@@ -354,7 +354,14 @@ uint32 BlockDir::CreateLayer(int16 nLayerType)
     {
         nNewLayerIndex = (uint32) moLayerList.size();
 
-        moLayerList.resize(moLayerList.size() + 1);
+        try
+        {
+            moLayerList.resize(moLayerList.size() + 1);
+        }
+        catch (std::exception &)
+        {
+            return ThrowPCIDSKException(0, "Out of memory in BlockDir::CreateLayer().");
+        }
     }
     else
     {
@@ -534,7 +541,8 @@ BlockInfo BlockDir::GetFreeBlock(void)
     if (mpoFreeBlockLayer->GetBlockCount() == 0)
         CreateFreeBlocks(std::max((uint32) 16, GetNewBlockCount()));
 
-    assert(mpoFreeBlockLayer->GetBlockCount() > 0);
+    if (mpoFreeBlockLayer->GetBlockCount() <= 0)
+        ThrowPCIDSKException("Cannot create new blocks.");
 
     BlockInfo sFreeBlock;
     sFreeBlock.nSegment = INVALID_SEGMENT;

@@ -35,18 +35,18 @@
 namespace PCIDSK
 {
 
-extern int16 ganCharTo1[256];
-extern int16 ganCharTo10[256];
-extern int16 ganCharTo100[256];
-extern int16 ganCharTo1000[256];
-extern int32 ganCharTo10000[256];
-extern int32 ganCharTo100000[256];
-extern int32 ganCharTo1000000[256];
-extern int32 ganCharTo10000000[256];
-extern int32 ganCharTo100000000[256];
-extern int64 ganCharTo1000000000[256];
-extern int64 ganCharTo10000000000[256];
-extern int64 ganCharTo100000000000[256];
+extern const int16 ganCharTo1[256];
+extern const int16 ganCharTo10[256];
+extern const int16 ganCharTo100[256];
+extern const int16 ganCharTo1000[256];
+extern const int32 ganCharTo10000[256];
+extern const int32 ganCharTo100000[256];
+extern const int32 ganCharTo1000000[256];
+extern const int32 ganCharTo10000000[256];
+extern const int32 ganCharTo100000000[256];
+extern const int64 ganCharTo1000000000[256];
+extern const int64 ganCharTo10000000000[256];
+extern const int64 ganCharTo100000000000[256];
 
 inline int16 ScanInt1(const uint8 * string)
 {

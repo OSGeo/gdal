@@ -30,6 +30,7 @@
 #include "blockdir/blockfile.h"
 #include "core/pcidsk_utils.h"
 #include "core/pcidsk_scanint.h"
+#include "pcidsk_exception.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -143,10 +144,17 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
     SwapValue(&mnValidInfo);
 
     // Initialize the block layers.
-    moLayerInfoList.resize(msBlockDir.nLayerCount);
-    moTileLayerInfoList.resize(msBlockDir.nLayerCount);
+    try
+    {
+        moLayerInfoList.resize(msBlockDir.nLayerCount);
+        moTileLayerInfoList.resize(msBlockDir.nLayerCount);
 
-    moLayerList.resize(msBlockDir.nLayerCount);
+        moLayerList.resize(msBlockDir.nLayerCount);
+    }
+    catch (std::exception &)
+    {
+        ThrowPCIDSKException("Out of memory in BinaryTileDir().");
+    }
 
     for (uint32 iLayer = 0; iLayer < msBlockDir.nLayerCount; iLayer++)
     {
@@ -165,6 +173,9 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
 
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+
+    if (!pabyBlockDir)
+        ThrowPCIDSKException("Out of memory in BinaryTileDir().");
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -320,10 +331,20 @@ void BinaryTileDir::InitBlockList(BinaryTileLayer * poLayer)
     // Read the blocks from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
 
+    if (!pabyBlockDir)
+        return ThrowPCIDSKException("Out of memory in BinaryTileDir::InitBlockList().");
+
     mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nSize);
 
     // Setup the block list of the block layer.
-    poLayer->moBlockList.resize(psLayer->nBlockCount);
+    try
+    {
+        poLayer->moBlockList.resize(psLayer->nBlockCount);
+    }
+    catch (std::exception &)
+    {
+        return ThrowPCIDSKException("Out of memory in BinaryTileDir::InitBlockList().");
+    }
 
     SwapBlock((BlockInfo *) pabyBlockDir, psLayer->nBlockCount);
 
@@ -380,6 +401,9 @@ void BinaryTileDir::WriteDir(void)
 
     // Write the block directory to disk.
     char * pabyBlockDir = (char *) malloc(nDirSize + 1); // +1 for '\0'.
+
+    if (!pabyBlockDir)
+        return ThrowPCIDSKException("Out of memory in BinaryTileDir::WriteDir().");
 
     char * pabyBlockDirIter = pabyBlockDir;
 
@@ -504,8 +528,15 @@ BlockLayer * BinaryTileDir::_CreateLayer(uint16 nLayerType, uint32 iLayer)
 {
     if (iLayer == moLayerInfoList.size())
     {
-        moLayerInfoList.resize(moLayerInfoList.size() + 1);
-        moTileLayerInfoList.resize(moLayerInfoList.size());
+        try
+        {
+            moLayerInfoList.resize(moLayerInfoList.size() + 1);
+            moTileLayerInfoList.resize(moLayerInfoList.size());
+        }
+        catch (std::exception &)
+        {
+            ThrowPCIDSKException("Out of memory in BinaryTileDir::_CreateLayer().");
+        }
 
         moLayerInfoList[iLayer] = new BlockLayerInfo;
         moTileLayerInfoList[iLayer] = new TileLayerInfo;

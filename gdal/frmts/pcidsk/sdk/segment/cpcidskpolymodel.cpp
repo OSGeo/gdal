@@ -91,7 +91,8 @@ void CPCIDSKPolyModelSegment::Load()
         return;
     }
 
-    assert(data_size - 1024 == 7 * 512);
+    if (data_size - 1024 != 7 * 512)
+        return ThrowPCIDSKException("Corrupted poly model?");
 
     pimpl_->seg_data.SetSize((int)(data_size - 1024)); // should be 7 * 512
 

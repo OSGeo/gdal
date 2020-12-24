@@ -75,11 +75,11 @@ BlockTileDir::~BlockTileDir(void)
 {
     assert(moLayerInfoList.size() == moTileLayerInfoList.size());
 
-    for (size_t iLayer = 0; iLayer < moLayerInfoList.size(); iLayer++)
-    {
-        delete moLayerInfoList[iLayer];
-        delete moTileLayerInfoList[iLayer];
-    }
+    for (auto poIter : moLayerInfoList)
+        delete poIter;
+
+    for (auto poIter : moTileLayerInfoList)
+        delete poIter;
 }
 
 /************************************************************************/

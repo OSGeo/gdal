@@ -105,10 +105,21 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
     PCIDSKBuffer segptr( segment_pointer, 32 );
 
     segment_flag = segptr.buffer[0];
-    segment_type = static_cast<eSegType>(atoi(segptr.Get(1,3)));
+    const int segment_type_int = atoi(segptr.Get(1,3));
+    segment_type = static_cast<eSegType>(segment_type_int);
     if (EQUAL(SegmentTypeName(segment_type), "UNKNOWN"))
         segment_type = SEG_UNKNOWN;
-    data_offset = (atouint64(segptr.Get(12,11))-1) * 512;
+    data_offset = atouint64(segptr.Get(12,11));
+    if( data_offset == 0 )
+        data_offset = 0; // throw exception maybe ?
+    else
+    {
+        if( data_offset-1 > std::numeric_limits<uint64>::max() / 512 )
+        {
+            return ThrowPCIDSKException("too large data_offset");
+        }
+        data_offset = (data_offset-1) * 512;
+    }
     data_size = atouint64(segptr.Get(23,9)) * 512;
     data_size_limit = 999999999ULL * 512;
 

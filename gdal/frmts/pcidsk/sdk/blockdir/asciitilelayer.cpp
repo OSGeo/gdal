@@ -28,6 +28,7 @@
 #include "blockdir/asciitilelayer.h"
 #include "blockdir/blockfile.h"
 #include "core/pcidsk_scanint.h"
+#include "pcidsk_exception.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -108,6 +109,9 @@ void AsciiTileLayer::WriteTileList(void)
 
     char * pabyTileLayer = (char *) malloc(nSize + 1); // +1 for '\0'.
 
+    if (!pabyTileLayer)
+        return ThrowPCIDSKException("Out of memory in AsciiTileLayer::WriteTileList().");
+
     // Write the tile layer header to disk.
     char * pabyHeaderIter = pabyTileLayer;
 
@@ -175,12 +179,22 @@ void AsciiTileLayer::ReadTileList(void)
 
     uint8 * pabyTileList = (uint8 *) malloc(nSize);
 
+    if (!pabyTileList)
+        return ThrowPCIDSKException("Out of memory in AsciiTileLayer::ReadTileList().");
+
     ReadFromLayer(pabyTileList, 128, nSize);
 
     uint8 * pabyTileOffsetIter = pabyTileList;
     uint8 * pabyTileSizeIter = pabyTileList + nTileCount * 12;
 
-    moTileList.resize(nTileCount);
+    try
+    {
+        moTileList.resize(nTileCount);
+    }
+    catch (std::exception &)
+    {
+        return ThrowPCIDSKException("Out of memory in AsciiTileLayer::ReadTileList().");
+    }
 
     for (uint32 iTile = 0; iTile < nTileCount; iTile++)
     {

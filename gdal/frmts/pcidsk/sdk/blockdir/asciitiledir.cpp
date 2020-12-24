@@ -85,7 +85,7 @@ static BlockInfoList GetBlockList(const SysBlockInfoList & oBlockInfoList,
 
         std::set<uint32> oBlockSet;
 
-        oBlockList.resize(0);
+        oBlockList.clear();
 
         while (iBlock < oBlockInfoList.size())
         {
@@ -184,10 +184,17 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
     SwapValue(&mnValidInfo);
 
     // Initialize the block layers.
-    moLayerInfoList.resize(msBlockDir.nLayerCount);
-    moTileLayerInfoList.resize(msBlockDir.nLayerCount);
+    try
+    {
+        moLayerInfoList.resize(msBlockDir.nLayerCount);
+        moTileLayerInfoList.resize(msBlockDir.nLayerCount);
 
-    moLayerList.resize(msBlockDir.nLayerCount);
+        moLayerList.resize(msBlockDir.nLayerCount);
+    }
+    catch (std::exception &)
+    {
+        ThrowPCIDSKException("Out of memory in AsciiTileDir().");
+    }
 
     for (uint32 iLayer = 0; iLayer < msBlockDir.nLayerCount; iLayer++)
     {
@@ -285,6 +292,9 @@ void AsciiTileDir::ReadFullDir(void)
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
 
+    if (!pabyBlockDir)
+        return ThrowPCIDSKException("Out of memory in AsciiTileDir::ReadFullDir().");
+
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
     mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512, nSize);
@@ -371,6 +381,9 @@ void AsciiTileDir::ReadPartialDir(void)
 
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+
+    if (!pabyBlockDir)
+        return ThrowPCIDSKException("Out of memory in AsciiTileDir::ReadPartialDir().");
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -545,12 +558,22 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
     // Read the blocks from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
 
+    if (!pabyBlockDir)
+        return ThrowPCIDSKException("Out of memory in AsciiTileDir::InitBlockList().");
+
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
     mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nSize);
 
     // Setup the block list.
-    poLayer->moBlockList.resize(psLayer->nBlockCount);
+    try
+    {
+        poLayer->moBlockList.resize(psLayer->nBlockCount);
+    }
+    catch (std::exception &)
+    {
+        return ThrowPCIDSKException("Out of memory in AsciiTileDir::InitBlockList().");
+    }
 
     for (uint32 iBlock = 0; iBlock < psLayer->nBlockCount; iBlock++)
     {
@@ -621,6 +644,9 @@ void AsciiTileDir::WriteDir(void)
 
     // Write the block directory to disk.
     char * pabyBlockDir = (char *) malloc(nDirSize + 1); // +1 for '\0'.
+
+    if (!pabyBlockDir)
+        return ThrowPCIDSKException("Out of memory in AsciiTileDir::WriteDir().");
 
     char * pabyBlockDirIter = pabyBlockDir;
 
@@ -770,8 +796,15 @@ BlockLayer * AsciiTileDir::_CreateLayer(uint16 nLayerType, uint32 iLayer)
 {
     if (iLayer == moLayerInfoList.size())
     {
-        moLayerInfoList.resize(moLayerInfoList.size() + 1);
-        moTileLayerInfoList.resize(moLayerInfoList.size());
+        try
+        {
+            moLayerInfoList.resize(moLayerInfoList.size() + 1);
+            moTileLayerInfoList.resize(moLayerInfoList.size());
+        }
+        catch (std::exception &)
+        {
+            return (BlockLayer *) ThrowPCIDSKExceptionPtr("Out of memory in AsciiTileDir::_CreateLayer().");
+        }
 
         moLayerInfoList[iLayer] = new BlockLayerInfo;
         moTileLayerInfoList[iLayer] = new TileLayerInfo;

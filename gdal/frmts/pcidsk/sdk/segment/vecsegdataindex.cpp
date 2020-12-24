@@ -133,7 +133,15 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
     {
         bool needs_swap = !BigEndianSystem();
 
-        block_index.resize( block_count );
+        try
+        {
+            block_index.resize( block_count );
+        }
+        catch( const std::exception& ex )
+        {
+            throw PCIDSKException("Out of memory allocating block_index(%u): %s",
+                                  block_count, ex.what());
+        }
         if( block_count > 0 )
         {
             vs->ReadFromFile( &(block_index[0]),

@@ -27,6 +27,7 @@
 
 #include "blockdir/binarytilelayer.h"
 #include "core/pcidsk_utils.h"
+#include "pcidsk_exception.h"
 
 using namespace PCIDSK;
 
@@ -75,7 +76,14 @@ void BinaryTileLayer::WriteTileList(void)
  */
 void BinaryTileLayer::ReadTileList(void)
 {
-    moTileList.resize(GetTileCount());
+    try
+    {
+        moTileList.resize(GetTileCount());
+    }
+    catch (std::exception &)
+    {
+        return ThrowPCIDSKException("Out of memory in BinaryTileDir::ReadTileList().");
+    }
 
     ReadFromLayer(&moTileList.front(), 0,
                   moTileList.size() * sizeof(BlockTileInfo));

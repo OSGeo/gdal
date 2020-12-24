@@ -32,6 +32,7 @@
 #include "blockdir/binarytiledir.h"
 #include "core/mutexholder.h"
 #include "pcidsk_types.h"
+#include "pcidsk_exception.h"
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
@@ -651,7 +652,14 @@ void BlockTileLayer::SetTileLayerInfo(uint32 nXSize, uint32 nYSize,
 
     MutexHolder oLock(mpoTileListMutex);
 
-    moTileList.resize(nTileCount);
+    try
+    {
+        moTileList.resize(nTileCount);
+    }
+    catch (std::exception &)
+    {
+        return ThrowPCIDSKException("Out of memory in BlockTileLayer::SetTileLayerInfo().");
+    }
 
     for (uint32 iTile = 0; iTile < nTileCount; iTile++)
     {
