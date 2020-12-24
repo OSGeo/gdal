@@ -2718,6 +2718,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                             delete poCurve;
                             delete poMulti;
                             *ppoGeom = nullptr;
+                            break;
                         }
                     }
                 }
