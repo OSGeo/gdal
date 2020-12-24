@@ -112,6 +112,8 @@ void CPCIDSKVectorSegment::Synchronize()
 {
     if( base_initialized )
     {
+        FlushSegHeaderIfNeeded();
+
         FlushDataBuffer( sec_vert );
         FlushDataBuffer( sec_record );
 
@@ -161,6 +163,7 @@ void CPCIDSKVectorSegment::Initialize()
     head.Put( 0, 256, 16 );
     head.Put( 0, 272, 16 );
 
+#ifdef PCIMAJORVERSION
     PCIDSK::ShapeField oFieldsDefault;
     oFieldsDefault.SetValue(std::vector<int32>{});
 
@@ -170,6 +173,7 @@ void CPCIDSKVectorSegment::Initialize()
              PCIDSK::FieldTypeCountedInt,
              "", "",
              &oFieldsDefault);
+#endif
 
     FlushHeader();
 }
@@ -1188,6 +1192,16 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
     LoadHeader();
 
 /* -------------------------------------------------------------------- */
+/*      If we have existing features, we should go through adding       */
+/*      this new field.                                                 */
+/* -------------------------------------------------------------------- */
+    if( total_shape_count > 0 )
+    {
+        return ThrowPCIDSKException( "Support for adding fields in populated layers "
+                              "has not yet been implemented." );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If no default is provided, use the obvious value.               */
 /* -------------------------------------------------------------------- */
     if( default_value == nullptr )
@@ -1243,16 +1257,19 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
     vh.field_formats.push_back( format );
     vh.field_defaults.push_back( *default_value );
 
-    vh.WriteFieldDefinitions();
+    vh_dirty = true;
+}
 
-/* -------------------------------------------------------------------- */
-/*      If we have existing features, we should go through adding       */
-/*      this new field.                                                 */
-/* -------------------------------------------------------------------- */
-    if( total_shape_count > 0 )
+/************************************************************************/
+/*                        FlushSegHeaderIfNeeded()                      */
+/************************************************************************/
+
+void CPCIDSKVectorSegment::FlushSegHeaderIfNeeded()
+{
+    if( vh_dirty )
     {
-        return ThrowPCIDSKException( "Support for adding fields in populated layers "
-                              "has not yet been implemented." );
+        vh.WriteFieldDefinitions();
+        vh_dirty = false;
     }
 }
 
@@ -1264,6 +1281,7 @@ ShapeId CPCIDSKVectorSegment::CreateShape( ShapeId id )
 
 {
     LoadHeader();
+    FlushSegHeaderIfNeeded();
 
 /* -------------------------------------------------------------------- */
 /*      Make sure we have the last shapeid index page loaded.           */
@@ -1325,6 +1343,7 @@ ShapeId CPCIDSKVectorSegment::CreateShape( ShapeId id )
 void CPCIDSKVectorSegment::DeleteShape( ShapeId id )
 
 {
+    FlushSegHeaderIfNeeded();
     int shape_index = IndexFromShapeId( id );
 
     if( shape_index == -1 )
@@ -1393,6 +1412,7 @@ void CPCIDSKVectorSegment::SetVertices( ShapeId id,
                                         const std::vector<ShapeVertex>& list )
 
 {
+    FlushSegHeaderIfNeeded();
     int shape_index = IndexFromShapeId( id );
 
     if( shape_index == -1 )
@@ -1475,6 +1495,7 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
                                       const std::vector<ShapeField>& list_in )
 
 {
+    FlushSegHeaderIfNeeded();
     uint32 i;
     int shape_index = IndexFromShapeId( id );
     std::vector<ShapeField> full_list;

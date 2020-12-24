@@ -533,6 +533,44 @@ def test_pcidsk_online_1():
     assert md['NBITS'] == '1', 'did not get expected NBITS=1 metadata.'
 
 ###############################################################################
+# Read test of a PCIDSK TILED version 1 file.
+
+def test_pcidsk_tile_v1():
+
+    tst = gdaltest.GDALTest('PCIDSK', 'pcidsk/tile_v1.1.pix', 1, 49679)
+
+    return tst.testCreateCopy(check_gt=1, check_srs=1)
+
+def test_pcidsk_tile_v1_overview():
+
+    ds = gdal.Open('data/pcidsk/tile_v1.1.pix')
+
+    band = ds.GetRasterBand(1)
+    assert band.GetOverviewCount() == 1, 'did not get expected overview count'
+
+    cs = band.GetOverview(0).Checksum()
+    assert cs == 8368, ('wrong overview checksum (%d)' % cs)
+
+###############################################################################
+# Read test of a PCIDSK TILED version 2 file.
+
+def test_pcidsk_tile_v2():
+
+    tst = gdaltest.GDALTest('PCIDSK', 'pcidsk/tile_v2.pix', 1, 136704)
+
+    return tst.testCreateCopy(check_gt=1, check_srs=1)
+
+def test_pcidsk_tile_v2_overview():
+
+    ds = gdal.Open('data/pcidsk/tile_v2.pix')
+
+    band = ds.GetRasterBand(1)
+    assert band.GetOverviewCount() == 1, 'did not get expected overview count'
+
+    cs = band.GetOverview(0).Checksum()
+    assert cs == 8368, ('wrong overview checksum (%d)' % cs)
+
+###############################################################################
 # Cleanup.
 
 
