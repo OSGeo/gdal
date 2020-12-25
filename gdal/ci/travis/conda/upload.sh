@@ -17,7 +17,7 @@ then
     exit 0;
 fi
 
-CI_PLAT=""
+export CI_PLAT=""
 if grep -q "windows" <<< "$PLATFORM"; then
     CI_PLAT="win"
 fi
