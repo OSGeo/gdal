@@ -677,7 +677,11 @@ typedef enum
      * @since GDAL 2.4
      */
                                                         OFSTJSON = 4,
-                                                        OFSTMaxSubType = 4
+    /** UUID string representation. Only valid for OFTString.
+     * @since GDAL 3.3
+     */
+                                                        OFSTUUID = 5,
+                                                        OFSTMaxSubType = 5
 } OGRFieldSubType;
 
 /**

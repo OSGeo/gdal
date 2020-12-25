@@ -2192,6 +2192,11 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             oField.SetType( OFTString );
             oField.SetSubType( OFSTJSON );
         }
+        else if ( nTypeOID == UUIDOID)
+        {
+            oField.SetType( OFTString );
+            oField.SetSubType( OFSTUUID );
+        }
         else /* unknown type */
         {
             CPLDebug("PG", "Unhandled OID (%d) for column %s. Defaulting to String.",

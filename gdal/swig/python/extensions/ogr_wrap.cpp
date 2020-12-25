@@ -4900,6 +4900,7 @@ SWIGINTERN int OGRFeatureDefnShadow_IsSame(OGRFeatureDefnShadow *self,OGRFeature
             case OFSTInt16:
             case OFSTFloat32:
             case OFSTJSON:
+            case OFSTUUID:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal field subtype value");
@@ -35798,6 +35799,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OFSTInt16",SWIG_From_int(static_cast< int >(2)));
   SWIG_Python_SetConstant(d, "OFSTFloat32",SWIG_From_int(static_cast< int >(3)));
   SWIG_Python_SetConstant(d, "OFSTJSON",SWIG_From_int(static_cast< int >(4)));
+  SWIG_Python_SetConstant(d, "OFSTUUID",SWIG_From_int(static_cast< int >(5)));
   SWIG_Python_SetConstant(d, "OJUndefined",SWIG_From_int(static_cast< int >(0)));
   SWIG_Python_SetConstant(d, "OJLeft",SWIG_From_int(static_cast< int >(1)));
   SWIG_Python_SetConstant(d, "OJRight",SWIG_From_int(static_cast< int >(2)));

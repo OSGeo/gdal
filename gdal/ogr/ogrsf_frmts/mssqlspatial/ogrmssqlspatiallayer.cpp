@@ -241,6 +241,12 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 oField.SetType( OFTDateTime );
                 break;
 
+            case SQL_C_GUID:
+                oField.SetType( OFTString );
+                oField.SetSubType( OFSTUUID );
+                break;
+
+
             default:
                 /* leave it as OFTString */;
         }
