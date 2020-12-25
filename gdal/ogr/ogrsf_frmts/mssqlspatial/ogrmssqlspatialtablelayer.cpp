@@ -924,7 +924,9 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
     else if( oField.GetType() == OFTString )
     {
-        if( oField.GetWidth() == 0 || oField.GetWidth() > 4000 || !bPreservePrecision )
+        if( oField.GetSubType() == OGRFieldSubType::OFSTUUID)
+            strcpy( szFieldType, "uniqueidentifier" );
+        else if( oField.GetWidth() == 0 || oField.GetWidth() > 4000 || !bPreservePrecision )
             strcpy( szFieldType, "nvarchar(MAX)" );
         else
             snprintf( szFieldType, sizeof(szFieldType), "nvarchar(%d)", oField.GetWidth() );
@@ -2405,6 +2407,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
                                        OGRFeature* poFeature, int i, int *bind_num, void **bind_buffer)
 {
     int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
+    int nOGRFieldSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();
 
     // We need special formatting for integer list values.
     if(  nOGRFieldType == OFTIntegerList )
@@ -2495,42 +2498,60 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
     {
         if (nOGRFieldType == OFTString)
         {
-            // bind UTF8 as unicode parameter
-            wchar_t* buffer = CPLRecodeToWChar( pszStrValue, CPL_ENC_UTF8, CPL_ENC_UCS2);
-            size_t nLen = wcslen(buffer) + 1;
-            if (nLen > 4000)
+            if (nOGRFieldSubType == OFSTUUID)
             {
-                /* need to handle nvarchar(max) */
-#ifdef SQL_SS_LENGTH_UNLIMITED
-                nLen = SQL_SS_LENGTH_UNLIMITED;
-#else
-                /* for older drivers truncate the data to 4000 chars */
-                buffer[4000] = 0;
-                nLen = 4000;
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "String data truncation applied on field: %s. Use a more recent ODBC driver that supports handling large string values.", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
-#endif
-            }
-#if WCHAR_MAX > 0xFFFFu
-            // Shorten each character to a two-byte value, as expected by
-            // the ODBC driver
-            GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
-            for( unsigned int nIndex = 1; nIndex < nLen; nIndex += 1 )
-                panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
-#endif
-            int nRetCode = SQLBindParameter(poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1),
-                SQL_PARAM_INPUT, SQL_C_WCHAR, SQL_WVARCHAR, nLen, 0, (SQLPOINTER)buffer, 0, nullptr);
-            if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
-            {
-                poStatement->Append( "?" );
-                bind_buffer[*bind_num] = buffer;
-                ++(*bind_num);
-            }
+                int nRetCode = SQLBindParameter(poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1),
+                    SQL_PARAM_INPUT, SQL_C_CHAR, SQL_GUID, 16, 0, (SQLPOINTER)pszStrValue, 0, nullptr);
+                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                {
+                    poStatement->Append( "?" );
+                    bind_buffer[*bind_num] = CPLStrdup(pszStrValue);
+                    ++(*bind_num);
+                }
+                else
+                {
+                    OGRMSSQLAppendEscaped(poStatement, pszStrValue);
+                }
+            }   
             else
             {
-                OGRMSSQLAppendEscaped(poStatement, pszStrValue);
-                CPLFree(buffer);
-            }
+                // bind UTF8 as unicode parameter
+                wchar_t* buffer = CPLRecodeToWChar( pszStrValue, CPL_ENC_UTF8, CPL_ENC_UCS2);
+                size_t nLen = wcslen(buffer) + 1;
+                if (nLen > 4000)
+                {
+                    /* need to handle nvarchar(max) */
+    #ifdef SQL_SS_LENGTH_UNLIMITED
+                    nLen = SQL_SS_LENGTH_UNLIMITED;
+    #else
+                    /* for older drivers truncate the data to 4000 chars */
+                    buffer[4000] = 0;
+                    nLen = 4000;
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "String data truncation applied on field: %s. Use a more recent ODBC driver that supports handling large string values.", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+    #endif
+                }
+    #if WCHAR_MAX > 0xFFFFu
+                // Shorten each character to a two-byte value, as expected by
+                // the ODBC driver
+                GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
+                for( unsigned int nIndex = 1; nIndex < nLen; nIndex += 1 )
+                    panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
+    #endif
+                int nRetCode = SQLBindParameter(poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1),
+                    SQL_PARAM_INPUT, SQL_C_WCHAR, SQL_WVARCHAR, nLen, 0, (SQLPOINTER)buffer, 0, nullptr);
+                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                {
+                    poStatement->Append( "?" );
+                    bind_buffer[*bind_num] = buffer;
+                    ++(*bind_num);
+                }
+                else
+                {
+                    OGRMSSQLAppendEscaped(poStatement, pszStrValue);
+                    CPLFree(buffer);
+                }
+            } 
         }
         else
             OGRMSSQLAppendEscaped(poStatement, pszStrValue);

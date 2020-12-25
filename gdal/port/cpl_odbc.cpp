@@ -1983,7 +1983,7 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_INTERVAL_HOUR_TO_SECOND:
         case SQL_INTERVAL_MINUTE_TO_SECOND:
         case SQL_GUID:
-            return SQL_C_CHAR;
+            return SQL_C_GUID;
 
         case SQL_DATE:
         case SQL_TYPE_DATE:

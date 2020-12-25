@@ -318,6 +318,38 @@ def test_ogr_mssqlspatial_create_feature_in_unregistered_table():
     feature.Destroy()
 
 ###############################################################################
+# Test UUID datatype support
+
+def test_ogr_mssqlspatial_uuid():
+    if gdaltest.mssqlspatial_ds is None:
+        pytest.skip()
+
+    lyr = gdaltest.mssqlspatial_ds.CreateLayer('test_ogr_mssql_uuid')
+
+    fd = ogr.FieldDefn('uid', ogr.OFTString)
+    fd.SetSubType(ogr.OFSTUUID)
+
+    assert lyr.CreateField(fd) == 0
+
+    lyr.StartTransaction()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['uid'] = '6F9619FF-8B86-D011-B42D-00C04FC964FF'
+    lyr.CreateFeature(f)
+    lyr.CommitTransaction()
+
+    test_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=0)
+    lyr = test_ds.GetLayer('test_ogr_mssql_uuid')
+    fd = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fd.GetType() == ogr.OFTString
+    assert fd.GetSubType() == ogr.OFSTUUID
+    f = lyr.GetNextFeature()
+
+    assert f.GetField(0) == '6F9619FF-8B86-D011-B42D-00C04FC964FF'
+
+    test_ds.Destroy()
+
+
+###############################################################################
 #
 
 
@@ -331,6 +363,7 @@ def test_ogr_mssqlspatial_cleanup():
     gdaltest.mssqlspatial_ds = ogr.Open(gdaltest.mssqlspatial_dsname, update=1)
     gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE Unregistered')
     gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE tpoly')
+    gdaltest.mssqlspatial_ds.ExecuteSQL('DROP TABLE test_ogr_mssql_uuid')
 
     gdaltest.mssqlspatial_ds = None
 
