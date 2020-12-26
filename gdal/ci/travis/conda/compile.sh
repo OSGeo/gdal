@@ -3,19 +3,23 @@
 mkdir -p packages
 
 CI_PLAT=""
-if [ "$PLATFORM" == "windows-latest" ]; then
+if grep -q "windows" <<< "$PLATFORM"; then
     CI_PLAT="win"
 fi
 
-if [ "$PLATFORM" == "ubuntu-latest" ]; then
+if grep -q "ubuntu" <<< "$PLATFORM"; then
     CI_PLAT="linux"
 fi
 
-if [ "$PLATFORM" == "macos-latest" ]; then
+if grep -q "macos" <<< "$PLATFORM"; then
     CI_PLAT="osx"
 fi
 
-conda build recipe --clobber-file recipe/recipe_clobber.yaml --output-folder packages -m ".ci_support/${CI_PLAT}_64_.yaml"
-conda install -c ./packages libgdal gdal
 
+
+conda build recipe --clobber-file recipe/recipe_clobber.yaml --output-folder packages -m ".ci_support/${CI_PLAT}_64_.yaml"
+conda create -y -n test -c ./packages python=3.8 libgdal gdal
+conda deactivate
+conda activate test
 gdalinfo --version
+conda deactivate

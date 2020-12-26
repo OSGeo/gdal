@@ -1,6 +1,6 @@
 #!/bin/bash
 
-conda install -c conda-forge conda-build ninja compilers anaconda-client make python=3.8 -y
+conda install -c conda-forge conda-build anaconda-client python=3.8 -y
 
 git clone  https://github.com/conda-forge/gdal-feedstock.git
 
