@@ -39,21 +39,25 @@
 
 from __future__ import print_function, division
 
-import math
-from multiprocessing import Pool
-from functools import partial
 import glob
 import json
+import math
+import optparse
 import os
-import tempfile
-import threading
 import shutil
 import sys
+import tempfile
+import threading
+from functools import partial
+from multiprocessing import Pool
+from typing import List, NoReturn, Tuple, Optional, Any
 from uuid import uuid4
 from xml.etree import ElementTree
 
 from osgeo import gdal
 from osgeo import osr
+
+Options = Any
 
 try:
     from PIL import Image
@@ -75,7 +79,7 @@ class UnsupportedTileMatrixSet(Exception):
     pass
 
 class TileMatrixSet(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.identifier = None
         self.srs = None
         self.topleft_x = None
@@ -118,7 +122,7 @@ class TileMatrixSet(object):
         return (minx, miny, maxx, maxy)
 
     @staticmethod
-    def parse(j):
+    def parse(j: dict) -> 'TileMatrixSet':
         assert 'identifier' in j
         assert 'supportedCRS' in j
         assert 'tileMatrix' in j
@@ -130,7 +134,7 @@ class TileMatrixSet(object):
         if srs.IsProjected():
             metersPerUnit = srs.GetLinearUnits()
         elif srs.IsGeographic():
-            metersPerUnit = srs.GetSemiMajor() * math.pi / 180;
+            metersPerUnit = srs.GetSemiMajor() * math.pi / 180
         tms = TileMatrixSet()
         tms.srs = srs
         tms.identifier = str(j['identifier'])
@@ -340,7 +344,7 @@ class GlobalMercator(object):
                  AUTHORITY["EPSG","9001"]]]
     """
 
-    def __init__(self, tile_size=256):
+    def __init__(self, tile_size: int = 256) -> None:
         "Initialize the TMS Global Mercator pyramid"
         self.tile_size = tile_size
         self.initialResolution = 2 * math.pi * 6378137 / self.tile_size
@@ -489,9 +493,9 @@ class GlobalGeodetic(object):
        WMS, KML    Web Clients, Google Earth  TileMapService
     """
 
-    def __init__(self, tmscompatible, tile_size=256):
+    def __init__(self, tmscompatible: Optional[bool], tile_size: int = 256) -> None:
         self.tile_size = tile_size
-        if tmscompatible is not None:
+        if tmscompatible:
             # Defaults the resolution factor to 0.703125 (2 tiles @ level 0)
             # Adhers to OSGeo TMS spec
             # http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#global-geodetic
@@ -606,7 +610,7 @@ class GDALError(Exception):
     pass
 
 
-def exit_with_error(message, details=""):
+def exit_with_error(message: str, details: str = "") -> NoReturn:
     # Message printing and exit code kept from the way it worked using the OptionParser (in case
     # someone parses the error output)
     sys.stderr.write("Usage: gdal2tiles.py [options] input_file [output]\n\n")
@@ -617,7 +621,7 @@ def exit_with_error(message, details=""):
     sys.exit(2)
 
 
-def set_cache_max(cache_in_bytes):
+def set_cache_max(cache_in_bytes: int) -> None:
     # We set the maximum using `SetCacheMax` and `GDAL_CACHEMAX` to support both fork and spawn as multiprocessing start methods.
     # https://github.com/OSGeo/gdal/pull/2112
     os.environ['GDAL_CACHEMAX'] = '%d' % int(cache_in_bytes / 1024 / 1024)
@@ -814,7 +818,7 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
             exit_with_error("ReprojectImage() failed on %s, error %d" % (tilefilename, res))
 
 
-def setup_no_data_values(input_dataset, options):
+def setup_no_data_values(input_dataset: gdal.Dataset, options: Options) -> List[float]:
     """
     Extract the NODATA values from the dataset or use the passed arguments as override if any
     """
@@ -843,7 +847,7 @@ def setup_no_data_values(input_dataset, options):
     return in_nodata
 
 
-def setup_input_srs(input_dataset, options):
+def setup_input_srs(input_dataset: gdal.Dataset, options: Options) -> Tuple[Optional[osr.SpatialReference], Optional[str]]:
     """
     Determines and returns the Input Spatial Reference System (SRS) as an osr object and as a
     WKT representation
@@ -873,7 +877,7 @@ def setup_input_srs(input_dataset, options):
     return input_srs, input_srs_wkt
 
 
-def setup_output_srs(input_srs, options):
+def setup_output_srs(input_srs: Optional[osr.SpatialReference], options: Options) -> Optional[osr.SpatialReference]:
     """
     Setup the desired SRS (based on options)
     """
@@ -894,12 +898,12 @@ def setup_output_srs(input_srs, options):
     return output_srs
 
 
-def has_georeference(dataset):
+def has_georeference(dataset: gdal.Dataset) -> bool:
     return (dataset.GetGeoTransform() != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0) or
             dataset.GetGCPCount() != 0)
 
 
-def reproject_dataset(from_dataset, from_srs, to_srs, options=None):
+def reproject_dataset(from_dataset: gdal.Dataset, from_srs: Optional[osr.SpatialReference], to_srs: Optional[osr.SpatialReference], options: Optional[Options] = None) -> gdal.Dataset:
     """
     Returns the input dataset in the expected "destination" SRS.
     If the dataset is already in the correct SRS, returns it unmodified
@@ -961,7 +965,7 @@ def add_gdal_warp_options_to_string(vrt_string, warp_options):
     return ElementTree.tostring(vrt_root).decode()
 
 
-def update_no_data_values(warped_vrt_dataset, nodata_values, options=None):
+def update_no_data_values(warped_vrt_dataset: gdal.Dataset, nodata_values: List[float], options: Optional[Options] = None) -> gdal.Dataset:
     """
     Takes an array of NODATA values and forces them on the WarpedVRT file dataset passed
     """
@@ -1002,7 +1006,7 @@ def update_no_data_values(warped_vrt_dataset, nodata_values, options=None):
     return corrected_dataset
 
 
-def add_alpha_band_to_string_vrt(vrt_string):
+def add_alpha_band_to_string_vrt(vrt_string: str) -> str:
     # TODO: gbataille - Old code speak of this being equivalent to gdalwarp -dstalpha
     # To be checked
 
@@ -1053,7 +1057,7 @@ def add_alpha_band_to_string_vrt(vrt_string):
     return ElementTree.tostring(vrt_root).decode()
 
 
-def update_alpha_value_for_non_alpha_inputs(warped_vrt_dataset, options=None):
+def update_alpha_value_for_non_alpha_inputs(warped_vrt_dataset: gdal.Dataset, options: Optional[Options] = None) -> gdal.Dataset:
     """
     Handles dataset with 1 or 3 bands, i.e. without alpha channel, in the case the nodata value has
     not been forced by options
@@ -1075,7 +1079,7 @@ def update_alpha_value_for_non_alpha_inputs(warped_vrt_dataset, options=None):
     return warped_vrt_dataset
 
 
-def nb_data_bands(dataset):
+def nb_data_bands(dataset: gdal.Dataset) -> int:
     """
     Return the number of data (non-alpha) bands of a gdal dataset
     """
@@ -1086,7 +1090,7 @@ def nb_data_bands(dataset):
         return dataset.RasterCount - 1
     return dataset.RasterCount
 
-def create_base_tile(tile_job_info, tile_detail):
+def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') -> None:
 
     dataBandsCount = tile_job_info.nb_data_bands
     output = tile_job_info.output_file_path
@@ -1193,7 +1197,7 @@ def create_base_tile(tile_job_info, tile_detail):
 
 
 
-def create_overview_tiles(tile_job_info, output_folder, options):
+def create_overview_tiles(tile_job_info: 'TileJobInfo', output_folder: str, options: Options) -> None:
     """Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
     mem_driver = gdal.GetDriverByName('MEM')
     tile_driver = tile_job_info.tile_driver
@@ -1326,12 +1330,11 @@ def create_overview_tiles(tile_job_info, output_folder, options):
                     progress_bar.log_progress()
 
 
-def optparse_init():
+def optparse_init() -> optparse.OptionParser:
     """Prepare the option parser for input (argv)"""
 
-    from optparse import OptionParser, OptionGroup
     usage = "Usage: %prog [options] input_file [output]"
-    p = OptionParser(usage, version="%prog " + __version__)
+    p = optparse.OptionParser(usage, version="%prog " + __version__)
     p.add_option("-p", "--profile", dest='profile',
                  type='choice', choices=profile_list,
                  help=("Tile cutting profile (%s) - default 'mercator' "
@@ -1371,7 +1374,7 @@ def optparse_init():
                  help="Width and height in pixel of a tile")
 
     # KML options
-    g = OptionGroup(p, "KML (Google Earth) options",
+    g = optparse.OptionGroup(p, "KML (Google Earth) options",
                     "Options for generated Google Earth SuperOverlay metadata")
     g.add_option("-k", "--force-kml", dest='kml', action="store_true",
                  help=("Generate KML for Google Earth - default for 'geodetic' profile and "
@@ -1384,7 +1387,7 @@ def optparse_init():
     p.add_option_group(g)
 
     # HTML options
-    g = OptionGroup(p, "Web viewer options",
+    g = optparse.OptionGroup(p, "Web viewer options",
                     "Options for generated HTML viewers a la Google Maps")
     g.add_option("-w", "--webviewer", dest='webviewer', type='choice', choices=webviewer_list,
                  help="Web viewer to generate (%s) - default 'all'" % ",".join(webviewer_list))
@@ -1399,7 +1402,7 @@ def optparse_init():
     p.add_option_group(g)
 
     # MapML options
-    g = OptionGroup(p, "MapML options",
+    g = optparse.OptionGroup(p, "MapML options",
                     "Options for generated MapML file")
     g.add_option("--mapml-template", dest='mapml_template', action="store_true",
                  help=("Filename of a template mapml file where variables will "
@@ -1417,7 +1420,7 @@ def optparse_init():
     return p
 
 
-def process_args(argv):
+def process_args(argv: List[str]) -> Tuple[str, str, Options]:
     parser = optparse_init()
     options, args = parser.parse_args(args=argv)
 
@@ -1449,7 +1452,7 @@ def process_args(argv):
     return input_file, output_folder, options
 
 
-def options_post_processing(options, input_file, output_folder):
+def options_post_processing(options: Options, input_file: str, output_folder: str) -> Options:
     if not options.title:
         options.title = os.path.basename(input_file)
 
@@ -1564,7 +1567,7 @@ class Gdal2TilesError(Exception):
 
 class GDAL2Tiles(object):
 
-    def __init__(self, input_file, output_folder, options):
+    def __init__(self, input_file: str, output_folder: str, options: Options) -> None:
         """Constructor function - initialization"""
         self.out_drv = None
         self.mem_drv = None
@@ -1646,7 +1649,7 @@ class GDAL2Tiles(object):
         self.kml = self.options.kml
 
     # -------------------------------------------------------------------------
-    def open_input(self):
+    def open_input(self) -> None:
         """Initialization of the input raster, reprojection if necessary"""
         gdal.AllRegister()
 
@@ -1662,7 +1665,7 @@ class GDAL2Tiles(object):
         # Open the input file
 
         if self.input_file:
-            input_dataset = gdal.Open(self.input_file, gdal.GA_ReadOnly)
+            input_dataset: gdal.Dataset = gdal.Open(self.input_file, gdal.GA_ReadOnly)
         else:
             raise Exception("No input file was specified")
 
@@ -1970,7 +1973,7 @@ class GDAL2Tiles(object):
                 print("MaxZoomLevel:", self.tmaxz)
 
 
-    def generate_metadata(self):
+    def generate_metadata(self) -> None:
         """
         Generation of main metadata files and HTML viewers (metadata related to particular
         tiles are generated during the tile processing).
@@ -2059,7 +2062,7 @@ class GDAL2Tiles(object):
                             self.options, children
                         ).encode('utf-8'))
 
-    def generate_base_tiles(self):
+    def generate_base_tiles(self) -> Tuple[TileJobInfo, List[TileDetail]]:
         """
         Generation of the base tiles (the lowest in the pyramid) directly from the input raster
         """
@@ -2238,7 +2241,7 @@ class GDAL2Tiles(object):
 
         return (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize)
 
-    def generate_tilemapresource(self):
+    def generate_tilemapresource(self) -> str:
         """
         Template for tilemapresource.xml. Returns filled string. Expected variables:
           title, north, south, east, west, isepsg4326, projection, publishurl,
@@ -2289,7 +2292,7 @@ class GDAL2Tiles(object):
     """
         return s
 
-    def generate_googlemaps(self):
+    def generate_googlemaps(self) -> str:
         """
         Template for googlemaps.html implementing Overlay of tiles for 'mercator' profile.
         It returns filled string. Expected variables:
@@ -2586,7 +2589,7 @@ class GDAL2Tiles(object):
 
         return s
 
-    def generate_leaflet(self):
+    def generate_leaflet(self) -> str:
         """
         Template for leaflet.html implementing overlay of tiles for 'mercator' profile.
         It returns filled string. Expected variables:
@@ -2717,7 +2720,7 @@ class GDAL2Tiles(object):
 
         return s
 
-    def generate_openlayers(self):
+    def generate_openlayers(self) -> str:
         """
         Template for openlayers.html, with the tiles as overlays, and base layers.
 
@@ -3018,7 +3021,7 @@ class GDAL2Tiles(object):
 
         return s
 
-    def generate_mapml(self):
+    def generate_mapml(self) -> str:
 
         if self.options.mapml_template:
             template = self.options.mapml_template
@@ -3065,7 +3068,7 @@ class GDAL2Tiles(object):
         return ty
 
 
-def worker_tile_details(input_file, output_folder, options):
+def worker_tile_details(input_file: str, output_folder: str, options: Options) -> Tuple[TileJobInfo, List[TileDetail]]:
     gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
     gdal2tiles.open_input()
     gdal2tiles.generate_metadata()
@@ -3074,16 +3077,16 @@ def worker_tile_details(input_file, output_folder, options):
 
 class ProgressBar(object):
 
-    def __init__(self, total_items):
+    def __init__(self, total_items: int) -> None:
         self.total_items = total_items
         self.nb_items_done = 0
         self.current_progress = 0
         self.STEP = 2.5
 
-    def start(self):
+    def start(self) -> None:
         sys.stdout.write("0")
 
-    def log_progress(self, nb_items=1):
+    def log_progress(self, nb_items: int = 1) -> None:
         self.nb_items_done += nb_items
         progress = float(self.nb_items_done) / self.total_items * 100
         if progress >= self.current_progress + self.STEP:
@@ -3144,7 +3147,7 @@ def get_tile_swne(tile_job_info, options):
     return tile_swne
 
 
-def single_threaded_tiling(input_file, output_folder, options):
+def single_threaded_tiling(input_file: str, output_folder: str, options: Options) -> None:
     """
     Keep a single threaded version that stays clear of multiprocessing, for platforms that would not
     support it
@@ -3174,7 +3177,7 @@ def single_threaded_tiling(input_file, output_folder, options):
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-def multi_threaded_tiling(input_file, output_folder, options):
+def multi_threaded_tiling(input_file: str, output_folder: str, options: Options) -> None:
     nb_processes = options.nb_processes or 1
 
     # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
@@ -3213,7 +3216,7 @@ def multi_threaded_tiling(input_file, output_folder, options):
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-def main(argv):
+def main(argv: List[str]) -> int:
     # TODO: gbataille - use mkdtemp to work in a temp directory
     # TODO: gbataille - debug intermediate tiles.vrt not produced anymore?
     # TODO: gbataille - Refactor generate overview tiles to not depend on self variables
@@ -3226,7 +3229,7 @@ def main(argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        return
+        return 0
     input_file, output_folder, options = process_args(argv[1:])
     nb_processes = options.nb_processes or 1
 
@@ -3234,6 +3237,8 @@ def main(argv):
         single_threaded_tiling(input_file, output_folder, options)
     else:
         multi_threaded_tiling(input_file, output_folder, options)
+
+    return 0
 
 
 # vim: set tabstop=4 shiftwidth=4 expandtab:
