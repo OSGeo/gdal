@@ -1342,7 +1342,7 @@ def optparse_init():
     p.add_option('-s', '--s_srs', dest="s_srs", metavar="SRS",
                  help="The spatial reference system used for the source input data")
     p.add_option('-z', '--zoom', dest="zoom",
-                 help="Zoom levels to render (format:'2-5' or '10').")
+                 help="Zoom levels to render (format:'2-5', '10-' or '10').")
     p.add_option('-e', '--resume', dest="resume", action="store_true",
                  help="Resume mode. Generate only missing files.")
     p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
@@ -1452,6 +1452,28 @@ def process_args(argv):
 def options_post_processing(options, input_file, output_folder):
     if not options.title:
         options.title = os.path.basename(input_file)
+
+    # User specified zoom levels
+    tminz = None
+    tmaxz = None
+    if options.zoom:
+        minmax = options.zoom.split('-', 1)
+        zoom_min = minmax[0]
+        tminz = int(zoom_min)
+
+        if len(minmax) == 2:
+            # Min-max zoom value
+            zoom_max = minmax[1]
+            if zoom_max:
+                # User-specified (non-automatically calculated)
+                tmaxz = int(zoom_max)
+                if tmaxz < tminz:
+                    raise Exception('max zoom (%d) less than min zoom (%d)' %
+                                    (tmaxz, tminz))
+        else:
+            # Single zoom value (min = max)
+            tmaxz = tminz
+    options.zoom = [tminz, tmaxz]
 
     if options.url and not options.url.endswith('/'):
         options.url += '/'
@@ -1626,21 +1648,7 @@ class GDAL2Tiles(object):
         elif self.options.resampling == 'bilinear':
             self.querysize = self.tile_size * 2
 
-        # User specified zoom levels
-        self.tminz = None
-        self.tmaxz = None
-        if self.options.zoom:
-            minmax = self.options.zoom.split('-', 1)
-            minmax.extend([''])
-            zoom_min, zoom_max = minmax[:2]
-            self.tminz = int(zoom_min)
-            if zoom_max:
-                if int(zoom_max) < self.tminz:
-                    raise Exception('max zoom (%d) less than min zoom (%d)' %
-                                    (int(zoom_max), self.tminz))
-                self.tmaxz = int(zoom_max)
-            else:
-                self.tmaxz = int(zoom_min)
+        self.tminz, self.tmaxz = self.options.zoom
 
         # KML generation
         self.kml = self.options.kml
@@ -1800,8 +1808,8 @@ class GDAL2Tiles(object):
             self.tileswne = self.mercator.TileLatLonBounds
 
             # Generate table with min max tile coordinates for all zoomlevels
-            self.tminmax = list(range(0, 32))
-            for tz in range(0, 32):
+            self.tminmax = list(range(0, MAXZOOMLEVEL))
+            for tz in range(0, MAXZOOMLEVEL):
                 tminx, tminy = self.mercator.MetersToTile(self.ominx, self.ominy, tz)
                 tmaxx, tmaxy = self.mercator.MetersToTile(self.omaxx, self.omaxy, tz)
                 # crop tiles extending world limits (+-180,+-90)
@@ -1823,6 +1831,7 @@ class GDAL2Tiles(object):
             # (closest possible zoom level up on the resolution of raster)
             if self.tmaxz is None:
                 self.tmaxz = self.mercator.ZoomForPixelSize(self.out_gt[1])
+                self.tmaxz = max(self.tminz, self.tmaxz)
 
             self.tminz = min(self.tminz, self.tmaxz)
 
@@ -1845,8 +1854,8 @@ class GDAL2Tiles(object):
             self.tileswne = self.geodetic.TileLatLonBounds
 
             # Generate table with min max tile coordinates for all zoomlevels
-            self.tminmax = list(range(0, 32))
-            for tz in range(0, 32):
+            self.tminmax = list(range(0, MAXZOOMLEVEL))
+            for tz in range(0, MAXZOOMLEVEL):
                 tminx, tminy = self.geodetic.LonLatToTile(self.ominx, self.ominy, tz)
                 tmaxx, tmaxy = self.geodetic.LonLatToTile(self.omaxx, self.omaxy, tz)
                 # crop tiles extending world limits (+-180,+-90)
@@ -1869,6 +1878,7 @@ class GDAL2Tiles(object):
             # (closest possible zoom level up on the resolution of raster)
             if self.tmaxz is None:
                 self.tmaxz = self.geodetic.ZoomForPixelSize(self.out_gt[1])
+                self.tmaxz = max(self.tminz, self.tmaxz)
 
             self.tminz = min(self.tminz, self.tmaxz)
 
@@ -1894,6 +1904,7 @@ class GDAL2Tiles(object):
             # Get the maximal zoom level (native resolution of the raster)
             if self.tmaxz is None:
                 self.tmaxz = self.nativezoom
+                self.tmaxz = max(self.tminz, self.tmaxz)
             elif self.tmaxz > self.nativezoom:
                 print('Clamping max zoom level to %d' % self.nativezoom)
                 self.tmaxz = self.nativezoom
@@ -1961,6 +1972,7 @@ class GDAL2Tiles(object):
             # (closest possible zoom level up on the resolution of raster)
             if self.tmaxz is None:
                 self.tmaxz = tms.ZoomForPixelSize(self.out_gt[1], self.tile_size)
+                self.tmaxz = max(self.tminz, self.tmaxz)
 
             self.tminz = min(self.tminz, self.tmaxz)
 
