@@ -198,6 +198,26 @@ MAP  *Mopen(
          goto error_open;
  }
 
+ /* validate value of valueScale */
+ switch(m->raster.valueScale)
+ {
+     case VS_NOTDETERMINED:
+     case VS_CLASSIFIED:
+     case VS_CONTINUOUS:
+     case VS_BOOLEAN:
+     case VS_NOMINAL:
+     case VS_ORDINAL:
+     case VS_SCALAR:
+     case VS_DIRECTION:
+     case VS_LDD:
+     case VS_UNDEFINED:
+         break;
+
+     default:
+         M_ERROR(BAD_VALUESCALE);
+         goto error_open;
+ }
+
  CsfFinishMapInit(m);
  
  CsfRegisterMap(m);
