@@ -898,7 +898,7 @@ def test_fits_vector_write_without_source_fits_metadata_compute_repeat():
         assert md['TFORM23'].rstrip() == '2I'
         assert md['TFORM29'].rstrip() == '2K'
         assert md['TFORM32'].rstrip() == '2A'  # from field width
-        assert md['TFORM35'].rstrip() == '3E'  # should normally be 2E, but overriden by REPEAT_2E=3
+        assert md['TFORM35'].rstrip() == '3E'  # should normally be 2E, but overridden by REPEAT_2E=3
         assert md['TFORM38'].rstrip() == '2D'
         assert md['TFORM40'].rstrip().startswith('PA(')  # not recognized as complex
         assert md['TFORM41'].rstrip().startswith('PA(')  # not recognized as complex
