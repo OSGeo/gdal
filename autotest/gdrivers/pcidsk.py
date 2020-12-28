@@ -549,7 +549,7 @@ def test_pcidsk_tile_v1_overview():
     assert band.GetOverviewCount() == 1, 'did not get expected overview count'
 
     cs = band.GetOverview(0).Checksum()
-    assert cs == 12139, ('wrong overview checksum (%d)' % cs)
+    assert cs == 12003, ('wrong overview checksum (%d)' % cs)
 
 ###############################################################################
 # Read test of a PCIDSK TILED version 2 file.
@@ -568,7 +568,7 @@ def test_pcidsk_tile_v2_overview():
     assert band.GetOverviewCount() == 1, 'did not get expected overview count'
 
     cs = band.GetOverview(0).Checksum()
-    assert cs == 12028, ('wrong overview checksum (%d)' % cs)
+    assert cs == 12003, ('wrong overview checksum (%d)' % cs)
 
 ###############################################################################
 # Cleanup.
