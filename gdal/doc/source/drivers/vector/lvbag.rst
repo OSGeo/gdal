@@ -12,34 +12,33 @@ Dutch Kadaster LV BAG 2.0 Extract
 
 This driver can read XML files in the LV BAG 2.0 extract format as provided by
 the Dutch Kadaster BAG products. All LV BAG 2.0 extract products are supported.
-The driver supports all BAG layers including thorse introduced in BAG 2.0.
+The driver supports all BAG layers including those introduced in BAG 2.0.
 
 The driver is only available if GDAL/OGR is compiled against the Expat
 library.
 
 Each extract XML file is presented as a single OGR layer. The layers are
-georeferenced in their native (EPSG:28992) SRS. Each dataset exposes the LvID
-field according to the BAG 2.0 specification.
+georeferenced in their native (EPSG:28992) SRS.
 
 More information about the LV BAG 2.0 can be found at https://zakelijk.kadaster.nl/bag-2.0
 
 LV BAG model definitions are available at https://www.kadaster.nl/-/xsd-s-bag-2.0-extract
 
-Note 1 : the earlier BAG 1.0 extract is **not supported**\ by this driver.
+Note 1 : The earlier BAG 1.0 extract is **not supported**\  by this driver.
 
-Note 2 : the driver will only read ST (Standaard Levering) extract files. Mutation
+Note 2 : The driver will only read ST (Standaard Levering) extract files. Mutation
 ML (Mutatie Levering) files are not supported.
 
 Open options
 ------------
 
 The following open options can be specified
-(typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
+(typically with the **-oo**\  name=value parameters of ogrinfo or ogr2ogr):
 
--  **AUTOCORRECT_INVALID_DATA**\ =YES/NO (defaults to YES). Whether or not the driver must
+-  **AUTOCORRECT_INVALID_DATA**\ =YES/NO (defaults to NO). Whether or not the driver must
    try to adjust the data if a feature contains invalid or corrupted data. This typically
-   includes fixing invalid geometries (with GEOS >= 3.8.0), dates, object status etc. If
-   performance is essential set this option to NO.
+   includes fixing invalid geometries (with GEOS >= 3.8.0), dates, object status etc.
+-  **LEGACY_ID**\ =YES/NO (defaults to NO). Format the BAG identifiers compatible with BAG 1.0.
 
 VSI Virtual File System API support
 -----------------------------------
@@ -69,13 +68,13 @@ Examples
 
       ogrinfo -ro 9999PND01012020_000001.xml
 
--  Insert features from LV BAG extract archive into PostgreSQL as WGS84 geometries.
+-  Insert repaired features from LV BAG extract archive into PostgreSQL as WGS84 geometries.
    The table 'pand' will be created with the features from 9999PND18122019.zip. The
    database instance (lvbag) must already exist, and the table 'pand' must not already exist.
 
    ::
 
-      ogr2ogr -t_srs EPSG:4326 -f PostgreSQL PG:dbname=lvbag /vsizip/9999PND18122019.zip
+      ogr2ogr -oo AUTOCORRECT_INVALID_DATA=YES -t_srs EPSG:4326 -f PostgreSQL PG:dbname=lvbag /vsizip/9999PND18122019.zip
 
 - Load a LV BAG extract directory into Postgres:
 

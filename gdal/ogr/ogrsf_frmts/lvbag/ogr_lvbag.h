@@ -80,7 +80,8 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     
     bool                bSchemaOnly;
     bool                bHasReadSchema;
-    bool                bFitInvalidData;
+    bool                bFixInvalidData;
+    bool                bLegacyId;
     
     int                 nCurrentDepth;
     int                 nGeometryElementDepth;
@@ -89,6 +90,7 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     int                 nAttributeElementDepth;
     
     CPLString           osElementString;
+    CPLString           osAttributeString;
     bool                bCollectData;
 
     char                aBuf[BUFSIZ];

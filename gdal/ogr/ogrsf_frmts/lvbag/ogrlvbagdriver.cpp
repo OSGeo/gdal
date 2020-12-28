@@ -57,6 +57,10 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( strstr(pszPtr, "http://www.kadaster.nl/schemas/standlevering-generiek/1.0") == nullptr )
         return FALSE;
 
+    // Pin the driver to XSD version 'v20200601'
+    if( strstr(pszPtr, "http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20200601") == nullptr )
+        return FALSE;
+
     return TRUE;
 }
 
@@ -138,7 +142,8 @@ void RegisterOGRLVBAG()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
-"  <Option name='AUTOCORRECT_INVALID_DATA' type='boolean' description='whether driver should try to fix invalid data' default='YES'/>"
+"  <Option name='AUTOCORRECT_INVALID_DATA' type='boolean' description='whether driver should try to fix invalid data' default='NO'/>"
+"  <Option name='LEGACY_ID' type='boolean' description='whether driver should use the BAG 1.0 identifiers' default='NO'/>"
 "</OpenOptionList>" );
 
     poDriver->pfnOpen = OGRLVBAGDriverOpen;

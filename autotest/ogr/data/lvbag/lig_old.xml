@@ -1,23 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<sl-bag-extract:bagStand
-    xmlns:DatatypenNEN3610="www.kadaster.nl/schemas/lvbag/imbag/datatypennen3610/v20200601"
-    xmlns:Objecten="www.kadaster.nl/schemas/lvbag/imbag/objecten/v20200601"
-    xmlns:gml="http://www.opengis.net/gml/3.2"
-    xmlns:Historie="www.kadaster.nl/schemas/lvbag/imbag/historie/v20200601"
-    xmlns:Objecten-ref="www.kadaster.nl/schemas/lvbag/imbag/objecten-ref/v20200601"
-    xmlns:nen5825="www.kadaster.nl/schemas/lvbag/imbag/nen5825/v20200601"
-    xmlns:KenmerkInOnderzoek="www.kadaster.nl/schemas/lvbag/imbag/kenmerkinonderzoek/v20200601"
-    xmlns:selecties-extract="http://www.kadaster.nl/schemas/lvbag/extract-selecties/v20200601"
-    xmlns:sl-bag-extract="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20200601"
-    xmlns:sl="http://www.kadaster.nl/schemas/standlevering-generiek/1.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:schemaLocation="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20200601 http://www.kadaster.nl/schemas/bag-verstrekkingen/extract-deelbestand-lvc/v20200601/BagvsExtractDeelbestandExtractLvc-2.1.0.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sl-bag-extract:bagStand xmlns:selecties-extract="http://www.kadaster.nl/schemas/lvbag/extract-selecties/v20180601" xmlns:sl-bag-extract="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20180601" xmlns:sl="http://www.kadaster.nl/schemas/standlevering-generiek/1.0" xmlns:DatatypenNEN3610="www.kadaster.nl/schemas/lvbag/imbag/datatypennen3610/v20180601" xmlns:Objecten="www.kadaster.nl/schemas/lvbag/imbag/objecten/v20180601" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:Historie="www.kadaster.nl/schemas/lvbag/imbag/historie/v20180601" xmlns:Objecten-ref="www.kadaster.nl/schemas/lvbag/imbag/objecten-ref/v20180601" xmlns:nen5825="www.kadaster.nl/schemas/lvbag/imbag/nen5825/v20180601" xmlns:KenmerkInOnderzoek="www.kadaster.nl/schemas/lvbag/imbag/kenmerkinonderzoek/v20180601">
     <sl-bag-extract:bagInfo>
         <selecties-extract:Gebied-Registratief>
             <selecties-extract:Gebied-NLD />
         </selecties-extract:Gebied-Registratief>
         <selecties-extract:LVC-Extract>
-            <selecties-extract:StandTechnischeDatum>2020-10-08</selecties-extract:StandTechnischeDatum>
+            <selecties-extract:StandTechnischeDatum>2019-12-18</selecties-extract:StandTechnischeDatum>
         </selecties-extract:LVC-Extract>
     </sl-bag-extract:bagInfo>
     <sl:standBestand>
@@ -33,7 +21,7 @@
             <sl-bag-extract:bagObject>
                 <Objecten:Ligplaats>
                     <Objecten:heeftAlsHoofdadres>
-                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0106200000005333</Objecten-ref:NummeraanduidingRef>
+                        <Objecten-ref:NummeraanduidingRef xlink:href="NL.IMBAG.NUMMERAANDUIDING.0106200000005333"/>
                     </Objecten:heeftAlsHoofdadres>
                     <Objecten:voorkomen>
                         <Historie:Voorkomen>
@@ -41,18 +29,21 @@
                             <Historie:beginGeldigheid>2009-05-26</Historie:beginGeldigheid>
                             <Historie:tijdstipRegistratie>2009-11-06T13:37:22.000</Historie:tijdstipRegistratie>
                             <Historie:BeschikbaarLV>
-                                <Historie:tijdstipRegistratieLV>2009-11-06T14:07:51.498</Historie:tijdstipRegistratieLV>
+<Historie:tijdstipRegistratieLV>2009-11-06T14:07:51.498</Historie:tijdstipRegistratieLV>
                             </Historie:BeschikbaarLV>
                         </Historie:Voorkomen>
                     </Objecten:voorkomen>
-                    <Objecten:identificatie domein="NL.IMBAG.Ligplaats">0106020000000003</Objecten:identificatie>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Ligplaats</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106020000000003</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
                     <Objecten:status>Plaats aangewezen</Objecten:status>
                     <Objecten:geometrie>
                         <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="2" gml:id="LIG_0106020000000003_1_1257512871">
                             <gml:exterior>
-                                <gml:LinearRing>
-                                    <gml:posList count="6">231948.413 557767.07 231959.553 557765.225 231962.627 557787.614 231951.714 557788.937 231951.516 557787.148 231948.413 557767.07</gml:posList>
-                                </gml:LinearRing>
+<gml:LinearRing>
+    <gml:posList count="6">231948.413 557767.07 231959.553 557765.225 231962.627 557787.614 231951.714 557788.937 231951.516 557787.148 231948.413 557767.07</gml:posList>
+</gml:LinearRing>
                             </gml:exterior>
                         </gml:Polygon>
                     </Objecten:geometrie>
@@ -66,7 +57,7 @@
             <sl-bag-extract:bagObject>
                 <Objecten:Ligplaats>
                     <Objecten:heeftAlsHoofdadres>
-                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0106200000005334</Objecten-ref:NummeraanduidingRef>
+                        <Objecten-ref:NummeraanduidingRef xlink:href="NL.IMBAG.NUMMERAANDUIDING.0106200000005334"/>
                     </Objecten:heeftAlsHoofdadres>
                     <Objecten:voorkomen>
                         <Historie:Voorkomen>
@@ -74,18 +65,21 @@
                             <Historie:beginGeldigheid>2009-05-26</Historie:beginGeldigheid>
                             <Historie:tijdstipRegistratie>2009-11-06T13:37:22.000</Historie:tijdstipRegistratie>
                             <Historie:BeschikbaarLV>
-                                <Historie:tijdstipRegistratieLV>2009-11-06T14:07:51.503</Historie:tijdstipRegistratieLV>
+<Historie:tijdstipRegistratieLV>2009-11-06T14:07:51.503</Historie:tijdstipRegistratieLV>
                             </Historie:BeschikbaarLV>
                         </Historie:Voorkomen>
                     </Objecten:voorkomen>
-                    <Objecten:identificatie domein="NL.IMBAG.Ligplaats">0106020000000004</Objecten:identificatie>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Ligplaats</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106020000000004</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
                     <Objecten:status>Plaats aangewezen</Objecten:status>
                     <Objecten:geometrie>
                         <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="2" gml:id="LIG_0106020000000004_1_1257512871">
                             <gml:exterior>
-                                <gml:LinearRing>
-                                    <gml:posList count="7">231951.714 557788.937 231962.627 557787.614 231962.848 557789.227 231965.413 557813.518 231954.552 557814.665 231953.36 557803.776 231951.714 557788.937</gml:posList>
-                                </gml:LinearRing>
+<gml:LinearRing>
+    <gml:posList count="7">231951.714 557788.937 231962.627 557787.614 231962.848 557789.227 231965.413 557813.518 231954.552 557814.665 231953.36 557803.776 231951.714 557788.937</gml:posList>
+</gml:LinearRing>
                             </gml:exterior>
                         </gml:Polygon>
                     </Objecten:geometrie>
@@ -99,7 +93,7 @@
             <sl-bag-extract:bagObject>
                 <Objecten:Ligplaats>
                     <Objecten:heeftAlsHoofdadres>
-                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0106200000036855</Objecten-ref:NummeraanduidingRef>
+                        <Objecten-ref:NummeraanduidingRef xlink:href="NL.IMBAG.NUMMERAANDUIDING.0106200000036855"/>
                     </Objecten:heeftAlsHoofdadres>
                     <Objecten:voorkomen>
                         <Historie:Voorkomen>
@@ -107,18 +101,21 @@
                             <Historie:beginGeldigheid>2015-08-26</Historie:beginGeldigheid>
                             <Historie:tijdstipRegistratie>2015-08-26T10:26:57.000</Historie:tijdstipRegistratie>
                             <Historie:BeschikbaarLV>
-                                <Historie:tijdstipRegistratieLV>2015-08-26T10:30:59.909</Historie:tijdstipRegistratieLV>
+<Historie:tijdstipRegistratieLV>2015-08-26T10:30:59.909</Historie:tijdstipRegistratieLV>
                             </Historie:BeschikbaarLV>
                         </Historie:Voorkomen>
                     </Objecten:voorkomen>
-                    <Objecten:identificatie domein="NL.IMBAG.Ligplaats">0106020000000012</Objecten:identificatie>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Ligplaats</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106020000000012</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
                     <Objecten:status>Plaats aangewezen</Objecten:status>
                     <Objecten:geometrie>
                         <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="2" gml:id="LIG_0106020000000012_1_1440577859">
                             <gml:exterior>
-                                <gml:LinearRing>
-                                    <gml:posList count="5">233640.11 556960.992 233639.726 556955.494 233682.054 556952.808 233682.309 556958.691 233640.11 556960.992</gml:posList>
-                                </gml:LinearRing>
+<gml:LinearRing>
+    <gml:posList count="5">233640.11 556960.992 233639.726 556955.494 233682.054 556952.808 233682.309 556958.691 233640.11 556960.992</gml:posList>
+</gml:LinearRing>
                             </gml:exterior>
                         </gml:Polygon>
                     </Objecten:geometrie>
