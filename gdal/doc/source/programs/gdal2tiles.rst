@@ -44,7 +44,7 @@ can publish a picture without proper georeferencing too.
     Inputs with non-Byte data type (i.e. ``Int16``, ``UInt16``,...) will be clamped to
     the ``Byte`` data type, causing wrong results. To avoid this it is necessary to
     rescale input to the ``Byte`` data type using `gdal_translate` utility.
-    
+
 .. note::
 
     Config options of the input drivers may have an effect on the output of gdal2tiles. An example driver config option is GDAL_PDF_DPI, which can be found at :ref:`configoptions`
@@ -78,7 +78,7 @@ can publish a picture without proper georeferencing too.
 
 .. option:: -z <ZOOM>, --zoom=<ZOOM>
 
-  Zoom levels to render (format:'2-5' or '10').
+  Zoom levels to render (format:'2-5', '10-' or '10').
 
 .. option:: -e, --resume
 

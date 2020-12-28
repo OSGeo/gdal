@@ -142,3 +142,31 @@ class OptionParserPostProcessingTest(TestCase):
 
         with self.assertRaises(SystemExit):
             gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+    def test_zoom_option_not_specified(self):
+        self.DEFAULT_ATTRDICT_OPTIONS["zoom"] = None
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "baz")
+
+        self.assertEqual(options.zoom, [None, None])
+
+    def test_zoom_option_single_level(self):
+        self.DEFAULT_ATTRDICT_OPTIONS["zoom"] = "10"
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "baz")
+
+        self.assertEqual(options.zoom, [10, 10])
+
+    def test_zoom_option_two_levels(self):
+        self.DEFAULT_ATTRDICT_OPTIONS["zoom"] = '14-24'
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "baz")
+
+        self.assertEqual(options.zoom, [14, 24])
+
+    def test_zoom_option_two_levels_automatic_max(self):
+        self.DEFAULT_ATTRDICT_OPTIONS["zoom"] = '14-'
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "baz")
+
+        self.assertEqual(options.zoom, [14, None])
