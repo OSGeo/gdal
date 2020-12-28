@@ -537,7 +537,7 @@ def test_pcidsk_online_1():
 
 def test_pcidsk_tile_v1():
 
-    tst = gdaltest.GDALTest('PCIDSK', 'pcidsk/tile_v1.1.pix', 1, 49679)
+    tst = gdaltest.GDALTest('PCIDSK', 'pcidsk/tile_v1.1.pix', 1, 49526)
 
     return tst.testCreateCopy(check_gt=1, check_srs=1)
 
@@ -556,7 +556,7 @@ def test_pcidsk_tile_v1_overview():
 
 def test_pcidsk_tile_v2():
 
-    tst = gdaltest.GDALTest('PCIDSK', 'pcidsk/tile_v2.pix', 1, 49897)
+    tst = gdaltest.GDALTest('PCIDSK', 'pcidsk/tile_v2.pix', 1, 49526)
 
     return tst.testCreateCopy(check_gt=1, check_srs=1)
 
