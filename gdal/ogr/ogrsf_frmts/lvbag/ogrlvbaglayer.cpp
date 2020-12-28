@@ -33,7 +33,6 @@
 
 constexpr const char *pszSpecificationUrn = "urn:ogc:def:crs:EPSG::28992";
 constexpr const size_t nDefaultIdentifierSize = 16;
-constexpr const size_t nWplLokaalIDSize = 4;
 
 /************************************************************************/
 /*                           OGRLVBAGLayer()                            */
