@@ -340,7 +340,7 @@ def test_ogr_lvbag_read_errors():
         assert lyr.GetName() == ''
         assert lyr.GetFeatureCount() == 0
 
-def test_ogr_lvbag_fix_lokaalid():
+def test_ogr_lvbag_fix_identificatie():
 
     ds = ogr.Open('data/lvbag/pnd2.xml')
     assert ds is not None, 'cannot open dataset'
@@ -352,6 +352,12 @@ def test_ogr_lvbag_fix_lokaalid():
 
     feat = lyr.GetNextFeature()
     assert feat.GetField('identificatie') == 'NL.IMBAG.Pand.0571100000003518'
+
+def test_ogr_lvbag_old_schema():
+
+    ds = ogr.Open('data/lvbag/lig_old.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 0, 'bad layer count'
 
 ###############################################################################
 # Run test_ogrsf

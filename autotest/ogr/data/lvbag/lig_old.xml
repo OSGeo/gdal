@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sl-bag-extract:bagStand xmlns:selecties-extract="http://www.kadaster.nl/schemas/lvbag/extract-selecties/v20180601" xmlns:sl-bag-extract="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20180601" xmlns:sl="http://www.kadaster.nl/schemas/standlevering-generiek/1.0" xmlns:DatatypenNEN3610="www.kadaster.nl/schemas/lvbag/imbag/datatypennen3610/v20180601" xmlns:Objecten="www.kadaster.nl/schemas/lvbag/imbag/objecten/v20180601" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:Historie="www.kadaster.nl/schemas/lvbag/imbag/historie/v20180601" xmlns:Objecten-ref="www.kadaster.nl/schemas/lvbag/imbag/objecten-ref/v20180601" xmlns:nen5825="www.kadaster.nl/schemas/lvbag/imbag/nen5825/v20180601" xmlns:KenmerkInOnderzoek="www.kadaster.nl/schemas/lvbag/imbag/kenmerkinonderzoek/v20180601">
+    <sl-bag-extract:bagInfo>
+        <selecties-extract:Gebied-Registratief>
+            <selecties-extract:Gebied-NLD />
+        </selecties-extract:Gebied-Registratief>
+        <selecties-extract:LVC-Extract>
+            <selecties-extract:StandTechnischeDatum>2019-12-18</selecties-extract:StandTechnischeDatum>
+        </selecties-extract:LVC-Extract>
+    </sl-bag-extract:bagInfo>
+    <sl:standBestand>
+        <sl:dataset>LVBAG</sl:dataset>
+        <sl:inhoud>
+            <sl:gebied>Nederland</sl:gebied>
+            <sl:leveringsId>0000000001</sl:leveringsId>
+            <sl:objectTypen>
+                <sl:objectType>LIG</sl:objectType>
+            </sl:objectTypen>
+        </sl:inhoud>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Ligplaats>
+                    <Objecten:heeftAlsHoofdadres>
+                        <Objecten-ref:NummeraanduidingRef xlink:href="NL.IMBAG.NUMMERAANDUIDING.0106200000005333"/>
+                    </Objecten:heeftAlsHoofdadres>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2009-05-26</Historie:beginGeldigheid>
+                            <Historie:tijdstipRegistratie>2009-11-06T13:37:22.000</Historie:tijdstipRegistratie>
+                            <Historie:BeschikbaarLV>
+<Historie:tijdstipRegistratieLV>2009-11-06T14:07:51.498</Historie:tijdstipRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Ligplaats</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106020000000003</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
+                    <Objecten:status>Plaats aangewezen</Objecten:status>
+                    <Objecten:geometrie>
+                        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="2" gml:id="LIG_0106020000000003_1_1257512871">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="6">231948.413 557767.07 231959.553 557765.225 231962.627 557787.614 231951.714 557788.937 231951.516 557787.148 231948.413 557767.07</gml:posList>
+</gml:LinearRing>
+                            </gml:exterior>
+                        </gml:Polygon>
+                    </Objecten:geometrie>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2009-05-26</Objecten:documentdatum>
+                    <Objecten:documentnummer>2009-01000</Objecten:documentnummer>
+                </Objecten:Ligplaats>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Ligplaats>
+                    <Objecten:heeftAlsHoofdadres>
+                        <Objecten-ref:NummeraanduidingRef xlink:href="NL.IMBAG.NUMMERAANDUIDING.0106200000005334"/>
+                    </Objecten:heeftAlsHoofdadres>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2009-05-26</Historie:beginGeldigheid>
+                            <Historie:tijdstipRegistratie>2009-11-06T13:37:22.000</Historie:tijdstipRegistratie>
+                            <Historie:BeschikbaarLV>
+<Historie:tijdstipRegistratieLV>2009-11-06T14:07:51.503</Historie:tijdstipRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Ligplaats</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106020000000004</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
+                    <Objecten:status>Plaats aangewezen</Objecten:status>
+                    <Objecten:geometrie>
+                        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="2" gml:id="LIG_0106020000000004_1_1257512871">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="7">231951.714 557788.937 231962.627 557787.614 231962.848 557789.227 231965.413 557813.518 231954.552 557814.665 231953.36 557803.776 231951.714 557788.937</gml:posList>
+</gml:LinearRing>
+                            </gml:exterior>
+                        </gml:Polygon>
+                    </Objecten:geometrie>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2009-05-26</Objecten:documentdatum>
+                    <Objecten:documentnummer>2009-01000</Objecten:documentnummer>
+                </Objecten:Ligplaats>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Ligplaats>
+                    <Objecten:heeftAlsHoofdadres>
+                        <Objecten-ref:NummeraanduidingRef xlink:href="NL.IMBAG.NUMMERAANDUIDING.0106200000036855"/>
+                    </Objecten:heeftAlsHoofdadres>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2015-08-26</Historie:beginGeldigheid>
+                            <Historie:tijdstipRegistratie>2015-08-26T10:26:57.000</Historie:tijdstipRegistratie>
+                            <Historie:BeschikbaarLV>
+<Historie:tijdstipRegistratieLV>2015-08-26T10:30:59.909</Historie:tijdstipRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Ligplaats</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106020000000012</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
+                    <Objecten:status>Plaats aangewezen</Objecten:status>
+                    <Objecten:geometrie>
+                        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="2" gml:id="LIG_0106020000000012_1_1440577859">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="5">233640.11 556960.992 233639.726 556955.494 233682.054 556952.808 233682.309 556958.691 233640.11 556960.992</gml:posList>
+</gml:LinearRing>
+                            </gml:exterior>
+                        </gml:Polygon>
+                    </Objecten:geometrie>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2015-08-26</Objecten:documentdatum>
+                    <Objecten:documentnummer>MUT/2015 - BB 00516</Objecten:documentnummer>
+                </Objecten:Ligplaats>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
+    </sl:standBestand>
+</sl-bag-extract:bagStand>
