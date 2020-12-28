@@ -415,4 +415,46 @@ namespace tut
         }
     }
 
+    // Test GetEPSGGeogCS
+    template<>
+    template<>
+    void object::test<9 >()
+    {
+        // When export to WKT1 is not possible
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput(
+            "PROJCRS[\"World_Vertical_Perspective\",\n"
+            "    BASEGEOGCRS[\"WGS 84\",\n"
+            "        DATUM[\"World Geodetic System 1984\",\n"
+            "            ELLIPSOID[\"WGS 84\",6378137,298.257223563,\n"
+            "                LENGTHUNIT[\"metre\",1]]],\n"
+            "        PRIMEM[\"Greenwich\",0,\n"
+            "            ANGLEUNIT[\"Degree\",0.0174532925199433]]],\n"
+            "    CONVERSION[\"World_Vertical_Perspective\",\n"
+            "        METHOD[\"Vertical Perspective\",\n"
+            "            ID[\"EPSG\",9838]],\n"
+            "        PARAMETER[\"Latitude of topocentric origin\",0,\n"
+            "            ANGLEUNIT[\"Degree\",0.0174532925199433],\n"
+            "            ID[\"EPSG\",8834]],\n"
+            "        PARAMETER[\"Longitude of topocentric origin\",0,\n"
+            "            ANGLEUNIT[\"Degree\",0.0174532925199433],\n"
+            "            ID[\"EPSG\",8835]],\n"
+            "        PARAMETER[\"Viewpoint height\",35800000,\n"
+            "            LENGTHUNIT[\"metre\",1],\n"
+            "            ID[\"EPSG\",8840]]],\n"
+            "    CS[Cartesian,2],\n"
+            "        AXIS[\"(E)\",east,\n"
+            "            ORDER[1],\n"
+            "            LENGTHUNIT[\"metre\",1]],\n"
+            "        AXIS[\"(N)\",north,\n"
+            "            ORDER[2],\n"
+            "            LENGTHUNIT[\"metre\",1]],\n"
+            "    USAGE[\n"
+            "        SCOPE[\"Not known.\"],\n"
+            "        AREA[\"World.\"],\n"
+            "        BBOX[-90,-180,90,180]],\n"
+            "    ID[\"ESRI\",54049]]");
+        ensure_equals(oSRS.GetEPSGGeogCS(), 4326);
+    }
+
 } // namespace tut
