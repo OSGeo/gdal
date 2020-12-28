@@ -4130,7 +4130,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
         GDALDataType eSrcDataType = GDT_Unknown;
         bool bPropagateNoData = false;
 
-        // Ouput values of resampling function
+        // Output values of resampling function
         CPLErr eErr = CE_Failure;
         void* pDstBuffer = nullptr;
         GDALDataType eDstBufferDataType = GDT_Unknown;
@@ -4838,7 +4838,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
             GDALDataType eSrcDataType = GDT_Unknown;
             bool bPropagateNoData = false;
 
-            // Ouput values of resampling function
+            // Output values of resampling function
             CPLErr eErr = CE_Failure;
             void* pDstBuffer = nullptr;
             GDALDataType eDstBufferDataType = GDT_Unknown;

@@ -11941,12 +11941,12 @@ public class CoordinateTransformation:public int[] TransformPointsWithErrorCodes
 
 
 /**
- * Class of error codes typically related to coordinate operation initalization,
+ * Class of error codes typically related to coordinate operation initialization,
  * typically when creating a PJ* object from a PROJ string.
  *
  * Some of them can also be emitted during coordinate transformation,
  * like PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID in case the resource loading
- * is differed until it is really needed.
+ * is deferred until it is really needed.
  */
 public interface osrConstants:public final static int PROJ_ERR_INVALID_OP
 

@@ -311,7 +311,7 @@ int OCTCoordinateTransformationOptionsSetOperation(
 
 /** \brief Sets the desired accuracy for coordinate operations.
  *
- * Only coordinate operations that offer an accuracy of at leat the one
+ * Only coordinate operations that offer an accuracy of at least the one
  * specified will be considered.
  *
  * An accuracy of 0 is valid and means a coordinate operation made only of one or
@@ -322,7 +322,7 @@ int OCTCoordinateTransformationOptionsSetOperation(
  * If this option is specified with PROJ < 8, the OGR_CT_OP_SELECTION configuration
  * option will default to BEST_ACCURACY.
  *
- * @param dfAccuracy accuracy in metres (or a negative value to disable this filter)
+ * @param dfAccuracy accuracy in meters (or a negative value to disable this filter)
  *
  * @since GDAL 3.3
  */
