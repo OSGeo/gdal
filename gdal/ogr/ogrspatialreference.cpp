@@ -11605,12 +11605,25 @@ int OGRSpatialReference::GetEPSGGeogCS() const
 /* -------------------------------------------------------------------- */
 /*      Get the datum and geogcs names.                                 */
 /* -------------------------------------------------------------------- */
+
     const char *pszGEOGCS = GetAttrValue( "GEOGCS" );
     const char *pszDatum = GetAttrValue( "DATUM" );
 
     // We can only operate on coordinate systems with a geogcs.
+    OGRSpatialReference oSRSTmp;
     if( pszGEOGCS == nullptr || pszDatum == nullptr )
-        return -1;
+    {
+        // Calling GetAttrValue("GEOGCS") will fail on a CRS that can't be
+        // export to WKT1, so try to extract the geographic CRS through PROJ
+        // API with CopyGeogCSFrom() and get the nodes' values from it.
+        oSRSTmp.CopyGeogCSFrom(this);
+        pszGEOGCS = oSRSTmp.GetAttrValue( "GEOGCS" );
+        pszDatum = oSRSTmp.GetAttrValue( "DATUM" );
+        if( pszGEOGCS == nullptr || pszDatum == nullptr )
+        {
+            return -1;
+        }
+    }
 
     // Lookup geographic CRS name
     const PJ_TYPE type = PJ_TYPE_GEOGRAPHIC_2D_CRS;
@@ -11678,8 +11691,8 @@ int OGRSpatialReference::GetEPSGGeogCS() const
 /*      If we know the datum, associate the most likely GCS with        */
 /*      it.                                                             */
 /* -------------------------------------------------------------------- */
-    pszAuthName = GetAuthorityName( "GEOGCS|DATUM" );
-
+    pszAuthName = oSRSTmp.IsEmpty() ? GetAuthorityName( "GEOGCS|DATUM" ) :
+                                      oSRSTmp.GetAuthorityName( "GEOGCS|DATUM" );
     if( pszAuthName != nullptr
         && EQUAL(pszAuthName, "epsg")
         && GetPrimeMeridian() == 0.0 )
