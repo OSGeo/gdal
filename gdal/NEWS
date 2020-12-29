@@ -1,3 +1,146 @@
+= GDAL/OGR 3.2.1 Release Notes =
+
+The 3.2.1 release is a bug fix release.
+
+== Build ==
+
+* Windows: add missing makefile.vc for HEIF driver
+* Windows: add missing build support for OGCAPI driver
+* gdal-config (non installed): add -I/gnm in CFLAGS
+* Add some missing <limits> includes for gcc11 or recent clang
+
+== Resource files ==
+
+ * tms_MapML_CBMTILE.json: fix it to use correct resolution / scaleDenominator. Unfortunately this makes it non-usable by gdal2tiles, but still by the COG driver
+
+== GDAL algorithms ==
+
+ * GDALSuggestedWarpOutput2(): avoid potential crash if an approximate transformer is provided
+ * Warper ComputeSourceWindow(): avoid potential integer overflow with a ill-behaved transformer/inverse projection
+  Warper: fix assertion/crash in debug mode in GWKCheckAndComputeSrcOffsets()
+ * Pansharpening: fix wrong band assingment when input multispectral bands not in order 1,2,... and NoData set as PansharpeningOptions and not present in input bands
+
+== GDAL core ==
+
+ * /vsimem/: fix memleak if destroying the C++ handle with delete instead of using VSIFCloseL(). (oss-fuzz #28422)
+ * /vsisubfile/: fix memleak if destroying the C++ handle with delete instead of using VSIFCloseL(). (oss-fuzz #28446)
+ * Python embedding: fix symbol conflicts with python library (#3215)
+
+== GDAL utilities ==
+
+ * gdal_rasterize: make -i work again (#3124)
+ * gdal_translate -tr: make non-nearest resampling honour the specified resolution to avoid potential sub-pixel misalignment when the spatial extent, resolution and dimensions in pixels don't perfectly match
+ * gdalwarp: make -of COG work with multiple input sources when BigTIFF temporary output is needed (#3212)
+ * gdalwarp: preserve scale/offset settings of source bands to output (#3232)
+
+== GDAL drivers ==
+
+Multi-driver:
+ * gdal2tiles/COG/MBTiles/GeoPackage: adjustments for EPSG:3857 output (due to PROJ 8 changes)
+ * Raw datasets: increase the default max mem alloc to 1 GB for 64 bit processes, and add a RAW_MEM_ALLOC_LIMIT_MB config option to allow the user to specify a higher value (#3213)
+
+BLX driver:
+ * fix potential free of uninitialized variable in case memory allocation would fail
+
+FIT driver:
+ * avoid potential integer overflow with PAGESIZE creation option (oss-fuzz #26673)
+
+FITS driver:
+ * display more informative error message when opening raster dataset in vector mode, or vice-verca
+ * avoid stack smash overflow with 32 bit Linux builds in GetRawBinaryLayout()
+ * set physical filename when opening subdataset
+ * add support for creation and update of binary tables
+
+GRIB driver:
+ * avoid erroneous unit conversion when section 4 has vertical values coordinates (#3158)
+ * add surface type 150 = Generalized Vertical Height Coordinate (#3158)
+
+HDF5 driver:
+ * fix reading netCDF4/HDF5 files whose HDF5 signature is not at offset 0 (#3188)
+
+HFA driver:
+ * fix reading SRS with NAD83 favors, like 'NAD83(CORS96)'
+
+MRF driver:
+ * Restore raw Lerc1 detection (#3109)
+
+netCDF driver:
+ * fix reading netCDF4/HDF5 files whose HDF5 signature is not at offset 0 (#3188)
+ * accept relative variations in X/longitude and Y/latitude spacing of up to 0.05%. Add a GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK config option to ignore those checks if needed (#3244)
+
+PCRaster / libcsf:
+ * validate value before cast. (oss-fuzz #28928 and #29029)
+
+VRT driver:
+ * VRTPansharpenedDataset: fix crash when the spectral bands have no nodata value, but we have one declared in PansharpeningOptions, and when the VRTPansharpenedDataset exposes overviews (#3189)
+
+WCS driver:
+ * fix memory leak in error code path (oss-fuzz #28345)
+
+WMS driver:
+ * properly deal with northing,easting ordered CRS in WMS 1.3.0 when using connection string being a GetMap URL request (#3191)
+
+WMTS driver:
+ * Map CURLE_FILE_COULDNT_READ_FILE to 404 (#3187)
+
+XYZ driver:
+ * support reading datasets organized by columns, such as the ones of https://www.opengeodata.nrw.de/produkte/geobasis/hm/dgm1_xyz/dgm1_xyz
+ *  avoid harmless floating point division by zero (oss-fuzz #27740)
+
+== OGR core ==
+
+ * OGRFeature::GetFieldAsString() and GeoJSON output: do not output Float32 with excessive precision
+ * OGR SQL: fix potential crash or incorrect result on multi column ORDER BY (#3249)
+ * OGRSpatialReference::GetEPSGGeogCS(): make it use database lookups if needed (and avoid misidentification of 'NAD83(CORS96)' for example
+ * OGRSpatialReference::exportToWKT(): add a option to allow export of Geographic/Projected 3D CRS in WKT1_GDAL
+ * GetEPSGGeogCS(): fix when projected CRS can't be exported to WKT2
+ * OGRShapeCreateCompoundCurve(): fix memory leak in error code path. (oss-fuzz #28923)
+
+== OGR drivers ==
+
+DXF driver:
+ * Skip hatch polyline segments with one vertex
+
+Elasticsearch driver:
+ * support WKT geo_shape encoding
+ * make GetExtent() use server-side query for geo_shape if ES >= 7.8 and XPack is installed
+ * fix GetFeatureCount() when SetAttributeFilter() is a ElasticSearch JSON filter
+ * add open options for timeouts and maximum number of features
+
+FlatGeobuf driver:
+ * add editable capabilities (#3169)
+ * Port upstream changes to fix oss-fuzz #27530
+
+GeoJSON driver:
+ * accept files starting with {"bbox":...,"features":[... (#1537)
+ * accept file containing a Feature object and starting with a large properties (#3280)
+ * writer: avoid CPLDebug() messages when writing BBOX in RFC7946 mode
+ * writer: avoid invalid .0 suffix to be added to numeric values like 1eXX (#3172)
+
+GML driver:
+ * GML geometry parsing: handle km unit for radius of arcs (#3118)
+ * GML geometry parsing: avoid potential exponential complexity on broken XML (oss-fuzz #27301)
+ * GML geometry parsing: fix nullptr dereference on invalid GML (oss-fuzz #28040)
+
+MITAB driver:
+ * avoid casting invalid value to enumerated type (oss-fuzz #26770)
+
+NAS driver:
+ * don't skip prescan, if NAS_GFS_TEMPLATE is given, but still don't write .gfs
+
+PostgreSQL driver:
+ * on reading, instantiate SRS from EPSG when possible instead of srtext to avoid axis order issues, and strip TOWGS84 on known datum (#3174)
+ * when detecting srid from table contents, ignore null geometries
+
+WFS driver:
+ * fix CreateFeature() for WFS 2 (#3323). And for WFS 2, make CreateFeature() and SetFeature() use GML 3
+
+== Python bindings ==
+
+* osgeo/__init__.py - add python version check and deprecation warning. GDAL 3.2.X will be the last release supporting Python 2.7. Python 3.6 or above will be required for GDAL 3.3
+* Remove swig/python/[gdal|ogr|osr|gdalconst|gdalnumeric].py (#3149)
+* Implement correct behavior for copy.copy() and copy.deepcopy() on a Geometry object (#3278)
+
 = GDAL/OGR 3.2.0 Release Notes =
 
 == In a nutshell... ==
