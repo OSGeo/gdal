@@ -593,20 +593,35 @@ bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
             if (maxValInImg < zMax)
                 maxValInImg = zMax;
 
-            int numBytesNeeded = 1; // Assume no valid pixels
+            int numBytesNeeded = 1;
             if (numValidPixel != 0) {
                 if (numFinite == 0 && numValidPixel == (v1-v0) * (h1-h0) && isallsameval(v0, v1, h0, h1))
-                    numBytesNeeded = 5; // Stored as constant block
-                else
+                    numBytesNeeded = 5; // Stored as non-finite constant block
+                else {
                     numBytesNeeded = numBytesZTile(numValidPixel, zMin, zMax, maxZError);
+                    // Try moving zMin up to maxZError, see if things improve
+                    if (numFinite == numValidPixel && numValidPixel != 0 && zMin + maxZError <= zMax) {
+                        float zm = zMin + maxZError;
+                        int nBN = numBytesZTile(numValidPixel, zm, zMax, maxZError);
+                        // If it didn't work, maybe a small int between zMin and zMin + maxZError will?
+                        if (nBN >= numBytesNeeded && floor(zMin) != floor(zMin + maxZError)) {
+                            zm = floor(zMin + maxZError);
+                            nBN = numBytesZTile(numValidPixel, zm, zMax, maxZError);
+                        }
+                        if (nBN < numBytesNeeded) {
+                            zMin = zm;
+                            numBytesNeeded = nBN;
+                        }
+                    }
+                }
             }
             numBytes += numBytesNeeded;
 
             if (bArr) { // Skip the write if no pointer was provided
                 int numBytesWritten = 0;
                 if (numFinite == 0 && numValidPixel == (v1 - v0) * (h1 - h0) && isallsameval(v0, v1, h0, h1)) {
-                    // direct write as a const non-finite block
-                    *bArr++ = 3;
+                    // direct write as non-finite const block, 4 byte float
+                    *bArr++ = 3; // 3 | bits67[3]
                     bArr = writeFlt(bArr, (*this)(v0, h0), sizeof(float));
                     numBytesWritten = 5;
                 }
@@ -836,7 +851,6 @@ bool Lerc1Image::readZTile(Byte** ppByte, size_t& nRemainingBytes,
         return true;
     }
 
-    // read z's as int arr bit stuffed
     idataVec.resize((r1 - r0) * (c1 - c0)); // max size
     if (!blockread(&ptr, nRemainingBytes, idataVec))
         return false;
