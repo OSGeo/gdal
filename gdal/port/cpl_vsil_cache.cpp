@@ -412,6 +412,9 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
+    if( nSize == 0 || nCount == 0 )
+        return 0;
+
     // nFileSize might be set wrongly to 0 by underlying layers, such as
     // /vsicurl_streaming/https://query.data.world/s/jgsghstpphjhicstradhy5kpjwrnfy
     if( nFileSize > 0 && nOffset >= nFileSize )
