@@ -72,6 +72,8 @@ template.csproj:
     echo ^<PropertyGroup^> >> $@
     echo ^<TargetFramework^>$(NETSTANDARD)^</TargetFramework^> >> $@
     echo ^<AssemblyVersion^>$(GDAL_VERSION).0^</AssemblyVersion^> >> $@
+    echo ^<AssemblyOriginatorKeyFile^>..\gdal.snk^</AssemblyOriginatorKeyFile^> >> $@
+    echo ^<SignAssembly^>true^</SignAssembly^> >> $@
 	echo ^<AllowUnsafeBlocks^>true^</AllowUnsafeBlocks^> >> $@
     echo ^</PropertyGroup^> >> $@
     echo ^</Project^> >> $@
@@ -299,6 +301,9 @@ test:
 	ogrinfo.exe Data/intersectionresult.shp
 	gdalwarp.exe Data/testwarp.tif "-of GTiff -t_srs EPSG:32645 -overwrite" "../../../autotest/gcore/data/byte.tif"
 	getcrsinfo.exe "EPSG" 20
+    sn -vf osr_csharp.dll
+    sn -vf ogr_csharp.dll
+    sn -vf gdal_csharp.dll
 !ENDIF
 
 clean:
