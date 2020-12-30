@@ -855,7 +855,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 def DEMProcessingOptions(options=None, colorFilename=None, format=None,
-              creationOptions=None, computeEdges=False, alg='Horn', band=1,
+              creationOptions=None, computeEdges=False, alg=None, band=1,
               zFactor=None, scale=None, azimuth=None, altitude=None,
               combined=False, multiDirectional=False, igor=False,
               slopeFormat=None, trigonometric=False, zeroForFlat=False,
@@ -868,7 +868,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
           format --- output format ("GTiff", etc...)
           creationOptions --- list of creation options
           computeEdges --- whether to compute values at raster edges.
-          alg --- 'ZevenbergenThorne' or 'Horn'
+          alg --- 'Horn' (default) or 'ZevenbergenThorne' for hillshade, slope or aspect. 'Wilson' (default) or 'Riley' for TRI
           band --- source band number to use
           zFactor --- (hillshade only) vertical exaggeration used to pre-multiply the elevations.
           scale --- ratio of vertical units to horizontal.
@@ -898,8 +898,8 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
                 new_options += ['-co', opt]
         if computeEdges:
             new_options += ['-compute_edges']
-        if alg == 'ZevenbergenThorne':
-            new_options += ['-alg', 'ZevenbergenThorne']
+        if alg:
+            new_options += ['-alg', alg]
         new_options += ['-b', str(band)]
         if zFactor is not None:
             new_options += ['-z', str(zFactor)]

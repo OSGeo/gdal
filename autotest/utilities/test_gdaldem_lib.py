@@ -404,6 +404,21 @@ def test_gdaldem_lib_tri():
     ds = None
 
 ###############################################################################
+# Test gdaldem tri with Riley formula
+
+
+def test_gdaldem_lib_tri_riley():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM', alg='Riley')
+    assert ds is not None
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 41233, 'Bad checksum'
+
+    ds = None
+
+###############################################################################
 # Test gdaldem roughness
 
 
