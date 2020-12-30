@@ -602,7 +602,7 @@ bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
                     // Try moving zMin up by maxZError, it may require fewer bytes
                     // A bit less than maxZError, to avoid quantizing underflow
                     float zm = static_cast<float>(zMin + 0.999999 * maxZError);
-                    if (numFinite == numValidPixel && numValidPixel != 0 && zm <= zMax) {
+                    if (numFinite == numValidPixel && zm <= zMax) {
                         int nBN = numBytesZTile(numValidPixel, zm, zMax, maxZError);
                         // Maybe an int value for zMin works?
                         if (zMin < floorf(zm)) {
