@@ -604,7 +604,7 @@ bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
                     float zm = static_cast<float>(zMin + 0.999999 * maxZError);
                     if (numFinite == numValidPixel && zm <= zMax) {
                         int nBN = numBytesZTile(numValidPixel, zm, zMax, maxZError);
-                        // Maybe an int value for zMin works?
+                        // Maybe an int value for zMin saves a few bytes?
                         if (zMin < floorf(zm)) {
                             int nBNi = numBytesZTile(numValidPixel, floorf(zm), zMax, maxZError);
                             if (nBNi < nBN) {
