@@ -4437,6 +4437,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /*      processed.                                                      */
 /* -------------------------------------------------------------------- */
             int nDstYOff = static_cast<int>(0.5 + nChunkYOff/dfYRatioDstToSrc);
+            if( nDstYOff == nDstHeight )
+                continue;
             int nDstYOff2 = static_cast<int>(
                 0.5 + (nChunkYOff+nFullResYChunk)/dfYRatioDstToSrc);
 
