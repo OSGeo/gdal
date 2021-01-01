@@ -107,7 +107,7 @@ public:
 
     explicit RPolygon( double dfValue ): dfPolyValue(dfValue) {}
 
-    void             AddSegment( int x1, int y1, int x2, int y2 );
+    void             AddSegment( int x1, int y1, int x2, int y2, int direction );
     void             Dump() const;
     void             Coalesce();
     void             Merge( StringId iBaseString, StringId iSrcString, int iDirection );
@@ -282,7 +282,7 @@ void RPolygon::Merge( StringId iBaseString, StringId iSrcString, int iDirection 
 /*                             AddSegment()                             */
 /************************************************************************/
 
-void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
+void RPolygon::AddSegment( int x1, int y1, int x2, int y2, int direction )
 
 {
     nLastLineUpdated = std::max(y1, y2);
@@ -297,14 +297,31 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
     StringId iExistingString = findExtremityNot(oMapEndStrings, xy1, -1);
     if( iExistingString >= 0 )
     {
-        std::swap( xy1, xy2 );
-    }
-    else
-    {
-        iExistingString = findExtremityNot(oMapEndStrings, xy2, -1);
-    }
-    if( iExistingString >= 0 )
-    {
+        StringId iExistingString2 = findExtremityNot(oMapEndStrings, xy1, iExistingString);
+        if ( iExistingString2 >= 0 ) 
+        {
+            // If there are two strings that ending with this segment
+            // choose the string which is in the same pixel with this segment
+            auto& anString2 = oMapStrings[iExistingString2];
+            const size_t nSSize2 = anString2.size();
+
+            if ( x1 == x2 ) 
+            {
+                // vertical segment input, choose the horizontal string
+                if ( anString2[nSSize2 - 2].y == anString2[nSSize2 - 1].y ) 
+                {
+                    iExistingString = iExistingString2;
+                }
+            }
+            else 
+            {
+                // horizontal segment input, choose the vertical string
+                if ( anString2[nSSize2 - 2].x == anString2[nSSize2 - 1].x ) 
+                {
+                    iExistingString = iExistingString2;
+                }
+            }
+        }
         auto& anString = oMapStrings[iExistingString];
         const size_t nSSize = anString.size();
 
@@ -318,27 +335,36 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
         removeExtremity(oMapEndStrings, anString.back(), iExistingString);
 
         if( (anString[nSSize - 2].x - anString[nSSize - 1].x
-                == (anString[nSSize - 1].x - xy1.x) * nLastLen)
+                == (anString[nSSize - 1].x - xy2.x) * nLastLen)
             && (anString[nSSize - 2].y - anString[nSSize - 1].y
-                == (anString[nSSize - 1].y - xy1.y) * nLastLen) )
+                == (anString[nSSize - 1].y - xy2.y) * nLastLen) )
         {
-            anString[nSSize - 1] = xy1;
+            anString[nSSize - 1] = xy2;
         }
         else
         {
-            anString.push_back( xy1 );
+            anString.push_back( xy2 );
         }
         insertExtremity(oMapEndStrings, anString.back(), iExistingString);
-        return;
+    }
+    else 
+    {
+        oMapStrings[iNextStringId] = std::vector<XY>{ xy1, xy2 };
+        insertExtremity(oMapStartStrings, xy1, iNextStringId);
+        insertExtremity(oMapEndStrings, xy2, iNextStringId);
+
+        iExistingString = iNextStringId;
+        iNextStringId ++;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create a new string.                                            */
-/* -------------------------------------------------------------------- */
-    oMapStrings[iNextStringId] = std::vector<XY>{ xy1, xy2 };
-    insertExtremity(oMapStartStrings, xy1, iNextStringId);
-    insertExtremity(oMapEndStrings, xy2, iNextStringId);
-    iNextStringId ++;
+    // merge rings if possible
+    if ( direction == 1 ) {
+        StringId iExistingString2 = findExtremityNot(oMapEndStrings, xy2, iExistingString);
+        if ( iExistingString2 >= 0 ) 
+        {
+            this->Merge(iExistingString, iExistingString2, -1);
+        }
+    }
 }
 
 /************************************************************************/
@@ -382,14 +408,14 @@ static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
             if( papoPoly[nThisId] == nullptr )
                 papoPoly[nThisId] = new RPolygon( panPolyValue[nThisId] );
 
-            papoPoly[nThisId]->AddSegment( iXReal, iY, iXReal+1, iY );
+            papoPoly[nThisId]->AddSegment( iXReal, iY, iXReal+1, iY, 1 );
         }
         if( nPreviousId != -1 )
         {
             if( papoPoly[nPreviousId] == nullptr )
                 papoPoly[nPreviousId] = new RPolygon(panPolyValue[nPreviousId]);
 
-            papoPoly[nPreviousId]->AddSegment( iXReal, iY, iXReal+1, iY );
+            papoPoly[nPreviousId]->AddSegment( iXReal, iY, iXReal+1, iY, 0 );
         }
     }
 
@@ -400,7 +426,7 @@ static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
             if( papoPoly[nThisId] == nullptr )
                 papoPoly[nThisId] = new RPolygon(panPolyValue[nThisId]);
 
-            papoPoly[nThisId]->AddSegment( iXReal+1, iY, iXReal+1, iY+1 );
+            papoPoly[nThisId]->AddSegment( iXReal+1, iY, iXReal+1, iY+1, 1 );
         }
 
         if( nRightId != -1 )
@@ -408,7 +434,7 @@ static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
             if( papoPoly[nRightId] == nullptr )
                 papoPoly[nRightId] = new RPolygon(panPolyValue[nRightId]);
 
-            papoPoly[nRightId]->AddSegment( iXReal+1, iY, iXReal+1, iY+1 );
+            papoPoly[nRightId]->AddSegment( iXReal+1, iY, iXReal+1, iY+1, 0 );
         }
     }
 }
