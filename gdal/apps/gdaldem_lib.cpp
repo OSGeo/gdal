@@ -173,7 +173,7 @@ struct GDALDEMProcessingOptions
     bool bGradientAlgSpecified = false;
     GradientAlg eGradientAlg = GradientAlg::HORN;
     bool bTRIAlgSpecified = false;
-    TRIAlg eTRIAlg = TRIAlg::WILSON;
+    TRIAlg eTRIAlg = TRIAlg::RILEY;
     bool bCombined = false;
     bool bIgor = false;
     bool bMultiDirectional = false;

@@ -348,15 +348,16 @@ The following option is available:
 
 .. option:: -alg Wilson|Riley
 
-    The default is Wilson (see Wilson et al 2007, Marine Geodesy 30:3-35), which
-    uses the  mean difference between a central pixel and its surrounding cells.
-    This is recommended for bathymetric use cases.
-
-    Starting with GDAL 3.3, the Riley algorithm is available (see Riley, S.J.,
+    Starting with GDAL 3.3, the Riley algorithm (see Riley, S.J.,
     De Gloria, S.D., Elliot, R. (1999): A Terrain Ruggedness that Quantifies Topographic Heterogeneity.
-    Intermountain Journal of Science, Vol.5, No.1-4, pp.23-27), which uses the
+    Intermountain Journal of Science, Vol.5, No.1-4, pp.23-27) is available and
+    the new default value. This algorithm uses the
     square root of the sum of the square of the difference between a central pixel
     and its surrounding cells. This is recommended for terrestrial use cases.
+
+    The Wilson (see Wilson et al 2007, Marine Geodesy 30:3-35) algorithm
+    uses the mean difference between a central pixel and its surrounding cells.
+    This is recommended for bathymetric use cases.
 
 TPI
 ^^^

@@ -389,13 +389,13 @@ def test_gdaldem_lib_tpi():
     ds = None
 
 ###############################################################################
-# Test gdaldem tri
+# Test gdaldem tri with Wilson formula
 
 
-def test_gdaldem_lib_tri():
+def test_gdaldem_lib_tri_wilson():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM')
+    ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM', alg='Wilson')
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -410,7 +410,7 @@ def test_gdaldem_lib_tri():
 def test_gdaldem_lib_tri_riley():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
-    ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM', alg='Riley')
+    ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM')
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
