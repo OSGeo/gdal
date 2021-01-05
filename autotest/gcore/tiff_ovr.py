@@ -1950,6 +1950,22 @@ def test_tiff_ovr_color_table_bug_3336():
     del ds
     gdal.GetDriverByName('GTiff').Delete(temp_path)
 
+###############################################################################
+
+
+def test_tiff_ovr_color_table_bug_3336_bis():
+
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(temp_path, 128, 12531)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(255, (255,2552,55))
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    assert ds.BuildOverviews('nearest', overviewlist=[128]) == 0
+    del ds
+    gdal.GetDriverByName('GTiff').Delete(temp_path)
+
 
 ###############################################################################
 # Cleanup
