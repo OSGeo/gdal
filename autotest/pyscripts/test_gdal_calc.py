@@ -46,6 +46,7 @@ gdalnumeric_not_available = False
 try:
     from osgeo import gdalnumeric
     from osgeo.utils import gdal_calc
+    from osgeo.gdal_array import GDALTypeCodeToNumericTypeCode
     import numpy as np
     gdalnumeric.BandRasterIONumPy
 except (ImportError, AttributeError):
@@ -309,7 +310,7 @@ def test_gdal_calc_py_8():
 
 def my_sum(a, gdal_dt=None):
     """ sum using numpy """
-    np_dt = None if gdal_dt is None else gdal_calc.gdal_dt_to_np_dt[gdal_dt]
+    np_dt = GDALTypeCodeToNumericTypeCode(gdal_dt)
     concatenate = np.stack(a)
     ret = concatenate.sum(axis=0, dtype=np_dt)
     return ret
@@ -402,7 +403,7 @@ def test_gdal_calc_py_9():
 
     # for summing 3 bytes we'll use GDT_UInt16
     gdal_dt = gdal.GDT_UInt16
-    np_dt = None if gdal_dt is None else gdal_calc.gdal_dt_to_np_dt[gdal_dt]
+    np_dt = GDALTypeCodeToNumericTypeCode(gdal_dt)
 
     # sum with overflow
     checksum = 12261

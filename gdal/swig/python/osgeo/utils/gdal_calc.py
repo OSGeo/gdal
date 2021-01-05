@@ -50,21 +50,27 @@
 # gdal_calc.py -A input.tif --A_band=1 -B input.tif --B_band=2 --outfile=result.tif --calc="(A+B)/2" --calc="A*logical_and(A>100,A<150)"
 ################################################################
 
+from numbers import Number
+from typing import Union, Tuple, Optional, Sequence
 from optparse import OptionParser, OptionConflictError, Values
 import os
 import os.path
 import sys
 import shlex
 import string
-import numbers
 from collections import defaultdict
-from osgeo.utils.auxiliary.base import is_path_like
 
 import numpy
 
 from osgeo import gdal
 from osgeo import gdalnumeric
+from osgeo.utils.auxiliary.base import is_path_like, PathLike
 from osgeo.utils.auxiliary.util import GetOutputDriverFor
+from osgeo.utils.auxiliary.extent_util import Extent, GT
+from osgeo.utils.auxiliary import extent_util
+from osgeo.utils.auxiliary.rectangle import GeoRectangle
+
+GDALDataType = int
 
 # create alphabetic list (lowercase + uppercase) for storing input layers
 AlphaList = list(string.ascii_letters)
@@ -76,63 +82,6 @@ DefaultNDVLookup = {gdal.GDT_Byte: 255, gdal.GDT_UInt16: 65535, gdal.GDT_Int16: 
 
 # tuple of available output datatypes names
 GDALDataTypeNames = tuple(gdal.GetDataTypeName(dt) for dt in DefaultNDVLookup.keys())
-
-gdal_dt_to_np_dt = {gdal.GDT_Byte: numpy.uint8,
-                    gdal.GDT_UInt16: numpy.uint16,
-                    gdal.GDT_Int16: numpy.int16,
-                    gdal.GDT_UInt32: numpy.uint32,
-                    gdal.GDT_Int32: numpy.int32,
-                    gdal.GDT_Float32: numpy.float32,
-                    gdal.GDT_Float64: numpy.float64}
-
-EXTENT = int
-EXTENT_IGNORE = 0
-EXTENT_FAIL = 1
-EXTENT_UNION = 2
-EXTENT_INTERSECT = 3
-
-
-def parse_extent(extent):
-    if isinstance(extent, str):
-        extent = extent.lower()
-        if extent == 'ignore':
-            return EXTENT_IGNORE
-        elif extent == 'fail':
-            return EXTENT_FAIL
-        elif extent == 'union':
-            return EXTENT_UNION
-        elif extent == 'intersect':
-            return EXTENT_INTERSECT
-    elif isinstance(extent, EXTENT):
-        return extent
-    raise Exception('Error: Unknown extent %s' % extent)
-
-
-GT_SAME = -1
-GT_ALMOST_SAME = -2
-GT_COMPATIBLE_DIFF = -3
-GT_INCOMPATIBLE_OFFSET = 0
-GT_INCOMPATIBLE_PIXEL_SIZE = 1
-GT_INCOMPATIBLE_ROTATION = 2
-GT_NON_ZERO_ROTATION = 3
-
-
-def gt_diff(gt0, gt1, diff_support, eps=0.0):
-    if gt0 == gt1:
-        return GT_SAME
-    if isinstance(eps, numbers.Number):
-        eps = {GT_INCOMPATIBLE_OFFSET: eps, GT_INCOMPATIBLE_PIXEL_SIZE: eps, GT_INCOMPATIBLE_ROTATION: eps}
-    same = {
-        GT_INCOMPATIBLE_OFFSET:     eps[GT_INCOMPATIBLE_OFFSET]     >= (abs(gt0[0] - gt1[0]) + abs(gt0[3] - gt1[3])),
-        GT_INCOMPATIBLE_PIXEL_SIZE: eps[GT_INCOMPATIBLE_PIXEL_SIZE] >= (abs(gt0[1] - gt1[1]) + abs(gt0[5] - gt1[5])),
-        GT_INCOMPATIBLE_ROTATION:   eps[GT_INCOMPATIBLE_ROTATION]   >= (abs(gt0[2] - gt1[2]) + abs(gt0[4] - gt1[4])),
-        GT_NON_ZERO_ROTATION:       gt0[2] == gt0[4] == gt1[2] == gt1[4] == 0}
-    if same[GT_INCOMPATIBLE_OFFSET] and same[GT_INCOMPATIBLE_PIXEL_SIZE] and same[GT_INCOMPATIBLE_ROTATION]:
-        return GT_ALMOST_SAME
-    for reason in same.keys():
-        if not same[reason] or diff_support[reason]:
-            return reason  # incompatible gt, returns the reason
-    return GT_COMPATIBLE_DIFF
 
 
 def doit(opts, args):
@@ -157,23 +106,31 @@ def doit(opts, args):
 
     if not hasattr(opts, "color_table"):
         opts.color_table = None
-    if not opts.extent:
-        opts.extent = EXTENT_IGNORE
+
+    if isinstance(opts.extent, GeoRectangle):
+        pass
+    elif opts.projwin:
+        if isinstance(opts.projwin, GeoRectangle):
+            opts.extent = opts.projwin
+        else:
+            opts.extent = GeoRectangle.from_lurd(*opts.projwin)
+    elif not opts.extent:
+        opts.extent = Extent.IGNORE
     else:
-        opts.extent = parse_extent(opts.extent)
+        opts.extent = extent_util.parse_extent(opts.extent)
 
     compatible_gt_eps = 0.000001
     gt_diff_support = {
-        GT_INCOMPATIBLE_OFFSET: opts.extent != EXTENT_FAIL,
-        GT_INCOMPATIBLE_PIXEL_SIZE: False,
-        GT_INCOMPATIBLE_ROTATION: False,
-        GT_NON_ZERO_ROTATION: False,
+        GT.INCOMPATIBLE_OFFSET: opts.extent != Extent.FAIL,
+        GT.INCOMPATIBLE_PIXEL_SIZE: False,
+        GT.INCOMPATIBLE_ROTATION: False,
+        GT.NON_ZERO_ROTATION: False,
     }
     gt_diff_error = {
-        GT_INCOMPATIBLE_OFFSET: 'different offset',
-        GT_INCOMPATIBLE_PIXEL_SIZE: 'different pixel size',
-        GT_INCOMPATIBLE_ROTATION: 'different rotation',
-        GT_NON_ZERO_ROTATION: 'non zero rotation',
+        GT.INCOMPATIBLE_OFFSET: 'different offset',
+        GT.INCOMPATIBLE_PIXEL_SIZE: 'different pixel size',
+        GT.INCOMPATIBLE_ROTATION: 'different rotation',
+        GT.NON_ZERO_ROTATION: 'non zero rotation',
     }
 
     ################################################################
@@ -243,7 +200,7 @@ def doit(opts, args):
                 if DimensionsCheck:
                     if DimensionsCheck != myFileDimensions:
                         GeoTransformDiffer = True
-                        if opts.extent in [EXTENT_IGNORE, EXTENT_FAIL]:
+                        if opts.extent in [Extent.IGNORE, Extent.FAIL]:
                             raise Exception("Error! Dimensions of file %s (%i, %i) are different from other files (%i, %i).  Cannot proceed" %
                                             (filename, myFileDimensions[0], myFileDimensions[1], DimensionsCheck[0], DimensionsCheck[1]))
                 else:
@@ -261,7 +218,7 @@ def doit(opts, args):
 
                 # check that the GeoTransforms of each layer are the same
                 myFileGeoTransform = myFile.GetGeoTransform(can_return_null=True)
-                if opts.extent == EXTENT_IGNORE:
+                if opts.extent == Extent.IGNORE:
                     GeoTransformCheck = myFileGeoTransform
                 else:
                     Dimensions.append(myFileDimensions)
@@ -269,10 +226,10 @@ def doit(opts, args):
                     if not GeoTransformCheck:
                         GeoTransformCheck = myFileGeoTransform
                     else:
-                        my_gt_diff = gt_diff(GeoTransformCheck, myFileGeoTransform, eps=compatible_gt_eps, diff_support=gt_diff_support)
-                        if my_gt_diff not in [GT_SAME, GT_ALMOST_SAME]:
+                        my_gt_diff = extent_util.gt_diff(GeoTransformCheck, myFileGeoTransform, eps=compatible_gt_eps, diff_support=gt_diff_support)
+                        if my_gt_diff not in [GT.SAME, GT.ALMOST_SAME]:
                             GeoTransformDiffer = True
-                            if my_gt_diff not in [GT_COMPATIBLE_DIFF]:
+                            if my_gt_diff != GT.COMPATIBLE_DIFF:
                                 raise Exception(
                                     "Error! GeoTransform of file {} {} is incompatible ({}), first file GeoTransform is {}. Cannot proceed".
                                         format(filename, myFileGeoTransform, gt_diff_error[my_gt_diff], GeoTransformCheck))
@@ -296,8 +253,22 @@ def doit(opts, args):
     else:
         allBandsCount = len(opts.calc)
 
-    if opts.extent not in [EXTENT_IGNORE, EXTENT_FAIL] and (GeoTransformDiffer or not isinstance(opts.extent, EXTENT)):
-        raise Exception('Error! mixing different GeoTransforms/Extents is not supported yet.')
+    if opts.extent not in [Extent.IGNORE, Extent.FAIL] and (GeoTransformDiffer or isinstance(opts.extent, GeoRectangle)):
+        # mixing different GeoTransforms/Extents
+        GeoTransformCheck, DimensionsCheck, ExtentCheck = extent_util.calc_geotransform_and_dimensions(
+            GeoTransforms, Dimensions, opts.extent)
+        if GeoTransformCheck is None:
+            raise Exception("Error! The requested extent is empty. Cannot proceed")
+        for i in range(len(myFileNames)):
+            temp_vrt_filename, temp_vrt_ds = extent_util.make_temp_vrt(myFiles[i], ExtentCheck)
+            myTempFileNames.append(temp_vrt_filename)
+            myFiles[i] = None  # close original ds
+            myFiles[i] = temp_vrt_ds  # replace original ds with vrt_ds
+
+            # update the new precise dimensions and gt from the new ds
+            GeoTransformCheck = temp_vrt_ds.GetGeoTransform()
+            DimensionsCheck = [temp_vrt_ds.RasterXSize, temp_vrt_ds.RasterYSize]
+        temp_vrt_ds = None
 
     ################################################################
     # set up output file
@@ -540,9 +511,12 @@ def doit(opts, args):
 ################################################################
 
 
-def Calc(calc, outfile=None, NoDataValue=None, type=None, format=None, creation_options=None, allBands='', overwrite=False,
-         hideNoData=False, projectionCheck=False, color_table=None, extent=None, user_namespace=None,
-         debug=False, quiet=False, **input_files):
+def Calc(calc: Union[str, Sequence[str]], outfile: Optional[PathLike] = None, NoDataValue: Optional[Number] = None,
+         type: Optional[Union[GDALDataType, str]] = None, format: Optional[str] = None,
+         creation_options: Optional[Sequence[str]] = None, allBands: str = '', overwrite: bool = False,
+         hideNoData: bool = False, projectionCheck: bool = False, color_table: Optional[gdal.ColorTable] = None,
+         extent: Optional[Extent] = None, projwin: Optional[Union[Tuple, GeoRectangle]] = None, user_namespace=None,
+         debug: bool=False, quiet: bool = False, **input_files):
 
     """ Perform raster calculations with numpy syntax.
     Use any basic arithmetic supported by numpy arrays such as +-* along with logical
@@ -572,7 +546,7 @@ def Calc(calc, outfile=None, NoDataValue=None, type=None, format=None, creation_
     opts.input_files = input_files
     # Single calc value compatibility
     # (type is overridden in the parameter list)
-    if isinstance(calc, list):
+    if isinstance(calc, (list, tuple)):
         opts.calc = calc
     else:
         opts.calc = [calc]
@@ -587,6 +561,7 @@ def Calc(calc, outfile=None, NoDataValue=None, type=None, format=None, creation_
     opts.projectionCheck = projectionCheck
     opts.color_table = color_table
     opts.extent = extent
+    opts.projwin = projwin
     opts.user_namespace = user_namespace
     opts.debug = debug
     opts.quiet = quiet
@@ -646,8 +621,11 @@ def main(argv):
 
     # parser.add_option("--color_table", dest="color_table", help="color table file name")
     parser.add_option("--extent", dest="extent",
-                      choices=['ignore', 'fail'],
+                      choices=[e.name.lower() for e in Extent],
                       help="how to treat mixed geotrasnforms")
+    parser.add_option("--projwin", dest="projwin", type=float, nargs=4,
+                      help="extent corners <ulx> <uly> <lrx> <lry> given in georeferenced coordinates")
+
     parser.add_option("--projectionCheck", dest="projectionCheck", action="store_true",
                       help="check that all rasters share the same projection")
 
