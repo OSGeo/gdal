@@ -40,6 +40,8 @@ from osgeo import osr
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.require_driver('netCDF')
+
 ###############################################################################
 # Netcdf CF compliance Functions
 ###############################################################################
