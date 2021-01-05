@@ -31,6 +31,7 @@
 # ******************************************************************************
 
 import os.path
+from numbers import Number
 from pathlib import Path
 from typing import Sequence, Union, List, Tuple
 from enum import Enum
@@ -82,3 +83,10 @@ def get_byte(number: int, i: int):
 
 def path_join(*args):
     return os.path.join(*(str(arg) for arg in args))
+
+
+def num(s: str) -> Number:
+    try:
+        return int(s)
+    except ValueError:
+        return float(s)
