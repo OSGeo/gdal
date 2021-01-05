@@ -34,16 +34,11 @@ import sys
 from numbers import Number
 from pathlib import Path
 from typing import Optional, Union, Sequence
+import numpy as np
 
 from osgeo import gdal
-
-try:
-    import numpy as Numeric
-except ImportError:
-    import Numeric
-
-
-# =============================================================================
+from osgeo.utils.auxiliary.base import num
+from osgeo.utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
 
 
 def Usage():
@@ -131,7 +126,8 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
              srcwin: Optional[Sequence[int]] = None,
              skip: Union[int, Sequence[int]] = 1,
              band_nums: Optional[Sequence[int]] = None, delim=' ',
-             skip_no_data: bool = False, no_data_value: Optional[Union[Sequence, Number]] = None):
+             skip_no_data: bool = False, no_data_value: Optional[Union[Sequence, Number]] = None,
+             return_np_arrays: bool = False):
     """
     translates a raster file (or dataset) into xyz format
 
@@ -164,6 +160,7 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
             print('Could not get band %d' % band_num)
             return 1
         bands.append(band)
+    band_count = len(bands)
 
     gt = srcds.GetGeoTransform()
 
@@ -171,31 +168,38 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
     if srcwin is None:
         srcwin = (0, 0, srcds.RasterXSize, srcds.RasterYSize)
 
+    dt, np_dt = GDALTypeCodeAndNumericTypeCodeFromDataSet(srcds)
+
     # Open the output file.
     if dstfile is not None:
         dst_fh = open(dstfile, 'wt')
+    elif return_np_arrays:
+        dst_fh = None
     else:
         dst_fh = sys.stdout
 
-    dt = srcds.GetRasterBand(1).DataType
-    if dt == gdal.GDT_Int32 or dt == gdal.GDT_UInt32:
-        band_format = (("%d" + delim) * len(bands)).rstrip(delim) + '\n'
-    else:
-        band_format = (("%g" + delim) * len(bands)).rstrip(delim) + '\n'
+    if dst_fh:
+        if dt == gdal.GDT_Int32 or dt == gdal.GDT_UInt32:
+            band_format = (("%d" + delim) * len(bands)).rstrip(delim) + '\n'
+        else:
+            band_format = (("%g" + delim) * len(bands)).rstrip(delim) + '\n'
 
-    # Setup an appropriate print format.
-    if abs(gt[0]) < 180 and abs(gt[3]) < 180 \
-        and abs(srcds.RasterXSize * gt[1]) < 180 \
-        and abs(srcds.RasterYSize * gt[5]) < 180:
-        frmt = '%.10g' + delim + '%.10g' + delim + '%s'
-    else:
-        frmt = '%.3f' + delim + '%.3f' + delim + '%s'
+        # Setup an appropriate print format.
+        if abs(gt[0]) < 180 and abs(gt[3]) < 180 \
+            and abs(srcds.RasterXSize * gt[1]) < 180 \
+            and abs(srcds.RasterYSize * gt[5]) < 180:
+            frmt = '%.10g' + delim + '%.10g' + delim + '%s'
+        else:
+            frmt = '%.3f' + delim + '%.3f' + delim + '%s'
 
     if skip_no_data:
-        no_data_value = \
-            [no_data_value] if isinstance(no_data_value, Number) else \
-            list(band.GetNoDataValue() for band in bands) if not no_data_value else \
-            list(no_data_value)
+        if isinstance(no_data_value, Number):
+            no_data_value = [no_data_value] * band_count
+        elif not no_data_value:
+            no_data_value = list(band.GetNoDataValue() for band in bands)
+        skip_no_data = None not in no_data_value
+        if skip_no_data:
+            no_data_value = np.asarray(no_data_value, dtype=np_dt)
 
     if isinstance(skip, Sequence):
         x_skip, y_skip = skip
@@ -204,23 +208,22 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
 
     x_off, y_off, x_size, y_size = srcwin
 
-    # Loop emitting data.
+    if return_np_arrays:
+        all_geo_x = all_geo_y = np.empty(0, dtype=np_dt)
+        all_data = np.empty((0, band_count), dtype=np_dt)
 
+    # Loop emitting data.
     for y in range(y_off, y_off + y_size, y_skip):
 
-        data = []
+        data = np.empty((0, x_size), dtype=np_dt)  # dims: (bands, x_size)
         for band in bands:
-            band_data = band.ReadAsArray(x_off, y, x_size, 1)
-            band_data = Numeric.reshape(band_data, (x_size,))
-
-            data.append(band_data)
+            band_data = band.ReadAsArray(x_off, y, x_size, 1)  # read one band line
+            data = np.append(data, band_data, axis=0)
 
         for x_i in range(0, x_size, x_skip):
 
-            x_i_data = []
-            for i in range(len(bands)):
-                x_i_data.append(data[i][x_i])
-            if no_data_value == x_i_data:
+            x_i_data = data[:, x_i]   # single pixel, dims: (bands)
+            if skip_no_data and no_data_value == x_i_data:
                 continue
 
             x = x_i + x_off
@@ -228,18 +231,17 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
             geo_x = gt[0] + (x + 0.5) * gt[1] + (y + 0.5) * gt[2]
             geo_y = gt[3] + (x + 0.5) * gt[4] + (y + 0.5) * gt[5]
 
-            band_str = band_format % tuple(x_i_data)
+            if dst_fh:
+                band_str = band_format % tuple(x_i_data)
+                line = frmt % (float(geo_x), float(geo_y), band_str)
+                dst_fh.write(line)
+            if return_np_arrays:
+                all_geo_x = np.append(all_geo_x, geo_x)
+                all_geo_y = np.append(all_geo_y, geo_y)
+                all_data = np.append(all_data, [x_i_data], axis=0)
 
-            line = frmt % (float(geo_x), float(geo_y), band_str)
-
-            dst_fh.write(line)
-
-
-def num(s: str) -> Number:
-    try:
-        return int(s)
-    except ValueError:
-        return float(s)
+    if return_np_arrays:
+        return all_geo_x, all_geo_y, all_data.transpose()
 
 
 if __name__ == '__main__':
