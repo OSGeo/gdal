@@ -32,9 +32,15 @@
 
 import os.path
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Sequence, Union, List, Tuple
+from enum import Enum
 
 path_like = Union[str, Path]
+SequanceNotString = Union[List, Tuple]
+
+
+def enum_to_str(enum_or_str: Union[Enum, str]) -> str:
+    return enum_or_str.name if isinstance(enum_or_str, Enum) else str(enum_or_str)
 
 
 def is_path_like(s) -> bool:
@@ -76,4 +82,3 @@ def get_byte(number: int, i: int):
 
 def path_join(*args):
     return os.path.join(*(str(arg) for arg in args))
-
