@@ -35,32 +35,30 @@ import gdaltest
 from osgeo import gdal
 import pytest
 
+def numpy_available():
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        return True
+    except (ImportError, AttributeError):
+        return False
+
+pytestmark = pytest.mark.skipif(not numpy_available(), reason='numpy not available')
+
 ###############################################################################
-# verify that we can load Numeric python, and find the Numpy driver.
+# verify that we can load gdalnumeric
 
 
 def test_numpy_rw_1():
 
-    gdaltest.numpy_drv = None
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except (ImportError, AttributeError):
-        pytest.skip()
-
-    gdal.AllRegister()
-
-    gdaltest.numpy_drv = gdal.GetDriverByName('NUMPY')
-    assert gdaltest.numpy_drv is not None, 'NUMPY driver not found!'
+    from osgeo import gdalnumeric
+    gdalnumeric.zeros
 
 ###############################################################################
 # Load a test file into a memory Numpy array, and verify the checksum.
 
 
 def test_numpy_rw_2():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     from osgeo import gdalnumeric
 
@@ -80,9 +78,6 @@ def test_numpy_rw_2():
 
 def test_numpy_rw_3():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/cint_sar.tif')
     array = ds.ReadAsArray()
 
@@ -93,9 +88,6 @@ def test_numpy_rw_3():
 
 
 def test_numpy_rw_4():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/byte.tif')
     array = ds.GetRasterBand(1).ReadAsArray(0, 0, 20, 20, 5, 5)
@@ -108,9 +100,6 @@ def test_numpy_rw_4():
 
 
 def test_numpy_rw_5():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     from osgeo import gdalnumeric
 
@@ -141,9 +130,6 @@ def test_numpy_rw_5():
 
 def test_numpy_rw_6():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     import numpy
     from osgeo import gdalnumeric
 
@@ -161,9 +147,6 @@ def test_numpy_rw_6():
 
 
 def test_numpy_rw_7():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     import numpy
     from osgeo import gdalnumeric
@@ -202,9 +185,6 @@ def test_numpy_rw_7():
 
 def test_numpy_rw_8():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     import numpy
     from osgeo import gdalnumeric
 
@@ -223,9 +203,6 @@ def test_numpy_rw_8():
 
 def test_numpy_rw_9():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/byte.tif')
     array = ds.ReadAsArray()
 
@@ -242,9 +219,6 @@ def test_numpy_rw_9():
 
 
 def test_numpy_rw_10():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     import numpy
 
@@ -272,9 +246,6 @@ def test_numpy_rw_10():
 
 
 def test_numpy_rw_11():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -335,9 +306,6 @@ def test_numpy_rw_11():
 
 def test_numpy_rw_12():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     import numpy
 
     ar = numpy.empty([2, 2], dtype=numpy.uint8)
@@ -363,9 +331,6 @@ def test_numpy_rw_12():
 
 
 def test_numpy_rw_13():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     import numpy
 
@@ -547,9 +512,6 @@ def numpy_rw_14_progress_callback_2(pct, message, user_data):
 
 def test_numpy_rw_14():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     # Progress not implemented yet
     if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
        gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
@@ -611,9 +573,6 @@ def test_numpy_rw_14():
 
 def test_numpy_rw_15():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     import numpy
     from osgeo import gdal_array
 
@@ -630,9 +589,6 @@ def test_numpy_rw_15():
 
 
 def test_numpy_rw_16():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -661,9 +617,6 @@ def test_numpy_rw_16():
 
 def test_numpy_rw_17():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     import numpy
     from osgeo import gdal_array
 
@@ -688,9 +641,6 @@ def test_numpy_rw_17():
 
 
 def test_numpy_rw_18():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     import numpy
     import numpy.random
@@ -719,9 +669,6 @@ def test_numpy_rw_18():
 
 def test_numpy_rw_failure_in_readasarray():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/idontexist2.vrt')
     assert ds is not None
 
@@ -747,9 +694,6 @@ def test_numpy_rw_failure_in_readasarray():
 
 
 def test_numpy_rw_gdal_array_openarray_permissions():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     import numpy
     from osgeo import gdal_array
@@ -777,9 +721,6 @@ def test_numpy_rw_cleanup():
 # Test ReadAsArray RMS subsampling.
 
 def test_numpy_rw_rms_resemple_alg():
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
 
     wrk_ds = gdal.Open('../gdrivers/data/int16.tif')
     assert wrk_ds is not None, 'Failed to open test dataset.'
