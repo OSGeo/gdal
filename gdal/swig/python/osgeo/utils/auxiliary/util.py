@@ -33,6 +33,7 @@ from typing import Optional, Union
 
 from osgeo import gdal
 from osgeo.utils.auxiliary.base import get_extension, is_path_like, path_like
+from osgeo import gdalnumeric
 
 path_or_ds = Union[path_like, gdal.Dataset]
 
@@ -82,6 +83,23 @@ def GetOutputDriverFor(filename: path_like, is_raster=True, default_raster_forma
     elif len(drv_list) > 1:
         print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
+
+
+def GDALTypeCodeToNumericTypeCodeWithDefault(buf_type, signed_byte, default=None):
+    typecode = gdalnumeric.GDALTypeCodeToNumericTypeCode(buf_type)
+    if typecode is None:
+        typecode = default
+
+    if buf_type == gdal.GDT_Byte and signed_byte:
+        typecode = gdalnumeric.int8
+    return typecode
+
+
+def GDALTypeCodeAndNumericTypeCodeFromDataSet(ds):
+    buf_type = ds.GetRasterBand(1).DataType
+    signed_byte = ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
+    np_typecode = GDALTypeCodeToNumericTypeCodeWithDefault(buf_type, signed_byte=signed_byte, default=gdalnumeric.float32)
+    return buf_type, np_typecode
 
 
 def open_ds(filename_or_ds: path_or_ds, *args, **kwargs):
