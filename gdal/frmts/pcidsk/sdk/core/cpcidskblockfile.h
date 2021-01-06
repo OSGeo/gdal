@@ -71,6 +71,11 @@ public:
 
     virtual uint64      GetImageFileSize(void) const override;
 
+    virtual bool        IsValidFileOffset(uint64 nOffset) const override;
+
+    virtual bool        IsCorruptedSegment(uint16 nSegment,
+                                           uint64 nOffset, uint64 nSize) const override;
+
     virtual uint16      ExtendSegment(const std::string & oName,
                                       const std::string & oDesc,
                                       uint64 nExtendSize) override;

@@ -31,12 +31,15 @@
 #include "core/pcidsk_utils.h"
 #include "core/pcidsk_scanint.h"
 #include "pcidsk_exception.h"
+#include "pcidsk_buffer.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
 #include <algorithm>
 
 using namespace PCIDSK;
+
+#define BINARY_TILEDIR_VERSION 1
 
 /************************************************************************/
 /*                         GetOptimizedBlockSize()                      */
@@ -109,7 +112,7 @@ size_t BinaryTileDir::GetOptimizedDirSize(BlockFile * poFile)
          sizeof(BlockLayerInfo));
 
     if (nDirSize > std::numeric_limits<size_t>::max())
-        return ThrowPCIDSKException(0, "Unable to create extremely large file on 32-bit system or file is corrupted.");
+        return ThrowPCIDSKException(0, "Unable to create extremely large file on 32-bit system.");
 
     return static_cast<size_t>(nDirSize);
 }
@@ -149,6 +152,38 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
     SwapBlockDir(&msBlockDir);
     SwapValue(&mnValidInfo);
 
+    // Check that we support the tile directory version.
+    if (mnVersion > BINARY_TILEDIR_VERSION)
+    {
+        ThrowPCIDSKException("The tile directory version %d is not supported.", mnVersion);
+        return;
+    }
+
+    // Make sure the block size is a multiple of 4096.
+    if (msBlockDir.nBlockSize == 0 || msBlockDir.nBlockSize % 4096 != 0)
+    {
+        ThrowPCIDSKException("The tile directory is corrupted.");
+        return;
+    }
+
+    // The size of the block layers.
+    uint64 nReadSize =
+        (static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(BlockLayerInfo) +
+         static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(TileLayerInfo) +
+         sizeof(BlockLayerInfo));
+
+    if (mpoFile->IsCorruptedSegment(mnSegment, 512, nReadSize))
+    {
+        ThrowPCIDSKException("The tile directory is corrupted.");
+        return;
+    }
+
+    if (nReadSize > std::numeric_limits<size_t>::max())
+    {
+        ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
+        return;
+    }
+
     // Initialize the block layers.
     try
     {
@@ -157,9 +192,10 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
 
         moLayerList.resize(msBlockDir.nLayerCount);
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        ThrowPCIDSKException("Out of memory in BinaryTileDir().");
+        ThrowPCIDSKException("Out of memory in BinaryTileDir(): %s", ex.what());
+        return;
     }
 
     for (uint32 iLayer = 0; iLayer < msBlockDir.nLayerCount; iLayer++)
@@ -172,15 +208,6 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
                                                   moTileLayerInfoList[iLayer]);
     }
 
-    // The size of the block layers.
-    uint64 nReadSize =
-        (static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(BlockLayerInfo) +
-         static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(TileLayerInfo) +
-         sizeof(BlockLayerInfo));
-
-    if (nReadSize > std::numeric_limits<size_t>::max())
-        ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
-
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
 
@@ -189,6 +216,9 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
         ThrowPCIDSKException("Out of memory in BinaryTileDir().");
         return;
     }
+
+    PCIDSKBuffer oBlockDirAutoPtr;
+    oBlockDirAutoPtr.buffer = (char *) pabyBlockDir;
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -218,8 +248,6 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
     nSize = sizeof(BlockLayerInfo);
     SwapBlockLayer((BlockLayerInfo *) pabyBlockDirIter);
     memcpy(&msFreeBlockLayer, pabyBlockDirIter, nSize);
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -235,7 +263,7 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
  */
 BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment,
                              uint32 nBlockSize)
-    : BlockTileDir(poFile, nSegment, 1)
+    : BlockTileDir(poFile, nSegment, BINARY_TILEDIR_VERSION)
 {
     // Initialize the directory info.
     msBlockDir.nLayerCount = 0;
@@ -350,14 +378,20 @@ void BinaryTileDir::InitBlockList(BinaryTileLayer * poLayer)
     // The size of the blocks.
     uint64 nReadSize = static_cast<uint64>(psLayer->nBlockCount) * sizeof(BlockInfo);
 
+    if (mpoFile->IsCorruptedSegment(mnSegment, 512 + nOffset, nReadSize))
+        return ThrowPCIDSKException("The tile directory is corrupted.");
+
     if (nReadSize > std::numeric_limits<size_t>::max())
-        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
+        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
 
     // Read the blocks from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
 
     if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in BinaryTileDir::InitBlockList().");
+
+    PCIDSKBuffer oBlockDirAutoPtr;
+    oBlockDirAutoPtr.buffer = (char *) pabyBlockDir;
 
     mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nReadSize);
 
@@ -366,17 +400,15 @@ void BinaryTileDir::InitBlockList(BinaryTileLayer * poLayer)
     {
         poLayer->moBlockList.resize(psLayer->nBlockCount);
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        return ThrowPCIDSKException("Out of memory in BinaryTileDir::InitBlockList().");
+        return ThrowPCIDSKException("Out of memory in BinaryTileDir::InitBlockList(): %s", ex.what());
     }
 
     SwapBlock((BlockInfo *) pabyBlockDir, psLayer->nBlockCount);
 
     memcpy(&poLayer->moBlockList.front(), pabyBlockDir,
            psLayer->nBlockCount * sizeof(BlockInfo));
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -427,6 +459,9 @@ void BinaryTileDir::WriteDir(void)
 
     if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in BinaryTileDir::WriteDir().");
+
+    PCIDSKBuffer oBlockDirAutoPtr;
+    oBlockDirAutoPtr.buffer = pabyBlockDir;
 
     char * pabyBlockDirIter = pabyBlockDir;
 
@@ -530,8 +565,6 @@ void BinaryTileDir::WriteDir(void)
 
     // Write the block directory to disk.
     mpoFile->WriteToSegment(mnSegment, pabyBlockDir, 0, nDirSize);
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -555,9 +588,9 @@ BlockLayer * BinaryTileDir::_CreateLayer(uint16 nLayerType, uint32 iLayer)
             moLayerInfoList.resize(moLayerInfoList.size() + 1);
             moTileLayerInfoList.resize(moLayerInfoList.size());
         }
-        catch (std::exception &)
+        catch (const std::exception & ex)
         {
-            ThrowPCIDSKException("Out of memory in BinaryTileDir::_CreateLayer().");
+            return (BlockLayer *) ThrowPCIDSKExceptionPtr("Out of memory in BinaryTileDir::_CreateLayer(): %s", ex.what());
         }
 
         moLayerInfoList[iLayer] = new BlockLayerInfo;

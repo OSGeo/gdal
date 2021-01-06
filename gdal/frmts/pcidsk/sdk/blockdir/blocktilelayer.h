@@ -158,7 +158,7 @@ public:
     bool                ReadSparseTile(void * pData,
                                        uint32 nCol, uint32 nRow);
 
-    uint32              ReadTile(void * pData, uint32 nCol, uint32 nRow);
+    uint32              ReadTile(void * pData, uint32 nCol, uint32 nRow, uint32 nSize);
 
     bool                ReadPartialSparseTile(void * pData,
                                               uint32 nCol, uint32 nRow,

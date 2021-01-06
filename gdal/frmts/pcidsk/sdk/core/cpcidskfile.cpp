@@ -646,6 +646,26 @@ void CPCIDSKFile::InitializeFromHeader()
         if (count_c32u == 8224)
             count_c32u = 0;
     }
+
+    if (channel_count !=
+        count_8u +
+        count_16s +
+        count_16u +
+        count_32s +
+        count_32u +
+        count_32r +
+        count_64s +
+        count_64u +
+        count_64r +
+        count_c16s +
+        count_c16u +
+        count_c32s +
+        count_c32u +
+        count_c32r)
+    {
+        return ThrowPCIDSKException("The file seems to contain an unsupported data type.");
+    }
+
 /* -------------------------------------------------------------------- */
 /*      for pixel interleaved files we need to compute the length of    */
 /*      a scanline padded out to a 512 byte boundary.                   */

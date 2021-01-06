@@ -28,7 +28,6 @@
 #include "blockdir/blocklayer.h"
 #include "blockdir/blockfile.h"
 #include "pcidsk_exception.h"
-#include <cassert>
 
 using namespace PCIDSK;
 
@@ -72,7 +71,6 @@ BlockLayer::~BlockLayer(void)
  */
 BlockInfo * BlockLayer::GetBlockInfo(uint32 iBlock)
 {
-    assert(IsValid());
     if (!IsValid())
         return nullptr;
 
@@ -86,7 +84,6 @@ BlockInfo * BlockLayer::GetBlockInfo(uint32 iBlock)
             ThrowPCIDSKExceptionPtr("Corrupted block directory.");
     }
 
-    assert(iBlock < moBlockList.size());
     if (iBlock >= moBlockList.size())
         return nullptr;
 
@@ -190,8 +187,6 @@ uint32 BlockLayer::GetContiguousCount(uint64 nOffset, uint64 nSize)
         ((nSize + nStartOffset + nBlockSize - 1) / nBlockSize);
 
     BlockInfo * psStartBlock = GetBlockInfo(iStartBlock);
-
-    assert(psStartBlock);
 
     if (!psStartBlock)
         return 0;
@@ -408,7 +403,6 @@ bool BlockLayer::IsValid(void) const
  */
 void BlockLayer::Resize(uint64 nLayerSize)
 {
-    assert(IsValid());
     if (!IsValid())
         return;
 
@@ -466,9 +460,9 @@ void BlockLayer::PushBlocks(const BlockInfoList & oBlockList)
     {
         moBlockList.resize(nBlockCount + oBlockList.size());
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        ThrowPCIDSKException("Out of memory in BlockLayer::PushBlocks().");
+        return ThrowPCIDSKException("Out of memory in BlockLayer::PushBlocks(): %s", ex.what());
     }
 
     for (size_t iBlock = 0; iBlock < oBlockList.size(); iBlock++)
@@ -523,9 +517,9 @@ BlockInfoList BlockLayer::PopBlocks(uint32 nBlockCount)
     {
         moBlockList.resize(nRemainingBlockCount);
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        ThrowPCIDSKException("Out of memory in BlockLayer::PopBlocks().");
+        ThrowPCIDSKException("Out of memory in BlockLayer::PopBlocks(): %s", ex.what());
     }
 
     _SetBlockCount(nRemainingBlockCount);

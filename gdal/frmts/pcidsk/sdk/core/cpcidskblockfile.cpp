@@ -158,6 +158,20 @@ uint64 CPCIDSKBlockFile::GetImageFileSize(void) const
     return nImageSize * mpoFile->GetWidth() * mpoFile->GetHeight();
 }
 
+bool CPCIDSKBlockFile::IsValidFileOffset(uint64 nOffset) const
+{
+    return nOffset <= mpoFile->GetFileSize() * 512;
+}
+
+bool CPCIDSKBlockFile::IsCorruptedSegment(uint16 nSegment, uint64 nOffset, uint64 nSize) const
+{
+    PCIDSKSegment * poSegment = mpoFile->GetSegment(nSegment);
+
+    return (!poSegment ||
+            nOffset + nSize > poSegment->GetContentSize() ||
+            !IsValidFileOffset(nOffset + nSize + poSegment->GetContentOffset()));
+}
+
 uint16 CPCIDSKBlockFile::ExtendSegment(const std::string & oName,
                                        const std::string & oDesc,
                                        uint64 nExtendSize)

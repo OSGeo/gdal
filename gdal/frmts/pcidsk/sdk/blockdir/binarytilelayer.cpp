@@ -26,8 +26,10 @@
  ****************************************************************************/
 
 #include "blockdir/binarytilelayer.h"
+#include "blockdir/blockfile.h"
 #include "core/pcidsk_utils.h"
 #include "pcidsk_exception.h"
+#include <algorithm>
 
 using namespace PCIDSK;
 
@@ -76,13 +78,23 @@ void BinaryTileLayer::WriteTileList(void)
  */
 void BinaryTileLayer::ReadTileList(void)
 {
+    uint32 nTileCount = GetTileCount();
+
+    uint64 nSize = static_cast<uint64>(nTileCount) * sizeof(BlockTileInfo);
+
+    if (nSize > GetLayerSize() || !GetFile()->IsValidFileOffset(nSize))
+        return ThrowPCIDSKException("The tile layer is corrupted.");
+
+    if (nSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException("Unable to read extremely large tile layer on 32-bit system.");
+
     try
     {
-        moTileList.resize(GetTileCount());
+        moTileList.resize(nTileCount);
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        return ThrowPCIDSKException("Out of memory in BinaryTileDir::ReadTileList().");
+        return ThrowPCIDSKException("Out of memory in BinaryTileDir::ReadTileList(): %s", ex.what());
     }
 
     ReadFromLayer(&moTileList.front(), 0,

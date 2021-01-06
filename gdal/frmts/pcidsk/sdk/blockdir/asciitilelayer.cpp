@@ -29,9 +29,11 @@
 #include "blockdir/blockfile.h"
 #include "core/pcidsk_scanint.h"
 #include "pcidsk_exception.h"
+#include "pcidsk_buffer.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <algorithm>
 
 using namespace PCIDSK;
 
@@ -112,6 +114,9 @@ void AsciiTileLayer::WriteTileList(void)
     if (!pabyTileLayer)
         return ThrowPCIDSKException("Out of memory in AsciiTileLayer::WriteTileList().");
 
+    PCIDSKBuffer oTileLayerAutoPtr;
+    oTileLayerAutoPtr.buffer = pabyTileLayer;
+
     // Write the tile layer header to disk.
     char * pabyHeaderIter = pabyTileLayer;
 
@@ -160,8 +165,6 @@ void AsciiTileLayer::WriteTileList(void)
     }
 
     WriteToLayer(pabyTileLayer, 0, nSize);
-
-    free(pabyTileLayer);
 }
 
 /************************************************************************/
@@ -175,12 +178,21 @@ void AsciiTileLayer::ReadTileList(void)
 {
     uint32 nTileCount = GetTileCount();
 
-    size_t nSize = nTileCount * 20;
+    uint64 nSize = static_cast<uint64>(nTileCount) * 20;
+
+    if (128 + nSize > GetLayerSize() || !GetFile()->IsValidFileOffset(128 + nSize))
+        return ThrowPCIDSKException("The tile layer is corrupted.");
+
+    if (nSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException("Unable to open extremely large tile layer on 32-bit system.");
 
     uint8 * pabyTileList = (uint8 *) malloc(nSize);
 
     if (!pabyTileList)
         return ThrowPCIDSKException("Out of memory in AsciiTileLayer::ReadTileList().");
+
+    PCIDSKBuffer oTileListAutoPtr;
+    oTileListAutoPtr.buffer = (char *) pabyTileList;
 
     ReadFromLayer(pabyTileList, 128, nSize);
 
@@ -191,9 +203,9 @@ void AsciiTileLayer::ReadTileList(void)
     {
         moTileList.resize(nTileCount);
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        return ThrowPCIDSKException("Out of memory in AsciiTileLayer::ReadTileList().");
+        return ThrowPCIDSKException("Out of memory in AsciiTileLayer::ReadTileList(): %s", ex.what());
     }
 
     for (uint32 iTile = 0; iTile < nTileCount; iTile++)
@@ -206,6 +218,4 @@ void AsciiTileLayer::ReadTileList(void)
         psTile->nSize = ScanInt8(pabyTileSizeIter);
         pabyTileSizeIter += 8;
     }
-
-    free(pabyTileList);
 }

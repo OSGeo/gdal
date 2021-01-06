@@ -31,6 +31,7 @@
 #include "core/pcidsk_utils.h"
 #include "core/pcidsk_scanint.h"
 #include "pcidsk_exception.h"
+#include "pcidsk_buffer.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -38,6 +39,8 @@
 #include <set>
 
 using namespace PCIDSK;
+
+#define ASCII_TILEDIR_VERSION 1
 
 #define SYS_BLOCK_SIZE                  8192
 #define SYS_BLOCK_INFO_SIZE             28
@@ -148,7 +151,7 @@ size_t AsciiTileDir::GetOptimizedDirSize(BlockFile * poFile)
          nLayerCount * sizeof(TileLayerInfo));
 
     if (nDirSize > std::numeric_limits<size_t>::max())
-        return ThrowPCIDSKException(0, "Unable to create extremely large file on 32-bit system or file is corrupted.");
+        return ThrowPCIDSKException(0, "Unable to create extremely large file on 32-bit system.");
 
     return static_cast<size_t>(nDirSize);
 }
@@ -189,6 +192,29 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
 
     SwapValue(&mnValidInfo);
 
+    // Check that we support the tile directory version.
+    if (mnVersion > ASCII_TILEDIR_VERSION)
+    {
+        ThrowPCIDSKException("The tile directory version %d is not supported.", mnVersion);
+        return;
+    }
+
+    // The size of the block layers.
+    uint64 nReadSize = (static_cast<uint64>(msBlockDir.nBlockCount) * SYS_BLOCK_INFO_SIZE +
+                        static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE);
+
+    if (mpoFile->IsCorruptedSegment(mnSegment, 512, nReadSize))
+    {
+        ThrowPCIDSKException("The tile directory is corrupted.");
+        return;
+    }
+
+    if (nReadSize > std::numeric_limits<size_t>::max())
+    {
+        ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
+        return;
+    }
+
     // Initialize the block layers.
     try
     {
@@ -197,9 +223,10 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
 
         moLayerList.resize(msBlockDir.nLayerCount);
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        ThrowPCIDSKException("Out of memory in AsciiTileDir().");
+        ThrowPCIDSKException("Out of memory in AsciiTileDir(): %s", ex.what());
+        return;
     }
 
     for (uint32 iLayer = 0; iLayer < msBlockDir.nLayerCount; iLayer++)
@@ -239,7 +266,7 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
  */
 AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment,
                            CPL_UNUSED uint32 nBlockSize)
-    : BlockTileDir(poFile, nSegment, 1)
+    : BlockTileDir(poFile, nSegment, ASCII_TILEDIR_VERSION)
 {
     // Initialize the directory info.
     msBlockDir.nLayerCount = 0;
@@ -295,14 +322,20 @@ void AsciiTileDir::ReadFullDir(void)
     uint64 nReadSize = (static_cast<uint64>(msBlockDir.nBlockCount) * SYS_BLOCK_INFO_SIZE +
                         static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE);
 
+    if (mpoFile->IsCorruptedSegment(mnSegment, 512, nReadSize))
+        return ThrowPCIDSKException("The tile directory is corrupted.");
+
     if (nReadSize > std::numeric_limits<size_t>::max())
-        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
+        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
 
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
 
     if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::ReadFullDir().");
+
+    PCIDSKBuffer oBlockDirAutoPtr;
+    oBlockDirAutoPtr.buffer = (char *) pabyBlockDir;
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -372,8 +405,6 @@ void AsciiTileDir::ReadFullDir(void)
     // We need to validate the block count field.
     msFreeBlockLayer.nBlockCount = (uint32)
         ((AsciiTileLayer *) mpoFreeBlockLayer)->moBlockList.size();
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -388,14 +419,20 @@ void AsciiTileDir::ReadPartialDir(void)
     uint64 nReadSize = (static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE +
                         static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(TileLayerInfo));
 
+    if (mpoFile->IsCorruptedSegment(mnSegment, 512 + nOffset, nReadSize))
+        return ThrowPCIDSKException("The tile directory is corrupted.");
+
     if (nReadSize > std::numeric_limits<size_t>::max())
-        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
+        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
 
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
 
     if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::ReadPartialDir().");
+
+    PCIDSKBuffer oBlockDirAutoPtr;
+    oBlockDirAutoPtr.buffer = (char *) pabyBlockDir;
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -469,8 +506,6 @@ void AsciiTileDir::ReadPartialDir(void)
 
         msFreeBlockLayer.nBlockCount = 0;
     }
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -570,14 +605,20 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
     // The size of the blocks.
     uint64 nReadSize = static_cast<uint64>(psLayer->nBlockCount) * SYS_BLOCK_INFO_SIZE;
 
+    if (mpoFile->IsCorruptedSegment(mnSegment, 512 + nOffset, nReadSize))
+        return ThrowPCIDSKException("The tile directory is corrupted.");
+
     if (nReadSize > std::numeric_limits<size_t>::max())
-        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
+        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
 
     // Read the blocks from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
 
     if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::InitBlockList().");
+
+    PCIDSKBuffer oBlockDirAutoPtr;
+    oBlockDirAutoPtr.buffer = (char *) pabyBlockDir;
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
@@ -588,9 +629,9 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
     {
         poLayer->moBlockList.resize(psLayer->nBlockCount);
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        return ThrowPCIDSKException("Out of memory in AsciiTileDir::InitBlockList().");
+        return ThrowPCIDSKException("Out of memory in AsciiTileDir::InitBlockList(): %s", ex.what());
     }
 
     for (uint32 iBlock = 0; iBlock < psLayer->nBlockCount; iBlock++)
@@ -609,8 +650,6 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
         //psBlock->nNextBlock  = ScanInt8(pabyBlockDirIter);
         pabyBlockDirIter += 8;
     }
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -663,6 +702,9 @@ void AsciiTileDir::WriteDir(void)
 
     if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::WriteDir().");
+
+    PCIDSKBuffer oBlockDirAutoPtr;
+    oBlockDirAutoPtr.buffer = pabyBlockDir;
 
     char * pabyBlockDirIter = pabyBlockDir;
 
@@ -791,8 +833,6 @@ void AsciiTileDir::WriteDir(void)
 
     // Write the block directory to disk.
     mpoFile->WriteToSegment(mnSegment, pabyBlockDir, 0, nDirSize);
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -816,9 +856,9 @@ BlockLayer * AsciiTileDir::_CreateLayer(uint16 nLayerType, uint32 iLayer)
             moLayerInfoList.resize(moLayerInfoList.size() + 1);
             moTileLayerInfoList.resize(moLayerInfoList.size());
         }
-        catch (std::exception &)
+        catch (const std::exception & ex)
         {
-            return (BlockLayer *) ThrowPCIDSKExceptionPtr("Out of memory in AsciiTileDir::_CreateLayer().");
+            return (BlockLayer *) ThrowPCIDSKExceptionPtr("Out of memory in AsciiTileDir::_CreateLayer(): %s", ex.what());
         }
 
         moLayerInfoList[iLayer] = new BlockLayerInfo;

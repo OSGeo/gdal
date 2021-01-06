@@ -262,7 +262,6 @@ uint32 BlockDir::GetLayerCount(void) const
  */
 uint16 BlockDir::GetLayerType(uint32 iLayer) const
 {
-    assert(iLayer < moLayerList.size());
     if (iLayer >= moLayerList.size())
         return BLTDead;
 
@@ -282,7 +281,6 @@ uint16 BlockDir::GetLayerType(uint32 iLayer) const
  */
 uint64 BlockDir::GetLayerSize(uint32 iLayer) const
 {
-    assert(iLayer < moLayerList.size());
     if (iLayer >= moLayerList.size())
         return 0;
 
@@ -358,9 +356,9 @@ uint32 BlockDir::CreateLayer(int16 nLayerType)
         {
             moLayerList.resize(moLayerList.size() + 1);
         }
-        catch (std::exception &)
+        catch (const std::exception & ex)
         {
-            return ThrowPCIDSKException(0, "Out of memory in BlockDir::CreateLayer().");
+            return ThrowPCIDSKException(0, "Out of memory in BlockDir::CreateLayer(): %s", ex.what());
         }
     }
     else

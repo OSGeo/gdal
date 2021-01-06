@@ -36,6 +36,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+#include <algorithm>
 
 #ifdef PCIMAJORVERSION
 #include "raster/memcmp.hh"
@@ -98,7 +99,6 @@ BlockTileLayer::~BlockTileLayer(void)
 BlockTileLayer::BlockTileInfo *
 BlockTileLayer::GetTileInfo(uint32 nCol, uint32 nRow)
 {
-    assert(IsValid());
     if (!IsValid())
         return nullptr;
 
@@ -360,7 +360,6 @@ void BlockTileLayer::WriteTile(const void * pData,
 {
     MutexHolder oLock(mpoTileListMutex);
 
-    assert(IsValid());
     if (!IsValid())
         return;
 
@@ -414,7 +413,6 @@ void BlockTileLayer::WriteTile(const void * pData,
  */
 bool BlockTileLayer::ReadSparseTile(void * pData, uint32 nCol, uint32 nRow)
 {
-    assert(IsValid());
     if (!IsValid())
         return false;
 
@@ -460,12 +458,12 @@ bool BlockTileLayer::ReadSparseTile(void * pData, uint32 nCol, uint32 nRow)
  * @param pData The data of the tile.
  * @param nCol The column of the tile.
  * @param nRow The row of the tile.
+ * @param nSize The buffer size.
  *
  * @return The size of the tile.
  */
-uint32 BlockTileLayer::ReadTile(void * pData, uint32 nCol, uint32 nRow)
+uint32 BlockTileLayer::ReadTile(void * pData, uint32 nCol, uint32 nRow, uint32 nSize)
 {
-    assert(IsValid());
     if (!IsValid())
         return 0;
 
@@ -480,10 +478,16 @@ uint32 BlockTileLayer::ReadTile(void * pData, uint32 nCol, uint32 nRow)
     if (psTile->nSize == 0)
         return 0;
 
-    if (!ReadFromLayer(pData, psTile->nOffset, psTile->nSize))
+    uint32 nReadSize = std::min(nSize, psTile->nSize);
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    assert(psTile->nSize == nSize);
+#endif
+
+    if (!ReadFromLayer(pData, psTile->nOffset, nReadSize))
         return 0;
 
-    return psTile->nSize;
+    return nReadSize;
 }
 
 /************************************************************************/
@@ -505,7 +509,6 @@ bool BlockTileLayer::ReadPartialSparseTile(void * pData,
                                            uint32 nCol, uint32 nRow,
                                            uint32 nOffset, uint32 nSize)
 {
-    assert(IsValid());
     if (!IsValid())
         return false;
 
@@ -587,7 +590,6 @@ bool BlockTileLayer::ReadPartialSparseTile(void * pData,
 bool BlockTileLayer::ReadPartialTile(void * pData, uint32 nCol, uint32 nRow,
                                      uint32 nOffset, uint32 nSize)
 {
-    assert(IsValid());
     if (!IsValid())
         return false;
 
@@ -656,9 +658,9 @@ void BlockTileLayer::SetTileLayerInfo(uint32 nXSize, uint32 nYSize,
     {
         moTileList.resize(nTileCount);
     }
-    catch (std::exception &)
+    catch (const std::exception & ex)
     {
-        return ThrowPCIDSKException("Out of memory in BlockTileLayer::SetTileLayerInfo().");
+        return ThrowPCIDSKException("Out of memory in BlockTileLayer::SetTileLayerInfo(): %s", ex.what());
     }
 
     for (uint32 iTile = 0; iTile < nTileCount; iTile++)

@@ -71,6 +71,7 @@ namespace PCIDSK
         int         GetSegmentNumber() override { return segment; }
         bool        IsContentSizeValid() const override { return data_size >= 1024; }
         uint64      GetContentSize() override { return data_size - 1024; }
+        uint64      GetContentOffset() override { return data_offset; }
         bool        IsAtEOF() override;
         bool        CanExtend(uint64 size) const override;
 

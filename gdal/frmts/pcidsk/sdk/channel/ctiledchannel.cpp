@@ -148,7 +148,7 @@ void CTiledChannel::ReadTile(void * buffer, uint32 nCol, uint32 nRow)
 
     if (strcmp(compression, "NONE") == 0)
     {
-        mpoTileLayer->ReadTile(buffer, nCol, nRow);
+        mpoTileLayer->ReadTile(buffer, nCol, nRow, mpoTileLayer->GetTileSize());
 
         // Do byte swapping if needed.
         if( needs_swap )
@@ -159,10 +159,12 @@ void CTiledChannel::ReadTile(void * buffer, uint32 nCol, uint32 nRow)
         return;
     }
 
-    PCIDSKBuffer oCompressedData(mpoTileLayer->GetTileDataSize(nCol, nRow));
+    uint32 nTileDataSize = mpoTileLayer->GetTileDataSize(nCol, nRow);
+
+    PCIDSKBuffer oCompressedData(nTileDataSize);
     PCIDSKBuffer oUncompressedData(mpoTileLayer->GetTileSize());
 
-    mpoTileLayer->ReadTile(oCompressedData.buffer, nCol, nRow);
+    mpoTileLayer->ReadTile(oCompressedData.buffer, nCol, nRow, nTileDataSize);
 
     if (strcmp(compression, "RLE") == 0)
     {

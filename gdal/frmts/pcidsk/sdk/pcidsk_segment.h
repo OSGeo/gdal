@@ -59,6 +59,7 @@ namespace PCIDSK
         virtual int         GetSegmentNumber() = 0;
         virtual bool        IsContentSizeValid() const = 0;
         virtual uint64      GetContentSize() = 0;
+        virtual uint64      GetContentOffset() = 0;
         virtual bool        IsAtEOF() = 0;
         virtual bool        CanExtend(uint64 size) const = 0;
 
