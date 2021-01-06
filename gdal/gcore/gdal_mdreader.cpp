@@ -828,12 +828,12 @@ CPLErr GDALWriteRPCSensorMLFile( const char *pszFilename, char **papszMD )
         bOK &= VSIFPrintfL( fp, "</sml:inputs>\n") > 0;
         bOK &= VSIFPrintfL( fp, "<sml:outputs>\n") > 0;
         bOK &= VSIFPrintfL( fp, "    <sml:OutputList>\n") > 0;
-        bOK &= VSIFPrintfL( fp, "      <sml:output name=\"r\">\n") > 0;
+        bOK &= VSIFPrintfL( fp, "      <sml:output name=\"row\">\n") > 0;
         bOK &= VSIFPrintfL( fp, "          <swe:Quantity definition=\"http://www.opengis.net/def/ogc/Row\">\n") > 0;
         bOK &= VSIFPrintfL( fp, "              <swe:uom code=\"pixel\"/>\n") > 0;
         bOK &= VSIFPrintfL( fp, "          </swe:Quantity>\n") > 0;
         bOK &= VSIFPrintfL( fp, "      </sml:output>\n") > 0;
-        bOK &= VSIFPrintfL( fp, "        <sml:output name=\"c\">\n") > 0;
+        bOK &= VSIFPrintfL( fp, "        <sml:output name=\"column\">\n") > 0;
         bOK &= VSIFPrintfL( fp, "            <swe:Quantity definition=\"http://www.opengis.net/def/ogc/Column\">\n") > 0;
         bOK &= VSIFPrintfL( fp, "                <swe:uom code=\"pixel\"/>\n") > 0;
         bOK &= VSIFPrintfL( fp, "            </swe:Quantity>\n") > 0;
