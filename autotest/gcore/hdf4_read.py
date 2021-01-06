@@ -293,10 +293,10 @@ def test_hdf4_read_online_9():
     if gdaltest.hdf4_drv is None:
         pytest.skip()
 
-    if not gdaltest.download_file('http://www.geogratis.cgdi.gc.ca/download/landsat_7/hdf/L71002025_02520010722/L71002025_02520010722_MTL.L1G', 'L71002025_02520010722_MTL.L1G'):
+    if not gdaltest.download_file('ftp://ftp.maps.canada.ca/pub/nrcan_rncan/archive/image/landsat_7/geobase_hdf/L71002025_02520010722/L71002025_02520010722_MTL.L1G', 'L71002025_02520010722_MTL.L1G'):
         pytest.skip()
 
-    if not gdaltest.download_file('http://www.geogratis.cgdi.gc.ca/download/landsat_7/hdf/L71002025_02520010722/L71002025_02520010722_HDF.L1G', 'L71002025_02520010722_HDF.L1G'):
+    if not gdaltest.download_file('ftp://ftp.maps.canada.ca/pub/nrcan_rncan/archive/image/landsat_7/geobase_hdf/L71002025_02520010722/L71002025_02520010722_HDF.L1G', 'L71002025_02520010722_HDF.L1G'):
         pytest.skip()
 
     f = open('tmp/cache/L71002025_02520010722_B10.L1G', 'wb')
