@@ -216,6 +216,7 @@ bool GDALCheckFileHeader(const CPLString& soFilePath,
 
 CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD );
 CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD );
+CPLErr GDALWriteRPCSensorMLFile( const char *pszFilename, char **papszMD );
 CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD );
 
 #endif //GDAL_MDREADER_H_INCLUDED
