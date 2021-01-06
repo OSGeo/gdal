@@ -186,7 +186,7 @@ void AsciiTileLayer::ReadTileList(void)
     if (nSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException("Unable to open extremely large tile layer on 32-bit system.");
 
-    uint8 * pabyTileList = (uint8 *) malloc(nSize);
+    uint8 * pabyTileList = (uint8 *) malloc(static_cast<size_t>(nSize));
 
     if (!pabyTileList)
         return ThrowPCIDSKException("Out of memory in AsciiTileLayer::ReadTileList().");
