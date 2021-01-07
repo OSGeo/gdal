@@ -151,6 +151,10 @@ void BlockTileLayer::Sync(void)
 /************************************************************************/
 bool BlockTileLayer::IsCorrupted(void) const
 {
+    // Dead layers have a tile size of 0, but it should be considered valid.
+    if (GetLayerType() == BLTDead)
+        return false;
+
     uint64 nTileSize =
         static_cast<uint64>(GetTileXSize()) * GetTileYSize() * GetDataTypeSize();
 
