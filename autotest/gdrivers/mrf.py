@@ -85,7 +85,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     if 'COMPRESS=LERC' in options and 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
         pytest.skip()
 
-    if src_filename == 'jpeg/12bit_rose_extract.jpg':
+    if 'jpg' in src_filename:
         import jpeg
         jpeg.test_jpeg_1()
         if gdaltest.jpeg_version == '9b':
@@ -471,7 +471,7 @@ def test_mrf_versioned():
 def test_mrf_cleanup():
 
     files = [
-        '2bit_rose_extract.jpg.*',
+        '12bit_rose_extract.jpg.*',
         'byte.tif.*',
         'int16.tif.*',
         'rgbsmall.tif.*',
