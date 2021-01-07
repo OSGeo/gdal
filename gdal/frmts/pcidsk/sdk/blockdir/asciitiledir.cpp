@@ -234,17 +234,9 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
         moLayerInfoList[iLayer] = new BlockLayerInfo;
         moTileLayerInfoList[iLayer] = new TileLayerInfo;
 
-        auto poLayer = new AsciiTileLayer(this, iLayer,
-                                          moLayerInfoList[iLayer],
-                                          moTileLayerInfoList[iLayer]);
-
-        moLayerList[iLayer] = poLayer;
-
-        if (poLayer->IsCorrupted())
-        {
-            ThrowPCIDSKException("The tile directory is corrupted.");
-            return;
-        }
+        moLayerList[iLayer] = new AsciiTileLayer(this, iLayer,
+                                                 moLayerInfoList[iLayer],
+                                                 moTileLayerInfoList[iLayer]);
     }
 
     // Read the block directory from disk.
@@ -258,6 +250,18 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
     else
     {
         ReadPartialDir();
+    }
+
+    // Check if any of the tile layers are corrupted.
+    for (BlockLayer * poLayer : moLayerList)
+    {
+        BlockTileLayer * poTileLayer = dynamic_cast<BlockTileLayer *>(poLayer);
+
+        if (poTileLayer->IsCorrupted())
+        {
+            ThrowPCIDSKException("The tile directory is corrupted.");
+            return;
+        }
     }
 }
 

@@ -203,17 +203,9 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
         moLayerInfoList[iLayer] = new BlockLayerInfo;
         moTileLayerInfoList[iLayer] = new TileLayerInfo;
 
-        auto poLayer = new BinaryTileLayer(this, iLayer,
-                                           moLayerInfoList[iLayer],
-                                           moTileLayerInfoList[iLayer]);
-
-        moLayerList[iLayer] = poLayer;
-
-        if (poLayer->IsCorrupted())
-        {
-            ThrowPCIDSKException("The tile directory is corrupted.");
-            return;
-        }
+        moLayerList[iLayer] = new BinaryTileLayer(this, iLayer,
+                                                  moLayerInfoList[iLayer],
+                                                  moTileLayerInfoList[iLayer]);
     }
 
     // Read the block layers from disk.
@@ -256,6 +248,18 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
     nSize = sizeof(BlockLayerInfo);
     SwapBlockLayer((BlockLayerInfo *) pabyBlockDirIter);
     memcpy(&msFreeBlockLayer, pabyBlockDirIter, nSize);
+
+    // Check if any of the tile layers are corrupted.
+    for (BlockLayer * poLayer : moLayerList)
+    {
+        BlockTileLayer * poTileLayer = dynamic_cast<BlockTileLayer *>(poLayer);
+
+        if (poTileLayer->IsCorrupted())
+        {
+            ThrowPCIDSKException("The tile directory is corrupted.");
+            return;
+        }
+    }
 }
 
 /************************************************************************/
