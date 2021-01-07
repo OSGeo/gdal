@@ -134,7 +134,7 @@ def gdal_edit(argv):
         elif argv[i] == '-a_nodata' and i < len(argv) - 1:
             nodata = float(argv[i + 1])
             i = i + 1
-        elif argv[i] == '-scale' and i < len(argv) :
+        elif argv[i] == '-scale' and i < len(argv) -1:
             scale.append(float(argv[i+1]))
             i = i + 1
             while i < len(argv) - 1 and ArgIsNumeric(argv[i+1]):
