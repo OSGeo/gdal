@@ -154,7 +154,7 @@ bool BlockTileLayer::IsCorrupted(void) const
     uint64 nTileSize =
         static_cast<uint64>(GetTileXSize()) * GetTileYSize() * GetDataTypeSize();
 
-    return nTileSize > std::numeric_limits<uint32>::max();
+    return nTileSize == 0 || nTileSize > std::numeric_limits<uint32>::max();
 }
 
 /************************************************************************/
@@ -647,7 +647,7 @@ void BlockTileLayer::SetTileLayerInfo(uint32 nXSize, uint32 nYSize,
         static_cast<uint64>(nTileXSize) * nTileYSize *
         DataTypeSize(GetDataTypeFromName(oDataType.c_str()));
 
-    if (nTileSize > std::numeric_limits<uint32>::max())
+    if (nTileSize == 0 || nTileSize > std::numeric_limits<uint32>::max())
     {
         return ThrowPCIDSKException("Invalid tile dimensions: %d x %d",
                                     nTileXSize, nTileYSize);
