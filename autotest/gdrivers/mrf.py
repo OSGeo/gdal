@@ -29,12 +29,8 @@
 ###############################################################################
 
 import glob
-
 import pytest
-
-
 from osgeo import gdal
-
 import gdaltest
 
 
@@ -75,6 +71,7 @@ mrf_list = [
     ('rgbsmall.tif', 21212, [21261, 21209, 21254, 21215], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
     ('rgbsmall.tif', 21212, [21283, 21127, 21278, 21124], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
     ('jpeg/12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
+    ('f32nan_data.tif', 54061, [54052], ['COMPRESS=LERC', 'OPTIONS=V1:Yes LERC_PREC:0.01']),
 ]
 
 
@@ -108,6 +105,9 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
             check_minmax = False
     return ut.testCreateCopy(check_minmax=check_minmax)
 
+def cleanup():
+    for ext in ['mrf', 'mrf.aux.xml', 'idx', 'ppg', 'til', 'lrc', 'pjg']:
+        gdal.Unlink('/vsimem/out.' + ext)
 
 def test_mrf_zen_test():
     result = 'success'
@@ -160,13 +160,7 @@ def test_mrf_overview_nnb_fact_2():
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         assert cs == expected_cs, dt
         ds = None
-
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.ppg')
-        gdal.Unlink('/vsimem/out.til')
-
+        cleanup()
     
 
 def test_mrf_overview_nnb_with_nodata_fact_2():
@@ -188,13 +182,7 @@ def test_mrf_overview_nnb_with_nodata_fact_2():
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         assert cs == expected_cs, dt
         ds = None
-
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.ppg')
-        gdal.Unlink('/vsimem/out.til')
-
+        cleanup()
     
 
 def test_mrf_overview_avg_fact_2():
@@ -216,14 +204,8 @@ def test_mrf_overview_avg_fact_2():
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         assert cs == expected_cs, dt
         ds = None
+        cleanup()
 
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.ppg')
-        gdal.Unlink('/vsimem/out.til')
-
-    
 
 def test_mrf_overview_avg_with_nodata_fact_2():
 
@@ -245,11 +227,7 @@ def test_mrf_overview_avg_with_nodata_fact_2():
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         assert cs == expected_cs, dt
         ds = None
-
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.til')
+        cleanup()
 
     
 def test_mrf_nnb_overview_partial_block():
@@ -263,11 +241,7 @@ def test_mrf_nnb_overview_partial_block():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 1087
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_overview_nnb_implicit_level():
@@ -293,11 +267,7 @@ def test_mrf_overview_nnb_implicit_level():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_overview_external():
@@ -312,13 +282,7 @@ def test_mrf_overview_external():
     expected_cs = 1087
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.mrf.ovr')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_lerc_nodata():
@@ -335,12 +299,7 @@ def test_mrf_lerc_nodata():
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.lrc')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_lerc_with_huffman():
@@ -355,12 +314,7 @@ def test_mrf_lerc_with_huffman():
     expected_cs = 31204
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.lrc')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 def test_raw_lerc():
     if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
@@ -379,10 +333,7 @@ def test_raw_lerc():
         expected_cs = 4819
         assert cs == expected_cs
         ds = None
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.lrc')
+        cleanup()
 
 def test_mrf_cached_source():
 
@@ -395,15 +346,7 @@ def test_mrf_cached_source():
     expected_cs = 0
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
-
-    gdal.Unlink('tmp/byte.idx')
-    gdal.Unlink('tmp/byte.ppg')
+    cleanup()
 
     open('tmp/byte.tif', 'wb').write(open('data/byte.tif', 'rb').read())
     gdal.Translate('tmp/out.mrf', 'tmp/byte.tif', format='MRF',
@@ -420,15 +363,9 @@ def test_mrf_cached_source():
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
+    cleanup()
 
     # Caching MRF in mp_safe mode
-
-    gdal.Unlink('tmp/out.mrf')
-    gdal.Unlink('tmp/out.mrf.aux.xml')
-    gdal.Unlink('tmp/out.idx')
-    gdal.Unlink('tmp/out.ppg')
-    gdal.Unlink('tmp/out.til')
-
     open('tmp/byte.tif', 'wb').write(open('data/byte.tif', 'rb').read())
     open('tmp/out.mrf', 'wt').write(
         """<MRF_META>
@@ -456,6 +393,7 @@ def test_mrf_cached_source():
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
+    # No cleanup, will test cloning next
 
     # Cloning MRF
     open('tmp/cloning.mrf', 'wt').write(
@@ -477,12 +415,7 @@ def test_mrf_cached_source():
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('tmp/out.mrf')
-    gdal.Unlink('tmp/out.mrf.aux.xml')
-    gdal.Unlink('tmp/out.idx')
-    gdal.Unlink('tmp/out.ppg')
-    gdal.Unlink('tmp/out.til')
+    cleanup()
 
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
@@ -498,12 +431,6 @@ def test_mrf_cached_source():
 
 
 def test_mrf_versioned():
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
 
     # Caching MRF
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
@@ -544,11 +471,7 @@ def test_mrf_versioned():
         ds = gdal.Open('/vsimem/out.mrf:MRF:V2')
     assert ds is None
 
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_cleanup():
@@ -574,9 +497,4 @@ def test_mrf_cleanup():
     for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
         gdal.Unlink(f)
 
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
-
+    cleanup()
