@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Dimap_Document>
+  <Metadata_Identification>
+    <METADATA_FORMAT version="2.0">DIMAP</METADATA_FORMAT>
+    <METADATA_PROFILE>PHR_SENSOR</METADATA_PROFILE>
+    <METADATA_SUBPROFILE>STRIP</METADATA_SUBPROFILE>
+    <METADATA_LANGUAGE>en</METADATA_LANGUAGE>
+  </Metadata_Identification>
+  <Acquisition_Configuration>
+    <Platform_Configuration>
+      <Coordinate_Reference_System>
+        <Temporal_CRS>
+          <CRS_TABLES version="0.0">IERS</CRS_TABLES>
+          <TEMPORAL_CRS_NAME>TAI</TEMPORAL_CRS_NAME>
+        </Temporal_CRS>
+      </Coordinate_Reference_System>
+      <Ephemeris_Configuration>
+        <NADIR_LAT unit="deg">NADIR_LAT</NADIR_LAT>
+        <NADIR_LON unit="deg">NADIR_LON</NADIR_LON>
+        <ACQUISITION_ORBIT_NUMBER>ACQUISITION_ORBIT_NUMBER</ACQUISITION_ORBIT_NUMBER>
+        <ACQUISITION_ORBIT_DIRECTION>DESCENDING</ACQUISITION_ORBIT_DIRECTION>
+        <Sensors_In_Use>
+          <DORIS>true</DORIS>
+        </Sensors_In_Use>
+      </Ephemeris_Configuration>
+    </Platform_Configuration>
+  </Acquisition_Configuration>
+</Dimap_Document>

@@ -1950,7 +1950,7 @@ def test_tiff_read_md11():
 
 def test_tiff_read_md12():
 
-    ds = gdal.Open('../gdrivers/data/dimap2/IMG_foo_R2C1.TIF', gdal.GA_ReadOnly)
+    ds = gdal.Open('../gdrivers/data/dimap2/single_component/IMG_foo_R2C1.TIF', gdal.GA_ReadOnly)
     filelist = ds.GetFileList()
 
     assert len(filelist) == 3, 'did not get expected file list.'
@@ -1977,9 +1977,9 @@ def test_tiff_read_md12():
     assert not os.path.exists('data/md_kompsat.tif.aux.xml')
 
     # Test not valid DIMAP product [https://github.com/OSGeo/gdal/issues/431]
-    shutil.copy('../gdrivers/data/dimap2/IMG_foo_R2C1.TIF', 'tmp/IMG_foo_temp.TIF')
-    shutil.copy('../gdrivers/data/dimap2/DIM_foo.XML', 'tmp/DIM_foo.XML')
-    shutil.copy('../gdrivers/data/dimap2/RPC_foo.XML', 'tmp/RPC_foo.XML')
+    shutil.copy('../gdrivers/data/dimap2/single_component/IMG_foo_R2C1.TIF', 'tmp/IMG_foo_temp.TIF')
+    shutil.copy('../gdrivers/data/dimap2/single_component/DIM_foo.XML', 'tmp/DIM_foo.XML')
+    shutil.copy('../gdrivers/data/dimap2/single_component/RPC_foo.XML', 'tmp/RPC_foo.XML')
     ds = gdal.Open('tmp/IMG_foo_temp.TIF', gdal.GA_ReadOnly)
     filelist = ds.GetFileList()
     ds = None
