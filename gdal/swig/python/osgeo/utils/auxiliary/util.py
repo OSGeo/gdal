@@ -32,10 +32,9 @@
 from typing import Optional, Union
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.base import get_extension, is_path_like, path_like
-from osgeo import gdalnumeric
+from osgeo.utils.auxiliary.base import get_extension, is_path_like, PathLike
 
-path_or_ds = Union[path_like, gdal.Dataset]
+path_or_ds = Union[PathLike, gdal.Dataset]
 
 
 def DoesDriverHandleExtension(drv: gdal.Driver, ext: str):
@@ -43,7 +42,7 @@ def DoesDriverHandleExtension(drv: gdal.Driver, ext: str):
     return exts is not None and exts.lower().find(ext.lower()) >= 0
 
 
-def GetOutputDriversFor(filename: path_like, is_raster=True):
+def GetOutputDriversFor(filename: PathLike, is_raster=True):
     drv_list = []
     ext = get_extension(filename)
     if ext.lower() == 'vrt':
@@ -69,8 +68,8 @@ def GetOutputDriversFor(filename: path_like, is_raster=True):
     return drv_list
 
 
-def GetOutputDriverFor(filename: path_like, is_raster=True, default_raster_format='GTiff',
-                          default_vector_format='ESRI Shapefile'):
+def GetOutputDriverFor(filename: PathLike, is_raster=True, default_raster_format='GTiff',
+                       default_vector_format='ESRI Shapefile'):
     if not filename:
         return 'MEM'
     drv_list = GetOutputDriversFor(filename, is_raster)
@@ -83,23 +82,6 @@ def GetOutputDriverFor(filename: path_like, is_raster=True, default_raster_forma
     elif len(drv_list) > 1:
         print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
-
-
-def GDALTypeCodeToNumericTypeCodeWithDefault(buf_type, signed_byte, default=None):
-    typecode = gdalnumeric.GDALTypeCodeToNumericTypeCode(buf_type)
-    if typecode is None:
-        typecode = default
-
-    if buf_type == gdal.GDT_Byte and signed_byte:
-        typecode = gdalnumeric.int8
-    return typecode
-
-
-def GDALTypeCodeAndNumericTypeCodeFromDataSet(ds):
-    buf_type = ds.GetRasterBand(1).DataType
-    signed_byte = ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
-    np_typecode = GDALTypeCodeToNumericTypeCodeWithDefault(buf_type, signed_byte=signed_byte, default=gdalnumeric.float32)
-    return buf_type, np_typecode
 
 
 def open_ds(filename_or_ds: path_or_ds, *args, **kwargs):
@@ -128,7 +110,7 @@ class OpenDS:
 
     def __init__(self, filename_or_ds: path_or_ds, silent_fail=False, *args, **kwargs):
         self.ds: Optional[gdal.Dataset] = None
-        self.filename: Optional[path_like] = None
+        self.filename: Optional[PathLike] = None
         if is_path_like(filename_or_ds):
             self.filename = str(filename_or_ds)
         else:
@@ -153,7 +135,7 @@ class OpenDS:
 
     @staticmethod
     def _open_ds(
-        filename: path_like,
+        filename: PathLike,
         access_mode=gdal.GA_ReadOnly,
         ovr_idx: int = None,
         open_options: dict = None,
