@@ -69,13 +69,6 @@ def is_sequence(f) -> bool:
     return isinstance(f, Sequence)
 
 
-def to_number(s) -> Union[int, float]:
-    try:
-        return int(s)
-    except ValueError:
-        return float(s)
-
-
 def get_byte(number: int, i: int):
     """ returns the i-th byte from an integer"""
     return (number & (0xff << (i * 8))) >> (i * 8)
