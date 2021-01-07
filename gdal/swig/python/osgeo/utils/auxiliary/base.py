@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Sequence, Union, List, Tuple
 from enum import Enum
 
-path_like = Union[str, Path]
+PathLike = Union[str, Path]
 SequanceNotString = Union[List, Tuple]
 
 
@@ -45,14 +45,14 @@ def enum_to_str(enum_or_str: Union[Enum, str]) -> str:
 
 
 def is_path_like(s) -> bool:
-    return isinstance(s, (str, Path))
+    return isinstance(s, PathLike.__args__)
 
 
-def get_suffix(filename: path_like) -> str:
+def get_suffix(filename: PathLike) -> str:
     return Path(filename).suffix  # same as os.path.splitext(filename)[1]
 
 
-def get_extension(filename: path_like) -> str:
+def get_extension(filename: PathLike) -> str:
     """
     returns the suffix without the leading dot.
     special case for shp.zip
