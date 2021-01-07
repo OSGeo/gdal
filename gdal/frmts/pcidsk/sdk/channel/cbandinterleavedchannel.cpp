@@ -80,21 +80,24 @@ CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
         line_offset = pixel_offset * width;
     }
 
-    if (height && line_offset > std::numeric_limits<uint64>::max() / height)
+    if (line_offset != std::numeric_limits<uint64>::max() &&
+        height && line_offset > std::numeric_limits<uint64>::max() / height)
     {
         ThrowPCIDSKException("Invalid line_offset: " PCIDSK_FRMT_UINT64,
                              line_offset);
         return;
     }
 
-    if (pixel_offset > line_offset)
+    if (pixel_offset != std::numeric_limits<uint64>::max() &&
+        pixel_offset > line_offset)
     {
         ThrowPCIDSKException("Invalid pixel_offset: " PCIDSK_FRMT_UINT64,
                              pixel_offset);
         return;
     }
 
-    if (start_byte > std::numeric_limits<uint64>::max() - line_offset * height)
+    if (start_byte != std::numeric_limits<uint64>::max() &&
+        start_byte > std::numeric_limits<uint64>::max() - line_offset * height)
     {
         ThrowPCIDSKException("Invalid start_byte: " PCIDSK_FRMT_UINT64,
                              start_byte);

@@ -120,13 +120,13 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
         data_offset = (data_offset-1) * 512;
     }
     data_size = atouint64(segptr.Get(23,9));
+    data_size_limit = 999999999ULL * 512;
 
     if( data_size > 999999999ULL )
     {
         return ThrowPCIDSKException("too large data_size");
     }
     data_size *= 512;
-    data_size_limit = 999999999ULL * 512;
 
     segptr.Get(4,8,segment_name);
 }
