@@ -80,30 +80,6 @@ CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
         line_offset = pixel_offset * width;
     }
 
-    if (line_offset != std::numeric_limits<uint64>::max() &&
-        height && line_offset > std::numeric_limits<uint64>::max() / height)
-    {
-        ThrowPCIDSKException("Invalid line_offset: " PCIDSK_FRMT_UINT64,
-                             line_offset);
-        return;
-    }
-
-    if (pixel_offset != std::numeric_limits<uint64>::max() &&
-        pixel_offset > line_offset)
-    {
-        ThrowPCIDSKException("Invalid pixel_offset: " PCIDSK_FRMT_UINT64,
-                             pixel_offset);
-        return;
-    }
-
-    if (start_byte != std::numeric_limits<uint64>::max() &&
-        start_byte > std::numeric_limits<uint64>::max() - line_offset * height)
-    {
-        ThrowPCIDSKException("Invalid start_byte: " PCIDSK_FRMT_UINT64,
-                             start_byte);
-        return;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Establish the file we will be accessing.                        */
 /* -------------------------------------------------------------------- */
@@ -139,6 +115,27 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
 
 {
     PCIDSKInterfaces *interfaces = file->GetInterfaces();
+
+/* -------------------------------------------------------------------- */
+/*      Check if we are reading from a valid channel.                   */
+/* -------------------------------------------------------------------- */
+    if (line_offset > std::numeric_limits<uint64>::max() / height)
+    {
+        return ThrowPCIDSKException(0, "Invalid line_offset: " PCIDSK_FRMT_UINT64,
+                                    line_offset);
+    }
+
+    if (pixel_offset > line_offset)
+    {
+        return ThrowPCIDSKException(0, "Invalid pixel_offset: " PCIDSK_FRMT_UINT64,
+                                    pixel_offset);
+    }
+
+    if (start_byte > std::numeric_limits<uint64>::max() - line_offset * height)
+    {
+        return ThrowPCIDSKException(0, "Invalid start_byte: " PCIDSK_FRMT_UINT64,
+                                    start_byte);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Default window if needed.                                       */
@@ -240,6 +237,27 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
 
 {
     PCIDSKInterfaces *interfaces = file->GetInterfaces();
+
+/* -------------------------------------------------------------------- */
+/*      Check if we are writing to a valid channel.                     */
+/* -------------------------------------------------------------------- */
+    if (line_offset > std::numeric_limits<uint64>::max() / height)
+    {
+        return ThrowPCIDSKException(0, "Invalid line_offset: " PCIDSK_FRMT_UINT64,
+                                    line_offset);
+    }
+
+    if (pixel_offset > line_offset)
+    {
+        return ThrowPCIDSKException(0, "Invalid pixel_offset: " PCIDSK_FRMT_UINT64,
+                                    pixel_offset);
+    }
+
+    if (start_byte > std::numeric_limits<uint64>::max() - line_offset * height)
+    {
+        return ThrowPCIDSKException(0, "Invalid start_byte: " PCIDSK_FRMT_UINT64,
+                                    start_byte);
+    }
 
     if( !file->GetUpdatable() )
         return ThrowPCIDSKException(0, "File not open for update in WriteBlock()" );
