@@ -248,8 +248,6 @@ def test_gdal_retile_4():
 def test_gdal_retile_5():
 
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
         import numpy as np
     except (ImportError, AttributeError):
         pytest.skip()

@@ -32,13 +32,18 @@
 
 import sys
 import os
+
+try:
+    import numpy  # noqa
+    numpy_available = True
+except ImportError:
+    numpy_available = False
+
 import pytest
 
 sys.path.append('../gcore')
 
-from osgeo import gdal
-from osgeo import ogr
-from osgeo import osr
+from osgeo import gdal, ogr, osr
 import gdaltest
 import test_cli_utilities
 
@@ -303,13 +308,7 @@ def test_gdal_rasterize_6():
 
 def test_gdal_rasterize_7():
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except (ImportError, AttributeError):
-        pytest.skip()
-
-    if test_cli_utilities.get_gdal_rasterize_path() is None:
+    if not numpy_available or test_cli_utilities.get_gdal_rasterize_path() is None:
         pytest.skip()
 
     drv = ogr.GetDriverByName('SQLite')

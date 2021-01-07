@@ -34,14 +34,11 @@
 
 
 import sys
+import numpy as np
 
 from osgeo import gdal
 gdal.TermProgress = gdal.TermProgress_nocb
 
-try:
-    import numpy
-except ImportError:
-    import Numeric as numpy
 
 
 # =============================================================================
@@ -129,7 +126,7 @@ def main(argv):
 
         for i in range(inband.YSize - 1, -1, -1):
             scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
-            scanline = numpy.choose(numpy.equal(scanline, inNoData),
+            scanline = np.choose(np.equal(scanline, inNoData),
                                     (scanline, outNoData))
             outband.WriteArray(scanline, 0, i)
     return 0

@@ -1124,7 +1124,7 @@ def test_vrtpansharpen_4():
             expected_cs = [4735, 4731]
         assert cs in expected_cs, gdal.GetDataTypeName(dt)
 
-    
+
 ###############################################################################
 # Test RasterIO() with various band datatypes
 
@@ -1199,7 +1199,7 @@ def test_vrtpansharpen_5():
         else:
             assert cs == 4450, gdal.GetDataTypeName(dt)
 
-    
+
 ###############################################################################
 # Test BitDepth limitations
 
@@ -1207,8 +1207,6 @@ def test_vrtpansharpen_5():
 def test_vrtpansharpen_6():
 
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
         import numpy
     except (ImportError, AttributeError):
         pytest.skip()
@@ -1282,7 +1280,7 @@ def test_vrtpansharpen_6():
             gdal.Unlink('/vsimem/ms.tif')
             gdal.Unlink('/vsimem/pan.tif')
 
-    
+
 ###############################################################################
 # Test bands with different extents
 

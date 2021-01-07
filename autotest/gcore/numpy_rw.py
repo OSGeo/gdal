@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test basic integration with Numeric Python.
+# Purpose:  Test basic integration with numpy.
 # Author:   Frank Warmerdam, warmerdam@pobox.com
 #
 ###############################################################################
@@ -29,24 +29,22 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+try:
+    import numpy
+    from osgeo import gdal_array
+    numpy_available = True
+except ImportError:
+    numpy_available = False
 
 import gdaltest
 from osgeo import gdal
 import pytest
 
-def numpy_available():
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-        return True
-    except (ImportError, AttributeError):
-        return False
 
-pytestmark = pytest.mark.skipif(not numpy_available(), reason='numpy not available')
+pytestmark = pytest.mark.skipif(not numpy_available, reason='numpy not available')
 
 ###############################################################################
-# verify that we can load gdalnumeric
+# verify that we can load the deprecated gdalnumeric module
 
 
 def test_numpy_rw_1():
@@ -60,12 +58,10 @@ def test_numpy_rw_1():
 
 def test_numpy_rw_2():
 
-    from osgeo import gdalnumeric
-
-    array = gdalnumeric.LoadFile('data/utmsmall.tif')
+    array = gdal_array.LoadFile('data/utmsmall.tif')
     assert array is not None, 'Failed to load utmsmall.tif into array'
 
-    ds = gdalnumeric.OpenArray(array)
+    ds = gdal_array.OpenArray(array)
     assert ds is not None, 'Failed to open memory array as dataset.'
 
     bnd = ds.GetRasterBand(1)
@@ -101,9 +97,7 @@ def test_numpy_rw_4():
 
 def test_numpy_rw_5():
 
-    from osgeo import gdalnumeric
-
-    array = gdalnumeric.LoadFile('data/rgbsmall.tif', 35, 21, 1, 1)
+    array = gdal_array.LoadFile('data/rgbsmall.tif', 35, 21, 1, 1)
 
     assert array[0][0][0] == 78, 'value read improperly.'
 
@@ -111,13 +105,12 @@ def test_numpy_rw_5():
 
     assert array[2][0][0] == 24, 'value read improperly.'
 
-    array = gdalnumeric.LoadFile('data/rgbsmall.tif', buf_xsize=1, buf_ysize=1, resample_alg=gdal.GRIORA_Bilinear)
+    array = gdal_array.LoadFile('data/rgbsmall.tif', buf_xsize=1, buf_ysize=1, resample_alg=gdal.GRIORA_Bilinear)
     assert array.shape[0] == 3 and array.shape[1] == 1 and array.shape[2] == 1, \
         'wrong array shape.'
     assert array[0][0][0] == 70 and array[1][0][0] == 97 and array[2][0][0] == 29, \
         'value read improperly.'
 
-    import numpy
     array = numpy.zeros([3, 1, 1], dtype=numpy.uint8)
     ds = gdal.Open('data/rgbsmall.tif')
     ds.ReadAsArray(buf_obj=array, resample_alg=gdal.GRIORA_Bilinear)
@@ -130,16 +123,13 @@ def test_numpy_rw_5():
 
 def test_numpy_rw_6():
 
-    import numpy
-    from osgeo import gdalnumeric
-
     ds = gdal.Open('data/byte.tif')
     array = numpy.zeros([ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     array_res = ds.GetRasterBand(1).ReadAsArray(buf_obj=array)
 
     assert array is array_res
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
 ###############################################################################
@@ -148,16 +138,13 @@ def test_numpy_rw_6():
 
 def test_numpy_rw_7():
 
-    import numpy
-    from osgeo import gdalnumeric
-
     ds = gdal.Open('data/byte.tif')
     array = numpy.zeros([1, ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     array_res = ds.ReadAsArray(buf_obj=array)
 
     assert array is array_res
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
     # Try again with a 2D array
@@ -166,7 +153,7 @@ def test_numpy_rw_7():
 
     assert array is array_res
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
     # With a multi band file
@@ -176,7 +163,7 @@ def test_numpy_rw_7():
 
     assert array is array_res
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
 ###############################################################################
@@ -185,18 +172,15 @@ def test_numpy_rw_7():
 
 def test_numpy_rw_8():
 
-    import numpy
-    from osgeo import gdalnumeric
-
     ds = gdal.Open('data/rgbsmall.tif')
     array = numpy.zeros([ds.RasterCount, ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     ds.ReadAsArray(buf_obj=array)
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     for i in range(1, ds.RasterCount):
         assert ds2.GetRasterBand(i).Checksum() == ds.GetRasterBand(i).Checksum()
 
-    
+
 ###############################################################################
 # Test Band.WriteArray()
 
@@ -219,8 +203,6 @@ def test_numpy_rw_9():
 
 
 def test_numpy_rw_10():
-
-    import numpy
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/signed8.tif', 2, 1, options=['PIXELTYPE=SIGNEDBYTE'])
     ar = numpy.empty([1, 2], dtype=numpy.int8)
@@ -246,9 +228,6 @@ def test_numpy_rw_10():
 
 
 def test_numpy_rw_11():
-
-    import numpy
-    from osgeo import gdal_array
 
     type_tuples = [('uint8', gdal.GDT_Byte, numpy.uint8, 255),
                    ('uint16', gdal.GDT_UInt16, numpy.uint16, 65535),
@@ -299,14 +278,12 @@ def test_numpy_rw_11():
            (type_tuple[0] != 'float32' and ar3[0][0] != type_tuple[3])), \
             'did not get expected result (2)'
 
-    
+
 ###############################################################################
 # Test array with slices (#3542)
 
 
 def test_numpy_rw_12():
-
-    import numpy
 
     ar = numpy.empty([2, 2], dtype=numpy.uint8)
     ar[0][0] = 0
@@ -332,8 +309,6 @@ def test_numpy_rw_12():
 
 def test_numpy_rw_13():
 
-    import numpy
-
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('', 2, 1, 1, gdal.GDT_Byte)
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
@@ -346,7 +321,7 @@ def test_numpy_rw_13():
     with pytest.raises(Exception, match='array does not have '
                              'corresponding GDAL data type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar)
-    
+
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
@@ -354,7 +329,7 @@ def test_numpy_rw_13():
                              'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
-    
+
 
     # Same with 3 dimensions
     ar = numpy.empty([1, 1, 2], dtype=numpy.uint8)
@@ -362,7 +337,7 @@ def test_numpy_rw_13():
                              'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
-    
+
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
@@ -370,7 +345,7 @@ def test_numpy_rw_13():
                              'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=1,
                                         buf_ysize=1)
-    
+
 
     # Inconsistent data type
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
@@ -378,7 +353,7 @@ def test_numpy_rw_13():
                              'with array type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar,
                                         buf_type=gdal.GDT_Int16)
-    
+
 
     # This one should be OK !
     ar = numpy.zeros([1, 2], dtype=numpy.uint8)
@@ -418,21 +393,21 @@ def test_numpy_rw_13():
     with pytest.raises(Exception, match='array does not have '
                              'corresponding GDAL data type'):
         ds.ReadAsArray(buf_obj=ar)
-    
+
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
     with pytest.raises(Exception, match='Specified buf_ysize not consistent '
                              'with array shape'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=2, buf_ysize=2)
-    
+
 
     # With 2 dimensions
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
     with pytest.raises(Exception, match='Array should have 3 '
                              'dimensions'):
         ds.ReadAsArray(buf_obj=ar)
-    
+
 
     # Try call with inconsistent parameters
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
@@ -449,7 +424,7 @@ def test_numpy_rw_13():
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
     with pytest.raises(Exception, match='Specified buf_type not consistent with array type'):
         ds.ReadAsArray(buf_obj=ar, buf_type=gdal.GDT_Int16)
-    
+
 
     # Not enough space in first dimension
     ar = numpy.empty([2, 1, 2], dtype=numpy.uint8)
@@ -517,8 +492,6 @@ def test_numpy_rw_14():
        gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
         pytest.skip()
 
-    import numpy
-
     ds = gdal.Open('data/byte.tif')
 
     # Test RasterBand.ReadAsArray
@@ -573,9 +546,6 @@ def test_numpy_rw_14():
 
 def test_numpy_rw_15():
 
-    import numpy
-    from osgeo import gdal_array
-
     array = numpy.empty([1, 1, 1], numpy.uint8)
     ds = gdal_array.OpenArray(array)
     gt = ds.GetGeoTransform(can_return_null=True)
@@ -589,9 +559,6 @@ def test_numpy_rw_15():
 
 
 def test_numpy_rw_16():
-
-    import numpy
-    from osgeo import gdal_array
 
     # 1D
     array = numpy.empty([1], numpy.uint8)
@@ -617,9 +584,6 @@ def test_numpy_rw_16():
 
 def test_numpy_rw_17():
 
-    import numpy
-    from osgeo import gdal_array
-
     # Disabled by default
     array = numpy.empty([1, 1], numpy.uint8)
     with gdaltest.error_handler():
@@ -641,10 +605,6 @@ def test_numpy_rw_17():
 
 
 def test_numpy_rw_18():
-
-    import numpy
-    import numpy.random
-    from osgeo import gdal_array
 
     img = numpy.random.randint(0, 255, size=(256, 200, 3)).astype('uint8')
     ds = gdal_array.OpenArray(img, interleave='pixel')
@@ -694,9 +654,6 @@ def test_numpy_rw_failure_in_readasarray():
 
 
 def test_numpy_rw_gdal_array_openarray_permissions():
-
-    import numpy
-    from osgeo import gdal_array
 
     # Writeable array
     ar = numpy.zeros([1, 1], dtype=numpy.uint8)
