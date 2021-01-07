@@ -105,7 +105,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
             check_minmax = False
     return ut.testCreateCopy(check_minmax=check_minmax)
 
-def cleanup(base = 'vsimem/out.'):
+def cleanup(base = '/vsimem/out.'):
     for ext in ['mrf', 'mrf.aux.xml', 'idx', 'ppg', 'til', 'lrc', 'pjg']:
         gdal.Unlink(base + ext)
 
