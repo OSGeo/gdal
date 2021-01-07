@@ -80,7 +80,7 @@ namespace PCIDSK
     // Helper functions for working with segments and data types
     int PCIDSK_DLL DataTypeSize( eChanType );
     const char PCIDSK_DLL * DataTypeName( eChanType );
-    const char PCIDSK_DLL * SegmentTypeName( eSegType );
+    const char PCIDSK_DLL * SegmentTypeName( int );
     eChanType PCIDSK_DLL GetDataTypeFromName(const char * pszDataType);
     bool PCIDSK_DLL IsDataTypeComplex(eChanType type);
 

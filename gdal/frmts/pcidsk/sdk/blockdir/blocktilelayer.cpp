@@ -102,7 +102,7 @@ BlockTileLayer::GetTileInfo(uint32 nCol, uint32 nRow)
     if (!IsValid())
         return nullptr;
 
-    uint32 nTilesPerRow = (GetXSize() + GetTileXSize() - 1) / GetTileXSize();
+    uint32 nTilesPerRow = GetTilePerRow();
 
     uint32 iTile = nRow * nTilesPerRow + nCol;
 
@@ -147,6 +147,17 @@ void BlockTileLayer::Sync(void)
 }
 
 /************************************************************************/
+/*                              IsCorrupted()                           */
+/************************************************************************/
+bool BlockTileLayer::IsCorrupted(void) const
+{
+    uint64 nTileSize =
+        static_cast<uint64>(GetTileXSize()) * GetTileYSize() * GetDataTypeSize();
+
+    return nTileSize > std::numeric_limits<uint32>::max();
+}
+
+/************************************************************************/
 /*                              GetTileCount()                          */
 /************************************************************************/
 
@@ -157,8 +168,8 @@ void BlockTileLayer::Sync(void)
  */
 uint32 BlockTileLayer::GetTileCount(void) const
 {
-    return (uint32) (((GetXSize() + GetTileXSize() - 1) / GetTileXSize()) *
-                     ((GetYSize() + GetTileYSize() - 1) / GetTileYSize()));
+    return (uint32) (((static_cast<uint64>(GetXSize()) + GetTileXSize() - 1) / GetTileXSize()) *
+                     ((static_cast<uint64>(GetYSize()) + GetTileYSize() - 1) / GetTileYSize()));
 }
 
 /************************************************************************/
@@ -172,7 +183,7 @@ uint32 BlockTileLayer::GetTileCount(void) const
  */
 uint32 BlockTileLayer::GetTilePerRow(void) const
 {
-    return (uint32) (GetXSize() + GetTileXSize() - 1) / GetTileXSize();
+    return (uint32) (static_cast<uint64>(GetXSize()) + GetTileXSize() - 1) / GetTileXSize();
 }
 
 /************************************************************************/
@@ -186,7 +197,7 @@ uint32 BlockTileLayer::GetTilePerRow(void) const
  */
 uint32 BlockTileLayer::GetTilePerCol(void) const
 {
-    return (uint32) (GetYSize() + GetTileYSize() - 1) / GetTileYSize();
+    return (uint32) (static_cast<uint64>(GetYSize()) + GetTileYSize() - 1) / GetTileYSize();
 }
 
 /************************************************************************/
@@ -369,7 +380,7 @@ void BlockTileLayer::WriteTile(const void * pData,
         return;
 
     if (nSize == 0)
-        nSize = GetTileXSize() * GetTileYSize() * GetDataTypeSize();
+        nSize = GetTileSize();
 
     if (psTile->nOffset == INVALID_OFFSET)
     {
@@ -632,6 +643,16 @@ void BlockTileLayer::SetTileLayerInfo(uint32 nXSize, uint32 nYSize,
                                       const std::string & oCompress,
                                       bool bNoDataValid, double dfNoDataValue)
 {
+    uint64 nTileSize =
+        static_cast<uint64>(nTileXSize) * nTileYSize *
+        DataTypeSize(GetDataTypeFromName(oDataType.c_str()));
+
+    if (nTileSize > std::numeric_limits<uint32>::max())
+    {
+        return ThrowPCIDSKException("Invalid tile dimensions: %d x %d",
+                                    nTileXSize, nTileYSize);
+    }
+
     mpsTileLayer->nXSize = nXSize;
     mpsTileLayer->nYSize = nYSize;
     mpsTileLayer->nTileXSize = nTileXSize;

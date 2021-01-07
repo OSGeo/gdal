@@ -235,7 +235,7 @@ bool PCIDSK::IsDataTypeComplex(eChanType type)
  * @return the string for the segment type.
  */
 
-const char * PCIDSK::SegmentTypeName( eSegType type )
+const char * PCIDSK::SegmentTypeName( int type )
 {
     switch( type )
     {

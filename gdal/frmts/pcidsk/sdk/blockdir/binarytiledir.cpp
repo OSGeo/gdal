@@ -203,9 +203,17 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
         moLayerInfoList[iLayer] = new BlockLayerInfo;
         moTileLayerInfoList[iLayer] = new TileLayerInfo;
 
-        moLayerList[iLayer] = new BinaryTileLayer(this, iLayer,
-                                                  moLayerInfoList[iLayer],
-                                                  moTileLayerInfoList[iLayer]);
+        auto poLayer = new BinaryTileLayer(this, iLayer,
+                                           moLayerInfoList[iLayer],
+                                           moTileLayerInfoList[iLayer]);
+
+        moLayerList[iLayer] = poLayer;
+
+        if (poLayer->IsCorrupted())
+        {
+            ThrowPCIDSKException("The tile directory is corrupted.");
+            return;
+        }
     }
 
     // Read the block layers from disk.

@@ -137,6 +137,8 @@ public:
 
     void                Sync(void);
 
+    bool                IsCorrupted(void) const;
+
     uint32              GetTileCount(void) const;
     uint32              GetTilePerRow(void) const;
     uint32              GetTilePerCol(void) const;

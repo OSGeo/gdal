@@ -234,9 +234,17 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
         moLayerInfoList[iLayer] = new BlockLayerInfo;
         moTileLayerInfoList[iLayer] = new TileLayerInfo;
 
-        moLayerList[iLayer] = new AsciiTileLayer(this, iLayer,
-                                                 moLayerInfoList[iLayer],
-                                                 moTileLayerInfoList[iLayer]);
+        auto poLayer = new AsciiTileLayer(this, iLayer,
+                                          moLayerInfoList[iLayer],
+                                          moTileLayerInfoList[iLayer]);
+
+        moLayerList[iLayer] = poLayer;
+
+        if (poLayer->IsCorrupted())
+        {
+            ThrowPCIDSKException("The tile directory is corrupted.");
+            return;
+        }
     }
 
     // Read the block directory from disk.
@@ -458,6 +466,9 @@ void AsciiTileDir::ReadPartialDir(void)
         {
             if (psPreviousLayer)
             {
+                if (psLayer->nStartBlock < psPreviousLayer->nStartBlock)
+                    return ThrowPCIDSKException("The tile directory is corrupted.");
+
                 psPreviousLayer->nBlockCount =
                     psLayer->nStartBlock - psPreviousLayer->nStartBlock;
             }
@@ -489,9 +500,15 @@ void AsciiTileDir::ReadPartialDir(void)
     {
         if (psPreviousLayer)
         {
+            if (msFreeBlockLayer.nStartBlock < psPreviousLayer->nStartBlock)
+                return ThrowPCIDSKException("The tile directory is corrupted.");
+
             psPreviousLayer->nBlockCount =
                 msFreeBlockLayer.nStartBlock - psPreviousLayer->nStartBlock;
         }
+
+        if (msBlockDir.nBlockCount < msFreeBlockLayer.nStartBlock)
+            return ThrowPCIDSKException("The tile directory is corrupted.");
 
         msFreeBlockLayer.nBlockCount =
             msBlockDir.nBlockCount - msFreeBlockLayer.nStartBlock;
@@ -500,6 +517,9 @@ void AsciiTileDir::ReadPartialDir(void)
     {
         if (psPreviousLayer)
         {
+            if (msBlockDir.nBlockCount < psPreviousLayer->nStartBlock)
+                return ThrowPCIDSKException("The tile directory is corrupted.");
+
             psPreviousLayer->nBlockCount =
                 msBlockDir.nBlockCount - psPreviousLayer->nStartBlock;
         }

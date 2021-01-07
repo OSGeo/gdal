@@ -314,8 +314,14 @@ void BlockLayer::WriteToLayer(const void * pData, uint64 nOffset, uint64 nSize)
  */
 bool BlockLayer::ReadFromLayer(void * pData, uint64 nOffset, uint64 nSize)
 {
-    if (nOffset + nSize > GetLayerSize())
+    uint64 nLayerSize = GetLayerSize();
+
+    if (nSize > nLayerSize ||
+        nOffset > nLayerSize ||
+        nOffset + nSize > nLayerSize)
+    {
         return false;
+    }
 
     if (!AreBlocksAllocated(nOffset, nSize))
         return false;

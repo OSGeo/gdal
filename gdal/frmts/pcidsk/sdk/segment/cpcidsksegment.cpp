@@ -106,9 +106,8 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
 
     segment_flag = segptr.buffer[0];
     const int segment_type_int = atoi(segptr.Get(1,3));
-    segment_type = static_cast<eSegType>(segment_type_int);
-    if (EQUAL(SegmentTypeName(segment_type), "UNKNOWN"))
-        segment_type = SEG_UNKNOWN;
+    segment_type = EQUAL(SegmentTypeName(segment_type_int), "UNKNOWN") ?
+        SEG_UNKNOWN : static_cast<eSegType>(segment_type_int);
     data_offset = atouint64(segptr.Get(12,11));
     if( data_offset == 0 )
         data_offset = 0; // throw exception maybe ?
@@ -120,13 +119,14 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
         }
         data_offset = (data_offset-1) * 512;
     }
-    data_size = atouint64(segptr.Get(23,9)) * 512;
-    data_size_limit = 999999999ULL * 512;
+    data_size = atouint64(segptr.Get(23,9));
 
-    if( data_size > data_size_limit )
+    if( data_size > 999999999ULL )
     {
         return ThrowPCIDSKException("too large data_size");
     }
+    data_size *= 512;
+    data_size_limit = 999999999ULL * 512;
 
     segptr.Get(4,8,segment_name);
 }

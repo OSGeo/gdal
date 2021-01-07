@@ -534,6 +534,12 @@ void CPCIDSKFile::InitializeFromHeader()
     }
     file_size = fh.GetUInt64(16,16);
 
+    if (file_size > std::numeric_limits<uint64>::max() / 512)
+    {
+        return ThrowPCIDSKException("Invalid file_size: " PCIDSK_FRMT_UINT64,
+                                    file_size);
+    }
+
     uint64 ih_start_block = atouint64(fh.Get(336,16));
     uint64 image_start_block = atouint64(fh.Get(304,16));
     fh.Get(360,8,interleaving);
