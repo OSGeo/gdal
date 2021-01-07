@@ -4592,6 +4592,13 @@ NITFDataset::NITFCreateCopy(
         GDALWriteRPCTXTFile( pszFilename, papszRPC );
     }
 
+    if( papszRPC != nullptr &&
+        CPLFetchBool(papszFullOptions, "RPCTXT", false))
+    {
+        //To be replaced by SensorML export
+        GDALWriteRPCTXTFile( pszFilename, papszRPC );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
