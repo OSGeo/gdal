@@ -105,9 +105,9 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
             check_minmax = False
     return ut.testCreateCopy(check_minmax=check_minmax)
 
-def cleanup():
+def cleanup(base = 'vsimem/out.'):
     for ext in ['mrf', 'mrf.aux.xml', 'idx', 'ppg', 'til', 'lrc', 'pjg']:
-        gdal.Unlink('/vsimem/out.' + ext)
+        gdal.Unlink(base + ext)
 
 def test_mrf_zen_test():
     result = 'success'
@@ -363,7 +363,7 @@ def test_mrf_cached_source():
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
-    cleanup()
+    cleanup('tmp/out.')
 
     # Caching MRF in mp_safe mode
     open('tmp/byte.tif', 'wb').write(open('data/byte.tif', 'rb').read())
@@ -415,20 +415,14 @@ def test_mrf_cached_source():
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
-    cleanup()
+    cleanup('tmp/out.')
 
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('tmp/cloning.mrf')
-    gdal.Unlink('tmp/cloning.mrf.aux.xml')
-    gdal.Unlink('tmp/cloning.idx')
-    gdal.Unlink('tmp/cloning.ppg')
-    gdal.Unlink('tmp/cloning.til')
-
+    cleanup('tmp/cloning.')
 
 def test_mrf_versioned():
 
@@ -477,24 +471,23 @@ def test_mrf_versioned():
 def test_mrf_cleanup():
 
     files = [
-        'jpeg/12bit_rose_extract.jpg.*',
+        '2bit_rose_extract.jpg.*',
         'byte.tif.*',
         'int16.tif.*',
-        'out.idx',
-        'out.mrf',
-        'out.mrf.aux.xml',
-        'out.ppg',
         'rgbsmall.tif.*',
-        'small_world_pct.tif.*',
+        'small_world*',
         'float32.tif.*',
         'float64.tif.*',
         'int32.tif.*',
         'uint16.tif.*',
         'uint32.tif.*',
         'utmsmall.tif.*',
-        'cloning.*']
+        'cloning.*',
+        'f32nan_data.*'
+        ]
 
     for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
         gdal.Unlink(f)
 
     cleanup()
+    cleanup('tmp/out.')
