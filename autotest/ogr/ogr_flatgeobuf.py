@@ -255,9 +255,9 @@ def test_ogr_flatgeobuf_2_1():
     else:
         assert num == 5
 
-def wktRoundtrip(expected):
+def wktRoundtrip(in_wkt, expected_wkt):
     ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
-    g = ogr.CreateGeometryFromWkt(expected)
+    g = ogr.CreateGeometryFromWkt(in_wkt)
     lyr = ds.CreateLayer('test', None, g.GetGeometryType(), [])
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(g)
@@ -274,12 +274,12 @@ def wktRoundtrip(expected):
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
     assert not gdal.VSIStatL('/vsimem/test.fgb')
 
-    assert actual == expected
+    assert actual == expected_wkt
 
 def test_ogr_flatgeobuf_3():
     wkts = ogrtest.get_wkt_data_series(with_z=True, with_m=True, with_gc=True, with_circular=True, with_surface=True)
     for wkt in wkts:
-        wktRoundtrip(wkt)
+        wktRoundtrip(wkt, wkt)
 
 # Run test_ogrsf
 def test_ogr_flatgeobuf_8():
@@ -755,3 +755,13 @@ def test_ogr_flatgeobuf_editing():
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
     assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+
+@pytest.mark.parametrize('in_wkt,expected_wkt', [
+    ('MULTIPOINT ((0 0), EMPTY)', 'MULTIPOINT ((0 0))'),
+    ('MULTILINESTRING ((0 0,1 1), EMPTY)', 'MULTILINESTRING ((0 0,1 1))'),
+    ('MULTIPOLYGON (((0 0,0 1,1 1,0 0)), EMPTY)', 'MULTIPOLYGON (((0 0,0 1,1 1,0 0)))'),
+    ('GEOMETRYCOLLECTION (POINT (0 0), POINT EMPTY)', 'GEOMETRYCOLLECTION (POINT (0 0))'),
+])
+def test_ogr_flatgeobuf_multi_geometries_with_empty(in_wkt, expected_wkt):
+    wktRoundtrip(in_wkt, expected_wkt)
