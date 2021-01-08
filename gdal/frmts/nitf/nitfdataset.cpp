@@ -4595,8 +4595,7 @@ NITFDataset::NITFCreateCopy(
     if( papszRPC != nullptr &&
         CPLFetchBool(papszFullOptions, "RPCTXT", false))
     {
-        //To be replaced by SensorML export
-        GDALWriteRPCTXTFile( pszFilename, papszRPC );
+        GDALWriteRPCSensorMLFile( pszFilename, papszRPC );
     }
 
 /* -------------------------------------------------------------------- */
