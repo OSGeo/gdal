@@ -71,7 +71,8 @@ mrf_list = [
     ('rgbsmall.tif', 21212, [21261, 21209, 21254, 21215], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
     ('rgbsmall.tif', 21212, [21283, 21127, 21278, 21124], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
     ('jpeg/12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
-    ('f32nan_data.tif', 54061, [54052], ['COMPRESS=LERC', 'OPTIONS=V1:Yes LERC_PREC:0.01']),
+    # checksum depends on floating point precision
+    ('f32nan_data.tif', 54061, [54052, 54050], ['COMPRESS=LERC', 'OPTIONS=V1:Yes LERC_PREC:0.01']),
 ]
 
 
