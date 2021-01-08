@@ -29,6 +29,7 @@ Contributors:  Thomas Maurer
 #endif
 
 NAMESPACE_LERC1_START
+static_assert(sizeof(float) == 4, "lerc requires float to be exactly 4 bytes");
 
 typedef unsigned char Byte;
 
@@ -123,7 +124,10 @@ protected:
 
     void computeCntStats(float& cntMin, float& cntMax) const; // Across the whole image, always works
     bool computeZStats(int r0, int r1, int c0, int c1,
-        float& zMin, float& zMax, int& numValidPixel) const;
+        float& zMin, float& zMax, int& numValidPixel, int& numFinite) const;
+
+    // returns true if all floating point values in the region have the same binary representation
+    bool isallsameval(int r0, int r1, int c0, int c1) const;
 
     static int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError);
 
