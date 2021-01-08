@@ -60,10 +60,14 @@ namespace PCIDSK
 
         PCIDSKChannel  *GetChannel( int band ) override;
         PCIDSKSegment  *GetSegment( int segment ) override;
-        std::vector<PCIDSKSegment *> GetSegments() override;
 
-        PCIDSKSegment  *GetSegment( int type, std::string name,
+        PCIDSKSegment  *GetSegment( int type, const std::string & name,
             int previous = 0 ) override;
+        unsigned GetSegmentID(int segment, const std::string & name = {},
+                              unsigned previous = 0) const override;
+        std::vector<unsigned> GetSegmentIDs(int segment,
+                  const std::function<bool(const char *,unsigned)> & oFilter) const override;
+
         int  CreateSegment( std::string name, std::string description,
             eSegType seg_type, int data_blocks ) override;
         void DeleteSegment( int segment ) override;
@@ -86,7 +90,6 @@ namespace PCIDSK
 
         void      WriteToFile( const void *buffer, uint64 offset, uint64 size ) override;
         void      ReadFromFile( void *buffer, uint64 offset, uint64 size ) override;
-        void      CheckFileBigEnough( uint64 bytes_to_read ) override;
 
         std::string GetFilename() const { return base_filename; }
 
@@ -95,6 +98,10 @@ namespace PCIDSK
 
         bool      GetEDBFileDetails( EDBFile** file_p, Mutex **io_mutex_p,
                                      std::string filename );
+
+        std::string GetUniqueEDBFilename() override;
+
+        std::map<int,int> GetEDBChannelMap(std::string oExtFilename) override;
 
         std::string GetMetadataValue( const std::string& key ) override
             { return metadata.GetMetadataValue(key); }
@@ -106,9 +113,10 @@ namespace PCIDSK
         void      Synchronize() override;
 
     // not exposed to applications.
-        void      ExtendFile( uint64 blocks_requested, bool prezero = false );
+        void      ExtendFile( uint64 blocks_requested,
+                              bool prezero = false, bool writedata = true );
         void      ExtendSegment( int segment, uint64 blocks_to_add,
-            bool prezero = false );
+                                 bool prezero = false, bool writedata = true );
         void      MoveSegmentToEOF( int segment );
 
     private:

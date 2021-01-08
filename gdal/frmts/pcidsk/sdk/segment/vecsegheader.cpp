@@ -252,17 +252,17 @@ void VecSegHeader::InitializeExisting()
 /* -------------------------------------------------------------------- */
 /*      Fetch the shapeid basics.                                       */
 /* -------------------------------------------------------------------- */
-    memcpy( &(vs->shape_count), vs->GetData(sec_raw,next_off,nullptr,4), 4);
+    memcpy( &(vs->total_shape_count), vs->GetData(sec_raw,next_off,nullptr,4), 4);
     if( needs_swap )
-        SwapData( &(vs->shape_count), 4, 1 );
-    if( vs->shape_count < 0 )
-        return ThrowPCIDSKException( "Invalid shape_count: %d", vs->shape_count );
+        SwapData(&(vs->total_shape_count), 4, 1);
+    if( vs->total_shape_count < 0 )
+        return ThrowPCIDSKException( "Invalid shape_count: %d", vs->total_shape_count );
 
     next_off += 4;
     vs->shape_index_start = 0;
 
     uint64 section_size = next_off - section_offsets[hsec_shape]
-        + static_cast<uint64>(vs->shape_count) * 12;
+        + static_cast<uint64>(vs->total_shape_count) * 12;
     if( section_size > std::numeric_limits<uint32>::max() )
         return ThrowPCIDSKException( "Invalid section_size" );
 
@@ -331,7 +331,7 @@ bool VecSegHeader::GrowSection( int hsec, uint32 new_size )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Can we grow the section in its currently location without       */
+/*      Can we grow the section in its current location without         */
 /*      overlapping anything else?                                      */
 /* -------------------------------------------------------------------- */
     int ihsec;

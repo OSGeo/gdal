@@ -1,0 +1,330 @@
+/******************************************************************************
+ *
+ * Purpose:  Documentation for the PCIDSKChannel class.
+ * 
+ ******************************************************************************
+ * Copyright (c) 2009
+ * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+/** 
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKChannel::GetWidth() const
+  
+\brief Fetch image width.
+
+@return returns the channel width in pixels.
+
+
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKChannel::GetHeight() const
+  
+\brief Fetch image height.
+
+@return returns the channel height in pixels.
+
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKChannel::GetBlockWidth() const
+  
+\brief Fetch image block width.
+
+Channel (band) access is done in blocks according
+to the natural blocking of the data.  For PIXEL, BAND
+and some FILE interleaved files a block is one scanline.
+For tiled files it is a tile.
+
+@return returns the width of a block in pixels.
+
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKChannel::GetBlockHeight() const
+  
+\brief Fetch image block height.
+
+Channel (band) access is done in blocks according
+to the natural blocking of the data.  For PIXEL, BAND
+and some FILE interleaved files a block is one scanline.
+For tiled files it is a tile.
+
+@return returns the height of a block in pixels.
+
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKChannel::GetBlockCount() const
+  
+\brief Fetch image block count.
+
+@return returns the number of blocks in a channel.
+
+
+
+******************************************************************************
+\fn eChanType PCIDSK::PCIDSKChannel::GetType() const
+
+\brief Fetch pixel data type.
+
+@return the pixel data type for this channel.
+
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKChannel::ReadBlock( int block_index, void *buffer,
+                                          int win_xoff=-1, int win_yoff=-1, 
+                                          int win_xsize=-1, int win_ysize=-1 );
+
+\brief read block of image data from disk.
+
+The buffer into which imagery is read should be preallocated large enough to 
+hold GetBlockWidth() * GetBlockHeight() * DataTypeSize(GetType()) bytes, 
+or win_xsize*win_ysize*DataType(GetType()) if subwindowing is being used.
+Image data is returned in the pixel data type reported by GetType() and 
+in the local systems byte order (for types larger than one byte).
+
+For scanline oriented images the block index is the scanline index.  For tiled
+images the block_index starts at 0 at the top left tile.  The tile to the 
+right of that is 1, and the first tile in the second row is equal to 
+"blocks_per_row".  
+
+Partial (incomplete) blocks at the right or bottom of images that are not a 
+multiple of the block width or height in size will be zero filled out to the
+block size.
+
+The win_xoff, win_yoff, win_xsize, and win_ysize parameters may be used to
+select a subwindow of the desired block.  By default the whole block is
+returned.
+
+Bitmap segment access is also handled via the PCIDSKChannel interface, and
+the buffer contains eight pixels packed into each byte which the first pixel
+in the high order bit (0x80) of the first byte.  Note that DataTypeSize()
+does not return an accurate size for bit buffers.
+
+@param block_index zero based block index to read.
+
+@param buffer the buffer into which the block will be read.
+
+@param win_xoff the x (right) offset into the block to start reading.
+
+@param win_yoff the y (down) offset into the block to start reading.
+
+@param win_xsize the width of the window to read from the block.
+
+@param win_ysize the height of the window to read from the block.
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKChannel::WriteBlock( int block_index, void *buffer );
+
+\brief write block of image data from disk.
+
+The buffer from which imagery is read should be preallocated large enough to 
+hold GetBlockWidth() * GetBlockHeight() * DataTypeSize(GetType()) bytes. 
+Image data is expected in the pixel data type reported by GetType() and 
+in the local systems byte order (for types larger than one byte).
+
+For scanline oriented images the block index is the scanline index.  For tiled
+images the block_index starts at 0 at the top left tile.  The tile to the 
+right of that is 1, and the first tile in the second row is equal to 
+"blocks_per_row".  
+
+Partial (incomplete) blocks at the right or bottom of images that are not a 
+multiple of the block width or height in size may be zero filled out to the
+block size.
+
+@param block_index zero based block index to read.
+
+@param buffer the buffer from which the block will be written.
+
+******************************************************************************
+\fn std::vector<std::string> PCIDSK::PCIDSKChannel::GetMetadataKeys();
+
+\brief Fetch metadata keys
+
+Returns a vector of metadata keys that occur on this object.  The values
+associated with each may be fetched with GetMetadataValue().
+
+@return list of keys
+
+@see GetMetadataValue()
+
+******************************************************************************
+\fn std::string PCIDSK::PCIDSKChannel::GetMetadataValue( const std::string &key );
+
+\brief Fetch metadata value
+
+Note that the returned pointer is to an internal structure and it may become 
+invalid if another thread modifies the metadata for this object.
+
+@param key the key to fetch the value for.
+
+@return the value of the indicated metadata item, or an empty string if it
+does not exist on the target object.
+
+@see GetMetadataKeys()
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKChannel::SetMetadataValue( const std::string &key, const std::string &value );
+
+\brief Set metadata value
+
+Assign  the metadata value associated with the passed key on this object.  
+The file needs to be open for update.  Note that keys should be well formed
+tokens (no special characters, spaces, etc).
+
+@param key the key to fetch the value for.  
+
+@param value the value to assign to the key.  An empty string deletes the item.
+
+@see GetMetadataValue()
+ 
+******************************************************************************
+\fn int PCIDSK::PCIDSKChannel::GetOverviewCount();
+
+\brief Fetch number of overviews
+
+@return the number of overviews available for this channel.
+
+@see GetOverview()
+
+******************************************************************************
+\fn PCIDSK::PCIDSKChannel *PCIDSK::PCIDSKChannel::GetOverview(int i);
+
+\brief Fetch Overview
+
+This method fetches a pointer to the requested overview.  The return 
+PCIDSKChannel object remains owned by the parent PCIDSKChannel but may be 
+otherwise accessed using the normal PCIDSKChannel mechanisms.  The size of
+the overview in pixels and lines will reveal it's decimation factor relative 
+to the base image.  
+
+@param i the zero based index of the overview to fetch (from zero to GetOverviewCount()-1)
+
+@return the overview channel object.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKChannel::Synchronize();
+
+\brief Write pending information to disk.
+
+Some write and update operations on PCIDSK files are not written to disk 
+immediately after write calls.  This method will ensure that any pending
+writes are flushed through to disk.  
+
+NOTE: Currently this method does not invalidate read-cached information. 
+At some point in the future it might be extended to do this as well.
+
+******************************************************************************
+\fn std::string PCIDSK::PCIDSKChannel::GetDescription();
+
+\brief Fetch channel description.
+
+@return Returns the contents of the IHi.1 field for the channel, with 
+trailing spaces stripped.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKChannel::SetDescription( const std::string &description);
+
+\brief Set channel description.
+
+@param description a string of up to 64 characters.
+
+******************************************************************************
+\fn std::vector<std::string> PCIDSK::PCIDSKChannel::GetHistoryEntries() const;
+
+\brief fetch history records
+
+@return a vector of the 8 history records for this channel.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKChannel::SetHistoryEntries( const std::vector<std::string> &entries );
+
+\brief Set all history records.
+
+Normally applications will just use the PushHistory() method.  This method
+is used for bulk copying of history for special situations.
+
+@param entries - should be a vector of 8 strings of at most 80 characters.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKChannel::PushHistory( const std::string &app, const std::string &message );
+
+\brief Push a new history message.
+
+This method will push a new history message at the front of the history 
+stack.  The top seven history messages will be pushed down one to make space
+and the last one will be lost.  The current date is automatically appended to 
+the message.  
+
+@param app the application name, only 7 characters are used.
+@param message the history message, only 56 characters are used.
+
+******************************************************************************
+\fn std::vector<int> PCIDSK::PCIDSKChannel::GetOverviewLevelMapping() const;
+
+\brief Get mapping between overview indices and overview levels
+
+This method will return a vector representing a mapping between an overview
+index, used with the PCIDSK::PCIDSKChannel::GetOverview method.
+
+@note The overview levels may not be sorted when retrieved via this mechanism.
+
+@return a vector, where the index of the entry maps to the overview index.
+
+******************************************************************************
+\fn void GetChanInfo( std::string &filename, uint64 &image_offset, uint64 &pixel_offset, uint64 &line_offset, bool &little_endian ) const;
+
+\brief Fetch on disk raw data layout. 
+
+For raw FILE interleaved files, this will return the file containing this 
+channels imagery and the layout on disk.  For all other channel types it will 
+return by filename will be empty and the other values will all be zero.
+
+@param filename the name of the external file.
+
+@param image_offset offset in bytes to the first pixel of image data.
+
+@param pixel_offset the offset in bytes from the start of one pixel to the start of the next on the same scanline.
+
+@param line_offset the offset in bytes from the start of one scanline to the start of the next.
+
+@param little_endian true if the imagery is in little endian byte order on disk (not meaningful for 8U pixels).
+
+******************************************************************************
+\fn void SetChanInfo( std::string filename, uint64 image_offset, uint64 pixel_offset, uint64 line_offset, bool little_endian );
+
+\brief Used to set external raw file layout. 
+
+For FILE interleaved files this method is used to define the external file 
+containing the imagery and the layout of the imagery in that file.  For any 
+other channel type an exception will be raised.
+
+@param filename the name of the external file.
+
+@param image_offset offset in bytes to the first pixel of image data.
+
+@param pixel_offset the offset in bytes from the start of one pixel to the start of the next on the same scanline.
+
+@param line_offset the offset in bytes from the start of one scanline to the start of the next.
+
+@param little_endian true if the imagery is in little endian byte order on disk (not meaningful for 8U pixels).
+
+*/
+

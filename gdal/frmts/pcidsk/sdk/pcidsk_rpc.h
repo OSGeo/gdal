@@ -85,9 +85,9 @@ namespace PCIDSK {
 
         // Output projection information of RPC Model
         // Get the Geosys String
-        virtual std::string GetGeosysString(void) const = 0;
+        virtual void GetMapUnits(std::string& map_units, std::string& proj_parms) const = 0;
         // Set the Geosys string
-        virtual void SetGeosysString(const std::string& geosys) = 0;
+        virtual void SetMapUnits(std::string const& map_units, std::string const& proj_parms) = 0;
 
         // Get the number of lines
         virtual unsigned int GetLines(void) const = 0;

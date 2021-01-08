@@ -25,7 +25,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "pcidsk_config.h"
 #include "pcidsk_rpc.h"
 #include "segment/cpcidsksegment.h"
 #include "core/pcidsk_utils.h"
@@ -79,6 +78,7 @@ struct CPCIDSKRPCModelSegment::PCIDSKRPCInfo
     std::string sensor_name; // the name of the sensor
 
     std::string map_units; // the map units string
+    std::string proj_parms; // Projection parameters encoded as text
 
     // TODO: Projection Info
 
@@ -88,7 +88,7 @@ struct CPCIDSKRPCModelSegment::PCIDSKRPCInfo
 
 CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *fileIn, int segmentIn,const char *segment_pointer) :
     CPCIDSKSegment(fileIn, segmentIn, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo),
-    loaded_(false),mbModified(false)
+    loaded_(false),mbModified(false),mbEmpty(false)
 {
     try
     {
@@ -116,6 +116,14 @@ void CPCIDSKRPCModelSegment::Load()
         return;
     }
 
+    if(data_size == 1024)
+    {
+        mbEmpty = true;
+        return;
+    }
+
+    mbEmpty = false;
+
     if( data_size - 1024 != 7 * 512 )
     {
         return ThrowPCIDSKException("Wrong data_size in CPCIDSKRPCModelSegment");
@@ -125,7 +133,7 @@ void CPCIDSKRPCModelSegment::Load()
 
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
 
-    // The RPC Model Segment is defined as follows:
+// The RPC Model Segment is defined as follows:
     // RFMODEL Segment: 7 512-byte blocks
 
     // Block 1:
@@ -212,8 +220,8 @@ void CPCIDSKRPCModelSegment::Load()
                 "number of coefficients according to the segment is %d.", pimpl_->num_coeffs);
         }
 
-        pimpl_->lines = pimpl_->seg_data.GetInt(512 + 4, 10);
-        pimpl_->pixels = pimpl_->seg_data.GetInt(512 + 14, 10);
+        pimpl_->pixels = pimpl_->seg_data.GetInt(512 + 4, 10);
+        pimpl_->lines = pimpl_->seg_data.GetInt(512 + 14, 10);
         pimpl_->x_off = pimpl_->seg_data.GetDouble(512 + 24, 22);
         pimpl_->x_scale = pimpl_->seg_data.GetDouble(512 + 46, 22);
         pimpl_->y_off = pimpl_->seg_data.GetDouble(512 + 68, 22);
@@ -330,15 +338,24 @@ void CPCIDSKRPCModelSegment::Load()
         pimpl_->line_denom.push_back(pimpl_->seg_data.GetDouble(5 * 512 + (i * 22), 22));
     }
 
+    // Pad coefficients up to 20
+    for (unsigned int i = pimpl_->num_coeffs; i < 20; ++i)
+    {
+        pimpl_->pixel_num.push_back(0.0);
+        pimpl_->pixel_denom.push_back(0.0);
+        pimpl_->line_num.push_back(0.0);
+        pimpl_->line_denom.push_back(0.0);
+    }
+
     // Block 7:
     // Bytes    0-15: MapUnits string
     // Bytes 256-511: ProjInfo_t, serialized
     pimpl_->map_units = std::string(&pimpl_->seg_data.buffer[6 * 512], 16);
+    pimpl_->proj_parms = std::string(&pimpl_->seg_data.buffer[6 * 512 + 256], 256);
 
     // We've now loaded the structure up with data. Mark it as being loaded
     // properly.
     loaded_ = true;
-
 }
 
 void CPCIDSKRPCModelSegment::Write(void)
@@ -375,7 +392,7 @@ void CPCIDSKRPCModelSegment::Write(void)
 
     // Sensor name:
     pimpl_->seg_data.Put("SENSOR",30,6);
-    pimpl_->seg_data.Put(pimpl_->sensor_name.c_str(),36,static_cast<int>(pimpl_->sensor_name.size()));
+    pimpl_->seg_data.Put(pimpl_->sensor_name.c_str(), 36, static_cast<int>(pimpl_->sensor_name.size()), true);
 
     // Block 2:
     // Bytes     0-3: Number of coefficients
@@ -403,8 +420,8 @@ void CPCIDSKRPCModelSegment::Write(void)
 
     pimpl_->seg_data.Put(pimpl_->num_coeffs,512, 4);
 
-    pimpl_->seg_data.Put(pimpl_->lines,512 + 4, 10);
-    pimpl_->seg_data.Put(pimpl_->pixels,512 + 14, 10);
+    pimpl_->seg_data.Put(pimpl_->pixels,512 + 4, 10);
+    pimpl_->seg_data.Put(pimpl_->lines,512 + 14, 10);
     pimpl_->seg_data.Put(pimpl_->x_off,512 + 24, 22,"%22.14f");
     pimpl_->seg_data.Put(pimpl_->x_scale,512 + 46, 22,"%22.14f");
     pimpl_->seg_data.Put(pimpl_->y_off,512 + 68, 22,"%22.14f");
@@ -472,9 +489,11 @@ void CPCIDSKRPCModelSegment::Write(void)
     // Bytes    0-15: MapUnits string
     // Bytes 256-511: ProjInfo_t, serialized
     pimpl_->seg_data.Put(pimpl_->map_units.c_str(),6 * 512, 16);
+    pimpl_->seg_data.Put(pimpl_->proj_parms.c_str(), 6 * 512 + 256, 256);
 
     WriteToFile(pimpl_->seg_data.buffer,0,data_size-1024);
     mbModified = false;
+    mbEmpty = false;
 }
 
 std::vector<double> CPCIDSKRPCModelSegment::GetXNumerator(void) const
@@ -628,21 +647,68 @@ void CPCIDSKRPCModelSegment::SetSensorName(const std::string& name)
     mbModified = true;
 }
 
-// Output projection information of RPC Model
-// Get the Geosys String
-std::string CPCIDSKRPCModelSegment::GetGeosysString(void) const
+/******************************************************************************/
+/*      GetMapUnits()                                                         */
+/******************************************************************************/
+/**
+ * Get output projection information of the RPC math model.
+ *
+ * @param[out] map_units PCI mapunits string
+ * @param[out] proj_parms Additional projection parameters, encoded as a
+ *      string.
+ *
+ * @remarks If false == IsUserGenerated(), then this projection represents
+ *      the projection that is utilized by the RPC's ground-to-image
+ *      coefficients, i.e., the projection that must be used when performing
+ *      ground-to-image or image-to-ground projections with the model.
+ * @remarks If true == IsUserGenerated(), then the RPC math model's projection
+ *      is Geographic WGS84 and the values returned here are just nominal
+ *      values that may be used to generate output products with this model.
+ */
+void
+CPCIDSKRPCModelSegment::GetMapUnits(std::string& map_units,
+                                    std::string& proj_parms) const
 {
-    return pimpl_->map_units;
-}
+    map_units = pimpl_->map_units;
+    proj_parms = pimpl_->proj_parms;
+    return;
+}// GetMapUnits
 
-// Set the Geosys string
-void CPCIDSKRPCModelSegment::SetGeosysString(const std::string& geosys)
+
+/******************************************************************************/
+/*      SetMapUnits()                                                         */
+/******************************************************************************/
+/**
+ * Set output projection information of the RPC math model.
+ *
+ * @param[in] map_units PCI mapunits string
+ * @param[in] proj_parms Additional projection parameters, encoded as a
+ *      string.
+ *
+ * @remarks If false == IsUserGenerated(), then this projection represents
+ *      the projection that is utilized by the RPC's ground-to-image
+ *      coefficients, i.e., the projection that must be used when performing
+ *      ground-to-image or image-to-ground projections with the model.
+ * @remarks If true == IsUserGenerated(), then the RPC math model's projection
+ *      is Geographic WGS84 and the values returned here are just nominal
+ *      values that may be used to generate output products with this model.
+ */
+void
+CPCIDSKRPCModelSegment::SetMapUnits(std::string const& map_units,
+                                    std::string const& proj_parms)
 {
-    if (geosys.size() > 16) {
+    if (map_units.size() > 16)
+    {
         return ThrowPCIDSKException("GeoSys/MapUnits string must be no more than "
             "16 characters to be valid.");
     }
-    pimpl_->map_units = geosys;
+    if (proj_parms.size() > 256)
+    {
+        return ThrowPCIDSKException("GeoSys/Projection parameters string must be no more than "
+            "256 characters to be valid.");
+    }
+    pimpl_->map_units = map_units;
+    pimpl_->proj_parms = proj_parms;
     mbModified = true;
 }
 

@@ -70,6 +70,7 @@ namespace PCIDSK
             { Put( (uint64) value, offset, size ); }
 
         void        PutBin(double value, int offset);
+        void        PutBin(int16 value, int offset);
 
         void        SetSize( int size );
 

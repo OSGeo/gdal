@@ -59,11 +59,15 @@ void CLinkSegment::Load()
         return;
     }
 
-    assert(data_size - 1024 == 1 * 512);
-
-    seg_data.SetSize(static_cast<int>(data_size) - 1024); // should be 1 * 512
+    seg_data.SetSize(data_size < 1024 ? -1 : (int) (data_size - 1024));
 
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
+
+    if (seg_data.buffer_size < 8)
+    {
+        path.clear();
+        return;
+    }
 
     if (!STARTS_WITH(seg_data.buffer, "SysLinkF"))
     {
@@ -71,12 +75,19 @@ void CLinkSegment::Load()
         return;
     }
 
-    path = std::string(&seg_data.buffer[8]);
-    // Remove trailing spaces
-    size_t nPos = path.size();
-    while( nPos > 0 && path[nPos-1] == ' ' )
-        nPos --;
-    path.resize(nPos);
+    const char * pszEnd = seg_data.buffer + seg_data.buffer_size;
+    const char * pszPathStart = seg_data.buffer + 8;
+    const char * pszPathEnd = pszPathStart;
+
+    // Find the end of the path.
+    while (pszPathEnd < pszEnd && *pszPathEnd)
+        ++pszPathEnd;
+
+    // Remove trailing spaces.
+    while (pszPathEnd > pszPathStart && *pszPathEnd == ' ')
+        --pszPathEnd;
+
+    path = std::string(pszPathStart, pszPathEnd);
 
     // We've now loaded the structure up with data. Mark it as being loaded
     // properly.

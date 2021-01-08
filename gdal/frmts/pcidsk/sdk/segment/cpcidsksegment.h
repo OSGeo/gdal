@@ -56,16 +56,14 @@ namespace PCIDSK
             const char *segment_pointer );
         virtual ~CPCIDSKSegment();
 
-        void        LoadSegmentPointer( const char *segment_pointer );
+        void        LoadSegmentPointer( const char *segment_pointer ) override final;
         void        LoadSegmentHeader();
 
         PCIDSKBuffer &GetHeader() { return header; }
         void        FlushHeader();
 
-        bool      GetUpdatable() const override;
         void      WriteToFile( const void *buffer, uint64 offset, uint64 size ) override;
         void      ReadFromFile( void *buffer, uint64 offset, uint64 size ) override;
-        void      CheckFileBigEnough( uint64 bytes_to_read );
 
         eSegType    GetSegmentType() override { return segment_type; }
         std::string GetName() override { return segment_name; }
@@ -73,7 +71,9 @@ namespace PCIDSK
         int         GetSegmentNumber() override { return segment; }
         bool        IsContentSizeValid() const override { return data_size >= 1024; }
         uint64      GetContentSize() override { return data_size - 1024; }
+        uint64      GetContentOffset() override { return data_offset; }
         bool        IsAtEOF() override;
+        bool        CanExtend(uint64 size) const override;
 
         void        SetDescription( const std::string &description) override;
 
@@ -101,6 +101,7 @@ namespace PCIDSK
 
         uint64      data_offset;     // includes 1024 byte segment header.
         uint64      data_size;
+        uint64      data_size_limit;
 
         PCIDSKBuffer header;
 

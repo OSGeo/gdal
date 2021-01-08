@@ -133,9 +133,6 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
     {
         bool needs_swap = !BigEndianSystem();
 
-        auto offset = offset_on_disk_within_section
-                              + vs->vh.section_offsets[hsec_shape] + 8;
-        vs->CheckFileBigEnough ( offset + 4 * block_count );
         try
         {
             block_index.resize( block_count );
@@ -148,7 +145,8 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
         if( block_count > 0 )
         {
             vs->ReadFromFile( &(block_index[0]),
-                              offset,
+                              offset_on_disk_within_section
+                              + vs->vh.section_offsets[hsec_shape] + 8,
                               4 * block_count );
 
             if( needs_swap )

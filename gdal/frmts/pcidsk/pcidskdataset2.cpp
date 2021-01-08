@@ -2036,6 +2036,13 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
             osOptions += " ";
             osOptions += pszValue;
         }
+
+        pszValue = CSLFetchNameValue( papszParmList, "TILEVERSION" );
+        if( pszValue != nullptr )
+        {
+            osOptions += " TILEV";
+            osOptions += pszValue;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2282,6 +2289,7 @@ void GDALRegister_PCIDSK()
 "       <Value>JPEG</Value>"
 "   </Option>"
 "   <Option name='TILESIZE' type='int' default='127' description='Tile Size (INTERLEAVING=TILED only)'/>"
+"   <Option name='TILEVERSION' type='int' default='2' description='Tile Version (INTERLEAVING=TILED only)'/>"
 "</CreationOptionList>" );
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
                                "<LayerCreationOptionList/>" );

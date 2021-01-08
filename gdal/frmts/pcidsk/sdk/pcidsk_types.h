@@ -29,25 +29,30 @@
 
 #include "pcidsk_config.h"
 
-#include <string>
-
 namespace PCIDSK
 {
     //! Channel pixel data types.
-    typedef enum {
-        CHN_8U=0,     /*!< 8 bit unsigned byte */
-        CHN_16S=1,    /*!< 16 bit signed integer */
-        CHN_16U=2,    /*!< 16 bit unsigned integer */
-        CHN_32R=3,    /*!< 32 bit ieee floating point */
-        CHN_C16U=4,     /*!< 16-bit unsigned integer, complex */
-        CHN_C16S=5,     /*!< 16-bit signed integer, complex */
-        CHN_C32R=6,     /*!< 32-bit IEEE-754 Float, complex */
-        CHN_BIT=7,      /*!< 1bit unsigned (packed bitmap) */
+    enum eChanType{
+        CHN_8U,     /*!< 8 bit unsigned byte */
+        CHN_16S,    /*!< 16 bit signed integer */
+        CHN_16U,    /*!< 16 bit unsigned integer */
+        CHN_32S,      /*!< 32 bit signed integer */
+        CHN_32U,      /*!< 32 bit unsigned integer */
+        CHN_32R,    /*!< 32 bit ieee floating point */
+        CHN_64S,      /*!< 64 bit signed integer */
+        CHN_64U,      /*!< 64 bit unsigned integer */
+        CHN_64R,      /*!< 64 bit ieee floating point */
+        CHN_C16S,     /*!< 16-bit signed integer, complex */
+        CHN_C16U,     /*!< 16-bit unsigned integer, complex */
+        CHN_C32S,     /*!< 32-bit signed integer, complex */
+        CHN_C32U,     /*!< 32-bit unsigned integer, complex */
+        CHN_C32R,     /*!< 32-bit IEEE-754 Float, complex */
+        CHN_BIT,      /*!< 1bit unsigned (packed bitmap) */
         CHN_UNKNOWN=99 /*!< unknown channel type */
-    } eChanType;
+    };
 
     //! Segment types.
-    typedef enum {
+    enum eSegType {
         SEG_UNKNOWN = -1,
 
         SEG_BIT = 101,
@@ -65,13 +70,18 @@ namespace PCIDSK
         SEG_SYS = 182,
         SEG_GCPOLD = 214,
         SEG_GCP2 = 215
-    } eSegType;
+    };
+
+    enum eInterpolationType {
+        INTERP_UNKNOWN = -1,
+        INTERP_LINEAR = 1
+    };
 
     // Helper functions for working with segments and data types
     int PCIDSK_DLL DataTypeSize( eChanType );
-    std::string PCIDSK_DLL DataTypeName( eChanType );
-    std::string PCIDSK_DLL SegmentTypeName( int /* eSegType actually */ );
-    eChanType PCIDSK_DLL GetDataTypeFromName(std::string const& type_name);
+    const char PCIDSK_DLL * DataTypeName( eChanType );
+    const char PCIDSK_DLL * SegmentTypeName( int );
+    eChanType PCIDSK_DLL GetDataTypeFromName(const char * pszDataType);
     bool PCIDSK_DLL IsDataTypeComplex(eChanType type);
 
 } // end namespace PCIDSK

@@ -1,0 +1,244 @@
+/******************************************************************************
+ *
+ * Purpose:  Documentation for the PCIDSKChannel class.
+ * 
+ ******************************************************************************
+ * Copyright (c) 2009
+ * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+/** 
+
+******************************************************************************
+\class PCIDSK::PCIDSKSegment
+
+This class interface is used for access to PCIDSK segments and associated
+data.  The class should never be instantiated by the application.  Instead
+all instances are owned by the corresponding PCIDSK::PCIDSKFile object
+and a pointer can be fetched using PCIDSKFile::GetSegment() or related
+methods. 
+
+Some segments types such as binary (SEG_BIN) provide no custom interfaces
+and can only be accessed using the generic PCIDSKSegment methods.   Others,
+such as georeferencing segments (SEG_GEO) offer additional segment specific
+interfaces via multiple inheritance.  Use dynamic casts to get access to
+the type specific interfaces.  
+
+Example:
+
+@code
+  PCIDSK::PCIDSKSegment *seg = file->GetSegment(1);
+
+  if( seg->GetSegmentType() == PCIDSK::SEG_GEO )
+  {									
+      PCIDSK::PCIDSKGeoref *georef = dynamic_cast<PCIDSK::PCIDSKGeoref*>( seg );
+
+      printf( "Geosys = %s\n", georef->GetGeosys() );
+  }
+@endcode
+
+@see PCIDSKGeoref, PCIDSKVectorSegment, PCIDSK_PCT, PCIDSKChannel, PCIDSK_TEX, PCIDSKGCPSegment, PCIDSKRPCSegment
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKSegment::WriteToFile( const void *buffer, uint64 offset, uint64 size);
+
+\brief Write data to segment.
+
+Write to data area of this segment.  Offset zero refers to the start of the 
+data area of the segment, access to to the segment header is not available
+via WriteToFile().
+
+@param buffer pointer to the data to write to disk.
+@param offset the byte offset in the file (zero based) at which to write the data.
+@param size the number of bytes from buffer to write.
+
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKSegment::ReadFromFile( void *buffer, uint64 offset, uint64 size);
+
+\brief Read data from segment.
+
+Read from data area of this segment.  Offset zero refers to the start of the 
+data area of the segment, access to to the segment header is not available
+via ReadFromFile().
+
+@param buffer pointer to the buffer into which the data should be read.
+@param offset the byte offset in the file (zero based) at which to read the data.
+@param size the number of bytes from the file to read.
+
+******************************************************************************
+\fn eSegType PCIDSK::PCIDSKSegment::GetSegmentType();
+
+\brief Fetch segment type.
+
+@return the type of this segment.  
+
+******************************************************************************
+\fn const char *PCIDSK::PCIDSKSegment::GetName();
+
+\brief Fetch segment name.
+
+The returned pointer is to internally managed data of the PCIDSKSegment, and
+should not be modified, freed, or used after the segment object ceases to exist.
+The name is at most eight characters long.
+
+@return the segment name.
+
+******************************************************************************
+\fn const char *PCIDSK::PCIDSKSegment::GetDescription();
+
+\brief Fetch segment description.
+
+The returned pointer is to internally managed data of the PCIDSKSegment, and
+should not be modified, freed, or used after the segment object ceases to exist.
+The description is at most 80 characters long.
+
+@return the segment description.
+
+******************************************************************************
+\fn int PCIDSK::PCIDSKSegment::GetSegmentNumber();
+
+\brief Fetch segment number.
+
+@return the segment number (1+).
+
+******************************************************************************
+\fn std::vector<std::string> PCIDSK::PCIDSKSegment::GetMetadataKeys();
+
+\brief Fetch metadata keys
+
+Returns a vector of metadata keys that occur on this object.  The values
+associated with each may be fetched with GetMetadataValue().
+
+@return list of keys
+
+@see GetMetadataValue()
+
+******************************************************************************
+\fn std::string PCIDSK::PCIDSKSegment::GetMetadataValue( const std::string &key );
+
+\brief Fetch metadata value
+
+Note that the returned pointer is to an internal structure and it may become 
+invalid if another thread modifies the metadata for this object.
+
+@param key the key to fetch the value for.
+
+@return the value of the indicated metadata item, or NULL if it does not 
+exist on the target object.
+
+@see GetMetadataKeys()
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKSegment::SetMetadataValue( const std::string &key, const std::string &value );
+
+\brief Set metadata value
+
+Assign  the metadata value associated with the passed key on this object.  
+The file needs to be open for update.  Note that keys should be well formed
+tokens (no special characters, spaces, etc).
+
+@param key the key to fetch the value for.  
+
+@param value the value to assign to the key.  An empty string deletes the item.
+
+@see GetMetadataValue()
+ 
+******************************************************************************
+\fn bool PCIDSK::PCIDSKSegment::IsAtEOF();
+
+\brief Is segment last in file?
+
+Returns true if the segment is the last one in the file, and thus can be 
+grown without having to move it.  Primarily this method is used by the 
+SDK itself. 
+
+@return true if segment at EOF or false otherwise.
+
+******************************************************************************
+\fn uint64 PCIDSK::PCIDSKSegment::GetContentSize();
+
+\brief Get size of segment data.
+
+Returns the size of the data portion of this segment (header excluded) 
+in bytes.  
+
+@return segment data size in bytes.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKSegment::Synchronize();
+
+\brief Write pending information to disk.
+
+Some write and update operations on PCIDSK files are not written to disk 
+immediately after write calls.  This method will ensure that any pending
+writes are flushed through to disk.  
+
+NOTE: Currently this method does not invalidate read-cached information. 
+At some point in the future it might be extended to do this as well.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKSegment::SetDescription( const std::string &description);
+
+\brief Set segment description.
+
+@param description a string of up to 64 characters.
+
+******************************************************************************
+\fn std::vector<std::string> PCIDSK::PCIDSKSegment::GetHistoryEntries() const;
+
+\brief fetch history records
+
+@return a vector of the 8 history records for this segment.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKSegment::SetHistoryEntries( const std::vector<std::string> &entries );
+
+\brief Set all history records.
+
+Normally applications will just use the PushHistory() method.  This method
+is used for bulk copying of history for special situations.
+
+@param entries - should be a vector of 8 strings of at most 80 characters.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKSegment::PushHistory( const std::string &app, const std::string &message );
+
+\brief Push a new history message.
+
+This method will push a new history message at the front of the history 
+stack.  The top seven history messages will be pushed down one to make space
+and the last one will be lost.  The current date is automatically appended to 
+the message.  
+
+@param app the application name, only 7 characters are used.
+@param message the history message, only 56 characters are used.
+
+******************************************************************************
+\fn void PCIDSK::PCIDSKSegment::Initialize();
+
+\brief Internal segment initializer.
+
+This method is only intended to be called by PCIDSKFile::CreateSegment().  It
+should never be called by application code.
+
+*/
+

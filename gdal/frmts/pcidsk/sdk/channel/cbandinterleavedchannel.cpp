@@ -43,8 +43,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
-
-#include "cpl_port.h"
+#include <climits>
 
 using namespace PCIDSK;
 
@@ -92,9 +91,9 @@ CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
         file->GetIODetails( &io_handle_p, &io_mutex_p );
 
     else
-        filename = MergeRelativePath( file->GetInterfaces()->io,
-                                      file->GetFilename(),
-                                      filename );
+        filename = file->GetInterfaces()->MergeRelativePath( file->GetInterfaces()->io,
+                                     file->GetFilename(),
+                                     filename );
 }
 
 /************************************************************************/
@@ -116,6 +115,27 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
 
 {
     PCIDSKInterfaces *interfaces = file->GetInterfaces();
+
+/* -------------------------------------------------------------------- */
+/*      Check if we are reading from a valid channel.                   */
+/* -------------------------------------------------------------------- */
+    if (line_offset > std::numeric_limits<uint64>::max() / height)
+    {
+        return ThrowPCIDSKException(0, "Invalid line_offset: " PCIDSK_FRMT_UINT64,
+                                    line_offset);
+    }
+
+    if (pixel_offset > line_offset)
+    {
+        return ThrowPCIDSKException(0, "Invalid pixel_offset: " PCIDSK_FRMT_UINT64,
+                                    pixel_offset);
+    }
+
+    if (start_byte > std::numeric_limits<uint64>::max() - line_offset * height)
+    {
+        return ThrowPCIDSKException(0, "Invalid start_byte: " PCIDSK_FRMT_UINT64,
+                                    start_byte);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Default window if needed.                                       */
@@ -143,8 +163,6 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
 /*      Establish region to read.                                       */
 /* -------------------------------------------------------------------- */
     int    pixel_size = DataTypeSize( pixel_type );
-    uint64 offset = start_byte + line_offset * block_index
-        + pixel_offset * xoff;
     if( xsize > 1 && pixel_offset > static_cast<uint64>(INT_MAX / (xsize - 1)) )
     {
         return ThrowPCIDSKException( 0, "Int overfow in ReadBlock() ");
@@ -166,6 +184,9 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
 /*      If the imagery is packed, we can read directly into the         */
 /*      target buffer.                                                  */
 /* -------------------------------------------------------------------- */
+    uint64 offset = start_byte + line_offset * block_index
+        + pixel_offset * xoff;
+
     if( pixel_size == (int) pixel_offset )
     {
         MutexHolder holder( *io_mutex_p );
@@ -216,6 +237,27 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
 
 {
     PCIDSKInterfaces *interfaces = file->GetInterfaces();
+
+/* -------------------------------------------------------------------- */
+/*      Check if we are writing to a valid channel.                     */
+/* -------------------------------------------------------------------- */
+    if (line_offset > std::numeric_limits<uint64>::max() / height)
+    {
+        return ThrowPCIDSKException(0, "Invalid line_offset: " PCIDSK_FRMT_UINT64,
+                                    line_offset);
+    }
+
+    if (pixel_offset > line_offset)
+    {
+        return ThrowPCIDSKException(0, "Invalid pixel_offset: " PCIDSK_FRMT_UINT64,
+                                    pixel_offset);
+    }
+
+    if (start_byte > std::numeric_limits<uint64>::max() - line_offset * height)
+    {
+        return ThrowPCIDSKException(0, "Invalid start_byte: " PCIDSK_FRMT_UINT64,
+                                    start_byte);
+    }
 
     if( !file->GetUpdatable() )
         return ThrowPCIDSKException(0, "File not open for update in WriteBlock()" );
@@ -422,7 +464,7 @@ void CBandInterleavedChannel
 /* -------------------------------------------------------------------- */
 /*      Update local configuration.                                     */
 /* -------------------------------------------------------------------- */
-    this->filename = MergeRelativePath( file->GetInterfaces()->io,
+    this->filename = file->GetInterfaces()->MergeRelativePath( file->GetInterfaces()->io,
                                         file->GetFilename(),
                                         filenameIn );
 

@@ -52,6 +52,10 @@ namespace PCIDSK {
             }
             mpoEphemeris = new EphemerisSeg_t(oEph);
             mbModified = true;
+
+            //we set loaded to true to trigger the Write during synchronize
+            //else if the segment has just been created it will not be saved.
+            this->loaded_ = true;
         }
 
         //synchronize the segment on disk.
