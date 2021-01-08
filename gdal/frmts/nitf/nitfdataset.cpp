@@ -4592,6 +4592,12 @@ NITFDataset::NITFCreateCopy(
         GDALWriteRPCTXTFile( pszFilename, papszRPC );
     }
 
+    if( papszRPC != nullptr &&
+        CPLFetchBool(papszFullOptions, "RPCTXT", false))
+    {
+        GDALWriteRPCSensorMLFile( pszFilename, papszRPC );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
