@@ -2622,6 +2622,11 @@ class GDAL2Tiles(object):
         args['publishurl'] = self.options.url  # not used
         args['copyright'] = self.options.copyright.replace('"', '\\"')
 
+        if self.options.xyz:
+            args['tms'] = 0
+        else:
+            args['tms'] = 1
+
         s = """<!DOCTYPE html>
         <html lang="en">
           <head>
@@ -2677,7 +2682,7 @@ class GDAL2Tiles(object):
         var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
 
         // Overlay layers (TMS)
-        var lyr = L.tileLayer('./{z}/{x}/{y}.%(tileformat)s', {tms: true, opacity: 0.7, attribution: "%(copyright)s", minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
+        var lyr = L.tileLayer('./{z}/{x}/{y}.%(tileformat)s', {tms: %(tms)s, opacity: 0.7, attribution: "%(copyright)s", minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
 
         // Map
         var map = L.map('map', {
