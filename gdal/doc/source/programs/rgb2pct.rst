@@ -35,10 +35,10 @@ maximize output image visual quality.
 
 .. option:: -pct <palette_file>
 
-    Extract the color table from
-    <palette_file> instead of computing it. Can be used to have a consistent
-    color table for multiple files.  The<palette_file> must be a raster file
-    in a GDAL supported format with a palette.
+    Extract the color table from <palette_file> instead of computing it.
+    Can be used to have a consistent color table for multiple files.
+    The<palette_file> must be either a raster file in a GDAL supported format with a palette
+    or a color file in a supported format (txt, qml, qlr).
 
 .. option:: -of <format>
 
@@ -55,8 +55,7 @@ maximize output image visual quality.
 
     The output pseudo-colored file that will be created.
 
-NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
-with Python support.
+NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built with Python support.
 
 Example
 -------
