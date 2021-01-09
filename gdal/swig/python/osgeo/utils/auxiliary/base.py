@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # ******************************************************************************
 #
-#  Project:  GDAL sctipts
-#  Purpose:  useful utility functions for this package
+#  Project:  GDAL utils.auxiliary
+#  Purpose:  general use utility functions
 #  Author:   Even Rouault <even.rouault at spatialys.com>
 #  Author:   Idan Miara <idan@miara.com>
 #

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # ******************************************************************************
 #
-#  Project:  GDAL sctipts
-#  Purpose:  useful utility functions for this package
+#  Project:  GDAL utils.auxiliary
+#  Purpose:  gdal utility functions
 #  Author:   Even Rouault <even.rouault at spatialys.com>
 #  Author:   Idan Miara <idan@miara.com>
 #
@@ -29,6 +29,7 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
+
 from typing import Optional, Union
 
 from osgeo import gdal
@@ -117,7 +118,7 @@ class OpenDS:
             self.ds = filename_or_ds
         self.args = args
         self.kwargs = kwargs
-        self.own = None
+        self.own = False
         self.silent_fail = silent_fail
 
     def __enter__(self) -> gdal.Dataset:
@@ -131,7 +132,7 @@ class OpenDS:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.own:
-            self.ds = None
+            self.ds = False
 
     @staticmethod
     def _open_ds(
@@ -146,14 +147,11 @@ class OpenDS:
         if ovr_idx > 0:
             open_options["OVERVIEW_LEVEL"] = ovr_idx - 1  # gdal overview 0 is the first overview (after the base layer)
         if logger is not None:
-            s = 'openning file: "{}"'.format(filename)
+            s = 'opening file: "{}"'.format(filename)
             if open_options:
                 s = s + " with options: {}".format(str(open_options))
             logger.debug(s)
         if open_options:
             open_options = ["{}={}".format(k, v) for k, v in open_options.items()]
 
-        if open_options:
-            return gdal.OpenEx(str(filename), open_options=open_options)
-        else:
-            return gdal.Open(str(filename), access_mode)
+        return gdal.OpenEx(str(filename), access_mode, open_options=open_options)
