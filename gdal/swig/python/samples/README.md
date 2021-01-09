@@ -10,10 +10,6 @@ Python interface may be used in your applications.
     Script demonstrates how to assemble polygons from arcs.
     Demonstrates various aspects of OGR Python API.
 
-`attachpct.py`
-
-    Simple command line program for copying the color table of a raster into another raster.
-
 `fft.py`
 
     Script to perform forward and inverse two-dimensional fast Fourier transform.
