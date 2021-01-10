@@ -42,9 +42,6 @@ void OGRRegisterAll()
 
 void OGRRegisterAllInternal()
 {
-#ifdef DB2_ENABLED
-    RegisterOGRDB2();
-#endif
 #ifdef SHAPE_ENABLED
     RegisterOGRShape();
 #endif

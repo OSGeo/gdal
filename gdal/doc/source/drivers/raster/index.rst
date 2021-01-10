@@ -43,7 +43,6 @@ Raster drivers
    ctable2
    ctg
    daas
-   db2
    dds
    derived
    dimap

@@ -33,7 +33,6 @@ Vector drivers
    couchdb
    csv
    csw
-   db2
    dgn
    dgnv8
    dods
