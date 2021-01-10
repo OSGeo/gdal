@@ -107,7 +107,7 @@ fixer_names = [
 ]
 extra = {}
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
     from setuptools import Extension
     HAVE_SETUPTOOLS = True
 except ImportError:
@@ -402,7 +402,11 @@ if GNM_ENABLED:
 if HAVE_NUMPY:
     ext_modules.append(array_module)
 
-packages = ["osgeo", "osgeo.utils", "osgeo.utils.auxiliary"]
+if HAVE_SETUPTOOLS:
+    packages = find_packages()
+else:
+    packages = ['osgeo', 'osgeo.utils', 'osgeo.utils.auxiliary']
+package_dir = {'': '.'}  # package sources are under the same dir as setup.py
 
 readme = str(open('README.rst', 'rb').read())
 
@@ -422,7 +426,6 @@ classifiers = [
     'Intended Audience :: Science/Research',
     'License :: OSI Approved :: MIT License',
     'Operating System :: OS Independent',
-    'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 3',
     'Programming Language :: C',
     'Programming Language :: C++',
@@ -439,7 +442,6 @@ else:
 
 exclude_package_data = {'': ['GNUmakefile']}
 
-
 setup_kwargs = dict(
     name=name,
     version=gdal_version,
@@ -453,7 +455,9 @@ setup_kwargs = dict(
     license=license_type,
     classifiers=classifiers,
     packages=packages,
+    package_dir=package_dir,
     url=url,
+    python_requires='>=3.6.0',
     data_files=data_files,
     ext_modules=ext_modules,
     scripts=glob('scripts/*.py'),
