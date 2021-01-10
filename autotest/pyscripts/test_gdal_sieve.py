@@ -50,7 +50,7 @@ def test_gdal_sieve_1():
     dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte)
     dst_ds = None
 
-    test_py_scripts.run_py_script(script_path, 'gdal_sieve', '-nomask -st 2 -4 ../alg/data/sieve_src.grd tmp/sieve_1.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_sieve', '-nomask -st 2 -4 '+test_py_scripts.get_data_path('alg')+'sieve_src.grd tmp/sieve_1.tif')
 
     dst_ds = gdal.Open('tmp/sieve_1.tif')
     dst_band = dst_ds.GetRasterBand(1)
@@ -70,6 +70,6 @@ def test_gdal_sieve_1():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    
+
 
 

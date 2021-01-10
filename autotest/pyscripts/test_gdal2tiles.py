@@ -42,7 +42,7 @@ def _verify_raster_band_checksums(filename, expected_cs=[]):
     ds = gdal.Open(filename)
     if ds is None:
         pytest.fail('cannot open output file "%s"' % filename)
-    
+
     num_bands = len(expected_cs)
     for i in range(num_bands):
         if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
@@ -57,7 +57,7 @@ def test_gdal2tiles_py_simple():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld.tif')
+    shutil.copy(test_py_scripts.get_data_path('gdrivers')+'small_world.tif', 'tmp/out_gdal2tiles_smallworld.tif')
 
     os.chdir('tmp')
     test_py_scripts.run_py_script(
@@ -77,7 +77,7 @@ def test_gdal2tiles_py_simple():
         assert os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename), \
             ('%s missing' % filename)
 
-    
+
 
 def test_gdal2tiles_py_zoom_option():
 
@@ -93,7 +93,7 @@ def test_gdal2tiles_py_zoom_option():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q --force-kml --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q --force-kml --processes=2 -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
 
     _verify_raster_band_checksums(
         'tmp/out_gdal2tiles_smallworld/1/0/0.png',
@@ -132,7 +132,7 @@ def test_gdal2tiles_py_resampling_option():
             script_path,
             'gdal2tiles',
             '-q --resampling={0} {1} {2}'.format(
-                resample, '../gdrivers/data/small_world.tif', out_dir))
+                resample, test_py_scripts.get_data_path('gdrivers')+'small_world.tif', out_dir))
 
         # very basic check
         ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
@@ -149,7 +149,7 @@ def test_gdal2tiles_py_xyz():
         pytest.skip()
 
     try:
-        shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld_xyz.tif')
+        shutil.copy(test_py_scripts.get_data_path('gdrivers')+'small_world.tif', 'tmp/out_gdal2tiles_smallworld_xyz.tif')
 
         os.chdir('tmp')
         ret = test_py_scripts.run_py_script(
@@ -187,8 +187,8 @@ def test_gdal2tiles_py_invalid_srs():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gdrivers/data/test_nosrs.vrt', 'tmp/out_gdal2tiles_test_nosrs.vrt')
-    shutil.copy('../gdrivers/data/byte.tif', 'tmp/byte.tif')
+    shutil.copy(test_py_scripts.get_data_path('gdrivers')+'test_nosrs.vrt', 'tmp/out_gdal2tiles_test_nosrs.vrt')
+    shutil.copy(test_py_scripts.get_data_path('gdrivers')+'byte.tif', 'tmp/byte.tif')
 
     os.chdir('tmp')
     # try running on image with missing SRS
@@ -240,7 +240,7 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
             'Case of tile not getting any data not handled properly '
             '(tiles at the border of the image)')
 
-    
+
 
 def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
     """
@@ -268,7 +268,7 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
             'Case of low level tile not getting any data not handled properly '
             '(tile at a zoom level too low)')
 
-    
+
 
 def test_python2_handles_utf8_by_default():
     if sys.version_info[0] >= 3:
@@ -383,7 +383,7 @@ def test_gdal2tiles_py_cleanup():
         except Exception:
             pass
 
-    
+
 
 def test_exclude_transparent_tiles():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
@@ -431,7 +431,7 @@ def test_gdal2tiles_py_profile_raster():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q -p raster -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q -p raster -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
 
     if sys.platform != 'win32':
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
@@ -462,7 +462,7 @@ def test_gdal2tiles_py_profile_raster_xyz():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q -p raster --xyz -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q -p raster --xyz -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
 
     if sys.platform != 'win32':
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
@@ -493,7 +493,7 @@ def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q -p geodetic --tmscompatible --xyz -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q -p geodetic --tmscompatible --xyz -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
 
     if sys.platform != 'win32':
         # For some reason, the checksums on the kml file on Windows are the ones of the below png
@@ -521,7 +521,7 @@ def test_gdal2tiles_py_mapml():
 
     shutil.rmtree('tmp/out_gdal2tiles_mapml', ignore_errors=True)
 
-    gdal.Translate('tmp/byte_APS.tif', '../gcore/data/byte.tif',
+    gdal.Translate('tmp/byte_APS.tif', test_py_scripts.get_data_path('gcore') + 'byte.tif',
                    options='-a_srs EPSG:5936 -a_ullr 0 40 40 0')
 
     test_py_scripts.run_py_script_as_external_script(

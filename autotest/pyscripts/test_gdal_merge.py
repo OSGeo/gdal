@@ -47,7 +47,7 @@ def test_gdal_merge_1():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'gdal_merge', '-o tmp/test_gdal_merge_1.tif ../gcore/data/byte.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_merge', '-o tmp/test_gdal_merge_1.tif ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
 
     ds = gdal.Open('tmp/test_gdal_merge_1.tif')
     assert ds.GetRasterBand(1).Checksum() == 4672

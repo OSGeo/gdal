@@ -50,7 +50,7 @@ def test_rgb2pct_1():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'rgb2pct', '../gcore/data/rgbsmall.tif tmp/test_rgb2pct_1.tif')
+    test_py_scripts.run_py_script(script_path, 'rgb2pct', test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif tmp/test_rgb2pct_1.tif')
 
     ds = gdal.Open('tmp/test_rgb2pct_1.tif')
     assert ds.GetRasterBand(1).Checksum() == 31231
@@ -76,7 +76,7 @@ def test_pct2rgb_1():
     ds = gdal.Open('tmp/test_pct2rgb_1.tif')
     assert ds.GetRasterBand(1).Checksum() == 20963
 
-    ori_ds = gdal.Open('../gcore/data/rgbsmall.tif')
+    ori_ds = gdal.Open(test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif')
     max_diff = gdaltest.compare_ds(ori_ds, ds)
     assert max_diff <= 18
 
@@ -93,7 +93,7 @@ def test_rgb2pct_2():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'rgb2pct', '-n 16 ../gcore/data/rgbsmall.tif tmp/test_rgb2pct_2.tif')
+    test_py_scripts.run_py_script(script_path, 'rgb2pct', '-n 16 ' + test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif tmp/test_rgb2pct_2.tif')
 
     ds = gdal.Open('tmp/test_rgb2pct_2.tif')
     assert ds.GetRasterBand(1).Checksum() == 16596
@@ -116,7 +116,7 @@ def test_rgb2pct_3():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'rgb2pct', '-pct tmp/test_rgb2pct_2.tif ../gcore/data/rgbsmall.tif tmp/test_rgb2pct_3.tif')
+    test_py_scripts.run_py_script(script_path, 'rgb2pct', '-pct tmp/test_rgb2pct_2.tif ' + test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif tmp/test_rgb2pct_3.tif')
 
     ds = gdal.Open('tmp/test_rgb2pct_3.tif')
     assert ds.GetRasterBand(1).Checksum() == 16596
@@ -144,10 +144,10 @@ def test_pct2rgb_4():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'pct2rgb', '-rgba ../gcore/data/rat.img tmp/test_pct2rgb_4.tif')
+    test_py_scripts.run_py_script(script_path, 'pct2rgb', '-rgba ' + test_py_scripts.get_data_path('gcore') + 'rat.img tmp/test_pct2rgb_4.tif')
 
     ds = gdal.Open('tmp/test_pct2rgb_4.tif')
-    ori_ds = gdal.Open('../gcore/data/rat.img')
+    ori_ds = gdal.Open(test_py_scripts.get_data_path('gcore') + 'rat.img')
 
     ori_data = struct.unpack('H', ori_ds.GetRasterBand(1).ReadRaster(1990, 1990, 1, 1, 1, 1))[0]
     data = (struct.unpack('B', ds.GetRasterBand(1).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
@@ -166,7 +166,7 @@ def test_pct2rgb_4():
 
 def test_gdalattachpct_1():
     pct_filename = 'tmp/test_rgb2pct_2.tif'
-    src_filename = '../gcore/data/rgbsmall.tif'
+    src_filename = test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif'
     pct_filename4 = 'tmp/test_gdalattachpct_1_4.txt'
 
     # pct from raster

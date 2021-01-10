@@ -44,7 +44,7 @@ def test_gdalinfo_py_1():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('Driver: GTiff/GeoTIFF') != -1
 
 ###############################################################################
@@ -56,7 +56,7 @@ def test_gdalinfo_py_2():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-checksum ../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-checksum ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('Checksum=4672') != -1
 
 ###############################################################################
@@ -68,10 +68,10 @@ def test_gdalinfo_py_3():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('Metadata') != -1
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-nomd ../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-nomd ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('Metadata') == -1
 
 ###############################################################################
@@ -83,10 +83,10 @@ def test_gdalinfo_py_4():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/gif/bug407.gif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gdrivers')+'gif/bug407.gif')
     assert ret.find('0: 255,255,255,255') != -1
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-noct ../gdrivers/data/gif/bug407.gif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-noct '+test_py_scripts.get_data_path('gdrivers')+'gif/bug407.gif')
     assert ret.find('0: 255,255,255,255') == -1
 
 ###############################################################################
@@ -99,18 +99,18 @@ def test_gdalinfo_py_5():
         pytest.skip()
 
     try:
-        os.remove('../gcore/data/byte.tif.aux.xml')
+        os.remove(test_py_scripts.get_data_path('gcore') + 'byte.tif.aux.xml')
     except OSError:
         pass
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('STATISTICS_MINIMUM=74') == -1, 'got wrong minimum.'
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-stats ../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-stats ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('STATISTICS_MINIMUM=74') != -1, 'got wrong minimum (2).'
 
     # We will blow an exception if the file does not exist now!
-    os.remove('../gcore/data/byte.tif.aux.xml')
+    os.remove(test_py_scripts.get_data_path('gcore') + 'byte.tif.aux.xml')
 
 ###############################################################################
 # Test a dataset with overviews and RAT
@@ -121,7 +121,7 @@ def test_gdalinfo_py_6():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/hfa/int.img')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gdrivers')+'hfa/int.img')
     assert ret.find('Overviews') != -1
 
 ###############################################################################
@@ -133,13 +133,13 @@ def test_gdalinfo_py_7():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/gcps.vrt')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gcore') + 'gcps.vrt')
     assert ret.find('GCP Projection =') != -1
     assert ret.find('PROJCS["NAD27 / UTM zone 11N"') != -1
     assert ret.find('(100,100) -> (446720,3745320,0)') != -1
 
     # Same but with -nogcps
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-nogcp ../gcore/data/gcps.vrt')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-nogcp ' + test_py_scripts.get_data_path('gcore') + 'gcps.vrt')
     assert ret.find('GCP Projection =') == -1
     assert ret.find('PROJCS["NAD27 / UTM zone 11N"') == -1
     assert ret.find('(100,100) -> (446720,3745320,0)') == -1
@@ -154,20 +154,20 @@ def test_gdalinfo_py_8():
         pytest.skip()
 
     try:
-        os.remove('../gcore/data/byte.tif.aux.xml')
+        os.remove(test_py_scripts.get_data_path('gcore') + 'byte.tif.aux.xml')
     except OSError:
         pass
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') == -1, \
         'did not expect histogram.'
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-hist ../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-hist ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') != -1, \
         'did not get expected histogram.'
 
     # We will blow an exception if the file does not exist now!
-    os.remove('../gcore/data/byte.tif.aux.xml')
+    os.remove(test_py_scripts.get_data_path('gcore') + 'byte.tif.aux.xml')
 
 ###############################################################################
 # Test -mdd option
@@ -178,10 +178,10 @@ def test_gdalinfo_py_9():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/nitf/fake_nsif.ntf')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gdrivers')+'nitf/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') == -1, 'Got unexpected extra MD.'
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mdd TRE ../gdrivers/data/nitf/fake_nsif.ntf')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mdd TRE '+test_py_scripts.get_data_path('gdrivers')+'nitf/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') != -1, 'did not get extra MD.'
 
 ###############################################################################
@@ -193,10 +193,10 @@ def test_gdalinfo_py_10():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('Computed Min/Max=74.000,255.000') == -1
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mm ../gcore/data/byte.tif')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mm ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
     assert ret.find('Computed Min/Max=74.000,255.000') != -1
 
 

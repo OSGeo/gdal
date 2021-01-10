@@ -37,13 +37,14 @@ from osgeo import gdal
 from osgeo import osr
 
 import gdaltest
+from test_py_scripts import samples_path
 
 ###############################################################################
 
 
 def _check_cog(filename):
 
-    path = '../../gdal/swig/python/samples'
+    path = samples_path
     if path not in sys.path:
         sys.path.append(path)
     import validate_cloud_optimized_geotiff
@@ -1000,7 +1001,7 @@ def test_cog_overview_size():
 
 def test_cog_float32_color_table():
 
-    src_ds = gdal.GetDriverByName('MEM').Create('', 1024, 1024, 1, gdal.GDT_Float32) 
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1024, 1024, 1, gdal.GDT_Float32)
     src_ds.GetRasterBand(1).Fill(1.0)
     ct = gdal.ColorTable()
     src_ds.GetRasterBand(1).SetColorTable(ct)

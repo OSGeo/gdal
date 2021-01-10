@@ -51,7 +51,7 @@ def test_gdal_proximity_1():
     dst_ds = drv.Create('tmp/proximity_1.tif', 25, 25, 1, gdal.GDT_Byte)
     dst_ds = None
 
-    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '../alg/data/pat.tif tmp/proximity_1.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_proximity', test_py_scripts.get_data_path('alg')+'pat.tif tmp/proximity_1.tif')
 
     dst_ds = gdal.Open('tmp/proximity_1.tif')
     dst_band = dst_ds.GetRasterBand(1)
@@ -65,7 +65,7 @@ def test_gdal_proximity_1():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    
+
 ###############################################################################
 # Try several options
 
@@ -76,7 +76,7 @@ def test_gdal_proximity_2():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata -1 -fixed-buf-val 255 ../alg/data/pat.tif tmp/proximity_2.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata -1 -fixed-buf-val 255 '+test_py_scripts.get_data_path('alg')+'pat.tif tmp/proximity_2.tif')
 
     dst_ds = gdal.Open('tmp/proximity_2.tif')
     dst_band = dst_ds.GetRasterBand(1)
@@ -90,7 +90,7 @@ def test_gdal_proximity_2():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    
+
 ###############################################################################
 # Try input nodata option
 
@@ -101,7 +101,7 @@ def test_gdal_proximity_3():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata 0 -use_input_nodata yes ../alg/data/pat.tif tmp/proximity_3.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata 0 -use_input_nodata yes '+test_py_scripts.get_data_path('alg')+'pat.tif tmp/proximity_3.tif')
 
     dst_ds = gdal.Open('tmp/proximity_3.tif')
     dst_band = dst_ds.GetRasterBand(1)
@@ -115,7 +115,7 @@ def test_gdal_proximity_3():
     if cs != cs_expected:
         print('Got: ', cs)
         pytest.fail('got wrong checksum')
-    
+
 ###############################################################################
 # Cleanup
 
@@ -130,7 +130,4 @@ def test_gdal_proximity_cleanup():
             os.remove(filename)
         except OSError:
             pass
-
-    
-
 
