@@ -28,6 +28,10 @@ endif
 
 CPPFLAGS	:=	 $(CPPFLAGS) $(XTRA_OPT)
 
+ifeq ($(NETCDF_MEM),yes)
+CPPFLAGS	:=	$(CPPFLAGS) -DHAVE_NETCDF_MEM
+endif
+
 ifeq ($(ENABLE_UFFD),yes)
 ifeq ($(NETCDF_MEM),yes)
 CPPFLAGS	:=	$(CPPFLAGS) -DENABLE_UFFD

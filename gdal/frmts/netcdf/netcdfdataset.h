@@ -832,6 +832,7 @@ class netCDFDataset final: public GDALPamDataset
 #ifdef ENABLE_UFFD
     cpl_uffd_context *pCtx = nullptr;
 #endif
+    VSILFILE     *fpVSIMEM = nullptr;
     int           nSubDatasets;
     char          **papszSubDatasets;
     char          **papszMetadata;

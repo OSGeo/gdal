@@ -4604,6 +4604,24 @@ def test_netcdf_hdf5_signature_not_at_beginning():
     ds = gdal.Open('data/netcdf/byte_hdf5_starting_at_offset_1024.nc')
     assert ds is not None
 
+
+###############################################################################
+# Test opening a /vsimem/ file
+
+
+def test_netcdf_open_vsimem():
+
+    if gdal.GetDriverByName('netCDF').GetMetadataItem('NETCDF_HAS_NETCDF_MEM') is None:
+        pytest.skip('NETCDF_HAS_NETCDF_MEM missing')
+
+    gdal.FileFromMemBuffer('/vsimem/test.nc',
+                           open('data/netcdf/trmm.nc', 'rb').read())
+    ds = gdal.Open('/vsimem/test.nc')
+    assert ds is not None
+    gdal.Unlink('/vsimem/test.nc')
+    assert ds.GetRasterBand(1).Checksum() == 14
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
