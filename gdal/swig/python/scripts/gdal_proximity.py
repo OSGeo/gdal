@@ -7,5 +7,5 @@ from osgeo.utils.gdal_proximity import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gdal_proximity', 'utils')
+deprecation_warn('gdal_proximity')
 sys.exit(main(sys.argv))

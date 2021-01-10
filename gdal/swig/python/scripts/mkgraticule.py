@@ -7,5 +7,5 @@ from osgeo.utils.mkgraticule import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('mkgraticule', 'utils')
+deprecation_warn('mkgraticule')
 sys.exit(main(sys.argv))

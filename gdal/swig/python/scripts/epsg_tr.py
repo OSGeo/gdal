@@ -7,5 +7,5 @@ from osgeo.utils.epsg_tr import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('epsg_tr', 'utils')
+deprecation_warn('epsg_tr')
 sys.exit(main(sys.argv))

@@ -7,5 +7,5 @@ from osgeo.utils.gcps2vec import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gcps2vec', 'utils')
+deprecation_warn('gcps2vec')
 sys.exit(main(sys.argv))

@@ -7,5 +7,5 @@ from osgeo.utils.gdal_pansharpen import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gdal_pansharpen', 'utils')
+deprecation_warn('gdal_pansharpen')
 sys.exit(main(sys.argv))

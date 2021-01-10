@@ -7,5 +7,5 @@ from osgeo.utils.gdal_auth import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gdal_auth', 'utils')
+deprecation_warn('gdal_auth')
 sys.exit(main(sys.argv))
