@@ -7,5 +7,5 @@ from osgeo.utils.gdal_sieve import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gdal_sieve', 'utils')
+deprecation_warn('gdal_sieve')
 sys.exit(main(sys.argv))

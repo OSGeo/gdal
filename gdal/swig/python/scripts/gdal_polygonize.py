@@ -7,5 +7,5 @@ from osgeo.utils.gdal_polygonize import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gdal_polygonize', 'utils')
+deprecation_warn('gdal_polygonize')
 sys.exit(main(sys.argv))

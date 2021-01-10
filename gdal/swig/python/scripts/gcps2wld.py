@@ -7,5 +7,5 @@ from osgeo.utils.gcps2wld import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gcps2wld', 'utils')
+deprecation_warn('gcps2wld')
 sys.exit(main(sys.argv))

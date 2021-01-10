@@ -7,5 +7,5 @@ from osgeo.utils.rgb2pct import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('rgb2pct', 'utils')
+deprecation_warn('rgb2pct')
 sys.exit(main(sys.argv))

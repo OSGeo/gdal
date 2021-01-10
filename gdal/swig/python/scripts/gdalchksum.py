@@ -7,5 +7,5 @@ from osgeo.utils.gdalchksum import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gdalchksum', 'utils')
+deprecation_warn('gdalchksum')
 sys.exit(main(sys.argv))

@@ -7,5 +7,5 @@ from osgeo.utils.ogrmerge import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('ogrmerge', 'utils')
+deprecation_warn('ogrmerge')
 sys.exit(main(sys.argv))

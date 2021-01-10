@@ -7,5 +7,5 @@ from osgeo.utils.gdalattachpct import main
 from osgeo.gdal import deprecation_warn
 
 
-deprecation_warn('gdalattachpct', 'utils')
+deprecation_warn('gdalattachpct')
 sys.exit(main(sys.argv))
