@@ -30,15 +30,11 @@
 # ******************************************************************************
 
 import sys
+import numpy as np
 
 from osgeo import gdal
 gdal.TermProgress = gdal.TermProgress_nocb
 
-try:
-    import numpy
-except ImportError:
-    import Numeric as numpy
-    numpy.arange = numpy.arrayrange
 
 # =============================================================================
 # read_lut()
@@ -150,21 +146,21 @@ def main(argv):
             max_val = entry
 
     if max_val > 255:
-        tc = numpy.uint16
+        tc = np.uint16
         gc = gdal.GDT_UInt16
     else:
-        tc = numpy.uint8
+        tc = np.uint8
         gc = gdal.GDT_Byte
 
     # ----------------------------------------------------------------------------
     # Convert the LUT from a normal array to a numpy style array.
 
     if len(lut) <= 256:
-        lookup = numpy.arange(256)
+        lookup = np.arange(256)
         for i in range(min(256, len(lut))):
             lookup[i] = lut[i]
     else:
-        lookup = numpy.arange(65536)
+        lookup = np.arange(65536)
         for i in range(min(65536, len(lut))):
             lookup[i] = lut[i]
 
@@ -218,7 +214,7 @@ def main(argv):
     for iY in range(src_ds.RasterYSize):
         src_data = src_band.ReadAsArray(0, iY, src_ds.RasterXSize, 1)
 
-        dst_data = numpy.take(lookup, src_data)
+        dst_data = np.take(lookup, src_data)
         dst_band.WriteArray(dst_data, 0, iY)
 
         gdal.TermProgress((iY + 1.0) / src_ds.RasterYSize)

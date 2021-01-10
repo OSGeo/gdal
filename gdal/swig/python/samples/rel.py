@@ -31,19 +31,11 @@
 
 import math
 import sys
+import numpy as np
 
-try:
-    import numpy as Numeric
-    Numeric.arrayrange = Numeric.arange
-except ImportError:
-    import Numeric
+from osgeo import gdal, gdal_array
+gdal.TermProgress = gdal.TermProgress_nocb
 
-try:
-    from osgeo import gdal_array as gdalnumeric
-    from osgeo import gdal
-    gdal.TermProgress = gdal.TermProgress_nocb
-except ImportError:
-    import gdalnumeric
 
 # =============================================================================
 
@@ -202,8 +194,8 @@ def main(argv):
         print('Cannot load band', iBand, 'from the', infile)
         return 2
 
-    numtype = gdalnumeric.GDALTypeCodeToNumericTypeCode(typ)
-    outline = Numeric.empty((1, inband.XSize), numtype)
+    numtype = gdal_array.GDALTypeCodeTonpTypeCode(typ)
+    outline = np.empty((1, inband.XSize), numtype)
 
     prev = inband.ReadAsArray(0, 0, inband.XSize, 1, inband.XSize, 1)[0]
     outband.WriteArray(outline, 0, 0)
@@ -225,8 +217,8 @@ def main(argv):
         nz = dx * dy
         nxyz = nx * nx + ny * ny + nz * nz
         nlxyz = nx * lx + ny * ly + nz * lz
-        cosine = dyn_range * (nlxyz / (lxyz * Numeric.sqrt(nxyz)))
-        cosine = Numeric.clip(cosine, 0.0, dyn_range)
+        cosine = dyn_range * (nlxyz / (lxyz * np.sqrt(nxyz)))
+        cosine = np.clip(cosine, 0.0, dyn_range)
         outline[0, 1:-1] = cosine.astype(numtype)
         outband.WriteArray(outline, 0, i)
 

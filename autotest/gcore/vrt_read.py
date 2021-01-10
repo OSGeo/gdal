@@ -181,7 +181,7 @@ def test_vrt_read_4():
         print('scaleddata[0, 0]: %f %f' % (scaleddata[0, 0].real, scaleddata[0, 0].imag))
         pytest.fail('did not get expected value')
 
-    
+
 ###############################################################################
 # Test serializing and deserializing of various band metadata
 
@@ -690,7 +690,7 @@ def test_vrt_read_20():
     for f in ['tmp/byte.tif', 'tmp/byte1_1.vrt', 'tmp/byte1_2.vrt', 'tmp/byte1_3.vrt', 'tmp/byte2.vrt']:
         os.unlink(f)
 
-    
+
 ###############################################################################
 # Test implicit virtual overviews
 
@@ -866,8 +866,6 @@ def test_vrt_read_22():
 def test_vrt_read_23():
 
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
         import numpy
     except (ImportError, AttributeError):
         pytest.skip()

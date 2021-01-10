@@ -31,17 +31,12 @@
 # ******************************************************************************
 
 import sys
+import numpy as np
 
 from osgeo import gdal
 from osgeo.utils.auxiliary.util import GetOutputDriverFor
 
 progress = gdal.TermProgress_nocb
-
-try:
-    import numpy as Numeric
-    Numeric.arrayrange = Numeric.arange
-except ImportError:
-    import Numeric
 
 
 def Usage():
@@ -120,10 +115,10 @@ def doit(src_filename, dst_filename, band_number=1, out_bands=3, frmt=None):
     ct = src_band.GetRasterColorTable()
 
     ct_size = ct.GetCount()
-    lookup = [Numeric.arrayrange(ct_size),
-              Numeric.arrayrange(ct_size),
-              Numeric.arrayrange(ct_size),
-              Numeric.ones(ct_size) * 255]
+    lookup = [np.arange(ct_size),
+              np.arange(ct_size),
+              np.arange(ct_size),
+              np.ones(ct_size) * 255]
 
     if ct is not None:
         for i in range(ct_size):
@@ -163,7 +158,7 @@ def doit(src_filename, dst_filename, band_number=1, out_bands=3, frmt=None):
         for iBand in range(out_bands):
             band_lookup = lookup[iBand]
 
-            dst_data = Numeric.take(band_lookup, src_data)
+            dst_data = np.take(band_lookup, src_data)
             tif_ds.GetRasterBand(iBand + 1).WriteArray(dst_data, 0, iY)
 
         progress((iY + 1.0) / src_ds.RasterYSize)

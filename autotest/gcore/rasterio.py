@@ -32,6 +32,11 @@
 import struct
 import sys
 
+try:
+    import numpy
+    numpy_available = True
+except ImportError:
+    numpy_available = False
 
 from osgeo import gdal
 import gdaltest
@@ -650,11 +655,7 @@ def test_rasterio_10():
 
 def test_rasterio_11():
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-        import numpy
-    except (ImportError, AttributeError):
+    if not numpy_available:
         pytest.skip()
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
@@ -685,11 +686,7 @@ def rasterio_12_progress_callback(pct, message, user_data):
 
 def test_rasterio_12():
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-        import numpy
-    except (ImportError, AttributeError):
+    if not numpy_available:
         pytest.skip()
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 4)
@@ -726,11 +723,7 @@ def test_rasterio_12():
 
 def test_rasterio_13():
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-        import numpy
-    except (ImportError, AttributeError):
+    if not numpy_available:
         pytest.skip()
 
     for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:
@@ -744,7 +737,7 @@ def test_rasterio_13():
         expected_ar = numpy.array([[0, 0, 0, 0, 0, 0, 0, 0], [0, 255, 255, 255, 255, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]])
         assert numpy.array_equal(ar_ds, expected_ar), dt
 
-    
+
 ###############################################################################
 # Test average downsampling by a factor of 2 on exact boundaries
 
@@ -871,28 +864,26 @@ cellsize     0
 
 ###############################################################################
 
+
 def test_rasterio_nodata():
 
-	try:
-		from osgeo import gdalnumeric
-		gdalnumeric.zeros
-	except (ImportError, AttributeError):
-		pytest.skip()
+    if not numpy_available:
+        pytest.skip()
 
-	ndv = 123
-	btype = [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_Int32, gdal.GDT_Float32, gdal.GDT_Float64 ]
+    ndv = 123
+    btype = [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_Int32, gdal.GDT_Float32, gdal.GDT_Float64]
 
-	### create a MEM dataset
-	for src_type in btype:
-		mem_ds = gdal.GetDriverByName('MEM').Create('', 10, 9, 1, src_type)
-		mem_ds.GetRasterBand(1).SetNoDataValue(ndv)
-		mem_ds.GetRasterBand(1).Fill(ndv)
+    ### create a MEM dataset
+    for src_type in btype:
+        mem_ds = gdal.GetDriverByName('MEM').Create('', 10, 9, 1, src_type)
+        mem_ds.GetRasterBand(1).SetNoDataValue(ndv)
+        mem_ds.GetRasterBand(1).Fill(ndv)
 
-		for dst_type in btype:
-			if ( dst_type > src_type ):
-				### read to a buffer of a wider type (and resample)
-				data = mem_ds.GetRasterBand(1).ReadAsArray(0, 0, 10, 9, 4, 3, resample_alg=gdal.GRIORA_Bilinear, buf_type=dst_type)
-				assert int(data[0,0]) == ndv, 'did not read expected band data via ReadAsArray() - src type -> dst type: ' + str( src_type ) + ' -> ' + str( dst_type )
+        for dst_type in btype:
+            if ( dst_type > src_type ):
+                ### read to a buffer of a wider type (and resample)
+                data = mem_ds.GetRasterBand(1).ReadAsArray(0, 0, 10, 9, 4, 3, resample_alg=gdal.GRIORA_Bilinear, buf_type=dst_type)
+                assert int(data[0,0]) == ndv, 'did not read expected band data via ReadAsArray() - src type -> dst type: ' + str( src_type ) + ' -> ' + str( dst_type )
 
 
 ###############################################################################
@@ -986,11 +977,7 @@ nodata_value 0
 
 def test_rasterio_dataset_readarray_cint16():
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-        import numpy
-    except (ImportError, AttributeError):
+    if not numpy_available:
         pytest.skip()
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2, gdal.GDT_CInt16)
@@ -1054,11 +1041,7 @@ def test_rasterio_floating_point_window_no_resampling():
 def test_rasterio_floating_point_window_no_resampling_numpy():
     # Same as above but using ReadAsArray() instead of ReadRaster()
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-        import numpy
-    except (ImportError, AttributeError):
+    if not numpy_available:
         pytest.skip()
 
     ds = gdal.Translate('/vsimem/test.tif', gdal.Open('data/rgbsmall.tif'))

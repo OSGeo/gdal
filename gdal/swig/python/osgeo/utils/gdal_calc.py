@@ -63,7 +63,7 @@ from collections import defaultdict
 import numpy
 
 from osgeo import gdal
-from osgeo import gdalnumeric
+from osgeo import gdal_array
 from osgeo.utils.auxiliary.base import is_path_like, PathLike
 from osgeo.utils.auxiliary.util import GetOutputDriverFor
 from osgeo.utils.auxiliary.extent_util import Extent, GT
@@ -90,9 +90,10 @@ def doit(opts, args):
     if opts.debug:
         print("gdal_calc.py starting calculation %s" % (opts.calc))
 
-    # set up global namespace for eval with all functions of gdalnumeric
-    global_namespace = dict([(key, getattr(gdalnumeric, key))
-                             for key in dir(gdalnumeric) if not key.startswith('__')])
+    # set up global namespace for eval with all functions of gdal_array, numpy
+    global_namespace = {key: getattr(module, key)
+                        for module in [gdal_array, numpy] for key in dir(module) if not key.startswith('__')}
+
     if opts.user_namespace:
         global_namespace.update(opts.user_namespace)
 
@@ -445,7 +446,7 @@ def doit(opts, args):
                         myBandNo = bandNo
                     else:
                         myBandNo = myBands[i]
-                    myval = gdalnumeric.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
+                    myval = gdal_array.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
                                                         xoff=myX, yoff=myY,
                                                         win_xsize=nXValid, win_ysize=nYValid)
                     if myval is None:
@@ -489,7 +490,7 @@ def doit(opts, args):
 
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)
-                if gdalnumeric.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY) != 0:
+                if gdal_array.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY) != 0:
                     raise Exception('Block writing failed')
                 myOutB = None  # write to band
 
@@ -600,7 +601,7 @@ def main(argv):
     parser = OptionParser(usage)
 
     # define options
-    parser.add_option("--calc", dest="calc", action="append", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. log10()). May appear multiple times to produce a multi-band file", metavar="expression")
+    parser.add_option("--calc", dest="calc", action="append", help="calculation in numpy syntax using +-/* or any numpy array functions (i.e. log10()). May appear multiple times to produce a multi-band file", metavar="expression")
     add_alpha_args(parser, argv)
 
     parser.add_option("--outfile", dest="outF", help="output file to generate or fill", metavar="filename")

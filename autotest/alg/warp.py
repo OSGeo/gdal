@@ -36,8 +36,7 @@ import os
 import shutil
 import sys
 
-from osgeo import gdal
-from osgeo import osr
+from osgeo import gdal, osr
 
 import gdaltest
 import pytest
@@ -1387,7 +1386,7 @@ def test_warp_41():
     for i in range(6):
         assert src_gt[i] == pytest.approx(vrt_gt[i], abs=1e-5)
 
-    
+
 ###############################################################################
 
 # Maximum
@@ -1642,7 +1641,7 @@ def test_warp_53():
                     print(option)
                     pytest.fail(alg_name)
 
-    
+
 ###############################################################################
 # Test Alpha on UInt16/Int16
 
@@ -1701,8 +1700,6 @@ def test_warp_55():
 def test_warp_56():
 
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
         import numpy
     except (ImportError, AttributeError):
         pytest.skip()

@@ -124,7 +124,7 @@ def test_tiff_write_3():
 def test_tiff_write_4():
 
     try:
-        from osgeo import gdalnumeric
+        import numpy
     except ImportError:
         pytest.skip()
 
@@ -134,9 +134,9 @@ def test_tiff_write_4():
                                       gdal.GDT_Byte, options)
 
     try:
-        data_red = gdalnumeric.zeros((50, 40))
-        data_green = gdalnumeric.zeros((50, 40))
-        data_blue = gdalnumeric.zeros((50, 40))
+        data_red = numpy.zeros((50, 40))
+        data_green = numpy.zeros((50, 40))
+        data_blue = numpy.zeros((50, 40))
     except AttributeError:
         import numpy
         data_red = numpy.zeros((50, 40))
@@ -150,16 +150,11 @@ def test_tiff_write_4():
             data_blue[y][x] = x + y
 
     try:
-        data_red = data_red.astype(gdalnumeric.UnsignedInt8)
-        data_green = data_green.astype(gdalnumeric.UnsignedInt8)
-        data_blue = data_blue.astype(gdalnumeric.UnsignedInt8)
+        data_red = data_red.astype(numpy.uint8)
+        data_green = data_green.astype(numpy.uint8)
+        data_blue = data_blue.astype(numpy.uint8)
     except AttributeError:
-        try:
-            data_red = data_red.astype(gdalnumeric.uint8)
-            data_green = data_green.astype(gdalnumeric.uint8)
-            data_blue = data_blue.astype(gdalnumeric.uint8)
-        except AttributeError:
-            pass
+        pass
 
     new_ds.GetRasterBand(1).WriteArray(data_red)
     new_ds.GetRasterBand(2).WriteArray(data_green)
@@ -389,7 +384,7 @@ def test_tiff_write_13():
     if md['LIBTIFF'] == 'INTERNAL':
         assert size <= 22816, 'fail: bad size'
 
-    
+
 ###############################################################################
 # Test creating an in memory copy.
 
@@ -685,7 +680,7 @@ def test_tiff_write_rpc_txt():
     # file list functionality is not working properly.
     assert not os.path.exists('tmp/tiff_write_rpc_txt_RPC.TXT')
 
-    
+
 ###############################################################################
 # Test writing a TIFF with an RPC in .aux.xml
 
@@ -1836,7 +1831,7 @@ def test_tiff_write_58():
         else:
             print(('Skipping compression method %s' % compression))
 
-    
+
 ###############################################################################
 # Test fix for #2759
 
@@ -1930,7 +1925,7 @@ def test_tiff_write_60():
 
         assert not os.path.exists(options_tuple[1])
 
-    
+
 ###############################################################################
 # Test BigTIFF=IF_NEEDED creation option
 
@@ -2156,7 +2151,7 @@ def test_tiff_write_70():
 
     with pytest.raises(OSError):
         os.stat('tmp/tiff_write_70.tif.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/tiff_write_70.tif')
     assert ds.GetRasterBand(1).GetNoDataValue() is None
@@ -2344,7 +2339,7 @@ def test_tiff_write_74():
 
         gdaltest.tiff_drv.Delete('tmp/test_74.tif')
 
-    
+
 ###############################################################################
 # Verify that FlushCache() alone doesn't cause crash (#3067 )
 
@@ -3975,7 +3970,7 @@ def test_tiff_write_106(filename='../gdrivers/data/jpeg/byte_with_xmp.jpg', opti
         for i in range(nbands):
             assert cs[i] != 0, 'did not get expected checksum'
 
-    
+
 
 def test_tiff_write_107():
     return test_tiff_write_106(options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
@@ -4861,7 +4856,7 @@ def test_tiff_write_129():
                     print(i)
                     pytest.fail(jpegtablesmode)
 
-    
+
 ###############################################################################
 # Test cases where JPEG quality will fail
 
@@ -4967,7 +4962,7 @@ def test_tiff_write_132():
 
         gdaltest.tiff_drv.Delete('/vsimem/tiff_write_132.tif')
 
-    
+
 ###############################################################################
 # Test streaming capabilities
 
@@ -5747,7 +5742,7 @@ def test_tiff_write_145():
             pytest.fail('did not get any warning/error')
         gdal.Unlink(filename)
 
-    
+
 ###############################################################################
 # Test implicit JPEG-in-TIFF overviews with RGBA (not completely sure this
 # is a legal formulation since 4 bands should probably be seen as CMYK)
@@ -5772,7 +5767,7 @@ def test_tiff_write_146():
             assert i == 2 or j < 2 or original_stats[i][j] == pytest.approx(got_stats[i][j], abs=5), \
                 'did not get expected statistics'
 
-    
+
 ###############################################################################
 # Test that we don't use implicit JPEG-in-TIFF overviews with CMYK when converting
 # to RGBA
@@ -5823,7 +5818,7 @@ def test_tiff_write_148():
             assert j < 2 or original_stats[i][j] == pytest.approx(got_stats[i][j], abs=5), \
                 'did not get expected statistics'
 
-    
+
 ###############################################################################
 # Test filling missing blocks with nodata
 
@@ -6322,7 +6317,7 @@ def test_tiff_write_159():
 
         gdaltest.tiff_drv.Delete('/vsimem/tiff_write_159.tif')
 
-    
+
 
 ###############################################################################
 # Test the Create() interface with a BLOCKYSIZE > image height
@@ -7343,7 +7338,7 @@ def test_tiff_write_too_many_tiles():
 
 
 ###############################################################################
-# 
+#
 
 
 def test_tiff_write_jpeg_incompatible_of_paletted():

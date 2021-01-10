@@ -31,6 +31,11 @@
 
 import sys
 
+try:
+    import numpy
+    numpy_available = True
+except ImportError:
+    numpy_available = False
 
 from osgeo import gdal
 import pytest
@@ -41,13 +46,7 @@ import pytest
 
 def test_virtualmem_1():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        pytest.skip()
-
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except (ImportError, AttributeError):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not numpy_available:
         pytest.skip()
 
     ds = gdal.Open('../gdrivers/data/small_world.tif')
@@ -113,15 +112,7 @@ def test_virtualmem_1():
 
 def test_virtualmem_2():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        pytest.skip()
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except (ImportError, AttributeError):
-        pytest.skip()
-
-    if not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not numpy_available or not sys.platform.startswith('linux'):
         pytest.skip()
 
     ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
@@ -141,14 +132,7 @@ def test_virtualmem_2():
 
 def test_virtualmem_3():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        pytest.skip()
-    try:
-        from osgeo import gdalnumeric
-    except ImportError:
-        pytest.skip()
-
-    if not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not numpy_available or not sys.platform.startswith('linux'):
         pytest.skip()
 
     for tmpfile in ['tmp/virtualmem_3.img', '/vsimem/virtualmem_3.img']:
@@ -166,13 +150,13 @@ def test_virtualmem_3():
         ds = gdal.Open(tmpfile)
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Read)
         ar2 = ds.GetRasterBand(2).GetVirtualMemAutoArray(gdal.GF_Read)
-        ar_127 = gdalnumeric.empty(ds.RasterXSize)
+        ar_127 = numpy.empty(ds.RasterXSize)
         ar_127.fill(127)
-        ar_255 = gdalnumeric.empty(ds.RasterXSize)
+        ar_255 = numpy.empty(ds.RasterXSize)
         ar_255.fill(255)
         for y in range(ds.RasterYSize):
-            assert gdalnumeric.array_equal(ar1[y], ar_127)
-            assert gdalnumeric.array_equal(ar2[y], ar_255)
+            assert numpy.array_equal(ar1[y], ar_127)
+            assert numpy.array_equal(ar2[y], ar_255)
         # We need to destroy the array before dataset destruction
         ar1 = None
         ar2 = None
@@ -180,21 +164,14 @@ def test_virtualmem_3():
 
         gdal.GetDriverByName('EHdr').Delete(tmpfile)
 
-    
+
 ###############################################################################
 # Test virtual mem auto with GTiff
 
 
 def test_virtualmem_4():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
-        pytest.skip()
-    try:
-        from osgeo import gdalnumeric
-    except ImportError:
-        pytest.skip()
-
-    if not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not numpy_available or not sys.platform.startswith('linux'):
         pytest.skip()
 
     tmpfile = 'tmp/virtualmem_4.tif'
@@ -225,17 +202,17 @@ def test_virtualmem_4():
         ds = gdal.Open(tmpfile)
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Read)
         ar2 = ds.GetRasterBand(2).GetVirtualMemAutoArray(gdal.GF_Read)
-        ar_127 = gdalnumeric.empty(ds.RasterXSize)
+        ar_127 = numpy.empty(ds.RasterXSize)
         ar_127.fill(127)
-        ar_255 = gdalnumeric.empty(ds.RasterXSize)
+        ar_255 = numpy.empty(ds.RasterXSize)
         ar_255.fill(255)
         for y in range(ds.RasterYSize):
-            if not gdalnumeric.array_equal(ar1[y], ar_127):
+            if not numpy.array_equal(ar1[y], ar_127):
                 ar1 = None
                 ar2 = None
                 ds = None
                 pytest.fail()
-            if not gdalnumeric.array_equal(ar2[y], ar_255):
+            if not numpy.array_equal(ar2[y], ar_255):
                 ar1 = None
                 ar2 = None
                 ds = None
@@ -247,7 +224,7 @@ def test_virtualmem_4():
 
         gdal.GetDriverByName('GTiff').Delete(tmpfile)
 
-    
+
 
 
 

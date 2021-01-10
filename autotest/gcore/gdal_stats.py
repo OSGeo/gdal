@@ -351,7 +351,7 @@ def test_stats_square_shape():
         print(hist)
         pytest.fail('did not get expected minmax')
 
-    
+
 ###############################################################################
 # Test when nodata = FLT_MIN (#6578)
 
