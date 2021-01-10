@@ -54,6 +54,10 @@
 #include "netcdfsg.h"
 #include "netcdfuffd.h"
 
+#ifdef HAVE_NETCDF_MEM
+#include "netcdf_mem.h"
+#endif
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
@@ -2311,6 +2315,10 @@ netCDFDataset::~netCDFDataset()
 #endif
         NCDF_ERR(status);
     }
+
+    if( fpVSIMEM )
+        VSIFCloseL(fpVSIMEM);
+
 #ifdef ENABLE_NCDUMP
     if( bFileToDestroyAtClosing )
         VSIUnlink( osFilename );
@@ -7405,28 +7413,55 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLFree(pszTemp);
     }
 #endif
-    int status2;
+    int status2 = -1;
 
 #ifdef ENABLE_UFFD
-    bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
-    bool bReadOnly = (poOpenInfo->eAccess == GA_ReadOnly);
-    void * pVma = nullptr;
-    uint64_t nVmaSize = 0;
     cpl_uffd_context * pCtx = nullptr;
+#endif
 
-    if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
-      pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
-    if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
+#ifdef HAVE_NETCDF_MEM
+    if( STARTS_WITH(osFilenameForNCOpen, "/vsimem/") &&
+        poOpenInfo->eAccess == GA_ReadOnly )
     {
-      // netCDF code, at least for netCDF 4.7.0, is confused by filenames like
-      // /vsicurl/http[s]://example.com/foo.nc, so just pass the final part
-      status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen), nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
+        vsi_l_offset nLength = 0;
+        poDS->fpVSIMEM = VSIFOpenL(osFilenameForNCOpen, "rb");
+        if( poDS->fpVSIMEM )
+        {
+            // We assume that the file will not be modified. If it is, then
+            // pabyBuffer might become invalid.
+            GByte* pabyBuffer = VSIGetMemFileBuffer(osFilenameForNCOpen,
+                                                    &nLength, false);
+            if( pabyBuffer )
+            {
+                status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen),
+                                    nMode, static_cast<size_t>(nLength), pabyBuffer,
+                                    &cdfid);
+            }
+        }
     }
     else
-      status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
-#else
-    status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #endif
+    {
+#ifdef ENABLE_UFFD
+        bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
+        bool bReadOnly = (poOpenInfo->eAccess == GA_ReadOnly);
+        void * pVma = nullptr;
+        uint64_t nVmaSize = 0;
+
+        if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
+            pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
+        if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
+        {
+            // netCDF code, at least for netCDF 4.7.0, is confused by filenames like
+            // /vsicurl/http[s]://example.com/foo.nc, so just pass the final part
+            status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen), nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
+        }
+        else
+            status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+#else
+        status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+#endif
+    }
     if( status2 != NC_NOERR )
     {
 #ifdef NCDF_DEBUG
@@ -9265,6 +9300,9 @@ void GDALRegister_netCDF()
 #endif
 #ifdef HAVE_HDF5
     poDriver->SetMetadataItem("GDAL_HAS_HDF5", "YES");
+#endif
+#ifdef HAVE_NETCDF_MEM
+    poDriver->SetMetadataItem("NETCDF_HAS_NETCDF_MEM", "YES");
 #endif
 
 #ifdef ENABLE_NCDUMP
