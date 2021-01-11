@@ -17,12 +17,22 @@ OBJ		=	pcidskdataset2.obj ogrpcidsklayer.obj vsi_pcidsk_io.obj gdal_edb.obj
 PCIDSKFLAGS	=	-Isdk -DPCIDSK_INTERNAL -DHAVE_LIBJPEG 
 
 OBJ	=	pcidskdataset2.obj ogrpcidsklayer.obj vsi_pcidsk_io.obj gdal_edb.obj \
+	sdk\blockdir\asciitiledir.obj \
+	sdk\blockdir\asciitilelayer.obj \
+	sdk\blockdir\binarytiledir.obj \
+	sdk\blockdir\binarytilelayer.obj \
+	sdk\blockdir\blockdir.obj \
+	sdk\blockdir\blockfile.obj \
+	sdk\blockdir\blocklayer.obj \
+	sdk\blockdir\blocktiledir.obj \
+	sdk\blockdir\blocktilelayer.obj \
 	sdk\channel\cbandinterleavedchannel.obj \
 	sdk\channel\cpcidskchannel.obj \
 	sdk\channel\cpixelinterleavedchannel.obj \
 	sdk\channel\ctiledchannel.obj \
 	sdk\channel\cexternalchannel.obj \
 	sdk\core\cpcidskfile.obj \
+	sdk\core\cpcidskblockfile.obj \
 	sdk\core\libjpeg_io.obj \
 	sdk\core\edb_pcidsk.obj \
 	sdk\core\metadataset_p.obj \
@@ -32,28 +42,31 @@ OBJ	=	pcidskdataset2.obj ogrpcidsklayer.obj vsi_pcidsk_io.obj gdal_edb.obj \
 	sdk\core\pcidskinterfaces.obj \
 	sdk\core\pcidskopen.obj \
 	sdk\core\pcidsk_pubutils.obj \
+	sdk\core\pcidsk_raster.obj \
+	sdk\core\pcidsk_scanint.obj \
 	sdk\core\pcidsk_utils.obj \
-	sdk\core\sysvirtualfile.obj \
 	sdk\core\clinksegment.obj \
 	sdk\segment\cpcidskgeoref.obj \
+	sdk\segment\cpcidsklut.obj \
+	sdk\segment\cpcidskblut.obj \
 	sdk\segment\cpcidskpct.obj \
+	sdk\segment\cpcidskbpct.obj \
 	sdk\segment\cpcidsksegment.obj \
 	sdk\segment\cpcidskvectorsegment.obj \
 	sdk\segment\cpcidskvectorsegment_consistencycheck.obj \
+        sdk\segment\systiledir.obj \
 	sdk\segment\vecsegheader.obj \
 	sdk\segment\vecsegdataindex.obj \
 	sdk\segment\metadatasegment_p.obj \
-	sdk\segment\sysblockmap.obj \
+	sdk\segment\cpcidskpolymodel.obj \
 	sdk\segment\cpcidskrpcmodel.obj \
 	sdk\segment\cpcidskgcp2segment.obj \
 	sdk\segment\cpcidskbitmap.obj \
 	sdk\segment\cpcidsk_tex.obj \
-	sdk\segment\cpcidskapmodel.obj \
 	sdk\segment\cpcidsktoutinmodel.obj \
 	sdk\segment\cpcidskbinarysegment.obj \
 	sdk\segment\cpcidsk_array.obj \
-	sdk\segment\cpcidskephemerissegment.obj \
-	sdk\segment\cpcidskads40model.obj
+	sdk\segment\cpcidskephemerissegment.obj
 	
 !ENDIF
             

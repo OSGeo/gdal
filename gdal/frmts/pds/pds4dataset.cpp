@@ -40,8 +40,8 @@
 #include <vector>
 #include <algorithm>
 
-#define TIFF_GEOTIFF_STRING "TIFF/GeoTIFF"
-#define BIGTIFF_GEOTIFF_STRING "BigTIFF/GeoTIFF"
+#define TIFF_GEOTIFF_STRING "TIFF 6.0"
+#define BIGTIFF_GEOTIFF_STRING "TIFF 6.0"
 #define PREEXISTING_BINARY_FILE \
     "Binary file pre-existing PDS4 label. This comment is used by GDAL to " \
     "avoid deleting the binary file when the label is deleted. Keep it to " \

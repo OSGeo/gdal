@@ -562,7 +562,7 @@ def test_gdal_setspatialref():
     ds = gdal.Open('data/byte.tif')
     sr = ds.GetSpatialRef()
     ds = gdal.GetDriverByName('MEM').Create('',1,1)
-    ds.SetSpatialRef(sr)
+    assert ds.SetSpatialRef(sr) == gdal.CE_None
     sr_got = ds.GetSpatialRef()
     assert sr_got
     assert sr_got.IsSame(sr)

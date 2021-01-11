@@ -32,7 +32,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdio>
-#include <limits>
+#include <algorithm>
 
 using namespace PCIDSK;
 
@@ -63,7 +63,8 @@ CPCIDSKVectorSegment::CPCIDSKVectorSegment( PCIDSKFile *fileIn, int segmentIn,
     base_initialized = false;
     needs_swap = false;
 
-    shape_count = 0;
+    total_shape_count = 0;
+    valid_shape_count = 0;
 
     last_shapes_id = NullShapeId;
     last_shapes_index = -1;
@@ -121,10 +122,10 @@ void CPCIDSKVectorSegment::Synchronize()
 
         FlushLoadedShapeIndex();
 
-        if( GetHeader().GetInt( 192, 16 ) != shape_count
+        if( GetHeader().GetInt( 192, 16 ) != total_shape_count
             && file->GetUpdatable() )
         {
-            GetHeader().Put( shape_count, 192, 16 );
+            GetHeader().Put( total_shape_count, 192, 16 );
             FlushHeader();
         }
     }
@@ -162,6 +163,18 @@ void CPCIDSKVectorSegment::Initialize()
     head.Put( 0, 256, 16 );
     head.Put( 0, 272, 16 );
 
+#ifdef PCIMAJORVERSION
+    PCIDSK::ShapeField oFieldsDefault;
+    oFieldsDefault.SetValue(std::vector<int32>{});
+
+    // Add the RingStart field, because it can't be added after
+    // shapes have been added. This is a bug that should be properly fixed
+    AddField(ATT_RINGSTART,
+             PCIDSK::FieldTypeCountedInt,
+             "", "",
+             &oFieldsDefault);
+#endif
+
     FlushHeader();
 }
 
@@ -184,6 +197,17 @@ void CPCIDSKVectorSegment::LoadHeader()
     needs_swap = !BigEndianSystem();
 
     vh.InitializeExisting();
+
+    // When the IDB code deletes a shape, it simply writes a -1
+    // into the index. We need to know how many actual valid shapes
+    // there are in the segment, so count them
+    valid_shape_count = 0;
+    ShapeId iShape = FindFirst();
+    while (iShape != NullShapeId)
+    {
+        ++valid_shape_count;
+        iShape = FindNext(iShape);
+    }
 }
 
 /************************************************************************/
@@ -277,7 +301,7 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
           if( count > 0 )
           {
               if( offset > std::numeric_limits<uint32>::max() - 8 )
-                    return ThrowPCIDSKException(0, "Invalid offset = %u", offset);
+                  return ThrowPCIDSKException(0, "Invalid offset = %u", offset);
               memcpy( &(value[0]), GetData(section,offset+4,nullptr,4*count), 4*count );
               if( needs_swap )
                   SwapData( &(value[0]), 4, count );
@@ -641,9 +665,7 @@ void CPCIDSKVectorSegment::WriteSecToFile( int section, char *buffer,
     if( block_count + block_offset > (int) block_map->size() )
     {
         vh.GrowBlockIndex( section,
-                           static_cast<int>(block_count
-                                            + block_offset
-                                            - block_map->size() ) );
+                           block_count + block_offset - static_cast<int>(block_map->size()) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -788,8 +810,8 @@ void CPCIDSKVectorSegment::LoadShapeIdPage( int page )
     int entries_to_load = shapeid_page_size;
 
     shape_index_start = page * shapeid_page_size;
-    if( shape_index_start + entries_to_load > shape_count )
-        entries_to_load = shape_count - shape_index_start;
+    if( shape_index_start + entries_to_load > total_shape_count )
+        entries_to_load = total_shape_count - shape_index_start;
 
     PCIDSKBuffer wrk_index;
     if( entries_to_load < 0 || entries_to_load > std::numeric_limits<int>::max() / 12 )
@@ -848,9 +870,9 @@ void CPCIDSKVectorSegment::AccessShapeByIndex( int shape_index )
 
     // this is for requesting the next shapeindex after shapecount on
     // a partial page.
-    if( shape_index == shape_count
+    if( shape_index == total_shape_count
         && (int) shape_index_ids.size() < shapeid_page_size
-        && shape_count == (int) shape_index_ids.size() + shape_index_start )
+        && total_shape_count == (int) shape_index_ids.size() + shape_index_start )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -915,7 +937,7 @@ void CPCIDSKVectorSegment::PopulateShapeIdMap()
 /* -------------------------------------------------------------------- */
 /*      Load all outstanding pages.                                     */
 /* -------------------------------------------------------------------- */
-    int shapeid_pages = (shape_count+shapeid_page_size-1) / shapeid_page_size;
+    int shapeid_pages = (total_shape_count+shapeid_page_size-1) / shapeid_page_size;
 
     while( shapeid_pages_certainly_mapped+1 < shapeid_pages )
     {
@@ -924,22 +946,47 @@ void CPCIDSKVectorSegment::PopulateShapeIdMap()
 }
 
 /************************************************************************/
+/*                     FindNextValidByIndex()                           */
+/************************************************************************/
+/**
+  * Find the next shape and the given shape index in the segment
+  * (including deleted shapes), if the shape at nIndex is NullShapeId then
+  * return the nexrt valid shape ID
+  *
+  * @param nIndex the index into
+  */
+ShapeId CPCIDSKVectorSegment::FindNextValidByIndex(int nIndex)
+{
+    LoadHeader();
+
+    if (total_shape_count == 0 || nIndex >= total_shape_count)
+        return NullShapeId;
+
+
+    for (int nShapeIndex = nIndex; nShapeIndex < total_shape_count; ++nShapeIndex)
+    {
+        // set up shape_index_ids array
+        AccessShapeByIndex(nShapeIndex);
+
+        int32 nNextShapeId = shape_index_ids[nShapeIndex - shape_index_start];
+        if (nNextShapeId != NullShapeId)
+        {
+            last_shapes_id = nNextShapeId;
+            last_shapes_index = nShapeIndex;
+            return last_shapes_id;
+        }
+    }
+
+    return NullShapeId;
+}
+
+/************************************************************************/
 /*                             FindFirst()                              */
 /************************************************************************/
 
 ShapeId CPCIDSKVectorSegment::FindFirst()
 {
-    LoadHeader();
-
-    if( shape_count == 0 )
-        return NullShapeId;
-
-    AccessShapeByIndex( 0 );
-
-    last_shapes_id = shape_index_ids[0];
-    last_shapes_index = 0;
-
-    return last_shapes_id;
+    return FindNextValidByIndex(0);
 }
 
 /************************************************************************/
@@ -953,15 +1000,7 @@ ShapeId CPCIDSKVectorSegment::FindNext( ShapeId previous_id )
 
     int previous_index = IndexFromShapeId( previous_id );
 
-    if( previous_index == shape_count - 1 )
-        return NullShapeId;
-
-    AccessShapeByIndex( previous_index+1 );
-
-    last_shapes_index = previous_index+1;
-    last_shapes_id = shape_index_ids[last_shapes_index - shape_index_start];
-
-    return last_shapes_id;
+    return FindNextValidByIndex(previous_index+1);
 }
 
 /************************************************************************/
@@ -973,7 +1012,7 @@ int CPCIDSKVectorSegment::GetShapeCount()
 {
     LoadHeader();
 
-    return shape_count;
+    return valid_shape_count;
 }
 
 /************************************************************************/
@@ -1156,7 +1195,7 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
 /*      If we have existing features, we should go through adding       */
 /*      this new field.                                                 */
 /* -------------------------------------------------------------------- */
-    if( shape_count > 0 )
+    if( total_shape_count > 0 )
     {
         return ThrowPCIDSKException( "Support for adding fields in populated layers "
                               "has not yet been implemented." );
@@ -1247,7 +1286,14 @@ ShapeId CPCIDSKVectorSegment::CreateShape( ShapeId id )
 /* -------------------------------------------------------------------- */
 /*      Make sure we have the last shapeid index page loaded.           */
 /* -------------------------------------------------------------------- */
-    AccessShapeByIndex( shape_count );
+    AccessShapeByIndex( total_shape_count );
+
+    // if highest_shapeid_used is unset, then look at all Ids
+    if (highest_shapeid_used == NullShapeId &&!shape_index_ids.empty())
+    {
+        auto it = std::max_element(shape_index_ids.begin(), shape_index_ids.end());
+        highest_shapeid_used = *it;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to assign a shapeid?                                 */
@@ -1280,9 +1326,10 @@ ShapeId CPCIDSKVectorSegment::CreateShape( ShapeId id )
     shape_index_page_dirty = true;
 
     if( shapeid_map_active )
-        shapeid_map[id] = shape_count;
+        shapeid_map[id] = total_shape_count;
 
-    shape_count++;
+    total_shape_count++;
+    valid_shape_count++;
 
     return id;
 }
@@ -1324,15 +1371,15 @@ void CPCIDSKVectorSegment::DeleteShape( ShapeId id )
     uint32 vert_off, rec_off;
     ShapeId  last_id;
 
-    AccessShapeByIndex( shape_count-1 );
+    AccessShapeByIndex( total_shape_count-1 );
 
-    last_id = shape_index_ids[shape_count-1-shape_index_start];
-    vert_off = shape_index_vertex_off[shape_count-1-shape_index_start];
-    rec_off = shape_index_record_off[shape_count-1-shape_index_start];
+    last_id = shape_index_ids[total_shape_count-1-shape_index_start];
+    vert_off = shape_index_vertex_off[total_shape_count-1-shape_index_start];
+    rec_off = shape_index_record_off[total_shape_count-1-shape_index_start];
 
     // We don't actually have to modify this area of the index on disk.
     // Some of the stuff at the end just becomes unreferenced when we
-    // decrement shape_count.
+    // decrement total_shape_count.
 
 /* -------------------------------------------------------------------- */
 /*      Load the page with the shape we are deleting, and put last      */
@@ -1349,7 +1396,12 @@ void CPCIDSKVectorSegment::DeleteShape( ShapeId id )
     if( shapeid_map_active )
         shapeid_map.erase( id );
 
-    shape_count--;
+    // if the highest shape_id is the one that was deleted,
+    // then reset highest_shapeid_used
+    if (id == highest_shapeid_used)
+        highest_shapeid_used = NullShapeId;
+    total_shape_count--;
+    valid_shape_count--;
 }
 
 /************************************************************************/
@@ -1547,12 +1599,12 @@ void CPCIDSKVectorSegment::FlushLoadedShapeIndex()
     if( !shape_index_page_dirty )
         return;
 
-    uint32 offset = vh.ShapeIndexPrepare( shape_count * 12 + 4 );
+    uint32 offset = vh.ShapeIndexPrepare( total_shape_count * 12 + 4 );
 
     PCIDSKBuffer write_buffer( shapeid_page_size * 12 );
 
     // Update the count field.
-    memcpy( write_buffer.buffer, &shape_count, 4 );
+    memcpy( write_buffer.buffer, &total_shape_count, 4 );
     if( needs_swap )
         SwapData( write_buffer.buffer, 4, 1 );
     WriteToFile( write_buffer.buffer, offset, 4 );

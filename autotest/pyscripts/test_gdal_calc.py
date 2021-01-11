@@ -41,15 +41,14 @@ import test_py_scripts
 import pytest
 from collections import defaultdict
 
-# test that gdalnumeric is available, if not skip all tests
-gdalnumeric_not_available = False
+# test that numpy is available, if not skip all tests
 try:
-    from osgeo import gdalnumeric
-    from osgeo.utils import gdal_calc
     import numpy as np
-    gdalnumeric.BandRasterIONumPy
+    from osgeo.utils import gdal_calc
+    from osgeo.gdal_array import GDALTypeCodeToNumericTypeCode
+    numpy_available = True
 except (ImportError, AttributeError):
-    gdalnumeric_not_available = True
+    numpy_available = False
 
 # Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 
@@ -107,8 +106,8 @@ def make_temp_filename_list(test_id, test_count, is_opt=False):
 
 def test_gdal_calc_py_1():
     """ test basic copy """
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -128,8 +127,8 @@ def test_gdal_calc_py_1():
 
 def test_gdal_calc_py_2():
     """ test simple formulas """
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -149,8 +148,8 @@ def test_gdal_calc_py_2():
 
 def test_gdal_calc_py_3():
     """ test --allBands option (simple copy) """
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -169,8 +168,8 @@ def test_gdal_calc_py_3():
 
 def test_gdal_calc_py_4():
     """ test --allBands option (simple calc) """
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -198,8 +197,8 @@ def test_gdal_calc_py_4():
 
 def test_gdal_calc_py_5():
     """ test python interface, basic copy """
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -224,8 +223,8 @@ def test_gdal_calc_py_5():
 
 def test_gdal_calc_py_6():
     """ test nodata """
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -247,8 +246,8 @@ def test_gdal_calc_py_6():
 
 def test_gdal_calc_py_7():
     """ test --optfile """
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -286,8 +285,8 @@ def test_gdal_calc_py_7():
 
 def test_gdal_calc_py_8():
     """ test multiple calcs """
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -309,7 +308,7 @@ def test_gdal_calc_py_8():
 
 def my_sum(a, gdal_dt=None):
     """ sum using numpy """
-    np_dt = None if gdal_dt is None else gdal_calc.gdal_dt_to_np_dt[gdal_dt]
+    np_dt = GDALTypeCodeToNumericTypeCode(gdal_dt)
     concatenate = np.stack(a)
     ret = concatenate.sum(axis=0, dtype=np_dt)
     return ret
@@ -333,8 +332,8 @@ def test_gdal_calc_py_9():
     * extent = 'fail'
     """
 
-    if gdalnumeric_not_available:
-        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+    if not numpy_available:
+        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -402,7 +401,7 @@ def test_gdal_calc_py_9():
 
     # for summing 3 bytes we'll use GDT_UInt16
     gdal_dt = gdal.GDT_UInt16
-    np_dt = None if gdal_dt is None else gdal_calc.gdal_dt_to_np_dt[gdal_dt]
+    np_dt = GDALTypeCodeToNumericTypeCode(gdal_dt)
 
     # sum with overflow
     checksum = 12261

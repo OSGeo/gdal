@@ -24,7 +24,7 @@ Generate a shaded relief map from any GDAL-supported elevation raster:
     gdaldem hillshade input_dem output_hillshade
                 [-z ZFactor (default=1)] [-s scale* (default=1)]
                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]
-                [-alg ZevenbergenThorne] [-combined | -multidirectional | -igor]
+                [-alg Horn|ZevenbergenThorne] [-combined | -multidirectional | -igor]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 Generate a slope map from any GDAL-supported elevation raster:
@@ -33,7 +33,7 @@ Generate a slope map from any GDAL-supported elevation raster:
 
     gdaldem slope input_dem output_slope_map
                 [-p use percent slope (default=degrees)] [-s scale* (default=1)]
-                [-alg ZevenbergenThorne]
+                [-alg Horn|ZevenbergenThorne]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 Generate an aspect map from any GDAL-supported elevation raster,
@@ -43,7 +43,7 @@ outputs a 32-bit float raster with pixel values from 0-360 indicating azimuth:
 
     gdaldem aspect input_dem output_aspect_map
                 [-trigonometric] [-zero_for_flat]
-                [-alg ZevenbergenThorne]
+                [-alg Horn|ZevenbergenThorne]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 Generate a color relief map from any GDAL-supported elevation raster:
@@ -60,6 +60,7 @@ Generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation 
 .. code-block::
 
     gdaldem TRI input_dem output_TRI_map
+                [-alg Wilson|Riley]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-q]
 
 Generate a Topographic Position Index (TPI) map from any GDAL-supported elevation raster:
@@ -141,10 +142,6 @@ The following general options are available:
 
     Do the computation at raster edges and near nodata values
 
-.. option:: alg ZevenbergenThorne
-
-    Use Zevenbergen & Thorne formula, instead of Horn's formula, to compute slope & aspect. The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.
-
 .. option:: -b <band>
 
     Select an input band to be processed. Bands are numbered from 1.
@@ -175,6 +172,10 @@ This command outputs an 8-bit raster with a nice shaded relief effect. It’s ve
 The value 0 is used as the output nodata value.
 
 The following specific options are available :
+
+.. option:: -alg Horn|ZevenbergenThorne
+
+    The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.
 
 .. option:: -z <factor>
 
@@ -221,6 +222,10 @@ The value `-9999` is used as the output nodata value.
 
 The following specific options are available :
 
+.. option:: -alg Horn|ZevenbergenThorne
+
+    The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.
+
 .. option:: -p
 
     If specified, the slope will be expressed as percent slope. Otherwise, it is expressed as degrees
@@ -235,6 +240,10 @@ aspect
 This command outputs a 32-bit float raster with values between 0° and 360° representing the azimuth that slopes are facing. The definition of the azimuth is such that : 0° means that the slope is facing the North, 90° it's facing the East, 180° it's facing the South and 270° it's facing the West (provided that the top of your input raster is north oriented). The aspect value -9999 is used as the nodata value to indicate undefined aspect in flat areas with slope=0.
 
 The following specifics options are available :
+
+.. option:: -alg Horn|ZevenbergenThorne
+
+    The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.
 
 .. option:: -trigonometric
 
@@ -330,13 +339,25 @@ TRI
 ^^^
 
 This command outputs a single-band raster with values computed from the elevation.
-`TRI` stands for Terrain Ruggedness Index, which is defined as the mean difference
-between a central pixel and its surrounding cells (see Wilson et al 2007,
-Marine Geodesy 30:3-35).
+`TRI` stands for Terrain Ruggedness Index, which measures the difference
+between a central pixel and its surrounding cells.
 
 The value -9999 is used as the output nodata value.
 
-There are no specific options.
+The following option is available:
+
+.. option:: -alg Wilson|Riley
+
+    Starting with GDAL 3.3, the Riley algorithm (see Riley, S.J.,
+    De Gloria, S.D., Elliot, R. (1999): A Terrain Ruggedness that Quantifies Topographic Heterogeneity.
+    Intermountain Journal of Science, Vol.5, No.1-4, pp.23-27) is available and
+    the new default value. This algorithm uses the
+    square root of the sum of the square of the difference between a central pixel
+    and its surrounding cells. This is recommended for terrestrial use cases.
+
+    The Wilson (see Wilson et al 2007, Marine Geodesy 30:3-35) algorithm
+    uses the mean difference between a central pixel and its surrounding cells.
+    This is recommended for bathymetric use cases.
 
 TPI
 ^^^

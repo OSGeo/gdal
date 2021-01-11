@@ -556,6 +556,19 @@ bool Lerc1Image::findTiling(double maxZError,
     return true;
 }
 
+// n is 1, 2 or 4
+static Byte* writeFlt(Byte* ptr, float z, int n) {
+    if (4 == n)
+        memcpy(ptr, &z, 4);
+    else if (1 == n)
+        *ptr = static_cast<Byte>(static_cast<signed char>(z));
+    else {
+        signed short s = static_cast<signed short>(z);
+        memcpy(ptr, &s, 2);
+    }
+    return ptr + n;
+}
+
 // Pass bArr==nulptr to estimate the size but skip the write
 bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
     Byte* bArr, int& numBytes, float& maxValInImg) const
@@ -573,20 +586,53 @@ bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
         while (h0 < getWidth()) {
             int h1 = std::min(getWidth(), h0 + tileWidth);
             float zMin = 0, zMax = 0;
-            int numValidPixel = 0;
-            if (!computeZStats(v0, v1, h0, h1, zMin, zMax, numValidPixel))
+            int numValidPixel = 0, numFinite = 0;
+            if (!computeZStats(v0, v1, h0, h1, zMin, zMax, numValidPixel, numFinite))
                 return false;
 
             if (maxValInImg < zMax)
                 maxValInImg = zMax;
 
-            int numBytesNeeded = numBytesZTile(numValidPixel, zMin, zMax, maxZError);
+            int numBytesNeeded = 1;
+            if (numValidPixel != 0) {
+                if (numFinite == 0 && numValidPixel == (v1-v0) * (h1-h0) && isallsameval(v0, v1, h0, h1))
+                    numBytesNeeded = 5; // Stored as non-finite constant block
+                else {
+                    numBytesNeeded = numBytesZTile(numValidPixel, zMin, zMax, maxZError);
+                    // Try moving zMin up by maxZError, it may require fewer bytes
+                    // A bit less than maxZError, to avoid quantizing underflow
+                    float zm = static_cast<float>(zMin + 0.999999 * maxZError);
+                    if (numFinite == numValidPixel && zm <= zMax) {
+                        int nBN = numBytesZTile(numValidPixel, zm, zMax, maxZError);
+                        // Maybe an int value for zMin saves a few bytes?
+                        if (zMin < floorf(zm)) {
+                            int nBNi = numBytesZTile(numValidPixel, floorf(zm), zMax, maxZError);
+                            if (nBNi < nBN) {
+                                zm = floorf(zm);
+                                nBN = nBNi;
+                            }
+                        }
+                        if (nBN < numBytesNeeded) {
+                            zMin = zm;
+                            numBytesNeeded = nBN;
+                        }
+                    }
+                }
+            }
             numBytes += numBytesNeeded;
 
             if (bArr) { // Skip the write if no pointer was provided
                 int numBytesWritten = 0;
-                if (!writeZTile(&bArr, numBytesWritten, v0, v1, h0, h1, numValidPixel, zMin, zMax, maxZError))
-                    return false;
+                if (numFinite == 0 && numValidPixel == (v1 - v0) * (h1 - h0) && isallsameval(v0, v1, h0, h1)) {
+                    // direct write as non-finite const block, 4 byte float
+                    *bArr++ = 3; // 3 | bits67[3]
+                    bArr = writeFlt(bArr, (*this)(v0, h0), sizeof(float));
+                    numBytesWritten = 5;
+                }
+                else {
+                    if (!writeZTile(&bArr, numBytesWritten, v0, v1, h0, h1, numValidPixel, zMin, zMax, maxZError))
+                        return false;
+                }
                 if (numBytesWritten != numBytesNeeded)
                     return false;
             }
@@ -631,13 +677,14 @@ void Lerc1Image::computeCntStats(float& cntMin, float& cntMax) const {
 }
 
 bool Lerc1Image::computeZStats(int r0, int r1, int c0, int c1,
-    float& zMin, float& zMax, int& numValidPixel) const
+    float& zMin, float& zMax, int& numValidPixel, int &numFinite) const
 {
     if (r0 < 0 || c0 < 0 || r1 > getHeight() || c1 > getWidth())
         return false;
     zMin = FLT_MAX;
     zMax = -FLT_MAX;
     numValidPixel = 0;
+    numFinite = 0;
     for (int row = r0; row < r1; row++)
         for (int col = c0; col < c1; col++)
             if (IsValid(row, col)) {
@@ -645,6 +692,8 @@ bool Lerc1Image::computeZStats(int r0, int r1, int c0, int c1,
                 float val = (*this)(row, col);
                 if (!std::isfinite(val))
                     zMin = NAN; // Serves as a flag, this block will be stored
+                else
+                    numFinite++;
                 if (val < zMin)
                     zMin = val;
                 if (val > zMax)
@@ -662,17 +711,16 @@ static int numBytesFlt(float z) {
     return (c == z) ? 1 : (s == z) ? 2 : 4;
 }
 
-// n is 1, 2 or 4
-static Byte* writeFlt(Byte* ptr, float z, int n) {
-    if (4 == n)
-        memcpy(ptr, &z, 4);
-    else if (1 == n)
-        *ptr = static_cast<Byte>(static_cast<signed char>(z));
-    else {
-        signed short s = static_cast<signed short>(z);
-        memcpy(ptr, &s, 2);
-    }
-    return ptr + n;
+// Returns true if all floats in the region have exactly the same binary representation
+// This makes it usable for non-finite values
+bool Lerc1Image::isallsameval(int r0, int r1, int c0, int c1) const
+{
+    uint32_t val = *reinterpret_cast<const uint32_t *>(&(*this)(r0, c0));
+    for (int row = r0; row < r1; row++)
+        for (int col = c0; col < c1; col++)
+            if (val != *reinterpret_cast<const uint32_t*>(&(*this)(row, col)))
+                return false;
+    return true;
 }
 
 int Lerc1Image::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) {
@@ -807,7 +855,6 @@ bool Lerc1Image::readZTile(Byte** ppByte, size_t& nRemainingBytes,
         return true;
     }
 
-    // read z's as int arr bit stuffed
     idataVec.resize((r1 - r0) * (c1 - c0)); // max size
     if (!blockread(&ptr, nRemainingBytes, idataVec))
         return false;

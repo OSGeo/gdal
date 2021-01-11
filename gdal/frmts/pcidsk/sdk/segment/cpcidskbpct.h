@@ -1,9 +1,9 @@
 /******************************************************************************
  *
- * Purpose: Interface representing access to a PCIDSK ADS40 Segment
+ * Purpose:  Declaration of the CPCIDSK_BPCT class.
  *
  ******************************************************************************
- * Copyright (c) 2009
+ * Copyright (c) 2015
  * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,25 +24,34 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef INCLUDE_PCIDSK_PCIDSK_ADS40_H
-#define INCLUDE_PCIDSK_PCIDSK_ADS40_H
+#ifndef INCLUDE_SEGMENT_PCIDSK_BPCT_H
+#define INCLUDE_SEGMENT_PCIDSK_BPCT_H
 
-#include <vector>
-#include <string>
+#include "pcidsk_config.h"
+#include "pcidsk_bpct.h"
+#include "pcidsk_buffer.h"
+#include "segment/cpcidsksegment.h"
 
-namespace PCIDSK {
-//! Interface to PCIDSK RPC segment.
-    class PCIDSKADS40Segment
+
+namespace PCIDSK
+{
+    class PCIDSKFile;
+
+    /************************************************************************/
+    /*                            CPCIDSK_BPCT                               */
+    /************************************************************************/
+
+    class CPCIDSK_BPCT : virtual public CPCIDSKSegment,
+                        public PCIDSK_BPCT
     {
     public:
-        // Get path
-        virtual std::string GetPath(void) const = 0;
-        // Set path
-        virtual void SetPath(const std::string& oPath) = 0;
+        CPCIDSK_BPCT( PCIDSKFile *file, int segment, const char *segment_pointer);
 
-        // Virtual destructor
-        virtual ~PCIDSKADS40Segment() {}
+        virtual     ~CPCIDSK_BPCT();
+
+        virtual void ReadBPCT( std::vector<BPCTEntry>& vBPCT ) override;
+        virtual void WriteBPCT( const std::vector<BPCTEntry>& vBPCT ) override;
     };
-}
+} // end namespace PCIDSK
 
-#endif // INCLUDE_PCIDSK_PCIDSK_ADS40_H
+#endif // INCLUDE_SEGMENT_PCIDSK_BPCT_H

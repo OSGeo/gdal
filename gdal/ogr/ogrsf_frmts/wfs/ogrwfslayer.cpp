@@ -1836,7 +1836,7 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
                 if (poGeom->getSpatialReference() == nullptr)
                     poGeom->assignSpatialReference(poSRS);
                 char* pszGML = nullptr;
-                if (strcmp(poDS->GetVersion(), "1.1.0") == 0)
+                if (strcmp(poDS->GetVersion(), "1.1.0") == 0 || atoi(poDS->GetVersion()) >= 2)
                 {
                     char** papszOptions = CSLAddString(nullptr, "FORMAT=GML3");
                     pszGML = OGR_G_ExportToGMLEx((OGRGeometryH)poGeom, papszOptions);
@@ -1985,22 +1985,25 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
     }
     else
     {
+        const char *pszFeatureIdElt = atoi(poDS->GetVersion()) >= 2 ?
+            "InsertResults.Feature.ResourceId" : "InsertResults.Feature.FeatureId";
         psFeatureID =
-            CPLGetXMLNode( psRoot, "InsertResults.Feature.FeatureId");
+            CPLGetXMLNode( psRoot, pszFeatureIdElt);
         if (psFeatureID == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot find InsertResults.Feature.FeatureId");
+                    "Cannot find %s", pszFeatureIdElt);
             CPLDestroyXMLNode( psXML );
             CPLHTTPDestroyResult(psResult);
             return OGRERR_FAILURE;
         }
     }
 
-    const char* pszFID = CPLGetXMLValue(psFeatureID, "fid", nullptr);
+    const char *pszFIDAttr = atoi(poDS->GetVersion()) >= 2 ? "rid" : "fid";
+    const char* pszFID = CPLGetXMLValue(psFeatureID, pszFIDAttr, nullptr);
     if (pszFID == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find fid");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", pszFIDAttr);
         CPLDestroyXMLNode( psXML );
         CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
@@ -2085,7 +2088,7 @@ OGRErr OGRWFSLayer::ISetFeature( OGRFeature *poFeature )
             if (poGeom->getSpatialReference() == nullptr)
                 poGeom->assignSpatialReference(poSRS);
             char* pszGML = nullptr;
-            if (strcmp(poDS->GetVersion(), "1.1.0") == 0)
+            if (strcmp(poDS->GetVersion(), "1.1.0") == 0 || atoi(poDS->GetVersion()) >= 2)
             {
                 char** papszOptions = CSLAddString(nullptr, "FORMAT=GML3");
                 pszGML = OGR_G_ExportToGMLEx((OGRGeometryH)poGeom, papszOptions);

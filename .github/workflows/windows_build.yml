@@ -181,6 +181,7 @@ jobs:
             $env:NMAKE_LOCAL+="NETCDF_LIB=`$(SDK_LIB)\netcdf.lib`n"
             $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"
             $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
+            #$env:NMAKE_LOCAL+="NETCDF_HAS_NETCDF_MEM = yes`n"
             $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:GITHUB_WORKSPACE\install-proj\include`n"
             $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:GITHUB_WORKSPACE\install-proj\lib\proj.lib`n"
             # For some reason libzstd.dll and libdeflate.dll conflicts at runtime

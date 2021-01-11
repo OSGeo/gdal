@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import sys
 
 from osgeo import gdal
@@ -446,3 +447,73 @@ def test_osr_ct_lon_wrap():
     x, y, _ = ct.TransformPoint(-25, 60, 0)
     assert x == pytest.approx(-25 + 360, abs=1e-12)
     assert y == pytest.approx(60, abs=1e-12)
+
+###############################################################################
+# Test ct.TransformPointWithErrorCode
+
+
+def test_osr_ct_transformpointwitherrorcode():
+
+    if osr.GetPROJVersionMajor() < 8:
+        # Issue before PROJ 8
+        pytest.skip()
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("+proj=longlat +ellps=GRS80")
+    t = osr.SpatialReference()
+    t.SetFromUserInput("+proj=tmerc +ellps=GRS80")
+    ct = osr.CoordinateTransformation(s, t)
+    assert ct
+
+    x, y, z, t, error_code = ct.TransformPointWithErrorCode(1, 2, 3, 4)
+    assert x == pytest.approx(111257.80439304397, rel=1e-10)
+    assert y == pytest.approx(221183.3401672801, rel=1e-10)
+    assert z == 3
+    assert t == 4
+    assert error_code == 0
+
+    x, y, z, t, error_code = ct.TransformPointWithErrorCode(90, 0, 0, 0)
+    assert math.isinf(x)
+    assert error_code == osr.PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN
+
+###############################################################################
+# Test CoordinateTransformationOptions.SetDesiredAccuracy
+
+
+def test_osr_ct_options_accuracy():
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("EPSG:4326")
+    t = osr.SpatialReference()
+    t.SetFromUserInput("EPSG:4258") # ETRS89
+    options = osr.CoordinateTransformationOptions()
+    options.SetDesiredAccuracy(0.05)
+    with gdaltest.error_handler():
+        ct = osr.CoordinateTransformation(s, t, options)
+    try:
+        ct.TransformPoint(49, 2, 0)
+        assert False
+    except:
+        pass
+
+
+###############################################################################
+# Test CoordinateTransformationOptions.SetBallparkAllowed
+
+
+def test_osr_ct_options_ballpark_disallowed():
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("EPSG:4267") # NAD27
+    t = osr.SpatialReference()
+    t.SetFromUserInput("EPSG:4258") # ETRS89
+    options = osr.CoordinateTransformationOptions()
+    options.SetBallparkAllowed(False)
+    with gdaltest.error_handler():
+        ct = osr.CoordinateTransformation(s, t, options)
+    try:
+        ct.TransformPoint(49, 2, 0)
+        assert False
+    except:
+        pass
+

@@ -1334,7 +1334,7 @@ def test_pds4_createlabelonly_gtiff():
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/byte.tif', gdal.Open('data/byte.tif'))
 
     src_ds = gdal.Open('/vsimem/byte.tif')
-    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>TIFF/GeoTIFF</parsing_standard_id>', validate = True)
+    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>TIFF 6.0</parsing_standard_id>', validate = True)
 
 
 ###############################################################################
@@ -1360,7 +1360,7 @@ def test_pds4_createlabelonly_bigtiff():
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/byte.tif', gdal.Open('data/byte.tif'), options=['BIGTIFF=YES'])
 
     src_ds = gdal.Open('/vsimem/byte.tif')
-    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>BigTIFF/GeoTIFF</parsing_standard_id>')
+    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>TIFF 6.0</parsing_standard_id>')
 
 
 ###############################################################################

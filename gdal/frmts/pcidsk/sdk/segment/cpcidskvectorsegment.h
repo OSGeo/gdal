@@ -129,7 +129,8 @@ namespace PCIDSK
         VecSegHeader    vh;
         VecSegDataIndex di[2];
 
-        int32                shape_count;
+        int32                total_shape_count;
+        int32                valid_shape_count;
         ShapeId              highest_shapeid_used;
         //ShapeId              first_shape_id;
         //ShapeId              last_shape_id;
@@ -176,6 +177,8 @@ namespace PCIDSK
         std::string          ConsistencyCheck_Header();
         std::string          ConsistencyCheck_DataIndices();
         std::string          ConsistencyCheck_ShapeIndices();
+
+        ShapeId         FindNextValidByIndex(int nIndex);
     };
 } // end namespace PCIDSK
 

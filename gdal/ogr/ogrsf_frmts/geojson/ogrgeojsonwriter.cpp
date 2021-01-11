@@ -1502,8 +1502,25 @@ char* OGR_G_ExportToJsonEx( OGRGeometryH hGeometry, char** papszOptions )
     oOptions.nCoordPrecision = nCoordPrecision;
     oOptions.nSignificantFigures = nSignificantFigures;
 
+    // If the CRS has latitude, longitude (or northing, easting) axis order,
+    // and the data axis to SRS axis mapping doesn't change that order,
+    // then swap X and Y values.
+    bool bHasSwappedXY = false;
+    const auto poSRS = poGeometry->getSpatialReference();
+    if( poSRS &&
+        (poSRS->EPSGTreatsAsLatLong() || poSRS->EPSGTreatsAsNorthingEasting()) &&
+        poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{1, 2} )
+    {
+        poGeometry->swapXY();
+        bHasSwappedXY = true;
+    }
+
     json_object* poObj =
        OGRGeoJSONWriteGeometry( poGeometry, oOptions );
+
+    // Unswap back
+    if( bHasSwappedXY )
+        poGeometry->swapXY();
 
     if( nullptr != poObj )
     {

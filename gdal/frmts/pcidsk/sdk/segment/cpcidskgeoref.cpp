@@ -222,21 +222,32 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
         for( i = 0; i < 17; i++ )
             parms[i] = seg_data.GetDouble(80+26*i,26);
 
-        std::string grid_units;
-        seg_data.Get(64,16,grid_units);
+        double dfUnitsCode = seg_data.GetDouble(1900, 26);
 
-        if( STARTS_WITH_CI(grid_units.c_str(),"DEG" /* "DEGREE" */) )
-            parms[17] = (double) (int) UNIT_DEGREE;
-        else if( STARTS_WITH_CI(grid_units.c_str(), "MET") )
-            parms[17] = (double) (int) UNIT_METER;
-        else if( STARTS_WITH_CI(grid_units.c_str(), "FOOT") )
-            parms[17] = (double) (int) UNIT_US_FOOT;
-        else if( STARTS_WITH_CI(grid_units.c_str(), "FEET") )
-            parms[17] = (double) (int) UNIT_US_FOOT;
-        else if( STARTS_WITH_CI(grid_units.c_str(), "INTL " /* "INTL FOOT" */) )
-            parms[17] = (double) (int) UNIT_INTL_FOOT;
+        // if the units code is undefined, use the IOUnits filed
+        if(dfUnitsCode == -1)
+        {
+            std::string grid_units;
+            seg_data.Get(64,16,grid_units);
+
+            if( STARTS_WITH_CI( grid_units.c_str(), "DEG" /* "DEGREE" */) )
+                parms[17] = (double) (int) UNIT_DEGREE;
+            else if( STARTS_WITH_CI( grid_units.c_str(), "MET") )
+                parms[17] = (double) (int) UNIT_METER;
+            else if( STARTS_WITH_CI( grid_units.c_str(), "FOOT") )
+                parms[17] = (double) (int) UNIT_US_FOOT;
+            else if( STARTS_WITH_CI( grid_units.c_str(), "FEET") )
+                parms[17] = (double) (int) UNIT_US_FOOT;
+            else if( STARTS_WITH_CI( grid_units.c_str(), "INTL " /* "INTL FOOT" */) )
+                parms[17] = (double) (int) UNIT_INTL_FOOT;
+            else
+                parms[17] = -1.0; /* unknown */
+        }
         else
-            parms[17] = -1.0; /* unknown */
+        {
+            parms[17] = dfUnitsCode;
+        }
+
     }
 
     return parms;
@@ -1021,7 +1032,6 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     else if( STARTS_WITH(geosys_clean.c_str(), "UTM ") )
     {
         char row_char = geosys_clean[10];
-        /*gsys = 1;*/
 
         // Southern hemisphere?
         if( (row_char >= 'C') && (row_char <= 'M') && ProjectionZone > 0 )

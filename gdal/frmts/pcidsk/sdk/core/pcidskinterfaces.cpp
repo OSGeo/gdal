@@ -30,6 +30,7 @@
 #include "pcidsk_utils.h"
 #include "pcidsk_interfaces.h"
 #include "pcidsk_mutex.h"
+#include "core/pcidsk_utils.h"
 
 using namespace PCIDSK;
 
@@ -45,6 +46,7 @@ PCIDSKInterfaces::PCIDSKInterfaces()
 {
     io = GetDefaultIOInterfaces();
     OpenEDB = DefaultOpenEDB;
+    MergeRelativePath = DefaultMergeRelativePath;
     CreateMutex = DefaultCreateMutex;
     Debug = DefaultDebug;
 
@@ -55,7 +57,6 @@ PCIDSKInterfaces::PCIDSKInterfaces()
     JPEGDecompressBlock = NULL;
     JPEGCompressBlock = NULL;
 #endif
-
 }
 
 /**

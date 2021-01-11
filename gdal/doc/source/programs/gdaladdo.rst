@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdaladdo [-r {nearest,average,rms,gauss,cubic,cubicspline,lanczos,average_magphase,mode}]
+    gdaladdo [-r {nearest,average,rms,bilinear,gauss,cubic,cubicspline,lanczos,average_magphase,mode}]
             [-b band]* [-minsize val]
             [-ro] [-clean] [-oo NAME=VALUE]* [--help-general] filename [levels]
 

@@ -90,10 +90,10 @@ namespace PCIDSK {
         void SetSensorName(const std::string& name) override;
 
         // Output projection information of RPC Model
-        // Get the Geosys String
-        std::string GetGeosysString(void) const override;
-        // Set the Geosys string
-        void SetGeosysString(const std::string& geosys) override;
+        void GetMapUnits(std::string& map_units, std::string& proj_parms) const override;
+
+        // Set the map units
+        void SetMapUnits(std::string const& map_units, std::string const& proj_parms) override;
 
         // Get the number of lines
         unsigned int GetLines(void) const override;
@@ -121,6 +121,10 @@ namespace PCIDSK {
         PCIDSKRPCInfo *pimpl_;
         bool loaded_;
         bool mbModified;
+
+        //this member is used when the segment was newly created
+        //and nothing was yet set in it.
+        bool mbEmpty;
     };
 }
 

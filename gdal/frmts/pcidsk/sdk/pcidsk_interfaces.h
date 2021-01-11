@@ -47,6 +47,10 @@ namespace PCIDSK
 
         const IOInterfaces *io;
 
+        std::string       (*MergeRelativePath)(const PCIDSK::IOInterfaces *,
+                                               const std::string& base,
+                                               const std::string& filename);
+
         EDBFile           *(*OpenEDB)(const std::string& filename, const std::string& access);
 
         Mutex             *(*CreateMutex)(void);

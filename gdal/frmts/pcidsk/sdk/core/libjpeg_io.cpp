@@ -34,8 +34,6 @@
 #include <cassert>
 #include <cstdio>
 
-#include "cpl_port.h"
-
 using namespace PCIDSK;
 
 #if defined(HAVE_LIBJPEG)
@@ -63,6 +61,13 @@ static void JpegError(j_common_ptr cinfo)
     char buf[256];
 
     cinfo->err->format_message(cinfo, buf);
+
+    // Make sure we destroy the context before throwing an exception.
+    if (cinfo->is_decompressor)
+        jpeg_destroy_decompress((j_decompress_ptr) cinfo);
+    else
+        jpeg_destroy_compress((j_compress_ptr) cinfo);
+
     return ThrowPCIDSKException( "%s", buf );
 }
 
@@ -110,6 +115,8 @@ void PCIDSK::LibJPEG_DecompressBlock(
     if (sJCompInfo.image_width != (unsigned int)xsize ||
         sJCompInfo.image_height != (unsigned int)ysize)
     {
+        jpeg_destroy_decompress( &sJCompInfo );
+
         return ThrowPCIDSKException("Tile Size wrong in LibJPEG_DecompressTile(), got %dx%d, expected %dx%d.",
                              sJCompInfo.image_width,
                              sJCompInfo.image_height,

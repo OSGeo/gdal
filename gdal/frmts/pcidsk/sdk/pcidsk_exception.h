@@ -40,11 +40,11 @@ namespace PCIDSK
 /*                              Exception                               */
 /************************************************************************/
 
-    class PCIDSKException : public std::exception
+    class PCIDSK_DLL PCIDSKException : public std::exception
     {
         friend void PCIDSK_DLL ThrowPCIDSKException( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
         friend int PCIDSK_DLL ThrowPCIDSKException( int ret_unused, const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
-        friend void* PCIDSK_DLL ThrowPCIDSKExceptionPtr( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
+        friend void PCIDSK_DLL * ThrowPCIDSKExceptionPtr( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
         PCIDSKException() {}
     public:
         PCIDSKException(const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
@@ -58,7 +58,7 @@ namespace PCIDSK
 
     void PCIDSK_DLL ThrowPCIDSKException( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
     int PCIDSK_DLL ThrowPCIDSKException( int ret_unused, const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
-    void* PCIDSK_DLL ThrowPCIDSKExceptionPtr( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
+    void PCIDSK_DLL * ThrowPCIDSKExceptionPtr( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
 
 } // end namespace PCIDSK
 

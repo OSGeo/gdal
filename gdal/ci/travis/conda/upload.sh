@@ -18,19 +18,22 @@ then
 fi
 
 export CI_PLAT=""
-if [ "$PLATFORM" == "windows-latest" ]; then
+if grep -q "windows" <<< "$PLATFORM"; then
     CI_PLAT="win"
 fi
 
-if [ "$PLATFORM" == "ubuntu-latest" ]; then
+if grep -q "ubuntu" <<< "$PLATFORM"; then
     CI_PLAT="linux"
 fi
 
-if [ "$PLATFORM" == "macos-latest" ]; then
+if grep -q "macos" <<< "$PLATFORM"; then
     CI_PLAT="osx"
 fi
 
+
+
 echo "Anaconda token is available, attempting to upload"
+conda install -c conda-forge anaconda-client -y
 
 find . -name "*gdal*.bz2" -exec anaconda -t "$ANACONDA_TOKEN" upload --force --no-progress --user gdal-master  {} \;
 

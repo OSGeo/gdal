@@ -792,6 +792,28 @@ public:
                            double *z, double *t,
                            int *pabSuccess ) = 0;
 
+    /**
+     * Transform points from source to destination space.
+     *
+     * This method is the same as the C function OCTTransform4DWithErrorCodes().
+     *
+     * @param nCount number of points to transform.
+     * @param x array of nCount X vertices, modified in place. Should not be NULL.
+     * @param y array of nCount Y vertices, modified in place. Should not be NULL.
+     * @param z array of nCount Z vertices, modified in place. Might be NULL.
+     * @param t array of nCount time values, modified in place. Might be NULL.
+     * @param panErrorCodes Output array of nCount value that will be set to 0 for
+     *                      success, or a non-zero value for failure. Refer to
+     *                      PROJ 8 public error codes. Might be NULL
+     * @return TRUE if some or all points transform successfully, or FALSE if
+     * if none transform.
+     * @since GDAL 3.3, and PROJ 8 to be able to use PROJ public error codes
+     */
+    virtual int TransformWithErrorCodes( int nCount,
+                                         double *x, double *y,
+                                         double *z, double *t,
+                                         int *panErrorCodes );
+
     /** Convert a OGRCoordinateTransformation* to a OGRCoordinateTransformationH.
      * @since GDAL 2.3
      */
@@ -840,6 +862,8 @@ public:
                            double dfSouthLatitudeDeg,
                            double dfEastLongitudeDeg,
                            double dfNorthLatitudeDeg);
+    bool SetDesiredAccuracy(double dfAccuracy);
+    bool SetBallparkAllowed(bool bAllowBallpark);
 
     bool SetCoordinateOperation(const char* pszCT, bool bReverseCT);
 /*! @cond Doxygen_Suppress */

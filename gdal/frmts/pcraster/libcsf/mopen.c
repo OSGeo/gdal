@@ -178,7 +178,46 @@ MAP  *Mopen(
  
  if (m->main.version == CSF_VERSION_1)
  	m->raster.angle = 0.0;
- 
+
+ /* validate value of cellRepr */
+ switch(m->raster.cellRepr)
+ {
+     case CR_UINT1:
+     case CR_INT4:
+     case CR_REAL4:
+     case CR_REAL8:
+     case CR_INT1:
+     case CR_INT2:
+     case CR_UINT2:
+     case CR_UINT4:
+     case CR_UNDEFINED:
+         break;
+
+     default:
+         M_ERROR(BAD_CELLREPR);
+         goto error_open;
+ }
+
+ /* validate value of valueScale */
+ switch(m->raster.valueScale)
+ {
+     case VS_NOTDETERMINED:
+     case VS_CLASSIFIED:
+     case VS_CONTINUOUS:
+     case VS_BOOLEAN:
+     case VS_NOMINAL:
+     case VS_ORDINAL:
+     case VS_SCALAR:
+     case VS_DIRECTION:
+     case VS_LDD:
+     case VS_UNDEFINED:
+         break;
+
+     default:
+         M_ERROR(BAD_VALUESCALE);
+         goto error_open;
+ }
+
  CsfFinishMapInit(m);
  
  CsfRegisterMap(m);

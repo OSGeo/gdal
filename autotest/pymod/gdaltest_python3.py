@@ -40,7 +40,6 @@ import sys
 from queue import Queue
 from threading import Thread
 
-
 def run_func(func):
     try:
         result = func()
@@ -107,12 +106,12 @@ def gdalurlopen(url, timeout=10):
         print('HTTP service for %s is down (HTTP Error: %d)' % (url, e.code))
         socket.setdefaulttimeout(old_timeout)
         return None
-    except urllib.error.URLError as e:
-        print('HTTP service for %s is down (URL Error: %s)' % (url, e.reason))
+    except urllib.error.ContentTooShortError:
+        print('HTTP content too short for %s.' % url)
         socket.setdefaulttimeout(old_timeout)
         return None
-    except urllib.error.ContentTooShort:
-        print('HTTP content too short for %s.' % url)
+    except urllib.error.URLError as e:
+        print('HTTP service for %s is down (URL Error: %s)' % (url, e.reason))
         socket.setdefaulttimeout(old_timeout)
         return None
 

@@ -4091,6 +4091,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
             nMaxOvrFactor,
             static_cast<int>(static_cast<double>(nHeight) / nDstHeight + 0.5) );
     }
+    // Make sure that round(nChunkYOff / nMaxOvrFactor) < round((nChunkYOff + nFullResYChunk) / nMaxOvrFactor)
+    nFullResYChunk = std::max(nFullResYChunk, 2 * nMaxOvrFactor);
     const int nMaxChunkYSizeQueried =
         nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
 
@@ -4130,7 +4132,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
         GDALDataType eSrcDataType = GDT_Unknown;
         bool bPropagateNoData = false;
 
-        // Ouput values of resampling function
+        // Output values of resampling function
         CPLErr eErr = CE_Failure;
         void* pDstBuffer = nullptr;
         GDALDataType eDstBufferDataType = GDT_Unknown;
@@ -4437,6 +4439,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 /*      processed.                                                      */
 /* -------------------------------------------------------------------- */
             int nDstYOff = static_cast<int>(0.5 + nChunkYOff/dfYRatioDstToSrc);
+            if( nDstYOff == nDstHeight )
+                continue;
             int nDstYOff2 = static_cast<int>(
                 0.5 + (nChunkYOff+nFullResYChunk)/dfYRatioDstToSrc);
 
@@ -4551,8 +4555,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * The output bands need to exist in advance and share the same characteristics
  * (type, dimensions)
  *
- * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE"
- * "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" and "BILINEAR"
+ * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE",
+ * "RMS", "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" and "BILINEAR"
  *
  * It does not support color tables or complex data types.
  *
@@ -4838,7 +4842,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
             GDALDataType eSrcDataType = GDT_Unknown;
             bool bPropagateNoData = false;
 
-            // Ouput values of resampling function
+            // Output values of resampling function
             CPLErr eErr = CE_Failure;
             void* pDstBuffer = nullptr;
             GDALDataType eDstBufferDataType = GDT_Unknown;

@@ -30,12 +30,29 @@
 #include "pcidsk_segment.h"
 #include <string>
 #include <vector>
+#include <map>
+#include <functional>
+#include <algorithm>
 
 namespace PCIDSK
 {
 /************************************************************************/
 /*                              PCIDSKFile                              */
 /************************************************************************/
+    static bool CheckSegNamesEqual(const char * pszName, unsigned nSize,
+                                   const char * pszCheckName, unsigned nCheckSize)
+    {
+        if(nCheckSize == 0)
+            return true;
+        int nFirstSize = std::min(nCheckSize, nSize);
+        if(!std::equal(pszName, pszName + nFirstSize, pszCheckName))
+            return false;
+        //make sure the rest of the string is just whitespace
+        for(unsigned i = nFirstSize; i < nSize; i++)
+            if(pszName[i] != ' ')
+                return false;
+        return true;
+    }
 
     class PCIDSKChannel;
     class PCIDSKSegment;
@@ -52,10 +69,29 @@ namespace PCIDSK
 
         virtual PCIDSKChannel  *GetChannel( int band ) = 0;
         virtual PCIDSKSegment  *GetSegment( int segment ) = 0;
-        virtual std::vector<PCIDSKSegment *> GetSegments() = 0;
 
-        virtual PCIDSK::PCIDSKSegment *GetSegment( int type,
-            std::string name, int previous = 0 ) = 0;
+        virtual PCIDSK::PCIDSKSegment *
+            GetSegment( int type, const std::string & name, int previous = 0 ) = 0;
+        virtual unsigned GetSegmentID(int segment, const std::string & name = {},
+                                      unsigned previous = 0) const = 0;
+        virtual std::vector<unsigned> GetSegmentIDs(int segment,
+                 const std::function<bool(const char *, unsigned)> & oFilter) const = 0;
+        std::vector<unsigned> GetSegmentIDs(int segment) const
+        {
+            static const std::function<bool(const char *, unsigned)> oTrue =
+                [](const char *, unsigned) { return true; };
+            return GetSegmentIDs(segment, oTrue);
+        }
+        std::vector<unsigned> GetSegmentIDs(int segment, const std::string & name) const
+        {
+            std::function<bool(const char *, unsigned)> oCheck =
+                [&name](const char * pszName, unsigned nSize)
+                {
+                    return CheckSegNamesEqual(pszName, nSize, name.c_str(),
+                                              (unsigned)name.size());
+                };
+            return GetSegmentIDs(segment, std::move(oCheck));
+        }
 
         virtual int GetWidth() const = 0;
         virtual int GetHeight() const = 0;
@@ -78,10 +114,13 @@ namespace PCIDSK
     // low level io, primarily internal.
         virtual void WriteToFile( const void *buffer, uint64 offset, uint64 size)=0;
         virtual void ReadFromFile( void *buffer, uint64 offset, uint64 size ) = 0;
-        virtual void CheckFileBigEnough( uint64 bytes_to_read ) = 0;
 
         virtual void GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp,
                                    std::string filename="", bool writable=false ) = 0;
+
+        virtual std::string GetUniqueEDBFilename() = 0;
+
+        virtual std::map<int,int> GetEDBChannelMap(std::string oExtFilename) = 0;
 
         virtual std::string GetMetadataValue( const std::string& key ) = 0;
         virtual void SetMetadataValue( const std::string& key, const std::string& value ) = 0;

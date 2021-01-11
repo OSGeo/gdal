@@ -111,15 +111,14 @@ void CPCIDSK_ARRAY::Load()
         nElements *= moSizes[i];
     }
 
+    moArray.resize(nElements);
     for( unsigned int i = 0; i < nElements; i++ )
     {
         const double* pdValue = (const double*)seg_data.Get(i*8,8);
         char uValue[8];
         std::memcpy(uValue,pdValue,8);
         SwapData(uValue,8,1);
-        double dValue;
-        memcpy(&dValue, uValue, 8);
-        moArray.push_back(dValue);
+        memcpy(&moArray[i], uValue, 8);
     }
 
     //PCIDSK doesn't have support for headers.
@@ -209,6 +208,8 @@ unsigned char CPCIDSK_ARRAY::GetDimensionCount() const
  */
 void CPCIDSK_ARRAY::SetDimensionCount(unsigned char nDim)
 {
+    if( !file->GetUpdatable() )
+        return ThrowPCIDSKException("File not open for update.");
     if(nDim < 1 || nDim > 8)
     {
         return ThrowPCIDSKException("An array cannot have a "
@@ -291,6 +292,8 @@ const std::vector<double>& CPCIDSK_ARRAY::GetArray() const
  */
 void CPCIDSK_ARRAY::SetArray(const std::vector<double>& oArray)
 {
+    if( !file->GetUpdatable() )
+        return ThrowPCIDSKException("File not open for update.");
     unsigned int nLength = 1;
     for( unsigned int i=0 ; i < moSizes.size() ; i++)
     {

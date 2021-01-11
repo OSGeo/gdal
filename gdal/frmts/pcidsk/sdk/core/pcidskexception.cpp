@@ -27,6 +27,7 @@
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
+#include "pcidsk_buffer.h"
 #include "pcidsk_exception.h"
 #include <cstdlib>
 #include <cstring>
@@ -166,7 +167,7 @@ void PCIDSKException::vPrintf( const char *fmt, std::va_list args )
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
-        char *pszWorkBuffer = (char *) malloc(nWorkBufferSize);
+        PCIDSKBuffer oWorkBuffer(nWorkBufferSize);
 
 #ifdef va_copy
         va_end( wrk_args );
@@ -174,28 +175,20 @@ void PCIDSKException::vPrintf( const char *fmt, std::va_list args )
 #else
         wrk_args = args;
 #endif
-        while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, fmt, wrk_args))
+        while( (nPR=vsnprintf( oWorkBuffer.buffer, nWorkBufferSize, fmt, wrk_args))
                >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            char* pszWorkBufferNew = (char *) realloc(pszWorkBuffer,
-                                                      nWorkBufferSize );
+            oWorkBuffer.SetSize(nWorkBufferSize);
 #ifdef va_copy
             va_end( wrk_args );
             va_copy( wrk_args, args );
 #else
             wrk_args = args;
 #endif
-            if( pszWorkBufferNew == nullptr )
-            {
-                strcpy( pszWorkBuffer, "(message too large)" );
-                break;
-            }
-            pszWorkBuffer = pszWorkBufferNew;
         }
-        message = pszWorkBuffer;
-        free( pszWorkBuffer );
+        message = oWorkBuffer.buffer;
     }
     else
     {

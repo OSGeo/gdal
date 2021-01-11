@@ -565,9 +565,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
       parameters should generally not be specified if buf_obj is specified. The array is returned"""
 
-      from osgeo import gdalnumeric
+      from osgeo import gdal_array
 
-      return gdalnumeric.BandReadAsArray(self, xoff, yoff,
+      return gdal_array.BandReadAsArray(self, xoff, yoff,
                                          win_xsize, win_ysize,
                                          buf_xsize, buf_ysize, buf_type, buf_obj,
                                          resample_alg=resample_alg,
@@ -578,9 +578,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                  resample_alg=gdalconst.GRIORA_NearestNeighbour,
                  callback=None,
                  callback_data=None):
-      from osgeo import gdalnumeric
+      from osgeo import gdal_array
 
-      return gdalnumeric.BandWriteArray(self, array, xoff, yoff,
+      return gdal_array.BandWriteArray(self, array, xoff, yoff,
                                         resample_alg=resample_alg,
                                         callback=callback,
                                         callback_data=callback_data)
@@ -595,7 +595,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
            Any reference to the array must be dropped before the last reference to the
            related dataset is also dropped.
         """
-        from osgeo import gdalnumeric
+        from osgeo import gdal_array
         if xsize is None:
             xsize = self.XSize
         if ysize is None:
@@ -610,7 +610,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
             virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint)
         else:
             virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, cache_size, page_size_hint, options)
-        return gdalnumeric.VirtualMemGetArray(virtualmem)
+        return gdal_array.VirtualMemGetArray(virtualmem)
 
   def GetVirtualMemAutoArray(self, eAccess=gdalconst.GF_Read, options=None):
         """Return a NumPy array for the band, seen as a virtual memory mapping.
@@ -618,12 +618,12 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
            Any reference to the array must be dropped before the last reference to the
            related dataset is also dropped.
         """
-        from osgeo import gdalnumeric
+        from osgeo import gdal_array
         if options is None:
             virtualmem = self.GetVirtualMemAuto(eAccess)
         else:
             virtualmem = self.GetVirtualMemAuto(eAccess,options)
-        return gdalnumeric.VirtualMemGetArray( virtualmem )
+        return gdal_array.VirtualMemGetArray( virtualmem )
 
   def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, tilexsize=256, tileysize=256,
@@ -635,7 +635,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
            Any reference to the array must be dropped before the last reference to the
            related dataset is also dropped.
         """
-        from osgeo import gdalnumeric
+        from osgeo import gdal_array
         if xsize is None:
             xsize = self.XSize
         if ysize is None:
@@ -646,7 +646,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size)
         else:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
-        return gdalnumeric.VirtualMemGetArray( virtualmem )
+        return gdal_array.VirtualMemGetArray( virtualmem )
 %}
 }
 
@@ -812,8 +812,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
         parameters should generally not be specified if buf_obj is specified. The array is returned"""
 
-        from osgeo import gdalnumeric
-        return gdalnumeric.DatasetReadAsArray(self, xoff, yoff, xsize, ysize, buf_obj,
+        from osgeo import gdal_array
+        return gdal_array.DatasetReadAsArray(self, xoff, yoff, xsize, ysize, buf_obj,
                                               buf_xsize, buf_ysize, buf_type,
                                               resample_alg=resample_alg,
                                               callback=callback,
@@ -881,7 +881,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
            Any reference to the array must be dropped before the last reference to the
            related dataset is also dropped.
         """
-        from osgeo import gdalnumeric
+        from osgeo import gdal_array
         if xsize is None:
             xsize = self.RasterXSize
         if ysize is None:
@@ -898,7 +898,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, band_list, band_sequential, cache_size, page_size_hint)
         else:
             virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, band_list, band_sequential, cache_size, page_size_hint,  options)
-        return gdalnumeric.VirtualMemGetArray( virtualmem )
+        return gdal_array.VirtualMemGetArray( virtualmem )
 
     def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, tilexsize=256, tileysize=256,
@@ -916,7 +916,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
            Any reference to the array must be dropped before the last reference to the
            related dataset is also dropped.
         """
-        from osgeo import gdalnumeric
+        from osgeo import gdal_array
         if xsize is None:
             xsize = self.RasterXSize
         if ysize is None:
@@ -929,7 +929,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size)
         else:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size, options)
-        return gdalnumeric.VirtualMemGetArray( virtualmem )
+        return gdal_array.VirtualMemGetArray( virtualmem )
 
     def GetSubDatasets(self):
         sd_list = []
@@ -1014,14 +1014,14 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 %extend GDALRasterAttributeTableShadow {
 %pythoncode %{
   def WriteArray(self, array, field, start=0):
-      from osgeo import gdalnumeric
+      from osgeo import gdal_array
 
-      return gdalnumeric.RATWriteArray(self, array, field, start)
+      return gdal_array.RATWriteArray(self, array, field, start)
 
   def ReadAsArray(self, field, start=0, length=None):
-      from osgeo import gdalnumeric
+      from osgeo import gdal_array
 
-      return gdalnumeric.RATReadArray(self, field, start, length)
+      return gdal_array.RATReadArray(self, field, start, length)
 %}
 }
 
@@ -1070,8 +1070,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                   buffer_datatype = None,
                   buf_obj = None):
 
-      from osgeo import gdalnumeric
-      return gdalnumeric.MDArrayReadAsArray(self, array_start_idx, count, array_step, buffer_datatype, buf_obj)
+      from osgeo import gdal_array
+      return gdal_array.MDArrayReadAsArray(self, array_start_idx, count, array_step, buffer_datatype, buf_obj)
 
   def AdviseRead(self, array_start_idx = None, count = None):
       if not array_start_idx:
@@ -1154,8 +1154,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                   array_start_idx = None,
                   array_step = None):
 
-      from osgeo import gdalnumeric
-      return gdalnumeric.MDArrayWriteArray(self, array, array_start_idx, array_step)
+      from osgeo import gdal_array
+      return gdal_array.MDArrayWriteArray(self, array, array_start_idx, array_step)
 
   def ReadAsMaskedArray(self,
                   array_start_idx = None,
@@ -1890,7 +1890,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 def DEMProcessingOptions(options=None, colorFilename=None, format=None,
-              creationOptions=None, computeEdges=False, alg='Horn', band=1,
+              creationOptions=None, computeEdges=False, alg=None, band=1,
               zFactor=None, scale=None, azimuth=None, altitude=None,
               combined=False, multiDirectional=False, igor=False,
               slopeFormat=None, trigonometric=False, zeroForFlat=False,
@@ -1903,7 +1903,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
           format --- output format ("GTiff", etc...)
           creationOptions --- list of creation options
           computeEdges --- whether to compute values at raster edges.
-          alg --- 'ZevenbergenThorne' or 'Horn'
+          alg --- 'Horn' (default) or 'ZevenbergenThorne' for hillshade, slope or aspect. 'Wilson' (default) or 'Riley' for TRI
           band --- source band number to use
           zFactor --- (hillshade only) vertical exaggeration used to pre-multiply the elevations.
           scale --- ratio of vertical units to horizontal.
@@ -1933,8 +1933,8 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
                 new_options += ['-co', opt]
         if computeEdges:
             new_options += ['-compute_edges']
-        if alg == 'ZevenbergenThorne':
-            new_options += ['-alg', 'ZevenbergenThorne']
+        if alg:
+            new_options += ['-alg', alg]
         new_options += ['-b', str(band)]
         if zFactor is not None:
             new_options += ['-z', str(zFactor)]

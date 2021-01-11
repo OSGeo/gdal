@@ -52,6 +52,7 @@ class TileDBDataset final: public GDALPamDataset
     friend class TileDBRasterBand;
 
     protected:
+        uint64_t      nTimestamp = 0;
         int           nBitsPerSample = 8;
         GDALDataType  eDataType = GDT_Unknown;
         int           nBlockXSize = -1;
@@ -777,11 +778,22 @@ CPLErr TileDBDataset::TrySaveXML()
 #if TILEDB_VERSION_MAJOR > 1 || TILEDB_VERSION_MINOR >= 7
         if ( eAccess == GA_ReadOnly )
         {
-            auto oMeta = std::unique_ptr<tiledb::Array>( 
-                new tiledb::Array( *m_ctx, m_array->uri(), TILEDB_WRITE )
-            );
-            oMeta->put_metadata("_gdal", TILEDB_UINT8, strlen( pszTree ), pszTree);
-            oMeta->close();
+            if ( nTimestamp )
+            {
+                auto oMeta = std::unique_ptr<tiledb::Array>(
+                    new tiledb::Array( *m_ctx, m_array->uri(), TILEDB_WRITE, nTimestamp )
+                );
+                oMeta->put_metadata("_gdal", TILEDB_UINT8, strlen( pszTree ), pszTree);
+                oMeta->close();
+            }
+            else
+            {
+                auto oMeta = std::unique_ptr<tiledb::Array>(
+                        new tiledb::Array( *m_ctx, m_array->uri(), TILEDB_WRITE )
+                    );
+                oMeta->put_metadata("_gdal", TILEDB_UINT8, strlen( pszTree ), pszTree);
+                oMeta->close();
+            }
         }
         else
         {
@@ -1188,6 +1200,11 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszConfig = CSLFetchNameValue(
                                     poOpenInfo->papszOpenOptions,
                                     "TILEDB_CONFIG" );
+
+        const char* pszTimestamp = CSLFetchNameValue(
+                                        poOpenInfo->papszOpenOptions,
+                                        "TILEDB_TIMESTAMP" );
+
         if( pszConfig != nullptr )
         {
             tiledb::Config cfg( pszConfig );
@@ -1197,6 +1214,9 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->m_ctx.reset( new tiledb::Context() );
         }
+
+        if ( pszTimestamp )
+            poDS->nTimestamp = atoi ( pszTimestamp );
 
         CPLString osArrayPath;
         CPLString osAux;
@@ -1247,13 +1267,23 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             eMode = TILEDB_WRITE;
             poDS->m_roCtx.reset(new tiledb::Context( poDS->m_ctx->config() ) );
-            poDS->m_roArray.reset(
-                new tiledb::Array( *poDS->m_roCtx, osArrayPath, TILEDB_READ )
-            );
+            if ( poDS->nTimestamp )
+                poDS->m_roArray.reset(
+                    new tiledb::Array( *poDS->m_roCtx, osArrayPath,
+                                        TILEDB_READ, poDS->nTimestamp ) );
+            else
+                poDS->m_roArray.reset(
+                    new tiledb::Array( *poDS->m_roCtx, osArrayPath, TILEDB_READ )
+                );
         }
 
-        poDS->m_array.reset(
-            new tiledb::Array( *poDS->m_ctx, osArrayPath, eMode ) );
+        if ( poDS->nTimestamp )
+            poDS->m_array.reset(
+                new tiledb::Array( *poDS->m_ctx, osArrayPath,
+                                    eMode, poDS->nTimestamp ) );
+        else
+            poDS->m_array.reset(
+                new tiledb::Array( *poDS->m_ctx, osArrayPath, eMode ) );
 
         poDS->eAccess = poOpenInfo->eAccess;
 
@@ -1779,6 +1809,12 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
         poDS->nBlockYSize = ( pszBlockYSize ) ? atoi( pszBlockYSize ) : 256;
         poDS->bStats = CSLFetchBoolean( papszOptions, "STATS", FALSE );
 
+        const char* pszTimestamp = CSLFetchNameValue(
+                                        papszOptions,
+                                        "TILEDB_TIMESTAMP" );
+        if ( pszTimestamp != nullptr )
+            poDS->nTimestamp = atoi( pszTimestamp );
+
         // set dimensions and attribute type for schema
         poDS->m_schema.reset( new tiledb::ArraySchema( *poDS->m_ctx, TILEDB_DENSE ) );
         poDS->m_schema->set_tile_order( TILEDB_ROW_MAJOR );
@@ -2016,8 +2052,14 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
 
         poDstDS->SetMetadata( poDstDS->papszSubDatasets, "SUBDATASETS" );
         tiledb::Array::create( poDstDS->GetDescription(), *poDstDS->m_schema );
-        poDstDS->m_array.reset( new tiledb::Array(
-            *poDstDS->m_ctx, poDstDS->GetDescription(), TILEDB_WRITE ) );
+
+        if ( poDstDS->nTimestamp )
+            poDstDS->m_array.reset( new tiledb::Array(
+                *poDstDS->m_ctx, poDstDS->GetDescription(),
+                TILEDB_WRITE, poDstDS->nTimestamp ) );
+        else
+            poDstDS->m_array.reset( new tiledb::Array(
+                    *poDstDS->m_ctx, poDstDS->GetDescription(), TILEDB_WRITE ) );
 
         /* --------------------------------------------------------  */
         /*      Report preliminary (0) progress.                     */
@@ -2125,7 +2167,13 @@ TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBa
             return nullptr;
 
         tiledb::Array::create( osArrayPath, *poDS->m_schema );
-        poDS->m_array.reset( new tiledb::Array( *poDS->m_ctx, osArrayPath, TILEDB_WRITE ) );
+
+        if ( poDS->nTimestamp )
+            poDS->m_array.reset( new tiledb::Array( *poDS->m_ctx, osArrayPath,
+                                    TILEDB_WRITE, poDS->nTimestamp ) );
+        else
+            poDS->m_array.reset( new tiledb::Array( *poDS->m_ctx,
+                                 osArrayPath, TILEDB_WRITE ) );
 
         for( int i = 0; i < poDS->nBands;i++ )
         {
@@ -2412,6 +2460,7 @@ void GDALRegister_TileDB()
 "        <Value>PIXEL</Value>\n"
 "        <Value>ATTRIBUTES</Value>\n"
 "   </Option>\n"
+"   <Option name='TILEDB_TIMESTAMP' type='int' description='Create array at this timestamp, the timestamp should be > 0'/>\n"
 "</CreationOptionList>\n" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
@@ -2419,6 +2468,7 @@ void GDALRegister_TileDB()
 "   <Option name='STATS' type='boolean' description='Dump TileDB stats'/>"
 "   <Option name='TILEDB_ATTRIBUTE' type='string' description='Attribute to read from each band'/>"
 "   <Option name='TILEDB_CONFIG' type='string' description='location of configuration file for TileDB'/>"
+"   <Option name='TILEDB_TIMESTAMP' type='int' description='Open array at this timestamp, the timestamp should be > 0'/>"
 "</OpenOptionList>" );
 
     poDriver->pfnIdentify = TileDBDataset::Identify;

@@ -35,7 +35,7 @@ import sys
 import time
 
 from osgeo import gdal
-from osgeo.auxiliary.base import GetOutputDriverFor
+from osgeo.utils.auxiliary.util import GetOutputDriverFor
 
 progress = gdal.TermProgress_nocb
 
@@ -88,10 +88,7 @@ def raster_copy(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
 def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                             t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
                             nodata):
-    try:
-        import numpy as Numeric
-    except ImportError:
-        import Numeric
+    import numpy as np
 
     s_band = s_fh.GetRasterBand(s_band_n)
     t_band = t_fh.GetRasterBand(t_band_n)
@@ -100,12 +97,12 @@ def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                                   t_xsize, t_ysize)
     data_dst = t_band.ReadAsArray(t_xoff, t_yoff, t_xsize, t_ysize)
 
-    if not Numeric.isnan(nodata):
-        nodata_test = Numeric.equal(data_src, nodata)
+    if not np.isnan(nodata):
+        nodata_test = np.equal(data_src, nodata)
     else:
-        nodata_test = Numeric.isnan(data_src)
+        nodata_test = np.isnan(data_src)
 
-    to_write = Numeric.choose(nodata_test, (data_src, data_dst))
+    to_write = np.choose(nodata_test, (data_src, data_dst))
 
     t_band.WriteArray(to_write, t_xoff, t_yoff)
 
@@ -117,10 +114,7 @@ def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
 def raster_copy_with_mask(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                           t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
                           m_band):
-    try:
-        import numpy as Numeric
-    except ImportError:
-        import Numeric
+    import numpy as np
 
     s_band = s_fh.GetRasterBand(s_band_n)
     t_band = t_fh.GetRasterBand(t_band_n)
@@ -131,8 +125,8 @@ def raster_copy_with_mask(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                                    t_xsize, t_ysize)
     data_dst = t_band.ReadAsArray(t_xoff, t_yoff, t_xsize, t_ysize)
 
-    mask_test = Numeric.equal(data_mask, 0)
-    to_write = Numeric.choose(mask_test, (data_src, data_dst))
+    mask_test = np.equal(data_mask, 0)
+    to_write = np.choose(mask_test, (data_src, data_dst))
 
     t_band.WriteArray(to_write, t_xoff, t_yoff)
 

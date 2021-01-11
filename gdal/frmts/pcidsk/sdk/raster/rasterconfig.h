@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Purpose: Support for reading and manipulating PCIDSK ADS40 Segments
+ * Purpose:  Configurations for the raster library.
  *
  ******************************************************************************
  * Copyright (c) 2009
@@ -24,39 +24,21 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
-#define INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
 
-#include "pcidsk_ads40.h"
-#include "segment/cpcidsksegment.h"
+#ifndef RASTER_CONFIG_H
+#define RASTER_CONFIG_H
 
-namespace PCIDSK {
-    class PCIDSKFile;
+// Use raster namespace.
+#define USE_RASTER_NAMESPACE
 
-    class CPCIDSKADS40ModelSegment : public PCIDSKADS40Segment,
-                                     public CPCIDSKSegment
-    {
-    public:
-        CPCIDSKADS40ModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
-        ~CPCIDSKADS40ModelSegment();
+#ifdef USE_RASTER_NAMESPACE
+#define RASTER_NAMESPACE_BEGIN namespace raster {
+#define RASTER_NAMESPACE_END }
+#define USING_RASTER_NAMESPACE using namespace raster;
+#else
+#define RASTER_NAMESPACE_BEGIN
+#define RASTER_NAMESPACE_END
+#define USING_RASTER_NAMESPACE
+#endif
 
-        // Get path
-        std::string GetPath(void) const override;
-        // Set path
-        void SetPath(const std::string& oPath) override;
-
-        //synchronize the segment on disk.
-        void Synchronize() override;
-    private:
-        // Helper housekeeping functions
-        void Load();
-        void Write();
-
-        struct PCIDSKADS40Info;
-        PCIDSKADS40Info *pimpl_;
-        bool loaded_;
-        bool mbModified;
-    };
-}
-
-#endif // INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
+#endif

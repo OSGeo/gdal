@@ -43,8 +43,8 @@ def test_numpy_rw_multidim_init():
 
     gdaltest.numpy_drv = None
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
+        # importing gdal_array will allow numpy driver registration
+        from osgeo import gdal_array  # noqa
     except (ImportError, AttributeError):
         pytest.skip()
 
@@ -87,12 +87,12 @@ def test_numpy_rw_multidim_numpy_array_as_dataset():
 
     if gdaltest.numpy_drv is None:
         pytest.skip()
-    from osgeo import gdalnumeric
+    from osgeo import gdal_array
     import numpy as np
 
     for typ in (np.int8, np.uint8, np.uint16, np.int16, np.uint32, np.int32, np.float32, np.float64, np.cfloat, np.cdouble):
         ar = np.array([[1,2,3], [4,5,6]], dtype=typ)
-        ds = gdalnumeric.OpenMultiDimensionalNumPyArray(ar)
+        ds = gdal_array.OpenMultiDimensionalNumPyArray(ar)
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -135,13 +135,13 @@ def test_numpy_rw_multidim_numpy_array_as_dataset_negative_strides():
 
     if gdaltest.numpy_drv is None:
         pytest.skip()
-    from osgeo import gdalnumeric
+    from osgeo import gdal_array
     import numpy as np
 
     for typ in (np.int8, np.uint8, np.uint16, np.int16, np.uint32, np.int32, np.float32, np.float64, np.cfloat, np.cdouble):
         ar = np.array([[1,2,3], [4,5,6]], dtype=typ)
         ar = ar[::-1,::-1] # Test negative strides
-        ds = gdalnumeric.OpenMultiDimensionalNumPyArray(ar)
+        ds = gdal_array.OpenMultiDimensionalNumPyArray(ar)
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -156,7 +156,7 @@ def test_numpy_rw_multidim_compound_datatype():
 
     if gdaltest.numpy_drv is None:
         pytest.skip()
-    from osgeo import gdalnumeric
+    from osgeo import gdal_array
     import numpy as np
 
     drv = gdal.GetDriverByName('MEM')
@@ -169,7 +169,7 @@ def test_numpy_rw_multidim_compound_datatype():
     myarray = rg.CreateMDArray("myarray", [ dim ], dt)
     assert myarray
 
-    numpydt = gdalnumeric.ExtendedDataTypeToNumPyDataType(dt)
+    numpydt = gdal_array.ExtendedDataTypeToNumPyDataType(dt)
     assert numpydt.itemsize == 8
     assert numpydt.names == ('x', 'y')
     assert numpydt.fields['x'] == (np.int16, 0)

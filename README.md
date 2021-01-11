@@ -1,16 +1,16 @@
 GDAL - Geospatial Data Abstraction Library
 ====
 
-![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2020.04%20build/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2018.04%20build/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2018.04%2032bit%20build/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/MacOS%20build/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/Windows%20builds/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/Android%20build/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/ASAN%20build/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/mingw_w64%20build/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/CLang%20Static%20Analyzer/badge.svg)
-![Build Status](https://github.com/OSGeo/gdal/workflows/Code%20Checks/badge.svg)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2020.04%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Ubuntu+20.04+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2018.04%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Ubuntu+18.04+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2018.04%2032bit%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Ubuntu+18.04+32bit+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/MacOS%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22MacOS+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/Windows%20builds/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Windows+builds%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/Android%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Android+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/ASAN%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22ASAN+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/mingw_w64%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22mingw_w64+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/CLang%20Static%20Analyzer/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22CLang+Static+Analyzer%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/workflows/Code%20Checks/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Code+Checks%22+branch%3Amaster)
 [![Build Status](https://travis-ci.com/OSGeo/gdal.svg?branch=master)](https://travis-ci.com/OSGeo/gdal)
 [![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/master?svg=true)](https://ci.appveyor.com/project/OSGeo/gdal)
 [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal)
@@ -19,12 +19,12 @@ GDAL - Geospatial Data Abstraction Library
 
 GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats.
 
-* Main site: http://www.gdal.org - Developer and user docs, links to other resources
+* Main site: https://www.gdal.org - Developer and user docs, links to other resources
 * GIT repository: https://github.com/OSGeo/gdal
 * Bug tracker: https://github.com/OSGeo/gdal/issues
-* Download: http://download.osgeo.org/gdal
-* Wiki: http://trac.osgeo.org/gdal - Various user and developer contributed documentation and hints
-* Mailing list: http://lists.osgeo.org/mailman/listinfo/gdal-dev
+* Download: https://download.osgeo.org/gdal
+* Wiki: https://trac.osgeo.org/gdal - Various user and developer contributed documentation and hints
+* Mailing list: https://lists.osgeo.org/mailman/listinfo/gdal-dev
 
 ### How to contribute
 

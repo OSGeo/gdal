@@ -448,6 +448,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
                          CSLConstList papszMetadata ) override;
     int MkdirInternal( const char *pszDirname, long nMode, bool bDoStatCheck ) override;
 
+    void ClearCache() override;
+
   public:
     VSIAzureFSHandler() = default;
     ~VSIAzureFSHandler() override = default;
@@ -827,6 +829,16 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
     return bSuccess;
 }
 
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSIAzureFSHandler::ClearCache()
+{
+    IVSIS3LikeFSHandler::ClearCache();
+
+    VSIAzureBlobHandleHelper::ClearCache();
+}
 
 /************************************************************************/
 /*                                Open()                                */

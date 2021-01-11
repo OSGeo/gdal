@@ -28,7 +28,10 @@
 #ifndef PCIDSK_CONFIG_H_INCLUDED
 #define PCIDSK_CONFIG_H_INCLUDED
 
-#if defined(DEBUG_BOOL) || defined(NULL_AS_NULLPTR)
+// The PCIMAJORVERSION define is something we use internally at PCI Geomatics.
+#ifdef PCIMAJORVERSION
+#define CPL_UNUSED
+#else
 #include "cpl_port.h"
 #endif
 
@@ -37,10 +40,10 @@
 #define override
 #endif
 
-
 namespace PCIDSK {
 
     typedef unsigned char  uint8;
+    typedef unsigned char  uchar;
 
 #ifndef _PCI_TYPES
     typedef int            int32;
@@ -52,8 +55,13 @@ namespace PCIDSK {
     typedef __int64          int64;
     typedef unsigned __int64 uint64;
 #else
-    typedef long long          int64;
-    typedef unsigned long long uint64;
+    #if defined(PCIMAJORVERSION) && BUILDABI == 64
+        typedef long               int64;
+        typedef unsigned long      uint64;
+    #else // BUILDABI
+        typedef long long          int64;
+        typedef unsigned long long uint64;
+    #endif // BUILDABI
 #endif
 
 #endif // _PCI_TYPES
@@ -73,7 +81,11 @@ namespace PCIDSK {
 #if defined(__MSVCRT__) || defined(_MSC_VER)
   #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "I64"
 #else
+  #if defined(PCIMAJORVERSION) && BUILDABI == 64
+  #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "l"
+  #else // BUILDABI
   #define PCIDSK_FRMT_64_WITHOUT_PREFIX     "ll"
+  #endif // BUILDABI
 #endif
 
 // #define MISSING_VSNPRINTF
@@ -92,6 +104,10 @@ namespace PCIDSK {
 #define PCIDSK_SDK_MAJOR_VERSION    0
 #define PCIDSK_SDK_MINOR_VERSION    1
 
+#ifndef PCIDSK_DEFAULT_TILE_SIZE
+#define PCIDSK_DEFAULT_TILE_SIZE 256
+#endif
+
 #if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
 #define PCIDSK_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
 #else
@@ -102,12 +118,15 @@ namespace PCIDSK {
 #if defined(PCIDSK_INTERNAL) && !defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
 #include <stdlib.h>
 extern "C" double CPLAtof(const char*);
-extern "C" int CPLsprintf(char *str, const char* fmt, ...) PCIDSK_PRINT_FUNC_FORMAT(2,3);
 extern "C" int CPLsnprintf(char *str, size_t size, const char* fmt, ...) PCIDSK_PRINT_FUNC_FORMAT(3,4);
 #else
 #define CPLAtof atof
-#define CPLsprintf sprintf
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#define CPLsnprintf _snprintf
+#else
 #define CPLsnprintf snprintf
+#endif
 #endif
 #endif
 
@@ -115,8 +134,13 @@ extern "C" int CPLsnprintf(char *str, size_t size, const char* fmt, ...) PCIDSK_
   #define PCIDSK_FRMT_INT64     "%I64d"
   #define PCIDSK_FRMT_UINT64    "%I64u"
 #else
+  #if defined(PCIMAJORVERSION) && BUILDABI == 64
+  #define PCIDSK_FRMT_INT64     "%ld"
+  #define PCIDSK_FRMT_UINT64    "%lu"
+  #else // BUILDABI
   #define PCIDSK_FRMT_INT64     "%lld"
   #define PCIDSK_FRMT_UINT64    "%llu"
+  #endif // BUILDABI
 #endif
 
 #endif // PCIDSK_CONFIG_H_INCLUDED

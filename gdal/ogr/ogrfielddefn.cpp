@@ -849,6 +849,9 @@ const char * OGRFieldDefn::GetFieldSubTypeName( OGRFieldSubType eSubType )
       case OFSTJSON:
         return "JSON";
 
+      case OFSTUUID:
+        return "UUID";
+
       default:
         return "(unknown)";
     }
@@ -897,6 +900,8 @@ int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
     if( eSubType == OFSTFloat32 )
         return eType == OFTReal || eType == OFTRealList;
     if( eSubType == OFSTJSON )
+        return eType == OFTString;
+    if( eSubType == OFSTUUID )
         return eType == OFTString;
     return FALSE;
 }

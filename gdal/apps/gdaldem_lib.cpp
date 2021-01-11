@@ -57,8 +57,15 @@
  * Color table of named colors and lookup code derived from src/libes/gis/named_colr.c
  * of GRASS 4.1
  *
- * TRI - Terrain Ruggedness Index is as described in Wilson et al. (2007)
+ * TRI -
+ * For bathymetric use cases, implements
+ * Terrain Ruggedness Index is as described in Wilson et al. (2007)
  * this is based on the method of Valentine et al. (2004)
+ *
+ * For terrestrial use cases, implements
+ * Riley, S.J., De Gloria, S.D., Elliot, R. (1999): A Terrain Ruggedness
+ * that Quantifies Topographic Heterogeneity. Intermountain Journal of Science, Vol.5, No.1-4, pp.23-27
+ * 
  *
  * TPI - Topographic Position Index follows the description in
  * Wilson et al. (2007), following Weiss (2001).  The radius is fixed
@@ -128,33 +135,50 @@ typedef enum
     COLOR_SELECTION_EXACT_ENTRY
 } ColorSelectionMode;
 
+namespace {
+enum class GradientAlg
+{
+    HORN,
+    ZEVENBERGEN_THORNE,
+};
+
+enum class TRIAlg
+{
+    WILSON,
+    RILEY,
+};
+}
+
 struct GDALDEMProcessingOptions
 {
     /*! output format. Use the short format name. */
-    char *pszFormat;
+    char *pszFormat = nullptr;
 
     /*! the progress function to use */
-    GDALProgressFunc pfnProgress;
+    GDALProgressFunc pfnProgress = nullptr;
 
     /*! pointer to the progress data variable */
-    void *pProgressData;
+    void *pProgressData = nullptr;
 
-    double z;
-    double scale;
-    double az;
-    double alt;
-    int slopeFormat;
-    bool bAddAlpha;
-    bool bZeroForFlat;
-    bool bAngleAsAzimuth;
-    ColorSelectionMode eColorSelectionMode;
-    bool bComputeAtEdges;
-    bool bZevenbergenThorne;
-    bool bCombined;
-    bool bIgor;
-    bool bMultiDirectional;
-    char** papszCreateOptions;
-    int nBand;
+    double z = 1.0;
+    double scale = 1.0;
+    double az = 315.0;
+    double alt = 45.0;
+    int slopeFormat = 1; // 0 = 'percent' or 1 = 'degrees'
+    bool bAddAlpha = false;
+    bool bZeroForFlat = false;
+    bool bAngleAsAzimuth = true;
+    ColorSelectionMode eColorSelectionMode = COLOR_SELECTION_INTERPOLATE;
+    bool bComputeAtEdges = false;
+    bool bGradientAlgSpecified = false;
+    GradientAlg eGradientAlg = GradientAlg::HORN;
+    bool bTRIAlgSpecified = false;
+    TRIAlg eTRIAlg = TRIAlg::RILEY;
+    bool bCombined = false;
+    bool bIgor = false;
+    bool bMultiDirectional = false;
+    char** papszCreateOptions = nullptr;
+    int nBand = 1;
 };
 
 /************************************************************************/
@@ -725,19 +749,13 @@ CPLErr GDALGeneric3x3Processing(
 /*                            GradientAlg                               */
 /************************************************************************/
 
-typedef enum
-{
-    HORN,
-    ZEVENBERGEN_THORNE
-} GradientAlg;
-
 template<class T, GradientAlg alg> struct Gradient
 {
     static void inline calc(const T* afWin, double inv_ewres, double inv_nsres,
                             double&x, double&y);
 };
 
-template<class T> struct Gradient<T, HORN>
+template<class T> struct Gradient<T, GradientAlg::HORN>
 {
     static void calc(const T* afWin, double inv_ewres, double inv_nsres,
                      double&x, double&y)
@@ -750,7 +768,7 @@ template<class T> struct Gradient<T, HORN>
     }
 };
 
-template<class T> struct Gradient<T, ZEVENBERGEN_THORNE>
+template<class T> struct Gradient<T, GradientAlg::ZEVENBERGEN_THORNE>
 {
     static void calc(const T* afWin, double inv_ewres, double inv_nsres,
                      double&x, double&y)
@@ -885,7 +903,7 @@ float GDALHillshadeIgorAlg (const T* afWin, float /*fDstNoDataValue*/, void* pDa
     GDALHillshadeAlgData* psData = static_cast<GDALHillshadeAlgData*>(pData);
 
     double slopeDegrees;
-    if (alg == HORN)
+    if (alg == GradientAlg::HORN)
     {
         const double dx = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
             (afWin[2] + afWin[5] + afWin[5] + afWin[8])) * psData->inv_ewres;
@@ -906,7 +924,7 @@ float GDALHillshadeIgorAlg (const T* afWin, float /*fDstNoDataValue*/, void* pDa
     }
 
     double aspect;
-    if (alg == HORN)
+    if (alg == GradientAlg::HORN)
     {
         const double dx = ((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
             (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
@@ -1148,7 +1166,7 @@ void* GDALCreateHillshadeData( double* adfGeoTransform,
                                double scale,
                                double alt,
                                double az,
-                               bool bZevenbergenThorne )
+                               GradientAlg eAlg )
 {
     GDALHillshadeAlgData* pData = static_cast<GDALHillshadeAlgData *>(
         CPLCalloc(1, sizeof(GDALHillshadeAlgData)));
@@ -1157,7 +1175,7 @@ void* GDALCreateHillshadeData( double* adfGeoTransform,
     pData->inv_ewres = 1.0 / adfGeoTransform[1];
     pData->sin_altRadians = sin(alt * kdfDegreesToRadians);
     pData->azRadians = az * kdfDegreesToRadians;
-    pData->z_scaled = z / ((bZevenbergenThorne ? 2 : 8) * scale);
+    pData->z_scaled = z / ((eAlg == GradientAlg::ZEVENBERGEN_THORNE ? 2 : 8) * scale);
     pData->cos_alt_mul_z =
         cos(alt * kdfDegreesToRadians) * pData->z_scaled;
     pData->cos_az_mul_cos_alt_mul_z =
@@ -1268,7 +1286,7 @@ void* GDALCreateHillshadeMultiDirectionalData( double* adfGeoTransform,
                                                double z,
                                                double scale,
                                                double alt,
-                                               bool bZevenbergenThorne )
+                                               GradientAlg eAlg )
 {
     GDALHillshadeMultiDirectionalAlgData* pData =
       static_cast<GDALHillshadeMultiDirectionalAlgData *>(
@@ -1276,7 +1294,7 @@ void* GDALCreateHillshadeMultiDirectionalData( double* adfGeoTransform,
 
     pData->inv_nsres = 1.0 / adfGeoTransform[5];
     pData->inv_ewres = 1.0 / adfGeoTransform[1];
-    const double z_scaled = z / ((bZevenbergenThorne ? 2 : 8) * scale);
+    const double z_scaled = z / ((eAlg == GradientAlg::ZEVENBERGEN_THORNE ? 2 : 8) * scale);
     const double cos_alt_mul_z =
         cos(alt * kdfDegreesToRadians) * z_scaled;
     pData->square_z = z_scaled * z_scaled;
@@ -2676,11 +2694,12 @@ template<class T> static T MyAbs(T x);
 template<> float MyAbs( float x ) { return fabsf(x); }
 template<> int MyAbs( int x ) { return x >= 0 ? x : -x; }
 
+// Implements Wilson et al. (2007), for bathymetric use cases
 template<class T>
 static
-float GDALTRIAlg( const T* afWin,
-                  float /*fDstNoDataValue*/,
-                  void* /*pData*/ )
+float GDALTRIAlgWilson( const T* afWin,
+                        float /*fDstNoDataValue*/,
+                        void* /*pData*/ )
 {
     // Terrain Ruggedness is average difference in height
     return (MyAbs(afWin[0]-afWin[4]) +
@@ -2691,6 +2710,27 @@ float GDALTRIAlg( const T* afWin,
             MyAbs(afWin[6]-afWin[4]) +
             MyAbs(afWin[7]-afWin[4]) +
             MyAbs(afWin[8]-afWin[4])) * 0.125f;
+}
+
+// Implements Riley, S.J., De Gloria, S.D., Elliot, R. (1999): A Terrain Ruggedness
+// that Quantifies Topographic Heterogeneity. Intermountain Journal of Science, Vol.5, No.1-4, pp.23-27
+// for terrestrial use cases
+template<class T>
+static
+float GDALTRIAlgRiley( const T* afWin,
+                        float /*fDstNoDataValue*/,
+                        void* /*pData*/ )
+{
+    const auto square = [](double x) { return x * x; };
+
+    return static_cast<float>(std::sqrt(square(afWin[0]-afWin[4]) +
+                                        square(afWin[1]-afWin[4]) +
+                                        square(afWin[2]-afWin[4]) +
+                                        square(afWin[3]-afWin[4]) +
+                                        square(afWin[5]-afWin[4]) +
+                                        square(afWin[6]-afWin[4]) +
+                                        square(afWin[7]-afWin[4]) +
+                                        square(afWin[8]-afWin[4])));
 }
 
 /************************************************************************/
@@ -3434,6 +3474,24 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         psOptions = psOptionsToFree;
     }
 
+    if( psOptions->bGradientAlgSpecified &&
+        !(eUtilityMode == HILL_SHADE || eUtilityMode == SLOPE || eUtilityMode == ASPECT) )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "This value of -alg is only value for hillshade, slope or aspect processing");
+        GDALDEMProcessingOptionsFree(psOptionsToFree);
+        return nullptr;
+    }
+
+    if( psOptions->bTRIAlgSpecified &&
+        !(eUtilityMode == TRI) )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "This value of -alg is only value for TRI processing");
+        GDALDEMProcessingOptionsFree(psOptionsToFree);
+        return nullptr;
+    }
+
     double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
     const int nXSize = GDALGetRasterXSize(hSrcDataset);
@@ -3509,16 +3567,16 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                                                         psOptions->z,
                                                         psOptions->scale,
                                                         psOptions->alt,
-                                                        psOptions->bZevenbergenThorne);
-        if( psOptions->bZevenbergenThorne )
+                                                        psOptions->eGradientAlg);
+        if( psOptions->eGradientAlg == GradientAlg::ZEVENBERGEN_THORNE )
         {
-            pfnAlgFloat = GDALHillshadeMultiDirectionalAlg<float, ZEVENBERGEN_THORNE>;
-            pfnAlgInt32 = GDALHillshadeMultiDirectionalAlg<GInt32, ZEVENBERGEN_THORNE>;
+            pfnAlgFloat = GDALHillshadeMultiDirectionalAlg<float, GradientAlg::ZEVENBERGEN_THORNE>;
+            pfnAlgInt32 = GDALHillshadeMultiDirectionalAlg<GInt32, GradientAlg::ZEVENBERGEN_THORNE>;
         }
         else
         {
-            pfnAlgFloat = GDALHillshadeMultiDirectionalAlg<float, HORN>;
-            pfnAlgInt32 = GDALHillshadeMultiDirectionalAlg<GInt32, HORN>;
+            pfnAlgFloat = GDALHillshadeMultiDirectionalAlg<float, GradientAlg::HORN>;
+            pfnAlgInt32 = GDALHillshadeMultiDirectionalAlg<GInt32, GradientAlg::HORN>;
         }
     }
     else if( eUtilityMode == HILL_SHADE )
@@ -3530,36 +3588,36 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                                         psOptions->scale,
                                         psOptions->alt,
                                         psOptions->az,
-                                        psOptions->bZevenbergenThorne);
-        if( psOptions->bZevenbergenThorne )
+                                        psOptions->eGradientAlg);
+        if( psOptions->eGradientAlg == GradientAlg::ZEVENBERGEN_THORNE )
         {
             if( psOptions->bCombined )
             {
-                pfnAlgFloat = GDALHillshadeCombinedAlg<float, ZEVENBERGEN_THORNE>;
-                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, ZEVENBERGEN_THORNE>;
+                pfnAlgFloat = GDALHillshadeCombinedAlg<float, GradientAlg::ZEVENBERGEN_THORNE>;
+                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, GradientAlg::ZEVENBERGEN_THORNE>;
             }
             else if( psOptions->bIgor )
             {
-                pfnAlgFloat = GDALHillshadeIgorAlg<float, ZEVENBERGEN_THORNE>;
-                pfnAlgInt32 = GDALHillshadeIgorAlg<GInt32, ZEVENBERGEN_THORNE>;
+                pfnAlgFloat = GDALHillshadeIgorAlg<float, GradientAlg::ZEVENBERGEN_THORNE>;
+                pfnAlgInt32 = GDALHillshadeIgorAlg<GInt32, GradientAlg::ZEVENBERGEN_THORNE>;
             }
             else
             {
-                pfnAlgFloat = GDALHillshadeAlg<float, ZEVENBERGEN_THORNE>;
-                pfnAlgInt32 = GDALHillshadeAlg<GInt32, ZEVENBERGEN_THORNE>;
+                pfnAlgFloat = GDALHillshadeAlg<float, GradientAlg::ZEVENBERGEN_THORNE>;
+                pfnAlgInt32 = GDALHillshadeAlg<GInt32, GradientAlg::ZEVENBERGEN_THORNE>;
             }
         }
         else
         {
             if( psOptions->bCombined )
             {
-                pfnAlgFloat = GDALHillshadeCombinedAlg<float, HORN>;
-                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, HORN>;
+                pfnAlgFloat = GDALHillshadeCombinedAlg<float, GradientAlg::HORN>;
+                pfnAlgInt32 = GDALHillshadeCombinedAlg<GInt32, GradientAlg::HORN>;
             }
             else if( psOptions->bIgor )
             {
-                pfnAlgFloat = GDALHillshadeIgorAlg<float, HORN>;
-                pfnAlgInt32 = GDALHillshadeIgorAlg<GInt32, HORN>;
+                pfnAlgFloat = GDALHillshadeIgorAlg<float, GradientAlg::HORN>;
+                pfnAlgInt32 = GDALHillshadeIgorAlg<GInt32, GradientAlg::HORN>;
             }
             else
             {
@@ -3574,8 +3632,8 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                 }
                 else
                 {
-                    pfnAlgFloat = GDALHillshadeAlg<float, HORN>;
-                    pfnAlgInt32 = GDALHillshadeAlg<GInt32, HORN>;
+                    pfnAlgFloat = GDALHillshadeAlg<float, GradientAlg::HORN>;
+                    pfnAlgInt32 = GDALHillshadeAlg<GInt32, GradientAlg::HORN>;
                 }
             }
         }
@@ -3586,7 +3644,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         bDstHasNoData = true;
 
         pData = GDALCreateSlopeData(adfGeoTransform, psOptions->scale, psOptions->slopeFormat);
-        if( psOptions->bZevenbergenThorne )
+        if( psOptions->eGradientAlg == GradientAlg::ZEVENBERGEN_THORNE )
         {
             pfnAlgFloat = GDALSlopeZevenbergenThorneAlg<float>;
             pfnAlgInt32 = GDALSlopeZevenbergenThorneAlg<GInt32>;
@@ -3607,7 +3665,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         }
 
         pData = GDALCreateAspectData(psOptions->bAngleAsAzimuth);
-        if( psOptions->bZevenbergenThorne )
+        if( psOptions->eGradientAlg == GradientAlg::ZEVENBERGEN_THORNE )
         {
             pfnAlgFloat = GDALAspectZevenbergenThorneAlg<float>;
             pfnAlgInt32 = GDALAspectZevenbergenThorneAlg<GInt32>;
@@ -3622,8 +3680,16 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
     {
         dfDstNoDataValue = -9999;
         bDstHasNoData = true;
-        pfnAlgFloat = GDALTRIAlg<float>;
-        pfnAlgInt32 = GDALTRIAlg<GInt32>;
+        if( psOptions->eTRIAlg == TRIAlg::WILSON )
+        {
+            pfnAlgFloat = GDALTRIAlgWilson<float>;
+            pfnAlgInt32 = GDALTRIAlgWilson<GInt32>;
+        }
+        else
+        {
+            pfnAlgFloat = GDALTRIAlgRiley<float>;
+            pfnAlgInt32 = GDALTRIAlgRiley<GInt32>;
+        }
     }
     else if( eUtilityMode == TPI )
     {
@@ -3882,31 +3948,8 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
     char** papszArgv,
     GDALDEMProcessingOptionsForBinary* psOptionsForBinary )
 {
-    GDALDEMProcessingOptions *psOptions =
-        static_cast<GDALDEMProcessingOptions *>(
-            CPLCalloc(1, sizeof(GDALDEMProcessingOptions)));
+    GDALDEMProcessingOptions *psOptions = new GDALDEMProcessingOptions;
     Algorithm eUtilityMode = INVALID;
-
-    psOptions->pszFormat = nullptr;
-    psOptions->pfnProgress = GDALDummyProgress;
-    psOptions->pProgressData = nullptr;
-    psOptions->z = 1.0;
-    psOptions->scale = 1.0;
-    psOptions->az = 315.0;
-    psOptions->alt = 45.0;
-    // 0 = 'percent' or 1 = 'degrees'
-    psOptions->slopeFormat = 1;
-    psOptions->bAddAlpha = false;
-    psOptions->bZeroForFlat = false;
-    psOptions->bAngleAsAzimuth = true;
-    psOptions->eColorSelectionMode = COLOR_SELECTION_INTERPOLATE;
-    psOptions->bComputeAtEdges = false;
-    psOptions->bZevenbergenThorne = false;
-    psOptions->bCombined = false;
-    psOptions->bIgor = false;
-    psOptions->bMultiDirectional = false;
-    psOptions->nBand = 1;
-    psOptions->papszCreateOptions = nullptr;
     bool bAzimuthSpecified = false;
     bool bAltSpecified = false;
 
@@ -3964,12 +4007,28 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
             i++;
             if( EQUAL(papszArgv[i], "ZevenbergenThorne") )
             {
-                psOptions->bZevenbergenThorne = true;
+                psOptions->bGradientAlgSpecified = true;
+                psOptions->eGradientAlg = GradientAlg::ZEVENBERGEN_THORNE;
             }
-            else if( !EQUAL(papszArgv[i], "Horn") )
+            else if( EQUAL(papszArgv[i], "Horn") )
+            {
+                psOptions->bGradientAlgSpecified = true;
+                psOptions->eGradientAlg = GradientAlg::HORN;
+            }
+            else if( EQUAL(papszArgv[i], "Riley") )
+            {
+                psOptions->bTRIAlgSpecified = true;
+                psOptions->eTRIAlg = TRIAlg::RILEY;
+            }
+            else if( EQUAL(papszArgv[i], "Wilson") )
+            {
+                psOptions->bTRIAlgSpecified = true;
+                psOptions->eTRIAlg = TRIAlg::WILSON;
+            }
+            else
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Numeric value expected for %s", papszArgv[i-1]);
+                         "Invalid value for -alg: %s", papszArgv[i-1]);
                 GDALDEMProcessingOptionsFree(psOptions);
                 return nullptr;
             }
@@ -4160,7 +4219,7 @@ void GDALDEMProcessingOptionsFree( GDALDEMProcessingOptions *psOptions )
         CPLFree(psOptions->pszFormat);
         CSLDestroy(psOptions->papszCreateOptions);
 
-        CPLFree(psOptions);
+        delete psOptions;
     }
 }
 

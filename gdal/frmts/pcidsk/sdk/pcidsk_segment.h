@@ -48,7 +48,8 @@ namespace PCIDSK
 
         virtual void Initialize() {}
 
-        virtual bool GetUpdatable() const = 0;
+        virtual void LoadSegmentPointer( const char *segment_pointer ) = 0;
+
         virtual void WriteToFile( const void *buffer, uint64 offset, uint64 size)=0;
         virtual void ReadFromFile( void *buffer, uint64 offset, uint64 size ) = 0;
 
@@ -58,7 +59,9 @@ namespace PCIDSK
         virtual int         GetSegmentNumber() = 0;
         virtual bool        IsContentSizeValid() const = 0;
         virtual uint64      GetContentSize() = 0;
+        virtual uint64      GetContentOffset() = 0;
         virtual bool        IsAtEOF() = 0;
+        virtual bool        CanExtend(uint64 size) const = 0;
 
         virtual void        SetDescription( const std::string &description) = 0;
 

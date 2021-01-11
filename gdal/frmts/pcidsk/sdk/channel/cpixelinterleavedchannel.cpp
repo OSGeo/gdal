@@ -32,8 +32,6 @@
 #include <cassert>
 #include <cstring>
 
-#include "cpl_port.h"
-
 using namespace PCIDSK;
 
 /************************************************************************/
@@ -147,6 +145,21 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
                 src += pixel_group-4;
             }
         }
+        else if( pixel_size == 8 )
+        {
+            for( i = win_xsize; i != 0; i-- )
+            {
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                src += pixel_group-8;
+            }
+        }
         else
             return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
@@ -162,8 +175,12 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
     return 1;
 }
 
+/************************************************************************/
+/*                             CopyPixels()                             */
+/************************************************************************/
+
 template <typename T>
-static void CopyPixels(const T* const src, T* const dst,
+void CopyPixels(const T* const src, T* const dst,
                 std::size_t offset, std::size_t count)
 {
     for (std::size_t i = 0; i < count; i++)
@@ -200,9 +217,20 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /*      reasonably efficiently.  We might consider adding faster        */
 /*      cases for 16/32bit data that is word aligned.                   */
 /* -------------------------------------------------------------------- */
-    // TODO: fixup for the complex case
     if( pixel_size == pixel_group )
+    {
         memcpy( pixel_buffer, buffer, pixel_size * width );
+
+        if( needs_swap )
+        {
+            bool complex = IsDataTypeComplex( GetType() );
+
+            if( complex )
+                SwapData( pixel_buffer, pixel_size/2, width*2 );
+            else
+                SwapData( pixel_buffer, pixel_size, width );
+        }
+    }
     else
     {
         int i;
@@ -233,6 +261,8 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
         }
         else if( pixel_size == 4 )
         {
+            bool complex = IsDataTypeComplex( GetType() );
+
             for( i = width; i != 0; i-- )
             {
                 *(dst++) = *(src++);
@@ -241,10 +271,40 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
                 *(dst++) = *(src++);
 
                 if( needs_swap )
-                    SwapData( dst-4, 4, 1);
+                {
+                    if( complex )
+                        SwapData( dst-4, 2, 2);
+                    else
+                        SwapData( dst-4, 4, 1);
+                }
 
                 dst += pixel_group-4;
+            }
+        }
+        else if( pixel_size == 8 )
+        {
+            bool complex = IsDataTypeComplex( GetType() );
 
+            for( i = width; i != 0; i-- )
+            {
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+
+                if( needs_swap )
+                {
+                    if( complex )
+                        SwapData( dst-8, 4, 2);
+                    else
+                        SwapData( dst-8, 8, 1);
+                }
+
+                dst += pixel_group-8;
             }
         }
         else
@@ -252,10 +312,6 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
     }
 
     file->UnlockBlock( true );
-
-/* -------------------------------------------------------------------- */
-/*      Do byte swapping if needed.                                     */
-/* -------------------------------------------------------------------- */
 
     return 1;
 }

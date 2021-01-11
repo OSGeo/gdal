@@ -4656,6 +4656,37 @@ def test_ogr_pg_unique():
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
 ###############################################################################
+# Test UUID datatype support
+
+def test_ogr_pg_uuid():
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    lyr = gdaltest.pg_ds.CreateLayer('test_ogr_pg_uuid')
+
+    fd = ogr.FieldDefn('uid', ogr.OFTString)
+    fd.SetSubType(ogr.OFSTUUID)
+
+    assert lyr.CreateField(fd) == 0
+
+    lyr.StartTransaction()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['uid'] = '6f9619ff-8b86-d011-b42d-00c04fc964ff'
+    lyr.CreateFeature(f)
+    lyr.CommitTransaction()
+    
+    test_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=0)
+    lyr = test_ds.GetLayer('test_ogr_pg_uuid')
+    fd = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fd.GetType() == ogr.OFTString
+    assert fd.GetSubType() == ogr.OFSTUUID
+    f = lyr.GetNextFeature()
+
+    assert f.GetField(0) == '6f9619ff-8b86-d011-b42d-00c04fc964ff'
+
+    test_ds.Destroy()
+
+###############################################################################
 #
 
 
@@ -4725,6 +4756,7 @@ def test_ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_86')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_87')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_json')
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:test_ogr_pg_uuid')
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:AutoTest-schema.tpoly')

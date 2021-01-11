@@ -29,11 +29,9 @@
 
 import sys
 from osgeo import gdal
-import gdalnumeric
-try:
-    import numpy
-except ImportError:
-    import Numeric as numpy
+import numpy as np
+
+from osgeo import gdal_array
 
 
 def doit(src_filename, dst_magnitude, dst_phase):
@@ -43,12 +41,12 @@ def doit(src_filename, dst_magnitude, dst_phase):
     print('{} x {}'.format(xsize, ysize))
 
     src_image = src_ds.GetRasterBand(1).ReadAsArray()
-    mag_image = pow(numpy.real(src_image) * numpy.real(src_image) +
-                    numpy.imag(src_image) * numpy.imag(src_image), 0.5)
-    gdalnumeric.SaveArray(mag_image, dst_magnitude)
+    mag_image = pow(np.real(src_image) * np.real(src_image) +
+                    np.imag(src_image) * np.imag(src_image), 0.5)
+    gdal_array.SaveArray(mag_image, dst_magnitude)
 
-    phase_image = numpy.angle(src_image)
-    gdalnumeric.SaveArray(phase_image, dst_phase)
+    phase_image = np.angle(src_image)
+    gdal_array.SaveArray(phase_image, dst_phase)
     return 0
 
 

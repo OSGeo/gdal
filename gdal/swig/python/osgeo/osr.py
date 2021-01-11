@@ -271,6 +271,22 @@ OAO_Down = _osr.OAO_Down
 OAMS_TRADITIONAL_GIS_ORDER = _osr.OAMS_TRADITIONAL_GIS_ORDER
 OAMS_AUTHORITY_COMPLIANT = _osr.OAMS_AUTHORITY_COMPLIANT
 OAMS_CUSTOM = _osr.OAMS_CUSTOM
+PROJ_ERR_INVALID_OP = _osr.PROJ_ERR_INVALID_OP
+PROJ_ERR_INVALID_OP_WRONG_SYNTAX = _osr.PROJ_ERR_INVALID_OP_WRONG_SYNTAX
+PROJ_ERR_INVALID_OP_MISSING_ARG = _osr.PROJ_ERR_INVALID_OP_MISSING_ARG
+PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE = _osr.PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE
+PROJ_ERR_INVALID_OP_MUTUALLY_EXCLUSIVE_ARGS = _osr.PROJ_ERR_INVALID_OP_MUTUALLY_EXCLUSIVE_ARGS
+PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID = _osr.PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID
+PROJ_ERR_COORD_TRANSFM = _osr.PROJ_ERR_COORD_TRANSFM
+PROJ_ERR_COORD_TRANSFM_INVALID_COORD = _osr.PROJ_ERR_COORD_TRANSFM_INVALID_COORD
+PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN = _osr.PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN
+PROJ_ERR_COORD_TRANSFM_NO_OPERATION = _osr.PROJ_ERR_COORD_TRANSFM_NO_OPERATION
+PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID = _osr.PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID
+PROJ_ERR_COORD_TRANSFM_GRID_AT_NODATA = _osr.PROJ_ERR_COORD_TRANSFM_GRID_AT_NODATA
+PROJ_ERR_OTHER = _osr.PROJ_ERR_OTHER
+PROJ_ERR_OTHER_API_MISUSE = _osr.PROJ_ERR_OTHER_API_MISUSE
+PROJ_ERR_OTHER_NO_INVERSE_OP = _osr.PROJ_ERR_OTHER_NO_INVERSE_OP
+PROJ_ERR_OTHER_NETWORK_ERROR = _osr.PROJ_ERR_OTHER_NETWORK_ERROR
 
 def GetUseExceptions(*args):
     """GetUseExceptions() -> int"""
@@ -1074,6 +1090,16 @@ class CoordinateTransformationOptions(_object):
         """SetOperation(CoordinateTransformationOptions self, char const * operation) -> bool"""
         return _osr.CoordinateTransformationOptions_SetOperation(self, *args)
 
+
+    def SetDesiredAccuracy(self, *args):
+        """SetDesiredAccuracy(CoordinateTransformationOptions self, double accuracy) -> bool"""
+        return _osr.CoordinateTransformationOptions_SetDesiredAccuracy(self, *args)
+
+
+    def SetBallparkAllowed(self, *args):
+        """SetBallparkAllowed(CoordinateTransformationOptions self, bool allowBallpark) -> bool"""
+        return _osr.CoordinateTransformationOptions_SetBallparkAllowed(self, *args)
+
 CoordinateTransformationOptions_swigregister = _osr.CoordinateTransformationOptions_swigregister
 CoordinateTransformationOptions_swigregister(CoordinateTransformationOptions)
 
@@ -1107,6 +1133,11 @@ class CoordinateTransformation(_object):
         TransformPoint(CoordinateTransformation self, double x, double y, double z, double t)
         """
         return _osr.CoordinateTransformation_TransformPoint(self, *args)
+
+
+    def TransformPointWithErrorCode(self, *args):
+        """TransformPointWithErrorCode(CoordinateTransformation self, double x, double y, double z, double t)"""
+        return _osr.CoordinateTransformation_TransformPointWithErrorCode(self, *args)
 
 
     def TransformPoints(self, *args):

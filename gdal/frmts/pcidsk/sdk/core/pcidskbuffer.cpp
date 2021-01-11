@@ -195,16 +195,8 @@ double PCIDSKBuffer::GetDouble( int offset, int size ) const
         if( value_str[i] == 'D' )
             value_str[i] = 'E';
     }
-#ifdef PCIDSK_INTERNAL
-    return CPLAtof(value_str.c_str());
-#else
-    std::stringstream oStream;
-    oStream << value_str;
-    double dValue = 0.0;
-    oStream >> dValue;
 
-    return dValue;
-#endif
+    return CPLAtof(value_str.c_str());
 }
 
 /************************************************************************/
@@ -240,6 +232,17 @@ void PCIDSKBuffer::PutBin(double value, int offset)
 {
     const char* pszValue = (const char*)&value;
     memcpy( buffer + offset, pszValue, 8 );
+}
+
+/************************************************************************/
+/*                              PutBin(int16)                           */
+/************************************************************************/
+
+void PCIDSKBuffer::PutBin(int16 value, int offset)
+{
+    const char * pszValue = (const char *) &value;
+
+    memcpy(buffer + offset, pszValue, sizeof(int16));
 }
 
 /************************************************************************/

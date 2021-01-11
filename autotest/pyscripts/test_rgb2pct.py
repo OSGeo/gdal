@@ -60,8 +60,8 @@ def test_rgb2pct_1():
 
 def test_pct2rgb_1():
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.BandRasterIONumPy
+        from osgeo import gdal_array
+        gdal_array.BandRasterIONumPy
     except:
         pytest.skip()
 
@@ -133,8 +133,8 @@ def test_rgb2pct_3():
 
 def test_pct2rgb_4():
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.BandRasterIONumPy
+        from osgeo import gdal_array
+        gdal_array.BandRasterIONumPy
     except (ImportError, AttributeError):
         pytest.skip()
 
@@ -179,7 +179,7 @@ def test_rgb2pct_cleanup():
         except OSError:
             pass
 
-    
+
 
 
 

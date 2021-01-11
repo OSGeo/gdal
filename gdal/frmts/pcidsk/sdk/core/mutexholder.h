@@ -50,6 +50,15 @@ namespace PCIDSK
                 mutex->Release();
         }
 
+        void Release()
+        {
+            if (mutex)
+            {
+                mutex->Release();
+                mutex = nullptr;
+            }
+        }
+
     private:
         Mutex     *mutex;
 

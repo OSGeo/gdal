@@ -28,6 +28,7 @@
 
 #include "pcidsk_gcp.h"
 #include "pcidsk_exception.h"
+#include "pcidsk_file.h"
 #include "core/pcidsk_utils.h"
 
 #include <cstring>
@@ -62,13 +63,17 @@ CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const 
     catch( const PCIDSKException& )
     {
         delete pimpl_;
-        pimpl_ = nullptr;
-        throw;
+        pimpl_ = new PCIDSKGCP2SegInfo;
+        pimpl_->gcps.clear();
+        pimpl_->num_gcps = 0;
+        pimpl_->changed = false;
+        this->loaded_ = true;
     }
 }
 
 CPCIDSKGCP2Segment::~CPCIDSKGCP2Segment()
 {
+    RebuildSegmentData();
     delete pimpl_;
 }
 
@@ -125,6 +130,7 @@ void CPCIDSKGCP2Segment::Load()
     {
         unsigned int offset = 512 + i * 256;
         bool is_cp = pimpl_->seg_data.buffer[offset] == 'C';
+        bool is_active = pimpl_->seg_data.buffer[offset] != 'I';
         double pixel = pimpl_->seg_data.GetDouble(offset + 6, 14);
         double line = pimpl_->seg_data.GetDouble(offset + 20, 14);
 
@@ -132,10 +138,11 @@ void CPCIDSKGCP2Segment::Load()
         double x = pimpl_->seg_data.GetDouble(offset + 48, 22);
         double y = pimpl_->seg_data.GetDouble(offset + 70, 22);
 
-        PCIDSK::GCP::EElevationDatum elev_datum = pimpl_->seg_data.buffer[offset + 47] != 'M' ?
+        char cElevDatum = (char)toupper(pimpl_->seg_data.buffer[offset + 47]);
+        PCIDSK::GCP::EElevationDatum elev_datum = cElevDatum != 'M' ?
             GCP::EEllipsoidal : GCP::EMeanSeaLevel;
 
-        char elev_unit_c = pimpl_->seg_data.buffer[offset + 46];
+        char elev_unit_c = (char)toupper(pimpl_->seg_data.buffer[offset + 46]);
         PCIDSK::GCP::EElevationUnit elev_unit = elev_unit_c == 'M' ? GCP::EMetres :
             elev_unit_c == 'F' ? GCP::EInternationalFeet :
             elev_unit_c == 'A' ? GCP::EAmericanFeet : GCP::EUnknown;
@@ -156,6 +163,7 @@ void CPCIDSKGCP2Segment::Load()
                         line_err, pix_err);
         gcp.SetElevationUnit(elev_unit);
         gcp.SetElevationDatum(elev_datum);
+        gcp.SetActive(is_active);
         gcp.SetCheckpoint(is_cp);
 
         pimpl_->gcps.push_back(gcp);
@@ -177,6 +185,8 @@ void CPCIDSKGCP2Segment::SetGCPs(std::vector<PCIDSK::GCP> const& gcps)
     pimpl_->num_gcps = static_cast<unsigned int>(gcps.size());
     pimpl_->gcps = gcps; // copy them in
     pimpl_->changed = true;
+
+    RebuildSegmentData();
 }
 
 // Return the count of GCPs in the segment
@@ -195,7 +205,7 @@ void CPCIDSKGCP2Segment::Synchronize()
 
 void CPCIDSKGCP2Segment::RebuildSegmentData(void)
 {
-    if (pimpl_->changed == false || !GetUpdatable()) {
+    if (pimpl_->changed == false || !this->file->GetUpdatable()) {
         return;
     }
     pimpl_->changed = false;
@@ -231,8 +241,14 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
 
         if ((*iter).IsCheckPoint()) {
             pimpl_->seg_data.Put("C", offset, 1);
-        } else {
+        }
+        else if ((*iter).IsActive())
+        {
             pimpl_->seg_data.Put("G", offset, 1);
+        }
+        else
+        {
+            pimpl_->seg_data.Put("I", offset, 1);
         }
 
         pimpl_->seg_data.Put("0", offset + 1, 5);
@@ -305,4 +321,6 @@ void  CPCIDSKGCP2Segment::ClearGCPs(void)
     pimpl_->num_gcps = 0;
     pimpl_->gcps.clear();
     pimpl_->changed = true;
+
+    RebuildSegmentData();
 }

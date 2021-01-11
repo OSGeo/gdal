@@ -693,6 +693,9 @@ GRIB_SETTING=yes
 #NETCDF_HAS_NC4 = yes
 #NETCDF_HAS_HDF4 = yes
 
+# Uncomment for a version of netcdf with netcdf_mem.h (>= 4.5.0)
+#NETCDF_HAS_NETCDF_MEM = yes
+
 # Add ORACLE support.
 # Uncomment the following line to enable OCI Oracle Spatial support.
 #ORACLE_HOME =	C:/Software/Oracle/Product/10.1.0/db_1

@@ -3095,3 +3095,62 @@ def test_ogr_geojson_write_float_exponential_without_dot():
 
     # Check that the json can be parsed
     json.loads(data)
+
+
+###############################################################################
+# Test bugfix for #3280
+
+def test_ogr_geojson_feature_starting_with_big_properties():
+
+    filename = '/vsimem/test_ogr_geojson_feature_starting_with_big_properties.json'
+    gdal.FileFromMemBuffer(filename,
+                           '{"properties":{"foo":"%s"},"type":"Feature","geometry":null}' % ('x' * 10000))
+    assert ogr.Open(filename) is not None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+def test_ogr_geojson_export_geometry_axis_order():
+
+    # EPSG:4326 and lat,long data order
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    g = ogr.CreateGeometryFromWkt('POINT (49 2)')
+    g.AssignSpatialReference(sr)
+    before_wkt = g.ExportToWkt()
+    assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }
+    assert g.ExportToWkt() == before_wkt
+
+    # EPSG:4326 and long,lat data order
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g = ogr.CreateGeometryFromWkt('POINT (2 49)')
+    g.AssignSpatialReference(sr)
+    assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }
+
+    # CRS84 with long,lat CRS and data order
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("OGC:CRS84")
+    g = ogr.CreateGeometryFromWkt('POINT (2 49)')
+    g.AssignSpatialReference(sr)
+    assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }
+
+    # Projected CRS with easting, northing order
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32631)
+    g = ogr.CreateGeometryFromWkt('POINT (2 49)')
+    g.AssignSpatialReference(sr)
+    assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }
+
+    # Projected CRS with northing, easting order
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(2393)
+    g = ogr.CreateGeometryFromWkt('POINT (49 2)')
+    g.AssignSpatialReference(sr)
+    assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }
+
+    # No CRS
+    g = ogr.CreateGeometryFromWkt('POINT (2 49)')
+    assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }

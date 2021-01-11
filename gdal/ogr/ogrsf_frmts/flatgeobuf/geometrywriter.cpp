@@ -54,7 +54,13 @@ void GeometryWriter::writePoint(const OGRPoint *p)
 void GeometryWriter::writeMultiPoint(const OGRMultiPoint *mp)
 {
     for (int i = 0; i < mp->getNumGeometries(); i++)
-        writePoint(mp->getGeometryRef(i)->toPoint());
+    {
+        const auto part = mp->getGeometryRef(i);
+        if( !part->IsEmpty() )
+        {
+            writePoint(part->toPoint());
+        }
+    }
 }
 
 uint32_t GeometryWriter::writeSimpleCurve(const OGRSimpleCurve *sc)
@@ -86,7 +92,13 @@ void GeometryWriter::writeMultiLineString(const OGRMultiLineString *mls)
     uint32_t e = 0;
     const auto numGeometries = mls->getNumGeometries();
     for (int i = 0; i < numGeometries; i++)
-        m_ends.push_back(e += writeSimpleCurve(mls->getGeometryRef(i)->toLineString()));
+    {
+        const auto part = mls->getGeometryRef(i);
+        if( !part->IsEmpty() )
+        {
+            m_ends.push_back(e += writeSimpleCurve(part->toLineString()));
+        }
+    }
 }
 
 void GeometryWriter::writePolygon(const OGRPolygon *p)
@@ -107,8 +119,11 @@ const Offset<Geometry> GeometryWriter::writeMultiPolygon(const OGRMultiPolygon *
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < mp->getNumGeometries(); i++) {
         const auto part = mp->getGeometryRef(i)->toPolygon();
-        GeometryWriter writer { m_fbb, part, GeometryType::Polygon, m_hasZ, m_hasM };
-        parts.push_back(writer.write(depth + 1));
+        if( !part->IsEmpty() )
+        {
+            GeometryWriter writer { m_fbb, part, GeometryType::Polygon, m_hasZ, m_hasM };
+            parts.push_back(writer.write(depth + 1));
+        }
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }
@@ -118,8 +133,11 @@ const Offset<Geometry> GeometryWriter::writeGeometryCollection(const OGRGeometry
     std::vector<Offset<Geometry>> parts;
     for (int i = 0; i < gc->getNumGeometries(); i++) {
         auto part = gc->getGeometryRef(i);
-        GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
-        parts.push_back(writer.write(depth + 1));
+        if( !part->IsEmpty() )
+        {
+            GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
+            parts.push_back(writer.write(depth + 1));
+        }
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
 }

@@ -262,4 +262,59 @@ def test_tiledb_write_band_meta(mode):
 
     src_ds = None
 
+@pytest.mark.require_driver('TileDB')
+@pytest.mark.parametrize(
+    'mode',
+    ['BAND', 'PIXEL']
+)
+def test_tiledb_write_history(mode):
+    try:
+        import numpy as np
+    except (ImportError):
+        pytest.skip()
 
+    options = [
+        'INTERLEAVE=%s' % (mode),
+        'TILEDB_TIMESTAMP=1'
+    ]
+
+    gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
+
+    new_ds = gdaltest.tiledb_drv.Create('tmp/tiledb_versioning', 20, 20, 1,
+                                         gdal.GDT_Byte, options=options)
+    new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
+
+    meta = new_ds.GetMetadata('IMAGE_STRUCTURE')
+    assert meta['INTERLEAVE'] == mode, 'Didn\'t get expected mode'
+    del new_ds
+
+    ts = [2, 3, 4, 5]
+
+    for t in ts:
+        update_ds = gdal.OpenEx('tmp/tiledb_versioning', gdal.GA_Update,
+                                open_options=['TILEDB_TIMESTAMP=%i' % (t)])
+        update_bnd = update_ds.GetRasterBand(1)
+        update_bnd.SetMetadataItem('TILEDB_TIMESTAMP', str(t))
+        data = np.ones((20, 20)) * t
+        update_bnd.WriteArray(data)
+        update_bnd = None
+        update_ds = None
+
+    for t in ts:
+        ds = gdal.OpenEx('tmp/tiledb_versioning',
+                         open_options=['TILEDB_TIMESTAMP=%i' % (t)])
+        bnd = ds.GetRasterBand(1)
+        assert int(bnd.GetMetadataItem('TILEDB_TIMESTAMP')) == t
+        assert bnd.Checksum() == 20 * 20 * t
+        bnd = None
+        ds = None
+
+    # open at a later non-existent timestamp
+    ds = gdal.OpenEx('tmp/tiledb_versioning',
+                      open_options=['TILEDB_TIMESTAMP=6'])
+    bnd = ds.GetRasterBand(1)
+    assert int(bnd.GetMetadataItem('TILEDB_TIMESTAMP')) == 5
+    bnd = None
+    ds = None
+
+    gdaltest.tiledb_drv.Delete('tmp/tiledb_versioning')

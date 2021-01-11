@@ -1,23 +1,29 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sl-bag-extract:bagStand xmlns:DatatypenNEN3610="www.kadaster.nl/schemas/lvbag/imbag/datatypennen3610/v20180601" xmlns:Objecten="www.kadaster.nl/schemas/lvbag/imbag/objecten/v20180601" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:Historie="www.kadaster.nl/schemas/lvbag/imbag/historie/v20180601" xmlns:Objecten-ref="www.kadaster.nl/schemas/lvbag/imbag/objecten-ref/v20180601" xmlns:nen5825="www.kadaster.nl/schemas/lvbag/imbag/nen5825/v20180601" xmlns:KenmerkInOnderzoek="www.kadaster.nl/schemas/lvbag/imbag/kenmerkinonderzoek/v20180601" xmlns:selecties-extract="http://www.kadaster.nl/schemas/lvbag/extract-selecties/v20180601" xmlns:sl-bag-extract="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20180601" xmlns:sl="http://www.kadaster.nl/schemas/standlevering-generiek/1.0">
+<?xml version="1.0" encoding="UTF-8"?>
+<sl-bag-extract:bagStand
+    xmlns:DatatypenNEN3610="www.kadaster.nl/schemas/lvbag/imbag/datatypennen3610/v20200601"
+    xmlns:Objecten="www.kadaster.nl/schemas/lvbag/imbag/objecten/v20200601"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:Historie="www.kadaster.nl/schemas/lvbag/imbag/historie/v20200601"
+    xmlns:Objecten-ref="www.kadaster.nl/schemas/lvbag/imbag/objecten-ref/v20200601"
+    xmlns:nen5825="www.kadaster.nl/schemas/lvbag/imbag/nen5825/v20200601"
+    xmlns:KenmerkInOnderzoek="www.kadaster.nl/schemas/lvbag/imbag/kenmerkinonderzoek/v20200601"
+    xmlns:selecties-extract="http://www.kadaster.nl/schemas/lvbag/extract-selecties/v20200601"
+    xmlns:sl-bag-extract="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20200601"
+    xmlns:sl="http://www.kadaster.nl/schemas/standlevering-generiek/1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:schemaLocation="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20200601 http://www.kadaster.nl/schemas/bag-verstrekkingen/extract-deelbestand-lvc/v20200601/BagvsExtractDeelbestandExtractLvc-2.1.0.xsd">
     <sl-bag-extract:bagInfo>
         <selecties-extract:Gebied-Registratief>
-            <selecties-extract:Gebied-GEM>
-                <selecties-extract:GemeenteCollectie>
-                    <selecties-extract:Gemeente>
-                        <selecties-extract:GemeenteIdentificatie>1581</selecties-extract:GemeenteIdentificatie>
-                    </selecties-extract:Gemeente>
-                </selecties-extract:GemeenteCollectie>
-            </selecties-extract:Gebied-GEM>
+            <selecties-extract:Gebied-NLD />
         </selecties-extract:Gebied-Registratief>
         <selecties-extract:LVC-Extract>
-            <selecties-extract:StandTechnischeDatum>2020-05-01</selecties-extract:StandTechnischeDatum>
+            <selecties-extract:StandTechnischeDatum>2020-10-08</selecties-extract:StandTechnischeDatum>
         </selecties-extract:LVC-Extract>
     </sl-bag-extract:bagInfo>
     <sl:standBestand>
         <sl:dataset>LVBAG</sl:dataset>
         <sl:inhoud>
-            <sl:gebied>GEMEENTE</sl:gebied>
+            <sl:gebied>Nederland</sl:gebied>
             <sl:leveringsId>0000000001</sl:leveringsId>
             <sl:objectTypen>
                 <sl:objectType>PND</sl:objectType>
@@ -26,16 +32,13 @@
         <sl:stand>
             <sl-bag-extract:bagObject>
                 <Objecten:Pand>
-                    <Objecten:identificatie>
-                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
-                        <DatatypenNEN3610:lokaalID>1581100000007976</DatatypenNEN3610:lokaalID>
-                    </Objecten:identificatie>
+                    <Objecten:identificatie domein="NL.IMBAG.Pand">1581100000007976</Objecten:identificatie>
                     <Objecten:geometrie>
                         <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_1581100000007976_1_1294065634">
                             <gml:exterior>
-<gml:LinearRing>
-    <gml:posList count="12">148270.573 451918.6 0.0 148263.223 451926.981 0.0 148263.822 451927.512 0.0 148261.813 451929.805 0.0 148261.601 451929.625 0.0 148261.725 451929.48 0.0 148261.387 451929.194 0.0 148257.832 451926.178 0.0 148261.567 451921.773 0.0 148261.021 451921.31 0.0 148266.354 451915.022 0.0 148270.573 451918.6 0.0</gml:posList>
-</gml:LinearRing>
+                                <gml:LinearRing>
+                                    <gml:posList count="12">148270.573 451918.6 0.0 148263.223 451926.981 0.0 148263.822 451927.512 0.0 148261.813 451929.805 0.0 148261.601 451929.625 0.0 148261.725 451929.48 0.0 148261.387 451929.194 0.0 148257.832 451926.178 0.0 148261.567 451921.773 0.0 148261.021 451921.31 0.0 148266.354 451915.022 0.0 148270.573 451918.6 0.0</gml:posList>
+                                </gml:LinearRing>
                             </gml:exterior>
                         </gml:Polygon>
                     </Objecten:geometrie>
@@ -52,8 +55,8 @@
                             <Historie:tijdstipRegistratie>2011-01-03T15:31:58.000</Historie:tijdstipRegistratie>
                             <Historie:eindRegistratie>2011-10-11T15:51:35.000</Historie:eindRegistratie>
                             <Historie:BeschikbaarLV>
-<Historie:tijdstipRegistratieLV>2011-01-03T15:40:34.052</Historie:tijdstipRegistratieLV>
-<Historie:tijdstipEindRegistratieLV>2011-10-11T16:02:02.073</Historie:tijdstipEindRegistratieLV>
+                                <Historie:tijdstipRegistratieLV>2011-01-03T15:40:34.052</Historie:tijdstipRegistratieLV>
+                                <Historie:tijdstipEindRegistratieLV>2011-10-11T16:02:02.073</Historie:tijdstipEindRegistratieLV>
                             </Historie:BeschikbaarLV>
                         </Historie:Voorkomen>
                     </Objecten:voorkomen>
@@ -63,16 +66,13 @@
         <sl:stand>
             <sl-bag-extract:bagObject>
                 <Objecten:Pand>
-                    <Objecten:identificatie>
-                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
-                        <DatatypenNEN3610:lokaalID>1581100000007976</DatatypenNEN3610:lokaalID>
-                    </Objecten:identificatie>
+                    <Objecten:identificatie domein="NL.IMBAG.Pand">1581100000007976</Objecten:identificatie>
                     <Objecten:geometrie>
                         <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_1581100000007976_2_1318341722">
                             <gml:exterior>
-<gml:LinearRing>
-    <gml:posList count="32">148260.379 451929.55 0.0 148259.428 451930.663 0.0 148257.628 451929.125 0.0 148257.593 451928.6 0.0 148257.953 451928.184 0.0 148255.496 451926.061 0.0 148256.18 451925.269 0.0 148255.974 451925.09 0.0 148255.937 451924.565 0.0 148257.094 451923.196 0.0 148257.69 451923.151 0.0 148257.894 451923.315 0.0 148259.871 451920.868 0.0 148258.591 451919.834 0.0 148258.591 451918.356 0.0 148262.771 451913.843 0.0 148263.868 451913.792 0.0 148264.928 451914.631 0.0 148264.694 451914.926 0.0 148265.707 451915.785 0.0 148266.354 451915.022 0.0 148270.573 451918.6 0.0 148263.223 451926.981 0.0 148263.822 451927.512 0.0 148261.813 451929.805 0.0 148261.601 451929.625 0.0 148261.725 451929.48 0.0 148261.387 451929.194 0.0 148260.789 451929.898 0.0 148260.379 451929.55 0.0 148256.68 451926.413 0.0 148260.379 451929.55 0.0</gml:posList>
-</gml:LinearRing>
+                                <gml:LinearRing>
+                                    <gml:posList count="32">148260.379 451929.55 0.0 148259.428 451930.663 0.0 148257.628 451929.125 0.0 148257.593 451928.6 0.0 148257.953 451928.184 0.0 148255.496 451926.061 0.0 148256.18 451925.269 0.0 148255.974 451925.09 0.0 148255.937 451924.565 0.0 148257.094 451923.196 0.0 148257.69 451923.151 0.0 148257.894 451923.315 0.0 148259.871 451920.868 0.0 148258.591 451919.834 0.0 148258.591 451918.356 0.0 148262.771 451913.843 0.0 148263.868 451913.792 0.0 148264.928 451914.631 0.0 148264.694 451914.926 0.0 148265.707 451915.785 0.0 148266.354 451915.022 0.0 148270.573 451918.6 0.0 148263.223 451926.981 0.0 148263.822 451927.512 0.0 148261.813 451929.805 0.0 148261.601 451929.625 0.0 148261.725 451929.48 0.0 148261.387 451929.194 0.0 148260.789 451929.898 0.0 148260.379 451929.55 0.0 148256.68 451926.413 0.0 148260.379 451929.55 0.0</gml:posList>
+                                </gml:LinearRing>
                             </gml:exterior>
                         </gml:Polygon>
                     </Objecten:geometrie>
@@ -89,8 +89,8 @@
                             <Historie:tijdstipRegistratie>2011-10-11T15:51:35.000</Historie:tijdstipRegistratie>
                             <Historie:eindRegistratie>2016-02-10T15:52:03.000</Historie:eindRegistratie>
                             <Historie:BeschikbaarLV>
-<Historie:tijdstipRegistratieLV>2011-10-11T16:02:02.073</Historie:tijdstipRegistratieLV>
-<Historie:tijdstipEindRegistratieLV>2016-02-10T16:00:09.301</Historie:tijdstipEindRegistratieLV>
+                                <Historie:tijdstipRegistratieLV>2011-10-11T16:02:02.073</Historie:tijdstipRegistratieLV>
+                                <Historie:tijdstipEindRegistratieLV>2016-02-10T16:00:09.301</Historie:tijdstipEindRegistratieLV>
                             </Historie:BeschikbaarLV>
                         </Historie:Voorkomen>
                     </Objecten:voorkomen>
@@ -100,16 +100,13 @@
         <sl:stand>
             <sl-bag-extract:bagObject>
                 <Objecten:Pand>
-                    <Objecten:identificatie>
-                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
-                        <DatatypenNEN3610:lokaalID>1581100000007976</DatatypenNEN3610:lokaalID>
-                    </Objecten:identificatie>
+                    <Objecten:identificatie domein="NL.IMBAG.Pand">1581100000007976</Objecten:identificatie>
                     <Objecten:geometrie>
                         <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_1581100000007976_3_1455116409">
                             <gml:exterior>
-<gml:LinearRing>
-    <gml:posList count="13">148256.68 451926.413 0.0 148261.014 451921.303 0.0 148259.588 451920.094 0.0 148259.515 451919.217 0.0 148263.396 451914.641 0.0 148264.273 451914.569 0.0 148265.707 451915.785 0.0 148266.354 451915.022 0.0 148270.573 451918.6 0.0 148263.223 451926.981 0.0 148261.555 451929.336 0.0 148260.912 451930.002 0.0 148256.68 451926.413 0.0</gml:posList>
-</gml:LinearRing>
+                                <gml:LinearRing>
+                                    <gml:posList count="13">148256.68 451926.413 0.0 148261.014 451921.303 0.0 148259.588 451920.094 0.0 148259.515 451919.217 0.0 148263.396 451914.641 0.0 148264.273 451914.569 0.0 148265.707 451915.785 0.0 148266.354 451915.022 0.0 148270.573 451918.6 0.0 148263.223 451926.981 0.0 148261.555 451929.336 0.0 148260.912 451930.002 0.0 148256.68 451926.413 0.0</gml:posList>
+                                </gml:LinearRing>
                             </gml:exterior>
                         </gml:Polygon>
                     </Objecten:geometrie>
@@ -126,8 +123,8 @@
                             <Historie:tijdstipRegistratie>2016-02-10T15:52:03.000</Historie:tijdstipRegistratie>
                             <Historie:eindRegistratie>2019-06-13T09:56:11.000</Historie:eindRegistratie>
                             <Historie:BeschikbaarLV>
-<Historie:tijdstipRegistratieLV>2016-02-10T16:00:09.301</Historie:tijdstipRegistratieLV>
-<Historie:tijdstipEindRegistratieLV>2019-06-13T10:00:57.675</Historie:tijdstipEindRegistratieLV>
+                                <Historie:tijdstipRegistratieLV>2016-02-10T16:00:09.301</Historie:tijdstipRegistratieLV>
+                                <Historie:tijdstipEindRegistratieLV>2019-06-13T10:00:57.675</Historie:tijdstipEindRegistratieLV>
                             </Historie:BeschikbaarLV>
                         </Historie:Voorkomen>
                     </Objecten:voorkomen>
@@ -137,16 +134,13 @@
         <sl:stand>
             <sl-bag-extract:bagObject>
                 <Objecten:Pand>
-                    <Objecten:identificatie>
-                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
-                        <DatatypenNEN3610:lokaalID>1581100000007976</DatatypenNEN3610:lokaalID>
-                    </Objecten:identificatie>
+                    <Objecten:identificatie domein="NL.IMBAG.Pand">1581100000007976</Objecten:identificatie>
                     <Objecten:geometrie>
                         <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_1581100000007976_4_1560412857">
                             <gml:exterior>
-<gml:LinearRing>
-    <gml:posList count="13">148270.573 451918.6 0.0 148263.223 451926.981 0.0 148263.822 451927.512 0.0 148261.248 451930.287 0.0 148256.68 451926.413 0.0 148261.014 451921.303 0.0 148259.588 451920.094 0.0 148259.515 451919.217 0.0 148263.396 451914.641 0.0 148264.273 451914.569 0.0 148265.707 451915.785 0.0 148266.354 451915.022 0.0 148270.573 451918.6 0.0</gml:posList>
-</gml:LinearRing>
+                                <gml:LinearRing>
+                                    <gml:posList count="13">148270.573 451918.6 0.0 148263.223 451926.981 0.0 148263.822 451927.512 0.0 148261.248 451930.287 0.0 148256.68 451926.413 0.0 148261.014 451921.303 0.0 148259.588 451920.094 0.0 148259.515 451919.217 0.0 148263.396 451914.641 0.0 148264.273 451914.569 0.0 148265.707 451915.785 0.0 148266.354 451915.022 0.0 148270.573 451918.6 0.0</gml:posList>
+                                </gml:LinearRing>
                             </gml:exterior>
                         </gml:Polygon>
                     </Objecten:geometrie>
@@ -161,7 +155,7 @@
                             <Historie:beginGeldigheid>2019-06-13</Historie:beginGeldigheid>
                             <Historie:tijdstipRegistratie>2019-06-13T09:56:11.000</Historie:tijdstipRegistratie>
                             <Historie:BeschikbaarLV>
-<Historie:tijdstipRegistratieLV>2019-06-13T10:00:57.675</Historie:tijdstipRegistratieLV>
+                                <Historie:tijdstipRegistratieLV>2019-06-13T10:00:57.675</Historie:tijdstipRegistratieLV>
                             </Historie:BeschikbaarLV>
                         </Historie:Voorkomen>
                     </Objecten:voorkomen>

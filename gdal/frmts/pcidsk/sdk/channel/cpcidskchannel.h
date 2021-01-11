@@ -48,7 +48,7 @@ namespace PCIDSK
 /* inheritance to attempt to avoid the fragile base class problem and   */
 /* then implement the Imagery I/O functions.                            */
 /************************************************************************/
-    class CPCIDSKChannel : public PCIDSKChannel
+    class PCIDSK_DLL CPCIDSKChannel : public PCIDSKChannel
     {
         friend class PCIDSKFile;
 
@@ -74,6 +74,10 @@ namespace PCIDSK
         std::vector<int> GetOverviewLevelMapping() const override;
 
         int         GetChannelNumber() { return channel_number; }
+
+        bool        IsLocked() const { return is_locked; }
+
+        std::string GetFilename() const;
 
         std::string GetMetadataValue( const std::string &key ) const override
             { return metadata.GetMetadataValue(key); }
@@ -107,6 +111,8 @@ namespace PCIDSK
 
     // Just for CPCIDSKFile.
         void      InvalidateOverviewInfo();
+        void      UpdateOverviewInfo(const char *pszOverviewMDKey,
+                                     int nFactor);
 
     protected:
         CPCIDSKFile *file;
@@ -118,6 +124,7 @@ namespace PCIDSK
         int       channel_number;
         uint64    ih_offset;
         mutable eChanType pixel_type;
+        bool      is_locked;
         char      byte_order; // 'S': littleendian, 'N': bigendian
         mutable int       needs_swap;
 

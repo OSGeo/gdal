@@ -168,6 +168,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
     int MkdirInternal( const char *pszDirname, long nMode, bool bDoStatCheck ) override;
     int RmdirInternal( const char * pszDirname, bool bRecursive );
 
+    void ClearCache() override;
+
   public:
     VSIADLSFSHandler() = default;
     ~VSIADLSFSHandler() override = default;
@@ -1143,6 +1145,17 @@ bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event)
                                                         m_nCurOffset,
         m_pabyBuffer, m_nBufferOff, m_poHandleHelper.get(),
         nMaxRetry, dfRetryDelay);
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSIADLSFSHandler::ClearCache()
+{
+    IVSIS3LikeFSHandler::ClearCache();
+
+    VSIAzureBlobHandleHelper::ClearCache();
 }
 
 /************************************************************************/

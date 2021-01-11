@@ -325,7 +325,7 @@ exifFields[] = {
  * EXIF-GPS tags  (Version 2.31, July 2016; nothing changed for version 2.32 May 2019)
  */
 
-static TIFFField
+static const TIFFField
 gpsFields[] = {
 	/*  For the GPS tag definitions in gpsFields[] the standard definition for Rationals is TIFF_SETGET_DOUBLE and TIFF_SETGET_C0_FLOAT.
 	 *-- ATTENTION: After the upgrade with Rational2Double, the GPSTAG values can now be written and also read in double precision!

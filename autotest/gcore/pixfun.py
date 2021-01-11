@@ -32,13 +32,12 @@ import gdaltest
 import pytest
 
 try:
-    import numpy
+    import numpy  # noqa
     numpy_available = True
 except ImportError:
     numpy_available = False
 
 from osgeo import gdal
-
 
 
 ###############################################################################
@@ -301,17 +300,16 @@ def test_pixfun_sum_r():
     assert ds is not None, ('Unable to open "%s" dataset.' % filename)
     data = ds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available:
-        refdata = numpy.zeros(data.shape, 'float')
-        for reffilename in ('data/uint16.tif', 'data/int32.tif',
-                            'data/float32.tif'):
-            refds = gdal.Open(reffilename)
-            assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
-            refdata += refds.GetRasterBand(1).ReadAsArray()
+    refdata = numpy.zeros(data.shape, 'float')
+    for reffilename in ('data/uint16.tif', 'data/int32.tif',
+                        'data/float32.tif'):
+        refds = gdal.Open(reffilename)
+        assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+        refdata += refds.GetRasterBand(1).ReadAsArray()
 
-        assert numpy.alltrue(data == refdata)
+    assert numpy.alltrue(data == refdata)
 
-    
+
 
 ###############################################################################
 # Verify the sum of 3 (two complex and one real) datasets.
@@ -326,17 +324,16 @@ def test_pixfun_sum_c():
     assert ds is not None, ('Unable to open "%s" dataset.' % filename)
     data = ds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available:
-        refdata = numpy.zeros(data.shape, 'complex')
-        for reffilename in ('data/uint16.tif', 'data/cint_sar.tif',
-                            'data/cfloat64.tif'):
-            refds = gdal.Open(reffilename)
-            assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
-            refdata += refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
+    refdata = numpy.zeros(data.shape, 'complex')
+    for reffilename in ('data/uint16.tif', 'data/cint_sar.tif',
+                        'data/cfloat64.tif'):
+        refds = gdal.Open(reffilename)
+        assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+        refdata += refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
 
-        assert numpy.alltrue(data == refdata)
+    assert numpy.alltrue(data == refdata)
 
-    
+
 
 ###############################################################################
 # Verify the difference of 2 (real) datasets.
@@ -403,17 +400,16 @@ def test_pixfun_mul_r():
     assert ds is not None, ('Unable to open "%s" dataset.' % filename)
     data = ds.GetRasterBand(1).ReadAsArray()
 
-    if numpy_available:
-        refdata = numpy.ones(data.shape, 'float')
-        for reffilename in ('data/uint16.tif', 'data/int32.tif',
-                            'data/float32.tif'):
-            refds = gdal.Open(reffilename)
-            assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
-            refdata *= refds.GetRasterBand(1).ReadAsArray()
+    refdata = numpy.ones(data.shape, 'float')
+    for reffilename in ('data/uint16.tif', 'data/int32.tif',
+                        'data/float32.tif'):
+        refds = gdal.Open(reffilename)
+        assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+        refdata *= refds.GetRasterBand(1).ReadAsArray()
 
-        assert numpy.alltrue(data == refdata)
+    assert numpy.alltrue(data == refdata)
 
-    
+
 
 ###############################################################################
 # Verify the product of 2 (complex) datasets.

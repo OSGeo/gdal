@@ -38,9 +38,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include <algorithm>
-
-#include "cpl_port.h"
 
 using namespace PCIDSK;
 
@@ -59,8 +56,9 @@ CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
     this->file = fileIn;
     this->channel_number = channel_numberIn;
     this->ih_offset = ih_offsetIn;
-    byte_order = 'S';
-    needs_swap = FALSE;
+    is_locked = false;
+    byte_order = 'N';
+    needs_swap = !BigEndianSystem();
 
     width = file->GetWidth();
     height = file->GetHeight();
@@ -75,6 +73,7 @@ CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
     {
         unsigned short test_value = 1;
 
+        is_locked = image_header.buffer[200] == 'W';
         byte_order = image_header.buffer[201];
         if( ((uint8 *) &test_value)[0] == 1 )
             needs_swap = (byte_order != 'S');
@@ -180,6 +179,24 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
         overview_bands.push_back( nullptr );
         overview_decimations.push_back( atoi(keys[i].c_str()+10) );
     }
+}
+
+/************************************************************************/
+/*                       UpdateOverviewInfo()                           */
+/************************************************************************/
+/** Update the in-memory information for an overview.
+  * This method will add overview information to the in-memory arrays
+  *
+  * @param  pszOverviewMDValue  Overview value
+  *
+  * @param  nFactor             Overview factor i.e. 2, 4, etc
+  */
+void CPCIDSKChannel::UpdateOverviewInfo(const char *pszOverviewMDValue,
+                                        int nFactor)
+{
+    overview_infos.push_back( pszOverviewMDValue );
+    overview_bands.push_back( nullptr );
+    overview_decimations.push_back( nFactor );
 }
 
 /************************************************************************/
@@ -351,6 +368,14 @@ std::vector<int> CPCIDSKChannel::GetOverviewLevelMapping() const
     EstablishOverviewInfo();
 
     return overview_decimations;
+}
+
+/************************************************************************/
+/*                              GetFilename()                           */
+/************************************************************************/
+std::string CPCIDSKChannel::GetFilename() const
+{
+    return file->GetFilename();
 }
 
 /************************************************************************/

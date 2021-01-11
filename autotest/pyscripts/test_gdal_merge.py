@@ -162,8 +162,8 @@ def test_gdal_merge_4():
 
 def test_gdal_merge_5():
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.BandRasterIONumPy
+        from osgeo import gdal_array
+        gdal_array.BandRasterIONumPy
     except (ImportError, AttributeError):
         pytest.skip()
 
@@ -233,8 +233,4 @@ def test_gdal_merge_cleanup():
             os.remove(filename)
         except OSError:
             pass
-
-    
-
-
 

@@ -27,6 +27,7 @@
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
+#include "pcidsk_buffer.h"
 #include "pcidsk_exception.h"
 #include "pcidsk_georef.h"
 #include "pcidsk_io.h"
@@ -154,11 +155,18 @@ void PCIDSK::SwapPixels(void* const data,
     case CHN_8U:
     case CHN_16U:
     case CHN_16S:
+    case CHN_32U:
+    case CHN_32S:
     case CHN_32R:
+    case CHN_64U:
+    case CHN_64S:
+    case CHN_64R:
         SwapData(data, DataTypeSize(type), static_cast<int>(count));
         break;
     case CHN_C16U:
     case CHN_C16S:
+    case CHN_C32U:
+    case CHN_C32S:
     case CHN_C32R:
         SwapData(data, DataTypeSize(type) / 2, static_cast<int>(count) * 2);
         break;
@@ -171,6 +179,54 @@ void PCIDSK::SwapPixels(void* const data,
 /************************************************************************/
 /*                              SwapData()                              */
 /************************************************************************/
+#if defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ > 3
+void PCIDSK::SwapData( void* const data, const int size, const int wcount )
+{
+    if(size == 2)
+    {
+        uint16 * data16 = reinterpret_cast<uint16*>(data);
+        for(int i = 0; i < wcount; i++)
+            data16[i] = __builtin_bswap16(data16[i]);
+    }
+    else if(size == 4)
+    {
+        uint32 * data32 = reinterpret_cast<uint32*>(data);
+        for(int i = 0; i < wcount; i++)
+            data32[i] = __builtin_bswap32(data32[i]);
+    }
+    else if(size == 8)
+    {
+        uint64 * data64 = reinterpret_cast<uint64*>(data);
+        for(int i = 0; i < wcount; i++)
+            data64[i] = __builtin_bswap64(data64[i]);
+    }
+}
+#elif defined(_MSC_VER)
+#pragma intrinsic(_byteswap_ushort, _byteswap_ulong, _byteswap_uint64)
+
+void PCIDSK::SwapData( void* const data, const int size, const int wcount )
+{
+    if(size == 2)
+    {
+        uint16 * data16 = reinterpret_cast<uint16*>(data);
+        for(int i = 0; i < wcount; i++)
+            data16[i] = _byteswap_ushort(data16[i]);
+    }
+    else if(size == 4)
+    {
+        uint32 * data32 = reinterpret_cast<uint32*>(data);
+        for(int i = 0; i < wcount; i++)
+            data32[i] = _byteswap_ulong(data32[i]);
+    }
+    else if(size == 8)
+    {
+        uint64 * data64 = reinterpret_cast<uint64*>(data);
+        for(int i = 0; i < wcount; i++)
+            data64[i] = _byteswap_uint64(data64[i]);
+    }
+}
+
+#else
 
 void PCIDSK::SwapData( void* const data, const int size, const int wcount )
 
@@ -239,6 +295,8 @@ void PCIDSK::SwapData( void* const data, const int size, const int wcount )
         return ThrowPCIDSKException( "Unsupported data size in SwapData()" );
 }
 
+#endif
+
 /************************************************************************/
 /*                          BigEndianSystem()                           */
 /************************************************************************/
@@ -263,53 +321,71 @@ bool PCIDSK::BigEndianSystem()
 /*      _DBLayout metadata.                                             */
 /************************************************************************/
 
-void PCIDSK::ParseTileFormat( std::string full_text,
-                              int &block_size, std::string &compression )
-
+void PCIDSK::ParseTileFormat(std::string oOptions,
+                             int & nTileSize, std::string & oCompress)
 {
-    compression = "NONE";
-    block_size = 127;
+    nTileSize = PCIDSK_DEFAULT_TILE_SIZE;
+    oCompress = "NONE";
 
-    UCaseStr( full_text );
+    UCaseStr(oOptions);
 
-/* -------------------------------------------------------------------- */
-/*      Only operate on tiled stuff.                                    */
-/* -------------------------------------------------------------------- */
-    if( !STARTS_WITH(full_text.c_str(), "TILED") )
-        return;
+    std::string::size_type nStart = oOptions.find_first_not_of(" ");
+    std::string::size_type nEnd = oOptions.find_first_of(" ", nStart);
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a block size?                                        */
-/* -------------------------------------------------------------------- */
-    const char *next_text = full_text.c_str() + 5;
-
-    if( isdigit(*next_text) )
+    while (nStart != std::string::npos || nEnd != std::string::npos)
     {
-        block_size = atoi(next_text);
-        while( isdigit(*next_text) )
-            next_text++;
-    }
+        std::string oToken = oOptions.substr(nStart, nEnd - nStart);
 
-    while( *next_text == ' ' )
-        next_text++;
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a compression type?                                  */
-/* -------------------------------------------------------------------- */
-    if( *next_text != '\0' )
-    {
-        compression = next_text;
-        if (compression == "NO_WARNINGS")
-            compression = "";
-        else if( compression != "RLE"
-            && !STARTS_WITH(compression.c_str(), "JPEG")
-            && compression != "NONE"
-            && compression != "QUADTREE" )
+        if (oToken.size() > 5 && STARTS_WITH(oToken.c_str(), "TILED"))
         {
-            return ThrowPCIDSKException( "Unsupported tile compression scheme '%s' requested.",
-                                  compression.c_str() );
+            // the TILED entry can be TILED# or TILED=#
+            int nPos = oToken[5] == '=' ? 6 : 5;
+
+            nTileSize = atoi(oToken.substr(nPos).c_str());
+
+            if (nTileSize <= 0)
+                ThrowPCIDSKException("Invalid tile option: %s", oToken.c_str());
         }
+        else if (oToken == "NONE" || oToken == "RLE" ||
+                 STARTS_WITH(oToken.c_str(), "JPEG") ||
+                 STARTS_WITH(oToken.c_str(), "QUADTREE"))
+        {
+            oCompress = oToken;
+        }
+
+        nStart = oOptions.find_first_not_of(" ", nEnd);
+        nEnd = oOptions.find_first_of(" ", nStart);
     }
+}
+
+/************************************************************************/
+/*                         ParseLinkedFilename()                        */
+/************************************************************************/
+
+std::string PCIDSK::ParseLinkedFilename(std::string oOptions)
+{
+    std::string oToFind = "FILENOCREATE=";
+    std::string oLinkedFileName;
+
+    std::string::size_type nStart = oOptions.find_first_not_of(" ");
+    std::string::size_type nEnd = oOptions.find_first_of(" ", nStart);
+
+    while (nStart != std::string::npos || nEnd != std::string::npos)
+    {
+        std::string oToken = oOptions.substr(nStart, nEnd - nStart);
+
+        if (oToken.size() > oToFind.size() &&
+            strncmp(oToken.c_str(), oToFind.c_str(), oToFind.size()) == 0)
+        {
+            oLinkedFileName = oOptions.substr(nStart+oToFind.size());
+            break;
+        }
+
+        nStart = oOptions.find_first_not_of(" ", nEnd);
+        nEnd = oOptions.find_first_of(" ", nStart);
+    }
+
+    return oLinkedFileName;
 }
 
 /************************************************************************/
@@ -408,7 +484,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
     dparms.resize(18);
 
     // This is rather iffy!
-    if( STARTS_WITH_CI(geosys.c_str(),"DEG" /* "DEGREE" */) )
+    if( STARTS_WITH_CI(geosys.c_str(), "DEG" /* "DEGREE" */) )
         dparms[17] = (double) (int) UNIT_DEGREE;
     else if( STARTS_WITH_CI(geosys.c_str(), "MET") )
         dparms[17] = (double) (int) UNIT_METER;
@@ -416,7 +492,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
         dparms[17] = (double) (int) UNIT_US_FOOT;
     else if( STARTS_WITH_CI(geosys.c_str(), "FEET") )
         dparms[17] = (double) (int) UNIT_US_FOOT;
-    else if( STARTS_WITH_CI(geosys.c_str(),"INTL " /* "INTL FOOT" */) )
+    else if( STARTS_WITH_CI(geosys.c_str(), "INTL " /* "INTL FOOT" */) )
         dparms[17] = (double) (int) UNIT_INTL_FOOT;
     else if( STARTS_WITH_CI(geosys.c_str(), "SPCS") )
         dparms[17] = (double) (int) UNIT_METER;
@@ -492,7 +568,7 @@ std::string PCIDSK::ExtractPath( std::string filename )
 }
 
 /************************************************************************/
-/*                         MergeRelativePath()                          */
+/*                         DefaultMergeRelativePath()                   */
 /*                                                                      */
 /*      This attempts to take src_filename and make it relative to      */
 /*      the base of the file "base", if this evaluates to a new file    */
@@ -501,9 +577,9 @@ std::string PCIDSK::ExtractPath( std::string filename )
 /*      does not resolve to a file in the filesystem.                   */
 /************************************************************************/
 
-std::string PCIDSK::MergeRelativePath( const PCIDSK::IOInterfaces *io_interfaces,
-                                       std::string base,
-                                       std::string src_filename )
+std::string PCIDSK::DefaultMergeRelativePath(const PCIDSK::IOInterfaces *io_interfaces,
+                                             const std::string& base,
+                                             const std::string& src_filename)
 
 {
 /* -------------------------------------------------------------------- */
@@ -626,7 +702,7 @@ static void vDebug( void (*pfnDebug)(const char *),
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
-        char *pszWorkBuffer = (char *) malloc(nWorkBufferSize);
+        PCIDSKBuffer oWorkBuffer(nWorkBufferSize);
 
 #ifdef va_copy
         va_end( wrk_args );
@@ -634,28 +710,20 @@ static void vDebug( void (*pfnDebug)(const char *),
 #else
         wrk_args = args;
 #endif
-        while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, fmt, wrk_args))
+        while( (nPR=vsnprintf( oWorkBuffer.buffer, nWorkBufferSize, fmt, wrk_args))
                >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            char* pszWorkBufferNew = (char *) realloc(pszWorkBuffer,
-                                                      nWorkBufferSize );
+            oWorkBuffer.SetSize(nWorkBufferSize);
 #ifdef va_copy
             va_end( wrk_args );
             va_copy( wrk_args, args );
 #else
             wrk_args = args;
 #endif
-            if( pszWorkBufferNew == nullptr )
-            {
-                strcpy( pszWorkBuffer, "(message too large)" );
-                break;
-            }
-            pszWorkBuffer = pszWorkBufferNew;
         }
-        message = pszWorkBuffer;
-        free( pszWorkBuffer );
+        message = oWorkBuffer.buffer;
     }
     else
     {

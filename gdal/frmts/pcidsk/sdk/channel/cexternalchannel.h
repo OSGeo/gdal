@@ -58,6 +58,7 @@ namespace PCIDSK
             eChanType pixel_type );
         virtual ~CExternalChannel();
 
+        virtual eChanType GetType() const override;
         virtual int GetBlockWidth() const override;
         virtual int GetBlockHeight() const override;
         virtual int ReadBlock( int block_index, void *buffer,
@@ -71,6 +72,10 @@ namespace PCIDSK
         virtual void SetEChanInfo( std::string filename, int echannel,
                                    int exoff, int eyoff,
                                    int exsize, int eysize ) override;
+
+        std::string GetExternalFilename(){return filename;}
+        int         GetExternalChanNum(){return echannel;}
+
     private:
         int      exoff;
         int      eyoff;
