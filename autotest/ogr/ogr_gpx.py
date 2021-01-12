@@ -280,7 +280,7 @@ def test_ogr_gpx_6():
 
 def test_ogr_gpx_7():
 
-    bna_ds = ogr.Open('data/gpx/bna_for_gpx.bna')
+    bna_ds = ogr.Open('data/gpx/csv_for_gpx.csv')
 
     try:
         os.remove('tmp/gpx.gpx')
@@ -290,7 +290,7 @@ def test_ogr_gpx_7():
     co_opts = ['GPX_USE_EXTENSIONS=yes']
 
     # Duplicate waypoints
-    bna_lyr = bna_ds.GetLayerByName('bna_for_gpx_points')
+    bna_lyr = bna_ds.GetLayerByName('csv_for_gpx')
 
     gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx',
                                                                   options=co_opts)

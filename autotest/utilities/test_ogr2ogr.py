@@ -1901,15 +1901,15 @@ def test_ogr2ogr_53():
     os.unlink('tmp/test_ogr2ogr_53.kml')
 
     # Default behaviour with a driver that does not GDAL_DMD_CREATIONFIELDDATATYPES
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f BNA tmp/test_ogr2ogr_53.bna tmp/test_ogr2ogr_53.csv -nlt POINT')
+    #gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f BNA tmp/test_ogr2ogr_53.bna tmp/test_ogr2ogr_53.csv -nlt POINT')
 
-    f = open('tmp/test_ogr2ogr_53.bna', 'rt')
-    content = f.read()
-    f.close()
+    #f = open('tmp/test_ogr2ogr_53.bna', 'rt')
+    #content = f.read()
+    #f.close()
 
-    assert '"123456789012.0"' in content
+    #assert '"123456789012.0"' in content
 
-    os.unlink('tmp/test_ogr2ogr_53.bna')
+    #os.unlink('tmp/test_ogr2ogr_53.bna')
 
     # with -mapFieldType
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f KML tmp/test_ogr2ogr_53.kml tmp/test_ogr2ogr_53.csv -mapFieldType Integer64=String')

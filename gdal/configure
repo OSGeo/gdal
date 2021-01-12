@@ -1073,7 +1073,6 @@ enable_driver_rik
 enable_driver_aeronavfaa
 enable_driver_arcgen
 enable_driver_avc
-enable_driver_bna
 enable_driver_cad
 enable_driver_csv
 enable_driver_dgn
@@ -1997,7 +1996,6 @@ Optional Features:
                           disable aeronavfaa driver support (enabled by default)
   --disable-driver-arcgen disable arcgen driver support (enabled by default)
   --disable-driver-avc    disable avc driver support (enabled by default)
-  --disable-driver-bna    disable bna driver support (enabled by default)
   --disable-driver-cad    disable cad driver support (enabled by default)
   --disable-driver-csv    disable csv driver support (enabled by default)
   --disable-driver-dgn    disable dgn driver support (enabled by default)
@@ -28023,35 +28021,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED avc"
   INTERNAL_FORMAT_avc_ENABLED=no
-fi
-
-# Check whether --enable-driver-bna was given.
-if test "${enable_driver_bna+set}" = set; then :
-  enableval=$enable_driver_bna;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_bna
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED bna"
-  INTERNAL_FORMAT_bna_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DBNA_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED bna"
-  INTERNAL_FORMAT_bna_ENABLED=no
 fi
 
 # Check whether --enable-driver-cad was given.
