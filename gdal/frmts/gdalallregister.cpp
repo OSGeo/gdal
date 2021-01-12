@@ -444,6 +444,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ROIPAC();
     GDALRegister_RRASTER();
     GDALRegister_BYN();
+    GDALRegister_CRAP();
 #endif
 
 #ifdef FRMT_arg
