@@ -798,6 +798,13 @@ void CPCIDSKFile::InitializeFromHeader()
 
         pixel_type = GetDataTypeFromName(pixel_type_string);
 
+        // For file interleaved channels, we expect a valid channel type.
+        if (interleaving == "FILE" && pixel_type == CHN_UNKNOWN)
+        {
+            return ThrowPCIDSKException("Invalid or unsupported channel type: %s",
+                                        pixel_type_string);
+        }
+
         // if we didn't get channel type in header, work out from counts (old).
         // Check this only if we don't have complex channels:
 

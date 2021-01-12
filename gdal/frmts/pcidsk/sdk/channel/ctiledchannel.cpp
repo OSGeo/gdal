@@ -234,6 +234,9 @@ int CTiledChannel::ReadBlock( int iBlock, void *buffer,
 
     uint32 nTilePerRow = mpoTileLayer->GetTilePerRow();
 
+    if (nTilePerRow == 0)
+        return ThrowPCIDSKException(0, "Invalid number of tiles per row.");
+
     uint32 nCol = iBlock % nTilePerRow;
     uint32 nRow = iBlock / nTilePerRow;
 
@@ -352,6 +355,9 @@ int CTiledChannel::WriteBlock( int iBlock, void *buffer )
     int nPixelCount = nTileXSize * nTileYSize;
 
     uint32 nTilePerRow = mpoTileLayer->GetTilePerRow();
+
+    if (nTilePerRow == 0)
+        return ThrowPCIDSKException(0, "Invalid number of tiles per row.");
 
     uint32 nCol = iBlock % nTilePerRow;
     uint32 nRow = iBlock / nTilePerRow;
