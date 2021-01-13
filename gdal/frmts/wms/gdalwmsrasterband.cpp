@@ -883,7 +883,6 @@ CPLErr GDALWMSRasterBand::ReadBlockFromCache(const char* pszKey, int x, int y,
 
 CPLErr GDALWMSRasterBand::EmptyBlock(int x, int y, int to_buffer_band, void *buffer) {
     CPLErr ret = CE_None;
-    size_t block_size = static_cast<size_t>(nBlockXSize) * nBlockYSize;
 
     for (int ib = 1; ib <= m_parent_dataset->nBands; ++ib) {
         if (ret == CE_None) {
@@ -910,7 +909,8 @@ CPLErr GDALWMSRasterBand::EmptyBlock(int x, int y, int to_buffer_band, void *buf
                 double valNDV = band->GetNoDataValue(&hasNDV);
                 if (!hasNDV)
                     valNDV = 0;
-                GDALCopyWords(&hasNDV, GDT_Float64, 0, p, eDataType, GDALGetDataTypeSizeBytes(eDataType), block_size);
+                GDALCopyWords(&valNDV, GDT_Float64, 0, p, eDataType,
+                    GDALGetDataTypeSizeBytes(eDataType), static_cast<size_t>(nBlockXSize) * nBlockYSize);
             }
             if (b != nullptr) {
                 b->DropLock();
