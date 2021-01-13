@@ -910,7 +910,7 @@ CPLErr GDALWMSRasterBand::EmptyBlock(int x, int y, int to_buffer_band, void *buf
                 if (!hasNDV)
                     valNDV = 0;
                 GDALCopyWords(&valNDV, GDT_Float64, 0, p, eDataType,
-                    GDALGetDataTypeSizeBytes(eDataType), static_cast<size_t>(nBlockXSize) * nBlockYSize);
+                    GDALGetDataTypeSizeBytes(eDataType), nBlockXSize * nBlockYSize);
             }
             if (b != nullptr) {
                 b->DropLock();
