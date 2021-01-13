@@ -881,11 +881,6 @@ CPLErr GDALWMSRasterBand::ReadBlockFromCache(const char* pszKey, int x, int y,
     return ReadBlockFromDataset(ds, x, y, to_buffer_band, buffer, advise_read);
 }
 
-template <typename T> static void valset(T* dst, T val, size_t count) {
-    for (; count; count--)
-        *dst++ = val;
-}
-
 CPLErr GDALWMSRasterBand::EmptyBlock(int x, int y, int to_buffer_band, void *buffer) {
     CPLErr ret = CE_None;
     size_t block_size = static_cast<size_t>(nBlockXSize) * nBlockYSize;
@@ -915,20 +910,7 @@ CPLErr GDALWMSRasterBand::EmptyBlock(int x, int y, int to_buffer_band, void *buf
                 double valNDV = band->GetNoDataValue(&hasNDV);
                 if (!hasNDV)
                     valNDV = 0;
-#define NDVSET(T) valset(reinterpret_cast<T *>(p), static_cast<T>(valNDV), block_size)
-                    switch (eDataType) {
-                    case GDT_Byte: NDVSET(GByte); break;
-                    case GDT_UInt16: NDVSET(GUInt16); break;
-                    case GDT_Int16: NDVSET(GInt16); break;
-                    case GDT_UInt32: NDVSET(GUInt32); break;
-                    case GDT_Int32: NDVSET(GInt32); break;
-                    case GDT_Float32: NDVSET(float); break;
-                    case GDT_Float64: NDVSET(double); break;
-                    default:
-                        CPLError(CE_Failure, CPLE_NotSupported, "GDALWMS: Type not supported.");
-                        ret = CE_Failure;
-                    }
-#undef NDVSET
+                GDALCopyWords(&hasNDV, GDT_Float64, 0, p, eDataType, GDALGetDataTypeSizeBytes(eDataType), block_size);
             }
             if (b != nullptr) {
                 b->DropLock();
