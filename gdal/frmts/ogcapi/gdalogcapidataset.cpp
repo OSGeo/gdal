@@ -683,6 +683,7 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
     CPLString osMapURL;
     CPLString osTilesURL;
     CPLString osCoverageURL;
+    bool bCoverageGeotiff = false;
     CPLString osItemsJsonURL;
     CPLString osSelfURL;
     for( const auto& oLink: oLinks )
@@ -702,6 +703,15 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
         else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" &&
                  (osType == "image/tiff; application=geotiff" ||
                   osType == "application/x-geotiff") )
+        {
+            if( !bCoverageGeotiff )
+            {
+                osCoverageURL = BuildURL(oLink["href"].ToString());
+                bCoverageGeotiff = true;
+            }
+        }
+        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" &&
+                 osType.empty() )
         {
             osCoverageURL = BuildURL(oLink["href"].ToString());
         }
@@ -829,6 +839,11 @@ bool OGCAPIDataset::InitFromURL(GDALOpenInfo* poOpenInfo)
             {
                 osURL = BuildURL(oLink["href"].ToString());
                 break;
+            }
+            else if( oLink["rel"].ToString() == "self" &&
+                     oLink.GetString("type").empty() )
+            {
+                osURL = BuildURL(oLink["href"].ToString());
             }
         }
         if( osURL.empty() )
@@ -1055,7 +1070,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
             const auto osRel = oLink.GetString("rel");
             const auto osType = oLink.GetString("type");
             if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage-domainset" &&
-                osType == "application/json" )
+                (osType == "application/json" || osType.empty()) )
             {
                 CPLString osURL = BuildURL(oLink["href"].ToString());
                 CPLJSONDocument oDoc;
@@ -1065,7 +1080,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
                 }
             }
             else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage-rangetype" &&
-                     osType == "application/json" )
+                     (osType == "application/json" || osType.empty()) )
             {
                 CPLString osURL = BuildURL(oLink["href"].ToString());
                 CPLJSONDocument oDoc;
@@ -1122,11 +1137,30 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
     CPLString osYAxisName;
     if( oDomainSet.IsValid() )
     {
+        auto oAxisLabels = oDomainSet["generalGrid"]["axisLabels"].ToArray();
+        if( oAxisLabels.IsValid() && oAxisLabels.Size() >= 2 )
+        {
+            osXAxisName = oAxisLabels[0].ToString();
+            osYAxisName = oAxisLabels[1].ToString();
+        }
+
         auto oAxis = oDomainSet["generalGrid"]["axis"].ToArray();
         if( oAxis.IsValid() && oAxis.Size() >= 2 )
         {
-            double dfXRes = oAxis[0].GetDouble("resolution");
-            double dfYRes = oAxis[1].GetDouble("resolution");
+            double dfXRes = std::abs(oAxis[0].GetDouble("resolution"));
+            double dfYRes = std::abs(oAxis[1].GetDouble("resolution"));
+
+            dfXMin = oAxis[0].GetDouble("lowerBound");
+            dfXMax = oAxis[0].GetDouble("upperBound");
+            dfYMin = oAxis[1].GetDouble("lowerBound");
+            dfYMax = oAxis[1].GetDouble("upperBound");
+
+            if( osXAxisName == "Lat" )
+            {
+                std::swap( dfXRes, dfYRes );
+                std::swap( dfXMin, dfYMin );
+                std::swap( dfXMax, dfYMax );
+            }
 
             double dfXSize = (dfXMax - dfXMin) / dfXRes;
             double dfYSize = (dfYMax - dfYMin) / dfYRes;
@@ -1144,20 +1178,23 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
             m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
         }
 
-        auto oAxisLabels = oDomainSet["generalGrid"]["axisLabels"].ToArray();
-        if( oAxisLabels.IsValid() && oAxisLabels.Size() >= 2 )
-        {
-            osXAxisName = oAxisLabels[0].ToString();
-            osYAxisName = oAxisLabels[1].ToString();
-        }
-
         OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput( oDomainSet["generalGrid"].GetString("srsName").c_str() ) == OGRERR_NONE )
+        const std::string srsName( oDomainSet["generalGrid"].GetString("srsName") );
+        bool bSwap = false;
+        if( oSRS.SetFromUserInput( srsName.c_str() ) == OGRERR_NONE )
         {
             if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
             {
-                std::swap( osXAxisName, osYAxisName );
+                bSwap = true;
             }
+        }
+        else if( srsName == "https://ows.rasdaman.org/def/crs/EPSG/0/4326" ) // HACK
+        {
+            bSwap = true;
+        }
+        if( bSwap )
+        {
+            std::swap( osXAxisName, osYAxisName );
         }
 
     }
@@ -1206,6 +1243,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
         CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "5")));
     CPLString osWMS_XML;
     char* pszEscapedURL = CPLEscapeString(osCoverageURLModified, -1, CPLES_XML);
+    std::string osAccept("<Accept>image/tiff;application=geotiff</Accept>");
     osWMS_XML.Printf(
         "<GDAL_WMS>"
         "    <Service name=\"OGCAPICoverage\">"
@@ -1226,6 +1264,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
         "    <DataType>%s</DataType>"
         "    <MaxConnections>%d</MaxConnections>"
         "    %s"
+        "    %s"
         "</GDAL_WMS>",
         pszEscapedURL,
         dfXMin, dfYMax,
@@ -1236,6 +1275,7 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
         l_nBands,
         GDALGetDataTypeName(eDT),
         nMaxConnections,
+        osAccept.c_str(),
         bCache ? "<Cache />" : "");
     CPLFree(pszEscapedURL);
     CPLDebug("OGCAPI", "%s", osWMS_XML.c_str());
