@@ -125,12 +125,6 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
                                     line_offset);
     }
 
-    if (pixel_offset > line_offset)
-    {
-        return ThrowPCIDSKException(0, "Invalid pixel_offset: " PCIDSK_FRMT_UINT64,
-                                    pixel_offset);
-    }
-
     if (start_byte > std::numeric_limits<uint64>::max() - line_offset * height)
     {
         return ThrowPCIDSKException(0, "Invalid start_byte: " PCIDSK_FRMT_UINT64,
@@ -163,6 +157,11 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
 /*      Establish region to read.                                       */
 /* -------------------------------------------------------------------- */
     int    pixel_size = DataTypeSize( pixel_type );
+
+    if (pixel_offset == 0 || pixel_size == 0)
+    {
+        return ThrowPCIDSKException( 0, "Invalid data type." );
+    }
     if( xsize > 1 && pixel_offset > static_cast<uint64>(INT_MAX / (xsize - 1)) )
     {
         return ThrowPCIDSKException( 0, "Int overfow in ReadBlock() ");
@@ -268,6 +267,10 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /*      Establish region to read.                                       */
 /* -------------------------------------------------------------------- */
     int    pixel_size = DataTypeSize( pixel_type );
+
+    if (pixel_offset == 0 || pixel_size == 0)
+        return ThrowPCIDSKException( 0, "Invalid data type." );
+
     uint64 offset = start_byte + line_offset * block_index;
     int    window_size = (int) (pixel_offset*(width-1) + pixel_size);
 

@@ -155,6 +155,10 @@ bool BlockTileLayer::IsCorrupted(void) const
     if (GetLayerType() == BLTDead)
         return false;
 
+    // The tile layer is corrupted when the image size is 0.
+    if (GetXSize() == 0 || GetYSize() == 0)
+        return true;
+
     uint64 nTileSize =
         static_cast<uint64>(GetTileXSize()) * GetTileYSize() * GetDataTypeSize();
 
@@ -655,6 +659,12 @@ void BlockTileLayer::SetTileLayerInfo(uint32 nXSize, uint32 nYSize,
     {
         return ThrowPCIDSKException("Invalid tile dimensions: %d x %d",
                                     nTileXSize, nTileYSize);
+    }
+
+    if (nXSize == 0 || nYSize == 0)
+    {
+        return ThrowPCIDSKException("Invalid tile layer dimensions: %d x %d",
+                                    nXSize, nYSize);
     }
 
     mpsTileLayer->nXSize = nXSize;
