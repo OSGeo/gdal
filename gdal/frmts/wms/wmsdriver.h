@@ -440,6 +440,7 @@ protected:
     CPLString m_osUserAgent;
     CPLString m_osReferer;
     CPLString m_osUserPwd;
+    std::string m_osAccept{}; // HTTP Accept header
 
     GDALWMSDataWindow m_default_data_window;
     int m_default_block_size_x;
