@@ -4593,7 +4593,7 @@ NITFDataset::NITFCreateCopy(
     }
 
     if( papszRPC != nullptr &&
-        CPLFetchBool(papszFullOptions, "RPCTXT", false))
+        CPLFetchBool(papszFullOptions, "RPC_SENSORML", false))
     {
         GDALWriteRPCSensorMLFile( pszFilename, papszRPC );
     }
