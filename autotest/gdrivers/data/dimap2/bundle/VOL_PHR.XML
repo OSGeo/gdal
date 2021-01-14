@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml-stylesheet href="./LIBRARY/VOL_STYL.XSL" type="text/xsl"?>
+<Dimap_Document>
+  <Metadata_Identification>
+    <METADATA_FORMAT version="2.0">DIMAP</METADATA_FORMAT>
+    <METADATA_PROFILE>VOLUME</METADATA_PROFILE>
+    <METADATA_SUBPROFILE>SINGLE_VOLUME</METADATA_SUBPROFILE>
+    <METADATA_LANGUAGE>en</METADATA_LANGUAGE>
+  </Metadata_Identification>
+  <Dataset_Identification>
+    <DATASET_NAME>PHR Volume Description</DATASET_NAME>
+    <DATASET_ID>DATASET_ID</DATASET_ID>
+  </Dataset_Identification>
+  <Dataset_Content>
+    <Dataset_Components>
+      <Component>
+        <COMPONENT_TITLE>First component</COMPONENT_TITLE>
+        <COMPONENT_TYPE version="2.0">DIMAP</COMPONENT_TYPE>
+        <COMPONENT_PATH href="DIM_foo.XML"/>
+      </Component>
+      <Component>
+        <COMPONENT_TITLE>Second component</COMPONENT_TITLE>
+        <COMPONENT_TYPE version="2.0">DIMAP</COMPONENT_TYPE>
+        <COMPONENT_PATH href="DIM_foo2.XML"/>
+      </Component>
+    </Dataset_Components>
+  </Dataset_Content>
+</Dimap_Document>

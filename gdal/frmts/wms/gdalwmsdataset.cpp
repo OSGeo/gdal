@@ -178,6 +178,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     }
 
     if (ret == CE_None) {
+        m_osAccept = CPLGetXMLValue(config, "Accept", "");
+    }
+
+    if (ret == CE_None) {
         const char *offline_mode = CPLGetXMLValue(config, "OfflineMode", "");
         if (offline_mode[0] != '\0') {
             const int offline_mode_bool = StrToBool(offline_mode);
@@ -730,6 +734,9 @@ const char * const * GDALWMSDataset::GetHTTPRequestOpts()
 
     if (m_http_max_conn > 0)
         opts = CSLAddString(opts, CPLOPrintf("MAXCONN=%d", m_http_max_conn));
+
+    if (!m_osAccept.empty() )
+        opts = CSLAddNameValue(opts, "ACCEPT", m_osAccept.c_str());
 
     m_http_options = opts;
     return m_http_options;

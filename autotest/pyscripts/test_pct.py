@@ -34,6 +34,8 @@ import struct
 
 
 from osgeo import gdal
+from osgeo.utils import gdalattachpct, rgb2pct
+import osgeo.utils.auxiliary.color_table as color_table
 import gdaltest
 import test_py_scripts
 import pytest
@@ -162,6 +164,54 @@ def test_pct2rgb_4():
     ori_ds = None
 
 
+def test_gdalattachpct_1():
+    pct_filename = 'tmp/test_rgb2pct_2.tif'
+    src_filename = '../gcore/data/rgbsmall.tif'
+    pct_filename4 = 'tmp/test_gdalattachpct_1_4.txt'
+
+    # pct from raster
+    ct0 = color_table.get_color_table(pct_filename)
+    ds1, err = rgb2pct.doit(src_filename=src_filename, pct_filename=pct_filename)
+    ct1 = color_table.get_color_table(ds1)
+    assert err == 0 and ds1 is not None and ct1 is not None and color_table.are_equal_color_table(ct0, ct1)
+    ds1 = None
+
+    # generate some junk color table
+    color2 = (1, 2, 3, 4)
+    ct2a = color_table.get_fixed_color_table(color2)
+    assert color_table.is_fixed_color_table(ct2a, color2)
+
+    # assign junk color table
+    ds2, err = gdalattachpct.doit(src_filename=src_filename, pct_filename=ct2a)
+    ct2b = color_table.get_color_table(ds2)
+    assert err == 0 and ds2 is not None and color_table.are_equal_color_table(ct2a, ct2b)
+    ds2 = None
+
+    # pct from gdal.ColorTable object
+    ds3, err = gdalattachpct.doit(src_filename=src_filename, pct_filename=ct1)
+    ct3 = color_table.get_color_table(ds3)
+    assert err == 0 and ds3 is not None and color_table.are_equal_color_table(ct1, ct3)
+    ds3 = None
+
+    # write color table to a txt file
+    color_table.write_color_table_to_file(ct3, pct_filename4)
+    ct4 = color_table.get_color_table(pct_filename4)
+    assert color_table.are_equal_color_table(ct3, ct4)
+
+    # pct from txt file
+    ds5, err = rgb2pct.doit(src_filename=src_filename, pct_filename=ct4)
+    ct5 = color_table.get_color_table(ds5)
+    assert err == 0 and ds5 is not None and ct5 is not None and color_table.are_equal_color_table(ct4, ct5)
+    ds5 = None
+
+    ct1 = None
+    ct2b = None
+    ct2a = None
+    ct3 = None
+    ct4 = None
+    ct5 = None
+
+
 ###############################################################################
 # Cleanup
 
@@ -172,14 +222,11 @@ def test_rgb2pct_cleanup():
            'tmp/test_rgb2pct_2.tif',
            'tmp/test_rgb2pct_3.tif',
            'tmp/test_pct2rgb_1.tif',
-           'tmp/test_pct2rgb_4.tif']
+           'tmp/test_pct2rgb_4.tif',
+           'tmp/test_gdalattachpct_1_4.txt']
     for filename in lst:
         try:
             os.remove(filename)
         except OSError:
             pass
-
-
-
-
 

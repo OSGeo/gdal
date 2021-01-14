@@ -1832,12 +1832,23 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
                 return 0;
             }
         }
+
+        const vsi_l_offset nRegionOffset = iterOffset - nOffsetToDownload;
+        if (osRegion.size() < nRegionOffset)
+        {
+            if( iterOffset == curOffset )
+            {
+                CPLDebug(poFS->GetDebugKey(), "Request at offset " CPL_FRMT_GUIB
+                         ", after end of file", iterOffset);
+            }
+            break;
+        }
+
         const int nToCopy = static_cast<int>(
             std::min(static_cast<vsi_l_offset>(nBufferRequestSize),
-                     osRegion.size() -
-                     (iterOffset - nOffsetToDownload)));
+                     osRegion.size() - nRegionOffset));
         memcpy(pBuffer,
-               osRegion.data() + iterOffset - nOffsetToDownload,
+               osRegion.data() + nRegionOffset,
                nToCopy);
         pBuffer = static_cast<char *>(pBuffer) + nToCopy;
         iterOffset += nToCopy;

@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="LIBRARY/STYLE.XSL" type="text/xsl"?><Dimap_Document>
+<!-- this is a fake and stripped Dimap2 dataset -->
+  <Metadata_Identification>
+      <METADATA_FORMAT version="2.0">DIMAP</METADATA_FORMAT>
+      <METADATA_PROFILE>PHR_SENSOR</METADATA_PROFILE>
+      <METADATA_SUBPROFILE>PRODUCT</METADATA_SUBPROFILE>
+      <METADATA_LANGUAGE>en</METADATA_LANGUAGE>
+  </Metadata_Identification>
+  <Dataset_Content>
+      <SURFACE_AREA unit="square km">1</SURFACE_AREA>
+      <Dataset_Components>
+         <Component>
+            <COMPONENT_TITLE>Strip Source</COMPONENT_TITLE>
+            <COMPONENT_CONTENT>Lineage Information</COMPONENT_CONTENT>
+            <COMPONENT_TYPE version="2.0">DIMAP</COMPONENT_TYPE>
+            <COMPONENT_PATH href="STRIP_foo_DIM.XML"/>
+         </Component>
+         <Component>
+            <COMPONENT_TITLE>RPC Model</COMPONENT_TITLE>
+            <COMPONENT_CONTENT>Geoposition Model</COMPONENT_CONTENT>
+            <COMPONENT_TYPE version="2.0">DIMAP</COMPONENT_TYPE>
+            <COMPONENT_PATH href="RPC_foo.XML"/>
+         </Component>
+      </Dataset_Components>
+  </Dataset_Content>
+  <Product_Information>
+      <Producer_Information>
+         <PRODUCER_NAME>PRODUCER_NAME</PRODUCER_NAME>
+         <PRODUCER_URL href="http://PRODUCER_URL"/>
+         <PRODUCER_CONTACT>PRODUCER_CONTACT</PRODUCER_CONTACT>
+         <PRODUCER_ADDRESS>PRODUCER_ADDRESS</PRODUCER_ADDRESS>
+      </Producer_Information>
+      <Delivery_Identification>
+         <PRODUCTION_DATE>PRODUCTION_DATE</PRODUCTION_DATE>
+         <JOB_ID>JOB_ID</JOB_ID>
+         <PRODUCT_CODE>PRODUCT_CODE</PRODUCT_CODE>
+         <DELIVERY_TYPE>DELIVERY_TYPE</DELIVERY_TYPE>
+         <Order_Identification>
+            <CUSTOMER_REFERENCE>CUSTOMER_REFERENCE</CUSTOMER_REFERENCE>
+            <INTERNAL_REFERENCE>INTERNAL_REFERENCE</INTERNAL_REFERENCE>
+            <COMMERCIAL_REFERENCE>COMMERCIAL_REFERENCE</COMMERCIAL_REFERENCE>
+            <COMMERCIAL_ITEM>COMMERCIAL_ITEM</COMMERCIAL_ITEM>
+         </Order_Identification>
+      </Delivery_Identification>
+  </Product_Information>
+  <Coordinate_Reference_System>
+      <Geodetic_CRS>
+         <CRS_TABLES version="6.3">EPSG</CRS_TABLES>
+         <GEODETIC_CRS_TYPE>GEOGRAPHIC2D</GEODETIC_CRS_TYPE>
+         <GEODETIC_CRS_NAME>WGS84</GEODETIC_CRS_NAME>
+         <GEODETIC_CRS_CODE>urn:ogc:def:crs:EPSG::4326</GEODETIC_CRS_CODE>
+      </Geodetic_CRS>
+      <Temporal_CRS>
+         <CRS_TABLES version="0.0">ITU</CRS_TABLES>
+         <TEMPORAL_CRS_NAME>UTC</TEMPORAL_CRS_NAME>
+      </Temporal_CRS>
+  </Coordinate_Reference_System>
+  <Geoposition>
+      <Raster_CRS>
+         <RASTER_GEOMETRY>SENSOR</RASTER_GEOMETRY>
+         <PIXEL_ORIENTATION>CENTER</PIXEL_ORIENTATION>
+         <PIXEL_CRS_TYPE>POINT</PIXEL_CRS_TYPE>
+         <PIXEL_ORIGIN>1</PIXEL_ORIGIN>
+      </Raster_CRS>
+      <Geoposition_Models>
+         <Rational_Function_Model>
+            <Component>
+               <COMPONENT_TITLE>RPC Model</COMPONENT_TITLE>
+               <COMPONENT_CONTENT>Geoposition Model</COMPONENT_CONTENT>
+               <COMPONENT_TYPE version="2.0">DIMAP</COMPONENT_TYPE>
+               <COMPONENT_PATH href="RPC_foo.XML"/>
+            </Component>
+         </Rational_Function_Model>
+      </Geoposition_Models>
+  </Geoposition>
+  <Processing_Information>
+      <Production_Facility>
+         <SOFTWARE version="VERSION">SOFTWARE</SOFTWARE>
+         <PROCESSING_CENTER>PROCESSING_CENTER</PROCESSING_CENTER>
+         <PROCESSING_PLACE/>
+      </Production_Facility>
+      <Product_Settings>
+         <PROCESSING_LEVEL>SENSOR</PROCESSING_LEVEL>
+         <SPECTRAL_PROCESSING>PMS</SPECTRAL_PROCESSING>
+         <Geometric_Settings>
+            <GEOMETRIC_PROCESSING>SENSOR</GEOMETRIC_PROCESSING>
+            <EPHEMERIS_USED>CORRECTED</EPHEMERIS_USED>
+            <ATTITUDES_USED>ACCURATE</ATTITUDES_USED>
+            <GROUND_SETTING>true</GROUND_SETTING>
+            <GROUND_DESC>R3D_ORTHO</GROUND_DESC>
+            <VERTICAL_SETTING>true</VERTICAL_SETTING>
+            <VERTICAL_DESC>REFERENCE3D</VERTICAL_DESC>
+         </Geometric_Settings>
+         <Radiometric_Settings>
+            <RADIOMETRIC_PROCESSING>BASIC</RADIOMETRIC_PROCESSING>
+            <INTER_DETECTOR_NORMALIZATION>false</INTER_DETECTOR_NORMALIZATION>
+            <DETECTORS_INTERPOLATION>true</DETECTORS_INTERPOLATION>
+            <STRAYLIGHT_CORRECTION>false</STRAYLIGHT_CORRECTION>
+            <VCTI_CORRECTION>false</VCTI_CORRECTION>
+            <INTER_ARRAY_RECONSTRUCTION>true</INTER_ARRAY_RECONSTRUCTION>
+            <RADIOMETRIC_STRETCH>false</RADIOMETRIC_STRETCH>
+            <OUT_OF_ORDER_THRESHOLD>0.5</OUT_OF_ORDER_THRESHOLD>
+         </Radiometric_Settings>
+         <Sampling_Settings>
+            <RESAMPLING_SPACING unit="m">0.5</RESAMPLING_SPACING>
+            <RESAMPLING_KERNEL>SPLINE</RESAMPLING_KERNEL>
+         </Sampling_Settings>
+         <MTF_Settings>
+            <PAN_RESTORATION>true</PAN_RESTORATION>
+            <MS_RESTORATION>false</MS_RESTORATION>
+         </MTF_Settings>
+      </Product_Settings>
+  </Processing_Information>
+  <Raster_Data>
+      <Data_Access>
+         <DATA_FILE_ORGANISATION>BAND_COMPOSITE</DATA_FILE_ORGANISATION>
+         <DATA_FILE_FORMAT>image/tiff</DATA_FILE_FORMAT>
+         <DATA_FILE_TILES>true</DATA_FILE_TILES>
+         <Data_Files>
+            <Data_File tile_R="1" tile_C="1">
+               <DATA_FILE_PATH href="IMG_foo_R1C1.TIF"/>
+            </Data_File>
+            <Data_File tile_R="2" tile_C="1">
+               <DATA_FILE_PATH href="IMG_foo_R2C1.TIF"/>
+            </Data_File>
+         </Data_Files>
+      </Data_Access>
+      <Raster_Dimensions>
+         <NROWS>30</NROWS>
+         <NCOLS>20</NCOLS>
+         <NBANDS>4</NBANDS>
+         <Tile_Set>
+            <NTILES>2</NTILES>
+            <Regular_Tiling>
+               <NTILES_SIZE nrows="20" ncols="20"/>
+               <NTILES_COUNT ntiles_R="2" ntiles_C="1"/>
+               <OVERLAP_ROW>0</OVERLAP_ROW>
+               <OVERLAP_COL>0</OVERLAP_COL>
+            </Regular_Tiling>
+         </Tile_Set>
+      </Raster_Dimensions>
+      <Raster_Encoding>
+         <DATA_TYPE>INTEGER</DATA_TYPE>
+         <NBITS>12</NBITS>
+         <SIGN>UNSIGNED</SIGN>
+         <COMPRESSION_TYPE>LOSSLESS</COMPRESSION_TYPE>
+      </Raster_Encoding>
+      <Raster_Display>
+         <Band_Display_Order>
+            <RED_CHANNEL>B2</RED_CHANNEL>
+            <GREEN_CHANNEL>B1</GREEN_CHANNEL>
+            <BLUE_CHANNEL>B0</BLUE_CHANNEL>
+            <ALPHA_CHANNEL>B3</ALPHA_CHANNEL>
+         </Band_Display_Order>
+         <Special_Value>
+            <SPECIAL_VALUE_TEXT>NODATA</SPECIAL_VALUE_TEXT>
+            <SPECIAL_VALUE_COUNT>0</SPECIAL_VALUE_COUNT>
+         </Special_Value>
+         <Special_Value>
+            <SPECIAL_VALUE_TEXT>SATURATED</SPECIAL_VALUE_TEXT>
+            <SPECIAL_VALUE_COUNT>4095</SPECIAL_VALUE_COUNT>
+         </Special_Value>
+      </Raster_Display>
+  </Raster_Data>
+  <Radiometric_Data>
+      <Dynamic_Range>
+         <ACQUISITION_RANGE>12</ACQUISITION_RANGE>
+         <PRODUCT_RANGE>12</PRODUCT_RANGE>
+      </Dynamic_Range>
+      <Radiometric_Calibration>
+         <Instrument_Calibration>
+            <Band_Measurement_List>
+               <Band_Spectral_Range>
+                  <BAND_ID>B0</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Spectral range value of raw radiometric Band</MEASURE_DESC>
+                  <MEASURE_UNIT>micrometers</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification accuracy value</MEASURE_UNCERTAINTY>
+                  <MIN>MIN</MIN>
+                  <MAX>MAX</MAX>
+               </Band_Spectral_Range>
+               <Band_Spectral_Range>
+                  <BAND_ID>B1</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Spectral range value of raw radiometric Band</MEASURE_DESC>
+                  <MEASURE_UNIT>micrometers</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification accuracy value</MEASURE_UNCERTAINTY>
+                  <MIN>MIN</MIN>
+                  <MAX>MAX</MAX>
+               </Band_Spectral_Range>
+               <Band_Spectral_Range>
+                  <BAND_ID>B2</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Spectral range value of raw radiometric Band</MEASURE_DESC>
+                  <MEASURE_UNIT>micrometers</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification accuracy value</MEASURE_UNCERTAINTY>
+                  <MIN>MIN</MIN>
+                  <MAX>MAX</MAX>
+               </Band_Spectral_Range>
+               <Band_Spectral_Range>
+                  <BAND_ID>B3</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Spectral range value of raw radiometric Band</MEASURE_DESC>
+                  <MEASURE_UNIT>micrometers</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification accuracy value</MEASURE_UNCERTAINTY>
+                  <MIN>MIN</MIN>
+                  <MAX>MAX</MAX>
+               </Band_Spectral_Range>
+               <Band_Radiance>
+                  <BAND_ID>B0</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Raw radiometric count (DN) to TOA Radiance (L). Formulae L=DN/GAIN+BIAS</MEASURE_DESC>
+                  <MEASURE_UNIT>watt/m2/steradians/micrometers</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification accuracy value</MEASURE_UNCERTAINTY>
+                  <GAIN>GAIN</GAIN>
+                  <BIAS>BIAS</BIAS>
+               </Band_Radiance>
+               <Band_Radiance>
+                  <BAND_ID>B1</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Raw radiometric count (DN) to TOA Radiance (L). Formulae L=DN/GAIN+BIAS</MEASURE_DESC>
+                  <MEASURE_UNIT>watt/m2/steradians/micrometers</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification accuracy value</MEASURE_UNCERTAINTY>
+                  <GAIN>GAIN</GAIN>
+                  <BIAS>BIAS</BIAS>
+               </Band_Radiance>
+               <Band_Radiance>
+                  <BAND_ID>B2</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Raw radiometric count (DN) to TOA Radiance (L). Formulae L=DN/GAIN+BIAS</MEASURE_DESC>
+                  <MEASURE_UNIT>watt/m2/steradians/micrometers</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification accuracy value</MEASURE_UNCERTAINTY>
+                  <GAIN>GAIN</GAIN>
+                  <BIAS>BIAS</BIAS>
+               </Band_Radiance>
+               <Band_Radiance>
+                  <BAND_ID>B3</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Raw radiometric count (DN) to TOA Radiance (L). Formulae L=DN/GAIN+BIAS</MEASURE_DESC>
+                  <MEASURE_UNIT>watt/m2/steradians/micrometers</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification accuracy value</MEASURE_UNCERTAINTY>
+                  <GAIN>GAIN</GAIN>
+                  <BIAS>BIAS</BIAS>
+               </Band_Radiance>
+               <Band_Solar_Irradiance>
+                  <BAND_ID>B0</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+                  <MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification</MEASURE_UNCERTAINTY>
+                  <VALUE>VALUE</VALUE>
+               </Band_Solar_Irradiance>
+               <Band_Solar_Irradiance>
+                  <BAND_ID>B1</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+                  <MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification</MEASURE_UNCERTAINTY>
+                  <VALUE>VALUE</VALUE>
+               </Band_Solar_Irradiance>
+               <Band_Solar_Irradiance>
+                  <BAND_ID>B2</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+                  <MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification</MEASURE_UNCERTAINTY>
+                  <VALUE>VALUE</VALUE>
+               </Band_Solar_Irradiance>
+               <Band_Solar_Irradiance>
+                  <BAND_ID>B3</BAND_ID>
+                  <CALIBRATION_DATE>CALIBRATION_DATE</CALIBRATION_DATE>
+                  <MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+                  <MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+                  <MEASURE_UNCERTAINTY>Specification</MEASURE_UNCERTAINTY>
+                  <VALUE>VALUE</VALUE>
+               </Band_Solar_Irradiance>
+            </Band_Measurement_List>
+         </Instrument_Calibration>
+      </Radiometric_Calibration>
+  </Radiometric_Data>
+  <Quality_Assessment>
+      <Imaging_Quality_Measurement>
+         <QUALITY_TABLES>PHR</QUALITY_TABLES>
+         <MEASURE_NAME>Cloud_Cotation (CLD)</MEASURE_NAME>
+         <MEASURE_TYPE>AUTOMATIC</MEASURE_TYPE>
+         <Quality_Mask>
+            <Component>
+               <COMPONENT_TITLE>Cloud_Cotation Mask</COMPONENT_TITLE>
+               <COMPONENT_CONTENT>GML MASK</COMPONENT_CONTENT>
+               <COMPONENT_TYPE>ENCAPSULATED</COMPONENT_TYPE>
+               <COMPONENT_PATH href="CLD_foo_MSK.GML"/>
+            </Component>
+         </Quality_Mask>
+      </Imaging_Quality_Measurement>
+  </Quality_Assessment>
+  <Dataset_Sources>
+      <Source_Identification>
+         <SOURCE_ID>SOURCE_ID</SOURCE_ID>
+         <SOURCE_TYPE>Strip_Source</SOURCE_TYPE>
+         <SOURCE_DESCRIPTION>PHR1A Data Strip</SOURCE_DESCRIPTION>
+         <Strip_Source>
+            <MISSION>PHR</MISSION>
+            <MISSION_INDEX>1A</MISSION_INDEX>
+            <INSTRUMENT>PHR</INSTRUMENT>
+            <INSTRUMENT_INDEX>1A</INSTRUMENT_INDEX>
+            <IMAGING_DATE>2016-06-17</IMAGING_DATE>
+            <IMAGING_TIME>12:34:56</IMAGING_TIME>
+            <BAND_MODE>PX</BAND_MODE>
+         </Strip_Source>
+         <Component>
+            <COMPONENT_TITLE>Strip Source</COMPONENT_TITLE>
+            <COMPONENT_CONTENT>Lineage Information</COMPONENT_CONTENT>
+            <COMPONENT_TYPE version="2.0">DIMAP</COMPONENT_TYPE>
+            <COMPONENT_PATH href="STRIP_foo_DIM.XML"/>
+         </Component>
+      </Source_Identification>
+  </Dataset_Sources>
+</Dimap_Document>

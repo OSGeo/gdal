@@ -9,6 +9,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2001, Frank Warmerdam
+#  Copyright (c) 2020, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -33,8 +34,8 @@ import os.path
 import sys
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.util import GetOutputDriverFor
-
+from osgeo.utils.auxiliary.util import GetOutputDriverFor, open_ds
+from osgeo.utils.auxiliary.color_table import get_color_table
 
 
 def Usage():
@@ -44,7 +45,7 @@ def Usage():
 
 def main(argv):
     color_count = 256
-    frmt = None
+    driver = None
     src_filename = None
     dst_filename = None
     pct_filename = None
@@ -60,7 +61,7 @@ def main(argv):
 
         if arg == '-of' or arg == '-f':
             i = i + 1
-            frmt = argv[i]
+            driver = argv[i]
 
         elif arg == '-n':
             i = i + 1
@@ -84,13 +85,13 @@ def main(argv):
     if dst_filename is None:
         return Usage()
 
-    _ds, err = doit(pct_filename, src_filename, dst_filename, color_count, frmt)
+    _ds, err = doit(src_filename, pct_filename, dst_filename, color_count, driver)
     return err
 
 
-def doit(pct_filename=None, src_filename=None, dst_filename=None, color_count=256, frmt=None):
+def doit(src_filename, pct_filename=None, dst_filename=None, color_count=256, driver=None):
     # Open source file
-    src_ds = gdal.Open(src_filename)
+    src_ds = open_ds(src_filename)
     if src_ds is None:
         print('Unable to open %s' % src_filename)
         return None, 1
@@ -101,32 +102,30 @@ def doit(pct_filename=None, src_filename=None, dst_filename=None, color_count=25
         return None, 1
 
     # Ensure we recognise the driver.
+    if not driver:
+        driver = GetOutputDriverFor(dst_filename)
 
-    if frmt is None:
-        frmt = GetOutputDriverFor(dst_filename)
-
-    dst_driver = gdal.GetDriverByName(frmt)
+    dst_driver = gdal.GetDriverByName(driver)
     if dst_driver is None:
-        print('"%s" driver not registered.' % frmt)
+        print('"%s" driver not registered.' % driver)
         return None, 1
 
     # Generate palette
 
-    ct = gdal.ColorTable()
     if pct_filename is None:
+        ct = gdal.ColorTable()
         err = gdal.ComputeMedianCutPCT(src_ds.GetRasterBand(1),
                                        src_ds.GetRasterBand(2),
                                        src_ds.GetRasterBand(3),
                                        color_count, ct,
                                        callback=gdal.TermProgress_nocb)
     else:
-        pct_ds = gdal.Open(pct_filename)
-        ct = pct_ds.GetRasterBand(1).GetRasterColorTable().Clone()
+        ct = get_color_table(pct_filename)
 
     # Create the working file.  We have to use TIFF since there are few formats
     # that allow setting the color table after creation.
 
-    if format == 'GTiff':
+    if driver.lower() == 'gtiff':
         tif_filename = dst_filename
     else:
         import tempfile
@@ -160,10 +159,10 @@ def doit(pct_filename=None, src_filename=None, dst_filename=None, color_count=25
     if tif_filename == dst_filename:
         dst_ds = tif_ds
     else:
-        dst_ds = dst_driver.CreateCopy(dst_filename, tif_ds)
+        dst_ds = dst_driver.CreateCopy(dst_filename or '', tif_ds)
         tif_ds = None
-        gtiff_driver.Delete(tif_filename)
         os.close(tif_filedesc)
+        gtiff_driver.Delete(tif_filename)
 
     return dst_ds, err
 

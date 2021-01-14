@@ -114,6 +114,12 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
 
     psRequest->m_headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->URL.c_str(), psRequest->options));
+    const char* pszAccept = CSLFetchNameValue(psRequest->options, "ACCEPT");
+    if( pszAccept )
+    {
+        psRequest->m_headers = curl_slist_append(psRequest->m_headers,
+                                        CPLSPrintf("Accept: %s", pszAccept));
+    }
     if( psRequest->m_headers != nullptr )
         curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER,
                          psRequest->m_headers);

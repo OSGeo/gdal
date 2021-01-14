@@ -436,6 +436,9 @@ CPLErr DIMAPRasterBand::GetHistogram( double dfMin, double dfMax,
 int DIMAPDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
+    if( STARTS_WITH(poOpenInfo->pszFilename, "DIMAP:") )
+        return true;
+
     if( poOpenInfo->nHeaderBytes >= 100 )
     {
         if( ( strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
@@ -506,23 +509,36 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get the metadata filename.                                      */
 /* -------------------------------------------------------------------- */
-    CPLString osMDFilename;
+    CPLString osFilename;
+    CPLString osSelectedSubdataset;
 
-    if( poOpenInfo->bIsDirectory )
+    if( STARTS_WITH(poOpenInfo->pszFilename, "DIMAP:") )
     {
-        VSIStatBufL sStat;
+        CPLStringList aosTokens(CSLTokenizeString2(poOpenInfo->pszFilename, ":", CSLT_HONOURSTRINGS));
+        if( aosTokens.size() != 3 )
+            return nullptr;
 
-        osMDFilename =
-            CPLFormCIFilename( poOpenInfo->pszFilename, "METADATA.DIM", nullptr );
-
-        /* DIMAP2 */
-        if( VSIStatL( osMDFilename, &sStat ) != 0 )
-        osMDFilename =
-                CPLFormCIFilename( poOpenInfo->pszFilename, "VOL_PHR.XML", nullptr );
+        osFilename = aosTokens[1];
+        osSelectedSubdataset = aosTokens[2];
     }
     else
     {
-        osMDFilename = poOpenInfo->pszFilename;
+        osFilename = poOpenInfo->pszFilename;
+    }
+
+    VSIStatBufL sStat;
+    CPLString osMDFilename(osFilename);
+    if( VSIStatL(osFilename.c_str(), &sStat) == 0 && VSI_ISDIR(sStat.st_mode) )
+    {
+        osMDFilename =
+            CPLFormCIFilename( osFilename, "METADATA.DIM", nullptr );
+
+        /* DIMAP2 */
+        if( VSIStatL( osMDFilename, &sStat ) != 0 )
+        {
+            osMDFilename =
+                CPLFormCIFilename( osFilename, "VOL_PHR.XML", nullptr );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -550,6 +566,8 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osRPCFilename;
     CPLXMLNode *psProductDim = nullptr;
     CPLXMLNode *psProductStrip = nullptr;
+
+    CPLStringList aosSubdatasets;
 
     // Check needed information for the DIMAP format.
     if( nProductVersion == 1 )
@@ -587,17 +605,24 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
             for( CPLXMLNode *psDatasetComponent = psDatasetComponents->psChild;
-                osDIMAPFilename.empty() && psDatasetComponent != nullptr;
-                psDatasetComponent = psDatasetComponent->psNext )
+                 psDatasetComponent != nullptr;
+                 psDatasetComponent = psDatasetComponent->psNext )
             {
                 const char* pszComponentType =
                     CPLGetXMLValue(psDatasetComponent, "COMPONENT_TYPE","");
                 if( strcmp(pszComponentType, "DIMAP") == 0 )
                 {
+                    // DIMAP product found.
                     const char *pszHref = CPLGetXMLValue(
                             psDatasetComponent, "COMPONENT_PATH.href", "" );
+                    const CPLString osComponentTitle(CPLGetXMLValue(
+                        psDatasetComponent, "COMPONENT_TITLE", ""));
+                    const CPLString osComponentTitleLaundered(
+                        CPLString(osComponentTitle).replaceAll(' ', '_'));
 
-                    if( strlen(pszHref) > 0 )  // DIMAP product found.
+                    if( strlen(pszHref) > 0 && osDIMAPFilename.empty() &&
+                        (osSelectedSubdataset.empty() ||
+                         osSelectedSubdataset == osComponentTitleLaundered) )
                     {
                         if( poOpenInfo->bIsDirectory )
                         {
@@ -624,9 +649,17 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
                             osImageDSFilename =
                                 CPLFormFilename( osPath, pszDataFileHref, nullptr );
                         }
-
-                        break;
                     }
+
+                    const int iIdx = static_cast<int>(aosSubdatasets.size() / 2 + 1);
+                    aosSubdatasets.SetNameValue(
+                        CPLSPrintf("SUBDATASET_%d_NAME", iIdx),
+                        CPLSPrintf("DIMAP:\"%s\":%s",
+                                   poOpenInfo->pszFilename,
+                                   osComponentTitleLaundered.c_str()));
+                    aosSubdatasets.SetNameValue(
+                        CPLSPrintf("SUBDATASET_%d_DESC", iIdx),
+                        CPLSPrintf("Component %s", osComponentTitle.c_str()));
                 }
             }
 
@@ -663,7 +696,6 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
                     if( strlen(pszHref) > 0 )  // STRIP product found.
                     {
-                        VSIStatBufL sStat;
                         CPLString osPath = CPLGetPath(osDIMAPFilename);
                         osSTRIPFilename =
                             CPLFormCIFilename( osPath, pszHref, nullptr );
@@ -714,6 +746,10 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     DIMAPDataset *poDS = new DIMAPDataset();
 
+    if( osSelectedSubdataset.empty() && aosSubdatasets.size() > 2 )
+    {
+        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+    }
     poDS->psProduct = psProduct;
     poDS->psProductDim = psProductDim;
     poDS->psProductStrip = psProductStrip;
@@ -1633,6 +1669,7 @@ void GDALRegister_DIMAP()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "drivers/raster/dimap.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
     poDriver->pfnOpen = DIMAPDataset::Open;
     poDriver->pfnIdentify = DIMAPDataset::Identify;
