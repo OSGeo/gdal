@@ -824,7 +824,7 @@ float* GRIB2Section567Writer::GetFloatData()
         m_nBits = 8;
     }
 
-    m_bUseZeroBits =( m_fMin == m_fMax ||
+    m_bUseZeroBits = ( ( m_fMin == m_fMax &&  (!m_bHasNoData || m_fMin == static_cast<float>(m_dfNoData)) )  ||
         (!GDALDataTypeIsFloating(m_eDT) && dfScaledMaxDiff < 1.0) );
 
     return pafData;
