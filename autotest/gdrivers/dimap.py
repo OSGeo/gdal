@@ -76,9 +76,9 @@ def test_dimap_1():
 # Open DIMAP 2
 
 
-def test_dimap_2():
+def test_dimap_2_single_component():
 
-    for name in ['data/dimap2', 'data/dimap2/VOL_PHR.XML', 'data/dimap2/DIM_foo.XML']:
+    for name in ['data/dimap2/single_component', 'data/dimap2/single_component/VOL_PHR.XML', 'data/dimap2/single_component/DIM_foo.XML']:
         ds = gdal.Open(name)
         assert ds.RasterCount == 4 and ds.RasterXSize == 20 and ds.RasterYSize == 30, \
             'wrong size or bands'
@@ -96,6 +96,38 @@ def test_dimap_2():
 
         ds = None
 
-    
+
+###############################################################################
+# Open DIMAP 2
 
 
+def test_dimap_2_bundle():
+
+    ds = gdal.Open('data/dimap2/bundle')
+    assert ds.RasterCount == 4 and ds.RasterXSize == 20 and ds.RasterYSize == 30
+    md = ds.GetMetadata()
+    assert md != {}
+    assert ds.GetMetadata('RPC') is not None
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 7024
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 2
+
+    # Open first subdataset
+    ds = gdal.Open(subds[0][0])
+    assert ds.RasterCount == 4 and ds.RasterXSize == 20 and ds.RasterYSize == 30
+    md = ds.GetMetadata()
+    assert md != {}
+    assert ds.GetMetadata('RPC') is not None
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 7024
+    assert len(ds.GetSubDatasets()) == 0
+
+    # Open second subdataset
+    ds = gdal.Open(subds[1][0])
+    assert ds.RasterCount == 1 and ds.RasterXSize == 20 and ds.RasterYSize == 30
+    md = ds.GetMetadata()
+    assert md != {}
+    assert ds.GetMetadata('RPC') is not None
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 7024
