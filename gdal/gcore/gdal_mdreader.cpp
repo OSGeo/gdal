@@ -661,7 +661,6 @@ CPLErr GDALWriteRPCSensorMLFile( const char *pszFilename, char **papszMD )
   osRPCFilename.replace (found, osRPCFilename.size() - found, "_RPC_SML.xml");
   if( papszMD == nullptr )
   {
-      VSIUnlink(osRPCFilename);
       return CE_None;
   }
 
