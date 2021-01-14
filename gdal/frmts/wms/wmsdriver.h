@@ -505,7 +505,7 @@ protected:
                               int to_buffer_band, void *buffer, int advise_read);
     CPLErr ReadBlockFromDataset(GDALDataset *ds, int x, int y, int to_buffer_band,
                                                    void *buffer, int advise_read);
-    CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
+    CPLErr EmptyBlock(int x, int y, int to_buffer_band, void *buffer);
     static CPLErr ReportWMSException(const char *file_name);
 
 protected:
