@@ -151,7 +151,6 @@ class OpenDS:
             if open_options:
                 s = s + " with options: {}".format(str(open_options))
             logger.debug(s)
-        if open_options:
-            open_options = ["{}={}".format(k, v) for k, v in open_options.items()]
+        open_options = ["{}={}".format(k, v) for k, v in open_options.items()]
 
         return gdal.OpenEx(str(filename), access_mode, open_options=open_options)

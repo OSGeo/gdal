@@ -69,6 +69,7 @@ from osgeo.utils.auxiliary.util import GetOutputDriverFor
 from osgeo.utils.auxiliary.extent_util import Extent, GT
 from osgeo.utils.auxiliary import extent_util
 from osgeo.utils.auxiliary.rectangle import GeoRectangle
+from osgeo.utils.auxiliary.color_table import get_color_table
 
 GDALDataType = int
 
@@ -353,7 +354,7 @@ def doit(opts, args):
             if opts.color_table:
                 # set color table and color interpretation
                 if is_path_like(opts.color_table):
-                    raise Exception('Error! reading a color table from a file is not supported yet')
+                    opts.color_table = get_color_table(opts.color_table)
                 myOutB.SetRasterColorTable(opts.color_table)
                 myOutB.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
 
@@ -515,7 +516,8 @@ def doit(opts, args):
 def Calc(calc: Union[str, Sequence[str]], outfile: Optional[PathLike] = None, NoDataValue: Optional[Number] = None,
          type: Optional[Union[GDALDataType, str]] = None, format: Optional[str] = None,
          creation_options: Optional[Sequence[str]] = None, allBands: str = '', overwrite: bool = False,
-         hideNoData: bool = False, projectionCheck: bool = False, color_table: Optional[gdal.ColorTable] = None,
+         hideNoData: bool = False, projectionCheck: bool = False,
+         color_table: Optional[Union[PathLike, gdal.ColorTable]] = None,
          extent: Optional[Extent] = None, projwin: Optional[Union[Tuple, GeoRectangle]] = None, user_namespace=None,
          debug: bool=False, quiet: bool = False, **input_files):
 
@@ -620,7 +622,7 @@ def main(argv):
     parser.add_option("--quiet", dest="quiet", action="store_true", help="suppress progress messages")
     parser.add_option("--optfile", dest="optfile", metavar="optfile", help="Read the named file and substitute the contents into the command line options list.")
 
-    # parser.add_option("--color_table", dest="color_table", help="color table file name")
+    parser.add_option("--color-table", dest="color_table", help="color table file name")
     parser.add_option("--extent", dest="extent",
                       choices=[e.name.lower() for e in Extent],
                       help="how to treat mixed geotrasnforms")
