@@ -1,5 +1,6 @@
 /* Get the common system configuration switches from the main file. */
 #include "cpl_port.h"
+#include <inttypes.h>
 
 /* Libtiff specific switches. */
 
@@ -43,13 +44,13 @@
 #define SUBIFD_SUPPORT 1
 
 /* Signed 16-bit type */
-#define TIFF_INT16_T GInt16
+#define TIFF_INT16_T int16_t
 
 /* Signed 32-bit type */
-#define TIFF_INT32_T GInt32
+#define TIFF_INT32_T int32_t
 
 /* Signed 64-bit type */
-#define TIFF_INT64_T GIntBig
+#define TIFF_INT64_T int64_t
 
 /* Signed 8-bit type */
 #define TIFF_INT8_T signed char
@@ -60,32 +61,32 @@
 /* Signed size type */
 #ifdef _WIN64
 #  define TIFF_SSIZE_T GIntBig
-#  define TIFF_SSIZE_FORMAT CPL_FRMT_GIB
-#  define TIFF_SIZE_FORMAT CPL_FRMT_GUIB
+#  define TIFF_SSIZE_FORMAT CPL_FRMT_GB_WITHOUT_PREFIX "d"
+#  define TIFF_SIZE_FORMAT CPL_FRMT_GB_WITHOUT_PREFIX "u"
 #else
 #  define TIFF_SSIZE_T signed long
-#  define TIFF_SSIZE_FORMAT "%ld"
+#  define TIFF_SSIZE_FORMAT "ld"
 #  if SIZEOF_VOIDP == 8
-#    define TIFF_SIZE_FORMAT "%lu"
+#    define TIFF_SIZE_FORMAT "lu"
 #  else
-#    define TIFF_SIZE_FORMAT "%u"
+#    define TIFF_SIZE_FORMAT "u"
 #  endif
 #endif
 
 /* Unsigned 16-bit type */
-#define TIFF_UINT16_T GUInt16
+#define TIFF_UINT16_T uint16_t
 
 /* Unsigned 32-bit type */
-#define TIFF_UINT32_T GUInt32
+#define TIFF_UINT32_T uint32_t
 
 /* Unsigned 64-bit type */
-#define TIFF_UINT64_T GUIntBig
+#define TIFF_UINT64_T uint64_t
 
 /* Unsigned 8-bit type */
-#define TIFF_UINT8_T unsigned char
+#define TIFF_UINT8_T uint8_t
 
-#define TIFF_UINT64_FORMAT CPL_FRMT_GUIB
-#define TIFF_INT64_FORMAT CPL_FRMT_GIB
+#define TIFF_UINT64_FORMAT PRIu64
+#define TIFF_INT64_FORMAT PRId64
 
 #ifdef JPEG_DUAL_MODE_8_12
 #  define LIBJPEG_12_PATH "../../jpeg/libjpeg12/jpeglib.h"

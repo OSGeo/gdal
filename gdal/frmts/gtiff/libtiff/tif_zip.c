@@ -261,7 +261,7 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	} while (occ > 0);
 	if (occ != 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "Not enough data at scanline %lu (short " TIFF_UINT64_FORMAT " bytes)",
+		    "Not enough data at scanline %lu (short %" TIFF_UINT64_FORMAT " bytes)",
 		    (unsigned long) tif->tif_row, (TIFF_UINT64_T) occ);
 		return (0);
 	}
