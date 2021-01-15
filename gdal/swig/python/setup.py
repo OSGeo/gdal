@@ -402,11 +402,13 @@ if GNM_ENABLED:
 if HAVE_NUMPY:
     ext_modules.append(array_module)
 
+utils_package_root = 'gdal-utils'   # path for gdal-utils sources
 if HAVE_SETUPTOOLS:
-    packages = find_packages()
+    packages = find_packages(utils_package_root)
 else:
-    packages = ['osgeo', 'osgeo_utils', 'osgeo_utils.auxiliary']
-package_dir = {'': '.'}  # package sources are under the same dir as setup.py
+    packages = ['osgeo_utils', 'osgeo_utils.auxiliary']
+packages = ['osgeo'] + packages
+package_dir = {'osgeo': 'osgeo', '': utils_package_root}
 
 readme = str(open('README.rst', 'rb').read())
 
