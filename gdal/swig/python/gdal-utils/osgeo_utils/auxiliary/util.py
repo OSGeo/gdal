@@ -33,7 +33,7 @@
 from typing import Optional, Union
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.base import get_extension, is_path_like, PathLike
+from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike
 
 PathOrDS = Union[PathLike, gdal.Dataset]
 

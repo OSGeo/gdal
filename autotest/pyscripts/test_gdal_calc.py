@@ -43,7 +43,7 @@ from collections import defaultdict
 
 # test that numpy is available, if not skip all tests
 np = pytest.importorskip('numpy')
-gdal_calc = pytest.importorskip('osgeo.utils.gdal_calc')
+gdal_calc = pytest.importorskip('osgeo_utils.gdal_calc')
 gdal_array = pytest.importorskip('osgeo.gdal_array')
 try:
     GDALTypeCodeToNumericTypeCode = gdal_array.GDALTypeCodeToNumericTypeCode

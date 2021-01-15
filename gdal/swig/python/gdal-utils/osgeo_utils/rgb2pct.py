@@ -34,8 +34,8 @@ import os.path
 import sys
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.util import GetOutputDriverFor, open_ds
-from osgeo.utils.auxiliary.color_table import get_color_table
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
+from osgeo_utils.auxiliary.color_table import get_color_table
 
 
 def Usage():
