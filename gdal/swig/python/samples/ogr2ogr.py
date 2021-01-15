@@ -68,7 +68,7 @@ def EQUAL(a, b):
     return a.lower() == b.lower()
 
 ###############################################################################
-# Redefinition of GDALTermProgress, so that autotest/pyscripts/test_ogr2ogr_py.py
+# Redefinition of GDALTermProgress, so that test_ogr2ogr_py.py
 # can check that the progress bar is displayed
 
 

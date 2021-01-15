@@ -38,13 +38,14 @@ from osgeo import osr
 import pytest
 
 import gdaltest
+from test_py_scripts import samples_path
 
 ###############################################################################
 
 
 def _check_cog(filename, check_tiled=True, full_check=False):
 
-    path = '../../gdal/swig/python/samples'
+    path = samples_path
     if path not in sys.path:
         sys.path.append(path)
     import validate_cloud_optimized_geotiff

@@ -66,7 +66,7 @@ def test_gdal_polygonize_1():
     shp_ds.Destroy()
 
     # run the algorithm.
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '../alg/data/polygonize_in.grd tmp poly DN')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', test_py_scripts.get_data_path('alg')+'polygonize_in.grd tmp poly DN')
 
     # Confirm we get the set of expected features in the output layer.
 
@@ -114,7 +114,7 @@ def test_gdal_polygonize_2():
         pass
 
     # run the algorithm.
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "ESRI Shapefile" -q -nomask ../alg/data/polygonize_in.grd tmp')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "ESRI Shapefile" -q -nomask '+test_py_scripts.get_data_path('alg')+'polygonize_in.grd tmp')
 
     # Confirm we get the set of expected features in the output layer.
     shp_ds = ogr.Open('tmp')
@@ -152,7 +152,7 @@ def test_gdal_polygonize_3():
         pass
 
     # run the algorithm.
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "GPKG" -q -nomask ../alg/data/polygonize_in.grd tmp/out.gpkg')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "GPKG" -q -nomask '+test_py_scripts.get_data_path('alg')+'polygonize_in.grd tmp/out.gpkg')
 
     # Confirm we get the set of expected features in the output layer.
     gpkg_ds = ogr.Open('tmp/out.gpkg')
@@ -180,7 +180,7 @@ def test_gdal_polygonize_4():
         pytest.skip()
 
     # Test mask syntax
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask ../gcore/data/byte.tif tmp/out.gml')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask ' + test_py_scripts.get_data_path('gcore') + 'byte.tif tmp/out.gml')
 
     content = open('tmp/out.gml', 'rt').read()
 
@@ -189,7 +189,7 @@ def test_gdal_polygonize_4():
     assert '<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>' in content
 
     # Test mask,1 syntax
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask,1 ../gcore/data/byte.tif tmp/out.gml')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask,1 ' + test_py_scripts.get_data_path('gcore') + 'byte.tif tmp/out.gml')
 
     content = open('tmp/out.gml', 'rt').read()
 

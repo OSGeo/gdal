@@ -41,6 +41,7 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import gdaltest
+from test_py_scripts import samples_path
 
 pytestmark = pytest.mark.require_driver('GPKG')
 
@@ -79,7 +80,7 @@ def startup_and_cleanup():
 
 
 def _validate_check(filename):
-    path = '../../gdal/swig/python/samples'
+    path = samples_path
     if path not in sys.path:
         sys.path.append(path)
     try:
@@ -1652,7 +1653,7 @@ def test_ogr_gpkg_write_srs_undefined_cartesian():
     gpkg_ds.ReleaseResultSet(sql_lyr)
 
     srs= osr.SpatialReference()
-    srs.SetFromUserInput('LOCAL_CS["Undefined cartesian SRS"]') 
+    srs.SetFromUserInput('LOCAL_CS["Undefined cartesian SRS"]')
     lyr = gpkg_ds.CreateLayer('srs_test_cartesian_layer', geom_type=ogr.wkbPoint, srs=srs)
     srs_wkt = lyr.GetSpatialRef().ExportToWkt()
     assert srs_wkt.find('Undefined cartesian SRS') >= 0
