@@ -3046,4 +3046,47 @@ namespace tut
         ensure_equals( userData2.pWriteArg, &writeCbkArg );
     }
 
+    // Test CPLLoadConfigOptionsFromFile() and CPLLoadConfigOptionsFromPredefinedFiles()
+    template<>
+    template<>
+    void object::test<44>()
+    {
+        CPLLoadConfigOptionsFromFile("/i/do/not/exist");
+
+        VSILFILE* fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
+        VSIFPrintfL(fp, "[configoptions]\n");
+        VSIFPrintfL(fp, "# some comment\n");
+        VSIFPrintfL(fp, "FOO_CONFIGOPTION=BAR\n");
+        VSIFCloseL(fp);
+
+        // Try CPLLoadConfigOptionsFromFile()
+        CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc");
+        ensure( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
+        CPLSetConfigOption("FOO_CONFIGOPTION", nullptr);
+
+        // Try CPLLoadConfigOptionsFromPredefinedFiles() with GDAL_CONFIG_FILE set
+        CPLSetConfigOption("GDAL_CONFIG_FILE", "/vsimem/.gdal/gdalrc");
+        CPLLoadConfigOptionsFromPredefinedFiles();
+        ensure( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
+        CPLSetConfigOption("FOO_CONFIGOPTION", nullptr);
+
+        // Try CPLLoadConfigOptionsFromPredefinedFiles() with $HOME/.gdal/gdalrc file
+#ifdef WIN32
+        const char* pszHOMEEnvVarName = "USERPROFILE";
+#else
+        const char* pszHOMEEnvVarName = "HOME";
+#endif
+        CPLString osOldVal(CPLGetConfigOption(pszHOMEEnvVarName, ""));
+        CPLSetConfigOption(pszHOMEEnvVarName, "/vsimem/");
+        CPLLoadConfigOptionsFromPredefinedFiles();
+        ensure( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
+        CPLSetConfigOption("FOO_CONFIGOPTION", nullptr);
+        if( !osOldVal.empty() )
+            CPLSetConfigOption(pszHOMEEnvVarName, osOldVal.c_str());
+        else
+            CPLSetConfigOption(pszHOMEEnvVarName, nullptr);
+
+        VSIUnlink("/vsimem/.gdal/gdalrc");
+    }
+
 } // namespace tut

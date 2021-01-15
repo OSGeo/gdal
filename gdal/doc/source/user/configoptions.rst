@@ -65,6 +65,45 @@ they can be limited to only the current thread with
 For boolean options, the values YES, TRUE or ON can be used to turn the option on;
 NO, FALSE or OFF to turn it off.
 
+
+GDAL configuration file
+-----------------------
+
+.. versionadded:: 3.3
+
+On driver registration, loading of configuration is attempted from a set of
+predefined files.
+
+The following locations are tried by :cpp:func:`CPLLoadConfigOptionsFromPredefinedFiles`:
+
+ - the location pointed by the environment variable (or configuration option)
+   GDAL_CONFIG_FILE is attempted first. If it set, the next steps are not
+   attempted
+
+ - for Unix builds, the location pointed by ${sysconfdir}/gdal/gdalrc is first
+   attempted (where ${sysconfdir} evaluates to ${prefix}/etc, unless the
+   ``--sysconfdir`` switch of ./configure has been invoked). Then  $(HOME)/.gdal/gdalrc
+   is tried, potentially overriding what was loaded with the sysconfdir
+
+ - for Windows builds, the location pointed by $(USERPROFILE)/.gdal/gdalrc
+   is attempted.
+
+A configuration file is a text file in a .ini style format, that lists
+configuration options and their values. Lines starting with `#` are comment lines.
+
+Example:
+
+.. code-block::
+
+    [configoptions]
+    # set BAR as the value of configuration option FOO
+    FOO=BAR
+
+
+Configuration options set in the configuration file can later be overridden
+by calls to :cpp:func:`CPLSetConfigOption` or  :cpp:func:`CPLSetThreadLocalConfigOption`,
+or through the ``--config`` command line switch.
+
 .. _list_config_options:
 
 List of configuration options and where they apply

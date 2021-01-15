@@ -119,6 +119,8 @@ GDALDriverManager::GDALDriverManager()
 {
     CPLAssert( poDM == nullptr );
 
+    CPLLoadConfigOptionsFromPredefinedFiles();
+
 /* -------------------------------------------------------------------- */
 /*      We want to push a location to search for data files             */
 /*      supporting GDAL/OGR such as EPSG csv files, S-57 definition     */
