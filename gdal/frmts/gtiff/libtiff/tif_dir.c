@@ -1381,7 +1381,7 @@ TIFFCreateCustomDirectory(TIFF* tif, const TIFFFieldArray* infoarray)
 
 	/*
 	 * Reset the field definitions to match the application provided list. 
-	 * Hopefully TIFFDefaultDirectory() won't have done anything irreversable
+	 * Hopefully TIFFDefaultDirectory() won't have done anything irreversible
 	 * based on it's assumption this is an image directory.
 	 */
 	_TIFFSetupFields(tif, infoarray);

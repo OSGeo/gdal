@@ -79,7 +79,7 @@ int TWebPDatasetWriter(const uint8_t* data, size_t data_size,
   
   if ( (tif->tif_rawcc + (tmsize_t)data_size) > tif->tif_rawdatasize ) {
     TIFFErrorExt(tif->tif_clientdata, module,
-                 "Buffer too small by " TIFF_SIZE_FORMAT " bytes.",
+                 "Buffer too small by %" TIFF_SIZE_FORMAT " bytes.",
                  (size_t) (tif->tif_rawcc + data_size - tif->tif_rawdatasize));
     return 0;
   } else {
