@@ -33,9 +33,9 @@ import tempfile
 from typing import Optional
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.base import PathLike
-from osgeo.utils.auxiliary.util import open_ds, path_or_ds
-from osgeo.utils.auxiliary.color_palette import get_color_palette, ColorPaletteOrPathOrStrings
+from osgeo_utils.auxiliary.base import PathLike
+from osgeo_utils.auxiliary.util import open_ds, path_or_ds
+from osgeo_utils.auxiliary.color_palette import get_color_palette, ColorPaletteOrPathOrStrings
 
 
 def get_color_table_from_raster(path_or_ds: path_or_ds) -> Optional[gdal.ColorTable]:

@@ -64,12 +64,12 @@ import numpy
 
 from osgeo import gdal
 from osgeo import gdal_array
-from osgeo.utils.auxiliary.base import is_path_like, PathLike
-from osgeo.utils.auxiliary.util import GetOutputDriverFor
-from osgeo.utils.auxiliary.extent_util import Extent, GT
-from osgeo.utils.auxiliary import extent_util
-from osgeo.utils.auxiliary.rectangle import GeoRectangle
-from osgeo.utils.auxiliary.color_table import get_color_table
+from osgeo_utils.auxiliary.base import is_path_like, PathLike
+from osgeo_utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.extent_util import Extent, GT
+from osgeo_utils.auxiliary import extent_util
+from osgeo_utils.auxiliary.rectangle import GeoRectangle
+from osgeo_utils.auxiliary.color_table import get_color_table
 
 GDALDataType = int
 

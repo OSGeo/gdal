@@ -44,7 +44,7 @@ from collections import defaultdict
 # test that numpy is available, if not skip all tests
 try:
     import numpy as np
-    from osgeo.utils import gdal_calc
+    from osgeo_utils import gdal_calc
     from osgeo.gdal_array import GDALTypeCodeToNumericTypeCode
     numpy_available = True
 except (ImportError, AttributeError):

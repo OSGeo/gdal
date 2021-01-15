@@ -32,7 +32,7 @@
 import sys
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
 def Usage():

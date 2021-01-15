@@ -107,7 +107,7 @@ def deprecation_warn(module, sub_package=None, new_module=None):
 
     have_warned = 1
     if sub_package is None or sub_package == 'utils':
-        sub_package = 'osgeo.utils'
+        sub_package = 'osgeo_utils'
     if new_module is None:
         new_module = module
     new_module = '{}.{}'.format(sub_package, new_module)

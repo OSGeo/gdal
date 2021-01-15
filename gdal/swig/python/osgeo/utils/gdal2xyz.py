@@ -37,8 +37,8 @@ from typing import Optional, Union, Sequence
 import numpy as np
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.base import num
-from osgeo.utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
+from osgeo_utils.auxiliary.base import num
+from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
 
 
 def Usage():

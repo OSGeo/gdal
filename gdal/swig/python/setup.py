@@ -405,7 +405,7 @@ if HAVE_NUMPY:
 if HAVE_SETUPTOOLS:
     packages = find_packages()
 else:
-    packages = ['osgeo', 'osgeo.utils', 'osgeo.utils.auxiliary']
+    packages = ['osgeo', 'osgeo_utils', 'osgeo_utils.auxiliary']
 package_dir = {'': '.'}  # package sources are under the same dir as setup.py
 
 readme = str(open('README.rst', 'rb').read())

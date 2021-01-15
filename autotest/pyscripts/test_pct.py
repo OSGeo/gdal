@@ -34,8 +34,8 @@ import struct
 
 
 from osgeo import gdal
-from osgeo.utils import gdalattachpct, rgb2pct
-import osgeo.utils.auxiliary.color_table as color_table
+from osgeo_utils import gdalattachpct, rgb2pct
+import osgeo_utils.auxiliary.color_table as color_table
 import gdaltest
 import test_py_scripts
 import pytest

@@ -34,7 +34,7 @@ from enum import Enum
 from typing import Optional, Union, Sequence, Dict
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.rectangle import GeoRectangle
+from osgeo_utils.auxiliary.rectangle import GeoRectangle
 
 
 class Extent(Enum):

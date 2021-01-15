@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
-# import osgeo.utils.gdal_proximity as a convenience to use as a script
-from osgeo.utils.gdal_proximity import *  # noqa
-from osgeo.utils.gdal_proximity import main
+# import osgeo_utils.gdal_proximity as a convenience to use as a script
+from osgeo_utils.gdal_proximity import *  # noqa
+from osgeo_utils.gdal_proximity import main
 from osgeo.gdal import deprecation_warn
 
 
