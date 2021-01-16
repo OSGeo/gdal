@@ -415,21 +415,16 @@ CPLString PrintDouble(double d, const char *frmt)
     return CPLString().FormatC(d, frmt);
 }
 
-static void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
-    const char *val)
+void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName, const char *pszVal)
 {
     CPLCreateXMLNode(parent, CXT_Attribute, pszName);
-    CPLSetXMLValue(parent, pszName, val);
+    CPLSetXMLValue(parent, pszName, pszVal);
 }
 
 void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
     const double val, const char *frmt)
 {
-    XMLSetAttributeVal(parent, pszName, CPLString().FormatC(val, frmt));
-
-    //  Unfortunately the %a doesn't work in VisualStudio scanf or strtod
-    //    if (strtod(sVal.c_str(),0) != val)
-    //  sVal.Printf("%a",val);
+    XMLSetAttributeVal(parent, pszName, PrintDouble(val, frmt));
 }
 
 CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
