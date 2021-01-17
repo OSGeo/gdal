@@ -1017,7 +1017,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
         WriteByte(m_fp, 5); // section number
         WriteUInt32(m_fp, m_nDataPoints);
         WriteUInt16(m_fp, GS5_CMPLX);
-        WriteFloat32(m_fp, m_fMin); // ref value = 
+        WriteFloat32(m_fp, m_fMin); // ref value = nodata or single data
         WriteInt16(m_fp, 0); // binary scale factor
         WriteInt16(m_fp, 0); // decimal scale factor
         WriteByte(m_fp, 0); // number of bits
