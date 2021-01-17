@@ -6113,6 +6113,7 @@ void GDALRegister_NITF()
 "   <Option name='SDE_TRE' type='boolean' description='Write GEOLOB and GEOPSB TREs (only geographic SRS for now)' default='NO'/>"
 "   <Option name='RPC00B' type='boolean' description='Write RPC00B TRE (either from source TRE, or from RPC metadata)' default='YES'/>"
 "   <Option name='RPCTXT' type='boolean' description='Write out _RPC.TXT file' default='NO'/>"
+"   <Option name='RPC_SENSORML' type='boolean' description='Write out _RPC_SML.xml file' default='NO'/>"
 "   <Option name='USE_SRC_NITF_METADATA' type='boolean' description='Whether to use NITF source metadata in NITF-to-NITF conversions' default='YES'/>";
     osCreationOptions += "</CreationOptionList>";
 

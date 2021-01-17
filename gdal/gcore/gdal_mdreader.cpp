@@ -647,227 +647,293 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
 }
 
 /************************************************************************/
-/*                         GDALWriteRPCSensorMLFile()                        */
+/*                         GDALWriteRPCSensorMLFile()                   */
 /************************************************************************/
-
-CPLErr GDALWriteRPCSensorMLFile( const char *pszFilename, char **papszMD )
-
+CPLErr GDALWriteRPCSensorMLFile(const char *pszFilename, char **papszMD)
 {
-  CPLString osRPCFilename = pszFilename;
-  CPLString soPt(".");
-  size_t found = osRPCFilename.rfind(soPt);
-  if (found == CPLString::npos)
-      return CE_Failure;
-  osRPCFilename.replace (found, osRPCFilename.size() - found, "_RPC_SML.xml");
-  if( papszMD == nullptr )
-  {
-      return CE_None;
-  }
+    CPLString osRPCFilename = pszFilename;
+    CPLString soPt(".");
+    size_t found = osRPCFilename.rfind(soPt);
+    if(found == CPLString::npos)
+        return CE_Failure;
+    osRPCFilename.replace(found, osRPCFilename.size() - found, "_RPC_SML.xml");
+    if(papszMD == nullptr)
+    {
+        return CE_None;
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Read file and parse.                                            */
-/* -------------------------------------------------------------------- */
-  VSILFILE *fp = VSIFOpenL( osRPCFilename, "w" );
+    /* -------------------------------------------------------------------- */
+    /*      Read file and parse.                                            */
+    /* -------------------------------------------------------------------- */
+    VSILFILE *fp = VSIFOpenL(osRPCFilename, "w");
 
-  if( fp == nullptr )
-  {
-      CPLError( CE_Failure, CPLE_OpenFailed,
-                "Unable to create %s for writing.\n%s",
-                osRPCFilename.c_str(), CPLGetLastErrorMsg() );
-      return CE_Failure;
-  }
+    if(fp == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Unable to create %s for writing.\n%s", osRPCFilename.c_str(),
+                 CPLGetLastErrorMsg());
+        return CE_Failure;
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Write RPC values from our RPC metadata.                         */
-/* -------------------------------------------------------------------- */
-  bool bOK = true;
+    /* -------------------------------------------------------------------- */
+    /*      Write RPC values from our RPC metadata.                         */
+    /* -------------------------------------------------------------------- */
+    bool bOK = true;
 
-      bOK &= VSIFPrintfL( fp, "<sml:SimpleProcess gml:id=\"model.1\"\n") > 0;
-      bOK &= VSIFPrintfL( fp, "xmlns:sml=\"http://www.opengis.net/sensorml/2.0\"\n") > 0;
-      bOK &= VSIFPrintfL( fp, "xmlns:swe=\"http://www.opengis.net/swe/2.0\"\n") > 0;
-      bOK &= VSIFPrintfL( fp, "xmlns:gml=\"http://www.opengis.net/gml/3.2\"\n") > 0;
-      bOK &= VSIFPrintfL( fp, "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n") > 0;
-      bOK &= VSIFPrintfL( fp, "xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n") > 0;
-      bOK &= VSIFPrintfL( fp, "xsi:schemaLocation=\"http://www.opengis.net/sensorml/2.0 http://schemas.opengis.net/sensorML/2.0/sensorML.xsd\"\n") > 0;
-      bOK &= VSIFPrintfL( fp, "definition=\"http://www.opengis.net/def/sensor-model/NTB/2.1/NITF/RPC00B\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<gml:identifier codeSpace=\"uid\">urn:ogc:sensor-model:ntb-nitf:2.1:RPC00B</gml:identifier>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:identification>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "    <sml:IdentifierList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        <sml:identifier>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            <sml:Term>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "               <sml:label>TRE</sml:label>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "               <sml:value>RPC00B</sml:value>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            </sml:Term>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        </sml:identifier>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "    </sml:IdentifierList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "</sml:identification>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:classification>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "     <sml:ClassifierList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "         <sml:classifier>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "             <sml:Term definition=\"http://sweetontology.net/reprMathFunction/Polynomial\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "                <sml:label>Math Function Type</sml:label>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "                <sml:value>Rational Polynomial Coefficients</sml:value>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "             </sml:Term>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "         </sml:classifier>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "      </sml:ClassifierList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, " </sml:classification>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:characteristics name=\"ignored\"/>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:inputs>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "    <sml:InputList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        <sml:input name=\"latitude\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            <swe:Quantity definition=\"http://www.opengis.net/def/axis/EPSG/9.9/108\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "                <swe:uom code=\"deg\"/>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            </swe:Quantity>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        </sml:input>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        <sml:input name=\"longitude\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            <swe:Quantity definition=\"http://www.opengis.net/def/axis/EPSG/9.9/109\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "                <swe:uom code=\"deg\"/>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            </swe:Quantity>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        </sml:input>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        <sml:input name=\"altitude\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            <swe:Quantity definition=\"http://www.opengis.net/def/sensor-model-param/xdomes/altitude\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "                <swe:uom code=\"m\"/>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            </swe:Quantity>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        </sml:input>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "    </sml:InputList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "</sml:inputs>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:outputs>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "    <sml:OutputList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "      <sml:output name=\"row\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "          <swe:Quantity definition=\"http://www.opengis.net/def/ogc/Row\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "              <swe:uom code=\"pixel\"/>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "          </swe:Quantity>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "      </sml:output>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        <sml:output name=\"column\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            <swe:Quantity definition=\"http://www.opengis.net/def/ogc/Column\">\n") > 0;
-      bOK &= VSIFPrintfL( fp, "                <swe:uom code=\"pixel\"/>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "            </swe:Quantity>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "        </sml:output>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "    </sml:OutputList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, " </sml:outputs>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:parameters>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:ParameterList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:SimpleProcess gml:id=\"model.1\"\n") > 0;
+    bOK &= VSIFPrintfL(
+               fp, "xmlns:sml=\"http://www.opengis.net/sensorml/2.0\"\n") > 0;
+    bOK &=
+        VSIFPrintfL(fp, "xmlns:swe=\"http://www.opengis.net/swe/2.0\"\n") > 0;
+    bOK &=
+        VSIFPrintfL(fp, "xmlns:gml=\"http://www.opengis.net/gml/3.2\"\n") > 0;
+    bOK &= VSIFPrintfL(
+               fp,
+               "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n") > 0;
+    bOK &=
+        VSIFPrintfL(fp, "xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n") > 0;
+    bOK &=
+        VSIFPrintfL(
+            fp, "xsi:schemaLocation=\"http://www.opengis.net/sensorml/2.0 "
+                "http://schemas.opengis.net/sensorML/2.0/sensorML.xsd\"\n") > 0;
+    bOK &=
+        VSIFPrintfL(fp, "definition=\"http://www.opengis.net/def/sensor-model/"
+                        "NTB/2.1/NITF/RPC00B\">\n") > 0;
+    bOK &=
+        VSIFPrintfL(fp, "<gml:identifier "
+                        "codeSpace=\"uid\">urn:ogc:sensor-model:ntb-nitf:2.1:"
+                        "RPC00B</gml:identifier>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:identification>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "    <sml:IdentifierList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        <sml:identifier>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "            <sml:Term>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "               <sml:label>TRE</sml:label>\n") > 0;
+    bOK &=
+        VSIFPrintfL(fp, "               <sml:value>RPC00B</sml:value>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "            </sml:Term>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        </sml:identifier>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "    </sml:IdentifierList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "</sml:identification>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:classification>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "     <sml:ClassifierList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "         <sml:classifier>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "             <sml:Term "
+                           "definition=\"http://sweetontology.net/"
+                           "reprMathFunction/Polynomial\">\n") > 0;
+    bOK &=
+        VSIFPrintfL(
+            fp, "                <sml:label>Math Function Type</sml:label>\n") >
+        0;
+    bOK &= VSIFPrintfL(fp, "                <sml:value>Rational Polynomial "
+                           "Coefficients</sml:value>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "             </sml:Term>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "         </sml:classifier>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "      </sml:ClassifierList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, " </sml:classification>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:characteristics name=\"ignored\"/>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:inputs>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "    <sml:InputList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        <sml:input name=\"latitude\">\n") > 0;
+    bOK &=
+        VSIFPrintfL(
+            fp,
+            "            <swe:Quantity "
+            "definition=\"http://www.opengis.net/def/axis/EPSG/9.9/108\">\n") >
+        0;
+    bOK &= VSIFPrintfL(fp, "                <swe:uom code=\"deg\"/>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "            </swe:Quantity>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        </sml:input>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        <sml:input name=\"longitude\">\n") > 0;
+    bOK &=
+        VSIFPrintfL(
+            fp,
+            "            <swe:Quantity "
+            "definition=\"http://www.opengis.net/def/axis/EPSG/9.9/109\">\n") >
+        0;
+    bOK &= VSIFPrintfL(fp, "                <swe:uom code=\"deg\"/>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "            </swe:Quantity>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        </sml:input>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        <sml:input name=\"altitude\">\n") > 0;
+    bOK &= VSIFPrintfL(fp, "            <swe:Quantity "
+                           "definition=\"http://www.opengis.net/def/"
+                           "sensor-model-param/xdomes/altitude\">\n") > 0;
+    bOK &= VSIFPrintfL(fp, "                <swe:uom code=\"m\"/>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "            </swe:Quantity>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        </sml:input>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "    </sml:InputList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "</sml:inputs>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:outputs>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "    <sml:OutputList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "      <sml:output name=\"row\">\n") > 0;
+    bOK &= VSIFPrintfL(
+               fp, "          <swe:Quantity "
+                   "definition=\"http://www.opengis.net/def/ogc/Row\">\n") > 0;
+    bOK &= VSIFPrintfL(fp, "              <swe:uom code=\"pixel\"/>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "          </swe:Quantity>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "      </sml:output>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        <sml:output name=\"column\">\n") > 0;
+    bOK &=
+        VSIFPrintfL(
+            fp, "            <swe:Quantity "
+                "definition=\"http://www.opengis.net/def/ogc/Column\">\n") > 0;
+    bOK &= VSIFPrintfL(fp, "                <swe:uom code=\"pixel\"/>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "            </swe:Quantity>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "        </sml:output>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "    </sml:OutputList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, " </sml:outputs>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:parameters>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:ParameterList>\n") > 0;
 
-  for( int i = 0; apszRPCTXTSingleValItems[i] != nullptr; i ++ )
-  {
-      const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXTSingleValItems[i] );
-      if( pszRPCVal == nullptr )
-      {
-          CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s field missing in metadata, %s file not written.",
-                    apszRPCTXTSingleValItems[i], osRPCFilename.c_str() );
-          CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-          VSIUnlink( osRPCFilename );
-          return CE_Failure;
-      }
+    for(int i = 0; apszRPCTXTSingleValItems[i] != nullptr; i++)
+    {
+        const char *pszRPCVal =
+            CSLFetchNameValue(papszMD, apszRPCTXTSingleValItems[i]);
+        if(pszRPCVal == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s field missing in metadata, %s file not written.",
+                     apszRPCTXTSingleValItems[i], osRPCFilename.c_str());
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+            VSIUnlink(osRPCFilename);
+            return CE_Failure;
+        }
 
-      bOK &= VSIFPrintfL( fp, "<sml:parameter name=\"%s\">\n", apszRPCTXTSingleValItems[i]) > 0;
+        bOK &= VSIFPrintfL(fp, "<sml:parameter name=\"%s\">\n",
+                           apszRPCTXTSingleValItems[i]) > 0;
 
-      bOK &= VSIFPrintfL( fp, "  <swe:DataRecord definition=\"http://www.opengis.net/def/sensor-model-param/NTB/2.1/NITF/RPC00B/%s\">\n", apszRPCTXTSingleValItems[i]) > 0;
-      bOK &= VSIFPrintfL( fp, "    <swe:label>NITF RPC00B %s</swe:label>\n", apszRPCTXTSingleValItems[i]) > 0;
+        bOK &= VSIFPrintfL(fp,
+                           "  <swe:DataRecord "
+                           "definition=\"http://www.opengis.net/def/"
+                           "sensor-model-param/NTB/2.1/NITF/RPC00B/%s\">\n",
+                           apszRPCTXTSingleValItems[i]) > 0;
+        bOK &= VSIFPrintfL(fp, "    <swe:label>NITF RPC00B %s</swe:label>\n",
+                           apszRPCTXTSingleValItems[i]) > 0;
 
-      bOK &= VSIFPrintfL( fp, "    <swe:field name=\"%s\"> <swe:Quantity definition=\"http://www.opengis.net/def/sensor-model-param/NTB/2.1/NITF/RPC00B/%s\"><swe:label>%s</swe:label>\n", apszRPCTXTSingleValItems[i], apszRPCTXTSingleValItems[i], apszRPCTXTSingleValItems[i]) > 0;
+        bOK &= VSIFPrintfL(fp,
+                           "    <swe:field name=\"%s\"> <swe:Quantity "
+                           "definition=\"http://www.opengis.net/def/"
+                           "sensor-model-param/NTB/"
+                           "2.1/NITF/RPC00B/%s\"><swe:label>%s</swe:label>\n",
+                           apszRPCTXTSingleValItems[i],
+                           apszRPCTXTSingleValItems[i],
+                           apszRPCTXTSingleValItems[i]) > 0;
 
+        if(strcmp(apszRPCTXTSingleValItems[i], "ERR_BIAS") == 0 ||
+           strcmp(apszRPCTXTSingleValItems[i], "ERR_RAND") == 0 ||
+           strcmp(apszRPCTXTSingleValItems[i], "HEIGHT_OFF") == 0 ||
+           strcmp(apszRPCTXTSingleValItems[i], "HEIGHT_SCALE") == 0)
+            bOK &= VSIFPrintfL(fp, "    <swe:uom code=\"m\"/>") > 0;
 
-if (strcmp(apszRPCTXTSingleValItems[i],"ERR_BIAS")==0 ||
-    strcmp(apszRPCTXTSingleValItems[i],"ERR_RAND")==0 ||
-    strcmp(apszRPCTXTSingleValItems[i],"HEIGHT_OFF")==0 ||
-    strcmp(apszRPCTXTSingleValItems[i],"HEIGHT_SCALE")==0)
-bOK &= VSIFPrintfL( fp, "    <swe:uom code=\"m\"/>") > 0;
+        else if(strcmp(apszRPCTXTSingleValItems[i], "LINE_OFF") == 0 ||
+                strcmp(apszRPCTXTSingleValItems[i], "SAMP_OFF") == 0 ||
+                strcmp(apszRPCTXTSingleValItems[i], "LINE_SCALE") == 0 ||
+                strcmp(apszRPCTXTSingleValItems[i], "SAMP_SCALE") == 0)
+            bOK &= VSIFPrintfL(fp, "    <swe:uom code=\"pixels\"/>") > 0;
 
-else if (strcmp(apszRPCTXTSingleValItems[i],"LINE_OFF")==0 ||
-strcmp(apszRPCTXTSingleValItems[i],"SAMP_OFF")==0 ||
-strcmp(apszRPCTXTSingleValItems[i],"LINE_SCALE")==0 ||
-strcmp(apszRPCTXTSingleValItems[i],"SAMP_SCALE")==0)
-bOK &= VSIFPrintfL( fp, "    <swe:uom code=\"pixels\"/>") > 0;
+        else if(strcmp(apszRPCTXTSingleValItems[i], "LAT_OFF") == 0 ||
+                strcmp(apszRPCTXTSingleValItems[i], "LAT_SCALE") == 0 ||
+                strcmp(apszRPCTXTSingleValItems[i], "LONG_OFF") == 0 ||
+                strcmp(apszRPCTXTSingleValItems[i], "LONG_SCALE") == 0)
+            bOK &= VSIFPrintfL(fp, "    <swe:uom code=\"deg\"/>") > 0;
 
-else if (strcmp(apszRPCTXTSingleValItems[i],"LAT_OFF")==0 ||
-strcmp(apszRPCTXTSingleValItems[i],"LAT_SCALE")==0 ||
-strcmp(apszRPCTXTSingleValItems[i],"LONG_OFF")==0 ||
-strcmp(apszRPCTXTSingleValItems[i],"LONG_SCALE")==0)
-bOK &= VSIFPrintfL( fp, "    <swe:uom code=\"deg\"/>") > 0;
+        bOK &= VSIFPrintfL(
+                   fp, "<swe:value>%s</swe:value></swe:Quantity></swe:field>\n",
+                   pszRPCVal) > 0;
 
+        bOK &= VSIFPrintfL(fp, "  </swe:DataRecord>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "</sml:parameter>\n") > 0;
+    }
 
-      bOK &= VSIFPrintfL( fp, "<swe:value>%s</swe:value></swe:Quantity></swe:field>\n", pszRPCVal) > 0;
+    // start of DataArray
 
-      bOK &= VSIFPrintfL( fp, "  </swe:DataRecord>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "</sml:parameter>\n") > 0;
-  }
+    for(int i = 0; apszRPCTXT20ValItems[i] != nullptr; i++)
+    {
+        const char *pszRPCVal =
+            CSLFetchNameValue(papszMD, apszRPCTXT20ValItems[i]);
+        if(pszRPCVal == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s field missing in metadata, %s file not written.",
+                     apszRPCTXTSingleValItems[i], osRPCFilename.c_str());
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+            VSIUnlink(osRPCFilename);
+            return CE_Failure;
+        }
 
+        char **papszItems =
+            CSLTokenizeStringComplex(pszRPCVal, " ,", FALSE, FALSE);
 
-  // start of DataArray
+        if(CSLCount(papszItems) != 20)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s field is corrupt (not 20 values), %s file not "
+                     "written.\n%s = %s",
+                     apszRPCTXT20ValItems[i], osRPCFilename.c_str(),
+                     apszRPCTXT20ValItems[i], pszRPCVal);
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+            VSIUnlink(osRPCFilename);
+            CSLDestroy(papszItems);
+            return CE_Failure;
+        }
 
-  for( int i = 0; apszRPCTXT20ValItems[i] != nullptr; i ++ )
-  {
-      const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXT20ValItems[i] );
-      if( pszRPCVal == nullptr )
-      {
-          CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s field missing in metadata, %s file not written.",
-                    apszRPCTXTSingleValItems[i], osRPCFilename.c_str() );
-          CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-          VSIUnlink( osRPCFilename );
-          return CE_Failure;
-      }
+        bOK &= VSIFPrintfL(fp, "            <sml:parameter name=\"%s\">\n",
+                           apszRPCTXT20ValItems[i]) > 0;
+        bOK &= VSIFPrintfL(fp,
+                           "               <swe:DataArray "
+                           "definition=\"http://www.opengis.net/def/"
+                           "sensor-model-param/NTB/2.1/NITF/RPC00B/%s\">\n",
+                           apszRPCTXT20ValItems[i]) > 0;
+        bOK &= VSIFPrintfL(fp, "                    <swe:elementCount>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "                        <swe:Count>\n") > 0;
+        bOK &=
+            VSIFPrintfL(
+                fp, "                            <swe:value>20</swe:value>\n") >
+            0;
+        bOK &= VSIFPrintfL(fp, "                        </swe:Count>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "                    </swe:elementCount>\n") > 0;
+        bOK &= VSIFPrintfL(
+                   fp, "                    <swe:elementType name=\"%s\"/>\n",
+                   apszRPCTXT20ValItems[i]) > 0;
+        bOK &= VSIFPrintfL(fp, "                    <swe:encoding>\n") > 0;
+        bOK &=
+            VSIFPrintfL(
+                fp,
+                "                        <swe:TextEncoding tokenSeparator=\" "
+                "\" blockSeparator=\",\" decimalSeparator=\".\"/>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "                    </swe:encoding>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "                    <swe:values>\n") > 0;
 
-      char **papszItems = CSLTokenizeStringComplex( pszRPCVal, " ,",
-                                                        FALSE, FALSE );
+        for(int j = 0; j < 20; j++)
+        {
+            bOK &= VSIFPrintfL(fp, "%s ", papszItems[j]) > 0;
+        }
 
-      if( CSLCount(papszItems) != 20 )
-      {
-          CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s field is corrupt (not 20 values), %s file not written.\n%s = %s",
-                    apszRPCTXT20ValItems[i], osRPCFilename.c_str(),
-                    apszRPCTXT20ValItems[i], pszRPCVal );
-          CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-          VSIUnlink( osRPCFilename );
-          CSLDestroy( papszItems );
-          return CE_Failure;
-      }
+        bOK &= VSIFPrintfL(fp, "                    </swe:values>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "                </swe:DataArray>\n") > 0;
+        bOK &= VSIFPrintfL(fp, "            </sml:parameter>\n") > 0;
 
+        CSLDestroy(papszItems);
+    }
 
-bOK &= VSIFPrintfL( fp, "            <sml:parameter name=\"%s\">\n", apszRPCTXT20ValItems[i]) > 0;
-bOK &= VSIFPrintfL( fp, "               <swe:DataArray definition=\"http://www.opengis.net/def/sensor-model-param/NTB/2.1/NITF/RPC00B/%s\">\n", apszRPCTXT20ValItems[i]) > 0;
-bOK &= VSIFPrintfL( fp, "                    <swe:elementCount>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                        <swe:Count>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                            <swe:value>20</swe:value>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                        </swe:Count>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                    </swe:elementCount>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                    <swe:elementType name=\"%s\"/>\n", apszRPCTXT20ValItems[i]) > 0;
-bOK &= VSIFPrintfL( fp, "                    <swe:encoding>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                        <swe:TextEncoding tokenSeparator=\" \" blockSeparator=\",\" decimalSeparator=\".\"/>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                    </swe:encoding>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                    <swe:values>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "</sml:ParameterList>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "</sml:parameters>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:method>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "<sml:ProcessMethod>\n") > 0;
+    bOK &=
+        VSIFPrintfL(
+            fp,
+            "    <swe:description>The RPC00B Tagged Record Extension contains "
+            "rational function polynomial coefficients and normalization "
+            "parameters that define the physical relationship between image "
+            "coordinates and ground coordinates.</swe:description>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "</sml:ProcessMethod>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "</sml:method>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "</sml:SimpleProcess>\n") > 0;
 
-      for( int j = 0; j < 20; j++ )
-      {
-          bOK &= VSIFPrintfL( fp, "%s ", papszItems[j] ) > 0;
-      }
+    if(VSIFCloseL(fp) != 0)
+        bOK = false;
 
-bOK &= VSIFPrintfL( fp, "                    </swe:values>\n") > 0;
-bOK &= VSIFPrintfL( fp, "                </swe:DataArray>\n") > 0;
-bOK &= VSIFPrintfL( fp, "            </sml:parameter>\n") > 0;
-
-
-
-      CSLDestroy( papszItems );
-  }
-
-
-
-      bOK &= VSIFPrintfL( fp, "</sml:ParameterList>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "</sml:parameters>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:method>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "<sml:ProcessMethod>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "    <swe:description>The RPC00B Tagged Record Extension contains rational function polynomial coefficients and normalization parameters that define the physical relationship between image coordinates and ground coordinates.</swe:description>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "</sml:ProcessMethod>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "</sml:method>\n") > 0;
-      bOK &= VSIFPrintfL( fp, "</sml:SimpleProcess>\n") > 0;
-
-  if( VSIFCloseL( fp ) != 0 )
-      bOK = false;
-
-  return bOK ? CE_None : CE_Failure;
+    return bOK ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
