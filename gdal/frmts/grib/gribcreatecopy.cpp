@@ -767,10 +767,13 @@ float* GRIB2Section567Writer::GetFloatData()
 
     m_fMin = std::numeric_limits<float>::max();
     m_fMax = -std::numeric_limits<float>::max();
+    bool bHasNoDataValuePoint = false;
+    bool bHasDataValuePoint = false;
     for( GUInt32 i = 0; i < m_nDataPoints; i++ )
     {
         if( m_bHasNoData && pafData[i] == static_cast<float>(m_dfNoData) )
         {
+            if (!bHasNoDataValuePoint) bHasNoDataValuePoint = true;
             continue;
         }
         if( !CPLIsFinite( pafData[i] ) )
@@ -781,6 +784,7 @@ float* GRIB2Section567Writer::GetFloatData()
             VSIFree(pafData);
             return nullptr;
         }
+        if (!bHasDataValuePoint) bHasDataValuePoint = true;
         pafData[i] += m_fValOffset;
         if( pafData[i] < m_fMin ) m_fMin = pafData[i];
         if( pafData[i] > m_fMax ) m_fMax = pafData[i];
@@ -824,8 +828,8 @@ float* GRIB2Section567Writer::GetFloatData()
         m_nBits = 8;
     }
 
-    m_bUseZeroBits = ( ( m_fMin == m_fMax &&  (!m_bHasNoData || m_fMin == static_cast<float>(m_dfNoData)) )  ||
-        (!GDALDataTypeIsFloating(m_eDT) && dfScaledMaxDiff < 1.0) );
+    m_bUseZeroBits = ( m_fMin == m_fMax &&  !(bHasDataValuePoint && bHasNoDataValuePoint) )  ||
+        (!GDALDataTypeIsFloating(m_eDT) && dfScaledMaxDiff < 1.0);
 
     return pafData;
 }
@@ -1005,7 +1009,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
     const float fNoData = static_cast<float>(m_dfNoData);
     if( m_bUseZeroBits )
     {
-        // Case where all values are at nodata
+        // Case where all values are at nodata or a single value
         VSIFree(pafData);
 
         // Section 5: Data Representation Section
@@ -1013,7 +1017,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
         WriteByte(m_fp, 5); // section number
         WriteUInt32(m_fp, m_nDataPoints);
         WriteUInt16(m_fp, GS5_CMPLX);
-        WriteFloat32(m_fp, m_fMin); // ref value
+        WriteFloat32(m_fp, m_fMin); // ref value = 
         WriteInt16(m_fp, 0); // binary scale factor
         WriteInt16(m_fp, 0); // decimal scale factor
         WriteByte(m_fp, 0); // number of bits
