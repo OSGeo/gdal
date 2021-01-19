@@ -170,8 +170,11 @@ void JPGDatasetCommon::ReadXMPMetadata()
     const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
 
     // Search for APP1 chunk.
-    // TODO(schwehr): What are these constants?
-    GByte abyChunkHeader[2 + 2 + 29] = {};
+    constexpr int APP1_BYTE = 0xe1;
+    constexpr int JFIF_MARKER_SIZE = 2 + 2; // ID + size
+    constexpr const char APP1_XMP_SIGNATURE[] = "http://ns.adobe.com/xap/1.0/";
+    constexpr int APP1_XMP_SIGNATURE_LEN = static_cast<int>(sizeof(APP1_XMP_SIGNATURE));
+    GByte abyChunkHeader[JFIF_MARKER_SIZE + APP1_XMP_SIGNATURE_LEN] = {};
     int nChunkLoc = 2;
     bool bFoundXMP = false;
 
@@ -192,9 +195,9 @@ void JPGDatasetCommon::ReadXMPMetadata()
             || (abyChunkHeader[1] & 0xf0) != 0xe0 )
             break;  // Not an APP chunk.
 
-        if( abyChunkHeader[1] == 0xe1 &&
-            STARTS_WITH(reinterpret_cast<char *>(abyChunkHeader) + 4,
-                        "http://ns.adobe.com/xap/1.0/") )
+        if( abyChunkHeader[1] == APP1_BYTE &&
+            memcmp(reinterpret_cast<char *>(abyChunkHeader) + JFIF_MARKER_SIZE,
+                   APP1_XMP_SIGNATURE, APP1_XMP_SIGNATURE_LEN) == 0 )
         {
             bFoundXMP = true;
             break;  // APP1 - XMP.
@@ -203,16 +206,16 @@ void JPGDatasetCommon::ReadXMPMetadata()
 
     if (bFoundXMP)
     {
-        const int nXMPLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
-        if (nXMPLength > 2 + 29)
+        const int nXMPLength = abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2 - APP1_XMP_SIGNATURE_LEN;
+        if (nXMPLength > 0)
         {
             char *pszXMP =
-                static_cast<char *>(VSIMalloc(nXMPLength - 2 - 29 + 1));
+                static_cast<char *>(VSIMalloc(nXMPLength + 1));
             if (pszXMP)
             {
-                if (VSIFReadL(pszXMP, nXMPLength - 2 - 29, 1, fpImage) == 1)
+                if (VSIFReadL(pszXMP, nXMPLength, 1, fpImage) == 1)
                 {
-                    pszXMP[nXMPLength - 2 - 29] = '\0';
+                    pszXMP[nXMPLength] = '\0';
 
                     // Avoid setting the PAM dirty bit just for that.
                     const int nOldPamFlags = nPamFlags;
