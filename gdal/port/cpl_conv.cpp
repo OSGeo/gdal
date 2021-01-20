@@ -2027,9 +2027,11 @@ void CPL_STDCALL CPLFreeConfig()
  * This function is typically called by CPLLoadConfigOptionsFromPredefinedFiles()
  *
  * @param pszFilename File where to load configuration from.
+ * @param bOverrideEnvVars Whether configuration options from the configuration
+ *                         file should override environment variables.
  * @since GDAL 3.3
  */
-void CPLLoadConfigOptionsFromFile(const char* pszFilename)
+void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
 {
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if( fp == nullptr )
@@ -2057,7 +2059,20 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename)
             const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
             if( pszKey && pszValue )
             {
-                CPLSetConfigOption(pszKey, pszValue);
+                if( bOverrideEnvVars || getenv(pszKey) == nullptr )
+                {
+                    CPLDebugOnly("CPL",
+                                 "Setting configuration option %s=%s",
+                                 pszKey, pszValue);
+                    CPLSetConfigOption(pszKey, pszValue);
+                }
+                else
+                {
+                    CPLDebugOnly("CPL",
+                                 "Ignoring configuration option %s from "
+                                 "configuration file as it is already set "
+                                 "as an environment variable", pszKey);
+                }
             }
             CPLFree(pszKey);
         }
@@ -2083,6 +2098,10 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename)
  * on Unix builds (potentially overriding what was loaded with the sysconfdir)
  * or $(USERPROFILE)/.gdal/gdalrc on Windows builds.
  *
+ * CPLLoadConfigOptionsFromFile() will be called with bOverrideEnvVars = false,
+ * that is the value of environment variables previously set will be used instead
+ * of the value set in the configuration files.
+ *
  * This function is automatically called by GDALDriverManager() constructor
  *
  * @since GDAL 3.3
@@ -2092,14 +2111,14 @@ void CPLLoadConfigOptionsFromPredefinedFiles()
     const char* pszFile = CPLGetConfigOption("GDAL_CONFIG_FILE", nullptr);
     if( pszFile != nullptr )
     {
-        CPLLoadConfigOptionsFromFile(pszFile);
+        CPLLoadConfigOptionsFromFile(pszFile, false);
     }
     else
     {
 #ifdef SYSCONFDIR
         pszFile = CPLFormFilename(CPLFormFilename(SYSCONFDIR, "gdal", nullptr),
                                   "gdalrc", nullptr);
-        CPLLoadConfigOptionsFromFile(pszFile);
+        CPLLoadConfigOptionsFromFile(pszFile, false);
 #endif
 
 #ifdef WIN32
@@ -2111,7 +2130,7 @@ void CPLLoadConfigOptionsFromPredefinedFiles()
         {
             pszFile = CPLFormFilename(CPLFormFilename( pszHome, ".gdal", nullptr),
                                       "gdalrc", nullptr);
-            CPLLoadConfigOptionsFromFile(pszFile);
+            CPLLoadConfigOptionsFromFile(pszFile, false);
         }
     }
 }

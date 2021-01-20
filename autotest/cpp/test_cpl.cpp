@@ -3051,7 +3051,7 @@ namespace tut
     template<>
     void object::test<44>()
     {
-        CPLLoadConfigOptionsFromFile("/i/do/not/exist");
+        CPLLoadConfigOptionsFromFile("/i/do/not/exist", false);
 
         VSILFILE* fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
         VSIFPrintfL(fp, "[configoptions]\n");
@@ -3060,7 +3060,7 @@ namespace tut
         VSIFCloseL(fp);
 
         // Try CPLLoadConfigOptionsFromFile()
-        CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc");
+        CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
         ensure( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
         CPLSetConfigOption("FOO_CONFIGOPTION", nullptr);
 
