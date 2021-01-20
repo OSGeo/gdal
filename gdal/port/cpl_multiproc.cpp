@@ -143,6 +143,9 @@ static int     CPLCreateOrAcquireSpinLockInternal( CPLLock** );
 static int     CPLAcquireSpinLock( CPLSpinLock* );
 static void    CPLReleaseSpinLock( CPLSpinLock* );
 static void    CPLDestroySpinLock( CPLSpinLock* );
+static CPLMutex*    CPLCreateOrAcquireMasterMutex( double );
+static CPLMutex*&   CPLCreateOrAcquireMasterMutexInternal( double );
+static CPLMutex*    CPLCreateUnacquiredMutex();
 
 // We don't want it to be publicly used since it solves rather tricky issues
 // that are better to remain hidden.
