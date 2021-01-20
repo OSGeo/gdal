@@ -34,11 +34,11 @@ from typing import Optional
 
 from osgeo import gdal
 from osgeo.utils.auxiliary.base import PathLike
-from osgeo.utils.auxiliary.util import open_ds, path_or_ds
+from osgeo.utils.auxiliary.util import open_ds, PathOrDS
 from osgeo.utils.auxiliary.color_palette import get_color_palette, ColorPaletteOrPathOrStrings
 
 
-def get_color_table_from_raster(path_or_ds: path_or_ds) -> Optional[gdal.ColorTable]:
+def get_color_table_from_raster(path_or_ds: PathOrDS) -> Optional[gdal.ColorTable]:
     ds = open_ds(path_or_ds, silent_fail=True)
     if ds is not None:
         ct = ds.GetRasterBand(1).GetRasterColorTable()

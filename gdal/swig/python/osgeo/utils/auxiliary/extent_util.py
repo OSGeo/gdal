@@ -78,7 +78,7 @@ def gt_diff(gt0: GeoTransform, gt1: GeoTransform, diff_support: Dict[GT, bool], 
     if same[GT.INCOMPATIBLE_OFFSET] and same[GT.INCOMPATIBLE_PIXEL_SIZE] and same[GT.INCOMPATIBLE_ROTATION]:
         return GT.ALMOST_SAME
     for reason in same.keys():
-        if not same[reason] or diff_support[reason]:
+        if not same[reason] and not diff_support[reason]:
             return reason  # incompatible gt, returns the reason
     return GT.COMPATIBLE_DIFF
 

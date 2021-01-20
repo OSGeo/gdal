@@ -35,7 +35,7 @@ from typing import Optional, Union
 from osgeo import gdal
 from osgeo.utils.auxiliary.base import get_extension, is_path_like, PathLike
 
-path_or_ds = Union[PathLike, gdal.Dataset]
+PathOrDS = Union[PathLike, gdal.Dataset]
 
 
 def DoesDriverHandleExtension(drv: gdal.Driver, ext: str):
@@ -85,18 +85,18 @@ def GetOutputDriverFor(filename: PathLike, is_raster=True, default_raster_format
     return drv_list[0]
 
 
-def open_ds(filename_or_ds: path_or_ds, *args, **kwargs):
+def open_ds(filename_or_ds: PathOrDS, *args, **kwargs):
     ods = OpenDS(filename_or_ds, *args, **kwargs)
     return ods.__enter__()
 
 
-def get_ovr_count(filename_or_ds: path_or_ds):
+def get_ovr_count(filename_or_ds: PathOrDS):
     with OpenDS(filename_or_ds) as ds:
         bnd = ds.GetRasterBand(1)
         return bnd.GetOverviewCount()
 
 
-def get_ovr_idx(filename_or_ds: path_or_ds, ovr_idx: Optional[int]):
+def get_ovr_idx(filename_or_ds: PathOrDS, ovr_idx: Optional[int]):
     if ovr_idx is None:
         ovr_idx = 0
     if ovr_idx < 0:
@@ -109,7 +109,7 @@ def get_ovr_idx(filename_or_ds: path_or_ds, ovr_idx: Optional[int]):
 class OpenDS:
     __slots__ = ['filename', 'ds', 'args', 'kwargs', 'own', 'silent_fail']
 
-    def __init__(self, filename_or_ds: path_or_ds, silent_fail=False, *args, **kwargs):
+    def __init__(self, filename_or_ds: PathOrDS, silent_fail=False, *args, **kwargs):
         self.ds: Optional[gdal.Dataset] = None
         self.filename: Optional[PathLike] = None
         if is_path_like(filename_or_ds):
@@ -138,8 +138,8 @@ class OpenDS:
     def _open_ds(
         filename: PathLike,
         access_mode=gdal.GA_ReadOnly,
-        ovr_idx: int = None,
-        open_options: dict = None,
+        ovr_idx: Optional[int] = None,
+        open_options: Optional[dict] = None,
         logger=None,
     ):
         open_options = dict(open_options or dict())
