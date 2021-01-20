@@ -739,20 +739,20 @@ template<> struct CPLStaticAssert<true>
 
 /** Byte-swap a 16 bit pointer */
 #define CPL_SWAP16PTR(x) \
-{                                                                 \
+do {                                                              \
     GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2); \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[1];                                \
     _pabyDataT[1] = byTemp;                                       \
-}
+} while(0)
 
 #if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
 
 /** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
-{                                                                 \
+do {                                                              \
     GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4);  \
                                                                   \
@@ -762,11 +762,11 @@ template<> struct CPLStaticAssert<true>
     byTemp = _pabyDataT[1];                                       \
     _pabyDataT[1] = _pabyDataT[2];                                \
     _pabyDataT[2] = byTemp;                                       \
-}
+} while(0)
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAP64PTR(x) \
-{                                                                 \
+do {                                                              \
     GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
                                                                   \
@@ -782,31 +782,31 @@ template<> struct CPLStaticAssert<true>
     byTemp = _pabyDataT[3];                                       \
     _pabyDataT[3] = _pabyDataT[4];                                \
     _pabyDataT[4] = byTemp;                                       \
-}
+} while(0)
 
 #else
 
 /** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
-{                                                                           \
+do {                                                                        \
     GUInt32 _n32;                                                           \
     void* _lx = x;                                                          \
     memcpy(&_n32, _lx, 4);                                                  \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4); \
     _n32 = CPL_SWAP32(_n32);                                                \
     memcpy(_lx, &_n32, 4);                                                  \
-}
+} while(0)
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAP64PTR(x) \
-{                                                                           \
+do {                                                                        \
     GUInt64 _n64;                                                           \
     void* _lx = x;                                                          \
     memcpy(&_n64, _lx, 8);                                                    \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
     _n64 = CPL_SWAP64(_n64);                                                \
     memcpy(_lx, &_n64, 8);                                                    \
-}
+} while(0)
 
 #endif
 
