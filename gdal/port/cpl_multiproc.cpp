@@ -143,9 +143,14 @@ static int     CPLCreateOrAcquireSpinLockInternal( CPLLock** );
 static int     CPLAcquireSpinLock( CPLSpinLock* );
 static void    CPLReleaseSpinLock( CPLSpinLock* );
 static void    CPLDestroySpinLock( CPLSpinLock* );
+
+#ifndef CPL_MULTIPROC_PTHREAD
+#ifndef MUTEX_NONE
 static CPLMutex*    CPLCreateOrAcquireMasterMutex( double );
 static CPLMutex*&   CPLCreateOrAcquireMasterMutexInternal( double );
 static CPLMutex*    CPLCreateUnacquiredMutex();
+#endif
+#endif
 
 // We don't want it to be publicly used since it solves rather tricky issues
 // that are better to remain hidden.
@@ -606,7 +611,7 @@ void CPLCondWait( CPLCond * /* hCond */ , CPLMutex* /* hMutex */ ) {}
 /*                         CPLCondTimedWait()                           */
 /************************************************************************/
 
-CPLCondTimedWaitReason CPLCondTimedWait( CPLCond * /* hCond */ , 
+CPLCondTimedWaitReason CPLCondTimedWait( CPLCond * /* hCond */ ,
                                          CPLMutex* /* hMutex */, double )
 {
     return COND_TIMED_WAIT_OTHER;
