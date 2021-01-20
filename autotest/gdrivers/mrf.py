@@ -159,7 +159,7 @@ def test_mrf_overview_nnb_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == expected_cs, dt
+        assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
         cleanup()
     
@@ -181,7 +181,7 @@ def test_mrf_overview_nnb_with_nodata_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == expected_cs, dt
+        assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
         cleanup()
     
@@ -203,7 +203,7 @@ def test_mrf_overview_avg_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == expected_cs, dt
+        assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
         cleanup()
 
@@ -226,7 +226,7 @@ def test_mrf_overview_avg_with_nodata_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == expected_cs, dt
+        assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
         cleanup()
 
@@ -334,11 +334,19 @@ def test_raw_lerc():
         expected_cs = 4819
         assert cs == expected_cs
         ds = None
+        # Test open options for raw LERC1, it accepts NDV and datatype overrides
+        if opt:
+            ds = gdal.OpenEx('/vsimem/out.lrc', open_options = ['@NDV=100, @datatype=UInt32'])
+            with gdaltest.error_handler():
+                cs = ds.GetRasterBand(1).Checksum()
+            print(cs, opt)
+            assert cs == 60065
+            ds = None
         cleanup()
 
 def test_mrf_cached_source():
 
-    # Caching MRF
+    # Test empty cache creation
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                    creationOptions=['CACHEDSOURCE=invalid_source', 'NOCOPY=TRUE'])
     ds = gdal.Open('/vsimem/out.mrf')
@@ -369,7 +377,7 @@ def test_mrf_cached_source():
     # Caching MRF in mp_safe mode
     open('tmp/byte.tif', 'wb').write(open('data/byte.tif', 'rb').read())
     open('tmp/out.mrf', 'wt').write(
-        """<MRF_META>
+"""<MRF_META>
   <CachedSource>
     <Source>byte.tif</Source>
   </CachedSource>
@@ -377,10 +385,6 @@ def test_mrf_cached_source():
     <Size x="20" y="20" c="1" />
     <PageSize x="512" y="512" c="1" />
   </Raster>
-  <GeoTags>
-    <BoundingBox minx="440720.00000000" miny="3750120.00000000" maxx="441920.00000000" maxy="3751320.00000000" />
-    <Projection>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</Projection>
-  </GeoTags>
 </MRF_META>""")
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
@@ -388,6 +392,7 @@ def test_mrf_cached_source():
     assert cs == expected_cs
     ds = None
 
+    # Read it again, from the cache
     gdal.Unlink('tmp/byte.tif')
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
@@ -398,7 +403,7 @@ def test_mrf_cached_source():
 
     # Cloning MRF
     open('tmp/cloning.mrf', 'wt').write(
-        """<MRF_META>
+"""<MRF_META>
   <CachedSource>
     <Source clone="true">out.mrf</Source>
   </CachedSource>
@@ -406,10 +411,6 @@ def test_mrf_cached_source():
     <Size x="20" y="20" c="1" />
     <PageSize x="512" y="512" c="1" />
   </Raster>
-  <GeoTags>
-    <BoundingBox minx="440720.00000000" miny="3750120.00000000" maxx="441920.00000000" maxy="3751320.00000000" />
-    <Projection>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</Projection>
-  </GeoTags>
 </MRF_META>""")
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
@@ -418,6 +419,7 @@ def test_mrf_cached_source():
     ds = None
     cleanup('tmp/out.')
 
+    # Read it again, from the cache
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
@@ -430,15 +432,11 @@ def test_mrf_versioned():
     # Caching MRF
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
     gdal.FileFromMemBuffer('/vsimem/out.mrf',
-                           """<MRF_META>
+"""<MRF_META>
   <Raster versioned="on">
     <Size x="20" y="20" c="1" />
     <PageSize x="512" y="512" c="1" />
   </Raster>
-  <GeoTags>
-    <BoundingBox minx="440720.00000000" miny="3750120.00000000" maxx="441920.00000000" maxy="3751320.00000000" />
-    <Projection>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</Projection>
-  </GeoTags>
 </MRF_META>""")
     ds = gdal.Open('/vsimem/out.mrf', gdal.GA_Update)
     ds.GetRasterBand(1).Fill(0)

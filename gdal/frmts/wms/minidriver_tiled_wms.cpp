@@ -402,7 +402,10 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         // Data values are attributes, they include NoData Min and Max
         if (nullptr != CPLGetXMLNode(TG, "DataValues")) {
             const char *nodata = CPLGetXMLValue(TG, "DataValues.NoData", nullptr);
-            if (nodata != nullptr) m_parent_dataset->WMSSetNoDataValue(nodata);
+            if (nodata != nullptr) {
+                m_parent_dataset->WMSSetNoDataValue(nodata);
+                m_parent_dataset->SetTileOO("@NDV", nodata);
+            }
             const char *min = CPLGetXMLValue(TG, "DataValues.min", nullptr);
             if (min != nullptr) m_parent_dataset->WMSSetMinValue(min);
             const char *max = CPLGetXMLValue(TG, "DataValues.max", nullptr);
@@ -410,7 +413,10 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         }
 
         m_parent_dataset->WMSSetBandsCount(band_count);
-        m_parent_dataset->WMSSetDataType(GDALGetDataTypeByName(CPLGetXMLValue(TG, "DataType", "Byte")));
+        GDALDataType dt = GDALGetDataTypeByName(CPLGetXMLValue(TG, "DataType", "Byte"));
+        m_parent_dataset->WMSSetDataType(dt);
+        if (dt != GDT_Byte)
+            m_parent_dataset->SetTileOO("@DATATYPE", GDALGetDataTypeName(dt));
         m_projection_wkt = CPLGetXMLValue(TG, "Projection", "");
 
         m_base_url = CPLGetXMLValue(TG, "OnlineResource.xlink:href", global_base_url);

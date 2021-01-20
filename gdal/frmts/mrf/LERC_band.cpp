@@ -531,7 +531,12 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     CPLCreateXMLElementAndValue(raster, "DataFile", poOpenInfo->pszFilename);
     // Set a magic index file name to prevent the driver from attempting to open it
     CPLCreateXMLElementAndValue(raster, "IndexFile", "(null)");
-
+    // The NDV could be passed as an open option
+    const char* pszNDV = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NDV", "");
+    if (strlen(pszNDV) > 0) {
+        CPLXMLNode* values = CPLCreateXMLNode(raster, CXT_Element, "DataValues");
+        XMLSetAttributeVal(values, "NoData", pszNDV);
+    }
     return config;
 }
 
