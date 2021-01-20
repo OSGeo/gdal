@@ -2008,6 +2008,115 @@ void CPL_STDCALL CPLFreeConfig()
 }
 
 /************************************************************************/
+/*                    CPLLoadConfigOptionsFromFile()                    */
+/************************************************************************/
+
+/** Load configuration from a given configuration file.
+ *
+ * A configuration file is a text file in a .ini style format, that lists
+ * configuration options and their values.
+ * Lines starting with # are comment lines.
+ * 
+ * Example:
+ * <pre>
+ * [configoptions]
+ * # set BAR as the value of configuration option FOO
+ * FOO=BAR
+ * </pre>
+ *
+ * This function is typically called by CPLLoadConfigOptionsFromPredefinedFiles()
+ *
+ * @param pszFilename File where to load configuration from.
+ * @since GDAL 3.3
+ */
+void CPLLoadConfigOptionsFromFile(const char* pszFilename)
+{
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
+    if( fp == nullptr )
+        return;
+    CPLDebug("CPL", "Loading configuration from %s", pszFilename);
+    const char* pszLine;
+    bool bInConfigOptions = false;
+    while( (pszLine = CPLReadLine2L(fp, -1, nullptr)) != nullptr )
+    {
+        if( pszLine[0] == '#' )
+        {
+            // Comment line
+        }
+        else if( strcmp(pszLine, "[configoptions]") == 0 )
+        {
+            bInConfigOptions = true;
+        }
+        else if( pszLine[0] == '[' )
+        {
+            bInConfigOptions = false;
+        }
+        else if( bInConfigOptions )
+        {
+            char* pszKey = nullptr;
+            const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+            if( pszKey && pszValue )
+            {
+                CPLSetConfigOption(pszKey, pszValue);
+            }
+            CPLFree(pszKey);
+        }
+    }
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                CPLLoadConfigOptionsFromPredefinedFiles()             */
+/************************************************************************/
+
+/** Load configuration from a set of predefined files.
+ *
+ * If the environment variable (or configuration option) GDAL_CONFIG_FILE is
+ * set, then CPLLoadConfigOptionsFromFile() will be called with the value of 
+ * this configuration option as the file location.
+ *
+ * Otherwise, for Unix builds, CPLLoadConfigOptionsFromFile() will be called
+ * with ${sysconfdir}/gdal/gdalrc first where ${sysconfdir} evaluates
+ * to ${prefix}/etc, unless the --sysconfdir switch of configure has been invoked.
+ *
+ * Then CPLLoadConfigOptionsFromFile() will be called with $(HOME)/.gdal/gdalrc
+ * on Unix builds (potentially overriding what was loaded with the sysconfdir)
+ * or $(USERPROFILE)/.gdal/gdalrc on Windows builds.
+ *
+ * This function is automatically called by GDALDriverManager() constructor
+ *
+ * @since GDAL 3.3
+ */
+void CPLLoadConfigOptionsFromPredefinedFiles()
+{
+    const char* pszFile = CPLGetConfigOption("GDAL_CONFIG_FILE", nullptr);
+    if( pszFile != nullptr )
+    {
+        CPLLoadConfigOptionsFromFile(pszFile);
+    }
+    else
+    {
+#ifdef SYSCONFDIR
+        pszFile = CPLFormFilename(CPLFormFilename(SYSCONFDIR, "gdal", nullptr),
+                                  "gdalrc", nullptr);
+        CPLLoadConfigOptionsFromFile(pszFile);
+#endif
+
+#ifdef WIN32
+        const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
+#else
+        const char* pszHome = CPLGetConfigOption("HOME", nullptr);
+#endif
+        if( pszHome != nullptr )
+        {
+            pszFile = CPLFormFilename(CPLFormFilename( pszHome, ".gdal", nullptr),
+                                      "gdalrc", nullptr);
+            CPLLoadConfigOptionsFromFile(pszFile);
+        }
+    }
+}
+
+/************************************************************************/
 /*                              CPLStat()                               */
 /************************************************************************/
 

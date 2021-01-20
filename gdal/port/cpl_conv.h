@@ -66,6 +66,8 @@ char CPL_DLL** CPLGetConfigOptions(void);
 void CPL_DLL   CPLSetConfigOptions(const char* const * papszConfigOptions);
 char CPL_DLL** CPLGetThreadLocalConfigOptions(void);
 void CPL_DLL   CPLSetThreadLocalConfigOptions(const char* const * papszConfigOptions);
+void CPL_DLL   CPLLoadConfigOptionsFromFile(const char* pszFilename);
+void CPL_DLL   CPLLoadConfigOptionsFromPredefinedFiles();
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
