@@ -329,6 +329,27 @@ EXIF_GPSDifferential      0x001E   SHORT     1                Optional
 EXIF_GPSHPositioningError 0x001F   RATIONAL  1                Optional
 ========================= ======== ========= ================ ===========
 
+FLIR metadata
+-------------
+
+.. versionadded:: 3.3
+
+Metadata encoded according to the FLIR convention (infrared images) is available
+in the ``FLIR`` metadata domain.
+
+Metadata from the following sections is supported:
+
+- Header
+- RawData
+- CameraInfo
+- PaletteInfo
+- GPSInfo
+
+Consult https://exiftool.org/TagNames/FLIR.html for details.
+
+The thermal image data, stored either as raw data or in PNG, is exposed as a
+GDAL subdataset whose name is ``JPEG:"filename.jpg":FLIR_RAW_THERMAL_IMAGE``
+
 See Also
 --------
 
