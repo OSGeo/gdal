@@ -379,10 +379,6 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
         *phLock = nullptr;
         return FALSE;
     }
-    else
-    {
-        CPLAcquireMutex( hCOAMutex, dfWaitInSeconds );
-    }
 
     if( *phLock == nullptr )
     {
