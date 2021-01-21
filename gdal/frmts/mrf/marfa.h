@@ -18,7 +18,7 @@
 * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright 2014-2021 Esri
+* Copyright 2014-2015 Esri
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 */
 
 /******************************************************************************
+ * $Id$
  *
  * Project:  Meta Raster Format
  * Purpose:  MRF structures
@@ -283,12 +284,14 @@ static inline const ILSize pcount(const ILSize &size, const ILSize &psz) {
     pcnt.c = pcount(size.c, psz.c);
     auto xy = static_cast<GIntBig>(pcnt.x) * pcnt.y;
     auto zc = static_cast<GIntBig>(pcnt.z) * pcnt.c;
-    if( zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc ) {
+    if( zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc )
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Integer overflow in page count computation");
         pcnt.l = -1;
     }
-    else {
+    else
+    {
         pcnt.l = xy * zc;
     }
     return pcnt;
@@ -414,9 +417,15 @@ protected:
         return pbuffer;
     }
 
+#if GDAL_VERSION_MAJOR >= 2
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
         void *, int, int, GDALDataType,
         int, int *, GSpacing, GSpacing, GSpacing, GDALRasterIOExtraArg*) override;
+#else
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
+        void *, int, int, GDALDataType,
+        int, int *, int, int, int);
+#endif
 
     virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
         GDALProgressFunc, void*) override;
@@ -560,13 +569,13 @@ public:
 
     const char *GetOptionValue(const char *opt, const char *def) const;
     void SetAccess(GDALAccess eA) { eAccess = eA; }
-    void SetDeflate(int v) { dodeflate = (v != 0); }
+    void SetDeflate(int v) { deflatep = (v != 0); }
 
 protected:
     // Pointer to the GDALMRFDataset
     MRFDataset *poDS;
     // Deflate page requested, named to avoid conflict with libz deflate()
-    int dodeflate;
+    int deflatep;
     int deflate_flags;
     // Level count of this band
     GInt32 m_l;
@@ -634,8 +643,7 @@ public:
     int PalSize, TransSize, deflate_flags;
 
 private:
-    // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
-    PNG_Codec& operator= (const PNG_Codec& src);
+    PNG_Codec& operator= (const PNG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
 };
 
 class PNG_Band final: public MRFRasterBand {
@@ -713,16 +721,8 @@ public:
         MRFRasterBand(pDS, image, b, int(level)) {}
     virtual ~Raw_Band() {}
 protected:
-    virtual CPLErr Decompress(buf_mgr& dst, buf_mgr& src) override {
-        if (src.size > dst.size)
-            return CE_Failure;
-        memcpy(dst.buffer, src.buffer, src.size);
-        dst.size = src.size;
-        return CE_None;
-    }
-    virtual CPLErr Compress(buf_mgr& dst, buf_mgr& src) override {
-        return Decompress(dst, src);
-    }
+    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
+    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
 };
 
 class TIF_Band final: public MRFRasterBand {

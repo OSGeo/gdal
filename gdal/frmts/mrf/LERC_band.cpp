@@ -1,5 +1,5 @@
 /*
-Copyright 2013-2021 Esri
+Copyright 2013-2020 Esri
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -16,7 +16,7 @@ http://github.com/Esri/lerc/
 LERC band implementation
 LERC page compression and decompression functions
 
-Authors:  Lucian Plesea
+Contributors:  Lucian Plesea
 */
 
 #include "marfa.h"
