@@ -61,6 +61,7 @@ exec_prefix	=	@exec_prefix@
 datarootdir	=	@datarootdir@
 docdir	=	@docdir@
 htmldir	=	@htmldir@
+sysconfdir      =       @sysconfdir@
 INST_PREFIX	=	@exec_prefix@
 INST_INCLUDE	=	@includedir@
 INST_DATA 	=	@datadir@/gdal

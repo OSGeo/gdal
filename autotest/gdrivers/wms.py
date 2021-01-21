@@ -443,7 +443,7 @@ def test_wms_8():
 ###############################################################################
 # Test OnEarth Tiled WMS minidriver
 
-
+# Permanently down
 def wms_9():
 
     if gdaltest.wms_drv is None:
@@ -503,8 +503,9 @@ def wms_10():
 # Test getting subdatasets from GetTileService
 
 
-def test_wms_11():
-
+# Permanently down
+def wms_11():
+    
     if gdaltest.wms_drv is None:
         pytest.skip()
 
@@ -626,17 +627,16 @@ def test_wms_15():
 
     if gdaltest.wms_drv is None:
         pytest.skip()
-    src_ds = gdal.Open("http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true")
+    
+    srv = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true'
+    src_ds = gdal.Open(srv)
     if src_ds is None:
-        srv = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true'
         if gdaltest.gdalurlopen(srv) is None:
             pytest.skip()
         pytest.fail()
     ds = gdal.GetDriverByName("WMS").CreateCopy("/vsimem/wms.xml", src_ds)
     src_ds = None
-
-    if ds is None:
-        return' fail'
+    assert ds, 'failed to copy'
 
     assert ds.RasterXSize == 1073741824 and ds.RasterYSize == 1073741824 and ds.RasterCount == 3, \
         'wrong size or bands'
@@ -644,16 +644,12 @@ def test_wms_15():
     wkt = ds.GetProjectionRef()
     assert wkt.startswith('PROJCS["WGS 84 / Pseudo-Mercator"'), ('Got wrong SRS: ' + wkt)
 
-    gt = ds.GetGeoTransform()
-    assert gt[0] == pytest.approx(-20037508.342787001, abs=0.00001) and gt[3] == pytest.approx(20037508.342787001, abs=0.00001) and gt[1] == pytest.approx(0.037322767717361482, abs=0.00001) and gt[2] == pytest.approx(0, abs=0.00001) and gt[5] == pytest.approx(-0.037322767717361482, abs=0.00001) and gt[4] == pytest.approx(0, abs=0.00001), \
-        'wrong geotransform'
+    corner = 20037508.342787001
+    res = 0.037322767717361482
+    assert ds.GetGeoTransform() == pytest.approx([-corner, res, 0, corner, 0, -res], abs = 0.00001), 'wrong geotransform'
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 22, 'bad overview count'
-
-    (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
-    if block_xsize != 256 or block_ysize != 256:
-        print("(%d, %d)" % (block_xsize, block_ysize))
-        pytest.fail('bad block size')
+    assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
 
     ds = None
     gdal.Unlink("/vsimem/wms.xml")
@@ -742,7 +738,7 @@ def test_wms_16():
 ###############################################################################
 # Test a TiledWMS dataset with a color table (#4613)
 
-
+# Permanently down
 def wms_17():
 
     if gdaltest.wms_drv is None:
@@ -762,7 +758,7 @@ def wms_17():
     ds = None
 
 ###############################################################################
-# Test a ArcGIS Server
+# Test an ArcGIS Server
 
 
 def test_wms_18():
@@ -785,13 +781,13 @@ def test_wms_18():
     # todo: add locationinfo test
 
     # add getting image test
-    if gdaltest.gdalurlopen('http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer') is None:
+    if not gdaltest.gdalurlopen('http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer'):
+        ds = None
         pytest.skip()
 
     expected_cs = 12824
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == expected_cs, 'Did not get expected checksum.'
-
     ds = None
 
     # Alternative url with additional parameters
@@ -830,9 +826,38 @@ def test_wms_19():
     assert cs != 0, 'Did not get expected checksum.'
 
     ds = None
+
 ###############################################################################
+# Test reading data via MRF/LERC
 
+def test_wms_data_via_mrf():
+    if gdaltest.wms_drv is None:
+        pytest.skip()
 
+    mrfdrv = gdal.GetDriverByName("MRF")
+    if mrfdrv is None or 'LERC' not in mrfdrv.GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
+    
+    url = "http://astro.arcgis.com/arcgis/rest/services/OnMars/HiRISE_DEM/ImageServer/tile/${z}/${y}/${x}"
+    dstemplate = """<GDAL_WMS>
+<Service name="TMS" ServerUrl="{url}"/>
+<DataWindow SizeX="513" SizeY="513"/>
+<BandsCount>1</BandsCount><BlockSizeX>513</BlockSizeX><BlockSizeY>513</BlockSizeY>
+<DataType>{dt}</DataType><DataValues NoData="{ndv}"/>
+</GDAL_WMS>"""
+
+    # This is a LERC1 format tile service, DEM in floating point, it can be read as any type
+    # The returned no data value can also be set on read, which affects the checksum
+    testlist = [
+        ("Byte", 0, 10327), # Same as the default type, NDV not defined
+        ("Float32", 0, 61833), # float, default NDV
+        ("Float32", 32768.32, 57160), # float, Forced NDV
+    ]
+    for dt, ndv, expected_cs in testlist:
+        ds = gdal.Open(dstemplate.format(url = url, dt = dt, ndv=ndv))
+        assert ds.GetRasterBand(1).Checksum() == expected_cs, "datatype {} and ndv {}".format(dt, ndv)
+        ds = None
+ 
 def test_wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -842,8 +867,3 @@ def test_wms_cleanup():
         shutil.rmtree('gdalwmscache')
     except OSError:
         pass
-
-    
-
-
-

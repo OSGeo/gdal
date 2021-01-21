@@ -45,7 +45,7 @@ def test_ogrmerge_1():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -o tmp/out.shp ../ogr/data/poly.shp ../ogr/data/poly.shp')
+                                  '-single -o tmp/out.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/out.shp')
     lyr = ds.GetLayer(0)
@@ -64,9 +64,9 @@ def test_ogrmerge_2():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -o tmp/out.shp ../ogr/data/poly.shp')
+                                  '-single -o tmp/out.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-append -single -o tmp/out.shp "../ogr/data/p*ly.shp"')
+                                  '-append -single -o tmp/out.shp "'+test_py_scripts.get_data_path('ogr')+'p*ly.shp"')
 
     ds = ogr.Open('tmp/out.shp')
     lyr = ds.GetLayer(0)
@@ -85,9 +85,9 @@ def test_ogrmerge_3():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-overwrite_ds -o tmp/out.shp ../ogr/data/poly.shp')
+                                  '-overwrite_ds -o tmp/out.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-overwrite_ds -single -o tmp/out.shp ../ogr/data/poly.shp')
+                                  '-overwrite_ds -single -o tmp/out.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/out.shp')
     lyr = ds.GetLayer(0)
@@ -106,7 +106,7 @@ def test_ogrmerge_4():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp')
+                                  '-f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/out.vrt')
     lyr = ds.GetLayer(0)
@@ -126,15 +126,15 @@ def test_ogrmerge_5():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp ../ogr/data/shp/testpoly.shp -nln '
+                                  '-f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '+test_py_scripts.get_data_path('ogr')+'shp/testpoly.shp -nln '
                                   '"foo_{DS_NAME}_{DS_BASENAME}_{DS_INDEX}_{LAYER_NAME}_{LAYER_INDEX}"')
 
     ds = ogr.Open('tmp/out.vrt')
     lyr = ds.GetLayer(0)
-    assert lyr.GetName() == 'foo_../ogr/data/poly.shp_poly_0_poly_0'
+    assert lyr.GetName() == 'foo_'+test_py_scripts.get_data_path('ogr')+'poly.shp_poly_0_poly_0'
     assert lyr.GetFeatureCount() == 10
     lyr = ds.GetLayer(1)
-    assert lyr.GetName() == 'foo_../ogr/data/shp/testpoly.shp_testpoly_1_testpoly_0'
+    assert lyr.GetName() == 'foo_'+test_py_scripts.get_data_path('ogr')+'shp/testpoly.shp_testpoly_1_testpoly_0'
     assert lyr.GetFeatureCount() == 14
     ds = None
 
@@ -150,14 +150,14 @@ def test_ogrmerge_6():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-src_layer_field_name source -src_layer_field_content '
                                   '"foo_{DS_NAME}_{DS_BASENAME}_{DS_INDEX}_{LAYER_NAME}_{LAYER_INDEX}"')
 
     ds = ogr.Open('tmp/out.vrt')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f['source'] != 'foo_../ogr/data/poly.shp_poly_0_poly_0':
+    if f['source'] != 'foo_'+test_py_scripts.get_data_path('ogr')+'poly.shp_poly_0_poly_0':
         f.DumpReadable()
         pytest.fail()
     ds = None
@@ -175,7 +175,7 @@ def test_ogrmerge_7():
 
     # No match in -single mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-src_geom_type POINT')
 
     ds = ogr.Open('tmp/out.vrt')
@@ -186,7 +186,7 @@ def test_ogrmerge_7():
 
     # Match in single mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-src_geom_type POLYGON')
 
     ds = ogr.Open('tmp/out.vrt')
@@ -197,7 +197,7 @@ def test_ogrmerge_7():
 
     # No match in default mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-src_geom_type POINT')
 
     ds = ogr.Open('tmp/out.vrt')
@@ -208,7 +208,7 @@ def test_ogrmerge_7():
 
     # Match in default mode
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-src_geom_type POLYGON')
 
     ds = ogr.Open('tmp/out.vrt')
@@ -227,7 +227,7 @@ def test_ogrmerge_8():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-s_srs EPSG:32630 -t_srs EPSG:4326')
 
     ds = ogr.Open('tmp/out.vrt')
@@ -255,7 +255,7 @@ def test_ogrmerge_9():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-s_srs EPSG:32630 -t_srs EPSG:4326')
 
     ds = ogr.Open('tmp/out.vrt')
@@ -283,7 +283,7 @@ def test_ogrmerge_10():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-single -f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-single -f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-a_srs EPSG:32630')
 
     ds = ogr.Open('tmp/out.vrt')
@@ -309,7 +309,7 @@ def test_ogrmerge_11():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp '
+                                  '-f VRT -o tmp/out.vrt '+test_py_scripts.get_data_path('ogr')+'poly.shp '
                                   '-a_srs EPSG:32630')
 
     ds = ogr.Open('tmp/out.vrt')

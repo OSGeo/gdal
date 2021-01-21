@@ -75,7 +75,7 @@ input_checksum = (12603, 58561, 36064, 10807)
 def get_input_file():
     infile = make_temp_filename(0)
     if not os.path.isfile(infile):
-        shutil.copy('../gcore/data/stefan_full_rgba.tif', infile)
+        shutil.copy(test_py_scripts.get_data_path('gcore') + 'stefan_full_rgba.tif', infile)
     return infile
 
 
@@ -233,7 +233,7 @@ def test_gdal_calc_py_6():
     test_id, test_count = 6, 2
     out = make_temp_filename_list(test_id, test_count)
 
-    gdal.Translate(out[0], '../gcore/data/byte.tif', options='-a_nodata 74')
+    gdal.Translate(out[0], test_py_scripts.get_data_path('gcore') + 'byte.tif', options='-a_nodata 74')
     gdal_calc.Calc('A', A=out[0], overwrite=True, quiet=True, outfile=out[1], NoDataValue=1)
 
     for i, checksum in zip(range(test_count), (4672, 4673)):

@@ -32,6 +32,7 @@
 import os
 import sys
 import pytest
+from test_py_scripts import samples_path
 
 # Make sure we run from the directory of the script
 if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
@@ -47,7 +48,7 @@ import gdaltest
 
 def validate(filename, quiet=False):
 
-    path = '../../gdal/swig/python/samples'
+    path = samples_path
     if path not in sys.path:
         sys.path.append(path)
     try:
@@ -3191,7 +3192,7 @@ def test_gpkg_GeneralCmdLineProcessor():
            'scope=' not in ret_gdalinfo and \
            'scope=' not in ret_ogrinfo)
 
-    
+
 ###############################################################################
 
 

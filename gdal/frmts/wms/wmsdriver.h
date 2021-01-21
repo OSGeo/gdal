@@ -383,6 +383,11 @@ public:
         list2vec(vMax,pszMax);
     }
 
+    // Set open options for tiles
+    // Works like a <set>, only one entry with a give name can exist, last one set wins
+    // If the value is null, the entry is deleted
+    void SetTileOO(const char* pszName, const char* pszValue);
+
     void SetXML(const char *psz) {
         m_osXML.clear();
         if (psz)
