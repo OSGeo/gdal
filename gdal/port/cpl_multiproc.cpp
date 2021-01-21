@@ -299,7 +299,7 @@ CPLMutex*& CPLCreateOrAcquireMasterMutexInternal(double dfWaitInSeconds = 1000.0
     {
         // In case of unexpected call to CPLCleanupMasterMutex,
         // attempt this NOT thread-safe re-construction of the master mutex.
-        hCOAMutex = CPLCreateMutex();
+        hCOAMutex = CPLCreateUnacquiredMutex();
     }
 
     if( hCOAMutex )
