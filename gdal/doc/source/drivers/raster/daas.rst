@@ -51,16 +51,16 @@ Access to the API requires an authentication token. There are two
 methods supported:
 
 -  Authentication with an API key and a client id. They must be provided
-   respectively with the API_KEY open option (or GDAL_DAAS_API_KEY
+   respectively with the API_KEY open option (or :decl_configoption:`GDAL_DAAS_API_KEY`
    configuration option) and the CLIENT_ID open option (or
-   GDAL_DAAS_CLIENT_Id open option). In that case, the driver will
+   :decl_configoption:`GDAL_DAAS_CLIENT_Id` configuration option). In that case, the driver will
    authenticate against the authentication endpoint to get an access
    token.
 -  Directly providing the access token with the ACCESS_TOKEN open option
-   (or GDAL_DAAS_ACCESS_TOKEN open option).
+   (or :decl_configoption:`GDAL_DAAS_ACCESS_TOKEN` configuration option).
 
 In both cases, the X_FORWARDED_USER open option (or
-GDAL_DAAS_X_FORWARDED_USER configuration option) can be specified to
+:decl_configoption:`GDAL_DAAS_X_FORWARDED_USER` configuration option) can be specified to
 fill the HTTP X-Forwarded-User header in requests sent to the DAAS
 service endpoint with the user from which the request originates from.
 
