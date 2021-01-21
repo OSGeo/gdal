@@ -50,6 +50,8 @@ constexpr GUInt32 RETRY_SPATIAL_SPLIT = 2;
 // Let's limit to 100 MB uncompressed per request
 constexpr int knDEFAULT_SERVER_BYTE_LIMIT = 100 * 1024 * 1024;
 
+constexpr int MAIN_MASK_BAND_NUMBER = 0;
+
 /************************************************************************/
 /*                          GDALDAASBandDesc                            */
 /************************************************************************/
@@ -58,6 +60,7 @@ class GDALDAASBandDesc
 {
     public:
         int       nIndex = 0;
+        GDALDataType eDT = GDT_Unknown; // as declared in the GetMetadata response bands[]
         CPLString osName;
         CPLString osDescription;
         CPLString osColorInterp;
@@ -811,16 +814,6 @@ bool GDALDAASDataset::GetImageMetadata()
 
     bool bIgnoredError = false;
 
-    CPLString osPixelType(GetString(oProperties, "pixelType", true, bError));
-
-    m_eDT = GetGDALDataTypeFromDAASPixelType(osPixelType);
-    if( m_eDT == GDT_Unknown )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                "Unsupported value pixelType = '%s'", osPixelType.c_str());
-        bError = true;
-    }
-
     m_nActualBitDepth = GetInteger(oProperties, "actualBitDepth", false,
                                    bIgnoredError);
 
@@ -890,10 +883,10 @@ bool GDALDAASDataset::GetImageMetadata()
     }
 
     CPLJSONArray oBandArray = oProperties.GetArray("bands");
-    if( !oBandArray.IsValid() )
+    if( !oBandArray.IsValid() || oBandArray.Size() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                "Missing bands array");
+                "Missing or empty bands array");
         bError = true;
     }
     else
@@ -911,6 +904,20 @@ bool GDALDAASDataset::GetImageMetadata()
                 oDesc.osColorInterp = GetString(oBandObj, "colorInterpretation",
                                                 false, bIgnoredError);
                 oDesc.bIsMask = oBandObj.GetBool("isMask");
+
+                const CPLString osPixelType(GetString(oBandObj, "pixelType", true, bError));
+                oDesc.eDT = GetGDALDataTypeFromDAASPixelType(osPixelType);
+                if( oDesc.eDT == GDT_Unknown )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                            "Unsupported value pixelType = '%s'", osPixelType.c_str());
+                    bError = true;
+                }
+                if( i == 0 )
+                {
+                    m_eDT = oDesc.eDT;
+                }
+
                 if( !CPLFetchBool( m_papszOpenOptions, "MASKS", true ) &&
                     oDesc.bIsMask )
                 {
@@ -926,6 +933,12 @@ bool GDALDAASDataset::GetImageMetadata()
                 {
                     m_aoBandDesc.push_back(oDesc);
                 }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Invalid bands[] element");
+                bError = true;
             }
         }
     }
@@ -1894,7 +1907,6 @@ GUInt32 GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff,
     int nXBlocks = (nXOff + nXSize - 1) / nBlockXSize - nBlockXOff + 1;
     int nYBlocks = (nYOff + nYSize - 1) / nBlockYSize - nBlockYOff + 1;
 
-    const int nThisDTSize = GDALGetDataTypeSizeBytes(eDataType);
     int nTotalDataTypeSize = 0;
     const int nQueriedBands = static_cast<int>(anRequestedBands.size());
     for( int i = 0; i < nQueriedBands; i++ )
@@ -2029,6 +2041,7 @@ GUInt32 GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff,
         {
             if( anRequestedBands.size() > 1 && poGDS->GetRasterCount() > 1 )
             {
+                const int nThisDTSize = GDALGetDataTypeSizeBytes(eDataType);
                 const GIntBig nUncompressedSizeThisBand = 
                     static_cast<GIntBig>(nXBlocks) * nYBlocks *
                             nBlockXSize * nBlockYSize * nThisDTSize;
@@ -2078,7 +2091,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
         std::vector<int> anMasks;
         for( auto& iBand: anRequestedBands )
         {
-            if( iBand == 0 || poGDS->m_aoBandDesc[iBand-1].bIsMask )
+            if( iBand == MAIN_MASK_BAND_NUMBER || poGDS->m_aoBandDesc[iBand-1].bIsMask )
                 anMasks.push_back(iBand);
             else
                 anNonMasks.push_back(iBand);
@@ -2245,7 +2258,8 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     bool bOK = true;
     for( auto& iBand: anRequestedBands )
     {
-        auto desc = (iBand == 0) ? poGDS->m_poMaskBand->GetDescription() :
+        auto desc = (iBand == MAIN_MASK_BAND_NUMBER) ?
+                                   poGDS->m_poMaskBand->GetDescription() :
                                    poGDS->GetRasterBand(iBand)->GetDescription();
         if( EQUAL(desc, "" ) )
             bOK = false;
@@ -2293,7 +2307,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                 {
                     GByte* pabyDstBuffer = nullptr;
                     GDALDAASRasterBand* poIterBand;
-                    if( iBand == 0 )
+                    if( iBand == MAIN_MASK_BAND_NUMBER )
                     {
                         poIterBand = poGDS->m_poMaskBand;
                     }
@@ -2429,9 +2443,10 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     }
 
     // Get the actual data type of the buffer response
-    GDALDataType eBufferDataType = eDataType;
+    GDALDataType eBufferDataType =
+        anRequestedBands[0] == MAIN_MASK_BAND_NUMBER ? GDT_Byte : poGDS->m_aoBandDesc[anRequestedBands[0]-1].eDT;
     auto oBandArray = oDocRoot.GetArray("properties/bands");
-    if( oBandArray.IsValid() && oBandArray.Size() > 1 )
+    if( oBandArray.IsValid() && oBandArray.Size() >= 1 )
     {
         bool bIgnored;
         auto oBandProperties = oBandArray[0];
@@ -2561,7 +2576,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                 const int iBand = anRequestedBands[i];
                 GByte* pabyDstBuffer = nullptr;
                 GDALDAASRasterBand* poIterBand;
-                if( iBand == 0 )
+                if( iBand == MAIN_MASK_BAND_NUMBER )
                 {
                     poIterBand = poGDS->m_poMaskBand;
                 }
@@ -2598,15 +2613,15 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                 }
 
                 GDALRasterBand* poTileBand = poTileDS->GetRasterBand(i + 1);
-                const int nDTSize = GDALGetDataTypeSizeBytes(
-                    poIterBand->GetRasterDataType());
+                const auto eIterBandDT = poIterBand->GetRasterDataType();
+                const int nDTSize = GDALGetDataTypeSizeBytes(eIterBandDT);
                 eErr = poTileBand->RasterIO(GF_Read,
                     iXBlock * nBlockXSize,
                     iYBlock * nBlockYSize,
                     nBlockActualXSize, nBlockActualYSize,
                     pabyDstBuffer,
                     nBlockActualXSize, nBlockActualYSize,
-                    eDataType,
+                    eIterBandDT,
                     nDTSize, nDTSize * nBlockXSize, nullptr);
 
                 if( poBlock )
