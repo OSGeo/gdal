@@ -1,0 +1,925 @@
+<Dimap_Document version="1.1">
+<!-- this is a fake and stripped Dimap2 VHR2020 dataset -->
+	<Metadata_Identification>
+		<METADATA_FORMAT version="2.0">DIMAP</METADATA_FORMAT>
+		<METADATA_PROFILE>PNEO_ORTHO</METADATA_PROFILE>
+		<METADATA_SUBPROFILE>PRODUCT</METADATA_SUBPROFILE>
+		<METADATA_LANGUAGE>en</METADATA_LANGUAGE>
+	</Metadata_Identification>
+	<Dataset_Identification>
+		<DATASET_TYPE>RASTER_ORTHO</DATASET_TYPE>
+		<DATASET_NAME version="1.0">FOO_MS-FS_ORT</DATASET_NAME>
+		<DATASET_QL_PATH href="PREVIEW.JPG"></DATASET_QL_PATH>
+		<DATASET_QL_FORMAT>image/jpeg</DATASET_QL_FORMAT>
+		<Legal_Constraints>
+			<COPYRIGHT>Copyright</COPYRIGHT>
+			<LICENSE>License</LICENSE>
+		</Legal_Constraints>
+		<Security_Constraints></Security_Constraints>
+	</Dataset_Identification>
+	<Dataset_Content>
+		<SURFACE_AREA unit="square km">2.2754197622202037</SURFACE_AREA>
+		<CLOUD_COVERAGE unit="percent">77.98127298818147</CLOUD_COVERAGE>
+		<SNOW_COVERAGE unit="percent">0</SNOW_COVERAGE>
+		<Dataset_Components></Dataset_Components>
+		<Dataset_Extent>
+			<EXTENT_TYPE>Bounding_Box</EXTENT_TYPE>
+			<Vertex>
+				<LON>4.9191722725666835</LON>
+				<LAT>45.76779493067844</LAT>
+				<COL>0</COL>
+				<ROW>0</ROW>
+			</Vertex>
+			<Vertex>
+				<LON>4.937108342675127</LON>
+				<LAT>45.76779493067844</LAT>
+				<COL>1662</COL>
+				<ROW>0</ROW>
+			</Vertex>
+			<Vertex>
+				<LON>4.937108342675127</LON>
+				<LAT>45.75306404277349</LAT>
+				<COL>1662</COL>
+				<ROW>1365</ROW>
+			</Vertex>
+			<Vertex>
+				<LON>4.9191722725666835</LON>
+				<LAT>45.75306404277349</LAT>
+				<COL>0</COL>
+				<ROW>1365</ROW>
+			</Vertex>
+			<Vertex>
+				<LON>4.928140307620906</LON>
+				<LAT>45.76042948672597</LAT>
+				<COL>832</COL>
+				<ROW>684</ROW>
+			</Vertex>
+			<Center>
+				<LON>4.928140307620906</LON>
+				<LAT>45.76042948672597</LAT>
+				<COL>830</COL>
+				<ROW>682</ROW>
+			</Center>
+		</Dataset_Extent>
+	</Dataset_Content>
+	<Product_Information>
+		<Producer_Information>
+			<PRODUCER_NAME>PRODUCER_NAME</PRODUCER_NAME>
+			<PRODUCER_URL href="http://example.com/"></PRODUCER_URL>
+			<PRODUCER_CONTACT>foo@example.com</PRODUCER_CONTACT>
+			<PRODUCER_ADDRESS>Address</PRODUCER_ADDRESS>
+		</Producer_Information>
+		<Distributor_Information></Distributor_Information>
+		<Delivery_Identification>
+			<PRODUCTION_DATE>2021-01-14T09:25:33.000Z</PRODUCTION_DATE>
+			<JOB_ID>job_id</JOB_ID>
+			<PRODUCT_CODE>STD</PRODUCT_CODE>
+			<PRODUCT_TYPE>STANDARD</PRODUCT_TYPE>
+			<PRODUCT_INFO>PNEO</PRODUCT_INFO>
+			<DELIVERY_TYPE>NETWORK</DELIVERY_TYPE>
+			<Order_Identification>
+				<CUSTOMER_REFERENCE>PNEO_ORTHO_BUNDLE-FS</CUSTOMER_REFERENCE>
+				<INTERNAL_REFERENCE></INTERNAL_REFERENCE>
+				<COMMERCIAL_REFERENCE>PNEO_ORTHO_BUNDLE-FS</COMMERCIAL_REFERENCE>
+				<COMMERCIAL_ITEM>NONE</COMMERCIAL_ITEM>
+				<COMMENT>PNEO_ORTHO_BUNDLE-FS</COMMENT>
+			</Order_Identification>
+		</Delivery_Identification>
+	</Product_Information>
+	<Coordinate_Reference_System>
+		<Geodetic_CRS>
+			<CRS_TABLES version="0.0">EPSG</CRS_TABLES>
+			<GEODETIC_CRS_TYPE>GEOGRAPHIC2D</GEODETIC_CRS_TYPE>
+			<GEODETIC_CRS_NAME>WGS 84</GEODETIC_CRS_NAME>
+			<GEODETIC_CRS_CODE>urn:ogc:def:crs:EPSG::4326</GEODETIC_CRS_CODE>
+		</Geodetic_CRS>
+		<Temporal_CRS>
+			<CRS_TABLES version="0.0">ITU</CRS_TABLES>
+			<TEMPORAL_CRS_NAME>UTC</TEMPORAL_CRS_NAME>
+		</Temporal_CRS>
+	</Coordinate_Reference_System>
+	<Geoposition>
+		<Raster_CRS>
+			<RASTER_GEOMETRY>GROUND</RASTER_GEOMETRY>
+			<PIXEL_CRS_TYPE>CELL</PIXEL_CRS_TYPE>
+			<PIXEL_ORIENTATION>UL</PIXEL_ORIENTATION>
+			<PIXEL_ORIGIN>1</PIXEL_ORIGIN>
+		</Raster_CRS>
+		<Geoposition_Insert>
+			<ULXMAP unit="deg">4.919166876637048</ULXMAP>
+			<ULYMAP unit="deg">45.767800326608075</ULYMAP>
+			<XDIM unit="deg">1.0791859271024855e-05</XDIM>
+			<YDIM unit="deg">1.079185927102548e-05</YDIM>
+		</Geoposition_Insert>
+	</Geoposition>
+	<Processing_Information>
+		<Production_Facility>
+			<SOFTWARE version="bar">foo</SOFTWARE>
+			<PROCESSING_CENTER>Processing Center</PROCESSING_CENTER>
+		</Production_Facility>
+		<Product_Settings>
+			<PROCESSING_LEVEL>ORTHO</PROCESSING_LEVEL>
+			<SPECTRAL_PROCESSING>MS-FS</SPECTRAL_PROCESSING>
+			<Geometric_Settings>
+				<GEOMETRIC_PROCESSING>ORTHO</GEOMETRIC_PROCESSING>
+				<EPHEMERIS_USED>CORRECTED</EPHEMERIS_USED>
+				<ATTITUDES_USED>CORRECTED</ATTITUDES_USED>
+				<LIGHT_SPEED_SETTING>false</LIGHT_SPEED_SETTING>
+				<ATMOSPHERIC_REFRACTION_SETTING>true</ATMOSPHERIC_REFRACTION_SETTING>
+				<GROUND_SETTING>true</GROUND_SETTING>
+				<GROUND_DESC>To be defined</GROUND_DESC>
+				<VERTICAL_SETTING>true</VERTICAL_SETTING>
+				<VERTICAL_DESC>To be defined</VERTICAL_DESC>
+			</Geometric_Settings>
+			<Radiometric_Settings>
+				<RADIOMETRIC_PROCESSING>REFLECTANCE</RADIOMETRIC_PROCESSING>
+				<ATMOSPHERIC_RADIOMETRIC_SETTING>NONE</ATMOSPHERIC_RADIOMETRIC_SETTING>
+			</Radiometric_Settings>
+			<Sampling_Settings>
+				<RESAMPLING_SPACING unit="m">1.0791859271024855e-05</RESAMPLING_SPACING>
+				<RESAMPLING_KERNEL>optimized_bicubic</RESAMPLING_KERNEL>
+			</Sampling_Settings>
+			<Radiometric_Settings>
+				<MTF_Settings>
+					<PAN_RESTORATION>false</PAN_RESTORATION>
+					<MS_RESTORATION>false</MS_RESTORATION>
+				</MTF_Settings>
+			</Radiometric_Settings>
+		</Product_Settings>
+	</Processing_Information>
+	<Raster_Data>
+		<Raster_Dimensions>
+			<NROWS>1366</NROWS>
+			<NCOLS>1663</NCOLS>
+			<NBANDS>6</NBANDS>
+			<Tile_Set></Tile_Set>
+		</Raster_Dimensions>
+		<Raster_Encoding>
+			<DATA_TYPE>INTEGER</DATA_TYPE>
+			<NBITS>16</NBITS>
+			<SIGN></SIGN>
+			<COMPRESSION_TYPE>LOSSLESS</COMPRESSION_TYPE>
+		</Raster_Encoding>
+		<Data_Access>
+			<DATA_FILE_ORGANISATION>BAND_COMPOSITE</DATA_FILE_ORGANISATION>
+			<DATA_FILE_FORMAT>image/tiff</DATA_FILE_FORMAT>
+			<DATA_FILE_TILES>false</DATA_FILE_TILES>
+			<Data_Files>
+				<Data_File tile_R="1" tile_C="1">
+					<DATA_FILE_PATH href="IMG_RGB_R1C1.TIF"></DATA_FILE_PATH>
+				</Data_File>
+				<Raster_Display>
+					<Raster_Index_List>
+						<Raster_Index>
+							<BAND_ID>R</BAND_ID>
+							<BAND_NAME>RED</BAND_NAME>
+							<BAND_INDEX>1</BAND_INDEX>
+						</Raster_Index>
+						<Raster_Index>
+							<BAND_ID>G</BAND_ID>
+							<BAND_NAME>GREEN</BAND_NAME>
+							<BAND_INDEX>2</BAND_INDEX>
+						</Raster_Index>
+						<Raster_Index>
+							<BAND_ID>B</BAND_ID>
+							<BAND_NAME>BLUE</BAND_NAME>
+							<BAND_INDEX>3</BAND_INDEX>
+						</Raster_Index>
+					</Raster_Index_List>
+					<Band_Display_Order>
+						<RED_CHANNEL>R</RED_CHANNEL>
+						<GREEN_CHANNEL>G</GREEN_CHANNEL>
+						<BLUE_CHANNEL>B</BLUE_CHANNEL>
+					</Band_Display_Order>
+					<Special_Value>
+						<SPECIAL_VALUE_TEXT>NODATA</SPECIAL_VALUE_TEXT>
+						<SPECIAL_VALUE_COUNT>0</SPECIAL_VALUE_COUNT>
+						<Special_Value_Color></Special_Value_Color>
+					</Special_Value>
+				</Raster_Display>
+			</Data_Files>
+			<Data_Files>
+				<Data_File tile_R="1" tile_C="1">
+					<DATA_FILE_PATH href="IMG_NED_R1C1.TIF"></DATA_FILE_PATH>
+				</Data_File>
+				<Raster_Display>
+					<Raster_Index_List>
+						<Raster_Index>
+							<BAND_ID>NIR</BAND_ID>
+							<BAND_NAME>NIR</BAND_NAME>
+							<BAND_INDEX>4</BAND_INDEX>
+						</Raster_Index>
+						<Raster_Index>
+							<BAND_ID>RE</BAND_ID>
+							<BAND_NAME>RED EDGE</BAND_NAME>
+							<BAND_INDEX>2</BAND_INDEX>
+						</Raster_Index>
+						<Raster_Index>
+							<BAND_ID>DB</BAND_ID>
+							<BAND_NAME>DEEP BLUE</BAND_NAME>
+							<BAND_INDEX>3</BAND_INDEX>
+						</Raster_Index>
+					</Raster_Index_List>
+					<Band_Display_Order>
+						<RED_CHANNEL>NIR</RED_CHANNEL>
+						<GREEN_CHANNEL>RE</GREEN_CHANNEL>
+						<BLUE_CHANNEL>DB</BLUE_CHANNEL>
+					</Band_Display_Order>
+					<Special_Value>
+						<SPECIAL_VALUE_TEXT>NODATA</SPECIAL_VALUE_TEXT>
+						<SPECIAL_VALUE_COUNT>0</SPECIAL_VALUE_COUNT>
+						<Special_Value_Color></Special_Value_Color>
+					</Special_Value>
+				</Raster_Display>
+			</Data_Files>
+		</Data_Access>
+	</Raster_Data>
+	<Radiometric_Data>
+		<Dynamic_Range>
+			<ACQUISITION_RANGE>12</ACQUISITION_RANGE>
+			<PRODUCT_RANGE>16</PRODUCT_RANGE>
+		</Dynamic_Range>
+		<Instrument_Configuration>
+			<DETECTION_MODE>TDI_MODE</DETECTION_MODE>
+			<TDI_CONFIGURATION></TDI_CONFIGURATION>
+		</Instrument_Configuration>
+		<Dynamic_Adjustment>
+			<ADJUSTMENT_TYPE>NONE</ADJUSTMENT_TYPE>
+		</Dynamic_Adjustment>
+		<Histogram_Band_List>
+			<Histogram_Band>
+				<BAND_ID>R</BAND_ID>
+				<VALUES>[snip]</VALUES>
+				<MIN>1</MIN>
+				<MAX>1</MAX>
+				<MEAN>1</MEAN>
+				<STDV>0</STDV>
+			</Histogram_Band>
+			<Histogram_Band>
+				<BAND_ID>G</BAND_ID>
+				<VALUES>[snip]</VALUES>
+				<MIN>2</MIN>
+				<MAX>2</MAX>
+				<MEAN>2</MEAN>
+				<STDV>0</STDV>
+			</Histogram_Band>
+			<Histogram_Band>
+				<BAND_ID>B</BAND_ID>
+				<VALUES>[snip]</VALUES>
+				<MIN>3</MIN>
+				<MAX>3</MAX>
+				<MEAN>3</MEAN>
+				<STDV>0</STDV>
+			</Histogram_Band>
+			<Histogram_Band>
+				<BAND_ID>NIR</BAND_ID>
+				<VALUES>[snip]</VALUES>
+				<MIN>4</MIN>
+				<MAX>4</MAX>
+				<MEAN>4</MEAN>
+				<STDV>0</STDV>
+			</Histogram_Band>
+			<Histogram_Band>
+				<BAND_ID>DB</BAND_ID>
+				<VALUES>[snip]</VALUES>
+				<MIN>5</MIN>
+				<MAX>5</MAX>
+				<MEAN>5</MEAN>
+				<STDV>0</STDV>
+			</Histogram_Band>
+			<Histogram_Band>
+				<BAND_ID>RE</BAND_ID>
+				<VALUES>[snip]</VALUES>
+				<MIN>6</MIN>
+				<MAX>6</MAX>
+				<MEAN>6</MEAN>
+				<STDV>0</STDV>
+			</Histogram_Band>
+		</Histogram_Band_List>
+		<Radiometric_Calibration>
+			<Band_Spectral_Range>
+				<BAND_ID>R</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Spectral Range values of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM>
+					<MIN>0.619</MIN>
+					<MAX>0.69</MAX>
+				</FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Spectral_Range>
+			<Band_Radiance>
+				<BAND_ID>R</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance (RHO) to TOA Radiance (L). Formulae L=RHO/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/steradian/micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.00270666432682</GAIN>
+				<BIAS>25.8609873087</BIAS>
+			</Band_Radiance>
+			<Band_Solar_Irradiance>
+				<BAND_ID>R</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<VALUE>1553.1</VALUE>
+				<FWHM></FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Solar_Irradiance>
+			<Band_DigitalNumber>
+				<BAND_ID>R</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>TOA Radiance (L) to Raw radiometric count (DN). Formulae: DN=L/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.126582278481</GAIN>
+				<BIAS>0</BIAS>
+			</Band_DigitalNumber>
+			<Band_Reflectance>
+				<BAND_ID>R</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance gained value (RHO') to Reflectance (RHO). Formulae: RHO=RHO'/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>10000</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Reflectance>
+			<Band_Spectral_Range>
+				<BAND_ID>G</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Spectral Range values of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM>
+					<MIN>0.533</MIN>
+					<MAX>0.591</MAX>
+				</FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Spectral_Range>
+			<Band_Radiance>
+				<BAND_ID>G</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance (RHO) to TOA Radiance (L). Formulae L=RHO/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/steradian/micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.00259610396266</GAIN>
+				<BIAS>50.2160963834</BIAS>
+			</Band_Radiance>
+			<Band_Solar_Irradiance>
+				<BAND_ID>G</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<VALUE>1817.5</VALUE>
+				<FWHM></FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Solar_Irradiance>
+			<Band_DigitalNumber>
+				<BAND_ID>G</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>TOA Radiance (L) to Raw radiometric count (DN). Formulae: DN=L/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.149253731343</GAIN>
+				<BIAS>0</BIAS>
+			</Band_DigitalNumber>
+			<Band_Reflectance>
+				<BAND_ID>G</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance gained value (RHO') to Reflectance (RHO). Formulae: RHO=RHO'/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>10000</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Reflectance>
+			<Band_Spectral_Range>
+				<BAND_ID>B</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Spectral Range values of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM>
+					<MIN>0.446</MIN>
+					<MAX>0.52</MAX>
+				</FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Spectral_Range>
+			<Band_Radiance>
+				<BAND_ID>B</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance (RHO) to TOA Radiance (L). Formulae L=RHO/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/steradian/micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.00333001195491</GAIN>
+				<BIAS>67.9368091322</BIAS>
+			</Band_Radiance>
+			<Band_Solar_Irradiance>
+				<BAND_ID>B</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<VALUE>1975.3</VALUE>
+				<FWHM></FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Solar_Irradiance>
+			<Band_DigitalNumber>
+				<BAND_ID>B</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>TOA Radiance (L) to Raw radiometric count (DN). Formulae: DN=L/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.161290322581</GAIN>
+				<BIAS>0</BIAS>
+			</Band_DigitalNumber>
+			<Band_Reflectance>
+				<BAND_ID>B</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance gained value (RHO') to Reflectance (RHO). Formulae: RHO=RHO'/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>10000</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Reflectance>
+			<Band_Spectral_Range>
+				<BAND_ID>NIR</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Spectral Range values of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM>
+					<MIN>0.768</MIN>
+					<MAX>0.888</MAX>
+				</FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Spectral_Range>
+			<Band_Radiance>
+				<BAND_ID>NIR</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance (RHO) to TOA Radiance (L). Formulae L=RHO/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/steradian/micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.00299798903048</GAIN>
+				<BIAS>12.2870894677</BIAS>
+			</Band_Radiance>
+			<Band_Solar_Irradiance>
+				<BAND_ID>NIR</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<VALUE>1063.1</VALUE>
+				<FWHM></FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Solar_Irradiance>
+			<Band_DigitalNumber>
+				<BAND_ID>NIR</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>TOA Radiance (L) to Raw radiometric count (DN). Formulae: DN=L/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.126582278481</GAIN>
+				<BIAS>0</BIAS>
+			</Band_DigitalNumber>
+			<Band_Reflectance>
+				<BAND_ID>NIR</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance gained value (RHO') to Reflectance (RHO). Formulae: RHO=RHO'/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>10000</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Reflectance>
+			<Band_Spectral_Range>
+				<BAND_ID>DB</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Spectral Range values of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM>
+					<MIN>0.416</MIN>
+					<MAX>0.457</MAX>
+				</FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Spectral_Range>
+			<Band_Radiance>
+				<BAND_ID>DB</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance (RHO) to TOA Radiance (L). Formulae L=RHO/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/steradian/micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.00381139544089</GAIN>
+				<BIAS>6.86384629269</BIAS>
+			</Band_Radiance>
+			<Band_Solar_Irradiance>
+				<BAND_ID>DB</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<VALUE>1790.8</VALUE>
+				<FWHM></FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Solar_Irradiance>
+			<Band_DigitalNumber>
+				<BAND_ID>DB</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>TOA Radiance (L) to Raw radiometric count (DN). Formulae: DN=L/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.133333333333</GAIN>
+				<BIAS>0</BIAS>
+			</Band_DigitalNumber>
+			<Band_Reflectance>
+				<BAND_ID>DB</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance gained value (RHO') to Reflectance (RHO). Formulae: RHO=RHO'/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>10000</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Reflectance>
+			<Band_Spectral_Range>
+				<BAND_ID>RE</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Spectral Range values of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM>
+					<MIN>0.697</MIN>
+					<MAX>0.75</MAX>
+				</FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Spectral_Range>
+			<Band_Radiance>
+				<BAND_ID>RE</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance (RHO) to TOA Radiance (L). Formulae L=RHO/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/steradian/micrometer</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.00422719150392</GAIN>
+				<BIAS>3.51220591733</BIAS>
+			</Band_Radiance>
+			<Band_Solar_Irradiance>
+				<BAND_ID>RE</BAND_ID>
+				<CALIBRATION_DATE>2019-05-20T09:07:00Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Solar irradiance value of raw radiometric Band</MEASURE_DESC>
+				<MEASURE_UNIT>watt/m2/micron</MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<VALUE>1350.4</VALUE>
+				<FWHM></FWHM>
+				<GAIN>0</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Solar_Irradiance>
+			<Band_DigitalNumber>
+				<BAND_ID>RE</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>TOA Radiance (L) to Raw radiometric count (DN). Formulae: DN=L/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>0.0980392156863</GAIN>
+				<BIAS>0</BIAS>
+			</Band_DigitalNumber>
+			<Band_Reflectance>
+				<BAND_ID>RE</BAND_ID>
+				<CALIBRATION_DATE>2020-02-05T09:56:28.208790Z</CALIBRATION_DATE>
+				<MEASURE_DESC>Reflectance gained value (RHO') to Reflectance (RHO). Formulae: RHO=RHO'/GAIN+BIAS</MEASURE_DESC>
+				<MEASURE_UNIT></MEASURE_UNIT>
+				<MEASURE_UNCERTAINTY>0</MEASURE_UNCERTAINTY>
+				<FWHM></FWHM>
+				<GAIN>10000</GAIN>
+				<BIAS>0</BIAS>
+			</Band_Reflectance>
+		</Radiometric_Calibration>
+		<Bad_Columns></Bad_Columns>
+	</Radiometric_Data>
+	<Geometric_Data>
+		<Refined_Model>
+			<Coordinate_Reference_System>
+				<Geodetic_CRS>
+					<Coordinate_System>
+						<CS_Axes></CS_Axes>
+					</Coordinate_System>
+					<Geometric_Datum></Geometric_Datum>
+					<Coordinate_Transformation>
+						<CT_Parameters></CT_Parameters>
+					</Coordinate_Transformation>
+				</Geodetic_CRS>
+				<Temporal_CRS></Temporal_CRS>
+			</Coordinate_Reference_System>
+			<Time>
+				<Time_Range></Time_Range>
+			</Time>
+			<Ephemeris>
+				<Points_List></Points_List>
+			</Ephemeris>
+			<Attitudes>
+				<QuaternionList></QuaternionList>
+			</Attitudes>
+			<Geometric_Calibration>
+				<Instrument_Calibration>
+					<Band_Calibration_List></Band_Calibration_List>
+				</Instrument_Calibration>
+			</Geometric_Calibration>
+		</Refined_Model>
+		<Use_Area>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>TOP_LEFT</LOCATION_TYPE>
+				<COL>0</COL>
+				<ROW>0</ROW>
+				<TIME>2017-04-12T11:06:01.976Z</TIME>
+				<SATELLITE_ALTITUDE>624605.5523094777</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.95239760554955</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.042073438505547</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.6551898021842977</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.043824766685143</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.163628025463603</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-10.8331459875158</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.037172414319008</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.7496652875802</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.318377309807055</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.2294261762621899</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2018438732275722</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>TOP_CENTER</LOCATION_TYPE>
+				<COL>831</COL>
+				<ROW>0</ROW>
+				<TIME>2017-04-12T11:06:01.975Z</TIME>
+				<SATELLITE_ALTITUDE>624605.5626767837</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.97201394316298</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.10245466193819</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.6712523160491988</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.104443907570268</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.161611357739138</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-10.901656937617949</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.103927455841502</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.76393768609</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.31991603966428</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.2299490077191502</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2026839428768887</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>TOP_RIGHT</LOCATION_TYPE>
+				<COL>1662</COL>
+				<ROW>0</ROW>
+				<TIME>2017-04-12T11:06:01.975Z</TIME>
+				<SATELLITE_ALTITUDE>624605.5734687159</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.9720870092056</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.162789768940154</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.687197996567753</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.165030867713762</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.163345010006599</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-10.969409620380818</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.17065147165483</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.77821090993356</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.32145324795101</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.2304744125753064</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2030397546133536</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>CENTER_LEFT</LOCATION_TYPE>
+				<COL>0</COL>
+				<ROW>682</ROW>
+				<TIME>2017-04-12T11:06:02.095Z</TIME>
+				<SATELLITE_ALTITUDE>624603.6277000243</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.9686156073402</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.060821907831537</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.6584515131548969</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.062615886710702</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.162597966673848</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-10.854454008453922</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.05785691987792</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.7481069539907</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.32559634788303</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.229581392406757</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2026442352287896</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>CENTER</LOCATION_TYPE>
+				<COL>831</COL>
+				<ROW>682</ROW>
+				<TIME>2017-04-12T11:06:02.094Z</TIME>
+				<SATELLITE_ALTITUDE>624603.6384247728</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.96867893793004</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.121153768513174</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.6743687711950941</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.12318337396411</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.1643482412893844</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-10.922194058910987</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.124561131602404</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.76238124344286</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.3271354095661</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.2301113860864856</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2026091934076724</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>CENTER_RIGHT</LOCATION_TYPE>
+				<COL>1662</COL>
+				<ROW>682</ROW>
+				<TIME>2017-04-12T11:06:02.093Z</TIME>
+				<SATELLITE_ALTITUDE>624603.6489089616</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.96882453590342</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.18154084209746</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.6903077351523098</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.183824215455823</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.1660977506261485</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-10.989998539208134</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.191339971010642</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.7766565579612</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.32867297089503</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.2306318348921557</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2033546030493332</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>BOTTOM_LEFT</LOCATION_TYPE>
+				<COL>0</COL>
+				<ROW>1365</ROW>
+				<TIME>2017-04-12T11:06:02.213Z</TIME>
+				<SATELLITE_ALTITUDE>624601.7008103533</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.98698983521814</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.079568593674372</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.6617169017456962</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.081397964588682</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.161150679743503</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-10.875832317189168</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.078535196796244</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.7465454736418</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.332825928977606</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.2297407280824655</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2026307812605794</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>BOTTOM_CENTER</LOCATION_TYPE>
+				<COL>831</COL>
+				<ROW>1365</ROW>
+				<TIME>2017-04-12T11:06:02.213Z</TIME>
+				<SATELLITE_ALTITUDE>624601.7117507895</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.98714614592976</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.139965094522386</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.6776326486257906</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.142036903208174</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.1628862551820816</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-10.943643077375624</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.145311830927215</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.7608218969785</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.33436534903973</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.2302637489622923</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2031107022458947</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+			<Located_Geometric_Values>
+				<LOCATION_TYPE>BOTTOM_RIGHT</LOCATION_TYPE>
+				<COL>1662</COL>
+				<ROW>1365</ROW>
+				<TIME>2017-04-12T11:06:02.212Z</TIME>
+				<SATELLITE_ALTITUDE>624601.7229644675</SATELLITE_ALTITUDE>
+				<Acquisition_Angles>
+					<IMAGE_ORIENTATION unit="deg">0</IMAGE_ORIENTATION>
+					<AZIMUTH_ANGLE unit="deg">179.9872400553361</AZIMUTH_ANGLE>
+					<VIEWING_ANGLE_ACROSS_TRACK unit="deg">10.200320203199135</VIEWING_ANGLE_ACROSS_TRACK>
+					<VIEWING_ANGLE_ALONG_TRACK unit="deg">-0.6935428874482622</VIEWING_ANGLE_ALONG_TRACK>
+					<VIEWING_ANGLE unit="deg">10.202643509428341</VIEWING_ANGLE>
+					<INCIDENCE_ANGLE_ALONG_TRACK unit="deg">-2.1646494424987295</INCIDENCE_ANGLE_ALONG_TRACK>
+					<INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">-11.011405001261998</INCIDENCE_ANGLE_ACROSS_TRACK>
+					<INCIDENCE_ANGLE unit="deg">11.212057268853268</INCIDENCE_ANGLE>
+				</Acquisition_Angles>
+				<Solar_Incidences>
+					<SUN_AZIMUTH unit="deg">165.77509914027766</SUN_AZIMUTH>
+					<SUN_ELEVATION unit="deg">52.33590324601941</SUN_ELEVATION>
+				</Solar_Incidences>
+				<Ground_Sample_Distance>
+					<GSD_ACROSS_TRACK unit="m">1.2307893423586884</GSD_ACROSS_TRACK>
+					<GSD_ALONG_TRACK unit="m">1.2034663846691482</GSD_ALONG_TRACK>
+				</Ground_Sample_Distance>
+			</Located_Geometric_Values>
+		</Use_Area>
+	</Geometric_Data>
+	<Quality_Assessment>
+		<Planimetric_Accuracy_Measurement>
+			<QUALITY_TABLES>DTED2</QUALITY_TABLES>
+			<MEASURE_NAME>Absolute Horizontal Accuracy</MEASURE_NAME>
+			<MEASURE_ID>AHA</MEASURE_ID>
+			<MEASURE_DESC>Estimated accuracy assessed through a priori deviation errors (Model, GCP, DEM)</MEASURE_DESC>
+			<MEASURE_TYPE>MATCHING</MEASURE_TYPE>
+			<Quality_Values>
+				<ACCURACY_MEAN unit="m">0</ACCURACY_MEAN>
+				<ACCURACY_STDV unit="m">0</ACCURACY_STDV>
+				<ACCURACY_CE68 unit="m">0</ACCURACY_CE68>
+				<ACCURACY_CE90 unit="m">0</ACCURACY_CE90>
+			</Quality_Values>
+		</Planimetric_Accuracy_Measurement>
+		<Imaging_Quality_Measurement>
+			<QUALITY_TABLES>PNEO</QUALITY_TABLES>
+			<MEASURE_NAME>Area_Of_Interest (ROI)</MEASURE_NAME>
+			<MEASURE_DESC>Region of interest mask</MEASURE_DESC>
+			<MEASURE_TYPE>AUTOMATIC</MEASURE_TYPE>
+			<QUALITY_MASK>
+				<Component>
+					<COMPONENT_TITLE>Area_Of_Interest (ROI)</COMPONENT_TITLE>
+					<COMPONENT_CONTENT>GML MASK</COMPONENT_CONTENT>
+					<COMPONENT_TYPE>ENCAPSULATED</COMPONENT_TYPE>
+					<COMPONENT_PATH href="MASKS/ROI.GML"></COMPONENT_PATH>
+				</Component>
+			</QUALITY_MASK>
+		</Imaging_Quality_Measurement>
+	</Quality_Assessment>
+	<Dataset_Sources>
+		<Source_Identification>
+			<SOURCE_ID>DS_PNEO4_201704121106009_PS1_FR1_FR1_E005N46_004192</SOURCE_ID>
+			<SOURCE_TYPE>Strip_Source</SOURCE_TYPE>
+			<Strip_Source>
+				<MISSION>PNEO</MISSION>
+				<MISSION_INDEX>4</MISSION_INDEX>
+				<IMAGING_DATE>2017-04-12</IMAGING_DATE>
+				<IMAGING_TIME>11:06:01.9</IMAGING_TIME>
+			</Strip_Source>
+		</Source_Identification>
+	</Dataset_Sources>
+</Dimap_Document>

@@ -1,0 +1,57 @@
+<Dimap_Document version="1.1">
+<!-- this is a fake and stripped Dimap2 VHR2020 dataset -->
+	<Metadata_Identification>
+		<METADATA_FORMAT version="2.0">DIMAP</METADATA_FORMAT>
+		<METADATA_PROFILE>VOLUME</METADATA_PROFILE>
+		<METADATA_SUBPROFILE>ORDER_VOLUME</METADATA_SUBPROFILE>
+		<METADATA_LANGUAGE>en</METADATA_LANGUAGE>
+	</Metadata_Identification>
+	<Dataset_Identification>
+		<DATASET_NAME>PNEO Volume Description: PNEO_ORTHO_BUNDLE-FS</DATASET_NAME>
+		<DATASET_ID>DS ID</DATASET_ID>
+	</Dataset_Identification>
+	<Product_Information>
+		<Producer_Information>
+			<PRODUCER_NAME>PRODUCER_NAME</PRODUCER_NAME>
+			<PRODUCER_URL href="http://example.com/"></PRODUCER_URL>
+			<PRODUCER_CONTACT>foo@example.com</PRODUCER_CONTACT>
+			<PRODUCER_ADDRESS>Address</PRODUCER_ADDRESS>
+		</Producer_Information>
+		<Delivery_Identification>
+			<PRODUCTION_DATE>2021-01-14T09:25:33.000Z</PRODUCTION_DATE>
+			<PRODUCT_CODE>STD</PRODUCT_CODE>
+			<PRODUCT_TYPE>STANDARD</PRODUCT_TYPE>
+			<Order_Identification>
+				<CUSTOMER_REFERENCE>PNEO_ORTHO_BUNDLE-FS</CUSTOMER_REFERENCE>
+				<INTERNAL_REFERENCE></INTERNAL_REFERENCE>
+				<COMMERCIAL_REFERENCE>PNEO_ORTHO_BUNDLE-FS</COMMERCIAL_REFERENCE>
+				<COMMERCIAL_ITEM>NONE</COMMERCIAL_ITEM>
+				<COMMENT>PNEO_ORTHO_BUNDLE-FS</COMMENT>
+			</Order_Identification>
+		</Delivery_Identification>
+	</Product_Information>
+	<Dataset_Content>
+		<Dataset_Components>
+			<Component>
+				<COMPONENT_TITLE>ORTHO MS-FS PNEO_ORTHO_BUNDLE-FS</COMPONENT_TITLE>
+				<COMPONENT_TYPE>DIMAP</COMPONENT_TYPE>
+				<COMPONENT_PATH index="PNEO_ORTHO_BUNDLE-FS_STD_A" href="MS-FS/DIM_MS-FS.XML"></COMPONENT_PATH>
+				<COMPONENT_QL_PATH index="PNEO_ORTHO_BUNDLE-FS_STD_A" href="MS-FS/PREVIEW.JPG"></COMPONENT_QL_PATH>
+			</Component>
+			<Component>
+                            <!-- not included -->
+				<COMPONENT_TITLE>ORTHO PAN PNEO_ORTHO_BUNDLE-FS</COMPONENT_TITLE>
+				<COMPONENT_TYPE>DIMAP</COMPONENT_TYPE>
+				<COMPONENT_PATH index="PNEO_ORTHO_BUNDLE-FS_STD_A" href="PAN/DIM_PAN.XML"></COMPONENT_PATH>
+				<COMPONENT_QL_PATH index="PNEO_ORTHO_BUNDLE-FS_STD_A" href="PAN/PREVIEW.JPG"></COMPONENT_QL_PATH>
+			</Component>
+			<Component>
+                            <!-- not included -->
+				<COMPONENT_TITLE>Digital Documentation about DIMAP format</COMPONENT_TITLE>
+				<COMPONENT_TYPE>ENCAPSULATED</COMPONENT_TYPE>
+				<COMPONENT_PATH href="http://example.com"></COMPONENT_PATH>
+				<COMPONENT_QL_PATH href="LIBRARY/VOL_LOGO.JPG"></COMPONENT_QL_PATH>
+			</Component>
+		</Dataset_Components>
+	</Dataset_Content>
+</Dimap_Document>
