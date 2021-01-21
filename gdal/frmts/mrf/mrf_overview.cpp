@@ -1,5 +1,5 @@
 /*
-* Copyright 2014-2015 Esri
+* Copyright 2014-2021 Esri
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -18,7 +18,7 @@
 * Project:  Meta Raster File Format Driver Implementation, overlay support
 * Purpose:  Implementation overlay support for MRF
 *
-* Author:   Lucian Plesea, Lucian.Plesea@jpl.nasa.gov, lplesea@esri.com
+* Author:   Lucian Plesea, Lucian.Plesea jpl.nasa.gov, lplesea esri.com
 *
 ******************************************************************************
 *  This source file contains the non GDAL standard part of the MRF overview building
@@ -27,10 +27,6 @@
 
 #include "marfa.h"
 #include <vector>
-
-CPL_CVSID("$Id$")
-
-using std::vector;
 
 NAMESPACE_MRF_START
 
@@ -238,37 +234,36 @@ template<> void AverageByFour<double>(double *buff, int xsz, int ysz, double ndv
  * either side
  */
 
-CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
-                                     int Width,int Height,
-                                     int srcLevel, int recursive,
-                                     int sampling_mode)
+CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY, int Width,int Height,
+                                 int srcLevel, int recursive, int sampling_mode)
 {
-    GDALRasterBand *b0=GetRasterBand(1);
-    if ( b0->GetOverviewCount() <= srcLevel)
+    CPLErr status = CE_None;
+    GDALRasterBand *b0 = GetRasterBand(1);
+    if (b0->GetOverviewCount() <= srcLevel)
         return CE_None;
 
-    int BlockXOut = BlockX/2 ; // Round down
+    int BlockXOut = BlockX / 2 ; // Round down
     Width += BlockX & 1; // Increment width if rounding down
-    int BlockYOut = BlockY/2 ; // Round down
+    int BlockYOut = BlockY / 2 ; // Round down
     Height += BlockY & 1; // Increment height if rounding down
 
-    int WidthOut = Width/2 + (Width & 1); // Round up
-    int HeightOut = Height/2 + (Height & 1); // Round up
+    int WidthOut = Width / 2 + (Width & 1); // Round up
+    int HeightOut = Height / 2 + (Height & 1); // Round up
 
     int bands = GetRasterCount();
-    int tsz_x,tsz_y;
+    int tsz_x, tsz_y;
     b0->GetBlockSize(&tsz_x, &tsz_y);
     GDALDataType eDataType = b0->GetRasterDataType();
 
-    int pixel_size = GDALGetDataTypeSize(eDataType)/8; // Bytes per pixel per band
+    int pixel_size = GDALGetDataTypeSizeBytes(eDataType); // Bytes per pixel per band
     int line_size = tsz_x * pixel_size; // A line has this many bytes
     int buffer_size = line_size * tsz_y; // A block size in bytes
 
     // Build a vector of input and output bands
-    vector<GDALRasterBand *> src_b;
-    vector<GDALRasterBand *> dst_b;
+    std::vector<GDALRasterBand *> src_b;
+    std::vector<GDALRasterBand *> dst_b;
 
-    for (int band=1; band<=bands; band++) {
+    for (int band=1; band <= bands; band++) {
         if (srcLevel==0)
             src_b.push_back(GetRasterBand(band));
         else
@@ -276,8 +271,8 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
         dst_b.push_back(GetRasterBand(band)->GetOverview(srcLevel));
     }
 
-    // Allocate space for four blocks
-    void *buffer = CPLMalloc(buffer_size *4 );
+    // Allocate input space for four blocks
+    std::vector<GByte> buffer(buffer_size * 4);
 
     // If the page is interleaved, we only need to check the page exists
     // otherwise we need to check each band block
@@ -287,10 +282,10 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
     // The inner loop is the band, so it is efficient for interleaved data.
     // There is no penalty for separate bands either.
     //
-    for (int y=0; y<HeightOut; y++) {
+    for (int y = 0; y < HeightOut && CE_None == status; y++) {
         int dst_offset_y = BlockYOut+y;
-        int src_offset_y = dst_offset_y *2;
-        for (int x=0; x<WidthOut; x++) {
+        int src_offset_y = dst_offset_y * 2;
+        for (int x = 0; x < WidthOut && CE_None == status; x++) {
             int dst_offset_x = BlockXOut + x;
             int src_offset_x = dst_offset_x * 2;
 
@@ -298,15 +293,15 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
             bool has_data = false;
             for (int band = 0; band < check_bands; band++) {
                 MRFRasterBand *bsrc = reinterpret_cast<MRFRasterBand *>(src_b[band]);
-                has_data = has_data || bsrc->TestBlock(src_offset_x, src_offset_y);
-                has_data = has_data || bsrc->TestBlock(src_offset_x + 1, src_offset_y);
-                has_data = has_data || bsrc->TestBlock(src_offset_x, src_offset_y + 1);
-                has_data = has_data || bsrc->TestBlock(src_offset_x + 1, src_offset_y + 1);
+                has_data |= bsrc->TestBlock(src_offset_x, src_offset_y);
+                has_data |= bsrc->TestBlock(src_offset_x + 1, src_offset_y);
+                has_data |= bsrc->TestBlock(src_offset_x, src_offset_y + 1);
+                has_data |= bsrc->TestBlock(src_offset_x + 1, src_offset_y + 1);
             }
 
-            // No data in any of the bands
+            // No data in any of the bands for this output block
             if (!has_data) {
-                // check that the output already is void, otherwise write an empty block
+                // check that the output is already empty, otherwise force write an empty block
                 for (int band = 0; band < check_bands; band++) {
                     MRFRasterBand *bdst = reinterpret_cast<MRFRasterBand *>(dst_b[band]);
                     if (bdst->TestBlock(dst_offset_x, dst_offset_y)) {
@@ -320,7 +315,7 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
             }
 
             // Do it band at a time so we can work in grayscale
-            for (int band=0; band<bands; band++) { // Counting from zero in a vector
+            for (int band=0; band < bands; band++) { // Counting from zero in a vector
 
                 int sz_x = 2*tsz_x ,sz_y = 2*tsz_y ;
                 MRFRasterBand *bsrc = static_cast<MRFRasterBand *>(src_b[band]);
@@ -342,30 +337,25 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
 
                 if (adjusted) { // Fill with no data for partial buffer, instead of padding afterwards
                     size_t bsb = bsrc->blockSizeBytes();
-                    char *b=static_cast<char *>(buffer);
+                    auto b = buffer.data();
                     bsrc->FillBlock(b);
                     bsrc->FillBlock(b + bsb);
-                    bsrc->FillBlock(b + 2*bsb);
-                    bsrc->FillBlock(b + 3*bsb);
+                    bsrc->FillBlock(b + 2 * bsb);
+                    bsrc->FillBlock(b + 3 * bsb);
                 }
 
                 int hasNoData = 0;
                 double ndv = bsrc->GetNoDataValue(&hasNoData);
 
-                CPLErr eErr = bsrc->RasterIO( GF_Read,
+                status = bsrc->RasterIO( GF_Read,
                     src_offset_x*tsz_x, src_offset_y*tsz_y, // offset in input image
                     sz_x, sz_y, // Size in output image
-                    buffer, sz_x, sz_y, // Buffer and size in buffer
-                    eDataType, // Requested type
-                    pixel_size, 2 * line_size
-#if GDAL_VERSION_MAJOR >= 2
-                    ,nullptr
-#endif
-                    ); // Pixel and line space
-                if( eErr != CE_None )
-                {
-                    // TODO ?
-                    CPLError(CE_Failure, CPLE_AppDefined, "RasterIO() failed");
+                    buffer.data(), sz_x, sz_y, // Buffer and size in buffer
+                    eDataType, pixel_size, 2 * line_size, nullptr);
+
+                if (CE_None != status) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "MRF: Patch - RasterIO() read failed");
+                    break; // Get out now
                 }
 
                 // Count the NoData values
@@ -373,18 +363,18 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
                 if (sampling_mode == SAMPLING_Avg) {
 
 // Dispatch based on data type
-// Use an ugly temporary macro to make it look easy
+// Use a temporary macro to make it look easy
 // Runs the optimized version if the page is full with data
 #define resample(T)\
     if (hasNoData) {\
-        count = MatchCount((T *)buffer, 4 * tsz_x * tsz_y, T(ndv));\
+        count = MatchCount((T *)buffer.data(), 4 * tsz_x * tsz_y, T(ndv));\
         if (4 * tsz_x * tsz_y == count)\
-            bdst->FillBlock(buffer);\
+            bdst->FillBlock(buffer.data());\
         else if (0 != count)\
-            AverageByFour((T *)buffer, tsz_x, tsz_y, T(ndv));\
+            AverageByFour((T *)buffer.data(), tsz_x, tsz_y, T(ndv));\
         }\
     if (0 == count)\
-        AverageByFour((T *)buffer, tsz_x, tsz_y);\
+        AverageByFour((T *)buffer.data(), tsz_x, tsz_y);\
     break;
 
                     switch (eDataType) {
@@ -403,14 +393,14 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
 
 #define resample(T)\
     if (hasNoData) {\
-        count = MatchCount((T *)buffer, 4 * tsz_x * tsz_y, T(ndv));\
+        count = MatchCount((T *)buffer.data(), 4 * tsz_x * tsz_y, T(ndv));\
         if (4 * tsz_x * tsz_y == count)\
-            bdst->FillBlock(buffer);\
+            bdst->FillBlock(buffer.data());\
         else if (0 != count)\
-            NearByFour((T *)buffer, tsz_x, tsz_y, T(ndv));\
+            NearByFour((T *)buffer.data(), tsz_x, tsz_y, T(ndv));\
         }\
     if (0 == count)\
-        NearByFour((T *)buffer, tsz_x, tsz_y);\
+        NearByFour((T *)buffer.data(), tsz_x, tsz_y);\
     break;
                     switch (eDataType) {
                     case GDT_Byte:      resample(GByte);
@@ -436,38 +426,32 @@ CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
                 if ( bdst->GetYSize() < dst_offset_y * sz_y + sz_y )
                     sz_y = bdst->GetYSize() - dst_offset_y * sz_y;
 
-                eErr = bdst->RasterIO( GF_Write,
-                    dst_offset_x*tsz_x, dst_offset_y*tsz_y, // offset in output image
+                status = bdst->RasterIO(GF_Write, dst_offset_x*tsz_x, dst_offset_y*tsz_y, // offset in output image
                     sz_x, sz_y, // Size in output image
-                    buffer, sz_x, sz_y, // Buffer and size in buffer
-                    eDataType, // Requested type
-                    pixel_size, line_size
-#if GDAL_VERSION_MAJOR >= 2
-                    ,nullptr
-#endif
-                ); // Pixel and line space
+                    buffer.data(), sz_x, sz_y, // Buffer and size in buffer
+                    eDataType, pixel_size, line_size, nullptr);
 
-                if( eErr != CE_None )
-                {
-                    // TODO ?
-                    CPLError(CE_Failure, CPLE_AppDefined, "RasterIO() failed");
+                if (CE_None != status) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "MRF: Patch - RasterIO() write failed");
+                    break;
                 }
-            }
+            } // Band loop
 
-            // Mark the input data as no longer needed, saves RAM
-            for (int band=0; band<bands; band++)
+            // Mark input data as no longer needed, saves RAM
+            for (int band=0; band < bands; band++)
                 src_b[band]->FlushCache();
         }
     }
 
-    CPLFree(buffer);
+    if (CE_None != status)
+        return status; // Report problems
 
     for (int band=0; band<bands; band++)
-        dst_b[band]->FlushCache(); // Commit the output to disk after each overview
+        dst_b[band]->FlushCache(); // Commit destination to disk after each overview
 
     if (!recursive)
         return CE_None;
-    return PatchOverview( BlockXOut, BlockYOut, WidthOut, HeightOut, srcLevel+1, true);
+    return PatchOverview(BlockXOut, BlockYOut, WidthOut, HeightOut, srcLevel + 1, true);
 }
 
 NAMESPACE_MRF_END

@@ -1,5 +1,7 @@
 /*
-* Copyright 2016 Esri
+* Copyright 2016-2021 Esri
+*
+* Author: Lucian Plesea
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -19,16 +21,10 @@
 */
 
 #include "marfa.h"
-CPL_CVSID("$Id$")
 
 CPL_C_START
 #include <jpeglib.h>
-
-#ifdef INTERNAL_PNG
-#include "../png/libpng/png.h"
-#else
 #include <png.h>
-#endif
 CPL_C_END
 
 NAMESPACE_MRF_START
@@ -42,11 +38,6 @@ template<int N> static bool AllAlpha(const buf_mgr &src, const ILImage &img) {
         s += stride;
     return s >= stop;
 }
-
-// Fully opaque
-#define opaque AllAlpha<255>
-// Fully transparent
-#define transparent AllAlpha<0>
 
 // Strip the alpha from an RGBA buffer, safe to use in place
 static void RGBA2RGB(const char *start, const char *stop, char *target) {
@@ -86,8 +77,7 @@ static void L2LA(const char *start, char *stop, const char *source_end) {
     }
 }
 
-static CPLErr initBuffer(buf_mgr &b)
-{
+static CPLErr initBuffer(buf_mgr &b) {
     b.buffer = (char *)(CPLMalloc(b.size));
     if (b.buffer != nullptr)
         return CE_None;
@@ -95,13 +85,11 @@ static CPLErr initBuffer(buf_mgr &b)
     return CE_Failure;
 }
 
-CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
-{
-    CPLErr retval = CE_None;
-
+CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
     const static GUInt32 JPEG_SIG = 0xe0ffd8ff; // JPEG 4CC code
     const static GUInt32 PNG_SIG  = 0x474e5089;  // PNG 4CC code
 
+    CPLErr retval = CE_None;
     ILImage image(img);
     GUInt32 signature;
     memcpy(&signature, src.buffer, sizeof(GUInt32));
@@ -123,14 +111,12 @@ CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
                 L2LA(dst.buffer, dst.buffer + dst.size, temp.buffer + temp.size);
         }
     }
-    else if( PNG_SIG == CPL_LSBWORD32(signature) ) { // Should be PNG
+    else if (PNG_SIG == CPL_LSBWORD32(signature)) { // Should be PNG, it reads as 4 bands
         PNG_Codec codec(image);
-        // PNG codec expands to 4 bands
         return codec.DecompressPNG(dst, src);
     }
     else {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Not a JPEG or PNG tile");
+        CPLError(CE_Failure, CPLE_NotSupported, "Not a JPEG or PNG tile");
         retval = CE_Failure;
     }
 
@@ -138,42 +124,32 @@ CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 }
 
 // The PNG internal palette is set on first band write
-CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
-{
+CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
     ILImage image(img);
-
     buf_mgr temp = { nullptr, static_cast<size_t>(img.pageSizeBytes) };
     CPLErr retval = initBuffer(temp);
     if (retval != CE_None)
         return retval;
 
-    try {
-        if (opaque(src, image)) { // If all pixels are opaque, compress as JPEG
-            if (image.pagesize.c == 4)
-                RGBA2RGB(src.buffer, src.buffer + src.size, temp.buffer);
-            else
-                LA2L(src.buffer, src.buffer + src.size, temp.buffer);
-
-            image.pagesize.c -= 1; // RGB or Grayscale only for JPEG
-            JPEG_Codec codec(image);
-            codec.rgb = rgb;
-            codec.optimize = optimize;
-            codec.sameres = sameres;
-            retval = codec.CompressJPEG(dst, temp);
-        }
-        else if (transparent(src, image)) {
-            dst.size = 0; // Don't store fully transparent pages
-        }
+    if (AllAlpha<255>(src, image)) { // If all pixels are opaque, compress as JPEG
+        if (image.pagesize.c == 4)
+            RGBA2RGB(src.buffer, src.buffer + src.size, temp.buffer);
         else
-        {
-            PNG_Codec codec(image);
-            codec.deflate_flags = deflate_flags;
-            retval = codec.CompressPNG(dst, src);
-        }
+            LA2L(src.buffer, src.buffer + src.size, temp.buffer);
+
+        image.pagesize.c -= 1; // RGB or Grayscale only for JPEG
+        JPEG_Codec codec(image);
+        codec.rgb = rgb;
+        codec.optimize = optimize;
+        codec.sameres = sameres;
+        retval = codec.CompressJPEG(dst, temp);
     }
-    catch (const CPLErr& err) {
-        retval = err;
+    else if (!AllAlpha<0>(src, image)) {
+        PNG_Codec codec(image);
+        codec.deflate_flags = deflate_flags;
+        retval = codec.CompressPNG(dst, src);
     }
+    else dst.size = 0; // Don't store fully transparent pages
 
     CPLFree(temp.buffer);
     return retval;
@@ -191,25 +167,18 @@ JPNG_Band::JPNG_Band( MRFDataset *pDS, const ILImage &image,
     sameres(FALSE),
     optimize(false)
 {   // Check error conditions
-    if( image.dt != GDT_Byte )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Data type not supported by MRF JPNG");
+    if (image.dt != GDT_Byte) {
+        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPNG");
         return;
     }
-    if( image.order != IL_Interleaved ||
-        (image.pagesize.c != 4 && image.pagesize.c != 2) )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "MRF JPNG can only handle 2 or 4 interleaved bands");
+    if (image.order != IL_Interleaved || (image.pagesize.c != 4 && image.pagesize.c != 2)) {
+        CPLError(CE_Failure, CPLE_NotSupported, "MRF JPNG can only handle 2 or 4 interleaved bands");
         return;
     }
 
-    if( img.pagesize.c == 4 )
-    { // RGBA can have storage flavors
+    if (img.pagesize.c == 4) { // RGBA can have storage flavors
         CPLString const &pm = pDS->GetPhotometricInterpretation();
-        if (pm == "RGB" || pm == "MULTISPECTRAL")
-        { // Explicit RGB or MS
+        if (pm == "RGB" || pm == "MULTISPECTRAL") { // Explicit RGB or MS
             rgb = TRUE;
             sameres = TRUE;
         }

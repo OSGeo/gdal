@@ -13,7 +13,7 @@
 GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-OBJ	=	Packer_RLE.obj Tif_band.obj Raw_band.obj PNG_band.obj JPEG_band.obj JPNG_band.obj\
+OBJ	=	Packer_RLE.obj Tif_band.obj PNG_band.obj JPEG_band.obj JPNG_band.obj\
     mrf_band.obj mrf_overview.obj mrf_util.obj marfa_dataset.obj
 
 PLUGIN_DLL =	gdal_mrf.dll
