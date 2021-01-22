@@ -2042,7 +2042,7 @@ CPLErr MRFDataset::WriteTile(void* buff, GUIntBig infooffset, GUIntBig size)
         if (tinfo.size == GIntBig(net64(size))) { // Might be identical
             if (size != 0) {
                 // Use the temporary buffer
-                tbuff.resize(size);
+                tbuff.resize(static_cast<size_t>(size));
                 VSIFSeekL(l_dfp, infooffset, SEEK_SET);
                 VSIFReadL(tbuff.data(), 1, tbuff.size(), l_dfp);
                 // Need to write it if not the same
@@ -2078,7 +2078,7 @@ CPLErr MRFDataset::WriteTile(void* buff, GUIntBig infooffset, GUIntBig size)
         // Spacing should be 0 in MP safe mode, this doesn't have much of effect
         // Use the existing data, spacing content is not guaranteed
         for (GUIntBig pending = spacing; pending != 0; pending -= std::max(pending, size))
-            VSIFWriteL(buff, 1, std::max(pending, size), l_dfp); // Usually only once
+            VSIFWriteL(buff, 1, static_cast<size_t>(std::max(pending, size)), l_dfp); // Usually only once
 
         if (static_cast<size_t>(size) != VSIFWriteL(buff, 1, static_cast<size_t>(size), l_dfp))
             ret = CE_Failure;
