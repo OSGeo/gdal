@@ -144,6 +144,14 @@ static int     CPLAcquireSpinLock( CPLSpinLock* );
 static void    CPLReleaseSpinLock( CPLSpinLock* );
 static void    CPLDestroySpinLock( CPLSpinLock* );
 
+#ifndef CPL_MULTIPROC_PTHREAD
+#ifndef MUTEX_NONE
+static CPLMutex*    CPLCreateOrAcquireMasterMutex( double );
+static CPLMutex*&   CPLCreateOrAcquireMasterMutexInternal( double );
+static CPLMutex*    CPLCreateUnacquiredMutex();
+#endif
+#endif
+
 // We don't want it to be publicly used since it solves rather tricky issues
 // that are better to remain hidden.
 void CPLFinalizeTLS();
@@ -268,7 +276,45 @@ int CPLCreateOrAcquireMutex( CPLMutex **phMutex, double dfWaitInSeconds )
 #ifndef CPL_MULTIPROC_PTHREAD
 
 #ifndef MUTEX_NONE
-static CPLMutex *hCOAMutex = nullptr;
+CPLMutex* CPLCreateUnacquiredMutex()
+{
+    CPLMutex *hMutex = CPLCreateMutex();
+    if (hMutex)
+    {
+        CPLReleaseMutex(hMutex);
+    }
+    return hMutex;
+}
+
+CPLMutex*& CPLCreateOrAcquireMasterMutexInternal(double dfWaitInSeconds = 1000.0)
+{
+    // The dynamic initialization of the block scope hCOAMutex
+    // with static storage duration is thread-safe in C++11
+    static CPLMutex *hCOAMutex = CPLCreateUnacquiredMutex();
+
+    // Erroneous call to CPLCleanupMasterMutex or memory issues
+    CPLAssert( hCOAMutex );
+
+    if ( !hCOAMutex )
+    {
+        // In case of unexpected call to CPLCleanupMasterMutex,
+        // attempt this NOT thread-safe re-construction of the master mutex.
+        hCOAMutex = CPLCreateUnacquiredMutex();
+    }
+
+    if( hCOAMutex )
+    {
+        CPLAcquireMutex( hCOAMutex, dfWaitInSeconds );
+    }
+
+    return hCOAMutex;
+}
+
+CPLMutex* CPLCreateOrAcquireMasterMutex(double dfWaitInSeconds = 1000.0)
+{
+    CPLMutex *hCOAMutex = CPLCreateOrAcquireMasterMutexInternal(dfWaitInSeconds);
+    return hCOAMutex;
+}
 #endif
 
 #ifdef MUTEX_NONE
@@ -284,21 +330,11 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
 {
     bool bSuccess = false;
 
-    // Ironically, creation of this initial mutex is not threadsafe
-    // even though we use it to ensure that creation of other mutexes
-    // is threadsafe.
+    CPLMutex* hCOAMutex = CPLCreateOrAcquireMasterMutex( dfWaitInSeconds );
     if( hCOAMutex == nullptr )
     {
-        hCOAMutex = CPLCreateMutex();
-        if( hCOAMutex == nullptr )
-        {
-            *phMutex = nullptr;
-            return FALSE;
-        }
-    }
-    else
-    {
-        CPLAcquireMutex( hCOAMutex, dfWaitInSeconds );
+        *phMutex = nullptr;
+        return FALSE;
     }
 
     if( *phMutex == nullptr )
@@ -337,21 +373,11 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
 {
     bool bSuccess = false;
 
-    // Ironically, creation of this initial mutex is not threadsafe
-    // even though we use it to ensure that creation of other mutexes.
-    // is threadsafe.
+    CPLMutex* hCOAMutex = CPLCreateOrAcquireMasterMutex( dfWaitInSeconds );
     if( hCOAMutex == nullptr )
     {
-        hCOAMutex = CPLCreateMutex();
-        if( hCOAMutex == nullptr )
-        {
-            *phLock = nullptr;
-            return FALSE;
-        }
-    }
-    else
-    {
-        CPLAcquireMutex( hCOAMutex, dfWaitInSeconds );
+        *phLock = nullptr;
+        return FALSE;
     }
 
     if( *phLock == nullptr )
@@ -396,8 +422,10 @@ void CPLCleanupMasterMutex()
 {
 #ifndef CPL_MULTIPROC_PTHREAD
 #ifndef MUTEX_NONE
+    CPLMutex*& hCOAMutex = CPLCreateOrAcquireMasterMutexInternal();
     if( hCOAMutex != nullptr )
     {
+        CPLReleaseMutex( hCOAMutex );
         CPLDestroyMutex( hCOAMutex );
         hCOAMutex = nullptr;
     }
@@ -579,7 +607,7 @@ void CPLCondWait( CPLCond * /* hCond */ , CPLMutex* /* hMutex */ ) {}
 /*                         CPLCondTimedWait()                           */
 /************************************************************************/
 
-CPLCondTimedWaitReason CPLCondTimedWait( CPLCond * /* hCond */ , 
+CPLCondTimedWaitReason CPLCondTimedWait( CPLCond * /* hCond */ ,
                                          CPLMutex* /* hMutex */, double )
 {
     return COND_TIMED_WAIT_OTHER;
