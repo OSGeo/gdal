@@ -2092,7 +2092,7 @@ CPLErr MRFDataset::WriteTile(void* buff, GUIntBig infooffset, GUIntBig size)
         //
         if (CE_None == ret && mp_safe) { // readback and check
             if (tbuff.size() < size)
-                tbuff.resize(size);
+                tbuff.resize(static_cast<size_t>(size));
             VSIFSeekL(l_dfp, offset, SEEK_SET);
             VSIFReadL(tbuff.data(), 1, tbuff.size(), l_dfp);
             same = std::equal(tbuff.begin(), tbuff.end(), static_cast<GByte*>(buff));
