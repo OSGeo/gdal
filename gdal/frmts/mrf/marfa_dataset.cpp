@@ -2069,6 +2069,7 @@ CPLErr MRFDataset::WriteTile(void* buff, GUIntBig infooffset, GUIntBig size)
             AddVersion();
     }
 
+    bool same = true;
     if (size) do {
         // start of critical MP section
         VSIFSeekL(l_dfp, 0, SEEK_END);
@@ -2089,18 +2090,14 @@ CPLErr MRFDataset::WriteTile(void* buff, GUIntBig infooffset, GUIntBig size)
         // This makes the caching MRF MP safe on file systems that implement append mode fully,
         // without using explicit locks
         //
-        if (ret == CE_None && mp_safe) {
-            // Use a temporary readback buffer
-            if (tbuff.empty())
+        if (CE_None == ret && mp_safe) { // readback and check
+            if (tbuff.size() < size)
                 tbuff.resize(size);
             VSIFSeekL(l_dfp, offset, SEEK_SET);
             VSIFReadL(tbuff.data(), 1, tbuff.size(), l_dfp);
-            if (std::equal(tbuff.begin(), tbuff.end(), static_cast<GByte *>(buff)))
-                break; // Success, get out of the loop
-            // Otherwise the tbuf stays large and will retry the write
-            // This works only if the file is opened in append mode
+            same = std::equal(tbuff.begin(), tbuff.end(), static_cast<GByte*>(buff));
         }
-    } while (CE_None == ret);
+    } while (CE_None == ret && mp_safe && !same);
 
     if (CE_None != ret) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Tile write failed");
