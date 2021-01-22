@@ -301,7 +301,7 @@ CPLMutex*& CPLCreateOrAcquireMasterMutexInternal(double dfWaitInSeconds = 1000.0
     {
         // Fall back to this, ironically, NOT thread-safe re-initialisation of
         // hCOAMutex in case of a memory error or call to CPLCleanupMasterMutex
-        // sequenced in an unusual, unexected or erroneous way.
+        // sequenced in an unusual, unexpected or erroneous way.
         // For example, an unusual sequence could be:
         //   GDALDriverManager has been instantiated,
         //   then OGRCleanupAll is called which calls CPLCleanupMasterMutex,
