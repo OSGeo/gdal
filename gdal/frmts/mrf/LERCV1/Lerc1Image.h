@@ -129,8 +129,6 @@ protected:
     // returns true if all floating point values in the region have the same binary representation
     bool isallsameval(int r0, int r1, int c0, int c1) const;
 
-    static int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError);
-
     bool writeZTile(Byte** ppByte, int& numBytes, int r0, int r1, int c0, int c1,
         int numValidPixel, float zMin, float zMax, double maxZError) const;
 
