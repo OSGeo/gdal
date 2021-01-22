@@ -178,7 +178,7 @@ static bool blockwrite(Byte** ppByte, const std::vector<unsigned int>& d) {
     int n = numBytesUInt(numElements);
     int numBits = nBits(maxElem); // 0 to 28
 
-    // use the upper 2 bits to encode the type used for numElements: Byte, ushort, or uint
+    // use bits67 to encode the type used for numElements: Byte, ushort, or uint
     // n is in {1, 2, 4}
     // 0xc0 is invalid, will trigger an error
     **ppByte = static_cast<Byte>(numBits | bits67[n-1]);
@@ -204,7 +204,7 @@ static bool blockwrite(Byte** ppByte, const std::vector<unsigned int>& d) {
         }
     }
 
-    // There are between 1 and 31 bits left to write
+    // There are between 1 and 4 bytes left to write
     int nbytes = 4;
     while (bits >= 8) {
         acc >>= 8;
