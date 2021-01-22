@@ -292,13 +292,22 @@ CPLMutex*& CPLCreateOrAcquireMasterMutexInternal(double dfWaitInSeconds = 1000.0
     // with static storage duration is thread-safe in C++11
     static CPLMutex *hCOAMutex = CPLCreateUnacquiredMutex();
 
-    // Erroneous call to CPLCleanupMasterMutex or memory issues
-    CPLAssert( hCOAMutex );
+    // WARNING: although adding an CPLAssert(hCOAMutex); might seem logical
+    // here, do not enable it (see comment below). It calls CPLError that
+    // uses the hCOAMutex itself leading to recursive mutex acquisition
+    // and likely a stack overflow.
 
     if ( !hCOAMutex )
     {
-        // In case of unexpected call to CPLCleanupMasterMutex,
-        // attempt this NOT thread-safe re-construction of the master mutex.
+        // Fall back to this, ironically, NOT thread-safe re-initialisation of
+        // hCOAMutex in case of a memory error or call to CPLCleanupMasterMutex
+        // sequenced in an unusual, unexected or erroneous way.
+        // For example, an unusual sequence could be:
+        //   GDALDriverManager has been instantiated,
+        //   then OGRCleanupAll is called which calls CPLCleanupMasterMutex,
+        //   then CPLFreeConfig is called which acquires the hCOAMutex
+        //   that has already been released and destroyed.
+
         hCOAMutex = CPLCreateUnacquiredMutex();
     }
 
