@@ -581,7 +581,7 @@ static int numBytesZTile(int nValues, float zMin, float zMax, double maxZError) 
         || ((double)zMax - zMin) / (2 * maxZError) > MAXQ) // max of 28 bits
         return(int)(1 + nValues * sizeof(float)); // Stored as such
     unsigned int maxElem = (int)(((double)zMax - zMin) / (2 * maxZError) + 0.5);
-    int nb = 1 + numBytesUInt(zMin);
+    int nb = 1 + numBytesFlt(zMin);
     if (maxElem == 0)
         return nb;
     return nb + 1 + numBytesUInt(nValues) + (nValues * nBits(maxElem) + 7) / 8;
