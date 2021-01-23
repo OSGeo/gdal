@@ -580,7 +580,7 @@ static int numBytesZTile(int nValues, float zMin, float zMax, double maxZError) 
     if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax)
         || ((double)zMax - zMin) / (2 * maxZError) > MAXQ) // max of 28 bits
         return(int)(1 + nValues * sizeof(float)); // Stored as such
-    unsigned int maxElem = (int)(((double)zMax - zMin) / (2 * maxZError) + 0.5);
+    unsigned int maxElem = static_cast<unsigned int>(((double)zMax - zMin) / (2 * maxZError) + 0.5);
     int nb = 1 + numBytesFlt(zMin);
     if (maxElem == 0)
         return nb;
