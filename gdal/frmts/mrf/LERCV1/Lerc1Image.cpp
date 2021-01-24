@@ -1,5 +1,5 @@
 /*
-Copyright 2015 - 2020 Esri
+Copyright 2015 - 2021 Esri
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,10 +28,16 @@ Contributors:  Thomas Maurer
 #include <algorithm>
 
 NAMESPACE_LERC1_START
-#define MAX_RUN 32767
-#define MIN_RUN 5
+
+// max quantized value, 28 bits
+// It is wasting a few bits, because a float has only 24bits of precision
+static const double MAXQ = 0x1000000;
+
+// RLE constants
+static const int MAX_RUN = 32767;
+static const int MIN_RUN = 5;
 // End of Transmission
-#define EOT -(MAX_RUN + 1)
+static const int EOT = -(MAX_RUN + 1);
 
 // Decode a RLE bitmask, size should be already set
 // Returns false if input seems wrong
@@ -151,8 +157,15 @@ int BitMaskV1::RLEsize() const {
 
 // Lookup tables for number of bytes in float and int, forward and reverse
 static const Byte bits67[4] = { 0x80, 0x40, 0xc0, 0 }; // shifted left 6 bits
-static const Byte stib67[4] = { 4, 2, 1, 0 }; // 0 is invalid
+static const Byte stib67[4] = { 4, 2, 1, 0 }; // Last one is not used
 static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
+
+// Bits required to store v
+static int nBits(unsigned int v) {
+    int n = 0;
+    while (v >> n) n++;
+    return n;
+}
 
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
@@ -163,11 +176,9 @@ static bool blockwrite(Byte** ppByte, const std::vector<unsigned int>& d) {
     unsigned int maxElem = *std::max_element(d.begin(), d.end());
     unsigned int numElements = (unsigned int)d.size();
     int n = numBytesUInt(numElements);
-    int numBits = 0; // 0 to 23
-    while (maxElem >> numBits)
-        numBits++;
+    int numBits = nBits(maxElem); // 0 to 28
 
-    // use the upper 2 bits to encode the type used for numElements: Byte, ushort, or uint
+    // use bits67 to encode the type used for numElements: Byte, ushort, or uint
     // n is in {1, 2, 4}
     // 0xc0 is invalid, will trigger an error
     **ppByte = static_cast<Byte>(numBits | bits67[n-1]);
@@ -193,7 +204,7 @@ static bool blockwrite(Byte** ppByte, const std::vector<unsigned int>& d) {
         }
     }
 
-    // There are between 1 and 31 bits left to write
+    // There are between 1 and 4 bytes left to write
     int nbytes = 4;
     while (bits >= 8) {
         acc >>= 8;
@@ -223,13 +234,13 @@ static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d)
     size -= n;
     if (static_cast<size_t>(numElements) > d.size())
         return false;
-    d.resize(numElements);
     if (numBits == 0) { // Nothing to read, all zeros
         d.resize(0);
         d.resize(numElements, 0);
         return true;
     }
 
+    d.resize(numElements);
     unsigned int numBytes = (numElements * numBits + 7) / 8;
     if (size < numBytes)
         return false;
@@ -252,31 +263,18 @@ static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d)
             val <<= (numBits - bits);
         }
         unsigned int nb = std::min(numBytes, 4u);
-        switch (nb) {
-        case 4:
+        if (4u == nb)
             memcpy(&acc, *ppByte, 4);
-            break;
-        case 0:
-            return false; // Need at least one byte
-        default: // read just a few bytes in the high bytes of an int
+        else // Read only a few bytes at the high end of acc
             memcpy(reinterpret_cast<Byte*>(&acc) + (4 - nb), *ppByte, nb);
-        }
         *ppByte += nb;
         numBytes -= nb;
+
         bits += 32 - numBits;
         val |= acc >> bits;
         acc <<= 32 - bits;
     }
     return numBytes == 0;
-}
-
-static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigned int maxElem) {
-    static const Byte ntbnn[32] = { 0,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0 };
-    int numBits = 0;
-    while (maxElem >> numBits)
-        numBits++;
-    unsigned int numUInts = (numElem * numBits + 31) / 32;
-    return 1 + numBytesUInt(numElem) + numUInts * sizeof(unsigned int) - ntbnn[(numElem * numBits) & 0x1f];
 }
 
 static const int CNT_Z = 8;
@@ -569,7 +567,27 @@ static Byte* writeFlt(Byte* ptr, float z, int n) {
     return ptr + n;
 }
 
-// Pass bArr==nulptr to estimate the size but skip the write
+// Only small, exact integer values return 1 or 2, otherwise 4
+static int numBytesFlt(float z) {
+    float s = static_cast<float>(static_cast<signed short>(z));
+    float c = static_cast<float>(static_cast<signed char>(z));
+    return (c == z) ? 1 : (s == z) ? 2 : 4;
+}
+
+static int numBytesZTile(int nValues, float zMin, float zMax, double maxZError) {
+    if (nValues == 0 || (zMin == 0 && zMax == 0))
+        return 1;
+    if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax)
+        || ((double)zMax - zMin) / (2 * maxZError) > MAXQ) // max of 28 bits
+        return(int)(1 + nValues * sizeof(float)); // Stored as such
+    unsigned int maxElem = static_cast<unsigned int>(((double)zMax - zMin) / (2 * maxZError) + 0.5);
+    int nb = 1 + numBytesFlt(zMin);
+    if (maxElem == 0)
+        return nb;
+    return nb + 1 + numBytesUInt(nValues) + (nValues * nBits(maxElem) + 7) / 8;
+}
+
+// Pass bArr == nullptr to estimate the size but skip the write
 bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
     Byte* bArr, int& numBytes, float& maxValInImg) const
 {
@@ -600,7 +618,7 @@ bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
                 else {
                     numBytesNeeded = numBytesZTile(numValidPixel, zMin, zMax, maxZError);
                     // Try moving zMin up by maxZError, it may require fewer bytes
-                    // A bit less than maxZError, to avoid quantizing underflow
+                    // A bit less than maxZError, to avoid quantization underflow
                     float zm = static_cast<float>(zMin + 0.999999 * maxZError);
                     if (numFinite == numValidPixel && zm <= zMax) {
                         int nBN = numBytesZTile(numValidPixel, zm, zMax, maxZError);
@@ -704,13 +722,6 @@ bool Lerc1Image::computeZStats(int r0, int r1, int c0, int c1,
     return true;
 }
 
-// Only small, exact integer values return 1 or 2, otherwise 4
-static int numBytesFlt(float z) {
-    float s = static_cast<float>(static_cast<signed short>(z));
-    float c = static_cast<float>(static_cast<signed char>(z));
-    return (c == z) ? 1 : (s == z) ? 2 : 4;
-}
-
 // Returns true if all floats in the region have exactly the same binary representation
 // This makes it usable for non-finite values
 bool Lerc1Image::isallsameval(int r0, int r1, int c0, int c1) const
@@ -721,16 +732,6 @@ bool Lerc1Image::isallsameval(int r0, int r1, int c0, int c1) const
             if (val != *reinterpret_cast<const uint32_t*>(&(*this)(row, col)))
                 return false;
     return true;
-}
-
-int Lerc1Image::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) {
-    if (numValidPixel == 0 || (zMin == 0 && zMax == 0))
-        return 1;
-    if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax)
-        || ((double)zMax - zMin) / (2 * maxZError) > 0x10000000)
-        return(int)(1 + numValidPixel * sizeof(float));
-    unsigned int maxElem = (unsigned int)(((double)zMax - zMin) / (2 * maxZError) + 0.5);
-    return 1 + numBytesFlt(zMin) + (maxElem ? computeNumBytesNeededByStuffer(numValidPixel, maxElem) : 0);
 }
 
 //
@@ -749,7 +750,7 @@ bool Lerc1Image::writeZTile(Byte** ppByte, int& numBytes,
         return true;
     }
     if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax) ||
-        ((double)zMax - zMin) / (2 * maxZError) > 0x10000000) {  // we'd need > 28 bit
+        ((double)zMax - zMin) / (2 * maxZError) > MAXQ) {  // we'd need > 28 bit
         // write z's as flt arr uncompressed
         *ptr++ = 0; // flag
         for (int row = r0; row < r1; row++)

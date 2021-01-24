@@ -18,7 +18,7 @@
 * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright 2014-2015 Esri
+* Copyright 2014-2021 Esri
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@
 */
 
 /******************************************************************************
- * $Id$
  *
  * Project:  Meta Raster Format
  * Purpose:  MRF structures
@@ -123,13 +122,11 @@ struct ILSize {
     GInt32 x, y, z, c;
     GIntBig l; // Dual use, sometimes it holds the number of pages
     ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
-        const int c_ = -1, const int l_ = -1)
-    {
-        x = x_; y = y_; z = z_; c = c_; l = l_;
-    }
+        const int c_ = -1, const int l_ = -1):
+        x(x_), y(y_), z(z_), c(c_), l(l_)
+    {}
 
-    bool operator==(const ILSize& other) const
-    {
+    bool operator==(const ILSize& other) const {
         return ((x == other.x) && (y == other.y) && (z == other.z) &&
             (c == other.c) && (l == other.l));
     }
@@ -182,19 +179,16 @@ typedef struct ILImage {
  *  Call netXX() to guarantee big endian
  *
  */
-static inline unsigned short int swab16(const unsigned short int val)
-{
+static inline unsigned short int swab16(const unsigned short int val) {
     return (val << 8) | (val >> 8);
 }
 
-static inline unsigned int swab32(unsigned int val)
-{
+static inline unsigned int swab32(unsigned int val) {
     return (unsigned int)(swab16((unsigned short int) val)) << 16
         | swab16((unsigned short int) (val >> 16));
 }
 
-static inline unsigned long long int swab64(const unsigned long long int val)
-{
+static inline unsigned long long int swab64(const unsigned long long int val) {
     return (unsigned long long int) (swab32((unsigned int)val)) << 32
         | swab32((unsigned int)(val >> 32));
 }
@@ -205,18 +199,17 @@ static inline unsigned long long int swab64(const unsigned long long int val)
 #ifdef CPL_MSB
 #define NET_ORDER true
 // These could be macros, but for the side effects related to type
-static inline unsigned short net16(const unsigned short x)
-{
+static inline unsigned short net16(const unsigned short x) {
     return (x);
 }
-static inline unsigned int net32(const unsigned int x)
-{
+static inline unsigned int net32(const unsigned int x) {
     return (x);
 }
-static inline unsigned long long net64(const unsigned long long x)
-{
+
+static inline unsigned long long net64(const unsigned long long x) {
     return (x);
 }
+
 #else
 #define NET_ORDER false
 #define net16(x) swab16(x)
@@ -284,16 +277,13 @@ static inline const ILSize pcount(const ILSize &size, const ILSize &psz) {
     pcnt.c = pcount(size.c, psz.c);
     auto xy = static_cast<GIntBig>(pcnt.x) * pcnt.y;
     auto zc = static_cast<GIntBig>(pcnt.z) * pcnt.c;
-    if( zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc )
-    {
+    if( zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc ) {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Integer overflow in page count computation");
         pcnt.l = -1;
+        return pcnt;
     }
-    else
-    {
-        pcnt.l = xy * zc;
-    }
+    pcnt.l = xy * zc;
     return pcnt;
 }
 
@@ -330,9 +320,7 @@ public:
         GDALDataType eType, char ** papszOptions);
 
     // Stub for delete, GDAL should only overwrite the XML
-    static CPLErr Delete(const char *) {
-        return CE_None;
-    }
+    static CPLErr Delete(const char *) { return CE_None; }
 
     virtual const char *_GetProjectionRef() override { return projection; }
     virtual CPLErr _SetProjection(const char *proj) override {
@@ -372,12 +360,8 @@ public:
     // Creates an XML tree from the current MRF.  If written to a file it becomes an MRF
     CPLXMLNode *BuildConfig();
 
-    void SetPBufferSize(unsigned int sz) {
-        pbsize = sz;
-    }
-    unsigned int GetPBufferSize() {
-        return pbsize;
-    }
+    void SetPBufferSize(unsigned int sz) { pbsize = sz; }
+    unsigned int GetPBufferSize() { return pbsize; }
 
 protected:
     // False if it failed
@@ -417,15 +401,9 @@ protected:
         return pbuffer;
     }
 
-#if GDAL_VERSION_MAJOR >= 2
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
         void *, int, int, GDALDataType,
         int, int *, GSpacing, GSpacing, GSpacing, GDALRasterIOExtraArg*) override;
-#else
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
-        void *, int, int, GDALDataType,
-        int, int *, int, int, int);
-#endif
 
     virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
         GDALProgressFunc, void*) override;
@@ -569,13 +547,13 @@ public:
 
     const char *GetOptionValue(const char *opt, const char *def) const;
     void SetAccess(GDALAccess eA) { eAccess = eA; }
-    void SetDeflate(int v) { deflatep = (v != 0); }
+    void SetDeflate(int v) { dodeflate = (v != 0); }
 
 protected:
     // Pointer to the GDALMRFDataset
     MRFDataset *poDS;
     // Deflate page requested, named to avoid conflict with libz deflate()
-    int deflatep;
+    int dodeflate;
     int deflate_flags;
     // Level count of this band
     GInt32 m_l;
@@ -643,7 +621,8 @@ public:
     int PalSize, TransSize, deflate_flags;
 
 private:
-    PNG_Codec& operator= (const PNG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+    // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+    PNG_Codec& operator= (const PNG_Codec& src);
 };
 
 class PNG_Band final: public MRFRasterBand {
@@ -721,8 +700,16 @@ public:
         MRFRasterBand(pDS, image, b, int(level)) {}
     virtual ~Raw_Band() {}
 protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+    virtual CPLErr Decompress(buf_mgr& dst, buf_mgr& src) override {
+        if (src.size > dst.size)
+            return CE_Failure;
+        memcpy(dst.buffer, src.buffer, src.size);
+        dst.size = src.size;
+        return CE_None;
+    }
+    virtual CPLErr Compress(buf_mgr& dst, buf_mgr& src) override {
+        return Decompress(dst, src);
+    }
 };
 
 class TIF_Band final: public MRFRasterBand {

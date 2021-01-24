@@ -18,7 +18,7 @@
 * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright 2014-2015 Esri
+* Copyright (c) 2014-2021 Esri
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
 * limitations under the License.
+*
+* Author: Lucian Plesea
+* 
 */
 
 /*
@@ -44,14 +47,8 @@
 #include <cassert>
 
 CPL_C_START
-#ifdef INTERNAL_PNG
-#include "../png/libpng/png.h"
-#else
 #include <png.h>
-#endif
 CPL_C_END
-
-CPL_CVSID("$Id$")
 
 NAMESPACE_MRF_START
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2015 - 2020 Esri
+Copyright 2015 - 2021 Esri
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -129,15 +129,17 @@ protected:
     // returns true if all floating point values in the region have the same binary representation
     bool isallsameval(int r0, int r1, int c0, int c1) const;
 
-    static int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError);
-
     bool writeZTile(Byte** ppByte, int& numBytes, int r0, int r1, int c0, int c1,
         int numValidPixel, float zMin, float zMax, double maxZError) const;
 
     bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int r0, int r1, int c0, int c1,
         double maxZErrorInFile, float maxZInImg);
 
+    unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
+        InfoFromComputeNumBytes* info) const;
+
     std::vector<unsigned int> idataVec;    // temporary buffer, reused in readZTile
+    BitMaskV1 mask;
 
 public:
     /// binary file IO with optional compression
@@ -146,9 +148,6 @@ public:
 
     Lerc1Image() {}
     ~Lerc1Image() {}
-
-    unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
-        InfoFromComputeNumBytes* info) const;
 
     static unsigned int computeNumBytesNeededToWriteVoidImage();
 
@@ -165,12 +164,14 @@ public:
         return mask.IsValid(row * getWidth() + col) != 0;
     }
 
+    void SetMask(int row, int col, bool v) {
+        mask.Set(row * getWidth() + col, v);
+    }
+
     // Read and write into a memory buffer
     bool write(Byte** ppByte, double maxZError = 0, bool onlyZPart = false) const;
     bool read(Byte** ppByte, size_t& nRemainingBytes, double maxZError, bool onlyZPart = false);
 
-
-    BitMaskV1 mask;
 };
 
 NAMESPACE_LERC1_END

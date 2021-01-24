@@ -18,7 +18,7 @@
 * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright 2014-2015 Esri
+* Copyright 2014-2021 Esri
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -31,28 +31,29 @@
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
 * limitations under the License.
+*
+* Author: Lucian Plesea
+* 
+*
+* JPEG band
+* JPEG page compression and decompression functions, file gets compiled twice
+* once directly and once through inclusion from JPEG12_band.cpp
+* LIBJPEG_12_H is defined if both 8 and 12 bit JPEG will be supported
+* JPEG12_ON    is defined only for the 12 bit versions
+*
+* The MRF JPEG codec implements the Zen (Zero ENhanced) JPEG extension
+* This extension, when supported by the decompressor, preserves the zero or non-zero state of all pixels
+* which allows zero pixels to be used as a non-data mask
+* Clients which don't support the Zen extension will read it as a normal JPEG
+*
+* On page writes, a mask of all fully zero pixels is built
+* If the mask has some zero pixels, it is written in a JPEG APP3 "Zen" marker
+* If the mask has no zero pixels, a zero length APP3 marker is inserted
+* 
+* On page reads, after the JPEG decompression, if a mask or a zero length APP3 marker is detected, 
+* the masked pixels with value of zero are set to 1 while the non-masked ones are set to zero
+* 
 */
-
-/*
- * JPEG band
- * JPEG page compression and decompression functions, gets compiled twice
- * once directly and once through inclusion from JPEG12_band.cpp
- * LIBJPEG_12_H is defined if both 8 and 12 bit JPEG will be supported
- * JPEG12_ON    is defined for the 12 bit versions
- *
- * The MRF JPEG codec implements the Zen (Zero ENhanced) JPEG extension
- * This extension, when supported by the decompressor, preserves the zero or non-zero state of all pixels
- * which allows zero pixels to be used as a non-data mask
- * Clients which don't support the Zen extension will read it as a normal JPEG
- *
- * On page writes, a mask of all fully zero pixels is built
- * If the mask has some zero pixels, it is written in a JPEG APP3 "Zen" marker
- * If the mask has no zero pixels, a zero length APP3 marker is inserted
- * 
- * On page reads, after the JPEG decompression, if a mask or a zero length APP3 marker is detected, 
- * the masked pixels with value of zero are set to 1 while the non-masked ones are set to zero
- * 
- */
 
 #include "marfa.h"
 #include <setjmp.h>
@@ -65,8 +66,6 @@ CPL_C_END
 #define PACKER
 #include "BitMask2D.h"
 #include "Packer_RLE.h"
-
-CPL_CVSID("$Id$")
 
 NAMESPACE_MRF_START
 
@@ -142,7 +141,7 @@ static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 }
 
 /**
-*\brief: Do nothing stub function for JPEG library, not called
+*\brief: Skips unknown chunks
 */
 static void skip_input_data_dec(j_decompress_ptr cinfo, long l) {
     struct jpeg_source_mgr *src = cinfo->src;
@@ -280,7 +279,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     }
 
     // Build a bitmaps of the black pixels
-    // If there are any black pixels, write a compressed mask in APP3 "C3Mask" chunk
+    // If there are any black pixels, write a compressed mask in APP3 "Zen" chunk
 
     // Mask is initialized to all pixels valid
     BitMask mask(sz.x, sz.y);
@@ -473,7 +472,7 @@ static boolean MaskProcessor(j_decompress_ptr pcinfo) {
 #if defined(JPEG12_ON)
 CPLErr JPEG_Codec::DecompressJPEG12(buf_mgr &dst, buf_mgr &isrc)
 #else
-CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
+CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
 #endif
 
 {
@@ -492,12 +491,12 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 
     struct jpeg_source_mgr src;
 
-    cinfo.err = jpeg_std_error( &sJErr );
+    cinfo.err = jpeg_std_error(&sJErr);
     sJErr.error_exit = errorExit;
     sJErr.emit_message = emitMessage;
-    cinfo.client_data = (void *) &(sJPEGStruct);
+    cinfo.client_data = &sJPEGStruct;
 
-    src.next_input_byte = (JOCTET *)isrc.buffer;
+    src.next_input_byte = reinterpret_cast<JOCTET*>(isrc.buffer);
     src.bytes_in_buffer = isrc.size;
     src.term_source = stub_source_dec;
     src.init_source = stub_source_dec;
@@ -519,8 +518,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 
     /* In some cases, libjpeg needs to allocate a lot of memory */
     /* http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
-    if( jpeg_has_multiple_scans(&(cinfo)) )
-    {
+    if (jpeg_has_multiple_scans(&(cinfo))) {
         /* In this case libjpeg will need to allocate memory or backing */
         /* store for all coefficients */
         /* See call to jinit_d_coef_controller() from master_selection() */
@@ -573,8 +571,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         cinfo.out_color_space = JCS_GRAYSCALE;
 
     const int datasize = ((cinfo.data_precision == 8) ? 1 : 2);
-    if( cinfo.image_width > static_cast<unsigned>(INT_MAX / (nbands * datasize)) )
-    {
+    if (cinfo.image_width > static_cast<unsigned>(INT_MAX / (nbands * datasize))) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
         jpeg_destroy_decompress(&cinfo);
         return CE_Failure;
@@ -610,8 +607,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         rp[1] = rp[0] + linesize;
         // if this fails, it calls the error handler
         // which will report an error
-        if( jpeg_read_scanlines(&cinfo, JSAMPARRAY(rp), 2) == 0 )
-        {
+        if (jpeg_read_scanlines(&cinfo, JSAMPARRAY(rp), 2) == 0) {
             jpeg_destroy_decompress(&cinfo);
             return CE_Failure;
         }
@@ -628,7 +624,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
     return CE_None;
 }
 
-// This part gets compiled only once
+// From here to end it gets compiled only once
 #if !defined(JPEG12_ON)
 
 // The Zen chunk signature
@@ -637,8 +633,7 @@ size_t CHUNK_NAME_SIZE = strlen(CHUNK_NAME) + 1;
 
 
 // Type dependent dispachers
-CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
-{
+CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
 #if defined(LIBJPEG_12_H)
     if (GDT_Byte != img.dt)
         return codec.DecompressJPEG12(dst, src);
@@ -646,8 +641,7 @@ CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     return codec.DecompressJPEG(dst, src);
 }
 
-CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
-{
+CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
 #if defined(LIBJPEG_12_H)
     if (GDT_Byte != img.dt)
         return codec.CompressJPEG12(dst, src);
@@ -674,11 +668,9 @@ JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
         return;
     }
 
-    if( nbands == 3 )
-    { // Only the 3 band JPEG has storage flavors
+    if( nbands == 3 ) { // Only the 3 band JPEG has storage flavors
         CPLString const &pm = pDS->GetPhotometricInterpretation();
-        if (pm == "RGB" || pm == "MULTISPECTRAL")
-        { // Explicit RGB or MS
+        if (pm == "RGB" || pm == "MULTISPECTRAL") { // Explicit RGB or MS
             codec.rgb = TRUE;
             codec.sameres = TRUE;
         }
