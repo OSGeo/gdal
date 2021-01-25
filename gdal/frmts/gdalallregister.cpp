@@ -152,6 +152,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JDEM();
 #endif
 
+#ifdef FRMT_zarr
+    GDALRegister_Zarr();
+#endif
+
 #ifdef FRMT_rasdaman
     GDALRegister_RASDAMAN();
 #endif

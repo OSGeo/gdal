@@ -774,6 +774,8 @@ KEA_LIB
 KEA_INC
 HAVE_KEA
 KEA_CONFIG
+ZARR_INCLUDE
+HAVE_ZARR
 HDF5_INCLUDE
 HAVE_HDF5
 HDF5_LIBS
@@ -1154,6 +1156,7 @@ with_boost_lib_path
 with_mongocxxv3
 with_hdf4
 with_hdf5
+with_zarr
 with_kea
 with_netcdf
 with_jasper
@@ -2158,6 +2161,7 @@ Optional Packages:
   --with-mongocxxv3=ARG        Include MongoCXXv3 support (ARG=yes or no)
   --with-hdf4=ARG       Include HDF4 support (ARG=path)
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
+  --with-zarr=ARG       Include Zarr support (ARG=path)
   --with-kea=ARG      Include kealib (ARG=path to kea-config) [default=yes]
   --with-netcdf=ARG     Include netCDF support (ARG=no or netCDF tree prefix)
   --with-jasper=ARG     Include JPEG-2000 support via JasPer library (ARG=path)
@@ -32837,6 +32841,31 @@ fi
 
 
 
+# Check whether --with-zarr was given.
+ZARR_INCLUDE=""
+HAVE_ZARR=no
+if test "${with_zarr+set}" = set; then
+  if test "$with_zarr" = "yes" -o "$with_zarr" = "" -a -r /usr/include/xtensor-zarr/xzarr_hierarchy.hpp ; then
+    ZARR_INCLUDE="-I/usr/include"
+    HAVE_ZARR=yes
+    echo "xtensor-zarr found - Zarr support enabled"
+  elif test -r "$with_zarr/include/xtensor-zarr/xzarr_hierarchy.hpp" ; then
+    ZARR_INCLUDE="-I$with_zarr/include"
+    HAVE_ZARR=yes
+    echo "xtensor-zarr found - Zarr support enabled"
+  else
+    echo "Zarr support requested with arg $with_zarr, but no xtensor-zarr header found there."
+  fi
+else
+  echo "zarr support disabled."
+fi
+
+if test "$HAVE_ZARR" != "no" ; then
+  OPT_GDAL_FORMATS="zarr $OPT_GDAL_FORMATS"
+fi
+
+
+
 HDF5_INCLUDE=""
 
 
@@ -45017,6 +45046,9 @@ echo "  HDF5 support:              ${HAVE_HDF5}"
 
 
 echo "  HDFS support:              ${HDFS_ENABLED}"
+
+
+echo "  Zarr support:              ${HAVE_ZARR}"
 
 
 echo "  HEIF support:              ${HAVE_HEIF}"

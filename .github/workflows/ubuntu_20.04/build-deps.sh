@@ -84,3 +84,24 @@ wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.
   && echo "/usr/local/FileGDB_API/lib" > /etc/ld.so.conf.d/filegdbapi.conf
 
 ldconfig
+
+# Install xtensor-zarr and its dependencies
+for requirement in xtensor-stack=xtensor-zarr=xtensor-zarr=0.0.3 \
+                   xtensor-stack=zarray=zarray=0.0.5 \
+                   xtensor-stack=xtensor-io=xtensor-io=0.12.4 \
+                   xtensor-stack=xtensor=xtensor=0.23.4 \
+                   xtensor-stack=xtl=xtl=0.7.2 \
+                   xtensor-stack=xsimd=xsimd=7.4.9 \
+                   nlohmann=json=nlohmann=v3.9.1 \
+                   gulrak=filesystem=ghc=v1.4.0 \
+                   ; do
+    org="$(echo $requirement | cut -d'=' -f1)"
+    lib="$(echo $requirement | cut -d'=' -f2)"
+    inc="$(echo $requirement | cut -d'=' -f3)"
+    ver="$(echo $requirement | cut -d'=' -f4)"
+    mkdir $lib \
+        && wget -q https://github.com/$org/$lib/archive/$ver.tar.gz -O - \
+            | tar xz -C $lib --strip-components=1 \
+        && mv $lib/include/$inc /usr/include/ \
+        && rm -rf $lib
+done

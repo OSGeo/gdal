@@ -198,7 +198,29 @@ jobs:
             $env:NMAKE_LOCAL+="WEBP_LIBS = /NODEFAULTLIB:libcmt.lib `$(SDK_PREFIX)\libwebp-1.0.3-windows-x86\lib\libwebp.lib`n"
             $env:NMAKE_LOCAL+="LIBDEFLATE_CFLAGS = -I`$(SDK_PREFIX)`n"
             $env:NMAKE_LOCAL+="LIBDEFLATE_LIB = `$(SDK_PREFIX)\libdeflate.lib`n"
+            $env:NMAKE_LOCAL+="ZARR_INCLUDE=-I$env:GITHUB_WORKSPACE\xtensor_zarr\include`n"
             $env:NMAKE_LOCAL | Set-Content "$env:GITHUB_WORKSPACE\gdal\nmake.local"
+            #
+            cd $env:GITHUB_WORKSPACE
+            mkdir xtensor_zarr
+            cd xtensor_zarr
+            mkdir include
+            exec { git clone --depth=1 -b 0.0.2 https://github.com/xtensor-stack/xtensor-zarr xtensor-zarr}
+            exec { git clone --depth=1 -b master https://github.com/xtensor-stack/zarray zarray}
+            exec { git clone --depth=1 -b 0.12.1 https://github.com/xtensor-stack/xtensor-io xtensor-io}
+            exec { git clone --depth=1 -b 0.23.0 https://github.com/xtensor-stack/xtensor xtensor}
+            exec { git clone --depth=1 -b 0.7.1 https://github.com/xtensor-stack/xtl xtl}
+            exec { git clone --depth=1 -b 7.4.9 https://github.com/xtensor-stack/xsimd xsimd}
+            exec { git clone --depth=1 -b v3.9.1 https://github.com/nlohmann/json json}
+            exec { git clone --depth=1 -b v1.4.0 https://github.com/gulrak/filesystem ghc}
+            Move-Item -Path xtensor-zarr\include\xtensor-zarr -Destination include\xtensor-zarr -force
+            Move-Item -Path zarray\include\zarray -Destination include\zarray -force
+            Move-Item -Path xtensor-io\include\xtensor-io -Destination include\xtensor-io -force
+            Move-Item -Path xtensor\include\xtensor -Destination include\xtensor -force
+            Move-Item -Path xtl\include\xtl -Destination include\xtl -force
+            Move-Item -Path xsimd\include\xsimd -Destination include\xsimd -force
+            Move-Item -Path json\include\nlohmann -Destination include\nlohmann -force
+            Move-Item -Path ghc\include\ghc -Destination include\ghc -force
             #
             cd $env:GITHUB_WORKSPACE
             cd proj

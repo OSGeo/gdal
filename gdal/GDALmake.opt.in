@@ -187,6 +187,12 @@ HAVE_HDF5     = @HAVE_HDF5@
 HDF5_INCLUDE  = @HDF5_INCLUDE@
 
 #
+# ZARR Support.
+#
+HAVE_ZARR     = @HAVE_ZARR@
+ZARR_INCLUDE  = @ZARR_INCLUDE@
+
+#
 # KEA Support.
 #
 HAVE_KEA     = @HAVE_KEA@

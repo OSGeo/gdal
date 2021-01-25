@@ -1,0 +1,42 @@
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ		=	zarrdataset.obj
+
+PLUGIN_DLL 	=	gdal_Zarr.dll
+
+# Still LERC specific
+!IFDEF ZLIB_EXTERNAL_LIB
+ZLIB_FLAGS = $(ZLIB_INC)
+!ELSE
+ZLIB_FLAGS = -I..\zlib
+!ENDIF
+
+EXTRAFLAGS = $(ZARR_INCLUDE) $(ZLIB_FLAGS) -DWIN32 
+
+!IF "$(ZARR_PLUGIN)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DZARR_PLUGIN
+!ENDIF
+
+
+default:	$(OBJ)
+	$(INSTALL) *.obj ..\o
+
+clean:
+	-del *.obj
+	-del *.dll
+	-del *.exp
+	-del *.lib
+	-del *.manifest
+
+plugin:	$(PLUGIN_DLL)
+
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(ZARR_LIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
+

@@ -1633,6 +1633,53 @@ AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
 AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if xtensor-zarr is available.
+dnl ---------------------------------------------------------------------------
+
+ZARR_INCLUDE=""
+
+AC_ARG_WITH(zarr,[  --with-zarr[=ARG]       Include Zarr support (ARG=path)],,)
+
+if test "$with_zarr" = "no" ; then
+
+  HAVE_ZARR=no
+
+  echo "zarr support disabled."
+
+elif test "$with_zarr" = "yes" -o "$with_zarr" = "" ; then
+
+  if test -r "/usr/include/xtensor-zarr/xzarr_hierarchy.hpp" ; then
+
+    ZARR_INCLUDE="-I/usr/include"
+    HAVE_ZARR=yes
+    echo "xtensor-zarr found - Zarr support enabled"
+  else
+    AC_MSG_ERROR([Zarr support requested with arg $with_zarr, but no xtensor-zarr header found])
+    HAVE_ZARR=no
+  fi
+
+else
+
+  if test -r "$with_zarr/include/xtensor-zarr/xzarr_hierarchy.hpp" ; then
+
+    ZARR_INCLUDE="-I$with_zarr/include"
+    HAVE_ZARR=yes
+    echo "xtensor-zarr found - Zarr support enabled"
+  else
+    AC_MSG_ERROR([Zarr support requested with arg $with_zarr, but no xtensor-zarr header found])
+    HAVE_ZARR=no
+  fi
+
+fi
+
+AC_SUBST(HAVE_ZARR,$HAVE_ZARR)
+AC_SUBST(ZARR_INCLUDE,$ZARR_INCLUDE)
+
+if test "$HAVE_ZARR" != "no" ; then
+  OPT_GDAL_FORMATS="zarr $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if liblzma is available.
 dnl ---------------------------------------------------------------------------
 
@@ -1699,7 +1746,7 @@ OGRFORMATS_ENABLED=
 OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
-AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted elas envisat ers esric fit gff gsg gxf hf2 idrisi ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacta terragen tga til tsx usgsdem xpm xyz zmap])
+AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers esric fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacta terragen tga til tsx usgsdem xpm xyz zmap])
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
 AC_DEFUN([INTERNAL_DRIVERS],[arcgen avc cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm jml mapml mvt ntf openfilegdb pgdump rec s57 selafin shape svg sxf tiger vdv wasp])dnl
 AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas ogcapi])dnl
