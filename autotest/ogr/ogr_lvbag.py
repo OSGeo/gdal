@@ -359,6 +359,19 @@ def test_ogr_lvbag_old_schema():
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 0, 'bad layer count'
 
+def test_ogr_lvbag_dataset_vbo():
+
+    ds = ogr.Open('data/lvbag/vbo2.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Verblijfsobject', 'bad layer name'
+    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
+    
+    feat = lyr.GetNextFeature()
+    assert feat.GetField('gebruiksdoel') == ['woonfunctie', 'gezondheidszorgfunctie'], 'expecting two items'
+
 ###############################################################################
 # Run test_ogrsf
 
