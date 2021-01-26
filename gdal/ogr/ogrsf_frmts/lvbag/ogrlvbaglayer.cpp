@@ -297,7 +297,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     }
     else if( EQUAL("vbo", pszDataset) )
     {
-        OGRFieldDefn oField0("gebruiksdoel", OFTString);
+        OGRFieldDefn oField0("gebruiksdoel", OFTStringList);
         OGRFieldDefn oField1("oppervlakte", OFTInteger);
         OGRFieldDefn oField2("nummeraanduidingRef", OFTString);
         OGRFieldDefn oField3("pandRef", OFTString);
@@ -541,6 +541,25 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                         }
                         m_poFeature->SetField(iFieldIndex, osElementString.c_str());
                     }
+                }
+                else if( poFieldDefn->GetType() == OFTStringList )
+                {
+                    if( m_poFeature->IsFieldSetAndNotNull(iFieldIndex) )
+                    {
+                        CPLStringList aoList;
+                        char **papszIter = m_poFeature->GetFieldAsStringList(iFieldIndex);
+                        while( papszIter != nullptr && *papszIter != nullptr )
+                        {
+                            aoList.AddString(*papszIter);
+                            papszIter++;
+                        }
+
+                        aoList.AddString(pszValue);
+                        m_poFeature->UnsetField(iFieldIndex);
+                        m_poFeature->SetField(iFieldIndex, aoList.List() );
+                    }
+                    else
+                        m_poFeature->SetField(iFieldIndex, pszValue);
                 }
                 else if( poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean )
                 {
