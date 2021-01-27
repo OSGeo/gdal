@@ -63,8 +63,8 @@ def test_ogr_lvbag_dataset_lig():
 
     assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
 
-    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef().lower() == 'hoofdadresNummeraanduidingRef' and \
-       lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef().lower() == 'nevenadresNummeraanduidingRef' and \
+    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef().lower() == 'hoofdadresnummeraanduidingref' and \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef().lower() == 'nevenadresnummeraanduidingref' and \
        lyr.GetLayerDefn().GetFieldDefn(2).GetNameRef().lower() == 'identificatie' and \
        lyr.GetLayerDefn().GetFieldDefn(3).GetNameRef().lower() == 'status' and \
        lyr.GetLayerDefn().GetFieldDefn(4).GetNameRef().lower() == 'geconstateerd' and \
@@ -362,18 +362,34 @@ def test_ogr_lvbag_old_schema():
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 0, 'bad layer count'
 
-def test_ogr_lvbag_dataset_vbo():
+def test_ogr_lvbag_stringlist_feat():
 
     ds = ogr.Open('data/lvbag/vbo2.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    assert lyr.GetName() == 'Verblijfsobject', 'bad layer name'
-    assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
-    
     feat = lyr.GetNextFeature()
     assert feat.GetField('gebruiksdoel') == ['woonfunctie', 'gezondheidszorgfunctie'], 'expecting two items'
+
+def test_ogr_lvbag_secondary_address():
+
+    ds = ogr.Open('data/lvbag/vbo3.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef().lower() == 'hoofdadresnummeraanduidingref' and \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef().lower() == 'nevenadresnummeraanduidingref')
+
+    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString(0) != 'NL.IMBAG.Nummeraanduiding.0106200000005333' or \
+       feat.GetFieldAsString(1) != 'NL.IMBAG.Nummeraanduiding.0855200000106110':
+        feat.DumpReadable()
+        pytest.fail()
 
 ###############################################################################
 # Run test_ogrsf
