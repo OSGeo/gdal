@@ -101,7 +101,7 @@ def test_ogr_lvbag_dataset_lig():
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString(0) != 'NL.IMBAG.Nummeraanduiding.0106200000005333' or \
-       feat.GetFieldAsString(1) != None or \
+       feat.GetFieldAsString(1) != '' or \
        feat.GetFieldAsString(2) != 'NL.IMBAG.Ligplaats.0106020000000003' or \
        feat.GetFieldAsString(3) != 'Plaats aangewezen' or \
        feat.GetFieldAsInteger(4) != 0 or \
@@ -379,15 +379,12 @@ def test_ogr_lvbag_secondary_address():
     assert ds.GetLayerCount() == 1, 'bad layer count'
 
     lyr = ds.GetLayer(0)
-    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef().lower() == 'hoofdadresnummeraanduidingref' and \
-       lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef().lower() == 'nevenadresnummeraanduidingref')
-
-    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString and \
-       lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString)
+    assert (lyr.GetLayerDefn().GetFieldDefn(2).GetNameRef().lower() == 'hoofdadresnummeraanduidingref' and \
+       lyr.GetLayerDefn().GetFieldDefn(3).GetNameRef().lower() == 'nevenadresnummeraanduidingref')
 
     feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString(0) != 'NL.IMBAG.Nummeraanduiding.0106200000005333' or \
-       feat.GetFieldAsString(1) != 'NL.IMBAG.Nummeraanduiding.0855200000106110':
+    if feat.GetFieldAsString(2) != 'NL.IMBAG.Nummeraanduiding.0855200000037747' or \
+       feat.GetFieldAsString(3) != 'NL.IMBAG.Nummeraanduiding.0855200000106110':
         feat.DumpReadable()
         pytest.fail()
 
