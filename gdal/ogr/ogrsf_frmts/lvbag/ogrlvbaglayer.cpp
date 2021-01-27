@@ -5,7 +5,7 @@
  * Author:   Laixer B.V., info at laixer dot com
  *
  ******************************************************************************
- * Copyright (c) 2020, Laixer B.V. <info at laixer dot com>
+ * Copyright (c) 2021, Laixer B.V. <info at laixer dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,6 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, c
     OGRAbstractProxiedLayer{ poPoolIn },
     poFeatureDefn{ new OGRFeatureDefn{} },
     fp{ nullptr },
-    nNextFID{ 0 },
     osFilename{ pszFilename },
     eFileDescriptorsState{ FD_CLOSED },
     oParser{ nullptr },
@@ -53,11 +52,13 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, c
     bHasReadSchema{ false },
     bFixInvalidData{ CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", false) },
     bLegacyId{ CPLFetchBool(papszOpenOptions, "LEGACY_ID", false) },
+    nNextFID{ 0 },
     nCurrentDepth{ 0 },
     nGeometryElementDepth{ 0 },
     nFeatureCollectionDepth{ 0 },
     nFeatureElementDepth{ 0 },
     nAttributeElementDepth{ 0 },
+    eAddressRefState{ AddressRefState::ADDRESS_PRIMARY },
     bCollectData{ false }
 {
     SetDescription(CPLGetBasename(pszFilename));
@@ -95,6 +96,7 @@ void OGRLVBAGLayer::ResetReading()
     nFeatureCollectionDepth = 0;
     nFeatureElementDepth = 0;
     nAttributeElementDepth = 0;
+    eAddressRefState = AddressRefState::ADDRESS_PRIMARY;
     bCollectData = false;
 }
 
@@ -250,9 +252,11 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     }
     else if( EQUAL("lig", pszDataset) )
     {
-        OGRFieldDefn oField0("nummeraanduidingRef", OFTString);
+        OGRFieldDefn oField0("hoofdadresNummeraanduidingRef", OFTString);
+        OGRFieldDefn oField1("nevenadresNummeraanduidingRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
+        poFeatureDefn->AddFieldDefn(&oField1);
 
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
@@ -265,9 +269,11 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     }
     else if( EQUAL("sta", pszDataset) )
     {
-        OGRFieldDefn oField0("nummeraanduidingRef", OFTString);
+        OGRFieldDefn oField0("hoofdadresNummeraanduidingRef", OFTString);
+        OGRFieldDefn oField1("nevenadresNummeraanduidingRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
+        poFeatureDefn->AddFieldDefn(&oField1);
 
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
@@ -299,13 +305,15 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     {
         OGRFieldDefn oField0("gebruiksdoel", OFTStringList);
         OGRFieldDefn oField1("oppervlakte", OFTInteger);
-        OGRFieldDefn oField2("nummeraanduidingRef", OFTString);
-        OGRFieldDefn oField3("pandRef", OFTString);
+        OGRFieldDefn oField2("hoofdadresNummeraanduidingRef", OFTString);
+        OGRFieldDefn oField3("nevenadresNummeraanduidingRef", OFTString);
+        OGRFieldDefn oField4("pandRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
         poFeatureDefn->AddFieldDefn(&oField2);
         poFeatureDefn->AddFieldDefn(&oField3);
+        poFeatureDefn->AddFieldDefn(&oField4);
  
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
@@ -451,6 +459,12 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
         }
     }
     else if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
+             nGeometryElementDepth == 0 && EQUAL("objecten:heeftalshoofdadres", pszName) )
+        eAddressRefState = AddressRefState::ADDRESS_PRIMARY;
+    else if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
+             nGeometryElementDepth == 0 && EQUAL("objecten:heeftalsnevenadres", pszName) )
+        eAddressRefState = AddressRefState::ADDRESS_SECONDARY;
+    else if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
              nGeometryElementDepth == 0 )
         StartDataCollect();
     else if( nGeometryElementDepth > 0 && STARTS_WITH_CI(pszName, "gml") )
@@ -513,11 +527,27 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         StopDataCollect();
         if ( !osElementString.empty() )
         {
-            const int iFieldIndex = poFeatureDefn->GetFieldIndex(pszTag);
+            const char *pszValue = osElementString.c_str();
+            const size_t nIdLength = osElementString.size();
+ 
+            int iFieldIndex = poFeatureDefn->GetFieldIndex(pszTag);
+
+            if( EQUAL("nummeraanduidingref", pszTag) )
+            {
+                switch (eAddressRefState)
+                {
+                    case AddressRefState::ADDRESS_SECONDARY:
+                        iFieldIndex = poFeatureDefn->GetFieldIndex("nevenadresnummeraanduidingref");
+                        break;
+                    
+                    default:
+                        iFieldIndex = poFeatureDefn->GetFieldIndex("hoofdadresnummeraanduidingref");
+                        break;
+                }
+            }
+
             if( iFieldIndex > -1 )
             {
-                const char *pszValue = osElementString.c_str();
-                const size_t nIdLength = osElementString.size();
                 const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
                 if( EQUAL("identificatie", pszTag) || STARTS_WITH_CI(pszName, "objecten-ref") )
                 {
