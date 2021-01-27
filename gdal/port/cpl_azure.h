@@ -101,6 +101,8 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString GetSignedURL(CSLConstList papszOptions);
 
         static void ClearCache();
+
+        std::string GetSASQueryString() const;
 };
 
 namespace cpl

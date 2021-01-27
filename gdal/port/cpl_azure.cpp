@@ -544,6 +544,17 @@ void VSIAzureBlobHandleHelper::RebuildURL()
 }
 
 /************************************************************************/
+/*                        GetSASQueryString()                           */
+/************************************************************************/
+
+std::string VSIAzureBlobHandleHelper::GetSASQueryString() const
+{
+    if( !m_osSAS.empty() )
+        return '?' + m_osSAS;
+    return std::string();
+}
+
+/************************************************************************/
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
