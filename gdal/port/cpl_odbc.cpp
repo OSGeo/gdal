@@ -1029,16 +1029,6 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             m_papszColValues[iCol][cbDataLen+1] = '\0';
         }
 
-        // Trim white space off end, if there is any.
-        // if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != nullptr )
-        // {
-        //     char *pszTarget = m_papszColValues[iCol];
-        //     size_t iEnd = strlen(pszTarget);
-
-        //     while( iEnd > 0 && pszTarget[iEnd - 1] == ' ' )
-        //         pszTarget[--iEnd] = '\0';
-        // }
-
         // Convert WCHAR to UTF-8, assuming the WCHAR is UCS-2.
         if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != nullptr
             && m_panColValueLengths[iCol] > 0 )
