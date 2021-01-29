@@ -82,7 +82,7 @@ def test_ogr_lvbag_dataset_lig():
        lyr.GetLayerDefn().GetFieldDefn(16).GetNameRef().lower() == 'tijdstipnietbaglv')
 
     assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString and \
-       lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTStringList and \
        lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString and \
        lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTString and \
        lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTInteger and \
@@ -383,10 +383,9 @@ def test_ogr_lvbag_secondary_address():
        lyr.GetLayerDefn().GetFieldDefn(3).GetNameRef().lower() == 'nevenadresnummeraanduidingref')
 
     feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString(2) != 'NL.IMBAG.Nummeraanduiding.0855200000037747' or \
-       feat.GetFieldAsString(3) != 'NL.IMBAG.Nummeraanduiding.0855200000106110':
-        feat.DumpReadable()
-        pytest.fail()
+    assert feat.GetFieldAsString(2) == 'NL.IMBAG.Nummeraanduiding.0518200000692257', 'bad hoofdadres'
+    assert feat.GetField(3) == ['NL.IMBAG.Nummeraanduiding.0518200000692258', 'NL.IMBAG.Nummeraanduiding.0518200000692259', 'NL.IMBAG.Nummeraanduiding.0518200000692260'], 'bad nevenadres'
+    assert feat.GetFieldAsString(5) == 'NL.IMBAG.Verblijfsobject.0518010000692261', 'bad identifier'
 
 ###############################################################################
 # Run test_ogrsf

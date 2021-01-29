@@ -253,7 +253,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     else if( EQUAL("lig", pszDataset) )
     {
         OGRFieldDefn oField0("hoofdadresNummeraanduidingRef", OFTString);
-        OGRFieldDefn oField1("nevenadresNummeraanduidingRef", OFTString);
+        OGRFieldDefn oField1("nevenadresNummeraanduidingRef", OFTStringList);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
@@ -270,7 +270,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     else if( EQUAL("sta", pszDataset) )
     {
         OGRFieldDefn oField0("hoofdadresNummeraanduidingRef", OFTString);
-        OGRFieldDefn oField1("nevenadresNummeraanduidingRef", OFTString);
+        OGRFieldDefn oField1("nevenadresNummeraanduidingRef", OFTStringList);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
@@ -306,7 +306,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         OGRFieldDefn oField0("gebruiksdoel", OFTStringList);
         OGRFieldDefn oField1("oppervlakte", OFTInteger);
         OGRFieldDefn oField2("hoofdadresNummeraanduidingRef", OFTString);
-        OGRFieldDefn oField3("nevenadresNummeraanduidingRef", OFTString);
+        OGRFieldDefn oField3("nevenadresNummeraanduidingRef", OFTStringList);
         OGRFieldDefn oField4("pandRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
@@ -527,9 +527,6 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         StopDataCollect();
         if ( !osElementString.empty() )
         {
-            const char *pszValue = osElementString.c_str();
-            const size_t nIdLength = osElementString.size();
- 
             int iFieldIndex = poFeatureDefn->GetFieldIndex(pszTag);
 
             if( EQUAL("nummeraanduidingref", pszTag) )
@@ -546,33 +543,33 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 }
             }
 
+            if( EQUAL("identificatie", pszTag) || STARTS_WITH_CI(pszName, "objecten-ref") )
+            {
+                bool bIsIdInvalid = false;
+                if( osElementString.size() == nDefaultIdentifierSize-1 )
+                {
+                    osElementString = '0' + osElementString;
+                }
+                else if( osElementString.size() > nDefaultIdentifierSize )
+                {
+                    bIsIdInvalid = true;
+                    m_poFeature->SetFieldNull(iFieldIndex);
+                    CPLError(CE_Warning, CPLE_AppDefined, 
+                        "Invalid identificatie : %s, value set to null", osElementString.c_str());
+                }
+                if ( !bIsIdInvalid )
+                {
+                    if ( !bLegacyId && !osAttributeString.empty() )
+                    {
+                        osElementString = osAttributeString + '.' + osElementString;
+                    }
+                }
+            }
+
             if( iFieldIndex > -1 )
             {
                 const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
-                if( EQUAL("identificatie", pszTag) || STARTS_WITH_CI(pszName, "objecten-ref") )
-                {
-                    bool bIsIdInvalid = false;
-                    if( nIdLength == nDefaultIdentifierSize-1 )
-                    {
-                        osElementString = '0' + osElementString;
-                    }
-                    else if( nIdLength > nDefaultIdentifierSize )
-                    {
-                        bIsIdInvalid = true;
-                        m_poFeature->SetFieldNull(iFieldIndex);
-                        CPLError(CE_Warning, CPLE_AppDefined, 
-                            "Invalid identificatie : %s, value set to null", pszValue);
-                    }
-                    if ( !bIsIdInvalid )
-                    {
-                        if ( !bLegacyId && !osAttributeString.empty() )
-                        {
-                            osElementString = osAttributeString + '.' + osElementString;
-                        }
-                        m_poFeature->SetField(iFieldIndex, osElementString.c_str());
-                    }
-                }
-                else if( poFieldDefn->GetType() == OFTStringList )
+                if( poFieldDefn->GetType() == OFTStringList )
                 {
                     if( m_poFeature->IsFieldSetAndNotNull(iFieldIndex) )
                     {
@@ -584,18 +581,18 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                             papszIter++;
                         }
 
-                        aoList.AddString(pszValue);
+                        aoList.AddString(osElementString.c_str());
                         m_poFeature->UnsetField(iFieldIndex);
                         m_poFeature->SetField(iFieldIndex, aoList.List() );
                     }
                     else
-                        m_poFeature->SetField(iFieldIndex, pszValue);
+                        m_poFeature->SetField(iFieldIndex, osElementString.c_str());
                 }
                 else if( poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean )
                 {
-                    if( EQUAL("n", pszValue) )
+                    if( EQUAL("n", osElementString.c_str()) )
                         m_poFeature->SetField(iFieldIndex, 0);
-                    else if( EQUAL("j", pszValue) )
+                    else if( EQUAL("j", osElementString.c_str()) )
                         m_poFeature->SetField(iFieldIndex, 1);
                     else
                     {
@@ -604,7 +601,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     }
                 }
                 else
-                    m_poFeature->SetField(iFieldIndex, pszValue);
+                    m_poFeature->SetField(iFieldIndex, osElementString.c_str());
                 
                 if( bFixInvalidData
                     && (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) )
@@ -617,7 +614,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     {
                         m_poFeature->SetFieldNull(iFieldIndex);
                         CPLError(CE_Warning, CPLE_AppDefined, 
-                            "Invalid date : %s, value set to null", pszValue);
+                            "Invalid date : %s, value set to null", osElementString.c_str());
                     }
                 }
             }

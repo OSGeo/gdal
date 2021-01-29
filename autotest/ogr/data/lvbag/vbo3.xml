@@ -33,37 +33,42 @@
             <sl-bag-extract:bagObject>
                 <Objecten:Verblijfsobject>
                     <Objecten:heeftAlsHoofdadres>
-                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0855200000037747</Objecten-ref:NummeraanduidingRef>
+                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0518200000692257</Objecten-ref:NummeraanduidingRef>
                     </Objecten:heeftAlsHoofdadres>
                     <Objecten:voorkomen>
                         <Historie:Voorkomen>
                             <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
-                            <Historie:beginGeldigheid>2009-05-12</Historie:beginGeldigheid>
-                            <Historie:tijdstipRegistratie>2009-08-07T16:34:55.000</Historie:tijdstipRegistratie>
+                            <Historie:beginGeldigheid>2003-09-23</Historie:beginGeldigheid>
+                            <Historie:eindGeldigheid>2011-06-28</Historie:eindGeldigheid>
+                            <Historie:tijdstipRegistratie>2011-01-28T20:24:15.000</Historie:tijdstipRegistratie>
+                            <Historie:eindRegistratie>2011-06-28T08:40:55.000</Historie:eindRegistratie>
                             <Historie:BeschikbaarLV>
-                                <Historie:tijdstipRegistratieLV>2009-09-18T14:14:37.245</Historie:tijdstipRegistratieLV>
+                                <Historie:tijdstipRegistratieLV>2011-01-28T20:31:35.817</Historie:tijdstipRegistratieLV>
+                                <Historie:tijdstipEindRegistratieLV>2011-06-28T09:02:12.456</Historie:tijdstipEindRegistratieLV>
                             </Historie:BeschikbaarLV>
                         </Historie:Voorkomen>
                     </Objecten:voorkomen>
                     <Objecten:heeftAlsNevenadres>
-                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0855200000106110</Objecten-ref:NummeraanduidingRef>
+                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0518200000692258</Objecten-ref:NummeraanduidingRef>
+                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0518200000692259</Objecten-ref:NummeraanduidingRef>
+                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0518200000692260</Objecten-ref:NummeraanduidingRef>
                     </Objecten:heeftAlsNevenadres>
-                    <Objecten:identificatie domein="NL.IMBAG.Verblijfsobject">0855010000097676</Objecten:identificatie>
+                    <Objecten:identificatie domein="NL.IMBAG.Verblijfsobject">0518010000692261</Objecten:identificatie>
                     <Objecten:geometrie>
                         <Objecten:punt>
                             <gml:Point srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3">
-                                <gml:pos>133741.956 398753.266 0.0</gml:pos>
+                                <gml:pos>81431.756 455218.921 0.0</gml:pos>
                             </gml:Point>
                         </Objecten:punt>
                     </Objecten:geometrie>
-                    <Objecten:gebruiksdoel>industriefunctie</Objecten:gebruiksdoel>
-                    <Objecten:oppervlakte>1758</Objecten:oppervlakte>
+                    <Objecten:gebruiksdoel>kantoorfunctie</Objecten:gebruiksdoel>
+                    <Objecten:oppervlakte>999999</Objecten:oppervlakte>
                     <Objecten:status>Verblijfsobject in gebruik</Objecten:status>
                     <Objecten:geconstateerd>N</Objecten:geconstateerd>
-                    <Objecten:documentdatum>2009-05-12</Objecten:documentdatum>
-                    <Objecten:documentnummer>BAG2009_001966</Objecten:documentnummer>
+                    <Objecten:documentdatum>2003-09-23</Objecten:documentdatum>
+                    <Objecten:documentnummer>V-200303753</Objecten:documentnummer>
                     <Objecten:maaktDeelUitVan>
-                        <Objecten-ref:PandRef domein="NL.IMBAG.Pand">0855100000452735</Objecten-ref:PandRef>
+                        <Objecten-ref:PandRef domein="NL.IMBAG.Pand">0518100000326407</Objecten-ref:PandRef>
                     </Objecten:maaktDeelUitVan>
                 </Objecten:Verblijfsobject>
             </sl-bag-extract:bagObject>
