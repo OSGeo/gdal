@@ -131,3 +131,15 @@ def test_dimap_2_bundle():
     assert ds.GetMetadata('RPC') is not None
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 7024
+
+
+###############################################################################
+# Open DIMAP VHR2020 MS-FS
+
+
+def test_dimap_2_vhr2020_ms_fs():
+
+    ds = gdal.Open('data/dimap2/vhr2020_ms_fs')
+    assert ds.RasterCount == 6 and ds.RasterXSize == 1663 and ds.RasterYSize == 1366
+    assert [ds.GetRasterBand(i+1).ComputeRasterMinMax()[0] for i in range(6)] == [1,2,3,4,5,6]
+    assert [ds.GetRasterBand(i+1).GetDescription() for i in range(6)] == ['Red', 'Green', 'Blue', 'NIR', 'Red Edge', 'Deep Blue']

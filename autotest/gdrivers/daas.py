@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import copy
 import json
 import sys
 
@@ -40,37 +41,39 @@ import gdaltest
 import webserver
 import pytest
 
+pytestmark = pytest.mark.require_driver('DAAS')
+
 ###############################################################################
-# Find DAAS driver
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-
-def test_daas_test_presence():
-
-    gdaltest.daas_drv = gdal.GetDriverByName('DAAS')
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-
-    gdaltest.daas_vars = {}
-    for var in ('GDAL_DAAS_API_KEY', 'GDAL_DAAS_CLIENT_ID', 'GDAL_DAAS_AUTH_URL'):
-        gdaltest.daas_vars[var] = gdal.GetConfigOption(var)
-        if gdaltest.daas_vars[var] is not None:
+    # Unset environment variables that influence the driver behaviour
+    daas_vars = {}
+    for var in ('GDAL_DAAS_API_KEY', 'GDAL_DAAS_CLIENT_ID', 'GDAL_DAAS_AUTH_URL', 'GDAL_DAAS_ACCESS_TOKEN'):
+        daas_vars[var] = gdal.GetConfigOption(var)
+        if daas_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
-        handler=webserver.DispatcherHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         pytest.skip()
+
+    yield
+
+    if gdaltest.webserver_port != 0:
+        webserver.server_stop(gdaltest.webserver_process,
+                              gdaltest.webserver_port)
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+    for var in daas_vars:
+        gdal.SetConfigOption(var, daas_vars[var])
+
 
 ###############################################################################
 
 
 def test_daas_missing_parameters():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.Open("DAAS:")
@@ -80,11 +83,6 @@ def test_daas_missing_parameters():
 
 
 def test_daas_authentication_failure():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     with gdaltest.config_options({'GDAL_DAAS_AUTH_URL': 'http://127.0.0.1:%d/auth' % gdaltest.webserver_port,
                                   'GDAL_DAAS_CLIENT_ID': 'client_id',
@@ -135,11 +133,6 @@ def test_daas_authentication_failure():
 
 
 def test_daas_authentication():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     # API_KEY + CLIENT_ID
     handler = webserver.SequentialHandler()
@@ -206,10 +199,18 @@ def test_daas_authentication():
 
 def test_daas_getimagemetadata_failure():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+    def test_json(j):
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
+                    json.dumps(j))
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_options(
+                {'GDAL_DAAS_PERFORM_AUTH': 'No',
+                'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
+                with gdaltest.error_handler():
+                    ds = gdal.Open(
+                        "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
+                    return ds
 
     # Empty content returned by server
     handler = webserver.SequentialHandler()
@@ -261,112 +262,61 @@ def test_daas_getimagemetadata_failure():
                     "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
                 assert not ds
 
-    # Valid JSon but missing response/payload/payload/imageMetadata/properties
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {}, '{}')
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(
-            {'GDAL_DAAS_PERFORM_AUTH': 'No',
-             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
-            with gdaltest.error_handler():
-                ds = gdal.Open(
-                    "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
-                assert not ds
 
-    # Valid JSon but missing width and height
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
-                '{ "response": { "payload": { "payload": { "imageMetadata": { "properties": {} } } } } }')
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(
-            {'GDAL_DAAS_PERFORM_AUTH': 'No',
-             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
-            with gdaltest.error_handler():
-                ds = gdal.Open(
-                    "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
-                assert not ds
+    min_valid_json = {
+        "properties": {
+            "width": 1,
+            "height": 1,
+            "_links": { "getBuffer": { "href": "http://example.com" } },
+            "bands": [{"name": "PAN", "pixelType": "Byte"}] }
+    }
+
+    # Check that min_valid_json actually works
+    gdal.ErrorReset()
+    assert test_json(min_valid_json) is not None
+    assert gdal.GetLastErrorMsg() == ''
+
+    # Valid JSon but missing response/payload/payload/imageMetadata/properties or properties
+    assert test_json({}) is None
+
+    # Valid JSon but missing properties
+    for prop_to_del in ['width', 'height', 'bands', '_links']:
+        j = copy.deepcopy(min_valid_json)
+        del j['properties'][prop_to_del]
+        assert test_json(j) is None
 
     # Valid JSon but invalid width (negative value)
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
-                '{ "response": { "payload": { "payload": { "imageMetadata": { "properties": { "width": -1, "height": 1 } } } } } }')
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(
-            {'GDAL_DAAS_PERFORM_AUTH': 'No',
-             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
-            with gdaltest.error_handler():
-                ds = gdal.Open(
-                    "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
-                assert not ds
+    j = copy.deepcopy(min_valid_json)
+    j['properties']['width'] = -1
+    assert test_json(j) is None
 
     # Valid JSon but invalid height (string)
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
-                '{ "response": { "payload": { "payload": { "imageMetadata": { "properties": { "width": 1, "height": "foo" } } } } } }')
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(
-            {'GDAL_DAAS_PERFORM_AUTH': 'No',
-             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
-            with gdaltest.error_handler():
-                ds = gdal.Open(
-                    "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
-                assert not ds
+    j = copy.deepcopy(min_valid_json)
+    j['properties']['height'] = 'foo'
+    assert test_json(j) is None
 
     # Missing pixelType
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
-                '{ "response": { "payload": { "payload": { "imageMetadata": { "properties": { "width": 1, "height": "1" } } } } } }')
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(
-            {'GDAL_DAAS_PERFORM_AUTH': 'No',
-             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
-            with gdaltest.error_handler():
-                ds = gdal.Open(
-                    "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
-                assert not ds
+    j = copy.deepcopy(min_valid_json)
+    del j['properties']['bands'][0]['pixelType']
+    assert test_json(j) is None
 
-    # Invalid pixelType and noDataValue, missing getBuffer url, bands
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
-                json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
-                    "width": 1,
-                    "height": 1,
-                    "pixelType": "foo",
-                    "noDataValue": "foo",
-                }}}}}}))
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(
-            {'GDAL_DAAS_PERFORM_AUTH': 'No',
-             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
-            with gdaltest.error_handler():
-                ds = gdal.Open(
-                    "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
-                assert not ds
+    # Invalid pixelType
+    j = copy.deepcopy(min_valid_json)
+    j['properties']['bands'][0]['pixelType'] = 'foo'
+    assert test_json(j) is None
 
     # Invalid rpc
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
-                json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
-                    "rpc": {}
-                }}}}}}))
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(
-            {'GDAL_DAAS_PERFORM_AUTH': 'No',
-             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
-            with gdaltest.error_handler():
-                ds = gdal.Open(
-                    "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
-                assert not ds
+    j = copy.deepcopy(min_valid_json)
+    j['properties']['rpc'] = {}
+    gdal.ErrorReset()
+    ds = test_json(j) is None
+    assert gdal.GetLastErrorMsg() != ''
+
 
 ###############################################################################
 
 
 def test_daas_getimagemetadata():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     # Valid JSon but invalid height (string)
     handler = webserver.SequentialHandler()
@@ -374,7 +324,6 @@ def test_daas_getimagemetadata():
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 2,
                     "height": 3,
-                    "pixelType": "Byte",
                     "actualBitDepth": 7,
                     "noDataValue": 0,
                     "metadataInt": 123,
@@ -391,7 +340,8 @@ def test_daas_getimagemetadata():
                         {
                             "name": "PAN",
                             "description": "Panchromatic band",
-                            "colorInterpretation": "GRAY"
+                            "colorInterpretation": "GRAY",
+                            "pixelType": "Byte"
                         }
                     ],
                     "srsExpression": {
@@ -492,11 +442,6 @@ def test_daas_getimagemetadata():
 
 def test_daas_getimagemetadata_http_retry():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     # 4 retries and success
     handler = webserver.SequentialHandler()
     handler.add('GET', '/daas/sensors/products/foo/images/bar', 502, {})
@@ -506,7 +451,6 @@ def test_daas_getimagemetadata_http_retry():
     metadata_response = json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
         "width": 2,
         "height": 1,
-        "pixelType": "Byte",
         "_links": {
             "getBuffer": {
                 "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -514,13 +458,16 @@ def test_daas_getimagemetadata_http_retry():
         },
         "bands": [
             {
-                "name": "Band 1"
+                "name": "Band 1",
+                "pixelType": "Byte"
             },
             {
-                "name": "Band 2"
+                "name": "Band 2",
+                "pixelType": "Byte"
             },
             {
-                "name": "Band 3"
+                "name": "Band 3",
+                "pixelType": "Byte"
             }
         ]
     }}}}}})
@@ -572,14 +519,9 @@ def test_daas_getimagemetadata_http_retry():
 
 def test_daas_getbuffer_failure():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
     metadata_response = json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
         "width": 2,
         "height": 1,
-        "pixelType": "Byte",
         "_links": {
             "getBuffer": {
                 "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -587,13 +529,16 @@ def test_daas_getbuffer_failure():
         },
         "bands": [
             {
-                "name": "Band 1"
+                "name": "Band 1",
+                "pixelType": "Byte"
             },
             {
-                "name": "Band 2"
+                "name": "Band 2",
+                "pixelType": "Byte"
             },
             {
-                "name": "Band 3"
+                "name": "Band 3",
+                "pixelType": "Byte"
             }
         ]
     }}}}}})
@@ -780,17 +725,11 @@ Content-Type: application/json
 
 def test_daas_getbuffer_pixel_encoding_failures():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 2,
                     "height": 1,
-                    "pixelType": "UInt16",
                     "_links": {
                         "getBuffer": {
                             "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -798,7 +737,8 @@ def test_daas_getbuffer_pixel_encoding_failures():
                     },
                     "bands": [
                         {
-                            "name": "Band 1"
+                            "name": "Band 1",
+                            "pixelType": "UInt16"
                         }
                     ]
                 }}}}}}))
@@ -846,7 +786,6 @@ def test_daas_getbuffer_pixel_encoding_failures():
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 2,
                     "height": 1,
-                    "pixelType": "Float32",
                     "_links": {
                         "getBuffer": {
                             "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -854,7 +793,8 @@ def test_daas_getbuffer_pixel_encoding_failures():
                     },
                     "bands": [
                         {
-                            "name": "Band 1"
+                            "name": "Band 1",
+                            "pixelType": "Float32",
                         }
                     ]
                 }}}}}}))
@@ -875,17 +815,11 @@ def test_daas_getbuffer_pixel_encoding_failures():
 
 def test_daas_getbuffer_raw():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 2,
                     "height": 1,
-                    "pixelType": "Byte",
                     "_links": {
                         "getBuffer": {
                             "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -893,13 +827,16 @@ def test_daas_getbuffer_raw():
                     },
                     "bands": [
                         {
-                            "name": "Band 1"
+                            "name": "Band 1",
+                            "pixelType": "Byte"
                         },
                         {
-                            "name": "Band 2"
+                            "name": "Band 2",
+                            "pixelType": "Byte"
                         },
                         {
-                            "name": "Band 3"
+                            "name": "Band 3",
+                            "pixelType": "Byte"
                         }
                     ]
                 }}}}}}))
@@ -973,10 +910,6 @@ Content-Type: application/json
 
 def _daas_getbuffer(pixel_encoding, drv_name, drv_options, mime_type):
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
     drv = gdal.GetDriverByName(drv_name)
     if drv is None:
         pytest.skip()
@@ -986,7 +919,6 @@ def _daas_getbuffer(pixel_encoding, drv_name, drv_options, mime_type):
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 100,
                     "height": 100,
-                    "pixelType": "Byte",
                     "_links": {
                         "getBuffer": {
                             "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -994,13 +926,16 @@ def _daas_getbuffer(pixel_encoding, drv_name, drv_options, mime_type):
                     },
                     "bands": [
                         {
-                            "name": "Band 1"
+                            "name": "Band 1",
+                            "pixelType": "Byte"
                         },
                         {
-                            "name": "Band 2"
+                            "name": "Band 2",
+                            "pixelType": "Byte"
                         },
                         {
-                            "name": "Band 3"
+                            "name": "Band 3",
+                            "pixelType": "Byte"
                         }
                     ]
                 }}}}}}))
@@ -1079,17 +1014,11 @@ def test_daas_getbuffer_jpeg2000_jp2openjpeg():
 
 def test_daas_getbuffer_overview():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 1024,
                     "height": 512,
-                    "pixelType": "Byte",
                     "_links": {
                         "getBuffer": {
                             "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -1097,7 +1026,8 @@ def test_daas_getbuffer_overview():
                     },
                     "bands": [
                         {
-                            "name": "Band 1"
+                            "name": "Band 1",
+                            "pixelType": "Byte"
                         }
                     ]
                 }}}}}}))
@@ -1175,17 +1105,11 @@ Content-Type: application/json
 
 def test_daas_rasterio():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     handler_metadata = webserver.SequentialHandler()
     handler_metadata.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
                          json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                              "width": 1024,
                              "height": 512,
-                             "pixelType": "Byte",
                              "_links": {
                                  "getBuffer": {
                                      "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -1193,7 +1117,8 @@ def test_daas_rasterio():
                              },
                              "bands": [
                                  {
-                                     "name": "Band 1"
+                                     "name": "Band 1",
+                                     "pixelType": "UInt16"
                                  }
                              ]
                          }}}}}}))
@@ -1216,7 +1141,7 @@ Content-Disposition: form-data; name="Info";
 Content-Type: application/json
 
 {"properties":{"format":"application/octet-stream","width":1024,"height":512}}
---bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % (' ' * (1024 * 512))
+--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % (' ' * (1024 * 512 * 2))
     response = response.replace('\n', '\r\n')
 
     expected_body = """{
@@ -1299,7 +1224,7 @@ Content-Disposition: form-data; name="Info";
 Content-Type: application/json
 
 {"properties":{"format":"application/octet-stream","width":512,"height":512}}
---bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % (' ' * (512 * 512))
+--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % (' ' * (512 * 512 * 2))
     response = response.replace('\n', '\r\n')
 
     expected_body = """{
@@ -1351,18 +1276,12 @@ Content-Type: application/json
 
 def test_daas_mask():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     # Valid JSon but invalid height (string)
     handler = webserver.SequentialHandler()
     handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 2,
                     "height": 3,
-                    "pixelType": "Byte",
                     "_links": {
                         "getBuffer": {
                             "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -1373,11 +1292,13 @@ def test_daas_mask():
                         {
                             "name": "PAN",
                             "description": "Panchromatic band",
-                            "colorInterpretation": "GRAY"
+                            "colorInterpretation": "GRAY",
+                            "pixelType": "UInt16"
                         },
                         {
                             "name": "THE_MASK",
-                            "colorInterpretation": "MAIN_MASK"
+                            "colorInterpretation": "MAIN_MASK",
+                            "pixelType": "Byte"
                         }
                     ]
                 }}}}}}))
@@ -1392,7 +1313,8 @@ def test_daas_mask():
     assert ds.GetRasterBand(1).GetMaskBand()
     assert ds.GetRasterBand(1).GetNoDataValue() is None
 
-    handler = webserver.SequentialHandler()
+    # Test a non-typical answer where the server returns a pixelType=Band for the PAN band
+    # instead of UInt16
     response = """--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
 Content-Disposition: form-data; name="Data";
 Content-Type: application/octet-stream
@@ -1402,14 +1324,11 @@ Content-Type: application/octet-stream
 Content-Disposition: form-data; name="Info";
 Content-Type: application/json
 
-{"properties":{"format":"application/octet-stream","width":2,"height":3}}
+{"properties":{"format":"application/octet-stream","width":2,"height":3,"bands":[{"name":"PAN","pixelType":"Byte"}]}}
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % ('XXXXXX')
     response = response.replace('\n', '\r\n')
-    handler.add('POST', '/getbuffer', 200,
-                {'Content-Type': 'multipart/form-data; boundary=bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7'},
-                response)
 
-    response = """--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
+    response2 = """--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7
 Content-Disposition: form-data; name="Data";
 Content-Type: application/octet-stream
 
@@ -1418,15 +1337,35 @@ Content-Type: application/octet-stream
 Content-Disposition: form-data; name="Info";
 Content-Type: application/json
 
-{"properties":{"format":"application/octet-stream","width":2,"height":3}}
+{"properties":{"format":"application/octet-stream","width":2,"height":3,"bands":[{"name":"THE_MASK","pixelType":"Byte"}]}}
 --bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7--""" % ('GHIJKL')
-    response = response.replace('\n', '\r\n')
+    response2 = response2.replace('\n', '\r\n')
+
+    handler = webserver.SequentialHandler()
     handler.add('POST', '/getbuffer', 200,
                 {'Content-Type': 'multipart/form-data; boundary=bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7'},
                 response)
+    handler.add('POST', '/getbuffer', 200,
+                {'Content-Type': 'multipart/form-data; boundary=bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7'},
+                response2)
 
     with webserver.install_http_handler(handler):
-        data = ds.GetRasterBand(1).GetMaskBand().ReadRaster()
+        data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_type = gdal.GDT_Byte)
+    assert data == 'GHIJKL'.encode('ascii')
+
+    ds.FlushCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/getbuffer', 200,
+                {'Content-Type': 'multipart/form-data; boundary=bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7'},
+                response)
+    handler.add('POST', '/getbuffer', 200,
+                {'Content-Type': 'multipart/form-data; boundary=bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7'},
+                response2)
+    with webserver.install_http_handler(handler):
+        data = ds.ReadRaster(buf_type = gdal.GDT_Byte)
+    assert data == 'XXXXXX'.encode('ascii')
+    data = ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_type = gdal.GDT_Byte)
     assert data == 'GHIJKL'.encode('ascii')
 
 ###############################################################################
@@ -1434,18 +1373,12 @@ Content-Type: application/json
 
 def test_daas_png_response_4_bands_for_a_one_band_request():
 
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
     # Valid JSon but invalid height (string)
     handler = webserver.SequentialHandler()
     handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 2,
                     "height": 3,
-                    "pixelType": "Byte",
                     "_links": {
                         "getBuffer": {
                             "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
@@ -1455,7 +1388,8 @@ def test_daas_png_response_4_bands_for_a_one_band_request():
                         {
                             "name": "PAN",
                             "description": "Panchromatic band",
-                            "colorInterpretation": "GRAY"
+                            "colorInterpretation": "GRAY",
+                            "pixelType": "Byte"
                         }
                     ]
                 }}}}}}))
@@ -1501,21 +1435,3 @@ Content-Type: application/json
     with webserver.install_http_handler(handler):
         data = ds.GetRasterBand(1).ReadRaster()
     assert data == 'AAAAAA'.encode('ascii')
-
-###############################################################################
-#
-
-
-def test_daas_cleanup():
-
-    if gdaltest.daas_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port != 0:
-        webserver.server_stop(gdaltest.webserver_process,
-                              gdaltest.webserver_port)
-
-    gdal.RmdirRecursive('/vsimem/cache_dir')
-
-    for var in gdaltest.daas_vars:
-        gdal.SetConfigOption(var, gdaltest.daas_vars[var])

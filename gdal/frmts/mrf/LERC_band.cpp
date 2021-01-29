@@ -1,5 +1,5 @@
 /*
-Copyright 2013-2020 Esri
+Copyright 2013-2021 Esri
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -16,7 +16,7 @@ http://github.com/Esri/lerc/
 LERC band implementation
 LERC page compression and decompression functions
 
-Contributors:  Lucian Plesea
+Authors:  Lucian Plesea
 */
 
 #include "marfa.h"
@@ -154,7 +154,7 @@ template <typename T> static void Lerc1ImgFill(Lerc1Image& zImg, T* src, const I
             for (int col = 0; col < w; col++) {
                 float val = static_cast<float>(*src++);
                 zImg(row, col) = val;
-                zImg.mask.Set(row * w + col, !CPLIsEqual(ndv, val));
+                zImg.SetMask(row, col, !CPLIsEqual(ndv, val));
             }
         return;
     }
@@ -163,7 +163,7 @@ template <typename T> static void Lerc1ImgFill(Lerc1Image& zImg, T* src, const I
             float val = static_cast<float>(*src);
             src += stride;
             zImg(row, col) = val;
-            zImg.mask.Set(row * w + col, !CPLIsEqual(ndv, val));
+            zImg.SetMask(row, col, !CPLIsEqual(ndv, val));
         }
 }
 

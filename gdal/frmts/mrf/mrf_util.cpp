@@ -18,7 +18,7 @@
 * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright 2014-2015 Esri
+* Copyright 2014-2021 Esri
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -31,21 +31,16 @@
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
 * limitations under the License.
+*
+*  Functions used by the driver, should have prototypes in the header file
+*
+*  Author: Lucian Plesea
 */
-
-/**
- *
- *  Functions used by the driver, should have prototypes in the header file
- *
- *  Author: Lucian Plesea
- */
 
 #include "marfa.h"
 #include <zlib.h>
 #include <algorithm>
 #include <limits>
-
-CPL_CVSID("$Id$")
 
 // LERC is not ready for big endian hosts for now
 #if defined(LERC) && defined(WORDS_BIGENDIAN)
@@ -80,8 +75,7 @@ char const * const * ILOrder_Name=ILO_N;
 /**
  *  Get the string for a compression type
  */
-const char *CompName(ILCompression comp)
-{
+const char *CompName(ILCompression comp) {
     if (comp>=IL_ERR_COMP) return ILComp_Name[IL_ERR_COMP];
     return ILComp_Name[comp];
 }
@@ -89,14 +83,12 @@ const char *CompName(ILCompression comp)
 /**
  *  Get the string for an order type
  */
-const char *OrderName(ILOrder val)
-{
+const char *OrderName(ILOrder val) {
     if (val>=IL_ERR_ORD) return ILOrder_Name[IL_ERR_ORD];
     return ILOrder_Name[val];
 }
 
-ILCompression CompToken(const char *opt, ILCompression def)
-{
+ILCompression CompToken(const char *opt, ILCompression def) {
     int i;
     if (nullptr==opt) return def;
     for (i=0; ILCompression(i) < IL_ERR_COMP; i++)
@@ -110,8 +102,7 @@ ILCompression CompToken(const char *opt, ILCompression def)
 /**
  *  Find a compression token
  */
-ILOrder OrderToken(const char *opt, ILOrder def)
-{
+ILOrder OrderToken(const char *opt, ILOrder def) {
     int i;
     if (nullptr==opt) return def;
     for (i=0; ILOrder(i)<IL_ERR_ORD; i++)
@@ -125,8 +116,7 @@ ILOrder OrderToken(const char *opt, ILOrder def)
 //
 //  Inserters for ILSize and ILIdx types
 //
-std::ostream& operator<<(std::ostream &out, const ILSize& sz)
-{
+std::ostream& operator<<(std::ostream &out, const ILSize& sz) {
     out << "X=" << sz.x << ",Y=" << sz.y << ",Z=" << sz.z
         << ",C=" << sz.c << ",L=" << sz.l;
     return out;
@@ -174,15 +164,14 @@ GIntBig IdxSize(const ILImage &full, const int scale) {
     ILImage img = full;
     img.pagecount = pcount(img.size, img.pagesize);
     GIntBig sz = img.pagecount.l;
-    while (scale != 0 && 1 != img.pagecount.x * img.pagecount.y)
-    {
+    while (scale != 0 && 1 != img.pagecount.x * img.pagecount.y) {
         img.size.x = pcount(img.size.x, scale);
         img.size.y = pcount(img.size.y, scale);
         img.pagecount = pcount(img.size, img.pagesize);
         sz += img.pagecount.l;
     }
-    if( sz > std::numeric_limits<GIntBig>::max() / static_cast<int>(sizeof(ILIdx)) )
-    {
+
+    if (sz > std::numeric_limits<GIntBig>::max() / static_cast<int>(sizeof(ILIdx))) {
         CPLError(CE_Failure, CPLE_AppDefined, "IdxSize: integer overflow");
         return 0;
     }
@@ -214,8 +203,7 @@ ILImage::ILImage() :
  * parameters are preserved.
  */
 
-CPLString getFname(const CPLString &in, const char *ext)
-{
+CPLString getFname(const CPLString &in, const char *ext) {
     if (strlen(in) < strlen(ext))
         return CPLString(ext);
 
@@ -238,8 +226,7 @@ CPLString getFname(const CPLString &in, const char *ext)
  *
  */
 
-CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, const char *def)
-{
+CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, const char *def) {
     CPLString fn = CPLGetXMLValue(node, token, "");
     if (fn.empty()) // Not provided
         return getFname(in, def);
@@ -264,8 +251,7 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
  * a number instead of a string
  */
 
-double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
-{
+double getXMLNum(CPLXMLNode *node, const char *pszPath, double def) {
     const char *textval=CPLGetXMLValue(node,pszPath,nullptr);
     if (textval) return atof(textval);
     return def;
@@ -275,14 +261,9 @@ double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 // Calculate offset of index, pos is in pages
 //
 
-GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
-{
-    return img.idxoffset + sizeof(ILIdx) *
-        (pos.c + img.pagecount.c * (
-         pos.x+img.pagecount.x * (
-         pos.y+img.pagecount.y *
-         static_cast<GIntBig>(pos.z)
-        )));
+GIntBig IdxOffset(const ILSize &pos, const ILImage &img) {
+    return img.idxoffset + sizeof(ILIdx) * (pos.c + img.pagecount.c * (
+            pos.x + img.pagecount.x * (pos.y + img.pagecount.y * static_cast<GIntBig>(pos.z))));
 }
 
 // Is compression type endianness dependent?
@@ -295,27 +276,28 @@ bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp) {
 }
 
 MRFRasterBand *newMRFRasterBand(MRFDataset *pDS, const ILImage &image, int b, int level)
-
 {
     MRFRasterBand *bnd = nullptr;
     CPLErrorReset();
-    switch(pDS->current.comp)
-    {
+    switch (pDS->current.comp) {
     case IL_PPNG: // Uses the PNG code, just has a palette in each PNG
     case IL_PNG:  bnd = new PNG_Band(pDS, image, b, level);  break;
     case IL_JPEG: bnd = new JPEG_Band(pDS, image, b, level); break;
     case IL_JPNG: bnd = new JPNG_Band(pDS, image, b, level); break;
     case IL_NONE: bnd = new Raw_Band(pDS, image, b, level);  break;
-    // ZLIB is just raw + deflate
-    case IL_ZLIB: bnd = new Raw_Band(pDS, image, b, level);  bnd->SetDeflate(1); break;
-    case IL_TIF: 
-        if( image.pageSizeBytes > INT_MAX - 1024 )
-            return nullptr;
-        bnd = new TIF_Band(pDS, image, b, level);
-        break;
 #if defined(LERC)
     case IL_LERC: bnd = new LERC_Band(pDS, image, b, level); break;
 #endif
+        // ZLIB is just raw + deflate
+    case IL_ZLIB:
+        bnd = new Raw_Band(pDS, image, b, level);
+        bnd->SetDeflate(1);
+        break;
+    case IL_TIF:
+        if (image.pageSizeBytes > INT_MAX - 1024)
+            return nullptr;
+        bnd = new TIF_Band(pDS, image, b, level);
+        break;
     default:
         return nullptr;
     }
@@ -342,7 +324,6 @@ double logbase(double val, double base) {
  *\brief Is logbase(val, base) an integer?
  *
  */
-
 int IsPower(double value, double base) {
     double v = logbase(value, base);
     return CPLIsEqual(v, int(v + 0.5));
@@ -363,36 +344,30 @@ int IsPower(double value, double base) {
  *
  * @param pszElement the name of the element or attribute to search for.
  *
- *
  * @return The first matching node or NULL on failure.
  */
 
-CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement )
-
-{
+CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement ) {
     if( psRoot == nullptr || pszElement == nullptr )
         return nullptr;
 
     // If the strings starts with '=', skip it and test the root
     // If not, start testing with the next sibling
-    if (pszElement[0]=='=') pszElement++;
-    else psRoot=psRoot->psNext;
+    if (pszElement[0]=='=')
+        pszElement++;
+    else
+        psRoot=psRoot->psNext;
 
     for (;psRoot!=nullptr;psRoot=psRoot->psNext)
-        if ((psRoot->eType == CXT_Element ||
-             psRoot->eType == CXT_Attribute)
-             && EQUAL(pszElement,psRoot->pszValue))
+        if ((psRoot->eType == CXT_Element || psRoot->eType == CXT_Attribute) && EQUAL(pszElement,psRoot->pszValue))
             return psRoot;
-
     return nullptr;
 }
 
 //
 // Extension to CSL, set an entry if it doesn't already exist
 //
-char **CSLAddIfMissing(char **papszList,
-    const char *pszName, const char *pszValue)
-{
+char **CSLAddIfMissing(char **papszList, const char *pszName, const char *pszValue) {
     if (CSLFetchNameValue(papszList, pszName))
         return papszList;
     return CSLSetNameValue(papszList, pszName, pszValue);
@@ -402,12 +377,11 @@ char **CSLAddIfMissing(char **papszList,
 // Print a double so it can be read with strod while preserving precision
 // Unfortunately this is not quite possible or portable enough at this time
 //
-CPLString PrintDouble(double d, const char *frmt)
-{
+CPLString PrintDouble(double d, const char *frmt) {
     CPLString res;
     res.FormatC(d, nullptr);
-    double v = CPLStrtod(res.c_str(), nullptr);
-    if (d == v) return res;
+    if (CPLStrtod(res.c_str(), nullptr) == d)
+        return res;
 
     //  This would be the right code with a C99 compiler that supports %a readback in strod()
     //    return CPLString().Printf("%a",d);
@@ -415,21 +389,16 @@ CPLString PrintDouble(double d, const char *frmt)
     return CPLString().FormatC(d, frmt);
 }
 
-void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName, const char *pszVal)
-{
+void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName, const char *pszVal) {
     CPLCreateXMLNode(parent, CXT_Attribute, pszName);
     CPLSetXMLValue(parent, pszName, pszVal);
 }
 
-void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
-    const double val, const char *frmt)
-{
+void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName, const double val, const char *frmt) {
     XMLSetAttributeVal(parent, pszName, PrintDouble(val, frmt));
 }
 
-CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
-    const char*pszName, const ILSize &sz, const char *frmt)
-{
+CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent, const char*pszName, const ILSize &sz, const char *frmt) {
     CPLXMLNode *node = CPLCreateXMLNode(parent, CXT_Element, pszName);
     XMLSetAttributeVal(node, "x", sz.x, frmt);
     XMLSetAttributeVal(node, "y", sz.y, frmt);
@@ -443,9 +412,7 @@ CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
 // Prints a vector of doubles into a string and sets that string as the value of an XML attribute
 // If all values are the same, it only prints one
 //
-void XMLSetAttributeVal(CPLXMLNode *parent,
-    const char*pszName, std::vector<double> const &values)
-{
+void XMLSetAttributeVal(CPLXMLNode *parent, const char*pszName, std::vector<double> const &values) {
     if (values.empty())
         return;
 
@@ -501,14 +468,7 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
     if( ifp == nullptr )
         return false;
 
-// There is no VSIFTruncateL in gdal 1.8 and lower, seek and write something at the end
-#if GDAL_VERSION_MAJOR == 1 && GDAL_VERSION_MINOR <= 8
-    int zero = 0;
-    VSIFSeekL(ifp, sz - sizeof(zero), SEEK_SET);
-    int ret = (sizeof(zero) == VSIFWriteL(&zero, sizeof(zero), 1,ifp));
-#else
     int ret = VSIFTruncateL(ifp, sz);
-#endif
     VSIFCloseL(ifp);
     return !ret;
 }
@@ -583,9 +543,7 @@ NAMESPACE_MRF_END
 
 USING_NAMESPACE_MRF
 
-void GDALRegister_mrf()
-
-{
+void GDALRegister_mrf() {
     if( GDALGetDriverByName("MRF") != nullptr )
         return;
 
@@ -595,10 +553,7 @@ void GDALRegister_mrf()
     driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/marfa.html");
     driver->SetMetadataItem(GDAL_DMD_EXTENSION, "mrf");
     driver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-#if GDAL_VERSION_MAJOR >= 2
     driver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-#endif
 
     // These will need to be revisited, do we support complex data types too?
     driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
