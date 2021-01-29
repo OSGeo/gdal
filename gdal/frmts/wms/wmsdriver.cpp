@@ -1055,6 +1055,8 @@ void WMSDeregister(CPL_UNUSED GDALDriver *d) {
 /*                          GDALRegister_WMS()                          */
 /************************************************************************/
 
+// The WMS driver does not define any open options, which means that open options are not checked
+// before they are passed to the minidrivers
 void GDALRegister_WMS()
 
 {
