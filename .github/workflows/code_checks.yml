@@ -84,10 +84,10 @@ jobs:
       - name: Detect printf
         run: ./gdal/scripts/detect_printf.sh
 
-      - name: Detect self assigments
+      - name: Detect self assignments
         run: ./gdal/scripts/detect_self_assignment.sh
 
-      - name: Detect suspicous char digit zero
+      - name: Detect suspicious char digit zero
         run: ./gdal/scripts/detect_suspicious_char_digit_zero.sh
 
       - name: Shellcheck

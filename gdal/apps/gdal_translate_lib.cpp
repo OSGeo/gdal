@@ -2210,7 +2210,7 @@ static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand
         {
             GDALRasterAttributeTable *poNewRAT = poSrcBand->GetDefaultRAT()->Clone();
 
-            // strip histogram data (as definied by the source RAT)
+            // strip histogram data (as defined by the source RAT)
             poNewRAT->RemoveStatistics();
             if( poNewRAT->GetColumnCount() )
             {

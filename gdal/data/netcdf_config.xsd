@@ -97,7 +97,7 @@
             <xs:annotation><xs:documentation>netCDF variable name. When both name
             and netcdf_name are set, the OGR field {name} will be written as the
             netCDF {netcdf_name} variable. When netcdf_name is set, but name is none,
-            then the Field definition will match an implictly created netCDF variable,
+            then the Field definition will match an implicitly created netCDF variable,
             such as x/lon, y/lat, z, ...
             </xs:documentation></xs:annotation>
         </xs:attribute>

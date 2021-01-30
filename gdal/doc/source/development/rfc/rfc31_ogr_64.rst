@@ -181,7 +181,7 @@ A new option is added to ogr2ogr : -mapFieldType. Can be used like this
 -mapFieldType Integer64=Integer,Date=String to mean that Integer64 field
 in the source layer should be created as Integer, and Date as String.
 ogr2ogr will also warn if attempting to create a field in an output
-driver that advertizes a GDAL_DMD_CREATIONFIELDDATATYPES metadata item
+driver that advertises a GDAL_DMD_CREATIONFIELDDATATYPES metadata item
 that does not mention the required field type. For Integer64 fields, if
 it is not advertized in GDAL_DMD_CREATIONFIELDDATATYPES metadata item or
 GDAL_DMD_CREATIONFIELDDATATYPES is missing, conversion to Real is done
@@ -279,7 +279,7 @@ list of changes is :
 -  WFS: Integer64, Integer64List and 64 bit FID supported in read/write.
    GetFeatureCount() modified to return 64 bit values.
 -  CartoDB: Integer64 supported on creation. On read returned as Real
-   (CartoDB only advertizes a 'Number' type). GetFeatureCount() modified
+   (CartoDB only advertises a 'Number' type). GetFeatureCount() modified
    to return 64 bit values.
 -  XLSX: Integer64 supported in read/write.
 -  ODS: Integer64 supported in read/write.

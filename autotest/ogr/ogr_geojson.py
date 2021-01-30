@@ -2240,7 +2240,7 @@ def test_ogr_geojson_57():
     assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"]))) == 0
     assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][2]["geometry"]))) == 0
 
-    # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N wit polygon on west of antimeridian
+    # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N with polygon on west of antimeridian
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=utm +zone=60 +datum=WGS84 +units=m +no_defs')

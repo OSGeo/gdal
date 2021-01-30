@@ -24,7 +24,7 @@
     <component name="Coordinate1">
         <factorymodule>isceobj.Image</factorymodule>
         <factoryname>createCoordinate</factoryname>
-        <doc>First coordinate of a 2D image (witdh).</doc>
+        <doc>First coordinate of a 2D image (width).</doc>
         <property name="startingValue">
             <value>14.259166666666667</value>
         </property>

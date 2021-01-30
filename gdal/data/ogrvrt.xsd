@@ -496,7 +496,7 @@
                 </xs:element>
                 <xs:element name="FieldStrategy" type="FieldStrategyType">
                     <xs:annotation>
-                        <xs:documentation>Defaults to Union if no Field or GeometryField element is speicified.</xs:documentation>
+                        <xs:documentation>Defaults to Union if no Field or GeometryField element is specified.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="Field" type="FieldTypeWithoutSrc">

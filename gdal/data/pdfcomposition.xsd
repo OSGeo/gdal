@@ -32,7 +32,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="1.0">
     <xs:element name="PDFComposition">
         <xs:annotation><xs:documentation>
-            Root element definining a composition of one or several pages.
+            Root element defining a composition of one or several pages.
         </xs:documentation></xs:annotation>
         <xs:complexType>
             <xs:sequence>
@@ -325,7 +325,7 @@
         </xs:sequence>
         <xs:attribute name="id" type="xs:string">
                 <xs:annotation><xs:documentation>
-                    ID that can be refered to to automatically place content.
+                    ID that can be referred to to automatically place content.
                     The georeferencing area ca be referenced to, only if the
                     control points define an affine geotransform, without rotation
                     or shearing, from PDF coordinate space to georeferenced
@@ -394,8 +394,8 @@
         <xs:annotation><xs:documentation>
             Sequence of raster, vector, labels, content from other PDF document,
             or conditionalized content of any of the above types.
-            The content is drawn in the order it is mentionned, that is the
-            first mentionned item is drawn first, and the last mentionned item
+            The content is drawn in the order it is mentioned, that is the
+            first mentioned item is drawn first, and the last mentioned item
             is drawn last.
         </xs:documentation></xs:annotation>
         <xs:sequence>
@@ -602,7 +602,7 @@
         <xs:attribute name="displayLayerName" type="xs:string">
             <xs:annotation><xs:documentation>
                 Name of the layer that will appear in the PDF reader.
-                If not specified, this wil be the OGR layer name.
+                If not specified, this will be the OGR layer name.
             </xs:documentation></xs:annotation>
         </xs:attribute>
         <xs:attribute name="fieldToDisplay" type="xs:string">
