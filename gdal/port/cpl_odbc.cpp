@@ -397,7 +397,7 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
                     achSQLState, &nNativeError,
                     reinterpret_cast<SQLCHAR *>(pachCurErrMsg),
                     nTextLength, &nTextLength2);
-            }               
+            }
             pachCurErrMsg[nTextLength] = '\0';
             m_osLastError += CPLString().Printf("%s[%5s]%s(" CPL_FRMT_GIB ")",
                     (m_osLastError.empty() ? "" : ", "), achSQLState,
@@ -1131,16 +1131,6 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
             m_papszColValues[iCol][cbDataLen] = '\0';
             m_papszColValues[iCol][cbDataLen+1] = '\0';
-        }
-
-        // Trim white space off end, if there is any.
-        if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != nullptr )
-        {
-            char *pszTarget = m_papszColValues[iCol];
-            size_t iEnd = strlen(pszTarget);
-
-            while( iEnd > 0 && pszTarget[iEnd - 1] == ' ' )
-                pszTarget[--iEnd] = '\0';
         }
 
         // Convert WCHAR to UTF-8, assuming the WCHAR is UCS-2.
