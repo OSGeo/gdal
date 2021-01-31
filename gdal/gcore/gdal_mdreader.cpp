@@ -768,7 +768,7 @@ CPLErr GDALWriteRPCSensorMLFile(const char *pszFilename, char **papszMD)
     bOK &= VSIFPrintfL(
                fp, "          <swe:Quantity "
                    "definition=\"http://www.opengis.net/def/ogc/Row\">\n") > 0;
-    bOK &= VSIFPrintfL(fp, "              <swe:uom code=\"pixel\"/>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "              <swe:uom code=\"px\"/>\n") > 0;
     bOK &= VSIFPrintfL(fp, "          </swe:Quantity>\n") > 0;
     bOK &= VSIFPrintfL(fp, "      </sml:output>\n") > 0;
     bOK &= VSIFPrintfL(fp, "        <sml:output name=\"column\">\n") > 0;
@@ -776,7 +776,7 @@ CPLErr GDALWriteRPCSensorMLFile(const char *pszFilename, char **papszMD)
         VSIFPrintfL(
             fp, "            <swe:Quantity "
                 "definition=\"http://www.opengis.net/def/ogc/Column\">\n") > 0;
-    bOK &= VSIFPrintfL(fp, "                <swe:uom code=\"pixel\"/>\n") > 0;
+    bOK &= VSIFPrintfL(fp, "                <swe:uom code=\"px\"/>\n") > 0;
     bOK &= VSIFPrintfL(fp, "            </swe:Quantity>\n") > 0;
     bOK &= VSIFPrintfL(fp, "        </sml:output>\n") > 0;
     bOK &= VSIFPrintfL(fp, "    </sml:OutputList>\n") > 0;
@@ -828,7 +828,7 @@ CPLErr GDALWriteRPCSensorMLFile(const char *pszFilename, char **papszMD)
                 strcmp(apszRPCTXTSingleValItems[i], "SAMP_OFF") == 0 ||
                 strcmp(apszRPCTXTSingleValItems[i], "LINE_SCALE") == 0 ||
                 strcmp(apszRPCTXTSingleValItems[i], "SAMP_SCALE") == 0)
-            bOK &= VSIFPrintfL(fp, "    <swe:uom code=\"pixels\"/>") > 0;
+            bOK &= VSIFPrintfL(fp, "    <swe:uom code=\"px\"/>") > 0;
 
         else if(strcmp(apszRPCTXTSingleValItems[i], "LAT_OFF") == 0 ||
                 strcmp(apszRPCTXTSingleValItems[i], "LAT_SCALE") == 0 ||
