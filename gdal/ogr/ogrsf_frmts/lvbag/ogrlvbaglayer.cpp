@@ -307,7 +307,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         OGRFieldDefn oField1("oppervlakte", OFTInteger);
         OGRFieldDefn oField2("hoofdadresNummeraanduidingRef", OFTString);
         OGRFieldDefn oField3("nevenadresNummeraanduidingRef", OFTStringList);
-        OGRFieldDefn oField4("pandRef", OFTString);
+        OGRFieldDefn oField4("pandRef", OFTStringList);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
