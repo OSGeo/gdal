@@ -415,16 +415,24 @@ static bool LoadPythonAPI()
     // First try in the current process in case the python symbols would
     // be already loaded
     HANDLE hProcess = GetCurrentProcess();
-    HMODULE ahModules[100];
-    DWORD nSizeNeeded = 0;
+    std::vector<HMODULE> ahModules;
 
-    EnumProcessModules(hProcess, ahModules, sizeof(ahModules),
-                        &nSizeNeeded);
+    // 100 is not large enough when GDAL is loaded from QGIS for example
+    ahModules.resize(1000);
+    for( int i = 0; i < 2; i++ )
+    {
+        DWORD nSizeNeeded = 0;
+        const DWORD nSizeIn = static_cast<DWORD>(
+                ahModules.size() * sizeof(HMODULE));
+        EnumProcessModules(hProcess, &ahModules[0], nSizeIn, &nSizeNeeded);
+        ahModules.resize(static_cast<size_t>(nSizeNeeded) / sizeof(HMODULE));
+        if( nSizeNeeded <= nSizeIn )
+        {
+            break;
+        }
+    }
 
-    const size_t nModules =
-        std::min(size_t(100),
-                 static_cast<size_t>(nSizeNeeded) / sizeof(HMODULE));
-    for( size_t i = 0; i < nModules; i++ )
+    for( size_t i = 0; i < ahModules.size(); i++ )
     {
         if( GetProcAddress(ahModules[i], "Py_SetProgramName") )
         {
