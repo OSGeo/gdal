@@ -113,6 +113,7 @@ int CPL_DLL OGRParseRFC822DateTime( const char* pszRFC822DateTime,
                                     OGRField* psField );
 char CPL_DLL * OGRGetRFC822DateTime(const OGRField* psField);
 char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField);
+char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond);
 char CPL_DLL * OGRGetXML_UTF8_EscapedString(const char* pszString);
 
 int OGRCompareDate(const OGRField *psFirstTuple,

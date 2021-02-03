@@ -1327,6 +1327,11 @@ char* OGRGetRFC822DateTime( const OGRField* psField )
 
 char* OGRGetXMLDateTime(const OGRField* psField)
 {
+    return OGRGetXMLDateTime(psField, false);
+}
+
+char* OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond)
+{
     const GInt16 year = psField->Date.Year;
     const GByte month = psField->Date.Month;
     const GByte day = psField->Date.Day;
@@ -1359,7 +1364,7 @@ char* OGRGetXMLDateTime(const OGRField* psField)
                      (TZFlag > 100) ? '+' : '-', TZHour, TZMinute);
     }
 
-    if( OGR_GET_MS(second) )
+    if( OGR_GET_MS(second) || bAlwaysMillisecond )
         pszRet = CPLStrdup(CPLSPrintf(
                                "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
                                year, month, day, hour, minute, second,
