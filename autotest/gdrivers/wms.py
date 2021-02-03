@@ -600,7 +600,7 @@ def test_wms_14():
     if ds is None:
         return' fail'
 
-    assert ds.RasterXSize == 134217728 and ds.RasterYSize == 134217728 and ds.RasterCount == 3, \
+    assert ds.RasterXSize == 536870912 and ds.RasterYSize == 536870912 and ds.RasterCount == 3, \
         'wrong size or bands'
 
     wkt = ds.GetProjectionRef()
@@ -608,10 +608,10 @@ def test_wms_14():
         ('Got wrong SRS: ' + wkt)
 
     gt = ds.GetGeoTransform()
-    assert abs(gt[0] - -20037508.34278924,) <= 0.00001 and abs(gt[3] - 20037508.34278924,) <= 0.00001 and gt[1] == pytest.approx(0.2985821417389697, abs=0.00001) and gt[2] == pytest.approx(0, abs=0.00001) and abs(gt[5] - -0.2985821417389697,) <= 0.00001 and gt[4] == pytest.approx(0, abs=0.00001), \
+    assert abs(gt[0] - -20037508.34278924,) <= 0.00001 and abs(gt[3] - 20037508.34278924,) <= 0.00001 and gt[1] == pytest.approx(0.07464553543474242, abs=0.00001) and gt[2] == pytest.approx(0, abs=0.00001) and abs(gt[5] - -0.07464553543474242,) <= 0.00001 and gt[4] == pytest.approx(0, abs=0.00001), \
         'wrong geotransform'
 
-    assert ds.GetRasterBand(1).GetOverviewCount() == 18, 'bad overview count'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 20, 'bad overview count'
 
     (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
     if block_xsize != 256 or block_ysize != 256:
