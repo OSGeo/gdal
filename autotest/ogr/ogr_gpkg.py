@@ -4232,6 +4232,12 @@ def test_ogr_gpkg_datetime_timezones():
     assert f.GetField('dt') == '2020/01/01 01:34:56+00'
     f = lyr.GetNextFeature()
     assert f.GetField('dt') == '2019/12/31 23:34:56.789+00'
+
+    sql_lyr = ds.ExecuteSQL("SELECT dt || '' FROM test")
+    f = sql_lyr.GetNextFeature()
+    # check that milliseconds are written to be strictly compliant with the GPKG spec
+    assert f.GetField(0) == '2020-01-01T01:34:56.000Z'
+    ds.ReleaseResultSet(sql_lyr)
     ds = None
 
     gdal.Unlink(filename)
