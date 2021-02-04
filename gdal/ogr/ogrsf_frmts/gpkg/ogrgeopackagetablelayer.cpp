@@ -310,7 +310,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                             sField.Date.TZFlag = 100;
                         }
 
-                        char* pszXMLDateTime = OGRGetXMLDateTime(&sField);
+                        constexpr bool bAlwaysMillisecond = true;
+                        char* pszXMLDateTime = OGRGetXMLDateTime(&sField, bAlwaysMillisecond);
                         osTemp = pszXMLDateTime;
                         pszVal = osTemp.c_str();
                         nValLengthBytes = static_cast<int>(osTemp.size());
