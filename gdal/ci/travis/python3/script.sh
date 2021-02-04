@@ -36,7 +36,7 @@ cd ../../..
 curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | sudo python3
 sudo -H pip3 install -U -r ./requirements.txt
 
-PYTEST="python3 $(which pytest) -vv -p no:sugar --color=no"
+PYTEST="python3 $(command -v pytest) -vv -p no:sugar --color=no"
 
 # Run ogr_fgdb.py in isolation from the rest
 $PYTEST ogr/ogr_fgdb.py
