@@ -205,7 +205,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         //
         nonmiss=0;
         if (idrstmpl[1] == 0) {        //  No binary scaling
-           rmin=(g2float)RINT(rmin*dscale); // Pourquoi un float ? RINT est entier
+           rmin=(g2float)RINT(rmin*dscale); // Why a float? RINT seems integer
            for ( j=0; j<ndpts; j++) {
               if (ifldmiss[j] == 0) {
                 jfld[nonmiss]=(g2int)(RINT(fld[j]*dscale)-rmin);
