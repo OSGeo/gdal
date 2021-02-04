@@ -3507,21 +3507,16 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
         return OGRERR_FAILURE;
     }
 
-    const auto DefaultGetExtent = [this, iGeomField, psExtent, bForce]()
-    {
-        m_bUseSingleQueryParams = true;
-        const auto eRet = OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
-        m_bUseSingleQueryParams = false;
-        return eRet;
-    };
-
     // geo_shape aggregation is only available since ES 7.8, but only with XPack
     // for now
     if( !m_abIsGeoPoint[iGeomField] &&
         !(m_poDS->m_nMajorVersion > 7 ||
             (m_poDS->m_nMajorVersion == 7 && m_poDS->m_nMinorVersion >= 8)) )
     {
-        return DefaultGetExtent();
+        m_bUseSingleQueryParams = true;
+        const auto eRet = OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+        m_bUseSingleQueryParams = false;
+        return eRet;
     }
 
     CPLString osFilter = CPLSPrintf("{ \"size\": 0, \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
@@ -3564,7 +3559,10 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     if( poTopLeftLon == nullptr || poTopLeftLat == nullptr ||
         poBottomRightLon == nullptr || poBottomRightLat == nullptr )
     {
-        eErr = DefaultGetExtent();
+        m_bUseSingleQueryParams = true;
+        const auto eRet = OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+        m_bUseSingleQueryParams = false;
+        return eRet;
     }
     else
     {
