@@ -264,12 +264,14 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
            free(jmin);
            free(jmax);
            free(lbit);
-           if( ier != 0 )
+           if (ier != 0 && (ier < 714 || ier > 717))
            {
                 free(ifld);
                 free(gref);
                 free(gwidth);
                 free(glen);
+                fprintf(stderr,
+                    "compack.c: Error while determining grouping. IER=%d\n", ier);
                 *lcpack = -1;
                 return;
            }

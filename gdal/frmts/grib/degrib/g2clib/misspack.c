@@ -102,6 +102,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
       ifldmiss = calloc(ndpts,sizeof(g2int));
       if( ifldmiss == NULL )
       {
+          printf("misspack: Cannot alloc memory for packing.\n");
           *lcpack = -1;
           return;
       }
@@ -158,7 +159,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         }
       }
       else
-      {
+      { // Why not using bscale = 1 in previous case ??
         double max_diff = RINT(rmax*dscale - rmin*dscale) * bscale;
         if( !(max_diff >= 0 && max_diff <= INT_MAX) )
         {
@@ -194,6 +195,8 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
             free(gref);
             free(gwidth);
             free(glen);
+            fprintf(stderr,
+                "misspack.c: Cannot alloc memory for work\n");
             *lcpack = -1;
             return;
         }
@@ -202,7 +205,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         //
         nonmiss=0;
         if (idrstmpl[1] == 0) {        //  No binary scaling
-           rmin=(g2float)RINT(rmin*dscale);
+           rmin=(g2float)RINT(rmin*dscale); // Pourquoi un float ? RINT est entier
            for ( j=0; j<ndpts; j++) {
               if (ifldmiss[j] == 0) {
                 jfld[nonmiss]=(g2int)(RINT(fld[j]*dscale)-rmin);
@@ -371,7 +374,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
            free(jmin);
            free(jmax);
            free(lbit);
-           if( ier != 0 )
+           if( ier != 0 && ( ier < 714 || ier > 717 ) )
            {
                 free(ifld);
                 free(jfld);
@@ -379,6 +382,8 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
                 free(gref);
                 free(gwidth);
                 free(glen);
+                fprintf(stderr,
+                    "misspack.c: Error while determining grouping. IER=%d\n", ier);
                 *lcpack = -1;
                 return;
            }
@@ -471,6 +476,8 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
                 free(gref);
                 free(gwidth);
                 free(glen);
+                fprintf(stderr,
+                    "misspack.c: Error while grouping \n");
                 *lcpack = -1;
                 return;
            }
@@ -521,7 +528,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         }
         else {
            nbitsgwidth=0;
-           for (i=0;i<ngroups;i++) gwidth[i]=0;
+           for (i=0;i<ngroups;i++) gwidth[i]=0; // Isn't it already the case??
         }
         //
         //  Find max/min of the group lengths and calc num of bits needed
@@ -553,7 +560,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         }
         else {
            nbitsglen=0;
-           for (i=0;i<ngroups;i++) glen[i]=0;
+           for (i=0;i<ngroups;i++) glen[i]=0; // Isn't it already the case??
         }
         //
         //  For each group, pack data values
