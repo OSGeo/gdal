@@ -115,7 +115,7 @@ jobs:
             $FLAKE8 gdal/swig/python/osgeo/utils/auxiliary
 
   doxygen:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -123,7 +123,7 @@ jobs:
       - name: Install Requirements
         run: |
             sudo apt update
-            sudo apt install doxygen texlive-latex-base
+            sudo apt install doxygen texlive-latex-base texlive-latex-extra
 
       - name: Run doxygen
         run: |
