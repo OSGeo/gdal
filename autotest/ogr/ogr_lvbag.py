@@ -59,61 +59,64 @@ def test_ogr_lvbag_dataset_lig():
 
     assert 'Amersfoort' in lyr.GetSpatialRef().ExportToWkt()
 
-    assert lyr.GetLayerDefn().GetFieldCount() == 16
+    assert lyr.GetLayerDefn().GetFieldCount() == 17
 
     assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
 
-    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef().lower() == 'nummeraanduidingref' and \
-       lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef().lower() == 'identificatie' and \
-       lyr.GetLayerDefn().GetFieldDefn(2).GetNameRef().lower() == 'status' and \
-       lyr.GetLayerDefn().GetFieldDefn(3).GetNameRef().lower() == 'geconstateerd' and \
-       lyr.GetLayerDefn().GetFieldDefn(4).GetNameRef().lower() == 'documentdatum' and \
-       lyr.GetLayerDefn().GetFieldDefn(5).GetNameRef().lower() == 'documentnummer' and \
-       lyr.GetLayerDefn().GetFieldDefn(6).GetNameRef().lower() == 'voorkomenidentificatie' and \
-       lyr.GetLayerDefn().GetFieldDefn(7).GetNameRef().lower() == 'begingeldigheid' and \
-       lyr.GetLayerDefn().GetFieldDefn(8).GetNameRef().lower() == 'eindgeldigheid' and \
-       lyr.GetLayerDefn().GetFieldDefn(9).GetNameRef().lower() == 'tijdstipregistratie' and \
-       lyr.GetLayerDefn().GetFieldDefn(10).GetNameRef().lower() == 'eindregistratie' and \
-       lyr.GetLayerDefn().GetFieldDefn(11).GetNameRef().lower() == 'tijdstipinactief' and \
-       lyr.GetLayerDefn().GetFieldDefn(12).GetNameRef().lower() == 'tijdstipregistratielv' and \
-       lyr.GetLayerDefn().GetFieldDefn(13).GetNameRef().lower() == 'tijdstipeindregistratielv' and \
-       lyr.GetLayerDefn().GetFieldDefn(14).GetNameRef().lower() == 'tijdstipinactieflv' and \
-       lyr.GetLayerDefn().GetFieldDefn(15).GetNameRef().lower() == 'tijdstipnietbaglv')
+    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef().lower() == 'hoofdadresnummeraanduidingref' and \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef().lower() == 'nevenadresnummeraanduidingref' and \
+       lyr.GetLayerDefn().GetFieldDefn(2).GetNameRef().lower() == 'identificatie' and \
+       lyr.GetLayerDefn().GetFieldDefn(3).GetNameRef().lower() == 'status' and \
+       lyr.GetLayerDefn().GetFieldDefn(4).GetNameRef().lower() == 'geconstateerd' and \
+       lyr.GetLayerDefn().GetFieldDefn(5).GetNameRef().lower() == 'documentdatum' and \
+       lyr.GetLayerDefn().GetFieldDefn(6).GetNameRef().lower() == 'documentnummer' and \
+       lyr.GetLayerDefn().GetFieldDefn(7).GetNameRef().lower() == 'voorkomenidentificatie' and \
+       lyr.GetLayerDefn().GetFieldDefn(8).GetNameRef().lower() == 'begingeldigheid' and \
+       lyr.GetLayerDefn().GetFieldDefn(9).GetNameRef().lower() == 'eindgeldigheid' and \
+       lyr.GetLayerDefn().GetFieldDefn(10).GetNameRef().lower() == 'tijdstipregistratie' and \
+       lyr.GetLayerDefn().GetFieldDefn(11).GetNameRef().lower() == 'eindregistratie' and \
+       lyr.GetLayerDefn().GetFieldDefn(12).GetNameRef().lower() == 'tijdstipinactief' and \
+       lyr.GetLayerDefn().GetFieldDefn(13).GetNameRef().lower() == 'tijdstipregistratielv' and \
+       lyr.GetLayerDefn().GetFieldDefn(14).GetNameRef().lower() == 'tijdstipeindregistratielv' and \
+       lyr.GetLayerDefn().GetFieldDefn(15).GetNameRef().lower() == 'tijdstipinactieflv' and \
+       lyr.GetLayerDefn().GetFieldDefn(16).GetNameRef().lower() == 'tijdstipnietbaglv')
 
     assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString and \
-       lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTStringList and \
        lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString and \
-       lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTInteger and \
-       lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTDate and \
-       lyr.GetLayerDefn().GetFieldDefn(5).GetType() == ogr.OFTString and \
-       lyr.GetLayerDefn().GetFieldDefn(6).GetType() == ogr.OFTInteger and \
-       lyr.GetLayerDefn().GetFieldDefn(7).GetType() == ogr.OFTDate and \
+       lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTInteger and \
+       lyr.GetLayerDefn().GetFieldDefn(5).GetType() == ogr.OFTDate and \
+       lyr.GetLayerDefn().GetFieldDefn(6).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(7).GetType() == ogr.OFTInteger and \
        lyr.GetLayerDefn().GetFieldDefn(8).GetType() == ogr.OFTDate and \
-       lyr.GetLayerDefn().GetFieldDefn(9).GetType() == ogr.OFTDateTime and \
+       lyr.GetLayerDefn().GetFieldDefn(9).GetType() == ogr.OFTDate and \
        lyr.GetLayerDefn().GetFieldDefn(10).GetType() == ogr.OFTDateTime and \
        lyr.GetLayerDefn().GetFieldDefn(11).GetType() == ogr.OFTDateTime and \
        lyr.GetLayerDefn().GetFieldDefn(12).GetType() == ogr.OFTDateTime and \
        lyr.GetLayerDefn().GetFieldDefn(13).GetType() == ogr.OFTDateTime and \
        lyr.GetLayerDefn().GetFieldDefn(14).GetType() == ogr.OFTDateTime and \
-       lyr.GetLayerDefn().GetFieldDefn(15).GetType() == ogr.OFTDateTime)
+       lyr.GetLayerDefn().GetFieldDefn(15).GetType() == ogr.OFTDateTime and \
+       lyr.GetLayerDefn().GetFieldDefn(16).GetType() == ogr.OFTDateTime)
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString(0) != 'NL.IMBAG.Nummeraanduiding.0106200000005333' or \
-       feat.GetFieldAsString(1) != 'NL.IMBAG.Ligplaats.0106020000000003' or \
-       feat.GetFieldAsString(2) != 'Plaats aangewezen' or \
-       feat.GetFieldAsInteger(3) != 0 or \
-       feat.GetFieldAsString(4) != '2009/05/26' or \
-       feat.GetFieldAsString(5) != '2009-01000' or \
-       feat.GetFieldAsInteger(6) != 1 or \
-       feat.GetFieldAsString(7) != '2009/05/26' or \
-       feat.GetField(8) != None or \
-       feat.GetFieldAsString(9) != '2009/11/06 13:37:22' or \
-       feat.GetField(10) != None or \
+       feat.GetFieldAsString(1) != '' or \
+       feat.GetFieldAsString(2) != 'NL.IMBAG.Ligplaats.0106020000000003' or \
+       feat.GetFieldAsString(3) != 'Plaats aangewezen' or \
+       feat.GetFieldAsInteger(4) != 0 or \
+       feat.GetFieldAsString(5) != '2009/05/26' or \
+       feat.GetFieldAsString(6) != '2009-01000' or \
+       feat.GetFieldAsInteger(7) != 1 or \
+       feat.GetFieldAsString(8) != '2009/05/26' or \
+       feat.GetField(9) != None or \
+       feat.GetFieldAsString(10) != '2009/11/06 13:37:22' or \
        feat.GetField(11) != None or \
-       feat.GetFieldAsString(12) != '2009/11/06 14:07:51.498' or \
-       feat.GetField(13) != None or \
+       feat.GetField(12) != None or \
+       feat.GetFieldAsString(13) != '2009/11/06 14:07:51.498' or \
        feat.GetField(14) != None or \
-       feat.GetField(15) != None:
+       feat.GetField(15) != None or \
+       feat.GetField(16) != None:
         feat.DumpReadable()
         pytest.fail()
 
@@ -229,7 +232,7 @@ def test_ogr_lvbag_dataset_sta():
     assert lyr.GetName() == 'Standplaats', 'bad layer name'
     assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
     assert lyr.GetFeatureCount() == 2
-    assert lyr.GetLayerDefn().GetFieldCount() == 16
+    assert lyr.GetLayerDefn().GetFieldCount() == 17
 
 def test_ogr_lvbag_dataset_vbo():
 
@@ -241,7 +244,7 @@ def test_ogr_lvbag_dataset_vbo():
     assert lyr.GetName() == 'Verblijfsobject', 'bad layer name'
     assert lyr.GetGeomType() == ogr.wkbPoint, 'bad layer geometry type'
     assert lyr.GetFeatureCount() == 3
-    assert lyr.GetLayerDefn().GetFieldCount() == 19
+    assert lyr.GetLayerDefn().GetFieldCount() == 20
 
 def test_ogr_lvbag_dataset_wpl():
 
@@ -358,6 +361,43 @@ def test_ogr_lvbag_old_schema():
     ds = ogr.Open('data/lvbag/lig_old.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 0, 'bad layer count'
+
+def test_ogr_lvbag_stringlist_feat():
+
+    ds = ogr.Open('data/lvbag/vbo2.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    assert feat.GetField('gebruiksdoel') == ['woonfunctie', 'gezondheidszorgfunctie'], 'expecting two items'
+
+def test_ogr_lvbag_secondary_address():
+
+    ds = ogr.Open('data/lvbag/vbo3.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert (lyr.GetLayerDefn().GetFieldDefn(2).GetNameRef().lower() == 'hoofdadresnummeraanduidingref' and \
+       lyr.GetLayerDefn().GetFieldDefn(3).GetNameRef().lower() == 'nevenadresnummeraanduidingref')
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetFieldAsString(2) == 'NL.IMBAG.Nummeraanduiding.0518200000692257', 'bad hoofdadres'
+    assert feat.GetField(3) == ['NL.IMBAG.Nummeraanduiding.0518200000692258', 'NL.IMBAG.Nummeraanduiding.0518200000692259', 'NL.IMBAG.Nummeraanduiding.0518200000692260'], 'bad nevenadres'
+    assert feat.GetFieldAsString(5) == 'NL.IMBAG.Verblijfsobject.0518010000692261', 'bad identifier'
+
+def test_ogr_lvbag_secondary_pandref():
+
+    ds = ogr.Open('data/lvbag/vbo4.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetNameRef().lower() == 'pandref'
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetField(4) == ['NL.IMBAG.Pand.0048100000002999', 'NL.IMBAG.Pand.1950100000100293'], 'bad nevenadres'
 
 ###############################################################################
 # Run test_ogrsf
