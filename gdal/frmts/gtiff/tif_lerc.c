@@ -282,6 +282,8 @@ LERCPreDecode(TIFF* tif, uint16 s)
 
         (void) s;
         assert(sp != NULL);
+        if( sp->state != LSTATE_INIT_DECODE )
+            tif->tif_setupdecode(tif);
 
         lerc_data_type = GetLercDataType(tif);
         if( lerc_data_type < 0 )
@@ -633,6 +635,8 @@ LERCPreEncode(TIFF* tif, uint16 s)
 
         (void) s;
         assert(sp != NULL);
+        if( sp->state != LSTATE_INIT_ENCODE )
+            tif->tif_setupencode(tif);
 
         lerc_data_type = GetLercDataType(tif);
         if( lerc_data_type < 0 )
