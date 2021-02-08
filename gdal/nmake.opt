@@ -417,6 +417,21 @@ JPEG12_SUPPORTED = 1
 #		/D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS \
 #		/DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI
 
+
+# Uncomment the following line to enable Pitney Bowes MRR support.
+#MRR_ENABLED = YES
+#MRR_VERSION=1
+#MRR_SDK = C:\MRRSDK\sdk
+#MRR_INC = $(MRR_SDK)\include
+#MRR_LIB = $(MRR_SDK)\lib\pe$(MRR_VERSION).lib \
+#          $(MRR_SDK)\lib\sde$(MRR_VERSION).lib $(MRR_SDK)\lib\sg$(MRR_VERSION).lib
+
+# To build MRR support as a plugin uncomment the following, and make sure
+# to do "nmake /f makefile.vc plugin" in gdal/frmts/mrr and copy the two
+# resulting DLLs to an appropriate place.
+#MRR_PLUGIN = YES
+
+
 # DWG support using the Open Design Alliance Teigha Libraries
 # Two versions are supported:
 # - ODA >= 2021 (tested with 2021.2), defined immediately
@@ -711,14 +726,6 @@ OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
 OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 !ENDIF
 !ENDIF
-
-#MRR_PLUGIN = YES
-#MRR_ENABLED = YES
-#MRR_VERSION=1
-#MRR_SDK = C:\MRRSDK\sdk
-#MRR_INC = $(MRR_SDK)\include 
-#MRR_LIB = $(MRR_SDK)\lib\pe$(MRR_VERSION).lib \
-#          $(MRR_SDK)\lib\sde$(MRR_VERSION).lib $(MRR_SDK)\lib\sg$(MRR_VERSION).lib
 
 
 #FGDB_ENABLED = YES
@@ -1024,6 +1031,14 @@ ECW_LIB_LINK=
 !ENDIF
 !ENDIF
 
+!IFDEF MRR_SDK
+!IF "$(MRR_PLUGIN)" != "YES"
+MRR_LIB_LINK= $(MRR_LIB)
+!ELSE
+MRR_LIB_LINK=
+!ENDIF
+!ENDIF
+
 !IFDEF LURATECH_CFLAGS
 !IF "$(JP2LURA_PLUGIN)" != "YES"
 LURATECH_LIB_LINK= $(LURATECH_LIB)
@@ -1149,7 +1164,7 @@ SYM_PREFIX=_
 !ENDIF
 
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
-	$(KAK_LIB_LINK) $(ECW_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
+	$(KAK_LIB_LINK) $(ECW_LIB_LINK) $(MRR_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(ARCOBJECTS_LIB) $(DWG_LIB_LINK) \
