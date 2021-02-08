@@ -1664,7 +1664,6 @@ def enable_exceptions():
 
 
 ###############################################################################
-run_func = gdaltestaux.run_func
 gdalurlopen = gdaltestaux.gdalurlopen
 runexternal = gdaltestaux.runexternal
 read_in_thread = gdaltestaux.read_in_thread

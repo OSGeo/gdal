@@ -40,26 +40,6 @@ import sys
 from queue import Queue
 from threading import Thread
 
-def run_func(func):
-    try:
-        result = func()
-        print(result)
-        return result
-    except SystemExit as x:
-        import traceback
-        traceback.print_exc()
-
-        raise x
-    except Exception:
-        # We really do want to catch most exceptions percolating up to here
-        # pylint: disable=broad-except
-        result = 'fail (blowup)'
-        print(result)
-
-        import traceback
-        traceback.print_exc()
-        return result
-
 
 def gdalurlopen(url, timeout=10):
     old_timeout = socket.getdefaulttimeout()
