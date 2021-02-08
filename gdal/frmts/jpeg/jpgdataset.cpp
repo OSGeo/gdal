@@ -39,6 +39,7 @@
 #include <climits>
 #include <cstddef>
 #include <cstdio>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #if HAVE_FCNTL_H
@@ -53,6 +54,7 @@
 #include "cpl_error.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
@@ -67,6 +69,7 @@ CPL_C_START
 #endif
 CPL_C_END
 #include "memdataset.h"
+#include "rawdataset.h"
 #include "vsidataio.h"
 
 CPL_CVSID("$Id$")
@@ -236,23 +239,514 @@ void JPGDatasetCommon::ReadXMPMetadata()
 }
 
 /************************************************************************/
+/*                        ReadFLIRMetadata()                            */
+/************************************************************************/
+
+// See https://exiftool.org/TagNames/FLIR.html
+
+void JPGDatasetCommon::ReadFLIRMetadata()
+{
+    if (bHasReadFLIRMetadata)
+        return;
+    bHasReadFLIRMetadata = true;
+
+    // Save current position to avoid disturbing JPEG stream decoding.
+    const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+
+    int nChunkLoc = 2;
+    // size of APP1 segment marker + size of "FLIR\0"
+    GByte abyChunkHeader[4 + 5];
+    std::vector<GByte> abyFLIR;
+
+    while(true)
+    {
+        if( VSIFSeekL(fpImage, nChunkLoc, SEEK_SET) != 0 )
+            break;
+
+        if( VSIFReadL(abyChunkHeader, sizeof(abyChunkHeader), 1, fpImage) != 1 )
+            break;
+
+        int nMarkerLength = abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2;
+        nChunkLoc += 4 + nMarkerLength;
+
+        if( abyChunkHeader[1] == 0xe1 &&
+            memcmp(abyChunkHeader + 4, "FLIR\0", 5) == 0 )
+        {
+            // Somewhat arbitrary limit
+            if( abyFLIR.size() > 10 * 1024 * 1024 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Too large FLIR data compared to hardcoded limit");
+                abyFLIR.clear();
+                break;
+            }
+
+            // 8 = sizeof("FLIR\0") + '\1' + chunk_idx + chunk_count
+            if( nMarkerLength < 8 )
+            {
+                abyFLIR.clear();
+                break;
+            }
+            size_t nOldSize = abyFLIR.size();
+            abyFLIR.resize(nOldSize + nMarkerLength - 8);
+            GByte abyIgnored[3]; // skip '\1' + chunk_idx + chunk_count
+            if( VSIFReadL(abyIgnored, 3, 1, fpImage) != 1 ||
+                VSIFReadL(&abyFLIR[nOldSize], nMarkerLength - 8, 1, fpImage) != 1 )
+            {
+                abyFLIR.clear();
+                break;
+            }
+        }
+    }
+    // Restore file pointer
+    VSIFSeekL(fpImage, nCurOffset, SEEK_SET);
+
+    constexpr size_t FLIR_HEADER_SIZE = 64;
+    if(abyFLIR.size() < FLIR_HEADER_SIZE )
+        return;
+    if( memcmp(&abyFLIR[0], "FFF\0", 4) != 0 )
+        return;
+
+    const auto ReadString = [&abyFLIR](size_t nOffset, size_t nLen)
+    {
+        std::string osStr( reinterpret_cast<const char*>(abyFLIR.data()) + nOffset, nLen );
+        osStr.resize( strlen(osStr.c_str() ) );
+        return osStr;
+    };
+
+    bool bLittleEndian = false;
+
+    const auto ReadUInt16 = [&abyFLIR, &bLittleEndian](size_t nOffset)
+    {
+        std::uint16_t nVal;
+        memcpy(&nVal, &abyFLIR[nOffset], sizeof(nVal));
+        if( bLittleEndian )
+            CPL_LSBPTR16(&nVal);
+        else
+            CPL_MSBPTR16(&nVal);
+        return nVal;
+    };
+
+    const auto ReadInt16 = [&abyFLIR, &bLittleEndian](size_t nOffset)
+    {
+        std::int16_t nVal;
+        memcpy(&nVal, &abyFLIR[nOffset], sizeof(nVal));
+        if( bLittleEndian )
+            CPL_LSBPTR16(&nVal);
+        else
+            CPL_MSBPTR16(&nVal);
+        return nVal;
+    };
+
+    const auto ReadUInt32 = [&abyFLIR, &bLittleEndian](size_t nOffset)
+    {
+        std::uint32_t nVal;
+        memcpy(&nVal, &abyFLIR[nOffset], sizeof(nVal));
+        if( bLittleEndian )
+            CPL_LSBPTR32(&nVal);
+        else
+            CPL_MSBPTR32(&nVal);
+        return nVal;
+    };
+
+    const auto ReadInt32 = [&abyFLIR, &bLittleEndian](size_t nOffset)
+    {
+        std::int32_t nVal;
+        memcpy(&nVal, &abyFLIR[nOffset], sizeof(nVal));
+        if( bLittleEndian )
+            CPL_LSBPTR32(&nVal);
+        else
+            CPL_MSBPTR32(&nVal);
+        return nVal;
+    };
+
+    const auto ReadFloat32 = [&abyFLIR, &bLittleEndian](size_t nOffset)
+    {
+        float fVal;
+        memcpy(&fVal, &abyFLIR[nOffset], sizeof(fVal));
+        if( bLittleEndian )
+            CPL_LSBPTR32(&fVal);
+        else
+            CPL_MSBPTR32(&fVal);
+        return fVal;
+    };
+
+    const auto ReadFloat64 = [&abyFLIR, &bLittleEndian](size_t nOffset)
+    {
+        double fVal;
+        memcpy(&fVal, &abyFLIR[nOffset], sizeof(fVal));
+        if( bLittleEndian )
+            CPL_LSBPTR64(&fVal);
+        else
+            CPL_MSBPTR64(&fVal);
+        return fVal;
+    };
+
+    // Avoid setting the PAM dirty bit just for that.
+    struct PamFlagKeeper
+    {
+        int& m_nPamFlagsRef;
+        int m_nOldPamFlags;
+        explicit PamFlagKeeper(int& nPamFlagsRef): m_nPamFlagsRef(nPamFlagsRef), m_nOldPamFlags(nPamFlagsRef) {}
+        ~PamFlagKeeper() { m_nPamFlagsRef = m_nOldPamFlags; }
+    };
+    PamFlagKeeper oKeeper(nPamFlags);
+
+    const auto SetStringIfNotEmpty = [&](const char* pszItemName, int nOffset, int nLength)
+    {
+        const auto str = ReadString(nOffset, nLength);
+        if( !str.empty() )
+            SetMetadataItem(pszItemName, str.c_str(), "FLIR");
+    };
+    SetStringIfNotEmpty("CreatorSoftware", 4, 16);
+
+    // Check file format version
+    const auto nFileFormatVersion = ReadUInt32(20);
+    if( !(nFileFormatVersion >= 100 && nFileFormatVersion < 200) )
+    {
+        CPLDebug("JPEG", "FLIR: Unknown file format version: %u", nFileFormatVersion);
+        return;
+    }
+
+    const auto nOffsetRecordDirectory = ReadUInt32(24);
+    const auto nEntryCountRecordDirectory = ReadUInt32(28);
+
+    CPLDebugOnly("JPEG", "FLIR: record offset %u, entry count %u",
+                 nOffsetRecordDirectory, nEntryCountRecordDirectory);
+    constexpr size_t SIZE_RECORD_DIRECTORY = 32;
+    if( nOffsetRecordDirectory < FLIR_HEADER_SIZE ||
+        nOffsetRecordDirectory +
+            SIZE_RECORD_DIRECTORY * nEntryCountRecordDirectory > abyFLIR.size() )
+    {
+        CPLDebug("JPEG", "Invalid FLIR FFF directory");
+        return;
+    }
+
+    // Read the RawData record
+    const auto ReadRawData = [&](std::uint32_t nRecOffset, std::uint32_t nRecLength)
+    {
+        if( !(nRecLength >= 32 &&
+              nRecOffset + nRecLength <= abyFLIR.size()) )
+            return;
+
+        const int nByteOrder = ReadUInt16(nRecOffset);
+        if( nByteOrder == 512 )
+            bLittleEndian = !bLittleEndian;
+        else if( nByteOrder != 2 )
+            return;
+        const auto nImageWidth = ReadUInt16(nRecOffset + 2);
+        SetMetadataItem("RawThermalImageWidth",
+                        CPLSPrintf("%d", nImageWidth), "FLIR");
+        const auto nImageHeight = ReadUInt16(nRecOffset + 4);
+        SetMetadataItem("RawThermalImageHeight",
+                        CPLSPrintf("%d", nImageHeight), "FLIR");
+        m_bRawThermalLittleEndian = bLittleEndian;
+        m_nRawThermalImageWidth = nImageWidth;
+        m_nRawThermalImageHeight = nImageHeight;
+        m_abyRawThermalImage.clear();
+        m_abyRawThermalImage.insert(m_abyRawThermalImage.end(),
+                                    abyFLIR.begin() + nRecOffset + 32,
+                                    abyFLIR.begin() + nRecOffset + nRecLength);
+
+        if( !STARTS_WITH(GetDescription(), "JPEG:") )
+        {
+            m_nSubdatasetCount ++;
+            SetMetadataItem(CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
+                            CPLSPrintf("JPEG:\"%s\":FLIR_RAW_THERMAL_IMAGE", GetDescription()),
+                            "SUBDATASETS");
+            SetMetadataItem(CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
+                            "FLIR raw thermal image",
+                            "SUBDATASETS");
+        }
+    };
+
+    // Read the Camera Info record
+    const auto ReadCameraInfo = [&](std::uint32_t nRecOffset, std::uint32_t nRecLength)
+    {
+        if( !(nRecLength >= 1126 &&
+              nRecOffset + nRecLength <= abyFLIR.size()) )
+            return;
+
+        const int nByteOrder = ReadUInt16(nRecOffset);
+        if( nByteOrder == 512 )
+            bLittleEndian = !bLittleEndian;
+        else if( nByteOrder != 2 )
+            return;
+
+        const auto ReadFloat32FromKelvin = [=](std::uint32_t nOffset)
+        {
+            constexpr float ZERO_CELCIUS_IN_KELVIN = 273.15f;
+            return ReadFloat32(nOffset) - ZERO_CELCIUS_IN_KELVIN;
+        };
+        SetMetadataItem("Emissivity",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 32)), "FLIR");
+        SetMetadataItem("ObjectDistance",
+                        CPLSPrintf("%f m", ReadFloat32(nRecOffset + 36)), "FLIR");
+        SetMetadataItem("ReflectedApparentTemperature",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 40)), "FLIR");
+        SetMetadataItem("AtmosphericTemperature",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 44)), "FLIR");
+        SetMetadataItem("IRWindowTemperature",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 48)), "FLIR");
+        SetMetadataItem("IRWindowTemperature",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 52)), "FLIR");
+        auto fRelativeHumidity = ReadFloat32(nRecOffset + 60);
+        if( fRelativeHumidity > 2 )
+            fRelativeHumidity /= 100.0f; // Sometimes expressed in percentage
+        SetMetadataItem("RelativeHumidity",
+                        CPLSPrintf("%f %%", 100.0f * fRelativeHumidity));
+        SetMetadataItem("PlanckR1",
+                        CPLSPrintf("%.8g", ReadFloat32(nRecOffset + 88)), "FLIR");
+        SetMetadataItem("PlanckB",
+                        CPLSPrintf("%.8g", ReadFloat32(nRecOffset + 92)), "FLIR");
+        SetMetadataItem("PlanckF",
+                        CPLSPrintf("%.8g", ReadFloat32(nRecOffset + 96)), "FLIR");
+        SetMetadataItem("AtmosphericTransAlpha1",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 112)), "FLIR");
+        SetMetadataItem("AtmosphericTransAlpha2",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 116)), "FLIR");
+        SetMetadataItem("AtmosphericTransBeta1",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 120)), "FLIR");
+        SetMetadataItem("AtmosphericTransBeta2",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 124)), "FLIR");
+        SetMetadataItem("AtmosphericTransX",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 128)), "FLIR");
+        SetMetadataItem("CameraTemperatureRangeMax",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 144)), "FLIR");
+        SetMetadataItem("CameraTemperatureRangeMin",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 148)), "FLIR");
+        SetMetadataItem("CameraTemperatureMaxClip",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 152)), "FLIR");
+        SetMetadataItem("CameraTemperatureMinClip",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 156)), "FLIR");
+        SetMetadataItem("CameraTemperatureMaxWarn",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 160)), "FLIR");
+        SetMetadataItem("CameraTemperatureMinWarn",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 164)), "FLIR");
+        SetMetadataItem("CameraTemperatureMaxSaturated",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 168)), "FLIR");
+        SetMetadataItem("CameraTemperatureMinSaturated",
+                        CPLSPrintf("%f C", ReadFloat32FromKelvin(nRecOffset + 172)), "FLIR");
+
+        SetStringIfNotEmpty("CameraModel", nRecOffset + 212, 32);
+        SetStringIfNotEmpty("CameraPartNumber", nRecOffset + 244, 16);
+        SetStringIfNotEmpty("CameraSerialNumber", nRecOffset + 260, 16);
+        SetStringIfNotEmpty("CameraSoftware", nRecOffset + 276, 16);
+        SetStringIfNotEmpty("LensModel", nRecOffset + 368, 32);
+        SetStringIfNotEmpty("LensPartNumber", nRecOffset + 400, 16);
+        SetStringIfNotEmpty("LensSerialNumber", nRecOffset + 416, 16);
+        SetMetadataItem("FieldOfView",
+                        CPLSPrintf("%f deg", ReadFloat32(nRecOffset + 436)), "FLIR");
+        SetStringIfNotEmpty("FilterModel", nRecOffset + 492, 16);
+        SetStringIfNotEmpty("FilterPartNumber", nRecOffset + 508, 32);
+        SetStringIfNotEmpty("FilterSerialNumber", nRecOffset + 540, 32);
+        SetMetadataItem("PlanckO",
+                        CPLSPrintf("%d", ReadInt32(nRecOffset + 776)), "FLIR");
+        SetMetadataItem("PlanckR2",
+                        CPLSPrintf("%.8g", ReadFloat32(nRecOffset + 780)), "FLIR");
+        SetMetadataItem("RawValueRangeMin",
+                        CPLSPrintf("%d", ReadUInt16(nRecOffset + 784)), "FLIR");
+        SetMetadataItem("RawValueRangeMax",
+                        CPLSPrintf("%d", ReadUInt16(nRecOffset + 786)), "FLIR");
+        SetMetadataItem("RawValueMedian",
+                        CPLSPrintf("%d", ReadUInt16(nRecOffset + 824)), "FLIR");
+        SetMetadataItem("RawValueRange",
+                        CPLSPrintf("%d", ReadUInt16(nRecOffset + 828)), "FLIR");
+        const auto nUnixTime = ReadUInt32(nRecOffset + 900);
+        const auto nSS = ReadUInt32(nRecOffset + 904) & 0xffff;
+        const auto nTZ = ReadInt16(nRecOffset + 908);
+        struct tm brokenDown;
+        CPLUnixTimeToYMDHMS(nUnixTime - nTZ * 60, &brokenDown);
+        std::string osDateTime(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d.%03d",
+                               brokenDown.tm_year + 1900,
+                               brokenDown.tm_mon + 1,
+                               brokenDown.tm_mday,
+                               brokenDown.tm_hour,
+                               brokenDown.tm_min,
+                               brokenDown.tm_sec,
+                               nSS));
+        if( nTZ <= 0 )
+            osDateTime += CPLSPrintf("+%02d:%02d", (-nTZ) / 60, (-nTZ) % 60);
+        else
+            osDateTime += CPLSPrintf("-%02d:%02d", nTZ / 60, nTZ % 60);
+        SetMetadataItem("DateTimeOriginal", osDateTime.c_str(), "FLIR");
+        SetMetadataItem("FocusStepCount",
+                        CPLSPrintf("%d", ReadUInt16(nRecOffset + 912)), "FLIR");
+        SetMetadataItem("FocusDistance",
+                        CPLSPrintf("%f m", ReadFloat32(nRecOffset + 1116)), "FLIR");
+        SetMetadataItem("FrameRate",
+                        CPLSPrintf("%d", ReadUInt16(nRecOffset + 1124)), "FLIR");
+    };
+
+    // Read the Palette Info record
+    const auto ReadPaletteInfo = [&](std::uint32_t nRecOffset, std::uint32_t nRecLength)
+    {
+        if( !(nRecLength >= 112 &&
+              nRecOffset + nRecLength <= abyFLIR.size()) )
+            return;
+        const int nPaletteColors = abyFLIR[nRecOffset];
+        SetMetadataItem("PaletteColors",
+                        CPLSPrintf("%d", nPaletteColors), "FLIR");
+
+        const auto SetColorItem = [=](const char* pszItem, std::uint32_t nOffset)
+        {
+            SetMetadataItem(pszItem,
+                            CPLSPrintf("%d %d %d",
+                                   abyFLIR[nOffset],
+                                   abyFLIR[nOffset+1],
+                                   abyFLIR[nOffset+2]), "FLIR");
+        };
+        SetColorItem("AboveColor", nRecOffset + 6);
+        SetColorItem("BelowColor", nRecOffset + 9);
+        SetColorItem("OverflowColor", nRecOffset + 12);
+        SetColorItem("UnderflowColor", nRecOffset + 15);
+        SetColorItem("Isotherm1Color", nRecOffset + 18);
+        SetColorItem("Isotherm2Color", nRecOffset + 21);
+        SetMetadataItem("PaletteMethod", CPLSPrintf("%d", abyFLIR[nRecOffset + 26]), "FLIR");
+        SetMetadataItem("PaletteStretch", CPLSPrintf("%d", abyFLIR[nRecOffset + 27]), "FLIR");
+        SetStringIfNotEmpty("PaletteFileName", nRecOffset + 48, 32);
+        SetStringIfNotEmpty("PaletteName", nRecOffset + 80, 32);
+        if( nRecLength < static_cast<std::uint32_t>(112 + nPaletteColors * 3) )
+            return;
+        std::string osPalette;
+        for( int i = 0; i < nPaletteColors; i++ )
+        {
+            if( !osPalette.empty() )
+                osPalette += ", ";
+            osPalette += CPLSPrintf("(%d %d %d)",
+                                    abyFLIR[nRecOffset + 112 + 3 * i + 0],
+                                    abyFLIR[nRecOffset + 112 + 3 * i + 1],
+                                    abyFLIR[nRecOffset + 112 + 3 * i + 2]);
+        }
+        SetMetadataItem("Palette", osPalette.c_str(), "FLIR");
+    };
+
+    // Read the GPS Info record
+    const auto ReadGPSInfo = [&](std::uint32_t nRecOffset, std::uint32_t nRecLength)
+    {
+        if( !(nRecLength >= 104 &&
+              nRecOffset + nRecLength <= abyFLIR.size()) )
+            return;
+        auto nGPSValid = ReadUInt32(nRecOffset);
+        if( nGPSValid == 0x01000000 )
+        {
+            bLittleEndian = !bLittleEndian;
+            nGPSValid = 1;
+        }
+        if( nGPSValid != 1 )
+            return;
+        SetMetadataItem("GPSVersionID",
+                        CPLSPrintf("%c%c%c%c",
+                                   abyFLIR[nRecOffset + 4],
+                                   abyFLIR[nRecOffset + 5],
+                                   abyFLIR[nRecOffset + 6],
+                                   abyFLIR[nRecOffset + 7]),
+                        "FLIR");
+        SetStringIfNotEmpty("GPSLatitudeRef", nRecOffset + 8, 1);
+        SetStringIfNotEmpty("GPSLongitudeRef", nRecOffset + 10, 1);
+        SetMetadataItem("GPSLatitude",
+                        CPLSPrintf("%.10f", ReadFloat64(nRecOffset + 16)), "FLIR");
+        SetMetadataItem("GPSLongitude",
+                        CPLSPrintf("%.10f", ReadFloat64(nRecOffset + 24)), "FLIR");
+        SetMetadataItem("GPSAltitude",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 32)), "FLIR");
+        SetMetadataItem("GPSDOP",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 64)), "FLIR");
+        SetStringIfNotEmpty("GPSSpeedRef", nRecOffset + 68, 1);
+        SetStringIfNotEmpty("GPSTrackRef", nRecOffset + 70, 1);
+        SetMetadataItem("GPSSpeed",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 76)), "FLIR");
+        SetMetadataItem("GPSTrack",
+                        CPLSPrintf("%f", ReadFloat32(nRecOffset + 80)), "FLIR");
+        SetStringIfNotEmpty("GPSMapDatum", nRecOffset + 88, 16);
+    };
+
+    size_t nOffsetDirEntry = nOffsetRecordDirectory;
+    enum FLIRRecordType
+    {
+        FLIR_REC_FREE = 0,
+        FLIR_REC_RAWDATA = 1,
+        FLIR_REC_CAMERA_INFO = 32,
+        FLIR_REC_PALETTE_INFO = 34,
+        FLIR_REC_GPS_INFO = 43,
+    };
+    // Iterate over records
+    for( std::uint32_t iRec = 0; iRec < nEntryCountRecordDirectory; iRec++ )
+    {
+        const auto nRecType = ReadUInt16(nOffsetDirEntry);
+        const auto nRecOffset = ReadUInt32(nOffsetDirEntry + 12);
+        const auto nRecLength = ReadUInt32(nOffsetDirEntry + 16);
+        if( nRecType == FLIR_REC_FREE && nRecLength == 0 )
+            continue; // silently keep empty records of type 0
+        CPLDebugOnly("JPEG", "FLIR: record %u, type %u, offset %u, length %u",
+                     iRec, nRecType, nRecOffset, nRecLength);
+        if( nRecOffset + nRecLength > abyFLIR.size() )
+        {
+            CPLDebug("JPEG", "Invalid record %u, type %u, offset %u, length %u "
+                     "w.r.t total FLIR segment size (%u)",
+                     iRec, nRecType, nRecOffset, nRecLength,
+                     static_cast<unsigned>(abyFLIR.size()));
+            continue;
+        }
+        switch( nRecType )
+        {
+            case FLIR_REC_RAWDATA:
+            {
+                const auto bLittleEndianBackup = bLittleEndian;
+                ReadRawData(nRecOffset, nRecLength);
+                bLittleEndian = bLittleEndianBackup;
+                break;
+            }
+            case FLIR_REC_CAMERA_INFO:
+            {
+                const auto bLittleEndianBackup = bLittleEndian;
+                ReadCameraInfo(nRecOffset, nRecLength);
+                bLittleEndian = bLittleEndianBackup;
+                break;
+            }
+            case FLIR_REC_PALETTE_INFO:
+            {
+                ReadPaletteInfo(nRecOffset, nRecLength);
+                break;
+            }
+            case FLIR_REC_GPS_INFO:
+            {
+                const auto bLittleEndianBackup = bLittleEndian;
+                ReadGPSInfo(nRecOffset, nRecLength);
+                bLittleEndian = bLittleEndianBackup;
+                break;
+            }
+            default:
+            {
+                CPLDebugOnly("JPEG", "FLIR record ignored");
+                break;
+            }
+        }
+        nOffsetDirEntry += SIZE_RECORD_DIRECTORY;
+    }
+
+    CPLDebug("JPEG", "FLIR metadata read");
+}
+
+/************************************************************************/
 /*                      GetMetadataDomainList()                         */
 /************************************************************************/
 
 char **JPGDatasetCommon::GetMetadataDomainList()
 {
+    ReadFLIRMetadata();
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "xml:XMP", "COLOR_PROFILE", nullptr);
+                                   "xml:XMP", "COLOR_PROFILE", "FLIR", nullptr);
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                        LoadForMetadataDomain()                       */
 /************************************************************************/
-char **JPGDatasetCommon::GetMetadata( const char *pszDomain )
+void JPGDatasetCommon::LoadForMetadataDomain( const char *pszDomain )
 {
     if (fpImage == nullptr)
-        return nullptr;
+        return;
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == nullptr || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
@@ -262,6 +756,19 @@ char **JPGDatasetCommon::GetMetadata( const char *pszDomain )
     if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
         pszDomain != nullptr && EQUAL(pszDomain, "COLOR_PROFILE"))
         ReadICCProfile();
+    if (eAccess == GA_ReadOnly && !bHasReadFLIRMetadata &&
+        pszDomain != nullptr && EQUAL(pszDomain, "FLIR"))
+        ReadFLIRMetadata();
+    if( pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS") )
+        ReadFLIRMetadata();
+}
+
+/************************************************************************/
+/*                           GetMetadata()                              */
+/************************************************************************/
+char **JPGDatasetCommon::GetMetadata( const char *pszDomain )
+{
+    LoadForMetadataDomain(pszDomain);
     return GDALPamDataset::GetMetadata(pszDomain);
 }
 
@@ -271,16 +778,7 @@ char **JPGDatasetCommon::GetMetadata( const char *pszDomain )
 const char *JPGDatasetCommon::GetMetadataItem( const char *pszName,
                                                const char *pszDomain )
 {
-    if (fpImage == nullptr)
-        return nullptr;
-    if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
-        (pszDomain == nullptr || EQUAL(pszDomain, "")) &&
-        pszName != nullptr &&
-        (EQUAL(pszName, "COMMENT") || STARTS_WITH_CI(pszName, "EXIF_")))
-        ReadEXIFMetadata();
-    if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
-        pszDomain != nullptr && EQUAL(pszDomain, "COLOR_PROFILE"))
-        ReadICCProfile();
+    LoadForMetadataDomain(pszDomain);
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
@@ -488,9 +986,11 @@ bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
         return true;
     nTiffDirStart = 0;
 
-    // TODO(schwehr): Do a compile time endian check.
-    int one = 1;
-    bigendian = *reinterpret_cast<char *>(&one) == 0;
+#ifdef CPL_MSB
+    constexpr bool bigendian = true;
+#else
+    constexpr bool bigendian = false;
+#endif
 
     // Search for APP1 chunk.
     GByte abyChunkHeader[10] = {};
@@ -934,8 +1434,6 @@ JPGDatasetCommon::JPGDatasetCommon() :
     bHasReadXMPMetadata(false),
     bHasReadICCMetadata(false),
     papszMetadata(nullptr),
-    papszSubDatasets(nullptr),
-    bigendian(true),
     nExifOffset(-1),
     nInterOffset(-1),
     nGPSOffset(-1),
@@ -1998,6 +2496,8 @@ int JPGDatasetCommon::Identify( GDALOpenInfo *poOpenInfo )
     // If it is a subfile, read the JPEG header.
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "JPEG_SUBFILE:") )
         return TRUE;
+    if( STARTS_WITH(poOpenInfo->pszFilename, "JPEG:") )
+        return TRUE;
 
     // First we check to see if the file has the expected header bytes.
     const int nHeaderBytes = poOpenInfo->nHeaderBytes;
@@ -2052,11 +2552,25 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
+    CPLString osFilename(poOpenInfo->pszFilename);
+    bool bFLIRRawThermalImage = false;
+    if( STARTS_WITH(poOpenInfo->pszFilename, "JPEG:") )
+    {
+        CPLStringList aosTokens(CSLTokenizeString2(poOpenInfo->pszFilename, ":", CSLT_HONOURSTRINGS));
+        if( aosTokens.size() != 3 )
+            return nullptr;
+
+        osFilename = aosTokens[1];
+        if( std::string(aosTokens[2]) != "FLIR_RAW_THERMAL_IMAGE" )
+            return nullptr;
+        bFLIRRawThermalImage = true;
+    }
+
     VSILFILE *fpL = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
     JPGDatasetOpenArgs sArgs;
-    sArgs.pszFilename = poOpenInfo->pszFilename;
+    sArgs.pszFilename = osFilename.c_str();
     sArgs.fpLin = fpL;
     sArgs.papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     sArgs.nScaleFactor = 1;
@@ -2065,7 +2579,106 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo *poOpenInfo )
         CPLFetchBool(poOpenInfo->papszOpenOptions,
                      "USE_INTERNAL_OVERVIEWS", true);
 
-    return JPGDataset::Open(&sArgs);
+    auto poDS = std::unique_ptr<JPGDatasetCommon>(JPGDataset::Open(&sArgs));
+    if( poDS == nullptr )
+    {
+        return nullptr;
+    }
+    if( bFLIRRawThermalImage )
+    {
+        return poDS->OpenFLIRRawThermalImage();
+    }
+    return poDS.release();
+}
+
+/************************************************************************/
+/*                       OpenFLIRRawThermalImage()                      */
+/************************************************************************/
+
+GDALDataset* JPGDatasetCommon::OpenFLIRRawThermalImage()
+{
+    ReadFLIRMetadata();
+    if( m_abyRawThermalImage.empty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot find FLIR raw thermal image");
+        return nullptr;
+    }
+
+    GByte* pabyData = static_cast<GByte*>(CPLMalloc(m_abyRawThermalImage.size()));
+    const std::string osTmpFilename(CPLSPrintf("/vsimem/jpeg/%p", pabyData));
+    memcpy(pabyData, m_abyRawThermalImage.data(),
+            m_abyRawThermalImage.size());
+    VSILFILE* fpRaw = VSIFileFromMemBuffer(
+            osTmpFilename.c_str(),
+            pabyData,
+            m_abyRawThermalImage.size(),
+            true);
+
+    // Termal image as uncompressed data
+    if( m_nRawThermalImageWidth * m_nRawThermalImageHeight * 2 ==
+                            static_cast<int>(m_abyRawThermalImage.size()) )
+    {
+        CPLDebug("JPEG", "Raw thermal image");
+
+        class JPEGRawDataset: public RawDataset
+        {
+            public:
+                JPEGRawDataset(int nXSizeIn, int nYSizeIn)
+                {
+                    nRasterXSize = nXSizeIn;
+                    nRasterYSize = nYSizeIn;
+                }
+                ~JPEGRawDataset() = default;
+
+                void SetBand(int nBand, GDALRasterBand* poBand)
+                {
+                    RawDataset::SetBand(nBand, poBand);
+                }
+        };
+
+        auto poBand = new RawRasterBand(
+            fpRaw,
+            0, // image offset
+            2, // pixel offset
+            2 * m_nRawThermalImageWidth, // line offset
+            GDT_UInt16,
+            m_bRawThermalLittleEndian ?
+                RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN :
+                RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
+            m_nRawThermalImageWidth,
+            m_nRawThermalImageHeight,
+            RawRasterBand::OwnFP::YES);
+
+        auto poRawDS = new JPEGRawDataset(m_nRawThermalImageWidth,
+                                            m_nRawThermalImageHeight);
+        poRawDS->SetBand(1, poBand);
+        poRawDS->MarkSuppressOnClose();
+        return poRawDS;
+    }
+
+    VSIFCloseL(fpRaw);
+
+    // Termal image as PNG
+    if( m_abyRawThermalImage.size() > 4 &&
+        memcmp(m_abyRawThermalImage.data(), "\x89PNG", 4) == 0 )
+    {
+        auto poRawDS = GDALDataset::Open(osTmpFilename.c_str());
+        if( poRawDS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Invalid raw thermal image");
+            VSIUnlink(osTmpFilename.c_str());
+            return nullptr;
+        }
+        poRawDS->MarkSuppressOnClose();
+        return poRawDS;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined,
+                "Unrecognized format for raw thermal image");
+    VSIUnlink(osTmpFilename.c_str());
+    return nullptr;
 }
 
 #endif // !defined(JPGDataset)

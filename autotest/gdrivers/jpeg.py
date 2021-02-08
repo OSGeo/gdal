@@ -1083,6 +1083,107 @@ def test_jpeg_multiscan_overviews():
 
     gdal.Unlink(tmpfilename)
 
+
+###############################################################################
+# Open JPEG image with FLIR metadata and raw thermal image as PNG
+
+def test_jpeg_flir_png():
+
+    ds = gdal.Open('data/jpeg/flir/FLIR.jpg')
+    assert ds.GetMetadataDomainList() == ['IMAGE_STRUCTURE', 'FLIR', '', 'SUBDATASETS', 'DERIVED_SUBDATASETS']
+    assert ds.GetMetadata('FLIR') ==  {
+        'AboveColor': '170 128 128',
+        'AtmosphericTemperature': '20.000000 C',
+        'AtmosphericTransAlpha1': '0.006569',
+        'AtmosphericTransAlpha2': '0.012620',
+        'AtmosphericTransBeta1': '-0.002276',
+        'AtmosphericTransBeta2': '-0.006670',
+        'AtmosphericTransX': '1.900000',
+        'BelowColor': '50 128 128',
+        'CameraModel': 'FLIR_i7',
+        'CameraPartNumber': 'T197600',
+        'CameraSerialNumber': '470023842',
+        'CameraSoftware': '8.1.1',
+        'CameraTemperatureMaxClip': '270.000031 C',
+        'CameraTemperatureMaxSaturated': '270.000031 C',
+        'CameraTemperatureMaxWarn': '250.000031 C',
+        'CameraTemperatureMinClip': '-40.000000 C',
+        'CameraTemperatureMinSaturated': '-60.000000 C',
+        'CameraTemperatureMinWarn': '0.000000 C',
+        'CameraTemperatureRangeMax': '250.000031 C',
+        'CameraTemperatureRangeMin': '0.000000 C',
+        'DateTimeOriginal': '2012-02-11T14:17:08.253+01:00',
+        'Emissivity': '0.800000',
+        'FieldOfView': '24.985918 deg',
+        'FocusDistance': '2.000000 m',
+        'FocusStepCount': '0',
+        'FrameRate': '9',
+        'IRWindowTemperature': '1.000000',
+        'Isotherm1Color': '100 128 128',
+        'Isotherm2Color': '100 110 240',
+        'LensModel': 'FOL7',
+        'ObjectDistance': '1.000000 m',
+        'OverflowColor': '67 216 98',
+        'Palette': '(16 101 140), (17 103 142), (18 105 145), (19 106 147), (20 108 149), (21 110 152), (22 112 154), (23 114 156), (24 116 158), (25 118 160), (26 120 162), (27 121 164), (28 123 165), (29 125 167), (30 127 169), (31 128 170), (32 130 172), (33 132 173), (34 133 174), (35 135 175), (36 136 177), (37 138 178), (38 140 179), (39 141 180), (40 143 181), (41 144 181), (42 145 182), (43 147 183), (44 148 183), (44 150 184), (45 151 185), (46 152 185), (47 154 185), (48 155 186), (49 156 186), (50 157 186), (51 159 186), (52 160 186), (53 161 186), (54 162 186), (55 163 186), (56 165 186), (57 166 186), (58 167 186), (59 168 186), (60 169 185), (61 170 185), (62 171 185), (63 172 184), (64 173 184), (65 174 183), (66 175 182), (67 176 182), (68 177 181), (69 177 180), (70 178 180), (71 179 179), (72 180 178), (73 181 177), (74 182 176), (75 182 175), (76 183 174), (77 184 173), (78 184 172), (79 185 171), (80 186 170), (81 186 169), (82 187 168), (83 188 166), (84 188 165), (85 189 164), (86 189 163), (87 190 161), (88 190 160), (89 191 159), (90 191 157), (91 192 156), (92 192 154), (93 193 153), (94 193 151), (95 194 150), (96 194 148), (97 194 147), (98 195 145), (99 195 144), (99 195 142), (100 196 140), (101 196 139), (102 196 137), (103 197 135), (104 197 134), (105 197 132), (106 197 130), (107 197 129), (108 198 127), (109 198 125), (110 198 123), (111 198 122), (112 198 120), (113 198 118), (114 198 117), (115 198 115), (116 198 113), (117 198 111), (118 198 109), (119 198 108), (120 198 106), (121 198 104), (122 198 102), (123 198 101), (124 198 99), (125 198 97), (126 198 96), (127 198 94), (128 198 92), (129 198 90), (130 198 89), (131 197 87), (132 197 85), (133 197 84), (134 197 82), (135 197 80), (136 196 79), (137 196 77), (138 196 75), (139 196 74), (140 195 72), (141 195 71), (142 195 69), (143 194 68), (144 194 66), (145 194 65), (146 193 63), (147 193 62), (148 193 60), (149 192 59), (150 192 58), (151 191 56), (152 191 55), (153 191 54), (154 190 53), (154 190 51), (155 189 50), (156 189 49), (157 188 48), (158 188 47), (159 187 46), (160 187 45), (161 186 44), (162 186 43), (163 185 42), (164 184 41), (165 184 40), (166 183 40), (167 183 39), (168 182 38), (169 181 37), (170 181 37), (171 180 36), (172 179 36), (173 179 35), (174 178 35), (175 177 34), (176 177 34), (177 176 34), (178 175 33), (179 175 33), (180 174 33), (181 173 33), (182 172 33), (183 172 33), (184 171 33), (185 170 33), (186 169 33), (187 168 33), (188 168 34), (189 167 34), (190 166 34), (191 165 35), (192 164 35), (193 163 36), (194 163 37), (195 162 37), (196 161 38), (197 160 39), (198 159 40), (199 158 41), (200 157 42), (201 156 43), (202 155 44), (203 155 45), (204 154 46), (205 153 48), (206 152 49), (207 151 51), (208 150 52), (209 149 54), (209 148 56), (210 147 58), (211 146 60), (212 145 62), (213 144 64), (214 143 66), (215 142 68), (216 141 70), (217 140 73), (218 139 75), (219 138 78), (220 137 80), (221 136 83), (222 135 86), (223 134 89), (224 133 91), (225 131 95), (226 130 98), (227 129 101), (228 128 104), (229 127 108), (230 126 111), (231 125 115), (232 124 118), (233 123 122), (234 122 126), (235 121 130)',
+        'PaletteColors': '224',
+        'PaletteFileName': '\\FlashFS\\system\\iron.pal',
+        'PaletteMethod': '0',
+        'PaletteName': 'Iron',
+        'PaletteStretch': '2',
+        'PlanckB': '1374.5',
+        'PlanckF': '1.35',
+        'PlanckO': '-6646',
+        'PlanckR1': '13799.269',
+        'PlanckR2': '0.022241818',
+        'RawThermalImageHeight': '120',
+        'RawThermalImageWidth': '120',
+        'RawValueMedian': '12582',
+        'RawValueRange': '1980',
+        'RawValueRangeMax': '61986',
+        'RawValueRangeMin': '7630',
+        'ReflectedApparentTemperature': '20.000000 C',
+        'UnderflowColor': '41 110 240'
+    }
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 1
+
+    ds = gdal.Open(subds[0][0])
+    assert ds is not None
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(1).Checksum() == 761
+
+###############################################################################
+# Open JPEG image with FLIR metadata and raw thermal image as raw
+
+def test_jpeg_flir_raw():
+
+    ds = gdal.Open('data/jpeg/flir/Image_thermique_de_l_emission_d_un_radiateur_a_travers_un_mur.jpg')
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 1
+
+    ds = gdal.Open(subds[0][0])
+    assert ds is not None
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert ds.GetRasterBand(1).Checksum() == 30310
+
+###############################################################################
+
+
+def test_jpeg_flir_error_flir_subds():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('JPEG:foo.jpg')
+        assert ds is None
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('JPEG:foo.jpg:BAR')
+        assert ds is None
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('JPEG:data/jpeg/masked.jpg:FLIR_RAW_THERMAL_IMAGE')
+        assert ds is None
+
 ###############################################################################
 # Cleanup
 

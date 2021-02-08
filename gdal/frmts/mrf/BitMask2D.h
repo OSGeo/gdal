@@ -180,10 +180,16 @@ private:
 #else
     void swab() {
         for (size_t i = 0; i < _bits.size(); i++)
+        {
             if (sizeof(T) == sizeof(GUIntBig))
-                CPL_SWAP64PTR(reinterpret_cast<GUIntBig *>(&_bits[i]))
+            {
+                CPL_SWAP64PTR(reinterpret_cast<GUIntBig *>(&_bits[i]));
+            }
             else
+            {
                 CPL_SWAP16PTR(reinterpret_cast<GUInt16 *> (&_bits[i]));
+            }
+        }
     }
 #endif
 

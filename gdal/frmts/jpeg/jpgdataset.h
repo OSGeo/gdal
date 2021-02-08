@@ -191,9 +191,8 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     bool   bHasReadEXIFMetadata;
     bool   bHasReadXMPMetadata;
     bool   bHasReadICCMetadata;
+    bool   bHasReadFLIRMetadata = false;
     char   **papszMetadata;
-    char   **papszSubDatasets;
-    bool   bigendian;
     int    nExifOffset;
     int    nInterOffset;
     int    nGPSOffset;
@@ -202,6 +201,14 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     int    nTIFFHEADER;
     bool   bHasDoneJpegCreateDecompress;
     bool   bHasDoneJpegStartDecompress;
+
+    int    m_nSubdatasetCount = 0;
+
+    // FLIR raw thermal image
+    bool   m_bRawThermalLittleEndian = false;
+    int    m_nRawThermalImageWidth = 0;
+    int    m_nRawThermalImageHeight = 0;
+    std::vector<GByte> m_abyRawThermalImage{};
 
     virtual CPLErr LoadScanline(int, GByte* outBuffer = nullptr) = 0;
     virtual void   StopDecompress() = 0;
@@ -216,8 +223,12 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     void   CheckForMask();
     void   DecompressMask();
 
+    void   LoadForMetadataDomain( const char *pszDomain );
+
     void   ReadEXIFMetadata();
     void   ReadXMPMetadata();
+    void   ReadFLIRMetadata();
+    GDALDataset* OpenFLIRRawThermalImage();
 
     bool   bHasCheckedForMask;
     JPGMaskBand *poMaskBand;
