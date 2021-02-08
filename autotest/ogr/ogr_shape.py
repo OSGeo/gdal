@@ -1791,11 +1791,7 @@ def test_ogr_shape_49():
     name = feat.GetField('NAME')
 
     # Setup the utf-8 string.
-    if sys.version_info >= (3, 0, 0):
-        gdaltest.exp_name = 'OSEBERG S\u00D8R'
-    else:
-        exec("gdaltest.exp_name =  u'OSEBERG S\u00D8R'")
-        gdaltest.exp_name = gdaltest.exp_name.encode('utf-8')
+    gdaltest.exp_name = 'OSEBERG S\u00D8R'
 
     assert name == gdaltest.exp_name, 'Did not get expected name, encoding problems?'
 
@@ -1825,11 +1821,7 @@ def test_ogr_shape_50():
     }
 
     # Setup the utf-8 string.
-    if sys.version_info >= (3, 0, 0):
-        gdaltest.fieldname = '\u4e2d\u56fd'
-    else:
-        exec("gdaltest.fieldname =  u'\u4e2d\u56fd'")
-        gdaltest.fieldname = gdaltest.fieldname.encode('utf-8')
+    gdaltest.fieldname = '\u4e2d\u56fd'
 
     assert lyr.GetLayerDefn().GetFieldIndex(gdaltest.fieldname) == 0, \
         lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef()
@@ -2630,8 +2622,7 @@ def test_ogr_shape_63():
     assert lyr.AlterFieldDefn(0, ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString), ogr.ALTER_NAME_FLAG) == 0
 
     chinese_str = struct.pack('B' * 6, 229, 144, 141, 231, 167, 176)
-    if sys.version_info >= (3, 0, 0):
-        chinese_str = chinese_str.decode('UTF-8')
+    chinese_str = chinese_str.decode('UTF-8')
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.AlterFieldDefn(0, ogr.FieldDefn(chinese_str, ogr.OFTString), ogr.ALTER_NAME_FLAG)

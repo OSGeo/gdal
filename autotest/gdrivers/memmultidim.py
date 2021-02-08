@@ -36,7 +36,7 @@ import gdaltest
 import math
 import pytest
 import struct
-import sys
+
 
 def test_mem_md_basic():
 
@@ -445,11 +445,7 @@ def test_mem_md_array_3_dim():
     assert myarray.SetSpatialRef(sr) == gdal.CE_None
     assert myarray.GetSpatialRef() is not None
 
-    data = array.array('B', [i for i in range(24)])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('B', list(range(24))).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     got_data = myarray.Read()
@@ -492,11 +488,7 @@ def test_mem_md_array_4_dim():
     assert myarray.GetDimensionCount() == 4
     assert myarray.GetTotalElementsCount() == 2 * 3 * 4 * 5
 
-    data = array.array('h', [-i for i in range(2 * 3 * 4 * 5)])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('h', [-i for i in range(2 * 3 * 4 * 5)]).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     got_data = myarray.Read()
@@ -518,11 +510,8 @@ def test_mem_md_copy_array():
     myarray = rg.CreateMDArray("myarray", [ dim0, dim1, dim2, dim3 ],
                                gdal.ExtendedDataType.Create(gdal.GDT_UInt32))
 
-    data = array.array('I', [i for i in range(myarray.GetTotalElementsCount())])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('I',
+                       list(range(myarray.GetTotalElementsCount()))).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     def my_cbk(pct, _, arg):
@@ -833,11 +822,7 @@ def test_mem_md_array_slice():
 
     ar = rg.CreateMDArray("array", [dim_2, dim_3, dim_4],
                           gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    data = array.array('B', [i for i in range(24)])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('B', list(range(24))).tobytes()
     assert ar.Write(data) == gdal.CE_None
 
     with pytest.raises(Exception):
@@ -1273,11 +1258,7 @@ def test_mem_md_array_transpose():
                               gdal.ExtendedDataType.Create(gdal.GDT_Float64))
     assert attr.Write(1) == gdal.CE_None
 
-    data = array.array('H', [i for i in range(24)])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('H', list(range(24))).tobytes()
     assert ar.Write(data) == gdal.CE_None
 
     with gdaltest.error_handler():
@@ -1362,11 +1343,7 @@ def test_mem_md_array_single_dim_non_contiguous_copy():
     drv = gdal.GetDriverByName('MEM')
     nvalues = 30
     spacing = 63
-    data = array.array('B', [i for i in range(nvalues)])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('B', list(range(nvalues))).tobytes()
     for t in (gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_Int32, gdal.GDT_Float64, gdal.GDT_CFloat64):
         ds = drv.CreateMultiDimensional('myds')
         rg = ds.GetRootGroup()
@@ -1391,11 +1368,7 @@ def test_mem_md_array_get_unscaled_0dim():
                                gdal.ExtendedDataType.Create(gdal.GDT_Byte))
     assert myarray
 
-    data = array.array('B', [1])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('B', [1]).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     myarray.SetOffset(1.5)
@@ -1430,11 +1403,7 @@ def test_mem_md_array_get_unscaled_0dim_complex():
                                gdal.ExtendedDataType.Create(gdal.GDT_CInt16))
     assert myarray
 
-    data = array.array('H', [1, 2])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('H', [1, 2]).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     myarray.SetOffset(1.5)
@@ -1463,11 +1432,7 @@ def test_mem_md_array_get_unscaled_0dim_non_matching_nodata():
                                gdal.ExtendedDataType.Create(gdal.GDT_Byte))
     assert myarray
 
-    data = array.array('B', [1])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('B', [1]).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     myarray.SetOffset(1.5)
@@ -1494,11 +1459,7 @@ def test_mem_md_array_get_unscaled_0dim_matching_nodata():
                                gdal.ExtendedDataType.Create(gdal.GDT_Byte))
     assert myarray
 
-    data = array.array('B', [1])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('B', [1]).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     myarray.SetOffset(1.5)
@@ -1527,11 +1488,7 @@ def test_mem_md_array_get_unscaled_0dim_matching_nodata_complex():
                                gdal.ExtendedDataType.Create(gdal.GDT_CInt16))
     assert myarray
 
-    data = array.array('H', [1, 2])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('H', [1, 2]).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     myarray.SetOffset(1.5)
@@ -1561,11 +1518,7 @@ def test_mem_md_array_get_unscaled_3dim():
                                gdal.ExtendedDataType.Create(gdal.GDT_Byte))
     assert myarray
 
-    data = array.array('B', [i for i in range(24)])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('B', list(range(24))).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     assert myarray.GetUnscaled().Read() == myarray.Read()
@@ -1630,11 +1583,7 @@ def test_mem_md_array_get_unscaled_1dim_complex():
                                gdal.ExtendedDataType.Create(gdal.GDT_CInt16))
     assert myarray
 
-    data = array.array('H', [1, 2, 3, 4])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('H', [1, 2, 3, 4]).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     assert myarray.GetUnscaled().Read() == myarray.Read()
@@ -1688,11 +1637,7 @@ def test_mem_md_array_get_mask():
 
     myarray = rg.CreateMDArray("myarray", [ dim0, dim1, dim2 ],
                                gdal.ExtendedDataType.Create(gdal.GDT_Int32))
-    data = array.array('I', [i for i in range(24)])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('I', list(range(24))).tobytes()
     assert myarray.Write(data) == gdal.CE_None
 
     mask = myarray.GetMask()
@@ -1743,11 +1688,7 @@ def test_mem_md_array_get_mask():
     # Test valid_range
     myarray = rg.CreateMDArray("myarray_valid_range", [ dim0, dim1, dim2 ],
                                gdal.ExtendedDataType.Create(gdal.GDT_Int16))
-    data = array.array('H', [i for i in range(24)])
-    if sys.version_info >= (3, 0, 0):
-        data = data.tobytes()
-    else:
-        data = data.tostring()
+    data = array.array('H', list(range(24))).tobytes()
     assert myarray.Write(data) == gdal.CE_None
     attr = myarray.CreateAttribute('valid_range', [2], bytedt)
     assert attr.Write([1,22]) == gdal.CE_None

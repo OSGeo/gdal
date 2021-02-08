@@ -29,9 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
-
-
 from osgeo import gdal
 from osgeo import ogr
 import gdaltest
@@ -306,9 +303,7 @@ def test_ogr_feature_cp_binary():
 
     assert check(dst_feature, 'field_binary', '0123465789ABCDEF')
 
-    expected = '\x01\x23\x46\x57\x89\xAB\xCD\xEF'
-    if sys.version_info >= (3, 0, 0):
-        expected = expected.encode('LATIN1')
+    expected = b'\x01\x23\x46\x57\x89\xAB\xCD\xEF'
     assert dst_feature.GetFieldAsBinary('field_binary') == expected
     assert dst_feature.GetFieldAsBinary(dst_feature.GetDefnRef().GetFieldIndex('field_binary')) == expected
 

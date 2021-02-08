@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from sys import version_info
 from osgeo import gdal
 
 
@@ -42,12 +41,8 @@ import pytest
 
 def test_rfc30_1():
 
-    if version_info >= (3, 0, 0):
-        filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
-        filename_escaped = gdaltest.urlescape(filename)
-    else:
-        exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
-        filename_escaped = gdaltest.urlescape(filename.encode('utf-8'))
+    filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
+    filename_escaped = gdaltest.urlescape(filename)
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename_escaped, filename):
         pytest.skip()
@@ -72,13 +67,7 @@ def test_rfc30_1():
 
 def test_rfc30_2():
 
-    if version_info >= (3, 0, 0):
-        filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
-    else:
-        exec("filename =  u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
-        # The typemaps should accept Unicode strings directly
-        # filename = filename.encode( 'utf-8' )
-
+    filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
     fd = gdal.VSIFOpenL(filename, 'w')
     assert fd is not None, 'failed to create utf-8 named file.'
 
@@ -87,13 +76,8 @@ def test_rfc30_2():
 
     # rename
 
-    if version_info >= (3, 0, 0):
-        new_filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
-        filename_for_rename = filename
-    else:
-        exec("new_filename = u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
-        filename_for_rename = filename.encode('utf-8')  # FIXME ? rename should perhaps accept unicode strings
-        new_filename = new_filename.encode('utf-8')  # FIXME ? rename should perhaps accept unicode strings
+    new_filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
+    filename_for_rename = filename
 
     assert gdal.Rename(filename_for_rename, new_filename) == 0, 'utf-8 rename failed.'
 
@@ -103,11 +87,7 @@ def test_rfc30_2():
     data = gdal.VSIFReadL(3, 1, fd)
     gdal.VSIFCloseL(fd)
 
-    if version_info >= (3, 0, 0):
-        ok = eval("data == b'abc'")
-    else:
-        ok = data == 'abc'
-    assert ok, 'did not get expected data.'
+    assert data == b'abc'
 
     gdal.Unlink(new_filename)
 

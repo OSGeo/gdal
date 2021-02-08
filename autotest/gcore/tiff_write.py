@@ -3448,11 +3448,8 @@ def test_tiff_write_96(other_options = [], nbands = 1, nbits = 8):
     src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100, nbands, options = ['NBITS=' + str(nbits)])
     src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    from sys import version_info
-    if version_info >= (3, 0, 0):
-        exec("src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25,25,50,50,b'\\xff',1,1)")
-    else:
-        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25, 25, 50, 50, '\xff', 1, 1)
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
+        25, 25, 50, 50, b'\xff', 1, 1)
     src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     expected_cs_mask = src_ds.GetRasterBand(1).GetMaskBand().Checksum()

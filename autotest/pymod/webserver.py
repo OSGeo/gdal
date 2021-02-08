@@ -34,7 +34,6 @@ from threading import Thread
 import contextlib
 import time
 import sys
-from sys import version_info
 import gdaltest
 
 do_log = False
@@ -352,19 +351,12 @@ class GDAL_HttpServer(HTTPServer):
 
     def stop_server(self):
         if self.running:
-            if version_info >= (2, 6, 0):
-                self.shutdown()
-            else:
-                gdaltest.gdalurlopen("http://127.0.0.1:%d/shutdown" % self.port)
+            self.shutdown()
         self.running = False
 
     def serve_until_stop_server(self):
         self.running = True
-        if version_info >= (2, 6, 0):
-            self.serve_forever(0.25)
-        else:
-            while self.running and not self.stop_requested:
-                self.handle_request()
+        self.serve_forever(0.25)
         self.running = False
         self.stop_requested = False
 

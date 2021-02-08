@@ -1215,16 +1215,9 @@ def test_tiff_direct_and_virtual_mem_io():
             data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type=dt)
             new_vals = []
             for i in range(4 * src_ds.RasterXSize * src_ds.RasterYSize):
-                if sys.version_info >= (3, 0, 0):
-                    new_vals.append(chr(data[2 * i]).encode('latin1'))
-                    new_vals.append(chr(255 - data[2 * i]).encode('latin1'))
-                else:
-                    new_vals.append(data[2 * i])
-                    new_vals.append(chr(255 - ord(data[2 * i])))
-            if sys.version_info >= (3, 0, 0):
-                data = ''.encode('latin1').join(new_vals)
-            else:
-                data = ''.join(new_vals)
+                new_vals.append(chr(data[2 * i]).encode('latin1'))
+                new_vals.append(chr(255 - data[2 * i]).encode('latin1'))
+            data = b''.join(new_vals)
             mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type=dt)
             src_ds = mem_ds
         elif dt == gdal.GDT_CInt16:
@@ -1233,20 +1226,11 @@ def test_tiff_direct_and_virtual_mem_io():
             data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type=dt)
             new_vals = []
             for i in range(4 * src_ds.RasterXSize * src_ds.RasterYSize):
-                if sys.version_info >= (3, 0, 0):
-                    new_vals.append(chr(data[4 * i]).encode('latin1'))
-                    new_vals.append(chr(data[4 * i]).encode('latin1'))
-                    new_vals.append(chr(255 - data[4 * i]).encode('latin1'))
-                    new_vals.append(chr(255 - data[4 * i]).encode('latin1'))
-                else:
-                    new_vals.append(data[4 * i])
-                    new_vals.append(data[4 * i])
-                    new_vals.append(chr(255 - ord(data[4 * i])))
-                    new_vals.append(chr(255 - ord(data[4 * i])))
-            if sys.version_info >= (3, 0, 0):
-                data = ''.encode('latin1').join(new_vals)
-            else:
-                data = ''.join(new_vals)
+                new_vals.append(chr(data[4 * i]).encode('latin1'))
+                new_vals.append(chr(data[4 * i]).encode('latin1'))
+                new_vals.append(chr(255 - data[4 * i]).encode('latin1'))
+                new_vals.append(chr(255 - data[4 * i]).encode('latin1'))
+            data = b''.join(new_vals)
             mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type=dt)
             src_ds = mem_ds
 

@@ -60,12 +60,9 @@ def test_gdal_edit_py_1():
         # Passing utf-8 characters doesn't at least please Wine...
         val = 'fake-utf8'
         val_encoded = val
-    elif sys.version_info >= (3, 0, 0):
+    else:
         val = '\u00e9ven'
         val_encoded = val
-    else:
-        exec("val = u'\\u00e9ven'")
-        val_encoded = val.encode('utf-8')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', 'tmp/test_gdal_edit_py.tif -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 123 -mo FOO=BAR -units metre -mo UTF8=' + val_encoded + ' -mo ' + val_encoded + '=UTF8')
 

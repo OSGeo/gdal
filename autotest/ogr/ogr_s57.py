@@ -31,9 +31,7 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
-
 
 import gdaltest
 import ogrtest
@@ -390,9 +388,7 @@ def test_ogr_s57_online_4():
     gdal.SetConfigOption('OGR_S57_OPTIONS', None)
     lyr = ds.GetLayerByName('LNDMRK')
     for feat in lyr:
-        mystr = feat.NOBJNM
-        if mystr and sys.version_info < (3, 0, 0):
-            mystr.decode('UTF-8').encode('UTF-8')
+        feat.NOBJNM
 
 ###############################################################################
 # Test updates of DSID (#2498)

@@ -29,8 +29,6 @@
 
 import os
 import struct
-import sys
-
 
 import gdaltest
 import ogrtest
@@ -641,10 +639,7 @@ def test_ogr_basic_16():
 
 def test_ogr_basic_invalid_unicode():
 
-    if sys.version_info >= (3, 0, 0):
-        val = '\udcfc'
-    else:
-        exec("val = u'\\udcfc'")
+    val = '\udcfc'
 
     try:
         ogr.Open(val)

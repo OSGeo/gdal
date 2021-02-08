@@ -28,8 +28,6 @@
 ###############################################################################
 
 import os
-import sys
-
 
 import gdaltest
 import ogrtest
@@ -800,12 +798,7 @@ def test_ogr_csv_23():
     ds = None
 
     data = open('tmp/csvwrk/utf8.csv', 'rb').read()
-    if sys.version_info >= (3, 0, 0):
-        ogrtest.ret = False
-        exec("ogrtest.ret = (data[:6] == b'\\xef\\xbb\\xbfWKT')")
-    else:
-        ogrtest.ret = (data[:6] == '\xef\xbb\xbfWKT')
-    assert ogrtest.ret, "No UTF8 BOM header on output"
+    assert data[:6] == b'\xef\xbb\xbfWKT', "No UTF8 BOM header on output"
 
     # create a CSV file without UTF8 BOM
     ds = ogr.Open('tmp/csvwrk', update=1)

@@ -31,7 +31,6 @@ import copy
 import math
 import pickle
 import random
-import sys
 
 
 import gdaltest
@@ -3073,10 +3072,7 @@ def test_ogr_geom_import_corrupted_wkb():
                 else:
                     wkb[i] = 255 - wkb[i]
                 with gdaltest.error_handler():
-                    if sys.version_info >= (3, 0, 0):
-                        g = ogr.CreateGeometryFromWkb(bytes(wkb))
-                    else:
-                        g = ogr.CreateGeometryFromWkb(str(wkb))
+                    g = ogr.CreateGeometryFromWkb(bytes(wkb))
                 if g:
                     g2 = ogr.CreateGeometryFromWkb(g.ExportToIsoWkb())
                     assert g.Equals(g2), (wkt, i, method)
@@ -3085,10 +3081,7 @@ def test_ogr_geom_import_corrupted_wkb():
         # Test truncation of the WKB
         for i in range(len(wkb)):
             with gdaltest.error_handler():
-                if sys.version_info >= (3, 0, 0):
-                    g = ogr.CreateGeometryFromWkb(bytes(wkb[0:i]))
-                else:
-                    g = ogr.CreateGeometryFromWkb(str(wkb[0:i]))
+                g = ogr.CreateGeometryFromWkb(bytes(wkb[0:i]))
             assert g is None, (wkt, i)
 
     

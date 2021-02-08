@@ -433,10 +433,7 @@ def test_basic_test_14():
         ds.SetMetadata({5: 6})
     
 
-    if sys.version_info >= (3, 0, 0):
-        val = '\u00e9ven'
-    else:
-        exec("val = u'\\u00e9ven'")
+    val = '\u00e9ven'
 
     ds.SetMetadata({'bar': val})
     assert ds.GetMetadata()['bar'] == val
