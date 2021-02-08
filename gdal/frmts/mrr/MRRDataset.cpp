@@ -18,7 +18,7 @@
 #include "ogr_spatialref.h"
 
 CPL_C_START
-void    GDALRegister_MRR(void);
+void  CPL_DLL  GDALRegister_MRR(void);
 CPL_C_END
 
 //////////////////////////////////////////////////////////////////////////
@@ -548,7 +548,7 @@ void GDALRegister_MRR()
     if (!GDAL_CHECK_VERSION("MRR"))
         return;
 
-    if (MRRInitialize(false) == false)
+    if (MRRInitialize(true) == false)
         return;
 
     if (GDALGetDriverByName("MRR") == nullptr)
