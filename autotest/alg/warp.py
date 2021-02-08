@@ -621,18 +621,20 @@ def test_warp_18():
 @pytest.mark.parametrize('resampling_string', [
     'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos', 'average'])
 @pytest.mark.parametrize('datatype', [
-    gdal.GDT_Byte,
-    gdal.GDT_Int16,
-    gdal.GDT_CInt16,
-    gdal.GDT_UInt16,
-    gdal.GDT_Int32,
-    gdal.GDT_CInt32,
-    gdal.GDT_UInt32,
-    gdal.GDT_Float32,
-    gdal.GDT_CFloat32,
-    gdal.GDT_Float64,
-    gdal.GDT_CFloat64,
-])
+        gdal.GDT_Byte,
+        gdal.GDT_Int16,
+        gdal.GDT_CInt16,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int32,
+        gdal.GDT_CInt32,
+        gdal.GDT_UInt32,
+        gdal.GDT_Float32,
+        gdal.GDT_CFloat32,
+        gdal.GDT_Float64,
+        gdal.GDT_CFloat64,
+    ],
+    ids=gdal.GetDataTypeName
+)
 def test_warp_19(tmpdir, size, datatype, resampling_string):
 
     test_file = str(tmpdir.join('test.tif'))
@@ -702,12 +704,15 @@ def test_warp_21():
 # Would have detected issue of #3458
 
 
-@pytest.mark.parametrize('option1', ['', '-wo OPTIMIZE_SIZE=TRUE'])
+@pytest.mark.parametrize('option1', ['', '-wo OPTIMIZE_SIZE=TRUE'],
+                         ids=['default', 'optimizeSize'])
 @pytest.mark.parametrize('option2', [
-    '',
-    '-co TILED=YES',
-    '-co TILED=YES -co BLOCKXSIZE=16 -co BLOCKYSIZE=16',
-])
+        '',
+        '-co TILED=YES',
+        '-co TILED=YES -co BLOCKXSIZE=16 -co BLOCKYSIZE=16',
+    ],
+    ids=['default', 'tiled', 'tiled16']
+)
 def test_warp_22(tmpdir, option1, option2):
 
     src = str(tmpdir.join('warp_22_src.tif'))
@@ -1593,13 +1598,14 @@ def test_warp_52():
 @pytest.mark.skipif(sys.platform == 'darwin',
                     reason="Expected checksum should be updated for Mac")
 @pytest.mark.parametrize('typestr', ('Byte', 'UInt16', 'Int16'))
-@pytest.mark.parametrize('option', ('-wo USE_GENERAL_CASE=TRUE', ''))
+@pytest.mark.parametrize('option', ('-wo USE_GENERAL_CASE=TRUE', ''),
+                         ids=['generalCase', 'default'])
 # First checksum is proj 4.8, second proj 4.9.2
 @pytest.mark.parametrize('alg_name, expected_cs', (
-    ('near', [3781, 3843]),
-    ('cubic', [3942, 4133]),
-    ('cubicspline', [3874, 4076]),
-    ('bilinear', [4019, 3991]),
+    pytest.param('near', [3781, 3843], id='near'),
+    pytest.param('cubic', [3942, 4133], id='cubic'),
+    pytest.param('cubicspline', [3874, 4076], id='cubicspline'),
+    pytest.param('bilinear', [4019, 3991], id='bilinear'),
 ))
 def test_warp_53(typestr, option, alg_name, expected_cs):
 
