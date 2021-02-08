@@ -106,19 +106,6 @@ def gdalurlopen(url, timeout=10):
         return None
 
 
-def spawn_async(cmd):
-    command = shlex.split(cmd)
-    try:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE)
-        return (process, process.stdout)
-    except OSError:
-        return (None, None)
-
-
-def wait_process(process):
-    process.wait()
-
-
 def runexternal(cmd, strin=None, check_memleak=True, display_live_on_parent_stdout=False, encoding='latin1'):
     # pylint: disable=unused-argument
     command = shlex.split(cmd)

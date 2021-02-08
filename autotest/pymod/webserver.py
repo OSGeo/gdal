@@ -28,12 +28,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from threading import Thread
-
 import contextlib
-import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import subprocess
 import sys
+from threading import Thread
+import time
+
 import gdaltest
 
 do_log = False
@@ -436,13 +437,15 @@ def launch(fork_process=None, handler=None):
     if sys.platform == 'win32':
         python_exe = python_exe.replace('\\', '/')
 
-    (process, process_stdout) = gdaltest.spawn_async(python_exe + ' ../pymod/webserver.py')
+    process = subprocess.Popen(
+        [python_exe, '../pymod/webserver.py'],
+        stdout=subprocess.PIPE)
     if process is None:
         return (None, 0)
 
-    line = process_stdout.readline()
+    line = process.stdout.readline()
     line = line.decode('ascii')
-    process_stdout.close()
+    process.stdout.close()
     if line.find('port=') == -1:
         return (None, 0)
 
@@ -460,7 +463,7 @@ def server_stop(process, port):
         return
 
     gdaltest.gdalurlopen('http://127.0.0.1:%d/shutdown' % port)
-    gdaltest.wait_process(process)
+    process.wait()
 
 
 def main():
