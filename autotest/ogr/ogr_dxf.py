@@ -31,7 +31,6 @@
 ###############################################################################
 
 import os
-from sys import version_info
 
 
 import ogrtest
@@ -43,22 +42,9 @@ import pytest
 
 ###############################################################################
 
-@pytest.fixture(autouse=True, scope='module')
-def startup_and_cleanup():
-
-    # Setup the utf-8 string.
-    if version_info >= (3, 0, 0):
-        gdaltest.sample_text = 'Text Sample1\u00BF\u03BB\n"abc"'
-        gdaltest.sample_style = 'Text Sample1\u00BF\u03BB\n\\"abc\\"'
-    else:
-        exec("gdaltest.sample_text =  u'Text Sample1\u00BF\u03BB'")
-        gdaltest.sample_text += chr(10)
-
-        gdaltest.sample_style = gdaltest.sample_text + '\\"abc\\"'
-        gdaltest.sample_style = gdaltest.sample_style.encode('utf-8')
-
-        gdaltest.sample_text += '"abc"'
-        gdaltest.sample_text = gdaltest.sample_text.encode('utf-8')
+# Setup the utf-8 string.
+sample_text = 'Text Sample1\u00BF\u03BB\n"abc"'
+sample_style = 'Text Sample1\u00BF\u03BB\n\\"abc\\"'
 
 ###############################################################################
 # Check some general things to see if they meet expectations.
@@ -309,10 +295,10 @@ def test_ogr_dxf_9():
 
     # First of two MTEXTs
     feat = layer.GetNextFeature()
-    assert feat.GetField('Text') == gdaltest.sample_text, \
+    assert feat.GetField('Text') == sample_text, \
         'Did not get expected first mtext.'
 
-    expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = f'LABEL(f:"Arial",t:"{sample_style}",a:45,s:0.5g,p:5,c:#000000)'
     assert feat.GetStyleString() == expected_style, \
         ('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
 
@@ -684,10 +670,10 @@ def test_ogr_dxf_16():
 
         # First MTEXT
         feat = dxf_layer.GetNextFeature()
-        assert feat.GetField('Text') == gdaltest.sample_text, \
+        assert feat.GetField('Text') == sample_text, \
             'Did not get expected first mtext.'
 
-        expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
+        expected_style = f'LABEL(f:"Arial",t:"{sample_style}",a:45,s:0.5g,p:5,c:#000000)'
         assert feat.GetStyleString() == expected_style, \
             ('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
 
@@ -1029,11 +1015,7 @@ def test_ogr_dxf_22():
     ds = ogr.Open('data/dxf/text.dxf')
     lyr = ds.GetLayer(0)
 
-    if version_info >= (3, 0, 0):
-        test_text = 'test\ttext ab/c~d\u00B1ef^g.h#i jklm'
-    else:
-        exec("test_text = u'test\ttext ab/c~d\u00B1ef^g.h#i jklm'")
-        test_text = test_text.encode('utf-8')
+    test_text = 'test\ttext ab/c~d\u00B1ef^g.h#i jklm'
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('Text') != test_text:
@@ -3025,11 +3007,7 @@ def test_ogr_dxf_44():
         f.DumpReadable()
         pytest.fail()
 
-    if version_info >= (3, 0, 0):
-        test_text = 'Apples\u00B1'
-    else:
-        exec("test_text = u'Apples\u00B1'")
-        test_text = test_text.encode('utf-8')
+    test_text = 'Apples\u00B1'
 
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'LABEL(f:"Arial",t:"' + test_text + '",p:2,s:1g,c:#ff0000,a:10)' \

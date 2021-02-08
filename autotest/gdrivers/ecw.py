@@ -33,7 +33,6 @@
 import os
 import os.path
 import sys
-from sys import version_info
 import array
 import shutil
 from osgeo import gdal
@@ -1293,12 +1292,8 @@ def test_ecw_37():
 
 def test_ecw_38():
 
-    gdaltest.ecw_38_fname = ''
-    if version_info >= (3, 0, 0):
-        exec("""gdaltest.ecw_38_fname = 'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
-    else:
-        exec("""gdaltest.ecw_38_fname = u'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
-    fname = gdaltest.ecw_38_fname
+    gdaltest.ecw_38_fname = fname = (
+        'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw')
 
     if gdaltest.ecw_drv.major_version < 4:
         pytest.skip()

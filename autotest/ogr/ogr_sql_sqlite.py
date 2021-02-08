@@ -29,11 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from BaseHTTPServer import BaseHTTPRequestHandler
-except ImportError:
-    from http.server import BaseHTTPRequestHandler
-
+from http.server import BaseHTTPRequestHandler
 
 from osgeo import ogr
 from osgeo import osr

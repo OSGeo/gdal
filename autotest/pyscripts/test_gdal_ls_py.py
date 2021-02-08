@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import io
 import sys
 from osgeo import gdal
 
@@ -55,16 +56,9 @@ def run_gdal_ls(argv):
 
     sys.path = saved_syspath
 
-    from sys import version_info
-    if version_info >= (3, 0, 0):
-        import io
-        outstr = io.StringIO()
-    else:
-        import StringIO
-        outstr = StringIO.StringIO()
-    ret = gdal_ls.gdal_ls(argv, outstr)
-    retstr = outstr.getvalue()
-    outstr.close()
+    with io.StringIO() as outstr:
+        ret = gdal_ls.gdal_ls(argv, outstr)
+        retstr = outstr.getvalue()
 
     assert ret == 0, 'got error code : %d' % ret
 

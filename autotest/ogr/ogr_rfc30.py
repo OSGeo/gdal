@@ -28,17 +28,16 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from sys import version_info
 from osgeo import ogr
-
-
-import pytest
 
 ###############################################################################
 # Try ogr.Open(), Driver.CreateDataSource(), Driver.DeleteDataSource()
 
 
-def ogr_rfc30_1_internal(filename, layer_name):
+def test_ogr_rfc30_1():
+
+    filename = '/vsimem/\u00e9.shp'
+    layer_name = '\u00e9'
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
     lyr = ds.CreateLayer('foo')
@@ -51,33 +50,3 @@ def ogr_rfc30_1_internal(filename, layer_name):
     ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
-
-
-def test_ogr_rfc30_1():
-
-    if version_info >= (3, 0, 0):
-        filename = '/vsimem/\u00e9.shp'
-        layer_name = '\u00e9'
-    else:
-        # First try with Unicode string
-        exec("filename =  u'/vsimem/\u00e9.shp'")
-        exec("layer_name = u'\u00e9'.encode( 'utf-8' )")  # FIXME? we should perhaps accept Unicode strings for layernames as well
-
-    return ogr_rfc30_1_internal(filename, layer_name)
-
-
-def test_ogr_rfc30_1_bis():
-
-    if version_info >= (3, 0, 0):
-        pytest.skip()
-
-    filename = None
-    layer_name = None
-    # Test that it also works with a regular string (non Unicode) with utf8 content on python 2.X
-    exec("filename =  u'/vsimem/\u00e9.shp'.encode( 'utf-8' )")
-    exec("layer_name = u'\u00e9'.encode( 'utf-8' )")  # FIXME? we should perhaps accept Unicode strings for layernames as well
-
-    return ogr_rfc30_1_internal(filename, layer_name)
-
-
-

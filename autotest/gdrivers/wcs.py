@@ -30,19 +30,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+from http.server import BaseHTTPRequestHandler
 import os
 import numbers
 import re
 import shutil
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
-try:
-    from BaseHTTPServer import BaseHTTPRequestHandler
-except ImportError:
-    from http.server import BaseHTTPRequestHandler
+import urllib.parse
 
 import pytest
 
@@ -297,8 +290,8 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             f = open('/tmp/log.txt', 'a')
             f.write('GET %s\n' % self.path)
             f.close()
-        split = urlparse.urlparse(self.path)
-        query = urlparse.parse_qs(split.query)
+        split = urllib.parse.urlparse(self.path)
+        query = urllib.parse.parse_qs(split.query)
         query2 = {}
         for key in query:
             query2[key.lower()] = query[key]
