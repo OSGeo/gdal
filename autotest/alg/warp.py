@@ -1595,8 +1595,8 @@ def test_warp_52():
 # Test Grey+Alpha
 
 
-@pytest.mark.skipif(sys.platform == 'darwin',
-                    reason="Expected checksum should be updated for Mac")
+@pytest.mark.xfail(sys.platform == 'darwin',
+                   reason="Expected checksum should be updated for Mac")
 @pytest.mark.parametrize('typestr', ('Byte', 'UInt16', 'Int16'))
 @pytest.mark.parametrize('option', ('-wo USE_GENERAL_CASE=TRUE', ''),
                          ids=['generalCase', 'default'])
