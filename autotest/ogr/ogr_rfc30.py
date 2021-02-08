@@ -31,9 +31,6 @@
 from sys import version_info
 from osgeo import ogr
 
-
-import pytest
-
 ###############################################################################
 # Try ogr.Open(), Driver.CreateDataSource(), Driver.DeleteDataSource()
 
@@ -64,20 +61,3 @@ def test_ogr_rfc30_1():
         exec("layer_name = u'\u00e9'.encode( 'utf-8' )")  # FIXME? we should perhaps accept Unicode strings for layernames as well
 
     return ogr_rfc30_1_internal(filename, layer_name)
-
-
-def test_ogr_rfc30_1_bis():
-
-    if version_info >= (3, 0, 0):
-        pytest.skip()
-
-    filename = None
-    layer_name = None
-    # Test that it also works with a regular string (non Unicode) with utf8 content on python 2.X
-    exec("filename =  u'/vsimem/\u00e9.shp'.encode( 'utf-8' )")
-    exec("layer_name = u'\u00e9'.encode( 'utf-8' )")  # FIXME? we should perhaps accept Unicode strings for layernames as well
-
-    return ogr_rfc30_1_internal(filename, layer_name)
-
-
-

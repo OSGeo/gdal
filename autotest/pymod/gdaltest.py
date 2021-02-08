@@ -35,11 +35,11 @@ import os
 import os.path
 import stat
 import sys
-from sys import version_info
 import time
 
 from osgeo import gdal
 from osgeo import osr
+import gdaltest_python3 as gdaltestaux
 import pytest
 
 cur_name = 'default'
@@ -69,11 +69,6 @@ jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
 jp2lura_drv_unregistered = False
-
-if version_info >= (3, 0, 0):
-    import gdaltest_python3 as gdaltestaux
-else:
-    import gdaltest_python2 as gdaltestaux
 
 # Process commandline arguments for stuff like --debug, --locale, --config
 
