@@ -1665,7 +1665,6 @@ def enable_exceptions():
 
 ###############################################################################
 run_func = gdaltestaux.run_func
-urlescape = gdaltestaux.urlescape
 gdalurlopen = gdaltestaux.gdalurlopen
 spawn_async = gdaltestaux.spawn_async
 wait_process = gdaltestaux.wait_process

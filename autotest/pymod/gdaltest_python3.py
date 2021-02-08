@@ -61,16 +61,6 @@ def run_func(func):
         return result
 
 
-def urlescape(url):
-    # Escape any non-ASCII characters
-    try:
-        import urllib
-        url = urllib.parse.quote(url)
-    except AttributeError:
-        pass
-    return url
-
-
 def gdalurlopen(url, timeout=10):
     old_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(timeout)

@@ -29,8 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
+import urllib.parse
 
+from osgeo import gdal
 
 import gdaltest
 import pytest
@@ -42,7 +43,7 @@ import pytest
 def test_rfc30_1():
 
     filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
-    filename_escaped = gdaltest.urlescape(filename)
+    filename_escaped = urllib.parse.quote(filename)
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename_escaped, filename):
         pytest.skip()
@@ -93,6 +94,3 @@ def test_rfc30_2():
 
     fd = gdal.VSIFOpenL(new_filename, 'r')
     assert fd is None, 'did unlink fail on utf8 filename?'
-
-
-
