@@ -615,59 +615,55 @@ def test_warp_18():
     return ret
 
 
-def warp_19_internal(size, datatype, resampling_string):
-
-    ds = gdaltest.tiff_drv.Create('tmp/test.tif', size, size, 1, datatype)
-    ds.SetGeoTransform((10, 5, 0, 30, 0, -5))
-    ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
-    ds.GetRasterBand(1).Fill(10.1, 20.1)
-    ds = None
-
-    gdal.Warp('tmp/testwarp.tif', 'tmp/test.tif', options='-r ' + resampling_string)
-
-    ref_ds = gdal.Open('tmp/test.tif')
-    ds = gdal.Open('tmp/testwarp.tif')
-    checksum = ds.GetRasterBand(1).Checksum()
-    checksum_ref = ref_ds.GetRasterBand(1).Checksum()
-    ds = None
-    ref_ds = None
-
-    gdaltest.tiff_drv.Delete('tmp/testwarp.tif')
-
-    assert checksum == checksum_ref
-
-    gdaltest.tiff_drv.Delete('tmp/test.tif')
-
-
 # Test all data types and resampling methods for very small images
 # to test edge behaviour
-def test_warp_19():
+@pytest.mark.parametrize('size', [1, 2, 3, 7])
+@pytest.mark.parametrize('resampling_string', [
+    'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos', 'average'])
+@pytest.mark.parametrize('datatype', [
+        gdal.GDT_Byte,
+        gdal.GDT_Int16,
+        gdal.GDT_CInt16,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int32,
+        gdal.GDT_CInt32,
+        gdal.GDT_UInt32,
+        gdal.GDT_Float32,
+        gdal.GDT_CFloat32,
+        gdal.GDT_Float64,
+        gdal.GDT_CFloat64,
+    ],
+    ids=gdal.GetDataTypeName
+)
+def test_warp_19(tmpdir, size, datatype, resampling_string):
+
+    test_file = str(tmpdir.join('test.tif'))
+    warp_file = str(tmpdir.join('testwarp.tif'))
 
     gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.tiff_drv is None:
         pytest.skip()
 
-    datatypes = [gdal.GDT_Byte,
-                 gdal.GDT_Int16,
-                 gdal.GDT_CInt16,
-                 gdal.GDT_UInt16,
-                 gdal.GDT_Int32,
-                 gdal.GDT_CInt32,
-                 gdal.GDT_UInt32,
-                 gdal.GDT_Float32,
-                 gdal.GDT_CFloat32,
-                 gdal.GDT_Float64,
-                 gdal.GDT_CFloat64]
+    ds = gdaltest.tiff_drv.Create(test_file, size, size, 1, datatype)
+    ds.SetGeoTransform((10, 5, 0, 30, 0, -5))
+    ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+    ds.GetRasterBand(1).Fill(10.1, 20.1)
+    ds = None
 
-    methods = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos', 'average']
+    gdal.Warp(warp_file, test_file, options=f'-r {resampling_string}')
 
-    sizes = [1, 2, 3, 7]
+    ref_ds = gdal.Open(test_file)
+    ds = gdal.Open(warp_file)
+    checksum = ds.GetRasterBand(1).Checksum()
+    checksum_ref = ref_ds.GetRasterBand(1).Checksum()
+    ds = None
+    ref_ds = None
 
-    for size in sizes:
-        print('Testing size = %d ...' % size)
-        for method in methods:
-            for datatype in datatypes:
-                warp_19_internal(size, datatype, method)
+    gdaltest.tiff_drv.Delete(warp_file)
+
+    assert checksum == checksum_ref
+
+    gdaltest.tiff_drv.Delete(test_file)
 
 
 # Test fix for #2724 (initialization of destination area to nodata in warped VRT)
@@ -708,12 +704,24 @@ def test_warp_21():
 # Would have detected issue of #3458
 
 
-def test_warp_22():
+@pytest.mark.parametrize('option1', ['', '-wo OPTIMIZE_SIZE=TRUE'],
+                         ids=['default', 'optimizeSize'])
+@pytest.mark.parametrize('option2', [
+        '',
+        '-co TILED=YES',
+        '-co TILED=YES -co BLOCKXSIZE=16 -co BLOCKYSIZE=16',
+    ],
+    ids=['default', 'tiled', 'tiled16']
+)
+def test_warp_22(tmpdir, option1, option2):
+
+    src = str(tmpdir.join('warp_22_src.tif'))
+    dst = str(tmpdir.join('warp_22_dst.tif'))
 
     # Generate source image with non uniform data
     w = 1001
     h = 1001
-    ds = gdal.GetDriverByName('GTiff').Create("tmp/warp_22_src.tif", w, h, 1)
+    ds = gdal.GetDriverByName('GTiff').Create(src, w, h, 1)
     ds.SetGeoTransform([2, 0.01, 0, 49, 0, -0.01])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -728,35 +736,14 @@ def test_warp_22():
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    ret = 'success'
-    failures = ''
+    # -wm should not be greater than 2 * w * h. Let's put it at its minimum
+    # value.
+    gdal.Warp(dst, src, options=f'-wm 100000 {option1} {option2}')
+    ds = gdal.Open(dst)
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == expected_cs
+    ds = None
 
-    # warp with various options
-    for option1 in ['', '-wo OPTIMIZE_SIZE=TRUE']:
-        for option2 in ['', '-co TILED=YES', '-co TILED=YES -co BLOCKXSIZE=16 -co BLOCKYSIZE=16']:
-            option = option1 + ' ' + option2
-            try:
-                os.remove('tmp/warp_22_dst.tif')
-            except OSError:
-                pass
-            # -wm should not be greater than 2 * w * h. Let's put it at its minimum value
-            gdal.Warp('tmp/warp_22_dst.tif', 'tmp/warp_22_src.tif', options='-wm 100000 ' + option)
-            ds = gdal.Open('tmp/warp_22_dst.tif')
-            cs = ds.GetRasterBand(1).Checksum()
-            if cs != expected_cs:
-                if failures != '':
-                    failures = failures + '\n'
-                failures = failures + 'failed for %s. Checksum : got %d, expected %d' % (option, cs, expected_cs)
-                ret = 'fail'
-            ds = None
-
-    if failures != '':
-        gdaltest.post_reason(failures)
-
-    os.remove('tmp/warp_22_src.tif')
-    os.remove('tmp/warp_22_dst.tif')
-
-    return ret
 
 ###############################################################################
 # Test warping with datasets where some RasterIO() requests involve nBufXSize == 0 (#3582)
@@ -1608,38 +1595,37 @@ def test_warp_52():
 # Test Grey+Alpha
 
 
-def test_warp_53():
+@pytest.mark.xfail(sys.platform == 'darwin',
+                   reason="Expected checksum should be updated for Mac")
+@pytest.mark.parametrize('typestr', ('Byte', 'UInt16', 'Int16'))
+@pytest.mark.parametrize('option', ('-wo USE_GENERAL_CASE=TRUE', ''),
+                         ids=['generalCase', 'default'])
+# First checksum is proj 4.8, second proj 4.9.2
+@pytest.mark.parametrize('alg_name, expected_cs', (
+    pytest.param('near', [3781, 3843], id='near'),
+    pytest.param('cubic', [3942, 4133], id='cubic'),
+    pytest.param('cubicspline', [3874, 4076], id='cubicspline'),
+    pytest.param('bilinear', [4019, 3991], id='bilinear'),
+))
+def test_warp_53(typestr, option, alg_name, expected_cs):
 
-    if sys.platform == 'darwin':
-        pytest.skip("Expected checksum should be updated for Mac")
+    src_ds = gdal.Translate('', '../gcore/data/byte.tif',
+                            options=f'-of MEM -b 1 -b 1 -ot {typestr}')
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src_ds.GetRasterBand(2).Fill(255)
+    zero = struct.pack('B' * 1, 0)
+    src_ds.GetRasterBand(2).WriteRaster(10, 10, 1, 1, zero,
+                                        buf_type=gdal.GDT_Byte)
+    dst_ds = gdal.Translate('', src_ds,
+                            options='-of MEM -a_srs EPSG:32611')
 
-    for typestr in ('Byte', 'UInt16', 'Int16'):
-        src_ds = gdal.Translate('', '../gcore/data/byte.tif',
-                                options='-of MEM -b 1 -b 1 -ot ' + typestr)
-        src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
-        src_ds.GetRasterBand(2).Fill(255)
-        zero = struct.pack('B' * 1, 0)
-        src_ds.GetRasterBand(2).WriteRaster(10, 10, 1, 1, zero,
-                                            buf_type=gdal.GDT_Byte)
-        dst_ds = gdal.Translate('', src_ds,
-                                options='-of MEM -a_srs EPSG:32611')
-
-        for option in ('-wo USE_GENERAL_CASE=TRUE', ''):
-            # First checksum is proj 4.8, second proj 4.9.2
-            for alg_name, expected_cs in (('near', [3781, 3843]),
-                                          ('cubic', [3942, 4133]),
-                                          ('cubicspline', [3874, 4076]),
-                                          ('bilinear', [4019, 3991])):
-                dst_ds.GetRasterBand(1).Fill(0)
-                dst_ds.GetRasterBand(2).Fill(0)
-                gdal.Warp(dst_ds, src_ds,
-                          options='-r ' + alg_name + ' ' + option)
-                cs1 = dst_ds.GetRasterBand(1).Checksum()
-                cs2 = dst_ds.GetRasterBand(2).Checksum()
-                if cs1 not in expected_cs or cs2 not in [3903, 4138]:
-                    print(typestr)
-                    print(option)
-                    pytest.fail(alg_name)
+    dst_ds.GetRasterBand(1).Fill(0)
+    dst_ds.GetRasterBand(2).Fill(0)
+    gdal.Warp(dst_ds, src_ds, options=f'-r {alg_name} {option}')
+    cs1 = dst_ds.GetRasterBand(1).Checksum()
+    cs2 = dst_ds.GetRasterBand(2).Checksum()
+    assert cs1 in expected_cs
+    assert cs2 in [3903, 4138]
 
 
 ###############################################################################
