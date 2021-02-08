@@ -310,6 +310,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     CPLString       m_osFilename{}; // e.g "/vsicurl/http://example.com/foo"
     char*           m_pszURL = nullptr;     // e.g "http://example.com/foo"
+    std::string     m_osQueryString{};      // e.g. an Azure SAS
 
     char          **m_papszHTTPOptions = nullptr;
 

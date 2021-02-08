@@ -846,7 +846,7 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders( bool bSetError, bool bGetHeade
 
     CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
-    CPLString osURL(m_pszURL);
+    CPLString osURL(m_pszURL + m_osQueryString);
     bool bRetryWithGet = false;
     bool bS3LikeRedirect = false;
     int nRetryCount = 0;
@@ -1333,7 +1333,7 @@ CPLString VSICurlHandle::GetRedirectURLIfValid(bool& bHasExpired)
     bHasExpired = false;
     poFS->GetCachedFileProp(m_pszURL, oFileProp);
 
-    CPLString osURL(m_pszURL);
+    CPLString osURL(m_pszURL + m_osQueryString);
     if( oFileProp.bS3LikeRedirect )
     {
         if( time(nullptr) + 1 < oFileProp.nExpireTimestampLocal )

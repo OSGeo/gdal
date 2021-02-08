@@ -1553,6 +1553,7 @@ VSIAzureHandle::VSIAzureHandle( VSIAzureFSHandler* poFSIn,
         VSICurlHandle(poFSIn, pszFilename, poHandleHelper->GetURLNoKVP()),
         m_poHandleHelper(poHandleHelper)
 {
+    m_osQueryString = poHandleHelper->GetSASQueryString();
 }
 
 /************************************************************************/
