@@ -32,6 +32,9 @@ from osgeo import gdal
 
 import struct
 
+import pytest
+
+
 def test_fillnodata_1x1_no_nodata():
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
@@ -44,7 +47,34 @@ def test_fillnodata_1x1_no_nodata():
     assert ar == (1,)
 
 
-def _test_fillnodata_nodata_zero(width, height, input_ar, maxSearchDist = 1):
+fillnodata_tests = {
+    # (width, height, input_ar, maxSearchDist, expected):
+    '1x1_nodata_but_pixel_valid': (1, 1, (1,), 1, (1,)),
+    '1x1_nodata_pixel_invalid': (1, 1, (0,), 1, (0,)),
+    '2x1_valid_invalid': (2, 1, (1, 0), 1, (1, 1)),
+    '2x1_invalid_valid': (2, 1, (0, 1), 1, (1, 1)),
+    '3x1_valid_invalid_valid': (3, 1, (2, 0, 4), 1, (2, 3, 4)),
+    '4x1_valid_invalid_invalid_valid': (4, 1, (2, 0, 0, 4), 1, (2, 2, 4, 4)),
+    '1x2_valid_invalid': (1, 2, (1, 0), 1, (1, 1)),
+    '1x2_invalid_valid': (1, 2, (0, 1), 1, (1, 1)),
+    '1x3_valid_invalid_valid': (1, 3, (2, 0, 4), 1, (2, 3, 4)),
+    '1x4_valid_invalid_invalid_valid': (1, 4, (2, 0, 0, 4), 1, (2, 2, 4, 4)),
+    '3x3_central_column_invalid': (
+        3, 3, (2, 0, 4, 4, 0, 6, 6, 0, 8), 1, (2, 3, 4, 4, 5, 6, 6, 7, 8)),
+    '3x3_central_line_invalid': (
+        3, 3, (2, 3, 4, 0, 0, 0, 6, 7, 8), 1, (2, 3, 4, 4, 5, 6, 6, 7, 8)),
+    '3x3_central_column_and_line_invalid': (
+        3, 3, (2, 0, 4, 0, 0, 0, 6, 0, 8), 1, (2, 3, 4, 4, 0, 6, 6, 7, 8)),
+    # 1.5 > sqrt(2)
+    '3x3_central_column_and_line_invalid_search_dist_1_5': (
+        3, 3, (2, 0, 4, 0, 0, 0, 6, 0, 8), 1.5, (2, 3, 4, 4, 5, 6, 6, 7, 8)),
+}
+
+
+@pytest.mark.parametrize('width, height, input_ar, maxSearchDist, expected',
+                         fillnodata_tests.values(),
+                         ids=fillnodata_tests.keys())
+def test_fillnodata_nodata(width, height, input_ar, maxSearchDist, expected):
     ds = gdal.GetDriverByName('MEM').Create('', width, height)
     npixels = ds.RasterXSize * ds.RasterYSize
     ds.GetRasterBand(1).SetNoDataValue(0)
@@ -56,102 +86,4 @@ def _test_fillnodata_nodata_zero(width, height, input_ar, maxSearchDist = 1):
                     maxSearchDist = maxSearchDist,
                     maskBand = None, smoothingIterations = 0)
     ar = ds.ReadRaster()
-    return struct.unpack('B' * npixels, ar)
-
-
-def test_fillnodata_1x1_nodata_but_pixel_valid():
-
-    assert _test_fillnodata_nodata_zero(1, 1, (1,)) == (1,)
-
-
-def test_fillnodata_1x1_nodata_pixel_invalid():
-
-    assert _test_fillnodata_nodata_zero(1, 1, (0,)) == (0,)
-
-
-def test_fillnodata_2x1_valid_invalid():
-
-    assert _test_fillnodata_nodata_zero(2, 1, (1, 0)) == (1, 1)
-
-
-def test_fillnodata_2x1_invalid_valid():
-
-    assert _test_fillnodata_nodata_zero(2, 1, (0, 1)) == (1, 1)
-
-
-def test_fillnodata_3x1_valid_invalid_valid():
-
-    assert _test_fillnodata_nodata_zero(3, 1, (2, 0, 4)) == (2, 3, 4)
-
-
-def test_fillnodata_4x1_valid_invalid_invalid_valid():
-
-    assert _test_fillnodata_nodata_zero(4, 1, (2, 0, 0, 4)) == (2, 2, 4, 4)
-
-
-def test_fillnodata_1x2_valid_invalid():
-
-    assert _test_fillnodata_nodata_zero(1, 2, (1,
-                                               0)) == (1,
-                                                       1)
-
-
-def test_fillnodata_1x2_invalid_valid():
-
-    assert _test_fillnodata_nodata_zero(1, 2, (0,
-                                               1)) == (1,
-                                                       1)
-
-def test_fillnodata_1x3_valid_invalid_valid():
-
-    assert _test_fillnodata_nodata_zero(1, 3, (2,
-                                               0,
-                                               4)) == (2,
-                                                       3,
-                                                       4)
-
-def test_fillnodata_1x4_valid_invalid_invalid_valid():
-
-    assert _test_fillnodata_nodata_zero(1, 4, (2,
-                                               0,
-                                               0,
-                                               4)) == (2,
-                                                       2,
-                                                       4,
-                                                       4)
-
-
-def test_fillnodata_3x3_central_column_invalid():
-
-    assert _test_fillnodata_nodata_zero(3, 3, (2, 0, 4,
-                                               4, 0, 6,
-                                               6, 0, 8)) == (2, 3, 4,
-                                                             4, 5, 6,
-                                                             6, 7, 8)
-
-
-def test_fillnodata_3x3_central_line_invalid():
-
-    assert _test_fillnodata_nodata_zero(3, 3, (2, 3, 4,
-                                               0, 0, 0,
-                                               6, 7, 8)) == (2, 3, 4,
-                                                             4, 5, 6,
-                                                             6, 7, 8)
-
-def test_fillnodata_3x3_central_column_and_line_invalid():
-
-    assert _test_fillnodata_nodata_zero(3, 3, (2, 0, 4,
-                                               0, 0, 0,
-                                               6, 0, 8)) == (2, 3, 4,
-                                                             4, 0, 6,
-                                                             6, 7, 8)
-
-# 1.5 > sqrt(2)
-def test_fillnodata_3x3_central_column_and_line_invalid_search_dist_1_5():
-
-    assert _test_fillnodata_nodata_zero(3, 3, (2, 0, 4,
-                                               0, 0, 0,
-                                               6, 0, 8), maxSearchDist = 1.5) \
-                == (2, 3, 4,
-                    4, 5, 6,
-                    6, 7, 8)
+    assert struct.unpack('B' * npixels, ar) == expected
