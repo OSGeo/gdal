@@ -255,9 +255,9 @@ The DataWindow element might be omitted. The default values are :
 -  UpperLeftY = 20037508.34
 -  LowerRightX = 20037508.34
 -  LowerRightY = -20037508.34
--  TileLevel = 19
--  OverviewCount = 18
--  SRS = EPSG:900913
+-  TileLevel = 21
+-  OverviewCount = 20
+-  SRS = EPSG:3857
 -  BlockSizeX = 256
 -  BlockSizeY = 256
 
