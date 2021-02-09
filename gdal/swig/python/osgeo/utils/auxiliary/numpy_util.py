@@ -33,7 +33,7 @@ import numpy
 
 
 def GDALTypeCodeToNumericTypeCodeEx(buf_type, signed_byte, default=None):
-    typecode = gdal_array.GDALTypeCodeToNumericTypeCodeEx(buf_type)
+    typecode = gdal_array.GDALTypeCodeToNumericTypeCode(buf_type)
     if typecode is None:
         typecode = default
 
