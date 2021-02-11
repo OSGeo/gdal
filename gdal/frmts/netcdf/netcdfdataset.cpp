@@ -9203,42 +9203,42 @@ void GDALRegister_netCDF()
 #endif
 "   </Option>"
 #ifdef NETCDF_HAS_NC4
-"   <Option name='COMPRESS' type='string-select' default='NONE'>"
+"   <Option name='COMPRESS' type='string-select' scope='raster' default='NONE'>"
 "     <Value>NONE</Value>"
 "     <Value>DEFLATE</Value>"
 "   </Option>"
-"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='1'/>"
+"   <Option name='ZLEVEL' type='int' scope='raster' description='DEFLATE compression level 1-9' default='1'/>"
 #endif
-"   <Option name='WRITE_BOTTOMUP' type='boolean' default='YES'>"
+"   <Option name='WRITE_BOTTOMUP' type='boolean' scope='raster' default='YES'>"
 "   </Option>"
 "   <Option name='WRITE_GDAL_TAGS' type='boolean' default='YES'>"
 "   </Option>"
-"   <Option name='WRITE_LONLAT' type='string-select'>"
+"   <Option name='WRITE_LONLAT' type='string-select' scope='raster'>"
 "     <Value>YES</Value>"
 "     <Value>NO</Value>"
 "     <Value>IF_NEEDED</Value>"
 "   </Option>"
-"   <Option name='TYPE_LONLAT' type='string-select'>"
+"   <Option name='TYPE_LONLAT' type='string-select' scope='raster'>"
 "     <Value>float</Value>"
 "     <Value>double</Value>"
 "   </Option>"
-"   <Option name='PIXELTYPE' type='string-select' description='only used in Create()'>"
+"   <Option name='PIXELTYPE' type='string-select' scope='raster' description='only used in Create()'>"
 "       <Value>DEFAULT</Value>"
 "       <Value>SIGNEDBYTE</Value>"
 "   </Option>"
-"   <Option name='CHUNKING' type='boolean' default='YES' description='define chunking when creating netcdf4 file'/>"
-"   <Option name='MULTIPLE_LAYERS' type='string-select' description='Behaviour regarding multiple vector layer creation' default='NO'>"
+"   <Option name='CHUNKING' type='boolean' scope='raster' default='YES' description='define chunking when creating netcdf4 file'/>"
+"   <Option name='MULTIPLE_LAYERS' type='string-select' scope='vector' description='Behaviour regarding multiple vector layer creation' default='NO'>"
 "       <Value>NO</Value>"
 "       <Value>SEPARATE_FILES</Value>"
 #ifdef NETCDF_HAS_NC4
 "       <Value>SEPARATE_GROUPS</Value>"
 #endif
 "   </Option>"
-"   <Option name='GEOMETRY_ENCODING' type='string' default='CF_1.8' description='Specifies the type of geometry encoding when creating a netCDF dataset'>"
+"   <Option name='GEOMETRY_ENCODING' type='string' scope='vector' default='CF_1.8' description='Specifies the type of geometry encoding when creating a netCDF dataset'>"
 "       <Value>WKT</Value>"
 "       <Value>CF_1.8</Value>"
 "   </Option>"
-"   <Option name='CONFIG_FILE' type='string' description='Path to a XML configuration file (or content inlined)'/>"
+"   <Option name='CONFIG_FILE' type='string' scope='vector' description='Path to a XML configuration file (or content inlined)'/>"
 "</CreationOptionList>"
                               );
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
@@ -9277,7 +9277,7 @@ void GDALRegister_netCDF()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
-"   <Option name='HONOUR_VALID_RANGE' type='boolean' "
+"   <Option name='HONOUR_VALID_RANGE' type='boolean' scope='raster' "
     "description='Whether to set to nodata pixel values outside of the "
     "validity range' default='YES'/>"
 "</OpenOptionList>" );
