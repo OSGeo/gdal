@@ -65,6 +65,7 @@ Software using GDAL
 - `Mirone  <http://w3.ualg.pt/~jluis/mirone>`_  Matlab based package for geospatial, oceanographic and geophysical analysis of grids
 - `Mygeodata Converter  <http://mygeodata.eu/apps/converter/index_EN.html>`_  Online converter of GDAL raster and OGR vector formats
 - `NASA Ames Stereo Pipeline  <https://ti.arc.nasa.gov/tech/asr/groups/intelligent-robotics/ngt/stereo/>`_  Software for creating terrain models and ortho images from planetary stereo images.
+- `NASA WorldWind  <https://worldwind.arc.nasa.gov/>`_   Multiplatform virtual globe library to quickly and easily create interactive visualizations of 3D globes, map and geographical information.
 - `NextGIS Formbuilder  <http://nextgis.com/nextgis-formbuilder>`_ Desktop application for creating and editing forms.
 - `NextGIS Web  <http://nextgis.com/nextgis-web>`_ Server-side Web GIS and a framework for storage, visualization and permissions management of all kinds
 - `Ogr2 GUI  <http://www.ogr2gui.ca/en/index.php>`_ Graphical user interface for ogr2ogr
