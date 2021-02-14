@@ -32,8 +32,6 @@
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
 
-CPL_CVSID("$Id$")
-
 static const char SIG[] = "GDAL_WMS TiledWMS: ";
 
 /*
@@ -359,37 +357,41 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             }
         }
 
-        TG = CPLSearchXMLNode(config, "Change");
-        while (TG != nullptr) {
-            CPLString name = CPLGetXMLValue(TG, "key", "");
-            if (name.empty())
+        // Then process the configuration file itself
+        CPLXMLNode *nodeChange = CPLSearchXMLNode(config, "Change");
+        while (nodeChange != nullptr) {
+            CPLString key = CPLGetXMLValue(nodeChange, "key", "");
+            if (key.empty())
                 throw CPLOPrintf("%s Change element needs a non-empty \"key\" attribute", SIG);
-            substs = CSLSetNameValue(substs, name, CPLGetXMLValue(TG, "", ""));
-            TG = SearchXMLSiblings(TG, "Change");
+            substs = CSLSetNameValue(substs, key, CPLGetXMLValue(nodeChange, "", ""));
+            nodeChange = SearchXMLSiblings(nodeChange, "Change");
         }
 
-        // Part of WMS config
-        const char *psconfig = CPLGetXMLValue(config, "Configuration", "");
+        m_parent_dataset->SetMetadataItem("ServerURL", m_base_url, nullptr);
+        m_parent_dataset->SetMetadataItem("TiledGroupName", tiledGroupName, nullptr);
+        for (int i = 0; i < CSLCount(substs); i++)
+            m_parent_dataset->SetMetadataItem("Change", substs[i], nullptr);
 
-        CPLString buffer;
+        CPLString GTS(CPLGetXMLValue(config, "Configuration", ""));
+        CPLString decodedGTS;
 
-        if (strlen(psconfig) != 0) { // Probably XML encoded because it is XML itself
-            buffer = psconfig; // The copy will be replaced by the decoded result
-            psconfig = WMSUtilDecode(buffer, CPLGetXMLValue(config, "Configuration.encoding", ""));
+        if (GTS.size() != 0) { // Probably XML encoded because it is XML itself
+            decodedGTS = GTS; // The copy will be replaced by the decoded result
+            WMSUtilDecode(decodedGTS, CPLGetXMLValue(config, "Configuration.encoding", ""));
         }
-        else { // Not inline, use the WMSdriver to fetch the server config
+        else { // Not local, use the WMSdriver to fetch the server config
             CPLString getTileServiceUrl = m_base_url + "request=GetTileService";
 
-            // This returns a string managed by the cfg cache
-            psconfig = GDALWMSDataset::GetServerConfig(getTileServiceUrl,
+            // This returns a string managed by the cfg cache, do not free
+            decodedGTS = GDALWMSDataset::GetServerConfig(getTileServiceUrl,
                 const_cast<char **>(m_parent_dataset->GetHTTPRequestOpts()));
 
-            if (psconfig == nullptr)
-                throw CPLOPrintf("%s HTTP failure", SIG);
+            if (decodedGTS.empty())
+                throw CPLOPrintf("%s Can't fetch server GetTileService", SIG);
         }
 
-        // psconfig contains the GetTileService return now
-        if (nullptr == (tileServiceConfig = CPLParseXMLString(psconfig)))
+        // decodedGTS contains the GetTileService return now
+        if (nullptr == (tileServiceConfig = CPLParseXMLString(decodedGTS)))
             throw CPLOPrintf("%s Error parsing the GetTileService response", SIG);
 
         if (nullptr == (TG = CPLSearchXMLNode(tileServiceConfig, "TiledPatterns")))
@@ -414,8 +416,10 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         if (nullptr != CPLGetXMLNode(TG, "Key")) {
             CPLXMLNode *node = CPLGetXMLNode(TG, "Key");
             while (nullptr != node) {
+                // the TEXT of the Key node
                 const char *val = CPLGetXMLValue(node, nullptr, nullptr);
-                if (val) keys = CSLAddString(keys, val);
+                if (nullptr != val)
+                    keys = CSLAddString(keys, val);
                 node = SearchXMLSiblings(node, "Key");
             }
         }
@@ -658,31 +662,73 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         if ((overview_count == 0) || (m_bsx < 1) || (m_bsy < 1))
             throw CPLOPrintf("%s No usable TilePattern elements found", SIG);
 
-        // Do we need to embed the server configuration in the prototype XML
-        if (CPLGetXMLValue(config, "Configuration", nullptr) == nullptr) {
+        // Do we need to modify the output XML
+        if (0 != CSLCount(OpenOptions)) {
             // Get the proposed XML, it will exist at this point
-            CPLXMLNode *cfg_root = CPLParseXMLString(m_parent_dataset->GetMetadataItem("XML", "WMS"));
+            CPLXMLNode* cfg_root = CPLParseXMLString(m_parent_dataset->GetMetadataItem("XML", "WMS"));
+            char* osXML = nullptr;
 
-            if (cfg_root && CPLGetXMLNode(cfg_root, "Cache")) { // Only if there is a cache node
+            if (cfg_root != nullptr) {
+                bool modified = false;
 
-                char *server_xml = CPLSerializeXMLTree(tileServiceConfig);
+                // Set openoption StoreConfiguration to Yes to save the server GTS in the output XML
+                if (CSLFetchBoolean(OpenOptions, "StoreConfiguration", 0)
+                    && nullptr == CPLGetXMLNode(cfg_root, "Service.Configuration"))
+                {
+                    char* xmlencodedGTS = CPLEscapeString(decodedGTS, static_cast<int>(decodedGTS.size()), CPLES_XML);
 
-                int len = static_cast<int>(strlen(server_xml));
-                char *encoded_server_xml = CPLEscapeString(server_xml, len, CPLES_XML);
-                CPLFree(server_xml);
+                    // It doesn't have a Service.Configuration element, safe to add one
+                    CPLXMLNode* scfg = CPLCreateXMLElementAndValue(CPLGetXMLNode(cfg_root, "Service"),
+                        "Configuration", xmlencodedGTS);
+                    CPLAddXMLAttributeAndValue(scfg, "encoding", "XMLencoded");
+                    modified = true;
+                    CPLFree(xmlencodedGTS);
+                }
 
-                // It doesn't have a Service.Configuration element, safe to add one
-                CPLXMLNode *service_node = CPLGetXMLNode(cfg_root, "Service");
-                CPLXMLNode *scfg = CPLCreateXMLElementAndValue(service_node, "Configuration", encoded_server_xml);
-                CPLAddXMLAttributeAndValue(scfg, "encoding", "XMLencoded");
-                CPLFree(encoded_server_xml);
+                // Set the TiledGroupName if it's not already there and we have it as an open option
+                if (!CPLGetXMLNode(cfg_root, "Service.TiledGroupName")
+                    && nullptr != CSLFetchNameValue(OpenOptions, "TiledGroupName"))
+                {
+                    CPLCreateXMLElementAndValue(CPLGetXMLNode(cfg_root, "Service"),
+                        "TiledGroupName", CSLFetchNameValue(OpenOptions, "TiledGroupName"));
+                    modified = true;
+                }
 
-                char * osXML = CPLSerializeXMLTree(cfg_root);
+                if (0 != CSLCount(substs))
+                {
+                    // Get all the existing Change elements
+                    char** existing_keys = nullptr;
+                    auto nodechange = CPLGetXMLNode(cfg_root, "Service.Change");
+                    while (nodechange) {
+                        const char *key = CPLGetXMLValue(nodechange, "Key", nullptr);
+                        if (key)
+                            existing_keys = CSLAddString(existing_keys, key);
+                        nodechange = nodechange->psNext;
+                    }
 
-                m_parent_dataset->SetXML(osXML);
-                CPLFree(osXML);
+                    for (int i = 0; i < CSLCount(substs); i++) {
+                        CPLString kv(substs[i]);
+                        auto sep_pos = kv.find_first_of("=:"); // It should find it
+                        if (sep_pos == CPLString::npos)
+                            continue;
+                        CPLString key(kv.substr(0, sep_pos));
+                        CPLString val(kv.substr(sep_pos + 1));
+                        // Add to the cfg_root if this change is not already there
+                        if (-1 == CSLFindString(existing_keys, key)) {
+                            auto cnode = CPLCreateXMLElementAndValue(CPLGetXMLNode(cfg_root, "Service"), "Change", val);
+                            CPLAddXMLAttributeAndValue(cnode, "Key", key);
+                            modified = true;
+                        }
+                    }
+                }
+
+                if (modified) {
+                    osXML = CPLSerializeXMLTree(cfg_root);
+                    m_parent_dataset->SetXML(osXML);
+                }
             }
 
+            CPLFree(osXML);
             CPLDestroyXMLNode(cfg_root);
         }
     }
