@@ -330,7 +330,6 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
     // Change    : May appear multiple times with different keys , syntax is "Change=key:value"
     //
 
-
     try { // Parse info from the WMS Service node
 //        m_end_url = CPLGetXMLValue(config, "AdditionalArgs", "");
         m_base_url = CPLGetXMLValue(config, "ServerURL", "");
