@@ -369,7 +369,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
 
         m_parent_dataset->SetMetadataItem("ServerURL", m_base_url, nullptr);
         m_parent_dataset->SetMetadataItem("TiledGroupName", tiledGroupName, nullptr);
-        for (int i = 0; i < CSLCount(substs); i++)
+        if (substs) for (int i = 0, n = CSLCount(substs); i < n; i++)
             m_parent_dataset->SetMetadataItem("Change", substs[i], nullptr);
 
         CPLString GTS(CPLGetXMLValue(config, "Configuration", ""));
@@ -706,7 +706,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
                         nodechange = nodechange->psNext;
                     }
 
-                    for (int i = 0; i < CSLCount(substs); i++) {
+                    if (substs) for (int i = 0, n = CSLCount(substs); i < n; i++) {
                         CPLString kv(substs[i]);
                         auto sep_pos = kv.find_first_of("=:"); // It should find it
                         if (sep_pos == CPLString::npos)
