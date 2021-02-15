@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  WMS Client Driver
+ * Project:  tiledWMS Client Driver
  * Purpose:  Implementation of the OnEarth Tiled WMS minidriver.
  *           http://onearth.jpl.nasa.gov/tiled.html
  * Author:   Lucian Plesea (Lucian dot Plesea at jpl.nasa.gov)
@@ -28,6 +28,36 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+
+ //
+ // Also known as the OnEarth tile protocol
+ //
+ // A few open options are supported by tiled WMS
+ //
+ // TiledGroupName=<Name>
+ //
+ //  This option is only valid when the WMS file does not contain a TiledGroupName. The name value
+ //  should match exactly the name declared by the server, including possible white spaces,
+ //  otherwise the open will fail.
+ //
+ // Change=<key>:<value>
+ //
+ //  If the tiled group selected supports the change key, this option will set the value
+ //  The <key> here does not include the brackets present in the GetTileService
+ //  For example, if a TiledPattern include a key of ${time}, the matching open option will be
+ //  Change=time:<YYYY-MM-DD>
+ //  The Change open option may be present multiple times, with different keys
+ //  If a key is not supported by the selected TilePattern, the open will fail
+ //  Alternate syntax is: Change=<key>=<value>
+ //
+ // StoreConfiguration=Yes
+ //
+ //  This boolean option is only useful when doing a createcopy of a tiledWMS dataset into another
+ //  tiledWMS dataset. When set, the source tiledWMS will store the server configuration into the XML
+ //  metadata representation, which then gets copied to the XML output. This will eliminate the need
+ //  to fetch the server configuration when opening the output datafile
+ // 
 
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
@@ -320,13 +350,6 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
     char** substs = nullptr;
     char** keys = nullptr;
     char** changes = nullptr;
-
-    //
-    // Get the open options. Config file content overrides the open options
-    // There are two options:
-    // GroupName : Should match the server declaration exactly
-    // Change    : May appear multiple times with different keys , syntax is "Change=key:value"
-    //
 
     try { // Parse info from the WMS Service node
 //        m_end_url = CPLGetXMLValue(config, "AdditionalArgs", "");

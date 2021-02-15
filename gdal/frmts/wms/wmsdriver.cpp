@@ -757,6 +757,9 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     const char* pszFilename = poOpenInfo->pszFilename;
     const char* pabyHeader = (const char *) poOpenInfo->pabyHeader;
 
+    if (!Identify(poOpenInfo))
+        return nullptr;
+
     if (poOpenInfo->nHeaderBytes == 0 &&
         STARTS_WITH_CI(pszFilename, "<GDAL_WMS>"))
     {
@@ -824,7 +827,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
         if (psXML == nullptr)
             return nullptr;
-        GDALDataset* poRet = GDALWMSMetaDataset::AnalyzeGetTileService(psXML);
+        GDALDataset* poRet = GDALWMSMetaDataset::AnalyzeGetTileService(psXML, poOpenInfo);
         CPLDestroyXMLNode( psXML );
         return poRet;
     }
@@ -949,8 +952,9 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 /* -------------------------------------------------------------------- */
     if (ds != nullptr)
     {
-        if (poOpenInfo->pszFilename && poOpenInfo->pszFilename[0] == '<')
+        if (poOpenInfo->pszFilename && poOpenInfo->pszFilename[0] == '<') {
             ds->nPamFlags = GPF_DISABLED;
+        }
         else {
             ds->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
             ds->SetDescription(poOpenInfo->pszFilename);
@@ -1059,8 +1063,12 @@ void WMSDeregister(CPL_UNUSED GDALDriver *d) {
 /*                          GDALRegister_WMS()                          */
 /************************************************************************/
 
-// The WMS driver does not define any open options, which means that open options are not checked
-// before they are passed to the minidrivers
+//
+// Do not define any open options here!
+// Doing so will enable checking the open options, which will generate warnings for
+// undeclared options which may be handled by individual minidrivers
+//
+
 void GDALRegister_WMS()
 
 {
