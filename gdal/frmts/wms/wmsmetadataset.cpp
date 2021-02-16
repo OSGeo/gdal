@@ -640,7 +640,7 @@ void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
         const char* value = CPLParseNameValue(papszChanges[i], &key);
         if (value != nullptr && key != nullptr)
             osSubdatasetName += CPLSPrintf("<Change key=\"${%s}\">%s</Change>", key, value);
-        if (key) CPLFree(key);
+        CPLFree(key);
     }
 
     osSubdatasetName += "</Service></GDAL_WMS>";
@@ -710,8 +710,7 @@ void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpe
             AnalyzeGetTileServiceRecurse(psIter, poOpenInfo);
         }
     }
-    if (papszChanges)
-        CPLFree(papszChanges);
+    CPLFree(papszChanges);
 }
 
 /************************************************************************/

@@ -709,7 +709,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         {
             // Get the proposed XML, it will exist at this point
             CPLXMLNode* cfg_root = CPLParseXMLString(m_parent_dataset->GetMetadataItem("XML", "WMS"));
-            char* osXML = nullptr;
+            char* pszXML = nullptr;
 
             if (cfg_root != nullptr)
             {
@@ -771,12 +771,12 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
 
                 if (modified)
                 {
-                    osXML = CPLSerializeXMLTree(cfg_root);
-                    m_parent_dataset->SetXML(osXML);
+                    pszXML = CPLSerializeXMLTree(cfg_root);
+                    m_parent_dataset->SetXML(pszXML);
                 }
             }
 
-            CPLFree(osXML);
+            CPLFree(pszXML);
             CPLDestroyXMLNode(cfg_root);
         }
     }
