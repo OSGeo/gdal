@@ -677,11 +677,11 @@ void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
 void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpenInfo * poOpenInfo)
 {
     // Only list tiled groups that contain the string in the open option TiledGroupName, if given
-    char **papszOpenOptions = poOpenInfo ? poOpenInfo->papszOpenOptions : nullptr;
-    CPLString osMatch(CSLFetchNameValueDef(papszOpenOptions, "TiledGroupName",""));
+    char **papszLocalOpenOptions = poOpenInfo ? poOpenInfo->papszOpenOptions : nullptr;
+    CPLString osMatch(CSLFetchNameValueDef(papszLocalOpenOptions, "TiledGroupName",""));
     osMatch.toupper();
     // Also pass the change patterns, if provided
-    char **papszChanges = CSLFetchNameValueMultiple(papszOpenOptions, "Change");
+    char **papszChanges = CSLFetchNameValueMultiple(papszLocalOpenOptions, "Change");
 
     CPLXMLNode* psIter = psXML->psChild;
     for(; psIter != nullptr; psIter = psIter->psNext)
