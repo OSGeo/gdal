@@ -41,7 +41,7 @@ CPLString ProjToWKT(const CPLString &proj) {
     {
         if (sr.SetFromUserInput("EPSG:3857") != OGRERR_NONE) return srs;
     }
-    else if (EQUAL(proj.c_str(), "EPSG:NONE"))
+    else if (EQUAL(proj.c_str(),"EPSG:NONE"))
     {
         return srs;
     }
