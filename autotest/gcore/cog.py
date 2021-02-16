@@ -258,6 +258,27 @@ def test_cog_creation_of_overviews():
     gdal.GetDriverByName('GTiff').Delete(filename)
     gdal.Unlink(directory)
 
+###############################################################################
+# Test creation of overviews with a different compression method
+
+def test_cog_creation_of_overviews_with_compression():
+    directory = '/vsimem/test_cog_creation_of_overviews_with_compression'
+    filename = directory + '/cog.tif'
+    src_ds = gdal.Translate('', 'data/byte.tif',
+                            options='-of MEM -outsize 2048 300')
+
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'JPEG'):
+        ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                options = ['COMPRESS=LZW'])
+
+        assert ds.GetRasterBand(1).GetOverviewCount() == 2
+        assert ds.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'LZW'
+        ds = None
+
+    src_ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.Unlink(directory)
+
 
 ###############################################################################
 # Test creation of overviews with a dataset with a mask
