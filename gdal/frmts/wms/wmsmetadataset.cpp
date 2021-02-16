@@ -28,8 +28,6 @@
 
 #include "wmsmetadataset.h"
 
-CPL_CVSID("$Id$")
-
 int VersionStringToInt(const char *version);
 
 /************************************************************************/
@@ -636,8 +634,10 @@ void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
     osSubdatasetName += pszTiledGroupName;
     osSubdatasetName += "</TiledGroupName>";
 
-    if (changes) {
-        for (int i = 0; changes[i] != nullptr; i++) {
+    if (changes)
+    {
+        for (int i = 0; changes[i] != nullptr; i++)
+        {
             char* key = nullptr;
             const char* value = CPLParseNameValue(changes[i], &key);
             if (value != nullptr && key != nullptr)
@@ -694,8 +694,10 @@ void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpe
         {
             CPLString name(CPLGetXMLValue(psIter, "Name", ""));
             const char* pszTitle = CPLGetXMLValue(psIter, "Title", nullptr);
-            if (!name.empty()) {
-                if (match.empty()) {
+            if (!name.empty())
+            {
+                if (match.empty())
+                {
                     AddTiledSubDataset(name, pszTitle, changes);
                 }
                 else {
@@ -706,13 +708,13 @@ void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpe
                 }
             }
         }
-        else if (psIter->eType == CXT_Element &&
-            EQUAL(psIter->pszValue, "TiledGroups"))
+        else if (psIter->eType == CXT_Element && EQUAL(psIter->pszValue, "TiledGroups"))
         {
             AnalyzeGetTileServiceRecurse(psIter, poOpenInfo);
         }
     }
-    if (changes) CPLFree(changes);
+    if (changes)
+        CPLFree(changes);
 }
 
 /************************************************************************/

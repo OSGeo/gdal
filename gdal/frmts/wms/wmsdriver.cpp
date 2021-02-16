@@ -952,10 +952,12 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 /* -------------------------------------------------------------------- */
     if (ds != nullptr)
     {
-        if (poOpenInfo->pszFilename && poOpenInfo->pszFilename[0] == '<') {
+        if (poOpenInfo->pszFilename && poOpenInfo->pszFilename[0] == '<')
+        {
             ds->nPamFlags = GPF_DISABLED;
         }
-        else {
+        else
+        {
             ds->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
             ds->SetDescription(poOpenInfo->pszFilename);
             ds->TryLoadXML();
