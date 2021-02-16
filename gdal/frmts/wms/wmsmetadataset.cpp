@@ -626,7 +626,7 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeGetCapabilities(CPLXMLNode* psXML,
 // tiledWMS only
 void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
                                             const char* pszTitle,
-                                            const char* const* changes)
+                                            const char* const* papszChanges)
 {
     CPLString osSubdatasetName = "<GDAL_WMS><Service name=\"TiledWMS\"><ServerUrl>";
     osSubdatasetName += osGetURL;
@@ -634,16 +634,13 @@ void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
     osSubdatasetName += pszTiledGroupName;
     osSubdatasetName += "</TiledGroupName>";
 
-    if (changes)
+    for (int i = 0; papszChanges != nullptr && papszChanges[i] != nullptr; i++)
     {
-        for (int i = 0; changes[i] != nullptr; i++)
-        {
-            char* key = nullptr;
-            const char* value = CPLParseNameValue(changes[i], &key);
-            if (value != nullptr && key != nullptr)
-                osSubdatasetName += CPLSPrintf("<Change key=\"${%s}\">%s</Change>", key, value);
-            if (key) CPLFree(key);
-        }
+        char* key = nullptr;
+        const char* value = CPLParseNameValue(papszChanges[i], &key);
+        if (value != nullptr && key != nullptr)
+            osSubdatasetName += CPLSPrintf("<Change key=\"${%s}\">%s</Change>", key, value);
+        if (key) CPLFree(key);
     }
 
     osSubdatasetName += "</Service></GDAL_WMS>";
@@ -680,31 +677,31 @@ void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
 void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpenInfo * poOpenInfo)
 {
     // Only list tiled groups that contain the string in the open option TiledGroupName, if given
-    char **OpenOptions = poOpenInfo ? poOpenInfo->papszOpenOptions : nullptr;
-    CPLString match(CSLFetchNameValueDef(OpenOptions, "TiledGroupName",""));
-    match.toupper();
+    char **papszOpenOptions = poOpenInfo ? poOpenInfo->papszOpenOptions : nullptr;
+    CPLString osMatch(CSLFetchNameValueDef(papszOpenOptions, "TiledGroupName",""));
+    osMatch.toupper();
     // Also pass the change patterns, if provided
-    char **changes = CSLFetchNameValueMultiple(OpenOptions, "Change");
+    char **papszChanges = CSLFetchNameValueMultiple(papszOpenOptions, "Change");
 
     CPLXMLNode* psIter = psXML->psChild;
     for(; psIter != nullptr; psIter = psIter->psNext)
     {
-        if (psIter->eType == CXT_Element &&
-            EQUAL(psIter->pszValue, "TiledGroup"))
+        if (psIter->eType == CXT_Element && EQUAL(psIter->pszValue, "TiledGroup"))
         {
-            CPLString name(CPLGetXMLValue(psIter, "Name", ""));
-            const char* pszTitle = CPLGetXMLValue(psIter, "Title", nullptr);
-            if (!name.empty())
+            const char *pszName = CPLGetXMLValue(psIter, "Name", nullptr);
+            if (pszName)
             {
-                if (match.empty())
+                const char* pszTitle = CPLGetXMLValue(psIter, "Title", nullptr);
+                if (osMatch.empty())
                 {
-                    AddTiledSubDataset(name, pszTitle, changes);
+                    AddTiledSubDataset(pszName, pszTitle, papszChanges);
                 }
-                else {
-                    CPLString NAME(name);
-                    NAME.toupper();
-                    if (std::string::npos != NAME.find(match))
-                        AddTiledSubDataset(name, pszTitle, changes);
+                else
+                {
+                    CPLString osNameUpper(pszName);
+                    osNameUpper.toupper();
+                    if (std::string::npos != osNameUpper.find(osMatch))
+                        AddTiledSubDataset(pszName, pszTitle, papszChanges);
                 }
             }
         }
@@ -713,8 +710,8 @@ void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpe
             AnalyzeGetTileServiceRecurse(psIter, poOpenInfo);
         }
     }
-    if (changes)
-        CPLFree(changes);
+    if (papszChanges)
+        CPLFree(papszChanges);
 }
 
 /************************************************************************/

@@ -93,7 +93,7 @@ class GDALWMSMetaDataset final: public GDALPamDataset
     // tiledWMS only
     void                AddTiledSubDataset(const char* pszTiledGroupName,
                                            const char* pszTitle,
-                                           const char* const* changes);
+                                           const char* const* papszChanges);
 
     // tiledWMS only
     void                AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpenInfo* poOpenInfo);
