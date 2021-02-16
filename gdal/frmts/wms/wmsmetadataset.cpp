@@ -679,9 +679,10 @@ void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
 // tiledWMS only
 void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpenInfo * poOpenInfo)
 {
-    // Only list tiled groups that start with the open option TiledGroupName if given
+    // Only list tiled groups that contain the string in the open option TiledGroupName, if given
     char **OpenOptions = poOpenInfo ? poOpenInfo->papszOpenOptions : nullptr;
-    const char *TGN = CSLFetchNameValue(OpenOptions, "TiledGroupName");
+    CPLString match(CSLFetchNameValueDef(OpenOptions, "TiledGroupName",""));
+    match.toupper();
     // Also pass the change patterns, if provided
     char **changes = CSLFetchNameValueMultiple(OpenOptions, "Change");
 
@@ -691,11 +692,18 @@ void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpe
         if (psIter->eType == CXT_Element &&
             EQUAL(psIter->pszValue, "TiledGroup"))
         {
-            const char* pszName = CPLGetXMLValue(psIter, "Name", nullptr);
+            CPLString name(CPLGetXMLValue(psIter, "Name", ""));
             const char* pszTitle = CPLGetXMLValue(psIter, "Title", nullptr);
-            if (pszName) {
-                if (!TGN || STARTS_WITH_CI(pszName, TGN))
-                    AddTiledSubDataset(pszName, pszTitle, changes);
+            if (!name.empty()) {
+                if (match.empty()) {
+                    AddTiledSubDataset(name, pszTitle, changes);
+                }
+                else {
+                    CPLString NAME(name);
+                    NAME.toupper();
+                    if (std::string::npos != NAME.find(match))
+                        AddTiledSubDataset(name, pszTitle, changes);
+                }
             }
         }
         else if (psIter->eType == CXT_Element &&
