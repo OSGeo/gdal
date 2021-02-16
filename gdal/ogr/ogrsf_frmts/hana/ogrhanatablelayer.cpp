@@ -124,8 +124,7 @@ std::vector<int> ParseIntValues(const char* str)
 
 FieldTypeInfo ParseFieldTypeInfo(const CPLString& typeDef)
 {
-    auto incorrectFormatErr = [&]()
-    {
+    auto incorrectFormatErr = [&]() {
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "Column type '%s' has incorrect format.", typeDef.c_str());
@@ -376,7 +375,7 @@ OGRErr OGRHanaTableLayer::ReadTableDefinition()
 /* -------------------------------------------------------------------- */
 
 std::pair<OGRErr, std::size_t> OGRHanaTableLayer::ExecuteUpdate(
-    odbc::PreparedStatementRef& statement, const char* functionName)
+    odbc::PreparedStatement& statement, const char* functionName)
 {
     std::size_t ret = 0;
 
@@ -384,13 +383,13 @@ std::pair<OGRErr, std::size_t> OGRHanaTableLayer::ExecuteUpdate(
     {
         if (dataSource_->IsTransactionStarted())
         {
-            if (statement->getBatchDataSize() >= batchSize_)
-                statement->executeBatch();
+            if (statement.getBatchDataSize() >= batchSize_)
+                statement.executeBatch();
             ret = 1;
         }
         else
         {
-            ret = statement->executeUpdate();
+            ret = statement.executeUpdate();
             dataSource_->Commit();
         }
     }
@@ -533,7 +532,7 @@ void OGRHanaTableLayer::ResetPreparedStatements()
 /************************************************************************/
 
 OGRErr OGRHanaTableLayer::SetStatementParameters(
-    odbc::PreparedStatementRef& stmt,
+    odbc::PreparedStatement& statement,
     OGRFeature* feature,
     bool skipFidColumn,
     bool newFeature,
@@ -565,7 +564,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                         std::to_string(feature->GetFID()).c_str());
                     return OGRERR_FAILURE;
                 }
-                stmt->setInt(
+                statement.setInt(
                     paramIndex,
                     odbc::Int(static_cast<std::int32_t>(feature->GetFID())));
                 break;
@@ -580,7 +579,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                         std::to_string(feature->GetFID()).c_str());
                     return OGRERR_FAILURE;
                 }
-                stmt->setLong(
+                statement.setLong(
                     paramIndex,
                     odbc::Long(static_cast<std::int64_t>(feature->GetFID())));
                 break;
@@ -604,55 +603,56 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
         {
         case odbc::SQLDataTypes::Bit:
         case odbc::SQLDataTypes::Boolean:
-            stmt->setBoolean(
+            statement.setBoolean(
                 paramIndex, featReader.GetFieldAsBoolean(fieldIndex));
             break;
         case odbc::SQLDataTypes::TinyInt:
             if (clmDesc.isArray)
-                stmt->setString(
+                statement.setString(
                     paramIndex, featReader.GetFieldAsIntArray(fieldIndex));
             else
-                stmt->setByte(
+                statement.setByte(
                     paramIndex, featReader.GetFieldAsByte(fieldIndex));
             break;
         case odbc::SQLDataTypes::SmallInt:
             if (clmDesc.isArray)
-                stmt->setString(
+                statement.setString(
                     paramIndex, featReader.GetFieldAsIntArray(fieldIndex));
             else
-                stmt->setShort(
+                statement.setShort(
                     paramIndex, featReader.GetFieldAsShort(fieldIndex));
             break;
         case odbc::SQLDataTypes::Integer:
             if (clmDesc.isArray)
-                stmt->setString(
+                statement.setString(
                     paramIndex, featReader.GetFieldAsIntArray(fieldIndex));
             else
-                stmt->setInt(paramIndex, featReader.GetFieldAsInt(fieldIndex));
+                statement.setInt(
+                    paramIndex, featReader.GetFieldAsInt(fieldIndex));
             break;
         case odbc::SQLDataTypes::BigInt:
             if (clmDesc.isArray)
-                stmt->setString(
+                statement.setString(
                     paramIndex, featReader.GetFieldAsBigIntArray(fieldIndex));
             else
-                stmt->setLong(
+                statement.setLong(
                     paramIndex, featReader.GetFieldAsLong(fieldIndex));
             break;
         case odbc::SQLDataTypes::Float:
         case odbc::SQLDataTypes::Real:
             if (clmDesc.isArray)
-                stmt->setString(
+                statement.setString(
                     paramIndex, featReader.GetFieldAsRealArray(fieldIndex));
             else
-                stmt->setFloat(
+                statement.setFloat(
                     paramIndex, featReader.GetFieldAsFloat(fieldIndex));
             break;
         case odbc::SQLDataTypes::Double:
             if (clmDesc.isArray)
-                stmt->setString(
+                statement.setString(
                     paramIndex, featReader.GetFieldAsDoubleArray(fieldIndex));
             else
-                stmt->setDouble(
+                statement.setDouble(
                     paramIndex, featReader.GetFieldAsDouble(fieldIndex));
             break;
         case odbc::SQLDataTypes::Decimal:
@@ -661,19 +661,19 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                  || feature->IsFieldNull(fieldIndex))
                 && feature->GetFieldDefnRef(fieldIndex)->GetDefault()
                        == nullptr)
-                stmt->setDecimal(paramIndex, odbc::Decimal());
+                statement.setDecimal(paramIndex, odbc::Decimal());
             else
-                stmt->setDouble(
+                statement.setDouble(
                     paramIndex, featReader.GetFieldAsDouble(fieldIndex));
             break;
         case odbc::SQLDataTypes::Char:
         case odbc::SQLDataTypes::VarChar:
         case odbc::SQLDataTypes::LongVarChar:
             if (clmDesc.isArray)
-                stmt->setString(
+                statement.setString(
                     paramIndex, featReader.GetFieldAsStringArray(fieldIndex));
             else
-                stmt->setString(
+                statement.setString(
                     paramIndex,
                     featReader.GetFieldAsString(fieldIndex, clmDesc.length));
             break;
@@ -681,10 +681,10 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
         case odbc::SQLDataTypes::WVarChar:
         case odbc::SQLDataTypes::WLongVarChar:
             if (clmDesc.isArray)
-                stmt->setString(
+                statement.setString(
                     paramIndex, featReader.GetFieldAsStringArray(fieldIndex));
             else
-                stmt->setString(
+                statement.setString(
                     paramIndex,
                     featReader.GetFieldAsNString(fieldIndex, clmDesc.length));
             break;
@@ -692,20 +692,22 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
         case odbc::SQLDataTypes::VarBinary:
         case odbc::SQLDataTypes::LongVarBinary: {
             Binary bin = featReader.GetFieldAsBinary(fieldIndex);
-            stmt->setBytes(paramIndex, bin.data, bin.size);
+            statement.setBytes(paramIndex, bin.data, bin.size);
         }
         break;
         case odbc::SQLDataTypes::DateTime:
         case odbc::SQLDataTypes::TypeDate:
-            stmt->setDate(paramIndex, featReader.GetFieldAsDate(fieldIndex));
+            statement.setDate(
+                paramIndex, featReader.GetFieldAsDate(fieldIndex));
             break;
         case odbc::SQLDataTypes::Time:
         case odbc::SQLDataTypes::TypeTime:
-            stmt->setTime(paramIndex, featReader.GetFieldAsTime(fieldIndex));
+            statement.setTime(
+                paramIndex, featReader.GetFieldAsTime(fieldIndex));
             break;
         case odbc::SQLDataTypes::Timestamp:
         case odbc::SQLDataTypes::TypeTimestamp:
-            stmt->setTimestamp(
+            statement.setTimestamp(
                 paramIndex, featReader.GetFieldAsTimestamp(fieldIndex));
             break;
         }
@@ -718,7 +720,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
         OGRErr err = GetGeometryWkb(feature, static_cast<int>(i), wkb);
         if (OGRERR_NONE != err)
             return err;
-        stmt->setBytes(paramIndex, wkb.data, wkb.size);
+        statement.setBytes(paramIndex, wkb.data, wkb.size);
     }
 
     if (!newFeature)
@@ -734,13 +736,13 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
             return OGRERR_FAILURE;
         }
 
-        stmt->setLong(
+        statement.setLong(
             paramIndex,
             odbc::Long(static_cast<std::int64_t>(feature->GetFID())));
     }
 
     if (dataSource_->IsTransactionStarted())
-        stmt->addBatch();
+        statement.addBatch();
 
     return OGRERR_NONE;
 }
@@ -1058,13 +1060,13 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
         }
 
         OGRErr err = SetStatementParameters(
-            insertFeatureStmt_, feature, !insertFeatureStmtHasFID, true,
+            *insertFeatureStmt_, feature, !insertFeatureStmtHasFID, true,
             "CreateFeature");
 
         if (OGRERR_NONE != err)
             return err;
 
-        auto ret = ExecuteUpdate(insertFeatureStmt_, "CreateFeature");
+        auto ret = ExecuteUpdate(*insertFeatureStmt_, "CreateFeature");
         return ret.first;
     }
     catch (const std::exception& ex)
@@ -1124,7 +1126,7 @@ OGRErr OGRHanaTableLayer::DeleteFeature(GIntBig nFID)
     if (dataSource_->IsTransactionStarted())
         deleteFeatureStmt_->addBatch();
 
-    auto ret = ExecuteUpdate(deleteFeatureStmt_, "DeleteFeature");
+    auto ret = ExecuteUpdate(*deleteFeatureStmt_, "DeleteFeature");
     return (OGRERR_NONE == ret.first && ret.second != 1)
                ? OGRERR_NON_EXISTING_FEATURE
                : ret.first;
@@ -1177,12 +1179,12 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
     }
 
     OGRErr err = SetStatementParameters(
-        updateFeatureStmt_, feature, true, false, "SetFeature");
+        *updateFeatureStmt_, feature, true, false, "SetFeature");
 
     if (OGRERR_NONE != err)
         return err;
 
-    auto ret = ExecuteUpdate(updateFeatureStmt_, "SetFeature");
+    auto ret = ExecuteUpdate(*updateFeatureStmt_, "SetFeature");
     return (OGRERR_NONE == ret.first && ret.second != 1)
                ? OGRERR_NON_EXISTING_FEATURE
                : ret.first;
@@ -1290,7 +1292,7 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
         return OGRERR_FAILURE;
     }
 
-    // fieldTypeInfo might contain a different defintion due to custom types
+    // fieldTypeInfo might contain a different defintion due to custom column types
     SetFieldDefn(dstField, fieldTypeInfo);
 
     AttributeColumnDescription clmDesc;

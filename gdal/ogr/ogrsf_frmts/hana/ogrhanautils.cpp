@@ -30,8 +30,6 @@
 
 #include <algorithm>
 
-#include "odbc/Types.h"
-
 CPL_CVSID("$Id$")
 
 namespace hana_utils {

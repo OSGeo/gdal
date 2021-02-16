@@ -99,7 +99,6 @@ struct FieldTypeInfo
     short type;
     int width;
     int precision;
-
 };
 
 struct Binary
@@ -293,14 +292,14 @@ private:
     OGRErr ReadTableDefinition();
 
     std::pair<OGRErr, std::size_t> ExecuteUpdate(
-        odbc::PreparedStatementRef& statement, const char* functionName);
+        odbc::PreparedStatement& statement, const char* functionName);
     odbc::PreparedStatementRef CreateDeleteFeatureStatement();
     odbc::PreparedStatementRef CreateInsertFeatureStatement(
         GIntBig fidColumnID);
     odbc::PreparedStatementRef CreateUpdateFeatureStatement();
     void ResetPreparedStatements();
     OGRErr SetStatementParameters(
-        odbc::PreparedStatementRef& statement,
+        odbc::PreparedStatement& statement,
         OGRFeature* feature,
         bool skipFidColumn,
         bool newFeature,
