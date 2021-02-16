@@ -71,6 +71,100 @@ CPLString BuildQuery(const char* source, const char* columns)
     return BuildQuery(source, columns, nullptr, nullptr, -1);
 }
 
+OGRFieldDefn* CreateFieldDefn(const AttributeColumnDescription& columnDesc)
+{
+    bool setFieldSize = false;
+    bool setFieldPrecision = false;
+
+    OGRFieldType ogrFieldType = OFTString;
+    OGRFieldSubType ogrFieldSubType = OGRFieldSubType::OFSTNone;
+
+    switch (columnDesc.type)
+    {
+    case odbc::SQLDataTypes::Bit:
+    case odbc::SQLDataTypes::Boolean:
+        ogrFieldType = OFTInteger;
+        ogrFieldSubType = OGRFieldSubType::OFSTBoolean;
+        break;
+    case odbc::SQLDataTypes::TinyInt:
+    case odbc::SQLDataTypes::SmallInt:
+        ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
+        ogrFieldSubType = OGRFieldSubType::OFSTInt16;
+        break;
+    case odbc::SQLDataTypes::Integer:
+        ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
+        break;
+    case odbc::SQLDataTypes::BigInt:
+        ogrFieldType = columnDesc.isArray ? OFTInteger64List : OFTInteger64;
+        break;
+    case odbc::SQLDataTypes::Double:
+    case odbc::SQLDataTypes::Real:
+    case odbc::SQLDataTypes::Float:
+        ogrFieldType = columnDesc.isArray ? OFTRealList : OFTReal;
+        if (columnDesc.type != odbc::SQLDataTypes::Double)
+            ogrFieldSubType = OGRFieldSubType::OFSTFloat32;
+        break;
+    case odbc::SQLDataTypes::Decimal:
+    case odbc::SQLDataTypes::Numeric:
+        ogrFieldType = columnDesc.isArray ? OFTRealList : OFTReal;
+        setFieldPrecision = true;
+        break;
+    case odbc::SQLDataTypes::Char:
+    case odbc::SQLDataTypes::VarChar:
+    case odbc::SQLDataTypes::LongVarChar:
+        ogrFieldType = columnDesc.isArray ? OFTStringList : OFTString;
+        setFieldSize = true;
+        break;
+    case odbc::SQLDataTypes::WChar:
+    case odbc::SQLDataTypes::WVarChar:
+    case odbc::SQLDataTypes::WLongVarChar:
+        // OFTWideString deprecated
+        ogrFieldType = columnDesc.isArray ? OFTStringList : OFTString;
+        setFieldSize = true;
+        break;
+    case odbc::SQLDataTypes::Date:
+    case odbc::SQLDataTypes::TypeDate:
+        ogrFieldType = OFTDate;
+        break;
+    case odbc::SQLDataTypes::Time:
+    case odbc::SQLDataTypes::TypeTime:
+        ogrFieldType = OFTTime;
+        break;
+    case odbc::SQLDataTypes::Timestamp:
+    case odbc::SQLDataTypes::TypeTimestamp:
+        ogrFieldType = OFTDateTime;
+        break;
+    case odbc::SQLDataTypes::Binary:
+    case odbc::SQLDataTypes::VarBinary:
+    case odbc::SQLDataTypes::LongVarBinary:
+        ogrFieldType = OFTBinary;
+        setFieldSize = true;
+        break;
+    default:
+        break;
+    }
+
+    OGRFieldDefn* field =
+        new OGRFieldDefn(columnDesc.name.c_str(), ogrFieldType);
+    field->SetSubType(ogrFieldSubType);
+    field->SetNullable(columnDesc.isNullable);
+    if (!columnDesc.isArray)
+    {
+        if (setFieldSize)
+            field->SetWidth(columnDesc.length);
+        if (setFieldPrecision)
+        {
+            field->SetWidth(columnDesc.precision);
+            field->SetPrecision(columnDesc.scale);
+        }
+    }
+    if (columnDesc.defaultValue.empty())
+        field->SetDefault(nullptr);
+    else
+        field->SetDefault(columnDesc.defaultValue);
+    return field;
+}
+
 OGRGeometry* CreateGeometryFromWkb(const void* data, std::size_t size)
 {
     if (size > static_cast<std::size_t>(std::numeric_limits<int>::max()))
@@ -571,100 +665,10 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
 
         AttributeColumnDescription attributeColumnDesc =
             clmDesc.attributeDescription;
+        std::unique_ptr<OGRFieldDefn> field(
+            CreateFieldDefn(attributeColumnDesc));
 
-        bool setFieldSize = false;
-        bool setFieldPrecision = false;
-
-        OGRFieldType ogrFieldType = OFTString;
-        OGRFieldSubType ogrFieldSubType = OGRFieldSubType::OFSTNone;
-
-        switch (attributeColumnDesc.type)
-        {
-        case odbc::SQLDataTypes::Bit:
-        case odbc::SQLDataTypes::Boolean:
-            ogrFieldType = OFTInteger;
-            ogrFieldSubType = OGRFieldSubType::OFSTBoolean;
-            break;
-        case odbc::SQLDataTypes::TinyInt:
-        case odbc::SQLDataTypes::SmallInt:
-            ogrFieldType =
-                attributeColumnDesc.isArray ? OFTIntegerList : OFTInteger;
-            ogrFieldSubType = OGRFieldSubType::OFSTInt16;
-            break;
-        case odbc::SQLDataTypes::Integer:
-            ogrFieldType =
-                attributeColumnDesc.isArray ? OFTIntegerList : OFTInteger;
-            break;
-        case odbc::SQLDataTypes::BigInt:
-            ogrFieldType =
-                attributeColumnDesc.isArray ? OFTInteger64List : OFTInteger64;
-            break;
-        case odbc::SQLDataTypes::Double:
-        case odbc::SQLDataTypes::Real:
-        case odbc::SQLDataTypes::Float:
-            ogrFieldType = attributeColumnDesc.isArray ? OFTRealList : OFTReal;
-            if (attributeColumnDesc.type != odbc::SQLDataTypes::Double)
-                ogrFieldSubType = OGRFieldSubType::OFSTFloat32;
-            break;
-        case odbc::SQLDataTypes::Decimal:
-        case odbc::SQLDataTypes::Numeric:
-            ogrFieldType = attributeColumnDesc.isArray ? OFTRealList : OFTReal;
-            setFieldPrecision = true;
-            break;
-        case odbc::SQLDataTypes::Char:
-        case odbc::SQLDataTypes::VarChar:
-        case odbc::SQLDataTypes::LongVarChar:
-            ogrFieldType =
-                attributeColumnDesc.isArray ? OFTStringList : OFTString;
-            setFieldSize = true;
-            break;
-        case odbc::SQLDataTypes::WChar:
-        case odbc::SQLDataTypes::WVarChar:
-        case odbc::SQLDataTypes::WLongVarChar:
-            // OFTWideString deprecated
-            ogrFieldType =
-                attributeColumnDesc.isArray ? OFTStringList : OFTString;
-            setFieldSize = true;
-            break;
-        case odbc::SQLDataTypes::Date:
-        case odbc::SQLDataTypes::TypeDate:
-            ogrFieldType = OFTDate;
-            break;
-        case odbc::SQLDataTypes::Time:
-        case odbc::SQLDataTypes::TypeTime:
-            ogrFieldType = OFTTime;
-            break;
-        case odbc::SQLDataTypes::Timestamp:
-        case odbc::SQLDataTypes::TypeTimestamp:
-            ogrFieldType = OFTDateTime;
-            break;
-        case odbc::SQLDataTypes::Binary:
-        case odbc::SQLDataTypes::VarBinary:
-        case odbc::SQLDataTypes::LongVarBinary:
-            ogrFieldType = OFTBinary;
-            setFieldSize = true;
-            break;
-        default:
-            break;
-        }
-
-        OGRFieldDefn field(attributeColumnDesc.name.c_str(), ogrFieldType);
-        field.SetSubType(ogrFieldSubType);
-        field.SetNullable(attributeColumnDesc.isNullable);
-        if (!attributeColumnDesc.isArray)
-        {
-            if (setFieldSize)
-                field.SetWidth(attributeColumnDesc.length);
-            if (setFieldPrecision)
-            {
-                field.SetWidth(attributeColumnDesc.precision);
-                field.SetPrecision(attributeColumnDesc.scale);
-            }
-        }
-        if (!attributeColumnDesc.defaultValue.empty())
-            field.SetDefault(attributeColumnDesc.defaultValue.c_str());
-
-        if ((ogrFieldType == OFTInteger || ogrFieldType == OFTInteger64)
+        if ((field->GetType() == OFTInteger || field->GetType() == OFTInteger64)
             && (fidFieldIndex_ == OGRNullFID && primKeys.size() > 0))
         {
             for (const CPLString& key : primKeys)
@@ -679,7 +683,7 @@ OGRErr OGRHanaLayer::ReadFeatureDefinition(
         }
 
         if (!attributeColumnDesc.isFeatureID)
-            featureDef->AddFieldDefn(&field);
+            featureDef->AddFieldDefn(field.get());
         attrColumns_.push_back(attributeColumnDesc);
     }
 

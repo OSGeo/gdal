@@ -30,6 +30,8 @@
 
 #include <algorithm>
 
+#include "odbc/Types.h"
+
 CPL_CVSID("$Id$")
 
 namespace hana_utils {
@@ -87,8 +89,7 @@ CPLString GetFullTableNameQuoted(
 {
     if (schemaName.empty())
         return QuotedIdentifier(tableName);
-    return QuotedIdentifier(schemaName) + "."
-           + QuotedIdentifier(tableName);
+    return QuotedIdentifier(schemaName) + "." + QuotedIdentifier(tableName);
 }
 
 CPLString GetFullColumnNameQuoted(

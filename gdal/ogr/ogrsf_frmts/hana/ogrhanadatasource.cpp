@@ -405,11 +405,15 @@ CPLString FormatDefaultValue(const char* value, short dataType)
 {
     /*
      The values that can be set as default values are :
-       - literal string values enclosed in single-quote characters and properly escaped like: 'Nice weather. Isn''t it ?'
+       - literal string values enclosed in single-quote characters and properly
+     escaped like: 'Nice weather. Isn''t it ?'
        - numeric values (unquoted)
-       - reserved keywords (unquoted): CURRENT_TIMESTAMP, CURRENT_DATE, CURRENT_TIME, NULL
-       - datetime literal values enclosed in single-quote characters with the following defined format: ‘YYYY/MM/DD HH:MM:SS[.sss]’
-       - any other driver specific expression. e.g. for SQLite: (strftime(‘%Y-%m-%dT%H:%M:%fZ’,’now’))
+       - reserved keywords (unquoted): CURRENT_TIMESTAMP, CURRENT_DATE,
+     CURRENT_TIME, NULL
+       - datetime literal values enclosed in single-quote characters with the
+     following defined format: ‘YYYY/MM/DD HH:MM:SS[.sss]’
+       - any other driver specific expression. e.g. for SQLite:
+     (strftime(‘%Y-%m-%dT%H:%M:%fZ’,’now’))
      */
 
     if (EQUAL(value, "NULL"))
@@ -436,7 +440,7 @@ CPLString FormatDefaultValue(const char* value, short dataType)
     case odbc::SQLDataTypes::WChar:
     case odbc::SQLDataTypes::WVarChar:
     case odbc::SQLDataTypes::WLongVarChar:
-     return Literal(value);
+        return Literal(value);
     case odbc::SQLDataTypes::Binary:
     case odbc::SQLDataTypes::VarBinary:
     case odbc::SQLDataTypes::LongVarBinary:
@@ -684,13 +688,16 @@ OGRErr OGRHanaDataSource::DeleteLayer(int index)
         return OGRERR_FAILURE;
 
     OGRLayer* layer = layers_[static_cast<std::size_t>(index)];
-    layers_.erase(layers_.begin() + index);
-    const char* layerName = layer->GetName();
-    CPLDebug("HANA", "DeleteLayer(%s)", layerName);
+    CPLDebug("HANA", "DeleteLayer(%s)", layer->GetName());
 
     if (auto tableLayer = dynamic_cast<OGRHanaTableLayer*>(layer))
-        tableLayer->DropTable();
+    {
+        OGRErr err = tableLayer->DropTable();
+        if (OGRERR_NONE == err)
+            return err;
+    }
 
+    layers_.erase(layers_.begin() + index);
     delete layer;
 
     return OGRERR_NONE;
@@ -1019,7 +1026,20 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
     const CPLString& query,
     std::vector<ColumnDescription>& columDescriptions)
 {
-    odbc::PreparedStatementRef stmtQuery = conn_->prepareStatement(query);
+    odbc::PreparedStatementRef stmtQuery;
+
+    try
+    {
+        stmtQuery = conn_->prepareStatement(query);
+    }
+    catch (const odbc::Exception& ex)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined, "Unable to prepare statement: %s",
+            ex.what());
+        return OGRERR_FAILURE;
+    }
+
     odbc::ResultSetMetaDataRef rsmd = stmtQuery->getMetaData();
 
     std::size_t numColumns = rsmd->getColumnCount();
@@ -1058,7 +1078,8 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                 odbc::String defaultValueStr =
                     rsColumns->getString(13 /*COLUMN_DEF*/);
                 if (!defaultValueStr.isNull())
-                    defaultValue = FormatDefaultValue(defaultValueStr->c_str(), dataType);
+                    defaultValue =
+                        FormatDefaultValue(defaultValueStr->c_str(), dataType);
             }
             rsColumns->close();
 
@@ -1180,9 +1201,10 @@ void OGRHanaDataSource::InitializeLayers(
 {
     std::vector<CPLString> tables = SplitStrings(tableNames, ",");
 
-    auto addLayersFromQuery = [&](const char* query) {
-        odbc::StatementRef stmt = conn_->createStatement();
-        odbc::ResultSetRef rsTables = stmt->executeQuery(query);
+    auto addLayersFromQuery = [&](const char* query, bool updatable) {
+        odbc::PreparedStatementRef stmt = conn_->prepareStatement(query);
+        stmt->setString(1, odbc::String(schemaName));
+        odbc::ResultSetRef rsTables = stmt->executeQuery();
         while (rsTables->next())
         {
             odbc::String tableName = rsTables->getString(1);
@@ -1193,7 +1215,7 @@ void OGRHanaDataSource::InitializeLayers(
                 tables.erase(pos);
 
             std::unique_ptr<OGRHanaTableLayer> layer =
-                std::make_unique<OGRHanaTableLayer>(this, updateMode_);
+                std::make_unique<OGRHanaTableLayer>(this, updatable);
             OGRErr err =
                 layer->Initialize(schemaName_.c_str(), tableName->c_str());
             if (OGRERR_NONE == err)
@@ -1202,28 +1224,23 @@ void OGRHanaDataSource::InitializeLayers(
         rsTables->close();
     };
 
-    // Look for tables with geometry columns
+    // Look for layers in Tables
     std::ostringstream osTables;
-    osTables
-        << "SELECT TABLE_NAME FROM SYS.ST_GEOMETRY_COLUMNS WHERE SCHEMA_NAME = "
-        << Literal(schemaName);
-    if (tables.size() > 0)
+    osTables << "SELECT TABLE_NAME FROM SYS.TABLES WHERE SCHEMA_NAME = ?";
+    if (!tables.empty())
         osTables << " AND TABLE_NAME IN (" << JoinStrings(tables, ",", Literal)
                  << ")";
 
-    addLayersFromQuery(osTables.str().c_str());
+    addLayersFromQuery(osTables.str().c_str(), updateMode_);
 
-    // Look for views with geometry columns
+    // Look for layers in Views
     std::ostringstream osViews;
-    osViews << "SELECT DISTINCT VIEW_NAME FROM SYS.VIEW_COLUMNS WHERE "
-               "SCHEMA_NAME = "
-            << Literal(schemaName)
-            << " AND DATA_TYPE_NAME in ('ST_GEOMETRY', 'ST_POINT')";
-    if (tables.size() > 0)
+    osViews << "SELECT VIEW_NAME FROM SYS.VIEWS WHERE SCHEMA_NAME = ?";
+    if (!tables.empty())
         osViews << " AND VIEW_NAME IN (" << JoinStrings(tables, ",", Literal)
                 << ")";
 
-    addLayersFromQuery(osViews.str().c_str());
+    addLayersFromQuery(osViews.str().c_str(), false);
 
     // Report about tables that could not be found
     for (const auto& tableName : tables)
@@ -1623,7 +1640,17 @@ OGRLayer* OGRHanaDataSource::ExecuteSQL(
         return nullptr;
     }
 
-    ExecuteSQL(sqlCommand);
+    try
+    {
+        ExecuteSQL(sqlCommand);
+    }
+    catch (const odbc::Exception& ex)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Unable to execute SQL statement '%s': %s", sqlCommand, ex.what());
+    }
+
     return nullptr;
 }
 

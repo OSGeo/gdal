@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test HANA driver functionality.
+# Purpose:  Test SAP HANA driver functionality.
 # Author:   Maxim Rylov
 #
 ###############################################################################
@@ -352,7 +352,7 @@ def test_ogr_hana_10():
 
 
 ###############################################################################
-# Test ExecuteSQL() results layers without geometry.
+# Test ExecuteSQL() results layers without geometry
 
 
 def test_ogr_hana_11():
@@ -514,7 +514,7 @@ def test_ogr_hana_18():
 
 
 ###############################################################################
-# Verify inplace update of a feature with SetFeature().
+# Verify inplace update of a feature with SetFeature()
 
 def test_ogr_hana_19():
     if gdaltest.hana_ds is None:
@@ -575,7 +575,7 @@ def test_ogr_hana_19():
 
 
 ###############################################################################
-# Verify that DeleteFeature() works properly.
+# Verify that DeleteFeature() works properly
 
 def test_ogr_hana_20():
     if gdaltest.hana_ds is None:
@@ -604,7 +604,7 @@ def test_ogr_hana_20():
 
 
 ###############################################################################
-# Test default values.
+# Test default values
 
 def test_ogr_hana_21():
     if gdaltest.hana_ds is None:
@@ -615,8 +615,10 @@ def test_ogr_hana_21():
     layer = gdaltest.hana_ds.CreateLayer('ogr_hana_21', srs, options=[])
 
     field_values = [999, 1, 6823, 623445, 78912394123, 12.253, 534.23749234, 7234.89732, "'2018/04/25'", "'21:15:47'",
-                    "'2018/04/25 21:15:47.987'", "'hello'", None, '74657374737472696e67', None, [], [], [], [], 'POINT (10 10)']
-    field_values_expected = [999, 1, 6823, 623445, 78912394123, 12.253, 534.23749234, 7234.89732, '2018/04/25', '21:15:47',
+                    "'2018/04/25 21:15:47.987'", "'hello'", None, '74657374737472696e67', None, [], [], [], [],
+                    'POINT (10 10)']
+    field_values_expected = [999, 1, 6823, 623445, 78912394123, 12.253, 534.23749234, 7234.89732, '2018/04/25',
+                             '21:15:47',
                              '2018/04/25 21:15:47.987', 'hello', None, b'74657374737472696e67', None, [], [], [], [],
                              None]
 
@@ -724,17 +726,37 @@ def test_ogr_hana_21():
         if field_defn.GetType() in [ogr.OFTIntegerList, ogr.OFTInteger64List, ogr.OFTRealList, ogr.OFTStringList]:
             continue
         expected_value = field_values_expected[i + 1]
-        actual = feat.GetFieldAsBinary(field_name) if field_defn.GetType() == ogr.OFTBinary else feat.GetField(field_name)
+        actual = feat.GetFieldAsBinary(field_name) if field_defn.GetType() == ogr.OFTBinary else feat.GetField(
+            field_name)
         assert check_values(actual, expected_value, 0.01), \
             pytest.fail('Values in field %s do not match (actual: %s, expected: %s)' %
                         (field_name, actual, expected_value))
 
     feat.Destroy()
 
+
 ###############################################################################
-# Test very large query.
+# Test creating a field with the fid name
 
 def test_ogr_hana_22():
+    if gdaltest.hana_ds is None:
+        pytest.skip()
+
+    layer = gdaltest.hana_ds.CreateLayer('OGR_HANA_22', geom_type=ogr.wkbNone, options=['FID=fid','LAUNDER=NO'])
+
+    gdal.PushErrorHandler()
+    assert layer.CreateField(ogr.FieldDefn('str', ogr.OFTString)) == 0
+    assert layer.CreateField(ogr.FieldDefn('fid', ogr.OFTString)) != 0
+    assert layer.CreateField(ogr.FieldDefn('fid', ogr.OFTInteger)) != 0
+    gdal.PopErrorHandler()
+
+    layer.ResetReading()
+
+
+###############################################################################
+# Test very large query
+
+def test_ogr_hana_23():
     if gdaltest.hana_ds is None:
         pytest.skip()
 
@@ -747,6 +769,73 @@ def test_ogr_hana_22():
     gdaltest.hana_layer.SetAttributeFilter(None)
 
     assert tr
+
+
+###############################################################################
+# Test COLUMN_TYPES layer creation option
+
+def test_ogr_hana_78():
+    if gdaltest.hana_ds is None:
+        pytest.skip()
+
+    layer = gdaltest.hana_ds.CreateLayer('OGR_HANA_78', options=['COLUMN_TYPES=SINT=SMALLINT,DEC1=DECIMAL(10,5),DEC2=DECIMAL(20,0)'])
+    layer.CreateField(ogr.FieldDefn('SINT', ogr.OFTString))
+    layer.CreateField(ogr.FieldDefn('DEC1', ogr.OFTString))
+    layer.CreateField(ogr.FieldDefn('DEC2', ogr.OFTString))
+    feat = ogr.Feature(layer.GetLayerDefn())
+    feat.SetField('SINT', '123')
+    feat.SetField('DEC2', '123456789012345')
+    layer.CreateFeature(feat)
+    feat.Destroy()
+
+    ds = open_datasource()
+    layer = ds.GetLayerByName('OGR_HANA_78')
+    layer_defn = layer.GetLayerDefn()
+    fieldSINT = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('SINT'))
+    fieldDEC1 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('DEC1'))
+    fieldDEC2 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex('DEC2'))
+    assert fieldSINT.GetType() == ogr.OFTInteger
+    assert fieldSINT.GetWidth() == 0
+    assert fieldDEC1.GetType() == ogr.OFTReal
+    assert fieldDEC1.GetWidth() == 10
+    assert fieldDEC1.GetPrecision() == 5
+    assert fieldDEC2.GetType() == ogr.OFTReal
+    assert fieldDEC2.GetWidth() == 20
+    assert fieldDEC2.GetPrecision() == 0
+
+    feat = layer.GetNextFeature()
+    assert feat.GetField('SINT') == 123
+    assert feat.GetField('DEC2') == 123456789012345
+    feat.Destroy()
+
+
+###############################################################################
+# Run test_ogrsf
+
+def test_ogr_hana_79():
+    if gdaltest.hana_ds is None:
+        pytest.skip()
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    conn_str = gdaltest.hana_connection_string + ';SCHEMA=' + gdaltest.hana_schema_name
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' "' + 'HANA:' + conn_str + '" ogr_hana_79')
+
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+###############################################################################
+# Test retrieving an error from ExecuteSQL()
+
+def test_ogr_hana_80():
+    if gdaltest.hana_ds is None:
+        pytest.skip()
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        layer = gdaltest.hana_ds.ExecuteSQL('SELECT FROM')
+    assert gdal.GetLastErrorMsg() != ''
+    assert layer is None
 
 
 ###############################################################################
@@ -811,6 +900,7 @@ def generate_schema_name(conn, prefix):
 
 def open_datasource(update=1):
     return ogr.Open('HANA:' + gdaltest.hana_connection_string + ';SCHEMA=' + gdaltest.hana_schema_name, update=update)
+
 
 def check_bboxes(actual, expected, max_error=0.001):
     minx = abs(actual[0] - expected[0])

@@ -46,7 +46,7 @@
 struct ColumnDefinition
 {
     CPLString name;
-    CPLString typeName;
+    CPLString typeDef;
 };
 
 struct AttributeColumnDescription
@@ -73,7 +73,7 @@ struct AttributeColumnDescription
         , isFeatureID(false)
         , isArray(false)
         , isAutoIncrement(false)
-        , isNullable(false)        
+        , isNullable(false)
     {
     }
 };
@@ -97,6 +97,9 @@ struct FieldTypeInfo
 {
     CPLString name;
     short type;
+    int width;
+    int precision;
+
 };
 
 struct Binary
@@ -303,10 +306,10 @@ private:
         bool newFeature,
         const char* functionName);
 
-    void DropTable();
+    OGRErr DropTable();
     void FlushPendingFeatures();
     bool HasPendingFeatures() const;
-    FieldTypeInfo GetFieldTypeInfo(OGRFieldDefn* field) const;
+    FieldTypeInfo GetFieldTypeInfo(OGRFieldDefn& field) const;
     OGRErr GetGeometryWkb(OGRFeature* feature, int fieldIndex, Binary& binary);
     void ClearBatches();
 
