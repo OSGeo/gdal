@@ -508,7 +508,11 @@ int GTIFGetGCSInfoEx( void* ctxIn,
 
         if( pnDatum )
         {
+#if PROJ_VERSION_MAJOR >= 8
+            PJ* datum = proj_crs_get_datum_forced(ctx, geod_crs);
+#else
             PJ* datum = proj_crs_get_datum(ctx, geod_crs);
+#endif
             if( !datum )
             {
                 proj_destroy(geod_crs);
