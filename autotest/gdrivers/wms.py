@@ -849,9 +849,9 @@ def test_wms_data_via_mrf():
     # This is a LERC1 format tile service, DEM in floating point, it can be read as any type
     # The returned no data value can also be set on read, which affects the checksum
     testlist = [
-        ("Byte", 0, 10327), # Same as the default type, NDV not defined
-        ("Float32", 0, 61833), # float, default NDV
-        ("Float32", 32768.32, 57160), # float, Forced NDV
+        ("Byte", 0, 29585), # Same as the default type, NDV not defined
+        ("Float32", 0, 56047), # float, default NDV
+        ("Float32", 32768.32, 33595), # float, Forced NDV
     ]
     for dt, ndv, expected_cs in testlist:
         ds = gdal.Open(dstemplate.format(url = url, dt = dt, ndv=ndv))
