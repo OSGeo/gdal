@@ -854,7 +854,6 @@ def test_twms_GIBS():
     baseURL = "https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"
 
     try:
-        gts = gdaltest.gts
         subdatasets = gdaltest.subdatasets
     except:
         pytest.skip()
