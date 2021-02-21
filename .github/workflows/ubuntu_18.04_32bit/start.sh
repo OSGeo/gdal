@@ -56,7 +56,7 @@ fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil
 # Build proj
 
 (git clone --depth 1 https://github.com/OSGeo/PROJ && cd PROJ && (cd data && curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz && tar xvzf proj-datumgrid-1.8.tar.gz) && ./autogen.sh && CC='ccache gcc' CXX='ccache g++' CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure  --disable-static --prefix=/usr/local || cat config.log && make -j3)
-sudo sh -c "cd $PWD/PROJ && make -j3 install && mv /usr/local/lib/libproj.so.19.2.0 /usr/local/lib/libinternalproj.so.19.2.0 && rm /usr/local/lib/libproj.so*  && rm /usr/local/lib/libproj.la && ln -s libinternalproj.so.19.2.0  /usr/local/lib/libinternalproj.so.19 && ln -s libinternalproj.so.19.2.0  /usr/local/lib/libinternalproj.so"
+sudo sh -c "cd $PWD/PROJ && make -j3 install && mv /usr/local/lib/libproj.so.22.0.0 /usr/local/lib/libinternalproj.so.22.0.0 && rm /usr/local/lib/libproj.so*  && rm /usr/local/lib/libproj.la && ln -s libinternalproj.so.22.0.0  /usr/local/lib/libinternalproj.so.19 && ln -s libinternalproj.so.22.0.0  /usr/local/lib/libinternalproj.so"
 
 # Configure GDAL
 CURRENT_DIR=$PWD
