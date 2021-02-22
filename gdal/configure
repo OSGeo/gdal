@@ -38920,6 +38920,8 @@ $as_echo "$as_me: WARNING: GEOS was found on your system, but geos-config report
       LIBS=${GEOS_LIBS}
       ax_save_CFLAGS="${CFLAGS}"
       CFLAGS="${GEOS_CFLAGS}"
+      ax_save_LDFLAGS="${LDFLAGS}"
+      LDFLAGS=""
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GEOSversion in -lgeos_c" >&5
 $as_echo_n "checking for GEOSversion in -lgeos_c... " >&6; }
@@ -38971,6 +38973,7 @@ fi
 
       CFLAGS="${ax_save_CFLAGS}"
       LIBS="${ax_save_LIBS}"
+      LDFLAGS="${ax_save_LDFLAGS}"
 
     fi
 
@@ -39204,6 +39207,8 @@ $as_echo "$as_me: WARNING: SFCGAL was found on your system, but sfcgal-config re
       LIBS=${SFCGAL_LIBS}
       ax_save_CFLAGS="${CFLAGS}"
       CFLAGS="${SFCGAL_CFLAGS}"
+      ax_save_LDFLAGS="${LDFLAGS}"
+      LDFLAGS=""
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sfcgal_version in -lSFCGAL" >&5
 $as_echo_n "checking for sfcgal_version in -lSFCGAL... " >&6; }
@@ -39256,6 +39261,7 @@ fi
 
       CFLAGS="${ax_save_CFLAGS}"
       LIBS="${ax_save_LIBS}"
+      LDFLAGS="${ax_save_LDFLAGS}"
 
     fi
 
