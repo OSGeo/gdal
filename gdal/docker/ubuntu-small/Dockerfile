@@ -14,6 +14,7 @@ FROM $BASE_IMAGE as builder
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
+USER root
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             software-properties-common build-essential ca-certificates \
@@ -154,7 +155,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python3            /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/python*            /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
@@ -166,6 +167,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
 # Build final image
 FROM $BASE_IMAGE as runner
 
+USER root
 RUN date
 
 # PROJ dependencies

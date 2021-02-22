@@ -19,6 +19,6 @@ esac
 
 export SCRIPT_DIR
 TAG_NAME=$(basename "${SCRIPT_DIR}")
-export BASE_IMAGE_NAME=${BASE_IMAGE_NAME:-osgeo/gdal:${TAG_NAME}}
+export TARGET_IMAGE=${TARGET_IMAGE:-osgeo/gdal:${TAG_NAME}}
 
 "${SCRIPT_DIR}/../util.sh" "$@"

@@ -126,10 +126,18 @@ Use the two script flags in order to leverage BuildKit:
 
 `alpine-small/build.sh --with-multi-arch --release --gdal v3.2.0 --proj master --platform linux/arm64,linux/amd64`
 
-## Custom Image Names
+## Custom Base Image
 
-Override the image and repository by setting the environment variable: `BASE_IMAGE_NAME`
+Override the base image, used to build and run gdal, by setting the environment variable: `BASE_IMAGE`
 
 **Example**
 
-`BASE_IMAGE_NAME="YOU_DOCKER_USERNAME/gdal" alpine-small/build.sh --release --gdal v3.2.0 --proj master`
+`BASE_IMAGE="debian:stable" ubuntu-small/build.sh --release --gdal v3.2.0 --proj master`
+
+## Custom Image Names
+
+Override the image and repository of the final image by setting the environment variable: `TARGET_IMAGE`
+
+**Example**
+
+`TARGET_IMAGE="YOU_DOCKER_USERNAME/gdal" alpine-small/build.sh --release --gdal v3.2.0 --proj master`
