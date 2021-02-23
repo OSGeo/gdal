@@ -13,6 +13,7 @@ FROM $BASE_IMAGE as builder
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
+USER root
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             software-properties-common build-essential ca-certificates \
@@ -180,6 +181,7 @@ RUN /buildscripts/bh-gdal.sh
 # Build final image
 FROM $BASE_IMAGE as runner
 
+USER root
 RUN date
 ARG JAVA_VERSION=11
 

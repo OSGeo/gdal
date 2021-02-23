@@ -10,8 +10,8 @@ if test "x${SCRIPT_DIR}" = "x"; then
     exit 1
 fi
 
-if test "x${BASE_IMAGE_NAME}" = "x"; then
-    echo "BASE_IMAGE_NAME not defined"
+if test "x${TARGET_IMAGE}" = "x"; then
+    echo "TARGET_IMAGE not defined"
     exit 1
 fi
 
@@ -198,10 +198,10 @@ EOF
         done
         echo "rsync daemon forked as process ${RSYNC_PID} listening on port ${RSYNC_PORT}"
 
-        RSYNC_REMOTE="rsync://${RSYNC_SERVER_IP}:${RSYNC_PORT}/gdal-docker-cache/${BASE_IMAGE_NAME}"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/proj"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/gdal"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/spatialite"
+        RSYNC_REMOTE="rsync://${RSYNC_SERVER_IP}:${RSYNC_PORT}/gdal-docker-cache/${TARGET_IMAGE}"
+        mkdir -p "$HOME/gdal-docker-cache/${TARGET_IMAGE}/proj"
+        mkdir -p "$HOME/gdal-docker-cache/${TARGET_IMAGE}/gdal"
+        mkdir -p "$HOME/gdal-docker-cache/${TARGET_IMAGE}/spatialite"
     else
         RSYNC_REMOTE=""
     fi
@@ -225,7 +225,7 @@ build_cmd()
     fi
 }
 
-if test "${BASE_IMAGE_NAME}" = "osgeo/gdal:ubuntu-full"; then
+if test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-full"; then
     PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is https://cdn.proj.org/index.html | grep -i Last-Modified)
 else
     PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep -i Last-Modified)
@@ -242,7 +242,7 @@ if test "${GDAL_VERSION}" = "" -o "${GDAL_VERSION}" = "master"; then
 fi
 echo "Using GDAL_VERSION=${GDAL_VERSION}"
 
-IMAGE_NAME="${BASE_IMAGE_NAME}-${TAG_NAME}"
+IMAGE_NAME="${TARGET_IMAGE}-${TAG_NAME}"
 BUILDER_IMAGE_NAME="${IMAGE_NAME}_builder"
 
 if test "${RELEASE}" = "yes"; then
@@ -252,6 +252,7 @@ if test "${RELEASE}" = "yes"; then
         "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
         "--build-arg" "GDAL_BUILD_IS_RELEASE=YES" \
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
+        "--build-arg" "BASE_IMAGE=${BASE_IMAGE}" \
     )
 
     docker $(build_cmd) "${BUILD_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
@@ -283,9 +284,9 @@ else
     BUILD_NETWORK=docker_build_gdal
     HOST_CACHE_DIR="$HOME/gdal-docker-cache"
 
-    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/proj"
-    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/gdal"
-    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/spatialite"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/spatialite"
 
     # Start a Docker container that has a rsync daemon, mounting HOST_CACHE_DIR
     if ! docker ps | grep "${RSYNC_DAEMON_CONTAINER}"; then
@@ -325,7 +326,7 @@ EOF
 
     fi
 
-    RSYNC_REMOTE="rsync://${RSYNC_DAEMON_CONTAINER}:23985/gdal-docker-cache/${BASE_IMAGE_NAME}"
+    RSYNC_REMOTE="rsync://${RSYNC_DAEMON_CONTAINER}:23985/gdal-docker-cache/${TARGET_IMAGE}"
 
     BUILD_ARGS=(
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
@@ -334,6 +335,7 @@ EOF
         "--build-arg" "GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}" \
         "--build-arg" "RSYNC_REMOTE=${RSYNC_REMOTE}" \
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
+        "--build-arg" "BASE_IMAGE=${BASE_IMAGE}" \
     )
 
     docker $(build_cmd) --network "${BUILD_NETWORK}" "${BUILD_ARGS[@]}" --target builder \
