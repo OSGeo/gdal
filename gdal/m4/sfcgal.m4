@@ -58,7 +58,9 @@ AC_DEFUN([SFCGAL_INIT],[
   elif test x"$with_sfcgal" = x"yes" -o x"$with_sfcgal" = x"" ; then
 
     AC_PATH_PROG(SFCGAL_CONFIG, sfcgal-config, no)
-    ac_sfcgal_config_auto=yes
+    if test x"$with_sfcgal" = x"" ; then
+      ac_sfcgal_config_auto=yes
+    fi
 
   else
 
@@ -128,6 +130,8 @@ AC_DEFUN([SFCGAL_INIT],[
       LIBS=${SFCGAL_LIBS}
       ax_save_CFLAGS="${CFLAGS}"
       CFLAGS="${SFCGAL_CFLAGS}"
+      ax_save_LDFLAGS="${LDFLAGS}"
+      LDFLAGS=""
 
       AC_CHECK_LIB([SFCGAL],
         [sfcgal_version],
@@ -138,12 +142,25 @@ AC_DEFUN([SFCGAL_INIT],[
 
 
       if test x"$HAVE_SFCGAL" = "xno"; then
-          SFCGAL_CFLAGS=""
+        if test $ac_sfcgal_config_auto = "yes" ; then
+          AC_MSG_WARN([SFCGAL was found on your system, but the library could not be linked. SFCGAL support disabled.])
+        else
+          AC_MSG_ERROR([SFCGAL library could not be linked])
+        fi
+
+        SFCGAL_CFLAGS=""
       fi
 
       CFLAGS="${ax_save_CFLAGS}"
       LIBS="${ax_save_LIBS}"
+      LDFLAGS="${ax_save_LDFLAGS}"
 
+    fi
+
+  else
+
+    if test $ac_sfcgal_config_auto = "no" ; then
+      AC_MSG_ERROR([SFCGAL support explicitly enabled, but sfcgal-config could not be found])
     fi
 
   fi

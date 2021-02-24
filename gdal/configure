@@ -38776,7 +38776,9 @@ $as_echo "no" >&6; }
 fi
 
 
-    ac_geos_config_auto=yes
+    if test x"$with_geos" = x"" ; then
+      ac_geos_config_auto=yes
+    fi
 
   else
 
@@ -38920,6 +38922,8 @@ $as_echo "$as_me: WARNING: GEOS was found on your system, but geos-config report
       LIBS=${GEOS_LIBS}
       ax_save_CFLAGS="${CFLAGS}"
       CFLAGS="${GEOS_CFLAGS}"
+      ax_save_LDFLAGS="${LDFLAGS}"
+      LDFLAGS=""
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GEOSversion in -lgeos_c" >&5
 $as_echo_n "checking for GEOSversion in -lgeos_c... " >&6; }
@@ -38966,12 +38970,27 @@ fi
 
 
       if test x"$HAVE_GEOS" = "xno"; then
-          GEOS_CFLAGS=""
+        if test $ac_geos_config_auto = "yes" ; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GEOS was found on your system, but the library could not be linked. GEOS support disabled." >&5
+$as_echo "$as_me: WARNING: GEOS was found on your system, but the library could not be linked. GEOS support disabled." >&2;}
+        else
+          as_fn_error $? "GEOS library could not be linked" "$LINENO" 5
+        fi
+
+        GEOS_CFLAGS=""
+
       fi
 
       CFLAGS="${ax_save_CFLAGS}"
       LIBS="${ax_save_LIBS}"
+      LDFLAGS="${ax_save_LDFLAGS}"
 
+    fi
+
+  else
+
+    if test $ac_geos_config_auto = "no" ; then
+      as_fn_error $? "GEOS support explicitly enabled, but geos-config could not be found" "$LINENO" 5
     fi
 
   fi
@@ -39060,7 +39079,9 @@ $as_echo "no" >&6; }
 fi
 
 
-    ac_sfcgal_config_auto=yes
+    if test x"$with_sfcgal" = x"" ; then
+      ac_sfcgal_config_auto=yes
+    fi
 
   else
 
@@ -39204,6 +39225,8 @@ $as_echo "$as_me: WARNING: SFCGAL was found on your system, but sfcgal-config re
       LIBS=${SFCGAL_LIBS}
       ax_save_CFLAGS="${CFLAGS}"
       CFLAGS="${SFCGAL_CFLAGS}"
+      ax_save_LDFLAGS="${LDFLAGS}"
+      LDFLAGS=""
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sfcgal_version in -lSFCGAL" >&5
 $as_echo_n "checking for sfcgal_version in -lSFCGAL... " >&6; }
@@ -39251,12 +39274,26 @@ fi
 
 
       if test x"$HAVE_SFCGAL" = "xno"; then
-          SFCGAL_CFLAGS=""
+        if test $ac_sfcgal_config_auto = "yes" ; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: SFCGAL was found on your system, but the library could not be linked. SFCGAL support disabled." >&5
+$as_echo "$as_me: WARNING: SFCGAL was found on your system, but the library could not be linked. SFCGAL support disabled." >&2;}
+        else
+          as_fn_error $? "SFCGAL library could not be linked" "$LINENO" 5
+        fi
+
+        SFCGAL_CFLAGS=""
       fi
 
       CFLAGS="${ax_save_CFLAGS}"
       LIBS="${ax_save_LIBS}"
+      LDFLAGS="${ax_save_LDFLAGS}"
 
+    fi
+
+  else
+
+    if test $ac_sfcgal_config_auto = "no" ; then
+      as_fn_error $? "SFCGAL support explicitly enabled, but sfcgal-config could not be found" "$LINENO" 5
     fi
 
   fi
