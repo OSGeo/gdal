@@ -47,7 +47,8 @@ class WSIOCILobFSHandle : public VSIFilesystemHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int               Stat( const char *pszFilename,
                             VSIStatBufL *pStatBuf, int nFlags ) override;
 
@@ -157,7 +158,8 @@ char** WSIOCILobFSHandle::ParseIdentificator( const char* pszFilename )
 
 VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
                                            const char* pszAccess,
-                                           bool /* bSetError*/ )
+                                           bool /* bSetError*/,
+                                           CSLConstList /* papszOptions */ )
 {
     char** papszParam = ParseIdentificator( pszFilename );
 

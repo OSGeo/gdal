@@ -1205,7 +1205,7 @@ def test_vsis3_4():
     handler = webserver.SequentialHandler()
 
     def method(request):
-        if request.headers['Content-Length'] != '0':
+        if request.headers['Content-Length'] != '0' or request.headers['Content-Type'] != 'foo' or request.headers['Content-Encoding'] != 'bar':
             sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
             request.send_response(400)
             return
@@ -1217,7 +1217,7 @@ def test_vsis3_4():
     handler.add('PUT', '/s3_fake_bucket3/empty_file.bin', custom_method=method)
 
     with webserver.install_http_handler(handler):
-        f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb')
+        f = gdal.VSIFOpenExL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb', 0, ['Content-Type=foo', 'Content-Encoding=bar'] )
         assert f is not None
         gdal.ErrorReset()
         gdal.VSIFCloseL(f)
@@ -3393,10 +3393,16 @@ def test_vsis3_extra_1():
         ret = gdal.Mkdir(subpath, 0)
         assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
 
-        f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
+        f = gdal.VSIFOpenExL(subpath + '/test.txt', 'wb', 0, ['Content-Type=foo', 'Content-Encoding=bar'])
         assert f is not None
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
+
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'HEADERS')
+        assert 'Content-Type' in md
+        assert md['Content-Type'] == 'foo'
+        assert 'Content-Encoding' in md
+        assert md['Content-Encoding'] == 'bar'
 
         ret = gdal.Rmdir(subpath)
         assert ret != 0, \

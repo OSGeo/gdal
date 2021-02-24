@@ -88,7 +88,8 @@ public:
 
         VSIVirtualHandle *Open( const char *pszFilename,
                                 const char *pszAccess,
-                                bool bSetError ) override;
+                                bool bSetError,
+                                CSLConstList papszOptions ) override;
         int Unlink( const char *pszFilename ) override;
         int Rmdir( const char *pszFilename ) override;
         int Mkdir( const char *pszDirname, long nMode ) override;
@@ -519,7 +520,8 @@ bool VSIWebHDFSWriteHandle::Append()
 
 VSIVirtualHandle* VSIWebHDFSFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -557,7 +559,7 @@ VSIVirtualHandle* VSIWebHDFSFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/

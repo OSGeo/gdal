@@ -440,7 +440,7 @@ def test_vsiaz_fake_write():
     gdal.VSICurlClearCache()
 
     # Test creation of BlockBob
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
+    f = gdal.VSIFOpenExL('/vsiaz/test_copy/file.tif', 'wb', 0, ['Content-Encoding=bar'])
     assert f is not None
 
     handler = webserver.SequentialHandler()
@@ -448,12 +448,13 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:7ucF475dRPgNdU524Ax2vgOl6DGoTO5DABOISLBLV7A=' or \
+           h['Authorization'] != 'SharedKey myaccount:jqNjm+2wmGAetpQPL2X9UWIrvmbYiOV59pQtyXD35nM=' or \
            'Expect' not in h or h['Expect'] != '100-continue' or \
            'Content-Length' not in h or h['Content-Length'] != '40000' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
            'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'BlockBlob' or \
-           'Content-Type' not in h or h['Content-Type'] != 'image/tiff':
+           'Content-Type' not in h or h['Content-Type'] != 'image/tiff' or \
+           'Content-Encoding' not in h or h['Content-Encoding'] != 'bar':
             sys.stderr.write('Bad headers: %s\n' % str(h))
             request.send_response(403)
             return

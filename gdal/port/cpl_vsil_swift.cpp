@@ -241,7 +241,8 @@ public:
 
         VSIVirtualHandle *Open( const char *pszFilename,
                                 const char *pszAccess,
-                                bool bSetError ) override;
+                                bool bSetError,
+                                CSLConstList papszOptions ) override;
 
         int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                 int nFlags ) override;
@@ -285,7 +286,8 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
 
 VSIVirtualHandle* VSISwiftFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -309,7 +311,7 @@ VSIVirtualHandle* VSISwiftFSHandler::Open( const char *pszFilename,
             return nullptr;
         UpdateHandleFromMap(poHandleHelper);
         VSIS3WriteHandle* poHandle =
-            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true);
+            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true, papszOptions);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
@@ -323,7 +325,7 @@ VSIVirtualHandle* VSISwiftFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/

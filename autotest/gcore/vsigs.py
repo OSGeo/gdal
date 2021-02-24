@@ -1199,10 +1199,16 @@ def test_vsigs_extra_1():
         ret = gdal.Mkdir(subpath, 0)
         assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
 
-        f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
+        f = gdal.VSIFOpenExL(subpath + '/test.txt', 'wb', 0, ['Content-Type=foo', 'Content-Encoding=bar'])
         assert f is not None
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
+
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'HEADERS')
+        assert 'Content-Type' in md
+        assert md['Content-Type'] == 'foo'
+        assert 'Content-Encoding' in md
+        assert md['Content-Encoding'] == 'bar'
 
         ret = gdal.Rmdir(subpath)
         assert ret != 0, \

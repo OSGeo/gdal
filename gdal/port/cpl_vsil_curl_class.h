@@ -63,6 +63,10 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
 struct curl_slist* VSICurlSetContentTypeFromExt(struct curl_slist* polist,
                                                 const char *pszPath);
 
+struct curl_slist* VSICurlSetCreationHeadersFromOptions(struct curl_slist* headers,
+                                                        CSLConstList papszOptions,
+                                                        const char *pszPath);
+
 namespace cpl {
 
 typedef enum
@@ -236,7 +240,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
 
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
@@ -458,7 +463,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                                 const std::string& osFilename,
                                 IVSIS3LikeHandleHelper *poS3HandleHelper,
                                 int nMaxRetry,
-                                double dfRetryDelay);
+                                double dfRetryDelay,
+                                CSLConstList papszOptions);
     virtual CPLString UploadPart(const CPLString& osFilename,
                          int nPartNumber,
                          const std::string& osUploadID,
@@ -524,6 +530,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     CPLString           m_osFilename{};
     IVSIS3LikeHandleHelper  *m_poS3HandleHelper = nullptr;
     bool                m_bUseChunked = false;
+    CPLStringList       m_aosOptions{};
 
     vsi_l_offset        m_nCurOffset = 0;
     int                 m_nBufferOff = 0;
@@ -562,7 +569,8 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
       VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
                         const char* pszFilename,
                         IVSIS3LikeHandleHelper* poS3HandleHelper,
-                        bool bUseChunked );
+                        bool bUseChunked,
+                        CSLConstList papszOptions );
       ~VSIS3WriteHandle() override;
 
       int Seek( vsi_l_offset nOffset, int nWhence ) override;

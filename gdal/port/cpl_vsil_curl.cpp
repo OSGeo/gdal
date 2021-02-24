@@ -3098,7 +3098,8 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
 
 VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
-                                                  bool bSetError )
+                                                  bool bSetError,
+                                                  CSLConstList /* papszOptions */ )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
@@ -4921,6 +4922,42 @@ struct curl_slist* VSICurlSetContentTypeFromExt(struct curl_slist* poList,
     }
 
     return poList;
+}
+
+/************************************************************************/
+/*                VSICurlSetCreationHeadersFromOptions()                */
+/************************************************************************/
+
+struct curl_slist* VSICurlSetCreationHeadersFromOptions(struct curl_slist* headers,
+                                                        CSLConstList papszOptions,
+                                                        const char *pszPath)
+{
+    bool bContentTypeFound = false;
+    for( CSLConstList papszIter = papszOptions; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = nullptr;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            if( EQUAL(pszKey, "Content-Type") )
+            {
+                bContentTypeFound = true;
+            }
+            CPLString osVal;
+            osVal.Printf("%s: %s", pszKey, pszValue);
+            headers = curl_slist_append(headers, osVal.c_str());
+        }
+        CPLFree(pszKey);
+    }
+
+    // If Content-type not found in papszOptions, try to set it from the
+    // filename exstension.
+    if( !bContentTypeFound )
+    {
+        headers = VSICurlSetContentTypeFromExt(headers, pszPath);
+    }
+
+    return headers;
 }
 
 #endif // DOXYGEN_SKIP
