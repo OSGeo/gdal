@@ -160,8 +160,8 @@ Y_POSSIBLE_NAMES=Lat\* -oo KEEP_GEOM_COLUMNS=NO* will return :
      Name (String) = Third point
      POINT (0.75 47.5)
      
-If CSV file does not have a header line the dummy "field_n" names can be
-used as possible names for coordinate fieds. For example plain XYZ point 
+If CSV file does not have a header line, the dummy "field_n" names can be
+used as possible names for coordinate fields. For example plain XYZ point 
 data can be opened as
 
 *ogrinfo -ro -al elevation.xyz -oo X_POSSIBLE_NAMES=field_1 -oo
