@@ -1250,3 +1250,65 @@ def test_vsiaz_read_credentials_simulated_azure_vm_expiration():
             gdal.VSIFCloseL(f)
 
         assert data == 'foo'
+
+
+###############################################################################
+# Test GetFileMetadata () / SetFileMetadata()
+
+
+def test_vsiaz_fake_metadata():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/azure/blob/myaccount/test/foo.bin', 200, {'Content-Length': '3', 'x-ms-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsiaz/test/foo.bin', 'HEADERS')
+        assert 'x-ms-foo' in md
+        assert md['x-ms-foo'] == 'bar'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 200, {'x-ms-meta-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsiaz/test/foo.bin', 'METADATA')
+        assert 'x-ms-meta-foo' in md
+        assert md['x-ms-meta-foo'] == 'bar'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/test/foo.bin?comp=tags', 200, {},
+                """<Tags><TagSet><Tag><Key>foo</Key><Value>bar</Value></Tag></TagSet></Tags>""")
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsiaz/test/foo.bin', 'TAGS')
+        assert 'foo' in md
+        assert md['foo'] == 'bar'
+
+    # Error case
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 404)
+    with webserver.install_http_handler(handler):
+        assert gdal.GetFileMetadata('/vsiaz/test/foo.bin', 'METADATA') == {}
+
+    # SetMetadata()
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=properties', 200, expected_headers={'x-ms-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'x-ms-foo': 'bar'}, 'PROPERTIES')
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 200, expected_headers={'x-ms-meta-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'x-ms-meta-foo': 'bar'}, 'METADATA')
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=tags', 204, expected_body=b'')
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'FOO': 'BAR'}, 'TAGS')
+
+    # Error case
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 404)
+    with webserver.install_http_handler(handler):
+        assert not gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'x-ms-meta-foo': 'bar'}, 'METADATA')

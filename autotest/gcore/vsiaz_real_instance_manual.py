@@ -108,6 +108,31 @@ def test_vsiaz_extra_1():
         assert data == 'hello'
         gdal.VSIFCloseL(f)
 
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'HEADERS')
+        assert 'x-ms-blob-type' in md
+
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'METADATA')
+        assert 'ETag' in md
+        assert 'x-ms-blob-type' not in md
+
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'TAGS')
+        assert md == {}
+
+        # Change properties
+        assert gdal.SetFileMetadata(subpath + '/test.txt', {'x-ms-blob-content-type' : 'foo'}, 'PROPERTIES')
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'HEADERS')
+        assert md['Content-Type'] == 'foo'
+
+        # Change metadata
+        assert gdal.SetFileMetadata(subpath + '/test.txt', {'x-ms-meta-FOO' : 'BAR'}, 'METADATA')
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'METADATA')
+        assert md['x-ms-meta-FOO'] == 'BAR'
+
+        # Change tags
+        assert gdal.SetFileMetadata(subpath + '/test.txt', {'BAR' : 'BAZ'}, 'TAGS')
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'TAGS')
+        assert md['BAR'] == 'BAZ'
+
         assert gdal.Rename(subpath + '/test.txt', subpath + '/test2.txt') == 0
 
         f = gdal.VSIFOpenL(subpath + '/test2.txt', 'rb')
