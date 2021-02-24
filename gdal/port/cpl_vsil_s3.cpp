@@ -750,6 +750,7 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
             CPLHTTPSetOptions(hCurlHandle,
                               poS3HandleHelper->GetURL().c_str(),
                               nullptr));
+        headers = VSICurlSetContentTypeFromExt(headers, osFilename.c_str());
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("POST", headers));
 
@@ -1374,6 +1375,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
             CPLHTTPSetOptions(hCurlHandle,
                               m_poS3HandleHelper->GetURL().c_str(),
                               nullptr));
+        headers = VSICurlSetContentTypeFromExt(headers, m_osFilename.c_str());
         headers = VSICurlMergeHeaders(headers,
                         m_poS3HandleHelper->GetCurlHeaders("PUT", headers,
                                                            m_pabyBuffer,
@@ -2868,6 +2870,7 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
                 CPLFree(pszKey);
             }
         }
+        headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers));
 

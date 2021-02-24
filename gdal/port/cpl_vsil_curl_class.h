@@ -59,6 +59,10 @@ struct curl_slist* VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL,
                        const char * const* papszOptions);
 struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
                                         struct curl_slist* poSrcToDestroy );
+
+struct curl_slist* VSICurlSetContentTypeFromExt(struct curl_slist* polist,
+                                                const char *pszPath);
+
 namespace cpl {
 
 typedef enum

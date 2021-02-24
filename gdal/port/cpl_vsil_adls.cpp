@@ -1745,6 +1745,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
                               nullptr));
         headers = curl_slist_append(headers, osSourceHeader.c_str());
         headers = curl_slist_append(headers, "Content-Length: 0");
+        headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = VSICurlMergeHeaders(headers,
                         poAzHandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1869,6 +1870,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
             CPLHTTPSetOptions(hCurlHandle,
                               poHandleHelper->GetURL().c_str(),
                               nullptr));
+        headers = VSICurlSetContentTypeFromExt(headers, osFilename.c_str());
 
         CPLString osContentLength; // leave it in this scope
 

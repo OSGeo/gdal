@@ -733,6 +733,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             CPLHTTPSetOptions(hCurlHandle,
                               m_poHandleHelper->GetURL().c_str(),
                               nullptr));
+        headers = VSICurlSetContentTypeFromExt(headers, m_osFilename.c_str());
 
         CPLString osContentLength; // leave it in this scope
         if( bSingleBlock )
@@ -1108,6 +1109,7 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
                               poS3HandleHelper->GetURL().c_str(),
                               nullptr));
         headers = curl_slist_append(headers, osSourceHeader.c_str());
+        headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = curl_slist_append(headers, "Content-Length: 0");
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers));
