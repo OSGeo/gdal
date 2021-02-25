@@ -1185,6 +1185,39 @@ def test_jpeg_flir_error_flir_subds():
         assert ds is None
 
 ###############################################################################
+# Write a CMYK image
+
+
+def test_jpeg_write_cmyk():
+
+    with gdaltest.config_option('GDAL_JPEG_TO_RGB', 'NO'):
+        src_ds = gdal.Open('data/jpeg/rgb_ntf_cmyk.jpg')
+
+    gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/out.jpg', src_ds)
+    assert gdal.GetLastErrorMsg() == ''
+    gdal.Unlink('/vsimem/out.jpg.aux.xml')
+
+    with gdaltest.config_option('GDAL_JPEG_TO_RGB', 'NO'):
+        ds = gdal.Open('/vsimem/out.jpg')
+
+    assert ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_CyanBand
+
+    ds = None
+    gdal.Unlink('/vsimem/out.jpg')
+
+###############################################################################
+# Attempt writing a 4-band image not CMYK
+
+
+def test_jpeg_write_4band_not_cmyk():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 8, 8, 4)
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/out.jpg', src_ds)
+    assert gdal.GetLastErrorMsg() != ''
+    gdal.GetDriverByName('JPEG').Delete('/vsimem/out.jpg')
+
+###############################################################################
 # Cleanup
 
 

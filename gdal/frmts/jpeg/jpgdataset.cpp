@@ -3678,7 +3678,7 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "JPEG driver doesn't support %d bands.  Must be 1 (grey), "
-                 "3 (RGB) or 4 bands.\n", nBands);
+                 "3 (RGB) or 4 bands (CMYK).\n", nBands);
 
         return nullptr;
     }
@@ -3694,6 +3694,14 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         if (bStrict)
             return nullptr;
     }
+
+    if( nBands == 4 &&
+        poSrcDS->GetRasterBand(1)->GetColorInterpretation() != GCI_CyanBand )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "4-band JPEGs will be interpretated on reading as in CMYK colorspace");
+    }
+
 
     VSILFILE *fpImage = nullptr;
     GDALJPEGUserData sUserData;

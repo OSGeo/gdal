@@ -98,9 +98,17 @@ Creation Options
 ----------------
 
 JPEG files are created using the "JPEG" driver code. Only Byte band
-types are supported, and only 1 and 3 band (RGB) configurations. JPEG
-file creation is implemented by the batch (CreateCopy) method. YCbCr,
-CMYK or YCbCrK colorspaces are not supported in creation. If the source
+types are supported.
+
+Only 1 (greyscale), 3 band (intput should be in RGB colorspace.
+the driver will convert it automatically to YCbCr colorspace for storage, and
+will expose it back as RGB on reading) or 4 band
+(input should already by in CMYK colorspace. It will be exposed as RGB on reading
+by default, unless the :decl_configoption:`GDAL_JPEG_TO_RGB` configuration option
+is set to NO) configurations.
+
+JPEG file creation is implemented by the batch (CreateCopy) method.
+YCbCrK colorspace is not supported in creation. If the source
 dataset has a nodata mask, it will be appended as a zlib compressed mask
 to the JPEG file.
 
