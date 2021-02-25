@@ -80,7 +80,7 @@
         if isinstance(value, slice):
             output = []
             step = value.step if value.step else 1
-            for i in xrange(value.start, value.stop, step):
+            for i in range(value.start, value.stop, step):
                 lyr = self.GetLayer(i)
                 if lyr is None:
                     return output
@@ -151,14 +151,14 @@
         if isinstance(value, slice):
             import sys
             output = []
-            if value.stop == sys.maxint:
-                #for an unending slice, sys.maxint is used
+            if value.stop == sys.maxsize:
+                #for an unending slice, sys.maxsize is used
                 #We need to stop before that or GDAL will write an
                 ##error to stdout
                 stop = len(self) - 1
             else:
                 stop = value.stop
-            for i in xrange(value.start, stop, value.step):
+            for i in range(value.start, stop, value.step):
                 feature = self.GetFeature(i)
                 if feature:
                     output.append(feature)

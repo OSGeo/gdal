@@ -742,7 +742,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         if buf_ysize is None:
             buf_ysize = ysize
         if band_list is None:
-            band_list = range(1,self.RasterCount+1)
+            band_list = list(range(1, self.RasterCount + 1))
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType
 
@@ -764,7 +764,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         if ysize is None:
             ysize = self.RasterYSize
         if band_list is None:
-            band_list = range(1,self.RasterCount+1)
+            band_list = list(range(1, self.RasterCount + 1))
         if buf_xsize is None:
             buf_xsize = xsize
         if buf_ysize is None:
@@ -804,7 +804,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         if datatype is None:
             datatype = self.GetRasterBand(1).DataType
         if band_list is None:
-            band_list = range(1,self.RasterCount+1)
+            band_list = list(range(1, self.RasterCount + 1))
         if options is None:
             virtualmem = self.GetVirtualMem(eAccess, xoff, yoff, xsize, ysize, bufxsize, bufysize, datatype, band_list, band_sequential, cache_size, page_size_hint)
         else:
@@ -835,7 +835,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         if datatype is None:
             datatype = self.GetRasterBand(1).DataType
         if band_list is None:
-            band_list = range(1,self.RasterCount+1)
+            band_list = list(range(1, self.RasterCount + 1))
         if options is None:
             virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size)
         else:
@@ -858,7 +858,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
     def BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj=None, buf_xsize=None, buf_ysize=None, buf_type=None, band_list=None, options=None):
         if band_list is None:
-            band_list = range(1, self.RasterCount + 1)
+            band_list = list(range(1, self.RasterCount + 1))
         if buf_xsize is None:
             buf_xsize = 0;
         if buf_ysize is None:
