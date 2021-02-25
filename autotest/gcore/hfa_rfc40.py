@@ -190,7 +190,7 @@ def ReadAndCheckValues(fname, numrows):
         raise HFATestError("double column does not match")
 
     data = rat.ReadAsArray(2, 0, 10)
-    if not (data == STRING_DATA.astype(numpy.character)).all():
+    if not (data == STRING_DATA.astype(bytes)).all():
         raise HFATestError("string column does not match")
 
     data = rat.ReadAsArray(3, 0, 10)
@@ -198,7 +198,7 @@ def ReadAndCheckValues(fname, numrows):
         raise HFATestError("int as double column does not match")
 
     data = rat.ReadAsArray(4, 0, 10)
-    if not (data == STRING_DATA_INTS.astype(numpy.int)).all():
+    if not (data == STRING_DATA_INTS.astype(int)).all():
         raise HFATestError("int as string column does not match")
 
     data = rat.ReadAsArray(5, 0, 10)
@@ -210,7 +210,7 @@ def ReadAndCheckValues(fname, numrows):
         raise HFATestError("double as string column does not match")
 
     data = rat.ReadAsArray(7, 0, 10)
-    if not (data.astype(numpy.int) == INT_DATA).all():
+    if not (data.astype(int) == INT_DATA).all():
         raise HFATestError("string as int column does not match")
 
     data = rat.ReadAsArray(8, 0, 10)
@@ -301,7 +301,7 @@ def CheckExtension(fname):
         raise HFATestError("Double column does not match")
 
     data = rat.ReadAsArray(2, 10, 10)
-    if not (data == STRING_DATA.astype(numpy.character)).all():
+    if not (data == STRING_DATA.astype(bytes)).all():
         raise HFATestError("String column does not match")
 
     # print('extension data ok')
@@ -329,7 +329,7 @@ def CheckLongStrings(fname):
     rat = band.GetDefaultRAT()
 
     data = rat.ReadAsArray(2, 10, 10)
-    if not (data == LONG_STRING_DATA.astype(numpy.character)).all():
+    if not (data == LONG_STRING_DATA.astype(bytes)).all():
         raise HFATestError("String column does not match")
 
     # print("checked long strings ok")

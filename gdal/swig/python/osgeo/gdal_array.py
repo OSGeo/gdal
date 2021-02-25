@@ -552,7 +552,7 @@ def RATWriteArray(rat, array, field, start=0):
         array = array.astype(numpy.double)
     elif numpy.issubdtype(array.dtype, numpy.character):
 # cast away any kind of Unicode etc
-        array = array.astype(numpy.character)
+        array = array.astype(bytes)
     else:
         raise ValueError("Array not of a supported type (integer, double or string)")
 
