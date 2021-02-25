@@ -123,15 +123,14 @@ except ImportError:
         build_py.fixer_names = fixer_names
         build_scripts.fixer_names = fixer_names
 else:
-    if sys.version_info >= (3,):
-        from lib2to3.refactor import get_fixers_from_package
+    from lib2to3.refactor import get_fixers_from_package
 
-        all_fixers = set(get_fixers_from_package('lib2to3.fixes'))
-        exclude_fixers = sorted(all_fixers.difference(fixer_names))
+    all_fixers = set(get_fixers_from_package('lib2to3.fixes'))
+    exclude_fixers = sorted(all_fixers.difference(fixer_names))
 
-        extra['use_2to3'] = True
-        extra['use_2to3_fixers'] = []
-        extra['use_2to3_exclude_fixers'] = exclude_fixers
+    extra['use_2to3'] = True
+    extra['use_2to3_fixers'] = []
+    extra['use_2to3_exclude_fixers'] = exclude_fixers
 
 
 class gdal_config_error(Exception):
@@ -145,20 +144,12 @@ def fetch_config(option, gdal_config='gdal-config'):
     try:
         import subprocess
         command, args = command.split()[0], command.split()[1]
-        from sys import version_info
-        if version_info >= (3, 0, 0):
-            try:
-                p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
-            except OSError:
-                e = sys.exc_info()[1]
-                raise gdal_config_error(e)
-            r = p.stdout.readline().decode('ascii').strip()
-        else:
-            exec("""try:
-    p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
-except OSError, e:
-    raise gdal_config_error, e""")
-            r = p.stdout.readline().strip()
+        try:
+            p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
+        except OSError:
+            e = sys.exc_info()[1]
+            raise gdal_config_error(e)
+        r = p.stdout.readline().decode('ascii').strip()
         p.stdout.close()
         p.wait()
 
@@ -332,24 +323,6 @@ class gdal_ext(build_ext):
         ext.extra_compile_args.extend(self.extra_cflags)
         return build_ext.build_extension(self, ext)
 
-# This is only needed with Python 2.
-if sys.version_info < (3,):
-    try:
-        import multiprocessing
-        from concurrent.futures import ThreadPoolExecutor as Pool
-
-        num_jobs = multiprocessing.cpu_count()
-
-        def parallel_build_extensions(self):
-            self.check_extensions_list(self.extensions)
-
-            with Pool(num_jobs) as pool:
-                # Note: map() returns an iterator that needs to be consumed.
-                list(pool.map(self.build_extension, self.extensions))
-
-        build_ext.build_extensions = parallel_build_extensions
-    except:
-        pass
 
 extra_link_args = []
 extra_compile_args = []
