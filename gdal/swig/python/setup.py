@@ -97,41 +97,14 @@ except ImportError:
     print('WARNING: numpy not available!  Array support will not be enabled')
     pass
 
-fixer_names = [
-    'lib2to3.fixes.fix_import',
-    'lib2to3.fixes.fix_next',
-    'lib2to3.fixes.fix_renames',
-    'lib2to3.fixes.fix_unicode',
-    'lib2to3.fixes.fix_ws_comma',
-    'lib2to3.fixes.fix_xrange',
-]
-extra = {}
 try:
     from setuptools import setup
     from setuptools import Extension
     HAVE_SETUPTOOLS = True
 except ImportError:
     from distutils.core import setup, Extension
-
-    try:
-        from distutils.command.build_py import build_py_2to3 as build_py
-        from distutils.command.build_scripts import build_scripts_2to3 as build_scripts
-    except ImportError:
-        from distutils.command.build_py import build_py
-        from distutils.command.build_scripts import build_scripts
-    else:
-        build_py.fixer_names = fixer_names
-        build_scripts.fixer_names = fixer_names
-else:
-    if sys.version_info >= (3,):
-        from lib2to3.refactor import get_fixers_from_package
-
-        all_fixers = set(get_fixers_from_package('lib2to3.fixes'))
-        exclude_fixers = sorted(all_fixers.difference(fixer_names))
-
-        extra['use_2to3'] = True
-        extra['use_2to3_fixers'] = []
-        extra['use_2to3_exclude_fixers'] = exclude_fixers
+    from distutils.command.build_py import build_py
+    from distutils.command.build_scripts import build_scripts
 
 
 class gdal_config_error(Exception):
@@ -461,16 +434,11 @@ setup_kwargs = dict(
     extras_require={'numpy': ['numpy > 1.0.0']},
 )
 
-# This section can be greatly simplified with python >= 3.5 using **
 if HAVE_SETUPTOOLS:
-    for k, v in extra.items():
-        setup_kwargs[k] = v
-
     setup_kwargs['zip_safe'] = False
     setup_kwargs['exclude_package_data'] = exclude_package_data
-    setup(**setup_kwargs)
 else:
     setup_kwargs['cmdclass']['build_py'] = build_py
     setup_kwargs['cmdclass']['build_scripts'] = build_scripts
 
-    setup(**setup_kwargs)
+setup(**setup_kwargs)
