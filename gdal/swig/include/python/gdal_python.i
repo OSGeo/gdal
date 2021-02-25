@@ -1167,7 +1167,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
       if mask is not None:
           array = self.ReadAsArray(array_start_idx, count, array_step)
           mask_array = mask.ReadAsArray(array_start_idx, count, array_step)
-          bool_array = ~mask_array.astype(numpy.bool)
+          bool_array = ~mask_array.astype(bool)
           return numpy.ma.array(array, mask=bool_array)
       else:
           return numpy.ma.array(self.ReadAsArray(array_start_idx, count, array_step), mask=None)
