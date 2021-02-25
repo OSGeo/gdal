@@ -234,6 +234,26 @@ Reprojection related creation options
 - **ADD_ALPHA=YES/NO**: Whether an alpha band is added in case of reprojection.
   Defaults to YES.
 
+Configuration options
+---------------------
+
+COG Overview creation can be configured with the :ref:`raster.gtiff` driver creation options
+
+-  **`COMPRESS_OVERVIEW`**:  See `Creation Options COMPRESS <#creation-options>`__ section.
+   Set the compression type to use for overviews
+-  **`PREDICTOR_OVERVIEW`**: Integer 1,2 or 3.
+   Set the predictor to use for overviews with LZW, DEFLATE and ZSTD compression
+-  **`JPEG_QUALITY_OVERVIEW`**: Integer between 0 and 100. Default value : 75.
+   Quality of JPEG compressed overviews, either internal or external.
+-  **`WEBP_LEVEL_OVERVIEW`**: Integer between 1 and 100. Default value : 75.
+   WEBP quality level of overviews, either internal or external.
+
+Example create a COG with the source data compressed as LZW and overviews compressed with WEBP with a WEBP quality of 90
+
+::
+
+    gdal_translate world.tif world_webmerc_cog.tif -of COG -co COMPRESS=LZW --config COMPRESS_OVERVIEW WEBP --config WEBP_LEVEL_OVERVIEW 90
+
 File format details
 -------------------
 
