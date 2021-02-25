@@ -10268,7 +10268,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
     {
         if ( CPLGetConfigOption( "PREDICTOR_OVERVIEW", nullptr ) != nullptr ) 
         {
-            nPredictor = atoi(CPLGetConfigOption("PREDICTOR_OVERVIEW","1"))
+            nPredictor = atoi(CPLGetConfigOption("PREDICTOR_OVERVIEW","1"));
         } 
         else 
         {
