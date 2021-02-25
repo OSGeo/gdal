@@ -11937,8 +11937,8 @@ void GTiffDatasetWriteRPCTag( TIFF *hTIFF, char **papszRPCMD )
         return;
 
     double adfRPCTag[92] = {};
-    adfRPCTag[0] = -1.0;  // Error Bias
-    adfRPCTag[1] = -1.0;  // Error Random
+    adfRPCTag[0] = sRPC.dfERR_BIAS;  // Error Bias
+    adfRPCTag[1] = sRPC.dfERR_RAND;  // Error Random
 
     adfRPCTag[2] = sRPC.dfLINE_OFF;
     adfRPCTag[3] = sRPC.dfSAMP_OFF;
@@ -11978,6 +11978,8 @@ char** GTiffDatasetReadRPCTag(TIFF* hTIFF)
         return nullptr;
 
     CPLStringList asMD;
+    asMD.SetNameValue(RPC_ERR_BIAS, CPLOPrintf("%.15g", padfRPCTag[0]));
+    asMD.SetNameValue(RPC_ERR_RAND, CPLOPrintf("%.15g", padfRPCTag[1]));
     asMD.SetNameValue(RPC_LINE_OFF, CPLOPrintf("%.15g", padfRPCTag[2]));
     asMD.SetNameValue(RPC_SAMP_OFF, CPLOPrintf("%.15g", padfRPCTag[3]));
     asMD.SetNameValue(RPC_LAT_OFF, CPLOPrintf("%.15g", padfRPCTag[4]));

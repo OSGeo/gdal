@@ -1155,6 +1155,8 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
  * Model. See http://geotiff.maptools.org/rpc_prop.html */
 typedef struct
 {
+    double dfERR_BIAS;
+    double dfERR_RAND;
     double dfLINE_OFF;   /*!< Line offset */
     double dfSAMP_OFF;   /*!< Sample/Pixel offset */
     double dfLAT_OFF;    /*!< Latitude offset */

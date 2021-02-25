@@ -69,6 +69,8 @@ CPL_CVSID("$Id$")
 
 static const char * const apszRPCTXTSingleValItems[] =
 {
+    RPC_ERR_BIAS,
+    RPC_ERR_RAND,
     RPC_LINE_OFF,
     RPC_SAMP_OFF,
     RPC_LAT_OFF,

@@ -79,6 +79,12 @@ char ** RPCInfoToMD( GDALRPCInfo *psRPCInfo )
     char **papszMD = nullptr;
     CPLString osField, osMultiField;
 
+    osField.Printf( "%.15g", psRPCInfo->dfERR_BIAS );
+    papszMD = CSLSetNameValue( papszMD, RPC_ERR_BIAS, osField );
+    
+    osField.Printf( "%.15g", psRPCInfo->dfERR_RAND );
+    papszMD = CSLSetNameValue( papszMD, RPC_ERR_RAND, osField );
+    
     osField.Printf( "%.15g", psRPCInfo->dfLINE_OFF );
     papszMD = CSLSetNameValue( papszMD, RPC_LINE_OFF, osField );
 

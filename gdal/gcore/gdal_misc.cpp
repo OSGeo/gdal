@@ -3433,6 +3433,8 @@ int CPL_STDCALL GDALExtractRPCInfo( CSLConstList papszMD, GDALRPCInfo *psRPC )
         return FALSE;
     }
 
+    _FetchDblFromMD( papszMD, RPC_ERR_BIAS, &(psRPC->dfERR_BIAS), 1, 0.0 );
+    _FetchDblFromMD( papszMD, RPC_ERR_RAND, &(psRPC->dfERR_RAND), 1, 0.0 );
     _FetchDblFromMD( papszMD, RPC_LINE_OFF, &(psRPC->dfLINE_OFF), 1, 0.0 );
     _FetchDblFromMD( papszMD, RPC_LINE_SCALE, &(psRPC->dfLINE_SCALE), 1, 1.0 );
     _FetchDblFromMD( papszMD, RPC_SAMP_OFF, &(psRPC->dfSAMP_OFF), 1, 0.0 );

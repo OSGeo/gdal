@@ -1448,6 +1448,10 @@ bool GDALRDADataset::ReadRPCs()
                                   CPLSPrintf("%.18g", dfMaxY));
     }
 
+    papszMD = CSLSetNameValue(papszMD, RPC_ERR_BIAS,
+        CPLSPrintf("%.18g", GetJsonDouble(poObj, "errBias", true, bError)));
+    papszMD = CSLSetNameValue(papszMD, RPC_ERR_RAND,
+        CPLSPrintf("%.18g", GetJsonDouble(poObj, "errRand", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_LINE_OFF,
         CPLSPrintf("%.18g", GetJsonDouble(poObj, "lineOffset", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_SAMP_OFF,
