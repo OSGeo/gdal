@@ -1037,17 +1037,20 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         // size reaches 2GB. (#3385)
         cbDataLen = static_cast<int>(cbDataLen);
 
-        if( Failed( nRetCode ) )
+        // a return code of SQL_NO_DATA is not indicative of an error - see
+        // https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/getting-long-data?view=sql-server-ver15
+        // "When there is no more data to return, SQLGetData returns SQL_NO_DATA"
+        // and the example from that page which uses:
+        // while ((rc = SQLGetData(hstmt, 2, SQL_C_BINARY, BinaryPtr, sizeof(BinaryPtr), &BinaryLenOrInd)) != SQL_NO_DATA) { ... }
+        if( nRetCode != SQL_NO_DATA && Failed( nRetCode ) )
         {
-            if( nRetCode != SQL_NO_DATA )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, "%s",
-                          m_poSession->GetLastError() );
-            }
+            CPLError( CE_Failure, CPLE_AppDefined, "%s",
+                      m_poSession->GetLastError() );
             return FALSE;
         }
 
-        if( cbDataLen == SQL_NULL_DATA )
+        // if first call to SQLGetData resulted in SQL_NO_DATA return code, then the data is empty (NULL)
+        if( cbDataLen == SQL_NULL_DATA || nRetCode == SQL_NO_DATA )
         {
             m_papszColValues[iCol] = nullptr;
             m_panColValueLengths[iCol] = 0;
