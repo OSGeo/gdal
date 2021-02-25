@@ -10,16 +10,16 @@ OGCAPI -- OGC API Tiles / Maps
 
 .. build_dependencies:: libcurl
 
-Access to server implementing OGC API - Tiles, OGC API - Maps or OGC API - Coverage.
+Access to server implementing OGC API - Tiles, OGC API - Maps or OGC API - Coverages.
 This driver has raster and vector capabilities.
 
 .. warning::
 
     This driver is experimental, and has been developed to demonstrate work
     related to the "Modular OGC API Workflows" initiative.
-    It implements non-finalized versions of OGC API - Tiles, - Maps and - Coverage.
+    It implements non-finalized versions of OGC API - Tiles, - Maps and - Coverages.
     Its interface may change at any time, or it might be removed.
-    It might also be eventually merged with the OAPIF driver.
+    It might also be eventually merged with the OGC API - Features driver.
 
 Driver capabilities
 -------------------
