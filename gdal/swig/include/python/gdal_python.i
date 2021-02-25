@@ -43,11 +43,7 @@ static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t
     if( data != data_aligned )
         memmove(data, data_aligned, buf_size);
 
-#if PY_VERSION_HEX >= 0x03000000
     PyBytesObject* stringobj = (PyBytesObject *) obj;
-#else
-    PyStringObject* stringobj = (PyStringObject *) obj;
-#endif
     Py_SIZE(stringobj) = buf_size;
     stringobj->ob_sval[buf_size] = '\0';
     stringobj->ob_shash = -1;          /* invalidate cached hash value */
@@ -185,7 +181,6 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
@@ -210,31 +205,6 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
         *buf = o;
     }
     return static_cast<unsigned int>(nRet);
-#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return 0;
-    }
-    PyObject* o = (PyObject*) *buf;
-    char *data = PyString_AsString(o);
-    SWIG_PYTHON_THREAD_END_BLOCK;
-    size_t nRet = (size_t)VSIFReadL( data, nMembSize, nMembCount, fp );
-    if (nRet * (size_t)nMembSize < buf_size)
-    {
-        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        _PyString_Resize(&o, nRet * nMembSize);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        *buf = o;
-    }
-    return static_cast<unsigned int>(nRet);
-#endif
 }
 %}
 %clear (void **buf );
@@ -263,21 +233,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
         }
     } else {
       do {
-%#if PY_VERSION_HEX >= 0x03030000
         $result = PyMemoryView_FromMemory(reinterpret_cast<char *>(*$1), *$2, PyBUF_READ);
-%#elif PY_VERSION_HEX >= 0x03000000
-        if( bUseExceptions ) {
-            PyErr_SetString(PyExc_RuntimeError, "Command works only in Python 3.3+");
-            $result = NULL;
-        } else {
-            CPLError(CE_Failure, CPLE_AppDefined, "Command works only in Python 3.3+");
-            $result = Py_None;
-            Py_INCREF($result);
-        }
-        break;
-%#else
-        $result = PyBuffer_FromMemory(*$1, *$2);
-%#endif
         if ($result == NULL) {
             if( bUseExceptions ) {
                 PyErr_SetString(PyExc_RuntimeError, "Could not allocate result buffer");
@@ -376,7 +332,6 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-%#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
@@ -390,20 +345,6 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-%#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-%#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     char* data_aligned = get_aligned_buffer(data, ntype);
@@ -471,7 +412,6 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-%#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
@@ -485,20 +425,6 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-%#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-%#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     char* data_aligned = get_aligned_buffer(data, ntype);
@@ -712,7 +638,6 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-%#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
@@ -725,20 +650,6 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-%#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-%#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     char* data_aligned = get_aligned_buffer(data, ntype);

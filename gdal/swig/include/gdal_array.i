@@ -1294,11 +1294,7 @@ static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
         }
 
         // create the dtype string
-#if PY_VERSION_HEX >= 0x03000000
         PyObject *pDTypeString = PyUnicode_FromFormat("S%d", nMaxLen);
-#else
-        PyObject *pDTypeString = PyString_FromFormat("S%d", nMaxLen);
-#endif
         // out type description object
         PyArray_Descr *pDescr;
         PyArray_DescrConverter(pDTypeString, &pDescr);
