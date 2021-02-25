@@ -141,26 +141,16 @@ def fetch_config(option, gdal_config='gdal-config'):
 
     command = gdal_config + " --%s" % option
 
+    import subprocess
+    command, args = command.split()[0], command.split()[1]
     try:
-        import subprocess
-        command, args = command.split()[0], command.split()[1]
-        try:
-            p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
-        except OSError:
-            e = sys.exc_info()[1]
-            raise gdal_config_error(e)
-        r = p.stdout.readline().decode('ascii').strip()
-        p.stdout.close()
-        p.wait()
-
-    except ImportError:
-
-        import popen2
-
-        p = popen2.popen3(command)
-        r = p[0].readline().strip()
-        if not r:
-            raise Warning(p[2].readline())
+        p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
+    except OSError:
+        e = sys.exc_info()[1]
+        raise gdal_config_error(e)
+    r = p.stdout.readline().decode('ascii').strip()
+    p.stdout.close()
+    p.wait()
 
     return r
 

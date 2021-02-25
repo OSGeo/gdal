@@ -601,10 +601,7 @@ class _MyHelper(object):
         self.original_help = help
 
         # Replace builtin help by ours
-        try:
-            import __builtin__ as builtins # Python 2
-        except ImportError:
-            import builtins # Python 3
+        import builtins
         builtins.help = self
 
     def __repr__(self):

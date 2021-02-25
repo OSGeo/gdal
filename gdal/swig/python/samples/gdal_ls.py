@@ -94,10 +94,7 @@ def display_file(fout, dirname, prefix, filename, longformat, check_open=False):
     else:
         line = filename_displayed + "\n"
 
-    try:
-        fout.write(line.encode('utf-8'))
-    except (TypeError, UnicodeEncodeError):
-        fout.write(line)
+    fout.write(line)
 
 
 def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, recurseInTGZ, first=False):

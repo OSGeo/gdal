@@ -1116,11 +1116,7 @@ class GPKGChecker(object):
                                  'Tile for %s should be PNG' % table_name)
                     if has_gdal:
                         tmp_file = '/vsimem/temp_validate_gpkg.tif'
-                        try:
-                            blob = bytes(blob)
-                        except:
-                            blob = str(blob)
-                        gdal.FileFromMemBuffer(tmp_file, blob)
+                        gdal.FileFromMemBuffer(tmp_file, bytes(blob))
                         ds = gdal.Open(tmp_file)
                         try:
                             self._assert(ds is not None, 'gpkg_2d_gridded_coverage#13',
@@ -1145,11 +1141,7 @@ class GPKGChecker(object):
                                  'Tile for %s should be TIFF' % table_name)
                     if has_gdal:
                         tmp_file = '/vsimem/temp_validate_gpkg.tif'
-                        try:
-                            blob = bytes(blob)
-                        except:
-                            blob = str(blob)
-                        gdal.FileFromMemBuffer(tmp_file, blob)
+                        gdal.FileFromMemBuffer(tmp_file, bytes(blob))
                         ds = gdal.Open(tmp_file)
                         try:
                             self._assert(ds is not None, 'gpkg_2d_gridded_coverage#15',
