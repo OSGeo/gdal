@@ -26,7 +26,6 @@ LINK_EXTRAFLAGS = -rpath $(INST_LIB) -no-undefined -version-info $(LIBGDAL_CURRE
 OBJ_EXT = lo
 endif
 
-.PHONY: makedir
 makedir:
 	mkdir -p org/gdal/gdal
 	mkdir -p org/gdal/gdalconst
@@ -124,3 +123,4 @@ $(JAVA_MODULES): $(JAVA_OBJECTS)
 %.$(OBJ_EXT): %.c
 	$(CC) -fno-strict-aliasing $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(JAVA_INCLUDE) -c $<
 
+.PHONY: all makedir clean veryclean generate build install test
