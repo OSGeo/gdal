@@ -427,6 +427,18 @@ Multidimensional API support
 The netCDF driver supports the :ref:`multidim_raster_data_model` for reading and
 creation operations.
 
+The :cpp:func:`GDALGroup::GetGroupNames` method supports the following options:
+
+- GROUP_BY=SAME_DIMENSION. If set, single-dimensional variables will be exposed
+  as a "virtual" subgroup. This enables the user to get a clearer organization of
+  variables, for example in datasets where variables belonging to different
+  trajectories are indexed by different dimensions but mixed in the same netCDF
+  group.
+
+The :cpp:func:`GDALGroup::OpenGroup` method supports the following options:
+
+- GROUP_BY=SAME_DIMENSION. See above description
+
 The :cpp:func:`GDALGroup::GetMDArrayNames` method supports the following options:
 
 - SHOW_ALL=YES/NO. Defaults to NO. If set to YES, all variables will be listed.
@@ -442,6 +454,7 @@ The :cpp:func:`GDALGroup::GetMDArrayNames` method supports the following options
 - SHOW_TIME=YES/NO. Defaults to YES. If set to NO,
   single-dimensional variables whose ``standard_name`` attribute is "time"
   will not be listed.
+- GROUP_BY=SAME_DIMENSION. If set, single-dimensional variables will not be listed
 
 The :cpp:func:`GDALGroup::CreateMDArray` method supports the following options:
 
