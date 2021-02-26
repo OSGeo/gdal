@@ -104,7 +104,7 @@ def test_virtualmem_1():
 
 ###############################################################################
 # Test write mode
-@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_virtualmem_2():
     ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
     ar = ds.GetVirtualMemArray(gdal.GF_Write)
@@ -120,7 +120,7 @@ def test_virtualmem_2():
 
 ###############################################################################
 # Test virtual mem auto with a raw driver
-@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_virtualmem_3():
     for tmpfile in ['tmp/virtualmem_3.img', '/vsimem/virtualmem_3.img']:
         ds = gdal.GetDriverByName('EHdr').Create(tmpfile, 400, 300, 2)
@@ -154,7 +154,7 @@ def test_virtualmem_3():
 
 ###############################################################################
 # Test virtual mem auto with GTiff
-@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_virtualmem_4():
     tmpfile = 'tmp/virtualmem_4.tif'
     for option in ['INTERLEAVE=PIXEL', 'INTERLEAVE=BAND']:

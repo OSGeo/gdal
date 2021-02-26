@@ -1984,7 +1984,7 @@ def test_tiff_read_empty_nodata_tag():
 ###############################################################################
 # Check that no auxiliary files are read with a simple Open(), reading
 # imagery and getting IMAGE_STRUCTURE metadata
-@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_tiff_read_strace_check():
 
     python_exe = sys.executable

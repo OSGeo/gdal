@@ -986,7 +986,7 @@ client_secret = CLIENT_SECRET
 
 ###############################################################################
 # Read credentials from simulated GCE instance
-@pytest.mark.skipif(sys.platform not in ('linux', 'linux2', 'win32'), reason='Incorrect platform')
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_vsigs_read_credentials_gce():
 
     if gdaltest.webserver_port == 0:
@@ -1059,7 +1059,7 @@ def test_vsigs_read_credentials_gce():
 ###############################################################################
 # Read credentials from simulated GCE instance with expiration of the
 # cached credentials
-@pytest.mark.skipif(sys.platform not in ('linux', 'linux2', 'win32'), reason='Incorrect platform')
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_vsigs_read_credentials_gce_expiration():
 
     if gdaltest.webserver_port == 0:

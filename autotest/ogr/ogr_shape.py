@@ -2909,7 +2909,7 @@ def test_ogr_shape_70():
 # Test heterogeneous file permissions on .shp and .dbf.
 
 
-@pytest.mark.skipif(sys.platform.find('linux') != 0, reason='Incorrect platform')
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_ogr_shape_71():
 
     if os.getuid() == 0:

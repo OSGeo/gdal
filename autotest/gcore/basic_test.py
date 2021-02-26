@@ -58,7 +58,7 @@ def test_basic_test_1():
     pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
-@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_basic_test_strace_non_existing_file():
 
     python_exe = sys.executable
