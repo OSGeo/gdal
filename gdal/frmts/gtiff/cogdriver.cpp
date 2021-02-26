@@ -1011,6 +1011,36 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
          }
     }
 
+    const char* osOvrCompress = CSLFetchNameValueDef(papszOptions, "OVERVIEW_COMPRESS", "AUTO");
+    if ( !EQUAL(osOvrCompress, "AUTO") ) 
+    {
+        CPLSetConfigOption("COMPRESS_OVERVIEW", osOvrCompress);
+    }
+
+    const char* osOvrQuality = CSLFetchNameValueDef(papszOptions, "OVERVIEW_QUALITY", "AUTO");
+    if ( !EQUAL(osOvrQuality, "AUTO") ) 
+    {
+        CPLSetConfigOption("JPEG_QUALITY_OVERVIEW", osOvrCompress);
+        CPLSetConfigOption("WEBP_LEVEL_OVERVIEW", osOvrCompress);
+    }
+
+    const char* osOvrPredictor = CSLFetchNameValueDef(papszOptions, "OVERVIEW_PREDICTOR", "FALSE");
+    if( EQUAL(osOvrPredictor, "YES") || EQUAL(osOvrPredictor, "ON") || EQUAL(osOvrPredictor, "TRUE") )
+    {
+        if( GDALDataTypeIsFloating(poSrcDS->GetRasterBand(1)->GetRasterDataType()) )
+            CPLSetConfigOption("PREDICTOR_OVERVIEW", "3");
+        else
+            CPLSetConfigOption("PREDICTOR_OVERVIEW", "2");
+    }
+    else if( EQUAL(osOvrPredictor, "STANDARD") || EQUAL(osOvrPredictor, "2") )
+    {
+        CPLSetConfigOption("PREDICTOR_OVERVIEW", "2");
+    }
+    else if( EQUAL(osOvrPredictor, "FLOATING_POINT") || EQUAL(osOvrPredictor, "3") )
+    {
+        CPLSetConfigOption("PREDICTOR_OVERVIEW", "3");
+    }
+
     GDALDriver* poGTiffDrv = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
     if( !poGTiffDrv )
         return nullptr;

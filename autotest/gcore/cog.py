@@ -267,22 +267,21 @@ def test_cog_creation_of_overviews_with_compression():
     src_ds = gdal.Translate('', 'data/byte.tif',
                             options='-of MEM -outsize 2048 300')
 
-    with gdaltest.config_option('COMPRESS_OVERVIEW', 'JPEG'):
-        ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
-                                                options = ['COMPRESS=LZW'])
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                            options = ['COMPRESS=LZW', 'OVERVIEW_COMPRESS=JPEG'])
 
-        assert ds.GetRasterBand(1).GetOverviewCount() == 2
-        assert ds.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'LZW'
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert ds.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'LZW'
 
-        ds_overview_a = gdal.Open('GTIFF_DIR:2:' + filename)
-        assert ds_overview_a.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'JPEG'
+    ds_overview_a = gdal.Open('GTIFF_DIR:2:' + filename)
+    assert ds_overview_a.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'JPEG'
 
-        ds_overview_b = gdal.Open('GTIFF_DIR:3:' + filename)
-        assert ds_overview_b.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'JPEG'
+    ds_overview_b = gdal.Open('GTIFF_DIR:3:' + filename)
+    assert ds_overview_b.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'JPEG'
 
-        ds_overview_a = None
-        ds_overview_b = None
-        ds = None
+    ds_overview_a = None
+    ds_overview_b = None
+    ds = None
 
     src_ds = None
     gdal.GetDriverByName('GTiff').Delete(filename)
