@@ -33,6 +33,7 @@ import pytest
 
 from osgeo import gdal
 
+# All tests will be skipped if numpy is unavailable.
 numpy = pytest.importorskip('numpy')
 
 

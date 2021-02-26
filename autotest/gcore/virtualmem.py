@@ -34,6 +34,7 @@ import sys
 from osgeo import gdal
 import pytest
 
+# All tests will be skipped if numpy unavailable or SKIP_VIRTUALMEM is set.
 numpy = pytest.importorskip('numpy')
 pytestmark = pytest.mark.skipif(gdal.GetConfigOption('SKIP_VIRTUALMEM'),
                                 reason='SKIP_VIRTUALMEM is set in config')

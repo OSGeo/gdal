@@ -39,7 +39,9 @@ import gdaltest
 import ogrtest
 import pytest
 
+# Skip all tests if we aren't on Windows.
 pytestmark = pytest.mark.skipif(sys.platform != 'win32', reason='Incorrect platform')
+
 
 ###############################################################################
 # Basic testing

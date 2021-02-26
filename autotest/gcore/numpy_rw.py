@@ -34,6 +34,7 @@ from osgeo import gdal
 import pytest
 
 
+# All tests will be skipped if numpy or gdal_array are unavailable.
 numpy = pytest.importorskip('numpy')
 gdal_array = pytest.importorskip('osgeo.gdal_array')
 
