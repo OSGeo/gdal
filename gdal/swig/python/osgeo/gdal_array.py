@@ -95,7 +95,12 @@ except __builtin__.Exception:
         pass
     _newclass = 0
 
-import osgeo.gdal
+from sys import version_info as _swig_python_version_info
+if _swig_python_version_info >= (2, 7, 0):
+    from . import gdal
+else:
+    import gdal
+del _swig_python_version_info
 class VirtualMem(_object):
     """Proxy of C++ CPLVirtualMemShadow class."""
 

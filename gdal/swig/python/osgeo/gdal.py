@@ -1984,8 +1984,18 @@ class Driver(MajorObject):
 Driver_swigregister = _gdal.Driver_swigregister
 Driver_swigregister(Driver)
 
-from . import ogr
-from . import osr
+from sys import version_info as _swig_python_version_info
+if _swig_python_version_info >= (2, 7, 0):
+    from . import ogr
+else:
+    import ogr
+del _swig_python_version_info
+from sys import version_info as _swig_python_version_info
+if _swig_python_version_info >= (2, 7, 0):
+    from . import osr
+else:
+    import osr
+del _swig_python_version_info
 class ColorEntry(_object):
     """Proxy of C++ GDALColorEntry class."""
 

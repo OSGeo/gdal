@@ -259,7 +259,12 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
     """DontUseExceptions()"""
     return _ogr.DontUseExceptions(*args)
-from . import osr
+from sys import version_info as _swig_python_version_info
+if _swig_python_version_info >= (2, 7, 0):
+    from . import osr
+else:
+    import osr
+del _swig_python_version_info
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class."""
 
