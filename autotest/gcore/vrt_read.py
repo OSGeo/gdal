@@ -146,10 +146,7 @@ def test_vrt_read_3():
 
 def test_vrt_read_4():
 
-    try:
-        import numpy as np
-    except ImportError:
-        pytest.skip()
+    np = pytest.importorskip('numpy')
 
     data = np.zeros((1, 1), np.complex64)
     data[0, 0] = 1. + 3.j
@@ -865,10 +862,7 @@ def test_vrt_read_22():
 
 def test_vrt_read_23():
 
-    try:
-        import numpy
-    except (ImportError, AttributeError):
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
 
     mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrt_read_23.tif', 2, 1)
     mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0, 10]]))

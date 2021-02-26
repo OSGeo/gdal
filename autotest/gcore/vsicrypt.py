@@ -466,10 +466,7 @@ def test_vsicrypt_5():
 
 def test_vsicrypt_6(testnonboundtoswig_setup):  # noqa
 
-    try:
-        import ctypes
-    except ImportError:
-        pytest.skip()
+    ctypes = pytest.importorskip('ctypes')
 
     testnonboundtoswig_setup.VSISetCryptKey.argtypes = [ctypes.c_char_p, ctypes.c_int]
     testnonboundtoswig_setup.VSISetCryptKey.restype = None

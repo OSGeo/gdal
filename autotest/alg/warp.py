@@ -1685,10 +1685,7 @@ def test_warp_55():
 
 def test_warp_56():
 
-    try:
-        import numpy
-    except (ImportError, AttributeError):
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
 
     pix_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3)

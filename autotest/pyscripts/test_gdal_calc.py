@@ -42,13 +42,13 @@ import pytest
 from collections import defaultdict
 
 # test that numpy is available, if not skip all tests
+np = pytest.importorskip('numpy')
+gdal_calc = pytest.importorskip('osgeo.utils.gdal_calc')
+gdal_array = pytest.importorskip('osgeo.gdal_array')
 try:
-    import numpy as np
-    from osgeo.utils import gdal_calc
-    from osgeo.gdal_array import GDALTypeCodeToNumericTypeCode
-    numpy_available = True
-except (ImportError, AttributeError):
-    numpy_available = False
+    GDALTypeCodeToNumericTypeCode = gdal_array.GDALTypeCodeToNumericTypeCode
+except AttributeError:
+    pytestmark = pytest.mark.skip('osgeo.gdal_array.GDALTypeCodeToNumericTypeCode is unavailable')
 
 # Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 
@@ -106,8 +106,6 @@ def make_temp_filename_list(test_id, test_count, is_opt=False):
 
 def test_gdal_calc_py_1():
     """ test basic copy """
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -127,8 +125,6 @@ def test_gdal_calc_py_1():
 
 def test_gdal_calc_py_2():
     """ test simple formulas """
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -148,8 +144,6 @@ def test_gdal_calc_py_2():
 
 def test_gdal_calc_py_3():
     """ test --allBands option (simple copy) """
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -168,8 +162,6 @@ def test_gdal_calc_py_3():
 
 def test_gdal_calc_py_4():
     """ test --allBands option (simple calc) """
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -197,8 +189,6 @@ def test_gdal_calc_py_4():
 
 def test_gdal_calc_py_5():
     """ test python interface, basic copy """
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -223,8 +213,6 @@ def test_gdal_calc_py_5():
 
 def test_gdal_calc_py_6():
     """ test nodata """
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -246,8 +234,6 @@ def test_gdal_calc_py_6():
 
 def test_gdal_calc_py_7():
     """ test --optfile """
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -285,8 +271,6 @@ def test_gdal_calc_py_7():
 
 def test_gdal_calc_py_8():
     """ test multiple calcs """
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:
@@ -331,9 +315,6 @@ def test_gdal_calc_py_9():
     * single alpha for multiple datasets
     * extent = 'fail'
     """
-
-    if not numpy_available:
-        pytest.skip("numpy is not available, skipping all tests", allow_module_level=True)
 
     script_path = test_py_scripts.get_py_script('gdal_calc')
     if script_path is None:

@@ -31,22 +31,17 @@
 
 import sys
 
-try:
-    import numpy
-    numpy_available = True
-except ImportError:
-    numpy_available = False
-
 from osgeo import gdal
 import pytest
 
+numpy = pytest.importorskip('numpy')
+
+
 ###############################################################################
 # Test linear and tiled virtual mem interfaces in read-only mode
-
-
 def test_virtualmem_1():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not numpy_available:
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
         pytest.skip()
 
     ds = gdal.Open('../gdrivers/data/small_world.tif')
@@ -106,13 +101,12 @@ def test_virtualmem_1():
     ar_bsq = None
     ds = None
 
+
 ###############################################################################
 # Test write mode
-
-
 def test_virtualmem_2():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not numpy_available or not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not sys.platform.startswith('linux'):
         pytest.skip()
 
     ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
@@ -126,13 +120,12 @@ def test_virtualmem_2():
 
     assert cs == 57182
 
+
 ###############################################################################
 # Test virtual mem auto with a raw driver
-
-
 def test_virtualmem_3():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not numpy_available or not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not sys.platform.startswith('linux'):
         pytest.skip()
 
     for tmpfile in ['tmp/virtualmem_3.img', '/vsimem/virtualmem_3.img']:
@@ -167,11 +160,9 @@ def test_virtualmem_3():
 
 ###############################################################################
 # Test virtual mem auto with GTiff
-
-
 def test_virtualmem_4():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not numpy_available or not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not sys.platform.startswith('linux'):
         pytest.skip()
 
     tmpfile = 'tmp/virtualmem_4.tif'
@@ -223,8 +214,3 @@ def test_virtualmem_4():
         ds = None
 
         gdal.GetDriverByName('GTiff').Delete(tmpfile)
-
-
-
-
-

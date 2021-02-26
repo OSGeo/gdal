@@ -643,10 +643,7 @@ def test_rmf_31d():
 
 
 def test_rmf_31e():
-    try:
-        import numpy
-    except ImportError:
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
 
     drv = gdal.GetDriverByName('Gtiff')
     if drv is None:

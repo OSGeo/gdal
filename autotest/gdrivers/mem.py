@@ -108,10 +108,7 @@ def test_mem_2():
     gdal.PopErrorHandler()
     assert ds is None, 'opening MEM dataset should have failed.'
 
-    try:
-        import ctypes
-    except ImportError:
-        pytest.skip()
+    ctypes = pytest.importorskip('ctypes')
 
     for libname in ['msvcrt', 'libc.so.6']:
         try:

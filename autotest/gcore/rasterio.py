@@ -32,12 +32,6 @@
 import struct
 import sys
 
-try:
-    import numpy
-    numpy_available = True
-except ImportError:
-    numpy_available = False
-
 from osgeo import gdal
 import gdaltest
 import pytest
@@ -654,9 +648,7 @@ def test_rasterio_10():
 
 
 def test_rasterio_11():
-
-    if not numpy_available:
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
     mem_ds.GetRasterBand(1).WriteArray(numpy.array([[80, 125, 125, 80], [80, 125, 125, 80], [80, 125, 125, 80]]))
@@ -685,9 +677,7 @@ def rasterio_12_progress_callback(pct, message, user_data):
 
 
 def test_rasterio_12():
-
-    if not numpy_available:
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 4)
     for i in range(3):
@@ -722,9 +712,7 @@ def test_rasterio_12():
 
 
 def test_rasterio_13():
-
-    if not numpy_available:
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
 
     for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:
 
@@ -866,9 +854,7 @@ cellsize     0
 
 
 def test_rasterio_nodata():
-
-    if not numpy_available:
-        pytest.skip()
+    pytest.importorskip('numpy')
 
     ndv = 123
     btype = [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_Int32, gdal.GDT_Float32, gdal.GDT_Float64]
@@ -976,9 +962,7 @@ nodata_value 0
 
 
 def test_rasterio_dataset_readarray_cint16():
-
-    if not numpy_available:
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2, gdal.GDT_CInt16)
     mem_ds.GetRasterBand(1).WriteArray(numpy.array([[1 + 2j]]))
@@ -1040,9 +1024,7 @@ def test_rasterio_floating_point_window_no_resampling():
 
 def test_rasterio_floating_point_window_no_resampling_numpy():
     # Same as above but using ReadAsArray() instead of ReadRaster()
-
-    if not numpy_available:
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
 
     ds = gdal.Translate('/vsimem/test.tif', gdal.Open('data/rgbsmall.tif'))
     assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == 'PIXEL'

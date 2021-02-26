@@ -204,11 +204,11 @@ def test_gdal_edit_py_5():
     if script_path is None:
         pytest.skip()
 
+    gdal_array = pytest.importorskip('osgeo.gdal_array')
     try:
-        from osgeo import gdal_array
         gdal_array.BandRasterIONumPy
-    except:
-        pytest.skip()
+    except AttributeError:
+        pytest.skip('osgeo.gdal_array.BandRasterIONumPy is unavailable')
 
     shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)

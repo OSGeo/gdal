@@ -32,13 +32,9 @@
 from osgeo import gdal
 import pytest
 
-
-try:
-    import ctypes
-except ImportError:
-    pass
-
 import gdaltest
+
+ctypes = pytest.importorskip('ctypes')
 
 gdal_handle_init = False
 gdal_handle = None
@@ -96,7 +92,8 @@ def setup():
         if dynamic_version != static_version:
             gdal_handle = None
             gdal_handle_stdcall = None
-            pytest.skip('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
+            pytest.skip(f'dynamic version({dynamic_version}) does not match '
+                        f'static version ({static_version})')
 
         return gdal_handle
     except Exception:
