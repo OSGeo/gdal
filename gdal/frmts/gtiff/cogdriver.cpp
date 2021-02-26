@@ -85,6 +85,30 @@ static const char* GetResampling(GDALDataset* poSrcDS)
 }
 
 /************************************************************************/
+/*                             GetPredictor()                          */
+/************************************************************************/
+static const char* GetPredictor(GDALDataset* poSrcDS, 
+                                const char* pszPredictor) 
+{
+    if( EQUAL(pszPredictor, "YES") || EQUAL(pszPredictor, "ON") || EQUAL(pszPredictor, "TRUE") )
+    {
+        if( GDALDataTypeIsFloating(poSrcDS->GetRasterBand(1)->GetRasterDataType()) )
+            return "3";
+        else
+            return "2";
+    }
+    else if( EQUAL(pszPredictor, "STANDARD") || EQUAL(pszPredictor, "2") )
+    {
+        return "2";
+    }
+    else if( EQUAL(pszPredictor, "FLOATING_POINT") || EQUAL(pszPredictor, "3") )
+    {
+        return "3";
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                     COGGetWarpingCharacteristics()                   */
 /************************************************************************/
 
@@ -928,21 +952,12 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     aosOptions.SetNameValue("BLOCKXSIZE", osBlockSize);
     aosOptions.SetNameValue("BLOCKYSIZE", osBlockSize);
     const char* pszPredictor = CSLFetchNameValueDef(papszOptions, "PREDICTOR", "FALSE");
-    if( EQUAL(pszPredictor, "YES") || EQUAL(pszPredictor, "ON") || EQUAL(pszPredictor, "TRUE") )
-    {
-        if( GDALDataTypeIsFloating(poSrcDS->GetRasterBand(1)->GetRasterDataType()) )
-            aosOptions.SetNameValue("PREDICTOR", "3");
-        else
-            aosOptions.SetNameValue("PREDICTOR", "2");
+    const char* pszPredictorValue = GetPredictor(poSrcDS, pszPredictor);
+    if (pszPredictorValue != nullptr) 
+    { 
+        aosOptions.SetNameValue("PREDICTOR", pszPredictorValue);
     }
-    else if( EQUAL(pszPredictor, "STANDARD") || EQUAL(pszPredictor, "2") )
-    {
-        aosOptions.SetNameValue("PREDICTOR", "2");
-    }
-    else if( EQUAL(pszPredictor, "FLOATING_POINT") || EQUAL(pszPredictor, "3") )
-    {
-        aosOptions.SetNameValue("PREDICTOR", "3");
-    }
+    
     const char* pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
     if( EQUAL(osCompress, "JPEG") )
     {
@@ -1011,35 +1026,13 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
          }
     }
 
-    const char* osOvrCompress = CSLFetchNameValueDef(papszOptions, "OVERVIEW_COMPRESS", "AUTO");
-    if ( !EQUAL(osOvrCompress, "AUTO") ) 
-    {
-        CPLSetConfigOption("COMPRESS_OVERVIEW", osOvrCompress);
-    }
-
-    const char* osOvrQuality = CSLFetchNameValueDef(papszOptions, "OVERVIEW_QUALITY", "AUTO");
-    if ( !EQUAL(osOvrQuality, "AUTO") ) 
-    {
-        CPLSetConfigOption("JPEG_QUALITY_OVERVIEW", osOvrCompress);
-        CPLSetConfigOption("WEBP_LEVEL_OVERVIEW", osOvrCompress);
-    }
+    CPLConfigOptionSetter ovrCompressSetter("COMPRESS_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_COMPRESS"), true);
+    CPLConfigOptionSetter ovrQualityJpegSetter("JPEG_QUALITY_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY"), true);
+    CPLConfigOptionSetter ovrQualityWebpSetter("WEBP_LEVEL_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY"), true);
 
     const char* osOvrPredictor = CSLFetchNameValueDef(papszOptions, "OVERVIEW_PREDICTOR", "FALSE");
-    if( EQUAL(osOvrPredictor, "YES") || EQUAL(osOvrPredictor, "ON") || EQUAL(osOvrPredictor, "TRUE") )
-    {
-        if( GDALDataTypeIsFloating(poSrcDS->GetRasterBand(1)->GetRasterDataType()) )
-            CPLSetConfigOption("PREDICTOR_OVERVIEW", "3");
-        else
-            CPLSetConfigOption("PREDICTOR_OVERVIEW", "2");
-    }
-    else if( EQUAL(osOvrPredictor, "STANDARD") || EQUAL(osOvrPredictor, "2") )
-    {
-        CPLSetConfigOption("PREDICTOR_OVERVIEW", "2");
-    }
-    else if( EQUAL(osOvrPredictor, "FLOATING_POINT") || EQUAL(osOvrPredictor, "3") )
-    {
-        CPLSetConfigOption("PREDICTOR_OVERVIEW", "3");
-    }
+    const char* pszOvrPredictorValue = GetPredictor(poSrcDS, osOvrPredictor);
+    CPLConfigOptionSetter ovrPredictorSetter("PREDICTOR_OVERVIEW", pszOvrPredictorValue, true);
 
     GDALDriver* poGTiffDrv = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
     if( !poGTiffDrv )
