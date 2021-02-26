@@ -237,7 +237,7 @@ Reprojection related creation options
 Configuration options
 ---------------------
 
-COG Overview creation can be configured with the :ref:`raster.gtiff` driver creation options
+COG Overview creation can be configured with the :ref:`raster.gtiff` driver configuration options (typically specified with ``--config NAME VALUE`` syntax)
 
 -  **`COMPRESS_OVERVIEW`**:  See `Creation Options COMPRESS <#creation-options>`__ section.
    Set the compression type to use for overviews
