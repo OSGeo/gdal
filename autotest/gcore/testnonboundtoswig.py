@@ -97,8 +97,7 @@ def setup():
 
         return gdal_handle
     except Exception:
-        print('cannot find gdal shared object')
-        pytest.skip()
+        pytest.skip('cannot find gdal shared object')
 
 ###############################################################################
 # Call GDALDestroyDriverManager()

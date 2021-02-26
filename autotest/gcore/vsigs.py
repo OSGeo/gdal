@@ -1144,11 +1144,9 @@ def test_vsigs_extra_1():
         pytest.skip()
 
     # if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
-    #    print('Missing GS_SECRET_ACCESS_KEY')
-    #    pytest.skip()
+    #    pytest.skip('Missing GS_SECRET_ACCESS_KEY')
     # elif gdal.GetConfigOption('GS_ACCESS_KEY_ID') is None:
-    #    print('Missing GS_ACCESS_KEY_ID')
-    #    pytest.skip()
+    #    pytest.skip('Missing GS_ACCESS_KEY_ID')
 
     gs_resource = gdal.GetConfigOption('GS_RESOURCE')
     if gs_resource is None:
