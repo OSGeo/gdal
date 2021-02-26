@@ -29,9 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import ctypes
 import struct
-from osgeo import gdal
 
+from osgeo import gdal
 
 import gdaltest
 import pytest
@@ -465,8 +466,6 @@ def test_vsicrypt_5():
 
 
 def test_vsicrypt_6(testnonboundtoswig_setup):  # noqa
-
-    ctypes = pytest.importorskip('ctypes')
 
     testnonboundtoswig_setup.VSISetCryptKey.argtypes = [ctypes.c_char_p, ctypes.c_int]
     testnonboundtoswig_setup.VSISetCryptKey.restype = None

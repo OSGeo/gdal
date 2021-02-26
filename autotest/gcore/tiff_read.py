@@ -2737,7 +2737,6 @@ def test_tiff_read_huge_implied_number_strips():
 ###############################################################################
 
 
-@pytest.mark.skipif(sys.platform == 'win32', reason='Runs super slow on some Windows configs')
 def test_tiff_read_many_blocks():
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()

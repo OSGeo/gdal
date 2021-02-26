@@ -1143,11 +1143,6 @@ def test_vsigs_extra_1():
     if not gdaltest.built_against_curl():
         pytest.skip()
 
-    # if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
-    #    pytest.skip('Missing GS_SECRET_ACCESS_KEY')
-    # elif gdal.GetConfigOption('GS_ACCESS_KEY_ID') is None:
-    #    pytest.skip('Missing GS_ACCESS_KEY_ID')
-
     gs_resource = gdal.GetConfigOption('GS_RESOURCE')
     if gs_resource is None:
         pytest.skip('Missing GS_RESOURCE')

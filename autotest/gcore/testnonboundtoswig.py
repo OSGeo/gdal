@@ -29,12 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import ctypes
+
 from osgeo import gdal
 import pytest
 
 import gdaltest
-
-ctypes = pytest.importorskip('ctypes')
 
 gdal_handle_init = False
 gdal_handle = None
@@ -61,11 +61,6 @@ def setup():
         return gdal_handle
 
     gdal_handle_init = True
-
-    try:
-        ctypes.cdll
-    except ImportError:
-        pytest.skip('cannot find ctypes')
 
     name = find_libgdal()
     if name is None:
