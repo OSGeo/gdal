@@ -978,7 +978,8 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks ) {
                   pszFullname, strerror(errno) );
         psHooks->Error( szErrorMsg );
 
-        goto error;
+        free(pszFullname);
+        return NULL;
     }
 
     memcpy(pszFullname + nLenWithoutExtension, ".shx", 5);
@@ -990,7 +991,10 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks ) {
                  "Failed to create file %s: %s",
                   pszFullname, strerror(errno) );
         psHooks->Error( szErrorMsg );
-        goto error;
+
+        free(pszFullname);
+        psHooks->FClose(fpSHP);
+        return NULL;
     }
 
     free( pszFullname );
@@ -1035,7 +1039,10 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks ) {
         szErrorMsg[sizeof(szErrorMsg)-1] = '\0';
         psHooks->Error( szErrorMsg );
 
-        goto error;
+        free(pszFullname);
+        psHooks->FClose(fpSHP);
+        psHooks->FClose(fpSHX);
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1054,7 +1061,10 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks ) {
         szErrorMsg[sizeof(szErrorMsg)-1] = '\0';
         psHooks->Error( szErrorMsg );
 
-        goto error;
+        free(pszFullname);
+        psHooks->FClose(fpSHP);
+        psHooks->FClose(fpSHX);
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1064,12 +1074,6 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks ) {
     psHooks->FClose( fpSHX );
 
     return( SHPOpenLL( pszLayer, "r+b", psHooks ) );
-
-error:
-    if (pszFullname) free(pszFullname);
-    if (fpSHP) psHooks->FClose( fpSHP );
-    if (fpSHX) psHooks->FClose( fpSHX );
-    return SHPLIB_NULLPTR;
 }
 
 /************************************************************************/
