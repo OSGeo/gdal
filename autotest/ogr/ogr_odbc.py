@@ -39,6 +39,8 @@ import gdaltest
 import ogrtest
 import pytest
 
+pytestmark = pytest.mark.skipif(sys.platform != 'win32', reason='Incorrect platform')
+
 ###############################################################################
 # Basic testing
 
@@ -47,9 +49,6 @@ def test_ogr_odbc_1():
 
     ogrtest.odbc_drv = ogr.GetDriverByName('ODBC')
     if ogrtest.odbc_drv is None:
-        pytest.skip()
-
-    if sys.platform != 'win32':
         pytest.skip()
 
     ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')

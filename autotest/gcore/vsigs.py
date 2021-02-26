@@ -983,16 +983,13 @@ client_secret = CLIENT_SECRET
     gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
     gdal.Unlink('/vsimem/.boto')
 
+
 ###############################################################################
 # Read credentials from simulated GCE instance
-
-
+@pytest.mark.skipif(sys.platform not in ('linux', 'linux2', 'win32'), reason='Incorrect platform')
 def test_vsigs_read_credentials_gce():
 
     if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
@@ -1058,17 +1055,14 @@ def test_vsigs_read_credentials_gce():
     gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
 
+
 ###############################################################################
 # Read credentials from simulated GCE instance with expiration of the
 # cached credentials
-
-
+@pytest.mark.skipif(sys.platform not in ('linux', 'linux2', 'win32'), reason='Incorrect platform')
 def test_vsigs_read_credentials_gce_expiration():
 
     if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')

@@ -1982,15 +1982,12 @@ def test_tiff_read_empty_nodata_tag():
     ds = gdal.Open('data/empty_nodata.tif')
     assert ds.GetRasterBand(1).GetNoDataValue() is None
 
+
 ###############################################################################
 # Check that no auxiliary files are read with a simple Open(), reading
 # imagery and getting IMAGE_STRUCTURE metadata
-
-
+@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
 def test_tiff_read_strace_check():
-
-    if not sys.platform.startswith('linux'):
-        pytest.skip()
 
     python_exe = sys.executable
     cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (
@@ -2742,11 +2739,8 @@ def test_tiff_read_huge_implied_number_strips():
 ###############################################################################
 
 
+@pytest.mark.skipif(sys.platform == 'win32', reason='Runs super slow on some Windows configs')
 def test_tiff_read_many_blocks():
-
-    # Runs super slow on some Windows configs
-    if sys.platform == 'win32':
-        pytest.skip()
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':

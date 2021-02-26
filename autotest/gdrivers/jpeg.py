@@ -886,17 +886,14 @@ def test_jpeg_26():
     assert ds is None
     gdal.Unlink('/vsimem/jpeg_26.jpg')
 
+
 ###############################################################################
 # Test reading a file that contains the 2 denial of service
 # vulnerabilities listed in
 # http://www.libjpeg-jpeg_26.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
-
+@pytest.mark.skipif(sys.platform == 'win32', reason='Fails for some reason on Windows')
 def test_jpeg_27_max_memory():
-
-    # Fails for some reason on Windows.
-    if sys.platform == 'win32':
-        pytest.skip()
 
     # Should error out with 'Reading this image would require
     # libjpeg to allocate at least...'

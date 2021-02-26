@@ -104,9 +104,10 @@ def test_virtualmem_1():
 
 ###############################################################################
 # Test write mode
+@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
 def test_virtualmem_2():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
         pytest.skip()
 
     ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
@@ -123,9 +124,10 @@ def test_virtualmem_2():
 
 ###############################################################################
 # Test virtual mem auto with a raw driver
+@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
 def test_virtualmem_3():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
         pytest.skip()
 
     for tmpfile in ['tmp/virtualmem_3.img', '/vsimem/virtualmem_3.img']:
@@ -160,9 +162,10 @@ def test_virtualmem_3():
 
 ###############################################################################
 # Test virtual mem auto with GTiff
+@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='Incorrect platform')
 def test_virtualmem_4():
 
-    if gdal.GetConfigOption('SKIP_VIRTUALMEM') or not sys.platform.startswith('linux'):
+    if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
         pytest.skip()
 
     tmpfile = 'tmp/virtualmem_4.tif'
