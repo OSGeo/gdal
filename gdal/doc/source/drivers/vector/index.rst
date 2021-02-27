@@ -16,7 +16,7 @@ Vector drivers
 .. note::
 
     The following drivers have been retired and moved to the
-    https://github.com/OSGeo/gdal-extra-drivers repository: BNA
+    https://github.com/OSGeo/gdal-extra-drivers repository: AeronavFAA, BNA
 
 ..
     Developer comment: make html includes a hack to hide the table from
@@ -26,7 +26,6 @@ Vector drivers
 .. toctree::
    :maxdepth: 1
 
-   aeronavfaa
    amigocloud
    ao
    arcgen

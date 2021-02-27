@@ -224,9 +224,6 @@ void OGRRegisterAllInternal()
 #ifdef HTF_ENABLED
     RegisterOGRHTF();
 #endif
-#ifdef AERONAVFAA_ENABLED
-    RegisterOGRAeronavFAA();
-#endif
 #ifdef GEOMEDIA_ENABLED
     RegisterOGRGeomedia();
 #endif
