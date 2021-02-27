@@ -16,7 +16,7 @@ Vector drivers
 .. note::
 
     The following drivers have been retired and moved to the
-    https://github.com/OSGeo/gdal-extra-drivers repository: AeronavFAA, BNA, HTF
+    https://github.com/OSGeo/gdal-extra-drivers repository: AeronavFAA, BNA, HTF, OpenAir
 
 ..
     Developer comment: make html includes a hack to hide the table from
@@ -89,7 +89,6 @@ Vector drivers
    odbc
    ods
    ogdi
-   openair
    openfilegdb
    osm
    pdf

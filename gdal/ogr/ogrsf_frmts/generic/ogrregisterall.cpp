@@ -208,9 +208,6 @@ void OGRRegisterAllInternal()
 #ifdef SUA_ENABLED
     RegisterOGRSUA();
 #endif
-#ifdef OPENAIR_ENABLED
-    RegisterOGROpenAir();
-#endif
 #ifdef PDS_ENABLED
     RegisterOGRPDS();
 #endif

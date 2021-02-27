@@ -1089,7 +1089,6 @@ enable_driver_jml
 enable_driver_mapml
 enable_driver_mvt
 enable_driver_ntf
-enable_driver_openair
 enable_driver_openfilegdb
 enable_driver_pgdump
 enable_driver_rec
@@ -2012,8 +2011,6 @@ Optional Features:
   --disable-driver-mapml  disable mapml driver support (enabled by default)
   --disable-driver-mvt    disable mvt driver support (enabled by default)
   --disable-driver-ntf    disable ntf driver support (enabled by default)
-  --disable-driver-openair
-                          disable openair driver support (enabled by default)
   --disable-driver-openfilegdb
                           disable openfilegdb driver support (enabled by default)
   --disable-driver-pgdump disable pgdump driver support (enabled by default)
@@ -28480,35 +28477,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED ntf"
   INTERNAL_FORMAT_ntf_ENABLED=no
-fi
-
-# Check whether --enable-driver-openair was given.
-if test "${enable_driver_openair+set}" = set; then :
-  enableval=$enable_driver_openair;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_openair
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED openair"
-  INTERNAL_FORMAT_openair_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DOPENAIR_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED openair"
-  INTERNAL_FORMAT_openair_ENABLED=no
 fi
 
 # Check whether --enable-driver-openfilegdb was given.
