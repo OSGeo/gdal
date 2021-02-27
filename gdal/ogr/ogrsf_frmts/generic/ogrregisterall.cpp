@@ -156,9 +156,6 @@ void OGRRegisterAllInternal()
 #ifdef FGDB_ENABLED
     RegisterOGRFileGDB();
 #endif
-#ifdef XPLANE_ENABLED
-    RegisterOGRXPlane();
-#endif
 #ifdef DWG_ENABLED
     RegisterOGRDWG();
 #endif

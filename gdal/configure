@@ -1100,7 +1100,6 @@ enable_driver_sxf
 enable_driver_tiger
 enable_driver_vdv
 enable_driver_wasp
-enable_driver_xplane
 enable_driver_eeda
 enable_driver_plmosaic
 enable_driver_rda
@@ -2021,7 +2020,6 @@ Optional Features:
   --disable-driver-tiger  disable tiger driver support (enabled by default)
   --disable-driver-vdv    disable vdv driver support (enabled by default)
   --disable-driver-wasp   disable wasp driver support (enabled by default)
-  --disable-driver-xplane disable xplane driver support (enabled by default)
   --disable-driver-eeda   disable eeda format support (enabled by default,
                           requires curl)
   --disable-driver-plmosaic
@@ -28789,35 +28787,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED wasp"
   INTERNAL_FORMAT_wasp_ENABLED=no
-fi
-
-# Check whether --enable-driver-xplane was given.
-if test "${enable_driver_xplane+set}" = set; then :
-  enableval=$enable_driver_xplane;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_xplane
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED xplane"
-  INTERNAL_FORMAT_xplane_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DXPLANE_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED xplane"
-  INTERNAL_FORMAT_xplane_ENABLED=no
 fi
 
 

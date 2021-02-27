@@ -6,7 +6,7 @@ GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			avc rec mem vrt csv gmt kml gpx \
-			geoconcept xplane georss gtm dxf pgdump gpsbabel \
+			geoconcept georss gtm dxf pgdump gpsbabel \
 			pds edigeo svg idrisi arcgen \
 			sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
 			$(ARCOBJECTS_DIR) \
@@ -270,7 +270,7 @@ default:
 				 vrt\*.obj csv\*.obj rec\*.obj kml\*.obj \
 				 gmt\*.obj geoconcept\*.obj \
 				 geojson\*.obj geojson\libjson\*.obj \
-				 gpx\*.obj xplane\*.obj georss\*.obj gtm\*.obj \
+				 gpx\*.obj georss\*.obj gtm\*.obj \
 				 dxf\*.obj pgdump\*.obj gpsbabel\*.obj \
 				 pds\*.obj \
 				 edigeo\*.obj svg\*.obj idrisi\*.obj \
