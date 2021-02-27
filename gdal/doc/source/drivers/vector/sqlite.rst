@@ -15,7 +15,7 @@ The driver can handle "regular" SQLite databases, as well as Spatialite
 databases (spatial enabled SQLite databases). The type of an existing
 database can be checked from the SQLITE debug info value "OGR style
 SQLite DB found/ SpatiaLite DB found/SpatiaLite v4 DB found" obtained by
-running **"ogrinfo db.sqlite --debug on"**
+running ``ogrinfo db.sqlite --debug on``
 
 Starting with GDAL 2.2, the SQLite driver can also read databases with
 :ref:`RasterLite2 raster coverages <raster.rasterlite2>`.
