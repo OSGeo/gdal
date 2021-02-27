@@ -15,7 +15,7 @@ Raster drivers
 .. note::
 
     The following drivers have been retired and moved to the
-    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid
+    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid, NTv1
 
 ..
     Developer comment: make html includes a hack to hide the table from
@@ -134,7 +134,6 @@ Raster drivers
    ngsgeoid
    ngw
    nitf
-   ntv1
    ntv2
    nwtgrd
    ogcapi
