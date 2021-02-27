@@ -155,20 +155,20 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
-/*      ULink                                                           */
+/*      Text                                                            */
 /* -------------------------------------------------------------------- */
-    oField.SetName( "ULink" );
+    oField.SetName( "Text" );
     oField.SetType( OFTString );
-    oField.SetSubType( OFSTJSON );
     oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
-/*      Text                                                            */
+/*      ULink                                                           */
 /* -------------------------------------------------------------------- */
-    oField.SetName( "Text" );
+    oField.SetName( "ULink" );
     oField.SetType( OFTString );
+    oField.SetSubType( OFSTJSON );
     oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
@@ -383,11 +383,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             break;
             case 6549: // 0x1995 Application ID by IPCC/Portugal
             {
-                theNewObject.Add( "domain", CPLSPrintf("0x%02x", pabyData[1] ) );
-                theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pabyData[0] ) );
-                theNewObject.Add( "family", CPLSPrintf("0x%02x", pabyData[3] ) );
-                theNewObject.Add( "object", CPLSPrintf("0x%02x", pabyData[2] ) );
-                theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pabyData[1], pabyData[0], pabyData[3], pabyData[2] ) );
+                theNewObject.Add( "domain", CPLSPrintf("0x%02x", pabyData[5] ) );
+                theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pabyData[4] ) );
+                theNewObject.Add( "family", CPLSPrintf("0x%02x", pabyData[7] ) );
+                theNewObject.Add( "object", CPLSPrintf("0x%02x", pabyData[6] ) );
+                theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pabyData[5], pabyData[4], pabyData[7], pabyData[6] ) );
                 theNewObject.Add( "type", "IPCC/Portugal" );
             }
             break;

@@ -855,11 +855,11 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                     break;
                     case 0x1995: // 0x1995 (6549) IPCC/Portugal
                     {
-                        theNewObject.Add( "domain", CPLSPrintf("0x%02x", pData[1] ) );
-                        theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pData[0] ) );
-                        theNewObject.Add( "family", CPLSPrintf("0x%02x", pData[3] ) );
-                        theNewObject.Add( "object", CPLSPrintf("0x%02x", pData[2] ) );
-                        theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pData[1], pData[0], pData[3], pData[2] ) );
+                        theNewObject.Add( "domain", CPLSPrintf("0x%02x", pData[5] ) );
+                        theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pData[4] ) );
+                        theNewObject.Add( "family", CPLSPrintf("0x%02x", pData[7] ) );
+                        theNewObject.Add( "object", CPLSPrintf("0x%02x", pData[6] ) );
+                        theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pData[5], pData[4], pData[7], pData[6] ) );
                         theNewObject.Add( "type", "IPCC/Portugal" );
                     }
                     break;
