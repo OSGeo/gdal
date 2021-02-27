@@ -39,7 +39,7 @@ apt install -y  --no-install-recommends \
     wine-devel-i386=5.21~bionic \
     wine-devel-amd64=5.21~bionic \
     winetricks \
-    xvfb        # This is for making a dummy X server disply 
+    xvfb        # This is for making a dummy X server display
 
 echo "------ Download python ------"
 wget https://www.python.org/ftp/python/3.7.6/python-3.7.6-amd64.exe

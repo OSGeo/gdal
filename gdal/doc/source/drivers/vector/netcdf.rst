@@ -375,7 +375,7 @@ direct children of the root <Configuration> node, or specifically to a
 given layer, when defined as children of a <Layer> node.
 
 The filename is specified with the CONFIG_FILE dataset creation option.
-Alternatively, the content of the file can be specifid inline as the
+Alternatively, the content of the file can be specified inline as the
 value of the option (it must then begin strictly with the
 "<Configuration" characters)
 
