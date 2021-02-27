@@ -115,3 +115,12 @@ Past members:
 
 Note that discussion of proposals to the PSC take place on gdal-dev, and input
 from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is available for review.
+
+
+GDAL Service Providers
+----------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   service_providers

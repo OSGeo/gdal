@@ -300,3 +300,22 @@ div[class ^= "admonition shortname"] > p.admonition-title {
 .build_dependencies .admonition-title::before{
     content: '\f129'; /* info */
 }
+
+/* For service_providers.rst */
+img.img-logos {
+    float: left;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+/* For service_providers.rst */
+div.service-provider {
+    margin: 50px;
+}
+
+/* For service_providers.rst */
+div.service-provider::after {
+    content: "";
+    clear: both;
+    display: table;
+}
