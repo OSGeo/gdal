@@ -58,13 +58,11 @@ communication channels in most situations.
 Conference
 ----------
 
-.. warning:: FOSS4G 2020 has unfortunately been canceled.
+.. image:: ../images/foss4g2021.png
+   :alt:     FOSS4G 2021
+   :target:  https://2021.foss4g.org/
 
-.. image:: ../images/foss4g2020.png
-   :alt:     FOSS4G 2020
-   :target:  https://2020.foss4g.org/
-
-`FOSS4G 2020 <https://2020.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held in Calgary, Canada, August 24th - August 29th, 2020.
+`FOSS4G 2021 <https://2021.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held ONLINE from September 27th to October 2nd 2021.
 
 
 Governance and Community Participation
