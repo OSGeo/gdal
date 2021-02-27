@@ -542,10 +542,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_CTG();
 #endif
 
-#ifdef FRMT_e00grid
-    GDALRegister_E00GRID();
-#endif
-
 #ifdef FRMT_zmap
     GDALRegister_ZMap();
 #endif

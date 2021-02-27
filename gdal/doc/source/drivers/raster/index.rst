@@ -15,7 +15,7 @@ Raster drivers
 .. note::
 
     The following drivers have been retired and moved to the
-    https://github.com/OSGeo/gdal-extra-drivers repository: BPG
+    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID
 
 ..
     Developer comment: make html includes a hack to hide the table from
@@ -56,7 +56,6 @@ Raster drivers
    doq1
    doq2
    dted
-   e00grid
    ecrgtoc
    ecw
    eedai

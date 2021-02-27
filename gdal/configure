@@ -1017,7 +1017,6 @@ enable_driver_cosar
 enable_driver_ctg
 enable_driver_dimap
 enable_driver_dted
-enable_driver_e00grid
 enable_driver_elas
 enable_driver_envisat
 enable_driver_ers
@@ -1915,8 +1914,6 @@ Optional Features:
   --disable-driver-ctg    disable ctg driver support (enabled by default)
   --disable-driver-dimap  disable dimap driver support (enabled by default)
   --disable-driver-dted   disable dted driver support (enabled by default)
-  --disable-driver-e00grid
-                          disable e00grid driver support (enabled by default)
   --disable-driver-elas   disable elas driver support (enabled by default)
   --disable-driver-envisat
                           disable envisat driver support (enabled by default)
@@ -26431,34 +26428,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED dted"
   INTERNAL_FORMAT_dted_ENABLED=no
-fi
-
-# Check whether --enable-driver-e00grid was given.
-if test "${enable_driver_e00grid+set}" = set; then :
-  enableval=$enable_driver_e00grid;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_e00grid
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED e00grid"
-  INTERNAL_FORMAT_e00grid_ENABLED=yes
-else
-  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED e00grid"
-  INTERNAL_FORMAT_e00grid_ENABLED=no
 fi
 
 # Check whether --enable-driver-elas was given.

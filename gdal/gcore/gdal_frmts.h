@@ -170,7 +170,6 @@ void CPL_DLL GDALRegister_MAP(void);
 void CPL_DLL GDALRegister_OZI(void);
 void CPL_DLL GDALRegister_ACE2(void);
 void CPL_DLL GDALRegister_CTG(void);
-void CPL_DLL GDALRegister_E00GRID(void);
 void CPL_DLL GDALRegister_SNODAS(void);
 void CPL_DLL GDALRegister_WEBP(void);
 void CPL_DLL GDALRegister_ZMap(void);
