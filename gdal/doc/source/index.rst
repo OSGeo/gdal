@@ -17,7 +17,7 @@ This documentation is also available as a `PDF file <gdal.pdf>`_.
     api/index
     tutorials/index
     development/index
-    community
+    community/index
     contributing/index
     faq
     license

@@ -58,7 +58,7 @@ communication channels in most situations.
 Conference
 ----------
 
-.. image:: ../images/foss4g2021.png
+.. image::   ../../images/foss4g2021.png
    :alt:     FOSS4G 2021
    :target:  https://2021.foss4g.org/
 
