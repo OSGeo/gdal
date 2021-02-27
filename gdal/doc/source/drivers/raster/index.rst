@@ -15,7 +15,7 @@ Raster drivers
 .. note::
 
     The following drivers have been retired and moved to the
-    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID
+    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID, EPSILON
 
 ..
     Developer comment: make html includes a hack to hide the table from
@@ -63,7 +63,6 @@ Raster drivers
    eir
    elas
    envi
-   epsilon
    esat
    esric
    ers

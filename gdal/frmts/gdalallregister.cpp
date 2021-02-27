@@ -504,10 +504,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GEOR();
 #endif
 
-#ifdef FRMT_epsilon
-    GDALRegister_EPSILON();
-#endif
-
 #ifdef FRMT_postgisraster
     GDALRegister_PostGISRaster();
 #endif

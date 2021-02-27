@@ -1189,7 +1189,6 @@ with_pcre
 with_teigha
 with_teigha_plt
 with_idb
-with_epsilon
 with_webp
 with_geos
 with_sfcgal
@@ -2202,7 +2201,6 @@ Optional Packages:
   --with-teigha=path Include Teigha DWG/DGN support
   --with-teigha-plt=platform Teigha platform
   --with-idb=DIR        Include Informix DataBlade support (DIR points to Informix root)
-  --with-epsilon=ARG    Include EPSILON support (ARG=no, yes or libepsilon install root path)
   --with-webp=ARG    Include WEBP support (ARG=no, yes or libwebp install root path)
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
@@ -38190,125 +38188,6 @@ IDB_LIB=${IDB_LIB}
 
 
 
-# Check whether --with-epsilon was given.
-if test "${with_epsilon+set}" = set; then :
-  withval=$with_epsilon;
-fi
-
-
-EPSILON_SETTING=no
-
-if test "$with_epsilon" = "yes" ; then
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for eps_read_block_header in -lepsilon" >&5
-$as_echo_n "checking for eps_read_block_header in -lepsilon... " >&6; }
-if ${ac_cv_lib_epsilon_eps_read_block_header+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lepsilon  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char eps_read_block_header ();
-int
-main ()
-{
-return eps_read_block_header ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_epsilon_eps_read_block_header=yes
-else
-  ac_cv_lib_epsilon_eps_read_block_header=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_epsilon_eps_read_block_header" >&5
-$as_echo "$ac_cv_lib_epsilon_eps_read_block_header" >&6; }
-if test "x$ac_cv_lib_epsilon_eps_read_block_header" = xyes; then :
-  EPSILON_SETTING=yes
-else
-  EPSILON_SETTING=no
-fi
-
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-lepsilon $LIBS"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-elif test "$with_epsilon" != "no" -a "$with_epsilon" != ""; then
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for eps_read_block_header in -lepsilon" >&5
-$as_echo_n "checking for eps_read_block_header in -lepsilon... " >&6; }
-if ${ac_cv_lib_epsilon_eps_read_block_header+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lepsilon -L$with_epsilon/lib -lepsilon $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char eps_read_block_header ();
-int
-main ()
-{
-return eps_read_block_header ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_epsilon_eps_read_block_header=yes
-else
-  ac_cv_lib_epsilon_eps_read_block_header=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_epsilon_eps_read_block_header" >&5
-$as_echo "$ac_cv_lib_epsilon_eps_read_block_header" >&6; }
-if test "x$ac_cv_lib_epsilon_eps_read_block_header" = xyes; then :
-  EPSILON_SETTING=yes
-else
-  EPSILON_SETTING=no
-fi
-
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-L$with_epsilon/lib -lepsilon $LIBS"
-    EXTRA_INCLUDES="-I$with_epsilon/include $EXTRA_INCLUDES"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-fi
-
-if test "$EPSILON_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="epsilon $OPT_GDAL_FORMATS"
-fi
-
-
-
 # Check whether --with-webp was given.
 if test "${with_webp+set}" = set; then :
   withval=$with_webp;
@@ -44960,9 +44839,6 @@ echo "  JP2Lura support:           ${HAVE_JP2LURA}"
 
 
 echo "  MSG support:               ${HAVE_MSG}"
-
-
-echo "  EPSILON support:           ${EPSILON_SETTING}"
 
 
 echo "  WebP support:              ${WEBP_SETTING}"

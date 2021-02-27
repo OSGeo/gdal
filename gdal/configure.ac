@@ -4480,41 +4480,6 @@ AC_SUBST(IDB_INC,${IDB_INC})
 AC_SUBST(IDB_LIB,${IDB_LIB})
 
 dnl ---------------------------------------------------------------------------
-dnl Check if epsilon library is available.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(epsilon,[  --with-epsilon[=ARG]    Include EPSILON support (ARG=no, yes or libepsilon install root path)],,)
-
-EPSILON_SETTING=no
-
-if test "$with_epsilon" = "yes" ; then
-
-  AC_CHECK_LIB(epsilon,eps_read_block_header,EPSILON_SETTING=yes,EPSILON_SETTING=no,)
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-lepsilon $LIBS"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-elif test "$with_epsilon" != "no" -a "$with_epsilon" != ""; then
-
-  AC_CHECK_LIB(epsilon,eps_read_block_header,EPSILON_SETTING=yes,EPSILON_SETTING=no,-L$with_epsilon/lib -lepsilon)
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-L$with_epsilon/lib -lepsilon $LIBS"
-    EXTRA_INCLUDES="-I$with_epsilon/include $EXTRA_INCLUDES"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-fi
-
-if test "$EPSILON_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="epsilon $OPT_GDAL_FORMATS"
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl Check if webp library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -6070,7 +6035,6 @@ LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
 LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])
-LOC_MSG([  EPSILON support:           ${EPSILON_SETTING}])
 LOC_MSG([  WebP support:              ${WEBP_SETTING}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
