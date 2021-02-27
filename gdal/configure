@@ -1093,7 +1093,6 @@ enable_driver_openfilegdb
 enable_driver_pgdump
 enable_driver_rec
 enable_driver_s57
-enable_driver_segy
 enable_driver_selafin
 enable_driver_shape
 enable_driver_sua
@@ -2015,7 +2014,6 @@ Optional Features:
   --disable-driver-pgdump disable pgdump driver support (enabled by default)
   --disable-driver-rec    disable rec driver support (enabled by default)
   --disable-driver-s57    disable s57 driver support (enabled by default)
-  --disable-driver-segy   disable segy driver support (enabled by default)
   --disable-driver-selafin
                           disable selafin driver support (enabled by default)
   --disable-driver-shape  disable shape driver support (enabled by default)
@@ -28590,35 +28588,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED s57"
   INTERNAL_FORMAT_s57_ENABLED=no
-fi
-
-# Check whether --enable-driver-segy was given.
-if test "${enable_driver_segy+set}" = set; then :
-  enableval=$enable_driver_segy;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_segy
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED segy"
-  INTERNAL_FORMAT_segy_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSEGY_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED segy"
-  INTERNAL_FORMAT_segy_ENABLED=no
 fi
 
 # Check whether --enable-driver-selafin was given.

@@ -239,9 +239,6 @@ void OGRRegisterAllInternal()
 #ifdef ARCGEN_ENABLED
     RegisterOGRARCGEN();
 #endif
-#ifdef SEGY_ENABLED
-    RegisterOGRSEGY();
-#endif
 #ifdef XLS_ENABLED
     RegisterOGRXLS();
 #endif

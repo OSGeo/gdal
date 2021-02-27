@@ -542,7 +542,6 @@ void CPL_DLL RegisterOGRCouchDB();
 void CPL_DLL RegisterOGRCloudant();
 void CPL_DLL RegisterOGRIdrisi();
 void CPL_DLL RegisterOGRARCGEN();
-void CPL_DLL RegisterOGRSEGY();
 void CPL_DLL RegisterOGRXLS();
 void CPL_DLL RegisterOGRODS();
 void CPL_DLL RegisterOGRXLSX();

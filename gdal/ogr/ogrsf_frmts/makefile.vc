@@ -8,7 +8,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			avc rec mem vrt csv gmt kml gpx \
 			geoconcept xplane georss gtm dxf pgdump gpsbabel \
 			sua pds edigeo svg idrisi arcgen \
-			segy sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
+			sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
 			$(ARCOBJECTS_DIR) \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
@@ -274,7 +274,7 @@ default:
 				 dxf\*.obj pgdump\*.obj gpsbabel\*.obj \
 				 sua\*.obj pds\*.obj \
 				 edigeo\*.obj svg\*.obj idrisi\*.obj \
-				 arcgen\*.obj segy\*.obj sxf\*.obj \
+				 arcgen\*.obj sxf\*.obj \
 				 openfilegdb\*.obj wasp\*.obj selafin\*.obj jml\*.obj \
 				 vdv\*.obj mvt\*.obj flatgeobuf\*.obj mapml\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
