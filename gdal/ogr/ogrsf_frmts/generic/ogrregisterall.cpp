@@ -239,9 +239,6 @@ void OGRRegisterAllInternal()
 #ifdef ARCGEN_ENABLED
     RegisterOGRARCGEN();
 #endif
-#ifdef SEGUKOOA_ENABLED
-    RegisterOGRSEGUKOOA();
-#endif
 #ifdef SEGY_ENABLED
     RegisterOGRSEGY();
 #endif

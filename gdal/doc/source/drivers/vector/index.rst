@@ -16,7 +16,7 @@ Vector drivers
 .. note::
 
     The following drivers have been retired and moved to the
-    https://github.com/OSGeo/gdal-extra-drivers repository: AeronavFAA, BNA, HTF, OpenAir
+    https://github.com/OSGeo/gdal-extra-drivers repository: AeronavFAA, BNA, HTF, OpenAir, SEGUKOOA
 
 ..
     Developer comment: make html includes a hack to hide the table from
@@ -99,7 +99,6 @@ Vector drivers
    plscenes
    s57
    sdts
-   segukooa
    segy
    selafin
    shapefile
