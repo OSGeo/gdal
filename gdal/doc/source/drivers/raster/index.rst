@@ -12,6 +12,11 @@ Raster drivers
 
 .. include:: driver_summary.rst
 
+.. note::
+
+    The following drivers have been retired and moved to the
+    https://github.com/OSGeo/gdal-extra-drivers repository: BPG
+
 ..
     Developer comment: make html includes a hack to hide the table from
     the index.html file. We need to keep it visible so that the top-level
@@ -29,7 +34,6 @@ Raster drivers
    bag
    blx
    bmp
-   bpg
    bsb
    bt
    byn
