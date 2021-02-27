@@ -221,9 +221,6 @@ void OGRRegisterAllInternal()
 #ifdef SOSI_ENABLED
     RegisterOGRSOSI();
 #endif
-#ifdef HTF_ENABLED
-    RegisterOGRHTF();
-#endif
 #ifdef GEOMEDIA_ENABLED
     RegisterOGRGeomedia();
 #endif
