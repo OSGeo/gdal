@@ -15,7 +15,7 @@ Raster drivers
 .. note::
 
     The following drivers have been retired and moved to the
-    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID, EPSILON
+    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid
 
 ..
     Developer comment: make html includes a hack to hide the table from
@@ -94,7 +94,6 @@ Raster drivers
    hfa
    ida
    Idrisi
-   ignfheightasciigrid
    ilwis
    intergraphraster
    iris

@@ -1027,7 +1027,6 @@ enable_driver_gsg
 enable_driver_gxf
 enable_driver_hf2
 enable_driver_idrisi
-enable_driver_ignfheightasciigrid
 enable_driver_ilwis
 enable_driver_ingr
 enable_driver_iris
@@ -1924,8 +1923,6 @@ Optional Features:
   --disable-driver-gxf    disable gxf driver support (enabled by default)
   --disable-driver-hf2    disable hf2 driver support (enabled by default)
   --disable-driver-idrisi disable idrisi driver support (enabled by default)
-  --disable-driver-ignfheightasciigrid
-                          disable ignfheightasciigrid driver support (enabled by default)
   --disable-driver-ilwis  disable ilwis driver support (enabled by default)
   --disable-driver-ingr   disable ingr driver support (enabled by default)
   --disable-driver-iris   disable iris driver support (enabled by default)
@@ -26706,34 +26703,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED idrisi"
   INTERNAL_FORMAT_idrisi_ENABLED=no
-fi
-
-# Check whether --enable-driver-ignfheightasciigrid was given.
-if test "${enable_driver_ignfheightasciigrid+set}" = set; then :
-  enableval=$enable_driver_ignfheightasciigrid;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_ignfheightasciigrid
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ignfheightasciigrid"
-  INTERNAL_FORMAT_ignfheightasciigrid_ENABLED=yes
-else
-  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ignfheightasciigrid"
-  INTERNAL_FORMAT_ignfheightasciigrid_ENABLED=no
 fi
 
 # Check whether --enable-driver-ilwis was given.
