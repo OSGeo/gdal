@@ -3753,7 +3753,7 @@ OGRGeometry *OGRGeometry::Normalize() const
  * This function is built on the GEOS library; check it for the definition
  * of the geometry operation.
  * If OGR is built without the GEOS library, this function will always fail,
- * issuing a CPLE_NotSupported error.*
+ * issuing a CPLE_NotSupported error.
  * @param hGeom The Geometry to normalize.
  *
  * @return a newly allocated geometry now owned by the caller, or NULL
