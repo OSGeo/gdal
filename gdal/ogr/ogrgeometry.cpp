@@ -3702,7 +3702,7 @@ OGRGeometryH OGR_G_MakeValid( OGRGeometryH hGeom )
  *
  * This method is the same as the C function OGR_G_Normalize().
  *
- * This function is built on the GEOS >= 3.8 library, check it for the definition
+ * This function is built on the GEOS library; check it for the definition
  * of the geometry operation.
  * If OGR is built without the GEOS library, this function will always fail,
  * issuing a CPLE_NotSupported error.
