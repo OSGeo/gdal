@@ -6527,6 +6527,11 @@ class Geometry(_object):
         return _ogr.Geometry_MakeValid(self, *args)
 
 
+    def Normalize(self, *args):
+        """Normalize(Geometry self) -> Geometry"""
+        return _ogr.Geometry_Normalize(self, *args)
+
+
     def RemoveLowerDimensionSubGeoms(self, *args):
         """RemoveLowerDimensionSubGeoms(Geometry self) -> Geometry"""
         return _ogr.Geometry_RemoveLowerDimensionSubGeoms(self, *args)
