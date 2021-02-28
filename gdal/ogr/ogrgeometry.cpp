@@ -3717,7 +3717,7 @@ OGRGeometry *OGRGeometry::Normalize() const
 #ifndef HAVE_GEOS
     CPLError( CE_Failure, CPLE_NotSupported,
                   "GEOS support not enabled." );
-        return -1.0;
+        return nullptr;
 #else
     OGRGeometry *poOGRProduct = nullptr;
 
