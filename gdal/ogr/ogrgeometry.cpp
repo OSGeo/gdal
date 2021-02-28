@@ -3750,7 +3750,7 @@ OGRGeometry *OGRGeometry::Normalize() const
  *
  * This function is the same as the C++ method OGRGeometry::Normalize().
  *
- * This function is built on the GEOS >= 3.8 library, check it for the definition
+ * This function is built on the GEOS library; check it for the definition
  * of the geometry operation.
  * If OGR is built without the GEOS library, this function will always fail,
  * issuing a CPLE_NotSupported error.*
