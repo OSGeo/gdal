@@ -242,7 +242,8 @@ A typical OnEarth Tiled WMS configuration file might look like:
        </Service>
    </GDAL_WMS>
 
-The TiledWMS minidriver can use the following open options:
+The TiledWMS minidriver can use the following open options :
+
 -  TiledGroupName -- The value is a string that identifies one of the tiled services 
    available on the server
 -  Change -- A <Key>:<Value> pair, which will be passed to the server. The key has to 
