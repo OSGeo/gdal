@@ -3767,8 +3767,6 @@ OGRGeometryH OGR_G_Normalize( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Normalize", nullptr );
 
-    //return reinterpret_cast<OGRGeometryH>(
-    //    reinterpret_cast<OGRGeometry *>(hGeom)->Normalize());
     return OGRGeometry::ToHandle(OGRGeometry::FromHandle(hGeom)->Normalize());
 }
 
