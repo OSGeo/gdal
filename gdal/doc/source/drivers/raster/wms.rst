@@ -32,7 +32,7 @@ other content before the ``<GDAL_WMS>`` element.
 <GDAL_WMS>
 <Service name="WMS">                                                       Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)
 <Version>1.1.1</Version>                                                   WMS version. (optional, defaults to 1.1.1)
-<ServerUrl>http://host.domain.com/wms.cgi?</ServerUrl>                WMS server URL. (required)
+<ServerUrl>http://host.domain.com/wms.cgi?</ServerUrl>                     WMS server URL. (required)
 <SRS>EPSG:4326</SRS>                                                       Image projection (optional, defaults to EPSG:4326 in WMS and 102100 in AGS, WMS version 1.1.1 or below only and ArcGIS Server). For ArcGIS Server the spatial reference can be specified as either a well-known ID or as a `spatial reference json object <http://resources.arcgis.com/en/help/rest/apiref/geometry.html#sr>`__
 <CRS>CRS:83</CRS>                                                          Image projection (optional, defaults to EPSG:4326, WMS version 1.3.0 or above only)
 <ImageFormat>image/jpeg</ImageFormat>                                      Format in which to request data. Paletted formats like image/gif will be converted to RGB. (optional, defaults to image/jpeg)
