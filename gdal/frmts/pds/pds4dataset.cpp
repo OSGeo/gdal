@@ -4084,6 +4084,8 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         if( poSrcDriver)
         {
             auto pszDriverName = poSrcDriver->GetDescription();
+            papszOptions = CSLSetNameValue(
+                papszOptions, "VAR_VERTICAL_DISPLAY_DIRECTION", "Top to Bottom");
             if( EQUAL(pszDriverName, "GTiff") )
             {
                 GByte abySignature[4] = {0};
@@ -4106,6 +4108,8 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
             else if( EQUAL(pszDriverName, "FITS") )
             {
                 osHeaderParsingStandard = "FITS 3.0";
+                papszOptions = CSLSetNameValue(
+                    papszOptions, "VAR_VERTICAL_DISPLAY_DIRECTION", "Bottom to Top");
             }
         }
     }

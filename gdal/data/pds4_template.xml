@@ -56,7 +56,7 @@
                     <disp:horizontal_display_axis>Sample</disp:horizontal_display_axis>
                     <disp:horizontal_display_direction>Left to Right</disp:horizontal_display_direction>
                     <disp:vertical_display_axis>Line</disp:vertical_display_axis>
-                    <disp:vertical_display_direction>Top to Bottom</disp:vertical_display_direction>
+                    <disp:vertical_display_direction>${VERTICAL_DISPLAY_DIRECTION}</disp:vertical_display_direction>
                 </disp:Display_Direction>
             </disp:Display_Settings>
 
