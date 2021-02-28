@@ -3016,6 +3016,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_MakeValid(self);
   }
 
+  %newobject Normalize;
+  OGRGeometryShadow* Normalize() {
+    return (OGRGeometryShadow*) OGR_G_Normalize(self);
+  }
+
   %newobject RemoveLowerDimensionSubGeoms;
   OGRGeometryShadow* RemoveLowerDimensionSubGeoms() {
     return (OGRGeometryShadow*) OGR_G_RemoveLowerDimensionSubGeoms(self);

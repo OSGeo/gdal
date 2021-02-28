@@ -3371,6 +3371,21 @@ def test_ogr_geom_makevalid():
 ###############################################################################
 
 
+def test_ogr_geom_normalize():
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    g = ogr.CreateGeometryFromWkt('POLYGON ((0 1,1 1,1 0,0 0,0 1))')
+    g = g.Normalize()
+    assert g is None or g.ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,1 0,0 0))'
+
+    return 'success'
+
+
+###############################################################################
+
+
 def test_ogr_geom_force_multipolygon_z_to_compound_curve():
 
     g = ogr.CreateGeometryFromWkt('MULTIPOLYGON Z (((0 0 0,0 1 0,1 1 0,0 0 0)))')
