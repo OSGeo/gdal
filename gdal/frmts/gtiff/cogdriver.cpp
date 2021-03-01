@@ -90,6 +90,8 @@ static const char* GetResampling(GDALDataset* poSrcDS)
 static const char* GetPredictor(GDALDataset* poSrcDS, 
                                 const char* pszPredictor) 
 {
+    if (pszPredictor == nullptr) return nullptr;
+
     if( EQUAL(pszPredictor, "YES") || EQUAL(pszPredictor, "ON") || EQUAL(pszPredictor, "TRUE") )
     {
         if( GDALDataTypeIsFloating(poSrcDS->GetRasterBand(1)->GetRasterDataType()) )
