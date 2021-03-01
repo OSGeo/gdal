@@ -1027,10 +1027,17 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                                      CPLSPrintf("%d", nAlignedLevels));
          }
     }
+    const char* pszOverviewCompress = CSLFetchNameValue(papszOptions, "OVERVIEW_COMPRESS");
 
-    CPLConfigOptionSetter ovrCompressSetter("COMPRESS_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_COMPRESS"), true);
+    CPLConfigOptionSetter ovrCompressSetter("COMPRESS_OVERVIEW", pszOverviewCompress, true);
     CPLConfigOptionSetter ovrQualityJpegSetter("JPEG_QUALITY_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY"), true);
     CPLConfigOptionSetter ovrQualityWebpSetter("WEBP_LEVEL_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY"), true);
+
+    std::unique_ptr<CPLConfigOptionSetter> poPhotometricSetter;
+    if (pszOverviewCompress != nullptr && nBands == 3 && EQUAL(pszOverviewCompress, "JPEG") ) 
+    {
+        poPhotometricSetter.reset(new CPLConfigOptionSetter("PHOTOMETRIC_OVERVIEW", "YCBCR", true));
+    }
 
     const char* osOvrPredictor = CSLFetchNameValueDef(papszOptions, "OVERVIEW_PREDICTOR", "FALSE");
     const char* pszOvrPredictorValue = GetPredictor(poSrcDS, osOvrPredictor);

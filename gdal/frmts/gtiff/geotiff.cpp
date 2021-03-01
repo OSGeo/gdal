@@ -10202,6 +10202,24 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
 
     int nOvBitsPerSample = m_nBitsPerSample;
 
+    int l_nPhotometric = m_nPhotometric;
+    const char* psvPhotometricValue = CPLGetConfigOption( "PHOTOMETRIC_OVERVIEW", nullptr );
+    if( psvPhotometricValue != nullptr )
+    {
+        if ( EQUAL (psvPhotometricValue, "YCBCR" ) && nBands == 3)
+        {
+            l_nPhotometric = PHOTOMETRIC_YCBCR;
+        } 
+        else 
+        { 
+            ReportError(CE_Warning, CPLE_NotSupported,
+            "Building external overviews with PHOTOMETRIC_OVERVIEW's other than YCBCR are not supported "
+            );
+        }
+    }
+
+
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
@@ -10212,7 +10230,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
     unsigned short *panGreen = nullptr;
     unsigned short *panBlue = nullptr;
 
-    if( m_nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr )
+    if( l_nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr )
     {
         CreateTIFFColorTable(m_poColorTable, nOvBitsPerSample,
                              anTRed, anTGreen, anTBlue,
@@ -10249,15 +10267,17 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
     }
 
     int l_nCompression = m_nCompression;
-    const char* pszValue = CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
-    if( pszValue != nullptr )
+    const char* pszCompressValue = CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
+    if( pszCompressValue != nullptr )
     {
-        l_nCompression = GTIFFGetCompressionMethod(pszValue, "COMPRESS_OVERVIEW");
+        l_nCompression = GTIFFGetCompressionMethod(pszCompressValue, "COMPRESS_OVERVIEW");
         if( l_nCompression < 0 )
         {
             l_nCompression = m_nCompression;
         }
     }
+
+    
 /* -------------------------------------------------------------------- */
 /*      Fetch predictor tag                                             */
 /* -------------------------------------------------------------------- */
@@ -10327,7 +10347,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
                                     nOvrBlockXSize,
                                     nOvrBlockYSize,
                                     TRUE,
-                                    l_nCompression, m_nPhotometric, m_nSampleFormat,
+                                    l_nCompression, l_nPhotometric, m_nSampleFormat,
                                     nPredictor,
                                     panRed, panGreen, panBlue,
                                     nExtraSamples, panExtraSampleValues,

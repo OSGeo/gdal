@@ -668,6 +668,8 @@ the default behavior of the GTiff driver.
    domain to be written to PAM.
 -  :decl_configoption:`COMPRESS_OVERVIEW` :  See `Creation Options COMPRESS <#creation-options>`__ section.
    Set the compression type to use for overviews
+-  :decl_configoption:`PHOTOMETRIC_OVERVIEW` :  YCBCR
+   Set the photometric color space for overview creation
 -  :decl_configoption:`PREDICTOR_OVERVIEW` : Integer 1,2 or 3.
    Set the predictor to use for overviews with LZW, DEFLATE and ZSTD compression
 -  :decl_configoption:`JPEG_QUALITY_OVERVIEW` : Integer between 0 and 100. Default value : 75.
