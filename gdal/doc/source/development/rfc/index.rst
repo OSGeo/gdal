@@ -85,3 +85,4 @@ RFC list
     rfc75_multidimensional_arrays
     rfc76_ogrpythondrivers
     rfc77_drop_python2_support
+    rfc79_listing_service_providers
