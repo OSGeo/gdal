@@ -3733,10 +3733,12 @@ OGRGeometry *OGRGeometry::Normalize() const
              poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosGeom,
                                                  this, nullptr);
 
+        } else 
+        {
+            GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
         }
-    } else {
-              GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
-    }
+        
+    } 
     freeGEOSContext( hGEOSCtxt );
 
     return poOGRProduct;
