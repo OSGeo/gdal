@@ -3271,11 +3271,7 @@ static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t
     if( data != data_aligned )
         memmove(data, data_aligned, buf_size);
 
-#if PY_VERSION_HEX >= 0x03000000
     PyBytesObject* stringobj = (PyBytesObject *) obj;
-#else
-    PyStringObject* stringobj = (PyStringObject *) obj;
-#endif
     Py_SIZE(stringobj) = buf_size;
     stringobj->ob_sval[buf_size] = '\0';
     stringobj->ob_shash = -1;          /* invalidate cached hash value */
@@ -3431,19 +3427,11 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
         PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "ignore");
         if (pyObj != NULL)
             return pyObj;
-#if PY_VERSION_HEX >= 0x03000000
         return PyBytes_FromString(pszStr);
-#else
-        return PyString_FromString(pszStr);
-#endif
     }
     pszIter ++;
   }
-#if PY_VERSION_HEX >= 0x03000000
   return PyUnicode_FromString(pszStr);
-#else
-  return PyString_FromString(pszStr);
-#endif
 }
 
 /* Return a NULL terminated c String from a PyObject */
@@ -3460,11 +3448,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
       if( pyUTF8Str == NULL )
         return NULL;
-#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
       pszNewStr = (char *) malloc(nLen+1);
       memcpy(pszNewStr, pszStr, nLen+1);
       Py_XDECREF(pyUTF8Str);
@@ -3473,11 +3457,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
   }
   else
   {
-#if PY_VERSION_HEX >= 0x03000000
       return PyBytes_AsString(pyObject);
-#else
-      return PyString_AsString(pyObject);
-#endif
   }
 }
 
@@ -3507,7 +3487,6 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
@@ -3532,31 +3511,6 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
         *buf = o;
     }
     return static_cast<unsigned int>(nRet);
-#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return 0;
-    }
-    PyObject* o = (PyObject*) *buf;
-    char *data = PyString_AsString(o);
-    SWIG_PYTHON_THREAD_END_BLOCK;
-    size_t nRet = (size_t)VSIFReadL( data, nMembSize, nMembCount, fp );
-    if (nRet * (size_t)nMembSize < buf_size)
-    {
-        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        _PyString_Resize(&o, nRet * nMembSize);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        *buf = o;
-    }
-    return static_cast<unsigned int>(nRet);
-#endif
 }
 
 
@@ -4132,11 +4086,7 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
 {
   *pbErr = FALSE;
   /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq)
-#if PY_VERSION_HEX < 0x03000000
-    || PyString_Check(pySeq)
-#endif
-    ) {
+  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq) ) {
     PyErr_SetString(PyExc_TypeError,"not a sequence");
     *pbErr = TRUE;
     return NULL;
@@ -4164,21 +4114,12 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
         *pbErr = TRUE;
         return NULL;
       }
-#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
       papszRet = CSLAddString( papszRet, pszStr );
       Py_XDECREF(pyUTF8Str);
     }
-#if PY_VERSION_HEX >= 0x03000000
     else if (PyBytes_Check(pyObj))
       papszRet = CSLAddString( papszRet, PyBytes_AsString(pyObj) );
-#else
-    else if (PyString_Check(pyObj))
-      papszRet = CSLAddString( papszRet, PyString_AsString(pyObj) );
-#endif
     else
     {
         Py_DECREF(pyObj);
@@ -5352,7 +5293,6 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double x
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
@@ -5365,20 +5305,6 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double x
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     char* data_aligned = get_aligned_buffer(data, ntype);
@@ -5826,7 +5752,6 @@ SWIGINTERN CPLErr GDALMDArrayHS_Read(GDALMDArrayHS *self,int nDims1,GUIntBig *ar
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
@@ -5840,20 +5765,6 @@ SWIGINTERN CPLErr GDALMDArrayHS_Read(GDALMDArrayHS *self,int nDims1,GUIntBig *ar
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     GDALDataType ntype  = GDALExtendedDataTypeGetNumericDataType(buffer_datatype);
@@ -6038,7 +5949,6 @@ SWIGINTERN CPLErr GDALMDArrayHS_GetNoDataValueAsRaw(GDALMDArrayHS *self,void **b
     GDALExtendedDataTypeRelease(selfType);
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
@@ -6052,20 +5962,6 @@ SWIGINTERN CPLErr GDALMDArrayHS_GetNoDataValueAsRaw(GDALMDArrayHS *self,void **b
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     memcpy(data, pabyBuf, buf_size);
@@ -6216,7 +6112,6 @@ SWIGINTERN CPLErr GDALAttributeHS_ReadAsRaw(GDALAttributeHS *self,void **buf){
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
@@ -6231,21 +6126,6 @@ SWIGINTERN CPLErr GDALAttributeHS_ReadAsRaw(GDALAttributeHS *self,void **buf){
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        GDALAttributeFreeRawResult(self, pabyBuf, buf_size);
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     memcpy(data, pabyBuf, buf_size);
@@ -6739,7 +6619,6 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
@@ -6753,20 +6632,6 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     char* data_aligned = get_aligned_buffer(data, ntype);
@@ -6828,7 +6693,6 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int 
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
@@ -6842,20 +6706,6 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int 
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     char* data_aligned = get_aligned_buffer(data, ntype);
@@ -8568,21 +8418,7 @@ SWIGINTERN PyObject *_wrap_VSIGetMemFileBuffer_unsafe(PyObject *SWIGUNUSEDPARM(s
       }
     } else {
       do {
-#if PY_VERSION_HEX >= 0x03030000
         resultobj = PyMemoryView_FromMemory(reinterpret_cast<char *>(*arg2), *arg3, PyBUF_READ);
-#elif PY_VERSION_HEX >= 0x03000000
-        if( bUseExceptions ) {
-          PyErr_SetString(PyExc_RuntimeError, "Command works only in Python 3.3+");
-          resultobj = NULL;
-        } else {
-          CPLError(CE_Failure, CPLE_AppDefined, "Command works only in Python 3.3+");
-          resultobj = Py_None;
-          Py_INCREF(resultobj);
-        }
-        break;
-#else
-        resultobj = PyBuffer_FromMemory(*arg2, *arg3);
-#endif
         if (resultobj == NULL) {
           if( bUseExceptions ) {
             PyErr_SetString(PyExc_RuntimeError, "Could not allocate result buffer");
@@ -9213,7 +9049,6 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
         PyErr_Clear();
       }
     }
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
       size_t safeLen = 0;
@@ -9242,22 +9077,6 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj0))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
-      if( safeLen > INT_MAX ) {
-        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-      }
-      arg1 = (int) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
     ok: ;
   }
   if (obj1) {
@@ -9998,11 +9817,7 @@ SWIGINTERN PyObject *_wrap_DirEntry_size_get(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -10033,11 +9848,7 @@ SWIGINTERN PyObject *_wrap_DirEntry_mtime_get(PyObject *SWIGUNUSEDPARM(self), Py
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -10543,7 +10354,6 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
         PyErr_Clear();
       }
     }
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
       size_t safeLen = 0;
@@ -10572,22 +10382,6 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj0))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
-      if( safeLen > INT_MAX ) {
-        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-      }
-      arg1 = (int) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
     ok: ;
   }
   {
@@ -10721,7 +10515,6 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj1))
     {
       size_t safeLen = 0;
@@ -10744,19 +10537,6 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj1))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
-      arg2 = (GIntBig) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
   }
   {
     if (!arg1) {
@@ -11830,11 +11610,7 @@ SWIGINTERN PyObject *_wrap_StatBuf_size_get(PyObject *SWIGUNUSEDPARM(self), PyOb
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -11865,11 +11641,7 @@ SWIGINTERN PyObject *_wrap_StatBuf_mtime_get(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -12253,13 +12025,7 @@ SWIGINTERN PyObject *_wrap_SetFileMetadata(PyObject *SWIGUNUSEDPARM(self), PyObj
       /* We need to use the dictionary form. */
       Py_ssize_t size = PyMapping_Length( obj1 );
       if ( size > 0 && size == (int)size) {
-#if PY_VERSION_HEX < 0x03000000
-        // PyMapping_Items also work with python 2.x  but throws a warning about
-        // -Wwrite-strings warning
-        PyObject *item_list = PyObject_CallMethod(obj1,const_cast<char*>("items"),NULL);
-#else
         PyObject *item_list = PyMapping_Items( obj1 );
-#endif
         for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
           
@@ -12766,11 +12532,7 @@ SWIGINTERN PyObject *_wrap_VSIFTellL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -12997,7 +12759,6 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
         PyErr_Clear();
       }
     }
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
       size_t safeLen = 0;
@@ -13026,22 +12787,6 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj0))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
-      if( safeLen > INT_MAX ) {
-        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-      }
-      arg1 = (int) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
     ok: ;
   }
   ecode3 = SWIG_AsVal_int(obj1, &val3);
@@ -13706,13 +13451,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       /* We need to use the dictionary form. */
       Py_ssize_t size = PyMapping_Length( obj1 );
       if ( size > 0 && size == (int)size) {
-#if PY_VERSION_HEX < 0x03000000
-        // PyMapping_Items also work with python 2.x  but throws a warning about
-        // -Wwrite-strings warning
-        PyObject *item_list = PyObject_CallMethod(obj1,const_cast<char*>("items"),NULL);
-#else
         PyObject *item_list = PyMapping_Items( obj1 );
-#endif
         for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
           
@@ -16978,7 +16717,6 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
   }
   resultobj = SWIG_Py_Void();
   {
-#if PY_VERSION_HEX >= 0x02070000
     /* %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)*/
     Py_buffer *buf=(Py_buffer*)malloc(sizeof(Py_buffer));
     
@@ -17027,9 +16765,6 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
     }
     Py_DECREF(resultobj);
     resultobj = PyMemoryView_FromBuffer(buf);
-#else
-    PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -18878,7 +18613,6 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   arg5 = static_cast< int >(val5);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj5))
     {
       size_t safeLen = 0;
@@ -18901,19 +18635,6 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj5))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
-      arg6 = (GIntBig) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
   }
   if (obj6) {
     {
@@ -19305,7 +19026,6 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   arg5 = static_cast< int >(val5);
   {
     /* %typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject) */
-#if PY_VERSION_HEX>=0x03000000
     if (PyBytes_Check(obj5))
     {
       Py_ssize_t safeLen = 0;
@@ -19318,20 +19038,6 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
       PyErr_SetString(PyExc_TypeError, "not a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj5))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
-      arg6 = (int) safeLen;
-      arg8 = obj5;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
   }
   ecode9 = SWIG_AsVal_int(obj6, &val9);
   if (!SWIG_IsOK(ecode9)) {
@@ -22883,11 +22589,7 @@ SWIGINTERN PyObject *_wrap_Statistics_valid_count_get(PyObject *SWIGUNUSEDPARM(s
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -23285,11 +22987,7 @@ SWIGINTERN PyObject *_wrap_MDArray_GetBlockSize(PyObject *SWIGUNUSEDPARM(self), 
     for( size_t i = 0; i < *arg3; i++ ) {
       char szTmp[32];
       sprintf(szTmp, CPL_FRMT_GUIB, (*arg2)[i]);
-#if PY_VERSION_HEX>=0x03000000
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
-#else
-      PyObject *o =  PyInt_FromString(szTmp, NULL, 10);
-#endif
       PyList_SetItem(list, i, o );
     }
     Py_DECREF(resultobj);
@@ -23366,11 +23064,7 @@ SWIGINTERN PyObject *_wrap_MDArray_GetProcessingChunkSize(PyObject *SWIGUNUSEDPA
     for( size_t i = 0; i < *arg4; i++ ) {
       char szTmp[32];
       sprintf(szTmp, CPL_FRMT_GUIB, (*arg3)[i]);
-#if PY_VERSION_HEX>=0x03000000
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
-#else
-      PyObject *o =  PyInt_FromString(szTmp, NULL, 10);
-#endif
       PyList_SetItem(list, i, o );
     }
     Py_DECREF(resultobj);
@@ -24072,7 +23766,6 @@ SWIGINTERN PyObject *_wrap_MDArray_Write(PyObject *SWIGUNUSEDPARM(self), PyObjec
   arg10 = reinterpret_cast< GDALExtendedDataTypeHS * >(argp10);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj6))
     {
       size_t safeLen = 0;
@@ -24095,19 +23788,6 @@ SWIGINTERN PyObject *_wrap_MDArray_Write(PyObject *SWIGUNUSEDPARM(self), PyObjec
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj6))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj6, (char**) &arg12, &safeLen);
-      arg11 = (GIntBig) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
   }
   {
     if (!arg10) {
@@ -24788,7 +24468,6 @@ SWIGINTERN PyObject *_wrap_MDArray_SetNoDataValueRaw(PyObject *SWIGUNUSEDPARM(se
   arg1 = reinterpret_cast< GDALMDArrayHS * >(argp1);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj1))
     {
       size_t safeLen = 0;
@@ -24811,19 +24490,6 @@ SWIGINTERN PyObject *_wrap_MDArray_SetNoDataValueRaw(PyObject *SWIGUNUSEDPARM(se
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj1))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
-      arg2 = (GIntBig) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
   }
   {
     if ( bUseExceptions ) {
@@ -26230,11 +25896,7 @@ SWIGINTERN PyObject *_wrap_Attribute_GetDimensionsSize(PyObject *SWIGUNUSEDPARM(
     for( size_t i = 0; i < *arg3; i++ ) {
       char szTmp[32];
       sprintf(szTmp, CPL_FRMT_GUIB, (*arg2)[i]);
-#if PY_VERSION_HEX>=0x03000000
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
-#else
-      PyObject *o =  PyInt_FromString(szTmp, NULL, 10);
-#endif
       PyList_SetItem(list, i, o );
     }
     Py_DECREF(resultobj);
@@ -26678,7 +26340,6 @@ SWIGINTERN PyObject *_wrap_Attribute_WriteRaw(PyObject *SWIGUNUSEDPARM(self), Py
   arg1 = reinterpret_cast< GDALAttributeHS * >(argp1);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj1))
     {
       size_t safeLen = 0;
@@ -26701,19 +26362,6 @@ SWIGINTERN PyObject *_wrap_Attribute_WriteRaw(PyObject *SWIGUNUSEDPARM(self), Py
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj1))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
-      arg2 = (GIntBig) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
   }
   {
     if ( bUseExceptions ) {
@@ -30218,7 +29866,6 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   arg5 = static_cast< int >(val5);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj5))
     {
       size_t safeLen = 0;
@@ -30241,19 +29888,6 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj5))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
-      arg6 = (GIntBig) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
   }
   if (obj6) {
     {
@@ -30980,11 +30614,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
       for ( int i = 0; i < arg4; ++i ) {
         char szTmp[32];
         sprintf(szTmp, CPL_FRMT_GUIB, integerarray[i]);
-#if PY_VERSION_HEX>=0x03000000
         PyObject *o = PyLong_FromString(szTmp, NULL, 10);
-#else
-        PyObject *o =  PyInt_FromString(szTmp, NULL, 10);
-#endif
         PyList_SetItem(resultobj, i, o );
       }
     }
@@ -38125,11 +37755,7 @@ SWIGINTERN PyObject *_wrap_GetCacheMax(PyObject *SWIGUNUSEDPARM(self), PyObject 
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -38164,11 +37790,7 @@ SWIGINTERN PyObject *_wrap_GetCacheUsed(PyObject *SWIGUNUSEDPARM(self), PyObject
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;

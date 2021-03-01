@@ -98,3 +98,5 @@ vagrant_safe_test:
 
 test: vagrant_safe_test
 	LC_ALL=C mono OSRTransform.exe
+
+.PHONY: all clean veryclean generate interface build sign install gdal_csharp samples vagrant_safe_test test

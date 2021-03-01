@@ -46,13 +46,12 @@ namespace GDALPy
 
     extern int (*Py_IsInitialized)(void);
     extern void (*Py_SetProgramName)(const char*);
-    extern PyObject* (*PyBuffer_FromReadWriteMemory)(void*, size_t);
     extern PyObject* (*PyObject_Type)(PyObject*);
     extern int (*PyObject_IsInstance)(PyObject*, PyObject*);
     extern PyObject* (*PyTuple_New)(size_t);
     extern PyObject* (*PyBool_FromLong)(long);
-    extern PyObject* (*PyInt_FromLong)(long); // Py2 only normally, aliased on PyLong_FromLong on Py3
-    extern long (*PyInt_AsLong)(PyObject *); // Py2 only normally, aliased on PyLong_AsLong on Py3
+    extern PyObject* (*PyLong_FromLong)(long);
+    extern long (*PyLong_AsLong)(PyObject *);
     extern PyObject* (*PyLong_FromLongLong)(GIntBig);
     extern GIntBig (*PyLong_AsLongLong)(PyObject *);
     extern PyObject* (*PyFloat_FromDouble)(double);
@@ -73,12 +72,9 @@ namespace GDALPy
     extern int (*PyTuple_SetItem)(PyObject *, size_t, PyObject *);
     extern void (*PyObject_Print)(PyObject*,FILE*,int);
 
-    extern Py_ssize_t (*PyBytes_Size)(PyObject *); // Py3 only normally, aliased on PyString_Size on Py2
-    extern const char* (*PyBytes_AsString)(PyObject*); // Py3 only normally, aliased on PyString_AsString on Py2
-    extern PyObject* (*PyBytes_FromStringAndSize)(const void*, size_t); // Py3 only normally, aliased on PyString_FromStringAndSize on Py2
-
-    extern PyObject* (*PyString_FromStringAndSize)(const void*, size_t); // Py2 only normally, aliased on PyBytes_FromStringAndSize on Py3
-    extern const char* (*PyString_AsString)(PyObject*); // Py2 only. Not aliased for Py3
+    extern Py_ssize_t (*PyBytes_Size)(PyObject *);
+    extern const char* (*PyBytes_AsString)(PyObject*);
+    extern PyObject* (*PyBytes_FromStringAndSize)(const void*, size_t);
 
     extern PyObject* (*PyUnicode_FromString)(const char*);
     extern PyObject* (*PyUnicode_AsUTF8String)(PyObject *);
@@ -122,9 +118,7 @@ namespace GDALPy
         int flags;
         const char* help;
     };
-    extern PyObject* (*Py_InitModule4)(const char*, const PyMethodDef*, const char*, PyObject*, int); // Py2 only
-
-    extern PyObject * (*PyModule_Create2)(struct PyModuleDef*, int); // Py3
+    extern PyObject * (*PyModule_Create2)(struct PyModuleDef*, int);
 
     #define PYTHON_API_VERSION 1013
 

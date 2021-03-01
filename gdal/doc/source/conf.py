@@ -103,238 +103,238 @@ man_pages = [
     (
         'programs/gdalinfo',
         'gdalinfo',
-        u'Lists various information about a GDAL supported raster dataset',
+        'Lists various information about a GDAL supported raster dataset',
         [author_frankw],
         1
     ),
     (
         'programs/gdalmdiminfo',
         'gdalmdiminfo',
-        u'Reports structure and content of a multidimensional dataset',
+        'Reports structure and content of a multidimensional dataset',
         [author_evenr],
         1
     ),
     (
         'programs/gdal_translate',
         'gdal_translate',
-        u'Converts raster data between different formats.',
+        'Converts raster data between different formats.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/gdalmdimtranslate',
         'gdalmdimtranslate',
-        u'Converts multidimensional data between different formats, and perform subsetting.',
+        'Converts multidimensional data between different formats, and perform subsetting.',
         [author_evenr],
         1
     ),
     (
         'programs/gdaladdo',
         'gdaladdo',
-        u'Builds or rebuilds overview images.',
+        'Builds or rebuilds overview images.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/gdalwarp',
         'gdalwarp',
-        u'Image reprojection and warping utility.',
+        'Image reprojection and warping utility.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/gdaltindex',
         'gdaltindex',
-        u'Builds a shapefile as a raster tileindex.',
+        'Builds a shapefile as a raster tileindex.',
         [author_frankw],
         1
     ),
     (
         'programs/gdalbuildvrt',
         'gdalbuildvrt',
-        u'Builds a VRT from a list of datasets.',
+        'Builds a VRT from a list of datasets.',
         [author_evenr],
         1
     ),
     (
         'programs/gdal_contour',
         'gdal_contour',
-        u'Builds vector contour lines from a raster elevation model.',
+        'Builds vector contour lines from a raster elevation model.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/gdaldem',
         'gdaldem',
-        u'Tools to analyze and visualize DEMs.',
+        'Tools to analyze and visualize DEMs.',
         ['Matthew Perry <perrygeo@gmail.com>', author_evenr, 'Howard Butler <hobu.inc@gmail.com>', 'Chris Yesson <chris.yesson@ioz.ac.uk>'],
         1
     ),
     (
         'programs/gdal_viewshed',
         'gdal_viewshed',
-        u'Calculates a viewshed raster from an input raster DEM for a user defined point',
+        'Calculates a viewshed raster from an input raster DEM for a user defined point',
         [author_tamass],
         1
     ),
     (
         'programs/gdal_create',
         'gdal_create',
-        u'Create a raster file (without source dataset)',
+        'Create a raster file (without source dataset)',
         [author_evenr],
         1
     ),
     (
         'programs/rgb2pct',
         'rgb2pct',
-        u'Convert a 24bit RGB image to 8bit paletted.',
+        'Convert a 24bit RGB image to 8bit paletted.',
         [author_frankw],
         1
     ),
     (
         'programs/pct2rgb',
         'pct2rgb',
-        u'Convert an 8bit paletted image to 24bit RGB.',
+        'Convert an 8bit paletted image to 24bit RGB.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/gdal_merge',
         'gdal_merge',
-        u'Mosaics a set of images.',
+        'Mosaics a set of images.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/gdal2tiles',
         'gdal2tiles',
-        u'Generates directory with TMS tiles, KMLs and simple web viewers.',
+        'Generates directory with TMS tiles, KMLs and simple web viewers.',
         ['Klokan Petr Pridal <klokan@klokan.cz>'],
         1
     ),
     (
         'programs/gdal_rasterize',
         'gdal_rasterize',
-        u'Burns vector geometries into a raster.',
+        'Burns vector geometries into a raster.',
         [author_frankw],
         1
     ),
     (
         'programs/gdaltransform',
         'gdaltransform',
-        u'Transforms coordinates.',
+        'Transforms coordinates.',
         [author_frankw, "Jan Hartmann <j.l.h.hartmann@uva.nl>"],
         1
     ),
     (
         'programs/nearblack',
         'nearblack',
-        u'Convert nearly black/white borders to black.',
+        'Convert nearly black/white borders to black.',
         [author_frankw],
         1
     ),
     (
         'programs/gdal_retile',
         'gdal_retile',
-        u'Retiles a set of tiles and/or build tiled pyramid levels.',
+        'Retiles a set of tiles and/or build tiled pyramid levels.',
         ['Christian Mueller <christian.mueller@nvoe.at>'],
         1
     ),
     (
         'programs/gdal_grid',
         'gdal_grid',
-        u'Creates regular grid from the scattered data.',
+        'Creates regular grid from the scattered data.',
         ['Andrey Kiselev <dron@ak4719.spb.edu>'],
         1
     ),
     (
         'programs/gdal_proximity',
         'gdal_proximity',
-        u'Produces a raster proximity map.',
+        'Produces a raster proximity map.',
         [author_frankw],
         1
     ),
     (
         'programs/gdal_polygonize',
         'gdal_polygonize',
-        u'Produces a polygon feature layer from a raster.',
+        'Produces a polygon feature layer from a raster.',
         [author_frankw],
         1
     ),
     (
         'programs/gdal_sieve',
         'gdal_sieve',
-        u'Removes small raster polygons.',
+        'Removes small raster polygons.',
         [author_frankw],
         1
     ),
     (
         'programs/gdal_fillnodata',
         'gdal_fillnodata',
-        u'Fill raster regions by interpolation from edges.',
+        'Fill raster regions by interpolation from edges.',
         [author_frankw],
         1
     ),
     (
         'programs/gdallocationinfo',
         'gdallocationinfo',
-        u'Raster query tool.',
+        'Raster query tool.',
         [author_frankw],
         1
     ),
     (
         'programs/gdalsrsinfo',
         'gdalsrsinfo',
-        u'Lists info about a given SRS in number of formats (WKT, PROJ.4, etc.)',
+        'Lists info about a given SRS in number of formats (WKT, PROJ.4, etc.)',
         [author_frankw, 'Etienne Tourigny <etourigny.dev-at-gmail-dot-com>'],
         1
     ),
     (
         'programs/gdalmove',
         'gdalmove',
-        u'Transform georeferencing of raster file in place.',
+        'Transform georeferencing of raster file in place.',
         [author_frankw],
         1
     ),
     (
         'programs/gdal_edit',
         'gdal_edit',
-        u'Edit in place various information of an existing GDAL dataset.',
+        'Edit in place various information of an existing GDAL dataset.',
         [author_evenr],
         1
     ),
     (
         'programs/gdal_calc',
         'gdal_calc',
-        u'Command line raster calculator with numpy syntax.',
+        'Command line raster calculator with numpy syntax.',
         ['Chris Yesson <chris dot yesson at ioz dot ac dot uk>', 'Etienne Tourigny <etourigny dot dev at gmail dot com>'],
         1
     ),
     (
         'programs/gdal_pansharpen',
         'gdal_pansharpen',
-        u' Perform a pansharpen operation.',
+        ' Perform a pansharpen operation.',
         [author_evenr],
         1
     ),
     (
         'programs/gdal-config',
         'gdal-config',
-        u' Determines various information about a GDAL installation.',
+        ' Determines various information about a GDAL installation.',
         [author_frankw],
         1
     ),
     (
         'programs/gdalmanage',
         'gdalmanage',
-        u' Identify, delete, rename and copy raster data files.',
+        ' Identify, delete, rename and copy raster data files.',
         [author_frankw],
         1
     ),
     (
         'programs/gdalcompare',
         'gdalcompare',
-        u' Compare two images.',
+        ' Compare two images.',
         [author_frankw],
         1
     ),
@@ -342,35 +342,35 @@ man_pages = [
     (
         'programs/ogrinfo',
         'ogrinfo',
-        u'Lists information about an OGR-supported data source.',
+        'Lists information about an OGR-supported data source.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/ogr2ogr',
         'ogr2ogr',
-        u'Converts simple features data between file formats.',
+        'Converts simple features data between file formats.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/ogrtindex',
         'ogrtindex',
-        u'Creates a tileindex.',
+        'Creates a tileindex.',
         [author_frankw, author_silker],
         1
     ),
     (
         'programs/ogrlineref',
         'ogrlineref',
-        u'Create linear reference and provide some calculations using it.',
+        'Create linear reference and provide some calculations using it.',
         [author_dmitryb],
         1
     ),
     (
         'programs/ogrmerge',
         'ogrmerge',
-        u' Merge several vector datasets into a single one.',
+        ' Merge several vector datasets into a single one.',
         [author_evenr],
         1
     ),
@@ -379,14 +379,14 @@ man_pages = [
     (
         'programs/gnmmanage',
         'gnmmanage',
-        u'Manages networks',
+        'Manages networks',
         [author_mikhailg, author_dmitryb],
         1
     ),
     (
         'programs/gnmanalyse',
         'gnmanalyse',
-        u'Analyses networks',
+        'Analyses networks',
         [author_mikhailg, author_dmitryb],
         1
     ),

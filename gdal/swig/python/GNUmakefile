@@ -9,10 +9,10 @@ endif
 all: build
 
 BINDING = python
-include ../SWIGmake.base
-
 PACKAGE_DIR=osgeo
 SWIGOUTPUTDIR=extensions/
+
+include ../SWIGmake.base
 
 SCRIPTS			= `ls ./scripts/*.py`
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
@@ -28,46 +28,63 @@ clean:
 	-rm -f *.so ./osgeo/*.so
 	-rm -rf dist
 
-SWIGARGS += -threads
+SWIGARGS += -relativeimport -threads
 SWIGARGS += -outdir "${PACKAGE_DIR}" 
 
 
 veryclean: clean
 	-rm -f ${WRAPPERS} ${PY_MODULES}
-	-rm -f ${SWIGOUTPUTDIR}/gdal_wrap.cpp 
-	-rm -f ${SWIGOUTPUTDIR}/gdalconst_wrap.c
-	-rm -f ${SWIGOUTPUTDIR}/ogr_wrap.cpp
-	-rm -f ${SWIGOUTPUTDIR}/osr_wrap.cpp
-	-rm -f ${SWIGOUTPUTDIR}/gdal_array_wrap.cpp
-	-rm -f ${SWIGOUTPUTDIR}/gnm_wrap.cpp
+	-rm -f $(SWIGOUTPUTDIR)gdal_wrap.cpp
+	-rm -f $(SWIGOUTPUTDIR)gdalconst_wrap.c
+	-rm -f $(SWIGOUTPUTDIR)ogr_wrap.cpp
+	-rm -f $(SWIGOUTPUTDIR)osr_wrap.cpp
+	-rm -f $(SWIGOUTPUTDIR)gdal_array_wrap.cpp
+	-rm -f $(SWIGOUTPUTDIR)gnm_wrap.cpp
 
-gdal_wrap.cpp: ../include/python/gdal_python.i
+$(SWIGOUTPUTDIR)gdal_array_wrap.cpp:  ../include/gdal_array.i ../include/python/typemaps_python.i
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ ../include/gdal_array.i
 
-ogr_wrap.cpp: ../include/python/ogr_python.i
+# Following is to prevent Coverity Scan to warn about Dereference before null check (REVERSE_INULL)
+SED_COMMANDS = \
+    -e 's/if (!PyTuple_Check(args)) SWIG_fail;/if (args == NULL || !PyTuple_Check(args)) SWIG_fail;/' \
+    -e 's/argc = args ? (int)PyObject_Length(args) : 0/argc = (int)PyObject_Length(args)/' \
+    -e 's/if (SWIG_IsTmpObj(res\([1-9]\)))/if (ReturnSame(SWIG_IsTmpObj(res\1)))/' \
+    -e 's/if( alloc\([1-9]\) == SWIG_NEWOBJ )/if (ReturnSame(alloc\1) == SWIG_NEWOBJ )/' \
+    -e 's/strncpy(buff, "swig_ptr: ", 10)/memcpy(buff, "swig_ptr: ", 10)/'
+# Unused assigned variable
+SED_COMMANDS += -e 's/module_head = \&swig_module;/\/\*module_head = \&swig_module;\*\//'
+# SWIG defect fixed per https://github.com/swig/swig/commit/b0e29fbdf31bb94b11cb8a7cc830b4a76467afa3#diff-ba23eb3671d250e6a62261f19f653dd2R93
+SED_COMMANDS += -e 's/obj = PyUnicode_AsUTF8String(obj);/obj = PyUnicode_AsUTF8String(obj); if (!obj) return SWIG_TypeError;/'
 
-osr_wrap.cpp: ../include/python/osr_python.i
-
-gdal_array_wrap.cpp:  ../include/gdal_array.i ../include/python/typemaps_python.i
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/gdal_array.i
-
-generate: ${WRAPPERS} gdal_array_wrap.cpp
-	# Following is to prevent Coverity Scan to warn about Dereference before null check (REVERSE_INULL)
-	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed "s/if (!PyTuple_Check(args)) SWIG_fail;/if (args == NULL || !PyTuple_Check(args)) SWIG_fail;/" ${SWIGOUTPUTDIR}/$$i | sed "s/argc = args ? (int)PyObject_Length(args) : 0/argc = (int)PyObject_Length(args)/" > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done
-	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed "s/if (SWIG_IsTmpObj(res\([1-9]\)))/if (ReturnSame(SWIG_IsTmpObj(res\1)))/" ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done
-	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed "s/if( alloc\([1-9]\) == SWIG_NEWOBJ )/if (ReturnSame(alloc\1) == SWIG_NEWOBJ )/" ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done
-	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed 's/strncpy(buff, "swig_ptr: ", 10)/memcpy(buff, "swig_ptr: ", 10)/' ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done
+generate: ${WRAPPERS} $(SWIGOUTPUTDIR)gdal_array_wrap.cpp
+	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do \
+	    if test -f $(SWIGOUTPUTDIR)$$i; then \
+	        sed $(SED_COMMANDS) $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
+	        mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
+	        \
+	        if test $$i = "gdal_wrap.cpp" ; then \
+	            sed \
+	              -e 's/result = (CPLErr)\(.*\);/CPL_IGNORE_RET_VAL(result = (CPLErr)\1);/' \
+	              $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
+	            mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
+	        fi; \
+	    fi; \
+	done
+ifeq ($(shell sed --version | grep GNU >/dev/null; echo $$?), 0)
 	# Only GNU sed accepts inserting newlines with \n. This is just to please Coverity, so no need to find a workaround
-	sed --version | grep GNU >/dev/null && (for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed "s/PyObject \*resultobj = 0;/PyObject \*resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;/" ${SWIGOUTPUTDIR}/$$i  | sed "s/#define SWIGPYTHON/#define SWIGPYTHON\n#define SED_HACKS/" | sed "s/return resultobj;/if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }\n  return resultobj;/" > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done) || /bin/true
-	# Unused assigned variable
-	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed 's/module_head = \&swig_module;/\/\*module_head = \&swig_module;\*\//' ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done
-	for i in gdal_wrap.cpp; do sed 's/result = (CPLErr)\(.*\);/CPL_IGNORE_RET_VAL(result = (CPLErr)\1);/' ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; done
-	# SWIG defect fixed per https://github.com/swig/swig/commit/b0e29fbdf31bb94b11cb8a7cc830b4a76467afa3#diff-ba23eb3671d250e6a62261f19f653dd2R93
-	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed 's/obj = PyUnicode_AsUTF8String(obj);/obj = PyUnicode_AsUTF8String(obj); if (!obj) return SWIG_TypeError;/' ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done
-	# Fix line 'import osgeo.ogr' generated by SWIG  into 'from . import ogr'
-	for i in gdal.py ogr.py osr.py gnm.py; do if test -f ${PACKAGE_DIR}/$$i; then sed 's/^import osgeo.ogr/from . import ogr/' ${PACKAGE_DIR}/$$i |  sed 's/osgeo.ogr.MajorObject/ogr.MajorObject/' > ${PACKAGE_DIR}/$$i.tmp; mv -f ${PACKAGE_DIR}/$$i.tmp ${PACKAGE_DIR}/$$i; fi; done
-	for i in gdal.py ogr.py osr.py gnm.py; do if test -f ${PACKAGE_DIR}/$$i; then sed 's/^import osgeo.osr/from . import osr/' ${PACKAGE_DIR}/$$i  > ${PACKAGE_DIR}/$$i.tmp; mv -f ${PACKAGE_DIR}/$$i.tmp ${PACKAGE_DIR}/$$i; fi; done
+	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gnm_wrap.cpp; do \
+	    if test -f $(SWIGOUTPUTDIR)$$i; then \
+	        sed \
+	          -e 's/PyObject \*resultobj = 0;/PyObject \*resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;/' \
+	          -e 's/\#define SWIGPYTHON/\#define SWIGPYTHON\n\#define SED_HACKS/' \
+	          -e 's/return resultobj;/if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }\n  return resultobj;/' \
+	          $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
+	        mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
+	    fi; \
+	done
+endif
 
-build: extensions/gdal_wrap.cpp
+build: $(SWIGOUTPUTDIR)gdal_wrap.cpp
 	rm -f setup_vars.ini
 	echo 'GNM_ENABLED=$(GNM_ENABLED)' >> setup_vars.ini
 	$(PYTHON) setup.py build
@@ -148,3 +165,5 @@ doc-tarball: epydoc
 	mv html python
 	tar cvzf python-doc.tar.gz python
 	rm -rf python
+
+.PHONY: all clean veryclean generate build egg install docs epydoc doc-tarball

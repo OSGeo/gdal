@@ -3387,19 +3387,11 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
         PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "ignore");
         if (pyObj != NULL)
             return pyObj;
-#if PY_VERSION_HEX >= 0x03000000
         return PyBytes_FromString(pszStr);
-#else
-        return PyString_FromString(pszStr);
-#endif
     }
     pszIter ++;
   }
-#if PY_VERSION_HEX >= 0x03000000
   return PyUnicode_FromString(pszStr);
-#else
-  return PyString_FromString(pszStr);
-#endif
 }
 
 /* Return a NULL terminated c String from a PyObject */
@@ -3416,11 +3408,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
       if( pyUTF8Str == NULL )
         return NULL;
-#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
       pszNewStr = (char *) malloc(nLen+1);
       memcpy(pszNewStr, pszStr, nLen+1);
       Py_XDECREF(pyUTF8Str);
@@ -3429,11 +3417,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
   }
   else
   {
-#if PY_VERSION_HEX >= 0x03000000
       return PyBytes_AsString(pyObject);
-#else
-      return PyString_AsString(pyObject);
-#endif
   }
 }
 
@@ -3711,11 +3695,7 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
 {
   *pbErr = FALSE;
   /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq)
-#if PY_VERSION_HEX < 0x03000000
-    || PyString_Check(pySeq)
-#endif
-    ) {
+  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq) ) {
     PyErr_SetString(PyExc_TypeError,"not a sequence");
     *pbErr = TRUE;
     return NULL;
@@ -3743,21 +3723,12 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
         *pbErr = TRUE;
         return NULL;
       }
-#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
       papszRet = CSLAddString( papszRet, pszStr );
       Py_XDECREF(pyUTF8Str);
     }
-#if PY_VERSION_HEX >= 0x03000000
     else if (PyBytes_Check(pyObj))
       papszRet = CSLAddString( papszRet, PyBytes_AsString(pyObj) );
-#else
-    else if (PyString_Check(pyObj))
-      papszRet = CSLAddString( papszRet, PyString_AsString(pyObj) );
-#endif
     else
     {
         Py_DECREF(pyObj);
@@ -6036,13 +6007,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       /* We need to use the dictionary form. */
       Py_ssize_t size = PyMapping_Length( obj1 );
       if ( size > 0 && size == (int)size) {
-#if PY_VERSION_HEX < 0x03000000
-        // PyMapping_Items also work with python 2.x  but throws a warning about
-        // -Wwrite-strings warning
-        PyObject *item_list = PyObject_CallMethod(obj1,const_cast<char*>("items"),NULL);
-#else
         PyObject *item_list = PyMapping_Items( obj1 );
-#endif
         for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
           
@@ -9895,11 +9860,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeatureCount(PyObject *SWIGUNUSEDPARM(self),
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -10834,11 +10795,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeaturesRead(PyObject *SWIGUNUSEDPARM(self),
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -13914,11 +13871,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64__SWIG_0(PyObject *SWIGUNU
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -13974,11 +13927,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64__SWIG_1(PyObject *SWIGUNU
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */
@@ -14754,11 +14703,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64List(PyObject *SWIGUNUSEDP
       char szTmp[32];
       sprintf(szTmp, CPL_FRMT_GIB, (*arg4)[i]);
       PyObject* val;
-#if PY_VERSION_HEX>=0x03000000
       val = PyLong_FromString(szTmp, NULL, 10);
-#else
-      val = PyInt_FromString(szTmp, NULL, 10);
-#endif
       PyList_SetItem( out, i, val );
     }
     resultobj = out;
@@ -15093,11 +15038,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-#if PY_VERSION_HEX >= 0x03000000
     resultobj = PyBytes_FromStringAndSize( *arg4, *arg3 );
-#else
-    resultobj = PyString_FromStringAndSize( *arg4, *arg3 );
-#endif
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
@@ -15191,11 +15132,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_1(PyObject *SWIGUNUSED
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-#if PY_VERSION_HEX >= 0x03000000
     resultobj = PyBytes_FromStringAndSize( *arg4, *arg3 );
-#else
-    resultobj = PyString_FromStringAndSize( *arg4, *arg3 );
-#endif
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */
@@ -15912,11 +15849,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
   {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, result);
-#if PY_VERSION_HEX>=0x03000000
     resultobj = PyLong_FromString(szTmp, NULL, 10);
-#else
-    resultobj = PyInt_FromString(szTmp, NULL, 10);
-#endif
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -21343,7 +21276,6 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
         PyErr_Clear();
       }
     }
-#if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj0))
     {
       size_t safeLen = 0;
@@ -21372,22 +21304,6 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
       PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
       SWIG_fail;
     }
-#else
-    if (PyString_Check(obj0))
-    {
-      Py_ssize_t safeLen = 0;
-      PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
-      if( safeLen > INT_MAX ) {
-        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-      }
-      arg1 = (int) safeLen;
-    }
-    else
-    {
-      PyErr_SetString(PyExc_TypeError, "not a string");
-      SWIG_fail;
-    }
-#endif
     ok: ;
   }
   if (obj1) {
@@ -22188,7 +22104,6 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
           PyErr_Clear();
         }
       }
-#if PY_VERSION_HEX>=0x03000000
       if (PyUnicode_Check(obj2))
       {
         size_t safeLen = 0;
@@ -22217,22 +22132,6 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
         PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
         SWIG_fail;
       }
-#else
-      if (PyString_Check(obj2))
-      {
-        Py_ssize_t safeLen = 0;
-        PyString_AsStringAndSize(obj2, (char**) &arg4, &safeLen);
-        if( safeLen > INT_MAX ) {
-          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-        }
-        arg3 = (int) safeLen;
-      }
-      else
-      {
-        PyErr_SetString(PyExc_TypeError, "not a string");
-        SWIG_fail;
-      }
-#endif
       ok: ;
     }
   }
@@ -22528,11 +22427,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-#if PY_VERSION_HEX >= 0x03000000
     resultobj = PyBytes_FromStringAndSize( *arg3, *arg2 );
-#else
-    resultobj = PyString_FromStringAndSize( *arg3, *arg2 );
-#endif
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
@@ -22628,11 +22523,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-#if PY_VERSION_HEX >= 0x03000000
     resultobj = PyBytes_FromStringAndSize( *arg3, *arg2 );
-#else
-    resultobj = PyString_FromStringAndSize( *arg3, *arg2 );
-#endif
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */

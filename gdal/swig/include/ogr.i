@@ -523,8 +523,7 @@ typedef int OGRErr;
 
 #ifndef FROM_GDAL_I
 /* For Python we don't import, but include MajorObject.i to avoid */
-/* cyclic dependency betwenn gdal.py and ogr.py. Python2 is fine with that */
-/* but Python3 not */
+/* cyclic dependency between gdal.py and ogr.py. */
 /* We should probably define a new module for MajorObject, or merge gdal and ogr */
 /* modules */
 #if defined(SWIGPYTHON)
