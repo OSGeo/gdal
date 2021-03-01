@@ -32,7 +32,7 @@ other content before the ``<GDAL_WMS>`` element.
 <GDAL_WMS>
 <Service name="WMS">                                                       Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)
 <Version>1.1.1</Version>                                                   WMS version. (optional, defaults to 1.1.1)
-<ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>                WMS server URL. (required)
+<ServerUrl>http://host.domain.com/wms.cgi?</ServerUrl>                     WMS server URL. (required)
 <SRS>EPSG:4326</SRS>                                                       Image projection (optional, defaults to EPSG:4326 in WMS and 102100 in AGS, WMS version 1.1.1 or below only and ArcGIS Server). For ArcGIS Server the spatial reference can be specified as either a well-known ID or as a `spatial reference json object <http://resources.arcgis.com/en/help/rest/apiref/geometry.html#sr>`__
 <CRS>CRS:83</CRS>                                                          Image projection (optional, defaults to EPSG:4326, WMS version 1.3.0 or above only)
 <ImageFormat>image/jpeg</ImageFormat>                                      Format in which to request data. Paletted formats like image/gif will be converted to RGB. (optional, defaults to image/jpeg)
@@ -225,7 +225,10 @@ OnEarth Tiled WMS
 
 The OnEarth Tiled WMS minidriver supports the Tiled WMS specification
 implemented for the JPL OnEarth driver per the specification at
-http://onearth.jpl.nasa.gov/tiled.html.
+http://web.archive.org/web/20130511182803/http://onearth.jpl.nasa.gov/tiled.html.
+
+Only the ServerUrl and the TiledGroupName are required, most of the required information 
+is automatically fetched from the remote server using the GetTileService method at open time.
 
 A typical OnEarth Tiled WMS configuration file might look like:
 
@@ -233,13 +236,24 @@ A typical OnEarth Tiled WMS configuration file might look like:
 
    <GDAL_WMS>
        <Service name="TiledWMS">
-       <ServerUrl>http://onmoon.jpl.nasa.gov/wms.cgi?</ServerUrl>
-       <TiledGroupName>Clementine</TiledGroupName>
+       <ServerUrl>https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?</ServerUrl>
+       <TiledGroupName>MODIS Terra CorrectedReflectance TrueColor tileset</TiledGroupName>
+       <Change key="${time}">2020-02-02</Change>
        </Service>
    </GDAL_WMS>
 
-Most of the other information is automatically fetched from the remote
-server using the GetTileService method at open time.
+The TiledWMS minidriver can use the following open options :
+
+-  TiledGroupName -- The value is a string that identifies one of the tiled services 
+   available on the server
+-  Change -- A <Key>:<Value> pair, which will be passed to the server. The key has to 
+   match a change key that the server declares for the respective tiled group.
+   This option can be used multiple times, for different keys.
+   Example:
+   -  Change=time:2020-02-02
+
+These open options are only accepted if the corresponding XML element is not present in the 
+configuration file.
 
 VirtualEarth
 ~~~~~~~~~~~~
@@ -400,7 +414,7 @@ The WMS driver can open :
 
    ::
 
-      gdalinfo "<GDAL_WMS><Service name=\"TiledWMS\"><ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl><TiledGroupName>Global SRTM Elevation</TiledGroupName></Service></GDAL_WMS>"
+      gdalinfo "<GDAL_WMS><Service name=\"TiledWMS\"><ServerUrl>https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?</ServerUrl><TiledGroupName>MODIS Terra CorrectedReflectance Bands367 tileset</TiledGroupName></Service></GDAL_WMS>"
 
 -  the base URL of a WMS service, prefixed with *WMS:* :
 
@@ -423,7 +437,7 @@ The WMS driver can open :
 
    ::
 
-      gdalinfo "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"
+      gdalinfo "WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?request=GetTileService"
 
    A list of subdatasets will be returned, resulting from the parsing of
    the GetTileService request on that server.
@@ -467,7 +481,7 @@ See Also
 -  `TMS
    Specification <http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification>`__
 -  `OnEarth Tiled WMS
-   specification <http://onearth.jpl.nasa.gov/tiled.html>`__
+   specification <http://web.archive.org/web/20130511182803/http://onearth.jpl.nasa.gov/tiled.html>`__
 -  `ArcGIS Server REST
    API <http://resources.arcgis.com/en/help/rest/apiref/>`__
 -  :ref:`raster.wmts` driver page.
