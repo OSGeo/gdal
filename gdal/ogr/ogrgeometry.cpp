@@ -3734,6 +3734,8 @@ OGRGeometry *OGRGeometry::Normalize() const
                                                  this, nullptr);
 
         }
+    } else {
+              GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
     }
     freeGEOSContext( hGEOSCtxt );
 
