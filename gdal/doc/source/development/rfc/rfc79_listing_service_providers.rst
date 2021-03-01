@@ -8,8 +8,8 @@ RFC 79: Listing of Service Providers on GDAL website
 Author:        Daniel Morissette, Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2021-Feb-22
-Last updated:  2021-Feb-22
-Status:        Development
+Last updated:  2021-Mar-01
+Status:        Adopted
 ============== ============================
 
 1. Motivation
@@ -121,4 +121,4 @@ https://mapserver.org/development/rfc/ms-rfc-116.html
 5. Voting History
 =================
 
-TBD
++1 from PSC members MateuszL, KurtS, JukkaR, DanielM and EvenR.
