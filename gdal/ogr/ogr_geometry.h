@@ -398,6 +398,7 @@ class CPL_DLL OGRGeometry
     virtual OGRBoolean  IsEmpty() const = 0;
     virtual OGRBoolean  IsValid() const;
     virtual OGRGeometry* MakeValid() const;
+    virtual OGRGeometry* Normalize() const;
     virtual OGRBoolean  IsSimple() const;
     /*! Returns whether the geometry has a Z component. */
     OGRBoolean  Is3D() const { return flags & OGR_G_3D; }

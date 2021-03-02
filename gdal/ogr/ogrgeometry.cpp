@@ -3694,6 +3694,87 @@ OGRGeometryH OGR_G_MakeValid( OGRGeometryH hGeom )
 }
 
 /************************************************************************/
+/*                            Normalize()                               */
+/************************************************************************/
+
+/**
+ * \brief Attempts to bring geometry into normalized/canonical form.
+ *
+ * This method is the same as the C function OGR_G_Normalize().
+ *
+ * This function is built on the GEOS library; check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.3
+ */
+OGRGeometry *OGRGeometry::Normalize() const
+{
+#ifndef HAVE_GEOS
+    CPLError( CE_Failure, CPLE_NotSupported,
+                  "GEOS support not enabled." );
+        return nullptr;
+#else
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+    if( hGeosGeom != nullptr )
+    {
+
+        int hGEOSRet = GEOSNormalize_r( hGEOSCtxt, hGeosGeom );
+
+        if( hGEOSRet == 0 )
+        {
+             poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosGeom,
+                                                 this, nullptr);
+
+        } else 
+        {
+            GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
+        }
+        
+    } 
+    freeGEOSContext( hGEOSCtxt );
+
+    return poOGRProduct;
+#endif
+}
+
+/************************************************************************/
+/*                         OGR_G_Normalize()                            */
+/************************************************************************/
+
+/**
+ * \brief Attempts to bring geometry into normalized/canonical form.
+ *
+ * This function is the same as the C++ method OGRGeometry::Normalize().
+ *
+ * This function is built on the GEOS library; check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ * @param hGeom The Geometry to normalize.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.3
+ */
+
+OGRGeometryH OGR_G_Normalize( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_Normalize", nullptr );
+
+    return OGRGeometry::ToHandle(OGRGeometry::FromHandle(hGeom)->Normalize());
+}
+
+/************************************************************************/
 /*                             ConvexHull()                             */
 /************************************************************************/
 
