@@ -30,7 +30,6 @@
 #include "ogr_pgdump.h"
 #include "ogrgeojsonreader.h"
 #include <sstream>
-#include <algorithm>
 
 CPL_CVSID("$Id$")
 
@@ -751,11 +750,10 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
     CPLString osSQL;
     std::string pszAPIURL = GetAPIURL();
     osSQL = pszAPIURL + "/users/0/projects/" + CPLString(pszProjectId) + "/sql";
-    std::string sqlUp = pszUnescapedSQL;
-    std::transform(sqlUp.begin(), sqlUp.end(), sqlUp.begin(), ::toupper);
-    if (sqlUp.find("DELETE") != std::string::npos ||
-        sqlUp.find("INSERT") != std::string::npos ||
-        sqlUp.find("UPDATE") != std::string::npos) {
+    std::string sql = pszUnescapedSQL;
+    if (sql.find("DELETE") != std::string::npos || sql.find("delete") != std::string::npos ||
+        sql.find("INSERT") != std::string::npos || sql.find("insert") != std::string::npos ||
+        sql.find("UPDATE") != std::string::npos || sql.find("update") != std::string::npos) {
         std::stringstream query;
         query << "{\"query\": \"" << OGRAMIGOCLOUDJsonEncode(pszUnescapedSQL) << "\"}";
         return RunPOST(osSQL.c_str(), query.str().c_str());
