@@ -2218,15 +2218,15 @@ def test_ogr_mitab_style():
     ds = ogr.Open(tmpfile)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,bc:#ddeeff,id:"mapinfo-brush-2,ogr-brush-0");PEN(w:1px,c:#ddeeff,id:"mapinfo-pen-2,ogr-pen-0")':
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,bc:#ddeeff,id:"mapinfo-brush-2,ogr-brush-0");PEN(w:1px,c:#ddeeff,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)':
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")':
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)':
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")':
+    if f.GetStyleString() != 'BRUSH(fc:#aabbcc,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)':
         f.DumpReadable()
         pytest.fail()
     ds = None

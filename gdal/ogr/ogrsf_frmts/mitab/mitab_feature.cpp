@@ -8412,17 +8412,20 @@ const char *ITABFeaturePen::GetPenStyleString() const
         break;
     }
 
+    // note - MapInfo renders all lines using a round pen cap and round pen join
+    // which are not the default values for OGR pen cap/join styles. So we need to explicitly
+    // include the cap/j parameters in these strings
     if (strlen(szPattern) != 0)
     {
       if(m_sPenDef.nPointWidth > 0)
         pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\"mapinfo-pen-%d,"
-                             "ogr-pen-%d\",p:\"%spx\")",
+                             "ogr-pen-%d\",p:\"%spx\",cap:r,j:r)",
                              static_cast<int>(GetPenWidthPoint()),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
                              szPattern);
       else
         pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\"mapinfo-pen-%d,"
-                             "ogr-pen-%d\",p:\"%spx\")",
+                             "ogr-pen-%d\",p:\"%spx\",cap:r,j:r)",
                              GetPenWidthPixel(),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle,
                              szPattern);
@@ -8431,12 +8434,12 @@ const char *ITABFeaturePen::GetPenStyleString() const
     {
       if(m_sPenDef.nPointWidth > 0)
         pszStyle =CPLSPrintf("PEN(w:%dpt,c:#%6.6x,id:\""
-                             "mapinfo-pen-%d,ogr-pen-%d\")",
+                             "mapinfo-pen-%d,ogr-pen-%d\",cap:r,j:r)",
                              static_cast<int>(GetPenWidthPoint()),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
       else
         pszStyle =CPLSPrintf("PEN(w:%dpx,c:#%6.6x,id:\""
-                             "mapinfo-pen-%d,ogr-pen-%d\")",
+                             "mapinfo-pen-%d,ogr-pen-%d\",cap:r,j:r)",
                              GetPenWidthPixel(),
                              m_sPenDef.rgbColor,GetPenPattern(),nOGRStyle);
     }
