@@ -35,6 +35,7 @@
 #include "ogrpgeogeometry.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
@@ -1062,6 +1063,7 @@ id,WKT
             if( i == 0 )
             {
                 poRing.reset(poPoly->getExteriorRing()->clone()->toLinearRing());
+                assert( poRing );
                 // Outer ring must be clockwise.
                 if( !poRing->isClockwise() )
                     poRing->reverseWindingOrder();
@@ -1069,6 +1071,7 @@ id,WKT
             else
             {
                 poRing.reset(poPoly->getInteriorRing(i-1)->clone()->toLinearRing());
+                assert( poRing );
                 // Inner rings should be anti-clockwise.
                 if( poRing->isClockwise() )
                     poRing->reverseWindingOrder();
@@ -1305,6 +1308,7 @@ id,WKT
                 if( j == 0 )
                 {
                     poRing.reset(poPoly->getExteriorRing()->clone()->toLinearRing());
+                    assert( poRing != nullptr );
                     // Outer ring must be clockwise.
                     if( !poRing->isClockwise() )
                         poRing->reverseWindingOrder();
@@ -1312,6 +1316,7 @@ id,WKT
                 else
                 {
                     poRing.reset(poPoly->getInteriorRing(j-1)->clone()->toLinearRing());
+                    assert( poRing != nullptr );
                     // Inner rings should be anti-clockwise.
                     if( poRing->isClockwise() )
                         poRing->reverseWindingOrder();

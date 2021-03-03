@@ -668,7 +668,7 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
 
 VSIS3WriteHandle::~VSIS3WriteHandle()
 {
-    Close();
+    VSIS3WriteHandle::Close();
     delete m_poS3HandleHelper;
     CPLFree(m_pabyBuffer);
     if( m_hCurlMulti )

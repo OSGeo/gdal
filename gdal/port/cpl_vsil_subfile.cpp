@@ -111,7 +111,7 @@ class VSISubFileFilesystemHandler final: public VSIFilesystemHandler
 
 VSISubFileHandle::~VSISubFileHandle()
 {
-    Close();
+    VSISubFileHandle::Close();
 }
 
 /************************************************************************/

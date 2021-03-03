@@ -135,7 +135,7 @@ int MRFDataset::CloseDependentDatasets() {
 
 MRFDataset::~MRFDataset() {   // Make sure everything gets written
     if (eAccess != GA_ReadOnly && !bCrystalized)
-        if (!Crystalize()) {
+        if (!MRFDataset::Crystalize()) {
             // Can't return error code from a destructor, just emit the error
             CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
         }
@@ -1147,7 +1147,7 @@ CPLXMLNode* MRFDataset::BuildConfig()
 
     // Do we have an affine transform different from identity?
     double gt[6];
-    if ((GetGeoTransform(gt) == CE_None) &&
+    if ((MRFDataset::GetGeoTransform(gt) == CE_None) &&
         (gt[0] != 0 || gt[1] != 1 || gt[2] != 0 ||
             gt[3] != 0 || gt[4] != 0 || gt[5] != 1))
     {
@@ -2024,7 +2024,7 @@ CPLErr MRFDataset::WriteTile(void* buff, GUIntBig infooffset, GUIntBig size)
         VSIFSeekL(l_ifp, infooffset, SEEK_SET);
         VSIFReadL(&tinfo, 1, sizeof(ILIdx), l_ifp);
 
-        if (verCount == 0) 
+        if (verCount == 0)
             new_version = true; // No previous yet, might create a new version
         else { // We need at least two versions before we can test for changes
             ILIdx prevtinfo = { 0, 0 };
