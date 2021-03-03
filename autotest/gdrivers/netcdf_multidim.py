@@ -1557,3 +1557,23 @@ def test_netcdf_multidim_createcopy_array_options_if_name_fullname(netcdf_setup)
     check()
 
     gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_multidim_group_by_same_dimension(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.OpenEx('data/netcdf/sen3_sral_mwr_fake_standard_measurement.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg.GetMDArrayNames(['GROUP_BY=SAME_DIMENSION']) is None
+    groups = rg.GetGroupNames(['GROUP_BY=SAME_DIMENSION'])
+    assert set(groups) == set(['time_01', 'time_20_c', 'time_20_ku'])
+    g = rg.OpenGroup('time_01', ['GROUP_BY=SAME_DIMENSION'])
+    assert g is not None
+    arrays = g.GetMDArrayNames()
+    for arrayName in arrays:
+        ar = g.OpenMDArray(arrayName)
+        dims = ar.GetDimensions()
+        assert len(dims) == 1
+        assert dims[0].GetName() == 'time_01'
