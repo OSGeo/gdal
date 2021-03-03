@@ -334,6 +334,8 @@ Several authentication methods are possible, and are attempted in the following 
 
 Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 
+Since GDAL 3.3, the :cpp:func:`VSIGetFileMetadata` and :cpp:func:`VSISetFileMetadata` operations are supported.
+
 .. versionadded:: 2.3
 
 .. _`/vsiaz_streaming/`:
