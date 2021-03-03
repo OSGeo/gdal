@@ -400,12 +400,17 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     };
     SetStringIfNotEmpty("CreatorSoftware", 4, 16);
 
-    // Check file format version
+    // Check file format version (big endian most of the time)
     const auto nFileFormatVersion = ReadUInt32(20);
     if( !(nFileFormatVersion >= 100 && nFileFormatVersion < 200) )
     {
-        CPLDebug("JPEG", "FLIR: Unknown file format version: %u", nFileFormatVersion);
-        return;
+        bLittleEndian = true; // retry with little-endian
+        const auto nFileFormatVersionOtherEndianness = ReadUInt32(20);
+        if( !(nFileFormatVersionOtherEndianness >= 100 && nFileFormatVersionOtherEndianness < 200) )
+        {
+            CPLDebug("JPEG", "FLIR: Unknown file format version: %u", nFileFormatVersion);
+            return;
+        }
     }
 
     const auto nOffsetRecordDirectory = ReadUInt32(24);
