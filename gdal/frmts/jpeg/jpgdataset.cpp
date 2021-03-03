@@ -147,6 +147,21 @@ void JPGDatasetCommon::ReadEXIFMetadata()
 
         // Append metadata from PAM after EXIF metadata.
         papszMetadata = CSLMerge(papszMetadata, GDALPamDataset::GetMetadata());
+
+        // Expose XMP in EXIF in xml:XMP metadata domain
+        if( GDALDataset::GetMetadata("xml:XMP") == nullptr )
+        {
+            const char* pszXMP = CSLFetchNameValue(papszMetadata, "EXIF_XmlPacket");
+            if( pszXMP )
+            {
+                CPLDebug("JPEG", "Read XMP metadata from EXIF tag");
+                const char * const apszMDList[2] = { pszXMP, nullptr };
+                SetMetadata(const_cast<char**>(apszMDList), "xml:XMP");
+
+                papszMetadata = CSLSetNameValue(papszMetadata, "EXIF_XmlPacket", nullptr);
+            }
+        }
+
         SetMetadata(papszMetadata);
 
         nPamFlags = nOldPamFlags;
@@ -755,9 +770,20 @@ void JPGDatasetCommon::LoadForMetadataDomain( const char *pszDomain )
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == nullptr || EQUAL(pszDomain, "")))
         ReadEXIFMetadata();
-    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
+    if (eAccess == GA_ReadOnly &&
         pszDomain != nullptr && EQUAL(pszDomain, "xml:XMP"))
-        ReadXMPMetadata();
+    {
+        if( !bHasReadXMPMetadata )
+        {
+            ReadXMPMetadata();
+        }
+        if( !bHasReadEXIFMetadata &&
+            GDALPamDataset::GetMetadata("xml:XMP") == nullptr )
+        {
+            // XMP can sometimes be embedded in a EXIF TIFF tag
+            ReadEXIFMetadata();
+        }
+    }
     if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
         pszDomain != nullptr && EQUAL(pszDomain, "COLOR_PROFILE"))
         ReadICCProfile();
