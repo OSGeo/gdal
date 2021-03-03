@@ -148,6 +148,7 @@ static const EXIFTagDesc exiftags [] = {
     { 0x212, TIFF_NOTYPE, 0, "EXIF_YCbCrSubSampling", COND_NOT_ALLOWED_EVEN_IN_JPEG_MARKER},
     { 0x213, TIFF_SHORT, 1, "EXIF_YCbCrPositioning", COND_MANDATORY},
     { 0x214, TIFF_RATIONAL, 6, "EXIF_ReferenceBlackWhite", COND_OPTIONAL},
+    { 0x2BC, TIFF_ASCII, 0, "EXIF_XmlPacket", COND_OPTIONAL}, // not in the EXIF standard. But found in some images
     { 0x828D, TIFF_NOTYPE, 0, "EXIF_CFA_Repeat_Pattern_Dim", COND_OPTIONAL},
     { 0x828E, TIFF_NOTYPE, 0, "EXIF_CFA_Pattern", COND_OPTIONAL},
     { 0x828F, TIFF_NOTYPE, 0, "EXIF_Battery_Level", COND_OPTIONAL},
@@ -621,7 +622,8 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
         if( EQUAL(szName,"EXIF_ExifVersion")
             || EQUAL(szName,"EXIF_FlashPixVersion")
             || EQUAL(szName,"EXIF_MakerNote")
-            || EQUAL(szName,"GPSProcessingMethod") )
+            || EQUAL(szName,"GPSProcessingMethod")
+            || EQUAL(szName,"EXIF_XmlPacket") )
             poTIFFDirEntry->tdir_type = TIFF_ASCII;
 
 /* -------------------------------------------------------------------- */
