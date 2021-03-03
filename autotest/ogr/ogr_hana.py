@@ -46,7 +46,6 @@ pytestmark = pytest.mark.require_driver('HANA')
 
 def test_ogr_hana_init():
     gdaltest.hana_ds = None
-
     gdaltest.hana_drv = ogr.GetDriverByName('HANA')
     if gdaltest.hana_drv is None:
         pytest.skip()

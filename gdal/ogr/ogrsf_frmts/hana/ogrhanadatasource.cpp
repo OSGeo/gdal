@@ -590,9 +590,6 @@ OGRHanaDataSource::OGRHanaDataSource()
 
 OGRHanaDataSource::~OGRHanaDataSource()
 {
-    for (auto& layer : layers_)
-        delete layer;
-
     layers_.clear();
 
     for (const auto& kv : srsCache_)
@@ -687,10 +684,11 @@ OGRErr OGRHanaDataSource::DeleteLayer(int index)
     if (index < 0 || static_cast<std::size_t>(index) >= layers_.size())
         return OGRERR_FAILURE;
 
-    OGRLayer* layer = layers_[static_cast<std::size_t>(index)];
+    const std::unique_ptr<OGRLayer>& layer =
+        layers_[static_cast<std::size_t>(index)];
     CPLDebug("HANA", "DeleteLayer(%s)", layer->GetName());
 
-    if (auto tableLayer = dynamic_cast<OGRHanaTableLayer*>(layer))
+    if (auto tableLayer = dynamic_cast<OGRHanaTableLayer*>(layer.get()))
     {
         OGRErr err = tableLayer->DropTable();
         if (OGRERR_NONE == err)
@@ -698,7 +696,6 @@ OGRErr OGRHanaDataSource::DeleteLayer(int index)
     }
 
     layers_.erase(layers_.begin() + index);
-    delete layer;
 
     return OGRERR_NONE;
 }
@@ -764,14 +761,12 @@ std::pair<CPLString, CPLString> OGRHanaDataSource::FindSchemaAndTableNames(
 
 int OGRHanaDataSource::FindLayerByName(const char* name)
 {
-    std::vector<OGRLayer*>::const_iterator it =
-        find_if(layers_.begin(), layers_.end(), [&](OGRLayer* l) {
-            return EQUAL(name, l->GetName());
-        });
-    if (it == layers_.end())
-        return -1;
-    return std::distance<std::vector<OGRLayer*>::const_iterator>(
-        layers_.begin(), it);
+    for (size_t i = 0; i < layers_.size(); ++i)
+    {
+        if (EQUAL(name, layers_[i]->GetName()))
+            return static_cast<int>(i);
+    }
+    return -1;
 }
 
 /************************************************************************/
@@ -1219,7 +1214,7 @@ void OGRHanaDataSource::InitializeLayers(
             OGRErr err =
                 layer->Initialize(schemaName_.c_str(), tableName->c_str());
             if (OGRERR_NONE == err)
-                layers_.push_back(layer.release());
+                layers_.push_back(std::move(layer));
         }
         rsTables->close();
     };
@@ -1412,7 +1407,7 @@ OGRLayer* OGRHanaDataSource::GetLayer(int index)
 {
     if (index < 0 || static_cast<std::size_t>(index) >= layers_.size())
         return nullptr;
-    return layers_[static_cast<std::size_t>(index)];
+    return layers_[static_cast<std::size_t>(index)].get();
 }
 
 /************************************************************************/
@@ -1583,9 +1578,9 @@ OGRLayer* OGRHanaDataSource::ICreateLayer(
     layer->SetCustomColumnTypes(CSLFetchNameValue(
         options, LayerCreationOptionsConstants::COLUMN_TYPES));
 
-    OGRLayer* ret = layer.release();
-    layers_.push_back(ret);
-    return ret;
+    layers_.push_back(std::move(layer));
+
+    return layers_[layers_.size() - 1].get();
 }
 
 /************************************************************************/

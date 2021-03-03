@@ -123,7 +123,7 @@ private:
     CPLString schemaName_;
     bool updateMode_;
     bool isTransactionStarted_;
-    std::vector<OGRLayer*> layers_;
+    std::vector<std::unique_ptr<OGRLayer>> layers_;
     SrsCache srsCache_;
     odbc::EnvironmentRef connEnv_;
     odbc::ConnectionRef conn_;
