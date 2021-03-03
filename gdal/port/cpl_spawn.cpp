@@ -592,7 +592,7 @@ struct _CPLSpawnedProcess
  * output stream.
  * @param bCreateErrorPipe set to TRUE to create a pipe for the child
  * error stream.
-
+ * @param papszOptions unused. should be set to NULL.
  *
  * @return a handle, that must be freed with CPLSpawnAsyncFinish()
  *
@@ -604,7 +604,7 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
                                   int bCreateInputPipe,
                                   int bCreateOutputPipe,
                                   int bCreateErrorPipe,
-                                  char** /* papszOptions */ )
+                                  CPL_UNUSED char** papszOptions )
 {
     int pipe_in[2] = { -1, -1 };
     int pipe_out[2] = { -1, -1 };
