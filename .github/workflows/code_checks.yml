@@ -72,6 +72,24 @@ jobs:
       - name: Run cppcheck test
         run: ./gdal/scripts/cppcheck.sh
 
+  cppcheck_2004:
+    runs-on: ubuntu-20.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Requirements
+        run: |
+          sudo apt update
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev
+
+      - name: Run configure
+        run: (cd gdal && ./configure)
+
+      - name: Run cppcheck test
+        run: ./gdal/scripts/cppcheck.sh
+
   code_quality_checks:
     runs-on: ubuntu-latest
     steps:

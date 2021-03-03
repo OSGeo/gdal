@@ -657,20 +657,22 @@ int OGRDB2DataSource::GetLayerCount()
 /*                       ParseValue()                                   */
 /************************************************************************/
 
-int OGRDB2DataSource::ParseValue(char** pszValue, char* pszSource,
+int OGRDB2DataSource::ParseValue(char** ppszValue, char* pszSource,
                                  const char* pszKey, int nStart, int nNext,
                                  int nTerm, int bRemove)
 {
     int nLen = static_cast<int>(strlen(pszKey));
-    if ((*pszValue) == nullptr && nStart + nLen < nNext &&
+    if ((*ppszValue) == nullptr && nStart + nLen < nNext &&
             EQUALN(pszSource + nStart, pszKey, nLen))
     {
         const int nSize = nNext - nStart - nLen;
-        *pszValue = (char*)CPLMalloc( nSize + 1 );
-        if (*pszValue)
-            strncpy(*pszValue, pszSource + nStart + nLen,
+        *ppszValue = (char*)CPLMalloc( nSize + 1 );
+        if (*ppszValue)
+        {
+            strncpy(*ppszValue, pszSource + nStart + nLen,
                     nSize);
-        (*pszValue)[nSize] = 0;
+            (*ppszValue)[nSize] = 0;
+        }
 
         if (bRemove)
         {

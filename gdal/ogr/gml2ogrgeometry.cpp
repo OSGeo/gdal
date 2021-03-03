@@ -924,7 +924,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
     bool bOrientation,
     bool bFaceHoleNegative )
 {
-    const bool bCastToLinearTypeIfPossible = true;  // Hard-coded for now.
+    // constexpr bool bCastToLinearTypeIfPossible = true;  // Hard-coded for now.
 
     // We need this nRecLevel == 0 check, otherwise this could result in multiple
     // revist of the same node, and exponential complexity.
@@ -1548,7 +1548,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         if( poCC == nullptr )
             return nullptr;
 
-        else if( bCastToLinearTypeIfPossible && bChildrenAreAllLineString )
+        else if( /* bCastToLinearTypeIfPossible &&*/ bChildrenAreAllLineString )
         {
             return OGRCurve::CastToLinearRing(poCC);
         }
@@ -2261,7 +2261,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         }
         else
         {
-            if( bCastToLinearTypeIfPossible &&
+            if( /* bCastToLinearTypeIfPossible && */
                 wkbFlatten(poMS->getGeometryType()) == wkbMultiSurface &&
                 bChildrenAreAllPolygons )
             {
@@ -2482,7 +2482,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
         }
 
-        if( bCastToLinearTypeIfPossible && bChildrenAreAllLineString )
+        if( /* bCastToLinearTypeIfPossible && */ bChildrenAreAllLineString )
         {
             return OGRMultiCurve::CastToMultiLineString(poMC);
         }
@@ -2545,7 +2545,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
         }
 
-        if( bCastToLinearTypeIfPossible && bChildrenAreAllLineString )
+        if( /* bCastToLinearTypeIfPossible && */ bChildrenAreAllLineString )
         {
             return OGRCurve::CastToLineString(poCC);
         }
@@ -2686,7 +2686,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         if( poCC == nullptr )
             return nullptr;
 
-        if( bCastToLinearTypeIfPossible && bChildrenAreAllLineString )
+        if( /* bCastToLinearTypeIfPossible && */ bChildrenAreAllLineString )
         {
             return OGRCurve::CastToLineString(poCC);
         }

@@ -76,7 +76,7 @@ OGRLVBAGLayer::~OGRLVBAGLayer()
 {
     delete m_poFeature;
     poFeatureDefn->Release();
-    CloseUnderlyingLayer();
+    OGRLVBAGLayer::CloseUnderlyingLayer();
 }
 
 /************************************************************************/
@@ -217,7 +217,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         OGRFieldDefn oField0("oorspronkelijkBouwjaar", OFTInteger);
 
         poFeatureDefn->AddFieldDefn(&oField0);
-        
+
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
         AddOccurrenceFieldDefn();
@@ -235,14 +235,14 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         OGRFieldDefn oField3("postcode", OFTString);
         OGRFieldDefn oField4("typeAdresseerbaarObject", OFTString);
         OGRFieldDefn oField5("openbareruimteRef", OFTString);
-  
+
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
         poFeatureDefn->AddFieldDefn(&oField2);
         poFeatureDefn->AddFieldDefn(&oField3);
         poFeatureDefn->AddFieldDefn(&oField4);
         poFeatureDefn->AddFieldDefn(&oField5);
- 
+
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
         AddOccurrenceFieldDefn();
@@ -293,7 +293,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
         poFeatureDefn->AddFieldDefn(&oField2);
- 
+
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
         AddOccurrenceFieldDefn();
@@ -314,7 +314,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         poFeatureDefn->AddFieldDefn(&oField2);
         poFeatureDefn->AddFieldDefn(&oField3);
         poFeatureDefn->AddFieldDefn(&oField4);
- 
+
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
         AddOccurrenceFieldDefn();
@@ -327,9 +327,9 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     else if( EQUAL("wpl", pszDataset) )
     {
         OGRFieldDefn oField0("naam", OFTString);
-  
+
         poFeatureDefn->AddFieldDefn(&oField0);
- 
+
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
         AddOccurrenceFieldDefn();
@@ -402,7 +402,7 @@ bool OGRLVBAGLayer::TouchLayer()
         eFileDescriptorsState = FD_CANNOT_REOPEN;
         return false;
     }
-    
+
     eFileDescriptorsState = FD_OPENED;
 
     return true;
@@ -523,7 +523,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         && nGeometryElementDepth == 0 )
     {
         const char *pszTag = XMLTagSplit(pszName);
-        
+
         StopDataCollect();
         if ( !osElementString.empty() )
         {
@@ -536,7 +536,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     case AddressRefState::ADDRESS_SECONDARY:
                         iFieldIndex = poFeatureDefn->GetFieldIndex("nevenadresnummeraanduidingref");
                         break;
-                    
+
                     default:
                         iFieldIndex = poFeatureDefn->GetFieldIndex("hoofdadresnummeraanduidingref");
                         break;
@@ -554,7 +554,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 {
                     bIsIdInvalid = true;
                     m_poFeature->SetFieldNull(iFieldIndex);
-                    CPLError(CE_Warning, CPLE_AppDefined, 
+                    CPLError(CE_Warning, CPLE_AppDefined,
                         "Invalid identificatie : %s, value set to null", osElementString.c_str());
                 }
                 if ( !bIsIdInvalid )
@@ -602,7 +602,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 }
                 else
                     m_poFeature->SetField(iFieldIndex, osElementString.c_str());
-                
+
                 if( bFixInvalidData
                     && (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) )
                 {
@@ -613,7 +613,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     if( nYear > 2100 )
                     {
                         m_poFeature->SetFieldNull(iFieldIndex);
-                        CPLError(CE_Warning, CPLE_AppDefined, 
+                        CPLError(CE_Warning, CPLE_AppDefined,
                             "Invalid date : %s, value set to null", osElementString.c_str());
                     }
                 }
@@ -732,7 +732,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
             CPLError(CE_Failure, CPLE_AppDefined, "Parsing LV BAG extract failed");
             XML_StopParser(oParser.get(), XML_FALSE);
         }
-        
+
         if( !bHasReadSchema )
             CreateFeatureDefn(osElementString.c_str());
         bHasReadSchema = true;
@@ -783,7 +783,7 @@ bool OGRLVBAGLayer::IsParserFinished( XML_Status status )
     {
         case XML_STATUS_OK:
             return false;
-        
+
         case XML_STATUS_ERROR:
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Parsing of LV BAG file failed : %s at line %d, "
@@ -826,7 +826,7 @@ void OGRLVBAGLayer::ParseDocument()
 
                 break;
             }
-            
+
             case XML_SUSPENDED:
             {
                 if( IsParserFinished(XML_ResumeParser(oParser.get())) )
@@ -834,7 +834,7 @@ void OGRLVBAGLayer::ParseDocument()
 
                 break;
             }
-            
+
             case XML_FINISHED:
             default:
                 return;
@@ -899,6 +899,6 @@ int OGRLVBAGLayer::TestCapability( const char *pszCap )
 
     if( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;
-    
+
     return FALSE;
 }

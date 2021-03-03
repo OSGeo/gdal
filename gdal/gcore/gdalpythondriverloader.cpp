@@ -368,7 +368,7 @@ PythonPluginLayer::PythonPluginLayer(PyObject* poLayer) :
     m_poLayer(poLayer),
     m_poFeatureDefn(nullptr)
 {
-    SetDescription(GetName());
+    SetDescription(PythonPluginLayer::GetName());
     const char* pszPtr = CPLSPrintf("%p", this);
     PyObject* ptr = PyUnicode_FromString(pszPtr);
     PyObject_SetAttrString(m_poLayer, "_gdal_pointer", ptr);
@@ -654,7 +654,7 @@ GIntBig PythonPluginLayer::GetFeatureCount(int bForce)
         (m_bFeatureCountHonourAttributeFilter || m_poAttrQuery == nullptr) &&
         (m_bFeatureCountHonourSpatialFilter || m_poFilterGeom == nullptr) )
     {
-        auto poMethod = PyObject_GetAttrString(m_poLayer, 
+        auto poMethod = PyObject_GetAttrString(m_poLayer,
                                               "feature_count" );
         PyObject* poRet = CallPython(poMethod, bForce);
         if( ErrOccurredEmitCPLError() )
@@ -1000,7 +1000,7 @@ OGRFeature* PythonPluginLayer::GetNextFeature()
 /*                         GetLayerDefn()                               */
 /************************************************************************/
 
-OGRFeatureDefn* PythonPluginLayer::GetLayerDefn() 
+OGRFeatureDefn* PythonPluginLayer::GetLayerDefn()
 {
     if( m_poFeatureDefn )
         return m_poFeatureDefn;

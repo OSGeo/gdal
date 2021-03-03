@@ -292,7 +292,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 
 VSIMemHandle::~VSIMemHandle()
 {
-    Close();
+    VSIMemHandle::Close();
 }
 
 /************************************************************************/

@@ -1838,7 +1838,7 @@ static void SetupNoData(const char* pszDest,
                     printf( "Copying nodata values from source %s "
                             "to destination %s.\n",
                             GDALGetDescription(hSrcDS), pszDest );
-                psWO->padfDstNoDataReal[i] = 
+                psWO->padfDstNoDataReal[i] =
                     psWO->padfSrcNoDataReal[i];
 
                 if( i == 0 && psOptions->bCreateOutput &&
@@ -2135,6 +2135,7 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
 #ifdef DEBUG
         // Do not remove this if the #ifdef DEBUG before is still there !
         poDstDS = reinterpret_cast<GDALDataset*>(hDstDS);
+        CPL_IGNORE_RET_VAL(poDstDS);
 #endif
     }
     else
