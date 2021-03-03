@@ -603,7 +603,9 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
 
         if( pszRPBVal == nullptr)
         {
-            if (strcmp(apszRPBMap[i], RPC_ERR_RAND) == 0 || strcmp(apszRPBMap[i], RPC_ERR_BIAS) == 0) {
+            if (strcmp(apszRPBMap[i], RPC_ERR_RAND) == 0 ||
+                strcmp(apszRPBMap[i], RPC_ERR_BIAS) == 0)
+            {
                 continue;
             }
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -695,7 +697,9 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
         const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXTSingleValItems[i] );
         if( pszRPCVal == nullptr )
         {
-            if (strcmp(apszRPCTXTSingleValItems[i], RPC_ERR_BIAS) == 0 || strcmp(apszRPCTXTSingleValItems[i], RPC_ERR_RAND) == 0) {
+            if (strcmp(apszRPCTXTSingleValItems[i], RPC_ERR_BIAS) == 0 ||
+                strcmp(apszRPCTXTSingleValItems[i], RPC_ERR_RAND) == 0)
+            {
                 continue;
             }
             CPLError( CE_Failure, CPLE_AppDefined,

@@ -1120,10 +1120,18 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject& oProperties)
         };
         for( size_t i = 0; i < CPL_ARRAYSIZE(asRPCSingleValues); ++i )
         {
-            double dfRPCVal = GetDouble(oRPC, asRPCSingleValues[i].pszJsonName, true, bRPCError);
-            if (bRPCError && (strcmp(asRPCSingleValues[i].pszGDALName, RPC_ERR_BIAS) == 0 || strcmp(asRPCSingleValues[i].pszGDALName, RPC_ERR_RAND) == 0)) {
-                dfRPCVal = 0.0;
-                bRPCError = false;
+            bool bRPCErrorTmp = false;
+            const bool bVerboseError =
+                !(strcmp(asRPCSingleValues[i].pszGDALName, RPC_ERR_BIAS) == 0 ||
+                  strcmp(asRPCSingleValues[i].pszGDALName, RPC_ERR_RAND) == 0);
+            double dfRPCVal = GetDouble(oRPC, asRPCSingleValues[i].pszJsonName, bVerboseError, bRPCErrorTmp);
+            if (bRPCErrorTmp)
+            {
+                if (bVerboseError)
+                {
+                    bRPCError = true;
+                }
+                continue;
             }
             aoRPC.SetNameValue(asRPCSingleValues[i].pszGDALName, CPLSPrintf("%.18g", dfRPCVal));
         }

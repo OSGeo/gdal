@@ -413,8 +413,6 @@ def test_daas_getimagemetadata():
 
     rpc = ds.GetMetadata('RPC')
     expected_rpc = {
-        'ERR_BIAS': '0',
-        'ERR_RAND': '0',
         'SAMP_OFF': '1',
         'LINE_OFF': '2',
         'LAT_OFF': '3',
@@ -440,13 +438,12 @@ def test_daas_getimagemetadata():
     assert ds.GetRasterBand(1).GetOverview(0) is None
 
 
-    # Valid JSON with additional RPC error parameters
+    # Valid JSON with additional RPC error/bias parameters
     handler = webserver.SequentialHandler()
     handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
                 json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
                     "width": 2,
                     "height": 3,
-                    "pixelType": "Byte",
                     "actualBitDepth": 7,
                     "noDataValue": 0,
                     "metadataInt": 123,
@@ -463,7 +460,8 @@ def test_daas_getimagemetadata():
                         {
                             "name": "PAN",
                             "description": "Panchromatic band",
-                            "colorInterpretation": "GRAY"
+                            "colorInterpretation": "GRAY",
+                            "pixelType": "Byte"
                         }
                     ],
                     "srsExpression": {

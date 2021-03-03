@@ -627,7 +627,7 @@ private:
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
     // Only needed by createcopy and close code.
-    static void     WriteRPC( GDALDataset *, TIFF *, int, GTiffProfile, 
+    static void     WriteRPC( GDALDataset *, TIFF *, int, GTiffProfile,
                               const char *, char **,
                               bool bWriteOnlyInPAMIfNeeded = false );
     static bool     WriteMetadata( GDALDataset *, TIFF *, bool, GTiffProfile,
@@ -4444,7 +4444,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                                 aOffsetSize[i+1].second - overlap);
                         }
                     }
-                    else 
+                    else
                     {
                         //terminate current block
                         anSizes.push_back(nChunkSize);
@@ -4459,7 +4459,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                         nChunkSize = aOffsetSize[i+1].second;
                     }
                 }
-                //terminate last block 
+                //terminate last block
                 anSizes.push_back(nChunkSize);
 #ifdef DEBUG_VERBOSE
                 CPLDebug("GTiff", "Requesting range [" CPL_FRMT_GUIB "-" CPL_FRMT_GUIB "]",
@@ -7876,7 +7876,7 @@ int GTiffDataset::Finalize()
         m_hTIFF = nullptr;
     }
 
-    if ( !m_poBaseDS ) 
+    if ( !m_poBaseDS )
     {
         if( m_fpL != nullptr )
         {
@@ -9356,7 +9356,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
 /*                          DiscardLsb()                                */
 /************************************************************************/
 
-template<class T> static void DiscardLsbT(GByte* pabyBuffer, 
+template<class T> static void DiscardLsbT(GByte* pabyBuffer,
                                          size_t nBytes,
                                          int iBand,
                                          int nBands,
@@ -9601,7 +9601,7 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
 /*      Load the block, if it isn't our current block.                  */
 /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_None;
-    
+
     if( !ReadStrile(nBlockId, m_pabyBlockBuf, nBlockReqSize) )
     {
         memset( m_pabyBlockBuf, 0, nBlockBufSize );
@@ -9783,7 +9783,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
         return oPair.first != 0;
     }
 #endif
-    
+
     WaitCompletionForBlock(nBlockId);
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
@@ -11931,9 +11931,9 @@ void GTiffDataset::PushMetadataToPam()
 void GTiffDatasetWriteRPCTag( TIFF *hTIFF, char **papszRPCMD )
 
 {
-    GDALRPCInfo sRPC;
+    GDALRPCInfoV2 sRPC;
 
-    if( !GDALExtractRPCInfo( papszRPCMD, &sRPC ) )
+    if( !GDALExtractRPCInfoV2( papszRPCMD, &sRPC ) )
         return;
 
     double adfRPCTag[92] = {};
@@ -12855,7 +12855,7 @@ void GTiffDataset::LookForProjection()
                     ( versions[0] == 1 && versions[1]== 1 && versions[2] == 0 ) ? "NO" : "YES";
 
                 // Should we simplify away vertical CS stuff?
-                if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS", 
+                if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
                                             pszDefaultReportCompdCS) ) )
                 {
                     CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
@@ -15119,7 +15119,7 @@ void GTiffDataset::ScanDirectories()
                 break;
             if ( iSubIFD > 0 ) {
                 // make static analyzer happy. subIFDOffsets cannot be null if iSubIFD>0
-                assert(subIFDOffsets != nullptr); 
+                assert(subIFDOffsets != nullptr);
                 nThisDir = subIFDOffsets[iSubIFD-1];
                 //CPLDebug("GTiff", "Opened subIFD %d/%d at offset %llu.", iSubIFD, nSubIFDs, nThisDir);
                 if (!TIFFSetSubDirectory(m_hTIFF,nThisDir))
@@ -15660,7 +15660,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         }
         else
         {
-            ReportError( pszFilename,CE_Failure, CPLE_IllegalArg, 
+            ReportError( pszFilename,CE_Failure, CPLE_IllegalArg,
                       "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
                       pszValue );
             return nullptr;
@@ -17611,7 +17611,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             "GDAL_STRUCTURAL_METADATA_SIZE=%06d bytes\n", nHiddenMDSize) + osHiddenStructuralMD;
         VSI_TIFFWrite(l_hTIFF, osHiddenStructuralMD.c_str(), osHiddenStructuralMD.size());
     }
- 
+
 
     // FIXME? libtiff writes extended tags in the order they are specified
     // and not in increasing order.
@@ -18487,7 +18487,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #endif
 
     bool bWriteMask = true;
-    if( 
+    if(
 #if defined(HAVE_LIBJPEG) || defined(JPEG_DIRECT_COPY)
         bTryCopy &&
 #endif
@@ -18587,7 +18587,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLDebug( "GTiff", "directory moved during flush." );
         }
     }
-    else if( 
+    else if(
 #if defined(HAVE_LIBJPEG) || defined(JPEG_DIRECT_COPY)
         bTryCopy &&
 #endif
@@ -19812,7 +19812,7 @@ int GTiffOneTimeInit()
 
 {
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
- 
+
 #ifdef HAVE_LERC
     if( pLercCodec == nullptr )
     {

@@ -1151,8 +1151,15 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 #endif
 
-/** Structure to store Rational Polynomial Coefficients / Rigorous Projection
- * Model. See http://geotiff.maptools.org/rpc_prop.html */
+/*! @cond Doxygen_Suppress */
+#ifdef GDAL_COMPILATION
+#define GDALExtractRPCInfoV1 GDALExtractRPCInfo
+#else
+#define GDALRPCInfo        GDALRPCInfoV2
+#define GDALExtractRPCInfo GDALExtractRPCInfoV2
+#endif
+
+/* Deprecated: use GDALRPCInfoV2 */
 typedef struct
 {
     double dfLINE_OFF;   /*!< Line offset */
@@ -1177,13 +1184,12 @@ typedef struct
     double dfMAX_LONG; /*!< Maximum longitude */
     double dfMAX_LAT;  /*!< Maximum latitude */
 } GDALRPCInfoV1;
+/*! @endcond */
 
 /** Structure to store Rational Polynomial Coefficients / Rigorous Projection
  * Model. See http://geotiff.maptools.org/rpc_prop.html */
 typedef struct
 {
-    double dfERR_BIAS;   /*!< Bias error */
-    double dfERR_RAND;   /*!< Random error */
     double dfLINE_OFF;   /*!< Line offset */
     double dfSAMP_OFF;   /*!< Sample/Pixel offset */
     double dfLAT_OFF;    /*!< Latitude offset */
@@ -1205,9 +1211,15 @@ typedef struct
     double dfMIN_LAT;  /*!< Minimum latitude */
     double dfMAX_LONG; /*!< Maximum longitude */
     double dfMAX_LAT;  /*!< Maximum latitude */
+
+    /* Those fields should be at the end. And all above fields should be the same as in GDALRPCInfoV1 */
+    double dfERR_BIAS;   /*!< Bias error */
+    double dfERR_RAND;   /*!< Random error */
 } GDALRPCInfoV2;
 
-int CPL_DLL CPL_STDCALL GDALExtractRPCInfo( CSLConstList, GDALRPCInfoV1 * );
+/*! @cond Doxygen_Suppress */
+int CPL_DLL CPL_STDCALL GDALExtractRPCInfoV1( CSLConstList, GDALRPCInfoV1 * );
+/*! @endcond */
 int CPL_DLL CPL_STDCALL GDALExtractRPCInfoV2( CSLConstList, GDALRPCInfoV2 * );
 
 /* ==================================================================== */
