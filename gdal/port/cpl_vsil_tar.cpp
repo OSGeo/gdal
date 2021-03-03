@@ -495,7 +495,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
 };
 
 /************************************************************************/
@@ -550,7 +551,8 @@ VSIArchiveReader* VSITarFilesystemHandler::CreateReader(const char* pszTarFileNa
 
 VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
                                                  const char *pszAccess,
-                                                 bool /* bSetError */ )
+                                                 bool /* bSetError */,
+                                                 CSLConstList /* papszOptions */ )
 {
 
     if (strchr(pszAccess, 'w') != nullptr ||

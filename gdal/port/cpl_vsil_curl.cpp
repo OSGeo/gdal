@@ -3098,7 +3098,8 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
 
 VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
-                                                  bool bSetError )
+                                                  bool bSetError,
+                                                  CSLConstList /* papszOptions */ )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
@@ -4869,6 +4870,95 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
     return poDest;
 }
 
+/************************************************************************/
+/*                    VSICurlSetContentTypeFromExt()                    */
+/************************************************************************/
+
+struct curl_slist* VSICurlSetContentTypeFromExt(struct curl_slist* poList,
+                                                const char *pszPath)
+{
+    struct curl_slist* iter = poList;
+    while( iter != nullptr )
+    {
+        if( STARTS_WITH_CI(iter->data, "Content-Type") )
+        {
+            return poList;
+        }
+        iter = iter->next;
+    }
+
+    static const struct
+    {
+        const char* ext;
+        const char* mime;
+    }
+    aosExtMimePairs[] =
+    {
+        {"txt", "text/plain"},
+        {"json", "application/json"},
+        {"tif", "image/tiff"}, {"tiff", "image/tiff"},
+        {"jpg", "image/jpeg"}, {"jpeg", "image/jpeg"},
+        {"jp2", "image/jp2"}, {"jpx", "image/jp2"}, {"j2k", "image/jp2"}, {"jpc", "image/jp2"},
+        {"png", "image/png"},
+    };
+
+    const char *pszExt = CPLGetExtension(pszPath);
+    if( pszExt )
+    {
+        for( const auto& pair: aosExtMimePairs )
+        {
+            if( EQUAL(pszExt, pair.ext) )
+            {
+
+                CPLString osContentType;
+                osContentType.Printf("Content-Type: %s", pair.mime);
+                poList = curl_slist_append(poList, osContentType.c_str());
+#ifdef DEBUG_VERBOSE
+                CPLDebug("HTTP", "Setting %s, based on lookup table.", osContentType.c_str());
+#endif
+                break;
+            }
+        }
+    }
+
+    return poList;
+}
+
+/************************************************************************/
+/*                VSICurlSetCreationHeadersFromOptions()                */
+/************************************************************************/
+
+struct curl_slist* VSICurlSetCreationHeadersFromOptions(struct curl_slist* headers,
+                                                        CSLConstList papszOptions,
+                                                        const char *pszPath)
+{
+    bool bContentTypeFound = false;
+    for( CSLConstList papszIter = papszOptions; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = nullptr;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            if( EQUAL(pszKey, "Content-Type") )
+            {
+                bContentTypeFound = true;
+            }
+            CPLString osVal;
+            osVal.Printf("%s: %s", pszKey, pszValue);
+            headers = curl_slist_append(headers, osVal.c_str());
+        }
+        CPLFree(pszKey);
+    }
+
+    // If Content-type not found in papszOptions, try to set it from the
+    // filename exstension.
+    if( !bContentTypeFound )
+    {
+        headers = VSICurlSetContentTypeFromExt(headers, pszPath);
+    }
+
+    return headers;
+}
 
 #endif // DOXYGEN_SKIP
 //! @endcond

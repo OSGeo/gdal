@@ -119,8 +119,9 @@ VSIPluginFilesystemHandler::~VSIPluginFilesystemHandler()
 
 
 VSIVirtualHandle* VSIPluginFilesystemHandler::Open( const char *pszFilename,
-                                                  const char *pszAccess,
-                                                  bool bSetError )
+                                                    const char *pszAccess,
+                                                    bool bSetError,
+                                                    CSLConstList /* papszOptions */ )
 {
     if( !IsValidFilename(pszFilename) )
         return nullptr;

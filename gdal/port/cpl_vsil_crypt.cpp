@@ -1435,7 +1435,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
     int Unlink( const char *pszFilename ) override;
@@ -1546,7 +1547,8 @@ static CPLString GetKey( const char* pszFilename )
 
 VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
                                                    const char *pszAccess,
-                                                   bool /* bSetError */ )
+                                                   bool /* bSetError */,
+                                                   CSLConstList /* papszOptions */ )
 {
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Open(%s, %s)", pszFilename, pszAccess);
@@ -2076,7 +2078,8 @@ public:
 
     VSIVirtualHandle *Open( const char * /* pszFilename */,
                             const char * /* pszAccess */,
-                            bool /* bSetError */ ) override
+                            bool /* bSetError */,
+                            CSLConstList /* papszOptions */ ) override
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);

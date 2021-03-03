@@ -440,7 +440,7 @@ def test_vsiaz_fake_write():
     gdal.VSICurlClearCache()
 
     # Test creation of BlockBob
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenExL('/vsiaz/test_copy/file.tif', 'wb', 0, ['Content-Encoding=bar'])
     assert f is not None
 
     handler = webserver.SequentialHandler()
@@ -448,11 +448,13 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:juvKZNo5zX5UXmLTK2BnPsezN0DCfUeW8RNZySbwN1o=' or \
+           h['Authorization'] != 'SharedKey myaccount:jqNjm+2wmGAetpQPL2X9UWIrvmbYiOV59pQtyXD35nM=' or \
            'Expect' not in h or h['Expect'] != '100-continue' or \
            'Content-Length' not in h or h['Content-Length'] != '40000' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
-           'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'BlockBlob':
+           'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'BlockBlob' or \
+           'Content-Type' not in h or h['Content-Type'] != 'image/tiff' or \
+           'Content-Encoding' not in h or h['Content-Encoding'] != 'bar':
             sys.stderr.write('Bad headers: %s\n' % str(h))
             request.send_response(403)
             return
@@ -470,7 +472,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', custom_method=method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
@@ -480,7 +482,7 @@ def test_vsiaz_fake_write():
         gdal.VSIFCloseL(f)
 
     # Simulate illegal read
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     assert f is not None
     with gdaltest.error_handler():
         ret = gdal.VSIFReadL(1, 1, f)
@@ -488,7 +490,7 @@ def test_vsiaz_fake_write():
     gdal.VSIFCloseL(f)
 
     # Simulate illegal seek
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     assert f is not None
     with gdaltest.error_handler():
         ret = gdal.VSIFSeekL(f, 1, 0)
@@ -496,7 +498,7 @@ def test_vsiaz_fake_write():
     gdal.VSIFCloseL(f)
 
     # Simulate failure when putting BlockBob
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     assert f is not None
 
     handler = webserver.SequentialHandler()
@@ -507,7 +509,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', custom_method=method)
 
     if gdal.VSIFSeekL(f, 0, 0) != 0:
         gdal.VSIFCloseL(f)
@@ -542,19 +544,19 @@ def test_vsiaz_fake_write():
             pytest.fail(ret)
 
     # Simulate creation of BlockBob over an existing blob of incompatible type
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     assert f is not None
 
     handler = webserver.SequentialHandler()
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 409)
-    handler.add('DELETE', '/azure/blob/myaccount/test_copy/file.bin', 202)
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 201)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', 409)
+    handler.add('DELETE', '/azure/blob/myaccount/test_copy/file.tif', 202)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', 201)
     with webserver.install_http_handler(handler):
         gdal.VSIFCloseL(f)
 
     # Test creation of AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     assert f is not None
 
@@ -563,7 +565,7 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:cEOpBBlEJNHqKyul2N7ZgyQoznDhPjIn293EWlm4t4o=' or \
+           h['Authorization'] != 'SharedKey myaccount:zmFZkO5IZCidFB/aAtr3oUaT2xg//F2SjyIgWMUoV5g=' or \
            'Content-Length' not in h or h['Content-Length'] != '0' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
            'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'AppendBlob':
@@ -576,7 +578,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', custom_method=method)
 
     def method(request):
         h = request.headers
@@ -599,7 +601,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif?comp=appendblock', custom_method=method)
 
     def method(request):
         h = request.headers
@@ -622,7 +624,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif?comp=appendblock', custom_method=method)
 
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
@@ -633,7 +635,7 @@ def test_vsiaz_fake_write():
 
     # Test failed creation of AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     assert f is not None
 
@@ -645,7 +647,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', custom_method=method)
 
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -657,13 +659,13 @@ def test_vsiaz_fake_write():
 
     # Test failed writing of a block of an AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     assert f is not None
 
     handler = webserver.SequentialHandler()
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 201)
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 403)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', 201)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif?comp=appendblock', 403)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)

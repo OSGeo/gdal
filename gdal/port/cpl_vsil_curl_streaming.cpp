@@ -224,7 +224,8 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError ) override;
+                                    bool bSetError,
+                                    CSLConstList /* papszOptions */ ) override;
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                            int nFlags ) override;
 
@@ -1596,7 +1597,8 @@ VSICurlStreamingFSHandler::CreateFileHandle( const char* pszURL )
 
 VSIVirtualHandle* VSICurlStreamingFSHandler::Open( const char *pszFilename,
                                                    const char *pszAccess,
-                                                   bool /* bSetError */ )
+                                                   bool /* bSetError */,
+                                                   CSLConstList /* papszOptions */ )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -1666,7 +1668,7 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
 const char* VSICurlStreamingFSHandler::GetActualURL(const char* pszFilename)
 {
     VSICurlStreamingHandle* poHandle = dynamic_cast<VSICurlStreamingHandle*>(
-        Open(pszFilename, "rb", false));
+        Open(pszFilename, "rb", false, nullptr));
     if( poHandle == nullptr )
         return pszFilename;
     CPLString osURL(poHandle->GetURL());

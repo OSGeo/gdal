@@ -1793,7 +1793,7 @@ def VSIFOpenL(*args):
     return _gdal.VSIFOpenL(*args)
 
 def VSIFOpenExL(*args):
-    """VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE"""
+    """VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError=False, char ** options=None) -> VSILFILE"""
     return _gdal.VSIFOpenExL(*args)
 
 def VSIFEofL(*args):

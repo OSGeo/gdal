@@ -1205,7 +1205,7 @@ def test_vsis3_4():
     handler = webserver.SequentialHandler()
 
     def method(request):
-        if request.headers['Content-Length'] != '0':
+        if request.headers['Content-Length'] != '0' or request.headers['Content-Type'] != 'foo' or request.headers['Content-Encoding'] != 'bar':
             sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
             request.send_response(400)
             return
@@ -1217,7 +1217,7 @@ def test_vsis3_4():
     handler.add('PUT', '/s3_fake_bucket3/empty_file.bin', custom_method=method)
 
     with webserver.install_http_handler(handler):
-        f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb')
+        f = gdal.VSIFOpenExL('/vsis3/s3_fake_bucket3/empty_file.bin', 'wb', 0, ['Content-Type=foo', 'Content-Encoding=bar'] )
         assert f is not None
         gdal.ErrorReset()
         gdal.VSIFCloseL(f)
@@ -1349,7 +1349,7 @@ def test_vsis3_4():
 
     # Redirect case
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/redirect', 'wb')
+        f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/redirect.tif', 'wb')
         assert f is not None
         assert gdal.VSIFWriteL('foobar', 1, 6, f) == 6
 
@@ -1366,7 +1366,7 @@ def test_vsis3_4():
             request.end_headers()
             request.wfile.write(response.encode('ascii'))
         elif request.headers['Authorization'].find('us-west-2') >= 0:
-            if request.headers['Content-Length'] != '6':
+            if request.headers['Content-Length'] != '6' or request.headers['Content-Type'] != 'image/tiff':
                 sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
                 request.send_response(400)
                 request.send_header('Content-Length', 0)
@@ -1389,8 +1389,8 @@ def test_vsis3_4():
             request.send_header('Content-Length', 0)
             request.end_headers()
 
-    handler.add('PUT', '/s3_fake_bucket3/redirect', custom_method=method)
-    handler.add('PUT', '/s3_fake_bucket3/redirect', custom_method=method)
+    handler.add('PUT', '/s3_fake_bucket3/redirect.tif', custom_method=method)
+    handler.add('PUT', '/s3_fake_bucket3/redirect.tif', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
@@ -1677,7 +1677,7 @@ def test_vsis3_6():
 
     with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
-            f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket4/large_file.bin', 'wb')
+            f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket4/large_file.tif', 'wb')
     assert f is not None
     size = 1024 * 1024 + 1
     big_buffer = 'a' * size
@@ -1695,6 +1695,12 @@ def test_vsis3_6():
             request.end_headers()
             request.wfile.write(response.encode('ascii'))
         elif request.headers['Authorization'].find('us-west-2') >= 0:
+            if request.headers['Content-Type'] != 'image/tiff':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
             response = '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>'
             request.send_response(200)
             request.send_header('Content-type', 'application/xml')
@@ -1707,8 +1713,8 @@ def test_vsis3_6():
             request.send_header('Content-Length', 0)
             request.end_headers()
 
-    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method=method)
-    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method=method)
+    handler.add('POST', '/s3_fake_bucket4/large_file.tif?uploads', custom_method=method)
+    handler.add('POST', '/s3_fake_bucket4/large_file.tif?uploads', custom_method=method)
 
     def method(request):
         if request.headers['Content-Length'] != '1048576':
@@ -1722,7 +1728,7 @@ def test_vsis3_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method=method)
+    handler.add('PUT', '/s3_fake_bucket4/large_file.tif?partNumber=1&uploadId=my_id', custom_method=method)
 
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
@@ -1739,7 +1745,7 @@ def test_vsis3_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id', custom_method=method)
+    handler.add('PUT', '/s3_fake_bucket4/large_file.tif?partNumber=2&uploadId=my_id', custom_method=method)
 
     def method(request):
 
@@ -1768,7 +1774,7 @@ def test_vsis3_6():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploadId=my_id', custom_method=method)
+    handler.add('POST', '/s3_fake_bucket4/large_file.tif?uploadId=my_id', custom_method=method)
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
@@ -1875,7 +1881,7 @@ def test_vsis3_write_multipart_retry():
 
         with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
             with webserver.install_http_handler(webserver.SequentialHandler()):
-                f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket4/large_file.bin', 'wb')
+                f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket4/large_file.tif', 'wb')
         assert f is not None
         size = 1024 * 1024 + 1
         big_buffer = 'a' * size
@@ -1883,15 +1889,15 @@ def test_vsis3_write_multipart_retry():
         handler = webserver.SequentialHandler()
 
         response = '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>'
-        handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', 502)
-        handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', 200,
+        handler.add('POST', '/s3_fake_bucket4/large_file.tif?uploads', 502)
+        handler.add('POST', '/s3_fake_bucket4/large_file.tif?uploads', 200,
                     {'Content-type': 'application/xml',
                     'Content-Length': len(response),
                     'Connection': 'close'},
                     response)
 
-        handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', 502)
-        handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', 200,
+        handler.add('PUT', '/s3_fake_bucket4/large_file.tif?partNumber=1&uploadId=my_id', 502)
+        handler.add('PUT', '/s3_fake_bucket4/large_file.tif?partNumber=1&uploadId=my_id', 200,
                     {'Content-Length': '0',
                     'ETag': '"first_etag"',
                     'Connection': 'close'}, {})
@@ -1902,13 +1908,13 @@ def test_vsis3_write_multipart_retry():
         assert ret == size
         handler = webserver.SequentialHandler()
 
-        handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id', 200,
+        handler.add('PUT', '/s3_fake_bucket4/large_file.tif?partNumber=2&uploadId=my_id', 200,
                     {'Content-Length': '0',
                     'ETag': '"second_etag"',
                     'Connection': 'close'}, {})
 
-        handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploadId=my_id', 502)
-        handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploadId=my_id', 200,
+        handler.add('POST', '/s3_fake_bucket4/large_file.tif?uploadId=my_id', 502)
+        handler.add('POST', '/s3_fake_bucket4/large_file.tif?uploadId=my_id', 200,
                     {'Content-Length': '0',
                     'Connection': 'close'}, {})
 
@@ -3387,10 +3393,16 @@ def test_vsis3_extra_1():
         ret = gdal.Mkdir(subpath, 0)
         assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
 
-        f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
+        f = gdal.VSIFOpenExL(subpath + '/test.txt', 'wb', 0, ['Content-Type=foo', 'Content-Encoding=bar'])
         assert f is not None
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
+
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'HEADERS')
+        assert 'Content-Type' in md
+        assert md['Content-Type'] == 'foo'
+        assert 'Content-Encoding' in md
+        assert md['Content-Encoding'] == 'bar'
 
         ret = gdal.Rmdir(subpath)
         assert ret != 0, \

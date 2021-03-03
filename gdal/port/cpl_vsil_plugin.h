@@ -76,7 +76,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
 
     int Stat        ( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
     int Unlink      ( const char * pszFilename ) override;

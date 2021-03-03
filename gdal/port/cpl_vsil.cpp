@@ -1149,7 +1149,7 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 VSIVirtualHandle *VSIFilesystemHandler::Open( const char *pszFilename,
                                               const char *pszAccess )
 {
-    return Open(pszFilename, pszAccess, false);
+    return Open(pszFilename, pszAccess, false, nullptr);
 }
 
 /************************************************************************/
@@ -1656,6 +1656,51 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess,
                        int bSetError )
 
 {
+    return VSIFOpenEx2L(pszFilename, pszAccess, bSetError, nullptr);
+}
+
+/************************************************************************/
+/*                            VSIFOpenEx2L()                            */
+/************************************************************************/
+
+/**
+ * \brief Open file.
+ *
+ * This function opens a file with the desired access.  Large files (larger
+ * than 2GB) should be supported.  Binary access is always implied and
+ * the "b" does not need to be included in the pszAccess string.
+ *
+ * Note that the "VSILFILE *" returned by this function is
+ * *NOT* a standard C library FILE *, and cannot be used with any functions
+ * other than the "VSI*L" family of functions.  They aren't "real" FILE objects.
+ *
+ * On windows it is possible to define the configuration option
+ * GDAL_FILE_IS_UTF8 to have pszFilename treated as being in the local
+ * encoding instead of UTF-8, restoring the pre-1.8.0 behavior of VSIFOpenL().
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fopen() function.
+ *
+ * @param pszFilename the file to open.  UTF-8 encoded.
+ * @param pszAccess access requested (i.e. "r", "r+", "w")
+ * @param bSetError flag determining whether or not this open call
+ * should set VSIErrors on failure.
+ * @param papszOptions NULL or NULL-terminated list of strings. The content is
+ *                     highly file system dependent. Currently only MIME headers
+ *                     such as Content-Type and Content-Encoding are supported
+ *                     for the /vsis3/, /vsigs/, /vsiaz/, /vsiadls/ file systems.
+ *
+ * @return NULL on failure, or the file handle.
+ *
+ * @since GDAL 3.3
+ */
+
+VSILFILE *VSIFOpenEx2L( const char * pszFilename, const char * pszAccess,
+                        int bSetError, CSLConstList papszOptions )
+
+{
     // Too long filenames can cause excessive memory allocation due to
     // recursion in some filesystem handlers
     constexpr size_t knMaxPath = 8192;
@@ -1666,9 +1711,9 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess,
         VSIFileManager::GetHandler( pszFilename );
 
     VSILFILE* fp = reinterpret_cast<VSILFILE *>(
-        poFSHandler->Open( pszFilename, pszAccess, CPL_TO_BOOL(bSetError) ) );
+        poFSHandler->Open( pszFilename, pszAccess, CPL_TO_BOOL(bSetError), papszOptions ) );
 
-    VSIDebug4( "VSIFOpenExL(%s,%s,%d) = %p",
+    VSIDebug4( "VSIFOpenEx2L(%s,%s,%d) = %p",
                pszFilename, pszAccess, bSetError, fp );
 
     return fp;
