@@ -662,15 +662,15 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     The OVERWRITE strategy (GDAL >= 3.2) will always overwrite the target file
  *     with the source one.
  * </li>
- * <li>NUM_THREADS=integer. Number of threads to use for parallel file copying.
+ * <li>NUM_THREADS=integer. (GDAL >= 3.1) Number of threads to use for parallel file copying.
  *     Only use for when /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ is in source or target.
- *     Since GDAL 3.1</li>
- * <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use to split
+ *     The default is 10 since GDAL 3.3</li>
+ * <li>CHUNK_SIZE=integer. (GDAL >= 3.1) Maximum size of chunk (in bytes) to use to split
  *     large objects when downloading them from /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ to
  *     local file system, or for upload to /vsis3/, /vsiaz/ or /vsiadls/ from local file system.
  *     Only used if NUM_THREADS > 1.
  *     For upload to /vsis3/, this chunk size must be set at least to 5 MB.
- *     Since GDAL 3.1</li>
+ *     The default is 8 MB since GDAL 3.3</li>
  * </ul>
  * @param pProgressFunc Progress callback, or NULL.
  * @param pProgressData User data of progress callback, or NULL.

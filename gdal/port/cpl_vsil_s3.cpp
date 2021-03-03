@@ -3567,14 +3567,19 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
     std::vector<ChunkToCopy> aoChunksToCopy;
     std::set<CPLString> aoSetDirsToCreate;
     const char* pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
+#if !defined(CPL_MULTIPROC_STUB)
+    // 10 threads used by default by the Python s3transfer library
+    const int nRequestedThreads = atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "10"));
+#else
     const int nRequestedThreads = atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "1"));
+#endif
     auto poTargetFSHandler = dynamic_cast<IVSIS3LikeFSHandler*>(
                                     VSIFileManager::GetHandler( pszTarget ));
     const bool bSupportsParallelMultipartUpload =
         bUploadFromLocalToNetwork && poTargetFSHandler != nullptr &&
         poTargetFSHandler->SupportsParallelMultipartUpload();
     const bool bSimulateThreading = CPLTestBool(CPLGetConfigOption("VSIS3_SIMULATE_THREADING", "NO"));
-    const int nMinSizeChunk = bSupportsParallelMultipartUpload && !bSimulateThreading ? 5242880 : 1; // 5242880 defines by S3 API
+    const int nMinSizeChunk = bSupportsParallelMultipartUpload && !bSimulateThreading ? 8 * 1024 * 1024 : 1; // 5242880 defined by S3 API as the minimum, but 8 MB used by default by the Python s3transfer library
     const int nMinThreads = bSimulateThreading ? 0 : 1;
     const size_t nMaxChunkSize =
         pszChunkSize && nRequestedThreads > nMinThreads &&
