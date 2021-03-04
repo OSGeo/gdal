@@ -160,7 +160,7 @@ General creation options
         available if general options (i.e. options which are not creation options,
         like subsetting, etc.) are used.
 
-- **OVERVIEW_COMPRESS**=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**:
+- **OVERVIEW_COMPRESS=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**:
   Set the compression method to use when storing the overviews in the COG.
 
 - **OVERVIEW_QUALITY=integer_value**: JPEG/WEBP quality setting. A value of 100 is best
