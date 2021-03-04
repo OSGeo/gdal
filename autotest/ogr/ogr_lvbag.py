@@ -409,6 +409,18 @@ def test_ogr_lvbag_secondary_pandref():
     feat = lyr.GetNextFeature()
     assert feat.GetField(4) == ['NL.IMBAG.Pand.0048100000002999', 'NL.IMBAG.Pand.1950100000100293'], 'bad nevenadres'
 
+def test_ogr_lvbag_secondary_pandref():
+
+    ds = ogr.Open('data/lvbag/file4.vbo')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetNameRef().lower() == 'pandref'
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetField(4) == ['NL.IMBAG.Pand.0048100000002999', 'NL.IMBAG.Pand.1950100000100293'], 'bad nevenadres'
+
 ###############################################################################
 # Run test_ogrsf
 
