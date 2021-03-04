@@ -1141,21 +1141,34 @@ void GDALCOGDriver::InitializeCreationOptionList()
                 "   <Option name='COMPRESS' type='string-select'>";
     osOptions += osCompressValues;
     osOptions += "   </Option>";
+
+    osOptions += "   <Option name='OVERVIEW_COMPRESS' type='string-select'>";
+    osOptions += osCompressValues;
+    osOptions += "   </Option>";
+
     if( bHasLZW || bHasDEFLATE || bHasZSTD )
     {
-        osOptions += "   <Option name='LEVEL' type='int' "
-            "description='DEFLATE/ZSTD compression level: 1 (fastest)'/>";
-        osOptions += "   <Option name='PREDICTOR' type='string-select' default='FALSE'>"
-                     "     <Value>YES</Value>"
+        const char* osPredictorOptions =  "     <Value>YES</Value>"
                      "     <Value>NO</Value>"
                      "     <Value alias='2'>STANDARD</Value>"
-                     "     <Value alias='3'>FLOATING_POINT</Value>"
-                     "   </Option>";
+                     "     <Value alias='3'>FLOATING_POINT</Value>";
+
+        osOptions += "   <Option name='LEVEL' type='int' "
+            "description='DEFLATE/ZSTD compression level: 1 (fastest)'/>";
+
+        osOptions += "   <Option name='PREDICTOR' type='string-select' default='FALSE'>";
+        osOptions += osPredictorOptions;
+        osOptions += "   </Option>"
+                "   <Option name='OVERVIEW_PREDICTOR' type='string-select' default='FALSE'>";
+        osOptions += osPredictorOptions;
+        osOptions += "   </Option>";
     }
     if( bHasJPEG || bHasWebP )
     {
         osOptions += "   <Option name='QUALITY' type='int' "
-                     "description='JPEG/WEBP quality 1-100' default='75'/>";
+                     "description='JPEG/WEBP quality 1-100' default='75'/>"
+                     "   <Option name='OVERVIEW_QUALITY' type='int'"
+                     "description='Overview JPEG/WEBP quality 1-100' default='75'/>";
     }
 #ifdef HAVE_LERC
     osOptions += ""
