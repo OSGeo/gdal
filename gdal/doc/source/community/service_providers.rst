@@ -110,7 +110,7 @@ and related Open Source technologies.
 
 .. container:: service-provider
 
-    |logo_faunalia|
+   |logo_faunalia|
     
   `Faunalia`_ (Italy) is a company that operates since more than 15 years in the field of Geographic Information Systems (GIS) based on free and open source software (chiefly QGIS, PostGIS, and more). Our main customers are public administrations, private companies, associations. Faunalia has its main branch in Italy, and operates worldwide. Faunalia provided training services on GDAL.
 
