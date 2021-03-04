@@ -1413,6 +1413,8 @@ struct sPolyExtended
 {
     CPL_DISALLOW_COPY_ASSIGN(sPolyExtended)
     sPolyExtended() = default;
+    sPolyExtended(sPolyExtended&&) = default;
+    sPolyExtended& operator= (sPolyExtended&&) = default;
 
     OGRGeometry* poGeometry = nullptr;
     OGRCurvePolygon* poPolygon = nullptr;
@@ -1427,28 +1429,14 @@ struct sPolyExtended
     bool            bIsPolygon = false;
 };
 
-static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)
+static bool OGRGeometryFactoryCompareArea(const sPolyExtended& sPoly1, const sPolyExtended& sPoly2)
 {
-    const sPolyExtended* psPoly1 = reinterpret_cast<const sPolyExtended*>(p1);
-    const sPolyExtended* psPoly2 = reinterpret_cast<const sPolyExtended*>(p2);
-    if( psPoly2->dfArea < psPoly1->dfArea )
-        return -1;
-    else if( psPoly2->dfArea > psPoly1->dfArea )
-        return 1;
-    else
-        return 0;
+    return sPoly2.dfArea < sPoly1.dfArea;
 }
 
-static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
+static bool OGRGeometryFactoryCompareByIndex(const sPolyExtended& sPoly1, const sPolyExtended& sPoly2)
 {
-    const sPolyExtended* psPoly1 = reinterpret_cast<const sPolyExtended*>(p1);
-    const sPolyExtended* psPoly2 = reinterpret_cast<const sPolyExtended*>(p2);
-    if( psPoly1->nInitialIndex < psPoly2->nInitialIndex )
-        return -1;
-    else if( psPoly1->nInitialIndex > psPoly2->nInitialIndex )
-        return 1;
-    else
-        return 0;
+    return sPoly1.nInitialIndex < sPoly2.nInitialIndex;
 }
 
 constexpr int N_CRITICAL_PART_NUMBER = 100;
@@ -1569,7 +1557,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
 /*      Setup per polygon envelope and area information.                */
 /* -------------------------------------------------------------------- */
-    sPolyExtended* asPolyEx = new sPolyExtended[nPolygonCount];
+    std::vector<sPolyExtended> asPolyEx(nPolygonCount);
 
     bool bValidTopology = true;
     bool bMixedUpGeometries = false;
@@ -1689,7 +1677,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 delete asPolyEx[i].poPolygon;
             }
         }
-        delete [] asPolyEx;
+
         if( pbIsValidGeometry )
             *pbIsValidGeometry = TRUE;
         return poCP;
@@ -1739,7 +1727,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 delete asPolyEx[i].poPolygon;
             }
         }
-        delete [] asPolyEx;
+
         if( pbIsValidGeometry )
             *pbIsValidGeometry = TRUE;
         return poRet;
@@ -1819,9 +1807,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     if( !bMixedUpGeometries )
     {
         // STEP 1: Sort polygons by descending area.
-        // TODO(schwehr): Use std::sort.
-        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended),
-              OGRGeometryFactoryCompareArea);
+        std::sort(asPolyEx.begin(), asPolyEx.end(),
+                  OGRGeometryFactoryCompareArea);
     }
     papoPolygons = nullptr;  // Just to use to avoid it afterwards.
 
@@ -2066,8 +2053,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     else
     {
         // STEP 3: Sort again in initial order.
-        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended),
-              OGRGeometryFactoryCompareByIndex);
+        std::sort(asPolyEx.begin(), asPolyEx.end(),
+                  OGRGeometryFactoryCompareByIndex);
 
         // STEP 4: Add holes as rings of their enclosing polygon.
         for( int i = 0; i < nPolygonCount; i++ )
@@ -2105,8 +2092,6 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             geom = poGC;
         }
     }
-
-    delete[] asPolyEx;
 
     return geom;
 }
@@ -3826,7 +3811,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
                     !cache.d->poRevCT->GetTargetCS()->IsSame(poCT->GetSourceCS()) )
                 {
                     delete cache.d->poRevCT;
-                    cache.d->poRevCT = 
+                    cache.d->poRevCT =
                         OGRCreateCoordinateTransformation( &oSRSWGS84,
                                                        poCT->GetSourceCS() );
                     cache.d->bIsNorthPolar = false;

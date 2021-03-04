@@ -132,6 +132,7 @@ CPL_CVSID("$Id$")
 #define BOTTOM_LEFT_LAT_OFFSET 1168
 #define BOTTOM_LEFT_LON_OFFSET 1184
 
+namespace {
 /* a few useful enums */
 enum eFileType {
     level_11 = 0,
@@ -146,6 +147,7 @@ enum ePolarization {
     vh,
     vv
 };
+} // namespace
 
 /************************************************************************/
 /* ==================================================================== */

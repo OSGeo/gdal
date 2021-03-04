@@ -68,6 +68,7 @@ CPL_CVSID("$Id$")
 #define GEOTRSFRM_ROTATION_PARAM2      4
 #define GEOTRSFRM_NS_RES               5
 
+namespace {
 typedef enum
 {
     LOWEST_RESOLUTION,
@@ -120,6 +121,7 @@ struct BandProperty
     bool                   bHasScale = false;
     double                 dfScale = 0;
 };
+} // namespace
 
 /************************************************************************/
 /*                            ArgIsNumeric()                            */
