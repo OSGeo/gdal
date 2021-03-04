@@ -10202,6 +10202,24 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
 
     int nOvBitsPerSample = m_nBitsPerSample;
 
+    int l_nPhotometric = m_nPhotometric;
+    const char* psvPhotometricValue = CPLGetConfigOption( "PHOTOMETRIC_OVERVIEW", nullptr );
+    if( psvPhotometricValue != nullptr )
+    {
+        if ( EQUAL (psvPhotometricValue, "YCBCR" ) && nBands == 3)
+        {
+            l_nPhotometric = PHOTOMETRIC_YCBCR;
+        } 
+        else 
+        { 
+            ReportError(CE_Warning, CPLE_NotSupported,
+            "Building external overviews with PHOTOMETRIC_OVERVIEW's other than YCBCR are not supported "
+            );
+        }
+    }
+
+
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
@@ -10212,7 +10230,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
     unsigned short *panGreen = nullptr;
     unsigned short *panBlue = nullptr;
 
-    if( m_nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr )
+    if( l_nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr )
     {
         CreateTIFFColorTable(m_poColorTable, nOvBitsPerSample,
                              anTRed, anTGreen, anTBlue,
@@ -10248,14 +10266,36 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
         nExtraSamples = 0;
     }
 
+    int l_nCompression = m_nCompression;
+    const char* pszCompressValue = CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
+    if( pszCompressValue != nullptr )
+    {
+        l_nCompression = GTIFFGetCompressionMethod(pszCompressValue, "COMPRESS_OVERVIEW");
+        if( l_nCompression < 0 )
+        {
+            l_nCompression = m_nCompression;
+        }
+    }
+
+    
 /* -------------------------------------------------------------------- */
 /*      Fetch predictor tag                                             */
 /* -------------------------------------------------------------------- */
     uint16 nPredictor = PREDICTOR_NONE;
-    if( m_nCompression == COMPRESSION_LZW ||
-        m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
-        m_nCompression == COMPRESSION_ZSTD )
-        TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
+    if( l_nCompression == COMPRESSION_LZW ||
+        l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
+        l_nCompression == COMPRESSION_ZSTD ) 
+    {
+        if ( CPLGetConfigOption( "PREDICTOR_OVERVIEW", nullptr ) != nullptr ) 
+        {
+            nPredictor = static_cast<uint16>(atoi(CPLGetConfigOption("PREDICTOR_OVERVIEW","1")));
+        } 
+        else 
+        {
+            TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
+        }
+    }
+
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(GDALRasterBand::ToHandle(GetRasterBand(1)),
@@ -10277,14 +10317,14 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
         int nOYSize = poOvrBand->GetYSize();
 
         int nOvrJpegQuality = m_nJpegQuality;
-        if( m_nCompression == COMPRESSION_JPEG &&
+        if( l_nCompression == COMPRESSION_JPEG &&
             CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ) != nullptr )
         {
             nOvrJpegQuality =
                 atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
         }
         int nOvrWebpLevel = m_nWebPLevel;
-        if( m_nCompression == COMPRESSION_WEBP &&
+        if( l_nCompression == COMPRESSION_WEBP &&
             CPLGetConfigOption( "WEBP_LEVEL_OVERVIEW", nullptr ) != nullptr )
         {
             nOvrWebpLevel =
@@ -10307,7 +10347,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
                                     nOvrBlockXSize,
                                     nOvrBlockYSize,
                                     TRUE,
-                                    m_nCompression, m_nPhotometric, m_nSampleFormat,
+                                    l_nCompression, l_nPhotometric, m_nSampleFormat,
                                     nPredictor,
                                     panRed, panGreen, panBlue,
                                     nExtraSamples, panExtraSampleValues,

@@ -666,6 +666,12 @@ the default behavior of the GTiff driver.
    partially corrupted TIFF files
 -  :decl_configoption:`ESRI_XML_PAM` : Can be set to TRUE to force metadata in the xml:ESRI
    domain to be written to PAM.
+-  :decl_configoption:`COMPRESS_OVERVIEW` :  See `Creation Options COMPRESS <#creation-options>`__ section.
+   Set the compression type to use for overviews
+-  :decl_configoption:`PHOTOMETRIC_OVERVIEW` :  YCBCR
+   Set the photometric color space for overview creation
+-  :decl_configoption:`PREDICTOR_OVERVIEW` : Integer 1,2 or 3.
+   Set the predictor to use for overviews with LZW, DEFLATE and ZSTD compression
 -  :decl_configoption:`JPEG_QUALITY_OVERVIEW` : Integer between 0 and 100. Default value : 75.
    Quality of JPEG compressed overviews, either internal or external.
 -  :decl_configoption:`WEBP_LEVEL_OVERVIEW` : Integer between 1 and 100. Default value : 75.
