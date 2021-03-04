@@ -97,8 +97,14 @@ OGRDataSource *OGRWalkDriver::Open( const char * pszFilename, int bUpdate )
         delete poDS;
         return nullptr;
     }
-    else
-        return poDS;
+
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("WALK") )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
+    return poDS;
 }
 
 /************************************************************************/

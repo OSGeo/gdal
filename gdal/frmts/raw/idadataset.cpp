@@ -796,6 +796,9 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     if( nActualFileSize != nExpectedFileSize )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("IDA") )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
@@ -992,6 +995,9 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
                                  char ** /* papszParmList */ )
 
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("IDA") )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */

@@ -281,6 +281,9 @@ GDALDataset *ZMapDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("ZMAP") )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -535,6 +538,9 @@ GDALDataset* ZMapDataset::CreateCopy( const char * pszFilename,
                                       GDALProgressFunc pfnProgress,
                                       void * pProgressData )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("ZMAP") )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */

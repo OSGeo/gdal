@@ -159,6 +159,9 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("INGR") )
+        return nullptr;
+
     // --------------------------------------------------------------------
     // Get Data Type Code (DTC) => Format Type
     // --------------------------------------------------------------------
@@ -497,6 +500,9 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
                                         GDALDataType eType,
                                         char **papszOptions )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("INGR") )
+        return nullptr;
+
     int nDeviceResolution = 1;
 
     const char *pszValue = CSLFetchNameValue(papszOptions, "RESOLUTION");
@@ -648,6 +654,9 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
                                            GDALProgressFunc pfnProgress,
                                            void *pProgressData )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("INGR") )
+        return nullptr;
+
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {

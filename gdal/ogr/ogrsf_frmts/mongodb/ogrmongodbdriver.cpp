@@ -2770,6 +2770,9 @@ static GDALDataset* OGRMongoDBDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRMongoDBDriverIdentify(poOpenInfo) )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("MONGODB", "You should consider using the MongoDBV3 driver instead.") )
+        return nullptr;
+
     OGRMongoDBDataSource *m_poDS = new OGRMongoDBDataSource();
 
     if( !m_poDS->Open( poOpenInfo->pszFilename,

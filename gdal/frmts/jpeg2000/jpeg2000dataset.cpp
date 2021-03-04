@@ -624,6 +624,9 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("JPEG2000", "You should consider using another driver, in particular the JP2OpenJPEG driver that is a better free and open source alternative. ") )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
@@ -848,6 +851,9 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("JPEG2000", "You should consider using another driver, in particular the JP2OpenJPEG driver that is a better free and open source alternative. ") )
+        return nullptr;
+
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
