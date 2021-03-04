@@ -304,6 +304,16 @@ def test_ogr_lvbag_read_zip_3():
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() > 0
 
+def test_ogr_lvbag_read_zip_4():
+
+    ds = ogr.Open('/vsizip/./data/lvbag/archive_single.zip')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Woonplaats', 'bad layer name'
+    assert lyr.GetFeatureCount() > 0
+
 def test_ogr_lvbag_invalid_polygon():
 
     pytest.skip()
