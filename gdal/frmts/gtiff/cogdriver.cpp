@@ -1159,7 +1159,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
         osOptions += "   <Option name='PREDICTOR' type='string-select' default='FALSE'>";
         osOptions += osPredictorOptions;
         osOptions += "   </Option>"
-                "   <Option name='OVERVIEW_PREDICTOR' type='string-select' default='FALSE'>";
+                     "   <Option name='OVERVIEW_PREDICTOR' type='string-select' default='FALSE'>";
         osOptions += osPredictorOptions;
         osOptions += "   </Option>";
     }
@@ -1167,7 +1167,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
     {
         osOptions += "   <Option name='QUALITY' type='int' "
                      "description='JPEG/WEBP quality 1-100' default='75'/>"
-                     "   <Option name='OVERVIEW_QUALITY' type='int'"
+                     "   <Option name='OVERVIEW_QUALITY' type='int' "
                      "description='Overview JPEG/WEBP quality 1-100' default='75'/>";
     }
 #ifdef HAVE_LERC
