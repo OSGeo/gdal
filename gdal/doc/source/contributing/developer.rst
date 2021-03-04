@@ -106,7 +106,7 @@ Working with a feature branch
    git push my_user_name my_new_feature_branch
    From GitHub UI, issue a pull request
 
-If the pull request discussion or Travis-CI/AppVeyor checks require
+If the pull request discussion or CI checks require
 changes, commit locally and push. To get a reasonable history, you may
 need to ``git rebase -i master``, in which case you will have to
 force-push your branch with

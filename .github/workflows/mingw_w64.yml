@@ -1,6 +1,13 @@
 name: mingw_w64 build
 
-on: [push, pull_request]
+on:
+    push:
+        paths-ignore:
+            - 'gdal/doc/**'
+    pull_request:
+        paths-ignore:
+            - 'gdal/doc/**'
+
 
 jobs:
 

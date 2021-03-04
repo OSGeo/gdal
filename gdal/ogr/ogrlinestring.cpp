@@ -396,8 +396,7 @@ double OGRSimpleCurve::getZ( int iVertex ) const
  * \brief Get measure at vertex.
  *
  * Returns the M (measure) value at the indicated vertex.  If no M
- * value is available, 0.0 is returned.  If iVertex is out of range a
- * crash may occur, no internal range checking is performed.
+ * value is available, 0.0 is returned.
  *
  * @param iVertex the vertex to return, between 0 and getNumPoints()-1.
  *
