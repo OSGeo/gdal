@@ -262,12 +262,12 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     {
         /* In an external procedure environment, before opening any
          * dataset, the caller must pass the with_context as an
-         * string metadata item OCI_CONTEXT_PTR to the driver. */ 
+         * string metadata item OCI_CONTEXT_PTR to the driver. */
 
         OCIExtProcContext* with_context = nullptr;
 
         const char* pszContext = GDALGetMetadataItem(
-                                           GDALGetDriverByName("GEORASTER"), 
+                                           GDALGetDriverByName("GEORASTER"),
                                           "OCI_CONTEXT_PTR", nullptr );
 
         if( pszContext )
@@ -284,7 +284,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
                                                 papszParam[2] );
     }
 
-    if( ! poGRW->poConnection || 
+    if( ! poGRW->poConnection ||
         ! poGRW->poConnection->Succeeded() )
     {
         CSLDestroy( papszParam );
@@ -608,7 +608,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
         }
         else
         {
-             snprintf( szDescription, sizeof(szDescription), 
+             snprintf( szDescription, sizeof(szDescription),
                 "(%s MDSYS.SDO_GEORASTER)", sColumn.c_str() );
         }
 
@@ -2323,15 +2323,15 @@ void GeoRasterWrapper::GetSpatialReference()
     int i;
 
     CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata, "spatialReferenceInfo" );
-    
+
     if( phSRSInfo == nullptr )
     {
         return;
     }
-    
-    const char* pszMCL = CPLGetXMLValue( phSRSInfo, "modelCoordinateLocation", 
+
+    const char* pszMCL = CPLGetXMLValue( phSRSInfo, "modelCoordinateLocation",
                                                     "CENTER" );
-    
+
     if( EQUAL( pszMCL, "CENTER" ) )
     {
       eModelCoordLocation = MCL_CENTER;
@@ -2342,7 +2342,7 @@ void GeoRasterWrapper::GetSpatialReference()
     }
 
     const char* pszModelType = CPLGetXMLValue( phSRSInfo, "modelType", "None" );
-    
+
     if( EQUAL( pszModelType, "FunctionalFitting" ) == false )
     {
         return;
@@ -2364,7 +2364,7 @@ void GeoRasterWrapper::GetSpatialReference()
 
     int nNumCoeff = atoi( CPLGetXMLValue( phPolynomial, "nCoefficients", "0" ));
 
-    if ( nNumCoeff != 3 ) 
+    if ( nNumCoeff != 3 )
     {
         return;
     }
@@ -2377,7 +2377,7 @@ void GeoRasterWrapper::GetSpatialReference()
         return;
     }
 
-    char** papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ", 
+    char** papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ",
                                            CSLT_STRIPLEADSPACES );
 
     if( CSLCount( papszCeoff ) < 3 )
@@ -2387,7 +2387,7 @@ void GeoRasterWrapper::GetSpatialReference()
     }
 
     double adfPCoef[3];
-    
+
     for( i = 0; i < 3; i++ )
     {
         adfPCoef[i] = CPLAtof( papszCeoff[i] );
@@ -2415,7 +2415,7 @@ void GeoRasterWrapper::GetSpatialReference()
         CSLDestroy(papszCeoff);
         return;
     }
-    
+
     double adfRCoef[3];
 
     for( i = 0; i < 3; i++ )
@@ -2431,7 +2431,7 @@ void GeoRasterWrapper::GetSpatialReference()
     double adfVal[6] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
 
     double dfDet = adfRCoef[1] * adfPCoef[2] - adfRCoef[2] * adfPCoef[1];
-   
+
     if( CPLIsEqual( dfDet, 0.0 ) )
     {
         dfDet = 0.0000000001; // to avoid divide by zero
@@ -2448,12 +2448,12 @@ void GeoRasterWrapper::GetSpatialReference()
     //  -------------------------------------------------------------------
     //  Adjust Model Coordinate Location
     //  -------------------------------------------------------------------
-    
+
     if ( eModelCoordLocation == MCL_CENTER )
     {
        adfVal[2] -= ( adfVal[0] / 2.0 );
        adfVal[5] -= ( adfVal[4] / 2.0 );
-    }    
+    }
 
     dfXCoefficient[0] = adfVal[0];
     dfXCoefficient[1] = adfVal[1];
@@ -2461,7 +2461,7 @@ void GeoRasterWrapper::GetSpatialReference()
     dfYCoefficient[0] = adfVal[3];
     dfYCoefficient[1] = adfVal[4];
     dfYCoefficient[2] = adfVal[5];
-    
+
     //  -------------------------------------------------------------------
     //  Apply ULTCoordinate
     //  -------------------------------------------------------------------
@@ -2477,7 +2477,7 @@ void GeoRasterWrapper::GetSpatialReference()
 
 void GeoRasterWrapper::GetGCP()
 {
-    CPLXMLNode* psGCP = CPLGetXMLNode( phMetadata, 
+    CPLXMLNode* psGCP = CPLGetXMLNode( phMetadata,
                 "spatialReferenceInfo.gcpGeoreferenceModel.gcp" );
 
     CPLXMLNode* psFirst = psGCP;
@@ -2705,8 +2705,10 @@ void GeoRasterWrapper::GetRPC()
         return;
     }
 
-    phRPC = (GDALRPCInfo*) VSIMalloc( sizeof(GDALRPCInfo) );
+    phRPC = (GDALRPCInfoV2*) VSIMalloc( sizeof(GDALRPCInfoV2) );
 
+    phRPC->dfERR_BIAS = -1.0;
+    phRPC->dfERR_RAND = -1.0;
     phRPC->dfLINE_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "rowOff", "0" ) );
     phRPC->dfSAMP_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "columnOff", "0" ) );
     phRPC->dfLONG_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "xOff", "0" ) );
@@ -3505,7 +3507,7 @@ bool GeoRasterWrapper::FlushMetadata()
         {
             if ( nExtentSRID == 0 )
             {
-                nExtentSRID = nIdxSRID; 
+                nExtentSRID = nIdxSRID;
             }
             else
             {

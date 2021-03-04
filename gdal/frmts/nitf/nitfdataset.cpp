@@ -1445,6 +1445,13 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     if( psImage && bHasRPC00 && !bHasLoadedRPCTXT )
     {
         char szValue[1280];
+    
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_BIAS );
+        poDS->SetMetadataItem( "ERR_BIAS", szValue, "RPC" );
+        
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_RAND );
+        poDS->SetMetadataItem( "ERR_RAND", szValue, "RPC" );
+        
         CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_OFF );
         poDS->SetMetadataItem( "LINE_OFF", szValue, "RPC" );
 

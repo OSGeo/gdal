@@ -1332,7 +1332,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
                 dfWestLongitudeDeg = x[0];
                 dfEastLongitudeDeg = x[1];
             }
-            if( ret ) 
+            if( ret )
             {
                 CPLDebug("GDAL", "Computing area of interest: %g, %g, %g, %g",
                         dfWestLongitudeDeg, dfSouthLatitudeDeg,
@@ -1476,7 +1476,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
 {
     char **papszMD = nullptr;
-    GDALRPCInfo sRPCInfo;
+    GDALRPCInfoV2 sRPCInfo;
     const char *pszMethod = CSLFetchNameValue( papszOptions, "SRC_METHOD" );
     if( pszMethod == nullptr )
         pszMethod = CSLFetchNameValue( papszOptions, "METHOD" );
@@ -1667,10 +1667,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
     else if( (pszMethod == nullptr || EQUAL(pszMethod, "RPC"))
              && (papszMD = GDALGetMetadata( hSrcDS, "RPC" )) != nullptr
-             && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
+             && GDALExtractRPCInfoV2( papszMD, &sRPCInfo ) )
     {
         psInfo->pSrcTransformArg =
-            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0, papszOptions );
+            GDALCreateRPCTransformerV2( &sRPCInfo, FALSE, 0, papszOptions );
         if( psInfo->pSrcTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
@@ -1854,10 +1854,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     }
     else if( (pszDstMethod == nullptr || EQUAL(pszDstMethod, "RPC"))
              && (papszMD = GDALGetMetadata( hDstDS, "RPC" )) != nullptr
-             && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
+             && GDALExtractRPCInfoV2( papszMD, &sRPCInfo ) )
     {
         psInfo->pDstTransformArg =
-            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0, papszOptions );
+            GDALCreateRPCTransformerV2( &sRPCInfo, FALSE, 0, papszOptions );
         if( psInfo->pDstTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );

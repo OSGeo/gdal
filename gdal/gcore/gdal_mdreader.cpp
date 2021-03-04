@@ -69,6 +69,8 @@ CPL_CVSID("$Id$")
 
 static const char * const apszRPCTXTSingleValItems[] =
 {
+    RPC_ERR_BIAS,
+    RPC_ERR_RAND,
     RPC_LINE_OFF,
     RPC_SAMP_OFF,
     RPC_LAT_OFF,
@@ -482,16 +484,18 @@ CPLString CPLStripQuotes(const CPLString& sString)
 /************************************************************************/
 
 static const char * const apszRPBMap[] = {
-    apszRPCTXTSingleValItems[0], "IMAGE.lineOffset",
-    apszRPCTXTSingleValItems[1], "IMAGE.sampOffset",
-    apszRPCTXTSingleValItems[2], "IMAGE.latOffset",
-    apszRPCTXTSingleValItems[3], "IMAGE.longOffset",
-    apszRPCTXTSingleValItems[4], "IMAGE.heightOffset",
-    apszRPCTXTSingleValItems[5], "IMAGE.lineScale",
-    apszRPCTXTSingleValItems[6], "IMAGE.sampScale",
-    apszRPCTXTSingleValItems[7], "IMAGE.latScale",
-    apszRPCTXTSingleValItems[8], "IMAGE.longScale",
-    apszRPCTXTSingleValItems[9], "IMAGE.heightScale",
+    apszRPCTXTSingleValItems[0], "IMAGE.errBias",
+    apszRPCTXTSingleValItems[1], "IMAGE.errRand",
+    apszRPCTXTSingleValItems[2], "IMAGE.lineOffset",
+    apszRPCTXTSingleValItems[3], "IMAGE.sampOffset",
+    apszRPCTXTSingleValItems[4], "IMAGE.latOffset",
+    apszRPCTXTSingleValItems[5], "IMAGE.longOffset",
+    apszRPCTXTSingleValItems[6], "IMAGE.heightOffset",
+    apszRPCTXTSingleValItems[7], "IMAGE.lineScale",
+    apszRPCTXTSingleValItems[8], "IMAGE.sampScale",
+    apszRPCTXTSingleValItems[9], "IMAGE.latScale",
+    apszRPCTXTSingleValItems[10], "IMAGE.longScale",
+    apszRPCTXTSingleValItems[11], "IMAGE.heightScale",
     apszRPCTXT20ValItems[0], "IMAGE.lineNumCoef",
     apszRPCTXT20ValItems[1], "IMAGE.lineDenCoef",
     apszRPCTXT20ValItems[2], "IMAGE.sampNumCoef",
@@ -593,11 +597,17 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
     char **papszMD = nullptr;
 
     /* From LINE_OFF to HEIGHT_SCALE */
-    for(size_t i = 0; i < 19; i += 2 )
+    for(size_t i = 0; i < 23; i += 2 )
     {
         const char *pszRPBVal = CSLFetchNameValue(papszLines, apszRPBMap[i] );
-        if( pszRPBVal == nullptr )
+
+        if( pszRPBVal == nullptr)
         {
+            if (strcmp(apszRPBMap[i], RPC_ERR_RAND) == 0 ||
+                strcmp(apszRPBMap[i], RPC_ERR_BIAS) == 0)
+            {
+                continue;
+            }
             CPLError( CE_Failure, CPLE_AppDefined,
                 "%s file found, but missing %s field (and possibly others).",
                 soFilePath.c_str(), apszRPBMap[i]);
@@ -614,7 +624,7 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
 
     /* For LINE_NUM_COEFF, LINE_DEN_COEFF, SAMP_NUM_COEFF, SAMP_DEN_COEFF */
     /* parameters that have 20 values each */
-    for(size_t i = 20; apszRPBMap[i] != nullptr; i += 2 )
+    for(size_t i = 24; apszRPBMap[i] != nullptr; i += 2 )
     {
         CPLString soVal;
         for(int j = 1; j <= 20; j++)
@@ -687,6 +697,11 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
         const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXTSingleValItems[i] );
         if( pszRPCVal == nullptr )
         {
+            if (strcmp(apszRPCTXTSingleValItems[i], RPC_ERR_BIAS) == 0 ||
+                strcmp(apszRPCTXTSingleValItems[i], RPC_ERR_RAND) == 0)
+            {
+                continue;
+            }
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s field missing in metadata, %s file not written.",
                       apszRPCTXTSingleValItems[i], osRPCFilename.c_str() );
@@ -774,8 +789,6 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
     bOK &= VSIFPrintfL( fp, "%s", "bandId = \"P\";\n" ) > 0;
     bOK &= VSIFPrintfL( fp, "%s", "SpecId = \"RPC00B\";\n" ) > 0;
     bOK &= VSIFPrintfL( fp, "%s", "BEGIN_GROUP = IMAGE\n" ) > 0;
-    bOK &= VSIFPrintfL( fp, "%s", "\terrBias = 0.0;\n" ) > 0;
-    bOK &= VSIFPrintfL( fp, "%s", "\terrRand = 0.0;\n" ) > 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write RPC values from our RPC metadata.                         */
@@ -787,6 +800,13 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 
         if( pszRPBVal == nullptr )
         {
+            if (strcmp(apszRPBMap[i], RPC_ERR_BIAS) == 0) {
+                bOK &= VSIFPrintfL( fp, "%s", "\terrBias = 0.0;\n" ) > 0;
+                continue;
+            } else if (strcmp(apszRPBMap[i], RPC_ERR_RAND) == 0) {
+                bOK &= VSIFPrintfL( fp, "%s", "\terrRand = 0.0;\n" ) > 0;
+                continue;
+            }
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s field missing in metadata, %s file not written.",
                       apszRPBMap[i], osRPBFilename.c_str() );

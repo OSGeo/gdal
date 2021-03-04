@@ -2276,10 +2276,6 @@ def test_nitf_72():
     with gdaltest.error_handler():
         gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options=['RPCTXT=YES'])
 
-    assert gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is not None, \
-        'fail: PAM file was expected'
-    gdal.Unlink('/vsimem/nitf_72.ntf.aux.xml')
-
     assert gdal.VSIStatL('/vsimem/nitf_72_RPC.TXT') is not None, \
         'fail: rpc.txt file was expected'
 

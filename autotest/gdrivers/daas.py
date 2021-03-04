@@ -437,6 +437,106 @@ def test_daas_getimagemetadata():
     assert ds.GetRasterBand(1).GetOverview(-1) is None
     assert ds.GetRasterBand(1).GetOverview(0) is None
 
+
+    # Valid JSON with additional RPC error/bias parameters
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/daas/sensors/products/foo/images/bar', 200, {},
+                json.dumps({"response": {"payload": {"payload": {"imageMetadata": {"properties": {
+                    "width": 2,
+                    "height": 3,
+                    "actualBitDepth": 7,
+                    "noDataValue": 0,
+                    "metadataInt": 123,
+                    "acquisitionDate": "2018-02-05T22:28:27.242Z",
+                    "cloudCover": 12.345678,
+                    "satellite": "MY_SATELLITE",
+                    "_links": {
+                        "getBuffer": {
+                            "href": 'http://127.0.0.1:%d/getbuffer' % gdaltest.webserver_port
+                        }
+                    },
+                    "geotransform": [2, 0, 0.1, 49, 0, -0.1],
+                    "bands": [
+                        {
+                            "name": "PAN",
+                            "description": "Panchromatic band",
+                            "colorInterpretation": "GRAY",
+                            "pixelType": "Byte"
+                        }
+                    ],
+                    "srsExpression": {
+                        "names": [
+                            {
+                                "type": "unused",
+                                "value": "unused"
+                            },
+                            {
+                                "type": "proj4",
+                                "value": "still_unused"
+                            },
+                            {
+                                "type": "urn",
+                                "value": "urn:ogc:def:crs:EPSG::4326"
+                            },
+                            {
+                                "type": "proj4",
+                                "value": "still_unused"
+                            },
+                            {
+                                "type": "unused",
+                                "value": "unused"
+                            },
+                        ]
+                    },
+                    "rpc":
+                        {
+                            "errBias": 1,
+                            "errRand": 2,
+                            "sampOff": 3,
+                            "lineOff": 4,
+                            "latOff": 5,
+                            "longOff": 6,
+                            "heightOff": 7,
+                            "lineScale": 8,
+                            "sampScale": 9,
+                            "latScale": 10,
+                            "longScale": 11,
+                            "heightScale": 12,
+                            "lineNumCoeff": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                            "lineDenCoeff": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0],
+                            "sampNumCoeff": [2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1],
+                            "sampDenCoeff": [3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
+                        }
+                }}}}}}))
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {'GDAL_DAAS_PERFORM_AUTH': 'No',
+             'GDAL_DAAS_SERVICE_URL': 'http://127.0.0.1:%d/daas' % gdaltest.webserver_port}):
+            ds = gdal.Open(
+                "DAAS:http://127.0.0.1:%d/daas/sensors/products/foo/images/bar" % gdaltest.webserver_port)
+    assert ds
+
+    rpc = ds.GetMetadata('RPC')
+    expected_rpc = {
+        'ERR_BIAS': '1',
+        'ERR_RAND': '2',
+        'SAMP_OFF': '3',
+        'LINE_OFF': '4',
+        'LAT_OFF': '5',
+        'LONG_OFF': '6',
+        'HEIGHT_OFF': '7',
+        'LINE_SCALE': '8',
+        'SAMP_SCALE': '9',
+        'LAT_SCALE': '10',
+        'LONG_SCALE': '11',
+        'HEIGHT_SCALE': '12',
+        'LINE_NUM_COEFF': '0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9',
+        'LINE_DEN_COEFF': '1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0',
+        'SAMP_NUM_COEFF': '2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1',
+        'SAMP_DEN_COEFF': '3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2',
+    }
+    assert rpc == expected_rpc
+
 ###############################################################################
 
 

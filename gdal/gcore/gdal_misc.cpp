@@ -511,7 +511,7 @@ int CPL_STDCALL GDALDataTypeIsConversionLossy( GDALDataType eTypeFrom,
 
     if( GDALDataTypeIsInteger(eTypeTo) )
     {
-        // E.g. float32 -> int32 
+        // E.g. float32 -> int32
         if( GDALDataTypeIsFloating(eTypeFrom) )
             return TRUE;
 
@@ -3411,13 +3411,31 @@ static bool _FetchDblFromMD( CSLConstList papszMD, const char *pszKey,
 
 /** Extract RPC info from metadata, and apply to an RPCInfo structure.
  *
- * The inverse of this function is RPCInfoToMD() in alg/gdal_rpc.cpp
+ * The inverse of this function is RPCInfoV1ToMD() in alg/gdal_rpc.cpp
  *
  * @param papszMD Dictionary of metadata representing RPC
  * @param psRPC (output) Pointer to structure to hold the RPC values.
  * @return TRUE in case of success. FALSE in case of failure.
  */
-int CPL_STDCALL GDALExtractRPCInfo( CSLConstList papszMD, GDALRPCInfo *psRPC )
+int CPL_STDCALL GDALExtractRPCInfoV1( CSLConstList papszMD, GDALRPCInfoV1 *psRPC )
+
+{
+    GDALRPCInfoV2 sRPC;
+    if( !GDALExtractRPCInfoV2(papszMD, &sRPC) )
+        return FALSE;
+    memcpy(psRPC, &sRPC, sizeof(GDALRPCInfoV1) );
+    return TRUE;
+}
+
+/** Extract RPC info from metadata, and apply to an RPCInfo structure.
+ *
+ * The inverse of this function is RPCInfoV2ToMD() in alg/gdal_rpc.cpp
+ *
+ * @param papszMD Dictionary of metadata representing RPC
+ * @param psRPC (output) Pointer to structure to hold the RPC values.
+ * @return TRUE in case of success. FALSE in case of failure.
+ */
+int CPL_STDCALL GDALExtractRPCInfoV2( CSLConstList papszMD, GDALRPCInfoV2 *psRPC )
 
 {
     if( CSLFetchNameValue( papszMD, RPC_LINE_NUM_COEFF ) == nullptr )
@@ -3433,6 +3451,8 @@ int CPL_STDCALL GDALExtractRPCInfo( CSLConstList papszMD, GDALRPCInfo *psRPC )
         return FALSE;
     }
 
+    _FetchDblFromMD( papszMD, RPC_ERR_BIAS, &(psRPC->dfERR_BIAS), 1, -1.0 );
+    _FetchDblFromMD( papszMD, RPC_ERR_RAND, &(psRPC->dfERR_RAND), 1, -1.0 );
     _FetchDblFromMD( papszMD, RPC_LINE_OFF, &(psRPC->dfLINE_OFF), 1, 0.0 );
     _FetchDblFromMD( papszMD, RPC_LINE_SCALE, &(psRPC->dfLINE_SCALE), 1, 1.0 );
     _FetchDblFromMD( papszMD, RPC_SAMP_OFF, &(psRPC->dfSAMP_OFF), 1, 0.0 );
