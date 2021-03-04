@@ -178,6 +178,11 @@ the database into a UTF-8 mode for text handling, satisfying the OGR
 strict UTF-8 capability. For pre-existing files, the driver will work
 with whatever it is given.
 
+The driver updates the GeoPackage ``last_change`` timestamp when the file is
+created or modified. If consistent binary output is required for
+reproducibility, the timestamp can be forced to a specific value by setting the
+:decl_configoption:`OGR_CURRENT_DATE` global configuration option.
+
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
