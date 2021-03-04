@@ -3,6 +3,12 @@ branches:
   except:
     - /(cherry-pick-)?backport-\d+-to-/
 
+# build will be skipped if all of the files match any of
+# the file patterns below
+skip_commits:
+    files:
+        - gdal/doc/**
+
 environment:
   matrix:
   #- APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
