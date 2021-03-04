@@ -155,6 +155,15 @@ with FlushCache()), those uncompressed tiles are definitely transferred
 to the GeoPackage file with the appropriate compression. All of this is
 transparent to the user of GDAL API/utilities
 
+The driver updates the GeoPackage ``last_change`` timestamp when the file is
+created or modified. If consistent binary output is required for
+reproducibility, the timestamp can be forced to a specific value by setting the
+:decl_configoption:`OGR_CURRENT_DATE` global configuration option.
+When setting the option, take care to meet the specific time format
+requirement of the GeoPackage standard, 
+e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
+
+
 .. _raster.gpkg.tile_formats:
 
 Tile formats
