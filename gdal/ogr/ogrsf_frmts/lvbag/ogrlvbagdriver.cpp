@@ -42,11 +42,6 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->fpL == nullptr )
         return FALSE;
  
-    if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
-        STARTS_WITH(poOpenInfo->pszFilename, "/vsigzip/") ||
-        STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
-        return -1;  // Check later
-
     auto pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
     if( poOpenInfo->nHeaderBytes == 0 || pszPtr[0] != '<' )
         return FALSE;
