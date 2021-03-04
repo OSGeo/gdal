@@ -164,14 +164,14 @@ General creation options
   Set the compression method to use when storing the overviews in the COG.
 
 - **OVERVIEW_QUALITY=integer_value**: JPEG/WEBP quality setting. A value of 100 is best
-   quality (least compression), and 1 is worst quality (best compression).
-   By default the overviews will be created with the same quality as the COG, unless 
-   the compression type is different then the default is 75.  
+  quality (least compression), and 1 is worst quality (best compression).
+  By default the overviews will be created with the same quality as the COG, unless
+  the compression type is different then the default is 75.
 
 - **OVERVIEW_PREDICTOR=[YES/NO/STANDARD/FLOATING_POINT]**: Set the predictor for LZW,
-   DEFLATE and ZSTD overview compression. By default the overviews will be created with the
-   same predictor as the COG, unless the compression type of the overview is different,
-   then the default is NO.  
+  DEFLATE and ZSTD overview compression. By default the overviews will be created with the
+  same predictor as the COG, unless the compression type of the overview is different,
+  then the default is NO.
 
 - **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: Select the version of
   the GeoTIFF standard used to encode georeferencing information. ``1.0``
