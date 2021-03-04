@@ -409,7 +409,7 @@ def test_ogr_lvbag_secondary_pandref():
     feat = lyr.GetNextFeature()
     assert feat.GetField(4) == ['NL.IMBAG.Pand.0048100000002999', 'NL.IMBAG.Pand.1950100000100293'], 'bad nevenadres'
 
-def test_ogr_lvbag_secondary_pandref():
+def test_ogr_lvbag_file_extension():
 
     ds = ogr.Open('data/lvbag/file4.vbo')
     assert ds is not None, 'cannot open dataset'
