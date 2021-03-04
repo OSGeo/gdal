@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.12
+ARG ALPINE_VERSION=3.13
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -178,7 +178,7 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     ); fi
 
 # Build libdeflate
-ARG LIBDEFLATE_VERSION=1.6
+ARG LIBDEFLATE_VERSION=1.7
 RUN if test "${LIBDEFLATE_VERSION}" != ""; then ( \
     mkdir libdeflate \
     && wget -q https://github.com/ebiggers/libdeflate/archive/v${LIBDEFLATE_VERSION}.tar.gz -O - \
@@ -229,7 +229,7 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build spatialite
-ARG SPATIALITE_VERSION=5.0.0
+ARG SPATIALITE_VERSION=5.0.1
 RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
     wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
@@ -244,7 +244,7 @@ RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
         export CXX="ccache g++"; \
         ccache -M 100M; \
     fi \
-    && ./configure --prefix=/usr --disable-static \
+    && ./configure --prefix=/usr --disable-static --disable-rttopo \
     && make -j$(nproc) \
     && make install \
     && if test "${RSYNC_REMOTE}" != ""; then \
