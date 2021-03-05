@@ -734,23 +734,25 @@ const char *PCIDSK2Band::GetMetadataItem( const char *pszName,
 /*      Try and fetch (use cached value if available)                   */
 /* -------------------------------------------------------------------- */
     auto oIter = m_oCacheMetadataItem.find(pszName);
-    if( oIter == m_oCacheMetadataItem.end() )
+    if( oIter != m_oCacheMetadataItem.end() )
     {
-        CPLString osValue;
-        try
-        {
-            osValue = poChannel->GetMetadataValue( pszName );
-        }
-        catch( const PCIDSKException& ex )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s", ex.what() );
-            return nullptr;
-        }
-
-        m_oCacheMetadataItem[pszName] = osValue;
-        oIter = m_oCacheMetadataItem.find(pszName);
+        return oIter->second.empty() ? nullptr : oIter->second.c_str();
     }
+
+    CPLString osValue;
+    try
+    {
+        osValue = poChannel->GetMetadataValue( pszName );
+    }
+    catch( const PCIDSKException& ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "%s", ex.what() );
+        return nullptr;
+    }
+
+    oIter = m_oCacheMetadataItem.insert(
+        std::pair<std::string, std::string>(pszName, osValue)).first;
     return oIter->second.empty() ? nullptr : oIter->second.c_str();
 }
 
@@ -1177,23 +1179,25 @@ const char *PCIDSK2Dataset::GetMetadataItem( const char *pszName,
 /*      Try and fetch (use cached value if available)                   */
 /* -------------------------------------------------------------------- */
     auto oIter = m_oCacheMetadataItem.find(pszName);
-    if( oIter == m_oCacheMetadataItem.end() )
+    if( oIter != m_oCacheMetadataItem.end() )
     {
-        CPLString osValue;
-        try
-        {
-            osValue = poFile->GetMetadataValue( pszName );
-        }
-        catch( const PCIDSKException& ex )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s", ex.what() );
-            return nullptr;
-        }
-
-        m_oCacheMetadataItem[pszName] = osValue;
-        oIter = m_oCacheMetadataItem.find(pszName);
+        return oIter->second.empty() ? nullptr : oIter->second.c_str();
     }
+
+    CPLString osValue;
+    try
+    {
+        osValue = poFile->GetMetadataValue( pszName );
+    }
+    catch( const PCIDSKException& ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "%s", ex.what() );
+        return nullptr;
+    }
+
+    oIter = m_oCacheMetadataItem.insert(
+        std::pair<std::string, std::string>(pszName, osValue)).first;
     return oIter->second.empty() ? nullptr : oIter->second.c_str();
 }
 
