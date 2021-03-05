@@ -587,7 +587,7 @@ def test_pds4_10():
         gdal.GetDriverByName('PDS4').Delete(filename)
         gdal.GetDriverByName('PDS4').Delete(filename2)
 
-    
+
 ###############################################################################
 # Test various data types
 
@@ -1276,7 +1276,10 @@ def test_pds4_append_subdataset_not_same_srs():
 ###############################################################################
 
 
-def _test_createlabelonly(src_ds, expected_standard_id = None, filename = '/vsimem/out.xml', validate = False):
+def _test_createlabelonly(src_ds,
+                          expected_content = None,
+                          filename = '/vsimem/out.xml',
+                          validate = False):
 
     src_ds_name = src_ds.GetDescription()
     src_driver_name = src_ds.GetDriver().GetDescription()
@@ -1305,8 +1308,12 @@ def _test_createlabelonly(src_ds, expected_standard_id = None, filename = '/vsim
         data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
     assert 'Binary file pre-existing PDS4 label' in data, data
-    if expected_standard_id:
-        assert expected_standard_id in data, data
+    if expected_content:
+        if isinstance(expected_content, list):
+            for expected_content_item in expected_content:
+                assert expected_content_item in data, data
+        else:
+            assert expected_content in data, data
 
     gdal.GetDriverByName('PDS4').Delete(filename)
     assert gdal.VSIStatL(src_ds_name)
@@ -1334,7 +1341,7 @@ def test_pds4_createlabelonly_gtiff():
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/byte.tif', gdal.Open('data/byte.tif'))
 
     src_ds = gdal.Open('/vsimem/byte.tif')
-    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>TIFF 6.0</parsing_standard_id>', validate = True)
+    return _test_createlabelonly(src_ds, expected_content = '<parsing_standard_id>TIFF 6.0</parsing_standard_id>', validate = True)
 
 
 ###############################################################################
@@ -1360,7 +1367,7 @@ def test_pds4_createlabelonly_bigtiff():
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/byte.tif', gdal.Open('data/byte.tif'), options=['BIGTIFF=YES'])
 
     src_ds = gdal.Open('/vsimem/byte.tif')
-    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>TIFF 6.0</parsing_standard_id>')
+    return _test_createlabelonly(src_ds, expected_content = '<parsing_standard_id>TIFF 6.0</parsing_standard_id>')
 
 
 ###############################################################################
@@ -1372,7 +1379,7 @@ def test_pds4_createlabelonly_isis3():
     gdal.GetDriverByName('ISIS3').CreateCopy('/vsimem/input.cub', gdal.Open('../gcore/data/uint16.tif'))
 
     src_ds = gdal.Open('/vsimem/input.cub')
-    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>ISIS3</parsing_standard_id>')
+    return _test_createlabelonly(src_ds, expected_content = '<parsing_standard_id>ISIS3</parsing_standard_id>')
 
 
 ###############################################################################
@@ -1384,7 +1391,7 @@ def test_pds4_createlabelonly_vicar():
     gdal.FileFromMemBuffer('/vsimem/test_vicar_truncated.bin', open('data/vicar/test_vicar_truncated.bin', 'rb').read())
 
     src_ds = gdal.Open('/vsimem/test_vicar_truncated.bin')
-    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>VICAR2</parsing_standard_id>')
+    return _test_createlabelonly(src_ds, expected_content = '<parsing_standard_id>VICAR2</parsing_standard_id>')
 
 
 ###############################################################################
@@ -1400,7 +1407,10 @@ def test_pds4_createlabelonly_fits():
     fits_drv.CreateCopy('tmp/input.fits', gdal.Open('../gcore/data/int16.tif'))
 
     src_ds = gdal.Open('tmp/input.fits')
-    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>FITS 3.0</parsing_standard_id>', filename = 'tmp/out.xml')
+    return _test_createlabelonly(src_ds,
+                                 expected_content = ['<parsing_standard_id>FITS 3.0</parsing_standard_id>',
+                                                     '<disp:vertical_display_direction>Bottom to Top</disp:vertical_display_direction>'],
+                                 filename = 'tmp/out.xml')
 
 
 ###############################################################################
@@ -1412,6 +1422,6 @@ def test_pds4_createlabelonly_pds3():
     gdal.FileFromMemBuffer('/vsimem/mc02_truncated.img', open('data/pds/mc02_truncated.img', 'rb').read())
 
     src_ds = gdal.Open('/vsimem/mc02_truncated.img')
-    return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>PDS3</parsing_standard_id>')
+    return _test_createlabelonly(src_ds, expected_content = '<parsing_standard_id>PDS3</parsing_standard_id>')
 
 
