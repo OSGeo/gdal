@@ -1795,7 +1795,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
             auto poADLSHandleHelper =
                 std::unique_ptr<IVSIS3LikeHandleHelper>(
                     VSIAzureBlobHandleHelper::BuildFromURI(osTargetNameWithoutPrefix, GetFSPrefix()));
-            if( poADLSHandleHelper == nullptr )
+            if( poADLSHandleHelper != nullptr )
                 InvalidateCachedData(poADLSHandleHelper->GetURLNoKVP().c_str());
 
             const CPLString osFilenameWithoutSlash(RemoveTrailingSlash(newpath));
@@ -1888,7 +1888,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
                                    static_cast<int>(nBufferSize));
             headers = curl_slist_append(headers, osContentLength.c_str());
         }
-        else 
+        else
         {
             curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
             headers = curl_slist_append(headers, "Content-Length: 0");
