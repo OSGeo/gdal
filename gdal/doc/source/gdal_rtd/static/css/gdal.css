@@ -319,3 +319,8 @@ div.service-provider::after {
     clear: both;
     display: table;
 }
+
+/* For service_providers.rst */
+div.service-provider-description {
+    display: table;
+}
