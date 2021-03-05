@@ -1,3 +1,63 @@
+= GDAL/OGR 3.2.2 Release Notes =
+
+The 3.2.2 release is a bug fix release. Note that the GDAL 3.2 series is the last one to support Python versions < 3.6
+
+== Build ==
+
+* fix compilation failure in Elastic driver with gcc < 5. Fixes #3439, #3422, #3414
+* Fix -Wodr -O2 warnings raised by gcc 10
+
+== Port ==
+
+* VSICachedFile::Read(): avoid division by zero if nSize == 0 (#3331)
+
+== GDAL algorithms ==
+
+* Fix failure in overview generation for certain raster sizes and overview factor, on raster with color table in particular (#3336)
+
+== GDAL core ==
+
+* GDAL Python embedding: fix loading in QGIS/Windows (QGIS #41048)
+
+== GDAL utilities ==
+
+* gdal_edit.py: Correctly handle the error of parameter '-scale' with no number given
+
+== GDAL drivers ==
+
+DAAS driver:
+ * fix pixel retrieval of dataset with UInt16 data type and one mask band (#3061), and also use pixelType from bands[] instead of deprecated top-level one
+
+GRIB driver:
+ * fix writing ComplexPacking with nodata values and a single valid value (#3352)
+
+GTiff driver:
+ * tif_lerc: fix issue with state machine
+
+PDS4 driver:
+ * update value of <parsing_standard_id> for TIFF/BigTIFF to what is expected by PDS4 IM (#3362)
+
+== OGR drivers ==
+
+AmigoCloud driver:
+ * fix json encoder to handle nested strings. (#3483)
+ * Fix date/datetime field type handling
+ * Fix SQL delete (#3512)
+
+FlatGeobuf driver:
+ * fix crash when writing a geometry collection with an empty polygon. (oss-fuzz 29291)
+
+GPKG driver:
+ * always write milliseconds in a DATETIME field for strict compliance with the spec (#3423)
+
+ODBC drivers:
+ * Fix OGR silently ignores some rows with NULLs for memo fields in MDB (#3456)
+
+== CSharp bindings ==
+
+* Sign csharp assemblies as part of the netcore build process, verify signature during tests (#1368) (#3332) (#3334)
+
+
 = GDAL/OGR 3.2.1 Release Notes =
 
 The 3.2.1 release is a bug fix release.
@@ -1273,7 +1333,7 @@ DXF driver:
 
 DWG driver:
  * add support for ODA 2021.2 (Windows builds)
- 
+
 ElasticSearch driver:
  * rename driver to Elasticsearch (s lowercase for search)
  * update geometry type name for Points
@@ -1638,7 +1698,7 @@ NITF driver:
  * avoid harmless floating point division by zero. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12844.
 
 PCIDSK driver:
- * avoid uint overflow and too big memory allocation attempt. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12893 
+ * avoid uint overflow and too big memory allocation attempt. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12893
 
 PDF driver:
  * Add a COMPOSITION_FILE creation option to generate a complex document
@@ -2337,7 +2397,7 @@ MITAB driver:
  * Expose font family to feature style symbol ID
 
 MSSQLSpatial driver:
- * Add support for MSODBCSQL (#1136) 
+ * Add support for MSODBCSQL (#1136)
  * Fix layer-schema separation problem (#586)
  * Fix bulk copy for multiple layers (#619)
  * Accept datetime values (#841)
@@ -2707,7 +2767,7 @@ ENVI driver:
 
 ERS driver:
    add extension metadata (github #320)
- 
+
 GeoPackage driver:
  * update from 'tiled gridded extension' to now OGC approved 'tiled gridded coverage data extension' (OGC 17-066r1) (#7159)
  * avoid corruption of gpkg_tile_matrix when building overviews, down to a level where they are smaller than the tile size (#6932)
@@ -2747,7 +2807,7 @@ GTiff driver:
  * use consistently multiplication/division by 257 when converting between GDAL [0,255] range to TIFF [0,65535] range for color map values (#2213)
  * don't write <GDALMetadata> colorinterp when writing a file with a color table
  * copy georeferencing info to PAM if the profile is not GeoTIFF
- 
+
 GRIB driver:
  * add GRIB2 write support
  * update to degrib 2.14 and g2clib 1.6.0
@@ -2832,7 +2892,7 @@ MBTiles driver:
  * add read/write support for Mapbox vector tiles
  * support opening and creating datasets with tiles whose dimension is not 256 (#7233)
  * default to opening as RGBA (#6119)
- 
+
 MEM driver:
  * Avoid Create(foo.tif) / CreateCopy(foo.tif) on the MEM or Memory drivers to delete a 'real' foo.tif file
  * add RAT support
@@ -2929,7 +2989,7 @@ VRT driver:
  * Warped VRT: correctly take into account cutline for implicit overviews; also avoid serializing a duplicate CUTLINE warping options in warped .vrt (#6954)
  * Warped VRT: fix implicit overview when output geotransform is not the same as the transformer dst geotransform (#6972)
  * fix IGetDataCoverageStatus() in the case of non-simple sources, which unbreaks gdalenhance -equalize (#6987)
- * re-apply shared='0' on sources if existing in original VRT when rewriting it due to invalidation 
+ * re-apply shared='0' on sources if existing in original VRT when rewriting it due to invalidation
  * avoid error being emitted when opening a VRTRawRasterBand in a .zip files (#7056)
  * implement VRTDataset::AdviseRead() (in the particular case of a single source) (#7082)
  * allow to incorporate a warped VRT as CDATA in the SourceFileName field of a regular VRT
@@ -3159,7 +3219,7 @@ GMT:
 IDB driver:
  * optimize spatial query using spatial index and st_intersects function (#6984)
  * close connection at dataset closing (#7024)
- 
+
 ILI driver:
  * declare OLCCreateField and OLCSequentialWrite capabilities
 
@@ -3227,7 +3287,7 @@ OCI driver:
 
 ODBC driver:
  * deal with table names that require double quoting (#7242)
- 
+
 ODS driver:
  * add read/write support for Boolean sub datatype
 
@@ -3281,7 +3341,7 @@ VFK driver:
 
 VRT driver:
  * increase maximum size limit to 10 MB (instead of 1MB), and add config option to be able to force loading if above that
- 
+
 XLS driver:
  * workaround opening filenames with incompatible character set on Windows (https://issues.qgis.org/issues/9301)
 
@@ -3424,7 +3484,7 @@ Build(Windows):
  * Add HDF4_INCLUDE option (#6805)
  * Add MSVC compiler option /MP to build with parallel processes.
  * Add ZLIB_LIB missing from EXTERNAL_LIBS
- 
+
 Build(all):
  * make Xerces 3.1 the minimal version
  * drop support for PostgreSQL client library older than 7.4, or non security maintained releases older than 8.1.4, 8.0.8, 7.4.13, 7.3.15
@@ -3559,7 +3619,7 @@ Multi-driver:
 
 AIGRID driver:
  * fix 2.1.0 regression when reading statistics (.sta) file with only 3 values, and fix <2.1 behavior to read them in LSB order (#6633)
- 
+
 AAIGRID driver:
  * auto-detect Float64 when the nodata value is not representable in the Float32 range
 
@@ -3639,7 +3699,7 @@ GRASS driver:
  * plugin configure: add support for GRASS 7.2 (#6785)
  * plugin makefile: do not clone datum tables and drivers (#2953)
  * use Rast_get_window/Rast_set_window for GRASS 7 (#6853)
- 
+
 GRIB driver:
  * Add (minimalistic) support for template 4.15 needed to read Wide Area Forecast System (WAFS) products (#5768)
  * **Partial** resynchronization with degrib-2.0.3, mostly to get updated tables (related to #5768)
@@ -3682,7 +3742,7 @@ ISIS3 driver:
  * add write support
  * add mask band support on read
  * get label in json:ISIS3 metadata domain
- 
+
 JPEGLS driver:
 
 JP2ECW driver:
@@ -3761,7 +3821,7 @@ NWT_GRD:
 
 OpenJPEG driver:
  * support direct extracting of GeoRaster JP2-F BLOB (#6861)
- 
+
 PCIDSK driver:
  * handle Exceptions returned from destructor and check access rights in setters (github #183)
 
@@ -3778,7 +3838,7 @@ PostgisRaster driver:
 
 R driver:
  * fix out-of-memory (oom) with corrupt R file
- 
+
 Raw drivers:
  * prevent crashes on dataset closing in case of short write
 
@@ -3873,7 +3933,7 @@ OGRSpatialReference:
  * AutoIdentifyEPSG(): add identification of EPSG:3995 (Arctic Polar Stereographic on WGS84) and EPSG:3031 (Antarctic Polar Stereographic on WGS84)
  * OGRCoordinateTransformation: avoid potential bugs in proj.4 on NaN input
  * importFromEPSG(): take into account DX,DY,DZ,RX,RY,RZ,DS columns in pcs.csv to add per-PCS TOWGS84 overrides (geotiff #52)
- * Coordinate transformation: prevent unnecessary coordinate transformations (github #184, #185) 
+ * Coordinate transformation: prevent unnecessary coordinate transformations (github #184, #185)
 
 Utilities:
  * ogr2ogr: do not return error on ogr2ogr --utility_version
@@ -4010,7 +4070,7 @@ MITAB driver:
  * add support for oblique stereographic (#6598)
  * Adds the authority code for Irish national grid (Ireland_1965) (github #149)
  * fix spelling for Euref_89 and add EPSG code (#6816)
- 
+
 MSSQLSpatial driver:
  * Fix bulk insert with table names containing spaces (#6527)
  * Build optional mssql plugin with SQL Native Client support for MSSQL Bulk Copy
@@ -4019,7 +4079,7 @@ MSSQLSpatial driver:
 MySQL driver:
  * fix spatial filtering on recent mysql by adding a SRID in the rectangle geometry
  * do not force NOT NULL constraint on geometry field if no spatial index is used
- 
+
 NAS driver:
  * support multiple 'anlass' in updates
 
@@ -4145,10 +4205,10 @@ Perl bindings:
  * the Warp method requires a list of datasets (#6521)
  * when 'use bigint' is in effect, int var is a ref.
  * Separate the module building in the CPAN distribution and in
-the GDAL source tree. The CPAN distribution will be 
+the GDAL source tree. The CPAN distribution will be
 developed at https://github.com/ajolma
  * Fix the Extension method in Driver per RFC 46
- * The Inv method of GeoTransform did not return a new object. 
+ * The Inv method of GeoTransform did not return a new object.
 Allow a single point in Apply method of GeoTransform.
  * Test for existence of PDL and require it if available.
  * allow decimation/replication in Piddle i/o.
