@@ -207,6 +207,13 @@ L<https://trac.osgeo.org/gdal>
 
 =cut
 
+unless ($ENV{GDAL_PERL_BINDINGS_OK}) {
+    my $msg = "NOTE: GDAL Perl Bindings are deprecated and will be removed in version 3.5.\n";
+    $msg .= "NOTE: Please use Geo::GDAL::FFI instead.\n";
+    $msg .= "NOTE: To remove this message define environment variable GDAL_PERL_BINDINGS_OK.\n";
+    warn $msg;
+}
+
 use Scalar::Util 'blessed';
 use vars qw/
     @EXPORT_OK %EXPORT_TAGS
