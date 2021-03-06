@@ -313,7 +313,7 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
     CPLDebug("OCI", "Release:%d", nServerRelease);
 
 /* -------------------------------------------------------------------- */
-/*      Set maximun name length (before 12.2 ? 30 : 128)                */
+/*      Set maximum name length (before 12.2 ? 30 : 128)                */
 /* -------------------------------------------------------------------- */
 
     if( nServerVersion > 12 || (nServerVersion == 12 && nServerRelease >= 2) )
@@ -393,11 +393,11 @@ int OGROCISession::Failed( sword nStatus, const char *pszFunction )
 }
 
 /************************************************************************/
-/*                            GetParmInfo()                             */
+/*                            GetParamInfo()                             */
 /************************************************************************/
 
 CPLErr
-OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
+OGROCISession::GetParamInfo( OCIParam *hParamDesc, OGRFieldDefn *poOGRDefn,
                             ub2 *pnOCIType, ub4 *pnOCILen )
 
 {
@@ -411,25 +411,25 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
 /*      Get basic parameter details.                                    */
 /* -------------------------------------------------------------------- */
     if( Failed(
-        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM,
+        OCIAttrGet( hParamDesc, OCI_DTYPE_PARAM,
                     &nOCIType, nullptr, OCI_ATTR_DATA_TYPE, hError ),
         "OCIAttrGet(Type)" ) )
         return CE_Failure;
 
     if( Failed(
-        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM,
+        OCIAttrGet( hParamDesc, OCI_DTYPE_PARAM,
                     &nOCILen, nullptr, OCI_ATTR_DATA_SIZE, hError ),
         "OCIAttrGet(Size)" ) )
         return CE_Failure;
 
     if( Failed(
-        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &pszColName,
+        OCIAttrGet( hParamDesc, OCI_DTYPE_PARAM, &pszColName,
                     &nColLen, OCI_ATTR_NAME, hError ),
         "OCIAttrGet(Name)") )
         return CE_Failure;
 
     if( Failed(
-        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &bOCINull,
+        OCIAttrGet( hParamDesc, OCI_DTYPE_PARAM, &bOCINull,
                     nullptr, OCI_ATTR_IS_NULL, hError ),
         "OCIAttrGet(Null)") )
         return CE_Failure;
@@ -438,7 +438,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Column length (%d) longer than column name buffer (%d) in\n"
-                  "OGROCISession::GetParmInfo()",
+                  "OGROCISession::GetParamInfo()",
                   nColLen, (int) sizeof(szTermColName) );
         return CE_Failure;
     }
@@ -471,12 +471,12 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
             sb1  nScale;
 
             if( Failed(
-                OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &byPrecision,
+                OCIAttrGet( hParamDesc, OCI_DTYPE_PARAM, &byPrecision,
                             nullptr, OCI_ATTR_PRECISION, hError ),
                 "OCIAttrGet(Precision)" ) )
                 return CE_Failure;
             if( Failed(
-                OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &nScale,
+                OCIAttrGet( hParamDesc, OCI_DTYPE_PARAM, &nScale,
                             nullptr, OCI_ATTR_SCALE, hError ),
                 "OCIAttrGet(Scale)") )
                 return CE_Failure;

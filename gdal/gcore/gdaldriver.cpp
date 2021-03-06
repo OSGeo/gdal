@@ -208,7 +208,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         if( !EQUAL(GetDescription(), "MEM") &&
             !EQUAL(GetDescription(), "Memory") &&
             // ogr2ogr -f PostgreSQL might reach the Delete method of the
-            // PostgisRaster dirver which is undesirable
+            // PostgisRaster driver which is undesirable
             !EQUAL(GetDescription(), "PostgreSQL") )
         {
             QuietDelete( pszFilename );

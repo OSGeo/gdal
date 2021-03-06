@@ -372,7 +372,7 @@ CPLErr MRFDataset::IBuildOverviews(
 
                 //
                 // Ready, generate this overview
-                // Note that this function has a bug in GDAL, the block stepping is incorect
+                // Note that this function has a bug in GDAL, the block stepping is incorrect
                 // It can generate multiple overview in one call,
                 // Could rewrite this loop so this function only gets called once
                 //

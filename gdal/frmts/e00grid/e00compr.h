@@ -23,7 +23,7 @@
  * Now use CPL for Error handling, Memory allocation, and File access.
  *
  * Revision 1.6  1999/01/08 17:40:33  daniel
- * Added E00Read/WriteCallbakcOpen()
+ * Added E00Read/WriteCallbackOpen()
  *
  * Revision 1.5  1998/11/13 15:39:45  daniel
  * Added functions for write support.

@@ -4316,14 +4316,14 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToPROJJSON(OSRSpatialReference
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToProj4(OSRSpatialReferenceShadow *self,char **argout){
     return OSRExportToProj4( self, argout );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToPCI(OSRSpatialReferenceShadow *self,char **proj,char **units,double *parms[17]){
-    return OSRExportToPCI( self, proj, units, parms );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToPCI(OSRSpatialReferenceShadow *self,char **proj,char **units,double *params[17]){
+    return OSRExportToPCI( self, proj, units, params );
   }
 
   #define SWIG_From_long   PyInt_FromLong 
 
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToUSGS(OSRSpatialReferenceShadow *self,long *code,long *zone,double *parms[15],long *datum){
-    return OSRExportToUSGS( self, code, zone, parms, datum );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToUSGS(OSRSpatialReferenceShadow *self,long *code,long *zone,double *params[15],long *datum){
+    return OSRExportToUSGS( self, code, zone, params, datum );
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToXML(OSRSpatialReferenceShadow *self,char **argout,char const *dialect=""){
     return OSRExportToXML( self, argout, dialect );

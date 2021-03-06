@@ -344,7 +344,7 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
         if( nUserSetRecordCount > poFirst->GetLayer(0)->GetFeatureCount() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Specificied resultRecordCount=%d is greater than "
+                     "Specified resultRecordCount=%d is greater than "
                      "the maximum %d supported by the server",
                      nUserSetRecordCount,
                      static_cast<int>(poFirst->GetLayer(0)->GetFeatureCount()));

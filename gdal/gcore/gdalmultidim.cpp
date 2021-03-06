@@ -538,7 +538,7 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
 /** Copy the content of a group into a new (generally empty) group.
  *
  * @param poDstRootGroup Destination root group. Must NOT be nullptr.
- * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behavior
+ * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcGroup Source group. Must NOT be nullptr.
  * @param bStrict Whether to enable stict mode. In strict mode, any error will
@@ -983,7 +983,7 @@ std::shared_ptr<GDALMDArray> GDALGroup::OpenMDArrayFromFullname(
  *                       the search should be started. If this is a non-empty
  *                       string, the group on which this method is called should
  *                       nominally be the root group (otherwise the path will
- *                       be interpretated as from the current group)
+ *                       be interpreted as from the current group)
  * @param papszOptions options to pass to OpenMDArray()
  * @since GDAL 3.2
  */
@@ -1806,7 +1806,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  * aligned on those tile/block boundaries will be more efficient.
  *
  * The returned number of elements in the vector is the same as
- * GetDimensionCount(). A value of 0 should be interpretated as no hint regarding
+ * GetDimensionCount(). A value of 0 should be interpreted as no hint regarding
  * the natural block size along the considered dimension.
  * "Flat" arrays will typically return a vector of values set to 0.
  *
@@ -1819,7 +1819,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  *
  * This is the same as the C function GDALMDArrayGetBlockSize().
  *
- * @return the block size, in number of elemnts along each dimension.
+ * @return the block size, in number of elements along each dimension.
  */
 std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
 {
@@ -1842,7 +1842,7 @@ std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
  *
  * @param nMaxChunkMemory Maximum amount of memory, in bytes, to use for the chunk.
  *
- * @return the chunk size, in number of elemnts along each dimension.
+ * @return the chunk size, in number of elements along each dimension.
  */
 std::vector<size_t> GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
 {
@@ -3055,7 +3055,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray* poSrcArray,
 
 /** Copy the content of an array into a new (generally empty) array.
  *
- * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behavior
+ * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcArray Source array. Should NOT be nullptr.
  * @param bStrict Whether to enable stict mode. In strict mode, any error will
@@ -8160,7 +8160,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int* pbHasValue,
  * aligned on those tile/block boundaries will be more efficient.
  *
  * The returned number of elements in the vector is the same as
- * GetDimensionCount(). A value of 0 should be interpretated as no hint regarding
+ * GetDimensionCount(). A value of 0 should be interpreted as no hint regarding
  * the natural block size along the considered dimension.
  * "Flat" arrays will typically return a vector of values set to 0.
  *
@@ -8173,7 +8173,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int* pbHasValue,
  *
  * This is the same as the C++ method GDALAbstractMDArray::GetBlockSize().
  *
- * @return the block size, in number of elemnts along each dimension.
+ * @return the block size, in number of elements along each dimension.
  */
 GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
 {
@@ -8208,7 +8208,7 @@ GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
  * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
  * @param nMaxChunkMemory Maximum amount of memory, in bytes, to use for the chunk.
  *
- * @return the chunk size, in number of elemnts along each dimension.
+ * @return the chunk size, in number of elements along each dimension.
  */
 
 size_t *GDALMDArrayGetProcessingChunkSize(GDALMDArrayH hArray, size_t *pnCount,

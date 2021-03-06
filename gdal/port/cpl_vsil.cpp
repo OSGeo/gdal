@@ -140,7 +140,7 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
  * Most implementations will return NULL, and a subsequent ReadDir will
  * list all files available in the file's directory. This function will be
  * overridden by VSI FilesystemHandlers that wish to force e.g. an empty list
- * to avoid opening non-existant files on slow filesystems. The return value shall be destroyed with CSLDestroy()
+ * to avoid opening non-existent files on slow filesystems. The return value shall be destroyed with CSLDestroy()
  * @since GDAL 3.2
  */
 char **VSISiblingFiles( const char *pszFilename)

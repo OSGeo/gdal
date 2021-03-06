@@ -92,7 +92,7 @@ public:
 
     enum GeometryType getType() const;
     double            getThickness() const;
-    void              setThickness( double thicknes );
+    void              setThickness( double thickness );
     RGBColor          getColor() const;
     void              setColor( RGBColor color ); // TODO: In 2004+ ACI is not the only way to set the color.
 
@@ -109,7 +109,7 @@ protected:
 
     std::vector<std::string>    asEED;
     enum GeometryType geometryType;
-    double            thickness;
+    double            m_thickness;
     RGBColor          geometry_color;
 };
 
@@ -347,8 +347,8 @@ public:
     bool getWeight() const;
     void setWeight( bool value );
 
-    double getFitTollerance() const;
-    void   setFitTollerance( double value );
+    double getFitTolerance() const;
+    void   setFitTolerance( double value );
 
     long getDegree() const;
     void setDegree( long value );
@@ -360,7 +360,7 @@ protected:
     bool   rational;
     bool   closed;
     bool   weight;
-    double fitTollerance;
+    double fitTolerance;
     long   degree;
 
     std::vector<double>    ctrlPointsWeight;

@@ -270,7 +270,7 @@ bool GDALVirtualMem::GotoNextPixel( coord_type& x, coord_type& y,
 /*                              GetOffset()                             */
 /************************************************************************/
 
-size_t GDALVirtualMem::GetOffset(const coord_type& x, 
+size_t GDALVirtualMem::GetOffset(const coord_type& x,
                                  const coord_type& y, int band) const
 {
     return static_cast<size_t>(
@@ -589,8 +589,8 @@ void GDALVirtualMem::FillCacheBandSequential(
     size_t nToFill,
     void* pUserData )
 {
-    const GDALVirtualMem* psParms = static_cast<GDALVirtualMem *>(pUserData);
-    psParms->DoIOBandSequential(GF_Read, nOffset, pPageToFill, nToFill);
+    const GDALVirtualMem* psParams = static_cast<GDALVirtualMem *>(pUserData);
+    psParams->DoIOBandSequential(GF_Read, nOffset, pPageToFill, nToFill);
 }
 
 /************************************************************************/
@@ -604,8 +604,8 @@ void GDALVirtualMem::SaveFromCacheBandSequential(
     size_t nToEvicted,
     void* pUserData )
 {
-    const GDALVirtualMem* psParms = static_cast<GDALVirtualMem *>(pUserData);
-    psParms->DoIOBandSequential(
+    const GDALVirtualMem* psParams = static_cast<GDALVirtualMem *>(pUserData);
+    psParams->DoIOBandSequential(
         GF_Write, nOffset, const_cast<void *>(pPageToBeEvicted), nToEvicted);
 }
 
@@ -620,8 +620,8 @@ void GDALVirtualMem::FillCachePixelInterleaved(
     size_t nToFill,
     void* pUserData )
 {
-    const GDALVirtualMem* psParms = static_cast<GDALVirtualMem *>(pUserData);
-    psParms->DoIOPixelInterleaved(GF_Read, nOffset, pPageToFill, nToFill);
+    const GDALVirtualMem* psParams = static_cast<GDALVirtualMem *>(pUserData);
+    psParams->DoIOPixelInterleaved(GF_Read, nOffset, pPageToFill, nToFill);
 }
 
 /************************************************************************/
@@ -635,8 +635,8 @@ void GDALVirtualMem::SaveFromCachePixelInterleaved(
     size_t nToEvicted,
     void* pUserData )
 {
-    const GDALVirtualMem* psParms = static_cast<GDALVirtualMem *>(pUserData);
-    psParms->DoIOPixelInterleaved(
+    const GDALVirtualMem* psParams = static_cast<GDALVirtualMem *>(pUserData);
+    psParams->DoIOPixelInterleaved(
         GF_Write, nOffset, const_cast<void *>(pPageToBeEvicted), nToEvicted);
 }
 
@@ -1299,9 +1299,9 @@ void GDALTiledVirtualMem::FillCache( CPLVirtualMem*,
                                      size_t nToFill,
                                      void* pUserData)
 {
-    const GDALTiledVirtualMem* psParms =
+    const GDALTiledVirtualMem* psParams =
         static_cast<GDALTiledVirtualMem *>( pUserData );
-    psParms->DoIO(GF_Read, nOffset, pPageToFill, nToFill);
+    psParams->DoIO(GF_Read, nOffset, pPageToFill, nToFill);
 }
 
 /************************************************************************/
@@ -1313,9 +1313,9 @@ void GDALTiledVirtualMem::SaveFromCache( CPLVirtualMem*,
                                          const void* pPageToBeEvicted,
                                          size_t nToEvicted, void* pUserData)
 {
-    const GDALTiledVirtualMem* psParms =
+    const GDALTiledVirtualMem* psParams =
         static_cast<GDALTiledVirtualMem *>( pUserData );
-    psParms->DoIO( GF_Write, nOffset,
+    psParams->DoIO( GF_Write, nOffset,
                    const_cast<void *>(pPageToBeEvicted),
                    nToEvicted );
 }

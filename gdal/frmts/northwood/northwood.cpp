@@ -232,7 +232,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, const unsigned char *nwtHeader )
 
         pGrd->stClassDict->nNumClassifiedItems = usTmp;
 
-        pGrd->stClassDict->stClassifedItem
+        pGrd->stClassDict->stClassifiedItem
             = reinterpret_cast<NWT_CLASSIFIED_ITEM **> (
               calloc( sizeof(NWT_CLASSIFIED_ITEM *),
                       pGrd->stClassDict->nNumClassifiedItems + 1 ) );
@@ -241,7 +241,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, const unsigned char *nwtHeader )
         for( usTmp=0; usTmp < pGrd->stClassDict->nNumClassifiedItems; usTmp++ )
         {
             NWT_CLASSIFIED_ITEM *psItem =
-                pGrd->stClassDict->stClassifedItem[usTmp] =
+                pGrd->stClassDict->stClassifiedItem[usTmp] =
                 reinterpret_cast<NWT_CLASSIFIED_ITEM *>(
                     calloc(sizeof(NWT_CLASSIFIED_ITEM), 1) );
 
@@ -508,9 +508,9 @@ void nwtCloseGrid( NWT_GRID * pGrd )
     {
         for( unsigned short usTmp = 0; usTmp < pGrd->stClassDict->nNumClassifiedItems; usTmp++ )
         {
-            free( pGrd->stClassDict->stClassifedItem[usTmp] );
+            free( pGrd->stClassDict->stClassifiedItem[usTmp] );
         }
-        free( pGrd->stClassDict->stClassifedItem );
+        free( pGrd->stClassDict->stClassifiedItem );
         free( pGrd->stClassDict );
     }
     if( pGrd->fp )
@@ -594,13 +594,13 @@ void nwtPrintGridHeader( NWT_GRID * pGrd )
         for( int i = 0; i < static_cast<int>( pGrd->stClassDict->nNumClassifiedItems ); i++ )
         {
             printf( "\n%s - (%d,%d,%d)  Raw = %d  %d %d",/*ok*/
-                    pGrd->stClassDict->stClassifedItem[i]->szClassName,
-                    pGrd->stClassDict->stClassifedItem[i]->r,
-                    pGrd->stClassDict->stClassifedItem[i]->g,
-                    pGrd->stClassDict->stClassifedItem[i]->b,
-                    pGrd->stClassDict->stClassifedItem[i]->usPixVal,
-                    pGrd->stClassDict->stClassifedItem[i]->res1,
-                    pGrd->stClassDict->stClassifedItem[i]->res2 );
+                    pGrd->stClassDict->stClassifiedItem[i]->szClassName,
+                    pGrd->stClassDict->stClassifiedItem[i]->r,
+                    pGrd->stClassDict->stClassifiedItem[i]->g,
+                    pGrd->stClassDict->stClassifiedItem[i]->b,
+                    pGrd->stClassDict->stClassifiedItem[i]->usPixVal,
+                    pGrd->stClassDict->stClassifiedItem[i]->res1,
+                    pGrd->stClassDict->stClassifiedItem[i]->res2 );
         }
     }
 }

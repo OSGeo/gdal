@@ -96,8 +96,8 @@ char *MITABSpatialRef2CoordSys( const OGRSpatialReference * poSR )
         return nullptr;
 
     TABProjInfo sTABProj;
-    int nParmCount = 0;
-    TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParmCount);
+    int nParamCount = 0;
+    TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParamCount);
 
     // Do coordsys lookup.
     double dXMin = 0.0;
@@ -160,9 +160,9 @@ char *MITABSpatialRef2CoordSys( const OGRSpatialReference * poSR )
         osCoordSys += CPLSPrintf(" \"%s\"", pszMIFUnits);
     }
 
-    // Append Projection Parms.
-    for( int iParm = 0; iParm < nParmCount; iParm++ )
-        osCoordSys += CPLSPrintf(", %.15g", sTABProj.adProjParams[iParm]);
+    // Append Projection Params.
+    for( int iParam = 0; iParam < nParamCount; iParam++ )
+        osCoordSys += CPLSPrintf(", %.15g", sTABProj.adProjParams[iParam]);
 
     // Append user bounds.
     if( bHasBounds )

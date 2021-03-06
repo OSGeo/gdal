@@ -781,7 +781,7 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     unsigned int niRecord = 0;
     unsigned int nRecordLength = 0;
     unsigned int nRecordOffset = 50;
-    char abyReadedRecord[8];
+    char abyReadRecord[8];
 
     while( nCurrentSHPOffset < nSHPFilesize )
     {
@@ -789,10 +789,10 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
             psHooks->FRead( &nRecordLength, 4, 1, fpSHP ) == 1)
         {
             if( !bBigEndian ) SwapWord( 4, &nRecordOffset );
-            memcpy( abyReadedRecord, &nRecordOffset, 4 );
-            memcpy( abyReadedRecord + 4, &nRecordLength, 4 );
+            memcpy( abyReadRecord, &nRecordOffset, 4 );
+            memcpy( abyReadRecord + 4, &nRecordLength, 4 );
 
-            psHooks->FWrite( abyReadedRecord, 8, 1, fpSHX );
+            psHooks->FWrite( abyReadRecord, 8, 1, fpSHX );
 
             if ( !bBigEndian ) SwapWord( 4, &nRecordOffset );
             if ( !bBigEndian ) SwapWord( 4, &nRecordLength );

@@ -239,7 +239,7 @@ CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
     {
         if( bHasNoDataArray )
         {
-            ApplyNoDataArry( pImage );
+            ApplyNoDataArray( pImage );
         }
 
         return CE_None;
@@ -982,10 +982,10 @@ int GeoRasterRasterBand::GetMaskFlags()
 }
 
 //  ---------------------------------------------------------------------------
-//                                                            ApplyNoDataArry()
+//                                                            ApplyNoDataArray()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterRasterBand::ApplyNoDataArry(void* pBuffer) const
+void GeoRasterRasterBand::ApplyNoDataArray(void* pBuffer) const
 {
     int i = 0;
     int j = 0;

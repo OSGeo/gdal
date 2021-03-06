@@ -390,7 +390,7 @@ help page :
 
    As calling SetAttributeFilter() or SetSpatialFilter() implies an implicit
    ResetReading(), they have the same effect as ResetReading(). That is to say,
-   while an implict transaction is in progress, the transaction will be committed
+   while an implicit transaction is in progress, the transaction will be committed
    (if no other layer is being read), and a new one will be started again at the next
    GetNextFeature() call. On the contrary, if they are called within an explicit
    transaction, the transaction is maintained.
@@ -399,7 +399,7 @@ help page :
    run when using the OGR API in different scenarios.
 
 
-   lyr1->GetNextFeature()             BEGIN (implict)
+   lyr1->GetNextFeature()             BEGIN (implicit)
                                       DECLARE cur1 CURSOR FOR SELECT * FROM lyr1
                                       FETCH 1 IN cur1
 
@@ -407,7 +407,7 @@ help page :
         --> lyr1->ResetReading()      CLOSE cur1
                                       COMMIT (implicit)
 
-   lyr1->GetNextFeature()             BEGIN (implict)
+   lyr1->GetNextFeature()             BEGIN (implicit)
                                       DECLARE cur1 CURSOR  FOR SELECT * FROM lyr1 WHERE xxx
                                       FETCH 1 IN cur1
 

@@ -71,7 +71,7 @@ class GSBGDataset final: public GDALPamDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType,
-                                char **papszParmList );
+                                char **papszParamList );
     static GDALDataset *CreateCopy( const char *pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char **papszOptions,
@@ -854,7 +854,7 @@ GDALDataset *GSBGDataset::Create( const char * pszFilename,
                                   int nYSize,
                                   CPL_UNUSED int nBands,
                                   GDALDataType eType,
-                                  CPL_UNUSED char **papszParmList )
+                                  CPL_UNUSED char **papszParamList )
 {
     if( nXSize <= 0 || nYSize <= 0 )
     {

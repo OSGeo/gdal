@@ -617,12 +617,12 @@ int CPL_DLL OSRGetAreaOfUse(  OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetProjection( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
-                        const char * pszParmName,
+                        const char * pszParamName,
                         double dfDefault /* = 0.0 */,
                         OGRErr * /* = NULL */ );
 OGRErr CPL_DLL OSRSetNormProjParm( OGRSpatialReferenceH, const char *, double);
 double CPL_DLL OSRGetNormProjParm( OGRSpatialReferenceH hSRS,
-                                   const char * pszParmName,
+                                   const char * pszParamName,
                                    double dfDefault /* = 0.0 */,
                                    OGRErr * /* = NULL */ );
 

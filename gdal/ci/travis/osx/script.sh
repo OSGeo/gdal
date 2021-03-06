@@ -26,4 +26,4 @@ $PYTEST
 
 # For some reason, the tests crash at process exit
 # (cd autotest; $PYTEST 2>&1 | tee /tmp/log.txt || /bin/true)
-# tail /tmp/log.txt | grep "Failed:    0 (0 blew exceptionss)"  >/dev/null
+# tail /tmp/log.txt | grep "Failed:    0 (0 blew exceptions)"  >/dev/null

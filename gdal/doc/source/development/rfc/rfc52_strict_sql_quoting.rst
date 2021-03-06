@@ -42,7 +42,7 @@ Current OGR behavior is generally fine, except in some situations when
 specifying columns in a SELECT statement or in a WHERE expression. The
 OGR SQL engine tries to determine the intent with the following rule :
 if the quoted string matches a column name, then it is assumed to be a
-column identifier, otherwise a string litteral. But sometimes (see
+column identifier, otherwise a string literal. But sometimes (see
 `http://trac.osgeo.org/gdal/ticket/5428 <http://trac.osgeo.org/gdal/ticket/5428>`__),
 there are situations where filters such as "MyField" = 'MYFIELD' are
 needed, and currently they always evaluate to TRUE.

@@ -411,8 +411,8 @@ void OGRFlatGeobufLayer::Create() {
     // final file. That is to say we try to separate reads in the source temporary
     // file and writes in the target file as much as possible, and by reading
     // source features in increasing offset within a batch.
-    const bool bUseBatchStragegy = !STARTS_WITH(m_osTempFile.c_str(), "/vsimem/");
-    if( bUseBatchStragegy )
+    const bool bUseBatchStrategy = !STARTS_WITH(m_osTempFile.c_str(), "/vsimem/");
+    if( bUseBatchStrategy )
     {
         const uint32_t nMaxBufferSize = std::max(m_maxFeatureSize,
             static_cast<uint32_t>(std::min(

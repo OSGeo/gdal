@@ -865,7 +865,7 @@ void ILWISDataset::FlushCache()
 GDALDataset *ILWISDataset::Create(const char* pszFilename,
                                   int nXSize, int nYSize,
                                   int nBands, GDALDataType eType,
-                                  CPL_UNUSED char** papszParmList)
+                                  CPL_UNUSED char** papszParamList)
 {
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */

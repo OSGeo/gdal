@@ -1189,9 +1189,9 @@ public:
  */
 typedef struct _linestyle
 {
-    short          nNumSegParms;
+    short          nNumSegParams;
     std::vector<double> adfSegparms;
-    short          nAreaFillParms;
+    short          nAreaFillParams;
     std::vector<double> adfAreaFillParameters;
 } CADLineStyle;
 

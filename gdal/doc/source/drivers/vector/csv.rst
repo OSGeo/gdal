@@ -360,11 +360,11 @@ Configuration options (set with ``--config key value`` on command line
 utilities):
 
 -  **OGR_WKT_PRECISION**\ =int: Number of decimals for coordinate
-   values. Default to 15. A heuristics is used to remove unsignificant
+   values. Default to 15. A heuristics is used to remove insignificant
    trailing 00000x or 99999x that can appear when formatting decimal
    numbers.
 -  **OGR_WKT_ROUND**\ =YES/NO: (GDAL >= 2.3) Whether to enable the above
-   mentioned heuristics to remove unsignificant trailing 00000x or
+   mentioned heuristics to remove insignificant trailing 00000x or
    99999x. Default to YES.
 
 VSI Virtual File System API support
@@ -414,7 +414,7 @@ The CSV driver can also read files whose structure is close to CSV files
 :
 
 -  Airport data files NfdcFacilities.xls, NfdcRunways.xls,
-   NfdcRemarks.xls and NfdcSchedules.xls found on tha `FAA
+   NfdcRemarks.xls and NfdcSchedules.xls found on that `FAA
    website <http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm>`__
 
 -  Files from the `USGS

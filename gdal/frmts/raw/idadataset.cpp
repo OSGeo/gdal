@@ -163,7 +163,7 @@ class IDADataset final: public RawDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType,
-                                char ** /* papszParmList */ );
+                                char ** /* papszParamList */ );
 };
 
 /************************************************************************/
@@ -989,7 +989,7 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *IDADataset::Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType,
-                                 char ** /* papszParmList */ )
+                                 char ** /* papszParamList */ )
 
 {
 /* -------------------------------------------------------------------- */

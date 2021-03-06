@@ -1690,7 +1690,7 @@ y = d + column * e + row * f
 # - \a Extent A Geo::GDAL::Extent object used to obtain the coordinates of the up left corner position.
 # - \a CellSize The cell size (width and height) (default is 1, used with Extent).
 #
-# @note When Extent is specifid, the created geo transform will be
+# @note When Extent is specified, the created geo transform will be
 # north up, have square cells, and coefficient f will be -1 times the
 # cell size (image y - row - will increase downwards and projection y
 # will increase upwards).

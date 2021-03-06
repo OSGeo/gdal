@@ -2317,7 +2317,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         oCodeStream.access_siz()->parse_string("Creversible=no");
 
     // Set some user-overridable parameters.
-    const char * const apszParms[] =
+    const char * const apszParams[] =
         { "Corder", "PCRL",
           "Cprecincts",
           "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}",
@@ -2334,19 +2334,19 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
           "Sprofile", nullptr,
           nullptr, nullptr };
 
-    for( int iParm = 0; apszParms[iParm] != nullptr; iParm += 2 )
+    for( int iParam = 0; apszParams[iParam] != nullptr; iParam += 2 )
     {
         const char *pszValue =
-            CSLFetchNameValue(papszOptions, apszParms[iParm]);
+            CSLFetchNameValue(papszOptions, apszParams[iParam]);
 
         if( pszValue == nullptr )
-            pszValue = apszParms[iParm + 1];
+            pszValue = apszParams[iParam + 1];
 
         if( pszValue != nullptr )
         {
             CPLString osOpt;
 
-            osOpt.Printf("%s=%s", apszParms[iParm], pszValue);
+            osOpt.Printf("%s=%s", apszParams[iParam], pszValue);
             try
             {
                 oCodeStream.access_siz()->parse_string(osOpt);

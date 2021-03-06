@@ -172,7 +172,7 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     int           nInternalOverviewsToFree;
     GDALDataset **papoInternalOverviews;
     JPGDatasetCommon* poActiveDS = nullptr; /* only valid in parent DS */
-    JPGDatasetCommon** ppoActiveDS = nullptr; /* &poActiveDS of poActiveDS frmo parentDS */
+    JPGDatasetCommon** ppoActiveDS = nullptr; /* &poActiveDS of poActiveDS from parentDS */
     void          InitInternalOverviews();
     GDALDataset  *InitEXIFOverview();
 

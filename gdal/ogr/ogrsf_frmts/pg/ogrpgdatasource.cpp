@@ -585,7 +585,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Set the encoding to UTF8 as the driver advertizes UTF8          */
+/*      Set the encoding to UTF8 as the driver advertises UTF8          */
 /*      unless PGCLIENTENCODING is defined                              */
 /* -------------------------------------------------------------------- */
     if (CPLGetConfigOption("PGCLIENTENCODING", nullptr) == nullptr)
@@ -2948,7 +2948,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
         (strstr(pszSQLCommand, "from") == nullptr && strstr(pszSQLCommand, "FROM") == nullptr))
     {
         /* For something that is not a select or a select without table, do not */
-        /* run under transaction (CREATE DATABASE, VACCUUM don't like transactions) */
+        /* run under transaction (CREATE DATABASE, VACUUM don't like transactions) */
 
         hResult = OGRPG_PQexec(hPGConn, pszSQLCommand, TRUE /* multiple allowed */ );
         if (hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK)

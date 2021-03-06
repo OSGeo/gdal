@@ -74,9 +74,9 @@ def test_osr_pci_2():
     PARAMETER["false_easting",0],PARAMETER["false_northing",0],\
     UNIT["metre",1,AUTHORITY["EPSG","9001"]]]""")
 
-    (proj, units, parms) = srs.ExportToPCI()
+    (proj, units, params) = srs.ExportToPCI()
 
-    assert proj == 'LCC         D-01' and units == 'METRE' and parms[2] == pytest.approx(-117.4745429, abs=0.0000005) and parms[3] == pytest.approx(33.76446203, abs=0.0000005) and parms[4] == pytest.approx(33.90363403, abs=0.0000005) and parms[5] == pytest.approx(33.62529003, abs=0.0000005), \
+    assert proj == 'LCC         D-01' and units == 'METRE' and params[2] == pytest.approx(-117.4745429, abs=0.0000005) and params[3] == pytest.approx(33.76446203, abs=0.0000005) and params[4] == pytest.approx(33.90363403, abs=0.0000005) and params[5] == pytest.approx(33.62529003, abs=0.0000005), \
         'Can not import Lambert Conformal Conic projection.'
 
 ###############################################################################

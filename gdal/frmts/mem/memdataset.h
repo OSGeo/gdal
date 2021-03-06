@@ -134,7 +134,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL: public GDALDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
+                                GDALDataType eType, char ** papszParamList );
     static GDALDataset *CreateMultiDimensional( const char * pszFilename,
                                                 CSLConstList papszRootGroupOptions,
                                                 CSLConstList papszOptions );

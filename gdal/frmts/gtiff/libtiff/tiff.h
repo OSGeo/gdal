@@ -465,7 +465,7 @@ typedef enum {
 #define	TIFFTAG_JBIGOPTIONS		34750	/* JBIG options */
 #define TIFFTAG_GPSIFD			34853	/* Pointer to GPS private directory */
 /* tags 34908-34914 are private tags registered to SGI */
-#define	TIFFTAG_FAXRECVPARAMS		34908	/* encoded Class 2 ses. parms */
+#define	TIFFTAG_FAXRECVPARAMS		34908	/* encoded Class 2 ses. params */
 #define	TIFFTAG_FAXSUBADDRESS		34909	/* received SubAddr string */
 #define	TIFFTAG_FAXRECVTIME		34910	/* receive time (secs) */
 #define	TIFFTAG_FAXDCS			34911	/* encoded fax ses. params, Table 2/T.30 */

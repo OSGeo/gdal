@@ -47,7 +47,7 @@ PYTESTARGS="--ignore ogr/ogr_fgdb.py"
 #python ogr_pgeo.py
 PYTESTARGS="$PYTESTARGS --ignore ogr/ogr_pgeo.py"
 
-# Fails on test_validate_jp2_2 (erros not in expected order)
+# Fails on test_validate_jp2_2 (errors not in expected order)
 PYTESTARGS="$PYTESTARGS --ignore gdrivers/test_validate_jp2.py"
 
 # Run all the Python autotests

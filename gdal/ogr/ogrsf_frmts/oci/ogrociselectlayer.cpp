@@ -79,23 +79,23 @@ OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
-    for( int iParm = 0; true; iParm++ )
+    for( int iParam = 0; true; iParam++ )
     {
         OGRFieldDefn oField( "", OFTString );
         int          nStatus;
-        OCIParam     *hParmDesc;
+        OCIParam     *hParamDesc;
         ub2          nOCIType;
         ub4          nOCILen;
 
         nStatus =
             OCIParamGet( poCommand->GetStatement(), OCI_HTYPE_STMT,
-                         poSession->hError, (dvoid**)&hParmDesc,
-                         (ub4) iParm+1 );
+                         poSession->hError, (dvoid**)&hParamDesc,
+                         (ub4) iParam+1 );
 
         if( nStatus == OCI_ERROR )
             break;
 
-        if( poSession->GetParmInfo( hParmDesc, &oField, &nOCIType, &nOCILen )
+        if( poSession->GetParamInfo( hParamDesc, &oField, &nOCIType, &nOCILen )
             != CE_None )
             break;
 
@@ -103,7 +103,7 @@ OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
         {
             CPLFree( pszGeomName );
             pszGeomName = CPLStrdup( oField.GetNameRef() );
-            iGeomColumn = iParm;
+            iGeomColumn = iParam;
             break;
         }
     }

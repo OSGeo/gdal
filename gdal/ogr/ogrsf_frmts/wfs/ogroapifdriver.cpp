@@ -125,8 +125,8 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       m_osAttributeFilter;
         CPLString       m_osGetID;
         bool            m_bFilterMustBeClientSideEvaluated = false;
-        bool            m_bGotQueriableAttributes = false;
-        std::set<CPLString> m_aoSetQueriableAttributes;
+        bool            m_bGotQueryableAttributes = false;
+        std::set<CPLString> m_aoSetQueryableAttributes;
         bool            m_bHasCQLText = false;
         // https://github.com/tschaub/ogcapi-features/blob/json-array-expression/extensions/cql/jfe/readme.md
         bool            m_bHasJSONFilterExpression = false;
@@ -146,7 +146,7 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       BuildFilterCQLText(const swq_expr_node* poNode);
         CPLString       BuildFilterJSONFilterExpr(const swq_expr_node* poNode);
         bool            SupportsResultTypeHits();
-        void            GetQueriableAttributes();
+        void            GetQueryableAttributes();
         void            GetSchema();
 
     public:
@@ -1825,8 +1825,8 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node* poNode)
             m_osGetID = poNode->papoSubExpr[1]->string_value;
         }
         else if( poFieldDefn &&
-            m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
-                m_aoSetQueriableAttributes.end() )
+            m_aoSetQueryableAttributes.find(poFieldDefn->GetNameRef()) !=
+                m_aoSetQueryableAttributes.end() )
         {
             CPLString osEscapedFieldName;
             {
@@ -1987,8 +1987,8 @@ CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node* poNode)
             m_osGetID = poNode->papoSubExpr[1]->string_value;
         }
         else if( poFieldDefn &&
-                 m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
-                    m_aoSetQueriableAttributes.end() )
+                 m_aoSetQueryableAttributes.find(poFieldDefn->GetNameRef()) !=
+                    m_aoSetQueryableAttributes.end() )
         {
             CPLString osRet(poFieldDefn->GetNameRef());
             switch(poNode->nOperation )
@@ -2160,8 +2160,8 @@ CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node* poNode)
         const int nFieldIdx = poNode->field_index;
         const OGRFieldDefn* poFieldDefn = GetLayerDefn()->GetFieldDefn(nFieldIdx);
         if( poFieldDefn &&
-            m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
-            m_aoSetQueriableAttributes.end() )
+            m_aoSetQueryableAttributes.find(poFieldDefn->GetNameRef()) !=
+            m_aoSetQueryableAttributes.end() )
         {
             CPLString osRet("[\"get\",\"");
             osRet += CPLString(poFieldDefn->GetNameRef()).replaceAll('\\',"\\\\").replaceAll('"',"\\\"");
@@ -2212,14 +2212,14 @@ CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node* poNode)
 }
 
 /************************************************************************/
-/*                        GetQueriableAttributes()                      */
+/*                        GetQueryableAttributes()                      */
 /************************************************************************/
 
-void OGROAPIFLayer::GetQueriableAttributes()
+void OGROAPIFLayer::GetQueryableAttributes()
 {
-    if( m_bGotQueriableAttributes )
+    if( m_bGotQueryableAttributes )
         return;
-    m_bGotQueriableAttributes = true;
+    m_bGotQueryableAttributes = true;
     CPLJSONDocument oAPIDoc = m_poDS->GetAPIDoc();
     if( oAPIDoc.GetRoot().GetString("openapi").empty() )
         return;
@@ -2264,7 +2264,7 @@ void OGROAPIFLayer::GetQueriableAttributes()
             }
             else if( GetLayerDefn()->GetFieldIndex(osName.c_str()) >= 0 )
             {
-                m_aoSetQueriableAttributes.insert(osName);
+                m_aoSetQueryableAttributes.insert(osName);
             }
         }
     }
@@ -2286,7 +2286,7 @@ void OGROAPIFLayer::GetQueriableAttributes()
                     const auto osId = oQueryables[i].GetString("id");
                     if( !osId.empty() )
                     {
-                        m_aoSetQueriableAttributes.insert(osId);
+                        m_aoSetQueryableAttributes.insert(osId);
                     }
                 }
             }
@@ -2314,7 +2314,7 @@ OGRErr OGROAPIFLayer::SetAttributeFilter( const char *pszQuery )
     m_osGetID.clear();
     if( m_poAttrQuery != nullptr )
     {
-        GetQueriableAttributes();
+        GetQueryableAttributes();
 
         swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWQExpr();
 

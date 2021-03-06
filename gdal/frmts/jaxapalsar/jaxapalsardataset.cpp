@@ -360,7 +360,7 @@ const GDAL_GCP *PALSARJaxaDataset::GetGCPs() {
 /************************************************************************/
 
 void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
-    /* seek to the end fo the leader file descriptor */
+    /* seek to the end of the leader file descriptor */
     VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH, SEEK_SET );
     if (poDS->nFileType == level_10) {
         poDS->SetMetadataItem( "PRODUCT_LEVEL", "1.0" );

@@ -1953,7 +1953,7 @@ void OGRDGNV8Layer::AddToComplexCurve( OGRFeature* poFeature,
     {
         double R, cx, cy;
         double alpha0, alpha1, alpha2;
-        if( OGRGeometryFactory::GetCurveParmeters(
+        if( OGRGeometryFactory::GetCurveParameters(
                 poCS->getX(i),
                 poCS->getY(i),
                 poCS->getX(i+1),
@@ -2118,12 +2118,12 @@ static bool IsFullCircle( OGRCircularString* poCS,
         double alpha0_2 = 0.0;
         double alpha1_2 = 0.0;
         double alpha2_2 = 0.0;
-        if( OGRGeometryFactory::GetCurveParmeters(
+        if( OGRGeometryFactory::GetCurveParameters(
                 poCS->getX(0), poCS->getY(0),
                 poCS->getX(1), poCS->getY(1),
                 poCS->getX(2), poCS->getY(2),
                 R_1, cx_1, cy_1, alpha0_1, alpha1_1, alpha2_1) &&
-            OGRGeometryFactory::GetCurveParmeters(
+            OGRGeometryFactory::GetCurveParameters(
                 poCS->getX(2), poCS->getY(2),
                 poCS->getX(3), poCS->getY(3),
                 poCS->getX(4), poCS->getY(4),
@@ -2288,7 +2288,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
         else if( poCS->getNumPoints() == 3 && !OGR_GT_HasZ(eType) )
         {
             double alpha0, alpha1, alpha2;
-            if( OGRGeometryFactory::GetCurveParmeters(
+            if( OGRGeometryFactory::GetCurveParameters(
                     poCS->getX(0),
                     poCS->getY(0),
                     poCS->getX(1),

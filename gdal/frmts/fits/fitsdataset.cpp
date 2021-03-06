@@ -105,7 +105,7 @@ public:
   static GDALDataset* Create( const char* pszFilename,
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
-                              char** papszParmList );
+                              char** papszParamList );
   static CPLErr Delete( const char * pszFilename );
 
   const OGRSpatialReference* GetSpatialRef() const override;
@@ -2658,7 +2658,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
 GDALDataset *FITSDataset::Create( const char* pszFilename,
                                   int nXSize, int nYSize,
                                   int nBands, GDALDataType eType,
-                                  CPL_UNUSED char** papszParmList )
+                                  CPL_UNUSED char** papszParamList )
 {
   int status = 0;
 

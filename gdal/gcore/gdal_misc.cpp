@@ -725,7 +725,7 @@ double GDALAdjustValueToDataType(
             }
             else
             {
-                // Intentionaly loose precision.
+                // Intentionally loose precision.
                 // TODO(schwehr): Is the double cast really necessary?
                 // If so, why?  What will fail?
                 dfValue = static_cast<double>(static_cast<float>(dfValue));

@@ -210,13 +210,13 @@ not normally be shown to the user.
 /**
 \brief Set the projection for the segment.
 
-For details on the geosys and parms values see the PCIDSKGeoref class.
+For details on the geosys and params values see the PCIDSKGeoref class.
 
 @param geosys the usual 16 character coordinate system string.
-@param parms additional parameters needed for user parametrized projection.
+@param params additional parameters needed for user parametrized projection.
 */
         virtual void        SetProjection(std::string geosys,
-                                          std::vector<double> parms ) = 0;
+                                          std::vector<double> params ) = 0;
 
 /**
 \brief Create new attribute field.

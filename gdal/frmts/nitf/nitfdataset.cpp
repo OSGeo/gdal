@@ -1445,13 +1445,13 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     if( psImage && bHasRPC00 && !bHasLoadedRPCTXT )
     {
         char szValue[1280];
-    
+
         CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_BIAS );
         poDS->SetMetadataItem( "ERR_BIAS", szValue, "RPC" );
-        
+
         CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_RAND );
         poDS->SetMetadataItem( "ERR_RAND", szValue, "RPC" );
-        
+
         CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_OFF );
         poDS->SetMetadataItem( "LINE_OFF", szValue, "RPC" );
 
@@ -1840,109 +1840,109 @@ void NITFDataset::CheckGeoSDEInfo()
 /*      Collect projection parameters.                                  */
 /* -------------------------------------------------------------------- */
 
-    char szParm[16];
+    char szParam[16];
     if (nPRJPSBSize < 82 + 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read PRJPSB TRE. Not enough bytes");
         return;
     }
-    const int nParmCount = atoi(NITFGetField(szParm,pszPRJPSB,82,1));
-    if (nPRJPSBSize < 83+15*nParmCount+15+15)
+    const int nParamCount = atoi(NITFGetField(szParam,pszPRJPSB,82,1));
+    if (nPRJPSBSize < 83+15*nParamCount+15+15)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read PRJPSB TRE. Not enough bytes");
         return;
     }
 
-    double adfParm[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    for( int i = 0; i < nParmCount; i++ )
-        adfParm[i] = CPLAtof(NITFGetField(szParm,pszPRJPSB,83+15*i,15));
+    double adfParam[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for( int i = 0; i < nParamCount; i++ )
+        adfParam[i] = CPLAtof(NITFGetField(szParam,pszPRJPSB,83+15*i,15));
 
-    const double dfFE = CPLAtof(NITFGetField(szParm,pszPRJPSB,83+15*nParmCount,15));
-    const double dfFN = CPLAtof(NITFGetField(szParm,pszPRJPSB,83+15*nParmCount+15,15));
+    const double dfFE = CPLAtof(NITFGetField(szParam,pszPRJPSB,83+15*nParamCount,15));
+    const double dfFN = CPLAtof(NITFGetField(szParam,pszPRJPSB,83+15*nParamCount+15,15));
 
 /* -------------------------------------------------------------------- */
 /*      Try to handle the projection.                                   */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
     if( STARTS_WITH_CI(pszPRJPSB+80, "AC") )
-        oSRS.SetACEA( adfParm[1], adfParm[2], adfParm[3], adfParm[0],
+        oSRS.SetACEA( adfParam[1], adfParam[2], adfParam[3], adfParam[0],
                       dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "AK") )
-        oSRS.SetLAEA( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetLAEA( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "AL") )
-        oSRS.SetAE( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetAE( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "BF") )
-        oSRS.SetBonne( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetBonne( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "CP") )
-        oSRS.SetEquirectangular( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetEquirectangular( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "CS") )
-        oSRS.SetCS( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetCS( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "EF") )
-        oSRS.SetEckertIV( adfParm[0], dfFE, dfFN );
+        oSRS.SetEckertIV( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "ED") )
-        oSRS.SetEckertVI( adfParm[0], dfFE, dfFN );
+        oSRS.SetEckertVI( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "GN") )
-        oSRS.SetGnomonic( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetGnomonic( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "HX") )
-        oSRS.SetHOM2PNO( adfParm[1],
-                         adfParm[3], adfParm[2],
-                         adfParm[5], adfParm[4],
-                         adfParm[0], dfFE, dfFN );
+        oSRS.SetHOM2PNO( adfParam[1],
+                         adfParam[3], adfParam[2],
+                         adfParam[5], adfParam[4],
+                         adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "KA") )
-        oSRS.SetEC( adfParm[1], adfParm[2], adfParm[3], adfParm[0],
+        oSRS.SetEC( adfParam[1], adfParam[2], adfParam[3], adfParam[0],
                     dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "LE") )
-        oSRS.SetLCC( adfParm[1], adfParm[2], adfParm[3], adfParm[0],
+        oSRS.SetLCC( adfParam[1], adfParam[2], adfParam[3], adfParam[0],
                      dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "LI") )
-        oSRS.SetCEA( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetCEA( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "MC") )
-        oSRS.SetMercator( adfParm[2], adfParm[1], 1.0, dfFE, dfFN );
+        oSRS.SetMercator( adfParam[2], adfParam[1], 1.0, dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "MH") )
-        oSRS.SetMC( 0.0, adfParm[1], dfFE, dfFN );
+        oSRS.SetMC( 0.0, adfParam[1], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "MP") )
-        oSRS.SetMollweide( adfParm[0], dfFE, dfFN );
+        oSRS.SetMollweide( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "NT") )
-        oSRS.SetNZMG( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetNZMG( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "OD") )
-        oSRS.SetOrthographic( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetOrthographic( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "PC") )
-        oSRS.SetPolyconic( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetPolyconic( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "PG") )
-        oSRS.SetPS( adfParm[1], adfParm[0], 1.0, dfFE, dfFN );
+        oSRS.SetPS( adfParam[1], adfParam[0], 1.0, dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "RX") )
-        oSRS.SetRobinson( adfParm[0], dfFE, dfFN );
+        oSRS.SetRobinson( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "SA") )
-        oSRS.SetSinusoidal( adfParm[0], dfFE, dfFN );
+        oSRS.SetSinusoidal( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "TC") )
-        oSRS.SetTM( adfParm[2], adfParm[0], adfParm[1], dfFE, dfFN );
+        oSRS.SetTM( adfParam[2], adfParam[0], adfParam[1], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "VA") )
-        oSRS.SetVDG( adfParm[0], dfFE, dfFN );
+        oSRS.SetVDG( adfParam[0], dfFE, dfFN );
 
     else
     {
@@ -1959,7 +1959,7 @@ void NITFDataset::CheckGeoSDEInfo()
                  "Cannot read GEOPSB TRE. Not enough bytes");
         return;
     }
-    LoadDODDatum( &oSRS, NITFGetField(szParm,pszGEOPSB,86,4) );
+    LoadDODDatum( &oSRS, NITFGetField(szParam,pszGEOPSB,86,4) );
 
 /* -------------------------------------------------------------------- */
 /*      Get the geotransform                                            */
@@ -1992,12 +1992,12 @@ void NITFDataset::CheckGeoSDEInfo()
     }
 
     double adfGT[6];
-    adfGT[0] = CPLAtof(NITFGetField(szParm,pszMAPLOB,13,15));
-    adfGT[1] = CPLAtof(NITFGetField(szParm,pszMAPLOB,3,5)) * dfMeterPerUnit;
+    adfGT[0] = CPLAtof(NITFGetField(szParam,pszMAPLOB,13,15));
+    adfGT[1] = CPLAtof(NITFGetField(szParam,pszMAPLOB,3,5)) * dfMeterPerUnit;
     adfGT[2] = 0.0;
-    adfGT[3] = CPLAtof(NITFGetField(szParm,pszMAPLOB,28,15));
+    adfGT[3] = CPLAtof(NITFGetField(szParam,pszMAPLOB,28,15));
     adfGT[4] = 0.0;
-    adfGT[5] = -CPLAtof(NITFGetField(szParm,pszMAPLOB,8,5)) * dfMeterPerUnit;
+    adfGT[5] = -CPLAtof(NITFGetField(szParam,pszMAPLOB,8,5)) * dfMeterPerUnit;
 
 /* -------------------------------------------------------------------- */
 /*      Apply back to dataset.                                          */

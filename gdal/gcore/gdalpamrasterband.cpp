@@ -408,7 +408,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree,
              psEntry != nullptr;
              psEntry = psEntry->psNext )
         {
-            /* Don't skeep <Category> tag with empty content */
+            /* Don't skip <Category> tag with empty content */
             if( psEntry->eType != CXT_Element
                 || !EQUAL(psEntry->pszValue,"Category")
                 || (psEntry->psChild != nullptr &&

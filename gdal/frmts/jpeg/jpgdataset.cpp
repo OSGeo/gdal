@@ -3730,7 +3730,7 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         poSrcDS->GetRasterBand(1)->GetColorInterpretation() != GCI_CyanBand )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "4-band JPEGs will be interpretated on reading as in CMYK colorspace");
+                 "4-band JPEGs will be interpreted on reading as in CMYK colorspace");
     }
 
 

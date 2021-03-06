@@ -254,7 +254,7 @@ option to YES. Then, blocks that are never written through the
 IWriteBlock()/IRasterIO() interfaces will have their offset and byte
 count set to 0. This is particularly useful to save disk space and time
 when the file must be initialized empty before being passed to a further
-processing stage that will fill it. To avoid ambiguities with anoter
+processing stage that will fill it. To avoid ambiguities with another
 sparse mechanism discussed in the next paragraphs, we will call such
 files with implicit tiles/strips "TIFF sparse files". They will be
 likely **not** interoperable with TIFF readers that are not GDAL based

@@ -68,9 +68,9 @@ namespace PCIDSK
 
     std::string         ParseLinkedFilename(std::string oOptions);
 
-    std::vector<double> ProjParmsFromText( std::string geosys,
-                                           std::string parms );
-    std::string         ProjParmsToText( std::vector<double> );
+    std::vector<double> ProjParamsFromText( std::string geosys,
+                                           std::string params );
+    std::string         ProjParamsToText( std::vector<double> );
 
     std::string         DefaultMergeRelativePath(const PCIDSK::IOInterfaces *,
                                                  const std::string& base,

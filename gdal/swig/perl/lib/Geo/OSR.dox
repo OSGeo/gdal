@@ -59,7 +59,7 @@
 # - GML: GML string
 # - URL: URL for downloading the spatial reference from
 # - ERMapper: listref: [Projection, Datum, Units]
-# - MapInfoCS: MapInfo style co-ordinate system definition
+# - MapInfoCS: MapInfo style coordinate system definition
 #
 # For more information, consult the import methods in <a href="http://www.gdal.org/classOGRSpatialReference.html">OGR documentation</a>.
 #
@@ -100,7 +100,7 @@
 # - PCI: a list: ($proj_string, $units, [$parms1, ...])
 # - USGS: a list: ($code, $zone, [$parms1, ...], $datum)
 # - GML (XML): GML based string (dialect)
-# - MapInfoCS (MICoordSys): MapInfo style co-ordinate system definition
+# - MapInfoCS (MICoordSys): MapInfo style coordinate system definition
 #
 # @note The named parameter syntax also works and is needed is those
 # cases when other arguments need or may be given. The format should

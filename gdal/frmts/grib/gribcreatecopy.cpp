@@ -513,7 +513,7 @@ bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference* poSRS)
     const double dfAngUnit = 1e-6;
     WriteScaled(dfLLY, dfAngUnit);
     WriteScaled(dfLLX, dfAngUnit);
-    // Resolution and component flags. "not applicatable" ==> 0 ?
+    // Resolution and component flags. "not applicable" ==> 0 ?
     WriteByte( fp, 0);
     WriteScaled(
         poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0), dfAngUnit);
@@ -587,7 +587,7 @@ bool GRIB2Section3Writer::Write()
     // Number of octets for optional list of numbers defining number of points
     WriteByte(fp, 0);
 
-    // Interpetation of list of numbers defining number of points =
+    // Interpretation of list of numbers defining number of points =
     // No appended list
     WriteByte(fp, 0);
 

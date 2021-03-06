@@ -147,7 +147,7 @@ GDALFilterLine( float *pafLastLine, float *pafThisLine, float *pafNextLine,
 /*                                                                      */
 /*      This implementation attempts to apply many iterations in        */
 /*      one IO pass by managing the filtering over a rolling buffer     */
-/*      of nIternations+2 scanlines.  While possibly clever this        */
+/*      of nIterations+2 scanlines.  While possibly clever this        */
 /*      makes the algorithm implementation largely                      */
 /*      incomprehensible.                                               */
 /************************************************************************/

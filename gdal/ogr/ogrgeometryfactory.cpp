@@ -4863,7 +4863,7 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
 }
 
 /************************************************************************/
-/*                         GetCurveParmeters()                          */
+/*                         GetCurveParameters()                          */
 /************************************************************************/
 
 /**
@@ -4889,7 +4889,7 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
  * @since GDAL 2.0
  */
 
-int OGRGeometryFactory::GetCurveParmeters(
+int OGRGeometryFactory::GetCurveParameters(
     double x0, double y0, double x1, double y1, double x2, double y2,
     double& R, double& cx, double& cy,
     double& alpha0, double& alpha1, double& alpha2 )
@@ -5178,7 +5178,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
 
     OGRLineString* poLine = new OGRLineString();
     bool bIsArc = true;
-    if( !GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+    if( !GetCurveParameters(x0, y0, x1, y1, x2, y2,
                            R, cx, cy, alpha0, alpha1, alpha2))
     {
         bIsArc = false;
@@ -5391,7 +5391,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
     double alpha0_1 = 0.0;
     double alpha1_1 = 0.0;
     double alpha2_1 = 0.0;
-    if( !(OGRGeometryFactory::GetCurveParmeters(p0.getX(), p0.getY(),
+    if( !(OGRGeometryFactory::GetCurveParameters(p0.getX(), p0.getY(),
                             p1.getX(), p1.getY(),
                             p2.getX(), p2.getY(),
                             R_1, cx_1, cy_1,
@@ -5459,7 +5459,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         double alpha2_2 = 0.0;
         // Check that the new candidate arc shares the same
         // radius, center and winding order.
-        if( !(OGRGeometryFactory::GetCurveParmeters(p1.getX(), p1.getY(),
+        if( !(OGRGeometryFactory::GetCurveParameters(p1.getX(), p1.getY(),
                                 p2.getX(), p2.getY(),
                                 p3.getX(), p3.getY(),
                                 R_2, cx_2, cy_2,
