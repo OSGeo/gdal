@@ -191,7 +191,7 @@ Available options are:
     template_tiles.mapml file from GDAL data resources
     will be used
 
-The --url option is also used to substitue ``${URL}`` in the template MapML file.
+The --url option is also used to substitute ``${URL}`` in the template MapML file.
 
 Examples
 --------

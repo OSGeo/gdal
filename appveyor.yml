@@ -7,7 +7,7 @@ branches:
 # the file patterns below
 skip_commits:
     files:
-        - gdal/doc/**
+        - gdal/doc/**/*
 
 environment:
   matrix:
