@@ -44,7 +44,7 @@ Software using GDAL
 - `gstat  <http://www.gstat.org>`_  a geostatistical modelling package.
 - `GuidosToolbox  <https://forest.jrc.ec.europa.eu/en/activities/lpa/gtb/>`_  A multi-platform desktop application for generic image object analysis.
 - `gvSIG  <http://www.gvsig.com>`_  Desktop GIS Client.
-- `HydroDaVE Explorer  <http://www.hydrodave.com>`_  A web-enabled client that provides users an easy to use, secure, and reliable data management platform to efficienctly manage, access, and analyze environmental data.
+- `HydroDaVE Explorer  <http://www.hydrodave.com>`_  A web-enabled client that provides users an easy to use, secure, and reliable data management platform to efficiently manage, access, and analyze environmental data.
 - `IDRISI  <http://www.idrisi.com>`_  A GIS and Image Processing Windows Desktop application. Uses GDAL to import/export/warp raster data.
 - `ILWIS  <http://www.itc.nl/ilwis>`_  Remote Sensing and GIS Desktop Package.
 - `Image I/O-Ext  <https://github.com/geosolutions-it/imageio-ext>`_  includes gdalframework, a framework leveraging on GDAL via SWIG's generated JAVA bindings to provide support for a broad set of data formats.
