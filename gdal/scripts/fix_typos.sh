@@ -62,9 +62,9 @@ if ! test -d fix_typos; then
     )
 fi
 
-EXCLUDED_FILES="*/.svn*,configure,config.status,config.guess,config.sub,*/autom4te.cache/*,*.ai"
+EXCLUDED_FILES="*/.svn*,configure,config.status,config.guess,config.sub,libtool,ltmain.sh,*/autom4te.cache/*,*.ai"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/hdf-eos/*,teststream.out,ogrogdilayer.cpp"
-EXCLUDED_FILES="$EXCLUDED_FILES,*/doc/br/*,*/data/*,figures.mp,*/tmp/*,*/ruby/*"
+EXCLUDED_FILES="$EXCLUDED_FILES,*/doc/build/*,*/data/*,figures.mp,*/tmp/*,*/ruby/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/fix_typos/*,fix_typos.sh,*.eps,geopackage_aspatial.html"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/kdu_cache_wrapper.h,*/PublicDecompWT/*,*/man/*,./html/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,PROVENANCE.TXT,libtool,ltmain.sh,libtool.m4,./m4/*"
