@@ -705,7 +705,7 @@ std::vector<double> CPCIDSKVectorSegment::GetProjection( std::string &geosys )
 /* -------------------------------------------------------------------- */
     GetHeader().Get( 160, 16, geosys, 0 ); // do not unpad!
 
-    return ProjParmsFromText( geosys, projparms.GetValueString() );
+    return ProjParamsFromText( geosys, projparms.GetValueString() );
 }
 
 /************************************************************************/
@@ -713,7 +713,7 @@ std::vector<double> CPCIDSKVectorSegment::GetProjection( std::string &geosys )
 /************************************************************************/
 
 void CPCIDSKVectorSegment::SetProjection( std::string geosys,
-                                          std::vector<double> parms )
+                                          std::vector<double> params )
 
 {
     LoadHeader();
@@ -725,7 +725,7 @@ void CPCIDSKVectorSegment::SetProjection( std::string geosys,
     uint32       proj_size;
     ShapeField   value;
 
-    value.SetValue( ProjParmsToText( parms ) );
+    value.SetValue( ProjParamsToText( params ) );
 
     ReadFromFile( proj.buffer, vh.section_offsets[hsec_proj], 32 );
     proj_size = WriteField( 32, value, proj );

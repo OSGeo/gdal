@@ -60,7 +60,7 @@ struct CPCIDSKPolyModelSegment::PCIDSKPolyInfo
 
     //map units of required projection
     std::string oMapUnit;
-    //proj parm info of required projection
+    //proj param info of required projection
     std::vector<double> oProjectionInfo;
 
     // The raw segment data
@@ -152,7 +152,7 @@ void CPCIDSKPolyModelSegment::Load()
 
     // Block 7: Required projection
     // Bytes 0-16: The map units
-    // Bytes 17-511: the proj parm info.
+    // Bytes 17-511: the proj param info.
     pimpl_->oMapUnit = pimpl_->seg_data.Get(6*512,17);
     for(i=0 ; i < 19 ; i++)
     {
@@ -220,7 +220,7 @@ void CPCIDSKPolyModelSegment::Write(void)
     assert(pimpl_->oProjectionInfo.size() <= 512-17-1);
     // Block 7: Required projection
     // Bytes 0-16: The map units
-    // Bytes 17-511: the proj parm info.
+    // Bytes 17-511: the proj param info.
     pimpl_->seg_data.Put("                 \0",6*512,17);
     pimpl_->seg_data.Put(pimpl_->oMapUnit.c_str(),6*512,(int)pimpl_->oMapUnit.size());
     //19 because (511-17)/26 = 19 (26 is the size of one value)
@@ -294,12 +294,12 @@ void CPCIDSKPolyModelSegment::SetGeosysString(const std::string& oGeosys)
     pimpl_->oMapUnit = oGeosys;
 }
 
-std::vector<double> CPCIDSKPolyModelSegment::GetProjParmInfo() const
+std::vector<double> CPCIDSKPolyModelSegment::GetProjParamInfo() const
 {
     return pimpl_->oProjectionInfo;
 }
 
-void CPCIDSKPolyModelSegment::SetProjParmInfo(const std::vector<double>& oInfo)
+void CPCIDSKPolyModelSegment::SetProjParamInfo(const std::vector<double>& oInfo)
 {
     pimpl_->oProjectionInfo = oInfo;
     while(pimpl_->oProjectionInfo.size() < 19)

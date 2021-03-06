@@ -57,8 +57,8 @@ namespace PCIDSK {
         std::string GetGeosysString() const override;
         void SetGeosysString(const std::string& oGeosys) override ;
 
-        std::vector<double> GetProjParmInfo() const override;
-        void SetProjParmInfo(const std::vector<double>& oInfo) override ;
+        std::vector<double> GetProjParamInfo() const override;
+        void SetProjParamInfo(const std::vector<double>& oInfo) override ;
 
         //synchronize the segment on disk.
         void Synchronize() override;

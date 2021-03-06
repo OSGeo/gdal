@@ -164,11 +164,11 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
     }
     if( xsize > 1 && pixel_offset > static_cast<uint64>(INT_MAX / (xsize - 1)) )
     {
-        return ThrowPCIDSKException( 0, "Int overfow in ReadBlock() ");
+        return ThrowPCIDSKException( 0, "Int overflow in ReadBlock() ");
     }
     if( pixel_offset*(xsize-1) > static_cast<uint64>(INT_MAX - pixel_size) )
     {
-        return ThrowPCIDSKException( 0, "Int overfow in ReadBlock() ");
+        return ThrowPCIDSKException( 0, "Int overflow in ReadBlock() ");
     }
     int    window_size = (int) (pixel_offset*(xsize-1) + pixel_size);
 
