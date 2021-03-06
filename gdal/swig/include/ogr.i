@@ -75,7 +75,7 @@ typedef int OGRJustification;
 %rename (wkbByteOrder) OGRwkbByteOrder;
 typedef enum
 {
-    wkbXDR = 0,         /* MSB/Sun/Motoroloa: Most Significant Byte First   */
+    wkbXDR = 0,         /* MSB/Sun/Motorola: Most Significant Byte First   */
     wkbNDR = 1          /* LSB/Intel/Vax: Least Significant Byte First      */
 } OGRwkbByteOrder;
 

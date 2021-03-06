@@ -67,7 +67,7 @@ public:
                                         int nr_rows,
                                         int nrBands,
                                         GDALDataType gdalType,
-                                        char** papszParmList);
+                                        char** papszParamList);
 
   static GDALDataset* createCopy       (char const* filename,
                                         GDALDataset* source,

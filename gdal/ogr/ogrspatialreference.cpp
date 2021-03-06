@@ -4933,7 +4933,7 @@ OGRErr OSRSetProjection( OGRSpatialReferenceH hSRS,
  * legal parameter names for specific projections.
  *
  *
- * @param pszParmName the parameter name, which should be selected from
+ * @param pszParamName the parameter name, which should be selected from
  * the macros in ogr_srs_api.h, such as SRS_PP_CENTRAL_MERIDIAN.
  *
  * @param dfValue value to assign.
@@ -4941,7 +4941,7 @@ OGRErr OSRSetProjection( OGRSpatialReferenceH hSRS,
  * @return OGRERR_NONE on success.
  */
 
-OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
+OGRErr OGRSpatialReference::SetProjParm( const char * pszParamName,
                                          double dfValue )
 
 {
@@ -4956,16 +4956,15 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
 /* -------------------------------------------------------------------- */
 /*      Try to find existing parameter with this name.                  */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poParm = nullptr;
     for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
     {
-        poParm = poPROJCS->GetChild( iChild );
+        OGR_SRSNode* poParam = poPROJCS->GetChild( iChild );
 
-        if( EQUAL(poParm->GetValue(), "PARAMETER")
-            && poParm->GetChildCount() == 2
-            && EQUAL(poParm->GetChild(0)->GetValue(), pszParmName) )
+        if( EQUAL(poParam->GetValue(), "PARAMETER")
+            && poParam->GetChildCount() == 2
+            && EQUAL(poParam->GetChild(0)->GetValue(), pszParamName) )
         {
-            poParm->GetChild(1)->SetValue( szValue );
+            poParam->GetChild(1)->SetValue( szValue );
             return OGRERR_NONE;
         }
     }
@@ -4973,11 +4972,11 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
 /* -------------------------------------------------------------------- */
 /*      Otherwise create a new parameter and append.                    */
 /* -------------------------------------------------------------------- */
-    poParm = new OGR_SRSNode( "PARAMETER" );
-    poParm->AddChild( new OGR_SRSNode( pszParmName ) );
-    poParm->AddChild( new OGR_SRSNode( szValue ) );
+    OGR_SRSNode* poParam = new OGR_SRSNode( "PARAMETER" );
+    poParam->AddChild( new OGR_SRSNode( pszParamName ) );
+    poParam->AddChild( new OGR_SRSNode( szValue ) );
 
-    poPROJCS->AddChild( poParm );
+    poPROJCS->AddChild( poParam );
 
     return OGRERR_NONE;
 }
@@ -4992,13 +4991,13 @@ OGRErr OGRSpatialReference::SetProjParm( const char * pszParmName,
  * This function is the same as OGRSpatialReference::SetProjParm()
  */
 OGRErr OSRSetProjParm( OGRSpatialReferenceH hSRS,
-                       const char * pszParmName, double dfValue )
+                       const char * pszParamName, double dfValue )
 
 {
     VALIDATE_POINTER1( hSRS, "OSRSetProjParm", OGRERR_FAILURE );
 
     return ToPointer(hSRS)->
-        SetProjParm( pszParmName, dfValue );
+        SetProjParm( pszParamName, dfValue );
 }
 
 /************************************************************************/
@@ -5250,13 +5249,13 @@ OGRErr OGRSpatialReference::SetNormProjParm( const char * pszName,
  * This function is the same as OGRSpatialReference::SetNormProjParm()
  */
 OGRErr OSRSetNormProjParm( OGRSpatialReferenceH hSRS,
-                           const char * pszParmName, double dfValue )
+                           const char * pszParamName, double dfValue )
 
 {
     VALIDATE_POINTER1( hSRS, "OSRSetNormProjParm", OGRERR_FAILURE );
 
     return ToPointer(hSRS)->
-        SetNormProjParm( pszParmName, dfValue );
+        SetNormProjParm( pszParamName, dfValue );
 }
 
 /************************************************************************/

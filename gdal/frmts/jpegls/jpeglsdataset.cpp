@@ -505,7 +505,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     if (nBitsPerSample > 16)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupport bitspersample : %d",
+                 "Unsupported bitspersample : %d",
                  nBitsPerSample);
         return nullptr;
     }

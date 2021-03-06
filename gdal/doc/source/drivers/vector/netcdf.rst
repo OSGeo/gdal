@@ -36,7 +36,7 @@ Driver capabilities
 Conventions and Data Formats
 ----------------------------
 The netCDF vector driver supports reading and writing netCDF files following the Climate and Forecast (CF) Metadata Conventions.
-Vector datasets can be written using the simple geometry specifcation of the CF-1.8 convention, or by using the CF-1.6 convention
+Vector datasets can be written using the simple geometry specification of the CF-1.8 convention, or by using the CF-1.6 convention
 and by writing non-point geometry items as WKT.
 
 Distinguishing the Two Formats
@@ -236,7 +236,7 @@ In the below example, the station_name and time variables may be indexed
 by the profile dimension (the geometry is assumed to be also indexed by
 the profile dimension), since all records that have the same value for
 one of those variables have same values for the other ones, whereas
-temparature and Z should be indexed by the default dimension.
+temperature and Z should be indexed by the default dimension.
 
 ============ ==================== ================== =========== ===
 station_name time                 geometry           temperature Z

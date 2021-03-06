@@ -641,7 +641,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  * best fitting coordinate transformation (which will be used for all coordinate
  * transformations, even if they don't fall into the declared area of interest)
  * If no options are set, then a list of candidate coordinate operations will be
- * reseached, and at each call to Transform(), the best of those candidate
+ * researched, and at each call to Transform(), the best of those candidate
  * regarding the centroid of the coordinate set will be dynamically selected.
  *
  * @param poSource source spatial reference system.
@@ -733,7 +733,7 @@ OCTNewCoordinateTransformation(
  * best fitting coordinate transformation (which will be used for all coordinate
  * transformations, even if they don't fall into the declared area of interest)
  * If no options are set, then a list of candidate coordinate operations will be
- * reseached, and at each call to Transform(), the best of those candidate
+ * researched, and at each call to Transform(), the best of those candidate
  * regarding the centroid of the coordinate set will be dynamically selected.
  *
  * @param hSourceSRS source spatial reference system.

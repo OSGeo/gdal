@@ -100,7 +100,7 @@ Creation Options
 JPEG files are created using the "JPEG" driver code. Only Byte band
 types are supported.
 
-Only 1 (greyscale), 3 band (intput should be in RGB colorspace.
+Only 1 (greyscale), 3 band (input should be in RGB colorspace.
 the driver will convert it automatically to YCbCr colorspace for storage, and
 will expose it back as RGB on reading) or 4 band
 (input should already by in CMYK colorspace. It will be exposed as RGB on reading
@@ -193,7 +193,7 @@ The below tables list the EXIF and GPS tags that can be written.
    appropriate spaces / zeroes
 
 -  The "Number of values" column is the number of values for the item.
-   Might be "variable" if there is no restriction, or a fixed value. Fo
+   Might be "variable" if there is no restriction, or a fixed value. For
    Type=ASCII, the fixed value includes the NUL-terminating byte, so the
    number of actual printable characters is number of values - 1.
 -  The "Optionality" column indicates whether the item should be present

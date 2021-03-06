@@ -353,7 +353,7 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
  * @param iDatum Input spheroid.<p>
  *
  * If the datum code is negative, the first two values in the parameter array
- * (parm) are used to define the values as follows:
+ * (param) are used to define the values as follows:
  *
  * <ul>
  *

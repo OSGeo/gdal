@@ -3101,7 +3101,7 @@ class CPL_DLL OGRGeometryFactory
                               double dfMaxAngleStepSizeDegrees,
                               const bool bUseMaxGap = false );
 
-    static int GetCurveParmeters( double x0, double y0,
+    static int GetCurveParameters( double x0, double y0,
                                   double x1, double y1,
                                   double x2, double y2,
                                   double& R, double& cx, double& cy,

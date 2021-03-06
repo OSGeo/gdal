@@ -1860,7 +1860,7 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
 
     // Compute shift between GDAL origin and TileMatrixSet origin
-    double dfShiftXPixels = (m_adfGeoTransform[0] - m_dfTMSMinX) / 
+    double dfShiftXPixels = (m_adfGeoTransform[0] - m_dfTMSMinX) /
                                                         m_adfGeoTransform[1];
     if( dfShiftXPixels < INT_MIN || dfShiftXPixels + 0.5 > INT_MAX )
         return false;
@@ -2290,7 +2290,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         sqlite3_free(pszSQL);
         if  ( err != OGRERR_NONE || oResult2.nRowCount == 0 ||
                 // Can happen if table is empty
-              SQLResultGetValue(&oResult2, 0, 0) == nullptr || 
+              SQLResultGetValue(&oResult2, 0, 0) == nullptr ||
                 // Can happen if table has no NOT NULL constraint on tile_row
                 // and that all tile_row are NULL
               SQLResultGetValue(&oResult2, 1, 0) == nullptr  )
@@ -4029,7 +4029,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             m_bHasDefinition12_063 = true;
             osSQL += ", definition_12_063 TEXT NOT NULL";
         }
-        osSQL += 
+        osSQL +=
             ")"
             ";"
         /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
@@ -4103,7 +4103,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         if( CPLFetchBool(papszOptions, "ADD_GPKG_OGR_CONTENTS", true) )
         {
             m_bHasGPKGOGRContents = true;
-            osSQL += 
+            osSQL +=
                 ";"
                 "CREATE TABLE gpkg_ogr_contents("
                 "table_name TEXT NOT NULL PRIMARY KEY,"
@@ -4640,7 +4640,7 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
                                                       "PRECISION", "1"));
     CPLString osGridCellEncoding(CSLFetchNameValueDef(
                 papszOptions, "GRID_CELL_ENCODING", "grid-value-is-center"));
-    m_bGridCellEncodingAsCO = 
+    m_bGridCellEncodingAsCO =
         CSLFetchNameValue(papszOptions, "GRID_CELL_ENCODING") != nullptr;
     CPLString osUom(CSLFetchNameValueDef(papszOptions, "UOM", ""));
     CPLString osFieldName(
@@ -5425,20 +5425,20 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         const char* pszASpatialVariant = CSLFetchNameValueDef(papszOptions,
                                                             "ASPATIAL_VARIANT",
                                                             "GPKG_ATTRIBUTES");
-        GPKGASpatialVariant eASPatialVariant = GPKG_ATTRIBUTES;
+        GPKGASpatialVariant eASpatialVariant = GPKG_ATTRIBUTES;
         if( EQUAL(pszASpatialVariant, "GPKG_ATTRIBUTES") )
-            eASPatialVariant = GPKG_ATTRIBUTES;
+            eASpatialVariant = GPKG_ATTRIBUTES;
         else if( EQUAL(pszASpatialVariant, "OGR_ASPATIAL") )
-            eASPatialVariant = OGR_ASPATIAL;
+            eASpatialVariant = OGR_ASPATIAL;
         else if( EQUAL(pszASpatialVariant, "NOT_REGISTERED") )
-            eASPatialVariant = NOT_REGISTERED;
+            eASpatialVariant = NOT_REGISTERED;
         else
         {
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Unsupported value for ASPATIAL_VARIANT: %s",
                      pszASpatialVariant);
         }
-        poLayer->SetASpatialVariant( eASPatialVariant );
+        poLayer->SetASpatialVariant( eASpatialVariant );
     }
 
     // If there was an ogr_empty_table table, we can remove it
@@ -5673,7 +5673,7 @@ OGRErr GDALGeoPackageDataset::DeleteRasterLayer( const char* pszLayerName )
     {
         SoftRollbackTransaction();
     }
-    
+
     return eErr;
 }
 

@@ -62,10 +62,10 @@ def test_osr_basic_1():
             (osr.SRS_PP_FALSE_EASTING, 500000.0),
             (osr.SRS_PP_FALSE_NORTHING, 0.0)]
 
-    for parm in parm_list:
-        value = utm_srs.GetProjParm(parm[0], -1111)
-        assert value == pytest.approx(parm[1], abs=.00000000000010), ('got %g for %s instead of %g.'
-                                 % (value, parm[0], parm[1]))
+    for param in parm_list:
+        value = utm_srs.GetProjParm(param[0], -1111)
+        assert value == pytest.approx(param[1], abs=.00000000000010), ('got %g for %s instead of %g.'
+                                 % (value, param[0], param[1]))
 
     auth_list = [('GEOGCS', '4326'),
                  ('DATUM', '6326')]
@@ -99,11 +99,11 @@ def test_osr_basic_2():
             (osr.SRS_PP_FALSE_EASTING, 2000000.0),
             (osr.SRS_PP_FALSE_NORTHING, 500000.0)]
 
-    for parm in parm_list:
-        value = srs.GetProjParm(parm[0], -1111)
-        assert gdaltest.approx_equal(parm[1], value), \
+    for param in parm_list:
+        value = srs.GetProjParm(param[0], -1111)
+        assert gdaltest.approx_equal(param[1], value), \
             ('got %.16g for %s instead of %.16g.'
-                                 % (value, parm[0], parm[1]))
+                                 % (value, param[0], param[1]))
 
     auth_list = [('GEOGCS', '4269'),
                  ('DATUM', '6269'),
@@ -142,11 +142,11 @@ def test_osr_basic_3():
             (osr.SRS_PP_FALSE_EASTING, 6561666.666666667),
             (osr.SRS_PP_FALSE_NORTHING, 1640416.666666667)]
 
-    for parm in parm_list:
-        value = srs.GetProjParm(parm[0], -1111)
-        assert gdaltest.approx_equal(parm[1], value), \
+    for param in parm_list:
+        value = srs.GetProjParm(param[0], -1111)
+        assert gdaltest.approx_equal(param[1], value), \
             ('got %.16g for %s instead of %.16g.'
-                                 % (value, parm[0], parm[1]))
+                                 % (value, param[0], param[1]))
 
     auth_list = [('GEOGCS', '4269'),
                  ('DATUM', '6269')]

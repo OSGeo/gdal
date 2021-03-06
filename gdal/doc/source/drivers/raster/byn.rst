@@ -55,7 +55,7 @@ Factor
 ------
 
 When translating from or into BYN file to or from another formats the
-scale will afect the result profundly.
+scale will affect the result profoundly.
 
 Translating to a format that supports Scale (GTIFF for example) will
 maintain the data type and thescale information. The pixel values are

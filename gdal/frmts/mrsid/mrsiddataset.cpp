@@ -212,7 +212,7 @@ class MrSIDDataset final: public GDALJP2AbstractDataset
 
     CPLErr              OpenZoomLevel( lt_int32 iZoom );
     int                 GetMetadataElement( const char *, void *, int=0 );
-    void                FetchProjParms();
+    void                FetchProjParams();
     void                GetGTIFDefn();
     char                *GetOGISDefn( GTIFDefn * );
 
@@ -239,7 +239,7 @@ class MrSIDDataset final: public GDALJP2AbstractDataset
 #ifdef MRSID_ESDK
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char ** papszParmList );
+                                 GDALDataType eType, char ** papszParamList );
     virtual void        FlushCache( void );
 #endif
 };
@@ -1754,7 +1754,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
 #define EPSGZoneWidth            8831
 
 /************************************************************************/
-/*                            SetGTParmIds()                            */
+/*                            SetGTParamIds()                            */
 /*                                                                      */
 /*      This is hardcoded logic to set the GeoTIFF parameter            */
 /*      identifiers for all the EPSG supported projections.  As the     */
@@ -1763,8 +1763,8 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
 /*      Explicitly copied from geo_normalize.c of the GeoTIFF package.  */
 /************************************************************************/
 
-static int SetGTParmIds( int nCTProjection,
-                         int *panProjParmId,
+static int SetGTParamIds( int nCTProjection,
+                         int *panProjParamId,
                          int *panEPSGCodes )
 
 {
@@ -1772,21 +1772,21 @@ static int SetGTParmIds( int nCTProjection,
 
     if( panEPSGCodes == nullptr )
         panEPSGCodes = anWorkingDummy;
-    if( panProjParmId == nullptr )
-        panProjParmId = anWorkingDummy;
+    if( panProjParamId == nullptr )
+        panProjParamId = anWorkingDummy;
 
     memset( panEPSGCodes, 0, sizeof(int) * 7 );
 
-    /* psDefn->nParms = 7; */
+    /* psDefn->nParams = 7; */
 
     switch( nCTProjection )
     {
       case CT_CassiniSoldner:
       case CT_NewZealandMapGrid:
-        panProjParmId[0] = ProjNatOriginLatGeoKey;
-        panProjParmId[1] = ProjNatOriginLongGeoKey;
-        panProjParmId[5] = ProjFalseEastingGeoKey;
-        panProjParmId[6] = ProjFalseNorthingGeoKey;
+        panProjParamId[0] = ProjNatOriginLatGeoKey;
+        panProjParamId[1] = ProjNatOriginLongGeoKey;
+        panProjParamId[5] = ProjFalseEastingGeoKey;
+        panProjParamId[6] = ProjFalseNorthingGeoKey;
 
         panEPSGCodes[0] = EPSGNatOriginLat;
         panEPSGCodes[1] = EPSGNatOriginLong;
@@ -1795,13 +1795,13 @@ static int SetGTParmIds( int nCTProjection,
         return TRUE;
 
       case CT_ObliqueMercator:
-        panProjParmId[0] = ProjCenterLatGeoKey;
-        panProjParmId[1] = ProjCenterLongGeoKey;
-        panProjParmId[2] = ProjAzimuthAngleGeoKey;
-        panProjParmId[3] = ProjRectifiedGridAngleGeoKey;
-        panProjParmId[4] = ProjScaleAtCenterGeoKey;
-        panProjParmId[5] = ProjFalseEastingGeoKey;
-        panProjParmId[6] = ProjFalseNorthingGeoKey;
+        panProjParamId[0] = ProjCenterLatGeoKey;
+        panProjParamId[1] = ProjCenterLongGeoKey;
+        panProjParamId[2] = ProjAzimuthAngleGeoKey;
+        panProjParamId[3] = ProjRectifiedGridAngleGeoKey;
+        panProjParamId[4] = ProjScaleAtCenterGeoKey;
+        panProjParamId[5] = ProjFalseEastingGeoKey;
+        panProjParamId[6] = ProjFalseNorthingGeoKey;
 
         panEPSGCodes[0] = EPSGProjCenterLat;
         panEPSGCodes[1] = EPSGProjCenterLong;
@@ -1813,12 +1813,12 @@ static int SetGTParmIds( int nCTProjection,
         return TRUE;
 
       case CT_ObliqueMercator_Laborde:
-        panProjParmId[0] = ProjCenterLatGeoKey;
-        panProjParmId[1] = ProjCenterLongGeoKey;
-        panProjParmId[2] = ProjAzimuthAngleGeoKey;
-        panProjParmId[4] = ProjScaleAtCenterGeoKey;
-        panProjParmId[5] = ProjFalseEastingGeoKey;
-        panProjParmId[6] = ProjFalseNorthingGeoKey;
+        panProjParamId[0] = ProjCenterLatGeoKey;
+        panProjParamId[1] = ProjCenterLongGeoKey;
+        panProjParamId[2] = ProjAzimuthAngleGeoKey;
+        panProjParamId[4] = ProjScaleAtCenterGeoKey;
+        panProjParamId[5] = ProjFalseEastingGeoKey;
+        panProjParamId[6] = ProjFalseNorthingGeoKey;
 
         panEPSGCodes[0] = EPSGProjCenterLat;
         panEPSGCodes[1] = EPSGProjCenterLong;
@@ -1834,11 +1834,11 @@ static int SetGTParmIds( int nCTProjection,
       case CT_PolarStereographic:
       case CT_TransverseMercator:
       case CT_TransvMercator_SouthOriented:
-        panProjParmId[0] = ProjNatOriginLatGeoKey;
-        panProjParmId[1] = ProjNatOriginLongGeoKey;
-        panProjParmId[4] = ProjScaleAtNatOriginGeoKey;
-        panProjParmId[5] = ProjFalseEastingGeoKey;
-        panProjParmId[6] = ProjFalseNorthingGeoKey;
+        panProjParamId[0] = ProjNatOriginLatGeoKey;
+        panProjParamId[1] = ProjNatOriginLongGeoKey;
+        panProjParamId[4] = ProjScaleAtNatOriginGeoKey;
+        panProjParamId[5] = ProjFalseEastingGeoKey;
+        panProjParamId[6] = ProjFalseNorthingGeoKey;
 
         panEPSGCodes[0] = EPSGNatOriginLat;
         panEPSGCodes[1] = EPSGNatOriginLong;
@@ -1848,12 +1848,12 @@ static int SetGTParmIds( int nCTProjection,
         return TRUE;
 
       case CT_LambertConfConic_2SP:
-        panProjParmId[0] = ProjFalseOriginLatGeoKey;
-        panProjParmId[1] = ProjFalseOriginLongGeoKey;
-        panProjParmId[2] = ProjStdParallel1GeoKey;
-        panProjParmId[3] = ProjStdParallel2GeoKey;
-        panProjParmId[5] = ProjFalseEastingGeoKey;
-        panProjParmId[6] = ProjFalseNorthingGeoKey;
+        panProjParamId[0] = ProjFalseOriginLatGeoKey;
+        panProjParamId[1] = ProjFalseOriginLongGeoKey;
+        panProjParamId[2] = ProjStdParallel1GeoKey;
+        panProjParamId[3] = ProjStdParallel2GeoKey;
+        panProjParamId[5] = ProjFalseEastingGeoKey;
+        panProjParamId[6] = ProjFalseNorthingGeoKey;
 
         panEPSGCodes[0] = EPSGFalseOriginLat;
         panEPSGCodes[1] = EPSGFalseOriginLong;
@@ -1864,10 +1864,10 @@ static int SetGTParmIds( int nCTProjection,
         return TRUE;
 
       case CT_SwissObliqueCylindrical:
-        panProjParmId[0] = ProjCenterLatGeoKey;
-        panProjParmId[1] = ProjCenterLongGeoKey;
-        panProjParmId[5] = ProjFalseEastingGeoKey;
-        panProjParmId[6] = ProjFalseNorthingGeoKey;
+        panProjParamId[0] = ProjCenterLatGeoKey;
+        panProjParamId[1] = ProjCenterLongGeoKey;
+        panProjParamId[5] = ProjFalseEastingGeoKey;
+        panProjParamId[6] = ProjFalseNorthingGeoKey;
 
         /* EPSG codes? */
         return TRUE;
@@ -1953,7 +1953,7 @@ static void WKTMassageDatum( char ** ppszDatum )
 }
 
 /************************************************************************/
-/*                           FetchProjParms()                           */
+/*                           FetchProjParams()                           */
 /*                                                                      */
 /*      Fetch the projection parameters for a particular projection     */
 /*      from MrSID metadata, and fill the GTIFDefn structure out        */
@@ -1961,7 +1961,7 @@ static void WKTMassageDatum( char ** ppszDatum )
 /*      Copied from geo_normalize.c of the GeoTIFF package.             */
 /************************************************************************/
 
-void MrSIDDataset::FetchProjParms()
+void MrSIDDataset::FetchProjParams()
 {
     double dfNatOriginLong = 0.0, dfNatOriginLat = 0.0, dfRectGridAngle = 0.0;
     double dfFalseEasting = 0.0, dfFalseNorthing = 0.0, dfNatOriginScale = 1.0;
@@ -2009,18 +2009,18 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfNatOriginLat;
-        psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
-        psDefn->ProjParm[1] = dfNatOriginLong;
-        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
-        psDefn->ProjParm[4] = dfNatOriginScale;
-        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[0] = dfNatOriginLat;
+        psDefn->ProjParamId[0] = ProjCenterLatGeoKey;
+        psDefn->ProjParam[1] = dfNatOriginLong;
+        psDefn->ProjParamId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParam[4] = dfNatOriginScale;
+        psDefn->ProjParamId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
 
 /* -------------------------------------------------------------------- */
@@ -2052,18 +2052,18 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfNatOriginLat;
-        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
-        psDefn->ProjParm[1] = dfNatOriginLong;
-        psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
-        psDefn->ProjParm[4] = dfNatOriginScale;
-        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[0] = dfNatOriginLat;
+        psDefn->ProjParamId[0] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParam[1] = dfNatOriginLong;
+        psDefn->ProjParamId[1] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParam[4] = dfNatOriginScale;
+        psDefn->ProjParamId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
 
 /* -------------------------------------------------------------------- */
@@ -2101,22 +2101,22 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfNatOriginLat;
-        psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
-        psDefn->ProjParm[1] = dfNatOriginLong;
-        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
-        psDefn->ProjParm[2] = dfAzimuth;
-        psDefn->ProjParmId[2] = ProjAzimuthAngleGeoKey;
-        psDefn->ProjParm[3] = dfRectGridAngle;
-        psDefn->ProjParmId[3] = ProjRectifiedGridAngleGeoKey;
-        psDefn->ProjParm[4] = dfNatOriginScale;
-        psDefn->ProjParmId[4] = ProjScaleAtCenterGeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[0] = dfNatOriginLat;
+        psDefn->ProjParamId[0] = ProjCenterLatGeoKey;
+        psDefn->ProjParam[1] = dfNatOriginLong;
+        psDefn->ProjParamId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParam[2] = dfAzimuth;
+        psDefn->ProjParamId[2] = ProjAzimuthAngleGeoKey;
+        psDefn->ProjParam[3] = dfRectGridAngle;
+        psDefn->ProjParamId[3] = ProjRectifiedGridAngleGeoKey;
+        psDefn->ProjParam[4] = dfNatOriginScale;
+        psDefn->ProjParamId[4] = ProjScaleAtCenterGeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
 
 /* -------------------------------------------------------------------- */
@@ -2147,18 +2147,18 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfNatOriginLat;
-        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
-        psDefn->ProjParm[1] = dfNatOriginLong;
-        psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
-        psDefn->ProjParm[4] = dfNatOriginScale;
-        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[0] = dfNatOriginLat;
+        psDefn->ProjParamId[0] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParam[1] = dfNatOriginLong;
+        psDefn->ProjParamId[1] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParam[4] = dfNatOriginScale;
+        psDefn->ProjParamId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
 
 /* -------------------------------------------------------------------- */
@@ -2187,16 +2187,16 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfNatOriginLat;
-        psDefn->ProjParmId[0] = ProjCenterLatGeoKey;
-        psDefn->ProjParm[1] = dfNatOriginLong;
-        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[0] = dfNatOriginLat;
+        psDefn->ProjParamId[0] = ProjCenterLatGeoKey;
+        psDefn->ProjParam[1] = dfNatOriginLong;
+        psDefn->ProjParamId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
 
 /* -------------------------------------------------------------------- */
@@ -2214,14 +2214,14 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[1] = dfNatOriginLong;
-        psDefn->ProjParmId[1] = ProjCenterLongGeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[1] = dfNatOriginLong;
+        psDefn->ProjParamId[1] = ProjCenterLongGeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
 
 /* -------------------------------------------------------------------- */
@@ -2253,18 +2253,18 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfNatOriginLat;
-        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
-        psDefn->ProjParm[1] = dfNatOriginLong;
-        psDefn->ProjParmId[1] = ProjStraightVertPoleLongGeoKey;
-        psDefn->ProjParm[4] = dfNatOriginScale;
-        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[0] = dfNatOriginLat;
+        psDefn->ProjParamId[0] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParam[1] = dfNatOriginLong;
+        psDefn->ProjParamId[1] = ProjStraightVertPoleLongGeoKey;
+        psDefn->ProjParam[4] = dfNatOriginScale;
+        psDefn->ProjParamId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
 
 /* -------------------------------------------------------------------- */
@@ -2296,20 +2296,20 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfNatOriginLat;
-        psDefn->ProjParmId[0] = ProjFalseOriginLatGeoKey;
-        psDefn->ProjParm[1] = dfNatOriginLong;
-        psDefn->ProjParmId[1] = ProjFalseOriginLongGeoKey;
-        psDefn->ProjParm[2] = dfStdParallel1;
-        psDefn->ProjParmId[2] = ProjStdParallel1GeoKey;
-        psDefn->ProjParm[3] = dfStdParallel2;
-        psDefn->ProjParmId[3] = ProjStdParallel2GeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[0] = dfNatOriginLat;
+        psDefn->ProjParamId[0] = ProjFalseOriginLatGeoKey;
+        psDefn->ProjParam[1] = dfNatOriginLong;
+        psDefn->ProjParamId[1] = ProjFalseOriginLongGeoKey;
+        psDefn->ProjParam[2] = dfStdParallel1;
+        psDefn->ProjParamId[2] = ProjStdParallel1GeoKey;
+        psDefn->ProjParam[3] = dfStdParallel2;
+        psDefn->ProjParamId[3] = ProjStdParallel2GeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
 
 /* -------------------------------------------------------------------- */
@@ -2342,20 +2342,20 @@ void MrSIDDataset::FetchProjParms()
 
         /* notdef: should transform to decimal degrees at this point */
 
-        psDefn->ProjParm[0] = dfStdParallel1;
-        psDefn->ProjParmId[0] = ProjStdParallel1GeoKey;
-        psDefn->ProjParm[1] = dfStdParallel2;
-        psDefn->ProjParmId[1] = ProjStdParallel2GeoKey;
-        psDefn->ProjParm[2] = dfNatOriginLat;
-        psDefn->ProjParmId[2] = ProjNatOriginLatGeoKey;
-        psDefn->ProjParm[3] = dfNatOriginLong;
-        psDefn->ProjParmId[3] = ProjNatOriginLongGeoKey;
-        psDefn->ProjParm[5] = dfFalseEasting;
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[6] = dfFalseNorthing;
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParam[0] = dfStdParallel1;
+        psDefn->ProjParamId[0] = ProjStdParallel1GeoKey;
+        psDefn->ProjParam[1] = dfStdParallel2;
+        psDefn->ProjParamId[1] = ProjStdParallel2GeoKey;
+        psDefn->ProjParam[2] = dfNatOriginLat;
+        psDefn->ProjParamId[2] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParam[3] = dfNatOriginLong;
+        psDefn->ProjParamId[3] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParam[5] = dfFalseEasting;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[6] = dfFalseNorthing;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
-        psDefn->nParms = 7;
+        psDefn->nParams = 7;
         break;
     }
 }
@@ -2397,11 +2397,11 @@ void MrSIDDataset::GetGTIFDefn()
     psDefn->Projection = KvUserDefined;
     psDefn->CTProjection = KvUserDefined;
 
-    psDefn->nParms = 0;
+    psDefn->nParams = 0;
     for( int i = 0; i < MAX_GTIF_PROJPARMS; i++ )
     {
-        psDefn->ProjParm[i] = 0.0;
-        psDefn->ProjParmId[i] = 0;
+        psDefn->ProjParam[i] = 0.0;
+        psDefn->ProjParamId[i] = 0;
     }
 
     psDefn->MapSys = KvUserDefined;
@@ -2462,7 +2462,7 @@ void MrSIDDataset::GetGTIFDefn()
          * ``UTM zone 11N'', and doesn't include datum info.
          */
         GTIFGetProjTRFInfo( psDefn->ProjCode, nullptr, &(psDefn->Projection),
-                            psDefn->ProjParm );
+                            psDefn->ProjParam );
 
         /*
          * Set the GeoTIFF identity of the parameters.
@@ -2470,8 +2470,8 @@ void MrSIDDataset::GetGTIFDefn()
         psDefn->CTProjection = (short)
             EPSGProjMethodToCTProjMethod( psDefn->Projection );
 
-        SetGTParmIds( psDefn->CTProjection, psDefn->ProjParmId, nullptr);
-        psDefn->nParms = 7;
+        SetGTParamIds( psDefn->CTProjection, psDefn->ProjParamId, nullptr);
+        psDefn->nParams = 7;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2585,7 +2585,7 @@ void MrSIDDataset::GetGTIFDefn()
     if( GetMetadataElement( "GEOTIFF_NUM::3075::ProjCoordTransGeoKey",
                             &(psDefn->CTProjection) ) )
     {
-        FetchProjParms();
+        FetchProjParams();
     }
 
 /* -------------------------------------------------------------------- */
@@ -2603,25 +2603,25 @@ void MrSIDDataset::GetGTIFDefn()
         && psDefn->CTProjection == KvUserDefined )
     {
         psDefn->CTProjection = CT_TransverseMercator;
-        psDefn->nParms = 7;
-        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
-        psDefn->ProjParm[0] = 0.0;
+        psDefn->nParams = 7;
+        psDefn->ProjParamId[0] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParam[0] = 0.0;
 
-        psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
-        psDefn->ProjParm[1] = psDefn->Zone*6 - 183.0;
+        psDefn->ProjParamId[1] = ProjNatOriginLongGeoKey;
+        psDefn->ProjParam[1] = psDefn->Zone*6 - 183.0;
 
-        psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
-        psDefn->ProjParm[4] = 0.9996;
+        psDefn->ProjParamId[4] = ProjScaleAtNatOriginGeoKey;
+        psDefn->ProjParam[4] = 0.9996;
 
-        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
-        psDefn->ProjParm[5] = 500000.0;
+        psDefn->ProjParamId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParam[5] = 500000.0;
 
-        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+        psDefn->ProjParamId[6] = ProjFalseNorthingGeoKey;
 
         if( psDefn->MapSys == MapSys_UTM_North )
-            psDefn->ProjParm[6] = 0.0;
+            psDefn->ProjParam[6] = 0.0;
         else
-            psDefn->ProjParm[6] = 10000000.0;
+            psDefn->ProjParam[6] = 10000000.0;
     }
 
     if ( pszProjection )
@@ -2763,25 +2763,25 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
     if( psDefnIn->Model == ModelTypeProjected )
     {
 /* -------------------------------------------------------------------- */
-/*      Make a local copy of parms, and convert back into the           */
+/*      Make a local copy of params, and convert back into the           */
 /*      angular units of the GEOGCS and the linear units of the         */
 /*      projection.                                                     */
 /* -------------------------------------------------------------------- */
-        double          adfParm[10];
+        double          adfParam[10];
         int             i;
 
-        for( i = 0; i < MIN(10,psDefnIn->nParms); i++ )
-            adfParm[i] = psDefnIn->ProjParm[i];
+        for( i = 0; i < MIN(10,psDefnIn->nParams); i++ )
+            adfParam[i] = psDefnIn->ProjParam[i];
         for( ; i < 10; i++)
-            adfParm[i] = 0;
+            adfParam[i] = 0;
 
-        adfParm[0] /= psDefnIn->UOMAngleInDegrees;
-        adfParm[1] /= psDefnIn->UOMAngleInDegrees;
-        adfParm[2] /= psDefnIn->UOMAngleInDegrees;
-        adfParm[3] /= psDefnIn->UOMAngleInDegrees;
+        adfParam[0] /= psDefnIn->UOMAngleInDegrees;
+        adfParam[1] /= psDefnIn->UOMAngleInDegrees;
+        adfParam[2] /= psDefnIn->UOMAngleInDegrees;
+        adfParam[3] /= psDefnIn->UOMAngleInDegrees;
 
-        adfParm[5] /= psDefnIn->UOMLengthInMeters;
-        adfParm[6] /= psDefnIn->UOMLengthInMeters;
+        adfParam[5] /= psDefnIn->UOMLengthInMeters;
+        adfParam[6] /= psDefnIn->UOMLengthInMeters;
 
 /* -------------------------------------------------------------------- */
 /*      Translation the fundamental projection.                         */
@@ -2789,130 +2789,130 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
         switch( psDefnIn->CTProjection )
         {
           case CT_TransverseMercator:
-            oSRS.SetTM( adfParm[0], adfParm[1],
-                        adfParm[4],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetTM( adfParam[0], adfParam[1],
+                        adfParam[4],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_TransvMercator_SouthOriented:
-            oSRS.SetTMSO( adfParm[0], adfParm[1],
-                          adfParm[4],
-                          adfParm[5], adfParm[6] );
+            oSRS.SetTMSO( adfParam[0], adfParam[1],
+                          adfParam[4],
+                          adfParam[5], adfParam[6] );
             break;
 
           case CT_Mercator:
-            oSRS.SetMercator( adfParm[0], adfParm[1],
-                              adfParm[4],
-                              adfParm[5], adfParm[6] );
+            oSRS.SetMercator( adfParam[0], adfParam[1],
+                              adfParam[4],
+                              adfParam[5], adfParam[6] );
             break;
 
           case CT_ObliqueStereographic:
-            oSRS.SetOS( adfParm[0], adfParm[1],
-                        adfParm[4],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetOS( adfParam[0], adfParam[1],
+                        adfParam[4],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_Stereographic:
-            oSRS.SetOS( adfParm[0], adfParm[1],
-                        adfParm[4],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetOS( adfParam[0], adfParam[1],
+                        adfParam[4],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_ObliqueMercator: /* hotine */
-            oSRS.SetHOM( adfParm[0], adfParm[1],
-                         adfParm[2], adfParm[3],
-                         adfParm[4],
-                         adfParm[5], adfParm[6] );
+            oSRS.SetHOM( adfParam[0], adfParam[1],
+                         adfParam[2], adfParam[3],
+                         adfParam[4],
+                         adfParam[5], adfParam[6] );
             break;
 
           case CT_EquidistantConic:
-            oSRS.SetEC( adfParm[0], adfParm[1],
-                        adfParm[2], adfParm[3],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetEC( adfParam[0], adfParam[1],
+                        adfParam[2], adfParam[3],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_CassiniSoldner:
-            oSRS.SetCS( adfParm[0], adfParm[1],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetCS( adfParam[0], adfParam[1],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_Polyconic:
-            oSRS.SetPolyconic( adfParm[0], adfParm[1],
-                               adfParm[5], adfParm[6] );
+            oSRS.SetPolyconic( adfParam[0], adfParam[1],
+                               adfParam[5], adfParam[6] );
             break;
 
           case CT_AzimuthalEquidistant:
-            oSRS.SetAE( adfParm[0], adfParm[1],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetAE( adfParam[0], adfParam[1],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_MillerCylindrical:
-            oSRS.SetMC( adfParm[0], adfParm[1],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetMC( adfParam[0], adfParam[1],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_Equirectangular:
-            oSRS.SetEquirectangular( adfParm[0], adfParm[1],
-                                     adfParm[5], adfParm[6] );
+            oSRS.SetEquirectangular( adfParam[0], adfParam[1],
+                                     adfParam[5], adfParam[6] );
             break;
 
           case CT_Gnomonic:
-            oSRS.SetGnomonic( adfParm[0], adfParm[1],
-                              adfParm[5], adfParm[6] );
+            oSRS.SetGnomonic( adfParam[0], adfParam[1],
+                              adfParam[5], adfParam[6] );
             break;
 
           case CT_LambertAzimEqualArea:
-            oSRS.SetLAEA( adfParm[0], adfParm[1],
-                          adfParm[5], adfParm[6] );
+            oSRS.SetLAEA( adfParam[0], adfParam[1],
+                          adfParam[5], adfParam[6] );
             break;
 
           case CT_Orthographic:
-            oSRS.SetOrthographic( adfParm[0], adfParm[1],
-                                  adfParm[5], adfParm[6] );
+            oSRS.SetOrthographic( adfParam[0], adfParam[1],
+                                  adfParam[5], adfParam[6] );
             break;
 
           case CT_Robinson:
-            oSRS.SetRobinson( adfParm[1],
-                              adfParm[5], adfParm[6] );
+            oSRS.SetRobinson( adfParam[1],
+                              adfParam[5], adfParam[6] );
             break;
 
           case CT_Sinusoidal:
-            oSRS.SetSinusoidal( adfParm[1],
-                                adfParm[5], adfParm[6] );
+            oSRS.SetSinusoidal( adfParam[1],
+                                adfParam[5], adfParam[6] );
             break;
 
           case CT_VanDerGrinten:
-            oSRS.SetVDG( adfParm[1],
-                         adfParm[5], adfParm[6] );
+            oSRS.SetVDG( adfParam[1],
+                         adfParam[5], adfParam[6] );
             break;
 
           case CT_PolarStereographic:
-            oSRS.SetPS( adfParm[0], adfParm[1],
-                        adfParm[4],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetPS( adfParam[0], adfParam[1],
+                        adfParam[4],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_LambertConfConic_2SP:
-            oSRS.SetLCC( adfParm[2], adfParm[3],
-                         adfParm[0], adfParm[1],
-                         adfParm[5], adfParm[6] );
+            oSRS.SetLCC( adfParam[2], adfParam[3],
+                         adfParam[0], adfParam[1],
+                         adfParam[5], adfParam[6] );
             break;
 
           case CT_LambertConfConic_1SP:
-            oSRS.SetLCC1SP( adfParm[0], adfParm[1],
-                            adfParm[4],
-                            adfParm[5], adfParm[6] );
+            oSRS.SetLCC1SP( adfParam[0], adfParam[1],
+                            adfParam[4],
+                            adfParam[5], adfParam[6] );
             break;
 
           case CT_AlbersEqualArea:
-            oSRS.SetACEA( adfParm[0], adfParm[1],
-                          adfParm[2], adfParm[3],
-                          adfParm[5], adfParm[6] );
+            oSRS.SetACEA( adfParam[0], adfParam[1],
+                          adfParam[2], adfParam[3],
+                          adfParam[5], adfParam[6] );
             break;
 
           case CT_NewZealandMapGrid:
-            oSRS.SetNZMG( adfParm[0], adfParm[1],
-                          adfParm[5], adfParm[6] );
+            oSRS.SetNZMG( adfParam[0], adfParam[1],
+                          adfParam[5], adfParam[6] );
             break;
         }
 

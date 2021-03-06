@@ -537,7 +537,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!bOzi3 && nSeparator != 0x77777777)
     {
         /* Some files have 8 extra bytes before the marker. I'm not sure */
-        /* what they are used for. So just skeep them and hope that */
+        /* what they are used for. So just skip them and hope that */
         /* we'll find the marker */
         CPL_IGNORE_RET_VAL(ReadInt(fp));
         nSeparator = ReadInt(fp);

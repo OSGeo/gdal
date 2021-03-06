@@ -286,7 +286,7 @@ private:
     int                 nNoDataArraySz;
     bool                bHasNoDataArray;
 
-    void                ApplyNoDataArry( void* pBuffer ) const;
+    void                ApplyNoDataArray( void* pBuffer ) const;
 
 public:
     double GetNoDataValue( int *pbSuccess = nullptr ) override;

@@ -1234,7 +1234,7 @@ int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct** doc, TPdfiumPageStruct** pa
   // Get mutex for loading pdfium
   CPLCreateOrAcquireMutex(&g_oPdfiumLoadDocMutex, PDFIUM_MUTEX_TIMEOUT);
 
-  // Decreas page use
+  // Decrease page use
   --pPage->sharedNum;
 
 #ifdef DEBUG

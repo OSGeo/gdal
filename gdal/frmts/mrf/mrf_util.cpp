@@ -241,7 +241,7 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
         || in.find_first_of("\\/") == in.npos)      // We can't get a basename from 'in'
         return fn;
 
-    // Relative path, prepand the path from the in file name
+    // Relative path, prepend the path from the in file name
     return in.substr(0, in.find_last_of("\\/")+1) + fn;
 }
 

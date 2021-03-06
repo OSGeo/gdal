@@ -250,7 +250,7 @@ public:
      * @param nConFID - connection feature identificator (-1 for virtual connection)
      * @param dfCost - cost moving from source to target (default 1)
      * @param dfInvCost - cost moving from target to source (default 1)
-     * @param eDir - direction, may be source to target, traget to source or both.
+     * @param eDir - direction, may be source to target, target to source or both.
      *               (default - both)
      * @return CE_None on success
      */

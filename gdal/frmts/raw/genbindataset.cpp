@@ -447,14 +447,14 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 
 #if 0
     // TODO(schwehr): Why was this being done but not used?
-    double adfProjParms[15] = { 0.0 };
+    double adfProjParams[15] = { 0.0 };
     if( CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) )
     {
         char **papszTokens = CSLTokenizeString(
             CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) );
 
         for( int i = 0; i < 15 && papszTokens[i] != NULL; i++ )
-            adfProjParms[i] = CPLAtofM( papszTokens[i] );
+            adfProjParams[i] = CPLAtofM( papszTokens[i] );
 
         CSLDestroy( papszTokens );
     }

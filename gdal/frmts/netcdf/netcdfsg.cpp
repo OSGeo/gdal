@@ -394,7 +394,7 @@ namespace nccfdriver
         // (3) check tuple order
         if(this->touple_order < 2)
         {
-            throw SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");    
+            throw SG_Exception_Existential(container_name, "insufficient node coordinates must have at least two axis");    
         }
 
        /* Investigate for instance dimension 
@@ -724,7 +724,7 @@ namespace nccfdriver
         }
 
         // Then scan throughout the netcdfDataset if those variables geometry_container
-        // atrribute matches the container
+        // attribute matches the container
         int varCount = 0;
         if(nc_inq_nvars(this->nc, &varCount) != NC_NOERR)
         {

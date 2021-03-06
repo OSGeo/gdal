@@ -106,7 +106,7 @@ Creation Options
 -  **SPEED_MODE=Fast/Accurate**: This property tag is used to set the
    speed mode to be used during lossy compression. The following modes
    are defined. Default is Fast
--  **RATE=int_value.** When specifyig this value, the target compressed
+-  **RATE=int_value.** When specifying this value, the target compressed
    file size will be the uncompressed file size divided by RATE. In
    general the achieved rate will be exactly the requested size or a few
    bytes lower. Will force use of irreversible wavelet. Default value: 0
@@ -118,7 +118,7 @@ Creation Options
    JPEG2000 file will depend of the image content. Only used for
    irreversible compression. The compression quality cannot be used
    together the property RATE. Default value: 0 (maximum quality). When
-   usin this option together with SPLIT_IEEE754=YES, the sign bit and
+   using this option together with SPLIT_IEEE754=YES, the sign bit and
    exponent bands will have to be switched to irreversible encoding,
    which can lead to huge loss in the reconstructed floating-point
    value.

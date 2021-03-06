@@ -113,7 +113,7 @@ class OGRPLScenesDataV1Layer final: public OGRLayer
             OGRSpatialReference*  m_poSRS;
             GIntBig               m_nTotalFeatures;
             std::map<CPLString, int> m_oMapPrefixedJSonFieldNameToFieldIdx;
-            std::map<int,CPLString>  m_oMapFieldIdxToQueriableJSonFieldName;
+            std::map<int,CPLString>  m_oMapFieldIdxToQueryableJSonFieldName;
 
             GIntBig               m_nNextFID;
             bool                  m_bEOF;
@@ -141,7 +141,7 @@ class OGRPLScenesDataV1Layer final: public OGRLayer
                                         json_object* poVal );
             void                  EstablishLayerDefn();
             void                  RegisterField(OGRFieldDefn* poFieldDefn,
-                                                const char* pszQueriableJSonName,
+                                                const char* pszQueryableJSonName,
                                                 const char* pszPrefixedJSonName);
             bool                  GetNextPage();
             json_object*          BuildFilter(swq_expr_node* poNode);

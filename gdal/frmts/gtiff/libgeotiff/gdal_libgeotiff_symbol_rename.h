@@ -101,7 +101,7 @@
 #define ReadKey gdal_ReadKey
 #define ReadTag gdal_ReadTag
 #define SetCSVFilenameHook gdal_SetCSVFilenameHook
-#define SetGTParmIds gdal_SetGTParmIds
+#define SetGTParamIds gdal_SetGTParamIds
 #define SortKeys gdal_SortKeys
 #define ST_Create gdal_ST_Create
 #define ST_Destroy gdal_ST_Destroy

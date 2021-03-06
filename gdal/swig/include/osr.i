@@ -1079,20 +1079,20 @@ public:
   }
 
 %apply (char **argout) { (char **) };
-%apply (double *argout[ANY]) { (double *parms[17] ) };
-  OGRErr ExportToPCI( char **proj, char **units, double *parms[17] ) {
-    return OSRExportToPCI( self, proj, units, parms );
+%apply (double *argout[ANY]) { (double *params[17] ) };
+  OGRErr ExportToPCI( char **proj, char **units, double *params[17] ) {
+    return OSRExportToPCI( self, proj, units, params );
   }
 %clear (char **);
-%clear (double *parms[17]);
+%clear (double *params[17]);
 
 %apply (long *OUTPUT) { (long*) };
-%apply (double *argout[ANY]) { (double *parms[15]) }
-  OGRErr ExportToUSGS( long *code, long *zone, double *parms[15], long *datum ) {
-    return OSRExportToUSGS( self, code, zone, parms, datum );
+%apply (double *argout[ANY]) { (double *params[15]) }
+  OGRErr ExportToUSGS( long *code, long *zone, double *params[15], long *datum ) {
+    return OSRExportToUSGS( self, code, zone, params, datum );
   }
 %clear (long*);
-%clear (double *parms[15]);
+%clear (double *params[15]);
 
   OGRErr ExportToXML( char **argout, const char *dialect = "" ) {
     return OSRExportToXML( self, argout, dialect );

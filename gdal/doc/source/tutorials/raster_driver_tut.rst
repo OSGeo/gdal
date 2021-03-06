@@ -572,7 +572,7 @@ The following sample implement PCI .aux labeled raw raster creation. It follows 
     GDALDataset *PAuxDataset::Create( const char * pszFilename,
                                     int nXSize, int nYSize, int nBands,
                                     GDALDataType eType,
-                                    char ** /* papszParmList */ )
+                                    char ** /* papszParamList */ )
     {
         // Verify input options.
         if( eType != GDT_Byte && eType != GDT_Float32 &&

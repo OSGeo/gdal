@@ -107,12 +107,12 @@ static bool InitializePythonAndLoadGDALPythonDriverModule()
         return false;
 
     static std::mutex gMutex;
-    static bool gbAlreadyInialized = false;
+    static bool gbAlreadyInitialized = false;
     std::lock_guard<std::mutex> guard(gMutex);
 
-    if( gbAlreadyInialized )
+    if( gbAlreadyInitialized )
         return true;
-    gbAlreadyInialized = true;
+    gbAlreadyInitialized = true;
 
     GIL_Holder oHolder(false);
 

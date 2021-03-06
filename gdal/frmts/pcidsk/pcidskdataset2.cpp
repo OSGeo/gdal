@@ -1996,7 +1996,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
                                      int nXSize, int nYSize, int nBands,
                                      GDALDataType eType,
-                                     char **papszParmList )
+                                     char **papszParamList )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2022,7 +2022,7 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /*      quality.                                                        */
 /* -------------------------------------------------------------------- */
     CPLString osOptions;
-    const char *pszValue = CSLFetchNameValue( papszParmList, "INTERLEAVING" );
+    const char *pszValue = CSLFetchNameValue( papszParamList, "INTERLEAVING" );
     if( pszValue == nullptr )
         pszValue = "BAND";
 
@@ -2030,18 +2030,18 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 
     if( osOptions == "TILED" )
     {
-        pszValue = CSLFetchNameValue( papszParmList, "TILESIZE" );
+        pszValue = CSLFetchNameValue( papszParamList, "TILESIZE" );
         if( pszValue != nullptr )
             osOptions += pszValue;
 
-        pszValue = CSLFetchNameValue( papszParmList, "COMPRESSION" );
+        pszValue = CSLFetchNameValue( papszParamList, "COMPRESSION" );
         if( pszValue != nullptr )
         {
             osOptions += " ";
             osOptions += pszValue;
         }
 
-        pszValue = CSLFetchNameValue( papszParmList, "TILEVERSION" );
+        pszValue = CSLFetchNameValue( papszParamList, "TILEVERSION" );
         if( pszValue != nullptr )
         {
             osOptions += " TILEV";
@@ -2067,13 +2067,13 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /*      Apply band descriptions, if provided as creation options.       */
 /* -------------------------------------------------------------------- */
         for( size_t i = 0;
-             papszParmList != nullptr && papszParmList[i] != nullptr;
+             papszParamList != nullptr && papszParamList[i] != nullptr;
              i++ )
         {
-            if( STARTS_WITH_CI(papszParmList[i], "BANDDESC") )
+            if( STARTS_WITH_CI(papszParamList[i], "BANDDESC") )
             {
-                int nBand = atoi(papszParmList[i] + 8 );
-                const char *pszDescription = strstr(papszParmList[i],"=");
+                int nBand = atoi(papszParamList[i] + 8 );
+                const char *pszDescription = strstr(papszParamList[i],"=");
                 if( pszDescription && nBand > 0 && nBand <= nBands )
                 {
                     poFile->GetChannel(nBand)->SetDescription( pszDescription+1 );

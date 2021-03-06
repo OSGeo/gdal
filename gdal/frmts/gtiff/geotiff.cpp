@@ -605,7 +605,7 @@ private:
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
+                                GDALDataType eType, char ** papszParamList );
     static GDALDataset *CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -640,7 +640,7 @@ private:
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
                               double dfExtraSpaceForOverviews,
-                              char **papszParmList,
+                              char **papszParamList,
                               VSILFILE** pfpL,
                               CPLString& osTmpFilename );
 
@@ -648,7 +648,7 @@ private:
                                       int bPreserveDataBuffer );
 
     static void SaveICCProfile( GTiffDataset *pDS, TIFF *hTIFF,
-                                char **papszParmList, uint32 nBitsPerSample );
+                                char **papszParamList, uint32 nBitsPerSample );
 };
 
 /************************************************************************/
@@ -11547,7 +11547,7 @@ static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
                                           uint16 nPhotometric,
                                           char** papszCreationOptions)
 {
-    bool bStardardColorInterp = true;
+    bool bStandardColorInterp = true;
     if( nPhotometric == PHOTOMETRIC_MINISBLACK )
     {
         for( int i = 0; i < poSrcDS->GetRasterCount(); ++i )
@@ -11557,14 +11557,14 @@ static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
             if( !(eInterp == GCI_GrayIndex || eInterp == GCI_Undefined ||
                     (i > 0 && eInterp == GCI_AlphaBand)) )
             {
-                bStardardColorInterp = false;
+                bStandardColorInterp = false;
                 break;
             }
         }
     }
     else if( nPhotometric == PHOTOMETRIC_PALETTE )
     {
-        bStardardColorInterp =
+        bStandardColorInterp =
             poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
                 GCI_PaletteIndex;
     }
@@ -11591,7 +11591,7 @@ static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
                     (i >= 3 && (eInterp == GCI_Undefined ||
                                 eInterp == GCI_AlphaBand))) )
             {
-                bStardardColorInterp = false;
+                bStandardColorInterp = false;
                 break;
             }
         }
@@ -11603,9 +11603,9 @@ static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
     }
     else
     {
-        bStardardColorInterp = false;
+        bStandardColorInterp = false;
     }
-    return bStardardColorInterp;
+    return bStandardColorInterp;
 }
 
 /************************************************************************/
@@ -11669,7 +11669,7 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
     if( !TIFFGetField( l_hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
-    const bool bStardardColorInterp =
+    const bool bStandardColorInterp =
         IsStandardColorInterpretation(poSrcDS, nPhotometric,
                                       l_papszCreationOptions);
 
@@ -11759,7 +11759,7 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
                                 "description", "" );
         }
 
-        if( !bStardardColorInterp &&
+        if( !bStandardColorInterp &&
             !(nBand <= 3 &&  EQUAL(CSLFetchNameValueDef(
                 l_papszCreationOptions, "PHOTOMETRIC", ""), "RGB") ) )
         {
@@ -11885,7 +11885,7 @@ void GTiffDataset::PushMetadataToPam()
     if( GetPamFlags() & GPF_DISABLED )
         return;
 
-    const bool bStardardColorInterp =
+    const bool bStandardColorInterp =
         IsStandardColorInterpretation(this, m_nPhotometric, m_papszCreationOptions);
 
     for( int nBand = 0; nBand <= GetRasterCount(); ++nBand )
@@ -11950,7 +11950,7 @@ void GTiffDataset::PushMetadataToPam()
             poBand->GDALPamRasterBand::SetUnitType( poBand->GetUnitType() );
             poBand->
                 GDALPamRasterBand::SetDescription( poBand->GetDescription() );
-            if( !bStardardColorInterp )
+            if( !bStandardColorInterp )
             {
                 poBand->GDALPamRasterBand::SetColorInterpretation(
                                         poBand->GetColorInterpretation() );
@@ -13462,7 +13462,7 @@ void GTiffDataset::LoadICCProfile()
 /* hTIFF:                                                               */
 /*      Pointer to TIFF handle. Only needed if pDS is NULL or           */
 /*      pDS->m_hTIFF is NULL.                                             */
-/* papszParmList:                                                       */
+/* papszParamList:                                                       */
 /*      Options containing the ICC profile or colorimetric metadata.    */
 /*      Ignored if pDS is not NULL.                                     */
 /* nBitsPerSample:                                                      */
@@ -13470,7 +13470,7 @@ void GTiffDataset::LoadICCProfile()
 /************************************************************************/
 
 void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *l_hTIFF,
-                                   char **papszParmList,
+                                   char **papszParamList,
                                    uint32 l_nBitsPerSample )
 {
     if( (pDS != nullptr) && (pDS->eAccess != GA_Update) )
@@ -13486,14 +13486,14 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *l_hTIFF,
             return;
     }
 
-    if( (papszParmList == nullptr) && (pDS == nullptr) )
+    if( (papszParamList == nullptr) && (pDS == nullptr) )
         return;
 
     const char *pszValue = nullptr;
     if( pDS != nullptr )
         pszValue = pDS->GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE");
     else
-        pszValue = CSLFetchNameValue(papszParmList, "SOURCE_ICC_PROFILE");
+        pszValue = CSLFetchNameValue(papszParamList, "SOURCE_ICC_PROFILE");
     if( pszValue != nullptr )
     {
         char *pEmbedBuffer = CPLStrdup(pszValue);
@@ -13527,7 +13527,7 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *l_hTIFF,
                 pszValue =
                     pDS->GetMetadataItem(pszCHRNames[i], "COLOR_PROFILE");
             else
-                pszValue = CSLFetchNameValue(papszParmList, pszCHRNames[i]);
+                pszValue = CSLFetchNameValue(papszParamList, pszCHRNames[i]);
             if( pszValue == nullptr )
             {
                 bOutputCHR = false;
@@ -13579,7 +13579,7 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *l_hTIFF,
             pszValue =
                 pDS->GetMetadataItem("SOURCE_WHITEPOINT", "COLOR_PROFILE");
         else
-            pszValue = CSLFetchNameValue(papszParmList, "SOURCE_WHITEPOINT");
+            pszValue = CSLFetchNameValue(papszParamList, "SOURCE_WHITEPOINT");
         if( pszValue != nullptr )
         {
             char** papszTokens =
@@ -13631,7 +13631,7 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *l_hTIFF,
                                       "COLOR_PROFILE" );
         else
             pszTFRed =
-                CSLFetchNameValue( papszParmList,
+                CSLFetchNameValue( papszParamList,
                                    "TIFFTAG_TRANSFERFUNCTION_RED" );
 
         char const *pszTFGreen = nullptr;
@@ -13641,7 +13641,7 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *l_hTIFF,
                                       "COLOR_PROFILE" );
         else
             pszTFGreen =
-                CSLFetchNameValue( papszParmList,
+                CSLFetchNameValue( papszParamList,
                                    "TIFFTAG_TRANSFERFUNCTION_GREEN" );
 
         char const *pszTFBlue = nullptr;
@@ -13651,7 +13651,7 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *l_hTIFF,
                                       "COLOR_PROFILE" );
         else
             pszTFBlue =
-                CSLFetchNameValue( papszParmList,
+                CSLFetchNameValue( papszParamList,
                                    "TIFFTAG_TRANSFERFUNCTION_BLUE" );
 
         if( (pszTFRed != nullptr) && (pszTFGreen != nullptr) && (pszTFBlue != nullptr) )
@@ -13722,7 +13722,7 @@ void GTiffDataset::SaveICCProfile( GTiffDataset *pDS, TIFF *l_hTIFF,
                 pszValue = pDS->GetMetadataItem( pszTXRNames[i],
                                                  "COLOR_PROFILE" );
             else
-                pszValue = CSLFetchNameValue(papszParmList, pszTXRNames[i]);
+                pszValue = CSLFetchNameValue(papszParamList, pszTXRNames[i]);
             if( pszValue == nullptr )
             {
                 bOutputTransferRange = false;
@@ -14427,12 +14427,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "LERC", "IMAGE_STRUCTURE" );
 #if HAVE_LERC
         uint32 nLercParamCount = 0;
-        uint32* panLercParms = nullptr;
+        uint32* panLercParams = nullptr;
         if( TIFFGetField( m_hTIFF, TIFFTAG_LERC_PARAMETERS, &nLercParamCount,
-                          &panLercParms ) &&
+                          &panLercParams ) &&
             nLercParamCount == 2 )
         {
-            memcpy( m_anLercAddCompressionAndVersion, panLercParms,
+            memcpy( m_anLercAddCompressionAndVersion, panLercParams,
                     sizeof(m_anLercAddCompressionAndVersion) );
         }
 
@@ -15614,7 +15614,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                               int nXSize, int nYSize, int l_nBands,
                               GDALDataType eType,
                               double dfExtraSpaceForOverviews,
-                              char **papszParmList,
+                              char **papszParamList,
                               VSILFILE** pfpL,
                               CPLString& l_osTmpFilename )
 
@@ -15649,12 +15649,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*      Setup values based on options.                                  */
 /* -------------------------------------------------------------------- */
     const GTiffProfile eProfile = GetProfile(
-        CSLFetchNameValue(papszParmList, "PROFILE"));
+        CSLFetchNameValue(papszParamList, "PROFILE"));
 
-    const bool bTiled = CPLFetchBool( papszParmList, "TILED", false );
+    const bool bTiled = CPLFetchBool( papszParamList, "TILED", false );
 
     int l_nBlockXSize = 0;
-    const char *pszValue = CSLFetchNameValue(papszParmList, "BLOCKXSIZE");
+    const char *pszValue = CSLFetchNameValue(papszParamList, "BLOCKXSIZE");
     if( pszValue != nullptr )
     {
         l_nBlockXSize = atoi( pszValue );
@@ -15667,7 +15667,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
 
     int l_nBlockYSize = 0;
-    pszValue = CSLFetchNameValue(papszParmList, "BLOCKYSIZE");
+    pszValue = CSLFetchNameValue(papszParamList, "BLOCKYSIZE");
     if( pszValue != nullptr )
     {
         l_nBlockYSize = atoi( pszValue );
@@ -15689,7 +15689,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
 
     int nPlanar = 0;
-    pszValue = CSLFetchNameValue(papszParmList, "INTERLEAVE");
+    pszValue = CSLFetchNameValue(papszParamList, "INTERLEAVE");
     if( pszValue != nullptr )
     {
         if( EQUAL( pszValue, "PIXEL" ) )
@@ -15712,7 +15712,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
 
     int l_nCompression = COMPRESSION_NONE;
-    pszValue = CSLFetchNameValue( papszParmList, "COMPRESS" );
+    pszValue = CSLFetchNameValue( papszParamList, "COMPRESS" );
     if( pszValue != nullptr )
     {
         l_nCompression = GTIFFGetCompressionMethod(pszValue, "COMPRESS");
@@ -15721,19 +15721,19 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
 
     int nPredictor = PREDICTOR_NONE;
-    pszValue = CSLFetchNameValue( papszParmList, "PREDICTOR" );
+    pszValue = CSLFetchNameValue( papszParamList, "PREDICTOR" );
     if( pszValue != nullptr )
         nPredictor = atoi( pszValue );
 
-    const int l_nZLevel = GTiffGetZLevel(papszParmList);
-    const int l_nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
-    const int l_nZSTDLevel = GTiffGetZSTDPreset(papszParmList);
-    const int l_nWebPLevel = GTiffGetWebPLevel(papszParmList);
-    const bool l_bWebPLossless = GTiffGetWebPLossless(papszParmList);
-    const int l_nJpegQuality = GTiffGetJpegQuality(papszParmList);
-    const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
+    const int l_nZLevel = GTiffGetZLevel(papszParamList);
+    const int l_nLZMAPreset = GTiffGetLZMAPreset(papszParamList);
+    const int l_nZSTDLevel = GTiffGetZSTDPreset(papszParamList);
+    const int l_nWebPLevel = GTiffGetWebPLevel(papszParamList);
+    const bool l_bWebPLossless = GTiffGetWebPLossless(papszParamList);
+    const int l_nJpegQuality = GTiffGetJpegQuality(papszParamList);
+    const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
 #if HAVE_LERC
-    const double l_dfMaxZError = GTiffGetLERCMaxZError(papszParmList);
+    const double l_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -15742,7 +15742,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     const CPLString osOriFilename(pszFilename);
     bool bStreaming =
         strcmp(pszFilename, "/vsistdout/") == 0 ||
-        CPLFetchBool(papszParmList, "STREAMABLE_OUTPUT", false);
+        CPLFetchBool(papszParamList, "STREAMABLE_OUTPUT", false);
 #ifdef S_ISFIFO
     if( !bStreaming )
     {
@@ -15757,19 +15757,19 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 #endif
     if( bStreaming &&
         !EQUAL( "NONE",
-                CSLFetchNameValueDef(papszParmList, "COMPRESS", "NONE")) )
+                CSLFetchNameValueDef(papszParamList, "COMPRESS", "NONE")) )
     {
         ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
             "Streaming only supported to uncompressed TIFF" );
         return nullptr;
     }
-    if( bStreaming && CPLFetchBool(papszParmList, "SPARSE_OK", false) )
+    if( bStreaming && CPLFetchBool(papszParamList, "SPARSE_OK", false) )
     {
         ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
             "Streaming not supported with SPARSE_OK" );
         return nullptr;
     }
-    const bool bCopySrcOverviews = CPLFetchBool(papszParmList, "COPY_SRC_OVERVIEWS", false);
+    const bool bCopySrcOverviews = CPLFetchBool(papszParamList, "COPY_SRC_OVERVIEWS", false);
     if( bStreaming && bCopySrcOverviews )
     {
         ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
@@ -15794,7 +15794,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Should the file be created as a bigtiff file?                   */
 /* -------------------------------------------------------------------- */
-    const char *pszBIGTIFF = CSLFetchNameValue(papszParmList, "BIGTIFF");
+    const char *pszBIGTIFF = CSLFetchNameValue(papszParamList, "BIGTIFF");
 
     if( pszBIGTIFF == nullptr )
         pszBIGTIFF = "IF_NEEDED";
@@ -15849,7 +15849,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( l_nCompression == COMPRESSION_NONE &&
         dfUncompressedImageSize >= 1e9 &&
-        !CPLFetchBool(papszParmList, "SPARSE_OK", false) &&
+        !CPLFetchBool(papszParamList, "SPARSE_OK", false) &&
         osOriFilename != "/vsistdout/" &&
         osOriFilename != "/vsistdout_redirect/" &&
         CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
@@ -15875,7 +15875,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 
     int eEndianness = ENDIANNESS_NATIVE;
-    pszValue = CSLFetchNameValue(papszParmList, "ENDIANNESS");
+    pszValue = CSLFetchNameValue(papszParamList, "ENDIANNESS");
     if( pszValue == nullptr )
         pszValue = CPLGetConfigOption( "GDAL_TIFF_ENDIANNESS", nullptr );
     if( pszValue != nullptr )
@@ -15907,7 +15907,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
 
-    const bool bAppend = CPLFetchBool(papszParmList, "APPEND_SUBDATASET", false);
+    const bool bAppend = CPLFetchBool(papszParamList, "APPEND_SUBDATASET", false);
 
     char szOpeningFlag[5] = {};
     strcpy(szOpeningFlag, bAppend ? "r+" : "w+");
@@ -15952,11 +15952,11 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*      specified for GDT_Byte, GDT_UInt16, GDT_UInt32.                 */
 /* -------------------------------------------------------------------- */
     int l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
-    if( CSLFetchNameValue(papszParmList, "NBITS") != nullptr )
+    if( CSLFetchNameValue(papszParamList, "NBITS") != nullptr )
     {
         int nMinBits = 0;
         int nMaxBits = 0;
-        l_nBitsPerSample = atoi(CSLFetchNameValue(papszParmList, "NBITS"));
+        l_nBitsPerSample = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
         if( eType == GDT_Byte )
         {
             nMinBits = 1;
@@ -16013,7 +16013,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we have a custom pixel type (just used for signed byte now). */
 /* -------------------------------------------------------------------- */
-    const char *pszPixelType = CSLFetchNameValue( papszParmList, "PIXELTYPE" );
+    const char *pszPixelType = CSLFetchNameValue( papszParamList, "PIXELTYPE" );
     if( pszPixelType == nullptr )
         pszPixelType = "";
 
@@ -16048,7 +16048,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     int nSamplesAccountedFor = 1;
     bool bForceColorTable = false;
 
-    pszValue = CSLFetchNameValue(papszParmList,"PHOTOMETRIC");
+    pszValue = CSLFetchNameValue(papszParamList,"PHOTOMETRIC");
     if( pszValue != nullptr )
     {
         if( EQUAL( pszValue, "MINISBLACK" ) )
@@ -16174,7 +16174,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         else if( l_nBands == 4 && eType == GDT_Byte )
         {
             uint16 v[1] = {
-                GTiffGetAlphaValue(CSLFetchNameValue(papszParmList, "ALPHA"),
+                GTiffGetAlphaValue(CSLFetchNameValue(papszParamList, "ALPHA"),
                                    DEFAULT_ALPHA_TYPE)
             };
 
@@ -16200,7 +16200,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         uint16 *v = static_cast<uint16 *>(
             CPLMalloc( sizeof(uint16) * nExtraSamples ) );
 
-        v[0] = GTiffGetAlphaValue( CSLFetchNameValue(papszParmList, "ALPHA"),
+        v[0] = GTiffGetAlphaValue( CSLFetchNameValue(papszParamList, "ALPHA"),
                                    EXTRASAMPLE_UNSPECIFIED );
 
         for( int i = 1; i < nExtraSamples; ++i )
@@ -16214,7 +16214,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     // Set the ICC color profile.
     if( eProfile != GTiffProfile::BASELINE )
     {
-        SaveICCProfile(nullptr, l_hTIFF, papszParmList, l_nBitsPerSample);
+        SaveICCProfile(nullptr, l_hTIFF, papszParamList, l_nBitsPerSample);
     }
 
     // Set the compression method before asking the default strip size
@@ -16226,7 +16226,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( l_nCompression == COMPRESSION_LERC )
     {
         const char* pszCompress =
-            CSLFetchNameValueDef( papszParmList, "COMPRESS", "" );
+            CSLFetchNameValueDef( papszParamList, "COMPRESS", "" );
         if( EQUAL(pszCompress , "LERC_DEFLATE" ) )
         {
             TIFFSetField( l_hTIFF, TIFFTAG_LERC_ADD_COMPRESSION,
@@ -16352,12 +16352,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( l_nCompression == COMPRESSION_JPEG &&
         !STARTS_WITH(pszFilename, szJPEGGTiffDatasetTmpPrefix) &&
         CPLTestBool(
-            CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
+            CSLFetchNameValueDef(papszParamList, "WRITE_JPEGTABLE_TAG", "YES")) )
     {
         GTiffWriteJPEGTables( l_hTIFF,
-                              CSLFetchNameValue(papszParmList, "PHOTOMETRIC"),
-                              CSLFetchNameValue(papszParmList, "JPEG_QUALITY"),
-                              CSLFetchNameValue(papszParmList,
+                              CSLFetchNameValue(papszParamList, "PHOTOMETRIC"),
+                              CSLFetchNameValue(papszParamList, "JPEG_QUALITY"),
+                              CSLFetchNameValue(papszParamList,
                                                 "JPEGTABLESMODE") );
     }
 
@@ -16750,7 +16750,7 @@ void GTiffDataset::SetJPEGQualityAndTablesModeFromFile(int nQuality,
 GDALDataset *GTiffDataset::Create( const char * pszFilename,
                                    int nXSize, int nYSize, int l_nBands,
                                    GDALDataType eType,
-                                   char **papszParmList )
+                                   char **papszParamList )
 
 {
     VSILFILE* l_fpL = nullptr;
@@ -16762,7 +16762,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     TIFF *l_hTIFF = CreateLL(
         pszFilename,
         nXSize, nYSize, l_nBands,
-        eType, 0, papszParmList, &l_fpL, l_osTmpFilename );
+        eType, 0, papszParamList, &l_fpL, l_osTmpFilename );
     const bool bStreaming = !l_osTmpFilename.empty();
 
     if( l_hTIFF == nullptr )
@@ -16831,7 +16831,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
         * DIV_ROUND_UP(nXSize, poDS->m_nBlockXSize);
 
     poDS->m_eProfile = GetProfile(
-        CSLFetchNameValue( papszParmList, "PROFILE" ) );
+        CSLFetchNameValue( papszParamList, "PROFILE" ) );
 
 /* -------------------------------------------------------------------- */
 /*      YCbCr JPEG compressed images should be translated on the fly    */
@@ -16854,12 +16854,12 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     if( poDS->m_nCompression == COMPRESSION_LERC )
     {
         uint32 nLercParamCount = 0;
-        uint32* panLercParms = nullptr;
+        uint32* panLercParams = nullptr;
         if( TIFFGetField( l_hTIFF, TIFFTAG_LERC_PARAMETERS, &nLercParamCount,
-                          &panLercParms ) &&
+                          &panLercParams ) &&
             nLercParamCount == 2 )
         {
-            memcpy( poDS->m_anLercAddCompressionAndVersion, panLercParms,
+            memcpy( poDS->m_anLercAddCompressionAndVersion, panLercParams,
                     sizeof(poDS->m_anLercAddCompressionAndVersion) );
         }
     }
@@ -16899,7 +16899,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /*      Do we want to ensure all blocks get written out on close to     */
 /*      avoid sparse files?                                             */
 /* -------------------------------------------------------------------- */
-    if( !CPLFetchBool( papszParmList, "SPARSE_OK", false ) )
+    if( !CPLFetchBool( papszParamList, "SPARSE_OK", false ) )
         poDS->m_bFillEmptyTilesAtClosing = true;
 
     poDS->m_bWriteEmptyTiles = bStreaming ||
@@ -16909,9 +16909,9 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     // right order and wanting all tstrips to be written in the same order
     // so that the end result can be memory mapped without knowledge of each
     // strip offset.
-    if( CPLTestBool( CSLFetchNameValueDef( papszParmList,
+    if( CPLTestBool( CSLFetchNameValueDef( papszParamList,
                               "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) ||
-         CPLTestBool( CSLFetchNameValueDef( papszParmList,
+         CPLTestBool( CSLFetchNameValueDef( papszParamList,
                               "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
     {
         poDS->m_bWriteEmptyTiles = true;
@@ -16921,19 +16921,19 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /*      Preserve creation options for consulting later (for instance    */
 /*      to decide if a TFW file should be written).                     */
 /* -------------------------------------------------------------------- */
-    poDS->m_papszCreationOptions = CSLDuplicate( papszParmList );
+    poDS->m_papszCreationOptions = CSLDuplicate( papszParamList );
 
-    poDS->m_nZLevel = GTiffGetZLevel(papszParmList);
-    poDS->m_nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
-    poDS->m_nZSTDLevel = GTiffGetZSTDPreset(papszParmList);
-    poDS->m_nWebPLevel = GTiffGetWebPLevel(papszParmList);
-    poDS->m_bWebPLossless = GTiffGetWebPLossless(papszParmList);
-    poDS->m_nJpegQuality = GTiffGetJpegQuality(papszParmList);
-    poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
+    poDS->m_nZLevel = GTiffGetZLevel(papszParamList);
+    poDS->m_nLZMAPreset = GTiffGetLZMAPreset(papszParamList);
+    poDS->m_nZSTDLevel = GTiffGetZSTDPreset(papszParamList);
+    poDS->m_nWebPLevel = GTiffGetWebPLevel(papszParamList);
+    poDS->m_bWebPLossless = GTiffGetWebPLossless(papszParamList);
+    poDS->m_nJpegQuality = GTiffGetJpegQuality(papszParamList);
+    poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
 #if HAVE_LERC
-    poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszParmList);
+    poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
 #endif
-    poDS->InitCreationOrOpenOptions(papszParmList);
+    poDS->InitCreationOrOpenOptions(papszParamList);
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -16958,7 +16958,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
         }
     }
 
-    poDS->GetDiscardLsbOption(papszParmList);
+    poDS->GetDiscardLsbOption(papszParamList);
 
     if( poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG && l_nBands != 1 )
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );

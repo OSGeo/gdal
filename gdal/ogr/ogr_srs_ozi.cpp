@@ -96,7 +96,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 {
     const char *pszDatum;
     const char *pszProj = nullptr;
-    const char *pszProjParms = nullptr;
+    const char *pszProjParams = nullptr;
 
     Clear();
 
@@ -114,18 +114,18 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         }
         else if( STARTS_WITH_CI(papszLines[iLine], "Projection Setup") )
         {
-            pszProjParms = papszLines[iLine];
+            pszProjParams = papszLines[iLine];
         }
     }
 
-    if( !(pszDatum && pszProj && pszProjParms) )
+    if( !(pszDatum && pszProj && pszProjParams) )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
     char **papszProj = CSLTokenizeStringComplex( pszProj, ",", TRUE, TRUE );
-    char **papszProjParms = CSLTokenizeStringComplex( pszProjParms, ",",
+    char **papszProjParams = CSLTokenizeStringComplex( pszProjParams, ",",
                                                       TRUE, TRUE );
     char **papszDatum = nullptr;
 
@@ -140,40 +140,40 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     }
     else if( STARTS_WITH_CI(papszProj[1], "Mercator") )
     {
-        if( CSLCount(papszProjParms) < 6 ) goto not_enough_data;
-        double dfScale = CPLAtof(papszProjParms[3]);
+        if( CSLCount(papszProjParams) < 6 ) goto not_enough_data;
+        double dfScale = CPLAtof(papszProjParams[3]);
         // If unset, default to scale = 1.
-        if( papszProjParms[3][0] == 0 ) dfScale = 1;
-        SetMercator( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
+        if( papszProjParams[3][0] == 0 ) dfScale = 1;
+        SetMercator( CPLAtof(papszProjParams[1]), CPLAtof(papszProjParams[2]),
                      dfScale,
-                     CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+                     CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(papszProj[1], "Transverse Mercator") )
     {
-        if( CSLCount(papszProjParms) < 6 ) goto not_enough_data;
-        SetTM( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
-               CPLAtof(papszProjParms[3]),
-               CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+        if( CSLCount(papszProjParams) < 6 ) goto not_enough_data;
+        SetTM( CPLAtof(papszProjParams[1]), CPLAtof(papszProjParams[2]),
+               CPLAtof(papszProjParams[3]),
+               CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(papszProj[1], "Lambert Conformal Conic") )
     {
-        if( CSLCount(papszProjParms) < 8 ) goto not_enough_data;
-        SetLCC( CPLAtof(papszProjParms[6]), CPLAtof(papszProjParms[7]),
-                CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
-                CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+        if( CSLCount(papszProjParams) < 8 ) goto not_enough_data;
+        SetLCC( CPLAtof(papszProjParams[6]), CPLAtof(papszProjParams[7]),
+                CPLAtof(papszProjParams[1]), CPLAtof(papszProjParams[2]),
+                CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(papszProj[1], "Sinusoidal") )
     {
-        if( CSLCount(papszProjParms) < 6 ) goto not_enough_data;
-        SetSinusoidal( CPLAtof(papszProjParms[2]),
-                       CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+        if( CSLCount(papszProjParams) < 6 ) goto not_enough_data;
+        SetSinusoidal( CPLAtof(papszProjParams[2]),
+                       CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(papszProj[1], "Albers Equal Area") )
     {
-        if( CSLCount(papszProjParms) < 8 ) goto not_enough_data;
-        SetACEA( CPLAtof(papszProjParms[6]), CPLAtof(papszProjParms[7]),
-                 CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
-                 CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
+        if( CSLCount(papszProjParams) < 8 ) goto not_enough_data;
+        SetACEA( CPLAtof(papszProjParams[6]), CPLAtof(papszProjParams[7]),
+                 CPLAtof(papszProjParams[1]), CPLAtof(papszProjParams[2]),
+                 CPLAtof(papszProjParams[4]), CPLAtof(papszProjParams[5]) );
     }
     else if( STARTS_WITH_CI(
                  papszProj[1], "(UTM) Universal Transverse Mercator") &&
@@ -483,7 +483,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         SetLinearUnits( SRS_UL_METER, 1.0 );
 
     CSLDestroy(papszProj);
-    CSLDestroy(papszProjParms);
+    CSLDestroy(papszProjParams);
     CSLDestroy(papszDatum);
 
     return OGRERR_NONE;
@@ -491,7 +491,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 not_enough_data:
 
     CSLDestroy(papszProj);
-    CSLDestroy(papszProjParms);
+    CSLDestroy(papszProjParams);
     CSLDestroy(papszDatum);
 
     return OGRERR_NOT_ENOUGH_DATA;
@@ -499,7 +499,7 @@ not_enough_data:
 other_error:
 
     CSLDestroy(papszProj);
-    CSLDestroy(papszProjParms);
+    CSLDestroy(papszProjParams);
     CSLDestroy(papszDatum);
 
     return OGRERR_FAILURE;

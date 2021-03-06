@@ -161,7 +161,7 @@ Creation Options
 
 -  **YCC=YES/NO** : YES if RGB must be transformed to YCC
    color space ("MCT transform", i.e. internal transform, without visual
-   degration). Defaults to YES.
+   degradation). Defaults to YES.
 
 -  **NBITS=int_value** : Bits (precision) for sub-byte
    files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).

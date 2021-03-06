@@ -1660,7 +1660,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         double alpha0 = 0.0;
         double alpha1 = 0.0;
         double alpha2 = 0.0;
-        if( !OGRGeometryFactory::GetCurveParmeters(
+        if( !OGRGeometryFactory::GetCurveParameters(
                                poLine->getX(0), poLine->getY(0),
                                poLine->getX(1), poLine->getY(1),
                                poLine->getX(2), poLine->getY(2),

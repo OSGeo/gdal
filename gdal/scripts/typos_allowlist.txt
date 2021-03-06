@@ -6,7 +6,7 @@
    /* 165 */ {"Top_St_Wol", "Obergrenze strat. Bew|lkung", "hPa", UC_NONE},
               "Icing Regime 1.Guess(1=gen,2=conv,3=strat,4=freez)", "1",
               "Icing Regime(1=general,2=convect,3=strat,4=freez)", "1",
- * The generated swig_type_info structures are assigned staticly to an initial 
+ * The generated swig_type_info structures are assigned staticly to an initial
  * The generated swig_type_info structures are assigned staticly to an initial
             YUR = 0.0;
             YUR = oES.YUR;
@@ -150,3 +150,110 @@ float32*gridwidth offset in arcseconds (or in metres for geoids)
     fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')
         nGeometryElementDepth == 0 && EQUAL("objecten:geometrie", pszName) )
   Generate XYZ tiles (OSM Slippy Map standard) instead of TMS.
+    <field name="UE_TIME_FLAG" value="0" />
+    HEADER_0=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+    HEADER_1=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+    HEADER_2=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+    HEADER_3=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+    HEADER_4=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+    TEXT=HEADER_0=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+    TEXT=HEADER_1=TE       00020021216151629xxxxxxxxxxxxxxxxxxxxxxxxxxx
+OM, SOM). Contact me if you have troubles with proper projection
+-  `Standard d'échange des objets du PCI selon la norme
+* Networks (GN and ND)
+ *              from equator (SOM, format A)
+*    AscLong   Longitude of ascending orbit at equator (SOM, format A)
+*    PSRev     Period of satellite revolution in minutes (SOM, format A)
+ *              of orbit (SOM, format A -- use 0.5201613)
+ *              1 = end of path (SOM, format A)
+ *    Satnum    Landsat Satellite Number (SOM, format B)
+ *              WRS-2 for Landsat 4, 5 and 6.)  (SOM, format B)
+    { "D071", 4255 },   // Herat North (Afghanistan)
+    // FIXME: SOM --- Space Oblique Mercator skipped.
+// constexpr long SOM    = 22L;  // Space Oblique Mercator (SOM)
+            A Z   AA AZ   BA BZ   ZA   ZZ   AAA    ZZZ      AAAA
+       VSIFPrintfL( fpTransfer, "ENDE\n" );
+      else if (EQUAL(firsttok, "ENDE"))
+         iRawField < (int) poResultSet->getDescrParm.gd_descriptorCount;
+            poResultSet->getDescrParm.gd_descriptor + iRawField;
+    memset( &getDescrParm, 0, sizeof(getDescrParm) );
+                                    "UE", 26,
+	$(CPP) $(CPPFLAGS) /DMSSQL_BCP_SUPPORTED=1 /Fo$@ /c $<
+         "xmlns:fo=\"urn:oasis:names:tc:opendocument:xmlns:"
+                    "fo:break-before=\"auto\" "
+                     (strcmp(papszTokens[0], "unsignificant") == 0 ||
+            else if( strcmp(psInterestNode->pszValue, "Alue") == 0 )
+          strcmp( pszElement, "Alue") == 0  ||
+    else if( EQUAL(poXREF->pszDatum,"NAX") )
+        poLayer->AddFieldDefn("CREAT_DATE", OFTInteger, "");
+                    poFeature->SetField("CREAT_DATE", creationUpdateDate.first);
+            /* make sure that the GEN file is part of an ADRG dataset, not a SRP dataset, by checking that the GEN field contains a NWO subfield */
+            const char* NWO = record->GetStringSubfield("GEN", 0, "NWO", 0);
+            if( NWO == nullptr )
+                                                "STR!LOD!LAD!UNIloa!SWO!SWA!NWO!NWA!NEO!NEA!SEO!SEA!SCA!ZNA!PSP!IMR!ARV!BRV!LSO!PSO!TXT",
+    sizeOfFields[nFields] += WriteLongitude(fd, LSO); /* NWO */
+                                                  "MSD!VOO!ADR!NOV!SQN!NOF!URF!EDN!DAT",
+        sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 3); /* EDN */
+                // Numero d'edition  du produit : QAL.QUV.EDN
+                const int EDN =
+                    record->GetIntSubfield( "QUV", 0, "EDN", 0, &bSuccess );
+                    CPLDebug("SRP", "EDN=%d", EDN);
+                    snprintf(szValue, sizeof(szValue), "%d", EDN);
+                    SetMetadataItem( "SRP_EDN", szValue );
+                int EDN = record->GetIntSubfield( "VDR", 0, "EDN", 0, &bSuccess );
+                    CPLDebug("SRP", "Record EDN %d",EDN);
+                    snprintf(szValue, sizeof(szValue), "%d", EDN);
+                    SetMetadataItem( "SRP_EDN", szValue );
+            /* make sure that the GEN file is part of a SRP dataset, not an ADRG dataset, by checking that the GEN field does not contain a NWO subfield */
+            if( NWO )
+            oDict.Add("DecodeParms", &((new GDALPDFDictionaryRW())
+            else if (EQUAL(pszDatum, "HEN")) /* HERAT North, Afghanistan */
+    else if ( EQUAL(pszMnemonic, "SOM") )
+ * Author:   Trent Hare (thare@usgs.gov),
+ * Author:   Trent Hare (thare@usgs.gov)
+            PLACE( achTSH+  0, TE            , "TE"                          );
+            nTreIndex--;
+    for(psIter = psTreNode->psChild;
+	$(CC) $(CFLAGS) $(PCIDSKFLAGS) $(JPEGFLAGS) /c $*.cpp /Fo$*.obj
+	$(CC) $(CXXFLAGS) /c $*.cpp /Fo$*.obj
+    else if( STARTS_WITH_CI(local_buf, "SOM ") )
+                 "SOM         %4s",
+    else if( STARTS_WITH(geosys_clean.c_str(), "SOM  ") )
+    double aline = (line - (nlines/2.0 + 0.5)) * step;
+    aline *= deg_to_rad;
+    double tanal = tan(aline);
+#define EPRJ_EOSAT_SOM                          23
+#define EPRJ_SOM_A_AND_B                        25
+    { "Herat North", "Herat_North", 4255 },
+    //ISTS 061 Astro 1968
+    //ISTS 073 Astro 1969
+    const int esy = MIN( MAX( 0, ( y + 1 ) * nBlockYSize ), nRasterYSize) -
+    if( (sx > nBlockXSize) || (sy > nBlockYSize) || (sx < esx) || (sy < esy) )
+                 sx, sy, esx, esy, nBlockXSize, nBlockYSize);
+static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DEFLATE", "TIF",
+    case IL_JPNG: bnd = new JPNG_Band(pDS, image, b, level); break;
+        "       <Value>JPEG</Value><Value>PNG</Value><Value>PPNG</Value><Value>JPNG</Value>"
+            (poDS->current.comp == IL_JPEG || poDS->current.comp == IL_JPNG)) {
+    IL_PNG = 0, IL_PPNG, IL_JPEG, IL_JPNG, IL_NONE, IL_ZLIB, IL_TIF,
+* JPNG band, uses JPEG or PNG encoding, depending on the input data
+    CPLError(CE_Failure, CPLE_OutOfMemory, "Allocating temporary JPNG buffer");
+        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPNG");
+        CPLError(CE_Failure, CPLE_NotSupported, "MRF JPNG can only handle 2 or 4 interleaved bands");
+        int nPart; // typically 0.  But for VHR2020 0=RGB, 1=NED
+            // MS-FS products have 3-bands for each of the RGB and NED files
+    /** Horizontal datum name, from the HDAT field.  One of NAS, NAX, WGA,
+    else if( EQUAL(poXREF->pszDatum, "NAX") )
+    else if( EQUAL(pszMnemonic, "SOM") )
+    if( strstr(fmt,"nknown field") != nullptr )
+ *	 S       Le           ue       ve
+	unsigned int	Le, ue, ve;
+	if (u <= 0.) ue = 0;
+	else ue = tiff_itrunc(UVSCALE*u, em);
+	if (ue > 255) ue = 255;
+	return (Le << 16 | ue << 8 | ve);
+// DECLARE_SYMBOL(creat, int, (const char *path, mode_t mode));
+    // LOAD_SYMBOL(creat);
+/*                             creat()                                  */
+int CPL_DLL creat( const char *path, mode_t mode )
+    // CASE_ALG(Gost) (obsolete)
+                    "Invalid txe or tye parameters detected. Please check your -txe or -tye argument.");

@@ -240,7 +240,7 @@ r_Ref<r_GMarray>& RasdamanDataset::request_array(const Subset& subset, int& offs
       offsetX = subset.x_lo() - existing.x_lo();
       offsetY = subset.y_lo() - existing.y_lo();
 
-      CPLDebug("rasdaman", "Found matching tile (%d, %d, %d, %d) for requested tile (%d, %d, %d, %d). Offests are (%d, %d).",
+      CPLDebug("rasdaman", "Found matching tile (%d, %d, %d, %d) for requested tile (%d, %d, %d, %d). Offsets are (%d, %d).",
             existing.x_lo(), existing.x_hi(), existing.y_lo(), existing.y_hi(),
             subset.x_lo(), subset.x_hi(), subset.y_lo(), subset.y_hi(),
             offsetX, offsetY);

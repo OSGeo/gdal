@@ -13,7 +13,7 @@ raster DEM. The specifics of the conversion depend on the desired
 cellsize, filter criteria, aggregation methods and possibly several
 other parameters. For this reason, **the best way to read a MrSID/MG4
 compressed LiDAR file is by referencing it in a View (.view) file, which
-also parameterizes its raster-conversion. The driver will read an MG4
+also parametrizes its raster-conversion. The driver will read an MG4
 file directly, however it uses default rasterization parameters that may
 not produce a desirable output.** The contents of the View file are
 described in the specification :ref:`MrSID/MG4 LiDAR View

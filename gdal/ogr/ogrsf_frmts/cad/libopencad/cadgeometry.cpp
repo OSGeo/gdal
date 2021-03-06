@@ -114,7 +114,7 @@ CADVector Matrix::multiply( const CADVector& vector ) const
 
 CADGeometry::CADGeometry() :
     geometryType( UNDEFINED ),
-    thickness( 0 )
+    m_thickness( 0 )
 {
     geometry_color.R = 0;
     geometry_color.G = 0;
@@ -133,12 +133,12 @@ CADGeometry::GeometryType CADGeometry::getType() const
 
 double CADGeometry::getThickness() const
 {
-    return thickness;
+    return m_thickness;
 }
 
-void CADGeometry::setThickness( double thicknes )
+void CADGeometry::setThickness( double thickness )
 {
-    thickness = thicknes;
+    m_thickness = thickness;
 }
 
 RGBColor CADGeometry::getColor() const
@@ -201,7 +201,7 @@ CADPoint3D::CADPoint3D( const CADVector& positionIn, double thicknessIn ) :
     position( positionIn),
     xAxisAng( 0.0 )
 {
-    thickness = thicknessIn;
+    m_thickness = thicknessIn;
     geometryType = CADGeometry::POINT;
 }
 
@@ -645,7 +645,7 @@ CADSpline::CADSpline() :
     rational( false ),
     closed( false ),
     weight( false ),
-    fitTollerance( 0.0 ),
+    fitTolerance( 0.0 ),
     degree( 0 )
 {
     geometryType = CADGeometry::SPLINE;
@@ -742,14 +742,14 @@ void CADSpline::setWeight( bool value )
     weight = value;
 }
 
-double CADSpline::getFitTollerance() const
+double CADSpline::getFitTolerance() const
 {
-    return fitTollerance;
+    return fitTolerance;
 }
 
-void CADSpline::setFitTollerance( double value )
+void CADSpline::setFitTolerance( double value )
 {
-    fitTollerance = value;
+    fitTolerance = value;
 }
 
 long CADSpline::getDegree() const

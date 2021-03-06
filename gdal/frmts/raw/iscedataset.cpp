@@ -317,7 +317,7 @@ void ISCEDataset::FlushCache( void )
                                  "createCoordinate" );
     CPLCreateXMLElementAndValue( psCoordinate1Node,
                                  "doc",
-                                 "First coordinate of a 2D image (witdh)." );
+                                 "First coordinate of a 2D image (width)." );
     /* Property name */
     psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
                                   CXT_Element,

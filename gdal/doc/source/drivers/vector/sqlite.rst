@@ -166,7 +166,7 @@ layer, can be created with one of the following SQL statement :
 
 where :
 
--  *datasource_name* is the connetion string to any OGR datasource.
+-  *datasource_name* is the connection string to any OGR datasource.
 -  *update_mode* = 0 for read-only mode (default value) or 1 for update
    mode.
 -  *layer_name* = the name of a layer of the opened datasource.

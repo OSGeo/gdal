@@ -490,8 +490,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         short nNoObjClass, nNoSemClass;
         /* nObjectsRead = */ VSIFReadL(&nNoObjClass, 2, 1, fpSXFIn);
         /* nObjectsRead = */ VSIFReadL(&nNoSemClass, 2, 1, fpSXFIn);
-        GByte baMask[8];
-        /* nObjectsRead = */ VSIFReadL(&baMask, 8, 1, fpSXFIn);
+        GByte byMask[8];
+        /* nObjectsRead = */ VSIFReadL(&byMask, 8, 1, fpSXFIn);
 
         int nCorners[8];
 

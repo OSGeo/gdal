@@ -170,7 +170,7 @@ class PNGDataset final: public GDALPamDataset
     virtual CPLErr SetGeoTransform( double * );
     static GDALDataset  *Create( const char* pszFilename,
                                 int nXSize, int nYSize, int nBands,
-                                GDALDataType, char** papszParmList );
+                                GDALDataType, char** papszParamList );
   protected:
         CPLErr write_png_header();
 

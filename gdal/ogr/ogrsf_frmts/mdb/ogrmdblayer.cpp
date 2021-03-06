@@ -424,7 +424,7 @@ void OGRMDBLayer::LookupSRID( int nSRID )
 
     if( pszSRText[0] == '{' )
     {
-        CPLDebug( "MDB", "Ignoreing GUID SRTEXT: %s", pszSRText );
+        CPLDebug( "MDB", "Ignoring GUID SRTEXT: %s", pszSRText );
         delete poSRSTable;
         CPLFree(pszSRText);
         return;

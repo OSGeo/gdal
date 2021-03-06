@@ -137,7 +137,7 @@ Algorithms:
  * Warper: use gcore global thread pool when doing multithreaded operations
  * Warper: fix average resampling that lead to very wrong results in some circumstances (#2665) (3.1.0 regression)
  * Warper: ComputeSourceWindow(): modify extra source pixel computation in anti-meridian warping situations
- * Warper: fix computation of kernel resampling width when wraping accros the antimeridian
+ * Warper: fix computation of kernel resampling width when wrapping across the antimeridian
  * Warper: emit error message instead of assertion if cutline is not a (multi)polygon (#3037)
  * RPC transformer: Add RPC_DEM_SRS option to override SRS of RPC_DEM. (#2680)
  * TPS transformer: fix handling of duplicated GCPs (fixes #2917)
@@ -652,7 +652,7 @@ Build(Unix):
  * Remove #define HOST_FILLORDER from cpl_config.h (#2345)
  * Added search for proj library in lib64 directory.
  * configure: strip -L/usr/lib and similar from netCDF, MySQL, GEOS and SFCGAL lib path (#2395)
- * configure: remove useless -lproj from --with-spatialite dectection
+ * configure: remove useless -lproj from --with-spatialite detection
 
 Build(Windows):
  * parametrize number of CPUs for parallel builds with CPU_COUNT variable (#1922)
@@ -755,7 +755,7 @@ All:
 * gdal_polygonize.py: fix outputting to geojson without explicit -f switch (#1533)
 * gdalcompare.py: take into account mask bands
 * gdal_retile.py: add resume option (#1703)
-* gdallocationinfo: emit verbose error when dataset canot be opened (#1684)
+* gdallocationinfo: emit verbose error when dataset cannot be opened (#1684)
 * gdallocationinfo and gdaltransform: print a hint when values are expected from the command line and stdin is an interactive terminal (refs #1684)
 * Python utilities: fix GetOutputDriverFor() when multiple drivers found (#1719)
 * gdal2tiles.py: add remaining resample methods
@@ -872,7 +872,7 @@ GXF driver:
 HDF4 driver:
  * fix retrieval of non-string swath and grid attributes
  * fix GR support for non-Byte rasters
- * remove broken attribure reading
+ * remove broken attribute reading
  * fixes related to color table
 
 HDF5 driver:
@@ -1130,7 +1130,7 @@ DXF driver:
 
 DWG driver:
  * add support for ODA 2021.2 (Windows builds)
- 
+
 ElasticSearch driver:
  * rename driver to Elasticsearch (s lowercase for search)
  * update geometry type name for Points
@@ -1495,7 +1495,7 @@ NITF driver:
  * avoid harmless floating point division by zero. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12844.
 
 PCIDSK driver:
- * avoid uint overflow and too big memory allocation attempt. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12893 
+ * avoid uint overflow and too big memory allocation attempt. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12893
 
 PDF driver:
  * Add a COMPOSITION_FILE creation option to generate a complex document
@@ -1539,7 +1539,7 @@ Core:
  * OGRBuildPolygonFromLines: avoid generating effectively duplicate points
  * OGRBuildPolygonFromEdges(): improve performance. https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13798
  * OGRGeometryFactory::transformWithOptions(): if WRAPDATELINE=YES, test that the geometry SRS is geographic
- * OGRGeometryFactory::GetCurveParmeters(): fix assertion when coordinates are very near 0
+ * OGRGeometryFactory::GetCurveParameters(): fix assertion when coordinates are very near 0
  * Expat XML parsing: add OGR_EXPAT_UNLIMITED_MEM_ALLOC=YES config option to workaround failure for very specific cases
  * OGRLineString::segmentize(): fix issues when segment length is divisible by maxlength (#1341)
  * OGR SQL: limit recursion in swq_expr_node::Check(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13540
@@ -1672,7 +1672,7 @@ VFK driver:
  * fix curved geometries being ignored (#1351)
 
 WFS3 driver:
- * handle paging wth missing type for rel:next, and better deal with user:pwd in URL
+ * handle paging with missing type for rel:next, and better deal with user:pwd in URL
  * use 'id' attribute of collection items, if 'name' not available
 
 == SWIG Language Bindings ==
@@ -2154,7 +2154,7 @@ GeoJSON driver:
  * properly flush the file in SyncToDisk() in append situations (https://issues.qgis.org/issues/18596)
  * parse '{"type": "GeometryCollection", "geometries": []}' as empty geometrycollection
  * increase max memory allowed to parse a single feature (#807)
- * remore topojson from extensions recognized by the driver
+ * remove topojson from extensions recognized by the driver
  * add partial support for field names differing by case (#1057)
  * RFC7946 writer: clip and offset geometries outside [-180,180] (#1068)
  * no longer write NaN/Infinity values by default (#1109)
@@ -2194,7 +2194,7 @@ MITAB driver:
  * Expose font family to feature style symbol ID
 
 MSSQLSpatial driver:
- * Add support for MSODBCSQL (#1136) 
+ * Add support for MSODBCSQL (#1136)
  * Fix layer-schema separation problem (#586)
  * Fix bulk copy for multiple layers (#619)
  * Accept datetime values (#841)
@@ -2564,7 +2564,7 @@ ENVI driver:
 
 ERS driver:
    add extension metadata (github #320)
- 
+
 GeoPackage driver:
  * update from 'tiled gridded extension' to now OGC approved 'tiled gridded coverage data extension' (OGC 17-066r1) (#7159)
  * avoid corruption of gpkg_tile_matrix when building overviews, down to a level where they are smaller than the tile size (#6932)
@@ -2604,7 +2604,7 @@ GTiff driver:
  * use consistently multiplication/division by 257 when converting between GDAL [0,255] range to TIFF [0,65535] range for color map values (#2213)
  * don't write <GDALMetadata> colorinterp when writing a file with a color table
  * copy georeferencing info to PAM if the profile is not GeoTIFF
- 
+
 GRIB driver:
  * add GRIB2 write support
  * update to degrib 2.14 and g2clib 1.6.0
@@ -2689,7 +2689,7 @@ MBTiles driver:
  * add read/write support for Mapbox vector tiles
  * support opening and creating datasets with tiles whose dimension is not 256 (#7233)
  * default to opening as RGBA (#6119)
- 
+
 MEM driver:
  * Avoid Create(foo.tif) / CreateCopy(foo.tif) on the MEM or Memory drivers to delete a 'real' foo.tif file
  * add RAT support
@@ -2786,7 +2786,7 @@ VRT driver:
  * Warped VRT: correctly take into account cutline for implicit overviews; also avoid serializing a duplicate CUTLINE warping options in warped .vrt (#6954)
  * Warped VRT: fix implicit overview when output geotransform is not the same as the transformer dst geotransform (#6972)
  * fix IGetDataCoverageStatus() in the case of non-simple sources, which unbreaks gdalenhance -equalize (#6987)
- * re-apply shared='0' on sources if existing in original VRT when rewriting it due to invalidation 
+ * re-apply shared='0' on sources if existing in original VRT when rewriting it due to invalidation
  * avoid error being emitted when opening a VRTRawRasterBand in a .zip files (#7056)
  * implement VRTDataset::AdviseRead() (in the particular case of a single source) (#7082)
  * allow to incorporate a warped VRT as CDATA in the SourceFileName field of a regular VRT
@@ -3016,7 +3016,7 @@ GMT:
 IDB driver:
  * optimize spatial query using spatial index and st_intersects function (#6984)
  * close connection at dataset closing (#7024)
- 
+
 ILI driver:
  * declare OLCCreateField and OLCSequentialWrite capabilities
 
@@ -3084,7 +3084,7 @@ OCI driver:
 
 ODBC driver:
  * deal with table names that require double quoting (#7242)
- 
+
 ODS driver:
  * add read/write support for Boolean sub datatype
 
@@ -3138,7 +3138,7 @@ VFK driver:
 
 VRT driver:
  * increase maximum size limit to 10 MB (instead of 1MB), and add config option to be able to force loading if above that
- 
+
 XLS driver:
  * workaround opening filenames with incompatible character set on Windows (https://issues.qgis.org/issues/9301)
 
@@ -3281,7 +3281,7 @@ Build(Windows):
  * Add HDF4_INCLUDE option (#6805)
  * Add MSVC compiler option /MP to build with parallel processes.
  * Add ZLIB_LIB missing from EXTERNAL_LIBS
- 
+
 Build(all):
  * make Xerces 3.1 the minimal version
  * drop support for PostgreSQL client library older than 7.4, or non security maintained releases older than 8.1.4, 8.0.8, 7.4.13, 7.3.15
@@ -3416,7 +3416,7 @@ Multi-driver:
 
 AIGRID driver:
  * fix 2.1.0 regression when reading statistics (.sta) file with only 3 values, and fix <2.1 behavior to read them in LSB order (#6633)
- 
+
 AAIGRID driver:
  * auto-detect Float64 when the nodata value is not representable in the Float32 range
 
@@ -3496,7 +3496,7 @@ GRASS driver:
  * plugin configure: add support for GRASS 7.2 (#6785)
  * plugin makefile: do not clone datum tables and drivers (#2953)
  * use Rast_get_window/Rast_set_window for GRASS 7 (#6853)
- 
+
 GRIB driver:
  * Add (minimalistic) support for template 4.15 needed to read Wide Area Forecast System (WAFS) products (#5768)
  * **Partial** resynchronization with degrib-2.0.3, mostly to get updated tables (related to #5768)
@@ -3539,7 +3539,7 @@ ISIS3 driver:
  * add write support
  * add mask band support on read
  * get label in json:ISIS3 metadata domain
- 
+
 JPEGLS driver:
 
 JP2ECW driver:
@@ -3618,7 +3618,7 @@ NWT_GRD:
 
 OpenJPEG driver:
  * support direct extracting of GeoRaster JP2-F BLOB (#6861)
- 
+
 PCIDSK driver:
  * handle Exceptions returned from destructor and check access rights in setters (github #183)
 
@@ -3635,7 +3635,7 @@ PostgisRaster driver:
 
 R driver:
  * fix out-of-memory (oom) with corrupt R file
- 
+
 Raw drivers:
  * prevent crashes on dataset closing in case of short write
 
@@ -3730,7 +3730,7 @@ OGRSpatialReference:
  * AutoIdentifyEPSG(): add identification of EPSG:3995 (Arctic Polar Stereographic on WGS84) and EPSG:3031 (Antarctic Polar Stereographic on WGS84)
  * OGRCoordinateTransformation: avoid potential bugs in proj.4 on NaN input
  * importFromEPSG(): take into account DX,DY,DZ,RX,RY,RZ,DS columns in pcs.csv to add per-PCS TOWGS84 overrides (geotiff #52)
- * Coordinate transformation: prevent unnecessary coordinate transformations (github #184, #185) 
+ * Coordinate transformation: prevent unnecessary coordinate transformations (github #184, #185)
 
 Utilities:
  * ogr2ogr: do not return error on ogr2ogr --utility_version
@@ -3867,7 +3867,7 @@ MITAB driver:
  * add support for oblique stereographic (#6598)
  * Adds the authority code for Irish national grid (Ireland_1965) (github #149)
  * fix spelling for Euref_89 and add EPSG code (#6816)
- 
+
 MSSQLSpatial driver:
  * Fix bulk insert with table names containing spaces (#6527)
  * Build optional mssql plugin with SQL Native Client support for MSSQL Bulk Copy
@@ -3876,7 +3876,7 @@ MSSQLSpatial driver:
 MySQL driver:
  * fix spatial filtering on recent mysql by adding a SRID in the rectangle geometry
  * do not force NOT NULL constraint on geometry field if no spatial index is used
- 
+
 NAS driver:
  * support multiple 'anlass' in updates
 
@@ -4002,10 +4002,10 @@ Perl bindings:
  * the Warp method requires a list of datasets (#6521)
  * when 'use bigint' is in effect, int var is a ref.
  * Separate the module building in the CPAN distribution and in
-the GDAL source tree. The CPAN distribution will be 
+the GDAL source tree. The CPAN distribution will be
 developed at https://github.com/ajolma
  * Fix the Extension method in Driver per RFC 46
- * The Inv method of GeoTransform did not return a new object. 
+ * The Inv method of GeoTransform did not return a new object.
 Allow a single point in Apply method of GeoTransform.
  * Test for existence of PDL and require it if available.
  * allow decimation/replication in Piddle i/o.
@@ -6298,7 +6298,7 @@ LIBKML driver:
  * create libkml/ subdirectory entry in .kmz
 
 MITAB driver:
- * support reading MIF file with no associated MID file (when MIF file advertizes 'Columns 0') (#5141)
+ * support reading MIF file with no associated MID file (when MIF file advertises 'Columns 0') (#5141)
 
 MSSQLSpatial driver:
  * Fix MSSQL to be aware of removed tables (#5071)
@@ -6979,7 +6979,7 @@ DGN driver:
  * Add support to read and write font name in the style (#3392)
 
 DXF driver:
- * Write HACH (Polygon) compatible with other DXF viewers
+ * Write HATCH (Polygon) compatible with other DXF viewers
  * Write layer geometry extent in file header (#4618)
  * Ignore Spline frame control points for VERTEX of POLYLINE (#4683)
  * Add color to POINT, INSERT and HATCH
@@ -8763,7 +8763,7 @@ OGRSpatialReference:
    OGRSpatialReference::IsSameVertCS() methods
  * add RSO gamma handling (proj #62)
  * TMSO support
- * Adjust handling of NAD27 to avoid towgs84 parms, use +datum when no towgs84,
+ * Adjust handling of NAD27 to avoid towgs84 params, use +datum when no towgs84,
    do not emit +ellipse if +datum used (#3737)
  * exportToProj4() : add +towgs84= instead of +datum= if both information are
    available. This behavior can be turned off by setting
@@ -9859,7 +9859,7 @@ Build (Unix):
  * Fixed Expat detection problem on MinGW (#2050)
  * Fix INST_DATA setting (/share/gdal instead of /share) (#2382)
  * Build MSGN driver on Unix-like platforms
- * Added MSG driver support to configure.in. EUMETSAT Wavelet Trasform software is only detected on request, option --with-msg specified.
+ * Added MSG driver support to configure.in. EUMETSAT Wavelet Transform software is only detected on request, option --with-msg specified.
  * Improve cross-compilation
  * Fix linking with HDF4 library when configuring with --with-hdf4 or --with-hdf4=yes (#2602)
  * Fixes for compilation with GCC 4.3
@@ -10299,7 +10299,7 @@ RMF driver:
  * Added support for reading and writing extended header..
  * RMF driver can crash / corrupt stack when importing projection from Panorama (#2277)
  * Fixed error checking code returned by color table read function.
- * Added support fo reading big endian variant of the RSW files.
+ * Added support for reading big endian variant of the RSW files.
  * Report units and dataset statistics (#2670)
 
 RPFTOC driver:
@@ -10541,7 +10541,7 @@ PG (Postgres/PostGIS) Driver:
  * Use the 'auth_srid' to avoid mismatches between OGR and PostGIS WKTs of EPSG codes (#2123)
  * Fix reporting of capabilities and handling of spatial and attribute filters by OGRPGResultLayer
  * Add PG_USE_POSTGIS to be able to disable PostGIS for debug purpose
- * Re-enable PQsetClientEncoding but set it to UNICODE now that the driver advertizes OLCStringsAsUTF8
+ * Re-enable PQsetClientEncoding but set it to UNICODE now that the driver advertises OLCStringsAsUTF8
  * Replace use of risky sprintf by CPLString to avoid potential buffer overflows
  * In non PostGIS mode, skip tables of schema 'information_schema'
  * Allow VACUUM through ExecuteSQL() without a transaction (#2619).

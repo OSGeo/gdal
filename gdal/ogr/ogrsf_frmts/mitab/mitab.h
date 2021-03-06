@@ -308,7 +308,7 @@ class TABFile final : public IMapInfoFile
 
     static OGRSpatialReference* GetSpatialRefFromTABProj(const TABProjInfo& sTABProj);
     static int                  GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
-                                                         TABProjInfo& sTABProj, int& nParmCount);
+                                                         TABProjInfo& sTABProj, int& nParamCount);
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,

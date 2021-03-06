@@ -124,7 +124,7 @@ std::string roundup(std::string s)
 }
 
 
-// This attempts to elimiate what is likely binary -> decimal representation
+// This attempts to eliminate what is likely binary -> decimal representation
 // error or the result of low-order rounding with calculations.  The result
 // may be more visually pleasing and takes up fewer places.
 std::string intelliround(std::string& s)

@@ -365,7 +365,7 @@ void OGRPGeoLayer::LookupSRID( int nSRID )
 
     if( pszSRText[0] == '{' )
     {
-        CPLDebug( "PGEO", "Ignoreing GUID SRTEXT: %s", pszSRText );
+        CPLDebug( "PGEO", "Ignoring GUID SRTEXT: %s", pszSRText );
         return;
     }
 

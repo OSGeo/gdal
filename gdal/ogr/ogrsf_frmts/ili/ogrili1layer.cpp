@@ -209,7 +209,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
     VSIFPrintfL( poDS->GetTransferFile(), "ELIN\n" );
 }
 
-static void AppendCoumpoundCurve( OGRCompoundCurve *poCC,
+static void AppendCompoundCurve( OGRCompoundCurve *poCC,
                                   OGRILI1DataSource *poDS )
 {
     for( int iMember = 0; iMember < poCC->getNumCurves(); iMember++)
@@ -318,7 +318,7 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( poGeometry->getGeometryType() == wkbCompoundCurve
              || poGeometry->getGeometryType() == wkbCompoundCurveZ )
     {
-        AppendCoumpoundCurve( poGeometry->toCompoundCurve(),
+        AppendCompoundCurve( poGeometry->toCompoundCurve(),
                               poDS );
     } else {
         CPLError( CE_Warning, CPLE_AppDefined,

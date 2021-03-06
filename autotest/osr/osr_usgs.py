@@ -74,9 +74,9 @@ def test_osr_usgs_2():
     PARAMETER["false_easting",0],PARAMETER["false_northing",0],\
     UNIT["metre",1,AUTHORITY["EPSG","9001"]]]""")
 
-    (proj_code, _, parms, datum_code) = srs.ExportToUSGS()
+    (proj_code, _, params, datum_code) = srs.ExportToUSGS()
 
-    assert proj_code == 4 and datum_code == 0 and gdal.PackedDMSToDec(parms[2]) == pytest.approx(33.90363403, abs=0.0000005) and gdal.PackedDMSToDec(parms[3]) == pytest.approx(33.62529003, abs=0.0000005) and gdal.PackedDMSToDec(parms[4]) == pytest.approx(-117.4745429, abs=0.0000005) and gdal.PackedDMSToDec(parms[5]) == pytest.approx(33.76446203, abs=0.0000005), \
+    assert proj_code == 4 and datum_code == 0 and gdal.PackedDMSToDec(params[2]) == pytest.approx(33.90363403, abs=0.0000005) and gdal.PackedDMSToDec(params[3]) == pytest.approx(33.62529003, abs=0.0000005) and gdal.PackedDMSToDec(params[4]) == pytest.approx(-117.4745429, abs=0.0000005) and gdal.PackedDMSToDec(params[5]) == pytest.approx(33.76446203, abs=0.0000005), \
         'Can not import Lambert Conformal Conic projection.'
 
 

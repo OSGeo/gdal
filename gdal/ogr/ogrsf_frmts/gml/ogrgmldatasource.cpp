@@ -861,7 +861,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
         }
     }
 
-    // Can we find an xsd which might conform to tbe GML3 Level 0
+    // Can we find an xsd which might conform to the GML3 Level 0
     // profile?  We really ought to look for it based on the rules
     // schemaLocation in the GML feature collection but for now we
     // just hopes it is in the same director with the same name.

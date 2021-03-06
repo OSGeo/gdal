@@ -2289,7 +2289,7 @@ void GeoRasterWrapper::LoadNoDataValues( void )
     }
 
     //  -------------------------------------------------------------------
-    //  Load NoDatas from list of values and list of value ranges
+    //  Load NoData from list of values and list of value ranges
     //  -------------------------------------------------------------------
 
     CPLXMLNode* phObjNoData = CPLGetXMLNode( phLayerInfo, "objectLayer.NODATA" );

@@ -641,7 +641,7 @@ static inline int CPLIsFinite(double f) { return !__isnan(f) && !__isinf(f); }
 #else
 #  define CPLIsNan(x) isnan(x)
 #  if defined(isinf) || defined(__FreeBSD__)
-/** Return whether a floating-pointer number is +/- infinty */
+/** Return whether a floating-pointer number is +/- infinity */
 #    define CPLIsInf(x) isinf(x)
 /** Return whether a floating-pointer number is finite */
 #    define CPLIsFinite(x) (!isnan(x) && !isinf(x))
@@ -1204,7 +1204,7 @@ inline C CPLUnsanitizedAdd(A a, B b)
 /* This typedef is for C functions that take char** as argument, but */
 /* with the semantics of a const list. In C, char** is not implicitly cast to */
 /* const char* const*, contrary to C++. So when seen for C++, it is OK */
-/* to expose the prototyes as const char* const*, but for C we keep the */
+/* to expose the prototypes as const char* const*, but for C we keep the */
 /* historical definition to avoid warnings. */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
 /** Type of a constant null-terminated list of nul terminated strings.
