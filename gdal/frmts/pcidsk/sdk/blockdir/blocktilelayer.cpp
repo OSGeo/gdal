@@ -119,7 +119,7 @@ BlockTileLayer::GetTileInfo(uint32 nCol, uint32 nRow)
 /************************************************************************/
 
 /**
- * Syncronizes the block tile layer to disk.
+ * Synchronizes the block tile layer to disk.
  */
 void BlockTileLayer::Sync(void)
 {
@@ -241,12 +241,12 @@ uint32 BlockTileLayer::GetDataTypeSize(void) const
 /************************************************************************/
 
 /**
- * Checks if the specfied tile is valid.
+ * Checks if the specified tile is valid.
  *
  * @param nCol The column of the tile.
  * @param nRow The row of the tile.
  *
- * @return If the specfied tile is valid.
+ * @return If the specified tile is valid.
  */
 bool BlockTileLayer::IsTileValid(uint32 nCol, uint32 nRow)
 {

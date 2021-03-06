@@ -378,7 +378,7 @@ int CTiledChannel::WriteBlock( int iBlock, void *buffer )
     const char * compression = mpoTileLayer->GetCompressType();
 
 /* -------------------------------------------------------------------- */
-/*      The simpliest case it an uncompressed direct and complete       */
+/*      The simplest case it an uncompressed direct and complete       */
 /*      tile read into the destination buffer.                          */
 /* -------------------------------------------------------------------- */
     if (strcmp(compression, "NONE") == 0)
@@ -504,7 +504,7 @@ void CTiledChannel::RLEDecompressBlock( PCIDSKBuffer &oCompressedData,
 
 /* -------------------------------------------------------------------- */
 /*      Process till we are out of source data, or our destination      */
-/*      buffer is full.  These conditions should be satisified at       */
+/*      buffer is full.  These conditions should be satisfied at       */
 /*      the same time!                                                  */
 /* -------------------------------------------------------------------- */
     while( src_offset + 1 + nPixelSize <= oCompressedData.buffer_size
