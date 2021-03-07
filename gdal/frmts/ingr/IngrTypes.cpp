@@ -199,7 +199,7 @@ static int DIV_ROUND_UP(int a, int b)
 //                                                            INGR_GetDataType()
 // -----------------------------------------------------------------------------
 
-GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
+GDALDataType CPL_STDCALL INGR_GetDataType( uint16_t eCode )
 {
     for( unsigned int i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
@@ -216,7 +216,7 @@ GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 //                                                          INGR_GetFormatName()
 // -----------------------------------------------------------------------------
 
-const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode )
+const char * CPL_STDCALL INGR_GetFormatName( uint16_t eCode )
 {
     for( unsigned int i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
@@ -233,7 +233,7 @@ const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode )
 //                                                         INGR_GetOrientation()
 // -----------------------------------------------------------------------------
 
-const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex )
+const char * CPL_STDCALL INGR_GetOrientation( uint8_t nIndex )
 {
     if (nIndex < sizeof(IngrOrientation) / sizeof(IngrOrientation[0]))
         return IngrOrientation[nIndex];
@@ -387,7 +387,7 @@ void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix, double *padfGeoTransfo
 //                                                          INGR_SetIGDSColors()
 // -----------------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
+uint32_t CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
                                       INGR_ColorTable256 *pColorTableIGDS )
 {
     GDALColorEntry oEntry;
@@ -396,9 +396,9 @@ uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
     for( i = 0; i < poColorTable->GetColorEntryCount(); i++ )
     {
         poColorTable->GetColorEntryAsRGB( i, &oEntry );
-        pColorTableIGDS->Entry[i].v_red   = (uint8) oEntry.c1;
-        pColorTableIGDS->Entry[i].v_green = (uint8) oEntry.c2;
-        pColorTableIGDS->Entry[i].v_blue  = (uint8) oEntry.c3;
+        pColorTableIGDS->Entry[i].v_red   = (uint8_t) oEntry.c1;
+        pColorTableIGDS->Entry[i].v_green = (uint8_t) oEntry.c2;
+        pColorTableIGDS->Entry[i].v_blue  = (uint8_t) oEntry.c3;
     }
 
     return i;
@@ -408,8 +408,8 @@ uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
 //                                                       INGR_GetTileDirectory()
 // -----------------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
-                                          uint32 nOffset,
+uint32_t CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
+                                          uint32_t nOffset,
                                           int nBandXSize,
                                           int nBandYSize,
                                           INGR_TileHeader *pTileDir,
@@ -457,7 +457,7 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
         return 0;
     }
 
-    uint32 nTiles = nTilesPerCol * nTilesPerRow;
+    uint32_t nTiles = nTilesPerCol * nTilesPerRow;
 
     // ----------------------------------------------------------------
     // Load the tile table (first tile s already read)
@@ -503,8 +503,8 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
 // -----------------------------------------------------------------------------
 
 void CPL_STDCALL INGR_GetIGDSColors( VSILFILE *fp,
-                                     uint32 nOffset,
-                                     uint32 nEntries,
+                                     uint32_t nOffset,
+                                     uint32_t nEntries,
                                      GDALColorTable *poColorTable )
 {
     if( fp == nullptr ||
@@ -519,7 +519,7 @@ void CPL_STDCALL INGR_GetIGDSColors( VSILFILE *fp,
     // Read it from the middle of the second block
     // -------------------------------------------------------------
 
-    uint32 nStart = nOffset + SIZEOF_HDR1 + SIZEOF_HDR2_A;
+    uint32_t nStart = nOffset + SIZEOF_HDR1 + SIZEOF_HDR2_A;
 
     INGR_ColorTable256 hIGDSColors;
 
@@ -565,7 +565,7 @@ void CPL_STDCALL INGR_GetIGDSColors( VSILFILE *fp,
 //                                                       INGR_SetEnvironColors()
 // -----------------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
+uint32_t CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
                                           INGR_ColorTableVar *pEnvironTable )
 {
     GDALColorEntry oEntry;
@@ -575,10 +575,10 @@ uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
     for( i = 0; i < poColorTable->GetColorEntryCount(); i++ )
     {
         poColorTable->GetColorEntryAsRGB( i, &oEntry );
-        pEnvironTable->Entry[i].v_slot  = (uint16) i;
-        pEnvironTable->Entry[i].v_red   = (uint16) ( oEntry.c1 * fNormFactor );
-        pEnvironTable->Entry[i].v_green = (uint16) ( oEntry.c2 * fNormFactor );
-        pEnvironTable->Entry[i].v_blue  = (uint16) ( oEntry.c3 * fNormFactor );
+        pEnvironTable->Entry[i].v_slot  = (uint16_t) i;
+        pEnvironTable->Entry[i].v_red   = (uint16_t) ( oEntry.c1 * fNormFactor );
+        pEnvironTable->Entry[i].v_green = (uint16_t) ( oEntry.c2 * fNormFactor );
+        pEnvironTable->Entry[i].v_blue  = (uint16_t) ( oEntry.c3 * fNormFactor );
     }
 
     return i;
@@ -589,8 +589,8 @@ uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
 // -----------------------------------------------------------------------------
 
 void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
-                             uint32 nOffset,
-                             uint32 nEntries,
+                             uint32_t nOffset,
+                             uint32_t nEntries,
                              GDALColorTable *poColorTable )
 {
     if( fp == nullptr ||
@@ -604,7 +604,7 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
     // Read it from the third block
     // -------------------------------------------------------------
 
-    uint32 nStart = nOffset + SIZEOF_HDR1 + SIZEOF_HDR2;
+    uint32_t nStart = nOffset + SIZEOF_HDR1 + SIZEOF_HDR2;
 
     INGR_ColorTableVar hVLTColors;
 
@@ -702,19 +702,19 @@ INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dValue )
     switch ( eType )
     {
     case GDT_Byte:
-        uResult.AsUint8   = (uint8) dValue;
+        uResult.AsUint8   = (uint8_t) dValue;
         break;
     case GDT_Int16:
-        uResult.AsUint16  = (int16) dValue;
+        uResult.AsUint16  = (int16_t) dValue;
         break;
     case GDT_UInt16:
-        uResult.AsUint16  = (uint16) dValue;
+        uResult.AsUint16  = (uint16_t) dValue;
         break;
     case GDT_Int32:
-        uResult.AsUint32  = (int32) dValue;
+        uResult.AsUint32  = (int32_t) dValue;
         break;
     case GDT_UInt32:
-        uResult.AsUint32  = (uint32) dValue;
+        uResult.AsUint32  = (uint32_t) dValue;
         break;
     case GDT_Float32:
         uResult.AsReal32  = (real32) dValue;
@@ -723,7 +723,7 @@ INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dValue )
         uResult.AsReal64  = (real64) dValue;
         break;
     default:
-        uResult.AsUint8   = (uint8) 0;
+        uResult.AsUint8   = (uint8_t) 0;
     }
 
     return uResult;
@@ -752,9 +752,9 @@ double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hValue )
 //                                                       INGR_GetDataBlockSize()
 // -----------------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
-                                          uint32 nBandOffset,
-                                          uint32 nDataOffset )
+uint32_t CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
+                                          uint32_t nBandOffset,
+                                          uint32_t nDataOffset )
 {
     if( nBandOffset == 0 )
     {
@@ -766,7 +766,7 @@ uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFilename,
         if( VSIStatL( pszFilename, &sStat ) != 0 ||
             sStat.st_size < nDataOffset )
             return 0;
-        return (uint32) (sStat.st_size - nDataOffset);
+        return (uint32_t) (sStat.st_size - nDataOffset);
     }
 
     // -------------------------------------------------------------
@@ -876,8 +876,8 @@ void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMem )
 //                                                       INGR_ReadJpegQuality()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
-                                      uint32 nSeekLimit )
+int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32_t nAppDataOfseet,
+                                      uint32_t nSeekLimit )
 {
     if( nAppDataOfseet == 0  )
     {
@@ -885,7 +885,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
     }
 
     INGR_JPEGAppData hJpegData;
-    uint32 nNext = nAppDataOfseet;
+    uint32_t nNext = nAppDataOfseet;
 
     GByte abyBuf[SIZEOF_JPGAD];
 
@@ -929,7 +929,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
 
 int CPL_STDCALL
 INGR_Decode( INGR_Format eFormat, GByte *pabySrcData, GByte *pabyDstData,
-             uint32 nSrcBytes, uint32 nBlockSize, uint32 *pnBytesConsumed )
+             uint32_t nSrcBytes, uint32_t nBlockSize, uint32_t *pnBytesConsumed )
 
 {
     switch( eFormat )
@@ -956,8 +956,8 @@ INGR_Decode( INGR_Format eFormat, GByte *pabySrcData, GByte *pabyDstData,
 // -----------------------------------------------------------------------------
 
 int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
-                                      uint32 nSrcBytes, uint32 nBlockSize,
-                                      uint32 *pnBytesConsumed )
+                                      uint32_t nSrcBytes, uint32_t nBlockSize,
+                                      uint32_t *pnBytesConsumed )
 {
     unsigned int iInput = 0;
     unsigned int iOutput = 0;
@@ -1018,8 +1018,8 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
 
 int CPL_STDCALL
 INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
-                              uint32 nSrcBytes, uint32 nBlockSize,
-                              uint32 *pnBytesConsumed )
+                              uint32_t nSrcBytes, uint32_t nBlockSize,
+                              uint32_t *pnBytesConsumed )
 {
     unsigned int nSrcShorts = nSrcBytes / 2;
     if (nSrcShorts == 0)
@@ -1079,8 +1079,8 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
 
 int CPL_STDCALL
 INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
-                             uint32 nSrcBytes, uint32 nBlockSize,
-                             uint32 *pnBytesConsumed )
+                             uint32_t nSrcBytes, uint32_t nBlockSize,
+                             uint32_t *pnBytesConsumed )
 {
     const unsigned int nSrcShorts = nSrcBytes / 2;
     if (nSrcShorts == 0)
@@ -1238,8 +1238,8 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
 
 int CPL_STDCALL
 INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
-                                  uint32 nSrcBytes, uint32 nBlockSize,
-                                  uint32 *pnBytesConsumed )
+                                  uint32_t nSrcBytes, uint32_t nBlockSize,
+                                  uint32_t *pnBytesConsumed )
 {
     unsigned int   nSrcShorts = nSrcBytes / 2;
     if (nSrcShorts == 0)
@@ -1357,29 +1357,29 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
     switch (INGR_GetDataType(pHeaderOne->DataTypeCode))
     {
     case GDT_Byte:
-        pHeaderOne->Minimum.AsUint8 = *(uint8*)&(pHeaderOne->Minimum);
-        pHeaderOne->Maximum.AsUint8 = *(uint8*)&(pHeaderOne->Maximum);
+        pHeaderOne->Minimum.AsUint8 = *(uint8_t*)&(pHeaderOne->Minimum);
+        pHeaderOne->Maximum.AsUint8 = *(uint8_t*)&(pHeaderOne->Maximum);
         break;
     case GDT_Int16:
-        pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum));
+        pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16_t*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16_t*)&(pHeaderOne->Maximum));
         break;
     case GDT_UInt16:
-        pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16*)&(pHeaderOne->Maximum));
+        pHeaderOne->Minimum.AsUint16 = CPL_LSBWORD16(*(uint16_t*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint16 = CPL_LSBWORD16(*(uint16_t*)&(pHeaderOne->Maximum));
         break;
     case GDT_Int32:
-        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum));
+        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32_t*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32_t*)&(pHeaderOne->Maximum));
         break;
     case GDT_UInt32:
-        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum));
+        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32_t*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32_t*)&(pHeaderOne->Maximum));
         break;
         /* FIXME ? I'm not sure this is correct for floats */
     case GDT_Float32:
-        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Minimum));
-        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32*)&(pHeaderOne->Maximum));
+        pHeaderOne->Minimum.AsUint32 = CPL_LSBWORD32(*(uint32_t*)&(pHeaderOne->Minimum));
+        pHeaderOne->Maximum.AsUint32 = CPL_LSBWORD32(*(uint32_t*)&(pHeaderOne->Maximum));
         break;
     case GDT_Float64:
         CPL_LSBPTR64(&pHeaderOne->Minimum.AsReal64); CPL_LSBPTR64(&pHeaderOne->Maximum.AsReal64);
@@ -1406,7 +1406,7 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
         INGR_DGN2IEEEDouble( &pHeaderOne->RotationAngle );
         INGR_DGN2IEEEDouble( &pHeaderOne->SkewAngle );
 
-        for( uint8 i = 0; i < 16; i++ )
+        for( uint8_t i = 0; i < 16; i++ )
         {
             INGR_DGN2IEEEDouble( &pHeaderOne->TransformationMatrix[i]);
         }
@@ -1423,7 +1423,7 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
         CPL_LSBPTR64( &pHeaderOne->RotationAngle );
         CPL_LSBPTR64( &pHeaderOne->SkewAngle );
 
-        for( uint8 i = 0; i < 16; i++ )
+        for( uint8_t i = 0; i < 16; i++ )
         {
             CPL_LSBPTR64( &pHeaderOne->TransformationMatrix[i]);
         }
@@ -1441,19 +1441,19 @@ void CPL_STDCALL INGR_HeaderOneMemToDisk(const INGR_HeaderOne* pHeaderOne, GByte
 
     switch (INGR_GetDataType(pLSBHeaderOne->DataTypeCode))
     {
-        case GDT_Byte:    *(uint8*)&(pLSBHeaderOne->Minimum) = pLSBHeaderOne->Minimum.AsUint8;
-                          *(uint8*)&(pLSBHeaderOne->Maximum) = pLSBHeaderOne->Maximum.AsUint8; break;
-        case GDT_Int16:   *(uint16*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD16(pLSBHeaderOne->Minimum.AsUint16);
-                          *(uint16*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD16(pLSBHeaderOne->Maximum.AsUint16); break;
-        case GDT_UInt16:  *(uint16*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD16(pLSBHeaderOne->Minimum.AsUint16);
-                          *(uint16*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD16(pLSBHeaderOne->Maximum.AsUint16); break;
-        case GDT_Int32:   *(uint32*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
-                          *(uint32*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
-        case GDT_UInt32:  *(uint32*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
-                          *(uint32*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
+        case GDT_Byte:    *(uint8_t*)&(pLSBHeaderOne->Minimum) = pLSBHeaderOne->Minimum.AsUint8;
+                          *(uint8_t*)&(pLSBHeaderOne->Maximum) = pLSBHeaderOne->Maximum.AsUint8; break;
+        case GDT_Int16:   *(uint16_t*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD16(pLSBHeaderOne->Minimum.AsUint16);
+                          *(uint16_t*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD16(pLSBHeaderOne->Maximum.AsUint16); break;
+        case GDT_UInt16:  *(uint16_t*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD16(pLSBHeaderOne->Minimum.AsUint16);
+                          *(uint16_t*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD16(pLSBHeaderOne->Maximum.AsUint16); break;
+        case GDT_Int32:   *(uint32_t*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
+                          *(uint32_t*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
+        case GDT_UInt32:  *(uint32_t*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
+                          *(uint32_t*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
         /* FIXME ? I'm not sure this is correct for floats */
-        case GDT_Float32: *(uint32*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
-                          *(uint32*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
+        case GDT_Float32: *(uint32_t*)&(pLSBHeaderOne->Minimum) = CPL_LSBWORD32(pLSBHeaderOne->Minimum.AsUint32);
+                          *(uint32_t*)&(pLSBHeaderOne->Maximum) = CPL_LSBWORD32(pLSBHeaderOne->Maximum.AsUint32); break;
         case GDT_Float64: CPL_LSBPTR64(&pLSBHeaderOne->Minimum.AsReal64); CPL_LSBPTR64(&pLSBHeaderOne->Maximum.AsReal64); break;
         default: break;
     }
@@ -1477,7 +1477,7 @@ void CPL_STDCALL INGR_HeaderOneMemToDisk(const INGR_HeaderOne* pHeaderOne, GByte
         CPL_LSBPTR64( &pLSBHeaderOne->RotationAngle );
         CPL_LSBPTR64( &pLSBHeaderOne->SkewAngle );
 
-        for( uint8 i = 0; i < 16; i++ )
+        for( uint8_t i = 0; i < 16; i++ )
         {
             CPL_LSBPTR64( &pLSBHeaderOne->TransformationMatrix[i]);
         }

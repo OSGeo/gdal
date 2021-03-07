@@ -61,8 +61,8 @@ INGR_TileHeader::INGR_TileHeader() :
     TileSize(0),
     Reserved3(0)
 {
-    fill( Reserved, Reserved + CPL_ARRAYSIZE(Reserved), static_cast<uint16>(0) );
-    fill( Reserved2, Reserved2 + CPL_ARRAYSIZE(Reserved2), static_cast<uint8>(0) );
+    fill( Reserved, Reserved + CPL_ARRAYSIZE(Reserved), static_cast<uint16_t>(0) );
+    fill( Reserved2, Reserved2 + CPL_ARRAYSIZE(Reserved2), static_cast<uint8_t>(0) );
     First.Start = 0;
     First.Allocated = 0;
     First.Used = 0;
@@ -111,7 +111,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // --------------------------------------------------------------------
     // Get Color Table from Color Table Type (CTV)
     // --------------------------------------------------------------------
-    uint32 nEntries = hHeaderTwo.NumberOfCTEntries;
+    uint32_t nEntries = hHeaderTwo.NumberOfCTEntries;
 
     if( nEntries > 0 )
     {
@@ -150,7 +150,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // Get tile directory
     // --------------------------------------------------------------------
 
-    uint16 eFormatUntyped = (INGR_Format) hHeaderOne.DataTypeCode;
+    uint16_t eFormatUntyped = (INGR_Format) hHeaderOne.DataTypeCode;
 
     bTiled = hHeaderOne.DataTypeCode == TiledRasterData;
 
@@ -234,7 +234,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // --------------------------------------------------------------------
     // More Metadata Information
     // --------------------------------------------------------------------
-    SetMetadataItem( "FORMAT", INGR_GetFormatName( (uint16) eFormat ),
+    SetMetadataItem( "FORMAT", INGR_GetFormatName( (uint16_t) eFormat ),
         "IMAGE_STRUCTURE" );
 
     if( bTiled )
@@ -403,7 +403,7 @@ CPLErr IntergraphRasterBand::IReadBlock( int nBlockXOff,
     if (HandleUninstantiatedTile( nBlockXOff, nBlockYOff, pImage ))
         return CE_None;
 
-    uint32 nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
+    uint32_t nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBlockBufSize, pabyBlockBuf );
 
     if( nBytesRead == 0 )
     {
@@ -488,7 +488,7 @@ IntergraphRGBBand::IntergraphRGBBand( IntergraphDataset *poDSIn,
     if( pabyBlockBuf == nullptr )
         return;
 
-    nRGBIndex = static_cast<uint8>(nRGorB);
+    nRGBIndex = static_cast<uint8_t>(nRGorB);
 
     // --------------------------------------------------------------------
     // Reallocate buffer for a block of RGB Data
@@ -547,7 +547,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
     bRLEBlockLoaded(FALSE),
     panRLELineOffset(nullptr)
 {
-    nRGBIndex = static_cast<uint8>(nRGorB);
+    nRGBIndex = static_cast<uint8_t>(nRGorB);
 
     if( pabyBlockBuf == nullptr )
         return;
@@ -574,8 +574,8 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
                     return;
                 }
             }
-            panRLELineOffset = (uint32 *)
-                VSI_CALLOC_VERBOSE(sizeof(uint32),nRasterYSize);
+            panRLELineOffset = (uint32_t *)
+                VSI_CALLOC_VERBOSE(sizeof(uint32_t),nRasterYSize);
             if( panRLELineOffset == nullptr )
                 return;
             nFullBlocksY = nRasterYSize;
@@ -603,7 +603,7 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
         // Find the biggest tile
         // ------------------------------------------------------------
 
-        for( uint32 iTiles = 0; iTiles < nTiles; iTiles++)
+        for( uint32_t iTiles = 0; iTiles < nTiles; iTiles++)
         {
             nRLESize = MAX( pahTiles[iTiles].Used, nRLESize );
         }
@@ -691,7 +691,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     // Load Block Buffer
     // --------------------------------------------------------------------
 
-    uint32 nBytesRead;
+    uint32_t nBytesRead;
 
     if( bTiled || !bRLEBlockLoaded )
     {
@@ -767,7 +767,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
     }
     else
     {
-        uint32 nBytesConsumed;
+        uint32_t nBytesConsumed;
 
         // If we are missing the offset to this line, process all
         // preceding lines that are not initialized.
@@ -782,7 +782,7 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
                 // Pass NULL as destination so that no decompression
                 // actually takes place.
                 if( nRLESize < panRLELineOffset[iLine] ||
-                    (uint32)INGR_Decode( eFormat,
+                    (uint32_t)INGR_Decode( eFormat,
                              pabyRLEBlock + panRLELineOffset[iLine],
                              nullptr,  nRLESize - panRLELineOffset[iLine], nBlockBufSize,
                              &nBytesConsumed ) < nBlockBufSize )
@@ -892,7 +892,7 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDSIn,
         // Find the biggest tile
         // ------------------------------------------------------------
 
-        for( uint32 iTiles = 0; iTiles < nTiles; iTiles++)
+        for( uint32_t iTiles = 0; iTiles < nTiles; iTiles++)
         {
             nBMPSize = MAX( pahTiles[iTiles].Used, nBMPSize );
         }
@@ -1000,7 +1000,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
     if (HandleUninstantiatedTile( nBlockXOff, nBlockYOff, pImage ))
         return CE_None;
 
-    uint32 nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBMPSize, pabyBMPBlock );
+    uint32_t nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nBMPSize, pabyBMPBlock );
 
     if( nBytesRead == 0 )
     {
@@ -1093,7 +1093,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
                                         GByte *pabyBlock ) const
 {
     vsi_l_offset nSeekOffset  = 0;
-    uint32 nReadSize    = 0;
+    uint32_t nReadSize    = 0;
 
     // --------------------------------------------------------------------
     // Read from tiles or read from strip
@@ -1101,7 +1101,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
 
     if( bTiled )
     {
-        uint32 nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        uint32_t nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
         if( pahTiles[nBlockId].Start == 0 )
         {
@@ -1112,7 +1112,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
         nReadSize     = pahTiles[nBlockId].Used;
 
         CPLAssert( nBlobkBytes >= 0 );
-        if( nReadSize > (uint32)nBlobkBytes )
+        if( nReadSize > (uint32_t)nBlobkBytes )
         {
             CPLDebug( "INGR",
                       "LoadBlockBuf(%d,%d) - trimmed tile size from %u to %d.",
@@ -1134,7 +1134,7 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
         return 0;
     }
 
-    uint32 nRead = static_cast<uint32>(VSIFReadL( pabyBlock, 1, nReadSize, poGDS->fp ));
+    uint32_t nRead = static_cast<uint32_t>(VSIFReadL( pabyBlock, 1, nReadSize, poGDS->fp ));
     if( nRead < nReadSize )
         memset( pabyBlock + nRead, 0, nReadSize - nRead );
     return static_cast<int>(nRead);
@@ -1202,8 +1202,8 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
                                           int nBlockYOff,
                                           void *pImage )
 {
-    uint32 nBlockSize = nBlockBufSize;
-    uint32 nBlockOffset = nBlockBufSize * nBlockYOff;
+    uint32_t nBlockSize = nBlockBufSize;
+    uint32_t nBlockOffset = nBlockBufSize * nBlockYOff;
 
     IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
 
@@ -1235,7 +1235,7 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
         int nRLECount = 0;
         GByte nValue = 0; // Start with OFF spans.
 
-        for(uint32 i=0; i<nBlockBufSize; i++)
+        for(uint32_t i=0; i<nBlockBufSize; i++)
         {
             if (((nValue == 0) && (pInput[i] == 0)) || ((nValue == 1) && pInput[i]))
             {
@@ -1292,7 +1292,7 @@ CPLErr IntergraphRasterBand::IWriteBlock( int nBlockXOff,
 
     VSIFSeekL( poGDS->fp, nDataOffset + nBlockOffset, SEEK_SET );
 
-    if( ( uint32 ) VSIFWriteL( pabyBlockBuf, 1, nBlockSize, poGDS->fp ) < nBlockSize )
+    if( ( uint32_t ) VSIFWriteL( pabyBlockBuf, 1, nBlockSize, poGDS->fp ) < nBlockSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
             "Can't write (%s) block with X offset %d and Y offset %d.\n%s",

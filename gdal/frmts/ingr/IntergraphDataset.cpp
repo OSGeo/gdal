@@ -537,7 +537,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.HeaderType.Version    = INGR_HEADER_VERSION;
     hHdr1.HeaderType.Type       = INGR_HEADER_TYPE;
     hHdr1.HeaderType.Is2Dor3D   = INGR_HEADER_2D;
-    hHdr1.DataTypeCode          = (uint16) INGR_GetFormat( eType, (pszCompression!=nullptr)?pszCompression:"None" );
+    hHdr1.DataTypeCode          = (uint16_t) INGR_GetFormat( eType, (pszCompression!=nullptr)?pszCompression:"None" );
     hHdr1.WordsToFollow         = ( ( SIZEOF_HDR1 * 3 ) / 2 ) - 2;
     hHdr1.ApplicationType       = GenericRasterImageFile;
     hHdr1.XViewOrigin           = 0.0;
@@ -551,7 +551,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.TransformationMatrix[15]      = 1.0;
     hHdr1.PixelsPerLine         = nXSize;
     hHdr1.NumberOfLines         = nYSize;
-    hHdr1.DeviceResolution      = static_cast<int16>(nDeviceResolution);
+    hHdr1.DeviceResolution      = static_cast<int16_t>(nDeviceResolution);
     hHdr1.ScanlineOrientation   = UpperLeftHorizontal;
     hHdr1.ScannableFlag         = NoLineHeader;
     hHdr1.RotationAngle         = 0.0;

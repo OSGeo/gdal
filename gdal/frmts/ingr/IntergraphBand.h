@@ -40,10 +40,10 @@ class IntergraphRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 
 protected:
     GDALColorTable *poColorTable;
-    uint32          nDataOffset;
-    uint32          nBlockBufSize;
-    uint32          nBandStart;
-    uint8           nRGBIndex;
+    uint32_t          nDataOffset;
+    uint32_t          nBlockBufSize;
+    uint32_t          nBandStart;
+    uint8_t           nRGBIndex;
 
     INGR_Format     eFormat;
     bool            bTiled;
@@ -51,7 +51,7 @@ protected:
     int             nFullBlocksY;
 
     GByte          *pabyBlockBuf;
-    uint32          nTiles;
+    uint32_t          nTiles;
 
     INGR_TileItem  *pahTiles;
 
@@ -110,7 +110,7 @@ class IntergraphBitmapBand final: public IntergraphRasterBand
 
 private:
     GByte          *pabyBMPBlock;
-    uint32          nBMPSize;
+    uint32_t          nBMPSize;
     int             nQuality;
     int             nRGBBand;
 
@@ -135,9 +135,9 @@ class IntergraphRLEBand final: public IntergraphRasterBand
 
 private:
     GByte          *pabyRLEBlock;
-    uint32          nRLESize;
+    uint32_t          nRLESize;
     int             bRLEBlockLoaded;
-    uint32         *panRLELineOffset;
+    uint32_t         *panRLELineOffset;
 
 public:
     IntergraphRLEBand( IntergraphDataset *poDS,
