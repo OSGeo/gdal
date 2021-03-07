@@ -32,7 +32,6 @@
 
 import copy
 import os
-import sys
 import array
 import struct
 import shutil
@@ -1058,8 +1057,7 @@ def test_nitf_41(not_jpeg_9b):
     jpg_drv = gdal.GetDriverByName('JPEG')
     md = jpg_drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+        pytest.skip('12bit jpeg not available')
 
     gdal.Unlink('data/nitf/U_4017A.NTF.aux.xml')
 
@@ -1081,8 +1079,7 @@ def test_nitf_42(not_jpeg_9b):
     jpg_drv = gdal.GetDriverByName('JPEG')
     md = jpg_drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+        pytest.skip('12bit jpeg not available')
 
     ds = gdal.Open('data/nitf/U_4017A.NTF')
     out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf42.ntf', ds, options=['IC=C3', 'FHDR=NITF02.10'])
@@ -4143,8 +4140,7 @@ def test_nitf_online_14(not_jpeg_9b):
     jpg_drv = gdal.GetDriverByName('JPEG')
     md = jpg_drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+        pytest.skip('12bit jpeg not available')
 
     ds = gdal.Open('tmp/cache/U_4020h.ntf')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16

@@ -34,28 +34,19 @@ from osgeo import gdal
 
 import pytest
 
-
-try:
-    import numpy
-    array = numpy.array
-except ImportError:
-    numpy = None
-    array = list
-
-pytestmark = pytest.mark.skipif(numpy is None, reason="numpy not available")
+# All tests will be skipped if numpy is unavailable.
+np = pytest.importorskip('numpy')
 
 
-INT_DATA = array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
-DOUBLE_DATA = array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])
-STRING_DATA = array(["sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw",
-                     "gbfgbf", "wwqw3", "e", ""])
-STRING_DATA_INTS = array(["197", "83", "46", "29", "1", "78",
-                          "23", "90", "12", "45"])
-STRING_DATA_DOUBLES = array(["0.1", "43.2", "78.1", "9.9", "23.0", "0.92",
-                             "82.5", "0.0", "1.0", "99.0"])
-LONG_STRING_DATA = array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd",
-                          "jkejjjdjd", "edcdcdcdc", "fcdkmk4m534m", "edwededdd",
-                          "dedwedew", "wdedefrfrfrf"])
+INT_DATA = np.array([197, 83, 46, 29, 1, 78, 23, 90, 12, 45])
+DOUBLE_DATA = np.array([0.1, 43.2, 78.1, 9.9, 23.0, 0.92, 82.5, 0.0, 1.0, 99.0])
+STRING_DATA = np.array([
+    "sddf", "wess", "grbgr", "dewd", "ddww", "qwsqw", "gbfgbf", "wwqw3", "e", ""])
+STRING_DATA_INTS = np.array(["197", "83", "46", "29", "1", "78", "23", "90", "12", "45"])
+STRING_DATA_DOUBLES = np.array([
+    "0.1", "43.2", "78.1", "9.9", "23.0", "0.92", "82.5", "0.0", "1.0", "99.0"])
+LONG_STRING_DATA = np.array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd", "jkejjjdjd",
+                             "edcdcdcdc", "fcdkmk4m534m", "edwededdd", "dedwedew", "wdedefrfrfrf"])
 
 
 class HFATestError(Exception):
@@ -74,7 +65,7 @@ def CreateAndWriteRAT(fname):
 
     # write some image data
     band = ds.GetRasterBand(1)
-    data = numpy.zeros((10, 10), numpy.uint8)
+    data = np.zeros((10, 10), np.uint8)
     data[5, 5] = 20
     band.WriteArray(data)
 
@@ -206,7 +197,7 @@ def ReadAndCheckValues(fname, numrows):
         raise HFATestError("double as int column does not match")
 
     data = rat.ReadAsArray(6, 0, 10)
-    if not (data == STRING_DATA_DOUBLES.astype(numpy.double)).all():
+    if not (data == STRING_DATA_DOUBLES.astype(np.double)).all():
         raise HFATestError("double as string column does not match")
 
     data = rat.ReadAsArray(7, 0, 10)
@@ -214,7 +205,7 @@ def ReadAndCheckValues(fname, numrows):
         raise HFATestError("string as int column does not match")
 
     data = rat.ReadAsArray(8, 0, 10)
-    if not (data.astype(numpy.double) == DOUBLE_DATA).all():
+    if not (data.astype(np.double) == DOUBLE_DATA).all():
         raise HFATestError("string as int column does not match")
 
     # print('succeeded reading')

@@ -4298,11 +4298,9 @@ def test_abort_sql():
 # Test ST_Transform() with no record in gpkg_spatial_ref_sys and thus we
 # fallback to EPSG
 
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason='f.GetGeometryRef() returns None on the current Windows CI')
 def test_ogr_gpkg_st_transform_no_record_spatial_ref_sys():
-
-    if sys.platform == 'win32':
-        # For some reason f.GetGeometryRef() returns None on the current Windows CI
-        pytest.skip('Failure on windows')
 
     ds = ogr.GetDriverByName('GPKG').CreateDataSource('/vsimem/test.gpkg')
     lyr = ds.CreateLayer('test')

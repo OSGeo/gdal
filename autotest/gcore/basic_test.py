@@ -58,10 +58,8 @@ def test_basic_test_1():
     pytest.fail('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
 
 
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_basic_test_strace_non_existing_file():
-
-    if not sys.platform.startswith('linux'):
-        pytest.skip()
 
     python_exe = sys.executable
     cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (

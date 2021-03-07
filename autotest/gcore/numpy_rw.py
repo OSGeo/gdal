@@ -29,19 +29,14 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    import numpy
-    from osgeo import gdal_array
-    numpy_available = True
-except ImportError:
-    numpy_available = False
-
 import gdaltest
 from osgeo import gdal
 import pytest
 
 
-pytestmark = pytest.mark.skipif(not numpy_available, reason='numpy not available')
+# All tests will be skipped if numpy or gdal_array are unavailable.
+numpy = pytest.importorskip('numpy')
+gdal_array = pytest.importorskip('osgeo.gdal_array')
 
 ###############################################################################
 # verify that we can load the deprecated gdalnumeric module

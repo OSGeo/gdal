@@ -148,8 +148,9 @@ def netcdf_test_copy_timeout(ifile, band, checksum, ofile, opts=None, driver='NE
             proc.terminate()
             if os.path.exists(ofile):
                 drv.Delete(ofile)
-            print('testCreateCopy() for file %s has reached timeout limit of %d seconds' % (ofile, timeout))
-            pytest.fail()
+            pytest.fail(
+                f'testCreateCopy() for file {ofile} has reached timeout limit of {timeout} seconds')
+
 
 ###############################################################################
 # check support for DEFLATE compression, requires HDF5 and zlib
@@ -1119,9 +1120,10 @@ def test_netcdf_34():
     # valgrind detects memory leaks when this occurs (although it should never happen)
     if proc.is_alive():
         proc.terminate()
-        pytest.fail('testOpen() for file %s has reached timeout limit of %d seconds' % (filename, timeout))
+        pytest.fail(
+            f'testOpen() for file {filename} has reached timeout limit of {timeout} seconds')
 
-    
+
 ###############################################################################
 # test writing a long metadata > 8196 chars (bug #5113)
 

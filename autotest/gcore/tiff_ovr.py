@@ -31,7 +31,6 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
 import array
 import stat
@@ -1387,10 +1386,8 @@ def test_tiff_ovr_43(both_endian):
             except:
                 ds = None
 
-    if gdal.GetLastErrorMsg().find(
-            'Unsupported JPEG data precision 12') != -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+    if gdal.GetLastErrorMsg().find('Unsupported JPEG data precision 12') != -1:
+        pytest.skip('12bit jpeg not available')
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr43.tif', 16, 16, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(4000)

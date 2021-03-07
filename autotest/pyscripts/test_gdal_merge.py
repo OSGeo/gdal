@@ -161,10 +161,10 @@ def test_gdal_merge_4():
 
 
 def test_gdal_merge_5():
+    gdal_array = pytest.importorskip('osgeo.gdal_array')
     try:
-        from osgeo import gdal_array
         gdal_array.BandRasterIONumPy
-    except (ImportError, AttributeError):
+    except AttributeError:
         pytest.skip()
 
     script_path = test_py_scripts.get_py_script('gdal_merge')

@@ -2771,10 +2771,8 @@ def test_ogr_shape_67():
 # Test opening a shape datasource with files with mixed case and then REPACK
 
 
+@pytest.mark.skipif(sys.platform == 'darwin', reason='Fails on MacOSX. Not sure why.')
 def test_ogr_shape_68():
-
-    if sys.platform == 'darwin':
-        pytest.skip("Fails on MacOSX. Not sure why.")
 
     for i in range(2):
         if i == 1 and sys.platform != 'win32':
@@ -2875,10 +2873,8 @@ def test_ogr_shape_69():
 # (shapefile opened twice on Windows)
 
 
+@pytest.mark.skipif(sys.platform != 'win32', reason='Incorrect platform')
 def test_ogr_shape_70():
-
-    if sys.platform != 'win32':
-        pytest.skip()
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_shape_70.shp')
     lyr = ds.CreateLayer('ogr_shape_70')
@@ -2913,10 +2909,8 @@ def test_ogr_shape_70():
 # Test heterogeneous file permissions on .shp and .dbf.
 
 
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_ogr_shape_71():
-
-    if sys.platform.find('linux') != 0:
-        pytest.skip()
 
     if os.getuid() == 0:
         pytest.skip('running as root... skipping')

@@ -3135,16 +3135,13 @@ aws_secret_access_key = bar
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
     gdal.Unlink('/vsimem/aws_config')
 
+
 ###############################################################################
 # Read credentials from simulated EC2 instance
-
-
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_vsis3_read_credentials_ec2_imdsv2():
 
     if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
@@ -3197,16 +3194,13 @@ def test_vsis3_read_credentials_ec2_imdsv2():
     gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
+
 ###############################################################################
 # Read credentials from simulated EC2 instance that only supports IMDSv1
-
-
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_vsis3_read_credentials_ec2_imdsv1():
 
     if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
@@ -3246,17 +3240,14 @@ def test_vsis3_read_credentials_ec2_imdsv1():
     gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
+
 ###############################################################################
 # Read credentials from simulated EC2 instance with expiration of the
 # cached credentials
-
-
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_vsis3_read_credentials_ec2_expiration():
 
     if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')

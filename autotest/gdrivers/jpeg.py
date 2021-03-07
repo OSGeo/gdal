@@ -344,8 +344,7 @@ def test_jpeg_10():
     drv = gdal.GetDriverByName('JPEG')
     md = drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+        pytest.skip('12bit jpeg not available')
 
     try:
         os.remove('data/jpeg/12bit_rose_extract.jpg.aux.xml')
@@ -377,8 +376,7 @@ def test_jpeg_11():
     drv = gdal.GetDriverByName('JPEG')
     md = drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+        pytest.skip('12bit jpeg not available')
 
     ds = gdal.Open('data/jpeg/12bit_rose_extract.jpg')
     out_ds = gdal.GetDriverByName('JPEG').CreateCopy('tmp/jpeg11.jpg', ds)
@@ -443,8 +441,7 @@ def test_jpeg_14():
     drv = gdal.GetDriverByName('JPEG')
     md = drv.GetMetadata()
     if md[gdal.DMD_CREATIONDATATYPES].find('UInt16') == -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+        pytest.skip('12bit jpeg not available')
 
     src_ds = gdal.Open('data/jpeg/12bit_rose_extract.jpg')
     ds = drv.CreateCopy('/vsistdout_redirect//vsimem/tmp.jpg', src_ds)
@@ -886,17 +883,14 @@ def test_jpeg_26():
     assert ds is None
     gdal.Unlink('/vsimem/jpeg_26.jpg')
 
+
 ###############################################################################
 # Test reading a file that contains the 2 denial of service
 # vulnerabilities listed in
 # http://www.libjpeg-jpeg_26.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
-
+@pytest.mark.skipif(sys.platform == 'win32', reason='Fails for some reason on Windows')
 def test_jpeg_27_max_memory():
-
-    # Fails for some reason on Windows.
-    if sys.platform == 'win32':
-        pytest.skip()
 
     # Should error out with 'Reading this image would require
     # libjpeg to allocate at least...'
