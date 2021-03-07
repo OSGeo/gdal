@@ -31,6 +31,7 @@
 
 
 #include <gdal_priv.h>
+#include <cassert>
 #include <vector>
 #include <algorithm>
 
@@ -325,7 +326,17 @@ ECBand::ECBand(ECDataset* parent, int b, int level) : lvl(level), ci(GCI_Undefin
     nBlockXSize = nBlockYSize = 256;
 
     // Default color interpretation
-    ci = (parent->nBands > 2) ? rgba[b - 1] : la[b - 1];
+    assert( b - 1 >= 0 );
+    if( parent->nBands >= 3 )
+    {
+        assert( b - 1 < static_cast<int>(CPL_ARRAYSIZE(rgba)) );
+        ci = rgba[b - 1];
+    }
+    else
+    {
+        assert( b - 1 < static_cast<int>(CPL_ARRAYSIZE(la)) );
+        ci = la[b - 1];
+    }
     if (0 == lvl)
         AddOverviews();
 }
