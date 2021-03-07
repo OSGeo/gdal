@@ -2996,7 +2996,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     double *padfTiePoints = nullptr;
     double *padfScale = nullptr;
     double *padfMatrix = nullptr;
-    int16 nCount = 0;
+    int16_t nCount = 0;
 
     padfGeoTransform[0] = 0.0;
     padfGeoTransform[1] = 1.0;
