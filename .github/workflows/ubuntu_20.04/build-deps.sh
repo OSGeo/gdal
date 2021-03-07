@@ -51,7 +51,35 @@ mkdir tiledb \
     && make -j$(nproc) \
     && make install-tiledb \
     && cd ../.. \
-    && rm -f tiledeb
+    && rm -rf tiledeb
 
 # Workaround bug in ogdi packaging
 ln -s /usr/lib/ogdi/libvrf.so /usr/lib
+
+# Install MrSID SDK
+mkdir mrsid \
+    && wget -q https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.4.4709-rhel6.x86-64.gcc531.tar.gz -O - \
+      | tar xz -C mrsid --strip-components=1 \
+    && cp -r mrsid/Raster_DSDK/include/* /usr/local/include \
+    && cp -r mrsid/Raster_DSDK/lib/* /usr/local/lib \
+    && cp -r mrsid/Lidar_DSDK/include/* /usr/local/include \
+    && cp -r mrsid/Lidar_DSDK/lib/* /usr/local/lib \
+    && sed -i "s/__GNUC__ <= 5/__GNUC__ <= 99/" /usr/local/include/lt_platform.h \
+    && cd .. \
+    && rm -rf mrsid
+
+# Install ECW SDK
+(cd / && wget -q https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz && tar xzf install-libecwj2-3.3-ubuntu-20.04.tar.gz && rm -f install-libecwj2-3.3-ubuntu-20.04.tar.gz ) \
+  && echo "/opt/libecwj2-3.3/lib" > /etc/ld.so.conf.d/libecwj2-3.3.conf
+
+# Install FileGDB API SDK
+wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && tar -xzf FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && chown -R root:root FileGDB_API-64gcc51 \
+  && mv FileGDB_API-64gcc51 /usr/local/FileGDB_API \
+  && rm -rf /usr/local/FileGDB_API/lib/libstdc++* \
+  && cp /usr/local/FileGDB_API/include/* /usr/include \
+  && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && echo "/usr/local/FileGDB_API/lib" > /etc/ld.so.conf.d/filegdbapi.conf
+
+ldconfig
