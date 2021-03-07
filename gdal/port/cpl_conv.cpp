@@ -2016,7 +2016,7 @@ void CPL_STDCALL CPLFreeConfig()
  * A configuration file is a text file in a .ini style format, that lists
  * configuration options and their values.
  * Lines starting with # are comment lines.
- * 
+ *
  * Example:
  * <pre>
  * [configoptions]
@@ -2087,7 +2087,7 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
 /** Load configuration from a set of predefined files.
  *
  * If the environment variable (or configuration option) GDAL_CONFIG_FILE is
- * set, then CPLLoadConfigOptionsFromFile() will be called with the value of 
+ * set, then CPLLoadConfigOptionsFromFile() will be called with the value of
  * this configuration option as the file location.
  *
  * Otherwise, for Unix builds, CPLLoadConfigOptionsFromFile() will be called
@@ -2193,10 +2193,8 @@ constexpr double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
 double CPLDMSToDec( const char *is )
 
 {
-    int sign = 0;
-
     // Copy string into work space.
-    while( isspace(static_cast<unsigned char>(sign = *is)) )
+    while( isspace(static_cast<unsigned char>(*is)) )
         ++is;
 
     const char *p = is;
@@ -2208,7 +2206,8 @@ double CPLDMSToDec( const char *is )
     *s = '\0';
     // It is possible that a really odd input (like lots of leading
     // zeros) could be truncated in copying into work.  But...
-    sign = *(s = work);
+    s = work;
+    int sign = *s;
 
     if( sign == '+' || sign == '-' )
         s++;
