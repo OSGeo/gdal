@@ -51,16 +51,16 @@ typedef struct {
         int             zipquality;             /* deflate */
         int             state;                  /* state flags */
 
-        uint32          segment_width;
-        uint32          segment_height;
+        uint32_t          segment_width;
+        uint32_t          segment_height;
 
         unsigned int    uncompressed_size;
         unsigned int    uncompressed_alloc;
-        uint8          *uncompressed_buffer;
+        uint8_t          *uncompressed_buffer;
         unsigned int    uncompressed_offset;
 
         unsigned int    mask_size;
-        uint8          *mask_buffer;
+        uint8_t          *mask_buffer;
 
         unsigned int    compressed_size;
         void           *compressed_buffer;
@@ -78,8 +78,8 @@ typedef struct {
 #define DecoderState(tif)       LState(tif)
 #define EncoderState(tif)       LState(tif)
 
-static int LERCEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s);
-static int LERCDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s);
+static int LERCEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s);
+static int LERCDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s);
 
 static int
 LERCFixupTags(TIFF* tif)
@@ -166,8 +166,8 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
                                    const char* module)
 {
     TIFFDirectory *td = &tif->tif_dir;
-    uint64 new_size_64;
-    uint64 new_alloc_64;
+    uint64_t new_size_64;
+    uint64_t new_alloc_64;
     unsigned int new_size;
     unsigned int new_alloc;
 
@@ -183,7 +183,7 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
                 sp->segment_height = td->td_rowsperstrip;
     }
 
-    new_size_64 = (uint64)sp->segment_width * sp->segment_height *
+    new_size_64 = (uint64_t)sp->segment_width * sp->segment_height *
                                         (td->td_bitspersample / 8);
     if( td->td_planarconfig == PLANARCONFIG_CONTIG )
     {
@@ -254,7 +254,7 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
                 sp->uncompressed_alloc = 0;
                 return 0;
             }
-            sp->mask_buffer = (uint8*)mask_buffer;
+            sp->mask_buffer = (uint8_t*)mask_buffer;
             sp->mask_size = mask_size;
         }
     }
@@ -266,7 +266,7 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
 * Setup state for decoding a strip.
 */
 static int
-LERCPreDecode(TIFF* tif, uint16 s)
+LERCPreDecode(TIFF* tif, uint16_t s)
 {
         static const char module[] = "LERCPreDecode";
         lerc_status lerc_ret;
@@ -277,7 +277,7 @@ LERCPreDecode(TIFF* tif, uint16 s)
         unsigned nomask_bands = td->td_samplesperpixel;
         int ndims;
         int use_mask = 0;
-        uint8* lerc_data = tif->tif_rawcp;
+        uint8_t* lerc_data = tif->tif_rawcp;
         unsigned int lerc_data_size = (unsigned int)tif->tif_rawcc;
 
         (void) s;
@@ -576,7 +576,7 @@ LERCPreDecode(TIFF* tif, uint16 s)
 * Decode a strip, tile or scanline.
 */
 static int
-LERCDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
+LERCDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 {
         static const char module[] = "LERCDecode";
         LERCState* sp = DecoderState(tif);
@@ -592,8 +592,8 @@ LERCDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
             return 0;
         }
 
-        if( (uint64)sp->uncompressed_offset +
-                                        (uint64)occ > sp->uncompressed_size )
+        if( (uint64_t)sp->uncompressed_offset +
+                                        (uint64_t)occ > sp->uncompressed_size )
         {
             TIFFErrorExt(tif->tif_clientdata, module,
                          "Too many bytes read");
@@ -627,7 +627,7 @@ LERCSetupEncode(TIFF* tif)
 * Reset encoding state at the start of a strip.
 */
 static int
-LERCPreEncode(TIFF* tif, uint16 s)
+LERCPreEncode(TIFF* tif, uint16_t s)
 {
         static const char module[] = "LERCPreEncode";
         LERCState *sp = EncoderState(tif);
@@ -652,7 +652,7 @@ LERCPreEncode(TIFF* tif, uint16 s)
 * Encode a chunk of pixels.
 */
 static int
-LERCEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
+LERCEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 {
         static const char module[] = "LERCEncode";
         LERCState *sp = EncoderState(tif);
@@ -661,8 +661,8 @@ LERCEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
         assert(sp != NULL);
         assert(sp->state == LSTATE_INIT_ENCODE);
 
-        if( (uint64)sp->uncompressed_offset +
-                                    (uint64)cc > sp->uncompressed_size )
+        if( (uint64_t)sp->uncompressed_offset +
+                                    (uint64_t)cc > sp->uncompressed_size )
         {
             TIFFErrorExt(tif->tif_clientdata, module,
                          "Too many bytes written");
@@ -936,7 +936,7 @@ LERCPostEncode(TIFF* tif)
 #endif
             {
                 int ret;
-                uint8* tif_rawdata_backup = tif->tif_rawdata;
+                uint8_t* tif_rawdata_backup = tif->tif_rawdata;
                 tif->tif_rawdata = sp->uncompressed_buffer;
                 ret = TIFFFlushData1(tif);
                 tif->tif_rawdata = tif_rawdata_backup;
@@ -963,7 +963,7 @@ LERCPostEncode(TIFF* tif)
 
             {
                 int ret;
-                uint8* tif_rawdata_backup = tif->tif_rawdata;
+                uint8_t* tif_rawdata_backup = tif->tif_rawdata;
                 tif->tif_rawdata = sp->uncompressed_buffer;
                 tif->tif_rawcc = zstd_ret;
                 ret = TIFFFlushData1(tif);
@@ -987,7 +987,7 @@ LERCPostEncode(TIFF* tif)
         else
         {
             int ret;
-            uint8* tif_rawdata_backup = tif->tif_rawdata;
+            uint8_t* tif_rawdata_backup = tif->tif_rawdata;
             tif->tif_rawdata = sp->compressed_buffer;
             tif->tif_rawcc = numBytesWritten;
             ret = TIFFFlushData1(tif);
@@ -1046,7 +1046,7 @@ static const TIFFField LERCFields[] = {
           TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, TRUE, FALSE, "", NULL },
 };
 
-static int LERCVSetFieldBase(TIFF* tif, uint32 tag, ...)
+static int LERCVSetFieldBase(TIFF* tif, uint32_t tag, ...)
 {
     LERCState* sp = LState(tif);
     int ret;
@@ -1058,7 +1058,7 @@ static int LERCVSetFieldBase(TIFF* tif, uint32 tag, ...)
 }
 
 static int
-LERCVSetField(TIFF* tif, uint32 tag, va_list ap)
+LERCVSetField(TIFF* tif, uint32_t tag, va_list ap)
 {
 	static const char module[] = "LERCVSetField";
         LERCState* sp = LState(tif);
@@ -1066,7 +1066,7 @@ LERCVSetField(TIFF* tif, uint32 tag, va_list ap)
         switch (tag) {
         case TIFFTAG_LERC_PARAMETERS:
         {
-                uint32 count = va_arg(ap, int);
+                uint32_t count = va_arg(ap, int);
                 int* params = va_arg(ap, int*);
                 if( count < 2 )
                 {
@@ -1167,7 +1167,7 @@ LERCVSetField(TIFF* tif, uint32 tag, va_list ap)
 }
 
 static int
-LERCVGetField(TIFF* tif, uint32 tag, va_list ap)
+LERCVGetField(TIFF* tif, uint32_t tag, va_list ap)
 {
         LERCState* sp = LState(tif);
 
@@ -1212,7 +1212,7 @@ int TIFFInitLERC(TIFF* tif, int scheme)
         /*
         * Allocate state block so tag methods have storage to record values.
         */
-        tif->tif_data = (uint8*) _TIFFcalloc(1, sizeof(LERCState));
+        tif->tif_data = (uint8_t*) _TIFFcalloc(1, sizeof(LERCState));
         if (tif->tif_data == NULL)
                 goto bad;
         sp = LState(tif);

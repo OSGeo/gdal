@@ -85,8 +85,8 @@ typedef struct {
 #define DecoderState(tif)       ZState(tif)
 #define EncoderState(tif)       ZState(tif)
 
-static int ZIPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s);
-static int ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s);
+static int ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s);
+static int ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s);
 
 static int
 ZIPFixupTags(TIFF* tif)
@@ -126,7 +126,7 @@ ZIPSetupDecode(TIFF* tif)
  * Setup state for decoding a strip.
  */
 static int
-ZIPPreDecode(TIFF* tif, uint16 s)
+ZIPPreDecode(TIFF* tif, uint16_t s)
 {
 	ZIPState* sp = DecoderState(tif);
 
@@ -144,12 +144,12 @@ ZIPPreDecode(TIFF* tif, uint16 s)
 	    we need to simplify this code to reflect a ZLib that is likely updated
 	    to deal with 8byte memory sizes, though this code will respond
 	    appropriately even before we simplify it */
-	sp->stream.avail_in = (uint64)tif->tif_rawcc < 0xFFFFFFFFU ? (uInt) tif->tif_rawcc : 0xFFFFFFFFU;
+	sp->stream.avail_in = (uint64_t)tif->tif_rawcc < 0xFFFFFFFFU ? (uInt) tif->tif_rawcc : 0xFFFFFFFFU;
 	return (inflateReset(&sp->stream) == Z_OK);
 }
 
 static int
-ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
+ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 {
 	static const char module[] = "ZIPDecode";
 	ZIPState* sp = DecoderState(tif);
@@ -174,20 +174,20 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 
             /* Check if we are in the situation where we can use libdeflate */
             if (isTiled(tif)) {
-                if( TIFFTileSize64(tif) != (uint64)occ )
+                if( TIFFTileSize64(tif) != (uint64_t)occ )
                     break;
             } else {
-                uint32 strip_height = td->td_imagelength - tif->tif_row;
+                uint32_t strip_height = td->td_imagelength - tif->tif_row;
                 if (strip_height > td->td_rowsperstrip)
                     strip_height = td->td_rowsperstrip;
-                if( TIFFVStripSize64(tif, strip_height) != (uint64)occ )
+                if( TIFFVStripSize64(tif, strip_height) != (uint64_t)occ )
                     break;
             }
 
             /* Check for overflow */
-            if( (size_t)tif->tif_rawcc != (uint64)tif->tif_rawcc )
+            if( (size_t)tif->tif_rawcc != (uint64_t)tif->tif_rawcc )
                 break;
-            if( (size_t)occ != (uint64)occ )
+            if( (size_t)occ != (uint64_t)occ )
                 break;
 
             /* Go for decompression using libdeflate */
@@ -238,8 +238,8 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	    appropriately even before we simplify it */
 	do {
                 int state;
-                uInt avail_in_before = (uint64)tif->tif_rawcc <= 0xFFFFFFFFU ? (uInt)tif->tif_rawcc : 0xFFFFFFFFU;
-                uInt avail_out_before = (uint64)occ < 0xFFFFFFFFU ? (uInt) occ : 0xFFFFFFFFU;
+                uInt avail_in_before = (uint64_t)tif->tif_rawcc <= 0xFFFFFFFFU ? (uInt)tif->tif_rawcc : 0xFFFFFFFFU;
+                uInt avail_out_before = (uint64_t)occ < 0xFFFFFFFFU ? (uInt) occ : 0xFFFFFFFFU;
                 sp->stream.avail_in = avail_in_before;
                 sp->stream.avail_out = avail_out_before;
 		state = inflate(&sp->stream, Z_PARTIAL_FLUSH);
@@ -261,8 +261,8 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	} while (occ > 0);
 	if (occ != 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "Not enough data at scanline %lu (short %" TIFF_UINT64_FORMAT " bytes)",
-		    (unsigned long) tif->tif_row, (TIFF_UINT64_T) occ);
+		    "Not enough data at scanline %lu (short %" PRIu64 " bytes)",
+		    (unsigned long) tif->tif_row, (uint64_t) occ);
 		return (0);
 	}
 
@@ -301,7 +301,7 @@ ZIPSetupEncode(TIFF* tif)
  * Reset encoding state at the start of a strip.
  */
 static int
-ZIPPreEncode(TIFF* tif, uint16 s)
+ZIPPreEncode(TIFF* tif, uint16_t s)
 {
 	ZIPState *sp = EncoderState(tif);
 
@@ -318,7 +318,7 @@ ZIPPreEncode(TIFF* tif, uint16 s)
 	    we need to simplify this code to reflect a ZLib that is likely updated
 	    to deal with 8byte memory sizes, though this code will respond
 	    appropriately even before we simplify it */
-	sp->stream.avail_out = (uint64)tif->tif_rawdatasize <= 0xFFFFFFFFU ? (uInt)tif->tif_rawdatasize : 0xFFFFFFFFU;
+	sp->stream.avail_out = (uint64_t)tif->tif_rawdatasize <= 0xFFFFFFFFU ? (uInt)tif->tif_rawdatasize : 0xFFFFFFFFU;
 	return (deflateReset(&sp->stream) == Z_OK);
 }
 
@@ -326,7 +326,7 @@ ZIPPreEncode(TIFF* tif, uint16 s)
  * Encode a chunk of pixels.
  */
 static int
-ZIPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
+ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 {
 	static const char module[] = "ZIPEncode";
 	ZIPState *sp = EncoderState(tif);
@@ -356,20 +356,20 @@ ZIPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 
             /* Check if we are in the situation where we can use libdeflate */
             if (isTiled(tif)) {
-                if( TIFFTileSize64(tif) != (uint64)cc )
+                if( TIFFTileSize64(tif) != (uint64_t)cc )
                     break;
             } else {
-                uint32 strip_height = td->td_imagelength - tif->tif_row;
+                uint32_t strip_height = td->td_imagelength - tif->tif_row;
                 if (strip_height > td->td_rowsperstrip)
                     strip_height = td->td_rowsperstrip;
-                if( TIFFVStripSize64(tif, strip_height) != (uint64)cc )
+                if( TIFFVStripSize64(tif, strip_height) != (uint64_t)cc )
                     break;
             }
 
             /* Check for overflow */
-            if( (size_t)tif->tif_rawdatasize != (uint64)tif->tif_rawdatasize )
+            if( (size_t)tif->tif_rawdatasize != (uint64_t)tif->tif_rawdatasize )
                 break;
-            if( (size_t)cc != (uint64)cc )
+            if( (size_t)cc != (uint64_t)cc )
                 break;
 
             /* Go for compression using libdeflate */
@@ -430,7 +430,7 @@ ZIPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	    to deal with 8byte memory sizes, though this code will respond
 	    appropriately even before we simplify it */
 	do {
-                uInt avail_in_before = (uint64)cc <= 0xFFFFFFFFU ? (uInt)cc : 0xFFFFFFFFU;
+                uInt avail_in_before = (uint64_t)cc <= 0xFFFFFFFFU ? (uInt)cc : 0xFFFFFFFFU;
                 sp->stream.avail_in = avail_in_before;
 		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
 			TIFFErrorExt(tif->tif_clientdata, module, 
@@ -443,7 +443,7 @@ ZIPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 			if (!TIFFFlushData1(tif))
 				return 0;
 			sp->stream.next_out = tif->tif_rawdata;
-			sp->stream.avail_out = (uint64)tif->tif_rawdatasize <= 0xFFFFFFFFU ? (uInt)tif->tif_rawdatasize : 0xFFFFFFFFU;
+			sp->stream.avail_out = (uint64_t)tif->tif_rawdatasize <= 0xFFFFFFFFU ? (uInt)tif->tif_rawdatasize : 0xFFFFFFFFU;
 		}
 		cc -= (avail_in_before - sp->stream.avail_in);
 	} while (cc > 0);
@@ -478,7 +478,7 @@ ZIPPostEncode(TIFF* tif)
 				if (!TIFFFlushData1(tif))
 					return 0;
 				sp->stream.next_out = tif->tif_rawdata;
-				sp->stream.avail_out = (uint64)tif->tif_rawdatasize <= 0xFFFFFFFFU ? (uInt)tif->tif_rawdatasize : 0xFFFFFFFFU;
+				sp->stream.avail_out = (uint64_t)tif->tif_rawdatasize <= 0xFFFFFFFFU ? (uInt)tif->tif_rawdatasize : 0xFFFFFFFFU;
 			}
 			break;
 		default:
@@ -524,7 +524,7 @@ ZIPCleanup(TIFF* tif)
 }
 
 static int
-ZIPVSetField(TIFF* tif, uint32 tag, va_list ap)
+ZIPVSetField(TIFF* tif, uint32_t tag, va_list ap)
 {
 	static const char module[] = "ZIPVSetField";
 	ZIPState* sp = ZState(tif);
@@ -588,7 +588,7 @@ ZIPVSetField(TIFF* tif, uint32 tag, va_list ap)
 }
 
 static int
-ZIPVGetField(TIFF* tif, uint32 tag, va_list ap)
+ZIPVGetField(TIFF* tif, uint32_t tag, va_list ap)
 {
 	ZIPState* sp = ZState(tif);
 
@@ -636,7 +636,7 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
-	tif->tif_data = (uint8*) _TIFFcalloc(sizeof (ZIPState), 1);
+	tif->tif_data = (uint8_t*) _TIFFcalloc(sizeof (ZIPState), 1);
 	if (tif->tif_data == NULL)
 		goto bad;
 	sp = ZState(tif);

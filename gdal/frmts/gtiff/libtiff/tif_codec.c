@@ -110,7 +110,7 @@ _notConfigured(TIFF* tif)
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
         char compression_code[20];
         
-        sprintf(compression_code, "%d",tif->tif_dir.td_compression );
+        sprintf(compression_code, "%"PRIu16, tif->tif_dir.td_compression );
 	TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
                      "%s compression support is not configured", 
                      c ? c->name : compression_code );
@@ -142,7 +142,7 @@ NotConfigured(TIFF* tif, int scheme)
  */
 
 int
-TIFFIsCODECConfigured(uint16 scheme)
+TIFFIsCODECConfigured(uint16_t scheme)
 {
 	const TIFFCodec* codec = TIFFFindCODEC(scheme);
 

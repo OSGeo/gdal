@@ -76,7 +76,7 @@ TIFFCleanup(TIFF* tif)
          * Clean up custom fields.
          */
 	if (tif->tif_fields && tif->tif_nfields > 0) {
-		uint32 i;
+		uint32_t i;
 
 		for (i = 0; i < tif->tif_nfields; i++) {
 			TIFFField *fld = tif->tif_fields[i];
@@ -91,7 +91,7 @@ TIFFCleanup(TIFF* tif)
 	}
 
         if (tif->tif_nfieldscompat > 0) {
-                uint32 i;
+                uint32_t i;
 
                 for (i = 0; i < tif->tif_nfieldscompat; i++) {
                         if (tif->tif_fieldscompat[i].allocated_size)

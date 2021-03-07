@@ -32,7 +32,7 @@
  * ``Library-private'' Support for the Predictor Tag
  */
 
-typedef int (*TIFFEncodeDecodeMethod)(TIFF* tif, uint8* buf, tmsize_t size);
+typedef int (*TIFFEncodeDecodeMethod)(TIFF* tif, uint8_t* buf, tmsize_t size);
 
 /*
  * Codecs that want to support the Predictor tag must place

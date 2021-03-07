@@ -57,8 +57,8 @@ typedef struct {
 #define DecoderState(tif)       LState(tif)
 #define EncoderState(tif)       LState(tif)
 
-static int ZSTDEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s);
-static int ZSTDDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s);
+static int ZSTDEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s);
+static int ZSTDDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s);
 
 static int
 ZSTDFixupTags(TIFF* tif)
@@ -89,7 +89,7 @@ ZSTDSetupDecode(TIFF* tif)
 * Setup state for decoding a strip.
 */
 static int
-ZSTDPreDecode(TIFF* tif, uint16 s)
+ZSTDPreDecode(TIFF* tif, uint16_t s)
 {
         static const char module[] = "ZSTDPreDecode";
         ZSTDState* sp = DecoderState(tif);
@@ -125,7 +125,7 @@ ZSTDPreDecode(TIFF* tif, uint16 s)
 }
 
 static int
-ZSTDDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
+ZSTDDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 {
         static const char module[] = "ZSTDDecode";
         ZSTDState* sp = DecoderState(tif);
@@ -192,7 +192,7 @@ ZSTDSetupEncode(TIFF* tif)
 * Reset encoding state at the start of a strip.
 */
 static int
-ZSTDPreEncode(TIFF* tif, uint16 s)
+ZSTDPreEncode(TIFF* tif, uint16_t s)
 {
         static const char module[] = "ZSTDPreEncode";
         ZSTDState *sp = EncoderState(tif);
@@ -233,7 +233,7 @@ ZSTDPreEncode(TIFF* tif, uint16 s)
 * Encode a chunk of pixels.
 */
 static int
-ZSTDEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
+ZSTDEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 {
         static const char module[] = "ZSTDEncode";
         ZSTDState *sp = EncoderState(tif);
@@ -326,7 +326,7 @@ ZSTDCleanup(TIFF* tif)
 }
 
 static int
-ZSTDVSetField(TIFF* tif, uint32 tag, va_list ap)
+ZSTDVSetField(TIFF* tif, uint32_t tag, va_list ap)
 {
 	static const char module[] = "ZSTDVSetField";
         ZSTDState* sp = LState(tif);
@@ -349,7 +349,7 @@ ZSTDVSetField(TIFF* tif, uint32 tag, va_list ap)
 }
 
 static int
-ZSTDVGetField(TIFF* tif, uint32 tag, va_list ap)
+ZSTDVGetField(TIFF* tif, uint32_t tag, va_list ap)
 {
         ZSTDState* sp = LState(tif);
 
@@ -375,6 +375,7 @@ TIFFInitZSTD(TIFF* tif, int scheme)
         static const char module[] = "TIFFInitZSTD";
         ZSTDState* sp;
 
+        (void) scheme;
         assert( scheme == COMPRESSION_ZSTD );
 
         /*
@@ -389,7 +390,7 @@ TIFFInitZSTD(TIFF* tif, int scheme)
         /*
         * Allocate state block so tag methods have storage to record values.
         */
-        tif->tif_data = (uint8*) _TIFFmalloc(sizeof(ZSTDState));
+        tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof(ZSTDState));
         if (tif->tif_data == NULL)
                 goto bad;
         sp = LState(tif);

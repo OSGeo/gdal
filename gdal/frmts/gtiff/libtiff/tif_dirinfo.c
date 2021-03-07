@@ -415,7 +415,7 @@ void
 _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* fieldarray)
 {
 	if (tif->tif_fields && tif->tif_nfields > 0) {
-		uint32 i;
+		uint32_t i;
 
 		for (i = 0; i < tif->tif_nfields; i++) {
 			TIFFField *fld = tif->tif_fields[i];
@@ -464,12 +464,12 @@ tagNameCompare(const void* a, const void* b)
 }
 
 int
-_TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32 n)
+_TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32_t n)
 {
 	static const char module[] = "_TIFFMergeFields";
 	static const char reason[] = "for fields array";
 	/* TIFFField** tp; */
-	uint32 i;
+	uint32_t i;
 
         tif->tif_foundfield = NULL;
 
@@ -511,7 +511,7 @@ _TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32 n)
 void
 _TIFFPrintFieldInfo(TIFF* tif, FILE* fd)
 {
-	uint32 i;
+	uint32_t i;
 
 	fprintf(fd, "%s: \n", tif->tif_name);
 	for (i = 0; i < tif->tif_nfields; i++) {
@@ -677,7 +677,7 @@ _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
 
 
 const TIFFField*
-TIFFFindField(TIFF* tif, uint32 tag, TIFFDataType dt)
+TIFFFindField(TIFF* tif, uint32_t tag, TIFFDataType dt)
 {
 	TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0, 0, 0, NULL, NULL};
 	TIFFField* pkey = &key;
@@ -729,7 +729,7 @@ _TIFFFindFieldByName(TIFF* tif, const char *field_name, TIFFDataType dt)
 }
 
 const TIFFField*
-TIFFFieldWithTag(TIFF* tif, uint32 tag)
+TIFFFieldWithTag(TIFF* tif, uint32_t tag)
 {
 	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
 	if (!fip) {
@@ -752,7 +752,7 @@ TIFFFieldWithName(TIFF* tif, const char *field_name)
 	return (fip);
 }
 
-uint32
+uint32_t
 TIFFFieldTag(const TIFFField* fip)
 {
 	return fip->field_tag;
@@ -789,7 +789,7 @@ TIFFFieldWriteCount(const TIFFField* fip)
 }
 
 const TIFFField*
-_TIFFFindOrRegisterField(TIFF *tif, uint32 tag, TIFFDataType dt)
+_TIFFFindOrRegisterField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 
 {
 	const TIFFField *fld;
@@ -805,7 +805,7 @@ _TIFFFindOrRegisterField(TIFF *tif, uint32 tag, TIFFDataType dt)
 }
 
 TIFFField*
-_TIFFCreateAnonField(TIFF *tif, uint32 tag, TIFFDataType field_type)
+_TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 {
 	TIFFField *fld;
 	(void) tif;
@@ -1059,13 +1059,13 @@ _TIFFSetGetType(TIFFDataType type, short count, unsigned char passcount)
 }
 
 int
-TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32 n)
+TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 {
 	static const char module[] = "TIFFMergeFieldInfo";
 	static const char reason[] = "for fields array";
 	TIFFField *tp;
 	size_t nfields;
-	uint32 i;
+	uint32_t i;
 
 	if (tif->tif_nfieldscompat > 0) {
 		tif->tif_fieldscompat = (TIFFFieldArray *)

@@ -382,7 +382,7 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES( TIFF* hTIFF,
              "/vsimem/tables_%p", &sDInfo);
     VSILFILE* fpTABLES = VSIFOpenL(szTmpFilename, "wb+");
 
-    uint16 nPhotometric = 0;
+    uint16_t nPhotometric = 0;
     TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &nPhotometric );
 
     jpeg_vsiio_dest( &sCInfo, fpTABLES );
@@ -467,11 +467,11 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
 /*      Write TIFFTAG_REFERENCEBLACKWHITE if needed.                    */
 /* -------------------------------------------------------------------- */
 
-    uint16 nPhotometric = 0;
+    uint16_t nPhotometric = 0;
     if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
-    uint16 nBitsPerSample = 0;
+    uint16_t nBitsPerSample = 0;
     if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(nBitsPerSample)) )
         nBitsPerSample = 1;
 
@@ -872,7 +872,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     }
     else
     {
-        uint32 nRowsPerStrip = 0;
+        uint32_t nRowsPerStrip = 0;
         if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP,
                         &(nRowsPerStrip) ) )
         {
@@ -884,7 +884,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
         // If the rows per strip is larger than the file we will get
         // confused.  libtiff internally will treat the rowsperstrip as
         // the image height and it is best if we do too. (#4468)
-        if( nRowsPerStrip > static_cast<uint32>(nYSize) )
+        if( nRowsPerStrip > static_cast<uint32_t>(nYSize) )
             nRowsPerStrip = nYSize;
 
         nBlockXSize = nXSize;

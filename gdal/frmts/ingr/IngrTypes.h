@@ -36,6 +36,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 #include <cmath>
+#include <cstdint>
 
 CPL_C_START
 #include "tiffio.h"
@@ -56,10 +57,6 @@ CPL_C_END
 //    Data type convention
 //  ----------------------------------------------------------------------------
 
-typedef   signed char       int8;
-typedef unsigned char       uint8;
-typedef   signed short      int16;
-typedef unsigned short      uint16;
 typedef double              real64;
 typedef float               real32;
 
@@ -69,13 +66,13 @@ typedef float               real32;
 
 typedef struct {
 #if defined(CPL_LSB)
-    uint16 Version   : 6;        // ??????00 00000000
-    uint16 Is2Dor3D  : 2;        // 000000?? 00000000
+    uint16_t Version   : 6;        // ??????00 00000000
+    uint16_t Is2Dor3D  : 2;        // 000000?? 00000000
 #else
-    uint16 Is2Dor3D  : 2;        // 000000?? 00000000
-    uint16 Version   : 6;        // ??????00 00000000
+    uint16_t Is2Dor3D  : 2;        // 000000?? 00000000
+    uint16_t Version   : 6;        // ??????00 00000000
 #endif
-    uint16 Type      : 8;        // 00000000 ????????
+    uint16_t Type      : 8;        // 00000000 ????????
 } INGR_HeaderType;
 
 //  ----------------------------------------------------------------------------
@@ -84,9 +81,9 @@ typedef struct {
 
 typedef union
 {
-    uint8   AsUint8;
-    uint16  AsUint16;
-    uint32  AsUint32;
+    uint8_t   AsUint8;
+    uint16_t  AsUint16;
+    uint32_t  AsUint32;
     real32  AsReal32;
     real64  AsReal64;
 } INGR_MinMax;
@@ -212,10 +209,10 @@ typedef enum {
 
 struct vlt_slot
 {
-    uint16 v_slot;
-    uint16 v_red;
-    uint16 v_green;
-    uint16 v_blue;
+    uint16_t v_slot;
+    uint16_t v_red;
+    uint16_t v_green;
+    uint16_t v_blue;
 };
 
 //  ----------------------------------------------------------------------------
@@ -224,9 +221,9 @@ struct vlt_slot
 
 struct igds_slot
 {
-    uint8 v_red;
-    uint8 v_green;
-    uint8 v_blue;
+    uint8_t v_red;
+    uint8_t v_green;
+    uint8_t v_blue;
 };
 
 //  ----------------------------------------------------------------------------
@@ -235,9 +232,9 @@ struct igds_slot
 
 typedef struct {
     INGR_HeaderType     HeaderType;
-    uint16              WordsToFollow;
-    uint16              DataTypeCode;
-    uint16              ApplicationType;
+    uint16_t              WordsToFollow;
+    uint16_t              DataTypeCode;
+    uint16_t              ApplicationType;
     real64              XViewOrigin;
     real64              YViewOrigin;
     real64              ZViewOrigin;
@@ -245,14 +242,14 @@ typedef struct {
     real64              YViewExtent;
     real64              ZViewExtent;
     real64              TransformationMatrix[16];
-    uint32              PixelsPerLine;
-    uint32              NumberOfLines;
-    int16               DeviceResolution;
-    uint8               ScanlineOrientation;
-    uint8               ScannableFlag;
+    uint32_t              PixelsPerLine;
+    uint32_t              NumberOfLines;
+    int16_t               DeviceResolution;
+    uint8_t               ScanlineOrientation;
+    uint8_t               ScannableFlag;
     real64              RotationAngle;
     real64              SkewAngle;
-    uint16              DataTypeModifier;
+    uint16_t              DataTypeModifier;
     char                DesignFileName[66];
     char                DataBaseFileName[66];
     char                ParentGridFileName[66];
@@ -260,7 +257,7 @@ typedef struct {
     INGR_MinMax         Minimum;
     INGR_MinMax         Maximum;
     char                Reserved[3];
-    uint8               GridFileVersion;
+    uint8_t               GridFileVersion;
 } INGR_HeaderOne;
 
 //  ----------------------------------------------------------------------------
@@ -268,25 +265,25 @@ typedef struct {
 //  ----------------------------------------------------------------------------
 
 typedef struct {
-    uint8               Gain;
-    uint8               OffsetThreshold;
-    uint8               View1;
-    uint8               View2;
-    uint8               ViewNumber;
-    uint8               Reserved2;
-    uint16              Reserved3;
+    uint8_t               Gain;
+    uint8_t               OffsetThreshold;
+    uint8_t               View1;
+    uint8_t               View2;
+    uint8_t               ViewNumber;
+    uint8_t               Reserved2;
+    uint16_t              Reserved3;
     real64              AspectRatio;
-    uint32              CatenatedFilePointer;
-    uint16              ColorTableType;
-    uint16              Reserved8;
-    uint32              NumberOfCTEntries;
-    uint32              ApplicationPacketPointer;
-    uint32              ApplicationPacketLength;
-    uint16              Reserved[110];
+    uint32_t              CatenatedFilePointer;
+    uint16_t              ColorTableType;
+    uint16_t              Reserved8;
+    uint32_t              NumberOfCTEntries;
+    uint32_t              ApplicationPacketPointer;
+    uint32_t              ApplicationPacketLength;
+    uint16_t              Reserved[110];
 } INGR_HeaderTwoA;
 
 typedef    struct {
-    uint16              ApplicationData[128];
+    uint16_t              ApplicationData[128];
 } INGR_HeaderTwoB;
 
 //  ----------------------------------------------------------------------------
@@ -310,9 +307,9 @@ typedef    struct {
 //  ----------------------------------------------------------------------------
 
 typedef     struct {
-    uint32              Start;
-    uint32              Allocated;
-    uint32              Used;
+    uint32_t              Start;
+    uint32_t              Allocated;
+    uint32_t              Used;
 } INGR_TileItem;
 
 //  ----------------------------------------------------------------------------
@@ -321,17 +318,17 @@ typedef     struct {
 
 typedef struct INGR_TileHeader {
     INGR_TileHeader();
-    uint16              ApplicationType;
-    uint16              SubTypeCode;
-    uint32              WordsToFollow;
-    uint16              PacketVersion;
-    uint16              Identifier;
-    uint16              Reserved[2];
-    uint16              Properties;
-    uint16              DataTypeCode;
-    uint8               Reserved2[100];
-    uint32              TileSize;
-    uint32              Reserved3;
+    uint16_t              ApplicationType;
+    uint16_t              SubTypeCode;
+    uint32_t              WordsToFollow;
+    uint16_t              PacketVersion;
+    uint16_t              Identifier;
+    uint16_t              Reserved[2];
+    uint16_t              Properties;
+    uint16_t              DataTypeCode;
+    uint8_t               Reserved2[100];
+    uint32_t              TileSize;
+    uint32_t              Reserved3;
     INGR_TileItem       First;
 } INGR_TileHeader;
 
@@ -418,12 +415,12 @@ void   INGR_DGN2IEEEDouble(void * dbl);
 //    Compression, Data Format, Data Type related functions
 //  ------------------------------------------------------------------
 
-uint32 CPL_STDCALL INGR_GetDataBlockSize( const char *pszFileName,
-                                          uint32 nBandOffset,
-                                          uint32 nDataOffset );
+uint32_t CPL_STDCALL INGR_GetDataBlockSize( const char *pszFileName,
+                                          uint32_t nBandOffset,
+                                          uint32_t nDataOffset );
 
-uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
-                                          uint32 nOffset,
+uint32_t CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
+                                          uint32_t nOffset,
                                           int nBandXSize,
                                           int nBandYSize,
                                           INGR_TileHeader *pTileDir,
@@ -432,11 +429,11 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
 INGR_Format CPL_STDCALL INGR_GetFormat( GDALDataType eType,
                                         const char *pszCompression );
 
-const char * CPL_STDCALL INGR_GetFormatName( uint16 eCode );
+const char * CPL_STDCALL INGR_GetFormatName( uint16_t eCode );
 
-GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode );
+GDALDataType CPL_STDCALL INGR_GetDataType( uint16_t eCode );
 
-const char * CPL_STDCALL INGR_GetOrientation( uint8 nIndex );
+const char * CPL_STDCALL INGR_GetOrientation( uint8_t nIndex );
 
 //  ------------------------------------------------------------------
 //    Transformation Matrix conversion
@@ -452,17 +449,17 @@ void CPL_STDCALL INGR_SetTransMatrix( real64 *padfMatrix,
 //  ------------------------------------------------------------------
 
 void CPL_STDCALL INGR_GetIGDSColors( VSILFILE *fp,
-                                     uint32 nOffset,
-                                     uint32 nEntries,
+                                     uint32_t nOffset,
+                                     uint32_t nEntries,
                                      GDALColorTable *poColorTable );
-uint32 CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
+uint32_t CPL_STDCALL INGR_SetIGDSColors( GDALColorTable *poColorTable,
                                        INGR_ColorTable256 *pColorTableIGDS );
 
 void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
-                                         uint32 nOffset,
-                                         uint32 nEntries,
+                                         uint32_t nOffset,
+                                         uint32_t nEntries,
                                          GDALColorTable *poColorTable );
-uint32 CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
+uint32_t CPL_STDCALL INGR_SetEnvironColors( GDALColorTable *poColorTable,
                                           INGR_ColorTableVar *pEnvironTable );
 
 //  ------------------------------------------------------------------
@@ -479,28 +476,28 @@ double CPL_STDCALL INGR_GetMinMax( GDALDataType eType, INGR_MinMax hVal );
 int CPL_STDCALL
 INGR_Decode( INGR_Format eFormat,
              GByte *pabySrcData, GByte *pabyDstData,
-             uint32 nSrcBytes, uint32 nBlockSize,
-             uint32 *pnBytesConsumed );
+             uint32_t nSrcBytes, uint32_t nBlockSize,
+             uint32_t *pnBytesConsumed );
 
 int CPL_STDCALL
 INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
-                      uint32 nSrcBytes, uint32 nBlockSize,
-                      uint32 *pnBytesConsumed );
+                      uint32_t nSrcBytes, uint32_t nBlockSize,
+                      uint32_t *pnBytesConsumed );
 
 int CPL_STDCALL
 INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
-                             uint32 nSrcBytes, uint32 nBlockSize,
-                             uint32 *pnBytesConsumed );
+                             uint32_t nSrcBytes, uint32_t nBlockSize,
+                             uint32_t *pnBytesConsumed );
 
 int CPL_STDCALL
 INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
-                                  uint32 nSrcBytes, uint32 nBlockSize,
-                                  uint32 *pnBytesConsumed );
+                                  uint32_t nSrcBytes, uint32_t nBlockSize,
+                                  uint32_t *pnBytesConsumed );
 
 int CPL_STDCALL
 INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
-                              uint32 nSrcBytes, uint32 nBlockSize,
-                              uint32 *pnBytesConsumed );
+                              uint32_t nSrcBytes, uint32_t nBlockSize,
+                              uint32_t *pnBytesConsumed );
 
 //  ------------------------------------------------------------------
 //    GeoTiff in memory helper
@@ -521,15 +518,15 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
 void CPL_STDCALL INGR_ReleaseVirtual( INGR_VirtualFile *poTiffMen );
 
 int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp,
-                          uint32 nAppDataOfseet,
-                          uint32 nSeekLimit );
+                          uint32_t nAppDataOfseet,
+                          uint32_t nSeekLimit );
 
 typedef     struct {
-    uint16              ApplicationType;
-    uint16              SubTypeCode;
-    uint32              RemainingLength;
-    uint16              PacketVersion;
-    uint16              JpegQuality;
+    uint16_t              ApplicationType;
+    uint16_t              SubTypeCode;
+    uint32_t              RemainingLength;
+    uint16_t              PacketVersion;
+    uint16_t              JpegQuality;
 } INGR_JPEGAppData;
 
 //  ------------------------------------------------------------------
