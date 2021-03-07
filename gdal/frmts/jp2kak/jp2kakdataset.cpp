@@ -2276,33 +2276,28 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     // Do we have a high res region of interest?
     kdu_roi_image *poROIImage = nullptr;
-    char **papszROIDefs = CSLFetchNameValueMultiple(papszOptions, "ROI");
-
-    for( int iROI = 0;
-         papszROIDefs != nullptr && papszROIDefs[iROI] != nullptr;
-         ++iROI )
+    const char* pszROI = CSLFetchNameValue(papszOptions, "ROI");
+    if( pszROI )
     {
-        char **papszTokens =
-            CSLTokenizeStringComplex(papszROIDefs[iROI], ",", FALSE, FALSE);
+        CPLStringList aosTokens(
+            CSLTokenizeStringComplex(pszROI, ",", FALSE, FALSE));
 
-        if( CSLCount(papszTokens) != 4 )
+        if( aosTokens.size() != 4 )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Skipping corrupt ROI def = \n%s", papszROIDefs[iROI]);
-            continue;
+                     "Skipping corrupt ROI def = \n%s", pszROI);
         }
+        else
+        {
+            kdu_dims region;
+            region.pos.x = atoi(aosTokens[0]);
+            region.pos.y = atoi(aosTokens[1]);
+            region.size.x = atoi(aosTokens[2]);
+            region.size.y = atoi(aosTokens[3]);
 
-        kdu_dims region;
-        region.pos.x = atoi(papszTokens[0]);
-        region.pos.y = atoi(papszTokens[1]);
-        region.size.x = atoi(papszTokens[2]);
-        region.size.y = atoi(papszTokens[3]);
-
-        CSLDestroy(papszTokens);
-
-        poROIImage = new kdu_roi_rect(oCodeStream, region);
+            poROIImage = new kdu_roi_rect(oCodeStream, region);
+        }
     }
-    CSLDestroy(papszROIDefs);
 
     // Set some particular parameters.
     oCodeStream.access_siz()->parse_string(

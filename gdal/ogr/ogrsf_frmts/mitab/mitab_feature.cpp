@@ -403,11 +403,9 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             int nYear = 0;
             int nMonth = 0;
             int nDay = 0;
-            int status = 0;
-
-            if((status =
-                    poDATFile->ReadDateField(poDATFile->GetFieldWidth(iField),
-                                             &nYear, &nMonth, &nDay)) == 0)
+            const int status = poDATFile->ReadDateField(
+                poDATFile->GetFieldWidth(iField), &nYear, &nMonth, &nDay);
+            if( status == 0)
             {
                 SetField(iField, nYear, nMonth, nDay, 0, 0, 0, 0);
             }
@@ -1834,14 +1832,14 @@ void TABCustomPoint::SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle)
     {
         const int nSymbolStyle = atoi(pszSymbolId+19);
         SetCustomSymbolStyle(static_cast<GByte>(nSymbolStyle));
-        
+
         const char* pszPtr = pszSymbolId+19;
-        while (*pszPtr != '-') 
+        while (*pszPtr != '-')
         {
             pszPtr++;
         }
         pszPtr++;
-        
+
         char szSymbolName[256] = "";
         int  i;
         for(i=0; i < 255 && *pszPtr != '\0' && *pszPtr != ',' && *pszPtr != '"'; i++, pszPtr++)
@@ -2183,7 +2181,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         GInt32 nCoordBlockPtr = poPLineHdr->m_nCoordBlockPtr;
         const GUInt32 nCoordDataSize = poPLineHdr->m_nCoordDataSize;
-        if( nCoordDataSize > 1024 * 1024 && 
+        if( nCoordDataSize > 1024 * 1024 &&
             nCoordDataSize > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2306,7 +2304,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         }
         const GUInt32 nMinimumBytesForSections =
                                 nMinSizeOfSection * numLineSections;
-        if( nMinimumBytesForSections > 1024 * 1024 && 
+        if( nMinimumBytesForSections > 1024 * 1024 &&
             nMinimumBytesForSections > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2343,7 +2341,7 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         const GUInt32 nMinimumBytesForPoints =
                         (bComprCoord ? 4 : 8) * numPointsTotal;
-        if( nMinimumBytesForPoints > 1024 * 1024 && 
+        if( nMinimumBytesForPoints > 1024 * 1024 &&
             nMinimumBytesForPoints > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -3153,7 +3151,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         }
         const GUInt32 nMinimumBytesForSections =
                                 nMinSizeOfSection * numLineSections;
-        if( nMinimumBytesForSections > 1024 * 1024 && 
+        if( nMinimumBytesForSections > 1024 * 1024 &&
             nMinimumBytesForSections > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -3188,7 +3186,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         const GUInt32 nMinimumBytesForPoints =
                         (bComprCoord ? 4 : 8) * numPointsTotal;
-        if( nMinimumBytesForPoints > 1024 * 1024 && 
+        if( nMinimumBytesForPoints > 1024 * 1024 &&
             nMinimumBytesForPoints > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -6546,10 +6544,10 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          * Copy data from poObjHdr
          *------------------------------------------------------------*/
         TABMAPObjMultiPoint *poMPointHdr = cpl::down_cast<TABMAPObjMultiPoint *>(poObjHdr);
- 
+
         const GUInt32 nMinimumBytesForPoints =
                         (bComprCoord ? 4 : 8) * poMPointHdr->m_nNumPoints;
-        if( nMinimumBytesForPoints > 1024 * 1024 && 
+        if( nMinimumBytesForPoints > 1024 * 1024 &&
             nMinimumBytesForPoints > poMapFile->GetFileSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -9161,7 +9159,7 @@ TABFeatureClass ITABFeatureSymbol::GetSymbolFeatureClass(const char *pszStyleStr
             poStylePart = nullptr;
         }
     }
-    
+
     TABFeatureClass result = TABFCPoint;
 
     // If the no Symbol found, do nothing.

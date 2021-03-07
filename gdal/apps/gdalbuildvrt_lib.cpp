@@ -34,6 +34,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -1243,6 +1244,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             }
             if( pszResampling )
                 poSource->SetResampling(pszResampling);
+            assert( poMaskVRTBand );
             poMaskVRTBand->ConfigureSource( poSource,
                                             static_cast<GDALRasterBand*>(GDALGetRasterBand(hSourceDS, 1)),
                                             TRUE,

@@ -2715,7 +2715,7 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	/* Internally, the integer variables can be bigger than the external ones,
 	* as long as the result will fit into the external variable size.
 	*/
-	uint64_t val, numSum[3] = { 0, 1, 0 }, denomSum[3] = { 1, 0, 0 };
+	uint64_t numSum[3] = { 0, 1, 0 }, denomSum[3] = { 1, 0, 0 };
 	uint64_t aux, bigNum, bigDenom;
 	uint64_t returnLimit;
 	int i;
@@ -2767,14 +2767,12 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	/*-- Start Euclidean algorithm to find the greatest common divisor (GCD) -- */
 #define MAX_ITERATIONS 64
 	for (i = 0; i < MAX_ITERATIONS; i++) {
+		uint64_t val;
 		/* if bigDenom is not zero, calculate integer part of fraction. */
 		if (bigDenom == 0) {
-			val = 0;
 			break;
 		}
-		else {
-			val = bigNum / bigDenom;
-		}
+		val = bigNum / bigDenom;
 
 		/* Set bigDenom to reminder of bigNum/bigDenom and bigNum to previous denominator bigDenom. */
 		aux = bigNum;
