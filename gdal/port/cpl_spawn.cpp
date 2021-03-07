@@ -40,6 +40,7 @@
 #if defined(WIN32)
 #include <windows.h>
 #else
+#include <cassert>
 #include <cerrno>
 #include <csignal>
 #include <cstdio>
@@ -695,6 +696,7 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
         }
 
         pid_t pid = 0;
+        assert( papszArgvDup[0] != nullptr );
         if( posix_spawnp(&pid, papszArgvDup[0],
                          bHasActions ? &actions : nullptr,
                          nullptr,
