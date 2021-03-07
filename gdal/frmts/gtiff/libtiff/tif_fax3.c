@@ -894,7 +894,7 @@ find1span(unsigned char* bp, int32_t bs, int32_t be)
 			bp++;
 		}
 		lp = (int64_t*) bp;
-		while ((bits >= (int32_t)(8 * sizeof(int64_t))) && (~0u == *lp)) {
+		while ((bits >= (int32_t)(8 * sizeof(int64_t))) && (~((uint64_t)0) == (uint64_t)*lp)) {
 			span += 8*sizeof (int64_t);
 			bits -= 8*sizeof (int64_t);
 			lp++;
