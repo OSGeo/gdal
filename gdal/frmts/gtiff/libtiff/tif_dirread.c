@@ -884,7 +884,9 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
 	}
 	if (!(tif->tif_flags&TIFF_BIGTIFF))
 	{
-		if (original_datasize_clamped<=4)
+		/* Only the condition on original_datasize_clamped. The second
+		 * one is implied, but Coverity Scan cannot see it. */
+		if (original_datasize_clamped<=4 && datasize <= 4 )
 			_TIFFmemcpy(data,&direntry->tdir_offset,datasize);
 		else
 		{
@@ -905,7 +907,8 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
 	}
 	else
 	{
-		if (original_datasize_clamped<=8)
+		/* See above comment for the Classic TIFF case */
+		if (original_datasize_clamped<=8 && datasize <= 8 )
 			_TIFFmemcpy(data,&direntry->tdir_offset,datasize);
 		else
 		{
