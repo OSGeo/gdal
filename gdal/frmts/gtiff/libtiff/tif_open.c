@@ -88,19 +88,19 @@ TIFFClientOpen(
 	/* The following are configuration checks. They should be redundant, but should not
 	 * compile to any actual code in an optimised release build anyway. If any of them
 	 * fail, (makefile-based or other) configuration is not correct */
-	assert(sizeof(uint8)==1);
-	assert(sizeof(int8)==1);
-	assert(sizeof(uint16)==2);
-	assert(sizeof(int16)==2);
-	assert(sizeof(uint32)==4);
-	assert(sizeof(int32)==4);
-	assert(sizeof(uint64)==8);
-	assert(sizeof(int64)==8);
+	assert(sizeof(uint8_t) == 1);
+	assert(sizeof(int8_t) == 1);
+	assert(sizeof(uint16_t) == 2);
+	assert(sizeof(int16_t) == 2);
+	assert(sizeof(uint32_t) == 4);
+	assert(sizeof(int32_t) == 4);
+	assert(sizeof(uint64_t) == 8);
+	assert(sizeof(int64_t) == 8);
 	assert(sizeof(tmsize_t)==sizeof(void*));
 	{
 		union{
-			uint8 a8[2];
-			uint16 a16;
+			uint8_t a8[2];
+			uint16_t a16;
 		} n;
 		n.a8[0]=1;
 		n.a8[1]=0;
@@ -124,10 +124,10 @@ TIFFClientOpen(
 	tif->tif_name = (char *)tif + sizeof (TIFF);
 	strcpy(tif->tif_name, name);
 	tif->tif_mode = m &~ (O_CREAT|O_TRUNC);
-	tif->tif_curdir = (uint16) -1;		/* non-existent directory */
+	tif->tif_curdir = (uint16_t) -1;		/* non-existent directory */
 	tif->tif_curoff = 0;
-	tif->tif_curstrip = (uint32) -1;	/* invalid strip */
-	tif->tif_row = (uint32) -1;		/* read/write pre-increment */
+	tif->tif_curstrip = (uint32_t) -1;	/* invalid strip */
+	tif->tif_row = (uint32_t) -1;		/* read/write pre-increment */
 	tif->tif_clientdata = clientdata;
 	if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc) {
 		TIFFErrorExt(clientdata, module,
@@ -373,11 +373,11 @@ TIFFClientOpen(
 	    #endif
 	    ) {
 		TIFFErrorExt(tif->tif_clientdata, name,
-		    "Not a TIFF or MDI file, bad magic number %d (0x%x)",
+		    "Not a TIFF or MDI file, bad magic number %"PRIu16" (0x%"PRIx16")",
 	    #else
 	    ) {
 		TIFFErrorExt(tif->tif_clientdata, name,
-		    "Not a TIFF file, bad magic number %d (0x%x)",
+		    "Not a TIFF file, bad magic number %"PRIu16" (0x%"PRIx16")",
 	    #endif
 		    tif->tif_header.common.tiff_magic,
 		    tif->tif_header.common.tiff_magic);
@@ -397,7 +397,7 @@ TIFFClientOpen(
 	if ((tif->tif_header.common.tiff_version != TIFF_VERSION_CLASSIC)&&
 	    (tif->tif_header.common.tiff_version != TIFF_VERSION_BIG)) {
 		TIFFErrorExt(tif->tif_clientdata, name,
-		    "Not a TIFF file, bad version number %d (0x%x)",
+		    "Not a TIFF file, bad version number %"PRIu16" (0x%"PRIx16")",
 		    tif->tif_header.common.tiff_version,
 		    tif->tif_header.common.tiff_version);
 		goto bad;
@@ -410,7 +410,7 @@ TIFFClientOpen(
 	}
 	else
 	{
-		if (!ReadOK(tif, ((uint8*)(&tif->tif_header) + sizeof(TIFFHeaderClassic)), (sizeof(TIFFHeaderBig)-sizeof(TIFFHeaderClassic))))
+		if (!ReadOK(tif, ((uint8_t*)(&tif->tif_header) + sizeof(TIFFHeaderClassic)), (sizeof(TIFFHeaderBig) - sizeof(TIFFHeaderClassic))))
 		{
 			TIFFErrorExt(tif->tif_clientdata, name,
 			    "Cannot read TIFF header");
@@ -424,7 +424,7 @@ TIFFClientOpen(
 		if (tif->tif_header.big.tiff_offsetsize != 8)
 		{
 			TIFFErrorExt(tif->tif_clientdata, name,
-			    "Not a TIFF file, bad BigTIFF offsetsize %d (0x%x)",
+			    "Not a TIFF file, bad BigTIFF offsetsize %"PRIu16" (0x%"PRIx16")",
 			    tif->tif_header.big.tiff_offsetsize,
 			    tif->tif_header.big.tiff_offsetsize);
 			goto bad;
@@ -432,7 +432,7 @@ TIFFClientOpen(
 		if (tif->tif_header.big.tiff_unused != 0)
 		{
 			TIFFErrorExt(tif->tif_clientdata, name,
-			    "Not a TIFF file, bad BigTIFF unused %d (0x%x)",
+			    "Not a TIFF file, bad BigTIFF unused %"PRIu16" (0x%"PRIx16")",
 			    tif->tif_header.big.tiff_unused,
 			    tif->tif_header.big.tiff_unused);
 			goto bad;
@@ -600,7 +600,7 @@ TIFFIsTiled(TIFF* tif)
 /*
  * Return current row being read/written.
  */
-uint32
+uint32_t
 TIFFCurrentRow(TIFF* tif)
 {
 	return (tif->tif_row);
@@ -609,7 +609,7 @@ TIFFCurrentRow(TIFF* tif)
 /*
  * Return index of the current directory.
  */
-uint16
+uint16_t
 TIFFCurrentDirectory(TIFF* tif)
 {
 	return (tif->tif_curdir);
@@ -618,7 +618,7 @@ TIFFCurrentDirectory(TIFF* tif)
 /*
  * Return current strip.
  */
-uint32
+uint32_t
 TIFFCurrentStrip(TIFF* tif)
 {
 	return (tif->tif_curstrip);
@@ -627,7 +627,7 @@ TIFFCurrentStrip(TIFF* tif)
 /*
  * Return current tile.
  */
-uint32
+uint32_t
 TIFFCurrentTile(TIFF* tif)
 {
 	return (tif->tif_curtile);

@@ -32,11 +32,11 @@
 #include <stdio.h>
 
 static int
-PackBitsPreEncode(TIFF* tif, uint16 s)
+PackBitsPreEncode(TIFF* tif, uint16_t s)
 {
 	(void) s;
 
-        tif->tif_data = (uint8*)_TIFFmalloc(sizeof(tmsize_t));
+        tif->tif_data = (uint8_t*)_TIFFmalloc(sizeof(tmsize_t));
 	if (tif->tif_data == NULL)
 		return (0);
 	/*
@@ -61,12 +61,12 @@ PackBitsPostEncode(TIFF* tif)
  * Encode a run of pixels.
  */
 static int
-PackBitsEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
+PackBitsEncode(TIFF* tif, uint8_t* buf, tmsize_t cc, uint16_t s)
 {
 	unsigned char* bp = (unsigned char*) buf;
-	uint8* op;
-	uint8* ep;
-	uint8* lastliteral;
+	uint8_t* op;
+	uint8_t* ep;
+	uint8_t* lastliteral;
 	long n, slop;
 	int b;
 	enum { BASE, LITERAL, RUN, LITERAL_RUN } state;
@@ -114,17 +114,17 @@ PackBitsEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 			if (n > 1) {
 				state = RUN;
 				if (n > 128) {
-					*op++ = (uint8) -127;
-					*op++ = (uint8) b;
+					*op++ = (uint8_t) -127;
+					*op++ = (uint8_t) b;
 					n -= 128;
 					goto again;
 				}
-				*op++ = (uint8)(-(n-1));
-				*op++ = (uint8) b;
+				*op++ = (uint8_t)(-(n - 1));
+				*op++ = (uint8_t) b;
 			} else {
 				lastliteral = op;
 				*op++ = 0;
-				*op++ = (uint8) b;
+				*op++ = (uint8_t) b;
 				state = LITERAL;
 			}
 			break;
@@ -132,33 +132,33 @@ PackBitsEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 			if (n > 1) {
 				state = LITERAL_RUN;
 				if (n > 128) {
-					*op++ = (uint8) -127;
-					*op++ = (uint8) b;
+					*op++ = (uint8_t) -127;
+					*op++ = (uint8_t) b;
 					n -= 128;
 					goto again;
 				}
-				*op++ = (uint8)(-(n-1));	/* encode run */
-				*op++ = (uint8) b;
+				*op++ = (uint8_t)(-(n - 1));	/* encode run */
+				*op++ = (uint8_t) b;
 			} else {			/* extend literal */
 				if (++(*lastliteral) == 127)
 					state = BASE;
-				*op++ = (uint8) b;
+				*op++ = (uint8_t) b;
 			}
 			break;
 		case RUN:		/* last object was run */
 			if (n > 1) {
 				if (n > 128) {
-					*op++ = (uint8) -127;
-					*op++ = (uint8) b;
+					*op++ = (uint8_t) -127;
+					*op++ = (uint8_t) b;
 					n -= 128;
 					goto again;
 				}
-				*op++ = (uint8)(-(n-1));
-				*op++ = (uint8) b;
+				*op++ = (uint8_t)(-(n - 1));
+				*op++ = (uint8_t) b;
 			} else {
 				lastliteral = op;
 				*op++ = 0;
-				*op++ = (uint8) b;
+				*op++ = (uint8_t) b;
 				state = LITERAL;
 			}
 			break;
@@ -169,7 +169,7 @@ PackBitsEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 			 * case we convert literal-run-literal
 			 * to a single literal.
 			 */
-			if (n == 1 && op[-2] == (uint8) -1 &&
+			if (n == 1 && op[-2] == (uint8_t) -1 &&
 			    *lastliteral < 126) {
 				state = (((*lastliteral) += 2) == 127 ?
 				    BASE : LITERAL);
@@ -192,7 +192,7 @@ PackBitsEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
  * when it was encoded by strips.
  */
 static int
-PackBitsEncodeChunk(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
+PackBitsEncodeChunk(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 {
 	tmsize_t rowsize = *(tmsize_t*)tif->tif_data;
 
@@ -211,7 +211,7 @@ PackBitsEncodeChunk(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 }
 
 static int
-PackBitsDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
+PackBitsDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 {
 	static const char module[] = "PackBitsDecode";
 	char *bp;
@@ -238,8 +238,8 @@ PackBitsDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 			if( occ < (tmsize_t)n )
 			{
 				TIFFWarningExt(tif->tif_clientdata, module,
-				    "Discarding %lu bytes to avoid buffer overrun",
-				    (unsigned long) ((tmsize_t)n - occ));
+				    "Discarding %"TIFF_SSIZE_FORMAT" bytes to avoid buffer overrun",
+				    (tmsize_t)n - occ);
 				n = (long)occ;
 			}
 			if( cc == 0 )
@@ -252,13 +252,13 @@ PackBitsDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 			b = *bp++;
 			cc--;
 			while (n-- > 0)
-				*op++ = (uint8) b;
+				*op++ = (uint8_t) b;
 		} else {		/* copy next n+1 bytes literally */
 			if (occ < (tmsize_t)(n + 1))
 			{
 				TIFFWarningExt(tif->tif_clientdata, module,
-				    "Discarding %lu bytes to avoid buffer overrun",
-				    (unsigned long) ((tmsize_t)n - occ + 1));
+				    "Discarding %"TIFF_SSIZE_FORMAT" bytes to avoid buffer overrun",
+				    (tmsize_t)n - occ + 1);
 				n = (long)occ - 1;
 			}
 			if (cc < (tmsize_t) (n+1)) 
@@ -272,12 +272,12 @@ PackBitsDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 			bp += n; cc -= n;
 		}
 	}
-	tif->tif_rawcp = (uint8*) bp;
+	tif->tif_rawcp = (uint8_t*) bp;
 	tif->tif_rawcc = cc;
 	if (occ > 0) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "Not enough data for scanline %lu",
-		    (unsigned long) tif->tif_row);
+		    "Not enough data for scanline %"PRIu32,
+		    tif->tif_row);
 		return (0);
 	}
 	return (1);
