@@ -558,7 +558,7 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
         return -1;
     }
 
-    if ((pszLine = m_poMIFFile->GetLastLine()) == nullptr ||
+    if (m_poMIFFile->GetLastLine() == nullptr ||
         STARTS_WITH_CI(m_poMIFFile->GetLastLine(), "DATA") == FALSE)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
