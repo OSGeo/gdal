@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <cassert>
 #include <list>
 
 #include "cpl_string.h"
@@ -646,10 +647,12 @@ CPLErr TileDBDataset::AddDimensions( tiledb::Domain& domain,
         CreateAttribute( eDataType, TILEDB_VALUES, nBands );
         break;
     case PIXEL:
+        assert( poBands );
         domain.add_dimensions( y, x, *poBands );
         CreateAttribute( eDataType, TILEDB_VALUES, 1 );
         break;
     default: // BAND
+        assert( poBands );
         domain.add_dimensions( *poBands, y, x );
         CreateAttribute( eDataType, TILEDB_VALUES, 1 );
         break;
