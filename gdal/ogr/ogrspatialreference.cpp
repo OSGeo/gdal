@@ -3664,7 +3664,7 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 
 {
-    if( !STARTS_WITH_CI(pszUrl, "http://") )
+    if( !STARTS_WITH_CI(pszUrl, "http://") && !STARTS_WITH_CI(pszUrl, "https://") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "The given string is not recognized as a URL"
@@ -3715,7 +3715,7 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
     }
 
     const char* pszData = reinterpret_cast<const char*>(psResult->pabyData);
-    if( STARTS_WITH_CI(pszData, "http://") )
+    if( STARTS_WITH_CI(pszData, "http://") || STARTS_WITH_CI(pszData, "https://") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "The data that was downloaded also starts with 'http://' "
