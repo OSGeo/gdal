@@ -867,7 +867,7 @@ CPLErr TileDBDataset::TrySaveXML()
 
         return eErr;
     }
-    catch(const tiledb::TileDBError& e)
+    catch(const std::exception& e)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "%s", e.what() );
         if ( psTree )
