@@ -383,42 +383,12 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*****************************************/
 JPIPKAKDataset::JPIPKAKDataset()
 {
-    pszPath = nullptr;
-    pszCid = nullptr;
-    pszProjection = nullptr;
-
-    poCache = nullptr;
-    poCodestream = nullptr;
-    poDecompressor = nullptr;
-
-    nPos = 0;
-    nVBASLen = 0;
-    nVBASFirstByte = 0;
-
-    nClassId = 0;
-    nCodestream = 0;
-    nDatabins = 0;
-    bWindowDone = FALSE;
-    bGeoTransformValid = FALSE;
-
-    bNeedReinitialize = FALSE;
-
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    nGCPCount = 0;
-    pasGCPList = nullptr;
-
-    bHighThreadRunning = 0;
-    bLowThreadRunning = 0;
-    bHighThreadFinished = 0;
-    bLowThreadFinished = 0;
-    nHighThreadByteCount = 0;
-    nLowThreadByteCount = 0;
 
     pGlobalMutex = CPLCreateMutex();
     CPLReleaseMutex(pGlobalMutex);
