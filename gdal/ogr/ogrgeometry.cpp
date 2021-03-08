@@ -372,7 +372,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
     {
         OGRErr err(OGRERR_NONE);
         OGRWktOptions opts;
-        
+
         opts.variant = wkbVariantIso;
         std::string wkt = exportToWkt(opts, &err);
         if( err == OGRERR_NONE )
@@ -1418,7 +1418,7 @@ OGRErr OGRGeometry::importFromWkb( const GByte* pabyData,
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
  * OGRERR_CORRUPT_DATA may be returned.
- * 
+ *
  * @since GDAL 2.3
  */
 
@@ -5929,8 +5929,13 @@ int OGRPreparedGeometryIntersects(
     UNUSED_IF_NO_GEOS const OGRGeometry* poOtherGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
-    if( poPreparedGeom == nullptr || poOtherGeom == nullptr )
+    if( poPreparedGeom == nullptr || poOtherGeom == nullptr
+        // The check for IsEmpty() is for buggy GEOS versions.
+        // See https://github.com/libgeos/geos/pull/423
+        || poOtherGeom->IsEmpty() )
+    {
         return FALSE;
+    }
 
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(poPreparedGeom->hGEOSCtxt);
@@ -5959,8 +5964,13 @@ int OGRPreparedGeometryContains(
     UNUSED_IF_NO_GEOS const OGRGeometry* poOtherGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
-    if( poPreparedGeom == nullptr || poOtherGeom == nullptr )
+    if( poPreparedGeom == nullptr || poOtherGeom == nullptr
+        // The check for IsEmpty() is for buggy GEOS versions.
+        // See https://github.com/libgeos/geos/pull/423
+        || poOtherGeom->IsEmpty() )
+    {
         return FALSE;
+    }
 
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(poPreparedGeom->hGEOSCtxt);

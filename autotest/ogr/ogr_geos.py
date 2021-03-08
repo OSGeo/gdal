@@ -501,6 +501,3 @@ def test_ogr_geos_polygonize():
     g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT EMPTY)')
     got = g.Polygonize()
     assert got is None, ('Got: %s' % got.ExportToWkt())
-
-
-
