@@ -3470,7 +3470,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return importFromURN( pszDefinition );
 
     if( STARTS_WITH_CI(pszDefinition, "http://opengis.net/def/crs")
+        || STARTS_WITH_CI(pszDefinition, "https://opengis.net/def/crs")
         || STARTS_WITH_CI(pszDefinition, "http://www.opengis.net/def/crs")
+        || STARTS_WITH_CI(pszDefinition, "https://www.opengis.net/def/crs")
         || STARTS_WITH_CI(pszDefinition, "www.opengis.net/def/crs"))
         return importFromCRSURL( pszDefinition );
 
@@ -3530,7 +3532,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
              || strstr(pszDefinition, "+init") != nullptr )
         return importFromProj4( pszDefinition );
 
-    if( STARTS_WITH_CI(pszDefinition, "http://") )
+    if( STARTS_WITH_CI(pszDefinition, "http://") || STARTS_WITH_CI(pszDefinition, "https://") )
     {
         return importFromUrl (pszDefinition);
     }
@@ -3662,7 +3664,7 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
 
 {
-    if( !STARTS_WITH_CI(pszUrl, "http://") )
+    if( !STARTS_WITH_CI(pszUrl, "http://") && !STARTS_WITH_CI(pszUrl, "https://") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "The given string is not recognized as a URL"
@@ -3713,7 +3715,7 @@ OGRErr OGRSpatialReference::importFromUrl( const char * pszUrl )
     }
 
     const char* pszData = reinterpret_cast<const char*>(psResult->pabyData);
-    if( STARTS_WITH_CI(pszData, "http://") )
+    if( STARTS_WITH_CI(pszData, "http://") || STARTS_WITH_CI(pszData, "https://") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "The data that was downloaded also starts with 'http://' "
@@ -4001,8 +4003,12 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 
     if( STARTS_WITH_CI(pszURL, "http://opengis.net/def/crs") )
         pszCur = pszURL + 26;
+    else if( STARTS_WITH_CI(pszURL, "https://opengis.net/def/crs") )
+        pszCur = pszURL + 27;
     else if( STARTS_WITH_CI(pszURL, "http://www.opengis.net/def/crs") )
         pszCur = pszURL + 30;
+    else if( STARTS_WITH_CI(pszURL, "https://www.opengis.net/def/crs") )
+        pszCur = pszURL + 31;
     else if( STARTS_WITH_CI(pszURL, "www.opengis.net/def/crs") )
         pszCur = pszURL + 23;
     else
