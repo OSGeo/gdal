@@ -4816,6 +4816,107 @@ def test_ogr_shape_point_nan():
     assert count == 1
 
 ###############################################################################
+# Test writing a point with non-finite value
+
+
+def test_ogr_shape_write_point_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    g = ogr.Geometry(ogr.wkbPoint25D)
+    g.AddPoint(0, 0, float('inf'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
+# Test writing a linestring with non-finite value
+
+
+def test_ogr_shape_write_linestring_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    g = ogr.Geometry(ogr.wkbLineString25D)
+    g.AddPoint(0, 0, 0)
+    g.AddPoint(0, 1, float('inf'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
+# Test writing a multilinestring with non-finite value
+
+
+def test_ogr_shape_write_multilinestring_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    ls = ogr.Geometry(ogr.wkbLineString25D)
+    ls.AddPoint(0, 0, 0)
+    ls.AddPoint(0, 1, float('inf'))
+    g = ogr.Geometry(ogr.wkbMultiLineString25D)
+    g.AddGeometry(ls)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
+# Test writing a polygon with non-finite value
+
+
+def test_ogr_shape_write_polygon_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    ls = ogr.Geometry(ogr.wkbLinearRing)
+    ls.AddPoint(0, 0, 0)
+    ls.AddPoint(0, 1, float('inf'))
+    ls.AddPoint(1, 1, 0)
+    ls.AddPoint(0, 0, 0)
+    g = ogr.Geometry(ogr.wkbPolygon25D)
+    g.AddGeometry(ls)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
+# Test writing a multipolygon with non-finite value
+
+
+def test_ogr_shape_write_multipolygon_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    ls = ogr.Geometry(ogr.wkbLinearRing)
+    ls.AddPoint(0, 0, 0)
+    ls.AddPoint(0, 1, float('inf'))
+    ls.AddPoint(1, 1, 0)
+    ls.AddPoint(0, 0, 0)
+    p = ogr.Geometry(ogr.wkbPolygon25D)
+    p.AddGeometry(ls)
+    g = ogr.Geometry(ogr.wkbMultiPolygon25D)
+    g.AddGeometry(p)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
 
 
 def test_ogr_shape_cleanup():
