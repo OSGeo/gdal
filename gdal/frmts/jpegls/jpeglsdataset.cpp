@@ -423,6 +423,9 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo, bIsDCOM))
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("JPEGLS") )
+        return nullptr;
+
     JlsParameters sParams;
 
 #ifdef CHARLS_2
@@ -562,6 +565,10 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 GDALProgressFunc /*pfnProgress*/, void * /*pProgressData*/ )
 
 {
+
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("JPEGLS") )
+        return nullptr;
+
     const int  nBands = poSrcDS->GetRasterCount();
     const int  nXSize = poSrcDS->GetRasterXSize();
     const int  nYSize = poSrcDS->GetRasterYSize();

@@ -44,6 +44,11 @@ static GDALDataset *OGRRECDriverOpen( GDALOpenInfo* poOpenInfo )
         return nullptr;
     }
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("REC") )
+    {
+        return nullptr;
+    }
+
     OGRRECDataSource *poDS = new OGRRECDataSource();
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {

@@ -81,6 +81,12 @@ OGRDataSource *OGRFMEDriver::Open( const char * pszFilename, int bUpdate )
         return NULL;
     }
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("FME") )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
     if( bUpdate )
     {
         delete poDS;

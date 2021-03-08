@@ -61,6 +61,9 @@ OGRDataSource *OGRDODSDriver::Open( const char * pszFilename,
     if( !STARTS_WITH_CI(pszFilename, "DODS:http:") )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("OGR_DODS") )
+        return nullptr;
+
     OGRDODSDataSource *poDS = new OGRDODSDataSource();
 
     if( !poDS->Open( pszFilename ) )

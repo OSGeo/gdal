@@ -130,8 +130,14 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
         delete poDS;
         return nullptr;
     }
-    else
-        return poDS;
+
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("GEOMEDIA") )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
+    return poDS;
 }
 
 /************************************************************************/

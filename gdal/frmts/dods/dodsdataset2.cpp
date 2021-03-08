@@ -1069,6 +1069,12 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("DODS") )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
     return poDS;
 }
 
