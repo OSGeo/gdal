@@ -1355,14 +1355,29 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
     // Prepare component indices list.
     CPLErr eErr = CE_None;
 
-    const size_t nBandSize = sizeof(int) * nBandCount;
-    int *component_indices = static_cast<int *>(CPLMalloc(nBandSize));
-    int *stripe_heights = static_cast<int *>(CPLMalloc(nBandSize));
-    int *sample_offsets = static_cast<int *>(CPLMalloc(nBandSize));
-    int *sample_gaps = static_cast<int *>(CPLMalloc(nBandSize));
-    int *row_gaps = static_cast<int *>(CPLMalloc(nBandSize));
-    int *precisions = static_cast<int *>(CPLMalloc(nBandSize));
-    bool *is_signed = static_cast<bool *>(CPLMalloc(nBandSize));
+    std::vector<int> component_indices(nBandCount);
+    std::vector<int> stripe_heights(nBandCount);
+    std::vector<int> sample_offsets(nBandCount);
+    std::vector<int> sample_gaps(nBandCount);
+    std::vector<int> row_gaps(nBandCount);
+    std::vector<int> precisions(nBandCount);
+
+    // std::vector<bool> is Unfortunately a specialized implementation such as &v[0] doesn't work
+    // https://codereview.stackexchange.com/questions/241629/stdvectorbool-workaround-in-c
+    class vector_safe_bool {
+        bool value;
+    public:
+        vector_safe_bool() = default;
+        // cppcheck-suppress noExplicitConstructor
+        vector_safe_bool(bool b) : value{b} {}
+
+        bool *operator&() noexcept { return &value; }
+        const bool *operator&() const noexcept { return &value; }
+
+        operator const bool &() const noexcept { return value; }
+        operator bool &() noexcept { return value; }
+    };
+    std::vector<vector_safe_bool> is_signed(nBandCount);
 
     for( int i = 0; i < nBandCount; i++ )
         component_indices[i] = panBandMap[i] - 1;
@@ -1404,7 +1419,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         kdu_dims l_dims_roi;
 
         poCodeStream->map_region(0, l_dims, l_dims_roi);
-        poCodeStream->apply_input_restrictions(nBandCount, component_indices,
+        poCodeStream->apply_input_restrictions(nBandCount, component_indices.data(),
                                                nDiscardLevels, 0, &l_dims_roi,
                                                KDU_WANT_OUTPUT_COMPONENTS);
 
@@ -1457,14 +1472,14 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
 
             if( eBufType == GDT_Byte )
                 decompressor.pull_stripe(
-                    static_cast<kdu_byte *>(pData), stripe_heights,
-                    sample_offsets, sample_gaps, row_gaps,
-                    precisions);
+                    static_cast<kdu_byte *>(pData), &stripe_heights[0],
+                    &sample_offsets[0], &sample_gaps[0], &row_gaps[0],
+                    &precisions[0]);
             else
                 decompressor.pull_stripe(
-                    static_cast<kdu_int16 *>(pData), stripe_heights,
-                    sample_offsets, sample_gaps, row_gaps,
-                    precisions, is_signed);
+                    static_cast<kdu_int16 *>(pData), &stripe_heights[0],
+                    &sample_offsets[0], &sample_gaps[0], &row_gaps[0],
+                    &precisions[0], &is_signed[0]);
             decompressor.finish();
         }
         else
@@ -1501,11 +1516,12 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
             if( eBufType == GDT_Byte )
                 decompressor.pull_stripe(
                     reinterpret_cast<kdu_byte *>(pabyIntermediate),
-                    stripe_heights, nullptr, nullptr, nullptr, precisions);
+                    &stripe_heights[0], nullptr, nullptr, nullptr, &precisions[0]);
             else
                 decompressor.pull_stripe(
                     reinterpret_cast<kdu_int16 *>(pabyIntermediate),
-                    stripe_heights, nullptr, nullptr, nullptr, precisions, is_signed);
+                    &stripe_heights[0], nullptr, nullptr, nullptr, &precisions[0],
+                    &is_signed[0]);
 
             decompressor.finish();
 
@@ -1642,14 +1658,6 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         wrk_family.close();
         subfile_src.close();
     }
-
-    CPLFree(component_indices);
-    CPLFree(stripe_heights);
-    CPLFree(sample_offsets);
-    CPLFree(sample_gaps);
-    CPLFree(row_gaps);
-    CPLFree(precisions);
-    CPLFree(is_signed);
 
     return eErr;
 }
