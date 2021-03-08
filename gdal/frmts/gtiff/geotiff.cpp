@@ -8811,8 +8811,10 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
         pszValue = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
     if( pszValue )
     {
-        const int nThreads =
+        int nThreads =
             EQUAL(pszValue, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszValue);
+        if( nThreads > 1024 )
+            nThreads = 1024; // to please Coverity
         if( nThreads > 1 )
         {
             if( m_nCompression == COMPRESSION_NONE )
