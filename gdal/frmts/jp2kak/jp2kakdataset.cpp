@@ -2098,8 +2098,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return nullptr;
     }
 
-    kdu_long *layer_bytes =
-        static_cast<kdu_long *>(CPLCalloc(sizeof(kdu_long), layer_count));
+    std::vector<kdu_long> layer_bytes;
+    layer_bytes.resize(layer_count);
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
@@ -2348,7 +2348,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
             catch( ... )
             {
-                CPLFree(layer_bytes);
                 if( bIsJP2 )
                 {
                     jp2_out.close();
@@ -2489,7 +2488,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             CPLDebug("JP2KAK", "jp2_out.write_header() - caught exception.");
             oCodeStream.destroy();
-            CPLFree(layer_bytes);
             return nullptr;
         }
     }
@@ -2547,7 +2545,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             {
                 CPLDebug("JP2KAK", "JP2KAKWriteBox) - caught exception.");
                 oCodeStream.destroy();
-                CPLFree(layer_bytes);
                 delete poBox;
                 return nullptr;
             }
@@ -2562,7 +2559,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             {
                 CPLDebug("JP2KAK", "JP2KAKWriteBox) - caught exception.");
                 oCodeStream.destroy();
-                CPLFree(layer_bytes);
                 delete poBox;
                 return nullptr;
             }
@@ -2630,7 +2626,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             nThisTileXSize, nThisTileYSize,
                                             bReversible, nBits, eType,
                                             oCodeStream, bFlushEnabled,
-                                            layer_bytes, layer_count,
+                                            layer_bytes.data(), layer_count,
                                             GDALScaledProgress,
                                             pScaledProgressData, bComseg) )
             {
@@ -2650,10 +2646,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     // Finish flushing out results.
-    oCodeStream.flush(layer_bytes, layer_count, nullptr, true, bComseg);
+    oCodeStream.flush(layer_bytes.data(), layer_count, nullptr, true, bComseg);
     oCodeStream.destroy();
-
-    CPLFree(layer_bytes);
 
     if( bIsJP2 )
     {
