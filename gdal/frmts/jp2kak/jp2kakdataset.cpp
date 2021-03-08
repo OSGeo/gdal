@@ -1102,6 +1102,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         int nNumThreads = atoi(CPLGetConfigOption("JP2KAK_THREADS", "-1"));
         if( nNumThreads == -1 )
             nNumThreads = kdu_get_num_processors() - 1;
+        if( nNumThreads > 1024 )
+            nNumThreads = 1024;
 
         if( nNumThreads > 0 )
         {
