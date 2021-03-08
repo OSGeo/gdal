@@ -4008,7 +4008,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
     else if( STARTS_WITH_CI(pszURL, "http://www.opengis.net/def/crs") )
         pszCur = pszURL + 30;
     else if( STARTS_WITH_CI(pszURL, "https://www.opengis.net/def/crs") )
-        pszCur = pszURL + 32;
+        pszCur = pszURL + 31;
     else if( STARTS_WITH_CI(pszURL, "www.opengis.net/def/crs") )
         pszCur = pszURL + 23;
     else
