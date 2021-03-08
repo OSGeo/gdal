@@ -86,7 +86,6 @@ def test_osr_opengis_http_4326():
     assert srs.SetFromUserInput("http://opengis.net/def/crs/EPSG/0/4326") == 0
     assert gdaltest.equal_srs_from_wkt(expected_wkt, srs.ExportToWkt())
 
-
 def test_osr_opengis_https_4326():
     srs = osr.SpatialReference()
     assert srs.SetFromUserInput("https://www.opengis.net/def/crs/EPSG/0/4326") == 0
@@ -94,5 +93,3 @@ def test_osr_opengis_https_4326():
 
     assert srs.SetFromUserInput("https://opengis.net/def/crs/EPSG/0/4326") == 0
     assert gdaltest.equal_srs_from_wkt(expected_wkt, srs.ExportToWkt())
-
-
