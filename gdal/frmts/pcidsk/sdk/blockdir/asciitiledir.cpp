@@ -625,7 +625,9 @@ void AsciiTileDir::UpdateBlockDirInfo(void)
 /************************************************************************/
 void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
 {
-    if (!poLayer || poLayer->mpsBlockLayer->nBlockCount == 0)
+    if (!poLayer)
+        return;
+    if( poLayer->mpsBlockLayer->nBlockCount == 0)
     {
         poLayer->moBlockList = BlockInfoList();
         return;
