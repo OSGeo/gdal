@@ -92,12 +92,44 @@ API
 
 
    GDAL/OGR In Other Languages
-   ++++++++++++++++++++++++++++
+   ---------------------------
 
-   There is a set of generic `SWIG <http://www.swig.org/>`__ interface files in the GDAL source tree (subdirectory swig) and a set of language bindings based on those. Currently active ones are 
-   `CSharp <https://trac.osgeo.org/gdal/wiki/GdalOgrInCsharp/>`__, `Java <https://trac.osgeo.org/gdal/wiki/GdalOgrInJava>`__, `Perl <https://trac.osgeo.org/gdal/wiki/GdalOgrInPerl>`__, and `Python <https://trac.osgeo.org/gdal/wiki/GdalOgrInPython>`__.
+   There is a set of generic `SWIG <http://www.swig.org/>`__ interface files in the GDAL source tree (subdirectory swig) and a set of language bindings based on those. Currently active ones are:
 
-   There are also other bindings that are developed outside of the GDAL source tree. These include bindings for `Go <https://github.com/lukeroth/gdal>`__, `Julia <https://github.com/JuliaGeo/GDAL.jl>`__, `Lua <https://trac.osgeo.org/gdal/wiki/GdalOgrInLua>`__, `Node.js <https://github.com/naturalatlas/node-gdal>`__, `Perl <https://metacpan.org/release/Geo-GDAL-FFI>`__, `PHP <http://dl.maptools.org/dl/php_ogr/php_ogr_documentation.html>`__, `R <http://cran.r-project.org/web/packages/rgdal/index.html>`__ (rgdal in SourceForge is out of date). There are also more Pythonic ways of using the vector/OGR functions with `Fiona <https://github.com/Toblerity/Fiona>`__ and the raster/GDAL ones with `Rasterio <https://github.com/mapbox/rasterio>`__ (**note**: those offer APIs not strictly coupled the GDAL/OGR C/C++ API)
+   .. toctree::
+       :maxdepth: 1
+
+       gdalogrin_csharp
+       gdalogrin_java
+       gdalogrin_python
+
+   There are also other bindings that are developed outside of the GDAL source tree (**note**: those offer APIs not strictly coupled the GDAL/OGR C/C++ API). These include bindings for
+
+      .. toctree::
+       :maxdepth: 1
+
+       Go <https://github.com/lukeroth/gdal>
+       Julia <https://github.com/JuliaGeo/GDAL.jl>
+       Lua <https://trac.osgeo.org/gdal/wiki/GdalOgrInLua>
+       Node.js <https://github.com/naturalatlas/node-gdal>
+       Perl <https://metacpan.org/release/Geo-GDAL-FFI>
+       PHP <http://dl.maptools.org/dl/php_ogr/php_ogr_documentation.html>
+       R <http://cran.r-project.org/web/packages/rgdal/index.html>
+
+    .. warning::
+        For Perl, since GDAL 3.5 the link `Perl <https://trac.osgeo.org/gdal/wiki/GdalOgrInPerl>`__ is deprecated, use above link instead.
+
+        For R, rgdal in SourceForge is out of date.
+
+
+
+    There are also more Pythonic ways of using the vector/OGR functions with
+
+      .. toctree::
+       :maxdepth: 1
+
+       Fiona <https://github.com/Toblerity/Fiona>
+       Rasterio <https://github.com/mapbox/rasterio>
 
 .. only:: latex
 
