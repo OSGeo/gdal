@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogr_geometry.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
@@ -42,6 +43,17 @@
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$")
+
+/************************************************************************/
+/*                         GetEmptyNonEmptyFlag()                       */
+/************************************************************************/
+
+static int GetEmptyNonEmptyFlag(double x, double y)
+{
+    if( std::isnan(x) || std::isnan(y) )
+        return 0;
+    return OGRGeometry::OGR_G_NOT_EMPTY_POINT;
+}
 
 /************************************************************************/
 /*                              OGRPoint()                              */
@@ -74,7 +86,7 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn ) :
     z(zIn),
     m(0.0)
 {
-    flags = OGR_G_NOT_EMPTY_POINT | OGR_G_3D;
+    flags = GetEmptyNonEmptyFlag(xIn, yIn) | OGR_G_3D;
 }
 
 /************************************************************************/
@@ -93,7 +105,7 @@ OGRPoint::OGRPoint( double xIn, double yIn ) :
     z(0.0),
     m(0.0)
 {
-    flags = OGR_G_NOT_EMPTY_POINT;
+    flags = GetEmptyNonEmptyFlag(xIn, yIn);
 }
 
 /************************************************************************/
@@ -114,7 +126,7 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn, double mIn ) :
     z(zIn),
     m(mIn)
 {
-    flags = OGR_G_NOT_EMPTY_POINT | OGR_G_3D | OGR_G_MEASURED;
+    flags = GetEmptyNonEmptyFlag(xIn, yIn) | OGR_G_3D | OGR_G_MEASURED;
 }
 
 /************************************************************************/
