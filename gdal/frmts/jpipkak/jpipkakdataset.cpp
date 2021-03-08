@@ -402,7 +402,7 @@ JPIPKAKDataset::~JPIPKAKDataset()
     char** papszOptions = nullptr;
     papszOptions = CSLSetNameValue(papszOptions,
                         "CLOSE_PERSISTENT", CPLSPrintf("JPIPKAK:%p", this));
-    CPLHTTPFetch("", papszOptions);
+    CPLHTTPDestroyResult(CPLHTTPFetch("", papszOptions));
     CSLDestroy(papszOptions);
 
     Deinitialize();
