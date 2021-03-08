@@ -261,7 +261,7 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
     {
         BlockTileLayer * poTileLayer = dynamic_cast<BlockTileLayer *>(poLayer);
 
-        if (poTileLayer->IsCorrupted())
+        if (poTileLayer == nullptr || poTileLayer->IsCorrupted())
         {
             ThrowPCIDSKException("The tile directory is corrupted.");
             return;
