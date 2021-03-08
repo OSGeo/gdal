@@ -1118,7 +1118,7 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
                               RMFDataset* poParentDS,
                               vsi_l_offset nNextHeaderOffset )
 {
-    if( !Identify(poOpenInfo) || 
+    if( !Identify(poOpenInfo) ||
         (poParentDS == nullptr && poOpenInfo->fpL == nullptr) )
         return nullptr;
 
@@ -1752,7 +1752,7 @@ do {                                                                    \
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                                 "RMF_SET_VERTCS",
                                  CPLGetConfigOption("RMF_SET_VERTCS", "NO"));
-        if(CPLTestBool(pszSetVertCS) && res == OGRERR_NONE && 
+        if(CPLTestBool(pszSetVertCS) && res == OGRERR_NONE &&
            poDS->sExtHeader.nVertDatum > 0)
         {
             oSRS.importVertCSFromPanorama(poDS->sExtHeader.nVertDatum);
@@ -2700,6 +2700,10 @@ CPLErr RMFDataset::InitCompressorData(char **papszParamList)
     {
         nThreads = 0;
     }
+    if( nThreads > 1024 )
+    {
+        nThreads = 1024;
+    }
 
     poCompressData = std::make_shared<RMFCompressData>();
     if(nThreads > 0)
@@ -2911,7 +2915,7 @@ CPLErr RMFDataset::WriteRawTile(int nBlockXOff, int nBlockYOff,
 
 CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff,
                             GByte* pabyData, size_t nRawBytes,
-                            GUInt32 nRawXSize, GUInt32 nRawYSize, 
+                            GUInt32 nRawXSize, GUInt32 nRawYSize,
                             bool& bNullTile)
 {
     bNullTile = false;
