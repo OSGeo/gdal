@@ -3472,7 +3472,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     if( STARTS_WITH_CI(pszDefinition, "http://opengis.net/def/crs")
         || STARTS_WITH_CI(pszDefinition, "https://opengis.net/def/crs")
         || STARTS_WITH_CI(pszDefinition, "http://www.opengis.net/def/crs")
-        || STARTS_WITH_CI(pszDefinition, "https://opengis.net/def/crs")
+        || STARTS_WITH_CI(pszDefinition, "https://www.opengis.net/def/crs")
         || STARTS_WITH_CI(pszDefinition, "www.opengis.net/def/crs"))
         return importFromCRSURL( pszDefinition );
 

@@ -78,18 +78,22 @@ def test_osr_url_2():
 def test_osr_spatialreference_https_4326():
     osr_url_test('https://spatialreference.org/ref/epsg/4326/', expected_wkt)
 
-def test_osr_opengis_http_4326():
+def test_osr_www_opengis_http_4326():
     srs = osr.SpatialReference()
     assert srs.SetFromUserInput("http://www.opengis.net/def/crs/EPSG/0/4326") == 0
     assert gdaltest.equal_srs_from_wkt(expected_wkt, srs.ExportToWkt())
 
+def test_osr_opengis_http_4326():
+    srs = osr.SpatialReference()
     assert srs.SetFromUserInput("http://opengis.net/def/crs/EPSG/0/4326") == 0
     assert gdaltest.equal_srs_from_wkt(expected_wkt, srs.ExportToWkt())
 
-def test_osr_opengis_https_4326():
+def test_osr_www_opengis_https_4326():
     srs = osr.SpatialReference()
     assert srs.SetFromUserInput("https://www.opengis.net/def/crs/EPSG/0/4326") == 0
     assert gdaltest.equal_srs_from_wkt(expected_wkt, srs.ExportToWkt())
 
+def test_osr_opengis_https_4326():
+    srs = osr.SpatialReference()
     assert srs.SetFromUserInput("https://opengis.net/def/crs/EPSG/0/4326") == 0
     assert gdaltest.equal_srs_from_wkt(expected_wkt, srs.ExportToWkt())
