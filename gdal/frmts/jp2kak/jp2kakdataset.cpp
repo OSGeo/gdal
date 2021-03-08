@@ -836,7 +836,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     subfile_source *poRawInput = nullptr;
     bool bIsJPIP = false;
     bool bIsSubfile = false;
-    GByte *pabyHeader = nullptr;
+    const GByte *pabyHeader = nullptr;
 
     const bool bResilient =
         CPLTestBool(CPLGetConfigOption("JP2KAK_RESILIENT", "NO"));
@@ -854,6 +854,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Handle setting up datasource for JPIP.
     const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    std::vector<GByte> abySubfileHeader(16); // leave in this scope
     if( poOpenInfo->nHeaderBytes < 16 )
     {
         if( (STARTS_WITH_CI(poOpenInfo->pszFilename, "http://")
@@ -865,9 +866,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "J2K_SUBFILE:") )
         {
-            // TODO(schwehr): Why was abySubfileHeader static in r6348?
-            GByte abySubfileHeader[16] = {};
-
             try
             {
                 poRawInput = new subfile_source;
@@ -875,7 +873,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                                  bBuffered);
                 poRawInput->seek(0);
 
-                poRawInput->read(abySubfileHeader, 16);
+                poRawInput->read(&abySubfileHeader[0], 16);
                 poRawInput->seek(0);
             }
             catch( ... )
@@ -883,7 +881,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 return nullptr;
             }
 
-            pabyHeader = abySubfileHeader;
+            pabyHeader = abySubfileHeader.data();
 
             bIsSubfile = true;
         }
