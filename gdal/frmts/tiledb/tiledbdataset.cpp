@@ -1853,8 +1853,8 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
         poDS->nBlocksX = DIV_ROUND_UP( nXSize, poDS->nBlockXSize );
         poDS->nBlocksY = DIV_ROUND_UP( nYSize, poDS->nBlockYSize );
 
-        uint64_t w = poDS->nBlocksX * poDS->nBlockXSize - 1;
-        uint64_t h = poDS->nBlocksY * poDS->nBlockYSize - 1;
+        uint64_t w = (uint64_t)poDS->nBlocksX * poDS->nBlockXSize - 1;
+        uint64_t h = (uint64_t)poDS->nBlocksY * poDS->nBlockYSize - 1;
 
         auto d1 = tiledb::Dimension::create<uint64_t>(
                     *poDS->m_ctx, "X", {0, w},
