@@ -285,7 +285,7 @@ void BlockLayer::WriteToLayer(const void * pData, uint64 nOffset, uint64 nSize)
         uint32 iBlock = (uint32) ((nOffset + iByte) / nBlockSize);
         uint32 iWork  = (uint32) ((nOffset + iByte) % nBlockSize);
 
-        uint64 nWorkSize = nContiguousCount * nBlockSize - iWork;
+        uint64 nWorkSize = (uint64)nContiguousCount * nBlockSize - iWork;
 
         if (nWorkSize > nSize - iByte)
             nWorkSize = nSize - iByte;
@@ -338,7 +338,7 @@ bool BlockLayer::ReadFromLayer(void * pData, uint64 nOffset, uint64 nSize)
         uint32 iBlock = (uint32) ((nOffset + iByte) / nBlockSize);
         uint32 iWork  = (uint32) ((nOffset + iByte) % nBlockSize);
 
-        uint64 nWorkSize = nContiguousCount * nBlockSize - iWork;
+        uint64 nWorkSize = (uint64)nContiguousCount * nBlockSize - iWork;
 
         if (nWorkSize > nSize - iByte)
             nWorkSize = nSize - iByte;
