@@ -2331,6 +2331,8 @@ static bool WriteSection4( VSILFILE* fp,
         }
         else
         {
+            free(pdstempl);
+            free(coordlist);
             CPLError(CE_Warning, CPLE_AppDefined,
                      "PDS_PDTN = %d is unknown. Product will not be "
                      "correctly read by this driver (but potentially valid "
