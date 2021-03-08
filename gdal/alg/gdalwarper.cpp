@@ -1625,7 +1625,8 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         // EXTRA_ELTS is an internal detail that we will recover
         // no need to serialize it.
         // And CUTLINE is also serialized in a special way
-        if( !EQUAL(pszName, "EXTRA_ELTS") && !EQUAL(pszName, "CUTLINE") )
+        if( pszName != nullptr &&
+            !EQUAL(pszName, "EXTRA_ELTS") && !EQUAL(pszName, "CUTLINE") )
         {
             CPLXMLNode *psOption =
                 CPLCreateXMLElementAndValue(
