@@ -2159,6 +2159,12 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( CSLFetchNameValue( papszOptions, "BLOCKYSIZE" ) != nullptr )
         nTileYSize = atoi(CSLFetchNameValue( papszOptions, "BLOCKYSIZE"));
+    if( nTileXSize <= 0 || nTileYSize <= 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Wrong value for BLOCKXSIZE/BLOCKYSIZE");
+        return nullptr;
+    }
 
     // Avoid splitting into too many tiles - apparently limiting to 64K tiles.
     // There is a hard limit on the number of tiles allowed in JPEG2000.
