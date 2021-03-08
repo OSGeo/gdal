@@ -516,3 +516,7 @@ def test_ogr_geos_prepared_geom():
     g2 = ogr.CreateGeometryFromWkt('POLYGON((0.5 0,0.5 1,1.5 1,1.5 0,0.5 0))')
     assert pg.Intersects(g2)
     assert not pg.Intersects(ogr.CreateGeometryFromWkt('POINT(-0.5 0.5)'))
+
+    # Test workaround for https://github.com/libgeos/geos/pull/423
+    assert not pg.Intersects(ogr.CreateGeometryFromWkt('POINT EMPTY'))
+    assert not pg.Contains(ogr.CreateGeometryFromWkt('POINT EMPTY'))

@@ -156,7 +156,7 @@ def test_ogr_shape_4():
         print(feat_read.GetGeometryRef().ExportToWkt())
         pytest.fail('Didnt get null geometry as expected.')
 
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -353,7 +353,7 @@ def test_ogr_shape_12():
         assert pnt_count == counts[i], ('Polygon %d has %d points instead of %d.' %
                                   (i, pnt_count, counts[i]))
 
-    
+
 ###############################################################################
 # Perform a SetFeature() on a couple features, resetting the size.
 
@@ -566,7 +566,7 @@ def test_ogr_shape_18():
 
     assert srs_lyr.GetAuthorityCode(None) == '27700'
 
-    
+
 ###############################################################################
 # Test polygon formation logic - recognising what rings are inner/outer
 # and deciding on polygon vs. multipolygon (#1217)
@@ -652,7 +652,7 @@ def test_ogr_shape_21():
 
         assert feat is None or feat.GetGeometryRef() is None
 
-    
+
 
 ###############################################################################
 # Test writing and reading all handled data types
@@ -1118,7 +1118,7 @@ def test_ogr_shape_29():
             lst
         assert 'packed' not in filename, lst
 
-    
+
 ###############################################################################
 # Test that REPACK doesn't change extension case (#3293)
 
@@ -1143,7 +1143,7 @@ def test_ogr_shape_30():
     for filename in lst:
         assert filename in ['.', '..', 'lowercase.shp', 'lowercase.shx', 'lowercase.dbf'], lst
 
-    
+
 ###############################################################################
 # Test truncation of long and duplicate field names.
 # FIXME: Empty field names are allowed now!
@@ -1275,7 +1275,7 @@ def test_ogr_shape_32():
                                           max_error=0.000000001) == 0), \
             ('Wrong geometry encountered at FID', i, ':', (feat_read.GetGeometryRef().ExportToWkt()))
 
-    
+
 ###############################################################################
 # Check that we can detect correct winding order even with polygons with big
 # coordinate offset (#3356)
@@ -1516,7 +1516,7 @@ def test_ogr_shape_40():
     for f in indexfiles:
         assert not os.path.exists(os.path.join('tmp', f)), ('DeleteFeature(): ' + f)
 
-    
+
 ###############################################################################
 # Run test_ogrsf
 
@@ -2166,7 +2166,7 @@ def ogr_shape_54_test_layer(ds, layer_index):
            feat.GetGeometryRef().ExportToWkt() == 'POINT (%d %d)' % (layer_index, layer_index + 1)), \
             ('failed for layer %d' % layer_index)
 
-    
+
 
 def test_ogr_shape_54():
 
@@ -2762,7 +2762,7 @@ def test_ogr_shape_67():
 
     with pytest.raises(OSError):
         os.stat('tmp/emptyshapefilewithsbn.sbn')
-    
+
 
     os.unlink('tmp/emptyshapefilewithsbn.shp')
     os.unlink('tmp/emptyshapefilewithsbn.shx')
@@ -2841,7 +2841,7 @@ def test_ogr_shape_68():
             assert new_shp_size == ori_shp_size
             assert new_shx_size == ori_shx_size
 
-    
+
 ###############################################################################
 # Test fix for #5135 (creating a field of type Integer with a big width)
 
@@ -3599,7 +3599,7 @@ def test_ogr_shape_91():
     for _ in lyr:
         pass
 
-    
+
 ###############################################################################
 # Test reading multipoint Z geometries without M
 
@@ -3690,7 +3690,7 @@ def test_ogr_shape_94():
             ds = None
             ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_94.shp')
 
-    
+
 ###############################################################################
 # Test demoting of ZM to Z when the M values are nodata
 
@@ -3936,7 +3936,7 @@ def test_ogr_shape_100():
 
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_shape_100.shp')
 
-    
+
 ###############################################################################
 # Test auto repack
 
@@ -4029,7 +4029,7 @@ def test_ogr_shape_101():
 
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_101.shp')
 
-    
+
 ###############################################################################
 # Test reading invalid .prj
 
@@ -4268,7 +4268,7 @@ def test_ogr_shape_104():
 
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
 
-    
+
 ###############################################################################
 # Test reading .dbf with substantial padding after last field definition.
 
@@ -4800,6 +4800,121 @@ def test_ogr_shape_ldid_and_cpg():
 
     gdal.Unlink('/vsimem/tmp.dbf')
     gdal.Unlink('/vsimem/tmp.cpg')
+
+###############################################################################
+# Test reading a shapefile with a point whose coordinates are NaN and with a spatial filter (#3542)
+
+
+def test_ogr_shape_point_nan():
+
+    ds = ogr.Open('data/shp/pointnan.shp')
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(0,0,100,100)
+    count = 0
+    for f in lyr:
+        count += 1
+    assert count == 1
+
+###############################################################################
+# Test writing a point with non-finite value
+
+
+def test_ogr_shape_write_point_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    g = ogr.Geometry(ogr.wkbPoint25D)
+    g.AddPoint(0, 0, float('inf'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
+# Test writing a linestring with non-finite value
+
+
+def test_ogr_shape_write_linestring_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    g = ogr.Geometry(ogr.wkbLineString25D)
+    g.AddPoint(0, 0, 0)
+    g.AddPoint(0, 1, float('inf'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
+# Test writing a multilinestring with non-finite value
+
+
+def test_ogr_shape_write_multilinestring_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    ls = ogr.Geometry(ogr.wkbLineString25D)
+    ls.AddPoint(0, 0, 0)
+    ls.AddPoint(0, 1, float('inf'))
+    g = ogr.Geometry(ogr.wkbMultiLineString25D)
+    g.AddGeometry(ls)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
+# Test writing a polygon with non-finite value
+
+
+def test_ogr_shape_write_polygon_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    ls = ogr.Geometry(ogr.wkbLinearRing)
+    ls.AddPoint(0, 0, 0)
+    ls.AddPoint(0, 1, float('inf'))
+    ls.AddPoint(1, 1, 0)
+    ls.AddPoint(0, 0, 0)
+    g = ogr.Geometry(ogr.wkbPolygon25D)
+    g.AddGeometry(ls)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
+
+###############################################################################
+# Test writing a multipolygon with non-finite value
+
+
+def test_ogr_shape_write_multipolygon_z_non_finite():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test.shp')
+    lyr = ds.CreateLayer('test')
+    ls = ogr.Geometry(ogr.wkbLinearRing)
+    ls.AddPoint(0, 0, 0)
+    ls.AddPoint(0, 1, float('inf'))
+    ls.AddPoint(1, 1, 0)
+    ls.AddPoint(0, 0, 0)
+    p = ogr.Geometry(ogr.wkbPolygon25D)
+    p.AddGeometry(ls)
+    g = ogr.Geometry(ogr.wkbMultiPolygon25D)
+    g.AddGeometry(p)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(g)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
 
 ###############################################################################
 
