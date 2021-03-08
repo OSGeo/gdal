@@ -303,9 +303,9 @@ TileDBRasterBand::TileDBRasterBand(
         std::vector<uint64_t> oaSubarray = { uint64_t( nBandIdx ),
                                         uint64_t( nBandIdx ),
                                         0,
-                                        uint64_t( poDSIn->nBlocksY * nBlockYSize ) - 1,
+                                        uint64_t(poDSIn->nBlocksY) * nBlockYSize - 1,
                                         0,
-                                        uint64_t( poDSIn->nBlocksX * nBlockXSize ) - 1,
+                                        uint64_t(poDSIn->nBlocksX) * nBlockXSize - 1,
                                         };
 
         if ( poGDS->m_array->schema().domain().ndim() == 3 )
