@@ -523,9 +523,9 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 
     if (psResult->nStatus != 0)
     {
-        CPLHTTPDestroyResult( psResult );
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Curl reports error: %d: %s", psResult->nStatus, psResult->pszErrBuf );
+        CPLHTTPDestroyResult( psResult );
         return FALSE;
     }
 
