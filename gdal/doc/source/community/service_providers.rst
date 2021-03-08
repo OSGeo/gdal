@@ -83,6 +83,13 @@ and related Open Source technologies.
 
       `Faunalia`_ (Italy) is a company that operates since more than 15 years in the field of Geographic Information Systems (GIS) based on free and open source software (chiefly QGIS, PostGIS, and more). Our main customers are public administrations, private companies, associations. Faunalia has its main branch in Italy, and operates worldwide. Faunalia provides training services on GDAL.
 
+
+  |logo_mundialis|
+
+  .. container:: service-provider-description
+
+      `mundialis`_ (Germany) is specialized in the processing of massive geospatial and remote sensing data. Our services centered on the Open Source geospatial systems GRASS GIS, actinia and QGIS are incorporated into our process chains, projects and tailored solutions. We analyse satellite, aerial and drone imagery for land degradation and landuse change. We offer support and training for GRASS GIS and GDAL.
+
 .. raw:: html
 
    <script type="text/javascript">
@@ -153,3 +160,9 @@ The steps to add a company to the service providers list are outlined in the :re
    :class: img-logos
    :width: 100 px
    :target: `Faunalia`_
+
+.. _`mundialis`: https://www.mundialis.de/
+.. |logo_mundialis| image:: ../../images/logo-mundialis.png
+   :class: img-logos
+   :width: 100 px
+   :target: `mundialis`_
