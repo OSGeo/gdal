@@ -3470,7 +3470,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return importFromURN( pszDefinition );
 
     if( STARTS_WITH_CI(pszDefinition, "http://opengis.net/def/crs")
+        || STARTS_WITH_CI(pszDefinition, "https://opengis.net/def/crs")
         || STARTS_WITH_CI(pszDefinition, "http://www.opengis.net/def/crs")
+        || STARTS_WITH_CI(pszDefinition, "https://opengis.net/def/crs")
         || STARTS_WITH_CI(pszDefinition, "www.opengis.net/def/crs"))
         return importFromCRSURL( pszDefinition );
 
@@ -3530,7 +3532,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
              || strstr(pszDefinition, "+init") != nullptr )
         return importFromProj4( pszDefinition );
 
-    if( STARTS_WITH_CI(pszDefinition, "http://") )
+    if( STARTS_WITH_CI(pszDefinition, "http://") || STARTS_WITH_CI(pszDefinition, "https://") )
     {
         return importFromUrl (pszDefinition);
     }
@@ -4001,8 +4003,12 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 
     if( STARTS_WITH_CI(pszURL, "http://opengis.net/def/crs") )
         pszCur = pszURL + 26;
+    else if( STARTS_WITH_CI(pszURL, "https://opengis.net/def/crs") )
+        pszCur = pszURL + 27;
     else if( STARTS_WITH_CI(pszURL, "http://www.opengis.net/def/crs") )
         pszCur = pszURL + 30;
+    else if( STARTS_WITH_CI(pszURL, "https://www.opengis.net/def/crs") )
+        pszCur = pszURL + 32;
     else if( STARTS_WITH_CI(pszURL, "www.opengis.net/def/crs") )
         pszCur = pszURL + 23;
     else
