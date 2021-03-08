@@ -48,7 +48,7 @@ extern const char * const pszGDALSignature;
 class HDF4SharedResources
 {
     friend class ::HDF4Dataset;
-    int32       m_hSD;
+    int32       m_hSD = -1;
     std::string m_osFilename;
     CPLStringList m_aosOpenOptions;
 
