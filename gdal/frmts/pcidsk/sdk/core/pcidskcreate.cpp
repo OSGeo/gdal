@@ -598,7 +598,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
         for( chan_index = 0; chan_index < channel_count; chan_index++ )
         {
-            uint64 ih_offset = (image_header_start)*512 + chan_index*1024;
+            uint64 ih_offset = (uint64)image_header_start*512 + (uint64)chan_index*1024;
 
             file->ReadFromFile( ih.buffer, ih_offset, 1024 );
 
