@@ -653,18 +653,8 @@ GDALColorTable *JP2KAKRasterBand::GetColorTable()
 /*                           JP2KAKDataset()                           */
 /************************************************************************/
 
-JP2KAKDataset::JP2KAKDataset() :
-    poInput(nullptr),
-    poRawInput(nullptr),
-    family(nullptr),
-    jpip_client(nullptr),
-    bPreferNPReads(false),
-    poThreadEnv(nullptr),
-    bCached(false),
-    bResilient(false),
-    bFussy(false),
-    bUseYCC(false),
-    bPromoteTo8Bit(false)
+JP2KAKDataset::JP2KAKDataset()
+
 {
     poDriver = static_cast<GDALDriver *>(GDALGetDriverByName("JP2KAK"));
 }
