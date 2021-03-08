@@ -465,7 +465,7 @@ int DDFModule::Create( const char *pszFilename )
         papoFieldDefns[iField]->GenerateDDREntry( this, nullptr, &nLength );
 
         CPLAssert( (int)strlen(papoFieldDefns[iField]->GetName()) == _sizeFieldTag );
-        strcpy( achDirEntry, papoFieldDefns[iField]->GetName() );
+        snprintf( achDirEntry, sizeof(achDirEntry), "%s", papoFieldDefns[iField]->GetName() );
         snprintf(szFormat, sizeof(szFormat), "%%0%dd", (int)_sizeFieldLength);
         snprintf( achDirEntry + _sizeFieldTag, sizeof(achDirEntry) - _sizeFieldTag,
                   szFormat, nLength );
