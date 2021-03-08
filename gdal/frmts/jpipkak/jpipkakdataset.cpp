@@ -2077,6 +2077,7 @@ static void JPIPWorkerFunc(void *req)
             // status is not being set, always zero in cpl_http
             CPLDebug("JPIPWorkerFunc", "zero data returned from server");
             CPLReleaseMutex(poJDS->pGlobalMutex);
+            CPLHTTPDestroyResult(psResult);
             break;
         }
 
