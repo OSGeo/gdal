@@ -372,7 +372,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
     {
         OGRErr err(OGRERR_NONE);
         OGRWktOptions opts;
-        
+
         opts.variant = wkbVariantIso;
         std::string wkt = exportToWkt(opts, &err);
         if( err == OGRERR_NONE )
@@ -1418,7 +1418,7 @@ OGRErr OGRGeometry::importFromWkb( const GByte* pabyData,
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
  * OGRERR_CORRUPT_DATA may be returned.
- * 
+ *
  * @since GDAL 2.3
  */
 
@@ -3733,12 +3733,12 @@ OGRGeometry *OGRGeometry::Normalize() const
              poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosGeom,
                                                  this, nullptr);
 
-        } else 
+        } else
         {
             GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
         }
-        
-    } 
+
+    }
     freeGEOSContext( hGEOSCtxt );
 
     return poOGRProduct;
@@ -6015,8 +6015,13 @@ int OGRPreparedGeometryIntersects(
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     OGRGeometry* poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
-    if( hPreparedGeom == nullptr || poOtherGeom == nullptr )
+    if( hPreparedGeom == nullptr || poOtherGeom == nullptr
+        // The check for IsEmpty() is for buggy GEOS versions.
+        // See https://github.com/libgeos/geos/pull/423
+        || poOtherGeom->IsEmpty() )
+    {
         return FALSE;
+    }
 
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
@@ -6046,8 +6051,13 @@ int OGRPreparedGeometryContains(
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     OGRGeometry* poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
-    if( hPreparedGeom == nullptr || poOtherGeom == nullptr )
+    if( hPreparedGeom == nullptr || poOtherGeom == nullptr
+        // The check for IsEmpty() is for buggy GEOS versions.
+        // See https://github.com/libgeos/geos/pull/423
+        || poOtherGeom->IsEmpty() )
+    {
         return FALSE;
+    }
 
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
