@@ -1017,7 +1017,6 @@ enable_driver_cosar
 enable_driver_ctg
 enable_driver_dimap
 enable_driver_dted
-enable_driver_e00grid
 enable_driver_elas
 enable_driver_envisat
 enable_driver_ers
@@ -1028,7 +1027,6 @@ enable_driver_gsg
 enable_driver_gxf
 enable_driver_hf2
 enable_driver_idrisi
-enable_driver_ignfheightasciigrid
 enable_driver_ilwis
 enable_driver_ingr
 enable_driver_iris
@@ -1070,10 +1068,8 @@ enable_driver_grib
 enable_driver_ozi
 enable_driver_pdf
 enable_driver_rik
-enable_driver_aeronavfaa
 enable_driver_arcgen
 enable_driver_avc
-enable_driver_bna
 enable_driver_cad
 enable_driver_csv
 enable_driver_dgn
@@ -1087,27 +1083,21 @@ enable_driver_gmt
 enable_driver_gpsbabel
 enable_driver_gpx
 enable_driver_gtm
-enable_driver_htf
 enable_driver_jml
 enable_driver_mapml
 enable_driver_mvt
 enable_driver_ntf
-enable_driver_openair
 enable_driver_openfilegdb
 enable_driver_pgdump
 enable_driver_rec
 enable_driver_s57
-enable_driver_segukooa
-enable_driver_segy
 enable_driver_selafin
 enable_driver_shape
-enable_driver_sua
 enable_driver_svg
 enable_driver_sxf
 enable_driver_tiger
 enable_driver_vdv
 enable_driver_wasp
-enable_driver_xplane
 enable_driver_eeda
 enable_driver_plmosaic
 enable_driver_rda
@@ -1198,7 +1188,6 @@ with_pcre
 with_teigha
 with_teigha_plt
 with_idb
-with_epsilon
 with_webp
 with_geos
 with_sfcgal
@@ -1923,8 +1912,6 @@ Optional Features:
   --disable-driver-ctg    disable ctg driver support (enabled by default)
   --disable-driver-dimap  disable dimap driver support (enabled by default)
   --disable-driver-dted   disable dted driver support (enabled by default)
-  --disable-driver-e00grid
-                          disable e00grid driver support (enabled by default)
   --disable-driver-elas   disable elas driver support (enabled by default)
   --disable-driver-envisat
                           disable envisat driver support (enabled by default)
@@ -1936,8 +1923,6 @@ Optional Features:
   --disable-driver-gxf    disable gxf driver support (enabled by default)
   --disable-driver-hf2    disable hf2 driver support (enabled by default)
   --disable-driver-idrisi disable idrisi driver support (enabled by default)
-  --disable-driver-ignfheightasciigrid
-                          disable ignfheightasciigrid driver support (enabled by default)
   --disable-driver-ilwis  disable ilwis driver support (enabled by default)
   --disable-driver-ingr   disable ingr driver support (enabled by default)
   --disable-driver-iris   disable iris driver support (enabled by default)
@@ -1993,11 +1978,8 @@ Optional Features:
                           requires dependency)
   --disable-driver-rik    disable rik format support (enabled by default,
                           requires dependency)
-  --disable-driver-aeronavfaa
-                          disable aeronavfaa driver support (enabled by default)
   --disable-driver-arcgen disable arcgen driver support (enabled by default)
   --disable-driver-avc    disable avc driver support (enabled by default)
-  --disable-driver-bna    disable bna driver support (enabled by default)
   --disable-driver-cad    disable cad driver support (enabled by default)
   --disable-driver-csv    disable csv driver support (enabled by default)
   --disable-driver-dgn    disable dgn driver support (enabled by default)
@@ -2014,31 +1996,23 @@ Optional Features:
                           disable gpsbabel driver support (enabled by default)
   --disable-driver-gpx    disable gpx driver support (enabled by default)
   --disable-driver-gtm    disable gtm driver support (enabled by default)
-  --disable-driver-htf    disable htf driver support (enabled by default)
   --disable-driver-jml    disable jml driver support (enabled by default)
   --disable-driver-mapml  disable mapml driver support (enabled by default)
   --disable-driver-mvt    disable mvt driver support (enabled by default)
   --disable-driver-ntf    disable ntf driver support (enabled by default)
-  --disable-driver-openair
-                          disable openair driver support (enabled by default)
   --disable-driver-openfilegdb
                           disable openfilegdb driver support (enabled by default)
   --disable-driver-pgdump disable pgdump driver support (enabled by default)
   --disable-driver-rec    disable rec driver support (enabled by default)
   --disable-driver-s57    disable s57 driver support (enabled by default)
-  --disable-driver-segukooa
-                          disable segukooa driver support (enabled by default)
-  --disable-driver-segy   disable segy driver support (enabled by default)
   --disable-driver-selafin
                           disable selafin driver support (enabled by default)
   --disable-driver-shape  disable shape driver support (enabled by default)
-  --disable-driver-sua    disable sua driver support (enabled by default)
   --disable-driver-svg    disable svg driver support (enabled by default)
   --disable-driver-sxf    disable sxf driver support (enabled by default)
   --disable-driver-tiger  disable tiger driver support (enabled by default)
   --disable-driver-vdv    disable vdv driver support (enabled by default)
   --disable-driver-wasp   disable wasp driver support (enabled by default)
-  --disable-driver-xplane disable xplane driver support (enabled by default)
   --disable-driver-eeda   disable eeda format support (enabled by default,
                           requires curl)
   --disable-driver-plmosaic
@@ -2224,7 +2198,6 @@ Optional Packages:
   --with-teigha=path Include Teigha DWG/DGN support
   --with-teigha-plt=platform Teigha platform
   --with-idb=DIR        Include Informix DataBlade support (DIR points to Informix root)
-  --with-epsilon=ARG    Include EPSILON support (ARG=no, yes or libepsilon install root path)
   --with-webp=ARG    Include WEBP support (ARG=no, yes or libwebp install root path)
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
@@ -26452,34 +26425,6 @@ else
   INTERNAL_FORMAT_dted_ENABLED=no
 fi
 
-# Check whether --enable-driver-e00grid was given.
-if test "${enable_driver_e00grid+set}" = set; then :
-  enableval=$enable_driver_e00grid;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_e00grid
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED e00grid"
-  INTERNAL_FORMAT_e00grid_ENABLED=yes
-else
-  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED e00grid"
-  INTERNAL_FORMAT_e00grid_ENABLED=no
-fi
-
 # Check whether --enable-driver-elas was given.
 if test "${enable_driver_elas+set}" = set; then :
   enableval=$enable_driver_elas;
@@ -26758,34 +26703,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED idrisi"
   INTERNAL_FORMAT_idrisi_ENABLED=no
-fi
-
-# Check whether --enable-driver-ignfheightasciigrid was given.
-if test "${enable_driver_ignfheightasciigrid+set}" = set; then :
-  enableval=$enable_driver_ignfheightasciigrid;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_ignfheightasciigrid
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ignfheightasciigrid"
-  INTERNAL_FORMAT_ignfheightasciigrid_ENABLED=yes
-else
-  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ignfheightasciigrid"
-  INTERNAL_FORMAT_ignfheightasciigrid_ENABLED=no
 fi
 
 # Check whether --enable-driver-ilwis was given.
@@ -27938,35 +27855,6 @@ fi
 
 
 
-# Check whether --enable-driver-aeronavfaa was given.
-if test "${enable_driver_aeronavfaa+set}" = set; then :
-  enableval=$enable_driver_aeronavfaa;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_aeronavfaa
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED aeronavfaa"
-  INTERNAL_FORMAT_aeronavfaa_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DAERONAVFAA_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED aeronavfaa"
-  INTERNAL_FORMAT_aeronavfaa_ENABLED=no
-fi
-
 # Check whether --enable-driver-arcgen was given.
 if test "${enable_driver_arcgen+set}" = set; then :
   enableval=$enable_driver_arcgen;
@@ -28023,35 +27911,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED avc"
   INTERNAL_FORMAT_avc_ENABLED=no
-fi
-
-# Check whether --enable-driver-bna was given.
-if test "${enable_driver_bna+set}" = set; then :
-  enableval=$enable_driver_bna;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_bna
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED bna"
-  INTERNAL_FORMAT_bna_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DBNA_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED bna"
-  INTERNAL_FORMAT_bna_ENABLED=no
 fi
 
 # Check whether --enable-driver-cad was given.
@@ -28431,35 +28290,6 @@ else
   INTERNAL_FORMAT_gtm_ENABLED=no
 fi
 
-# Check whether --enable-driver-htf was given.
-if test "${enable_driver_htf+set}" = set; then :
-  enableval=$enable_driver_htf;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_htf
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED htf"
-  INTERNAL_FORMAT_htf_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DHTF_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED htf"
-  INTERNAL_FORMAT_htf_ENABLED=no
-fi
-
 # Check whether --enable-driver-jml was given.
 if test "${enable_driver_jml+set}" = set; then :
   enableval=$enable_driver_jml;
@@ -28574,35 +28404,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED ntf"
   INTERNAL_FORMAT_ntf_ENABLED=no
-fi
-
-# Check whether --enable-driver-openair was given.
-if test "${enable_driver_openair+set}" = set; then :
-  enableval=$enable_driver_openair;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_openair
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED openair"
-  INTERNAL_FORMAT_openair_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DOPENAIR_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED openair"
-  INTERNAL_FORMAT_openair_ENABLED=no
 fi
 
 # Check whether --enable-driver-openfilegdb was given.
@@ -28721,64 +28522,6 @@ else
   INTERNAL_FORMAT_s57_ENABLED=no
 fi
 
-# Check whether --enable-driver-segukooa was given.
-if test "${enable_driver_segukooa+set}" = set; then :
-  enableval=$enable_driver_segukooa;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_segukooa
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED segukooa"
-  INTERNAL_FORMAT_segukooa_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSEGUKOOA_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED segukooa"
-  INTERNAL_FORMAT_segukooa_ENABLED=no
-fi
-
-# Check whether --enable-driver-segy was given.
-if test "${enable_driver_segy+set}" = set; then :
-  enableval=$enable_driver_segy;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_segy
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED segy"
-  INTERNAL_FORMAT_segy_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSEGY_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED segy"
-  INTERNAL_FORMAT_segy_ENABLED=no
-fi
-
 # Check whether --enable-driver-selafin was given.
 if test "${enable_driver_selafin+set}" = set; then :
   enableval=$enable_driver_selafin;
@@ -28835,35 +28578,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED shape"
   INTERNAL_FORMAT_shape_ENABLED=no
-fi
-
-# Check whether --enable-driver-sua was given.
-if test "${enable_driver_sua+set}" = set; then :
-  enableval=$enable_driver_sua;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_sua
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED sua"
-  INTERNAL_FORMAT_sua_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DSUA_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED sua"
-  INTERNAL_FORMAT_sua_ENABLED=no
 fi
 
 # Check whether --enable-driver-svg was given.
@@ -29009,35 +28723,6 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED wasp"
   INTERNAL_FORMAT_wasp_ENABLED=no
-fi
-
-# Check whether --enable-driver-xplane was given.
-if test "${enable_driver_xplane+set}" = set; then :
-  enableval=$enable_driver_xplane;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_xplane
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED xplane"
-  INTERNAL_FORMAT_xplane_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DXPLANE_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED xplane"
-  INTERNAL_FORMAT_xplane_ENABLED=no
 fi
 
 
@@ -38472,125 +38157,6 @@ IDB_LIB=${IDB_LIB}
 
 
 
-# Check whether --with-epsilon was given.
-if test "${with_epsilon+set}" = set; then :
-  withval=$with_epsilon;
-fi
-
-
-EPSILON_SETTING=no
-
-if test "$with_epsilon" = "yes" ; then
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for eps_read_block_header in -lepsilon" >&5
-$as_echo_n "checking for eps_read_block_header in -lepsilon... " >&6; }
-if ${ac_cv_lib_epsilon_eps_read_block_header+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lepsilon  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char eps_read_block_header ();
-int
-main ()
-{
-return eps_read_block_header ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_epsilon_eps_read_block_header=yes
-else
-  ac_cv_lib_epsilon_eps_read_block_header=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_epsilon_eps_read_block_header" >&5
-$as_echo "$ac_cv_lib_epsilon_eps_read_block_header" >&6; }
-if test "x$ac_cv_lib_epsilon_eps_read_block_header" = xyes; then :
-  EPSILON_SETTING=yes
-else
-  EPSILON_SETTING=no
-fi
-
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-lepsilon $LIBS"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-elif test "$with_epsilon" != "no" -a "$with_epsilon" != ""; then
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for eps_read_block_header in -lepsilon" >&5
-$as_echo_n "checking for eps_read_block_header in -lepsilon... " >&6; }
-if ${ac_cv_lib_epsilon_eps_read_block_header+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lepsilon -L$with_epsilon/lib -lepsilon $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char eps_read_block_header ();
-int
-main ()
-{
-return eps_read_block_header ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_epsilon_eps_read_block_header=yes
-else
-  ac_cv_lib_epsilon_eps_read_block_header=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_epsilon_eps_read_block_header" >&5
-$as_echo "$ac_cv_lib_epsilon_eps_read_block_header" >&6; }
-if test "x$ac_cv_lib_epsilon_eps_read_block_header" = xyes; then :
-  EPSILON_SETTING=yes
-else
-  EPSILON_SETTING=no
-fi
-
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-L$with_epsilon/lib -lepsilon $LIBS"
-    EXTRA_INCLUDES="-I$with_epsilon/include $EXTRA_INCLUDES"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-fi
-
-if test "$EPSILON_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="epsilon $OPT_GDAL_FORMATS"
-fi
-
-
-
 # Check whether --with-webp was given.
 if test "${with_webp+set}" = set; then :
   withval=$with_webp;
@@ -45242,9 +44808,6 @@ echo "  JP2Lura support:           ${HAVE_JP2LURA}"
 
 
 echo "  MSG support:               ${HAVE_MSG}"
-
-
-echo "  EPSILON support:           ${EPSILON_SETTING}"
 
 
 echo "  WebP support:              ${WEBP_SETTING}"

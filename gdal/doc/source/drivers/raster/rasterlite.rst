@@ -18,9 +18,6 @@ creating Rasterlite databases.
   as GIF, PNG, TIFF or JPEG tiles. The driver also supports reading
   overviews/pyramids, spatial reference system and spatial extent.
 
-Wavelet compressed tiles are not supported by default by GDAL, unless
-the :ref:`raster.epsilon` driver is compiled.
-
 GDAL/OGR must be compiled with OGR SQLite driver support. For read
 support, linking against spatialite library is not required, but recent
 enough sqlite3 library is needed to read rasterlite databases.
@@ -30,7 +27,7 @@ For write support a new table, linking against spatialite library \*is\*
 required.
 
 Although the Rasterlite documentation only mentions GIF, PNG, TIFF, JPEG
-and WAVELET (EPSILON driver) as compression formats for tiles, the
+as compression formats for tiles, the
 driver supports reading and writing internal tiles in any format handled
 by GDAL. Furthermore, the Rasterlite driver also allow reading and
 writing as many bands and as many band types as supported by the driver
@@ -97,7 +94,7 @@ Creation options
 
 -  **BLOCKYSIZE**\ =n: Sets tile height, defaults to 256.
 
--  **DRIVER**\ =[GTiff/GIF/PNG/JPEG/EPSILON/...] : name of the GDAL
+-  **DRIVER**\ =[GTiff/GIF/PNG/JPEG/...] : name of the GDAL
    driver to use for storing tiles. Defaults to GTiff
 
 -  **COMPRESS**\ =[LZW/JPEG/DEFLATE/...] : (GTiff driver) name of the
@@ -108,11 +105,6 @@ Creation options
 
 -  **QUALITY** : (JPEG-compressed GTiff, JPEG and WEBP drivers)
    JPEG/WEBP quality 1-100. Defaults to 75
-
--  **TARGET** : (EPSILON driver) target size reduction as a percentage
-   of the original (0-100). Defaults to 96.
-
--  **FILTER** : (EPSILON driver) Filter ID. Defaults to 'daub97lift'.
 
 Overviews
 ---------
