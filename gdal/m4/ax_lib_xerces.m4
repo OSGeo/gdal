@@ -100,7 +100,7 @@ AC_DEFUN([AX_LIB_XERCES],
         if test "$xerces_prefix" = "/usr"; then
             xerces_lib_flags="-lxerces-c -lpthread"
         else
-            xerces_lib_flags="-L$xerces_prefix/lib -lxerces-c -lpthread"
+            xerces_lib_flags="-L$xerces_prefix/${libdir} -lxerces-c -lpthread"
         fi
         run_xerces_test="yes"
     elif test "$xerces_requested" = "yes"; then

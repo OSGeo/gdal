@@ -1121,11 +1121,11 @@ if test "$with_libz" = "external" -o "$with_libz" = "" -o "$with_libz" = "yes" ;
 
 elif test "$with_libz" != "no" -a "$with_libz" != "internal" ; then
 
-  LIBS="-L$with_libz -L$with_libz/lib $LIBS"
+  LIBS="-L$with_libz -L$with_libz/${libdir} $LIBS"
 
-  AC_CHECK_LIB(z,deflateInit_,LIBZ_SETTING=external,LIBZ_SETTING=internal,-L$with_libz -L$with_libz/lib -lz)
+  AC_CHECK_LIB(z,deflateInit_,LIBZ_SETTING=external,LIBZ_SETTING=internal,-L$with_libz -L$with_libz/${libdir} -lz)
   if test "$LIBZ_SETTING" = "external" ; then
-    AC_CHECK_LIB(z,inflateCopy,LIBZ_SETTING=external,LIBZ_SETTING=internal,-L$with_libz -L$with_libz/lib -lz)
+    AC_CHECK_LIB(z,inflateCopy,LIBZ_SETTING=external,LIBZ_SETTING=internal,-L$with_libz -L$with_libz/${libdir} -lz)
      if test "$LIBZ_SETTING" = "external" ; then
         AC_MSG_RESULT([using libz library from $with_libz])
     else
@@ -1166,7 +1166,7 @@ AC_ARG_WITH(libdeflate,
 if test "$with_libdeflate" != "no" ; then
 
   if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
-    AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no],-L$with_libdeflate/lib)
+    AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no],-L$with_libdeflate/${libdir})
   else
     AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no])
   fi
@@ -1197,7 +1197,7 @@ fi
 if test "$LIBDEFLATE_SETTING" = "yes" ; then
   if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
     EXTRA_INCLUDES="-I$with_libdeflate/include $EXTRA_INCLUDES"
-    LIBS="-L$with_libdeflate/lib -ldeflate $LIBS"
+    LIBS="-L$with_libdeflate/${libdir} -ldeflate $LIBS"
   else
     LIBS="-ldeflate $LIBS"
   fi
@@ -1290,7 +1290,7 @@ else
     LIBS="-L$with_libtiff -ltiff $LIBS"
     EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
   else
-    LIBS="-L$with_libtiff/lib -ltiff $LIBS"
+    LIBS="-L$with_libtiff/${libdir} -ltiff $LIBS"
     EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
   fi
 
@@ -1414,31 +1414,24 @@ else
     fi
   else
     ORIG_LIBS="$LIBS"
-    LIBS="-L$with_proj/lib -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
+    LIBS="-L$with_proj/${libdir} -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
     AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
     AC_LANG_POP([C++])
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
+        LIBS="-L$with_proj/${libdir} -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib64 -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
-        unset ac_cv_lib_proj_proj_create_from_wkt
-        AC_LANG_PUSH([C++])
-        AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
-        AC_LANG_POP([C++])
-    fi
-    if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
+        LIBS="-L$with_proj/${libdir} -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
+            LIBS="-L$with_proj/${libdir} -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
             unset ac_cv_lib_proj_internal_proj_create_from_wkt
             AC_LANG_PUSH([C++])
             AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1449,12 +1442,12 @@ else
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -linternalproj $with_proj_extra_lib_for_test $ORIG_LIBS"
+        LIBS="-L$with_proj/${libdir} -linternalproj $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -linternalproj $with_proj_extra_lib_for_test $ORIG_LIBS"
+            LIBS="-L$with_proj/${libdir} -linternalproj $with_proj_extra_lib_for_test $ORIG_LIBS"
             unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
             AC_LANG_PUSH([C++])
             AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1523,7 +1516,7 @@ elif test "$with_spatialite" = "dlopen"; then
       SPATIALITE_SONAME="spatialite.so"
   fi
 else
-    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
+    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/${libdir} -lspatialite)
 
     if test -f "$with_spatialite/include/spatialite.h" -a \
         "$SPATIALITE_INIT_FOUND" = "yes"; then
@@ -1531,7 +1524,7 @@ else
         if test "$HAVE_SQLITE3" = "yes"; then
             SPATIALITE_INC="-I$with_spatialite/include"
             HAVE_SPATIALITE=yes
-            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+            SPATIALITE_LIBS="-L$with_spatialite/${libdir} -lspatialite"
             LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
             AC_MSG_RESULT(spatialite enabled)
         else
@@ -1593,10 +1586,10 @@ if test "$with_zstd" = "" -o "$with_zstd" = "yes" ; then
   fi
 elif test "$with_zstd" != "" -a "$with_zstd" != "no"; then
 
-  AC_CHECK_LIB(zstd,ZSTD_decompressStream,ZSTD_SETTING=yes,ZSTD_SETTING=no,-L$with_zstd/lib)
+  AC_CHECK_LIB(zstd,ZSTD_decompressStream,ZSTD_SETTING=yes,ZSTD_SETTING=no,-L$with_zstd/${libdir})
 
   if test "$ZSTD_SETTING" = "yes" -a -f "$with_zstd/include/zstd.h" ; then
-    LIBS="-L$with_zstd/lib -lzstd $LIBS"
+    LIBS="-L$with_zstd/${libdir} -lzstd $LIBS"
     EXTRA_INCLUDES="-I$with_zstd/include $EXTRA_INCLUDES"
   else
     AC_MSG_ERROR([libzstd not found])
@@ -1919,20 +1912,20 @@ fi
 # TODO: separate libs for rasters and vectors
 if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
 
-  AC_CHECK_LIB(grass_gis,G_is_initialized,GRASS_SETTING=grass70+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+  AC_CHECK_LIB(grass_gis,G_is_initialized,GRASS_SETTING=grass70+,GRASS_SETTING=no,-L$with_grass/${libdir} -lgrass_datetime)
   if test "$GRASS_SETTING" = "no" ; then
-    AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+    AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/${libdir} -lgrass_datetime)
   fi
 
   if test "$GRASS_SETTING" != "no" ; then
     if test "$GRASS_SETTING" = "grass70+" ; then
       G_RASTLIBS="-lgrass_raster -lgrass_imagery"
       G_VECTLIBS="-lgrass_vector -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
-      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+      LIBS="-L$with_grass/${libdir} $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
     else
       G_RASTLIBS="-lgrass_I"
       G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
-      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+      LIBS="-L$with_grass/${libdir} $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
     fi
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
@@ -1956,10 +1949,10 @@ elif test "$with_libgrass" = "yes" -o "$with_libgrass" = "" ; then
 
 else
 
-  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,-L$with_libgrass/lib)
+  AC_CHECK_LIB(grass5,G_gisinit_2,GRASS_SETTING=libgrass,GRASS_SETTING=no,-L$with_libgrass/${libdir})
 
   if test "$GRASS_SETTING" = "libgrass" ; then
-    LIBS="-L$with_libgrass -L$with_libgrass/lib -lgrass5 $LIBS"
+    LIBS="-L$with_libgrass -L$with_libgrass/${libdir} -lgrass5 $LIBS"
     GRASS_INCLUDE="-I$with_libgrass -I$with_libgrass/include $EXTRA_INCLUDES"
   else
     AC_MSG_ERROR([--with-libgrass=$with_grass requested, but libgrass5 not found!])
@@ -2006,7 +1999,7 @@ dnl Fedora has cfitsio headers in /usr/include/cfitsio
 else
 
   FITS_SETTING=external
-  LIBS="-L$with_cfitsio -L$with_cfitsio/lib -lcfitsio $LIBS"
+  LIBS="-L$with_cfitsio -L$with_cfitsio/${libdir} -lcfitsio $LIBS"
   EXTRA_INCLUDES="-I$with_cfitsio -I$with_cfitsio/include $EXTRA_INCLUDES"
 
   echo "using libcfitsio from $with_cfitsio."
@@ -2055,7 +2048,7 @@ elif test "$with_pcraster" = "internal" ; then
 else
 
   PCRASTER_SETTING=external
-  LIBS="-L$with_pcraster/lib -lcsf $LIBS"
+  LIBS="-L$with_pcraster/${libdir} -lcsf $LIBS"
   EXTRA_INCLUDES="-I$with_pcraster/include $EXTRA_INCLUDES"
 
   echo "using libcsf from $with_pcraster."
@@ -2106,7 +2099,7 @@ elif test "$with_png" = "internal" ; then
 else
 
   PNG_SETTING=external
-  LIBS="-L$with_png -L$with_png/lib -lpng $LIBS"
+  LIBS="-L$with_png -L$with_png/${libdir} -lpng $LIBS"
   EXTRA_INCLUDES="-I$with_png -I$with_png/include $EXTRA_INCLUDES"
 
   echo "using libpng from $with_png."
@@ -2141,7 +2134,7 @@ else
 
   DDS_SETTING=yes
   CRUNCHDIR="$with_dds"
-  LIBS="-L$with_dds/lib/ -lcrunch $LIBS"
+  LIBS="-L$with_dds/${libdir}/ -lcrunch $LIBS"
   echo "using libcrunch from $with_dds."
 
 fi
@@ -2179,7 +2172,7 @@ elif test "$with_gta" = "yes" -o "$with_gta" = "" ; then
 else
 
   GTA_SETTING=yes
-  LIBS="-L$with_gta -L$with_gta/lib -lgta $LIBS"
+  LIBS="-L$with_gta -L$with_gta/${libdir} -lgta $LIBS"
   EXTRA_INCLUDES="-I$with_gta -I$with_gta/include $EXTRA_INCLUDES"
 
   echo "using libgta from $with_gta."
@@ -2217,7 +2210,7 @@ elif test "$with_pcidsk" = "" -o "$with_pcidsk" = "yes" -o "$with_pcidsk" = "int
 else
 
   PCIDSK_SETTING=external
-  PCIDSK_LIB="-L$with_pcidsk/lib -lpcidsk"
+  PCIDSK_LIB="-L$with_pcidsk/${libdir} -lpcidsk"
   PCIDSK_INCLUDE="-I$with_pcidsk/include -I$with_pcidsk/include/pcidsk"
 
   echo "using libpcidsk from $with_pcidsk."
@@ -2292,10 +2285,10 @@ else
 
   dnl We now require libgeotiff 1.5.0
   dnl first check if $with_geotiff/lib has the library:
-  AC_CHECK_LIB(geotiff,GTIFAttachPROJContext,GEOTIFF_SETTING=external,GEOTIFF_SETTING=not_found,-L$with_geotiff/lib)
+  AC_CHECK_LIB(geotiff,GTIFAttachPROJContext,GEOTIFF_SETTING=external,GEOTIFF_SETTING=not_found,-L$with_geotiff/${libdir})
 
   if test $GEOTIFF_SETTING = "external" ; then
-    LIBS="-L$with_geotiff/lib -lgeotiff $LIBS"
+    LIBS="-L$with_geotiff/${libdir} -lgeotiff $LIBS"
     if test  -d $with_geotiff/include ; then
       EXTRA_INCLUDES="-I$with_geotiff/include $EXTRA_INCLUDES"
     fi
@@ -2367,7 +2360,7 @@ elif test "$with_jpeg" = "internal" ; then
 else
 
   JPEG_SETTING=external
-  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
+  LIBS="-L$with_jpeg -L$with_jpeg/${libdir} -ljpeg $LIBS"
   EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
 
   echo "using libjpeg from $with_jpeg."
@@ -2518,7 +2511,7 @@ elif test "$with_gif" = "internal" ; then
 else
 
   GIF_SETTING=external
-  LIBS="-L$with_gif -L$with_gif/lib -lgif $LIBS"
+  LIBS="-L$with_gif -L$with_gif/${libdir} -lgif $LIBS"
   EXTRA_INCLUDES="-I$with_gif -I$with_gif/include $EXTRA_INCLUDES"
 
   echo "using libgif from $with_gif."
@@ -2584,10 +2577,10 @@ elif test "$with_ogdi" = "yes" -o "$with_ogdi" = "" ; then
 
 else
 
-  AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,-L$with_ogdi -L$with_ogdi/lib -logdi)
+  AC_CHECK_LIB(ogdi,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,-L$with_ogdi -L$with_ogdi/${libdir} -logdi)
   if test "$HAVE_OGDI" = "yes" ; then
     if test -f "$with_ogdi/ecs.h" -o -f "$with_ogdi/include/ecs.h"; then
-        LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi $LIBS"
+        LIBS="-L$with_ogdi -L$with_ogdi/${libdir} -logdi $LIBS"
         OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
 
         echo "using libogdi from $with_ogdi."
@@ -2597,10 +2590,10 @@ else
      fi
   else
     dnl For backward compatibility. Retry with ogdi31 as a name
-    AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,-L$with_ogdi -L$with_ogdi/lib -logdi31)
+    AC_CHECK_LIB(ogdi31,cln_GetLayerCapabilities,HAVE_OGDI=yes,HAVE_OGDI=no,-L$with_ogdi -L$with_ogdi/${libdir} -logdi31)
     if test "$HAVE_OGDI" = "yes" ; then
       if test -f "$with_ogdi/ecs.h" -o -f "$with_ogdi/include/ecs.h"; then
-        LIBS="-L$with_ogdi -L$with_ogdi/lib -logdi31 $LIBS"
+        LIBS="-L$with_ogdi -L$with_ogdi/${libdir} -logdi31 $LIBS"
         OGDI_INCLUDE="-I$with_ogdi -I$with_ogdi/include"
 
         echo "using libogdi31 from $with_ogdi."
@@ -2718,10 +2711,10 @@ elif test "$with_sosi" = "yes" ; then
     rm -f testfyba
 else
 
-  AC_MSG_CHECKING([for libfyba.a, libfygm.a and libfyut.a in $with_sosi/lib])
-  if test -r $with_sosi/lib/libfyba.a -a -r $with_sosi/lib/libfygm.a -a -r $with_sosi/lib/libfyut.a ; then
+  AC_MSG_CHECKING([for libfyba.a, libfygm.a and libfyut.a in $with_sosi/${libdir}])
+  if test -r $with_sosi/${libdir}/libfyba.a -a -r $with_sosi/${libdir}/libfygm.a -a -r $with_sosi/${libdir}/libfyut.a ; then
     AC_MSG_RESULT([found.])
-    SOSI_LIB="$with_sosi/lib/libfyba.a $with_sosi/lib/libfygm.a $with_sosi/lib/libfyut.a"
+    SOSI_LIB="$with_sosi/${libdir}/libfyba.a $with_sosi/${libdir}/libfygm.a $with_sosi/${libdir}/libfyut.a"
     SOSI_ENABLED=yes
   else
     AC_MSG_ERROR([not found.])
@@ -2782,14 +2775,14 @@ else
   AC_ARG_WITH(boost-lib-path,
           [  --with-boost-lib-path=ARG   Path to boost libraries for mongocxx client],,,)
 
-  AC_MSG_CHECKING([for libmongoclient.so in in $with_mongocxx/lib])
+  AC_MSG_CHECKING([for libmongoclient.so in in $with_mongocxx/${libdir}])
   MONGODB_ENABLED=yes
-  if test -r $with_mongocxx/lib/libmongoclient.so; then
+  if test -r $with_mongocxx/${libdir}/libmongoclient.so; then
     AC_MSG_RESULT([found.])
-    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
-  elif test -r $with_mongocxx/lib/libmongoclient.dylib; then
+    MONGODB_LIB="-L$with_mongocxx/${libdir} -lmongoclient"
+  elif test -r $with_mongocxx/${libdir}/libmongoclient.dylib; then
     AC_MSG_RESULT([found.])
-    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
+    MONGODB_LIB="-L$with_mongocxx/${libdir} -lmongoclient"
   else
     AC_MSG_ERROR([not found.])
   fi
@@ -4770,8 +4763,8 @@ if test "$with_libjson_c" = "external" -o "$with_libjson_c" = "" -o "$with_libjs
 elif test "$with_libjson_c" = "internal" ; then
   LIBJSONC_SETTING=internal
 elif test "$with_libjson_c" != "no"; then
-  LIBS="-L$with_libjson_c/lib $LIBS"
-  AC_CHECK_LIB(json-c,json_object_set_serializer,LIBJSONC_SETTING=external,LIBJSONC_SETTING=internal,-L$with_libjson_c/lib)
+  LIBS="-L$with_libjson_c/${libdir} $LIBS"
+  AC_CHECK_LIB(json-c,json_object_set_serializer,LIBJSONC_SETTING=external,LIBJSONC_SETTING=internal,-L$with_libjson_c/${libdir})
 else
   AC_MSG_ERROR([libjson-c (internal or external) is required])
 fi

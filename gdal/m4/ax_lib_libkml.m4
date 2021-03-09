@@ -172,7 +172,7 @@ kmldom::KmlFactory* factory = kmldom::KmlFactory::GetFactory();
             if test "$libkml_prefix" = "/usr"; then
                 libkml_lib_flags="-lkmldom -lkmlbase -lkmlengine -lkmlconvenience -lminizip -luriparser"
             else
-                libkml_lib_flags="-L$libkml_prefix/lib -lkmldom -lkmlbase -lkmlengine -lkmlconvenience -lminizip -luriparser"
+                libkml_lib_flags="-L$libkml_prefix/${libdir} -lkmldom -lkmlbase -lkmlengine -lkmlconvenience -lminizip -luriparser"
             fi
             run_libkml_test="yes"
         elif test "$libkml_requested" = "yes"; then

@@ -119,9 +119,9 @@ AC_DEFUN([AX_LIB_EXPAT],
                     expat_lib_flags="-lexpat"
                 fi
             else
-                AC_CHECK_LIB(expat,XML_ParserCreate,run_expat_test="yes",run_expat_test="no",-L$expat_prefix/lib)
+                AC_CHECK_LIB(expat,XML_ParserCreate,run_expat_test="yes",run_expat_test="no",-L$expat_prefix/${libdir})
                 if test "$run_expat_test" = "yes"; then
-                    expat_lib_flags="-L$expat_prefix/lib -lexpat"
+                    expat_lib_flags="-L$expat_prefix/${libdir} -lexpat"
                 fi
             fi
         fi
