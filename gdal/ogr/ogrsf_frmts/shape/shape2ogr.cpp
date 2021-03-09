@@ -635,12 +635,11 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
              || hSHP->nShapeType == SHPT_ARCM
              || hSHP->nShapeType == SHPT_ARCZ )
     {
-        OGRGeometry *poForcedGeom =
-            OGRGeometryFactory::forceToMultiLineString( poGeom->clone() );
+        auto poForcedGeom = std::unique_ptr<OGRGeometry>(
+            OGRGeometryFactory::forceToMultiLineString( poGeom->clone() ));
 
         if( wkbFlatten(poForcedGeom->getGeometryType()) != wkbMultiLineString )
         {
-            delete poForcedGeom;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-linestring (%s) geometry to "
                       "ARC type shapefile.",
@@ -720,7 +719,6 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
-        delete poML;
         if( nReturnedShapeID == -1 )
             return OGRERR_FAILURE;
     }
