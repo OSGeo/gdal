@@ -1263,6 +1263,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 
         if( bCanBuildCompoundCRS )
         {
+            const std::string osHorizontalName = oSRS.GetName();
 /* -------------------------------------------------------------------- */
 /*      Promote to being a compound coordinate system.                  */
 /* -------------------------------------------------------------------- */
@@ -1283,7 +1284,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
             }
             else
             {
-                oSRS.SetNode( "COMPD_CS", "unknown" );
+                oSRS.SetNode( "COMPD_CS", (osHorizontalName + " + " + citation).c_str() );
             }
 
             oSRS.GetRoot()->AddChild( poOldRoot );
