@@ -52,10 +52,10 @@ public:
     /// The block layer info structure.
     struct BlockLayerInfo
     {
-        uint16 nLayerType;
-        uint32 nStartBlock;
-        uint32 nBlockCount;
-        uint64 nLayerSize;
+        uint16 nLayerType = 0;
+        uint32 nStartBlock = 0;
+        uint32 nBlockCount = 0;
+        uint64 nLayerSize = 0;
     };
 
     /// The tile layer info structure.
@@ -87,7 +87,7 @@ protected:
     TileLayerInfoList   moTileLayerInfoList;
 
     /// The free block layer info.
-    BlockLayerInfo      msFreeBlockLayer;
+    BlockLayerInfo      msFreeBlockLayer{};
 
     virtual uint32      GetNewBlockCount(void) const override;
 

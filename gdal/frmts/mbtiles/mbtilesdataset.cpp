@@ -502,7 +502,13 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
 
     z_stream sStream;
     memset(&sStream, 0, sizeof(sStream));
-    inflateInit(&sStream);
+    if( inflateInit(&sStream) != Z_OK )
+    {
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        CPLFree(pabyUncompressed);
+        return nullptr;
+    }
     sStream.next_in   = pabyData;
     sStream.avail_in  = nDataSize;
     sStream.next_out  = pabyUncompressed;

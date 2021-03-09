@@ -780,7 +780,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( EQUAL(pszInterleaving,"BIP") )
     {
         nPixelOffset = nItemSize * nBands;
-        if( poDS->nRasterXSize > INT_MAX / nPixelOffset )
+        if( nPixelOffset == 0 || poDS->nRasterXSize > INT_MAX / nPixelOffset )
             bIntOverflow = true;
         else
         {
@@ -796,7 +796,8 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
                       pszInterleaving );
 
         nPixelOffset = nItemSize;
-        if( poDS->nRasterXSize > INT_MAX / (nPixelOffset * nBands) )
+        if( nPixelOffset == 0 || nBands == 0 ||
+            poDS->nRasterXSize > INT_MAX / (nPixelOffset * nBands) )
             bIntOverflow = true;
         else
         {

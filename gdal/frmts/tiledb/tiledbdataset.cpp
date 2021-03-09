@@ -303,9 +303,9 @@ TileDBRasterBand::TileDBRasterBand(
         std::vector<uint64_t> oaSubarray = { uint64_t( nBandIdx ),
                                         uint64_t( nBandIdx ),
                                         0,
-                                        uint64_t( poDSIn->nBlocksY * nBlockYSize ) - 1,
+                                        uint64_t(poDSIn->nBlocksY) * nBlockYSize - 1,
                                         0,
-                                        uint64_t( poDSIn->nBlocksX * nBlockXSize ) - 1,
+                                        uint64_t(poDSIn->nBlocksX) * nBlockXSize - 1,
                                         };
 
         if ( poGDS->m_array->schema().domain().ndim() == 3 )
@@ -867,7 +867,7 @@ CPLErr TileDBDataset::TrySaveXML()
 
         return eErr;
     }
-    catch(const tiledb::TileDBError& e)
+    catch(const std::exception& e)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "%s", e.what() );
         if ( psTree )
@@ -1853,8 +1853,8 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
         poDS->nBlocksX = DIV_ROUND_UP( nXSize, poDS->nBlockXSize );
         poDS->nBlocksY = DIV_ROUND_UP( nYSize, poDS->nBlockYSize );
 
-        uint64_t w = poDS->nBlocksX * poDS->nBlockXSize - 1;
-        uint64_t h = poDS->nBlocksY * poDS->nBlockYSize - 1;
+        uint64_t w = (uint64_t)poDS->nBlocksX * poDS->nBlockXSize - 1;
+        uint64_t h = (uint64_t)poDS->nBlocksY * poDS->nBlockYSize - 1;
 
         auto d1 = tiledb::Dimension::create<uint64_t>(
                     *poDS->m_ctx, "X", {0, w},

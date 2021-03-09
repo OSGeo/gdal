@@ -843,6 +843,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
 
             if(pbUsageError)
                 *pbUsageError = TRUE;
+            GDALGridOptionsFree(psOptionsToFree);
             return nullptr;
         }
 
@@ -859,6 +860,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
 
             if(pbUsageError)
                 *pbUsageError = TRUE;
+            GDALGridOptionsFree(psOptionsToFree);
             return nullptr;
         }
     }

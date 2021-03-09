@@ -111,8 +111,10 @@ size_t BinaryTileDir::GetOptimizedDirSize(BlockFile * poFile)
          nLayerCount * sizeof(TileLayerInfo) +
          sizeof(BlockLayerInfo));
 
+#if SIZEOF_VOIDP < 8
     if (nDirSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException(0, "Unable to create extremely large file on 32-bit system.");
+#endif
 
     return static_cast<size_t>(nDirSize);
 }
@@ -178,11 +180,13 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
         return;
     }
 
+#if SIZEOF_VOIDP < 8
     if (nReadSize > std::numeric_limits<size_t>::max())
     {
         ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
         return;
     }
+#endif
 
     // Initialize the block layers.
     try
@@ -254,7 +258,7 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
     {
         BlockTileLayer * poTileLayer = dynamic_cast<BlockTileLayer *>(poLayer);
 
-        if (poTileLayer->IsCorrupted())
+        if (poTileLayer == nullptr || poTileLayer->IsCorrupted())
         {
             ThrowPCIDSKException("The tile directory is corrupted.");
             return;
@@ -357,9 +361,10 @@ size_t BinaryTileDir::GetDirSize(void) const
     // Add the size of the free blocks.
     nDirSize += static_cast<uint64>(msFreeBlockLayer.nBlockCount) * sizeof(BlockInfo);
 
+#if SIZEOF_VOIDP < 8
     if (nDirSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException(0, "Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
-
+#endif
     return static_cast<size_t>(nDirSize);
 }
 
@@ -393,8 +398,10 @@ void BinaryTileDir::InitBlockList(BinaryTileLayer * poLayer)
     if (mpoFile->IsCorruptedSegment(mnSegment, 512 + nOffset, nReadSize))
         return ThrowPCIDSKException("The tile directory is corrupted.");
 
+#if SIZEOF_VOIDP < 8
     if (nReadSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
+#endif
 
     // Read the blocks from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));

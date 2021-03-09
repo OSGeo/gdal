@@ -166,7 +166,7 @@ def test_jp2kak_12():
 
     ds = gdal.Open('data/jpeg2000/gtsmall_10_uint16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 63360 or cs == 63357 or cs == 63358
+    assert cs in (63360, 63653, 63357, 63358)
 
 
 ###############################################################################
@@ -191,7 +191,7 @@ def test_jp2kak_13():
     # levels the overview is actually generated with no discard levels
     # and in the debug output we see 500x7 -> 500x7 -> 250x4.
     checksum = ov_band.Checksum()
-    assert checksum in (11776, 11736, 11801), 'did not get expected overview checksum'
+    assert checksum in (11767, 11776, 11736, 11801), 'did not get expected overview checksum'
 
 ###############################################################################
 # Test external overviews.
@@ -213,14 +213,14 @@ def test_jp2kak_14():
         'did not get expected overview size.'
 
     checksum = ov_band.Checksum()
-    assert checksum in (12288, 12272, 12224), 'did not get expected overview checksum'
+    assert checksum in (12224, 12279, 12272, 12288), 'did not get expected overview checksum'
 
     ov_band = jp2_band.GetOverview(1)
     assert ov_band.XSize == 125 and ov_band.YSize == 2, \
         'did not get expected overview size. (2)'
 
     checksum = ov_band.Checksum()
-    assert checksum in (2957, 2980, 2990), 'did not get expected overview checksum (2)'
+    assert checksum in (2918, 2957, 2980, 2990), 'did not get expected overview checksum (2)'
 
     jp2_ds = None
     gdaltest.jp2kak_drv.Delete('tmp/jp2kak_13.jp2')

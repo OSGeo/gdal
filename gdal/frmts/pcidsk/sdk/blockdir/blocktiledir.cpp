@@ -109,7 +109,7 @@ BlockTileLayer * BlockTileDir::GetTileLayer(uint32 iLayer)
  */
 uint32 BlockTileDir::GetNewBlockCount(void) const
 {
-    return (uint32) (mpoFile->GetImageFileSize() / GetBlockSize() * 0.01);
+    return (uint32) ((unsigned long long)(mpoFile->GetImageFileSize() / GetBlockSize()) * 0.01);
 }
 
 /************************************************************************/

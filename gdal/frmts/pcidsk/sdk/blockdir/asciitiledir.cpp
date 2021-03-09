@@ -150,8 +150,10 @@ size_t AsciiTileDir::GetOptimizedDirSize(BlockFile * poFile)
          nLayerCount * SYS_BLOCK_LAYER_INFO_SIZE +
          nLayerCount * sizeof(TileLayerInfo));
 
+#if SIZEOF_VOIDP < 8
     if (nDirSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException(0, "Unable to create extremely large file on 32-bit system.");
+#endif
 
     return static_cast<size_t>(nDirSize);
 }
@@ -209,11 +211,13 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
         return;
     }
 
+#if SIZEOF_VOIDP < 8
     if (nReadSize > std::numeric_limits<size_t>::max())
     {
         ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
         return;
     }
+#endif
 
     // Initialize the block layers.
     try
@@ -257,7 +261,7 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
     {
         BlockTileLayer * poTileLayer = dynamic_cast<BlockTileLayer *>(poLayer);
 
-        if (poTileLayer->IsCorrupted())
+        if (poTileLayer == nullptr || poTileLayer->IsCorrupted())
         {
             ThrowPCIDSKException("The tile directory is corrupted.");
             return;
@@ -337,8 +341,10 @@ void AsciiTileDir::ReadFullDir(void)
     if (mpoFile->IsCorruptedSegment(mnSegment, 512, nReadSize))
         return ThrowPCIDSKException("The tile directory is corrupted.");
 
+#if SIZEOF_VOIDP < 8
     if (nReadSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
+#endif
 
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
@@ -434,8 +440,10 @@ void AsciiTileDir::ReadPartialDir(void)
     if (mpoFile->IsCorruptedSegment(mnSegment, 512 + nOffset, nReadSize))
         return ThrowPCIDSKException("The tile directory is corrupted.");
 
+#if SIZEOF_VOIDP < 8
     if (nReadSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
+#endif
 
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
@@ -565,8 +573,10 @@ size_t AsciiTileDir::GetDirSize(void) const
     // Add the size of the tile layers.
     nDirSize += static_cast<uint64>(moTileLayerInfoList.size()) * sizeof(TileLayerInfo);
 
+#if SIZEOF_VOIDP < 8
     if (nDirSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException(0, "Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
+#endif
 
     return static_cast<size_t>(nDirSize);
 }
@@ -615,7 +625,9 @@ void AsciiTileDir::UpdateBlockDirInfo(void)
 /************************************************************************/
 void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
 {
-    if (!poLayer || poLayer->mpsBlockLayer->nBlockCount == 0)
+    if (!poLayer)
+        return;
+    if( poLayer->mpsBlockLayer->nBlockCount == 0)
     {
         poLayer->moBlockList = BlockInfoList();
         return;
@@ -632,8 +644,10 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
     if (mpoFile->IsCorruptedSegment(mnSegment, 512 + nOffset, nReadSize))
         return ThrowPCIDSKException("The tile directory is corrupted.");
 
+#if SIZEOF_VOIDP < 8
     if (nReadSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system.");
+#endif
 
     // Read the blocks from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
