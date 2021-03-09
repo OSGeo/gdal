@@ -807,4 +807,4 @@ def test_tiff_srs_read_compoundcrs_without_gtcitation():
 
     ds = gdal.Open('data/gtiff/compdcrs_without_gtcitation.tif')
     sr = ds.GetSpatialRef()
-    assert sr.GetName() == 'WGS 84 / UTM zone 32N + VCS Name = EGM08_Geoid|Datum Name = EGM2008_Geoid|Unit Name = Meter|Shift Value = 0.0|Direction Value = 1.0|'
+    assert sr.GetName() == 'WGS 84 / UTM zone 32N + EGM08_Geoid'
