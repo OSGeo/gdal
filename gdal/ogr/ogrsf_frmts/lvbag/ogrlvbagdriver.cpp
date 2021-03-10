@@ -92,7 +92,7 @@ GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
                 continue;
 
             GDALOpenInfo oOpenInfo{ oSubFilename, GA_ReadOnly };
-            if( !OGRLVBAGDriverIdentify(&oOpenInfo) )
+            if( OGRLVBAGDriverIdentify(&oOpenInfo) != TRUE )
                 continue;
 
             if( !poDS->Open( oSubFilename, poOpenInfo->papszOpenOptions ) )
