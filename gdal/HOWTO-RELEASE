@@ -90,26 +90,8 @@ Perl module maintainer to make a CPAN release.
 
 8) Prepare archives
 
-8.1) Log onto a dedicated machine, or a controlled
-   environment. Currently, I (Even Rouault), log on rouault@osgeo7-wordpress
-
-   with ~/.ssh/config containing:
-
-   Host osgeo7-*
-        ProxyCommand ssh rouault@download.osgeo.org -W $(sed -e "s/^osgeo7-//;s/$/.lxd/" <<< "%h"):%p
-
-   There I have SWIG 2.0.12 and Doxygen 1.8.11 that I enable with:
-
-   export PATH=$HOME/install-swig-2.0.12/bin:$PATH
-   export PATH=$HOME/install-doxygen-1.8.11/bin:$PATH
-
-   SWIG 3 could now probably been used.
-   There were issues with Doxygen versions regarding
-   man page generation (man/man1 content to be checked w.r.t older releases),
-   but this will only apply to GDAL < 3.1 since with GDAL 3.1 we use Sphinx.
-
-8.2) Create the source distributions using the mkgdaldist.sh script (under gdal/
-   in git). 
+8.1) Create the source distributions using the mkgdaldist.sh script (under gdal/
+   in git).
    The argument should be the version number (i.e. 1.4.2). As our process involves
    doing betas or RCs, use the -rc option so that the filenames include this
    information (after promotion to official release, filename renaming will have
@@ -125,7 +107,7 @@ Perl module maintainer to make a CPAN release.
    a previous release (diff -Nur gdal-3.0.1 gdal-3.0.2).
    This is more easily doable for a bugfix release.
 
-8.3) Create a snapshot of the documentation (only for feature releases)
+8.2) Create a snapshot of the documentation (only for feature releases)
 
     0. Potentially refresh
        https://download.osgeo.org/gdal/for_doc/javadoc.zip (./make_doc.sh from swig/java)
@@ -134,8 +116,13 @@ Perl module maintainer to make a CPAN release.
     2. ./build_doc_snapshot 310
        This generates gdal310doc.zip
 
-8.4) Publish the resulting files on download.osgeo.org, 
+8.3) Publish the resulting files on download.osgeo.org,
     in /osgeo/download/gdal/X.Y.Z (where X.Y.Z is the version number)
+
+    with ~/.ssh/config containing:
+
+   Host osgeo7-*
+        ProxyCommand ssh rouault@download.osgeo.org -W $(sed -e "s/^osgeo7-//;s/$/.lxd/" <<< "%h"):%p
 
 
 9) Announce the release candidate availability to gdal-dev@
@@ -182,7 +169,7 @@ Perl module maintainer to make a CPAN release.
 
 13) Update doc/source/about_no_title.rst and doc/source/download.rst to advertise the new release and link to the release notes
 
-14) Update GitHub to close the release milestone. 
+14) Update GitHub to close the release milestone.
     Then create a new milestone for the next release.
 
 15) Upload the new Python bindings to Pypi (requires upload rights to
