@@ -252,8 +252,11 @@ if test "${RELEASE}" = "yes"; then
         "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
         "--build-arg" "GDAL_BUILD_IS_RELEASE=YES" \
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
-        "--build-arg" "BASE_IMAGE=${BASE_IMAGE}" \
     )
+
+    if test "x${BASE_IMAGE}" != "x"; then
+        BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
+    fi
 
     docker $(build_cmd) "${BUILD_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
     docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
