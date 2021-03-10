@@ -93,8 +93,12 @@ ifeq ($(LIBDEFLATE_SETTING),yes)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLIBDEFLATE_SUPPORT
 endif
 
-ifeq ($(HAVE_LERC),yes)
+ifeq ($(HAVE_LERC),internal)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLERC_SUPPORT -I../../../third_party/LercLib
+endif
+
+ifeq ($(HAVE_LERC),external)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLERC_SUPPORT $(LERC_INCLUDE)
 endif
 
 default:	$(EXTRA_DEP) $(OBJ:.o=.$(OBJ_EXT))

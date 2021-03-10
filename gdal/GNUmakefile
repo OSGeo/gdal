@@ -23,7 +23,7 @@ ifeq ($(GNM_ENABLED),yes)
    GDAL_OBJ += gnm/*.o gnm/gnm_frmts/o/*.o
 endif
 
-ifeq ($(HAVE_LERC),yes)
+ifeq ($(HAVE_LERC),internal)
    GDAL_OBJ += third_party/o/*.o
 endif
 
