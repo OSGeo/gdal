@@ -1246,9 +1246,22 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
     if( (verticalCSType != 0 || verticalDatum != 0 || verticalUnits != 0)
         && (oSRS.IsGeographic() || oSRS.IsProjected() || oSRS.IsLocal()) )
     {
-        if( !GDALGTIFKeyGetASCII( hGTIF, VerticalCitationGeoKey, citation,
+        if( GDALGTIFKeyGetASCII( hGTIF, VerticalCitationGeoKey, citation,
                                   sizeof(citation) ) )
+        {
+            if( STARTS_WITH_CI(citation, "VCS Name = ") )
+            {
+                memmove(citation, citation + strlen("VCS Name = "),
+                        strlen(citation + strlen("VCS Name = ")) + 1);
+                char* pszPipeChar = strchr(citation, '|');
+                if( pszPipeChar )
+                    *pszPipeChar = '\0';
+            }
+        }
+        else
+        {
             strcpy( citation, "unknown" );
+        }
 
         OGRSpatialReference oVertSRS;
         bool bCanBuildCompoundCRS = true;
@@ -1263,6 +1276,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 
         if( bCanBuildCompoundCRS )
         {
+            const std::string osHorizontalName = oSRS.GetName();
 /* -------------------------------------------------------------------- */
 /*      Promote to being a compound coordinate system.                  */
 /* -------------------------------------------------------------------- */
@@ -1283,7 +1297,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
             }
             else
             {
-                oSRS.SetNode( "COMPD_CS", "unknown" );
+                oSRS.SetNode( "COMPD_CS", (osHorizontalName + " + " + citation).c_str() );
             }
 
             oSRS.GetRoot()->AddChild( poOldRoot );
