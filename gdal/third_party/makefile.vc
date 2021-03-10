@@ -2,7 +2,7 @@ GDAL_ROOT	=	..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-!IF "$(HAVE_LERC)" == "1"
+!IF "$(HAVE_LERC)" == "internal"
 LERCLIB_DIR	=	LercLib
 !ENDIF
 

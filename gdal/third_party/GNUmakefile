@@ -1,16 +1,18 @@
 include ../GDALmake.opt
 
-SUBDIRS-yes     :=
+SUBDIRS     :=
 
-SUBDIRS-$(HAVE_LERC)    += LercLib
+ifeq ($(HAVE_LERC),internal)
+SUBDIRS    += LercLib
+endif
 
 %-install-obj:
 	$(MAKE) -C $* install-obj
 
-default: $(foreach d,$(SUBDIRS-yes),$(d)-install-obj)
+default: $(foreach d,$(SUBDIRS),$(d)-install-obj)
 
 
-clean:  $(foreach d,$(SUBDIRS-yes),$(d)-clean)
+clean:  $(foreach d,$(SUBDIRS),$(d)-clean)
 	rm -f o/*.o
 	$(RM) o/*.lo
 

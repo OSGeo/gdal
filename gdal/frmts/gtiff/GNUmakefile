@@ -14,21 +14,6 @@ TIFF_OPTS	:=	-DINTERNAL_LIBTIFF -Ilibtiff $(TIFF_OPTS)
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
 TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBTIFF_SYMBOLS $(TIFF_OPTS)
 endif
-ifeq ($(HAVE_LERC),yes)
-OBJ := $(OBJ) tif_lerc.o
-TIFF_OPTS	:=	-DHAVE_LERC -I../../third_party/LercLib $(TIFF_OPTS)
-
-# Still LERC specific
-ifeq ($(LIBZ_SETTING),internal)
-TIFF_OPTS :=      -I../zlib  $(TIFF_OPTS)
-endif
-
-# Still LERC specific
-ifeq ($(ZSTD_SETTING),yes)
-TIFF_OPTS 	:=	-DZSTD_SUPPORT $(TIFF_OPTS)
-endif
-
-endif
 
 ifeq ($(LIBDEFLATE_SETTING),yes)
 TIFF_OPTS 	:=	$(TIFF_OPTS) -DLIBDEFLATE_SUPPORT

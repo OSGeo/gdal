@@ -4017,7 +4017,7 @@ m4_foreach_w([frmt],XERCES_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -4041,7 +4041,7 @@ m4_foreach_w([frmt],EXPAT_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -4132,7 +4132,7 @@ m4_foreach_w([frmt],ODBC_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 fi
 
@@ -4846,7 +4846,7 @@ if test "$PDF_PLUGIN" != "yes" ; then
     if test "$LIBZ_SETTING" != "no" ; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED pdf"
     fi
-  fi 
+  fi
 fi
 
 
@@ -5379,7 +5379,7 @@ TILEDB_SETTING=no
 if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
 
   AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,)
-  
+
   if test "$TILEDB_SETTING" = "yes" ; then
     LIBS="-ltiledb $LIBS"
   else
@@ -5821,26 +5821,74 @@ dnl ---------------------------------------------------------------------------
 dnl Whether to include LERC in the build
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH([lerc],
-            AS_HELP_STRING([--without-lerc],
-               [Disable LERC library]),,)
+AC_ARG_WITH(lerc,
+    [  --with-lerc[=ARG]         Include libLerc support(ARG=yes/no/internal/path). Internal liblerc is required for MRF Lerc support. Internal or external libLerc may be used for internal libtiff Lerc support.],,,)
 
+HAVE_LERC=no
 AC_MSG_CHECKING([for LERC])
-if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
+if test "$with_lerc" = "internal"; then
     if test "$ac_cv_c_bigendian" = "yes"; then
-        HAVE_LERC=no
         AC_MSG_RESULT([disabled on big-endian])
     else
-        HAVE_LERC=yes
-        AC_MSG_RESULT([enabled])
+        HAVE_LERC=internal
+        AC_MSG_RESULT([enabled, internal])
     fi
-else
+elif test "$with_lerc" = "no"; then
     HAVE_LERC=no
     AC_MSG_RESULT([disabled by user])
+elif test "$with_lerc" = "yes" -o "x$with_lerc" = "x" ; then
+  lerc_lib_name="LercLib"
+  AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  if test "$lerc_lib" = "no" ; then
+    lerc_lib_name="Lerc"
+    AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  fi
+  if test "$lerc_lib" = "no" -a "$with_lerc" = "yes"; then
+    AC_MSG_ERROR([lerc library not found])
+  fi
+
+  AC_CHECK_HEADER(Lerc_c_api.h, [lerc_c_api_h=yes], [lerc_c_api_h=no])
+  if test "$lerc_c_api_h" = "no" -a "$with_lerc" = "yes"; then
+    AC_MSG_ERROR([Liblerc headers not found])
+  fi
+
+  if test "$lerc_lib" = "yes" -a "$lerc_c_api_h" = "yes"; then
+    HAVE_LERC=external
+    LIBS="$LIBS -l$lerc_lib_name"
+  else
+    if test "$ac_cv_c_bigendian" = "yes"; then
+        AC_MSG_RESULT([disabled on big-endian])
+    else
+        HAVE_LERC=internal
+        AC_MSG_RESULT([enabled, internal])
+    fi
+  fi
+else
+
+  ORIG_LIBS="$LIBS"
+  LIBS="-L$with_lerc/lib $LIBS"
+  lerc_lib_name="LercLib"
+  AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  if test "$lerc_lib" = "no" ; then
+    lerc_lib_name="Lerc"
+    AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  fi
+  if test "$lerc_lib" = "no"; then
+    AC_MSG_ERROR([lerc library not found])
+  fi
+
+  LIBS="-L$with_lerc/lib -l$lerc_lib_name $ORIG_LIBS"
+
+  if ! test -f "$with_lerc/include/Lerc_c_api.h"; then
+    AC_MSG_ERROR([Liblerc headers not found])
+  fi
+
+  HAVE_LERC=external
+  LERC_INCLUDE="-I$with_lerc/include"
 fi
 
 AC_SUBST(HAVE_LERC,$HAVE_LERC)
-
+AC_SUBST(LERC_INCLUDE,$LERC_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
 dnl Whether to include NULL driver in the build

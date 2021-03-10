@@ -67,6 +67,9 @@ static int NotConfigured(TIFF*, int);
 #ifndef LOGLUV_SUPPORT
 #define TIFFInitSGILog NotConfigured
 #endif
+#ifndef LERC_SUPPORT
+#define TIFFInitLERC NotConfigured
+#endif
 #ifndef LZMA_SUPPORT
 #define TIFFInitLZMA NotConfigured
 #endif
@@ -101,6 +104,7 @@ const TIFFCodec _TIFFBuiltinCODECS[] = {
     { "LZMA",		COMPRESSION_LZMA,	TIFFInitLZMA },
     { "ZSTD",		COMPRESSION_ZSTD,	TIFFInitZSTD },
     { "WEBP",		COMPRESSION_WEBP,	TIFFInitWebP },
+    { "LERC",		COMPRESSION_LERC,	TIFFInitLERC },
     { NULL,             0,                      NULL }
 };
 

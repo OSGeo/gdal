@@ -635,6 +635,7 @@ HEIF_LIBS
 HEIF_CFLAGS
 EXR_LIBS
 EXR_CFLAGS
+LERC_INCLUDE
 HAVE_LERC
 HAVE_OPENSSL_CRYPTO
 USE_ONLY_CRYPTODLL_ALG
@@ -2230,7 +2231,7 @@ Optional Packages:
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
   --with-crypto=ARG       Include crypto (from openssl) support (ARG=yes, no or path)
-  --without-lerc          Disable LERC library
+  --with-lerc=ARG         Include libLerc support(ARG=yes/no/internal/path). Internal liblerc is required for MRF Lerc support. Internal or external libLerc may be used for internal libtiff Lerc support.
   --with-null             Enable NULL driver (only useful for development
                           purposes
   --with-exr            Include EXR support via OpenEXR library
@@ -41742,26 +41743,257 @@ if test "${with_lerc+set}" = set; then :
 fi
 
 
+HAVE_LERC=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LERC" >&5
 $as_echo_n "checking for LERC... " >&6; }
-if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
+if test "$with_lerc" = "internal"; then
     if test "$ac_cv_c_bigendian" = "yes"; then
-        HAVE_LERC=no
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled on big-endian" >&5
 $as_echo "disabled on big-endian" >&6; }
     else
-        HAVE_LERC=yes
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
+        HAVE_LERC=internal
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled, internal" >&5
+$as_echo "enabled, internal" >&6; }
     fi
-else
+elif test "$with_lerc" = "no"; then
     HAVE_LERC=no
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
 $as_echo "disabled by user" >&6; }
+elif test "$with_lerc" = "yes" -o "x$with_lerc" = "x" ; then
+  lerc_lib_name="LercLib"
+  as_ac_Lib=`$as_echo "ac_cv_lib_"$lerc_lib_name"''_lerc_decode" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for lerc_decode in -l\"$lerc_lib_name\"" >&5
+$as_echo_n "checking for lerc_decode in -l\"$lerc_lib_name\"... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l"$lerc_lib_name"  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char lerc_decode ();
+int
+main ()
+{
+return lerc_decode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  lerc_lib=yes
+else
+  lerc_lib=no
+fi
+
+  if test "$lerc_lib" = "no" ; then
+    lerc_lib_name="Lerc"
+    as_ac_Lib=`$as_echo "ac_cv_lib_"$lerc_lib_name"''_lerc_decode" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for lerc_decode in -l\"$lerc_lib_name\"" >&5
+$as_echo_n "checking for lerc_decode in -l\"$lerc_lib_name\"... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l"$lerc_lib_name"  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char lerc_decode ();
+int
+main ()
+{
+return lerc_decode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  lerc_lib=yes
+else
+  lerc_lib=no
+fi
+
+  fi
+  if test "$lerc_lib" = "no" -a "$with_lerc" = "yes"; then
+    as_fn_error $? "lerc library not found" "$LINENO" 5
+  fi
+
+  ac_fn_c_check_header_mongrel "$LINENO" "Lerc_c_api.h" "ac_cv_header_Lerc_c_api_h" "$ac_includes_default"
+if test "x$ac_cv_header_Lerc_c_api_h" = xyes; then :
+  lerc_c_api_h=yes
+else
+  lerc_c_api_h=no
+fi
+
+
+  if test "$lerc_c_api_h" = "no" -a "$with_lerc" = "yes"; then
+    as_fn_error $? "Liblerc headers not found" "$LINENO" 5
+  fi
+
+  if test "$lerc_lib" = "yes" -a "$lerc_c_api_h" = "yes"; then
+    HAVE_LERC=external
+    LIBS="$LIBS -l$lerc_lib_name"
+  else
+    if test "$ac_cv_c_bigendian" = "yes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled on big-endian" >&5
+$as_echo "disabled on big-endian" >&6; }
+    else
+        HAVE_LERC=internal
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled, internal" >&5
+$as_echo "enabled, internal" >&6; }
+    fi
+  fi
+else
+
+  ORIG_LIBS="$LIBS"
+  LIBS="-L$with_lerc/lib $LIBS"
+  lerc_lib_name="LercLib"
+  as_ac_Lib=`$as_echo "ac_cv_lib_"$lerc_lib_name"''_lerc_decode" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for lerc_decode in -l\"$lerc_lib_name\"" >&5
+$as_echo_n "checking for lerc_decode in -l\"$lerc_lib_name\"... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l"$lerc_lib_name"  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char lerc_decode ();
+int
+main ()
+{
+return lerc_decode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  lerc_lib=yes
+else
+  lerc_lib=no
+fi
+
+  if test "$lerc_lib" = "no" ; then
+    lerc_lib_name="Lerc"
+    as_ac_Lib=`$as_echo "ac_cv_lib_"$lerc_lib_name"''_lerc_decode" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for lerc_decode in -l\"$lerc_lib_name\"" >&5
+$as_echo_n "checking for lerc_decode in -l\"$lerc_lib_name\"... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l"$lerc_lib_name"  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char lerc_decode ();
+int
+main ()
+{
+return lerc_decode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  lerc_lib=yes
+else
+  lerc_lib=no
+fi
+
+  fi
+  if test "$lerc_lib" = "no"; then
+    as_fn_error $? "lerc library not found" "$LINENO" 5
+  fi
+
+  LIBS="-L$with_lerc/lib -l$lerc_lib_name $ORIG_LIBS"
+
+  if ! test -f "$with_lerc/include/Lerc_c_api.h"; then
+    as_fn_error $? "Liblerc headers not found" "$LINENO" 5
+  fi
+
+  HAVE_LERC=external
+  LERC_INCLUDE="-I$with_lerc/include"
 fi
 
 HAVE_LERC=$HAVE_LERC
 
+LERC_INCLUDE=$LERC_INCLUDE
 
 
 

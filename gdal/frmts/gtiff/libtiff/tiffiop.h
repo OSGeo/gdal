@@ -419,6 +419,9 @@ extern int TIFFInitPixarLog(TIFF*, int);
 #ifdef LOGLUV_SUPPORT
 extern int TIFFInitSGILog(TIFF*, int);
 #endif
+#ifdef LERC_SUPPORT
+extern int TIFFInitLERC(TIFF* tif, int);
+#endif
 #ifdef LZMA_SUPPORT
 extern int TIFFInitLZMA(TIFF*, int);
 #endif

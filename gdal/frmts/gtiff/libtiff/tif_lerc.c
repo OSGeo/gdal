@@ -23,7 +23,14 @@
 */
 
 #include "tiffiop.h"
-#include "tif_lerc.h"
+#ifdef LERC_SUPPORT
+/*
+* TIFF Library.
+*
+* LERC Compression Support
+*
+*/
+
 #include "Lerc_c_api.h"
 #include "zlib.h"
 #ifdef ZSTD_SUPPORT
@@ -51,16 +58,16 @@ typedef struct {
         int             zipquality;             /* deflate */
         int             state;                  /* state flags */
 
-        uint32_t          segment_width;
-        uint32_t          segment_height;
+        uint32_t        segment_width;
+        uint32_t        segment_height;
 
         unsigned int    uncompressed_size;
         unsigned int    uncompressed_alloc;
-        uint8_t          *uncompressed_buffer;
+        uint8_t        *uncompressed_buffer;
         unsigned int    uncompressed_offset;
 
         unsigned int    mask_size;
-        uint8_t          *mask_buffer;
+        uint8_t        *mask_buffer;
 
         unsigned int    compressed_size;
         void           *compressed_buffer;
@@ -1198,6 +1205,7 @@ int TIFFInitLERC(TIFF* tif, int scheme)
         static const char module[] = "TIFFInitLERC";
         LERCState* sp;
 
+        (void) scheme;
         assert( scheme == COMPRESSION_LERC );
 
         /*
@@ -1256,3 +1264,4 @@ bad:
                     "No space for LERC state block");
         return 0;
 }
+#endif /* LERC_SUPPORT */
