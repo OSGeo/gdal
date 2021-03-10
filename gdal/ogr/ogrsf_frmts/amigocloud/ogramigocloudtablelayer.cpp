@@ -777,8 +777,9 @@ OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
     CPLString osSQL = osSELECTWithoutWHERE;
     osSQL += " WHERE ";
     osSQL += OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str();
-    osSQL += " = ";
+    osSQL += " LIKE '%";
     osSQL += CPLSPrintf(CPL_FRMT_GIB, nFeatureId);
+    osSQL += "%'";
 
     json_object* poObj = poDS->RunSQL(osSQL);
     json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
