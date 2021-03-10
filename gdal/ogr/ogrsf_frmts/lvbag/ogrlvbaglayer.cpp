@@ -225,7 +225,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         poFeatureDefn->SetName("Pand");
         SetDescription(poFeatureDefn->GetName());
 
-        AddSpatialRef(wkbMultiPolygon);
+        AddSpatialRef(wkbPolygon);
     }
     else if( EQUAL("num", pszDataset) )
     {

@@ -188,7 +188,7 @@ def test_ogr_lvbag_dataset_pnd():
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
-    assert lyr.GetGeomType() == ogr.wkbMultiPolygon, 'bad layer geometry type'
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
     assert lyr.GetFeatureCount() == 6
     assert lyr.GetLayerDefn().GetFieldCount() == 16
 
@@ -304,6 +304,16 @@ def test_ogr_lvbag_read_zip_3():
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() > 0
 
+def test_ogr_lvbag_read_zip_4():
+
+    ds = ogr.Open('/vsizip/./data/lvbag/archive_single.zip')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Woonplaats', 'bad layer name'
+    assert lyr.GetFeatureCount() > 0
+
 def test_ogr_lvbag_invalid_polygon():
 
     pytest.skip()
@@ -390,6 +400,18 @@ def test_ogr_lvbag_secondary_address():
 def test_ogr_lvbag_secondary_pandref():
 
     ds = ogr.Open('data/lvbag/vbo4.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetNameRef().lower() == 'pandref'
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetField(4) == ['NL.IMBAG.Pand.0048100000002999', 'NL.IMBAG.Pand.1950100000100293'], 'bad nevenadres'
+
+def test_ogr_lvbag_file_extension():
+
+    ds = ogr.Open('data/lvbag/file4.vbo')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
 
