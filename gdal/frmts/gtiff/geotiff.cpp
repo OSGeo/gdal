@@ -98,9 +98,6 @@
 #include "tiff.h"
 #include "tif_float.h"
 #include "tiffio.h"
-#ifdef INTERNAL_LIBTIFF
-#  include "tif_lerc.h"
-#endif
 #include "tiffvers.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
@@ -318,10 +315,8 @@ private:
     char       *m_pszGeorefFilename = nullptr;
 
     double      m_adfGeoTransform[6]{0,1,0,0,0,1};
-#if HAVE_LERC
     double      m_dfMaxZError = 0.0;
     uint32_t      m_anLercAddCompressionAndVersion[2]{0,0};
-#endif
     double      m_dfNoDataValue = -9999.0;
 
     toff_t      m_nDirOffset = 0;
@@ -8938,13 +8933,11 @@ void GTiffDataset::ThreadCompressionFunc( void* pData )
     TIFFSetField(hTIFFTmp, TIFFTAG_PLANARCONFIG, poDS->m_nPlanarConfig);
     if( psJob->nPredictor != PREDICTOR_NONE )
         TIFFSetField(hTIFFTmp, TIFFTAG_PREDICTOR, psJob->nPredictor);
-#if HAVE_LERC
     if( poDS->m_nCompression == COMPRESSION_LERC )
     {
         TIFFSetField(hTIFFTmp, TIFFTAG_LERC_PARAMETERS, 2,
                     poDS->m_anLercAddCompressionAndVersion);
     }
-#endif
 
     TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->m_nPhotometric);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->m_nSampleFormat);
@@ -10109,11 +10102,9 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->m_nZSTDLevel = m_nZSTDLevel;
     poODS->m_bWebPLossless = m_bWebPLossless;
     poODS->m_nJpegTablesMode = m_nJpegTablesMode;
-#if HAVE_LERC
     poODS->m_dfMaxZError = m_dfMaxZError;
     memcpy(poODS->m_anLercAddCompressionAndVersion, m_anLercAddCompressionAndVersion,
            sizeof(m_anLercAddCompressionAndVersion));
-#endif
 
     if( poODS->OpenOffset( VSI_TIFFOpenChild(m_hTIFF), nOverviewOffset,
                             GA_Update ) != CE_None )
@@ -10358,11 +10349,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
                                         CPLSPrintf("%d", nOvrJpegQuality) : nullptr,
                                     CPLSPrintf("%d", m_nJpegTablesMode),
                                     pszNoData,
-#ifdef HAVE_LERC
                                     m_anLercAddCompressionAndVersion,
-#else
-                                    nullptr,
-#endif
                                     m_bWriteCOGLayout,
                                     nOvrWebpLevel >= 0 ?
                                         CPLSPrintf("%d", nOvrWebpLevel) : nullptr
@@ -10756,11 +10743,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                                 CPLSPrintf("%d", nOvrJpegQuality) : nullptr,
                     CPLSPrintf("%d", m_nJpegTablesMode),
                     pszNoData,
-#ifdef HAVE_LERC
                     m_anLercAddCompressionAndVersion,
-#else
-                    nullptr,
-#endif
                     false,
                     nOvrWebpLevel >= 0 ?
                                 CPLSPrintf("%d", nOvrWebpLevel) : nullptr
@@ -12215,12 +12198,10 @@ void GTiffDataset::RestoreVolatileParameters(TIFF* hTIFF)
         if( m_nZSTDLevel > 0 && (m_nCompression == COMPRESSION_ZSTD ||
                                m_nCompression == COMPRESSION_LERC) )
             TIFFSetField(hTIFF, TIFFTAG_ZSTD_LEVEL, m_nZSTDLevel);
-#if HAVE_LERC
         if( m_nCompression == COMPRESSION_LERC )
         {
             TIFFSetField(hTIFF, TIFFTAG_LERC_MAXZERROR, m_dfMaxZError);
         }
-#endif
         if( m_nWebPLevel > 0 && m_nCompression == COMPRESSION_WEBP)
             TIFFSetField(hTIFF, TIFFTAG_WEBP_LEVEL, m_nWebPLevel);
         if( m_bWebPLossless && m_nCompression == COMPRESSION_WEBP)
@@ -14427,7 +14408,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     else if( m_nCompression == COMPRESSION_LERC )
     {
         m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", "LERC", "IMAGE_STRUCTURE" );
-#if HAVE_LERC
+
         uint32_t nLercParamCount = 0;
         uint32_t* panLercParams = nullptr;
         if( TIFFGetField( m_hTIFF, TIFFTAG_LERC_PARAMETERS, &nLercParamCount,
@@ -14467,7 +14448,6 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                          "Unknown Lerc version: %d", nLercVersion);
             }
         }
-#endif
     }
     else if( m_nCompression == COMPRESSION_WEBP )
     {
@@ -15449,12 +15429,10 @@ static signed char GTiffGetZSTDPreset(char** papszOptions)
     return static_cast<signed char>(nZSTDLevel);
 }
 
-#if HAVE_LERC
 static double GTiffGetLERCMaxZError(char** papszOptions)
 {
     return CPLAtof(CSLFetchNameValueDef( papszOptions, "MAX_Z_ERROR", "0.0") );
 }
-#endif
 
 static signed char GTiffGetWebPLevel(char** papszOptions)
 {
@@ -15734,9 +15712,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     const bool l_bWebPLossless = GTiffGetWebPLossless(papszParamList);
     const int l_nJpegQuality = GTiffGetJpegQuality(papszParamList);
     const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
-#if HAVE_LERC
     const double l_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Streaming related code                                          */
@@ -16224,7 +16200,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     // the default strip size is 8 or 16 depending on the photometric value.
     TIFFSetField( l_hTIFF, TIFFTAG_COMPRESSION, l_nCompression );
 
-#if HAVE_LERC
     if( l_nCompression == COMPRESSION_LERC )
     {
         const char* pszCompress =
@@ -16246,7 +16221,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         }
     }
     // TODO later: take into account LERC version
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Setup tiling/stripping flags.                                   */
@@ -16293,12 +16267,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( (l_nCompression == COMPRESSION_ZSTD ||
          l_nCompression == COMPRESSION_LERC) && l_nZSTDLevel != -1)
         TIFFSetField( l_hTIFF, TIFFTAG_ZSTD_LEVEL, l_nZSTDLevel);
-#if HAVE_LERC
     if( l_nCompression == COMPRESSION_LERC )
     {
         TIFFSetField( l_hTIFF, TIFFTAG_LERC_MAXZERROR, l_dfMaxZError );
     }
-#endif
     if( l_nCompression == COMPRESSION_WEBP && l_nWebPLevel != -1)
         TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LEVEL, l_nWebPLevel);
     if( l_nCompression == COMPRESSION_WEBP && l_bWebPLossless)
@@ -16852,7 +16824,6 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
             TIFFSetField(l_hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
     }
 
-#ifdef HAVE_LERC
     if( poDS->m_nCompression == COMPRESSION_LERC )
     {
         uint32_t nLercParamCount = 0;
@@ -16865,7 +16836,6 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
                     sizeof(poDS->m_anLercAddCompressionAndVersion) );
         }
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Read palette back as a color table if it has one.               */
@@ -16932,9 +16902,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->m_bWebPLossless = GTiffGetWebPLossless(papszParamList);
     poDS->m_nJpegQuality = GTiffGetJpegQuality(papszParamList);
     poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
-#if HAVE_LERC
     poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
-#endif
     poDS->InitCreationOrOpenOptions(papszParamList);
 
 /* -------------------------------------------------------------------- */
@@ -18168,9 +18136,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->m_nJpegQuality = GTiffGetJpegQuality(papszOptions);
     poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
-#if HAVE_LERC
     poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszOptions);
-#endif
     poDS->InitCreationOrOpenOptions(papszOptions);
 
     if( l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
@@ -18206,12 +18172,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             TIFFSetField( l_hTIFF, TIFFTAG_ZSTD_LEVEL, poDS->m_nZSTDLevel );
         }
     }
-#if HAVE_LERC
     if( l_nCompression == COMPRESSION_LERC )
     {
         TIFFSetField( l_hTIFF, TIFFTAG_LERC_MAXZERROR, poDS->m_dfMaxZError );
     }
-#endif
     if( l_nCompression == COMPRESSION_WEBP )
     {
         if( poDS->m_nWebPLevel != -1 )
@@ -19846,21 +19810,11 @@ static void GTiffTagExtender(TIFF *tif)
 #endif
 
 static std::mutex oDeleteMutex;
-#ifdef HAVE_LERC
-static TIFFCodec* pLercCodec = nullptr;
-#endif
 
 int GTiffOneTimeInit()
 
 {
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
-
-#ifdef HAVE_LERC
-    if( pLercCodec == nullptr )
-    {
-        pLercCodec = TIFFRegisterCODEC(COMPRESSION_LERC, "LERC", TIFFInitLERC);
-    }
-#endif
 
     static bool bOneTimeInitDone = false;
     if( bOneTimeInitDone )
@@ -19918,11 +19872,6 @@ static
 void GDALDeregister_GTiff( GDALDriver * )
 
 {
-#ifdef HAVE_LERC
-    if( pLercCodec )
-        TIFFUnRegisterCODEC(pLercCodec);
-    pLercCodec = nullptr;
-#endif
 }
 
 /************************************************************************/
@@ -19954,14 +19903,12 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
         nCompression = COMPRESSION_LZMA;
     else if( EQUAL( pszValue, "ZSTD" ) )
         nCompression = COMPRESSION_ZSTD;
-#ifdef HAVE_LERC
     else if( EQUAL( pszValue, "LERC" ) ||
              EQUAL( pszValue, "LERC_DEFLATE" ) ||
              EQUAL( pszValue, "LERC_ZSTD" ) )
     {
         nCompression = COMPRESSION_LERC;
     }
-#endif
     else if( EQUAL( pszValue, "WEBP" ) )
         nCompression = COMPRESSION_WEBP;
     else
@@ -19991,8 +19938,16 @@ CPLString GTiffGetCompressValues(bool& bHasLZW,
                                  bool& bHasZSTD,
                                  bool& bHasJPEG,
                                  bool& bHasWebP,
+                                 bool& bHasLERC,
                                  bool bForCOG)
 {
+    bHasLZW = false;
+    bHasDEFLATE = false;
+    bHasLZMA = false;
+    bHasZSTD = false;
+    bHasJPEG = false;
+    bHasWebP = false;
+    bHasLERC = false;
 
 /* -------------------------------------------------------------------- */
 /*      Determine which compression codecs are available that we        */
@@ -20061,18 +20016,22 @@ CPLString GTiffGetCompressValues(bool& bHasLZW,
             osCompressValues +=
                     "       <Value>WEBP</Value>";
         }
+        else if( c->scheme == COMPRESSION_LERC )
+        {
+            bHasLERC = true;
+        }
     }
-#ifdef HAVE_LERC
-    osCompressValues +=
-                    "       <Value>LERC</Value>";
-    osCompressValues +=
-                    "       <Value>LERC_DEFLATE</Value>";
-    if( bHasZSTD )
+    if( bHasLERC )
     {
         osCompressValues +=
-                    "       <Value>LERC_ZSTD</Value>";
+                        "       <Value>LERC</Value>"
+                        "       <Value>LERC_DEFLATE</Value>";
+        if( bHasZSTD )
+        {
+            osCompressValues +=
+                        "       <Value>LERC_ZSTD</Value>";
+        }
     }
-#endif
     _TIFFfree( codecs );
 
     return osCompressValues;
@@ -20096,8 +20055,9 @@ void GDALRegister_GTiff()
     bool bHasZSTD = false;
     bool bHasJPEG = false;
     bool bHasWebP = false;
+    bool bHasLERC = false;
     CPLString osCompressValues(GTiffGetCompressValues(
-        bHasLZW, bHasDEFLATE, bHasLZMA, bHasZSTD, bHasJPEG, bHasWebP,
+        bHasLZW, bHasDEFLATE, bHasLZMA, bHasZSTD, bHasJPEG, bHasWebP, bHasLERC,
         false /* bForCOG */));
 
     GDALDriver *poDriver = new GDALDriver();
@@ -20140,10 +20100,9 @@ void GDALRegister_GTiff()
     if( bHasZSTD )
         osOptions += ""
 "   <Option name='ZSTD_LEVEL' type='int' description='ZSTD compression level 1(fast)-22(slow)' default='9'/>";
-#ifdef HAVE_LERC
-    osOptions += ""
+    if( bHasLERC )
+        osOptions += ""
 "   <Option name='MAX_Z_ERROR' type='float' description='Maximum error for LERC compression' default='0'/>";
-#endif
     if ( bHasWebP )
     {
       osOptions += ""

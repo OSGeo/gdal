@@ -22,6 +22,7 @@
 #define EstimateStripByteCounts gdal_EstimateStripByteCounts
 #define Fax3BadLength gdal_Fax3BadLength
 #define Fax3Cleanup gdal_Fax3Cleanup
+#define _Fax3Close gdal__Fax3Close
 #define Fax3Close gdal_Fax3Close
 #define Fax3Decode1D gdal_Fax3Decode1D
 #define Fax3Decode2D gdal_Fax3Decode2D
@@ -50,6 +51,7 @@
 #define fpAcc gdal_fpAcc
 #define fpDiff gdal_fpDiff
 #define frame_dummy gdal_frame_dummy
+#define GetLercDataType gdal_GetLercDataType
 #define gtStripContig gdal_gtStripContig
 #define gtStripSeparate gdal_gtStripSeparate
 #define gtTileContig gdal_gtTileContig
@@ -74,7 +76,6 @@
 #define initYCbCrConversion gdal_initYCbCrConversion
 #define isCCITTCompression gdal_isCCITTCompression
 #define isInRefBlackWhiteRange gdal_isInRefBlackWhiteRange
-#define itrunc gdal_itrunc
 #define jpeg_create_decompress_encap gdal_jpeg_create_decompress_encap
 #define jpeg_encap_unwind gdal_jpeg_encap_unwind
 #define jpeg_read_header_encap gdal_jpeg_read_header_encap
@@ -84,6 +85,18 @@
 #define L16fromY gdal_L16fromY
 #define L16toGry gdal_L16toGry
 #define L16toY gdal_L16toY
+#define LERCCleanup gdal_LERCCleanup
+#define LERCDecode gdal_LERCDecode
+#define LERCEncode gdal_LERCEncode
+#define LERCFixupTags gdal_LERCFixupTags
+#define LERCPostEncode gdal_LERCPostEncode
+#define LERCPreDecode gdal_LERCPreDecode
+#define LERCPreEncode gdal_LERCPreEncode
+#define LERCSetupDecode gdal_LERCSetupDecode
+#define LERCSetupEncode gdal_LERCSetupEncode
+#define LERCVGetField gdal_LERCVGetField
+#define LERCVSetField gdal_LERCVSetField
+#define LERCVSetFieldBase gdal_LERCVSetFieldBase
 #define LogL10fromY gdal_LogL10fromY
 #define LogL10toY gdal_LogL10toY
 #define LogL16Decode gdal_LogL16Decode
@@ -285,6 +298,7 @@
 #define setExtraSamples gdal_setExtraSamples
 #define setorientation gdal_setorientation
 #define setupMap gdal_setupMap
+#define SetupUncompressedBuffer gdal_SetupUncompressedBuffer
 #define swabHorAcc16 gdal_swabHorAcc16
 #define swabHorAcc32 gdal_swabHorAcc32
 #define swabHorDiff16 gdal_swabHorDiff16
@@ -337,10 +351,10 @@
 #define TIFFDataWidth gdal_TIFFDataWidth
 #define TIFFDefaultDirectory gdal_TIFFDefaultDirectory
 #define TIFFDefaultRefBlackWhite gdal_TIFFDefaultRefBlackWhite
-#define TIFFDefaultStripSize gdal_TIFFDefaultStripSize
 #define _TIFFDefaultStripSize gdal__TIFFDefaultStripSize
-#define TIFFDefaultTileSize gdal_TIFFDefaultTileSize
+#define TIFFDefaultStripSize gdal_TIFFDefaultStripSize
 #define _TIFFDefaultTileSize gdal__TIFFDefaultTileSize
+#define TIFFDefaultTileSize gdal_TIFFDefaultTileSize
 #define TIFFDefaultTransferFunction gdal_TIFFDefaultTransferFunction
 #define TIFFDeferStrileArrayWriting gdal_TIFFDeferStrileArrayWriting
 #define _tiffDummyMapProc gdal__tiffDummyMapProc
@@ -412,6 +426,7 @@
 #define TIFFIsMSB2LSB gdal_TIFFIsMSB2LSB
 #define TIFFIsTiled gdal_TIFFIsTiled
 #define TIFFIsUpSampled gdal_TIFFIsUpSampled
+#define tiff_itrunc gdal_tiff_itrunc
 #define TIFFLastDirectory gdal_TIFFLastDirectory
 #define TIFFLinkDirectory gdal_TIFFLinkDirectory
 #define _TIFFmalloc gdal__TIFFmalloc
@@ -635,12 +650,12 @@
 #define TIFFUnRegisterCODEC gdal_TIFFUnRegisterCODEC
 #define _TIFFUnsanitizedAddUInt64AndInt gdal__TIFFUnsanitizedAddUInt64AndInt
 #define TIFFUnsetField gdal_TIFFUnsetField
-#define TIFFVGetField gdal_TIFFVGetField
 #define _TIFFVGetField gdal__TIFFVGetField
+#define TIFFVGetField gdal_TIFFVGetField
 #define TIFFVGetFieldDefaulted gdal_TIFFVGetFieldDefaulted
 #define _TIFFvoid gdal__TIFFvoid
-#define TIFFVSetField gdal_TIFFVSetField
 #define _TIFFVSetField gdal__TIFFVSetField
+#define TIFFVSetField gdal_TIFFVSetField
 #define TIFFVStripSize gdal_TIFFVStripSize
 #define TIFFVStripSize64 gdal_TIFFVStripSize64
 #define TIFFVTileSize gdal_TIFFVTileSize
@@ -784,6 +799,7 @@
 #define faxFields gdal_faxFields
 #define fax3Fields gdal_fax3Fields
 #define fax4Fields gdal_fax4Fields
+#define LERCFields gdal_LERCFields
 #define LogLuvFields gdal_LogLuvFields
 #define lzmaFields gdal_lzmaFields
 #define ojpegFields gdal_ojpegFields
@@ -849,4 +865,10 @@
 #endif
 #ifdef LZMA_SUPPORT
 #define TIFFInitLZMA gdal_TIFFInitLZMA
+#endif
+#ifdef WEBP_SUPPORT
+#define TIFFInitWebP gdal_TIFFInitWebP
+#endif
+#ifdef LERC_SUPPORT
+#define TIFFInitLERC gdal_TIFFInitLERC
 #endif

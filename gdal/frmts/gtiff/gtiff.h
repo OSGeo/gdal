@@ -73,6 +73,7 @@ CPLString CPL_DLL GTiffGetCompressValues(bool& bHasLZW,
                                  bool& bHasZSTD,
                                  bool& bHasJPEG,
                                  bool& bHasWebP,
+                                 bool& bHasLERC,
                                  bool bForCOG);
 
 #if !defined(TIFFTAG_GDAL_METADATA)
@@ -112,6 +113,21 @@ CPLString CPL_DLL GTiffGetCompressValues(bool& bHasLZW,
 
 #if !defined(COMPRESSION_LERC)
 #define     COMPRESSION_LERC        34887   /* LERC */
+#endif
+
+#ifndef TIFFTAG_LERC_VERSION
+#define TIFFTAG_LERC_PARAMETERS         50674   /* Stores LERC version and additional compression method */
+#endif
+
+#ifndef TIFFTAG_LERC_VERSION
+/* Pseudo tags */
+#define TIFFTAG_LERC_VERSION            65565 /* LERC version */
+#define     LERC_VERSION_2_4            4
+#define TIFFTAG_LERC_ADD_COMPRESSION    65566 /* LERC additional compression */
+#define     LERC_ADD_COMPRESSION_NONE    0
+#define     LERC_ADD_COMPRESSION_DEFLATE 1
+#define     LERC_ADD_COMPRESSION_ZSTD    2
+#define TIFFTAG_LERC_MAXZERROR      65567    /* LERC maximum error */
 #endif
 
 #if !defined(COMPRESSION_WEBP)

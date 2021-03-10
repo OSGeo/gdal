@@ -14,33 +14,14 @@ SUB_TIFF_TARGET =
 TIFF_INC   =   -Ilibtiff -DINTERNAL_LIBTIFF
 SUB_TIFF_TARGET =	tiff
 
-!IF "$(HAVE_LERC)" == "1"
-LERC_OBJ = tif_lerc.obj
-LERC_INC = -DHAVE_LERC -I../../third_party/LercLib
-
-# Still LERC specific
-!IFDEF ZLIB_EXTERNAL_LIB
-ZLIB_FLAGS = $(ZLIB_INC)
-!ELSE
-ZLIB_FLAGS = -I..\zlib
-!ENDIF
-
-# Still LERC specific
-!IFDEF ZSTD_CFLAGS
-ZSTD_FLAGS =	$(ZSTD_CFLAGS) -DZSTD_SUPPORT
-!ENDIF
-
-!ENDIF
-
 !IFDEF LIBDEFLATE_CFLAGS
-# We just need the include $(LIBDEFLATE_CFLAGS) for LERC purposes
 LIBDEFLATE_FLAGS =	$(LIBDEFLATE_CFLAGS) -DLIBDEFLATE_SUPPORT
 !ENDIF
 
 !ENDIF
 
 !IFDEF GEOTIFF_INC
-SUB_GEOTIFF_TARGET =	
+SUB_GEOTIFF_TARGET =
 !ELSE
 GEOTIFF_INC   =	-Ilibgeotiff -DINTERNAL_LIBGEOTIFF
 SUB_GEOTIFF_TARGET =	geotiff
@@ -70,6 +51,6 @@ geotiff:
 
 clean:
 	-del *.obj libtiff\*.obj libgeotiff\*.obj
-	
+
 
 
