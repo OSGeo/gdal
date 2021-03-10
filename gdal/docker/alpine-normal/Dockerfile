@@ -31,25 +31,10 @@ RUN apk add --no-cache \
     py3-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
+    netcdf-dev hdf5-dev freexl-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
-
-# Build geos
-ARG GEOS_VERSION=
-RUN if test "${GEOS_VERSION}" != ""; then ( \
-    wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
-    && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
-    && rm -f geos-${GEOS_VERSION}.tar.bz2 \
-    && cd geos-${GEOS_VERSION} \
-    && ./configure --prefix=/usr --disable-static \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libgeos*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf geos-${GEOS_VERSION} \
-    ); fi
 
 # Build szip
 ARG SZIP_VERSION=2.1.1
@@ -65,40 +50,6 @@ RUN if test "${SZIP_VERSION}" != ""; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf szip-${SZIP_VERSION} \
-    ); fi
-
-# Build hdf5
-ARG HDF5_VERSION=1.12.0
-RUN if test "${HDF5_VERSION}" != ""; then ( \
-    wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION%.*}/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz \
-    && tar xzf hdf5-${HDF5_VERSION}.tar.gz \
-    && rm -f hdf5-${HDF5_VERSION}.tar.gz \
-    && cd hdf5-${HDF5_VERSION} \
-    && CFLAGS=-O2 CXXFLAGS=-O2 ./configure --prefix=/usr --disable-static --with-szlib=/usr --enable-cxx --enable-threadsafe --enable-unsupported \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libhdf5*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf hdf5-${HDF5_VERSION} \
-    ); fi
-
-# Build netCDF
-ARG NETCDF_VERSION=4.7.4
-RUN if test "${NETCDF_VERSION}" != ""; then ( \
-    apk add --no-cache libexecinfo-dev \
-    && wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
-    && tar xzf v${NETCDF_VERSION}.tar.gz \
-    && rm -f v${NETCDF_VERSION}.tar.gz \
-    && cd netcdf-c-${NETCDF_VERSION} \
-    && CFLAGS=-O2 ./configure --prefix=/usr --disable-static \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libnetcdf*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf netcdf-c-${NETCDF_VERSION} \
-    && apk del libexecinfo-dev \
     ); fi
 
 # Build hdf4
@@ -119,22 +70,6 @@ RUN if test "${HDF4_VERSION}" != ""; then ( \
     && cd .. \
     && rm -rf hdf4 \
     && apk del byacc flex portablexdr-dev \
-    ); fi
-
-# Build freexl
-ARG FREEXL_VERSION=1.0.6
-RUN if test "${FREEXL_VERSION}" != ""; then ( \
-    wget -q http://www.gaia-gis.it/gaia-sins/freexl-sources/freexl-${FREEXL_VERSION}.tar.gz \
-    && tar xzf freexl-${FREEXL_VERSION}.tar.gz \
-    && rm -f freexl-${FREEXL_VERSION}.tar.gz \
-    && cd freexl-${FREEXL_VERSION} \
-    && ./configure --prefix=/usr --disable-static \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libfreexl*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf freexl-${FREEXL_VERSION} \
     ); fi
 
 # Build likbkea
@@ -277,9 +212,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
     && export GDAL_EXTRA_ARGS="" \
-    && if test "${GEOS_VERSION}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-geos ${GDAL_EXTRA_ARGS}"; \
-    fi \
+    && export GDAL_EXTRA_ARGS="--with-geos ${GDAL_EXTRA_ARGS}" \
     && if test "${XERCESC_VERSION}" != ""; then \
         export GDAL_EXTRA_ARGS="--with-xerces ${GDAL_EXTRA_ARGS}"; \
     fi \
@@ -288,12 +221,8 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         && export LDFLAGS="-lportablexdr ${LDFLAGS}" \
         && export GDAL_EXTRA_ARGS="--with-hdf4 ${GDAL_EXTRA_ARGS}"; \
     fi \
-    && if test "${HDF5_VERSION}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-hdf5 ${GDAL_EXTRA_ARGS}"; \
-    fi \
-    && if test "${NETCDF_VERSION}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-netcdf ${GDAL_EXTRA_ARGS}"; \
-    fi \
+    && export GDAL_EXTRA_ARGS="--with-hdf5 ${GDAL_EXTRA_ARGS}" \
+    && export GDAL_EXTRA_ARGS="--with-netcdf ${GDAL_EXTRA_ARGS}" \
     && if test "${SPATIALITE_VERSION}" != ""; then \
         export GDAL_EXTRA_ARGS="--with-spatialite ${GDAL_EXTRA_ARGS}"; \
     fi \
@@ -373,6 +302,7 @@ RUN apk add --no-cache \
         libjpeg-turbo libpng libwebp expat \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
+        netcdf hdf5 freexl \
         openexr libheif xerces-c geos cfitsio minizip \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
