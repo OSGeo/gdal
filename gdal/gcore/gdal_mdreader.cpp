@@ -1076,6 +1076,8 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
     {
         char *pszRawKey = nullptr;
         const char *pszValue = CPLParseNameValue( papszMD[iKey], &pszRawKey );
+        if( pszRawKey == nullptr )
+            continue;
         CPLString osKeySection;
         CPLString osKeyItem;
         char *pszDot = strchr(pszRawKey,'.');
