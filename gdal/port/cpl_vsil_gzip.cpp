@@ -1414,6 +1414,7 @@ void VSIGZipWriteHandleMT::DeflateCompress(void* inData)
     CPLAssert( psJob->pBuffer_);
 
     z_stream           sStream;
+    memset(&sStream, 0, sizeof(sStream));
     sStream.zalloc = nullptr;
     sStream.zfree = nullptr;
     sStream.opaque = nullptr;
@@ -3482,6 +3483,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
 #endif
 
     z_stream strm;
+    memset(&strm, 0, sizeof(strm));
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
     strm.opaque = nullptr;
