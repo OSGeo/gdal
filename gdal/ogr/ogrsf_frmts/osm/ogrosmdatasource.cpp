@@ -2681,6 +2681,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             int nBlobSize = sqlite3_column_bytes(pahSelectWayStmt[0], 1);
             const void* blob = sqlite3_column_blob(pahSelectWayStmt[0], 1);
 
+            // coverity[tainted_data]
             UncompressWay(
                 nBlobSize, static_cast<const GByte*>(blob),
                 nullptr, m_asLonLatCache, &nTags, pasTags, &sInfo );
