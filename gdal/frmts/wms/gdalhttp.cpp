@@ -104,13 +104,16 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     }
 
     if (!psRequest->Range.empty())
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_RANGE, psRequest->Range.c_str());
+    {
+        CPL_IGNORE_RET_VAL(
+            curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_RANGE, psRequest->Range.c_str()));
+    }
 
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEDATA, psRequest);
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, WriteFunc);
+    CPL_IGNORE_RET_VAL(curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEDATA, psRequest));
+    CPL_IGNORE_RET_VAL(curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, WriteFunc));
 
     psRequest->m_curl_error.resize(CURL_ERROR_SIZE + 1);
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, &psRequest->m_curl_error[0]);
+    CPL_IGNORE_RET_VAL(curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, &psRequest->m_curl_error[0]));
 
     psRequest->m_headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->URL.c_str(), psRequest->options));
@@ -121,8 +124,11 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
                                         CPLSPrintf("Accept: %s", pszAccept));
     }
     if( psRequest->m_headers != nullptr )
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER,
-                         psRequest->m_headers);
+    {
+        CPL_IGNORE_RET_VAL(
+            curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER,
+                         psRequest->m_headers));
+    }
 
 }
 
