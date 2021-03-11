@@ -760,8 +760,8 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
     } else {
         osSQL += "?query=";
         char * pszEscaped = CPLEscapeString( pszUnescapedSQL, -1, CPLES_URL );
-        std::string escapedSql = pszEscaped;
-        osSQL += escapedSql;
+        osSQL += pszEscaped;
+        CPLFree(pszEscaped);
         return RunGET(osSQL.c_str());
     }
 }
