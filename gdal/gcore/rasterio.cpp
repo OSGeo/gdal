@@ -229,8 +229,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     const int nBandDataSize = GDALGetDataTypeSizeBytes( eDataType );
     const int nBufDataSize = GDALGetDataTypeSizeBytes( eBufType );
-    GByte dummyByte = 0;
-    GByte *pabySrcBlock = &dummyByte; /* to avoid Coverity warning about nullptr dereference */
+    GByte dummyBlock[2] = {0, 0};
+    GByte *pabySrcBlock = dummyBlock; /* to avoid Coverity warning about nullptr dereference */
     GDALRasterBlock *poBlock = nullptr;
     const bool bUseIntegerRequestCoords =
            (!psExtraArg->bFloatingPointWindowValidity ||
