@@ -348,17 +348,18 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     int nLinkType = 0;
     int nLinkSize = 0;
 
+    // coverity[tained_data]
     unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                               anEntityNum + iLink, anMSLink + iLink, &nLinkSize);
 
     while( pabyData )
     {
         CPLJSONArray previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-        if (!previousValues.IsValid() ) 
+        if (!previousValues.IsValid() )
         {
             uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
             previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-        } 
+        }
         CPLJSONArray rawWords;
         for( int i=0; i < nLinkSize-1; i+=2 )
         {
@@ -367,7 +368,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         CPLJSONObject theNewObject = CPLJSONObject();
         theNewObject.Add( "size", nLinkSize );
         previousValues.Add( theNewObject );
-        switch( nLinkType ) 
+        switch( nLinkType )
         {
             case 24721: // OdDgDBLinkage::kOracle
             {
@@ -414,6 +415,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         anEntityNum[nLinkCount] = 0;
         anMSLink[nLinkCount] = 0;
 
+        // coverity[tained_data]
         pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                                   anEntityNum+nLinkCount, anMSLink+nLinkCount,
                                   &nLinkSize);
