@@ -1326,7 +1326,10 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                     else if (STARTS_WITH_CI(pabyData, "F"))
                         poFeature->SetField( iOGRField, 0);
                     else
+                    {
+                        // coverity[tainted_data]
                         poFeature->SetField( iOGRField, pabyData);
+                    }
                 }
                 else if ( eOGRType == OFTReal )
                 {
@@ -1918,7 +1921,7 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent,
         return OGRERR_FAILURE;
 
     PGconn      *hPGConn = poDS->GetPGConn();
-    PGresult    *hResult = 
+    PGresult    *hResult =
         OGRPG_PQexec( hPGConn, osCommand, FALSE, bErrorAsDebug );
     if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
     {
