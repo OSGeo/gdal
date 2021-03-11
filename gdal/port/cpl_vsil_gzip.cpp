@@ -3497,7 +3497,9 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
 
     size_t nTmpSize = 0;
     char* pszTmp = nullptr;
+#ifndef HAVE_LIBDEFLATE
     if( outptr == nullptr )
+#endif
     {
         nTmpSize = 2 * nBytes;
         pszTmp = static_cast<char *>(VSIMalloc(nTmpSize + 1));
@@ -3507,11 +3509,13 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
             return nullptr;
         }
     }
+#ifndef HAVE_LIBDEFLATE
     else
     {
         pszTmp = static_cast<char *>(outptr);
         nTmpSize = nOutAvailableBytes;
     }
+#endif
 
     strm.avail_out = static_cast<uInt>(nTmpSize);
     strm.next_out = reinterpret_cast<Bytef *>(pszTmp);
@@ -3521,11 +3525,13 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
         ret = inflate(&strm, Z_FINISH);
         if( ret == Z_BUF_ERROR )
         {
+#ifndef HAVE_LIBDEFLATE
             if( outptr == pszTmp )
             {
                 inflateEnd(&strm);
                 return nullptr;
             }
+#endif
 
             size_t nAlreadyWritten = nTmpSize - strm.avail_out;
             nTmpSize = nTmpSize * 2;
@@ -3549,8 +3555,12 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     {
         size_t nOutBytes = nTmpSize - strm.avail_out;
         // Nul-terminate if possible.
+#ifndef HAVE_LIBDEFLATE
         if( outptr != pszTmp || nOutBytes < nTmpSize )
+#endif
+        {
             pszTmp[nOutBytes] = '\0';
+        }
         inflateEnd(&strm);
         if( pnOutBytes != nullptr )
             *pnOutBytes = nOutBytes;
@@ -3558,8 +3568,12 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     }
     else
     {
+#ifndef HAVE_LIBDEFLATE
         if( outptr != pszTmp )
+#endif
+        {
             VSIFree(pszTmp);
+        }
         inflateEnd(&strm);
         return nullptr;
     }
