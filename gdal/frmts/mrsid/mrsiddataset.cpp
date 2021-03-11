@@ -2728,6 +2728,7 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
     dfSemiMajor = psDefnIn->SemiMajor;
     if( psDefnIn->SemiMajor == 0.0 )
     {
+        CPLFree( pszSpheroidName );
         pszSpheroidName = CPLStrdup("unretrievable - using WGS84");
         dfSemiMajor = SRS_WGS84_SEMIMAJOR;
         dfInvFlattening = SRS_WGS84_INVFLATTENING;
@@ -2942,7 +2943,10 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
     if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
         return pszWKT;
     else
+    {
+        CPLFree(pszWKT);
         return nullptr;
+    }
 }
 
 #ifdef MRSID_ESDK
