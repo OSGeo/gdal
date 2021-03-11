@@ -840,6 +840,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     zlib_filefunc_def* pzlib_filefunc_def )
 {
     zip64_internal ziinit;
+    memset(&ziinit, 0, sizeof(ziinit));
 
     if (pzlib_filefunc_def==nullptr)
         cpl_fill_fopen_filefunc(&ziinit.z_filefunc);
