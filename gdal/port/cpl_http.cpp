@@ -74,6 +74,8 @@
 #include <signal.h>
 #endif
 
+#define unchecked_curl_easy_setopt(handle,opt,param) CPL_IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
+
 #endif // HAVE_CURL
 
 CPL_CVSID("$Id$")
@@ -611,7 +613,7 @@ class CPLHTTPPostFields
             const char* pszFormFilePath = CSLFetchNameValue( papszOptions,
                 "FORM_FILE_PATH" );
             const char* pszParametersCount = CSLFetchNameValue( papszOptions,
-                "FORM_ITEM_COUNT" );        
+                "FORM_ITEM_COUNT" );
 
             if( pszFormFilePath != nullptr || pszParametersCount != nullptr )
             {
@@ -639,14 +641,14 @@ class CPLHTTPPostFields
                         if( mime_fp != nullptr )
                         {
                             curl_mime_name(mimepart, pszFormFileName);
-                            curl_mime_filename(mimepart, pszFilename);
-                            curl_mime_data_cb(mimepart, sStat.st_size, 
-                                CPLHTTPReadFunction, CPLHTTPSeekFunction, 
+                            CPL_IGNORE_RET_VAL(curl_mime_filename(mimepart, pszFilename));
+                            curl_mime_data_cb(mimepart, sStat.st_size,
+                                CPLHTTPReadFunction, CPLHTTPSeekFunction,
                                 CPLHTTPFreeFunction, mime_fp);
-                        } 
+                        }
                         else
                         {
-                            osErrMsg = CPLSPrintf("Failed to open file %s", 
+                            osErrMsg = CPLSPrintf("Failed to open file %s",
                                 pszFormFilePath);
                             return CE_Failure;
                         }
@@ -657,16 +659,16 @@ class CPLHTTPPostFields
                             CURLFORM_FILE, pszFormFilePath,
                             CURLFORM_END);
         #endif // LIBCURL_VERSION_NUM >= 0x073800
-                        CPLDebug("HTTP", "Send file: %s, COPYNAME: %s", 
+                        CPLDebug("HTTP", "Send file: %s, COPYNAME: %s",
                             pszFormFilePath, pszFormFileName);
                     }
                     else
                     {
-                        osErrMsg = CPLSPrintf("File '%s' not found", 
+                        osErrMsg = CPLSPrintf("File '%s' not found",
                                 pszFormFilePath);
                         return CE_Failure;
                     }
-                    
+
                 }
 
                 int nParametersCount = 0;
@@ -682,16 +684,16 @@ class CPLHTTPPostFields
                     const char *pszValue = CSLFetchNameValue( papszOptions,
                         CPLSPrintf("FORM_VALUE_%d", i) );
 
-                    if (nullptr == pszKey) 
+                    if (nullptr == pszKey)
                     {
-                        osErrMsg = CPLSPrintf("Key #%d is not exists. Maybe wrong count of form items", 
+                        osErrMsg = CPLSPrintf("Key #%d is not exists. Maybe wrong count of form items",
                             i);
                         return CE_Failure;
                     }
 
-                    if (nullptr == pszValue) 
+                    if (nullptr == pszValue)
                     {
-                        osErrMsg = CPLSPrintf("Value #%d is not exists. Maybe wrong count of form items", 
+                        osErrMsg = CPLSPrintf("Value #%d is not exists. Maybe wrong count of form items",
                             i);
                         return CE_Failure;
                     }
@@ -699,7 +701,7 @@ class CPLHTTPPostFields
         #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
                     mimepart = curl_mime_addpart(mime);
                     curl_mime_name(mimepart, pszKey);
-                    curl_mime_data(mimepart, pszValue, CURL_ZERO_TERMINATED);
+                    CPL_IGNORE_RET_VAL(curl_mime_data(mimepart, pszValue, CURL_ZERO_TERMINATED));
         #else // LIBCURL_VERSION_NUM >= 0x073800
                     curl_formadd(&formpost, &lastptr,
                         CURLFORM_COPYNAME, pszKey,
@@ -711,9 +713,9 @@ class CPLHTTPPostFields
                 }
 
         #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
-                curl_easy_setopt(http_handle, CURLOPT_MIMEPOST, mime);
+                unchecked_curl_easy_setopt(http_handle, CURLOPT_MIMEPOST, mime);
         #else // LIBCURL_VERSION_NUM >= 0x073800
-                curl_easy_setopt(http_handle, CURLOPT_HTTPPOST, formpost);
+                unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPPOST, formpost);
         #endif // LIBCURL_VERSION_NUM >= 0x073800
             }
             return CE_None;
@@ -749,12 +751,12 @@ class CPLHTTPPostFields
 /*                       CPLHTTPFetchCleanup()                          */
 /************************************************************************/
 
-static void CPLHTTPFetchCleanup(CURL *http_handle, struct curl_slist* headers, 
+static void CPLHTTPFetchCleanup(CURL *http_handle, struct curl_slist* headers,
     const char *pszPersistent, CSLConstList papszOptions)
 {
     if( CSLFetchNameValue(papszOptions, "POSTFIELDS") )
-        curl_easy_setopt(http_handle, CURLOPT_POST, 0 );
-    curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, nullptr);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_POST, 0 );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, nullptr);
 
     if( !pszPersistent )
         curl_easy_cleanup( http_handle );
@@ -1206,7 +1208,7 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
     }
 
     if( headers != nullptr )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
 
     // Are we making a head request.
     const char* pszNoBody = nullptr;
@@ -1215,13 +1217,13 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         if( CPLTestBool(pszNoBody) )
         {
             CPLDebug ("HTTP", "HEAD Request: %s", pszURL);
-            curl_easy_setopt(http_handle, CURLOPT_NOBODY, 1L);
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_NOBODY, 1L);
         }
     }
 
     // Capture response headers.
-    curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, psResult);
-    curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, psResult);
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
 
     CPLHTTPResultWithLimit sResultWithLimit;
     if( nullptr == pfnWrite )
@@ -1236,38 +1238,38 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         {
             sResultWithLimit.nMaxFileSize = atoi(pszMaxFileSize);
             // Only useful if size is returned by server before actual download.
-            curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
                              sResultWithLimit.nMaxFileSize);
         }
         pWriteArg = &sResultWithLimit;
     }
 
-    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, pWriteArg );
-    curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, pfnWrite );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, pWriteArg );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, pfnWrite );
 
     CurlProcessData stProcessData = { pfnProgress, pProgressArg };
     if( nullptr != pfnProgress)
     {
-        curl_easy_setopt(http_handle, CURLOPT_PROGRESSFUNCTION, ProcessFunction);
-        curl_easy_setopt(http_handle, CURLOPT_PROGRESSDATA, &stProcessData);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROGRESSFUNCTION, ProcessFunction);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROGRESSDATA, &stProcessData);
 
     #if LIBCURL_VERSION_NUM >= 0x072000
-        curl_easy_setopt(http_handle, CURLOPT_XFERINFOFUNCTION, NewProcessFunction);
-        curl_easy_setopt(http_handle, CURLOPT_XFERINFODATA, &stProcessData);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_XFERINFOFUNCTION, NewProcessFunction);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_XFERINFODATA, &stProcessData);
     #endif
-        curl_easy_setopt(http_handle, CURLOPT_NOPROGRESS, 0L);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_NOPROGRESS, 0L);
     }
 
     szCurlErrBuf[0] = '\0';
 
-    curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
     bool bGZipRequested = false;
     if( bSupportGZip &&
         CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
     {
         bGZipRequested = true;
-        curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
     }
 
     CPLHTTPPostFields oPostFields;
@@ -1633,11 +1635,11 @@ CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
         }
 
         if( aHeaders[i] != nullptr )
-            curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, aHeaders[i]);
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, aHeaders[i]);
 
         // Capture response headers.
-        curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, papsResults[i]);
-        curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, papsResults[i]);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
 
         asResults[i].psResult = papsResults[i];
         const char* pszMaxFileSize = CSLFetchNameValue(papszOptions,
@@ -1646,21 +1648,21 @@ CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
         {
             asResults[i].nMaxFileSize = atoi(pszMaxFileSize);
             // Only useful if size is returned by server before actual download.
-            curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
                             asResults[i].nMaxFileSize);
         }
 
-        curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &asResults[i] );
-        curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, CPLWriteFct );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &asResults[i] );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, CPLWriteFct );
 
 
-        curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER,
                          asErrorBuffers[i].szBuffer );
 
         if( bSupportGZip &&
             CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
         {
-            curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
         }
 
         asHandles.push_back(http_handle);
@@ -1813,8 +1815,8 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 
 // Note: papszOptions must be kept alive until curl_easy/multi_perform()
 // has completed, and we must be careful not to set short lived strings
-// with curl_easy_setopt(), as long as we need to support curl < 7.17
-// see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html
+// with unchecked_curl_easy_setopt(), as long as we need to support curl < 7.17
+// see https://curl.haxx.se/libcurl/c/unchecked_curl_easy_setopt.html
 // caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS
 
 void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
@@ -1824,20 +1826,20 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
 
     CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
 
-    curl_easy_setopt(http_handle, CURLOPT_URL, pszURL);
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, pszURL);
 
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
-        curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 
     const char *pszHttpVersion =
         CSLFetchNameValue( papszOptions, "HTTP_VERSION");
     if( pszHttpVersion == nullptr )
         pszHttpVersion = CPLGetConfigOption( "GDAL_HTTP_VERSION", nullptr );
     if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
-        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                          CURL_HTTP_VERSION_1_0);
     else if( pszHttpVersion && strcmp(pszHttpVersion, "1.1") == 0 )
-        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                          CURL_HTTP_VERSION_1_1);
     else if( pszHttpVersion &&
              (strcmp(pszHttpVersion, "2") == 0 ||
@@ -1848,7 +1850,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         if( bSupportHTTP2 )
         {
             // Try HTTP/2 both for HTTP and HTTPS. With fallback to HTTP/1.1
-            curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                              CURL_HTTP_VERSION_2_0);
         }
         else
@@ -1894,7 +1896,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
                 // CURL_HTTP_VERSION_2TLS means for HTTPS connection, try to
                 // negotiate HTTP/2 with the server (and fallback to HTTP/1.1
                 // otherwise), and for HTTP connection do HTTP/1
-                curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                                 CURL_HTTP_VERSION_2TLS);
             }
         }
@@ -1928,7 +1930,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     // previous versions as well.
     const char* pszTCPNoDelay = CSLFetchNameValueDef( papszOptions,
                                                       "TCP_NODELAY", "1");
-    curl_easy_setopt(http_handle, CURLOPT_TCP_NODELAY, atoi(pszTCPNoDelay));
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_TCP_NODELAY, atoi(pszTCPNoDelay));
 
     /* Support control over HTTPAUTH */
     const char *pszHttpAuth = CSLFetchNameValue( papszOptions, "HTTPAUTH" );
@@ -1940,14 +1942,14 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     /* CURLOPT_HTTPAUTH is defined in curl 7.11.0 or newer */
 #if LIBCURL_VERSION_NUM >= 0x70B00
     else if( EQUAL(pszHttpAuth, "BASIC") )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
     else if( EQUAL(pszHttpAuth, "NTLM") )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
     else if( EQUAL(pszHttpAuth, "ANY") )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
 #ifdef CURLAUTH_GSSNEGOTIATE
     else if( EQUAL(pszHttpAuth, "NEGOTIATE") )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_GSSNEGOTIATE );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_GSSNEGOTIATE );
 #endif
     else
     {
@@ -1968,34 +1970,34 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     if( pszHttpNetrc == nullptr )
         pszHttpNetrc = CPLGetConfigOption( "GDAL_HTTP_NETRC", "YES" );
     if( pszHttpNetrc == nullptr || CPLTestBool(pszHttpNetrc) )
-        curl_easy_setopt(http_handle, CURLOPT_NETRC, 1L);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_NETRC, 1L);
 
     // Support setting userid:password.
     const char *pszUserPwd = CSLFetchNameValue( papszOptions, "USERPWD" );
     if( pszUserPwd == nullptr )
         pszUserPwd = CPLGetConfigOption("GDAL_HTTP_USERPWD", nullptr);
     if( pszUserPwd != nullptr )
-        curl_easy_setopt(http_handle, CURLOPT_USERPWD, pszUserPwd );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_USERPWD, pszUserPwd );
 
     // Set Proxy parameters.
     const char* pszProxy = CSLFetchNameValue( papszOptions, "PROXY" );
     if( pszProxy == nullptr )
         pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", nullptr);
     if( pszProxy )
-        curl_easy_setopt(http_handle, CURLOPT_PROXY, pszProxy);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXY, pszProxy);
 
     const char* pszHttpsProxy = CSLFetchNameValue( papszOptions, "HTTPS_PROXY" );
     if ( pszHttpsProxy == nullptr )
         pszHttpsProxy = CPLGetConfigOption("GDAL_HTTPS_PROXY", nullptr);
     if ( pszHttpsProxy && (STARTS_WITH(pszURL, "https")) )
-        curl_easy_setopt(http_handle, CURLOPT_PROXY, pszHttpsProxy);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXY, pszHttpsProxy);
 
     const char* pszProxyUserPwd =
         CSLFetchNameValue( papszOptions, "PROXYUSERPWD" );
     if( pszProxyUserPwd == nullptr )
         pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", nullptr);
     if( pszProxyUserPwd )
-        curl_easy_setopt(http_handle, CURLOPT_PROXYUSERPWD, pszProxyUserPwd);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYUSERPWD, pszProxyUserPwd);
 
     // Support control over PROXYAUTH.
     const char *pszProxyAuth = CSLFetchNameValue( papszOptions, "PROXYAUTH" );
@@ -2008,13 +2010,13 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     // CURLOPT_PROXYAUTH is defined in curl 7.11.0 or newer.
 #if LIBCURL_VERSION_NUM >= 0x70B00
     else if( EQUAL(pszProxyAuth, "BASIC") )
-        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_BASIC );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_BASIC );
     else if( EQUAL(pszProxyAuth, "NTLM") )
-        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_NTLM );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_NTLM );
     else if( EQUAL(pszProxyAuth, "DIGEST") )
-        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_DIGEST );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_DIGEST );
     else if( EQUAL(pszProxyAuth, "ANY") )
-        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -2031,13 +2033,13 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
 
     // CURLOPT_SUPPRESS_CONNECT_HEADERS is defined in curl 7.54.0 or newer.
 #if LIBCURL_VERSION_NUM >= 0x073600
-    curl_easy_setopt(http_handle, CURLOPT_SUPPRESS_CONNECT_HEADERS, 1L);
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_SUPPRESS_CONNECT_HEADERS, 1L);
 #endif
 
     // Enable following redirections.  Requires libcurl 7.10.1 at least.
-    curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
-    curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
-    curl_easy_setopt(http_handle, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL );
 
     // Set connect timeout.
     const char *pszConnectTimeout =
@@ -2047,7 +2049,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     if( pszConnectTimeout != nullptr )
     {
         // coverity[tainted_data]
-        curl_easy_setopt(http_handle, CURLOPT_CONNECTTIMEOUT_MS,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_CONNECTTIMEOUT_MS,
                          static_cast<int>(1000 * CPLAtof(pszConnectTimeout)) );
     }
 
@@ -2058,7 +2060,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     if( pszTimeout != nullptr )
     {
         // coverity[tainted_data]
-        curl_easy_setopt(http_handle, CURLOPT_TIMEOUT_MS,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_TIMEOUT_MS,
                          static_cast<int>(1000 * CPLAtof(pszTimeout)) );
     }
 
@@ -2069,7 +2071,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         pszLowSpeedTime = CPLGetConfigOption("GDAL_HTTP_LOW_SPEED_TIME", nullptr);
     if( pszLowSpeedTime != nullptr )
     {
-        curl_easy_setopt(http_handle, CURLOPT_LOW_SPEED_TIME,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_LOW_SPEED_TIME,
                          atoi(pszLowSpeedTime) );
 
         const char *pszLowSpeedLimit =
@@ -2077,7 +2079,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         if( pszLowSpeedLimit == nullptr )
             pszLowSpeedLimit =
                 CPLGetConfigOption("GDAL_HTTP_LOW_SPEED_LIMIT", "1");
-        curl_easy_setopt(http_handle, CURLOPT_LOW_SPEED_LIMIT,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_LOW_SPEED_LIMIT,
                          atoi(pszLowSpeedLimit) );
     }
 
@@ -2087,8 +2089,8 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         pszUnsafeSSL = CPLGetConfigOption("GDAL_HTTP_UNSAFESSL", nullptr);
     if( pszUnsafeSSL != nullptr && CPLTestBool(pszUnsafeSSL) )
     {
-        curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
     }
 
     const char* pszUseCAPIStore = CSLFetchNameValue( papszOptions, "USE_CAPI_STORE" );
@@ -2098,7 +2100,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     {
 #if defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO) && LIBCURL_VERSION_NUM >= 0x70B00
         // Use certificates from Windows certificate store; requires crypt32.lib, OpenSSL crypto and ssl libraries.
-        curl_easy_setopt(http_handle, CURLOPT_SSL_CTX_FUNCTION, *CPL_ssl_ctx_callback);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_SSL_CTX_FUNCTION, *CPL_ssl_ctx_callback);
 #else
         CPLError(CE_Warning, CPLE_NotSupported,
                  "GDAL_HTTP_USE_CAPI_STORE requested, but libcurl too old, "
@@ -2115,7 +2117,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     {
     // 7.41.0
 #if LIBCURL_VERSION_NUM >= 0x72900
-        curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYSTATUS, 1L);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYSTATUS, 1L);
 #else
         CPLError(CE_Warning, CPLE_NotSupported,
                  "GDAL_HTTP_SSL_VERIFYSTATUS requested, but libcurl too old "
@@ -2143,33 +2145,33 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
 #endif
     if( pszCAInfo != nullptr )
     {
-        curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCAInfo);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCAInfo);
     }
 
     const char* pszCAPath = CSLFetchNameValue( papszOptions, "CAPATH" );
     if( pszCAPath != nullptr )
     {
-        curl_easy_setopt(http_handle, CURLOPT_CAPATH, pszCAPath);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_CAPATH, pszCAPath);
     }
 
     /* Set Referer */
     const char *pszReferer = CSLFetchNameValue(papszOptions, "REFERER");
     if( pszReferer != nullptr )
-        curl_easy_setopt(http_handle, CURLOPT_REFERER, pszReferer);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_REFERER, pszReferer);
 
     /* Set User-Agent */
     const char *pszUserAgent = CSLFetchNameValue(papszOptions, "USERAGENT");
     if( pszUserAgent == nullptr )
         pszUserAgent = CPLGetConfigOption("GDAL_HTTP_USERAGENT", nullptr);
     if( pszUserAgent != nullptr )
-        curl_easy_setopt(http_handle, CURLOPT_USERAGENT, pszUserAgent);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_USERAGENT, pszUserAgent);
 
     /* NOSIGNAL should be set to true for timeout to work in multithread
      * environments on Unix, requires libcurl 7.10 or more recent.
      * (this force avoiding the use of signal handlers)
      */
 #if LIBCURL_VERSION_NUM >= 0x070A00
-    curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
 #endif
 
     const char* pszFormFilePath = CSLFetchNameValue( papszOptions, "FORM_FILE_PATH" );
@@ -2181,15 +2183,15 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         if( pszPost != nullptr )
         {
             CPLDebug("HTTP", "These POSTFIELDS were sent:%.4000s", pszPost);
-            curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
-            curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
         }
 
         const char* pszCustomRequest =
             CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
         if( pszCustomRequest != nullptr )
         {
-            curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
         }
     }
 
@@ -2197,19 +2199,19 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     if( pszCookie == nullptr )
         pszCookie = CPLGetConfigOption("GDAL_HTTP_COOKIE", nullptr);
     if( pszCookie != nullptr )
-        curl_easy_setopt(http_handle, CURLOPT_COOKIE, pszCookie);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_COOKIE, pszCookie);
 
     const char* pszCookieFile = CSLFetchNameValue(papszOptions, "COOKIEFILE");
     if( pszCookieFile == nullptr )
         pszCookieFile = CPLGetConfigOption("GDAL_HTTP_COOKIEFILE", nullptr);
     if( pszCookieFile != nullptr )
-        curl_easy_setopt(http_handle, CURLOPT_COOKIEFILE, pszCookieFile);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_COOKIEFILE, pszCookieFile);
 
     const char* pszCookieJar = CSLFetchNameValue(papszOptions, "COOKIEJAR");
     if( pszCookieJar == nullptr )
         pszCookieJar = CPLGetConfigOption("GDAL_HTTP_COOKIEJAR", nullptr);
     if( pszCookieJar != nullptr )
-        curl_easy_setopt(http_handle, CURLOPT_COOKIEJAR, pszCookieJar);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_COOKIEJAR, pszCookieJar);
 
 
     struct curl_slist* headers = nullptr;
