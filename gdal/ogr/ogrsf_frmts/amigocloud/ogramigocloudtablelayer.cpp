@@ -774,25 +774,30 @@ OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
     if( osFIDColName.empty() )
         return OGRAmigoCloudLayer::GetFeature(nFeatureId);
 
-    CPLString osSQL = osSELECTWithoutWHERE;
-    osSQL += " WHERE ";
-    osSQL += OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str();
-    osSQL += " = ";
-    osSQL += CPLSPrintf(CPL_FRMT_GIB, nFeatureId);
+    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFeatureId);
+    if(it!=mFIDs.end()) {
+        OGRAmigoCloudFID &aFID = it->second;
 
-    json_object* poObj = poDS->RunSQL(osSQL);
-    json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
-    if( poRowObj == nullptr )
-    {
-        if( poObj != nullptr )
-            json_object_put(poObj);
-        return OGRAmigoCloudLayer::GetFeature(nFeatureId);
+        CPLString osSQL = osSELECTWithoutWHERE;
+        osSQL += " WHERE ";
+        osSQL += OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str();
+        osSQL += " = ";
+        osSQL += CPLSPrintf("'%s'", aFID.osAmigoId.c_str());
+
+        json_object *poObj = poDS->RunSQL(osSQL);
+        json_object *poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
+        if (poRowObj == nullptr) {
+            if (poObj != nullptr)
+                json_object_put(poObj);
+            return OGRAmigoCloudLayer::GetFeature(nFeatureId);
+        }
+
+        OGRFeature *poFeature = BuildFeature(poRowObj);
+        json_object_put(poObj);
+
+        return poFeature;
     }
-
-    OGRFeature* poFeature = BuildFeature(poRowObj);
-    json_object_put(poObj);
-
-    return poFeature;
+    return nullptr;
 }
 
 /************************************************************************/
