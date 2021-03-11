@@ -893,6 +893,7 @@ template<class T> static int QuadraticMeanFloatSSE2(int nDstXWidth,
 
         const auto rms = _mm_sqrt_ps(_mm_mul_ps(sumSquares, zeroDot25));
 
+        // coverity[incompatible_cast]
         _mm_storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), rms);
         pSrcScanlineShifted += 8;
     }
@@ -936,6 +937,7 @@ template<class T> static int AverageFloatSSE2(int nDstXWidth,
 
         const auto average = _mm_mul_ps(sum, zeroDot25);
 
+        // coverity[incompatible_cast]
         _mm_storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), average);
         pSrcScanlineShifted += 8;
     }
