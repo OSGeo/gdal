@@ -32,6 +32,7 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
+#include <array>
 
 /************************************************************************/
 /*                        OGRGPSBabelDataSource                         */
@@ -39,13 +40,13 @@
 
 class OGRGPSBabelDataSource final: public OGRDataSource
 {
-    int                 nLayers;
-    OGRLayer*           apoLayers[5];
-    char               *pszName;
-    char               *pszGPSBabelDriverName;
-    char               *pszFilename;
-    CPLString           osTmpFileName;
-    GDALDataset        *poGPXDS;
+    int                 nLayers = 0;
+    std::array<OGRLayer*, 5>  apoLayers{{nullptr,nullptr,nullptr,nullptr,nullptr}};
+    char               *pszName = nullptr;
+    char               *pszGPSBabelDriverName = nullptr;
+    char               *pszFilename = nullptr;
+    CPLString           osTmpFileName{};
+    GDALDataset        *poGPXDS = nullptr;
 
   public:
                         OGRGPSBabelDataSource();
