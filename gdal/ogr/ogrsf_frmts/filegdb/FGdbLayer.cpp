@@ -29,6 +29,7 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
+#include <cassert>
 #include "ogr_fgdb.h"
 #include "ogrpgeogeometry.h"
 #include "cpl_conv.h"
@@ -819,6 +820,7 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     //printf("nLastWrittenOffset = %d\n", nLastWrittenOffset);
     if( nLastWrittenOffset > 0 || bDisableSparsePages )
     {
+        assert( nOutMaxFID >= 1 );
         SET_BIT(pabyBlockMapOut, (nOutMaxFID - 1) / 1024);
         nNonEmptyPages ++;
         if( nLastWrittenOffset < 1024 * nRecordSize )

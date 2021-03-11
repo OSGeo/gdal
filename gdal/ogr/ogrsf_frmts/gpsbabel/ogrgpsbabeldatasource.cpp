@@ -41,15 +41,8 @@ CPL_CVSID("$Id$")
 /*                      OGRGPSBabelDataSource()                         */
 /************************************************************************/
 
-OGRGPSBabelDataSource::OGRGPSBabelDataSource() :
-    nLayers(0),
-    pszName(nullptr),
-    pszGPSBabelDriverName(nullptr),
-    pszFilename(nullptr),
-    poGPXDS(nullptr)
+OGRGPSBabelDataSource::OGRGPSBabelDataSource()
 {
-  std::fill_n(apoLayers, CPL_ARRAYSIZE(apoLayers),
-              static_cast<OGRLayer*>(nullptr));
 }
 
 /************************************************************************/

@@ -385,7 +385,8 @@ void OGRNASDataSource::PopulateRelations()
             const char *pszValue = CPLParseNameValue( papszOBProperties[i],
                                                       &l_pszName );
 
-            if( STARTS_WITH_CI(pszValue, "urn:adv:oid:")
+            if( l_pszName != nullptr && pszValue != nullptr
+                && STARTS_WITH_CI(pszValue, "urn:adv:oid:")
                 && psGMLId != nullptr && psGMLId->nSubProperties == 1 )
             {
                 poRelationLayer->AddRelation( psGMLId->papszSubProperties[0],
