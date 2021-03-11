@@ -408,10 +408,23 @@ bool OGCAPIDataset::Download(
             CPLStringList* paosHeaders )
 {
     char** papszOptions = nullptr;
+    CPLString osHeaders;
     if( pszAccept )
     {
-        papszOptions = CSLSetNameValue(papszOptions,
-            "HEADERS", (CPLString("Accept: ") + pszAccept).c_str());
+        osHeaders += "Accept: ";
+        osHeaders += pszAccept;
+    }
+    if( pszPostContent )
+    {
+        if( !osHeaders.empty() )
+        {
+            osHeaders += "\r\n";
+        }
+        osHeaders += "Content-Type: application/json";
+    }
+    if( !osHeaders.empty() )
+    {
+        papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders.c_str());
     }
     if( !m_osUserPwd.empty() )
     {
@@ -521,6 +534,9 @@ bool OGCAPIDataset::Download(
     else
     {
         osResult.assign(reinterpret_cast<const char*>(psResult->pabyData), psResult->nDataLen);
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OGCAPI", "%s", osResult.c_str());
+#endif
     }
     CPLHTTPDestroyResult(psResult);
     return true;
