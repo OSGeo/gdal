@@ -160,6 +160,7 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
                   static_cast<int>(chType) );
         VSIFCloseL(fpVCT);
         CSLDestroy( papszVDC );
+        CPLFree(pszWTKString);
         return FALSE;
     }
 
