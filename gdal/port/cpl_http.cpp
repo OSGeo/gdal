@@ -1965,6 +1965,36 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     }
 #endif
 
+#if CURL_AT_LEAST_VERSION(7,22,0)
+    const char *pszGssDelegation = CSLFetchNameValue(papszOptions, "GSSAPI_DELEGATION");
+    if( pszGssDelegation == nullptr )
+            pszGssDelegation = CPLGetConfigOption("GDAL_GSSAPI_DELEGATION", nullptr);
+    if(pszGssDelegation == nullptr)
+    {
+    }
+    else if(EQUAL(pszGssDelegation, "NONE"))
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_GSSAPI_DELEGATION,
+                                   CURLGSSAPI_DELEGATION_NONE);
+    }
+    else if(EQUAL(pszGssDelegation, "POLICY"))
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_GSSAPI_DELEGATION,
+                                   CURLGSSAPI_DELEGATION_POLICY_FLAG);
+    }
+    else if(EQUAL(pszGssDelegation, "ALWAYS"))
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_GSSAPI_DELEGATION,
+                                   CURLGSSAPI_DELEGATION_FLAG);
+    }
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Unsupported GSSAPI_DELEGATION value '%s', ignored.",
+                 pszGssDelegation);
+    }
+#endif //#if CURL_AT_LEAST_VERSION(7,22,0)
+
     // Support use of .netrc - default enabled.
     const char *pszHttpNetrc = CSLFetchNameValue( papszOptions, "NETRC" );
     if( pszHttpNetrc == nullptr )
