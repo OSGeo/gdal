@@ -914,6 +914,8 @@ int CPLHTTPPopFetchCallback(void)
  *     (GDAL >= 2.2)</li>
  * <li>HTTPAUTH=[BASIC/NTLM/GSSNEGOTIATE/ANY] to specify an authentication scheme to use.</li>
  * <li>USERPWD=userid:password to specify a user and password for authentication</li>
+ * <li>GSSAPI_DELEGATION=[NONE/POLICY/ALWAYS] set allowed GSS-API delegation.
+ *     Relevant only with HTTPAUTH=GSSNEGOTIATE (GDAL >= 3.3).</li>
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the server
  *                     with a POST request.</li>
  * <li>PROXY=val, to make requests go through a proxy server, where val is of the
@@ -964,14 +966,15 @@ int CPLHTTPPopFetchCallback(void)
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, HTTPS_PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
- * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION, SSL_VERIFYSTATUS, USE_CAPI_STORE
+ * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION, SSL_VERIFYSTATUS, USE_CAPI_STORE,
+ * GSSAPI_DELEGATION
  * values are searched in the configuration
  * options respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
  * GDAL_HTTP_PROXY, GDAL_HTTPS_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
  * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
- * GDAL_HTTP_USE_CAPI_STORE
+ * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION
  *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
