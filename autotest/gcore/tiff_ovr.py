@@ -78,7 +78,7 @@ def tiff_ovr_check(src_ds):
         if ovr_band.Checksum() != 328:
             msg = 'overview wrong checksum: band %d, overview 1, checksum = %d,' % (i, ovr_band.Checksum())
             pytest.fail(msg)
-    
+
 ###############################################################################
 # Create a 3 band floating point GeoTIFF file so we can build overviews on it
 # later.  Build overviews on it.
@@ -183,17 +183,7 @@ def test_tiff_ovr_4(both_endian):
     ovimage = ovband.ReadRaster(0, 0, ovband.XSize, ovband.YSize)
 
     pix_count = ovband.XSize * ovband.YSize
-    total = 0.0
-    is_bytes = False
-    if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
-        is_bytes = True
-
-    if is_bytes is True:
-        for i in range(pix_count):
-            total += ovimage[i]
-    else:
-        for i in range(pix_count):
-            total += ord(ovimage[i])
+    total = float(sum(ovimage))
 
     average = total / pix_count
     exp_average = 154.0992
@@ -207,13 +197,7 @@ def test_tiff_ovr_4(both_endian):
                                 ovband.XSize, ovband.YSize)
 
     pix_count = ovband.XSize * ovband.YSize
-    total = 0.0
-    if is_bytes is True:
-        for i in range(pix_count):
-            total += ovimage[i]
-    else:
-        for i in range(pix_count):
-            total += ord(ovimage[i])
+    total = float(sum(ovimage))
     average = total / pix_count
     exp_average = 0.6096
 
@@ -1247,7 +1231,7 @@ def test_tiff_ovr_39(both_endian):
         assert cs == expected_cs, \
             ('did not get expected checksum for datatype %s' % gdal.GetDataTypeName(datatype))
 
-    
+
 ###############################################################################
 # Test external overviews on 1 bit datasets with AVERAGE_BIT2GRAYSCALE (similar to tiff_ovr_4)
 
@@ -1274,18 +1258,7 @@ def test_tiff_ovr_40(both_endian):
     ovimage = ovband.ReadRaster(0, 0, ovband.XSize, ovband.YSize)
 
     pix_count = ovband.XSize * ovband.YSize
-    total = 0.0
-    is_bytes = False
-    if (isinstance(ovimage, bytes) and not isinstance(ovimage, str)):
-        is_bytes = True
-
-    if is_bytes is True:
-        for i in range(pix_count):
-            total += ovimage[i]
-    else:
-        for i in range(pix_count):
-            total += ord(ovimage[i])
-
+    total = float(sum(ovimage))
     average = total / pix_count
     exp_average = 154.0992
     assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
@@ -1298,13 +1271,7 @@ def test_tiff_ovr_40(both_endian):
                                 ovband.XSize, ovband.YSize)
 
     pix_count = ovband.XSize * ovband.YSize
-    total = 0.0
-    if is_bytes is True:
-        for i in range(pix_count):
-            total += ovimage[i]
-    else:
-        for i in range(pix_count):
-            total += ord(ovimage[i])
+    total = float(sum(ovimage))
     average = total / pix_count
     exp_average = 0.6096
 
@@ -1601,7 +1568,7 @@ def test_tiff_ovr_48(both_endian):
         cs = ds.GetRasterBand(i + 1).Checksum()
         assert cs == 0, i
 
-    
+
 ###############################################################################
 # Test possible stride computation issue in GDALRegenerateOverviewsMultiBand (#5653)
 

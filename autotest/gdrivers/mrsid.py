@@ -144,7 +144,7 @@ def test_mrsid_1():
     if got_prj != prj:
         print('Warning: did not get exactly expected projection. Got %s' % got_prj)
 
-    
+
 ###############################################################################
 # Do a direct IO to read the image at a resolution for which there is no
 # builtin overview.  Checks for the bug Steve L found in the optimized
@@ -162,16 +162,7 @@ def test_mrsid_2():
 
     ds = None
 
-    is_bytes = False
-    if (isinstance(data, bytes) and not isinstance(data, str)):
-        is_bytes = True
-
-    # check that we got roughly the right values by checking mean.
-    if is_bytes is True:
-        total = sum(data)
-    else:
-        total = sum([ord(c) for c in data])
-
+    total = sum(data)
     mean = float(total) / len(data)
 
     assert mean >= 95 and mean <= 105, 'image mean out of range.'
@@ -199,7 +190,7 @@ def test_mrsid_3():
             print('new = ', new_stat)
             pytest.fail('Statistics differ.')
 
-    
+
 ###############################################################################
 # Check a new (V3) file which uses a different form for coordinate sys.
 
@@ -478,7 +469,7 @@ def test_mrsid_online_3():
         gdaltest.compare_ds(ds, ds_ref, verbose=1)
         pytest.fail('Image too different from reference')
 
-    
+
 ###############################################################################
 
 

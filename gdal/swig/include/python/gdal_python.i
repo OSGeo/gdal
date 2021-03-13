@@ -7,50 +7,6 @@
 
 %feature("autodoc");
 
-%{
-
-/* This is quite annoying but the data member of a string/buffer object */
-/* is sometimes not 8-byte aligned (Linux 64bit at least) given that it is */
-/* part of the object structure, and so has an offset. So we will allocate */
-/* a bit more, do the RasterIO() on a properly aligned buffer, and then move */
-/* back if necessary to the original buffer */
-
-#define ALIGNMENT_EXTRA 63
-#define ALIGNMENT_SHIFT 32
-
-static
-char* get_aligned_buffer(char* data, GDALDataType ntype)
-{
-    int alignment_needed = ntype == GDT_Byte ? 1:
-                           ntype == GDT_Int16 ? 2:
-                           ntype == GDT_UInt16 ? 2:
-                           ntype == GDT_Int32 ? 4:
-                           ntype == GDT_UInt32 ? 4:
-                           ntype == GDT_Float32 ? 4:
-                           ntype == GDT_Float64 ? 8:
-                           ntype == GDT_CInt16 ? 2:
-                           ntype == GDT_CInt32 ? 4:
-                           ntype == GDT_CFloat32 ? 4:
-                           ntype == GDT_CFloat64 ? 8: 8;
-    char* data_aligned = data + (alignment_needed - (size_t)data % alignment_needed) % alignment_needed;
-    if( data_aligned != data )
-        data_aligned += ALIGNMENT_SHIFT;
-    return data_aligned;
-}
-
-static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t buf_size)
-{
-    if( data != data_aligned )
-        memmove(data, data_aligned, buf_size);
-
-    PyBytesObject* stringobj = (PyBytesObject *) obj;
-    Py_SIZE(stringobj) = buf_size;
-    stringobj->ob_sval[buf_size] = '\0';
-    stringobj->ob_shash = -1;          /* invalidate cached hash value */
-}
-
-%}
-
 %init %{
   /* gdal_python.i %init code */
   if ( GDALGetDriverCount() == 0 ) {
@@ -181,7 +137,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -194,13 +150,13 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
         return 0;
     }
     PyObject* o = (PyObject*) *buf;
-    char *data = PyBytes_AsString(o);
+    char *data = PyByteArray_AsString(o);
     SWIG_PYTHON_THREAD_END_BLOCK;
     size_t nRet = (size_t)VSIFReadL( data, nMembSize, nMembCount, fp );
     if (nRet * (size_t)nMembSize < buf_size)
     {
         SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        _PyBytes_Resize(&o, nRet * nMembSize);
+        PyByteArray_Resize(o, nRet * nMembSize);
         SWIG_PYTHON_THREAD_END_BLOCK;
         *buf = o;
     }
@@ -325,14 +281,14 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         ComputeBandRasterIOSize( nxsize, nysize,
                                  GDALGetDataTypeSize( ntype ) / 8,
                                  pixel_space, line_space, FALSE ) );
-    if (buf_size == 0 || buf_size + ALIGNMENT_EXTRA < buf_size)
+    if (buf_size == 0)
     {
         *buf = NULL;
         return CE_Failure;
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
+    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -344,15 +300,13 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf );
+    char *data = PyByteArray_AsString( (PyObject *)*buf );
     SWIG_PYTHON_THREAD_END_BLOCK;
-
-    char* data_aligned = get_aligned_buffer(data, ntype);
 
     /* Should we clear the buffer in case there are hole in it ? */
     if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
     {
-        memset(data_aligned, 0, buf_size);
+        memset(data, 0, buf_size);
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -375,7 +329,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     }
 
     CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                         (void *) data_aligned, nxsize, nysize, ntype,
+                         data, nxsize, nysize, ntype,
                          pixel_space, line_space, &sExtraArg );
     if (eErr == CE_Failure)
     {
@@ -383,10 +337,6 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         Py_DECREF((PyObject*)*buf);
         SWIG_PYTHON_THREAD_END_BLOCK;
         *buf = NULL;
-    }
-    else
-    {
-        update_buffer_size(*buf, data, data_aligned, buf_size);
     }
 
     return eErr;
@@ -405,14 +355,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     int nDataTypeSize = (GDALGetDataTypeSize(ntype) / 8);
     size_t buf_size = static_cast<size_t>(nBlockXSize) *
                                                 nBlockYSize * nDataTypeSize;
-    if( buf_size + ALIGNMENT_EXTRA < buf_size)
-    {
-        *buf = NULL;
-        return CE_Failure;
-    }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
+    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -424,22 +369,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf );
+    char *data = PyByteArray_AsString( (PyObject *)*buf );
     SWIG_PYTHON_THREAD_END_BLOCK;
 
-    char* data_aligned = get_aligned_buffer(data, ntype);
-
-    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data_aligned);
+    CPLErr eErr = GDALReadBlock( self, xoff, yoff, data);
     if (eErr == CE_Failure)
     {
         SWIG_PYTHON_THREAD_BEGIN_BLOCK;
         Py_DECREF((PyObject*)*buf);
         SWIG_PYTHON_THREAD_END_BLOCK;
         *buf = NULL;
-    }
-    else
-    {
-        update_buffer_size(*buf, data, data_aligned, buf_size);
     }
 
     return eErr;
@@ -631,14 +570,14 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                                     pband_list, band_list,
                                     pixel_space, line_space, band_space,
                                     FALSE));
-    if (buf_size == 0 || buf_size + ALIGNMENT_EXTRA < buf_size)
+    if (buf_size == 0)
     {
         *buf = NULL;
         return CE_Failure;
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
+    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         if( !bUseExceptions )
@@ -649,23 +588,21 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf );
+    char *data = PyByteArray_AsString( (PyObject *)*buf );
     SWIG_PYTHON_THREAD_END_BLOCK;
-
-    char* data_aligned = get_aligned_buffer(data, ntype);
 
     /* Should we clear the buffer in case there are hole in it ? */
     if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
     {
-        memset(data_aligned, 0, buf_size);
+        memset(data, 0, buf_size);
     }
     else if( band_list > 1 && band_space != 0 )
     {
         if( line_space != 0 && band_space > line_space * nysize )
-            memset(data_aligned, 0, buf_size);
+            memset(data, 0, buf_size);
         else if( pixel_space != 0 && band_space < pixel_space &&
                  pixel_space != GDALGetRasterCount(self) * ntypesize )
-            memset(data_aligned, 0, buf_size);
+            memset(data, 0, buf_size);
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -689,7 +626,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     }
 
     CPLErr eErr = GDALDatasetRasterIOEx(self, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                               (void*) data_aligned, nxsize, nysize, ntype,
+                               data, nxsize, nysize, ntype,
                                band_list, pband_list, pixel_space, line_space, band_space,
                                &sExtraArg );
     if (eErr == CE_Failure)
@@ -699,10 +636,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         SWIG_PYTHON_THREAD_END_BLOCK;
         *buf = NULL;
     }
-    else
-    {
-        update_buffer_size(*buf, data, data_aligned, buf_size);
-    }
+
     return eErr;
 }
 
