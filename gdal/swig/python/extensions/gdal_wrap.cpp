@@ -4200,10 +4200,10 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 }
 
 
-void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const GByte *pabyData)
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const char *pabyData)
 {
     const size_t nSize = static_cast<size_t>(nBytes);
-    GByte* pabyDataDup = (GByte*)VSIMalloc(nSize);
+    void* pabyDataDup = VSIMalloc(nSize);
     if (pabyDataDup == NULL)
             return;
     memcpy(pabyDataDup, pabyData, nSize);
@@ -10497,7 +10497,7 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) 0 ;
   GIntBig arg2 ;
-  GByte *arg3 = (GByte *) 0 ;
+  char *arg3 = (char *) 0 ;
   int bToFree1 = 0 ;
   int alloc2 = 0 ;
   PyObject * obj0 = 0 ;
@@ -10532,9 +10532,15 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
       PyBytes_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
       arg2 = (GIntBig) safeLen;
     }
+    else if (PyByteArray_Check(obj1))
+    {
+      Py_ssize_t safeLen = PyByteArray_Size(obj1);
+      arg3 = PyByteArray_AsString(obj1);
+      arg2 = (GIntBig) safeLen;
+    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
       SWIG_fail;
     }
   }
@@ -10549,7 +10555,7 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      wrapper_VSIFileFromMemBuffer((char const *)arg1,arg2,(GByte const *)arg3);
+      wrapper_VSIFileFromMemBuffer((char const *)arg1,arg2,(char const *)arg3);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -18653,9 +18659,15 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
       PyBytes_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
       arg6 = (GIntBig) safeLen;
     }
+    else if (PyByteArray_Check(obj5))
+    {
+      Py_ssize_t safeLen = PyByteArray_Size(obj5);
+      arg7 = PyByteArray_AsString(obj5);
+      arg6 = (GIntBig) safeLen;
+    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
       SWIG_fail;
     }
   }
@@ -23806,9 +23818,15 @@ SWIGINTERN PyObject *_wrap_MDArray_Write(PyObject *SWIGUNUSEDPARM(self), PyObjec
       PyBytes_AsStringAndSize(obj6, (char**) &arg12, &safeLen);
       arg11 = (GIntBig) safeLen;
     }
+    else if (PyByteArray_Check(obj6))
+    {
+      Py_ssize_t safeLen = PyByteArray_Size(obj6);
+      arg12 = PyByteArray_AsString(obj6);
+      arg11 = (GIntBig) safeLen;
+    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
       SWIG_fail;
     }
   }
@@ -24508,9 +24526,15 @@ SWIGINTERN PyObject *_wrap_MDArray_SetNoDataValueRaw(PyObject *SWIGUNUSEDPARM(se
       PyBytes_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
       arg2 = (GIntBig) safeLen;
     }
+    else if (PyByteArray_Check(obj1))
+    {
+      Py_ssize_t safeLen = PyByteArray_Size(obj1);
+      arg3 = PyByteArray_AsString(obj1);
+      arg2 = (GIntBig) safeLen;
+    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
       SWIG_fail;
     }
   }
@@ -26380,9 +26404,15 @@ SWIGINTERN PyObject *_wrap_Attribute_WriteRaw(PyObject *SWIGUNUSEDPARM(self), Py
       PyBytes_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
       arg2 = (GIntBig) safeLen;
     }
+    else if (PyByteArray_Check(obj1))
+    {
+      Py_ssize_t safeLen = PyByteArray_Size(obj1);
+      arg3 = PyByteArray_AsString(obj1);
+      arg2 = (GIntBig) safeLen;
+    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
       SWIG_fail;
     }
   }
@@ -29906,9 +29936,15 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
       PyBytes_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
       arg6 = (GIntBig) safeLen;
     }
+    else if (PyByteArray_Check(obj5))
+    {
+      Py_ssize_t safeLen = PyByteArray_Size(obj5);
+      arg7 = PyByteArray_AsString(obj5);
+      arg6 = (GIntBig) safeLen;
+    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
       SWIG_fail;
     }
   }

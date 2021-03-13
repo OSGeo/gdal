@@ -572,9 +572,15 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
     $1 = (GIntBig) safeLen;
   }
+  else if (PyByteArray_Check($input))
+  {
+    Py_ssize_t safeLen = PyByteArray_Size($input);
+    $2 = PyByteArray_AsString($input);
+    $1 = (GIntBig) safeLen;
+  }
   else
   {
-    PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
     SWIG_fail;
   }
 }
@@ -1809,7 +1815,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 }
 %}
 
-%typemap(in,numinputs=1,fragment="DecomposeSequenceOf4DCoordinates") (int nCount, double *x, double *y, double *z, double *t) (int foundTime = FALSE) 
+%typemap(in,numinputs=1,fragment="DecomposeSequenceOf4DCoordinates") (int nCount, double *x, double *y, double *z, double *t) (int foundTime = FALSE)
 {
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");

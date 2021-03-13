@@ -1296,3 +1296,14 @@ def test_rasterio_rms_halfsize_downsampling_cfloat32():
     ds.BuildOverviews('RMS', [2])
     ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
     assert ovr_data == data
+
+###############################################################################
+# Test WriteRaster() on a bytearray
+
+
+def test_rasterio_writeraster_from_bytearray():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 2)
+    ar = bytearray([1, 2])
+    ds.WriteRaster(0, 0, 1, 2, ar)
+    assert ds.ReadRaster() == ar
