@@ -462,11 +462,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 /*
- * Typemap for buffers with length <-> PyStrings
- * Used in Band::WriteRaster()
- *
- * This typemap has a typecheck also since the WriteRaster()
- * methods are overloaded.
+ * Typemap for methods such as GetFieldAsBinary()
  */
 %typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
 {
@@ -478,7 +474,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
   Py_XDECREF($result);
-  $result = PyBytes_FromStringAndSize( *$2, *$1 );
+  $result = PyByteArray_FromStringAndSize( *$2, *$1 );
 }
 %typemap(freearg) (int *nLen, char **pBuf )
 {

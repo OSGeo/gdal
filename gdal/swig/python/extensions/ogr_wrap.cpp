@@ -15041,7 +15041,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyBytes_FromStringAndSize( *arg4, *arg3 );
+    resultobj = PyByteArray_FromStringAndSize( *arg4, *arg3 );
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
@@ -15135,7 +15135,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_1(PyObject *SWIGUNUSED
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyBytes_FromStringAndSize( *arg4, *arg3 );
+    resultobj = PyByteArray_FromStringAndSize( *arg4, *arg3 );
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */
@@ -22412,7 +22412,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyBytes_FromStringAndSize( *arg3, *arg2 );
+    resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
@@ -22508,7 +22508,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyBytes_FromStringAndSize( *arg3, *arg2 );
+    resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
