@@ -52,6 +52,13 @@
 
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
+
+#ifndef CURL_AT_LEAST_VERSION
+#define CURL_VERSION_BITS(x,y,z) ((x)<<16|(y)<<8|z)
+#define CURL_AT_LEAST_VERSION(x,y,z) \
+  (LIBCURL_VERSION_NUM >= CURL_VERSION_BITS(x, y, z))
+#endif //#ifndef CURL_AT_LEAST_VERSION
+
 // CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and
 // earlier.
 #if LIBCURL_VERSION_NUM < 0x070a07
