@@ -10426,6 +10426,8 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   char *arg3 = (char *) 0 ;
   int bToFree1 = 0 ;
   int alloc2 = 0 ;
+  bool viewIsValid2 = false ;
+  Py_buffer view2 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
@@ -10441,6 +10443,19 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    {
+      if (PyObject_GetBuffer(obj1, &view2, PyBUF_SIMPLE) == 0)
+      {
+        viewIsValid2 = true;
+        arg2 = view2.len;
+        arg3 = (char *) view2.buf;
+        goto ok;
+      }
+      else
+      {
+        PyErr_Clear();
+      }
+    }
     if (PyUnicode_Check(obj1))
     {
       size_t safeLen = 0;
@@ -10452,23 +10467,12 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
       if (safeLen) safeLen--;
       arg2 = (GIntBig) safeLen;
     }
-    else if (PyBytes_Check(obj1))
-    {
-      Py_ssize_t safeLen = 0;
-      PyBytes_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
-      arg2 = (GIntBig) safeLen;
-    }
-    else if (PyByteArray_Check(obj1))
-    {
-      Py_ssize_t safeLen = PyByteArray_Size(obj1);
-      arg3 = PyByteArray_AsString(obj1);
-      arg2 = (GIntBig) safeLen;
-    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
       SWIG_fail;
     }
+    ok: ;
   }
   {
     if (!arg1) {
@@ -10500,7 +10504,10 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
+    if( viewIsValid2 ) {
+      PyBuffer_Release(&view2);
+    }
+    else if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
   }
@@ -10513,7 +10520,10 @@ fail:
   }
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
+    if( viewIsValid2 ) {
+      PyBuffer_Release(&view2);
+    }
+    else if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
   }
@@ -18516,6 +18526,8 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   int val5 ;
   int ecode5 = 0 ;
   int alloc6 = 0 ;
+  bool viewIsValid6 = false ;
+  Py_buffer view6 ;
   int val8 ;
   int val9 ;
   int val10 ;
@@ -18568,6 +18580,19 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   arg5 = static_cast< int >(val5);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    {
+      if (PyObject_GetBuffer(obj5, &view6, PyBUF_SIMPLE) == 0)
+      {
+        viewIsValid6 = true;
+        arg6 = view6.len;
+        arg7 = (char *) view6.buf;
+        goto ok;
+      }
+      else
+      {
+        PyErr_Clear();
+      }
+    }
     if (PyUnicode_Check(obj5))
     {
       size_t safeLen = 0;
@@ -18579,23 +18604,12 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
       if (safeLen) safeLen--;
       arg6 = (GIntBig) safeLen;
     }
-    else if (PyBytes_Check(obj5))
-    {
-      Py_ssize_t safeLen = 0;
-      PyBytes_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
-      arg6 = (GIntBig) safeLen;
-    }
-    else if (PyByteArray_Check(obj5))
-    {
-      Py_ssize_t safeLen = PyByteArray_Size(obj5);
-      arg7 = PyByteArray_AsString(obj5);
-      arg6 = (GIntBig) safeLen;
-    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
       SWIG_fail;
     }
+    ok: ;
   }
   if (obj6) {
     {
@@ -18717,7 +18731,10 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
+    if( viewIsValid6 ) {
+      PyBuffer_Release(&view6);
+    }
+    else if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
       delete[] arg7;
     }
   }
@@ -18730,7 +18747,10 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
 fail:
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
+    if( viewIsValid6 ) {
+      PyBuffer_Release(&view6);
+    }
+    else if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
       delete[] arg7;
     }
   }
@@ -23601,6 +23621,8 @@ SWIGINTERN PyObject *_wrap_MDArray_Write(PyObject *SWIGUNUSEDPARM(self), PyObjec
   void *argp10 = 0 ;
   int res10 = 0 ;
   int alloc11 = 0 ;
+  bool viewIsValid11 = false ;
+  Py_buffer view11 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -23727,6 +23749,19 @@ SWIGINTERN PyObject *_wrap_MDArray_Write(PyObject *SWIGUNUSEDPARM(self), PyObjec
   arg10 = reinterpret_cast< GDALExtendedDataTypeHS * >(argp10);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    {
+      if (PyObject_GetBuffer(obj6, &view11, PyBUF_SIMPLE) == 0)
+      {
+        viewIsValid11 = true;
+        arg11 = view11.len;
+        arg12 = (char *) view11.buf;
+        goto ok;
+      }
+      else
+      {
+        PyErr_Clear();
+      }
+    }
     if (PyUnicode_Check(obj6))
     {
       size_t safeLen = 0;
@@ -23738,23 +23773,12 @@ SWIGINTERN PyObject *_wrap_MDArray_Write(PyObject *SWIGUNUSEDPARM(self), PyObjec
       if (safeLen) safeLen--;
       arg11 = (GIntBig) safeLen;
     }
-    else if (PyBytes_Check(obj6))
-    {
-      Py_ssize_t safeLen = 0;
-      PyBytes_AsStringAndSize(obj6, (char**) &arg12, &safeLen);
-      arg11 = (GIntBig) safeLen;
-    }
-    else if (PyByteArray_Check(obj6))
-    {
-      Py_ssize_t safeLen = PyByteArray_Size(obj6);
-      arg12 = PyByteArray_AsString(obj6);
-      arg11 = (GIntBig) safeLen;
-    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
       SWIG_fail;
     }
+    ok: ;
   }
   {
     if (!arg10) {
@@ -23806,7 +23830,10 @@ SWIGINTERN PyObject *_wrap_MDArray_Write(PyObject *SWIGUNUSEDPARM(self), PyObjec
   }
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if( alloc11 == SWIG_NEWOBJ ) {
+    if( viewIsValid11 ) {
+      PyBuffer_Release(&view11);
+    }
+    else if( alloc11 == SWIG_NEWOBJ ) {
       delete[] arg12;
     }
   }
@@ -23839,7 +23866,10 @@ fail:
   }
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if( alloc11 == SWIG_NEWOBJ ) {
+    if( viewIsValid11 ) {
+      PyBuffer_Release(&view11);
+    }
+    else if( alloc11 == SWIG_NEWOBJ ) {
       delete[] arg12;
     }
   }
@@ -24423,6 +24453,8 @@ SWIGINTERN PyObject *_wrap_MDArray_SetNoDataValueRaw(PyObject *SWIGUNUSEDPARM(se
   void *argp1 = 0 ;
   int res1 = 0 ;
   int alloc2 = 0 ;
+  bool viewIsValid2 = false ;
+  Py_buffer view2 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   CPLErr result;
@@ -24435,6 +24467,19 @@ SWIGINTERN PyObject *_wrap_MDArray_SetNoDataValueRaw(PyObject *SWIGUNUSEDPARM(se
   arg1 = reinterpret_cast< GDALMDArrayHS * >(argp1);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    {
+      if (PyObject_GetBuffer(obj1, &view2, PyBUF_SIMPLE) == 0)
+      {
+        viewIsValid2 = true;
+        arg2 = view2.len;
+        arg3 = (char *) view2.buf;
+        goto ok;
+      }
+      else
+      {
+        PyErr_Clear();
+      }
+    }
     if (PyUnicode_Check(obj1))
     {
       size_t safeLen = 0;
@@ -24446,23 +24491,12 @@ SWIGINTERN PyObject *_wrap_MDArray_SetNoDataValueRaw(PyObject *SWIGUNUSEDPARM(se
       if (safeLen) safeLen--;
       arg2 = (GIntBig) safeLen;
     }
-    else if (PyBytes_Check(obj1))
-    {
-      Py_ssize_t safeLen = 0;
-      PyBytes_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
-      arg2 = (GIntBig) safeLen;
-    }
-    else if (PyByteArray_Check(obj1))
-    {
-      Py_ssize_t safeLen = PyByteArray_Size(obj1);
-      arg3 = PyByteArray_AsString(obj1);
-      arg2 = (GIntBig) safeLen;
-    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
       SWIG_fail;
     }
+    ok: ;
   }
   {
     if ( bUseExceptions ) {
@@ -24485,7 +24519,10 @@ SWIGINTERN PyObject *_wrap_MDArray_SetNoDataValueRaw(PyObject *SWIGUNUSEDPARM(se
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
+    if( viewIsValid2 ) {
+      PyBuffer_Release(&view2);
+    }
+    else if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
   }
@@ -24494,7 +24531,10 @@ SWIGINTERN PyObject *_wrap_MDArray_SetNoDataValueRaw(PyObject *SWIGUNUSEDPARM(se
 fail:
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
+    if( viewIsValid2 ) {
+      PyBuffer_Release(&view2);
+    }
+    else if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
   }
@@ -26301,6 +26341,8 @@ SWIGINTERN PyObject *_wrap_Attribute_WriteRaw(PyObject *SWIGUNUSEDPARM(self), Py
   void *argp1 = 0 ;
   int res1 = 0 ;
   int alloc2 = 0 ;
+  bool viewIsValid2 = false ;
+  Py_buffer view2 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   CPLErr result;
@@ -26313,6 +26355,19 @@ SWIGINTERN PyObject *_wrap_Attribute_WriteRaw(PyObject *SWIGUNUSEDPARM(self), Py
   arg1 = reinterpret_cast< GDALAttributeHS * >(argp1);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    {
+      if (PyObject_GetBuffer(obj1, &view2, PyBUF_SIMPLE) == 0)
+      {
+        viewIsValid2 = true;
+        arg2 = view2.len;
+        arg3 = (char *) view2.buf;
+        goto ok;
+      }
+      else
+      {
+        PyErr_Clear();
+      }
+    }
     if (PyUnicode_Check(obj1))
     {
       size_t safeLen = 0;
@@ -26324,23 +26379,12 @@ SWIGINTERN PyObject *_wrap_Attribute_WriteRaw(PyObject *SWIGUNUSEDPARM(self), Py
       if (safeLen) safeLen--;
       arg2 = (GIntBig) safeLen;
     }
-    else if (PyBytes_Check(obj1))
-    {
-      Py_ssize_t safeLen = 0;
-      PyBytes_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
-      arg2 = (GIntBig) safeLen;
-    }
-    else if (PyByteArray_Check(obj1))
-    {
-      Py_ssize_t safeLen = PyByteArray_Size(obj1);
-      arg3 = PyByteArray_AsString(obj1);
-      arg2 = (GIntBig) safeLen;
-    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
       SWIG_fail;
     }
+    ok: ;
   }
   {
     if ( bUseExceptions ) {
@@ -26363,7 +26407,10 @@ SWIGINTERN PyObject *_wrap_Attribute_WriteRaw(PyObject *SWIGUNUSEDPARM(self), Py
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
+    if( viewIsValid2 ) {
+      PyBuffer_Release(&view2);
+    }
+    else if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
   }
@@ -26372,7 +26419,10 @@ SWIGINTERN PyObject *_wrap_Attribute_WriteRaw(PyObject *SWIGUNUSEDPARM(self), Py
 fail:
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
+    if( viewIsValid2 ) {
+      PyBuffer_Release(&view2);
+    }
+    else if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
   }
@@ -29796,6 +29846,8 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   int val5 ;
   int ecode5 = 0 ;
   int alloc6 = 0 ;
+  bool viewIsValid6 = false ;
+  Py_buffer view6 ;
   int val8 ;
   int val9 ;
   int val10 ;
@@ -29845,6 +29897,19 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   arg5 = static_cast< int >(val5);
   {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    {
+      if (PyObject_GetBuffer(obj5, &view6, PyBUF_SIMPLE) == 0)
+      {
+        viewIsValid6 = true;
+        arg6 = view6.len;
+        arg7 = (char *) view6.buf;
+        goto ok;
+      }
+      else
+      {
+        PyErr_Clear();
+      }
+    }
     if (PyUnicode_Check(obj5))
     {
       size_t safeLen = 0;
@@ -29856,23 +29921,12 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
       if (safeLen) safeLen--;
       arg6 = (GIntBig) safeLen;
     }
-    else if (PyBytes_Check(obj5))
-    {
-      Py_ssize_t safeLen = 0;
-      PyBytes_AsStringAndSize(obj5, (char**) &arg7, &safeLen);
-      arg6 = (GIntBig) safeLen;
-    }
-    else if (PyByteArray_Check(obj5))
-    {
-      Py_ssize_t safeLen = PyByteArray_Size(obj5);
-      arg7 = PyByteArray_AsString(obj5);
-      arg6 = (GIntBig) safeLen;
-    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
       SWIG_fail;
     }
+    ok: ;
   }
   if (obj6) {
     {
@@ -29970,7 +30024,10 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
+    if( viewIsValid6 ) {
+      PyBuffer_Release(&view6);
+    }
+    else if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
       delete[] arg7;
     }
   }
@@ -29979,7 +30036,10 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
 fail:
   {
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-    if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
+    if( viewIsValid6 ) {
+      PyBuffer_Release(&view6);
+    }
+    else if (ReturnSame(alloc6) == SWIG_NEWOBJ ) {
       delete[] arg7;
     }
   }

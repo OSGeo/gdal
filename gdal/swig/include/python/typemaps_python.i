@@ -552,9 +552,22 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 
-%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) (int alloc = 0)
+%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
 {
   /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+  {
+    if (PyObject_GetBuffer($input, &view, PyBUF_SIMPLE) == 0)
+    {
+      viewIsValid = true;
+      $1 = view.len;
+      $2 = ($2_ltype) view.buf;
+      goto ok;
+    }
+    else
+    {
+        PyErr_Clear();
+    }
+  }
   if (PyUnicode_Check($input))
   {
     size_t safeLen = 0;
@@ -566,29 +579,21 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     if (safeLen) safeLen--;
     $1 = (GIntBig) safeLen;
   }
-  else if (PyBytes_Check($input))
-  {
-    Py_ssize_t safeLen = 0;
-    PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
-    $1 = (GIntBig) safeLen;
-  }
-  else if (PyByteArray_Check($input))
-  {
-    Py_ssize_t safeLen = PyByteArray_Size($input);
-    $2 = PyByteArray_AsString($input);
-    $1 = (GIntBig) safeLen;
-  }
   else
   {
-    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes or bytearray");
+    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
     SWIG_fail;
   }
+  ok: ;
 }
 
 %typemap(freearg) (GIntBig nLen, char *pBuf )
 {
   /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-  if( alloc$argnum == SWIG_NEWOBJ ) {
+  if( viewIsValid$argnum ) {
+    PyBuffer_Release(&view$argnum);
+  }
+  else if( alloc$argnum == SWIG_NEWOBJ ) {
     delete[] $2;
   }
 }

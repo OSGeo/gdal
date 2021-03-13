@@ -1307,3 +1307,14 @@ def test_rasterio_writeraster_from_bytearray():
     ar = bytearray([1, 2])
     ds.WriteRaster(0, 0, 1, 2, ar)
     assert ds.ReadRaster() == ar
+
+###############################################################################
+# Test WriteRaster() on a memoryview
+
+
+def test_rasterio_writeraster_from_memoryview():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 2)
+    ar = memoryview(bytearray([1, 2, 3]))[1:]
+    ds.WriteRaster(0, 0, 1, 2, ar)
+    assert ds.ReadRaster() == ar
