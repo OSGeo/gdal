@@ -4401,7 +4401,8 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                          GDALRIOResampleAlg resample_alg,
                          GDALProgressFunc callback = NULL,
                          void* callback_data = NULL,
-                         bool binterleave = true )
+                         bool binterleave = true,
+                         int band_list = 0, int *pband_list = 0 )
 {
     GDALDataType ntype  = (GDALDataType)buf_type;
     if( PyArray_NDIM(psArray) != 3 )
@@ -4429,11 +4430,12 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     nxsize = static_cast<int>(PyArray_DIMS(psArray)[xdim]);
     nysize = static_cast<int>(PyArray_DIMS(psArray)[ydim]);
     bandsize = static_cast<int>(PyArray_DIMS(psArray)[bdim]);
-    if( bandsize != GDALGetRasterCount(ds) )
+    int bandcount = band_list ? band_list : GDALGetRasterCount(ds);
+    if( bandsize != bandcount )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal numpy array band dimension %d. Expected value: %d",
-                  bandsize, GDALGetRasterCount(ds) );
+                  bandsize, bandcount );
         return CE_Failure;
     }
     pixel_space = PyArray_STRIDES(psArray)[xdim];
@@ -4462,9 +4464,40 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     return  GDALDatasetRasterIOEx( ds, (bWrite) ? GF_Write : GF_Read, nXOff, nYOff, nXSize, nYSize,
                                    PyArray_DATA(psArray), nxsize, nysize,
                                    ntype,
-                                   bandsize, NULL,
+                                   bandcount, pband_list,
                                    pixel_space, line_space, band_space, &sExtraArg );
   }
+
+
+static int*
+CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
+  /* check if is List */
+  if ( !PySequence_Check(pySeq) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  *pnSize = (int)size;
+  int* ret = (int*) malloc(*pnSize*sizeof(int));
+  for( int i = 0; i<*pnSize; i++ ) {
+    PyObject *o = PySequence_GetItem(pySeq,i);
+    if ( !PyArg_Parse(o,"i",&ret[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        free(ret);
+        *pnSize = -1;
+        return NULL;
+    }
+    Py_DECREF(o);
+  }
+  return ret;
+}
 
 
 static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
@@ -5475,6 +5508,8 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   GDALProgressFunc arg10 = (GDALProgressFunc) NULL ;
   void *arg11 = (void *) NULL ;
   bool arg12 = (bool) true ;
+  int arg13 = (int) 0 ;
+  int *arg14 = (int *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int val2 ;
@@ -5505,8 +5540,9 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject * obj9 = 0 ;
   PyObject * obj10 = 0 ;
   PyObject * obj11 = 0 ;
+  PyObject * obj12 = 0 ;
   char *  kwnames[] = {
-    (char *) "ds",(char *) "bWrite",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "psArray",(char *) "buf_type",(char *) "resample_alg",(char *) "callback",(char *) "callback_data",(char *) "binterleave", NULL 
+    (char *) "ds",(char *) "bWrite",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "psArray",(char *) "buf_type",(char *) "resample_alg",(char *) "callback",(char *) "callback_data",(char *) "binterleave",(char *) "band_list", NULL 
   };
   CPLErr result;
   
@@ -5517,7 +5553,7 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg11 = psProgressInfo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOOO|OOO:DatasetIONumPy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOOO|OOOO:DatasetIONumPy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DatasetIONumPy" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
@@ -5621,6 +5657,15 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
     } 
     arg12 = static_cast< bool >(val12);
   }
+  if (obj12) {
+    {
+      /* %typemap(in,numinputs=1) (int nList, int* pList)*/
+      arg14 = CreateCIntListFromSequence(obj12, &arg13);
+      if( arg13 < 0 ) {
+        SWIG_fail;
+      }
+    }
+  }
   {
     // %typemap(check) GDALRIOResampleAlg
     // This check is a bit too late, since arg9 has already been cast
@@ -5636,7 +5681,7 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   {
     SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-    result = (CPLErr)DatasetIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12);
+    result = (CPLErr)DatasetIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14);
     SWIG_PYTHON_THREAD_END_ALLOW;
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
@@ -5646,6 +5691,10 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
     CPLFree(psProgressInfo);
     
   }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    free(arg14);
+  }
   return resultobj;
 fail:
   {
@@ -5653,6 +5702,10 @@ fail:
     
     CPLFree(psProgressInfo);
     
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    free(arg14);
   }
   return NULL;
 }
@@ -6129,7 +6182,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"OpenMultiDimensionalNumPyArray", _wrap_OpenMultiDimensionalNumPyArray, METH_VARARGS, (char *)"OpenMultiDimensionalNumPyArray(PyArrayObject * psArray) -> Dataset"},
 	 { (char *)"GetArrayFilename", _wrap_GetArrayFilename, METH_VARARGS, (char *)"GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"},
 	 { (char *)"BandRasterIONumPy", (PyCFunction) _wrap_BandRasterIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
-	 { (char *)"DatasetIONumPy", (PyCFunction) _wrap_DatasetIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"DatasetIONumPy(Dataset ds, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, bool binterleave=True) -> CPLErr"},
+	 { (char *)"DatasetIONumPy", (PyCFunction) _wrap_DatasetIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"DatasetIONumPy(Dataset ds, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, bool binterleave=True, int band_list=0) -> CPLErr"},
 	 { (char *)"MDArrayIONumPy", _wrap_MDArrayIONumPy, METH_VARARGS, (char *)"MDArrayIONumPy(bool bWrite, GDALMDArrayHS * mdarray, PyArrayObject * psArray, int nDims1, int nDims3, GDALExtendedDataTypeHS * buffer_datatype) -> CPLErr"},
 	 { (char *)"VirtualMemGetArray", _wrap_VirtualMemGetArray, METH_VARARGS, (char *)"VirtualMemGetArray(VirtualMem virtualmem)"},
 	 { (char *)"RATValuesIONumPyWrite", (PyCFunction) _wrap_RATValuesIONumPyWrite, METH_VARARGS | METH_KEYWORDS, (char *)"RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, PyArrayObject * psArray) -> CPLErr"},

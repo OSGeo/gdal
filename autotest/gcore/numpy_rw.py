@@ -689,3 +689,19 @@ def test_numpy_rw_rms_resemple_alg():
     assert cs == exp_cs, 'got wrong rms sum'
 
 
+
+###############################################################################
+# Test Dataset.ReadAsArray() with band_list
+
+def test_numpy_rw_dataset_read_as_array():
+
+    wrk_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
+
+    assert numpy.array_equal(wrk_ds.ReadAsArray(band_list=[2]),
+                             wrk_ds.GetRasterBand(2).ReadAsArray())
+
+    assert numpy.array_equal(wrk_ds.ReadAsArray(band_list=[2,1]),
+                             numpy.stack(
+                                 [wrk_ds.GetRasterBand(2).ReadAsArray(),
+                                  wrk_ds.GetRasterBand(1).ReadAsArray()]))
+
