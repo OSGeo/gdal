@@ -14,6 +14,134 @@
   }
 %}
 
+%{
+static int getAlignment(GDALDataType ntype)
+{
+    switch(ntype)
+    {
+        case GDT_Unknown:
+            break; // shouldn't happen
+        case GDT_Byte:
+            return 1;
+        case GDT_Int16:
+        case GDT_UInt16:
+            return 2;
+        case GDT_Int32:
+        case GDT_UInt32:
+        case GDT_Float32:
+            return 4;
+        case GDT_Float64:
+            return 8;
+        case GDT_CInt16:
+            return 2;
+        case GDT_CInt32:
+        case GDT_CFloat32:
+            return 4;
+        case GDT_CFloat64:
+            return 8;
+        case GDT_TypeCount:
+            break; // shouldn't happen
+    }
+    // shouldn't happen
+    CPLAssert(false);
+    return 1;
+}
+
+static bool readraster_acquirebuffer(void** buf,
+                                     void*& inputOutputBuf,
+                                     size_t buf_size,
+                                     GDALDataType ntype,
+                                     int bUseExceptions,
+                                     char*& data,
+                                     Py_buffer& view)
+{
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    if( inputOutputBuf == Py_None )
+        inputOutputBuf = NULL;
+
+    if( inputOutputBuf )
+    {
+        if (PyObject_GetBuffer( (PyObject*)inputOutputBuf, &view,
+                                PyBUF_SIMPLE | PyBUF_WRITABLE) == 0)
+        {
+            if( static_cast<GUIntBig>(view.len) < buf_size )
+            {
+                PyBuffer_Release(&view);
+                SWIG_PYTHON_THREAD_END_BLOCK;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "buf_obj length is " CPL_FRMT_GUIB " bytes. "
+                    "It should be at least " CPL_FRMT_GUIB,
+                    static_cast<GUIntBig>(view.len),
+                    static_cast<GUIntBig>(buf_size));
+                return false;
+            }
+            data = (char*)view.buf;
+            if( (reinterpret_cast<uintptr_t>(data) % getAlignment(ntype)) != 0 )
+            {
+                PyBuffer_Release(&view);
+                SWIG_PYTHON_THREAD_END_BLOCK;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "buffer has not the appropriate alignment");
+                return false;
+            }
+        }
+        else
+        {
+            PyErr_Clear();
+            SWIG_PYTHON_THREAD_END_BLOCK;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "buf_obj is not a simple writable buffer");
+            return false;
+        }
+    }
+    else
+    {
+        *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
+        if (*buf == NULL)
+        {
+            *buf = Py_None;
+            if( !bUseExceptions )
+            {
+                PyErr_Clear();
+            }
+            SWIG_PYTHON_THREAD_END_BLOCK;
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+            return false;
+        }
+        data = PyByteArray_AsString( (PyObject *)*buf );
+    }
+    SWIG_PYTHON_THREAD_END_BLOCK;
+    return true;
+}
+
+static void readraster_releasebuffer(CPLErr eErr,
+                                     void** buf,
+                                     void* inputOutputBuf,
+                                     Py_buffer& view)
+{
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    if( inputOutputBuf )
+        PyBuffer_Release(&view);
+
+    if (eErr == CE_Failure)
+    {
+        if( inputOutputBuf == NULL )
+            Py_DECREF((PyObject*)*buf);
+        *buf = NULL;
+    }
+    else if( inputOutputBuf )
+    {
+        *buf = inputOutputBuf;
+        Py_INCREF((PyObject*)*buf);
+    }
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
+}
+
+%}
+
 %pythoncode %{
 
 
@@ -245,6 +373,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 }
 
 %extend GDALRasterBandShadow {
+%apply ( void *inPythonObject ) { (void* inputOutputBuf) };
 %apply ( void **outPythonObject ) { (void **buf ) };
 %apply ( int *optional_int ) {(int*)};
 %apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
@@ -258,7 +387,11 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                      GIntBig *buf_line_space = 0,
                      GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
                      GDALProgressFunc callback = NULL,
-                     void* callback_data=NULL) {
+                     void* callback_data=NULL,
+                     void* inputOutputBuf = NULL) {
+
+    *buf = NULL;
+
     // This check is a bit too late. resample_alg should already have been
     // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
@@ -283,28 +416,20 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                                  pixel_space, line_space, FALSE ) );
     if (buf_size == 0)
     {
-        *buf = NULL;
         return CE_Failure;
     }
 
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
+    char *data;
+    Py_buffer view;
+    if( !readraster_acquirebuffer(buf, inputOutputBuf, buf_size, ntype,
+                                  bUseExceptions, data, view) )
     {
-        *buf = Py_None;
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyByteArray_AsString( (PyObject *)*buf );
-    SWIG_PYTHON_THREAD_END_BLOCK;
 
     /* Should we clear the buffer in case there are hole in it ? */
-    if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
+    if( inputOutputBuf == NULL &&
+        line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
     {
         memset(data, 0, buf_size);
     }
@@ -331,23 +456,20 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize,
                          data, nxsize, nysize, ntype,
                          pixel_space, line_space, &sExtraArg );
-    if (eErr == CE_Failure)
-    {
-        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        Py_DECREF((PyObject*)*buf);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        *buf = NULL;
-    }
+
+    readraster_releasebuffer(eErr, buf, inputOutputBuf, view);
 
     return eErr;
   }
 %clear (void **buf );
+%clean (void* inputOutputBuf);
 %clear (int*);
 %clear (GIntBig*);
 
+%apply ( void *inPythonObject ) { (void* buf_obj) };
 %apply ( void **outPythonObject ) { (void **buf ) };
 %feature( "kwargs" ) ReadBlock;
-  CPLErr ReadBlock( int xoff, int yoff, void **buf) {
+  CPLErr ReadBlock( int xoff, int yoff, void **buf, void* buf_obj=NULL) {
 
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
@@ -356,34 +478,25 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     size_t buf_size = static_cast<size_t>(nBlockXSize) *
                                                 nBlockYSize * nDataTypeSize;
 
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
+    *buf = NULL;
+
+    char *data;
+    Py_buffer view;
+
+    if( !readraster_acquirebuffer(buf, buf_obj, buf_size, ntype,
+                                  bUseExceptions, data, view) )
     {
-        *buf = Py_None;
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyByteArray_AsString( (PyObject *)*buf );
-    SWIG_PYTHON_THREAD_END_BLOCK;
 
     CPLErr eErr = GDALReadBlock( self, xoff, yoff, data);
-    if (eErr == CE_Failure)
-    {
-        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        Py_DECREF((PyObject*)*buf);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        *buf = NULL;
-    }
+
+    readraster_releasebuffer(eErr, buf, buf_obj, view);
 
     return eErr;
   }
 %clear (void **buf );
+%clear (void* buf_obj);
 
 
 %pythoncode %{
@@ -410,7 +523,8 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                  buf_pixel_space=None, buf_line_space=None,
                  resample_alg=gdalconst.GRIORA_NearestNeighbour,
                  callback=None,
-                 callback_data=None):
+                 callback_data=None,
+                 buf_obj=None):
 
       if xsize is None:
           xsize = self.XSize
@@ -420,7 +534,8 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       return _gdal.Band_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                     buf_xsize, buf_ysize, buf_type,
                                     buf_pixel_space, buf_line_space,
-                                    resample_alg, callback, callback_data)
+                                    resample_alg, callback, callback_data,
+                                    buf_obj)
 
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
@@ -517,6 +632,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %extend GDALDatasetShadow {
 %feature("kwargs") ReadRaster1;
+%apply ( void *inPythonObject ) { (void* inputOutputBuf) };
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
 %apply ( void **outPythonObject ) { (void **buf ) };
@@ -530,8 +646,11 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                     GIntBig* buf_pixel_space = 0, GIntBig* buf_line_space = 0, GIntBig* buf_band_space = 0,
                     GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
                     GDALProgressFunc callback = NULL,
-                    void* callback_data=NULL )
+                    void* callback_data=NULL,
+                    void* inputOutputBuf = NULL )
 {
+    *buf = NULL;
+
     // This check is a bit too late. resample_alg should already have been
     // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
@@ -552,7 +671,6 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
       int lastband = GDALGetRasterCount( self ) - 1;
       if (lastband < 0)
       {
-          *buf = NULL;
           return CE_Failure;
       }
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
@@ -572,37 +690,33 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                                     FALSE));
     if (buf_size == 0)
     {
-        *buf = NULL;
         return CE_Failure;
     }
 
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
+    char *data;
+    Py_buffer view;
+
+    if( !readraster_acquirebuffer(buf, inputOutputBuf, buf_size, ntype,
+                                  bUseExceptions, data, view) )
     {
-        if( !bUseExceptions )
+        return CE_Failure;
+    }
+
+    if( inputOutputBuf == NULL )
+    {
+        /* Should we clear the buffer in case there are hole in it ? */
+        if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
         {
-            PyErr_Clear();
+            memset(data, 0, buf_size);
         }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyByteArray_AsString( (PyObject *)*buf );
-    SWIG_PYTHON_THREAD_END_BLOCK;
-
-    /* Should we clear the buffer in case there are hole in it ? */
-    if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
-    {
-        memset(data, 0, buf_size);
-    }
-    else if( band_list > 1 && band_space != 0 )
-    {
-        if( line_space != 0 && band_space > line_space * nysize )
-            memset(data, 0, buf_size);
-        else if( pixel_space != 0 && band_space < pixel_space &&
-                 pixel_space != GDALGetRasterCount(self) * ntypesize )
-            memset(data, 0, buf_size);
+        else if( band_list > 1 && band_space != 0 )
+        {
+            if( line_space != 0 && band_space > line_space * nysize )
+                memset(data, 0, buf_size);
+            else if( pixel_space != 0 && band_space < pixel_space &&
+                     pixel_space != GDALGetRasterCount(self) * ntypesize )
+                memset(data, 0, buf_size);
+        }
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -629,13 +743,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                                data, nxsize, nysize, ntype,
                                band_list, pband_list, pixel_space, line_space, band_space,
                                &sExtraArg );
-    if (eErr == CE_Failure)
-    {
-        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        Py_DECREF((PyObject*)*buf);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        *buf = NULL;
-    }
+
+    readraster_releasebuffer(eErr, buf, inputOutputBuf, view);
 
     return eErr;
 }
@@ -643,6 +752,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 %clear (GDALDataType *buf_type);
 %clear (int band_list, int *pband_list );
 %clear (void **buf );
+%clear (void *inputOutputBuf);
 %clear (int*);
 %clear (GIntBig*);
 
@@ -693,7 +803,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                    buf_pixel_space=None, buf_line_space=None, buf_band_space=None,
                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
                    callback=None,
-                   callback_data=None):
+                   callback_data=None,
+                   buf_obj=None):
 
         if xsize is None:
             xsize = self.RasterXSize
@@ -712,7 +823,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return _gdal.Dataset_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                             buf_xsize, buf_ysize, buf_type,
                                             band_list, buf_pixel_space, buf_line_space, buf_band_space,
-                                          resample_alg, callback, callback_data )
+                                          resample_alg, callback, callback_data, buf_obj )
 
     def GetVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,

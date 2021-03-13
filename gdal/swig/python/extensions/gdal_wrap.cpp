@@ -3236,6 +3236,133 @@ typedef int RETURN_NONE;
 typedef int VSI_RETVAL;
 
 
+static int getAlignment(GDALDataType ntype)
+{
+    switch(ntype)
+    {
+        case GDT_Unknown:
+            break; // shouldn't happen
+        case GDT_Byte:
+            return 1;
+        case GDT_Int16:
+        case GDT_UInt16:
+            return 2;
+        case GDT_Int32:
+        case GDT_UInt32:
+        case GDT_Float32:
+            return 4;
+        case GDT_Float64:
+            return 8;
+        case GDT_CInt16:
+            return 2;
+        case GDT_CInt32:
+        case GDT_CFloat32:
+            return 4;
+        case GDT_CFloat64:
+            return 8;
+        case GDT_TypeCount:
+            break; // shouldn't happen
+    }
+    // shouldn't happen
+    CPLAssert(false);
+    return 1;
+}
+
+static bool readraster_acquirebuffer(void** buf,
+                                     void*& inputOutputBuf,
+                                     size_t buf_size,
+                                     GDALDataType ntype,
+                                     int bUseExceptions,
+                                     char*& data,
+                                     Py_buffer& view)
+{
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    if( inputOutputBuf == Py_None )
+        inputOutputBuf = NULL;
+
+    if( inputOutputBuf )
+    {
+        if (PyObject_GetBuffer( (PyObject*)inputOutputBuf, &view,
+                                PyBUF_SIMPLE | PyBUF_WRITABLE) == 0)
+        {
+            if( static_cast<GUIntBig>(view.len) < buf_size )
+            {
+                PyBuffer_Release(&view);
+                SWIG_PYTHON_THREAD_END_BLOCK;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "buf_obj length is " CPL_FRMT_GUIB " bytes. "
+                    "It should be at least " CPL_FRMT_GUIB,
+                    static_cast<GUIntBig>(view.len),
+                    static_cast<GUIntBig>(buf_size));
+                return false;
+            }
+            data = (char*)view.buf;
+            if( (reinterpret_cast<uintptr_t>(data) % getAlignment(ntype)) != 0 )
+            {
+                PyBuffer_Release(&view);
+                SWIG_PYTHON_THREAD_END_BLOCK;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "buffer has not the appropriate alignment");
+                return false;
+            }
+        }
+        else
+        {
+            PyErr_Clear();
+            SWIG_PYTHON_THREAD_END_BLOCK;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "buf_obj is not a simple writable buffer");
+            return false;
+        }
+    }
+    else
+    {
+        *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
+        if (*buf == NULL)
+        {
+            *buf = Py_None;
+            if( !bUseExceptions )
+            {
+                PyErr_Clear();
+            }
+            SWIG_PYTHON_THREAD_END_BLOCK;
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+            return false;
+        }
+        data = PyByteArray_AsString( (PyObject *)*buf );
+    }
+    SWIG_PYTHON_THREAD_END_BLOCK;
+    return true;
+}
+
+static void readraster_releasebuffer(CPLErr eErr,
+                                     void** buf,
+                                     void* inputOutputBuf,
+                                     Py_buffer& view)
+{
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    if( inputOutputBuf )
+        PyBuffer_Release(&view);
+
+    if (eErr == CE_Failure)
+    {
+        if( inputOutputBuf == NULL )
+            Py_DECREF((PyObject*)*buf);
+        *buf = NULL;
+    }
+    else if( inputOutputBuf )
+    {
+        *buf = inputOutputBuf;
+        Py_INCREF((PyObject*)*buf);
+    }
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
+}
+
+
+
 #define MODULE_NAME           "gdal"
 
 
@@ -5204,7 +5331,9 @@ SWIGINTERN OGRErr GDALDatasetShadow_RollbackTransaction(GDALDatasetShadow *self)
 SWIGINTERN void GDALDatasetShadow_ClearStatistics(GDALDatasetShadow *self){
       GDALDatasetClearStatistics(self);
   }
-SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
+    *buf = NULL;
+
     // This check is a bit too late. resample_alg should already have been
     // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
@@ -5225,7 +5354,6 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double x
       int lastband = GDALGetRasterCount( self ) - 1;
       if (lastband < 0)
       {
-          *buf = NULL;
           return CE_Failure;
       }
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
@@ -5245,37 +5373,33 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double x
                                     FALSE));
     if (buf_size == 0)
     {
-        *buf = NULL;
         return CE_Failure;
     }
 
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
+    char *data;
+    Py_buffer view;
+
+    if( !readraster_acquirebuffer(buf, inputOutputBuf, buf_size, ntype,
+                                  bUseExceptions, data, view) )
     {
-        if( !bUseExceptions )
+        return CE_Failure;
+    }
+
+    if( inputOutputBuf == NULL )
+    {
+        /* Should we clear the buffer in case there are hole in it ? */
+        if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
         {
-            PyErr_Clear();
+            memset(data, 0, buf_size);
         }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyByteArray_AsString( (PyObject *)*buf );
-    SWIG_PYTHON_THREAD_END_BLOCK;
-
-    /* Should we clear the buffer in case there are hole in it ? */
-    if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
-    {
-        memset(data, 0, buf_size);
-    }
-    else if( band_list > 1 && band_space != 0 )
-    {
-        if( line_space != 0 && band_space > line_space * nysize )
-            memset(data, 0, buf_size);
-        else if( pixel_space != 0 && band_space < pixel_space &&
-                 pixel_space != GDALGetRasterCount(self) * ntypesize )
-            memset(data, 0, buf_size);
+        else if( band_list > 1 && band_space != 0 )
+        {
+            if( line_space != 0 && band_space > line_space * nysize )
+                memset(data, 0, buf_size);
+            else if( pixel_space != 0 && band_space < pixel_space &&
+                     pixel_space != GDALGetRasterCount(self) * ntypesize )
+                memset(data, 0, buf_size);
+        }
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -5302,13 +5426,8 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double x
                                data, nxsize, nysize, ntype,
                                band_list, pband_list, pixel_space, line_space, band_space,
                                &sExtraArg );
-    if (eErr == CE_Failure)
-    {
-        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        Py_DECREF((PyObject*)*buf);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        *buf = NULL;
-    }
+
+    readraster_releasebuffer(eErr, buf, inputOutputBuf, view);
 
     return eErr;
 }
@@ -6532,7 +6651,10 @@ SWIGINTERN CPLErr GDALRasterBandShadow_AdviseRead(GDALRasterBandShadow *self,int
 SWIGINTERN GDALMDArrayHS *GDALRasterBandShadow_AsMDArray(GDALRasterBandShadow *self){
     return GDALRasterBandAsMDArray(self);
   }
-SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,int *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,int *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
+
+    *buf = NULL;
+
     // This check is a bit too late. resample_alg should already have been
     // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
@@ -6557,28 +6679,20 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
                                  pixel_space, line_space, FALSE ) );
     if (buf_size == 0)
     {
-        *buf = NULL;
         return CE_Failure;
     }
 
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
+    char *data;
+    Py_buffer view;
+    if( !readraster_acquirebuffer(buf, inputOutputBuf, buf_size, ntype,
+                                  bUseExceptions, data, view) )
     {
-        *buf = Py_None;
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyByteArray_AsString( (PyObject *)*buf );
-    SWIG_PYTHON_THREAD_END_BLOCK;
 
     /* Should we clear the buffer in case there are hole in it ? */
-    if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
+    if( inputOutputBuf == NULL &&
+        line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
     {
         memset(data, 0, buf_size);
     }
@@ -6605,17 +6719,12 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
     CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize,
                          data, nxsize, nysize, ntype,
                          pixel_space, line_space, &sExtraArg );
-    if (eErr == CE_Failure)
-    {
-        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        Py_DECREF((PyObject*)*buf);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        *buf = NULL;
-    }
+
+    readraster_releasebuffer(eErr, buf, inputOutputBuf, view);
 
     return eErr;
   }
-SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int xoff,int yoff,void **buf){
+SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int xoff,int yoff,void **buf,void *buf_obj=NULL){
 
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
@@ -6624,30 +6733,20 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int 
     size_t buf_size = static_cast<size_t>(nBlockXSize) *
                                                 nBlockYSize * nDataTypeSize;
 
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
+    *buf = NULL;
+
+    char *data;
+    Py_buffer view;
+
+    if( !readraster_acquirebuffer(buf, buf_obj, buf_size, ntype,
+                                  bUseExceptions, data, view) )
     {
-        *buf = Py_None;
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyByteArray_AsString( (PyObject *)*buf );
-    SWIG_PYTHON_THREAD_END_BLOCK;
 
     CPLErr eErr = GDALReadBlock( self, xoff, yoff, data);
-    if (eErr == CE_Failure)
-    {
-        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-        Py_DECREF((PyObject*)*buf);
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        *buf = NULL;
-    }
+
+    readraster_releasebuffer(eErr, buf, buf_obj, view);
 
     return eErr;
   }
@@ -20679,6 +20778,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   GDALRIOResampleAlg arg15 = (GDALRIOResampleAlg) GRIORA_NearestNeighbour ;
   GDALProgressFunc arg16 = (GDALProgressFunc) NULL ;
   void *arg17 = (void *) NULL ;
+  void *arg18 = (void *) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   double val2 ;
@@ -20713,8 +20813,9 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   PyObject * obj12 = 0 ;
   PyObject * obj13 = 0 ;
   PyObject * obj14 = 0 ;
+  PyObject * obj15 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "buf_type",(char *) "band_list",(char *) "buf_pixel_space",(char *) "buf_line_space",(char *) "buf_band_space",(char *) "resample_alg",(char *) "callback",(char *) "callback_data", NULL 
+    (char *) "self",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "buf_type",(char *) "band_list",(char *) "buf_pixel_space",(char *) "buf_line_space",(char *) "buf_band_space",(char *) "resample_alg",(char *) "callback",(char *) "callback_data",(char *) "inputOutputBuf", NULL 
   };
   CPLErr result;
   
@@ -20729,7 +20830,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
     /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject6 = NULL ) */
     arg6 = &pyObject6;
   }
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OOOOOOOOOO:Dataset_ReadRaster1",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12,&obj13,&obj14)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OOOOOOOOOOO:Dataset_ReadRaster1",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12,&obj13,&obj14,&obj15)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_ReadRaster1" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
@@ -20905,6 +21006,12 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
       psProgressInfo->psPyCallbackData = obj14 ;
     }
   }
+  if (obj15) {
+    {
+      /* %typemap(in) ( void *inPythonObject ) */
+      arg18 = obj15;
+    }
+  }
   {
     // %typemap(check) GDALRIOResampleAlg
     // This check is a bit too late, since arg15 has already been cast
@@ -20924,7 +21031,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALDatasetShadow_ReadRaster1(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17));
+      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALDatasetShadow_ReadRaster1(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18));
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -31779,6 +31886,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   GDALRIOResampleAlg arg12 = (GDALRIOResampleAlg) GRIORA_NearestNeighbour ;
   GDALProgressFunc arg13 = (GDALProgressFunc) NULL ;
   void *arg14 = (void *) NULL ;
+  void *arg15 = (void *) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   double val2 ;
@@ -31810,8 +31918,9 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   PyObject * obj10 = 0 ;
   PyObject * obj11 = 0 ;
   PyObject * obj12 = 0 ;
+  PyObject * obj13 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "buf_type",(char *) "buf_pixel_space",(char *) "buf_line_space",(char *) "resample_alg",(char *) "callback",(char *) "callback_data", NULL 
+    (char *) "self",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "buf_type",(char *) "buf_pixel_space",(char *) "buf_line_space",(char *) "resample_alg",(char *) "callback",(char *) "callback_data",(char *) "inputOutputBuf", NULL 
   };
   CPLErr result;
   
@@ -31826,7 +31935,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
     /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject6 = NULL ) */
     arg6 = &pyObject6;
   }
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OOOOOOOO:Band_ReadRaster1",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OOOOOOOOO:Band_ReadRaster1",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10,&obj11,&obj12,&obj13)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ReadRaster1" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
@@ -31978,6 +32087,12 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
       psProgressInfo->psPyCallbackData = obj12 ;
     }
   }
+  if (obj13) {
+    {
+      /* %typemap(in) ( void *inPythonObject ) */
+      arg15 = obj13;
+    }
+  }
   {
     // %typemap(check) GDALRIOResampleAlg
     // This check is a bit too late, since arg12 has already been cast
@@ -31997,7 +32112,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALRasterBandShadow_ReadRaster1(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14));
+      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALRasterBandShadow_ReadRaster1(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15));
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -32048,6 +32163,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadBlock(PyObject *SWIGUNUSEDPARM(self), PyObje
   int arg2 ;
   int arg3 ;
   void **arg4 = (void **) 0 ;
+  void *arg5 = (void *) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int val2 ;
@@ -32058,8 +32174,9 @@ SWIGINTERN PyObject *_wrap_Band_ReadBlock(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "xoff",(char *) "yoff", NULL 
+    (char *) "self",(char *) "xoff",(char *) "yoff",(char *) "buf_obj", NULL 
   };
   CPLErr result;
   
@@ -32067,7 +32184,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadBlock(PyObject *SWIGUNUSEDPARM(self), PyObje
     /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject4 = NULL ) */
     arg4 = &pyObject4;
   }
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO:Band_ReadBlock",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|O:Band_ReadBlock",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ReadBlock" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
@@ -32083,13 +32200,19 @@ SWIGINTERN PyObject *_wrap_Band_ReadBlock(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_ReadBlock" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
+  if (obj3) {
+    {
+      /* %typemap(in) ( void *inPythonObject ) */
+      arg5 = obj3;
+    }
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALRasterBandShadow_ReadBlock(arg1,arg2,arg3,arg4));
+      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALRasterBandShadow_ReadBlock(arg1,arg2,arg3,arg4,arg5));
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -42699,7 +42822,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Dataset_CommitTransaction", _wrap_Dataset_CommitTransaction, METH_VARARGS, (char *)"Dataset_CommitTransaction(Dataset self) -> OGRErr"},
 	 { (char *)"Dataset_RollbackTransaction", _wrap_Dataset_RollbackTransaction, METH_VARARGS, (char *)"Dataset_RollbackTransaction(Dataset self) -> OGRErr"},
 	 { (char *)"Dataset_ClearStatistics", _wrap_Dataset_ClearStatistics, METH_VARARGS, (char *)"Dataset_ClearStatistics(Dataset self)"},
-	 { (char *)"Dataset_ReadRaster1", (PyCFunction) _wrap_Dataset_ReadRaster1, METH_VARARGS | METH_KEYWORDS, (char *)"Dataset_ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
+	 { (char *)"Dataset_ReadRaster1", (PyCFunction) _wrap_Dataset_ReadRaster1, METH_VARARGS | METH_KEYWORDS, (char *)"Dataset_ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
 	 { (char *)"Dataset_swigregister", Dataset_swigregister, METH_VARARGS, NULL},
 	 { (char *)"delete_Group", _wrap_delete_Group, METH_VARARGS, (char *)"delete_Group(Group self)"},
 	 { (char *)"Group_GetName", _wrap_Group_GetName, METH_VARARGS, (char *)"Group_GetName(Group self) -> char const *"},
@@ -42873,8 +42996,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_GetDataCoverageStatus", _wrap_Band_GetDataCoverageStatus, METH_VARARGS, (char *)"Band_GetDataCoverageStatus(Band self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop=0) -> int"},
 	 { (char *)"Band_AdviseRead", _wrap_Band_AdviseRead, METH_VARARGS, (char *)"Band_AdviseRead(Band self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, char ** options=None) -> CPLErr"},
 	 { (char *)"Band_AsMDArray", _wrap_Band_AsMDArray, METH_VARARGS, (char *)"Band_AsMDArray(Band self) -> MDArray"},
-	 { (char *)"Band_ReadRaster1", (PyCFunction) _wrap_Band_ReadRaster1, METH_VARARGS | METH_KEYWORDS, (char *)"Band_ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, int * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
-	 { (char *)"Band_ReadBlock", (PyCFunction) _wrap_Band_ReadBlock, METH_VARARGS | METH_KEYWORDS, (char *)"Band_ReadBlock(Band self, int xoff, int yoff) -> CPLErr"},
+	 { (char *)"Band_ReadRaster1", (PyCFunction) _wrap_Band_ReadRaster1, METH_VARARGS | METH_KEYWORDS, (char *)"Band_ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, int * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
+	 { (char *)"Band_ReadBlock", (PyCFunction) _wrap_Band_ReadBlock, METH_VARARGS | METH_KEYWORDS, (char *)"Band_ReadBlock(Band self, int xoff, int yoff, void * buf_obj=None) -> CPLErr"},
 	 { (char *)"Band_swigregister", Band_swigregister, METH_VARARGS, NULL},
 	 { (char *)"new_ColorTable", (PyCFunction) _wrap_new_ColorTable, METH_VARARGS | METH_KEYWORDS, (char *)"new_ColorTable(GDALPaletteInterp palette) -> ColorTable"},
 	 { (char *)"delete_ColorTable", _wrap_delete_ColorTable, METH_VARARGS, (char *)"delete_ColorTable(ColorTable self)"},

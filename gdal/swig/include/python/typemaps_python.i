@@ -461,6 +461,12 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   }
 }
 
+%typemap(in) ( void *inPythonObject )
+{
+  /* %typemap(in) ( void *inPythonObject ) */
+  $1 = $input;
+}
+
 /*
  * Typemap for methods such as GetFieldAsBinary()
  */
