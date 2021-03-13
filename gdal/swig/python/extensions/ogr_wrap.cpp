@@ -21293,18 +21293,9 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
       }
       arg1 = (int) safeLen;
     }
-    else if (PyBytes_Check(obj0))
-    {
-      Py_ssize_t safeLen = 0;
-      PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
-      if( safeLen > INT_MAX ) {
-        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-      }
-      arg1 = (int) safeLen;
-    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
       SWIG_fail;
     }
     ok: ;
@@ -22121,18 +22112,9 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
         }
         arg3 = (int) safeLen;
       }
-      else if (PyBytes_Check(obj2))
-      {
-        Py_ssize_t safeLen = 0;
-        PyBytes_AsStringAndSize(obj2, (char**) &arg4, &safeLen);
-        if( safeLen > INT_MAX ) {
-          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-        }
-        arg3 = (int) safeLen;
-      }
       else
       {
-        PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+        PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
         SWIG_fail;
       }
       ok: ;

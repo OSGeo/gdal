@@ -523,18 +523,9 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     }
     $1 = (int) safeLen;
   }
-  else if (PyBytes_Check($input))
-  {
-    Py_ssize_t safeLen = 0;
-    PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
-    if( safeLen > INT_MAX ) {
-      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-    }
-    $1 = (int) safeLen;
-  }
   else
   {
-    PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
     SWIG_fail;
   }
   ok: ;
