@@ -48,4 +48,4 @@ See Also
 --------
 
 -  `ODA DWG Reference <https://www.opendesign.com/files/guestdownloads/OpenDesign_Specification_for_.dwg_files.pdf>`__
--  `Libopencad repository <https://github.com/sandyre/libopencad>`__
+-  `Libopencad repository <https://github.com/nextgis-borsch/lib_opencad>`__
