@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2017-2018, Even Rouault <even.rouault at spatialys.com>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -592,8 +592,36 @@ int VSIAzureFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
         return -1;
 
     CPLString osFilename(pszFilename);
+
+    if( (osFilename.find('/', GetFSPrefix().size()) == std::string::npos ||
+         osFilename.find('/', GetFSPrefix().size()) == osFilename.size() - 1) &&
+        CPLGetConfigOption("AZURE_SAS", nullptr) != nullptr )
+    {
+        // On "/vsiaz/container", a HEAD or GET request fails to authenticate
+        // when SAS is used, so use directory listing instead.
+        char** papszRet = ReadDirInternal( osFilename, 100, nullptr );
+        int nRet = papszRet ? 0 : -1;
+        if( nRet == 0 )
+        {
+            pStatBuf->st_mtime = 0;
+            pStatBuf->st_size = 0;
+            pStatBuf->st_mode = S_IFDIR;
+
+            FileProp cachedFileProp;
+            GetCachedFileProp(GetURLFromFilename(osFilename), cachedFileProp);
+            cachedFileProp.eExists = EXIST_YES;
+            cachedFileProp.bIsDirectory = true;
+            cachedFileProp.bHasComputedFileSize = true;
+            SetCachedFileProp(GetURLFromFilename(osFilename), cachedFileProp);
+        }
+        CSLDestroy(papszRet);
+        return nRet;
+    }
+
     if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
+    {
         osFilename += "/";
+    }
     return VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags);
 }
 

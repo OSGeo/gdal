@@ -30,9 +30,9 @@
 
 from osgeo import gdal
 
-
 import gdaltest
 import pytest
+import stat
 
 pytestmark = pytest.mark.skipif(not gdaltest.built_against_curl(), reason="GDAL not built against curl")
 
@@ -124,6 +124,8 @@ def test_vsiaz_no_sign_request():
     if not gdaltest.built_against_curl():
         pytest.skip()
 
+    gdal.VSICurlClearCache()
+
     with gdaltest.config_options({ 'AZURE_STORAGE_ACCOUNT': 'naipblobs', 'AZURE_NO_SIGN_REQUEST': 'YES'}):
         actual_url = gdal.GetActualURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
         assert actual_url == 'https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif'
@@ -139,6 +141,23 @@ def test_vsiaz_no_sign_request():
 
         assert 'm_3008601_ne_16_1_20150804.tif' in gdal.ReadDir('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/')
 
+        gdal.VSICurlClearCache()
+
+        assert stat.S_ISDIR(gdal.VSIStatL('/vsiaz/naip').mode)
+
+        gdal.VSICurlClearCache()
+
+        assert stat.S_ISDIR(gdal.VSIStatL('/vsiaz/naip/').mode)
+
+        gdal.VSICurlClearCache()
+
+        assert gdal.VSIStatL('/vsiaz/naip_i_dont_exist') is None
+
+        gdal.VSICurlClearCache()
+
+        assert stat.S_ISDIR(gdal.VSIStatL('/vsiaz/naip/v002').mode)
+
+
 ###############################################################################
 # Test AZURE_SAS option
 
@@ -147,6 +166,8 @@ def test_vsiaz_sas():
 
     if not gdaltest.built_against_curl():
         pytest.skip()
+
+    gdal.VSICurlClearCache()
 
     # See https://azure.microsoft.com/en-us/services/open-datasets/catalog/naip/ for the value of AZURE_SAS
     with gdaltest.config_options({ 'AZURE_STORAGE_ACCOUNT': 'naipblobs', 'AZURE_SAS': 'st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D'}):
@@ -163,3 +184,19 @@ def test_vsiaz_sas():
         gdal.VSIFCloseL(f)
 
         assert 'm_3008601_ne_16_1_20150804.tif' in gdal.ReadDir('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/')
+
+        gdal.VSICurlClearCache()
+
+        assert stat.S_ISDIR(gdal.VSIStatL('/vsiaz/naip').mode)
+
+        gdal.VSICurlClearCache()
+
+        assert stat.S_ISDIR(gdal.VSIStatL('/vsiaz/naip/').mode)
+
+        gdal.VSICurlClearCache()
+
+        assert gdal.VSIStatL('/vsiaz/naip_i_dont_exist') is None
+
+        gdal.VSICurlClearCache()
+
+        assert stat.S_ISDIR(gdal.VSIStatL('/vsiaz/naip/v002').mode)
