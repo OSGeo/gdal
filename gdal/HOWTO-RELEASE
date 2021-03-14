@@ -318,6 +318,7 @@ e) Click the "Release" button and that is it! The release should be available in
     e.g
         ./docker/build-all.sh --tag 3.0.2 --gdal v3.0.2 --proj 6.2.1 --release --push
 
+    and update gdal/docker/README.md with the latest release
 
 21) Announce release to :
     - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org.
