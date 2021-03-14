@@ -368,6 +368,76 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
 
     return buf_obj
 
+
+def DatasetWriteArray(ds, array, xoff=0, yoff=0,
+                      band_list=None,
+                      interleave='band',
+                      resample_alg=gdal.GRIORA_NearestNeighbour,
+                      callback=None, callback_data=None):
+    """Pure python implementation of writing a chunk of a GDAL file
+    from a numpy array.  Used by the gdal.Dataset.WriteArray method."""
+
+    if band_list is None:
+        band_list = list(range(1, ds.RasterCount + 1))
+
+    interleave = interleave.lower()
+    if interleave == 'band':
+        interleave = True
+        xdim = 2
+        ydim = 1
+        banddim = 0
+    elif interleave == 'pixel':
+        interleave = False
+        xdim = 1
+        ydim = 0
+        banddim = 2
+    else:
+        raise ValueError('Interleave should be band or pixel')
+
+    if len(band_list) == 1:
+        if array is None or (len(array.shape) != 2 and len(array.shape) != 3):
+            raise ValueError("expected array of dim 2 or 3")
+        if len(array.shape) == 3:
+            if array.shape[banddim] != 1:
+                raise ValueError("expected size of dimension %d should be 1" % banddim)
+            array = array[banddim]
+
+        return BandWriteArray(ds.GetRasterBand(band_list[0]),
+                              array,
+                              xoff=xoff, yoff=yoff, resample_alg=resample_alg,
+                              callback=callback, callback_data=callback_data)
+
+    if array is None or len(array.shape) != 3:
+        raise ValueError("expected array of dim 3")
+
+    xsize = array.shape[xdim]
+    ysize = array.shape[ydim]
+
+    if xsize + xoff > ds.RasterXSize or ysize + yoff > ds.RasterYSize:
+        raise ValueError("array larger than output file, or offset off edge")
+    if array.shape[banddim] != len(band_list):
+        raise ValueError('Dimension %d of array should have size %d to store bands)' % (banddim, len(band_list)))
+
+    datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
+
+# if we receive some odd type, like int64, try casting to a very
+# generic type we do support (#2285)
+    if not datatype:
+        gdal.Debug('gdal_array', 'force array to float64')
+        array = array.astype(numpy.float64)
+        datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
+
+    if not datatype:
+        raise ValueError("array does not have corresponding GDAL data type")
+
+    ret = DatasetIONumPy(ds, 1, xoff, yoff, xsize, ysize,
+                         array, datatype, resample_alg, callback, callback_data,
+                         interleave, band_list)
+    if ret != 0:
+        _RaiseException()
+    return ret
+
+
 def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
                     resample_alg=gdal.GRIORA_NearestNeighbour,

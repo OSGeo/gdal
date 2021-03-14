@@ -2497,6 +2497,21 @@ class Dataset(MajorObject):
                                               interleave=interleave,
                                               band_list=band_list)
 
+    def WriteArray(self, array, xoff=0, yoff=0,
+                   band_list=None,
+                   interleave='band',
+                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                   callback=None,
+                   callback_data=None):
+        from osgeo import gdal_array
+
+        return gdal_array.DatasetWriteArray(self, array, xoff, yoff,
+                                            band_list=band_list,
+                                            interleave=interleave,
+                                            resample_alg=resample_alg,
+                                            callback=callback,
+                                            callback_data=callback_data)
+
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
                     buf_xsize=None, buf_ysize=None, buf_type=None,
