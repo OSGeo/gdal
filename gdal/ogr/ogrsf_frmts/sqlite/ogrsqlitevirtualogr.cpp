@@ -643,7 +643,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
     if( bAddComma )
         osSQL += ",";
-    bAddComma = true;
+
     if( bHasOGR_STYLEField )
     {
         osSQL += "'dummy' VARCHAR HIDDEN";
@@ -657,9 +657,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
     for( int i = 0; i < poFDefn->GetGeomFieldCount(); i++ )
     {
-        if( bAddComma )
-            osSQL += ",";
-        bAddComma = true;
+        osSQL += ",";
 
         OGRGeomFieldDefn* poFieldDefn = poFDefn->GetGeomFieldDefn(i);
 

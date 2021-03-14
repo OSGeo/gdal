@@ -3072,7 +3072,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
     else if ( eType == wkbGeometryCollection )
     {
         bool bCanConvertToMultiPoly = true;
-        bool bMustConvertToMultiPoly = true;
+        // bool bMustConvertToMultiPoly = true;
         OGRGeometryCollection* poGC = poLinearGeom->toGeometryCollection();
         for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
@@ -3080,7 +3080,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
                 wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if( eSubGeomType == wkbPolyhedralSurface || eSubGeomType == wkbTIN )
             {
-                bMustConvertToMultiPoly = true;
+                // bMustConvertToMultiPoly = true;
             }
             else if( eSubGeomType != wkbMultiPolygon &&
                      eSubGeomType != wkbPolygon )
@@ -3089,7 +3089,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
                 break;
             }
         }
-        if( bCanConvertToMultiPoly && bMustConvertToMultiPoly )
+        if( bCanConvertToMultiPoly /* && bMustConvertToMultiPoly */ )
         {
             OGRGeometry *poMultiPolygon = OGRGeometryFactory::forceTo(
                                 poLinearGeom->clone(), wkbMultiPolygon, nullptr );

@@ -162,11 +162,14 @@ MAIN_START(argc, argv)
     if( psOptionsForBinary->pszSource == nullptr )
         Usage("No input file specified.");
     if( psOptionsForBinary->pszDest== nullptr )
+    {
         Usage("No output file specified.");
-
-    if( psOptionsForBinary->pszDest == nullptr )
+    }
+    else
+    {
         psOptionsForBinary->pszDest = CPLStrdup(psOptionsForBinary->pszSource);
- 
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */

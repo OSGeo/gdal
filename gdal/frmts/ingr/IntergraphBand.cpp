@@ -195,8 +195,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // --------------------------------------------------------------------
     // Allocate buffer for a Block of data
     // --------------------------------------------------------------------
-    if( nBlockYSize == 0 ||
-        nBlockXSize > INT_MAX / nBlockYSize ||
+    if( nBlockXSize > INT_MAX / nBlockYSize ||
         nBlockXSize > INT_MAX / 4 - 2 ||
         GDALGetDataTypeSize( eDataType ) == 0 ||
         nBlockYSize > INT_MAX / (GDALGetDataTypeSize( eDataType ) / 8) ||
