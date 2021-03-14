@@ -302,7 +302,7 @@ static bool LoadPythonAPI()
                             oSetAlreadyTriedLinks.insert(osPythonBinary);
 
                             // If this is a symlink, hopefully the resolved
-                            // name will be like "python2.7"
+                            // name will be like "python3.6"
                             const int nBufSize = 2048;
                             std::vector<char> oFilename(nBufSize);
                             char *szPointerFilename = &oFilename[0];
@@ -417,12 +417,12 @@ static bool LoadPythonAPI()
     // Note: update doc/source/drivers/raster/vrt.rst if change
     if( libHandle == nullptr )
     {
-        const char* const apszPythonSO[] = { "libpython2.7." SO_EXT,
-                                                "libpython3.5m." SO_EXT,
+        const char* const apszPythonSO[] = {
                                                 "libpython3.6m." SO_EXT,
                                                 "libpython3.7m." SO_EXT,
                                                 "libpython3.8m." SO_EXT,
                                                 "libpython3.9m." SO_EXT,
+                                                "libpython3.5m." SO_EXT,
                                                 "libpython3.4m." SO_EXT,
                                                 "libpython3.3." SO_EXT,
                                                 "libpython3.2." SO_EXT };
@@ -622,12 +622,11 @@ static bool LoadPythonAPI()
     // Note: update doc/source/drivers/raster/vrt.rst if change
     if( libHandle == nullptr )
     {
-        const char* const apszPythonSO[] = { "python27.dll",
-                                            "python35.dll",
-                                            "python36.dll",
+        const char* const apszPythonSO[] = {"python36.dll",
                                             "python37.dll",
                                             "python38.dll",
                                             "python39.dll",
+                                            "python35.dll",
                                             "python34.dll",
                                             "python33.dll",
                                             "python32.dll" };
