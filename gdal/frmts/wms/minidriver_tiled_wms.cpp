@@ -405,7 +405,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             // This returns a string managed by the cfg cache, do not free
             const char* pszTmp = GDALWMSDataset::GetServerConfig(getTileServiceUrl,
                 const_cast<char **>(m_parent_dataset->GetHTTPRequestOpts()));
-            decodedGTS = pszTmp ? pszTmp : nullptr;
+            decodedGTS = pszTmp ? pszTmp : "";
 
             if (decodedGTS.empty())
                 throw CPLOPrintf("%s Can't fetch server GetTileService", SIG);
