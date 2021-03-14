@@ -57,7 +57,7 @@
  //  tiledWMS dataset. When set, the source tiledWMS will store the server configuration into the XML
  //  metadata representation, which then gets copied to the XML output. This will eliminate the need
  //  to fetch the server configuration when opening the output datafile
- // 
+ //
 
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
@@ -403,8 +403,9 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             CPLString getTileServiceUrl = m_base_url + "request=GetTileService";
 
             // This returns a string managed by the cfg cache, do not free
-            decodedGTS = GDALWMSDataset::GetServerConfig(getTileServiceUrl,
+            const char* pszTmp = GDALWMSDataset::GetServerConfig(getTileServiceUrl,
                 const_cast<char **>(m_parent_dataset->GetHTTPRequestOpts()));
+            decodedGTS = pszTmp ? pszTmp : nullptr;
 
             if (decodedGTS.empty())
                 throw CPLOPrintf("%s Can't fetch server GetTileService", SIG);
