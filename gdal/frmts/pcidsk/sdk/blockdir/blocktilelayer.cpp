@@ -37,6 +37,7 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
+#include <limits>
 
 #ifdef PCIMAJORVERSION
 #include "raster/memcmp.hh"

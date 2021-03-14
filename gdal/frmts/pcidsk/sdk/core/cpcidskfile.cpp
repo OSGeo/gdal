@@ -81,6 +81,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <limits>
 #include <string>
 #include <fstream>
 #include <sstream>

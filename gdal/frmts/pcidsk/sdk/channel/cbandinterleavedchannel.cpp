@@ -44,6 +44,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
+#include <limits>
 
 using namespace PCIDSK;
 
