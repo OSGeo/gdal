@@ -528,6 +528,31 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                                     resample_alg, callback, callback_data,
                                     buf_obj)
 
+  def WriteRaster(self, xoff, yoff, xsize, ysize,
+                  buf_string,
+                  buf_xsize=None, buf_ysize=None, buf_type=None,
+                  buf_pixel_space=None, buf_line_space=None ):
+
+      if buf_xsize is None:
+          buf_xsize = xsize
+      if buf_ysize is None:
+          buf_ysize = ysize
+
+      # Redirect to numpy-friendly WriteArray() if buf_string is a numpy array
+      # and other arguments are compatible
+      if type(buf_string).__name__ == 'ndarray' and \
+         buf_xsize == xsize and buf_ysize == ysize and buf_type is None and \
+         buf_pixel_space is None and buf_line_space is None:
+          return self.WriteArray(buf_string, xoff=xoff, yoff=yoff)
+
+      if buf_type is None:
+          buf_type = self.DataType
+
+      return _gdal.Band_WriteRaster(self,
+               xoff, yoff, xsize, ysize,
+              buf_string, buf_xsize, buf_ysize, buf_type,
+              buf_pixel_space, buf_line_space )
+
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
@@ -784,6 +809,14 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             buf_ysize = ysize
         if band_list is None:
             band_list = list(range(1, self.RasterCount + 1))
+
+        # Redirect to numpy-friendly WriteArray() if buf_string is a numpy array
+        # and other arguments are compatible
+        if type(buf_string).__name__ == 'ndarray' and \
+           buf_xsize == xsize and buf_ysize == ysize and buf_type is None and \
+           buf_pixel_space is None and buf_line_space is None and buf_band_space is None:
+            return self.WriteArray(buf_string, xoff=xoff, yoff=yoff,
+                                   band_list=band_list)
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType
 

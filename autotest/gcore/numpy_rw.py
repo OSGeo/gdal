@@ -720,6 +720,11 @@ def test_numpy_rw_dataset_writearray():
     assert ds.WriteArray(ar) == 0
     assert numpy.array_equal(ds.ReadAsArray(), ar)
 
+    # Use WriteRaster interface
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    assert ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ar.astype(numpy.uint32)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
     with pytest.raises(Exception):
         ds.WriteArray(None)
 
@@ -763,6 +768,11 @@ def test_numpy_rw_dataset_writearray():
     # band_list
     ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
     assert ds.WriteArray(ar[::-1,...], band_list=[2,1]) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # Use WriteRaster interface
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ar.astype(numpy.uint32)) == 0
     assert numpy.array_equal(ds.ReadAsArray(), ar)
 
     # 2D array
