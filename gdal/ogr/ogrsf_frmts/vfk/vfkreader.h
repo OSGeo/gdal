@@ -310,7 +310,7 @@ private:
 public:
     VFKDataBlock(const char *pszName, const IVFKReader *poReader) : IVFKDataBlock(pszName, poReader) {}
 
-    VFKFeature        *GetFeature(int, GUIntBig, VFKFeatureList* = nullptr);
+    VFKFeature        *GetFeature(int, GUIntBig, VFKFeatureList* poList = nullptr);
     VFKFeatureList     GetFeatures(int, GUIntBig);
     VFKFeatureList     GetFeatures(int, int, GUIntBig);
 
