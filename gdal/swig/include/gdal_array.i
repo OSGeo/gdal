@@ -723,12 +723,11 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 %inline %{
   CPLErr BandRasterIONumPy( GDALRasterBandShadow* band, int bWrite, double xoff, double yoff, double xsize, double ysize,
                             PyArrayObject *psArray,
-                            int buf_type,
+                            GDALDataType buf_type,
                             GDALRIOResampleAlg resample_alg,
                             GDALProgressFunc callback = NULL,
                             void* callback_data = NULL) {
 
-    GDALDataType ntype  = (GDALDataType)buf_type;
     if( PyArray_NDIM(psArray) < 2 || PyArray_NDIM(psArray) > 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -775,7 +774,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
     return  GDALRasterIOEx( band, (bWrite) ? GF_Write : GF_Read, nXOff, nYOff, nXSize, nYSize,
                           PyArray_DATA(psArray), nxsize, nysize,
-                          ntype, pixel_space, line_space, &sExtraArg );
+                          buf_type, pixel_space, line_space, &sExtraArg );
   }
 %}
 
@@ -784,14 +783,13 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 %inline %{
   CPLErr DatasetIONumPy( GDALDatasetShadow* ds, int bWrite, double xoff, double yoff, double xsize, double ysize,
                          PyArrayObject *psArray,
-                         int buf_type,
+                         GDALDataType buf_type,
                          GDALRIOResampleAlg resample_alg,
                          GDALProgressFunc callback = NULL,
                          void* callback_data = NULL,
                          bool binterleave = true,
                          int band_list = 0, int *pband_list = 0 )
 {
-    GDALDataType ntype  = (GDALDataType)buf_type;
     if( PyArray_NDIM(psArray) != 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -850,7 +848,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
     return  GDALDatasetRasterIOEx( ds, (bWrite) ? GF_Write : GF_Read, nXOff, nYOff, nXSize, nYSize,
                                    PyArray_DATA(psArray), nxsize, nysize,
-                                   ntype,
+                                   buf_type,
                                    bandcount, pband_list,
                                    pixel_space, line_space, band_space, &sExtraArg );
   }

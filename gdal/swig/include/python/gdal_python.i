@@ -376,13 +376,14 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %apply ( void *inPythonObject ) { (void* inputOutputBuf) };
 %apply ( void **outPythonObject ) { (void **buf ) };
 %apply ( int *optional_int ) {(int*)};
+%apply ( GDALDataType *optional_GDALDataType ) {(GDALDataType*)};
 %apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
 %feature( "kwargs" ) ReadRaster1;
   CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                      void **buf,
                      int *buf_xsize = 0,
                      int *buf_ysize = 0,
-                     int *buf_type = 0,
+                     GDALDataType *buf_type = 0,
                      GIntBig *buf_pixel_space = 0,
                      GIntBig *buf_line_space = 0,
                      GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
@@ -395,7 +396,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
     int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
-                                        : (GDALDataType)*buf_type;
+                                        : *buf_type;
     GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
@@ -454,6 +455,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %clean (void* inputOutputBuf);
 %clear (int*);
 %clear (GIntBig*);
+%clear (GDALDataType *);
 
 %apply ( void *inPythonObject ) { (void* buf_obj) };
 %apply ( void **outPythonObject ) { (void **buf ) };
@@ -622,7 +624,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %extend GDALDatasetShadow {
 %feature("kwargs") ReadRaster1;
 %apply ( void *inPythonObject ) { (void* inputOutputBuf) };
-%apply (int *optional_int) { (GDALDataType *buf_type) };
+%apply ( GDALDataType *optional_GDALDataType ) {(GDALDataType*)};
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
 %apply ( void **outPythonObject ) { (void **buf ) };
 %apply ( int *optional_int ) {(int*)};
@@ -644,7 +646,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype;
     if ( buf_type != 0 ) {
-      ntype = (GDALDataType) *buf_type;
+      ntype = *buf_type;
     } else {
       int lastband = GDALGetRasterCount( self ) - 1;
       if (lastband < 0)
@@ -727,7 +729,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     return eErr;
 }
 
-%clear (GDALDataType *buf_type);
+%clear (GDALDataType *);
 %clear (int band_list, int *pband_list );
 %clear (void **buf );
 %clear (void *inputOutputBuf);

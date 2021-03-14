@@ -2424,3 +2424,46 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
     }
     $1 = static_cast< GDALRIOResampleAlg >(val);
 }
+
+
+%typemap(in) GDALDataType
+{
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int($input, &val);
+    if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    $1 = static_cast<GDALDataType>(val);
+}
+
+%typemap(in) (GDALDataType *optional_GDALDataType) ( GDALDataType val )
+{
+  /* %typemap(in) (GDALDataType *optional_GDALDataType) */
+  int intval = 0;
+  if ( $input == Py_None ) {
+    $1 = NULL;
+  }
+  else if ( SWIG_IsOK(SWIG_AsVal_int($input, &intval)) ) {
+    if( intval < GDT_Unknown || intval >= GDT_TypeCount )
+    {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    val = static_cast<GDALDataType>(intval);
+    $1 = &val;
+  }
+  else {
+    PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+    SWIG_fail;
+  }
+}
+
+%typemap(typecheck,precedence=0) (GDALDataType *optional_GDALDataType)
+{
+  /* %typemap(typecheck,precedence=0) (GDALDataType *optional_GDALDataType) */
+  $1 = (($input==Py_None) || my_PyCheck_int($input)) ? 1 : 0;
+}

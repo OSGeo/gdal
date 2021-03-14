@@ -5338,7 +5338,7 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double x
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype;
     if ( buf_type != 0 ) {
-      ntype = (GDALDataType) *buf_type;
+      ntype = *buf_type;
     } else {
       int lastband = GDALGetRasterCount( self ) - 1;
       if (lastband < 0)
@@ -6481,11 +6481,11 @@ SWIGINTERN void GDALRasterBandShadow_ComputeBandStats(GDALRasterBandShadow *self
 SWIGINTERN CPLErr GDALRasterBandShadow_Fill(GDALRasterBandShadow *self,double real_fill,double imag_fill=0.0){
     return GDALFillRaster( self, real_fill, imag_fill );
   }
-SWIGINTERN CPLErr GDALRasterBandShadow_WriteRaster(GDALRasterBandShadow *self,int xoff,int yoff,int xsize,int ysize,GIntBig buf_len,char *buf_string,int *buf_xsize=0,int *buf_ysize=0,int *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0){
+SWIGINTERN CPLErr GDALRasterBandShadow_WriteRaster(GDALRasterBandShadow *self,int xoff,int yoff,int xsize,int ysize,GIntBig buf_len,char *buf_string,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0){
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
-                                        : (GDALDataType)*buf_type;
+                                        : *buf_type;
     GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     GDALRasterIOExtraArg* psExtraArg = NULL;
@@ -6640,14 +6640,14 @@ SWIGINTERN CPLErr GDALRasterBandShadow_AdviseRead(GDALRasterBandShadow *self,int
 SWIGINTERN GDALMDArrayHS *GDALRasterBandShadow_AsMDArray(GDALRasterBandShadow *self){
     return GDALRasterBandAsMDArray(self);
   }
-SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,int *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
+SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
 
     *buf = NULL;
 
     int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
     int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
-                                        : (GDALDataType)*buf_type;
+                                        : *buf_type;
     GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
@@ -13977,8 +13977,6 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
   int ecode4 = 0 ;
   int val5 ;
   int ecode5 = 0 ;
-  int val6 ;
-  int ecode6 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -14024,11 +14022,19 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
     arg5 = static_cast< int >(val5);
   }
   if (obj5) {
-    ecode6 = SWIG_AsVal_int(obj5, &val6);
-    if (!SWIG_IsOK(ecode6)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "Driver_Create" "', argument " "6"" of type '" "GDALDataType""'");
-    } 
-    arg6 = static_cast< GDALDataType >(val6);
+    {
+      // %typemap(in) GDALDataType
+      int val = 0;
+      int ecode = SWIG_AsVal_int(obj5, &val);
+      if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+      }
+      if( val < GDT_Unknown || val >= GDT_TypeCount )
+      {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+      }
+      arg6 = static_cast<GDALDataType>(val);
+    }
   }
   if (obj6) {
     {
@@ -18375,8 +18381,6 @@ SWIGINTERN PyObject *_wrap_Dataset_AddBand(PyObject *SWIGUNUSEDPARM(self), PyObj
   char **arg3 = (char **) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int val2 ;
-  int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -18392,11 +18396,19 @@ SWIGINTERN PyObject *_wrap_Dataset_AddBand(PyObject *SWIGUNUSEDPARM(self), PyObj
   }
   arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
   if (obj1) {
-    ecode2 = SWIG_AsVal_int(obj1, &val2);
-    if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Dataset_AddBand" "', argument " "2"" of type '" "GDALDataType""'");
-    } 
-    arg2 = static_cast< GDALDataType >(val2);
+    {
+      // %typemap(in) GDALDataType
+      int val = 0;
+      int ecode = SWIG_AsVal_int(obj1, &val);
+      if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+      }
+      if( val < GDT_Unknown || val >= GDT_TypeCount )
+      {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+      }
+      arg2 = static_cast<GDALDataType>(val);
+    }
   }
   if (obj2) {
     {
@@ -18580,7 +18592,7 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   Py_buffer view6 ;
   int val8 ;
   int val9 ;
-  int val10 ;
+  GDALDataType val10 ;
   GIntBig val13 ;
   GIntBig val14 ;
   GIntBig val15 ;
@@ -18693,12 +18705,18 @@ SWIGINTERN PyObject *_wrap_Dataset_WriteRaster(PyObject *SWIGUNUSEDPARM(self), P
   }
   if (obj8) {
     {
-      /* %typemap(in) (int *optional_##int) */
+      /* %typemap(in) (GDALDataType *optional_GDALDataType) */
+      int intval = 0;
       if ( obj8 == Py_None ) {
-        arg10 = 0;
+        arg10 = NULL;
       }
-      else if ( PyArg_Parse( obj8,"i" ,&val10 ) ) {
-        arg10 = (GDALDataType *) &val10;
+      else if ( SWIG_IsOK(SWIG_AsVal_int(obj8, &intval)) ) {
+        if( intval < GDT_Unknown || intval >= GDT_TypeCount )
+        {
+          SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+        }
+        val10 = static_cast<GDALDataType>(intval);
+        arg10 = &val10;
       }
       else {
         PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
@@ -19002,8 +19020,6 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   int ecode9 = 0 ;
   int val10 ;
   int ecode10 = 0 ;
-  int val11 ;
-  int ecode11 = 0 ;
   int val14 ;
   int ecode14 = 0 ;
   int val15 ;
@@ -19081,11 +19097,19 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
   } 
   arg10 = static_cast< int >(val10);
   if (obj8) {
-    ecode11 = SWIG_AsVal_int(obj8, &val11);
-    if (!SWIG_IsOK(ecode11)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode11), "in method '" "Dataset_BeginAsyncReader" "', argument " "11"" of type '" "GDALDataType""'");
-    } 
-    arg11 = static_cast< GDALDataType >(val11);
+    {
+      // %typemap(in) GDALDataType
+      int val = 0;
+      int ecode = SWIG_AsVal_int(obj8, &val);
+      if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+      }
+      if( val < GDT_Unknown || val >= GDT_TypeCount )
+      {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+      }
+      arg11 = static_cast<GDALDataType>(val);
+    }
   }
   if (obj9) {
     {
@@ -19251,8 +19275,6 @@ SWIGINTERN PyObject *_wrap_Dataset_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self),
   int ecode7 = 0 ;
   int val8 ;
   int ecode8 = 0 ;
-  int val9 ;
-  int ecode9 = 0 ;
   int val12 ;
   int ecode12 = 0 ;
   size_t val13 ;
@@ -19319,11 +19341,19 @@ SWIGINTERN PyObject *_wrap_Dataset_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Dataset_GetVirtualMem" "', argument " "8"" of type '" "int""'");
   } 
   arg8 = static_cast< int >(val8);
-  ecode9 = SWIG_AsVal_int(obj8, &val9);
-  if (!SWIG_IsOK(ecode9)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Dataset_GetVirtualMem" "', argument " "9"" of type '" "GDALDataType""'");
-  } 
-  arg9 = static_cast< GDALDataType >(val9);
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj8, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg9 = static_cast<GDALDataType>(val);
+  }
   {
     /* %typemap(in,numinputs=1) (int nList, int* pList)*/
     arg11 = CreateCIntListFromSequence(obj9, &arg10);
@@ -19431,8 +19461,6 @@ SWIGINTERN PyObject *_wrap_Dataset_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(s
   int ecode7 = 0 ;
   int val8 ;
   int ecode8 = 0 ;
-  int val9 ;
-  int ecode9 = 0 ;
   int val12 ;
   int ecode12 = 0 ;
   size_t val13 ;
@@ -19496,11 +19524,19 @@ SWIGINTERN PyObject *_wrap_Dataset_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(s
     SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Dataset_GetTiledVirtualMem" "', argument " "8"" of type '" "int""'");
   } 
   arg8 = static_cast< int >(val8);
-  ecode9 = SWIG_AsVal_int(obj8, &val9);
-  if (!SWIG_IsOK(ecode9)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Dataset_GetTiledVirtualMem" "', argument " "9"" of type '" "GDALDataType""'");
-  } 
-  arg9 = static_cast< GDALDataType >(val9);
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj8, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg9 = static_cast<GDALDataType>(val);
+  }
   {
     /* %typemap(in,numinputs=1) (int nList, int* pList)*/
     arg11 = CreateCIntListFromSequence(obj9, &arg10);
@@ -20770,7 +20806,7 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   void *pyObject6 = NULL ;
   int val7 ;
   int val8 ;
-  int val9 ;
+  GDALDataType val9 ;
   GIntBig val12 ;
   GIntBig val13 ;
   GIntBig val14 ;
@@ -20864,12 +20900,18 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
   }
   if (obj7) {
     {
-      /* %typemap(in) (int *optional_##int) */
+      /* %typemap(in) (GDALDataType *optional_GDALDataType) */
+      int intval = 0;
       if ( obj7 == Py_None ) {
-        arg9 = 0;
+        arg9 = NULL;
       }
-      else if ( PyArg_Parse( obj7,"i" ,&val9 ) ) {
-        arg9 = (GDALDataType *) &val9;
+      else if ( SWIG_IsOK(SWIG_AsVal_int(obj7, &intval)) ) {
+        if( intval < GDT_Unknown || intval >= GDT_TypeCount )
+        {
+          SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+        }
+        val9 = static_cast<GDALDataType>(intval);
+        arg9 = &val9;
       }
       else {
         PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
@@ -24847,8 +24889,6 @@ SWIGINTERN PyObject *_wrap_MDArray_SetOffset(PyObject *SWIGUNUSEDPARM(self), PyO
   int res1 = 0 ;
   double val2 ;
   int ecode2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -24869,11 +24909,19 @@ SWIGINTERN PyObject *_wrap_MDArray_SetOffset(PyObject *SWIGUNUSEDPARM(self), PyO
   } 
   arg2 = static_cast< double >(val2);
   if (obj2) {
-    ecode3 = SWIG_AsVal_int(obj2, &val3);
-    if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "MDArray_SetOffset" "', argument " "3"" of type '" "GDALDataType""'");
-    } 
-    arg3 = static_cast< GDALDataType >(val3);
+    {
+      // %typemap(in) GDALDataType
+      int val = 0;
+      int ecode = SWIG_AsVal_int(obj2, &val);
+      if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+      }
+      if( val < GDT_Unknown || val >= GDT_TypeCount )
+      {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+      }
+      arg3 = static_cast<GDALDataType>(val);
+    }
   }
   {
     if ( bUseExceptions ) {
@@ -24910,8 +24958,6 @@ SWIGINTERN PyObject *_wrap_MDArray_SetScale(PyObject *SWIGUNUSEDPARM(self), PyOb
   int res1 = 0 ;
   double val2 ;
   int ecode2 = 0 ;
-  int val3 ;
-  int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -24932,11 +24978,19 @@ SWIGINTERN PyObject *_wrap_MDArray_SetScale(PyObject *SWIGUNUSEDPARM(self), PyOb
   } 
   arg2 = static_cast< double >(val2);
   if (obj2) {
-    ecode3 = SWIG_AsVal_int(obj2, &val3);
-    if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "MDArray_SetScale" "', argument " "3"" of type '" "GDALDataType""'");
-    } 
-    arg3 = static_cast< GDALDataType >(val3);
+    {
+      // %typemap(in) GDALDataType
+      int val = 0;
+      int ecode = SWIG_AsVal_int(obj2, &val);
+      if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+      }
+      if( val < GDT_Unknown || val >= GDT_TypeCount )
+      {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+      }
+      arg3 = static_cast<GDALDataType>(val);
+    }
   }
   {
     if ( bUseExceptions ) {
@@ -27156,17 +27210,23 @@ fail:
 SWIGINTERN PyObject *_wrap_ExtendedDataType_Create(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDataType arg1 ;
-  int val1 ;
-  int ecode1 = 0 ;
   PyObject * obj0 = 0 ;
   GDALExtendedDataTypeHS *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:ExtendedDataType_Create",&obj0)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "ExtendedDataType_Create" "', argument " "1"" of type '" "GDALDataType""'");
-  } 
-  arg1 = static_cast< GDALDataType >(val1);
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj0, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg1 = static_cast<GDALDataType>(val);
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
@@ -29886,7 +29946,7 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   char *arg7 = (char *) 0 ;
   int *arg8 = (int *) 0 ;
   int *arg9 = (int *) 0 ;
-  int *arg10 = (int *) 0 ;
+  GDALDataType *arg10 = (GDALDataType *) 0 ;
   GIntBig *arg11 = (GIntBig *) 0 ;
   GIntBig *arg12 = (GIntBig *) 0 ;
   void *argp1 = 0 ;
@@ -29904,7 +29964,7 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   Py_buffer view6 ;
   int val8 ;
   int val9 ;
-  int val10 ;
+  GDALDataType val10 ;
   GIntBig val11 ;
   GIntBig val12 ;
   PyObject * obj0 = 0 ;
@@ -30014,12 +30074,18 @@ SWIGINTERN PyObject *_wrap_Band_WriteRaster(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   if (obj8) {
     {
-      /* %typemap(in) (int *optional_##int) */
+      /* %typemap(in) (GDALDataType *optional_GDALDataType) */
+      int intval = 0;
       if ( obj8 == Py_None ) {
-        arg10 = 0;
+        arg10 = NULL;
       }
-      else if ( PyArg_Parse( obj8,"i" ,&val10 ) ) {
-        arg10 = (int *) &val10;
+      else if ( SWIG_IsOK(SWIG_AsVal_int(obj8, &intval)) ) {
+        if( intval < GDT_Unknown || intval >= GDT_TypeCount )
+        {
+          SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+        }
+        val10 = static_cast<GDALDataType>(intval);
+        arg10 = &val10;
       }
       else {
         PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
@@ -31228,8 +31294,6 @@ SWIGINTERN PyObject *_wrap_Band_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self), Py
   int ecode7 = 0 ;
   int val8 ;
   int ecode8 = 0 ;
-  int val9 ;
-  int ecode9 = 0 ;
   size_t val10 ;
   int ecode10 = 0 ;
   size_t val11 ;
@@ -31292,11 +31356,19 @@ SWIGINTERN PyObject *_wrap_Band_GetVirtualMem(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Band_GetVirtualMem" "', argument " "8"" of type '" "int""'");
   } 
   arg8 = static_cast< int >(val8);
-  ecode9 = SWIG_AsVal_int(obj8, &val9);
-  if (!SWIG_IsOK(ecode9)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Band_GetVirtualMem" "', argument " "9"" of type '" "GDALDataType""'");
-  } 
-  arg9 = static_cast< GDALDataType >(val9);
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj8, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg9 = static_cast<GDALDataType>(val);
+  }
   ecode10 = SWIG_AsVal_size_t(obj9, &val10);
   if (!SWIG_IsOK(ecode10)) {
     SWIG_exception_fail(SWIG_ArgError(ecode10), "in method '" "Band_GetVirtualMem" "', argument " "10"" of type '" "size_t""'");
@@ -31454,8 +31526,6 @@ SWIGINTERN PyObject *_wrap_Band_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(self
   int ecode7 = 0 ;
   int val8 ;
   int ecode8 = 0 ;
-  int val9 ;
-  int ecode9 = 0 ;
   size_t val10 ;
   int ecode10 = 0 ;
   PyObject * obj0 = 0 ;
@@ -31515,11 +31585,19 @@ SWIGINTERN PyObject *_wrap_Band_GetTiledVirtualMem(PyObject *SWIGUNUSEDPARM(self
     SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Band_GetTiledVirtualMem" "', argument " "8"" of type '" "int""'");
   } 
   arg8 = static_cast< int >(val8);
-  ecode9 = SWIG_AsVal_int(obj8, &val9);
-  if (!SWIG_IsOK(ecode9)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Band_GetTiledVirtualMem" "', argument " "9"" of type '" "GDALDataType""'");
-  } 
-  arg9 = static_cast< GDALDataType >(val9);
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj8, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg9 = static_cast<GDALDataType>(val);
+  }
   ecode10 = SWIG_AsVal_size_t(obj9, &val10);
   if (!SWIG_IsOK(ecode10)) {
     SWIG_exception_fail(SWIG_ArgError(ecode10), "in method '" "Band_GetTiledVirtualMem" "', argument " "10"" of type '" "size_t""'");
@@ -31854,7 +31932,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   void **arg6 = (void **) 0 ;
   int *arg7 = (int *) 0 ;
   int *arg8 = (int *) 0 ;
-  int *arg9 = (int *) 0 ;
+  GDALDataType *arg9 = (GDALDataType *) 0 ;
   GIntBig *arg10 = (GIntBig *) 0 ;
   GIntBig *arg11 = (GIntBig *) 0 ;
   GDALRIOResampleAlg arg12 = (GDALRIOResampleAlg) GRIORA_NearestNeighbour ;
@@ -31874,7 +31952,7 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   void *pyObject6 = NULL ;
   int val7 ;
   int val8 ;
-  int val9 ;
+  GDALDataType val9 ;
   GIntBig val10 ;
   GIntBig val11 ;
   PyObject * obj0 = 0 ;
@@ -31965,12 +32043,18 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   if (obj7) {
     {
-      /* %typemap(in) (int *optional_##int) */
+      /* %typemap(in) (GDALDataType *optional_GDALDataType) */
+      int intval = 0;
       if ( obj7 == Py_None ) {
-        arg9 = 0;
+        arg9 = NULL;
       }
-      else if ( PyArg_Parse( obj7,"i" ,&val9 ) ) {
-        arg9 = (int *) &val9;
+      else if ( SWIG_IsOK(SWIG_AsVal_int(obj7, &intval)) ) {
+        if( intval < GDT_Unknown || intval >= GDT_TypeCount )
+        {
+          SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+        }
+        val9 = static_cast<GDALDataType>(intval);
+        arg9 = &val9;
       }
       else {
         PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
@@ -37953,17 +38037,23 @@ fail:
 SWIGINTERN PyObject *_wrap_GetDataTypeSize(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDataType arg1 ;
-  int val1 ;
-  int ecode1 = 0 ;
   PyObject * obj0 = 0 ;
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:GetDataTypeSize",&obj0)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GetDataTypeSize" "', argument " "1"" of type '" "GDALDataType""'");
-  } 
-  arg1 = static_cast< GDALDataType >(val1);
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj0, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg1 = static_cast<GDALDataType>(val);
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
@@ -37993,17 +38083,23 @@ fail:
 SWIGINTERN PyObject *_wrap_DataTypeIsComplex(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDataType arg1 ;
-  int val1 ;
-  int ecode1 = 0 ;
   PyObject * obj0 = 0 ;
   int result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:DataTypeIsComplex",&obj0)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "DataTypeIsComplex" "', argument " "1"" of type '" "GDALDataType""'");
-  } 
-  arg1 = static_cast< GDALDataType >(val1);
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj0, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg1 = static_cast<GDALDataType>(val);
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
@@ -38033,17 +38129,23 @@ fail:
 SWIGINTERN PyObject *_wrap_GetDataTypeName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDataType arg1 ;
-  int val1 ;
-  int ecode1 = 0 ;
   PyObject * obj0 = 0 ;
   char *result = 0 ;
   
   if (!PyArg_ParseTuple(args,(char *)"O:GetDataTypeName",&obj0)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "GetDataTypeName" "', argument " "1"" of type '" "GDALDataType""'");
-  } 
-  arg1 = static_cast< GDALDataType >(val1);
+  {
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj0, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    arg1 = static_cast<GDALDataType>(val);
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
@@ -42943,7 +43045,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_ComputeRasterMinMax", _wrap_Band_ComputeRasterMinMax, METH_VARARGS, (char *)"Band_ComputeRasterMinMax(Band self, int approx_ok=0)"},
 	 { (char *)"Band_ComputeBandStats", _wrap_Band_ComputeBandStats, METH_VARARGS, (char *)"Band_ComputeBandStats(Band self, int samplestep=1)"},
 	 { (char *)"Band_Fill", _wrap_Band_Fill, METH_VARARGS, (char *)"Band_Fill(Band self, double real_fill, double imag_fill=0.0) -> CPLErr"},
-	 { (char *)"Band_WriteRaster", (PyCFunction) _wrap_Band_WriteRaster, METH_VARARGS | METH_KEYWORDS, (char *)"Band_WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, int * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None) -> CPLErr"},
+	 { (char *)"Band_WriteRaster", (PyCFunction) _wrap_Band_WriteRaster, METH_VARARGS | METH_KEYWORDS, (char *)"Band_WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None) -> CPLErr"},
 	 { (char *)"Band_FlushCache", _wrap_Band_FlushCache, METH_VARARGS, (char *)"Band_FlushCache(Band self)"},
 	 { (char *)"Band_GetRasterColorTable", _wrap_Band_GetRasterColorTable, METH_VARARGS, (char *)"Band_GetRasterColorTable(Band self) -> ColorTable"},
 	 { (char *)"Band_GetColorTable", _wrap_Band_GetColorTable, METH_VARARGS, (char *)"Band_GetColorTable(Band self) -> ColorTable"},
@@ -42966,7 +43068,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_GetDataCoverageStatus", _wrap_Band_GetDataCoverageStatus, METH_VARARGS, (char *)"Band_GetDataCoverageStatus(Band self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop=0) -> int"},
 	 { (char *)"Band_AdviseRead", _wrap_Band_AdviseRead, METH_VARARGS, (char *)"Band_AdviseRead(Band self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, char ** options=None) -> CPLErr"},
 	 { (char *)"Band_AsMDArray", _wrap_Band_AsMDArray, METH_VARARGS, (char *)"Band_AsMDArray(Band self) -> MDArray"},
-	 { (char *)"Band_ReadRaster1", (PyCFunction) _wrap_Band_ReadRaster1, METH_VARARGS | METH_KEYWORDS, (char *)"Band_ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, int * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
+	 { (char *)"Band_ReadRaster1", (PyCFunction) _wrap_Band_ReadRaster1, METH_VARARGS | METH_KEYWORDS, (char *)"Band_ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
 	 { (char *)"Band_ReadBlock", (PyCFunction) _wrap_Band_ReadBlock, METH_VARARGS | METH_KEYWORDS, (char *)"Band_ReadBlock(Band self, int xoff, int yoff, void * buf_obj=None) -> CPLErr"},
 	 { (char *)"Band_swigregister", Band_swigregister, METH_VARARGS, NULL},
 	 { (char *)"new_ColorTable", (PyCFunction) _wrap_new_ColorTable, METH_VARARGS | METH_KEYWORDS, (char *)"new_ColorTable(GDALPaletteInterp palette) -> ColorTable"},
