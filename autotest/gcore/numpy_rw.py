@@ -670,10 +670,6 @@ def test_numpy_rw_gdal_array_openarray_permissions():
         assert ds.GetRasterBand(1).ReadAsArray(buf_obj = ar) is None
 
 
-def test_numpy_rw_cleanup():
-    gdaltest.numpy_drv = None
-
-
 ###############################################################################
 # Test ReadAsArray RMS subsampling.
 
