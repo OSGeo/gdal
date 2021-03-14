@@ -664,6 +664,11 @@ def test_numpy_rw_gdal_array_openarray_permissions():
         assert ds.GetRasterBand(1).Fill(1) != 0
     assert ds.GetRasterBand(1).Checksum()  == 0
 
+    # Cannot read in non-writeable array
+    with gdaltest.error_handler():
+        assert ds.ReadAsArray(buf_obj = ar) is None
+        assert ds.GetRasterBand(1).ReadAsArray(buf_obj = ar) is None
+
 
 def test_numpy_rw_cleanup():
     gdaltest.numpy_drv = None

@@ -4352,6 +4352,13 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         return CE_Failure;
     }
 
+    if( !bWrite && !(PyArray_FLAGS(psArray) & NPY_ARRAY_WRITEABLE) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot read in a non-writeable array." );
+        return CE_Failure;
+    }
+
     int xdim = ( PyArray_NDIM(psArray) == 2) ? 1 : 2;
     int ydim = ( PyArray_NDIM(psArray) == 2) ? 0 : 1;
 
@@ -4408,6 +4415,13 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal numpy array rank %d.",
                   PyArray_NDIM(psArray) );
+        return CE_Failure;
+    }
+
+    if( !bWrite && !(PyArray_FLAGS(psArray) & NPY_ARRAY_WRITEABLE) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cannot read in a non-writeable array." );
         return CE_Failure;
     }
 
