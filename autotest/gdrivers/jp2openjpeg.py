@@ -592,7 +592,7 @@ def test_jp2openjpeg_22():
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
     assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
-    assert ds.GetRasterBand(1).Checksum() in [11457, 11450, 11498]
+    assert ds.GetRasterBand(1).Checksum() in [11457, 11450, 11498, 11502]
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
 
