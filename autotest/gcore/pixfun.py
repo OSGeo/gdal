@@ -144,7 +144,7 @@ def test_pixfun_mod_c():
     assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
     refdata = refds.GetRasterBand(1).ReadAsArray()
 
-    res = numpy.alltrue(data == numpy.abs(refdata))
+    res = numpy.allclose(data, numpy.abs(refdata))
     if gdaltest.is_travis_branch('sanitize') and not res:
         print(data)
         print(numpy.abs(refdata))
