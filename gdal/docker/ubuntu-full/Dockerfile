@@ -168,9 +168,9 @@ ARG WITH_DEBUG_SYMBOLS=no
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY ./bh-proj.sh /buildscripts/bh-proj.sh
-RUN /buildscripts/bh-proj.sh
-RUN LD_LIBRARY_PATH=/build/usr/local/lib /build/usr/local/bin/projsync --target-dir /tmp/proj_grids --all
-RUN rm -f /build/usr/local/lib/libinternalproj*
+RUN DESTDIR=/build_tmp_proj /buildscripts/bh-proj.sh \
+     && LD_LIBRARY_PATH=/build_tmp_proj/usr/local/lib /build_tmp_proj/usr/local/bin/projsync --target-dir /tmp/proj_grids --all \
+     && rm -rf /build_tmp_proj
 
 # Build PROJ
 ARG PROJ_VERSION=master
