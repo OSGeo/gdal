@@ -2405,3 +2405,22 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
   PyTuple_SetItem( r, 4, PyLong_FromLong($2[0]));
   $result = t_output_helper($result,r);
 }
+
+
+%typemap(in) GDALRIOResampleAlg
+{
+    // %typemap(in) GDALRIOResampleAlg
+    int val = 0;
+    int ecode = SWIG_AsVal_int($input, &val);
+    if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALRIOResampleAlg");
+    }
+    if( val < 0 ||
+        ( val >= static_cast<int>(GRIORA_RESERVED_START) &&
+          val <= static_cast<int>(GRIORA_RESERVED_END) ) ||
+        val > static_cast<int>(GRIORA_LAST) )
+    {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+    $1 = static_cast< GDALRIOResampleAlg >(val);
+}

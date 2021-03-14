@@ -991,7 +991,7 @@ def test_rasterio_dataset_write_on_readonly():
     assert err != 0
 
 
-@pytest.mark.parametrize('resample_alg', [-1, 8])
+@pytest.mark.parametrize('resample_alg', [-1, 8, "foo"])
 def test_rasterio_dataset_invalid_resample_alg(resample_alg):
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)

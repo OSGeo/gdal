@@ -392,17 +392,6 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
     *buf = NULL;
 
-    // This check is a bit too late. resample_alg should already have been
-    // validated, so we are a bit in undefined behavior land, but compilers
-    // should hopefully do the right thing
-    if( static_cast<int>(resample_alg) < 0 ||
-        ( static_cast<int>(resample_alg) >= static_cast<int>(GRIORA_RESERVED_START) &&
-          static_cast<int>(resample_alg) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
-        static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
-        return CE_Failure;
-    }
     int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
     int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
@@ -651,17 +640,6 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 {
     *buf = NULL;
 
-    // This check is a bit too late. resample_alg should already have been
-    // validated, so we are a bit in undefined behavior land, but compilers
-    // should hopefully do the right thing
-    if( static_cast<int>(resample_alg) < 0 ||
-        ( static_cast<int>(resample_alg) >= static_cast<int>(GRIORA_RESERVED_START) &&
-          static_cast<int>(resample_alg) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
-        static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
-        return CE_Failure;
-    }
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype;

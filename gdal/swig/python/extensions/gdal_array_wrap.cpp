@@ -5335,8 +5335,6 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
   int ecode6 = 0 ;
   int val8 ;
   int ecode8 = 0 ;
-  int val9 ;
-  int ecode9 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -5408,11 +5406,22 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "BandRasterIONumPy" "', argument " "8"" of type '" "int""'");
   } 
   arg8 = static_cast< int >(val8);
-  ecode9 = SWIG_AsVal_int(obj8, &val9);
-  if (!SWIG_IsOK(ecode9)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "BandRasterIONumPy" "', argument " "9"" of type '" "GDALRIOResampleAlg""'");
-  } 
-  arg9 = static_cast< GDALRIOResampleAlg >(val9);
+  {
+    // %typemap(in) GDALRIOResampleAlg
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj8, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALRIOResampleAlg");
+    }
+    if( val < 0 ||
+      ( val >= static_cast<int>(GRIORA_RESERVED_START) &&
+        val <= static_cast<int>(GRIORA_RESERVED_END) ) ||
+      val > static_cast<int>(GRIORA_LAST) )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+    arg9 = static_cast< GDALRIOResampleAlg >(val);
+  }
   if (obj9) {
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
@@ -5455,19 +5464,6 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
       psProgressInfo->psPyCallbackData = obj10 ;
-    }
-  }
-  {
-    // %typemap(check) GDALRIOResampleAlg
-    // This check is a bit too late, since arg9 has already been cast
-    // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
-    // but compilers should hopefully do the right thing
-    if( static_cast<int>(arg9) < 0 ||
-      ( static_cast<int>(arg9) >= static_cast<int>(GRIORA_RESERVED_START) &&
-        static_cast<int>(arg9) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
-      static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
-    {
-      SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
     }
   }
   {
@@ -5524,8 +5520,6 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   int ecode6 = 0 ;
   int val8 ;
   int ecode8 = 0 ;
-  int val9 ;
-  int ecode9 = 0 ;
   bool val12 ;
   int ecode12 = 0 ;
   PyObject * obj0 = 0 ;
@@ -5601,11 +5595,22 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "DatasetIONumPy" "', argument " "8"" of type '" "int""'");
   } 
   arg8 = static_cast< int >(val8);
-  ecode9 = SWIG_AsVal_int(obj8, &val9);
-  if (!SWIG_IsOK(ecode9)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "DatasetIONumPy" "', argument " "9"" of type '" "GDALRIOResampleAlg""'");
-  } 
-  arg9 = static_cast< GDALRIOResampleAlg >(val9);
+  {
+    // %typemap(in) GDALRIOResampleAlg
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj8, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALRIOResampleAlg");
+    }
+    if( val < 0 ||
+      ( val >= static_cast<int>(GRIORA_RESERVED_START) &&
+        val <= static_cast<int>(GRIORA_RESERVED_END) ) ||
+      val > static_cast<int>(GRIORA_LAST) )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+    arg9 = static_cast< GDALRIOResampleAlg >(val);
+  }
   if (obj9) {
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
@@ -5664,19 +5669,6 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
       if( arg13 < 0 ) {
         SWIG_fail;
       }
-    }
-  }
-  {
-    // %typemap(check) GDALRIOResampleAlg
-    // This check is a bit too late, since arg9 has already been cast
-    // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
-    // but compilers should hopefully do the right thing
-    if( static_cast<int>(arg9) < 0 ||
-      ( static_cast<int>(arg9) >= static_cast<int>(GRIORA_RESERVED_START) &&
-        static_cast<int>(arg9) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
-      static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
-    {
-      SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
     }
   }
   {
