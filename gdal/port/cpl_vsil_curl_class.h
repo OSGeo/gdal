@@ -39,7 +39,7 @@
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_mem_cache.h"
 
-#include <curl/curl.h>
+#include "cpl_curl_priv.h"
 
 #include <set>
 #include <map>
@@ -48,10 +48,8 @@
 
 //! @cond Doxygen_Suppress
 
-// 7.18.1
-#if LIBCURL_VERSION_NUM >= 0x071201
+// Leave it for backward compatibility, but deprecate.
 #define HAVE_CURLINFO_REDIRECT_URL
-#endif
 
 void VSICurlStreamingClearCache( void ); // from cpl_vsil_curl_streaming.cpp
 
@@ -121,12 +119,12 @@ struct WriteFuncStruct
     void               *pReadCbkUserData = nullptr;
     bool                bInterrupted = false;
 
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
     // Workaround to ignore extra HTTP response headers from
     // proxies in older versions of curl.
     // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
     bool            bIsProxyConnectHeader = false;
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
 };
 
 struct PutData
