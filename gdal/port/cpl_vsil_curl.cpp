@@ -574,9 +574,9 @@ void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
     psStruct->pReadCbkUserData = pReadCbkUserData;
     psStruct->bInterrupted = false;
 
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
     psStruct->bIsProxyConnectHeader = false;
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
 }
 
 /************************************************************************/
@@ -606,7 +606,7 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                 {
                     psStruct->nHTTPCode = atoi(pszSpace + 1);
 
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
                     // Workaround to ignore extra HTTP response headers from
                     // proxies in older versions of curl.
                     // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
@@ -624,7 +624,7 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                             psStruct->bIsProxyConnectHeader = true;
                         }
                     }
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
                 }
             }
             else if( STARTS_WITH_CI(pszLine, "Content-Length: ") )
@@ -676,12 +676,12 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                           psStruct->nHTTPCode == 302) )
                         return 0;
                 }
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
                 else if( psStruct->bIsProxyConnectHeader )
                 {
                     psStruct->bIsProxyConnectHeader = false;
                 }
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
                 else
                 {
                     psStruct->bIsInHeader = false;
@@ -3795,12 +3795,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
             // work, then try again with CURLOPT_DIRLISTONLY set.
             if( iTry == 1 )
             {
-// 7.16.4
-#if LIBCURL_VERSION_NUM <= 0x071004
-                curl_easy_setopt(hCurlHandle, CURLOPT_FTPLISTONLY, 1);
-#elif LIBCURL_VERSION_NUM > 0x071004
                 curl_easy_setopt(hCurlHandle, CURLOPT_DIRLISTONLY, 1);
-#endif
             }
 
             VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -4836,18 +4831,12 @@ struct curl_slist* VSICurlSetOptions(
     struct curl_slist* headers = static_cast<struct curl_slist*>(
         CPLHTTPSetOptions(hCurlHandle, pszURL, papszOptions));
 
-// 7.16
-#if LIBCURL_VERSION_NUM >= 0x071000
     long option = CURLFTPMETHOD_SINGLECWD;
     curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
-#endif
 
-// 7.12.3
-#if LIBCURL_VERSION_NUM > 0x070C03
     // ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/
     // doesn't like EPSV command,
     curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
-#endif
 
     return headers;
 }
