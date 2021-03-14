@@ -164,10 +164,16 @@ ARG RSYNC_REMOTE
 
 ARG WITH_DEBUG_SYMBOLS=no
 
-# Build PROJ
-ARG PROJ_VERSION=master
+# Refresh grids
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY ./bh-proj.sh /buildscripts/bh-proj.sh
+RUN /buildscripts/bh-proj.sh
+RUN LD_LIBRARY_PATH=/build/usr/local/lib /build/usr/local/bin/projsync --target-dir /tmp/proj_grids --all
+RUN rm -f /build/usr/local/lib/libinternalproj*
+
+# Build PROJ
+ARG PROJ_VERSION=master
 RUN /buildscripts/bh-proj.sh
 
 ARG GDAL_VERSION=master
@@ -212,14 +218,13 @@ RUN apt-get update \
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
-ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX=/usr/local
+COPY --from=builder  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
+
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
-RUN ldconfig \
-    && projsync --system-directory --all
 
 COPY --from=builder  /build/usr/share/java /usr/share/java
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/

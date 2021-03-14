@@ -1,4 +1,11 @@
 #!/bin/sh
+
+set -e
+
+if test "x${PROJ_VERSION}" = "x"; then
+    PROJ_VERSION=master
+fi
+
 set -eu
 
 mkdir proj
