@@ -2247,7 +2247,7 @@ def test_ogr_vrt_33():
             elif i == 5:
                 assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
                 feat = lyr.GetNextFeature()
-                if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0.5 1.0,1 1,1.0 0.5,0.5 0.5,0.5 1.0))':
+                if feat.GetGeomFieldRef(0).ExportToWkt() not in ('POLYGON ((0.5 1.0,1 1,1.0 0.5,0.5 0.5,0.5 1.0))','POLYGON ((1 1,1.0 0.5,0.5 0.5,0.5 1.0,1 1))'):
                     feat.DumpReadable()
                     pytest.fail()
 
