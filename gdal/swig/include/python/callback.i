@@ -45,7 +45,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage,
 	                       psInfo->psPyCallbackData );
 
-    psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
+    psResult = PyObject_CallObject( psInfo->psPyCallback, psArgs);
     Py_XDECREF(psArgs);
 
     if( PyErr_Occurred() != NULL )

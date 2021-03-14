@@ -92,7 +92,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
 
     psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
-    PyEval_CallObject( (PyObject*)user_data, psArgs);
+    PyObject_CallObject( (PyObject*)user_data, psArgs);
     Py_XDECREF(psArgs);
 
     SWIG_PYTHON_THREAD_END_BLOCK;
