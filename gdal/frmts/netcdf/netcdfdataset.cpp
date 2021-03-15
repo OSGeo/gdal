@@ -513,7 +513,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             {
                 bSignedData = false;
                 // Fix nodata value as it was stored signed.
-                if( !bSignedData && dfNoData < 0 )
+                if( dfNoData < 0 )
                 {
                     dfNoData += 256;
                 }
