@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <limits>
+#include <new>
 
 CPL_CVSID("$Id$")
 
@@ -1829,30 +1830,47 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( const char ** ppszInput,
 std::string OGRSimpleCurve::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
     // LINEARRING or LINESTRING or CIRCULARSTRING
-    std::string wkt = getGeometryName() + wktTypeString(opts.variant);
+    std::string wkt = getGeometryName();
+    wkt += wktTypeString(opts.variant);
     if( IsEmpty() )
     {
         wkt += "EMPTY";
     }
     else
     {
-        wkt += "(";
+        wkt += '(';
 
         OGRBoolean hasZ = Is3D();
         OGRBoolean hasM =
             (opts.variant != wkbVariantIso ? FALSE : IsMeasured());
 
-        for( int i = 0; i < nPointCount; i++ )
+        try
         {
-            if (i > 0)
-                wkt += ",";
+            const int nOrdinatesPerVertex =
+                2 + ((hasZ) ? 1 : 0) + ((hasM) ? 1 : 0);
+            // At least 2 bytes per ordinate: one for the value,
+            // and one for the separator...
+            wkt.reserve(wkt.size() + 2 * nPointCount * nOrdinatesPerVertex);
 
-            wkt += OGRMakeWktCoordinateM(paoPoints[i].x, paoPoints[i].y,
-                                         padfZ ? padfZ[i] : 0.0,
-                                         padfM ? padfM[i] : 0.0,
-                                         hasZ, hasM, opts );
+            for( int i = 0; i < nPointCount; i++ )
+            {
+                if (i > 0)
+                    wkt += ',';
+
+                wkt += OGRMakeWktCoordinateM(paoPoints[i].x, paoPoints[i].y,
+                                             padfZ ? padfZ[i] : 0.0,
+                                             padfM ? padfM[i] : 0.0,
+                                             hasZ, hasM, opts );
+            }
+            wkt += ')';
         }
-        wkt += ")";
+        catch( const std::bad_alloc& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            if (err)
+                *err = OGRERR_FAILURE;
+            return std::string();
+        }
     }
     if (err)
         *err = OGRERR_NONE;
