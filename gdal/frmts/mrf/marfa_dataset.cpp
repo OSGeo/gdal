@@ -107,7 +107,7 @@ bool MRFDataset::SetPBuffer(unsigned int sz) {
         return false;
     }
     pbuffer = pbufferNew;
-    pbsize = (pbuffer == nullptr) ? 0 : sz;
+    pbsize = sz;
     return true;
 }
 
