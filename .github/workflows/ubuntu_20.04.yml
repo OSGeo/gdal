@@ -61,7 +61,7 @@ jobs:
         run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make && make test"
 
       - name: Build Python sdist package
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python && python setup.py sdist"
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python && python3 setup.py sdist"
 
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
