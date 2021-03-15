@@ -428,7 +428,6 @@ OGRSQLiteDataSource::OGRSQLiteDataSource() :
     nKnownSRID(0),
     panSRID(nullptr),
     papoSRS(nullptr),
-    papszOpenOptions(nullptr),
     bHaveGeometryColumns(FALSE),
     bIsSpatiaLiteDB(FALSE),
     bSpatialite4Layout(FALSE),
@@ -511,7 +510,6 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
-    CSLDestroy( papszOpenOptions );
 }
 
 /************************************************************************/
@@ -631,7 +629,7 @@ bool OGRSQLiteBaseDataSource::SetCacheSize()
     const char* pszSqliteCacheMB = CPLGetConfigOption("OGR_SQLITE_CACHE", nullptr);
     if (pszSqliteCacheMB != nullptr)
     {
-        const GIntBig iSqliteCacheBytes = 
+        const GIntBig iSqliteCacheBytes =
             static_cast<GIntBig>(atoi( pszSqliteCacheMB )) * 1024 * 1024;
 
         /* querying the current PageSize */
