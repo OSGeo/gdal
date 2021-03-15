@@ -457,6 +457,20 @@ def test_ogr_geos_isvalid_false():
 
     assert isring == 0
 
+
+###############################################################################
+
+
+def test_ogr_geos_isvalid_false_too_few_points():
+    g1 = ogr.CreateGeometryFromWkt('POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 3 2, 2 2))')
+
+    with ogrtest.enable_exceptions():  # fail test if exception is thrown
+        with gdaltest.error_handler():
+            isvalid = g1.IsValid()
+
+    assert isvalid == 0
+
+
 ###############################################################################
 
 
