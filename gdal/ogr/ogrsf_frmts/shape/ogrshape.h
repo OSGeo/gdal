@@ -277,7 +277,6 @@ class OGRShapeDataSource final: public OGRDataSource
     std::vector<CPLString> oVectorLayerName{};
 
     bool                b2GBLimit;
-    char              **papszOpenOptions;
     bool                m_bIsZip = false;
     bool                m_bSingleLayerZip = false;
     CPLString           m_osTemporaryUnzipDir{};

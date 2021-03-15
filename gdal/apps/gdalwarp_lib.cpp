@@ -1841,8 +1841,7 @@ static void SetupNoData(const char* pszDest,
                 psWO->padfDstNoDataReal[i] =
                     psWO->padfSrcNoDataReal[i];
 
-                if( i == 0 && psOptions->bCreateOutput &&
-                    !bInitDestSetByUser && iSrc == 0 )
+                if( i == 0 && !bInitDestSetByUser )
                 {
                     /* As we didn't know at the beginning if there was source nodata */
                     /* we have initialized INIT_DEST=0. Override this with NO_DATA now */

@@ -770,8 +770,6 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
 
-    char              **papszOpenOptions;
-
     void                AddSRIDToCache(int nId, OGRSpatialReference * poSRS );
 
     int                 bHaveGeometryColumns;

@@ -665,7 +665,7 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             for (int i=0; i<nPixels;++i)
             {
                 int y = (i*3);
-                src_image[i] = (255<<24) | (pabyScanlines[y+2]<<16) | (pabyScanlines[y+1]<<8) |
+                src_image[i] = (255U <<24) | (pabyScanlines[y+2]<<16) | (pabyScanlines[y+1]<<8) |
                   pabyScanlines[y];
             }
 

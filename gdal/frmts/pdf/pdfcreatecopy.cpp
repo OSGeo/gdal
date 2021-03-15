@@ -4224,7 +4224,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(GDALDataset* poSrcDS,
                 break;
             }
 
-            if( eErr == CE_None && pfnProgress != nullptr
+            if( pfnProgress != nullptr
                 && !pfnProgress( (iLine+1) / (double)nReqYSize,
                                 nullptr, pProgressData ) )
             {
