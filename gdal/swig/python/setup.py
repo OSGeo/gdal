@@ -345,7 +345,7 @@ else:
     packages = ['osgeo', 'osgeo.utils', 'osgeo.utils.auxiliary']
 package_dir = {'': '.'}  # package sources are under the same dir as setup.py
 
-readme = open('README.rst', 'rb').read().decode('utf-8')
+readme = open('README.rst', encoding="utf-8").read()
 
 name = 'GDAL'
 version = gdal_version
