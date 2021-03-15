@@ -790,3 +790,23 @@ def test_numpy_rw_dataset_writearray():
     # Too big 3D array in band dimension
     with pytest.raises(Exception):
         ds.WriteArray(numpy.array([[[0,1,2],[3,4,5]],[[10,11,12],[13,14,15]],[[10,11,12],[13,14,15]]]))
+
+
+###############################################################################
+# Test Band.ReadAsArray() error cases
+
+
+def test_numpy_rw_band_read_as_array_error_cases():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    band = ds.GetRasterBand(1)
+    assert band.ReadAsArray(buf_obj = numpy.empty((3,2), dtype=numpy.uint8)) is not None
+    assert band.ReadAsArray(buf_obj = numpy.empty((1, 3,2), dtype=numpy.uint8)) is not None
+
+    # 1D
+    with pytest.raises(Exception, match='expected array of dimension 2 or 3'):
+        band.ReadAsArray(buf_obj = numpy.empty((3,), dtype=numpy.uint8))
+
+    # 3D of wrong size in first dimension
+    with pytest.raises(Exception, match='expected size of first dimension should be 0'):
+        band.ReadAsArray(buf_obj = numpy.empty((2, 3,2), dtype=numpy.uint8))

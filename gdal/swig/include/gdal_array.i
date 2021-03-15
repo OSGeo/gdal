@@ -1625,10 +1625,15 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
         buf_obj = numpy.empty([buf_ysize, buf_xsize], dtype=typecode)
 
     else:
+        if len(buf_obj.shape) not in (2, 3):
+            raise ValueError("expected array of dimension 2 or 3")
+
         if len(buf_obj.shape) == 2:
             shape_buf_xsize = buf_obj.shape[1]
             shape_buf_ysize = buf_obj.shape[0]
         else:
+            if buf_obj.shape[0] != 1:
+                raise ValueError("expected size of first dimension should be 0")
             shape_buf_xsize = buf_obj.shape[2]
             shape_buf_ysize = buf_obj.shape[1]
         if buf_xsize is not None and buf_xsize != shape_buf_xsize:
