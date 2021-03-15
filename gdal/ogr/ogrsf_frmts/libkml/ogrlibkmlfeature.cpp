@@ -352,7 +352,7 @@ FeaturePtr feat2kml(
                         poOgrFeat->GetFieldAsInteger(iImagePyramidMaxHeight);
                 }
 
-                if( nTileSize <= 0 || nMaxWidth <= 0 || nMaxHeight <= 0)
+                if( nMaxWidth <= 0 || nMaxHeight <= 0)
                 {
                     CPLError(
                         CE_Failure, CPLE_AppDefined,
