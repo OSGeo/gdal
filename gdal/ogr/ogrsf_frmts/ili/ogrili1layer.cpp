@@ -600,7 +600,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                         if( eCurveType == wkbLineString ||
                             eCurveType == wkbCircularString )
                         {
-                            OGRSimpleCurve* poSC = curve->clone()->toSimpleCurve();
+                            OGRSimpleCurve* poSC = curve->toSimpleCurve()->clone();
                             poSC->reversePoints();
                             poCC->addCurveDirectly( poSC );
                         }
@@ -612,7 +612,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                             for( int i=poCCSub->getNumCurves()-1; i >= 0; --i )
                             {
                                 OGRSimpleCurve* poSC = poCCSub->getCurve(i)->
-                                    clone()->toSimpleCurve();
+                                    toSimpleCurve()->clone();
                                 poSC->reversePoints();
                                 poCC->addCurveDirectly(poSC);
                             }

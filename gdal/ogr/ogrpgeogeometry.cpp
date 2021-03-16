@@ -1062,7 +1062,7 @@ id,WKT
             std::unique_ptr<OGRLinearRing> poRing;
             if( i == 0 )
             {
-                poRing.reset(poPoly->getExteriorRing()->clone()->toLinearRing());
+                poRing.reset(poPoly->getExteriorRing()->clone());
                 assert( poRing );
                 // Outer ring must be clockwise.
                 if( !poRing->isClockwise() )
@@ -1070,7 +1070,7 @@ id,WKT
             }
             else
             {
-                poRing.reset(poPoly->getInteriorRing(i-1)->clone()->toLinearRing());
+                poRing.reset(poPoly->getInteriorRing(i-1)->clone());
                 assert( poRing );
                 // Inner rings should be anti-clockwise.
                 if( poRing->isClockwise() )
@@ -1307,7 +1307,7 @@ id,WKT
                 std::unique_ptr<OGRLinearRing> poRing;
                 if( j == 0 )
                 {
-                    poRing.reset(poPoly->getExteriorRing()->clone()->toLinearRing());
+                    poRing.reset(poPoly->getExteriorRing()->clone());
                     assert( poRing != nullptr );
                     // Outer ring must be clockwise.
                     if( !poRing->isClockwise() )
@@ -1315,7 +1315,7 @@ id,WKT
                 }
                 else
                 {
-                    poRing.reset(poPoly->getInteriorRing(j-1)->clone()->toLinearRing());
+                    poRing.reset(poPoly->getInteriorRing(j-1)->clone());
                     assert( poRing != nullptr );
                     // Inner rings should be anti-clockwise.
                     if( poRing->isClockwise() )

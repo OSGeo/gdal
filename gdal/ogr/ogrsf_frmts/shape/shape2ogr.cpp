@@ -786,6 +786,10 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
             else
                 poGC = poGeom->toGeometryCollection();
 
+            // Shouldn't happen really, but to please x86_64-w64-mingw32-g++ -O2 -Wnull-dereference
+            if( poGC == nullptr )
+                return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
             for( const auto poSubGeom: poGC )
             {
                 if( wkbFlatten(poSubGeom->getGeometryType()) != wkbPolygon )

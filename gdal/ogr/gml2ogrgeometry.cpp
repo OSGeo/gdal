@@ -721,7 +721,7 @@ static OGRPolygon *GML2FaceExtRing( const OGRGeometry *poGeom )
         {
             // There is a single Polygon within the collection.
             const OGRPolygon *poPg = poColl->getGeometryRef(0)->toPolygon();
-            poPolygon = poPg->clone()->toPolygon();
+            poPolygon = poPg->clone();
         }
         else
         {
@@ -734,7 +734,7 @@ static OGRPolygon *GML2FaceExtRing( const OGRGeometry *poGeom )
                         poColl->getGeometryRef(ig)->toPolygon();
                     if( poPg->getNumInteriorRings() > 0 )
                     {
-                        poPolygon = poPg->clone()->toPolygon();
+                        poPolygon = poPg->clone();
                     }
                 }
             }

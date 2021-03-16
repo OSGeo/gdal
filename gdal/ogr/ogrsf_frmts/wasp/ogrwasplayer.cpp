@@ -270,13 +270,13 @@ OGRWAsPLayer::~OGRWAsPLayer()
 OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
 {
     if ( !line.getNumPoints() )
-        return  line.clone()->toLineString();
+        return  line.clone();
 
     std::unique_ptr< OGRLineString > poLine(
         (
             pdfTolerance.get() && *pdfTolerance > 0
-            ? line.Simplify( *pdfTolerance )
-            : line.clone() )->toLineString() );
+            ? line.Simplify( *pdfTolerance )->toLineString()
+            : line.clone() ) );
 
     OGRPoint startPt, endPt;
     poLine->StartPoint( &startPt );
@@ -449,7 +449,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 case wkbLineString:
                 case wkbLineString25D:
                 {
-                    Boundary oB = { poIntersection->clone()->toLineString(), dfZ, oZones[i].dfZ };
+                    Boundary oB = { poIntersection->toLineString()->clone(), dfZ, oZones[i].dfZ };
                     oBoundaries.push_back( oB );
                 }
                 break;
@@ -466,7 +466,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
 
                         if( poLine == nullptr )
                         {
-                            poLine = poSubLine->clone()->toLineString();
+                            poLine = poSubLine->clone();
                         }
                         else if ( poLine->getNumPoints() == 0 || poStart->Equals( poEnd ) )
                         {
@@ -476,7 +476,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                         {
                             Boundary oB = {poLine, dfZ, oZones[i].dfZ};
                             oBoundaries.push_back( oB );
-                            poLine = poSubLine->clone()->toLineString();
+                            poLine = poSubLine->clone();
                         }
                         poLine->EndPoint( poEnd );
                     }
@@ -536,7 +536,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
         }
     }
 
-    Zone oZ =  { oEnvelope, poGeom->clone()->toPolygon(), dfZ };
+    Zone oZ =  { oEnvelope, poGeom->toPolygon()->clone(), dfZ };
     oZones.push_back( oZ );
     return err;
 }

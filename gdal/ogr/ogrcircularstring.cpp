@@ -129,6 +129,16 @@ const char * OGRCircularString::getGeometryName() const
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRCircularString *OGRCircularString::clone() const
+
+{
+    return new (std::nothrow) OGRCircularString(*this);
+}
+
+/************************************************************************/
 /*                           importFromWkb()                            */
 /*                                                                      */
 /*      Initialize from serialized stream in well known binary          */

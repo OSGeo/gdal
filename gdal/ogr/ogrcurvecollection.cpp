@@ -76,7 +76,7 @@ OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other )
         {
             for( int i = 0; i < nCurveCount; i++ )
             {
-                papoCurves[i] = other.papoCurves[i]->clone()->toCurve();
+                papoCurves[i] = other.papoCurves[i]->clone();
             }
         }
     }
@@ -122,7 +122,7 @@ OGRCurveCollection::operator=( const OGRCurveCollection& other )
             {
                 for( int i = 0; i < nCurveCount; i++ )
                 {
-                    papoCurves[i] = other.papoCurves[i]->clone()->toCurve();
+                    papoCurves[i] = other.papoCurves[i]->clone();
                 }
             }
         }

@@ -96,6 +96,16 @@ OGRCompoundCurve& OGRCompoundCurve::operator=( const OGRCompoundCurve& other )
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRCompoundCurve *OGRCompoundCurve::clone() const
+
+{
+    return new (std::nothrow) OGRCompoundCurve(*this);
+}
+
+/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 
@@ -212,24 +222,6 @@ std::string OGRCompoundCurve::exportToWkt(const OGRWktOptions& opts,
                                           OGRErr *err) const
 {
     return oCC.exportToWkt(this, opts, err);
-}
-
-/************************************************************************/
-/*                               clone()                                */
-/************************************************************************/
-
-OGRGeometry *OGRCompoundCurve::clone() const
-{
-    OGRCompoundCurve *poNewCC = new OGRCompoundCurve;
-    poNewCC->assignSpatialReference( getSpatialReference() );
-    poNewCC->flags = flags;
-
-    for( int i = 0; i < oCC.nCurveCount; i++ )
-    {
-        poNewCC->addCurve( oCC.papoCurves[i] );
-    }
-
-    return poNewCC;
 }
 
 /************************************************************************/
@@ -522,7 +514,7 @@ OGRCurve* OGRCompoundCurve::stealCurve( int iCurve )
 
 OGRErr OGRCompoundCurve::addCurve( OGRCurve* poCurve, double dfToleranceEps )
 {
-    OGRCurve* poClonedCurve = poCurve->clone()->toCurve();
+    OGRCurve* poClonedCurve = poCurve->clone();
     const OGRErr eErr = addCurveDirectly( poClonedCurve, dfToleranceEps );
     if( eErr != OGRERR_NONE )
         delete poClonedCurve;

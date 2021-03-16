@@ -91,6 +91,16 @@ OGRPolyhedralSurface& OGRPolyhedralSurface::operator=(
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRPolyhedralSurface *OGRPolyhedralSurface::clone() const
+
+{
+    return new (std::nothrow) OGRPolyhedralSurface(*this);
+}
+
+/************************************************************************/
 /*                          getGeometryName()                           */
 /************************************************************************/
 
@@ -159,32 +169,6 @@ void OGRPolyhedralSurface::empty()
     }
     oMP.nGeomCount = 0;
     oMP.papoGeoms = nullptr;
-}
-
-/************************************************************************/
-/*                               clone()                                */
-/************************************************************************/
-
-OGRGeometry* OGRPolyhedralSurface::clone() const
-{
-    OGRPolyhedralSurface *poNewPS =
-        OGRGeometryFactory::createGeometry(getGeometryType())->
-            toPolyhedralSurface();
-
-    poNewPS->assignSpatialReference(getSpatialReference());
-    poNewPS->flags = flags;
-
-    for( auto&& poSubGeom: *this )
-    {
-        if( poNewPS->oMP._addGeometryWithExpectedSubGeometryType(
-                      poSubGeom, getSubGeometryType()) != OGRERR_NONE )
-        {
-            delete poNewPS;
-            return nullptr;
-        }
-    }
-
-    return poNewPS;
 }
 
 /************************************************************************/

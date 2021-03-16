@@ -908,7 +908,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
 
     // IGeometry
     virtual int getDimension() const override;
-    virtual OGRGeometry *clone() const override;
+    virtual OGRPoint *clone() const override;
     virtual void empty() override;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const override;
     virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const override;
@@ -1047,6 +1047,9 @@ class CPL_DLL OGRCurve : public OGRGeometry
     /** Return end of a point iterator. */
     ConstIterator end() const;
 
+    // IGeometry
+    virtual OGRCurve *clone() const override = 0;
+
     // ICurve methods
     virtual double get_Length() const = 0;
     virtual void StartPoint( OGRPoint * ) const = 0;
@@ -1119,7 +1122,6 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                                        OGRRawPoint*& paoPointsIn,
                                        int& nMaxPoints,
                                        double*& padfZIn );
-
 //! @endcond
 
     virtual double get_LinearArea() const;
@@ -1220,11 +1222,11 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry interface.
-    virtual OGRGeometry *clone() const override;
     virtual void empty() override;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const override;
     virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const override;
     virtual OGRBoolean  IsEmpty() const override;
+    virtual OGRSimpleCurve *clone() const override = 0;
 
     // ICurve methods.
     virtual double get_Length() const override;
@@ -1343,6 +1345,7 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
 
     OGRLineString& operator=(const OGRLineString& other);
 
+    virtual OGRLineString *clone() const override;
     virtual OGRLineString* CurveToLine( double dfMaxAngleStepSizeDegrees = 0,
                                         const char* const* papszOptions = nullptr )
         const override;
@@ -1422,7 +1425,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
 
     // Non standard.
     virtual const char *getGeometryName() const override;
-    virtual OGRGeometry *clone() const override;
+    virtual OGRLinearRing *clone() const override;
     virtual int isClockwise() const;
     virtual void reverseWindingOrder();
     virtual void closeRings() override;
@@ -1524,6 +1527,7 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     virtual OGRBoolean  IsValid() const override;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const override;
     virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const override;
+    virtual OGRCircularString *clone() const override;
 
     // ICurve methods.
     virtual double get_Length() const override;
@@ -1748,7 +1752,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
                                     OGRErr *err = nullptr) const override;
 
     // IGeometry interface.
-    virtual OGRGeometry *clone() const override;
+    virtual OGRCompoundCurve *clone() const override;
     virtual void empty() override;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const override;
     virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const override;
@@ -1837,6 +1841,8 @@ class CPL_DLL OGRSurface : public OGRGeometry
     virtual double      get_Area() const = 0;
     virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const
                                 { return PointOnSurfaceInternal(poPoint); }
+    virtual OGRSurface *clone() const override = 0;
+
 //! @cond Doxygen_Suppress
     static OGRPolygon*      CastToPolygon(OGRSurface* poSurface);
     static OGRCurvePolygon* CastToCurvePolygon(OGRSurface* poSurface);
@@ -1885,6 +1891,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
         const override;
     virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon()
         const override;
+
 //! @endcond
 
     static OGRPolygon* CastToPolygon( OGRCurvePolygon* poCP );
@@ -1915,7 +1922,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
-    virtual OGRGeometry *clone() const override;
+    virtual OGRCurvePolygon *clone() const override;
     virtual void empty() override;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) override;
     virtual void flattenTo2D() override;
@@ -2073,6 +2080,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
+    virtual OGRPolygon *clone() const override;
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
     virtual OGRGeometry* getCurveGeometry(
@@ -2182,6 +2190,7 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     ~OGRTriangle() override;
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
+    virtual OGRTriangle *clone() const override;
 
     // IWks Interface.
     virtual OGRErr importFromWkb( const unsigned char *,
@@ -2263,7 +2272,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
-    virtual OGRGeometry *clone() const override;
+    virtual OGRGeometryCollection *clone() const override;
     virtual void empty() override;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) override;
     virtual void flattenTo2D() override;
@@ -2395,6 +2404,7 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
+    virtual OGRMultiSurface *clone() const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -2499,6 +2509,7 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
+    virtual OGRMultiPolygon *clone() const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::exportToWkt;
@@ -2624,7 +2635,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
 
     virtual void empty() override;
 
-    virtual OGRGeometry *clone() const override;
+    virtual OGRPolyhedralSurface *clone() const override;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const override;
     virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const override;
 
@@ -2717,6 +2728,7 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     OGRTriangulatedSurface& operator=( const OGRTriangulatedSurface& other );
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
+    virtual OGRTriangulatedSurface *clone() const override;
 
     // IWks Interface.
     virtual OGRErr addGeometry( const OGRGeometry * ) override;
@@ -2788,6 +2800,7 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
+    virtual OGRMultiPoint *clone() const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -2880,6 +2893,7 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
+    virtual OGRMultiCurve *clone() const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -2968,6 +2982,7 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
+    virtual OGRMultiLineString *clone() const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::exportToWkt;

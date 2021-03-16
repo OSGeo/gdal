@@ -99,6 +99,16 @@ OGRPolygon& OGRPolygon::operator=( const OGRPolygon& other )
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRPolygon *OGRPolygon::clone() const
+
+{
+    return new (std::nothrow) OGRPolygon(*this);
+}
+
+/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 
@@ -738,7 +748,7 @@ OGRPolygon* OGRPolygon::CurvePolyToPoly(
     CPL_UNUSED double dfMaxAngleStepSizeDegrees,
     CPL_UNUSED const char* const* papszOptions ) const
 {
-    return clone()->toPolygon();
+    return clone();
 }
 
 /************************************************************************/

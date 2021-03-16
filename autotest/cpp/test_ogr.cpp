@@ -650,7 +650,7 @@ namespace tut
 
         ensure_equals( GetVarSIntSize(0), 1 );
         ensure_equals( GetVarSIntSize(63), 1 );
-        ensure_equals( GetVarSIntSize(64), 2 ); 
+        ensure_equals( GetVarSIntSize(64), 2 );
         ensure_equals( GetVarSIntSize(-1), 1 );
         ensure_equals( GetVarSIntSize(-64), 1 );
         ensure_equals( GetVarSIntSize(-65), 2 );
@@ -1553,6 +1553,61 @@ namespace tut
         ensure(pszWKT != nullptr);
         ensure_equals(std::string(pszWKT), "POINT (1 2)");
         CPLFree(pszWKT);
+    }
+
+    // Test OGRGeometry::clone()
+    template<>
+    template<>
+    void object::test<18>()
+    {
+        const char* apszWKT[] =
+        {
+            "POINT (0 0)",
+            "POINT ZM EMPTY",
+            "LINESTRING (0 0)",
+            "LINESTRING ZM EMPTY",
+            "POLYGON ((0 0),(0 0))",
+            "MULTIPOLYGON ZM EMPTY",
+            "MULTIPOINT ((0 0))",
+            "MULTIPOINT ZM EMPTY",
+            "MULTILINESTRING ((0 0))",
+            "MULTILINESTRING ZM EMPTY",
+            "MULTIPOLYGON (((0 0)))",
+            "MULTIPOLYGON ZM EMPTY",
+            "GEOMETRYCOLLECTION (POINT (0 0))",
+            "GEOMETRYCOLLECTION ZM EMPTY",
+            "CIRCULARSTRING (0 0,1 1,0 0)",
+            "CIRCULARSTRING Z EMPTY",
+            "CIRCULARSTRING ZM EMPTY",
+            "COMPOUNDCURVE ((0 0,1 1))",
+            "COMPOUNDCURVE ZM EMPTY",
+            "CURVEPOLYGON ((0 0,1 1,1 0,0 0))",
+            "CURVEPOLYGON ZM EMPTY",
+            "MULTICURVE ((0 0))",
+            "MULTICURVE ZM EMPTY",
+            "MULTISURFACE (((0 0)))",
+            "MULTISURFACE ZM EMPTY",
+            "TRIANGLE ((0 0,0 1,1 1,0 0))",
+            "TRIANGLE ZM EMPTY",
+            "POLYHEDRALSURFACE (((0 0,0 1,1 1,0 0)))",
+            "POLYHEDRALSURFACE ZM EMPTY",
+            "TIN (((0 0,0 1,1 1,0 0)))",
+            "TIN ZM EMPTY",
+        };
+        OGRSpatialReference oSRS;
+        for( const char* pszWKT: apszWKT )
+        {
+            OGRGeometry* poGeom = nullptr;
+            OGRGeometryFactory::createFromWkt(pszWKT, &oSRS, &poGeom);
+            auto poClone = poGeom->clone();
+            ensure(poClone != nullptr);
+            char* outWKT = nullptr;
+            poClone->exportToWkt(&outWKT, wkbVariantIso);
+            ensure_equals(std::string(pszWKT), std::string(outWKT));
+            CPLFree(outWKT);
+            delete poClone;
+            delete poGeom;
+        }
     }
 
 } // namespace tut

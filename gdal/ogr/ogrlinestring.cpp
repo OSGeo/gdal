@@ -84,7 +84,8 @@ OGRSimpleCurve::OGRSimpleCurve( const OGRSimpleCurve& other ) :
     padfZ(nullptr),
     padfM(nullptr)
 {
-    setPoints( other.nPointCount, other.paoPoints, other.padfZ, other.padfM );
+    if( other.nPointCount > 0 )
+        setPoints( other.nPointCount, other.paoPoints, other.padfZ, other.padfM );
 }
 
 /************************************************************************/
@@ -120,6 +121,7 @@ OGRSimpleCurve& OGRSimpleCurve::operator=( const OGRSimpleCurve& other )
     OGRCurve::operator=( other );
 
     setPoints(other.nPointCount, other.paoPoints, other.padfZ, other.padfM);
+    flags = other.flags;
 
     return *this;
 }
@@ -133,28 +135,6 @@ void OGRSimpleCurve::flattenTo2D()
 {
     Make2D();
     setMeasured(FALSE);
-}
-
-/************************************************************************/
-/*                               clone()                                */
-/************************************************************************/
-
-OGRGeometry *OGRSimpleCurve::clone() const
-
-{
-    OGRSimpleCurve *poCurve =
-        OGRGeometryFactory::createGeometry(getGeometryType())->toSimpleCurve();
-
-    poCurve->assignSpatialReference( getSpatialReference() );
-    poCurve->setPoints( nPointCount, paoPoints, padfZ, padfM );
-    if( poCurve->getNumPoints() != nPointCount )
-    {
-        delete poCurve;
-        return nullptr;
-    }
-    poCurve->flags = flags;
-
-    return poCurve;
 }
 
 /************************************************************************/
@@ -2728,7 +2708,7 @@ OGRLineString* OGRLineString::CurveToLine(
     CPL_UNUSED double /* dfMaxAngleStepSizeDegrees */,
     CPL_UNUSED const char* const* /* papszOptions */ ) const
 {
-    return clone()->toLineString();
+    return clone();
 }
 
 /************************************************************************/
@@ -2833,6 +2813,15 @@ OGRLinearRing* OGRLineString::CastToLinearRing( OGRLineString* poLS )
     OGRLinearRing* poLR = new OGRLinearRing();
     TransferMembersAndDestroy(poLS, poLR);
     return poLR;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRLineString *OGRLineString::clone() const
+{
+    return new (std::nothrow) OGRLineString(*this);
 }
 
 //! @cond Doxygen_Suppress

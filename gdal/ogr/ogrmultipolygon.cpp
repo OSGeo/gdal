@@ -90,6 +90,16 @@ OGRMultiPolygon& OGRMultiPolygon::operator=( const OGRMultiPolygon& other )
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRMultiPolygon *OGRMultiPolygon::clone() const
+
+{
+    return new (std::nothrow) OGRMultiPolygon(*this);
+}
+
+/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 
