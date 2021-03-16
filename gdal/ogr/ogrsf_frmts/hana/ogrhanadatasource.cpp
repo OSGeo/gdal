@@ -77,13 +77,13 @@ public:
                "  <Option name='LAUNDER' type='boolean' description='Specifies whether layer and field names will be laundered' default='YES'/>"
                "  <Option name='PRECISION' type='boolean' description='Specifies whether fields created should keep the width and precision' default='YES'/>"
                "  <Option name='DEFAULT_STRING_SIZE' type='int' description='Specifies default string column size' default='4000'/>"
-               "  <Option name='GEOMETRY_NAME' type='string' description='Specifies name of geometry column.' default='GEOMETRY'/>"
+               "  <Option name='GEOMETRY_NAME' type='string' description='Specifies name of geometry column.' default='OGR_GEOMETRY'/>"
                "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Specifies whether the values of the geometry column can be NULL' default='YES'/>"
                "  <Option name='SRID' type='int' description='Forced SRID of the layer'/>"
                "  <Option name='FID' type='string' description='Specifies the name of the FID column to create' default='OGR_FID'/>"
                "  <Option name='FID64' type='boolean' description='Specifies whether to create the FID column with BIGINT type to handle 64bit wide ids' default='NO'/>"
                "  <Option name='COLUMN_TYPES' type='string' description='Specifies a comma-separated list of strings in the format field_name=hana_field_type that define column types.'/>"
-               "  <Option name='BATCH_SIZE' type='int' description='Specifies the number of features to be written per one batch' default='1024'/>"
+               "  <Option name='BATCH_SIZE' type='int' description='Specifies the number of bytes to be written per one batch' default='1024'/>"
                "</LayerCreationOptionList>";
     }
     // clang-format on
