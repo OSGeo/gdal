@@ -46,6 +46,7 @@
 #endif
 #include "ogrgeojsonreader.h"
 
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstdlib>
@@ -1200,6 +1201,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
     {
         poGeom = forceToMultiPolygon(poGeom);
+        assert(poGeom);
         eGeomType = wkbMultiPolygon;
     }
 
@@ -1219,6 +1221,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             poGeom = poMPoly;
         }
 
+        assert(poGeom);
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         for( auto&& poPoly: poMPoly )
@@ -6013,11 +6016,14 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
                 poRet = poCC;
         }
         else
-            poRet = poLS->clone()->toCurve();
+            poRet = poLS->clone();
     }
     else if( poCC != nullptr )
     {
-        poCC->addCurveDirectly(poLSNew ? poLSNew->toCurve() : poCS->toCurve());
+        if( poLSNew )
+            poCC->addCurveDirectly(poLSNew);
+        else
+            poCC->addCurveDirectly(poCS);
         poRet = poCC;
     }
     else if( poLSNew != nullptr )
@@ -6025,7 +6031,7 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
     else if( poCS != nullptr )
         poRet = poCS;
     else
-        poRet = poLS->clone()->toCurve();
+        poRet = poLS->clone();
 
     poRet->assignSpatialReference( poLS->getSpatialReference() );
 
