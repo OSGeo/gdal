@@ -1,3 +1,4 @@
+
 /**********************************************************************
  *
  * Name:     cpl_error.cpp
@@ -551,19 +552,22 @@ static int CPLGetProcessMemorySize()
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  include <sys/timeb.h>
 
+namespace {
 struct CPLTimeVal
 {
   time_t  tv_sec;         /* seconds */
   long    tv_usec;        /* and microseconds */
 };
+}
 
-static void CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
+static int CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
 {
   struct _timeb theTime;
 
   _ftime(&theTime);
   tp->tv_sec = static_cast<time_t>(theTime.time);
   tp->tv_usec = theTime.millitm * 1000;
+  return 0;
 }
 #else
 #  include <sys/time.h>     /* for gettimeofday() */
@@ -647,6 +651,9 @@ void CPLDebug( const char * pszCategory,
 #ifdef TIMESTAMP_DEBUG
     if( CPLGetConfigOption( "CPL_TIMESTAMP", nullptr ) != nullptr )
     {
+        static struct CPLTimeVal tvStart;
+        static const auto unused = CPLGettimeofday(&tvStart, nullptr);
+        CPL_IGNORE_RET_VAL(unused);
         struct CPLTimeVal tv;
         CPLGettimeofday(&tv, nullptr);
         strcpy( pszMessage, "[" );
@@ -662,7 +669,10 @@ void CPLDebug( const char * pszCategory,
         }
         CPLsnprintf(pszMessage+strlen(pszMessage),
                     ERROR_MAX - strlen(pszMessage),
-                    "].%06d: ", static_cast<int>(tv.tv_usec));
+                    "].%04d, %03.04f: ",
+                    static_cast<int>(tv.tv_usec / 100),
+                    tv.tv_sec + tv.tv_usec * 1e-6 -
+                        (tvStart.tv_sec + tvStart.tv_usec * 1e-6));
     }
 #endif
 
