@@ -54,15 +54,16 @@ struct FeatureItem : FlatGeobuf::Item {
     uint64_t offset;
 };
 
-// used to associate a feature index with offset
-// as the result of a spatial query to be able
-// to sort them on offset for read optimization
-struct IndexOffset {
-    uint64_t index;
-    uint64_t offset;
+class OGRFlatGeobufBaseLayerInterface CPL_NON_FINAL
+{
+    public:
+        virtual ~OGRFlatGeobufBaseLayerInterface();
+
+        virtual const std::string& GetFilename() const = 0;
+        virtual OGRLayer* GetLayer() = 0;
 };
 
-class OGRFlatGeobufLayer final : public OGRLayer
+class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerInterface
 {
     private:
         std::string m_osFilename;
@@ -150,7 +151,8 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         void VerifyBuffers( int bFlag ) { m_bVerifyBuffers = CPL_TO_BOOL(bFlag); }
 
-        const std::string& GetFilename() const { return m_osFilename; }
+        const std::string& GetFilename() const override { return m_osFilename; }
+        OGRLayer* GetLayer() override { return this; }
 
         static std::string GetTempFilePath(const CPLString &fileName, CSLConstList papszOptions);
         static VSILFILE *CreateOutputFile(const CPLString &pszFilename, CSLConstList papszOptions, bool isTemp);
@@ -159,22 +161,23 @@ class OGRFlatGeobufLayer final : public OGRLayer
         OGRwkbGeometryType getOGRwkbGeometryType();
 };
 
-class OGRFlatGeobufEditableLayer final: public OGREditableLayer
+class OGRFlatGeobufEditableLayer final: public OGREditableLayer, public OGRFlatGeobufBaseLayerInterface
 {
     public:
         OGRFlatGeobufEditableLayer(OGRFlatGeobufLayer *poFlatGeobufLayer, char **papszOpenOptions);
 
         virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
 
-        const std::string&  GetFilename() const {
+        const std::string&  GetFilename() const override {
             return static_cast<OGRFlatGeobufLayer *>(m_poDecoratedLayer)->GetFilename();
         }
+        OGRLayer* GetLayer() override { return this; }
 };
 
 class OGRFlatGeobufDataset final: public GDALDataset
 {
     private:
-        std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
+        std::vector<std::unique_ptr<OGRFlatGeobufBaseLayerInterface>> m_apoLayers;
         bool m_bCreate = false;
         bool m_bUpdate = false;
         bool m_bIsDir = false;
@@ -182,7 +185,7 @@ class OGRFlatGeobufDataset final: public GDALDataset
         bool OpenFile(const char* pszFilename, VSILFILE* fp, bool bVerifyBuffers);
 
     public:
-        explicit OGRFlatGeobufDataset(const char *pszName, bool bIsDir, bool bCreate, bool bUpdate);
+        OGRFlatGeobufDataset(const char *pszName, bool bIsDir, bool bCreate, bool bUpdate);
         ~OGRFlatGeobufDataset();
 
         static GDALDataset *Open(GDALOpenInfo*);
