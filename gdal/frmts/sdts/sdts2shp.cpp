@@ -821,7 +821,6 @@ WriteAttrRecordToDBF( DBFHandle hDBF, int iRecord,
                     DBFWriteIntegerAttribute(hDBF, iRecord, iField, nValue);
             }
             break;
-
         default:
             break;
         }
