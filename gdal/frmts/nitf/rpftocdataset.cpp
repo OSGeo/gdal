@@ -729,12 +729,20 @@ char **RPFTOCDataset::GetMetadata( const char *pszDomain )
 /*                  NITFCreateVRTDataSetFromTocEntry()                  */
 /************************************************************************/
 
-#define ASSERT_CREATE_VRT(x) do { if (!(x)) { \
-    CPLError(CE_Failure, CPLE_AppDefined, \
-             "For %s, assert '" #x "' failed", \
-             entry->frameEntries[i].fullFilePath); \
-    if (poSrcDS) GDALClose(poSrcDS); CPLFree(projectionRef); \
-    return nullptr;} } while( false )
+#define ASSERT_CREATE_VRT(x) \
+    do \
+    { \
+        if (!(x)) \
+        { \
+            CPLError(CE_Failure, CPLE_AppDefined, \
+                     "For %s, assert '" #x "' failed", \
+                     entry->frameEntries[i].fullFilePath); \
+            if (poSrcDS) \
+                GDALClose(poSrcDS); \
+            CPLFree(projectionRef); \
+            return nullptr; \
+        } \
+    } while( false )
 
 /* Builds a RPFTOCSubDataset from the set of files of the toc entry */
 GDALDataset *
