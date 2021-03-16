@@ -138,28 +138,6 @@ void OGRSimpleCurve::flattenTo2D()
 }
 
 /************************************************************************/
-/*                               clone()                                */
-/************************************************************************/
-
-OGRGeometry *OGRSimpleCurve::clone() const
-
-{
-    OGRSimpleCurve *poCurve =
-        OGRGeometryFactory::createGeometry(getGeometryType())->toSimpleCurve();
-
-    poCurve->assignSpatialReference( getSpatialReference() );
-    poCurve->setPoints( nPointCount, paoPoints, padfZ, padfM );
-    if( poCurve->getNumPoints() != nPointCount )
-    {
-        delete poCurve;
-        return nullptr;
-    }
-    poCurve->flags = flags;
-
-    return poCurve;
-}
-
-/************************************************************************/
 /*                               empty()                                */
 /************************************************************************/
 
@@ -2730,7 +2708,7 @@ OGRLineString* OGRLineString::CurveToLine(
     CPL_UNUSED double /* dfMaxAngleStepSizeDegrees */,
     CPL_UNUSED const char* const* /* papszOptions */ ) const
 {
-    return clone()->toLineString();
+    return clone();
 }
 
 /************************************************************************/
@@ -2835,6 +2813,15 @@ OGRLinearRing* OGRLineString::CastToLinearRing( OGRLineString* poLS )
     OGRLinearRing* poLR = new OGRLinearRing();
     TransferMembersAndDestroy(poLS, poLR);
     return poLR;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRLineString *OGRLineString::clone() const
+{
+    return new (std::nothrow) OGRLineString(*this);
 }
 
 //! @cond Doxygen_Suppress

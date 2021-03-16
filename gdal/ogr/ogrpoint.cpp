@@ -202,17 +202,10 @@ OGRPoint& OGRPoint::operator=( const OGRPoint& other )
 /*      Make a new object that is a copy of this object.                */
 /************************************************************************/
 
-OGRGeometry *OGRPoint::clone() const
+OGRPoint *OGRPoint::clone() const
 
 {
-    OGRPoint *poNewPoint = new (std::nothrow) OGRPoint( x, y, z, m );
-    if( poNewPoint == nullptr )
-        return nullptr;
-
-    poNewPoint->assignSpatialReference( getSpatialReference() );
-    poNewPoint->flags = flags;
-
-    return poNewPoint;
+    return new (std::nothrow) OGRPoint(*this);
 }
 
 /************************************************************************/

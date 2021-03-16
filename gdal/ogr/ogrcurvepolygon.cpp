@@ -100,25 +100,10 @@ OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRCurvePolygon::clone() const
+OGRCurvePolygon *OGRCurvePolygon::clone() const
 
 {
-    OGRCurvePolygon *poNewPolygon =
-        OGRGeometryFactory::createGeometry(getGeometryType())->
-            toCurvePolygon();
-    poNewPolygon->assignSpatialReference( getSpatialReference() );
-    poNewPolygon->flags = flags;
-
-    for( int i = 0; i < oCC.nCurveCount; i++ )
-    {
-        if( poNewPolygon->addRing( oCC.papoCurves[i] ) != OGRERR_NONE )
-        {
-            delete poNewPolygon;
-            return nullptr;
-        }
-    }
-
-    return poNewPolygon;
+    return new (std::nothrow) OGRCurvePolygon(*this);
 }
 
 /************************************************************************/
@@ -362,7 +347,7 @@ OGRErr  OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
 OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
 
 {
-    OGRCurve* poNewRingCloned = poNewRing->clone()->toCurve();
+    OGRCurve* poNewRingCloned = poNewRing->clone();
     OGRErr eErr = addRingDirectly(poNewRingCloned);
     if( eErr != OGRERR_NONE )
         delete poNewRingCloned;

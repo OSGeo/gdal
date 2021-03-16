@@ -149,25 +149,10 @@ void OGRGeometryCollection::empty()
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRGeometryCollection::clone() const
+OGRGeometryCollection *OGRGeometryCollection::clone() const
 
 {
-    OGRGeometryCollection *poNewGC =
-        OGRGeometryFactory::createGeometry(getGeometryType())->
-            toGeometryCollection();
-    poNewGC->assignSpatialReference( getSpatialReference() );
-    poNewGC->flags = flags;
-
-    for( auto&& poSubGeom: *this )
-    {
-        if( poNewGC->addGeometry( poSubGeom ) != OGRERR_NONE )
-        {
-            delete poNewGC;
-            return nullptr;
-        }
-    }
-
-    return poNewGC;
+    return new (std::nothrow) OGRGeometryCollection(*this);
 }
 
 /************************************************************************/
