@@ -2473,7 +2473,7 @@ class Dataset(MajorObject):
 
 
     def ReadRaster1(self, *args, **kwargs):
-        """ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
+        """ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
 
 
@@ -2483,7 +2483,8 @@ class Dataset(MajorObject):
                     resample_alg=gdalconst.GRIORA_NearestNeighbour,
                     callback=None,
                     callback_data=None,
-                    interleave='band'):
+                    interleave='band',
+                    band_list=None):
         """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
         parameters should generally not be specified if buf_obj is specified. The array is returned"""
 
@@ -2493,7 +2494,23 @@ class Dataset(MajorObject):
                                               resample_alg=resample_alg,
                                               callback=callback,
                                               callback_data=callback_data,
-                                              interleave=interleave )
+                                              interleave=interleave,
+                                              band_list=band_list)
+
+    def WriteArray(self, array, xoff=0, yoff=0,
+                   band_list=None,
+                   interleave='band',
+                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                   callback=None,
+                   callback_data=None):
+        from osgeo import gdal_array
+
+        return gdal_array.DatasetWriteArray(self, array, xoff, yoff,
+                                            band_list=band_list,
+                                            interleave=interleave,
+                                            resample_alg=resample_alg,
+                                            callback=callback,
+                                            callback_data=callback_data)
 
     def WriteRaster(self, xoff, yoff, xsize, ysize,
                     buf_string,
@@ -2507,6 +2524,14 @@ class Dataset(MajorObject):
             buf_ysize = ysize
         if band_list is None:
             band_list = list(range(1, self.RasterCount + 1))
+
+    # Redirect to numpy-friendly WriteArray() if buf_string is a numpy array
+    # and other arguments are compatible
+        if type(buf_string).__name__ == 'ndarray' and \
+           buf_xsize == xsize and buf_ysize == ysize and buf_type is None and \
+           buf_pixel_space is None and buf_line_space is None and buf_band_space is None:
+            return self.WriteArray(buf_string, xoff=xoff, yoff=yoff,
+                                   band_list=band_list)
         if buf_type is None:
             buf_type = self.GetRasterBand(1).DataType
 
@@ -2521,7 +2546,8 @@ class Dataset(MajorObject):
                    buf_pixel_space=None, buf_line_space=None, buf_band_space=None,
                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
                    callback=None,
-                   callback_data=None):
+                   callback_data=None,
+                   buf_obj=None):
 
         if xsize is None:
             xsize = self.RasterXSize
@@ -2540,7 +2566,7 @@ class Dataset(MajorObject):
         return _gdal.Dataset_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                             buf_xsize, buf_ysize, buf_type,
                                             band_list, buf_pixel_space, buf_line_space, buf_band_space,
-                                          resample_alg, callback, callback_data )
+                                          resample_alg, callback, callback_data, buf_obj )
 
     def GetVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,
@@ -3689,7 +3715,7 @@ class Band(MajorObject):
 
 
     def WriteRaster(self, *args, **kwargs):
-        """WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, int * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None) -> CPLErr"""
+        """WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None) -> CPLErr"""
         return _gdal.Band_WriteRaster(self, *args, **kwargs)
 
 
@@ -3804,12 +3830,12 @@ class Band(MajorObject):
 
 
     def ReadRaster1(self, *args, **kwargs):
-        """ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, int * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
+        """ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Band_ReadRaster1(self, *args, **kwargs)
 
 
     def ReadBlock(self, *args, **kwargs):
-        """ReadBlock(Band self, int xoff, int yoff) -> CPLErr"""
+        """ReadBlock(Band self, int xoff, int yoff, void * buf_obj=None) -> CPLErr"""
         return _gdal.Band_ReadBlock(self, *args, **kwargs)
 
 
@@ -3836,7 +3862,8 @@ class Band(MajorObject):
                    buf_pixel_space=None, buf_line_space=None,
                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
                    callback=None,
-                   callback_data=None):
+                   callback_data=None,
+                   buf_obj=None):
 
         if xsize is None:
             xsize = self.XSize
@@ -3846,7 +3873,33 @@ class Band(MajorObject):
         return _gdal.Band_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                       buf_xsize, buf_ysize, buf_type,
                                       buf_pixel_space, buf_line_space,
-                                      resample_alg, callback, callback_data)
+                                      resample_alg, callback, callback_data,
+                                      buf_obj)
+
+    def WriteRaster(self, xoff, yoff, xsize, ysize,
+                    buf_string,
+                    buf_xsize=None, buf_ysize=None, buf_type=None,
+                    buf_pixel_space=None, buf_line_space=None ):
+
+        if buf_xsize is None:
+            buf_xsize = xsize
+        if buf_ysize is None:
+            buf_ysize = ysize
+
+    # Redirect to numpy-friendly WriteArray() if buf_string is a numpy array
+    # and other arguments are compatible
+        if type(buf_string).__name__ == 'ndarray' and \
+           buf_xsize == xsize and buf_ysize == ysize and buf_type is None and \
+           buf_pixel_space is None and buf_line_space is None:
+            return self.WriteArray(buf_string, xoff=xoff, yoff=yoff)
+
+        if buf_type is None:
+            buf_type = self.DataType
+
+        return _gdal.Band_WriteRaster(self,
+                 xoff, yoff, xsize, ysize,
+                buf_string, buf_xsize, buf_ysize, buf_type,
+                buf_pixel_space, buf_line_space )
 
     def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,

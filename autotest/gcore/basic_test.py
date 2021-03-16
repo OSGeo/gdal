@@ -407,29 +407,29 @@ def test_basic_test_14():
 
     with pytest.raises(Exception):
         ds.SetMetadata(5)
-    
+
 
     ds.SetMetadata(['foo=bar'])
     assert ds.GetMetadata_List() == ['foo=bar']
 
     with pytest.raises(Exception):
         ds.SetMetadata([5])
-    
+
 
     ds.SetMetadata({'foo': 'baz'})
     assert ds.GetMetadata_List() == ['foo=baz']
 
     with pytest.raises(Exception):
         ds.SetMetadata({'foo': 5})
-    
+
 
     with pytest.raises(Exception):
         ds.SetMetadata({5: 'baz'})
-    
+
 
     with pytest.raises(Exception):
         ds.SetMetadata({5: 6})
-    
+
 
     val = '\u00e9ven'
 
@@ -441,13 +441,13 @@ def test_basic_test_14():
 
     with pytest.raises(Exception):
         ds.SetMetadata({val: 5})
-    
+
 
     with pytest.raises(Exception):
         ds.SetMetadata({5: val})
-    
 
-    
+
+
 ###############################################################################
 # Test errors with progress callback
 
@@ -587,3 +587,13 @@ def test_gdal_setgcpspatialref():
     assert sr_got
     assert sr_got.IsSame(sr)
 
+
+def test_gdal_getdatatypename():
+
+    assert gdal.GetDataTypeName(gdal.GDT_Byte) == 'Byte'
+    with pytest.raises(Exception):
+        gdal.GetDataTypeName(-1)
+    with pytest.raises(Exception):
+        gdal.GetDataTypeName(100)
+    with pytest.raises(Exception):
+        gdal.GetDataTypeName('invalid')

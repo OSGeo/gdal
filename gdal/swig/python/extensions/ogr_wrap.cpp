@@ -15041,7 +15041,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyBytes_FromStringAndSize( *arg4, *arg3 );
+    resultobj = PyByteArray_FromStringAndSize( *arg4, *arg3 );
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
@@ -15135,7 +15135,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_1(PyObject *SWIGUNUSED
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyBytes_FromStringAndSize( *arg4, *arg3 );
+    resultobj = PyByteArray_FromStringAndSize( *arg4, *arg3 );
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */
@@ -21293,18 +21293,9 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
       }
       arg1 = (int) safeLen;
     }
-    else if (PyBytes_Check(obj0))
-    {
-      Py_ssize_t safeLen = 0;
-      PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
-      if( safeLen > INT_MAX ) {
-        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-      }
-      arg1 = (int) safeLen;
-    }
     else
     {
-      PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+      PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
       SWIG_fail;
     }
     ok: ;
@@ -22121,18 +22112,9 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
         }
         arg3 = (int) safeLen;
       }
-      else if (PyBytes_Check(obj2))
-      {
-        Py_ssize_t safeLen = 0;
-        PyBytes_AsStringAndSize(obj2, (char**) &arg4, &safeLen);
-        if( safeLen > INT_MAX ) {
-          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-        }
-        arg3 = (int) safeLen;
-      }
       else
       {
-        PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+        PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
         SWIG_fail;
       }
       ok: ;
@@ -22430,7 +22412,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyBytes_FromStringAndSize( *arg3, *arg2 );
+    resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
@@ -22526,7 +22508,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyBytes_FromStringAndSize( *arg3, *arg2 );
+    resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */

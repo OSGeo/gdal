@@ -664,9 +664,10 @@ def test_numpy_rw_gdal_array_openarray_permissions():
         assert ds.GetRasterBand(1).Fill(1) != 0
     assert ds.GetRasterBand(1).Checksum()  == 0
 
-
-def test_numpy_rw_cleanup():
-    gdaltest.numpy_drv = None
+    # Cannot read in non-writeable array
+    with gdaltest.error_handler():
+        assert ds.ReadAsArray(buf_obj = ar) is None
+        assert ds.GetRasterBand(1).ReadAsArray(buf_obj = ar) is None
 
 
 ###############################################################################
@@ -689,3 +690,123 @@ def test_numpy_rw_rms_resemple_alg():
     assert cs == exp_cs, 'got wrong rms sum'
 
 
+
+###############################################################################
+# Test Dataset.ReadAsArray() with band_list
+
+def test_numpy_rw_dataset_read_as_array():
+
+    wrk_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
+
+    assert numpy.array_equal(wrk_ds.ReadAsArray(band_list=[2]),
+                             wrk_ds.GetRasterBand(2).ReadAsArray())
+
+    assert numpy.array_equal(wrk_ds.ReadAsArray(band_list=[2,1]),
+                             numpy.stack(
+                                 [wrk_ds.GetRasterBand(2).ReadAsArray(),
+                                  wrk_ds.GetRasterBand(1).ReadAsArray()]))
+
+
+
+
+###############################################################################
+# Test Dataset.WriteArray()
+
+def test_numpy_rw_dataset_writearray():
+
+    # Write 2D array in single-band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    ar = numpy.array([[0,1,2],[3,4,5]], dtype=numpy.uint8)
+    assert ds.WriteArray(ar) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # Use WriteRaster interface
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    assert ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ar.astype(numpy.uint32)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    with pytest.raises(Exception):
+        ds.WriteArray(None)
+
+    with pytest.raises(Exception):
+        ds.WriteArray('not an array')
+
+    # 1D array
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([0, 1, 2], dtype=numpy.uint8))
+
+    # Too big 2D array in X
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[0,1,2,10],[3,4,5,20]], dtype=numpy.uint8))
+
+    # Write 3D array in single-band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    ar = numpy.array([[[0,1,2],[3,4,5]]], dtype=numpy.uint8)
+    assert ds.WriteArray(ar) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar[0])
+
+    # ar.shape[0] != 1
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[[0,1,2],[3,4,5]],[[0,1,2],[3,4,5]]]))
+
+    # Write 3D array in two-band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    ar = numpy.array([[[0,1,2],[3,4,5]],[[10,11,12],[13,14,15]]], dtype=numpy.uint8)
+    assert ds.WriteRaster(0,0,3,2,memoryview(ar)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # Non-native data type
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteArray(ar.astype(numpy.int32)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # interleave='pixel'
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteArray(numpy.transpose(ar, (1,2,0)), interleave='pixel') == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # band_list
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteArray(ar[::-1,...], band_list=[2,1]) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # Use WriteRaster interface
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ar.astype(numpy.uint32)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # 2D array
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[0,1,2,0],[3,4,5,0]]))
+
+    # Too big 3D array in X
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[[0,1,2,0],[3,4,5,0]],[[10,11,12,0],[13,14,15,0]]]))
+
+    # Too big 3D array in Y
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[[0,1,2],[3,4,5],[3,4,5]],[[10,11,12],[13,14,15],[13,14,15]]]))
+
+    # Too big 3D array in band dimension
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[[0,1,2],[3,4,5]],[[10,11,12],[13,14,15]],[[10,11,12],[13,14,15]]]))
+
+
+###############################################################################
+# Test Band.ReadAsArray() error cases
+
+
+def test_numpy_rw_band_read_as_array_error_cases():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    band = ds.GetRasterBand(1)
+    assert band.ReadAsArray(buf_obj = numpy.empty((3,2), dtype=numpy.uint8)) is not None
+    assert band.ReadAsArray(buf_obj = numpy.empty((1, 3,2), dtype=numpy.uint8)) is not None
+
+    # 1D
+    with pytest.raises(Exception, match='expected array of dimension 2 or 3'):
+        band.ReadAsArray(buf_obj = numpy.empty((3,), dtype=numpy.uint8))
+
+    # 3D of wrong size in first dimension
+    with pytest.raises(Exception, match='expected size of first dimension should be 0'):
+        band.ReadAsArray(buf_obj = numpy.empty((2, 3,2), dtype=numpy.uint8))

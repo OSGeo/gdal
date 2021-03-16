@@ -991,7 +991,7 @@ def test_rasterio_dataset_write_on_readonly():
     assert err != 0
 
 
-@pytest.mark.parametrize('resample_alg', [-1, 8])
+@pytest.mark.parametrize('resample_alg', [-1, 8, "foo"])
 def test_rasterio_dataset_invalid_resample_alg(resample_alg):
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
@@ -1296,3 +1296,130 @@ def test_rasterio_rms_halfsize_downsampling_cfloat32():
     ds.BuildOverviews('RMS', [2])
     ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
     assert ovr_data == data
+
+###############################################################################
+# Test WriteRaster() on a bytearray
+
+
+def test_rasterio_writeraster_from_bytearray():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 2)
+    ar = bytearray([1, 2])
+    ds.WriteRaster(0, 0, 1, 2, ar)
+    assert ds.ReadRaster() == ar
+
+###############################################################################
+# Test WriteRaster() on a memoryview
+
+
+def test_rasterio_writeraster_from_memoryview():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 2)
+    ar = memoryview(bytearray([1, 2, 3]))[1:]
+    ds.WriteRaster(0, 0, 1, 2, ar)
+    assert ds.ReadRaster() == ar
+
+###############################################################################
+# Test ReadRaster() in an existing buffer
+
+
+def test_rasterio_readraster_in_existing_buffer():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 2, 1)
+    ar = bytearray([1, 2])
+    ds.WriteRaster(0, 0, 2, 1, ar)
+    band = ds.GetRasterBand(1)
+
+    # buf_obj is of expected size
+    assert ds.ReadRaster(buf_obj = bytearray([0, 0])) == ar
+    # buf_obj is larger than expected
+    assert ds.ReadRaster(buf_obj = bytearray([0, 0, 10])) == bytearray([1, 2, 10])
+    with gdaltest.error_handler():
+        # buf_obj is a wrong object type
+        assert ds.ReadRaster(buf_obj = 123) is None
+        # buf_obj is not large enough
+        assert ds.ReadRaster(buf_obj = bytearray([0])) is None
+        # buf_obj is read-only
+        assert ds.ReadRaster(buf_obj = bytes(bytearray([0, 0]))) is None
+
+
+    # buf_obj is of expected size
+    assert band.ReadRaster(buf_obj = bytearray([0, 0])) == ar
+    # buf_obj is larger than expected
+    assert band.ReadRaster(buf_obj = bytearray([0, 0, 10])) == bytearray([1, 2, 10])
+    with gdaltest.error_handler():
+        # buf_obj is a wrong object type
+        assert band.ReadRaster(buf_obj = 123) is None
+        # buf_obj is not large enough
+        assert band.ReadRaster(buf_obj = bytearray([0])) is None
+        # buf_obj is read-only
+        assert band.ReadRaster(buf_obj = bytes(bytearray([0, 0]))) is None
+
+###############################################################################
+# Test ReadBlock() in an existing buffer
+
+
+def test_rasterio_readblock_in_existing_buffer():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 2, 1)
+    ar = bytearray([1, 2])
+    ds.WriteRaster(0, 0, 2, 1, ar)
+    band = ds.GetRasterBand(1)
+
+    assert band.ReadBlock(0, 0) == ar
+
+    # buf_obj is of expected size
+    assert band.ReadBlock(0, 0, buf_obj = bytearray([0, 0])) == ar
+    # buf_obj is larger than expected
+    assert band.ReadBlock(0, 0, buf_obj = bytearray([0, 0, 10])) == bytearray([1, 2, 10])
+    with gdaltest.error_handler():
+        # buf_obj is a wrong object type
+        assert band.ReadBlock(0, 0, buf_obj = 123) is None
+        # buf_obj is not large enough
+        assert band.ReadBlock(0, 0, buf_obj = bytearray([0])) is None
+        # buf_obj is read-only
+        assert band.ReadBlock(0, 0, buf_obj = bytes(bytearray([0, 0]))) is None
+
+###############################################################################
+# Test ReadRaster() in an existing buffer and alignment issues
+
+
+@pytest.mark.parametrize('datatype', [gdal.GDT_Int16,
+                                      gdal.GDT_UInt16,
+                                      gdal.GDT_Int32,
+                                      gdal.GDT_UInt32,
+                                      gdal.GDT_Float32,
+                                      gdal.GDT_Float64,
+                                      gdal.GDT_CInt16,
+                                      gdal.GDT_CInt32,
+                                      gdal.GDT_CFloat32,
+                                      gdal.GDT_CFloat64],
+                          ids=gdal.GetDataTypeName)
+def test_rasterio_readraster_in_existing_buffer_alignment_issues(datatype):
+
+    ds = gdal.GetDriverByName('MEM').Create('', 2, 1, 1, datatype)
+    band = ds.GetRasterBand(1)
+    band.Fill(1)
+    ar = band.ReadRaster()
+    buffer_size = 2 * 1 * (gdal.GetDataTypeSize(datatype) // 8)
+
+    # buf_obj has appropriate alignment
+    assert ds.ReadRaster(buf_obj = bytearray([0] * buffer_size)) == ar
+
+    with gdaltest.error_handler():
+        # buf_obj has not appropriate alignment
+        assert ds.ReadRaster(buf_obj = memoryview(bytearray([0] * (buffer_size + 1)))[1:]) is None
+
+    # buf_obj has appropriate alignment
+    assert band.ReadRaster(buf_obj = bytearray([0] * buffer_size)) == ar
+
+    with gdaltest.error_handler():
+        # buf_obj has not appropriate alignment
+        assert band.ReadRaster(buf_obj = memoryview(bytearray([0] * (buffer_size + 1)))[1:]) is None
+
+    # buf_obj has appropriate alignment
+    assert band.ReadBlock(0, 0, buf_obj = bytearray([0] * buffer_size)) == ar
+
+    with gdaltest.error_handler():
+        # buf_obj has not appropriate alignment
+        assert band.ReadBlock(0, 0, buf_obj = memoryview(bytearray([0] * (2 * 8 + 1)))[1:]) is None

@@ -513,7 +513,11 @@ public:
 %apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
 %apply (GIntBig *optional_GIntBig) { (GIntBig*) };
 %apply (int *optional_int) { (int*) };
+#if defined(SWIGPYTHON)
+%apply (GDALDataType *optional_GDALDataType) { (GDALDataType *buf_type) };
+#else
 %apply (int *optional_int) { (GDALDataType *buf_type) };
+#endif
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
                       GIntBig buf_len, char *buf_string,
