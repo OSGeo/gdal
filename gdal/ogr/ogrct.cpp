@@ -49,6 +49,41 @@
 
 CPL_CVSID("$Id$")
 
+#ifdef DEBUG_PERF
+static double g_dfTotalTimeCRStoCRS = 0;
+static double g_dfTotalTimeReprojection = 0;
+
+/************************************************************************/
+/*                        CPLGettimeofday()                             */
+/************************************************************************/
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <sys/timeb.h>
+
+namespace {
+struct CPLTimeVal
+{
+  time_t  tv_sec;         /* seconds */
+  long    tv_usec;        /* and microseconds */
+};
+}
+
+static void CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
+{
+  struct _timeb theTime;
+
+  _ftime(&theTime);
+  tp->tv_sec = static_cast<time_t>(theTime.time);
+  tp->tv_usec = theTime.millitm * 1000;
+}
+#else
+#  include <sys/time.h>     /* for gettimeofday() */
+#  define  CPLTimeVal timeval
+#  define  CPLGettimeofday(t,u) gettimeofday(t,u)
+#endif
+
+#endif // DEBUG_PERF
+
 /************************************************************************/
 /*             OGRCoordinateTransformationOptions::Private              */
 /************************************************************************/
@@ -221,7 +256,7 @@ bool OGRCoordinateTransformationOptions::SetAreaOfInterest(
 /** \brief Sets an area of interest.
  *
  * See OGRCoordinateTransformationOptions::SetAreaOfInterest()
- * 
+ *
  * @since GDAL 3.0
  */
 int OCTCoordinateTransformationOptionsSetAreaOfInterest(
@@ -295,7 +330,7 @@ void OGRCoordinateTransformationOptions::SetTargetCenterLong(double dfCenterLong
 /** \brief Sets a coordinate operation.
  *
  * See OGRCoordinateTransformationOptions::SetCoordinateTransformation()
- * 
+ *
  * @since GDAL 3.0
  */
 int OCTCoordinateTransformationOptionsSetOperation(
@@ -573,7 +608,7 @@ void OGRCoordinateTransformation::DestroyCT( OGRCoordinateTransformation* poCT )
  *
  * The delete operator, or OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects.
- * 
+ *
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
  * To have a behavior similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
@@ -603,7 +638,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  *
  * The delete operator, or OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects.
- * 
+ *
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
  * To have a behavior similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
@@ -682,7 +717,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  *
  * OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects.
- * 
+ *
  * This will honour the axis order advertized by the source and target SRS,
  * as well as their "data axis to SRS axis mapping".
  * To have a behavior similar to GDAL &lt; 3.0, the OGR_CT_FORCE_TRADITIONAL_GIS_ORDER
@@ -718,7 +753,7 @@ OCTNewCoordinateTransformation(
  *
  * OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects.
- * 
+ *
  * The source SRS and target SRS should generally not be NULL. This is only
  * allowed if a custom coordinate operation is set through the hOptions argument.
  *
@@ -1117,6 +1152,11 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
 
         char* pszSrcSRS = exportSRSToText(poSRSSource);
         char* pszTargetSRS = exportSRSToText(poSRSTarget);
+#ifdef DEBUG_PERF
+        struct CPLTimeVal tvStart;
+        CPLGettimeofday(&tvStart, nullptr);
+        CPLDebug("OGR_CT", "Before proj_create_crs_to_crs()");
+#endif
 #ifdef DEBUG
         CPLDebug("OGR_CT", "Source CRS: '%s'", pszSrcSRS);
         CPLDebug("OGR_CT", "Target CRS: '%s'", pszTargetSRS);
@@ -1181,6 +1221,15 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
             CPLFree( pszTargetSRS );
             return FALSE;
         }
+#ifdef DEBUG_PERF
+        struct CPLTimeVal tvEnd;
+        CPLGettimeofday(&tvEnd, nullptr);
+        const double delay = (tvEnd.tv_sec + tvEnd.tv_usec * 1e-6) -
+                             (tvStart.tv_sec + tvStart.tv_usec * 1e-6);
+        g_dfTotalTimeCRStoCRS += delay;
+        CPLDebug("OGR_CT", "After proj_create_crs_to_crs(): %d ms",
+                 static_cast<int>(delay * 1000));
+#endif
 
         CPLFree(pszSrcSRS);
         CPLFree(pszTargetSRS);
@@ -1718,6 +1767,11 @@ int OGRProjCT::TransformWithErrorCodes(
         }
     }
 #endif
+#ifdef DEBUG_PERF
+    //CPLDebug("OGR_CT", "Begin TransformWithErrorCodes()");
+    struct CPLTimeVal tvStart;
+    CPLGettimeofday(&tvStart, nullptr);
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Apply data axis to source CRS mapping.                          */
@@ -1975,7 +2029,7 @@ int OGRProjCT::TransformWithErrorCodes(
                 break;
             }
             pj = nullptr;
-            CPLDebug("OGRCT", 
+            CPLDebug("OGRCT",
                      "Did not result in valid result. "
                      "Attempting a retry with another operation.");
             if( iRetry == N_MAX_RETRY ) {
@@ -2217,6 +2271,15 @@ int OGRProjCT::TransformWithErrorCodes(
         }
     }
 #endif
+#ifdef DEBUG_PERF
+    struct CPLTimeVal tvEnd;
+    CPLGettimeofday(&tvEnd, nullptr);
+    const double delay = (tvEnd.tv_sec + tvEnd.tv_usec * 1e-6) -
+                         (tvStart.tv_sec + tvStart.tv_usec * 1e-6);
+    g_dfTotalTimeReprojection += delay;
+    //CPLDebug("OGR_CT", "End TransformWithErrorCodes(): %d ms",
+    //         static_cast<int>(delay * 1000));
+#endif
 
     return TRUE;
 }
@@ -2326,4 +2389,18 @@ int OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hTransform,
 
     return OGRCoordinateTransformation::FromHandle(hTransform)->
         TransformWithErrorCodes( nCount, x, y, z, t, panErrorCodes );
+}
+
+/************************************************************************/
+/*                         OGRCTDumpStatistics()                        */
+/************************************************************************/
+
+void OGRCTDumpStatistics()
+{
+#ifdef DEBUG_PERF
+    CPLDebug("OGR_CT", "Total time in proj_create_crs_to_crs(): %d ms",
+             static_cast<int>(g_dfTotalTimeCRStoCRS * 1000));
+    CPLDebug("OGR_CT", "Total time in coordinate transformation: %d ms",
+             static_cast<int>(g_dfTotalTimeReprojection * 1000));
+#endif
 }
