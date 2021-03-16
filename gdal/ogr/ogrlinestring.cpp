@@ -84,7 +84,8 @@ OGRSimpleCurve::OGRSimpleCurve( const OGRSimpleCurve& other ) :
     padfZ(nullptr),
     padfM(nullptr)
 {
-    setPoints( other.nPointCount, other.paoPoints, other.padfZ, other.padfM );
+    if( other.nPointCount > 0 )
+        setPoints( other.nPointCount, other.paoPoints, other.padfZ, other.padfM );
 }
 
 /************************************************************************/
@@ -120,6 +121,7 @@ OGRSimpleCurve& OGRSimpleCurve::operator=( const OGRSimpleCurve& other )
     OGRCurve::operator=( other );
 
     setPoints(other.nPointCount, other.paoPoints, other.padfZ, other.padfM);
+    flags = other.flags;
 
     return *this;
 }
