@@ -16,6 +16,7 @@ dnf install -y clang make diffutils ccache \
               cryptopp-devel \
               armadillo-devel qhull-devel \
               hdf-devel hdf5-devel netcdf-devel \
+              mongo-cxx-driver-devel libpq-devel \
               python3-pip python3-devel
 
 USER=root
