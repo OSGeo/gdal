@@ -957,7 +957,52 @@ typedef struct {
     void     *pDstTransformArg;
     GDALTransformerFunc pDstTransformer;
 
+    // Memorize the value of the CHECK_WITH_INVERT_PROJ at the time we
+    // instanciated the object, to be able to decide if
+    // GDALRefreshGenImgProjTransformer() must do something or not.
+    bool     bCheckWithInvertPROJ;
+
 } GDALGenImgProjTransformInfo;
+
+/************************************************************************/
+/*                    GetCurrentCheckWithInvertPROJ()                   */
+/************************************************************************/
+
+static bool GetCurrentCheckWithInvertPROJ()
+{
+    return CPLTestBool(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" ));
+}
+
+/************************************************************************/
+/*               GDALCreateGenImgProjTransformerInternal()              */
+/************************************************************************/
+
+static void *
+GDALCreateSimilarGenImgProjTransformer( void *hTransformArg,
+                                        double dfRatioX, double dfRatioY );
+
+static GDALGenImgProjTransformInfo* GDALCreateGenImgProjTransformerInternal()
+{
+/* -------------------------------------------------------------------- */
+/*      Initialize the transform info.                                  */
+/* -------------------------------------------------------------------- */
+    GDALGenImgProjTransformInfo* psInfo =
+        static_cast<GDALGenImgProjTransformInfo *>(
+            CPLCalloc(sizeof(GDALGenImgProjTransformInfo), 1));
+
+    memcpy( psInfo->sTI.abySignature,
+            GDAL_GTI2_SIGNATURE,
+            strlen(GDAL_GTI2_SIGNATURE) );
+    psInfo->sTI.pszClassName = "GDALGenImgProjTransformer";
+    psInfo->sTI.pfnTransform = GDALGenImgProjTransform;
+    psInfo->sTI.pfnCleanup = GDALDestroyGenImgProjTransformer;
+    psInfo->sTI.pfnSerialize = GDALSerializeGenImgProjTransformer;
+    psInfo->sTI.pfnCreateSimilar = GDALCreateSimilarGenImgProjTransformer;
+
+    psInfo->bCheckWithInvertPROJ = GetCurrentCheckWithInvertPROJ();
+
+    return psInfo;
+}
 
 /************************************************************************/
 /*                GDALCreateSimilarGenImgProjTransformer()              */
@@ -974,10 +1019,11 @@ GDALCreateSimilarGenImgProjTransformer( void *hTransformArg,
         static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
 
     GDALGenImgProjTransformInfo *psClonedInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(
-            CPLMalloc(sizeof(GDALGenImgProjTransformInfo)));
+                                GDALCreateGenImgProjTransformerInternal();
 
     memcpy(psClonedInfo, psInfo, sizeof(GDALGenImgProjTransformInfo));
+
+    psClonedInfo->bCheckWithInvertPROJ = GetCurrentCheckWithInvertPROJ();
 
     if( psClonedInfo->pSrcTransformArg )
         psClonedInfo->pSrcTransformArg =
@@ -1154,31 +1200,6 @@ static void InsertCenterLong( GDALDatasetH hDS, OGRSpatialReference* poSRS,
     const double dfCenterLong = (dfMaxLong + dfMinLong) / 2.0;
     aosOptions.SetNameValue("CENTER_LONG",
                             CPLSPrintf("%g", dfCenterLong));
-}
-
-/************************************************************************/
-/*               GDALCreateGenImgProjTransformerInternal()              */
-/************************************************************************/
-
-static GDALGenImgProjTransformInfo* GDALCreateGenImgProjTransformerInternal()
-{
-/* -------------------------------------------------------------------- */
-/*      Initialize the transform info.                                  */
-/* -------------------------------------------------------------------- */
-    GDALGenImgProjTransformInfo* psInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(
-            CPLCalloc(sizeof(GDALGenImgProjTransformInfo), 1));
-
-    memcpy( psInfo->sTI.abySignature,
-            GDAL_GTI2_SIGNATURE,
-            strlen(GDAL_GTI2_SIGNATURE) );
-    psInfo->sTI.pszClassName = "GDALGenImgProjTransformer";
-    psInfo->sTI.pfnTransform = GDALGenImgProjTransform;
-    psInfo->sTI.pfnCleanup = GDALDestroyGenImgProjTransformer;
-    psInfo->sTI.pfnSerialize = GDALSerializeGenImgProjTransformer;
-    psInfo->sTI.pfnCreateSimilar = GDALCreateSimilarGenImgProjTransformer;
-
-    return psInfo;
 }
 
 /************************************************************************/
@@ -2014,7 +2035,8 @@ void GDALRefreshGenImgProjTransformer( void* hTransformArg )
     GDALGenImgProjTransformInfo *psInfo =
         static_cast<GDALGenImgProjTransformInfo *>( hTransformArg );
 
-    if( psInfo->pReprojectArg )
+    if( psInfo->pReprojectArg &&
+        psInfo->bCheckWithInvertPROJ != GetCurrentCheckWithInvertPROJ() )
     {
         CPLXMLNode* psXML =
             GDALSerializeTransformer(psInfo->pReproject,
