@@ -65,12 +65,15 @@ static void osr_proj_logger(void * /* user_data */,
 }
 
 static unsigned g_searchPathGenerationCounter = 0;
+static unsigned g_auxDbPathsGenerationCounter = 0;
 static std::mutex g_oSearchPathMutex;
 static CPLStringList g_aosSearchpaths;
+static CPLStringList g_aosAuxDbPaths;
 
 struct OSRPJContextHolder
 {
     unsigned searchPathGenerationCounter = 0;
+    unsigned auxDbPathsGenerationCounter = 0;
     PJ_CONTEXT* context = nullptr;
     OSRProjTLSCache oCache{};
 #if !defined(_WIN32)
@@ -215,6 +218,15 @@ PJ_CONTEXT* OSRGetProjTLSContext()
                 g_aosSearchpaths.Count(),
                 g_aosSearchpaths.List());
         }
+        if( l_projContext.auxDbPathsGenerationCounter !=
+                                        g_auxDbPathsGenerationCounter )
+        {
+            l_projContext.auxDbPathsGenerationCounter =
+                                        g_auxDbPathsGenerationCounter;
+            std::string oMainPath(proj_context_get_database_path(l_projContext.context));
+            proj_context_set_database_path(l_projContext.context, oMainPath.c_str(),
+                                           g_aosAuxDbPaths.List(), nullptr);
+        }
     }
     return l_projContext.context;
 }
@@ -332,6 +344,43 @@ char** OSRGetPROJSearchPaths()
 #endif
     ;
     return CSLTokenizeString2( proj_info().searchpath, pszSep, 0);
+}
+
+/************************************************************************/
+/*                        OSRSetPROJAuxDbPaths()                        */
+/************************************************************************/
+
+/** \brief Set list of PROJ auxiliary database filenames.
+ * 
+ * @param papszAux NULL-terminated list of auxiliary database filenames, or NULL
+ * @since GDAL 3.3
+ *
+ * @see OSRGetPROJAuxDbPaths, proj_context_set_database_path
+ */
+void OSRSetPROJAuxDbPaths( const char* const * papszAux )
+{
+    std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
+    g_auxDbPathsGenerationCounter ++;
+    g_aosAuxDbPaths.Assign(CSLDuplicate(papszAux), true);
+}
+
+/************************************************************************/
+/*                        OSRGetPROJAuxDbPaths()                        */
+/************************************************************************/
+
+/** \brief Get PROJ auxiliary database filenames.
+ * 
+ * @return NULL terminated list of PROJ auxiliary database filenames. To be freed with CSLDestroy()
+ * @since GDAL 3.3.0
+ *
+ * @see OSRSetPROJAuxDbPaths, proj_context_set_database_path
+ */
+char** OSRGetPROJAuxDbPaths( void )
+{
+    std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
+    //Unfortunately, there is no getter for auxiliary database list at PROJ.
+    //So, return our copy for now.
+    return CSLDuplicate(g_aosAuxDbPaths.List());
 }
 
 /************************************************************************/
