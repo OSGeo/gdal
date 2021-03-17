@@ -830,6 +830,17 @@ public:
      * @since GDAL 3.1
      */
     virtual OGRCoordinateTransformation* Clone() const = 0;
+
+    /** Return a coordinate transformation that performs the inverse transformation
+     * of the current one.
+     *
+     * In some cases, this is not possible, and this method might return nullptr,
+     * or fail to perform the transformations.
+     *
+     * @return the new coordinate transformation, or nullptr in case of error.
+     * @since GDAL 3.3
+     */
+    virtual OGRCoordinateTransformation* GetInverse() const = 0;
 };
 
 OGRCoordinateTransformation CPL_DLL *

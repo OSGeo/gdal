@@ -2825,7 +2825,6 @@ void *GDALCreateReprojectionTransformerEx(
     const char* pszCO = CSLFetchNameValue(papszOptions, "COORDINATE_OPERATION");
 
     OGRCoordinateTransformationOptions optionsFwd;
-    OGRCoordinateTransformationOptions optionsInv;
     if( !(dfWestLongitudeDeg == 0.0 && dfSouthLatitudeDeg == 0.0 &&
           dfEastLongitudeDeg == 0.0 && dfNorthLatitudeDeg == 0.0) )
     {
@@ -2833,22 +2832,16 @@ void *GDALCreateReprojectionTransformerEx(
                                   dfSouthLatitudeDeg,
                                   dfEastLongitudeDeg,
                                   dfNorthLatitudeDeg);
-        optionsInv.SetAreaOfInterest(dfWestLongitudeDeg,
-                                  dfSouthLatitudeDeg,
-                                  dfEastLongitudeDeg,
-                                  dfNorthLatitudeDeg);
     }
     if( pszCO )
     {
         optionsFwd.SetCoordinateOperation(pszCO, false);
-        optionsInv.SetCoordinateOperation(pszCO, true);
     }
 
     const char* pszCENTER_LONG = CSLFetchNameValue(papszOptions, "CENTER_LONG");
     if( pszCENTER_LONG )
     {
         optionsFwd.SetSourceCenterLong(CPLAtof(pszCENTER_LONG));
-        optionsInv.SetTargetCenterLong(CPLAtof(pszCENTER_LONG));
     }
 
     OGRCoordinateTransformation *poForwardTransform =
@@ -2871,10 +2864,7 @@ void *GDALCreateReprojectionTransformerEx(
     psInfo->poForwardTransform = poForwardTransform;
     psInfo->dfTime = CPLAtof(CSLFetchNameValueDef(papszOptions,
                                                   "COORDINATE_EPOCH", "0"));
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    psInfo->poReverseTransform =
-        OGRCreateCoordinateTransformation(poDstSRS, poSrcSRS, optionsInv);
-    CPLPopErrorHandler();
+    psInfo->poReverseTransform = poForwardTransform->GetInverse();
 
     if( psInfo->poReverseTransform )
         psInfo->poReverseTransform->SetEmitErrors(false);

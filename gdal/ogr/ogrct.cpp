@@ -514,6 +514,8 @@ class OGRProjCT : public OGRCoordinateTransformation
     int m_iCurTransformation = -1;
     OGRCoordinateTransformationOptions m_options{};
 
+    void ComputeThreshold();
+
     OGRProjCT(const OGRProjCT& other)
     {
         Initialize(other.poSRSSource, other.poSRSTarget, other.m_options);
@@ -546,6 +548,8 @@ public:
     OGRCoordinateTransformation* Clone() const override {
         return new OGRProjCT(*this);
     }
+
+    OGRCoordinateTransformation* GetInverse() const override;
 };
 //! @endcond
 
@@ -826,6 +830,27 @@ OGRProjCT::~OGRProjCT()
 }
 
 /************************************************************************/
+/*                          ComputeThreshold()                          */
+/************************************************************************/
+
+void OGRProjCT::ComputeThreshold()
+{
+    // The threshold is experimental. Works well with the cases of ticket #2305.
+    if( bSourceLatLong )
+    {
+        // coverity[tainted_data]
+        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", ".1" ));
+    }
+    else
+    {
+        // 1 works well for most projections, except for +proj=aeqd that
+        // requires a tolerance of 10000.
+        // coverity[tainted_data]
+        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
+    }
+}
+
+/************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
@@ -931,19 +956,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     bCheckWithInvertProj =
         CPLTestBool(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" ));
 
-    // The threshold is experimental. Works well with the cases of ticket #2305.
-    if( bSourceLatLong )
-    {
-        // coverity[tainted_data]
-        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", ".1" ));
-    }
-    else
-    {
-        // 1 works well for most projections, except for +proj=aeqd that
-        // requires a tolerance of 10000.
-        // coverity[tainted_data]
-        dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
-    }
+    ComputeThreshold();
 
     // Detect webmercator to WGS84
     OGRAxisOrientation orientAxis0, orientAxis1;
@@ -2282,6 +2295,60 @@ int OGRProjCT::TransformWithErrorCodes(
 #endif
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            GetInverse()                              */
+/************************************************************************/
+
+OGRCoordinateTransformation* OGRProjCT::GetInverse() const
+{
+    PJ* new_pj = nullptr;
+    // m_pj can be nullptr if using m_eStrategy != PROJ
+    if( m_pj && !bWebMercatorToWGS84LongLat && !bNoTransform )
+    {
+        // See https://github.com/OSGeo/PROJ/pull/2582
+        // This may fail before PROJ 8.0.1 if the m_pj object is a "meta"
+        // operation being a set of real operations
+        new_pj = proj_clone(OSRGetProjTLSContext(), m_pj);
+    }
+
+    OGRCoordinateTransformationOptions newOptions(m_options);
+    std::swap(newOptions.d->bHasSourceCenterLong, newOptions.d->bHasTargetCenterLong);
+    std::swap(newOptions.d->dfSourceCenterLong, newOptions.d->dfTargetCenterLong);
+    newOptions.d->bReverseCO = !newOptions.d->bReverseCO;
+
+    if( new_pj == nullptr && !bNoTransform )
+    {
+        return OGRCreateCoordinateTransformation(poSRSTarget, poSRSSource,
+                                                 newOptions);
+    }
+
+    auto poNewCT = new OGRProjCT();
+
+    if( poSRSTarget )
+        poNewCT->poSRSSource = poSRSTarget->Clone();
+    poNewCT->bSourceLatLong = bTargetLatLong;
+    poNewCT->bSourceWrap = bTargetWrap;
+    poNewCT->dfSourceWrapLong = dfTargetWrapLong;
+
+    if( poSRSSource )
+        poNewCT->poSRSTarget = poSRSSource->Clone();
+    poNewCT->bTargetLatLong = bSourceLatLong;
+    poNewCT->bTargetWrap = bSourceWrap;
+    poNewCT->dfTargetWrapLong = dfSourceWrapLong;
+
+    poNewCT->bCheckWithInvertProj =
+        CPLTestBool(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" ));
+
+    poNewCT->ComputeThreshold();
+
+    poNewCT->m_pj = new_pj;
+    poNewCT->m_bReversePj = !m_bReversePj;
+    poNewCT->bNoTransform = bNoTransform;
+    poNewCT->m_eStrategy = m_eStrategy;
+    poNewCT->m_options = newOptions;
+    return poNewCT;
 }
 //! @endcond
 
