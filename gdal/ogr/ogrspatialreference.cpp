@@ -9479,6 +9479,7 @@ void OSRCleanup( void )
     OGRCTDumpStatistics();
     CSVDeaccess( nullptr );
     CleanupSRSWGS84Mutex();
+    OSRCTCleanCache();
     OSRCleanupTLSContext();
 }
 

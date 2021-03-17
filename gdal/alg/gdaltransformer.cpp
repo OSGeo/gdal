@@ -1284,7 +1284,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
                 dfEastLongitudeDeg = 0;
                 dfNorthLatitudeDeg = 0;
             }
-            delete poCT;
+            OGRCoordinateTransformation::DestroyCT(poCT);
         }
 
         delete poGeog;
@@ -2923,10 +2923,10 @@ void GDALDestroyReprojectionTransformer( void *pTransformArg )
         static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
 
     if( psInfo->poForwardTransform )
-        delete psInfo->poForwardTransform;
+        OGRCoordinateTransformation::DestroyCT(psInfo->poForwardTransform);
 
     if( psInfo->poReverseTransform )
-        delete psInfo->poReverseTransform;
+        OGRCoordinateTransformation::DestroyCT(psInfo->poReverseTransform);
 
     CSLDestroy( psInfo->papszOptions );
 
