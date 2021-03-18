@@ -85,6 +85,36 @@ static void func3(void*)
     OSRDestroySpatialReference(hSRS);
 }
 
+static void func4()
+{
+    const char* apszAux0[] = {"data/test_aux.db", nullptr};
+    OSRSetPROJAuxDbPaths(apszAux0);
+
+    char** papszAux1 = OSRGetPROJAuxDbPaths();
+    if(papszAux1 == nullptr || papszAux1[0] == nullptr)
+    {
+        fprintf(stderr, "failure not expected (5)\n");
+        exit(1);
+    }
+    if(!EQUAL(apszAux0[0], papszAux1[0]))
+    {
+        fprintf(stderr, "failure not expected (6)\n");
+        exit(1);
+    }
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
+    if(OSRImportFromEPSG(hSRS, 4326) != OGRERR_NONE)
+    {
+        fprintf(stderr, "failure not expected (7)\n");
+        exit(1); 
+    }
+    if(OSRImportFromEPSG(hSRS, 111111) != OGRERR_NONE)
+    {
+        fprintf(stderr, "failure not expected (8)\n");
+        exit(1); 
+    }
+    OSRDestroySpatialReference(hSRS);
+}
+
 int main()
 {
     auto tokens = OSRGetPROJSearchPaths();
@@ -134,6 +164,8 @@ int main()
     {
         CPLJoinThread(ahThreads[i]);
     }
+    
+    func4();
 
     return 0;
 }
