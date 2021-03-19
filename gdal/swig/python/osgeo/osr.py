@@ -1291,6 +1291,18 @@ def GetPROJVersionMinor(*args):
 def GetPROJVersionMicro(*args):
     """GetPROJVersionMicro() -> int"""
     return _osr.GetPROJVersionMicro(*args)
+
+def SetPROJAuxDbPath(*args):
+    """SetPROJAuxDbPath(char const * utf8_path)"""
+    return _osr.SetPROJAuxDbPath(*args)
+
+def SetPROJAuxDbPaths(*args):
+    """SetPROJAuxDbPaths(char ** paths)"""
+    return _osr.SetPROJAuxDbPaths(*args)
+
+def GetPROJAuxDbPaths(*args):
+    """GetPROJAuxDbPaths() -> char **"""
+    return _osr.GetPROJAuxDbPaths(*args)
 # This file is compatible with both classic and new-style classes.
 
 

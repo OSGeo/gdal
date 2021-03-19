@@ -1663,3 +1663,13 @@ def test_osr_GetUTMZone_Projected3D():
     utm_srs.PromoteTo3D()
 
     assert utm_srs.GetUTMZone() == -11
+
+
+###############################################################################
+def test_SetPROJAuxDbPaths():
+
+    osr.SetPROJAuxDbPath('../cpp/data/test_aux.db')
+    sr = osr.SpatialReference()
+    assert sr.ImportFromEPSG(4326) == 0
+    assert sr.ImportFromEPSG(111111) == 0
+

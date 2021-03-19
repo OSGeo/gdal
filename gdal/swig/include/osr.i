@@ -1544,6 +1544,32 @@ int GetPROJVersionMicro()
 }
 %}
 
+%inline %{
+void SetPROJAuxDbPath( const char *utf8_path )
+{
+    const char* const apszPaths[2] = { utf8_path, NULL };
+    OSRSetPROJAuxDbPaths(apszPaths);
+}
+%}
+
+%apply (char **options) { (char **) };
+%inline %{
+void SetPROJAuxDbPaths( char** paths )
+{
+    OSRSetPROJAuxDbPaths(paths);
+}
+%}
+%clear (char **);
+
+%apply (char **CSL) {(char **)};
+%inline %{
+char** GetPROJAuxDbPaths()
+{
+    return OSRGetPROJAuxDbPaths();
+}
+%}
+%clear (char **);
+
 #ifdef SWIGPYTHON
 %thread;
 #endif

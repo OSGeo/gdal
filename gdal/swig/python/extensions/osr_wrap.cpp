@@ -4666,6 +4666,25 @@ int GetPROJVersionMicro()
     return num;
 }
 
+
+void SetPROJAuxDbPath( const char *utf8_path )
+{
+    const char* const apszPaths[2] = { utf8_path, NULL };
+    OSRSetPROJAuxDbPaths(apszPaths);
+}
+
+
+void SetPROJAuxDbPaths( char** paths )
+{
+    OSRSetPROJAuxDbPaths(paths);
+}
+
+
+char** GetPROJAuxDbPaths()
+{
+    return OSRGetPROJAuxDbPaths();
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17775,6 +17794,140 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SetPROJAuxDbPath(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  int bToFree1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SetPROJAuxDbPath",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    SetPROJAuxDbPath((char const *)arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SetPROJAuxDbPaths(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char **arg1 = (char **) 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SetPROJAuxDbPaths",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) char **options */
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    SetPROJAuxDbPaths(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetPROJAuxDbPaths(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetPROJAuxDbPaths")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (char **)GetPROJAuxDbPaths();
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
@@ -17986,6 +18139,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetPROJVersionMajor", _wrap_GetPROJVersionMajor, METH_VARARGS, (char *)"GetPROJVersionMajor() -> int"},
 	 { (char *)"GetPROJVersionMinor", _wrap_GetPROJVersionMinor, METH_VARARGS, (char *)"GetPROJVersionMinor() -> int"},
 	 { (char *)"GetPROJVersionMicro", _wrap_GetPROJVersionMicro, METH_VARARGS, (char *)"GetPROJVersionMicro() -> int"},
+	 { (char *)"SetPROJAuxDbPath", _wrap_SetPROJAuxDbPath, METH_VARARGS, (char *)"SetPROJAuxDbPath(char const * utf8_path)"},
+	 { (char *)"SetPROJAuxDbPaths", _wrap_SetPROJAuxDbPaths, METH_VARARGS, (char *)"SetPROJAuxDbPaths(char ** paths)"},
+	 { (char *)"GetPROJAuxDbPaths", _wrap_GetPROJAuxDbPaths, METH_VARARGS, (char *)"GetPROJAuxDbPaths() -> char **"},
 	 { NULL, NULL, 0, NULL }
 };
 
