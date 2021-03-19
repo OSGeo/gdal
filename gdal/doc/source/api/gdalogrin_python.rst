@@ -7,7 +7,8 @@ GDAL/OGR in Python
 This Python package and extensions are a number of tools for programming and manipulating the `GDAL <http://www.gdal.org/>`__ Geospatial Data Abstraction Library. Actually, it is two libraries -- GDAL for manipulating geospatial raster data and 
 OGR for manipulating geospatial vector data -- but we'll refer to the entire package as the GDAL library for the purposes of this document.
 
-The GDAL project (primarily Howard Butler) maintains SWIG generated Python bindings for GDAL and OGR.
+The GDAL project maintains SWIG generated Python bindings for GDAL and OGR.
+
 
 API
 ---
@@ -226,4 +227,3 @@ One example of GDAL/numpy integration is found in the `val_repl.py <http://trac.
    ReadAsArray expects to make an entire copy of a raster band or dataset
    unless the data are explicitly subsetted as part of the function call. For
    large data, this approach is expected to be prohibitively memory intensive.
-
