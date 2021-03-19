@@ -40,7 +40,8 @@ Gotchas
 
 Although GDAL's and OGR's Python bindings provide a fairly "Pythonic" wrapper around the underlying C++ code, there are several ways in which the Python bindings differ from typical Python libraries.
 These differences can catch Python programmers by surprise and lead to unexpected results. These differences result from the complexity of developing a large, long-lived library while continuing to maintain
-backward compatibility. They are being addressed over time, but until they are all gone, please review this list of `Python gotchas <http://trac.osgeo.org/gdal/wiki/PythonGotchas>`__.
+backward compatibility. They are being addressed over time, but until they are all gone, please review this list of :ref:`python_gotchas`.
+
 
 Dependencies
 ------------
