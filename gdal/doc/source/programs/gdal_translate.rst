@@ -118,9 +118,12 @@ resampling, and rescaling pixels in the process.
 .. option:: -scale [src_min src_max [dst_min dst_max]]
 
     Rescale the input pixels values from the range **src_min** to **src_max**
-    to the range **dst_min** to **dst_max**.  If omitted the output range is 0
+    to the range **dst_min** to **dst_max**. If omitted the output range is 0
     to 255.  If omitted the input range is automatically computed from the
-    source data. -scale can be repeated several times (if specified only once,
+    source data. Note that these values are only used to compute a scale and
+    offset to apply to the input raster values. In particular, src_min and
+    src_max are not used to clip input values.
+    -scale can be repeated several times (if specified only once,
     it also applies to all bands of the output dataset), so as to specify per
     band parameters. It is also possible to use the "-scale_bn" syntax where bn
     is a band number (e.g. "-scale_2" for the 2nd band of the output dataset)
