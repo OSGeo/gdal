@@ -258,6 +258,37 @@ def test_cog_creation_of_overviews():
     gdal.GetDriverByName('GTiff').Delete(filename)
     gdal.Unlink(directory)
 
+###############################################################################
+# Test creation of overviews with a different compression method
+
+def test_cog_creation_of_overviews_with_compression():
+    directory = '/vsimem/test_cog_creation_of_overviews_with_compression'
+    filename = directory + '/cog.tif'
+    src_ds = gdal.Translate('', 'data/byte.tif',
+                            options='-of MEM -outsize 2048 300')
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                            options = ['COMPRESS=LZW', 'OVERVIEW_COMPRESS=JPEG', 'OVERVIEW_QUALITY=50'])
+
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert ds.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'LZW'
+
+    ds_overview_a = gdal.Open('GTIFF_DIR:2:' + filename)
+    assert ds_overview_a.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'JPEG'
+    assert ds_overview_a.GetMetadata('IMAGE_STRUCTURE')['JPEG_QUALITY'] == '50'
+
+    ds_overview_b = gdal.Open('GTIFF_DIR:3:' + filename)
+    assert ds_overview_b.GetMetadata('IMAGE_STRUCTURE')['COMPRESSION'] == 'JPEG'
+    assert ds_overview_a.GetMetadata('IMAGE_STRUCTURE')['JPEG_QUALITY'] == '50'
+
+    ds_overview_a = None
+    ds_overview_b = None
+    ds = None
+
+    src_ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.Unlink(directory)
+
 
 ###############################################################################
 # Test creation of overviews with a dataset with a mask

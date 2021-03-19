@@ -51,3 +51,22 @@ Configuration options
 -  OGR_XLSX_FIELD_TYPES = STRING / AUTO : By default, the driver will
    try to detect the data type of fields. If set to STRING, all fields
    will be of String type.
+
+Examples
+--------
+
+-  Transform CSV file input.csv to an Office Open XML file output.xlsx.
+   The spreadsheet will contain one sheet with name "input".
+
+   ::
+
+      ogr2ogr -f "XLSX" output.xlsx input.csv
+      
+-  Add the contents of CSV file input2.csv to the OOXML file output.xlsx
+   created in the first example. The spreadsheet will now contain two
+   sheets, "input" and "input2".
+
+   ::
+
+      ogr2ogr -f "XLSX" output.xlsx -update input2.csv
+

@@ -1,4 +1,15 @@
 #!/bin/sh
+
+set -e
+
+if test "x${PROJ_VERSION}" = "x"; then
+    PROJ_VERSION=master
+fi
+
+if test "x${DESTDIR}" = "x"; then
+    DESTDIR=/build
+fi
+
 set -eu
 
 mkdir proj
@@ -28,7 +39,7 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     ./configure "--prefix=${PROJ_INSTALL_PREFIX:-/usr/local}" --disable-static
 
     make "-j$(nproc)"
-    make install DESTDIR="/build"
+    make install DESTDIR="${DESTDIR}"
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         ccache -s
@@ -45,31 +56,31 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 
 rm -rf proj
 
-PROJ_SO=$(readlink "/build${PROJ_INSTALL_PREFIX}/lib/libproj.so" | sed "s/libproj\.so\.//")
+PROJ_SO=$(readlink "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so" | sed "s/libproj\.so\.//")
 PROJ_SO_FIRST=$(echo "$PROJ_SO" | awk 'BEGIN {FS="."} {print $1}')
-PROJ_SO_DEST="/build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO}"
+PROJ_SO_DEST="${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO}"
 
-mv "/build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO}" "${PROJ_SO_DEST}"
+mv "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO}" "${PROJ_SO_DEST}"
 
-ln -s "libinternalproj.so.${PROJ_SO}" "/build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST}"
-ln -s "libinternalproj.so.${PROJ_SO}" "/build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so"
+ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST}"
+ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so"
 
-rm "/build${PROJ_INSTALL_PREFIX}/lib"/libproj.*
-ln -s "libinternalproj.so.${PROJ_SO}" "/build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST}"
+rm "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib"/libproj.*
+ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST}"
 
 if [ "${WITH_DEBUG_SYMBOLS}" = "yes" ]; then
     # separate debug symbols
-    mkdir -p "/build${PROJ_INSTALL_PREFIX}/lib/.debug/" "/build${PROJ_INSTALL_PREFIX}/bin/.debug/"
+    mkdir -p "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/.debug/" "${DESTDIR}${PROJ_INSTALL_PREFIX}/bin/.debug/"
 
-    DEBUG_SO="/build${PROJ_INSTALL_PREFIX}/lib/.debug/libinternalproj.so.${PROJ_SO}.debug"
+    DEBUG_SO="${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/.debug/libinternalproj.so.${PROJ_SO}.debug"
     objcopy -v --only-keep-debug --compress-debug-sections "${PROJ_SO_DEST}" "${DEBUG_SO}"
     strip --strip-debug --strip-unneeded "${PROJ_SO_DEST}"
     objcopy --add-gnu-debuglink="${DEBUG_SO}" "${PROJ_SO_DEST}"
 
-    for P in "/build${PROJ_INSTALL_PREFIX}/bin"/*; do
+    for P in "${DESTDIR}${PROJ_INSTALL_PREFIX}/bin"/*; do
         if file -h "$P" | grep -qi elf; then
             F=$(basename "$P")
-            DEBUG_P="/build${PROJ_INSTALL_PREFIX}/bin/.debug/${F}.debug"
+            DEBUG_P="${DESTDIR}${PROJ_INSTALL_PREFIX}/bin/.debug/${F}.debug"
             objcopy -v --only-keep-debug --strip-unneeded "$P" "${DEBUG_P}"
             strip --strip-debug --strip-unneeded "$P"
             objcopy --add-gnu-debuglink="${DEBUG_P}" "$P"
@@ -77,7 +88,7 @@ if [ "${WITH_DEBUG_SYMBOLS}" = "yes" ]; then
     done
 else
     strip -s "${PROJ_SO_DEST}"
-    for P in "/build${PROJ_INSTALL_PREFIX}/bin"/*; do
+    for P in "${DESTDIR}${PROJ_INSTALL_PREFIX}/bin"/*; do
         strip -s "$P" 2>/dev/null || /bin/true;
     done;
 fi

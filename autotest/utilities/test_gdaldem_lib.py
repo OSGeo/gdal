@@ -231,7 +231,6 @@ def test_gdaldem_lib_hillshade_compute_edges_float():
 
 def test_gdaldem_lib_hillshade_azimuth():
 
-    from sys import version_info
     src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
     src_ds.SetGeoTransform([2, 0.01, 0, 49, 0, -0.01])
     sr = osr.SpatialReference()
@@ -241,9 +240,8 @@ def test_gdaldem_lib_hillshade_azimuth():
         data = ''
         for i in range(100):
             val = 255 - 5 * max(abs(50 - i), abs(50 - j))
-            data = data + ('%c' % (val))
-        if version_info >= (3, 0, 0):
-            data = bytes(data, 'ISO-8859-1')
+            data = data + chr(val)
+        data = data.encode('ISO-8859-1')
         src_ds.GetRasterBand(1).WriteRaster(0, j, 100, 1, data)
 
     # Light from the east

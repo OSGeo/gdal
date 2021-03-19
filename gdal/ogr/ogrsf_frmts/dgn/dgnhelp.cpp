@@ -1018,6 +1018,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             int nEntityNum = 0;
             int nMSLink = 0;
             int nLinkSize = 0;
+            // coverity[tained_data]
             unsigned char *pabyData =
                 DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                                &nEntityNum, &nMSLink, &nLinkSize );

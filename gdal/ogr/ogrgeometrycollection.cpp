@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <new>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -148,25 +149,10 @@ void OGRGeometryCollection::empty()
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRGeometryCollection::clone() const
+OGRGeometryCollection *OGRGeometryCollection::clone() const
 
 {
-    OGRGeometryCollection *poNewGC =
-        OGRGeometryFactory::createGeometry(getGeometryType())->
-            toGeometryCollection();
-    poNewGC->assignSpatialReference( getSpatialReference() );
-    poNewGC->flags = flags;
-
-    for( auto&& poSubGeom: *this )
-    {
-        if( poNewGC->addGeometry( poSubGeom ) != OGRERR_NONE )
-        {
-            delete poNewGC;
-            return nullptr;
-        }
-    }
-
-    return poNewGC;
+    return new (std::nothrow) OGRGeometryCollection(*this);
 }
 
 /************************************************************************/
@@ -814,55 +800,72 @@ std::string OGRGeometryCollection::exportToWktInternal(const OGRWktOptions& opts
     OGRErr *err, std::string exclude) const
 {
     bool first = true;
-    size_t excludeSize = exclude.size();
-    std::string wkt;
+    const size_t excludeSize = exclude.size();
+    std::string wkt(getGeometryName());
+    wkt += wktTypeString(opts.variant);
 
-    for (int i = 0; i < nGeomCount; ++i)
+    try
     {
-        OGRGeometry *geom = papoGeoms[i];
-        std::string tempWkt = geom->exportToWkt(opts, err);
-        if (err && *err != OGRERR_NONE)
-            return std::string();
-
-        // For some strange reason we exclude the typename leader when using
-        // some geometries as part of a collection.
-        if (excludeSize && (tempWkt.compare(0, excludeSize, exclude) == 0))
+        for (int i = 0; i < nGeomCount; ++i)
         {
-            auto pos = tempWkt.find('(');
-            // We won't have an opening paren if the geom is empty.
-            if (pos == std::string::npos)
-                continue;
-            tempWkt = tempWkt.substr(pos);
+            OGRGeometry *geom = papoGeoms[i];
+            OGRErr subgeomErr = OGRERR_NONE;
+            std::string tempWkt = geom->exportToWkt(opts, &subgeomErr);
+            if (subgeomErr != OGRERR_NONE)
+            {
+                if (err)
+                    *err = subgeomErr;
+                return std::string();
+            }
+
+            // For some strange reason we exclude the typename leader when using
+            // some geometries as part of a collection.
+            if (excludeSize && (tempWkt.compare(0, excludeSize, exclude) == 0))
+            {
+                auto pos = tempWkt.find('(');
+                // We won't have an opening paren if the geom is empty.
+                if (pos == std::string::npos)
+                    continue;
+                tempWkt = tempWkt.substr(pos);
+            }
+
+            // Also strange, we allow the inclusion of ISO-only geometries (see
+            // OGRPolyhedralSurface) in a non-iso geometry collection.  In order
+            // to facilitate this, we need to rip the ISO bit from the string.
+            if (opts.variant != wkbVariantIso)
+            {
+                std::string::size_type pos;
+                if ((pos = tempWkt.find(" Z ")) != std::string::npos)
+                    tempWkt.erase(pos + 1, 2);
+                else if ((pos = tempWkt.find(" M ")) != std::string::npos)
+                    tempWkt.erase(pos + 1, 2);
+                else if ((pos = tempWkt.find(" ZM ")) != std::string::npos)
+                    tempWkt.erase(pos + 1, 3);
+            }
+
+            if (first)
+                wkt += '(';
+            else
+                wkt += ',';
+            first = false;
+            wkt += tempWkt;
         }
 
-        // Also strange, we allow the inclusion of ISO-only geometries (see
-        // OGRPolyhedralSurface) in a non-iso geometry collection.  In order
-        // to facilitate this, we need to rip the ISO bit from the string.
-        if (opts.variant != wkbVariantIso)
-        {
-            std::string::size_type pos;
-            if ((pos = tempWkt.find(" Z ")) != std::string::npos)
-                tempWkt.erase(pos + 1, 2);
-            else if ((pos = tempWkt.find(" M ")) != std::string::npos)
-                tempWkt.erase(pos + 1, 2);
-            else if ((pos = tempWkt.find(" ZM ")) != std::string::npos)
-                tempWkt.erase(pos + 1, 3);
-        }
-
-        if (!first)
-            wkt += std::string(",");
-        first = false;
-        wkt += tempWkt;
+        if (err)
+            *err = OGRERR_NONE;
+        if (first)
+            wkt += "EMPTY";
+        else
+            wkt += ')';
+        return wkt;
     }
-
-    if (err)
-        *err = OGRERR_NONE;
-    if (wkt.empty())
-        wkt += "EMPTY";
-    else
-        wkt = "(" + wkt + ")";
-     wkt = getGeometryName() + wktTypeString(opts.variant) + wkt;
-    return wkt;
+    catch( const std::bad_alloc& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        if (err)
+            *err = OGRERR_FAILURE;
+        return std::string();
+    }
 }
 //! @endcond
 

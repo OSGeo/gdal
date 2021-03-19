@@ -927,8 +927,8 @@ class netCDFDataset final: public GDALPamDataset
 
     static double       rint( double );
 
-    double       FetchCopyParm( const char *pszGridMappingValue,
-                                const char *pszParm, double dfDefault,
+    double       FetchCopyParam( const char *pszGridMappingValue,
+                                const char *pszParam, double dfDefault,
                                 bool *pbFound=nullptr );
 
     char **      FetchStandardParallels( const char *pszGridMappingValue );
@@ -979,7 +979,7 @@ class netCDFDataset final: public GDALPamDataset
 
     CPLErr DetectAndFillSGLayers( int ncid );
     CPLErr LoadSGVarIntoLayer( int ncid, int nc_basevarId );
-    
+
 
 #ifdef NETCDF_HAS_NC4
     static GDALDataset *OpenMultiDim( GDALOpenInfo * );

@@ -388,10 +388,10 @@ std::vector<std::shared_ptr<GDALDimension>> GDALGroup::GetDimensions(
 /** Return structural information on the group.
  *
  * This may be the compression, etc..
- * 
+ *
  * The return value should not be freed and is valid until GDALGroup is
  * released or this function called again.
- * 
+ *
  * This is the same as the C function GDALGroupGetStruturalInfo().
  */
 CSLConstList GDALGroup::GetStructuralInfo() const
@@ -538,7 +538,7 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
 /** Copy the content of a group into a new (generally empty) group.
  *
  * @param poDstRootGroup Destination root group. Must NOT be nullptr.
- * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behavior
+ * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcGroup Source group. Must NOT be nullptr.
  * @param bStrict Whether to enable stict mode. In strict mode, any error will
@@ -983,7 +983,7 @@ std::shared_ptr<GDALMDArray> GDALGroup::OpenMDArrayFromFullname(
  *                       the search should be started. If this is a non-empty
  *                       string, the group on which this method is called should
  *                       nominally be the root group (otherwise the path will
- *                       be interpretated as from the current group)
+ *                       be interpreted as from the current group)
  * @param papszOptions options to pass to OpenMDArray()
  * @since GDAL 3.2
  */
@@ -1806,7 +1806,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  * aligned on those tile/block boundaries will be more efficient.
  *
  * The returned number of elements in the vector is the same as
- * GetDimensionCount(). A value of 0 should be interpretated as no hint regarding
+ * GetDimensionCount(). A value of 0 should be interpreted as no hint regarding
  * the natural block size along the considered dimension.
  * "Flat" arrays will typically return a vector of values set to 0.
  *
@@ -1819,7 +1819,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  *
  * This is the same as the C function GDALMDArrayGetBlockSize().
  *
- * @return the block size, in number of elemnts along each dimension.
+ * @return the block size, in number of elements along each dimension.
  */
 std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
 {
@@ -1842,7 +1842,7 @@ std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
  *
  * @param nMaxChunkMemory Maximum amount of memory, in bytes, to use for the chunk.
  *
- * @return the chunk size, in number of elemnts along each dimension.
+ * @return the chunk size, in number of elements along each dimension.
  */
 std::vector<size_t> GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
 {
@@ -1936,12 +1936,12 @@ std::vector<size_t> GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunk
 /************************************************************************/
 
 /** Set the variable unit.
- * 
+ *
  * Values should conform as much as possible with those allowed by
  * the NetCDF CF conventions:
  * http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#units
  * but others might be returned.
- * 
+ *
  * Few examples are "meter", "degrees", "second", ...
  * Empty value means unknown.
  *
@@ -1963,12 +1963,12 @@ bool GDALMDArray::SetUnit(CPL_UNUSED const std::string& osUnit)
 /************************************************************************/
 
 /** Return the array unit.
- * 
+ *
  * Values should conform as much as possible with those allowed by
  * the NetCDF CF conventions:
  * http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#units
  * but others might be returned.
- * 
+ *
  * Few examples are "meter", "degrees", "second", ...
  * Empty value means unknown.
  *
@@ -1985,7 +1985,7 @@ const std::string& GDALMDArray::GetUnit() const
 /************************************************************************/
 
 /** Assign a spatial reference system object to the the array.
- * 
+ *
  * This is the same as the C function GDALMDArraySetSpatialRef().
  */
 bool GDALMDArray::SetSpatialRef(CPL_UNUSED const OGRSpatialReference* poSRS)
@@ -1999,7 +1999,7 @@ bool GDALMDArray::SetSpatialRef(CPL_UNUSED const OGRSpatialReference* poSRS)
 /************************************************************************/
 
 /** Return the spatial reference system object associated with the array.
- * 
+ *
  * This is the same as the C function GDALMDArrayGetSpatialRef().
  */
 std::shared_ptr<OGRSpatialReference> GDALMDArray::GetSpatialRef() const
@@ -3055,7 +3055,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray* poSrcArray,
 
 /** Copy the content of an array into a new (generally empty) array.
  *
- * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behavior
+ * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcArray Source array. Should NOT be nullptr.
  * @param bStrict Whether to enable stict mode. In strict mode, any error will
@@ -3143,7 +3143,7 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset* poSrcDS,
                 {
                     return false;
                 }
-                bool bRet = 
+                bool bRet =
                     poDstArray->Write(chunkArrayStartIdx,
                                        chunkCount,
                                        nullptr, nullptr,
@@ -3236,12 +3236,12 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset* poSrcDS,
 /************************************************************************/
 
 /** Return structural information on the array.
- * 
+ *
  * This may be the compression, etc..
- * 
+ *
  * The return value should not be freed and is valid until GDALMDArray is
  * released or this function called again.
- * 
+ *
  * This is the same as the C function GDALMDArrayGetStruturalInfo().
  */
 CSLConstList GDALMDArray::GetStructuralInfo() const
@@ -3283,16 +3283,19 @@ CSLConstList GDALMDArray::GetStructuralInfo() const
 bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
                              const size_t* count) const
 {
-    std::vector<GUInt64> tmp_arrayStartIdx;
     const auto nDimCount = GetDimensionCount();
-    if( arrayStartIdx == nullptr && nDimCount > 0 )
+    if( nDimCount == 0 )
+        return true;
+
+    std::vector<GUInt64> tmp_arrayStartIdx;
+    if( arrayStartIdx == nullptr )
     {
         tmp_arrayStartIdx.resize(nDimCount);
         arrayStartIdx = tmp_arrayStartIdx.data();
     }
 
     std::vector<size_t> tmp_count;
-    if( count == nullptr && nDimCount > 0 )
+    if( count == nullptr )
     {
         tmp_count.resize(nDimCount);
         const auto& dims = GetDimensions();
@@ -3961,7 +3964,7 @@ static std::shared_ptr<GDALMDArray> CreateFieldNameExtractArray(
  * https://www.numpy.org/devdocs/reference/arrays.indexing.html#basic-slicing-and-indexing
  * Or it can use field access by name. See
  * https://www.numpy.org/devdocs/reference/arrays.indexing.html#field-access
- * 
+ *
  * Multiple [] bracket elements can be concatenated, with a slice expression
  * or field name inside each.
  *
@@ -3969,7 +3972,7 @@ static std::shared_ptr<GDALMDArray> CreateFieldNameExtractArray(
  * indexes that apply to successive source dimensions, can be specified, using
  * integer indexing (e.g. 1), range indexing (start:stop:step), ellipsis (...)
  * or newaxis, using a comma separator.
- * 
+ *
  * Examples with a 2-dimensional array whose content is [[0,1,2,3],[4,5,6,7]].
  * <ul>
  * <li>GetView("[1][2]"): returns a 0-dimensional/scalar array with the value
@@ -4666,7 +4669,7 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64* arrayStartIdx,
     CPLAssert( nDTSize == 8 || nDTSize == 16 );
     const bool bIsBufferDataTypeNativeDataType = ( m_dt == bufferDataType );
     const bool bSelfAndParentHaveNoData =
-        m_bHasNoData && m_poParent->GetRawNoDataValue() != nullptr; 
+        m_bHasNoData && m_poParent->GetRawNoDataValue() != nullptr;
 
     double adfSrcNoData[2] = { 0, 0 };
     if( bSelfAndParentHaveNoData )
@@ -5137,7 +5140,7 @@ lbl_return_to_caller:
         VSIFree(pTempBuffer);
         return false;
     }
- 
+
     switch( oTmpBufferDT.GetNumericDataType() )
     {
         case GDT_Byte:
@@ -5205,7 +5208,7 @@ lbl_return_to_caller:
             break;
 
     }
- 
+
     VSIFree(pTempBuffer);
 
     return true;
@@ -6020,7 +6023,7 @@ GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
  *
  * @param pnValidCount Number of samples whose value is different from the nodata
  * value. (may be NULL)
- * 
+ *
  * @param pfnProgress a function to call to report progress, or NULL.
  *
  * @param pProgressData application data to pass to the progress function.
@@ -6103,7 +6106,7 @@ CPLErr GDALMDArray::GetStatistics( GDALDataset* poDS,
  *
  * @param pnValidCount Number of samples whose value is different from the nodata
  * value. (may be NULL)
- * 
+ *
  * @param pfnProgress a function to call to report progress, or NULL.
  *
  * @param pProgressData application data to pass to the progress function.
@@ -6456,7 +6459,7 @@ GDALExtendedDataType GDALExtendedDataType::Create(
 /** Return a new GDALExtendedDataType of class GEDTC_STRING.
  *
  * This is the same as the C function GDALExtendedDataTypeCreateString().
- * 
+ *
  * @param nMaxStringLength maximum length of a string in bytes. 0 if unknown/unlimited
  */
 GDALExtendedDataType GDALExtendedDataType::CreateString(size_t nMaxStringLength)
@@ -7418,10 +7421,10 @@ GDALAttributeH *GDALGroupGetAttributes(GDALGroupH hGroup, size_t* pnCount,
 /** Return structural information on the group.
  *
  * This may be the compression, etc..
- * 
+ *
  * The return value should not be freed and is valid until GDALGroup is
  * released or this function called again.
- * 
+ *
  * This is the same as the C++ method GDALGroup::GetStruturalInfo().
  */
 CSLConstList GDALGroupGetStructuralInfo(GDALGroupH hGroup)
@@ -8160,7 +8163,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int* pbHasValue,
  * aligned on those tile/block boundaries will be more efficient.
  *
  * The returned number of elements in the vector is the same as
- * GetDimensionCount(). A value of 0 should be interpretated as no hint regarding
+ * GetDimensionCount(). A value of 0 should be interpreted as no hint regarding
  * the natural block size along the considered dimension.
  * "Flat" arrays will typically return a vector of values set to 0.
  *
@@ -8173,7 +8176,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int* pbHasValue,
  *
  * This is the same as the C++ method GDALAbstractMDArray::GetBlockSize().
  *
- * @return the block size, in number of elemnts along each dimension.
+ * @return the block size, in number of elements along each dimension.
  */
 GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
 {
@@ -8208,7 +8211,7 @@ GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
  * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
  * @param nMaxChunkMemory Maximum amount of memory, in bytes, to use for the chunk.
  *
- * @return the chunk size, in number of elemnts along each dimension.
+ * @return the chunk size, in number of elements along each dimension.
  */
 
 size_t *GDALMDArrayGetProcessingChunkSize(GDALMDArrayH hArray, size_t *pnCount,
@@ -8234,10 +8237,10 @@ size_t *GDALMDArrayGetProcessingChunkSize(GDALMDArrayH hArray, size_t *pnCount,
 /** Return structural information on the array.
  *
  * This may be the compression, etc..
- * 
+ *
  * The return value should not be freed and is valid until GDALMDArray is
  * released or this function called again.
- * 
+ *
  * This is the same as the C++ method GDALMDArray::GetStruturalInfo().
  */
 CSLConstList GDALMDArrayGetStructuralInfo(GDALMDArrayH hArray)
@@ -8345,12 +8348,12 @@ GDALMDArrayH GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions)
 /************************************************************************/
 
 /** Set the variable unit.
- * 
+ *
  * Values should conform as much as possible with those allowed by
  * the NetCDF CF conventions:
  * http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#units
  * but others might be returned.
- * 
+ *
  * Few examples are "meter", "degrees", "second", ...
  * Empty value means unknown.
  *
@@ -8371,18 +8374,18 @@ int GDALMDArraySetUnit(GDALMDArrayH hArray, const char* pszUnit)
 /************************************************************************/
 
 /** Return the array unit.
- * 
+ *
  * Values should conform as much as possible with those allowed by
  * the NetCDF CF conventions:
  * http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html#units
  * but others might be returned.
- * 
+ *
  * Few examples are "meter", "degrees", "second", ...
  * Empty value means unknown.
- * 
+ *
  * The return value should not be freed and is valid until GDALMDArray is
  * released or this function called again.
- * 
+ *
  * This is the same as the C++ method GDALMDArray::GetUnit().
  */
 const char* GDALMDArrayGetUnit(GDALMDArrayH hArray)
@@ -8397,7 +8400,7 @@ const char* GDALMDArrayGetUnit(GDALMDArrayH hArray)
 /************************************************************************/
 
 /** Assign a spatial reference system object to the the array.
- * 
+ *
  * This is the same as the C++ method GDALMDArray::SetSpatialRef().
  * @return TRUE in case of success.
  */
@@ -8413,7 +8416,7 @@ int GDALMDArraySetSpatialRef(GDALMDArrayH hArray,
 /************************************************************************/
 
 /** Return the spatial reference system object associated with the array.
- * 
+ *
  * This is the same as the C++ method GDALMDArray::GetSpatialRef().
  *
  * The returned object must be freed with OSRDestroySpatialReference().
@@ -9164,7 +9167,7 @@ bool GDALAttributeString::IRead(const GUInt64* ,
     if( bufferDataType.GetClass() != GEDTC_STRING )
         return false;
     char* pszStr = static_cast<char*>(VSIMalloc(m_osValue.size() + 1));
-    if( !pszStr ) 
+    if( !pszStr )
         return false;
     memcpy(pszStr, m_osValue.c_str(), m_osValue.size() + 1);
     *static_cast<char**>(pDstBuffer) = pszStr;

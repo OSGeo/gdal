@@ -222,6 +222,8 @@ public:
         {
             if (*it == nullptr) continue;
             const char* psName = CPLGetXMLValue( *it, "Name", nullptr );
+            if( psName == nullptr )
+                continue;
             const char* psTypeRef = CPLGetXMLValue( *it, "Type.REF", nullptr );
             if (psTypeRef == nullptr) //Assoc Role
                 AddField(psName, OFTString); //FIXME: numeric?

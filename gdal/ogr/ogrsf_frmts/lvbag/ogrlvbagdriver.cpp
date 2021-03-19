@@ -38,14 +38,10 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( !poOpenInfo->bStatOK )
         return FALSE;
     if( poOpenInfo->bIsDirectory )
-        return -1;  // Unsure.
+        return -1;  // Check later
     if( poOpenInfo->fpL == nullptr )
         return FALSE;
  
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
-    if( !EQUAL(osExt, "xml") )
-        return FALSE;
-
     auto pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
     if( poOpenInfo->nHeaderBytes == 0 || pszPtr[0] != '<' )
         return FALSE;
@@ -74,32 +70,29 @@ GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
         poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
+    const char *pszFilename = poOpenInfo->pszFilename;
     auto poDS = std::unique_ptr<OGRLVBAGDataSource>{
         new OGRLVBAGDataSource{} };
-    poDS->SetDescription(poOpenInfo->pszFilename);
+    poDS->SetDescription(pszFilename);
 
     if( !poOpenInfo->bIsDirectory && poOpenInfo->fpL != nullptr )
     {
-        if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions ) )
+        if( !poDS->Open( pszFilename, poOpenInfo->papszOpenOptions ) )
             poDS.reset();
     }
     else if( poOpenInfo->bIsDirectory && poOpenInfo->fpL == nullptr )
     {
-        char **papszNames = VSIReadDir(poOpenInfo->pszFilename);
+        char **papszNames = VSIReadDir(pszFilename);
         for( int i = 0; papszNames != nullptr && papszNames[i] != nullptr; ++i )
         {
             const CPLString oSubFilename =
-                CPLFormFilename(poOpenInfo->pszFilename, papszNames[i], nullptr);
+                CPLFormFilename(pszFilename, papszNames[i], nullptr);
 
             if( EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], "..") )
                 continue;
 
-            CPLString osExt(CPLGetExtension(oSubFilename));
-            if( !EQUAL(osExt, "xml") )
-                continue;
-
             GDALOpenInfo oOpenInfo{ oSubFilename, GA_ReadOnly };
-            if( !OGRLVBAGDriverIdentify(&oOpenInfo) )
+            if( OGRLVBAGDriverIdentify(&oOpenInfo) != TRUE )
                 continue;
 
             if( !poDS->Open( oSubFilename, poOpenInfo->papszOpenOptions ) )

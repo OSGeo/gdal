@@ -75,9 +75,6 @@ void OGRRegisterAllInternal()
 #ifdef MEM_ENABLED
     RegisterOGRMEM();
 #endif
-#ifdef BNA_ENABLED
-    RegisterOGRBNA();
-#endif
 #ifdef CSV_ENABLED
     RegisterOGRCSV();
 #endif
@@ -159,9 +156,6 @@ void OGRRegisterAllInternal()
 #ifdef FGDB_ENABLED
     RegisterOGRFileGDB();
 #endif
-#ifdef XPLANE_ENABLED
-    RegisterOGRXPlane();
-#endif
 #ifdef DWG_ENABLED
     RegisterOGRDWG();
 #endif
@@ -208,12 +202,6 @@ void OGRRegisterAllInternal()
 #ifdef GPSBABEL_ENABLED
     RegisterOGRGPSBabel();
 #endif
-#ifdef SUA_ENABLED
-    RegisterOGRSUA();
-#endif
-#ifdef OPENAIR_ENABLED
-    RegisterOGROpenAir();
-#endif
 #ifdef PDS_ENABLED
     RegisterOGRPDS();
 #endif
@@ -223,12 +211,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef SOSI_ENABLED
     RegisterOGRSOSI();
-#endif
-#ifdef HTF_ENABLED
-    RegisterOGRHTF();
-#endif
-#ifdef AERONAVFAA_ENABLED
-    RegisterOGRAeronavFAA();
 #endif
 #ifdef GEOMEDIA_ENABLED
     RegisterOGRGeomedia();
@@ -250,12 +232,6 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef ARCGEN_ENABLED
     RegisterOGRARCGEN();
-#endif
-#ifdef SEGUKOOA_ENABLED
-    RegisterOGRSEGUKOOA();
-#endif
-#ifdef SEGY_ENABLED
-    RegisterOGRSEGY();
 #endif
 #ifdef XLS_ENABLED
     RegisterOGRXLS();

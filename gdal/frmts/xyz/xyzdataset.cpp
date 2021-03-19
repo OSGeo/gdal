@@ -446,8 +446,8 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 else
                 {
                     nLastYOff = nBlockYOff;
-                    return CE_None;
                 }
+                return CE_None;
             }
             poGDS->nLineNum ++;
 

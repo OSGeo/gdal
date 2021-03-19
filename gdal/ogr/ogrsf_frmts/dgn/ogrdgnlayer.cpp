@@ -155,20 +155,20 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
-/*      ULink                                                           */
+/*      Text                                                            */
 /* -------------------------------------------------------------------- */
-    oField.SetName( "ULink" );
+    oField.SetName( "Text" );
     oField.SetType( OFTString );
-    oField.SetSubType( OFSTJSON );
     oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
-/*      Text                                                            */
+/*      ULink                                                           */
 /* -------------------------------------------------------------------- */
-    oField.SetName( "Text" );
+    oField.SetName( "ULink" );
     oField.SetType( OFTString );
+    oField.SetSubType( OFSTJSON );
     oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
@@ -348,17 +348,18 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     int nLinkType = 0;
     int nLinkSize = 0;
 
+    // coverity[tained_data]
     unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                               anEntityNum + iLink, anMSLink + iLink, &nLinkSize);
 
     while( pabyData )
     {
         CPLJSONArray previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-        if (!previousValues.IsValid() ) 
+        if (!previousValues.IsValid() )
         {
             uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
             previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-        } 
+        }
         CPLJSONArray rawWords;
         for( int i=0; i < nLinkSize-1; i+=2 )
         {
@@ -367,7 +368,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         CPLJSONObject theNewObject = CPLJSONObject();
         theNewObject.Add( "size", nLinkSize );
         previousValues.Add( theNewObject );
-        switch( nLinkType ) 
+        switch( nLinkType )
         {
             case 24721: // OdDgDBLinkage::kOracle
             {
@@ -383,11 +384,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             break;
             case 6549: // 0x1995 Application ID by IPCC/Portugal
             {
-                theNewObject.Add( "domain", CPLSPrintf("0x%02x", pabyData[1] ) );
-                theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pabyData[0] ) );
-                theNewObject.Add( "family", CPLSPrintf("0x%02x", pabyData[3] ) );
-                theNewObject.Add( "object", CPLSPrintf("0x%02x", pabyData[2] ) );
-                theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pabyData[1], pabyData[0], pabyData[3], pabyData[2] ) );
+                theNewObject.Add( "domain", CPLSPrintf("0x%02x", pabyData[5] ) );
+                theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pabyData[4] ) );
+                theNewObject.Add( "family", CPLSPrintf("0x%02x", pabyData[7] ) );
+                theNewObject.Add( "object", CPLSPrintf("0x%02x", pabyData[6] ) );
+                theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pabyData[5], pabyData[4], pabyData[7], pabyData[6] ) );
                 theNewObject.Add( "type", "IPCC/Portugal" );
             }
             break;
@@ -414,6 +415,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         anEntityNum[nLinkCount] = 0;
         anMSLink[nLinkCount] = 0;
 
+        // coverity[tained_data]
         pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                                   anEntityNum+nLinkCount, anMSLink+nLinkCount,
                                   &nLinkSize);

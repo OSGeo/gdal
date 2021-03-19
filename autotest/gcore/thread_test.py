@@ -31,12 +31,6 @@
 
 import threading
 
-try:
-    import numpy  # noqa
-    numpy_available = True
-except ImportError:
-    numpy_available = False
-
 from osgeo import gdal
 import pytest
 
@@ -62,8 +56,7 @@ def thread_test_1_worker(args_dict):
 
 def test_thread_test_1():
 
-    if not numpy_available:
-        pytest.skip()
+    pytest.importorskip('numpy')
 
     threads = []
     args_array = []

@@ -272,7 +272,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
 
     const int nBands = poGDS->GetRasterCount();
     const int nLine = (poGDS->m_sImageHeader.nImageDescriptor & (1 << 5)) ?
-                            nBlockYOff : nRasterYSize - 1 - nBlockYOff; 
+                            nBlockYOff : nRasterYSize - 1 - nBlockYOff;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     if( !poGDS->m_anScanlineOffsets.empty() ) // RLE
     {
@@ -280,7 +280,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
         {
             for( int i = poGDS->m_nLastLineKnownOffset; i < nLine; i++ )
             {
-                if( IReadBlock(0, 
+                if( IReadBlock(0,
                            (poGDS->m_sImageHeader.nImageDescriptor & (1 << 5)) ?
                                 i : nRasterYSize - 1 - i,
                            nullptr) != CE_None )
@@ -616,6 +616,8 @@ GDALDataset* GDALTGADataset::Open(GDALOpenInfo* poOpenInfo)
         sHeader.eImageType == RLE_GRAYSCALE ||
         sHeader.eImageType == RLE_TRUE_COLOR )
     {
+        // nHeight is a GUInt16, so well bounded...
+        // coverity[tainted_data]
         poDS->m_anScanlineOffsets.resize(nHeight);
         poDS->m_anScanlineOffsets[0] = poDS->m_nImageDataOffset;
     }

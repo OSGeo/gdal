@@ -426,7 +426,6 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDSIn, int nBandIn )
     }
     else // also first band is missing .. do something for fail-safety
     {
-      eDataType = GDT_Byte; // default .. always works
       if (poDSIn->command.cDataConversion == 'N')
         eDataType = GDT_UInt16; // normal case: MSG 10 bits data
       else if (poDSIn->command.cDataConversion == 'B')

@@ -843,6 +843,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
 
             if(pbUsageError)
                 *pbUsageError = TRUE;
+            GDALGridOptionsFree(psOptionsToFree);
             return nullptr;
         }
 
@@ -859,6 +860,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
 
             if(pbUsageError)
                 *pbUsageError = TRUE;
+            GDALGridOptionsFree(psOptionsToFree);
             return nullptr;
         }
     }
@@ -1318,14 +1320,14 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
                 return nullptr;
             }
 
-            char **papszParms = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
-            const char* pszNoDataValue = CSLFetchNameValue( papszParms, "nodata" );
+            char **papszParams = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
+            const char* pszNoDataValue = CSLFetchNameValue( papszParams, "nodata" );
             if( pszNoDataValue != nullptr )
             {
                 psOptions->bNoDataSet = true;
                 psOptions->dfNoDataValue = CPLAtofM(pszNoDataValue);
             }
-            CSLDestroy(papszParms);
+            CSLDestroy(papszParams);
         }
         else if( papszArgv[i][0] == '-' )
         {

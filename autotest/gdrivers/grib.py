@@ -1213,28 +1213,113 @@ def test_grib_grib2_write_temperatures():
 
 ###############################################################################
 
+@pytest.mark.parametrize('datatype', [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName)
+def test_grib_grib2_write_nodata(datatype):
 
-def test_grib_grib2_write_nodata():
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, datatype)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).SetNoDataValue(123)
+    tmpfilename = '/vsimem/out.grb2'
+    options = [
+        'DATA_ENCODING=COMPLEX_PACKING'
+    ]
+    gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
 
-    for src_type in [ gdal.GDT_Byte, gdal.GDT_Float32 ]:
-        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, src_type)
-        src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
-        sr = osr.SpatialReference()
-        sr.SetFromUserInput('WGS84')
-        src_ds.SetProjection(sr.ExportToWkt())
-        src_ds.GetRasterBand(1).SetNoDataValue(123)
-        tmpfilename = '/vsimem/out.grb2'
-        options = [
-            'DATA_ENCODING=COMPLEX_PACKING'
-        ]
-        gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 123
+    got_vals = struct.unpack(4 * 'd', ds.ReadRaster())
+    ds = None
+    gdal.Unlink(tmpfilename)
+    for i in range(4):
+        assert got_vals[i] == 0.0
 
-        ds = gdal.Open(tmpfilename)
-        assert ds.GetRasterBand(1).GetNoDataValue() == 123
-        ds = None
-        gdal.Unlink(tmpfilename)
+###############################################################################
 
-    
+@pytest.mark.parametrize('datatype', [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName)
+def test_grib_grib2_write_nodata_only(datatype):
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, datatype)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).SetNoDataValue(12.3)
+    src_ds.WriteRaster(0, 0, 2, 2,
+                        struct.pack(4 * 'f', 12.3, 12.3, 12.3, 12.3),
+                        buf_type=gdal.GDT_Float32)
+    tmpfilename = '/vsimem/out.grb2'
+    options = [
+        'DATA_ENCODING=COMPLEX_PACKING'
+    ]
+    gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+
+    ds = gdal.Open(tmpfilename)
+    if datatype == gdal.GDT_Byte:
+        assert ds.GetRasterBand(1).GetNoDataValue() == 12
+    else:
+        assert ds.GetRasterBand(1).GetNoDataValue() == pytest.approx(12.3, rel=1e-4)
+    got_vals = struct.unpack(4 * 'd', ds.ReadRaster())
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if datatype == gdal.GDT_Byte:
+        expected_vals = (12, 12, 12, 12)
+    else:
+        expected_vals = (12.3, 12.3, 12.3, 12.3)
+    assert got_vals == pytest.approx(expected_vals, rel=1e-4)
+
+###############################################################################
+
+@pytest.mark.parametrize('datatype', [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName)
+def test_grib_grib2_write_full_OneData(datatype):
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, datatype)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).SetNoDataValue(123)
+    src_ds.WriteRaster(0, 0, 2, 2,
+                    struct.pack(4 * 'f', 25.4, 25.4, 25.4, 25.4),
+                    buf_type=gdal.GDT_Float32)
+    tmpfilename = '/vsimem/out.grb2'
+    options = [
+        'DATA_ENCODING=COMPLEX_PACKING'
+    ]
+    gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 123
+    got_vals = struct.unpack(4 * 'd', ds.ReadRaster())
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if (datatype == gdal.GDT_Byte):
+        expected_vals = (25, 25, 25, 25)
+    else:
+        expected_vals = (25.4, 25.4, 25.4, 25.4)
+    assert got_vals == pytest.approx(expected_vals, rel=1e-4)
+
+###############################################################################
+
+def test_grib_grib2_write_mix_nodata_and_a_single_data():
+    src_ds = gdal.Open('data/grib/one_value_and_nodata_points.grb2')
+    tmpfilename = '/vsimem/out.grb2'
+    options = [
+        'DATA_ENCODING=COMPLEX_PACKING',
+    ]
+    gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+    src_ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 9999
+    got_vals = struct.unpack(400 * 'd', ds.ReadRaster())
+    ds = None
+    gdal.Unlink(tmpfilename)
+    assert got_vals[0] == 9999
+    assert got_vals[6] == pytest.approx(0.01, rel=1e-4)
+
 ###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 

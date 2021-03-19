@@ -43,13 +43,13 @@
  * file using WEBP compression/decompression.
  */
 typedef struct {
-  uint16           nSamples;               /* number of samples per pixel */
+  uint16_t           nSamples;               /* number of samples per pixel */
   
   int              lossless;               /* lossy/lossless compression */
   int              quality_level;          /* compression level */
   WebPPicture      sPicture;               /* WebP Picture */
   WebPConfig       sEncoderConfig;         /* WebP encoder config */
-  uint8*           pBuffer;                /* buffer to hold raw data on encoding */
+  uint8_t*           pBuffer;                /* buffer to hold raw data on encoding */
   unsigned int     buffer_offset;          /* current offset into the buffer */
   unsigned int     buffer_size;
   
@@ -67,8 +67,8 @@ typedef struct {
 #define DecoderState(tif)       LState(tif)
 #define EncoderState(tif)       LState(tif)
 
-static int TWebPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s);
-static int TWebPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s);
+static int TWebPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s);
+static int TWebPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s);
 
 static
 int TWebPDatasetWriter(const uint8_t* data, size_t data_size,
@@ -79,7 +79,7 @@ int TWebPDatasetWriter(const uint8_t* data, size_t data_size,
   
   if ( (tif->tif_rawcc + (tmsize_t)data_size) > tif->tif_rawdatasize ) {
     TIFFErrorExt(tif->tif_clientdata, module,
-                 "Buffer too small by %" TIFF_SIZE_FORMAT " bytes.",
+                 "Buffer too small by %"TIFF_SIZE_FORMAT" bytes.",
                  (size_t) (tif->tif_rawcc + data_size - tif->tif_rawdatasize));
     return 0;
   } else {
@@ -94,7 +94,7 @@ int TWebPDatasetWriter(const uint8_t* data, size_t data_size,
  * Encode a chunk of pixels.
  */
 static int
-TWebPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
+TWebPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 {
   static const char module[] = "TWebPEncode";
   WebPState *sp = EncoderState(tif);
@@ -103,8 +103,8 @@ TWebPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
   assert(sp != NULL);
   assert(sp->state == LSTATE_INIT_ENCODE);
     
-  if( (uint64)sp->buffer_offset +
-                            (uint64)cc > sp->buffer_size )
+  if((uint64_t)sp->buffer_offset +
+     (uint64_t)cc > sp->buffer_size )
   {
       TIFFErrorExt(tif->tif_clientdata, module,
                    "Too many bytes to be written");
@@ -120,7 +120,7 @@ TWebPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 }
 
 static int
-TWebPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
+TWebPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 {
   static const char module[] = "WebPDecode";
   VP8StatusCode status = VP8_STATUS_OK;
@@ -159,7 +159,7 @@ TWebPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
     buf = WebPIDecGetRGB(sp->psDecoder, &current_y, NULL, NULL, &stride);
     
     if ((buf != NULL) &&
-        (occ <= stride * (current_y - sp->last_y))) {
+        (occ <= (tmsize_t)stride * (current_y - sp->last_y))) {
       memcpy(op,   
          buf + (sp->last_y * stride),
          occ);
@@ -196,8 +196,8 @@ static int
 TWebPSetupDecode(TIFF* tif)
 {
   static const char module[] = "WebPSetupDecode";
-  uint16 nBitsPerSample = tif->tif_dir.td_bitspersample;
-  uint16 sampleFormat = tif->tif_dir.td_sampleformat;
+  uint16_t nBitsPerSample = tif->tif_dir.td_bitspersample;
+  uint16_t sampleFormat = tif->tif_dir.td_sampleformat;
 
   WebPState* sp = DecoderState(tif);
   assert(sp != NULL);
@@ -248,10 +248,10 @@ TWebPSetupDecode(TIFF* tif)
 * Setup state for decoding a strip.
 */
 static int
-TWebPPreDecode(TIFF* tif, uint16 s)
+TWebPPreDecode(TIFF* tif, uint16_t s)
 {
   static const char module[] = "TWebPPreDecode";
-  uint32 segment_width, segment_height;
+  uint32_t segment_width, segment_height;
   WebPState* sp = DecoderState(tif);
   TIFFDirectory* td = &tif->tif_dir;
   (void) s;
@@ -313,8 +313,8 @@ static int
 TWebPSetupEncode(TIFF* tif)
 {
   static const char module[] = "WebPSetupEncode";
-  uint16 nBitsPerSample = tif->tif_dir.td_bitspersample;
-  uint16 sampleFormat = tif->tif_dir.td_sampleformat;
+  uint16_t nBitsPerSample = tif->tif_dir.td_bitspersample;
+  uint16_t sampleFormat = tif->tif_dir.td_sampleformat;
   
   WebPState* sp = EncoderState(tif);
   assert(sp != NULL);
@@ -390,10 +390,10 @@ TWebPSetupEncode(TIFF* tif)
 * Reset encoding state at the start of a strip.
 */
 static int
-TWebPPreEncode(TIFF* tif, uint16 s)
+TWebPPreEncode(TIFF* tif, uint16_t s)
 {
   static const char module[] = "TWebPPreEncode";
-  uint32 segment_width, segment_height;
+  uint32_t segment_width, segment_height;
   WebPState *sp = EncoderState(tif);
   TIFFDirectory* td = &tif->tif_dir;
 
@@ -567,7 +567,7 @@ TWebPCleanup(TIFF* tif)
 }
 
 static int
-TWebPVSetField(TIFF* tif, uint32 tag, va_list ap)
+TWebPVSetField(TIFF* tif, uint32_t tag, va_list ap)
 {
 	static const char module[] = "WebPVSetField";
   WebPState* sp = LState(tif);
@@ -601,7 +601,7 @@ TWebPVSetField(TIFF* tif, uint32 tag, va_list ap)
 }
 
 static int
-TWebPVGetField(TIFF* tif, uint32 tag, va_list ap)
+TWebPVGetField(TIFF* tif, uint32_t tag, va_list ap)
 {
   WebPState* sp = LState(tif);
 
@@ -649,7 +649,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   /*
   * Allocate state block so tag methods have storage to record values.
   */
-  tif->tif_data = (uint8*) _TIFFmalloc(sizeof(WebPState));
+  tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof(WebPState));
   if (tif->tif_data == NULL)
     goto bad;
   sp = LState(tif);

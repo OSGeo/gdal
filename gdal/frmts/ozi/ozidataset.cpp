@@ -266,6 +266,7 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     z_stream      stream;
+    memset(&stream, 0, sizeof(stream));
     stream.zalloc = (alloc_func)nullptr;
     stream.zfree = (free_func)nullptr;
     stream.opaque = (voidpf)nullptr;
@@ -537,7 +538,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!bOzi3 && nSeparator != 0x77777777)
     {
         /* Some files have 8 extra bytes before the marker. I'm not sure */
-        /* what they are used for. So just skeep them and hope that */
+        /* what they are used for. So just skip them and hope that */
         /* we'll find the marker */
         CPL_IGNORE_RET_VAL(ReadInt(fp));
         nSeparator = ReadInt(fp);

@@ -49,6 +49,9 @@ dnl Enable as much warnings as possible
 AX_CFLAGS_WARN_ALL(C_WFLAGS)
 AX_CXXFLAGS_WARN_ALL(CXX_WFLAGS)
 
+dnl Remove -Wdeclaration-after-statement that is no longer appropriate in C99
+C_WFLAGS=`echo "$C_WFLAGS " | sed "s/-Wdeclaration-after-statement //"`
+
 dnl For ICC: it needs -we10006 instead of -Werror to turn unknown options to errors
 dnl Some gcc/clang versions might succeed on this test, so also include -Werror in ERROR_ON_UNKNOWN_OPTIONS
 AX_CHECK_COMPILE_FLAG([-Werror -we10006],[ERROR_ON_UNKNOWN_OPTIONS="-Werror -we10006"],[ERROR_ON_UNKNOWN_OPTIONS="-Werror"])
@@ -76,7 +79,6 @@ AX_CHECK_COMPILE_FLAG([-Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CX
 
 dnl Error out on things that will fail with MSVC
 AX_CHECK_COMPILE_FLAG([-Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"],,[$ERROR_ON_UNKNOWN_OPTIONS])
-AX_CHECK_COMPILE_FLAG([-Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl -Wclobbered is not reliable on most gcc versions
 dnl AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"],,[$ERROR_ON_UNKNOWN_OPTIONS])
@@ -192,7 +194,6 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 CXXFLAGS=$SAVED_CXXFLAGS
 AC_LANG_POP([C++])
 
-
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
 AC_SUBST(C_WFLAGS,$C_WFLAGS)
 AC_SUBST(NO_UNUSED_PARAMETER_FLAG,$NO_UNUSED_PARAMETER_FLAG)
@@ -204,6 +205,7 @@ AC_SUBST(WARN_EFFCPLUSPLUS,$WARN_EFFCPLUSPLUS)
 
 dnl Checks for programs.
 AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_CXX
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
@@ -1616,9 +1618,9 @@ OGRFORMATS_ENABLED=
 OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
-AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers esric fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacta terragen tga til tsx usgsdem xpm xyz zmap])
+AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted elas envisat ers esric fit gff gsg gxf hf2 idrisi ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacta terragen tga til tsx usgsdem xpm xyz zmap])
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
-AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm htf jml mapml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
+AC_DEFUN([INTERNAL_DRIVERS],[arcgen avc cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm jml mapml mvt ntf openfilegdb pgdump rec s57 selafin shape svg sxf tiger vdv wasp])dnl
 AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas ogcapi])dnl
 AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic ngw plscenes wfs])dnl
 AC_DEFUN([SQLITE_FORMATS],[rasterlite mbtiles])dnl
@@ -4015,7 +4017,7 @@ m4_foreach_w([frmt],XERCES_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -4039,7 +4041,7 @@ m4_foreach_w([frmt],EXPAT_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -4130,7 +4132,7 @@ m4_foreach_w([frmt],ODBC_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 fi
 
@@ -4476,41 +4478,6 @@ fi
 AC_SUBST(HAVE_IDB,${HAVE_IDB})
 AC_SUBST(IDB_INC,${IDB_INC})
 AC_SUBST(IDB_LIB,${IDB_LIB})
-
-dnl ---------------------------------------------------------------------------
-dnl Check if epsilon library is available.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(epsilon,[  --with-epsilon[=ARG]    Include EPSILON support (ARG=no, yes or libepsilon install root path)],,)
-
-EPSILON_SETTING=no
-
-if test "$with_epsilon" = "yes" ; then
-
-  AC_CHECK_LIB(epsilon,eps_read_block_header,EPSILON_SETTING=yes,EPSILON_SETTING=no,)
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-lepsilon $LIBS"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-elif test "$with_epsilon" != "no" -a "$with_epsilon" != ""; then
-
-  AC_CHECK_LIB(epsilon,eps_read_block_header,EPSILON_SETTING=yes,EPSILON_SETTING=no,-L$with_epsilon/lib -lepsilon)
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-L$with_epsilon/lib -lepsilon $LIBS"
-    EXTRA_INCLUDES="-I$with_epsilon/include $EXTRA_INCLUDES"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-fi
-
-if test "$EPSILON_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="epsilon $OPT_GDAL_FORMATS"
-fi
 
 dnl ---------------------------------------------------------------------------
 dnl Check if webp library is available.
@@ -4879,7 +4846,7 @@ if test "$PDF_PLUGIN" != "yes" ; then
     if test "$LIBZ_SETTING" != "no" ; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED pdf"
     fi
-  fi 
+  fi
 fi
 
 
@@ -5412,7 +5379,7 @@ TILEDB_SETTING=no
 if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
 
   AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,)
-  
+
   if test "$TILEDB_SETTING" = "yes" ; then
     LIBS="-ltiledb $LIBS"
   else
@@ -5854,26 +5821,74 @@ dnl ---------------------------------------------------------------------------
 dnl Whether to include LERC in the build
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH([lerc],
-            AS_HELP_STRING([--without-lerc],
-               [Disable LERC library]),,)
+AC_ARG_WITH(lerc,
+    [  --with-lerc[=ARG]         Include libLerc support(ARG=yes/no/internal/path). Internal liblerc is required for MRF Lerc support. Internal or external libLerc may be used for internal libtiff Lerc support.],,,)
 
+HAVE_LERC=no
 AC_MSG_CHECKING([for LERC])
-if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
+if test "$with_lerc" = "internal"; then
     if test "$ac_cv_c_bigendian" = "yes"; then
-        HAVE_LERC=no
         AC_MSG_RESULT([disabled on big-endian])
     else
-        HAVE_LERC=yes
-        AC_MSG_RESULT([enabled])
+        HAVE_LERC=internal
+        AC_MSG_RESULT([enabled, internal])
     fi
-else
+elif test "$with_lerc" = "no"; then
     HAVE_LERC=no
     AC_MSG_RESULT([disabled by user])
+elif test "$with_lerc" = "yes" -o "x$with_lerc" = "x" ; then
+  lerc_lib_name="LercLib"
+  AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  if test "$lerc_lib" = "no" ; then
+    lerc_lib_name="Lerc"
+    AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  fi
+  if test "$lerc_lib" = "no" -a "$with_lerc" = "yes"; then
+    AC_MSG_ERROR([lerc library not found])
+  fi
+
+  AC_CHECK_HEADER(Lerc_c_api.h, [lerc_c_api_h=yes], [lerc_c_api_h=no])
+  if test "$lerc_c_api_h" = "no" -a "$with_lerc" = "yes"; then
+    AC_MSG_ERROR([Liblerc headers not found])
+  fi
+
+  if test "$lerc_lib" = "yes" -a "$lerc_c_api_h" = "yes"; then
+    HAVE_LERC=external
+    LIBS="$LIBS -l$lerc_lib_name"
+  else
+    if test "$ac_cv_c_bigendian" = "yes"; then
+        AC_MSG_RESULT([disabled on big-endian])
+    else
+        HAVE_LERC=internal
+        AC_MSG_RESULT([enabled, internal])
+    fi
+  fi
+else
+
+  ORIG_LIBS="$LIBS"
+  LIBS="-L$with_lerc/lib $LIBS"
+  lerc_lib_name="LercLib"
+  AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  if test "$lerc_lib" = "no" ; then
+    lerc_lib_name="Lerc"
+    AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  fi
+  if test "$lerc_lib" = "no"; then
+    AC_MSG_ERROR([lerc library not found])
+  fi
+
+  LIBS="-L$with_lerc/lib -l$lerc_lib_name $ORIG_LIBS"
+
+  if ! test -f "$with_lerc/include/Lerc_c_api.h"; then
+    AC_MSG_ERROR([Liblerc headers not found])
+  fi
+
+  HAVE_LERC=external
+  LERC_INCLUDE="-I$with_lerc/include"
 fi
 
 AC_SUBST(HAVE_LERC,$HAVE_LERC)
-
+AC_SUBST(LERC_INCLUDE,$LERC_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
 dnl Whether to include NULL driver in the build
@@ -6068,7 +6083,6 @@ LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
 LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])
-LOC_MSG([  EPSILON support:           ${EPSILON_SETTING}])
 LOC_MSG([  WebP support:              ${WEBP_SETTING}])
 LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])

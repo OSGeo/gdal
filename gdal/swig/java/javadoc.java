@@ -10270,12 +10270,12 @@ public class SpatialReference:public int ExportToMICoordSys(String[] argout)
  *
  * @param units an already allocated array of 1 string to receive units definition
  *
- * @param parms an already allocated array of 17 doubles to receive the 17
+ * @param params an already allocated array of 17 doubles to receive the 17
  * projection parameters will be assigned. See importFromPCI() for the list of parameters.
  *
  * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
-public class SpatialReference:public int ExportToPCI(String[] proj, String[] units, double[] parms)
+public class SpatialReference:public int ExportToPCI(String[] proj, String[] units, double[] params)
 
 /**
  * Convert this SRS into a nicely formatted WKT string for display to a person.
@@ -10354,7 +10354,7 @@ public class SpatialReference:public int ExportToProj4(String[] argout)
  * @param zone an already allocated array of 1 integer to receive the zone for UTM and State Plane
  * projection.
  *
- * @param parms n already allocated array of 15 doubles to receive
+ * @param params n already allocated array of 15 doubles to receive
  * 15 projection parameters. See importFromUSGS() for
  * the list of parameters.
  *
@@ -10363,7 +10363,7 @@ public class SpatialReference:public int ExportToProj4(String[] argout)
  * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 
-public class SpatialReference:public int ExportToUSGS(int[] projsys, int[] zone, double[] parms, int[] datum)
+public class SpatialReference:public int ExportToUSGS(int[] projsys, int[] zone, double[] params, int[] datum)
 
 /**
  * Convert this SRS into WKT format.
@@ -11050,7 +11050,7 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone,
  * </pre>
  *
  * If the datum code is negative, the first two values in the parameter array
- * (parm) are used to define the values as follows:
+ * (param) are used to define the values as follows:
  *
  * <ul>
  *
@@ -12199,7 +12199,7 @@ public interface ogrConstants:public final static int wkbMultiPolygon25D
 public interface ogrConstants:public final static int wkbGeometryCollection25D
 
 /**
- * MSB/Sun/Motoroloa: Most Significant Byte First
+ * MSB/Sun/Motorola: Most Significant Byte First
  */
 public interface ogrConstants:public final static int wkbXDR
 

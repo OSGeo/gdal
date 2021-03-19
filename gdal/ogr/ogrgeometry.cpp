@@ -372,7 +372,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
     {
         OGRErr err(OGRERR_NONE);
         OGRWktOptions opts;
-        
+
         opts.variant = wkbVariantIso;
         std::string wkt = exportToWkt(opts, &err);
         if( err == OGRERR_NONE )
@@ -1418,7 +1418,7 @@ OGRErr OGRGeometry::importFromWkb( const GByte* pabyData,
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
  * OGRERR_CORRUPT_DATA may be returned.
- * 
+ *
  * @since GDAL 2.3
  */
 
@@ -2149,7 +2149,13 @@ OGRGeometry::IsValid() const
 #else
         OGRBoolean bResult = FALSE;
 
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+        // Some invalid geometries, such as lines with one point, or
+        // rings that do not close, cannot be converted to GEOS.
+        // For validity checking we initialize the GEOS context with
+        // the warning handler as the error handler to avoid emitting
+        // CE_Failure when a geometry cannot be converted to GEOS.
+        GEOSContextHandle_t hGEOSCtxt = initGEOS_r( OGRGEOSWarningHandler, OGRGEOSWarningHandler );
+
         GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
 
         if( hThisGeosGeom != nullptr  )
@@ -3072,7 +3078,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
     else if ( eType == wkbGeometryCollection )
     {
         bool bCanConvertToMultiPoly = true;
-        bool bMustConvertToMultiPoly = true;
+        // bool bMustConvertToMultiPoly = true;
         OGRGeometryCollection* poGC = poLinearGeom->toGeometryCollection();
         for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
@@ -3080,7 +3086,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
                 wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if( eSubGeomType == wkbPolyhedralSurface || eSubGeomType == wkbTIN )
             {
-                bMustConvertToMultiPoly = true;
+                // bMustConvertToMultiPoly = true;
             }
             else if( eSubGeomType != wkbMultiPolygon &&
                      eSubGeomType != wkbPolygon )
@@ -3089,7 +3095,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
                 break;
             }
         }
-        if( bCanConvertToMultiPoly && bMustConvertToMultiPoly )
+        if( bCanConvertToMultiPoly /* && bMustConvertToMultiPoly */ )
         {
             OGRGeometry *poMultiPolygon = OGRGeometryFactory::forceTo(
                                 poLinearGeom->clone(), wkbMultiPolygon, nullptr );
@@ -3691,6 +3697,87 @@ OGRGeometryH OGR_G_MakeValid( OGRGeometryH hGeom )
 
     return reinterpret_cast<OGRGeometryH>(
         reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid());
+}
+
+/************************************************************************/
+/*                            Normalize()                               */
+/************************************************************************/
+
+/**
+ * \brief Attempts to bring geometry into normalized/canonical form.
+ *
+ * This method is the same as the C function OGR_G_Normalize().
+ *
+ * This function is built on the GEOS library; check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.3
+ */
+OGRGeometry *OGRGeometry::Normalize() const
+{
+#ifndef HAVE_GEOS
+    CPLError( CE_Failure, CPLE_NotSupported,
+                  "GEOS support not enabled." );
+        return nullptr;
+#else
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+    if( hGeosGeom != nullptr )
+    {
+
+        int hGEOSRet = GEOSNormalize_r( hGEOSCtxt, hGeosGeom );
+
+        if( hGEOSRet == 0 )
+        {
+             poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosGeom,
+                                                 this, nullptr);
+
+        } else
+        {
+            GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
+        }
+
+    }
+    freeGEOSContext( hGEOSCtxt );
+
+    return poOGRProduct;
+#endif
+}
+
+/************************************************************************/
+/*                         OGR_G_Normalize()                            */
+/************************************************************************/
+
+/**
+ * \brief Attempts to bring geometry into normalized/canonical form.
+ *
+ * This function is the same as the C++ method OGRGeometry::Normalize().
+ *
+ * This function is built on the GEOS library; check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ * @param hGeom The Geometry to normalize.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.3
+ */
+
+OGRGeometryH OGR_G_Normalize( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_Normalize", nullptr );
+
+    return OGRGeometry::ToHandle(OGRGeometry::FromHandle(hGeom)->Normalize());
 }
 
 /************************************************************************/
@@ -5934,8 +6021,13 @@ int OGRPreparedGeometryIntersects(
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     OGRGeometry* poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
-    if( hPreparedGeom == nullptr || poOtherGeom == nullptr )
+    if( hPreparedGeom == nullptr || poOtherGeom == nullptr
+        // The check for IsEmpty() is for buggy GEOS versions.
+        // See https://github.com/libgeos/geos/pull/423
+        || poOtherGeom->IsEmpty() )
+    {
         return FALSE;
+    }
 
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
@@ -5965,8 +6057,13 @@ int OGRPreparedGeometryContains(
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
     OGRGeometry* poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
-    if( hPreparedGeom == nullptr || poOtherGeom == nullptr )
+    if( hPreparedGeom == nullptr || poOtherGeom == nullptr
+        // The check for IsEmpty() is for buggy GEOS versions.
+        // See https://github.com/libgeos/geos/pull/423
+        || poOtherGeom->IsEmpty() )
+    {
         return FALSE;
+    }
 
     GEOSGeom hGEOSOtherGeom =
         poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);

@@ -2016,7 +2016,7 @@ void CPL_STDCALL CPLFreeConfig()
  * A configuration file is a text file in a .ini style format, that lists
  * configuration options and their values.
  * Lines starting with # are comment lines.
- * 
+ *
  * Example:
  * <pre>
  * [configoptions]
@@ -2027,9 +2027,11 @@ void CPL_STDCALL CPLFreeConfig()
  * This function is typically called by CPLLoadConfigOptionsFromPredefinedFiles()
  *
  * @param pszFilename File where to load configuration from.
+ * @param bOverrideEnvVars Whether configuration options from the configuration
+ *                         file should override environment variables.
  * @since GDAL 3.3
  */
-void CPLLoadConfigOptionsFromFile(const char* pszFilename)
+void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
 {
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if( fp == nullptr )
@@ -2057,7 +2059,20 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename)
             const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
             if( pszKey && pszValue )
             {
-                CPLSetConfigOption(pszKey, pszValue);
+                if( bOverrideEnvVars || getenv(pszKey) == nullptr )
+                {
+                    CPLDebugOnly("CPL",
+                                 "Setting configuration option %s=%s",
+                                 pszKey, pszValue);
+                    CPLSetConfigOption(pszKey, pszValue);
+                }
+                else
+                {
+                    CPLDebugOnly("CPL",
+                                 "Ignoring configuration option %s from "
+                                 "configuration file as it is already set "
+                                 "as an environment variable", pszKey);
+                }
             }
             CPLFree(pszKey);
         }
@@ -2072,7 +2087,7 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename)
 /** Load configuration from a set of predefined files.
  *
  * If the environment variable (or configuration option) GDAL_CONFIG_FILE is
- * set, then CPLLoadConfigOptionsFromFile() will be called with the value of 
+ * set, then CPLLoadConfigOptionsFromFile() will be called with the value of
  * this configuration option as the file location.
  *
  * Otherwise, for Unix builds, CPLLoadConfigOptionsFromFile() will be called
@@ -2083,6 +2098,10 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename)
  * on Unix builds (potentially overriding what was loaded with the sysconfdir)
  * or $(USERPROFILE)/.gdal/gdalrc on Windows builds.
  *
+ * CPLLoadConfigOptionsFromFile() will be called with bOverrideEnvVars = false,
+ * that is the value of environment variables previously set will be used instead
+ * of the value set in the configuration files.
+ *
  * This function is automatically called by GDALDriverManager() constructor
  *
  * @since GDAL 3.3
@@ -2092,14 +2111,14 @@ void CPLLoadConfigOptionsFromPredefinedFiles()
     const char* pszFile = CPLGetConfigOption("GDAL_CONFIG_FILE", nullptr);
     if( pszFile != nullptr )
     {
-        CPLLoadConfigOptionsFromFile(pszFile);
+        CPLLoadConfigOptionsFromFile(pszFile, false);
     }
     else
     {
 #ifdef SYSCONFDIR
         pszFile = CPLFormFilename(CPLFormFilename(SYSCONFDIR, "gdal", nullptr),
                                   "gdalrc", nullptr);
-        CPLLoadConfigOptionsFromFile(pszFile);
+        CPLLoadConfigOptionsFromFile(pszFile, false);
 #endif
 
 #ifdef WIN32
@@ -2111,7 +2130,7 @@ void CPLLoadConfigOptionsFromPredefinedFiles()
         {
             pszFile = CPLFormFilename(CPLFormFilename( pszHome, ".gdal", nullptr),
                                       "gdalrc", nullptr);
-            CPLLoadConfigOptionsFromFile(pszFile);
+            CPLLoadConfigOptionsFromFile(pszFile, false);
         }
     }
 }
@@ -2174,10 +2193,8 @@ constexpr double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
 double CPLDMSToDec( const char *is )
 
 {
-    int sign = 0;
-
     // Copy string into work space.
-    while( isspace(static_cast<unsigned char>(sign = *is)) )
+    while( isspace(static_cast<unsigned char>(*is)) )
         ++is;
 
     const char *p = is;
@@ -2189,7 +2206,8 @@ double CPLDMSToDec( const char *is )
     *s = '\0';
     // It is possible that a really odd input (like lots of leading
     // zeros) could be truncated in copying into work.  But...
-    sign = *(s = work);
+    s = work;
+    int sign = *s;
 
     if( sign == '+' || sign == '-' )
         s++;

@@ -52,6 +52,9 @@ static GDALDataset *OGRDB2DriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRDB2DriverIdentify(poOpenInfo) )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("DB2") )
+        return nullptr;
+
     CPLDebug( "OGRDB2DriverOpen", "pszFilename: '%s'",
               poOpenInfo->pszFilename);
 
@@ -78,6 +81,9 @@ static GDALDataset* OGRDB2DriverCreate( const char * pszFilename,
                                         GDALDataType eDT,
                                         char **papszOptions )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("DB2") )
+        return nullptr;
+
     OGRDB2DataSource   *poDS = new OGRDB2DataSource();
     CPLDebug( "OGRDB2DriverCreate", "pszFilename: '%s'", pszFilename);
     CPLDebug( "OGRDB2DriverCreate", "eDT: %d", eDT);

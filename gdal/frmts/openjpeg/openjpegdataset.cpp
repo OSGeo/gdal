@@ -456,7 +456,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      this request?                                                   */
 /* ==================================================================== */
     if( (nBufXSize < nXSize || nBufYSize < nYSize)
-        && GetOverviewCount() > 0 && eRWFlag == GF_Read )
+        && GetOverviewCount() > 0 )
     {
         int bTried;
         CPLErr eErr = TryOverviewRasterIO( eRWFlag,
@@ -2948,7 +2948,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
     if ( EQUAL( poSrcDS->GetDriverName(), "GEORASTER" ) )
     {
-        const char* pszGEOR_compress = poSrcDS->GetMetadataItem("COMPRESSION", 
+        const char* pszGEOR_compress = poSrcDS->GetMetadataItem("COMPRESSION",
                                                 "IMAGE_STRUCTURE");
 
         if( pszGEOR_compress == nullptr )
@@ -3028,7 +3028,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             {
                 VSIFWriteL( pBuffer, 1, nSize, fp );
                 nCount += nSize;
-                pfnProgress( (float) nCount / (float) nBlobSize, 
+                pfnProgress( (float) nCount / (float) nBlobSize,
                                  nullptr, pProgressData );
             }
 

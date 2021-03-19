@@ -314,7 +314,7 @@ private:
     int                 SetupCompression(GDALDataType eType,
                                          const char* pszFilename);
     static void         WriteTileJobFunc(void* pData);
-    CPLErr              InitCompressorData(char **papszParmList);
+    CPLErr              InitCompressorData(char **papszParamList);
     CPLErr              WriteTile(int nBlockXOff, int nBlockYOff,
                                   GByte* pabyData, size_t nBytes,
                                   GUInt32 nRawXSize, GUInt32 nRawYSize);

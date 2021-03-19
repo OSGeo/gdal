@@ -104,6 +104,9 @@ Configuration options set in the configuration file can later be overridden
 by calls to :cpp:func:`CPLSetConfigOption` or  :cpp:func:`CPLSetThreadLocalConfigOption`,
 or through the ``--config`` command line switch.
 
+The value of environment variables set before GDAL starts will be used instead
+of the value set in the configuration files.
+
 .. _list_config_options:
 
 List of configuration options and where they apply

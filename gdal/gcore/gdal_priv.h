@@ -2801,6 +2801,8 @@ int GDALCanFileAcceptSidecarFile(const char* pszFilename);
 
 bool GDALCanReliablyUseSiblingFileList(const char* pszFilename);
 
+bool GDALIsDriverDeprecatedForGDAL35StillEnabled(const char* pszDriverName, const char* pszExtraMsg = "");
+
 //! @endcond
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */

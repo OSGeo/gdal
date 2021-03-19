@@ -99,7 +99,7 @@ namespace nccfdriver
 
 
     /* OGR_SGFS_Transaction
-     * Abstract class for a commitable transaction
+     * Abstract class for a committable transaction
      *
      */
     class OGR_SGFS_Transaction

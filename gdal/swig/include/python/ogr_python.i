@@ -80,7 +80,7 @@
         if isinstance(value, slice):
             output = []
             step = value.step if value.step else 1
-            for i in xrange(value.start, value.stop, step):
+            for i in range(value.start, value.stop, step):
                 lyr = self.GetLayer(i)
                 if lyr is None:
                     return output
@@ -151,14 +151,14 @@
         if isinstance(value, slice):
             import sys
             output = []
-            if value.stop == sys.maxint:
-                #for an unending slice, sys.maxint is used
+            if value.stop == sys.maxsize:
+                #for an unending slice, sys.maxsize is used
                 #We need to stop before that or GDAL will write an
                 ##error to stdout
                 stop = len(self) - 1
             else:
                 stop = value.stop
-            for i in xrange(value.start, stop, value.step):
+            for i in range(value.start, stop, value.step):
                 feature = self.GetFeature(i)
                 if feature:
                     output.append(feature)
@@ -272,14 +272,14 @@
     # This makes it possible to fetch fields in the form "feature['area']".
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
-        if isinstance(key, (str, type(u''))):
+        if isinstance(key, str):
             fld_index = self._getfieldindex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
                 raise IndexError
         if fld_index < 0:
-            if isinstance(key, (str, type(u''))):
+            if isinstance(key, str):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
                 raise KeyError("Illegal field requested in GetField()")
@@ -291,14 +291,14 @@
     # This makes it possible to set fields in the form "feature['area'] = 123".
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
-        if isinstance(key, (str, type(u''))):
+        if isinstance(key, str):
             fld_index = self._getfieldindex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
                 raise IndexError
         if fld_index < 0:
-            if isinstance(key, (str, type(u''))):
+            if isinstance(key, str):
                 fld_index = self.GetGeomFieldIndex(key)
             if fld_index < 0:
                 raise KeyError("Illegal field requested in SetField()")
@@ -308,7 +308,7 @@
             return self.SetField2(fld_index, value)
 
     def GetField(self, fld_index):
-        if isinstance(fld_index, (str, type(u''))):
+        if isinstance(fld_index, str):
             fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise KeyError("Illegal field requested in GetField()")
@@ -359,21 +359,21 @@
 
         if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
             fld_index = args[0]
-            if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
+            if isinstance(fld_index, str):
                 fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
 
-        if len(args) == 2 and isinstance(args[1], type(u'')):
+        if len(args) == 2 and isinstance(args[1], str):
             fld_index = args[0]
-            if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
+            if isinstance(fld_index, str):
                 fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldString(self, fld_index, args[1])
 
         return _ogr.Feature_SetField(self, *args)
 
     def SetField2(self, fld_index, value):
-        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
+        if isinstance(fld_index, str):
             fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise KeyError("Illegal field requested in SetField2()")
@@ -601,10 +601,7 @@ class _MyHelper(object):
         self.original_help = help
 
         # Replace builtin help by ours
-        try:
-            import __builtin__ as builtins # Python 2
-        except ImportError:
-            import builtins # Python 3
+        import builtins
         builtins.help = self
 
     def __repr__(self):

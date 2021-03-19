@@ -865,7 +865,7 @@ void ILWISDataset::FlushCache()
 GDALDataset *ILWISDataset::Create(const char* pszFilename,
                                   int nXSize, int nYSize,
                                   int nBands, GDALDataType eType,
-                                  CPL_UNUSED char** papszParmList)
+                                  CPL_UNUSED char** papszParamList)
 {
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
@@ -917,11 +917,12 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     else
     {
         pszFileName = CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"mpl");
-        globalFile.reset(new IniFile(std::string(pszFileName)));
-        globalFile->SetKeyValue("Ilwis", "Type", "MapList");
-        globalFile->SetKeyValue("MapList", "GeoRef", "none.grf");
-        globalFile->SetKeyValue("MapList", "Size", std::string(strsize));
-        globalFile->SetKeyValue("MapList", "Maps", CPLSPrintf("%d", nBands));
+        auto iniFile = new IniFile(std::string(pszFileName));
+        iniFile->SetKeyValue("Ilwis", "Type", "MapList");
+        iniFile->SetKeyValue("MapList", "GeoRef", "none.grf");
+        iniFile->SetKeyValue("MapList", "Size", std::string(strsize));
+        iniFile->SetKeyValue("MapList", "Maps", CPLSPrintf("%d", nBands));
+        globalFile.reset(iniFile);
     }
 
     for( int iBand = 0; iBand < nBands; iBand++ )

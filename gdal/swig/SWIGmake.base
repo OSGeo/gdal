@@ -1,22 +1,21 @@
 
 SWIG = swig
 SWIGARGS = -Wall -I../include -I../include/$(BINDING) -I../include/$(BINDING)/docs
-SWIGOUTPUTDIR=
 
-WRAPPERS_WITHOUT_GNM = gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp
-WRAPPERS = $(WRAPPERS_WITHOUT_GNM) gnm_wrap.cpp
+WRAPPERS_WITHOUT_GNM = $(SWIGOUTPUTDIR)gdal_wrap.cpp $(SWIGOUTPUTDIR)gdalconst_wrap.c $(SWIGOUTPUTDIR)ogr_wrap.cpp $(SWIGOUTPUTDIR)osr_wrap.cpp
+WRAPPERS = $(WRAPPERS_WITHOUT_GNM) $(SWIGOUTPUTDIR)gnm_wrap.cpp
 
-gdal_wrap.cpp: ../include/gdal.i ../include/MajorObject.i ../include/Driver.i ../include/Dataset.i ../include/Band.i ../include/ColorTable.i ../include/cpl.i ../include/$(BINDING)/gdal_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i $(SWIG_INCLUDES)
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/gdal.i
+$(SWIGOUTPUTDIR)gdal_wrap.cpp: ../include/gdal.i ../include/MajorObject.i ../include/Driver.i ../include/Dataset.i ../include/Band.i ../include/ColorTable.i ../include/cpl.i ../include/$(BINDING)/gdal_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i $(SWIG_INCLUDES)
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ ../include/gdal.i
 
-gdalconst_wrap.c: ../include/gdalconst.i $(SWIG_INCLUDES)
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/gdalconst.i
+$(SWIGOUTPUTDIR)gdalconst_wrap.c: ../include/gdalconst.i $(SWIG_INCLUDES)
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -$(BINDING) -o $@ ../include/gdalconst.i
 
-ogr_wrap.cpp:  ../include/ogr.i ../include/$(BINDING)/ogr_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i $(SWIG_INCLUDES)
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/ogr.i
+$(SWIGOUTPUTDIR)ogr_wrap.cpp:  ../include/ogr.i ../include/$(BINDING)/ogr_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i $(SWIG_INCLUDES)
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ ../include/ogr.i
 
-osr_wrap.cpp:  ../include/osr.i ../include/$(BINDING)/osr_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i $(SWIG_INCLUDES)
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/osr.i
+$(SWIGOUTPUTDIR)osr_wrap.cpp:  ../include/osr.i ../include/$(BINDING)/osr_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i $(SWIG_INCLUDES)
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ ../include/osr.i
 
-gnm_wrap.cpp:  ../include/gnm.i ../include/$(BINDING)/gnm_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i $(SWIG_INCLUDES)
-	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $(SWIGOUTPUTDIR)$@ ../include/gnm.i
+$(SWIGOUTPUTDIR)gnm_wrap.cpp:  ../include/gnm.i ../include/$(BINDING)/gnm_$(BINDING).i ../include/$(BINDING)/typemaps_$(BINDING).i $(SWIG_INCLUDES)
+	$(SWIG) $(SWIGARGS) $(SWIGDEFINES) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ ../include/gnm.i

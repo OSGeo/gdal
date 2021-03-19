@@ -529,7 +529,7 @@ C bindings
                             int nCode );
     OGRErr  OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
     double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
-                            const char * pszParmName,
+                            const char * pszParamName,
                             double dfDefault,
                             OGRErr * );
 

@@ -442,12 +442,10 @@ gwE6fxOLyJDxuWRf\n
 # Read credentials from simulated GCE instance
 
 
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_eedai_gce_credentials():
 
     if gdaltest.eedai_drv is None:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdaltest.webserver_process = None

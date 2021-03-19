@@ -196,7 +196,7 @@ To include link to sample file, use the ``download`` directive::
 
 The result of this code will generate a standard link to an :download:`external file <example.txt>`
 
-To include a the contents of a file, use ``literalinclude`` directive::
+To include the contents of a file, use ``literalinclude`` directive::
 
    Example of :command:`gdalinfo` use:
    

@@ -269,72 +269,8 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
             '(tile at a zoom level too low)')
 
 
-
-def test_python2_handles_utf8_by_default():
-    if sys.version_info[0] >= 3:
-        pytest.skip()
-
-    return _test_utf8(should_raise_unicode=False)
-
-
-@pytest.mark.skip("This behaviour doesn't actually work as expected")
-def test_python2_gives_warning_if_bad_lc_ctype_and_non_ascii_chars():
-    if sys.version_info[0] >= 3:
-        pytest.skip()
-
-    lc_ctype = os.environ.get("LC_CTYPE", "")
-    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
-
-    ret = _test_utf8(should_raise_unicode=False, quiet=False, should_display_warning=True)
-
-    os.environ['LC_CTYPE'] = lc_ctype
-
-    return ret
-
-
-def test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars():
-    if sys.version_info[0] >= 3:
-        pytest.skip()
-
-    lc_ctype = os.environ.get("LC_CTYPE", "")
-    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
-
-    ret = _test_utf8(should_raise_unicode=False,
-                     quiet=False, should_display_warning=False,
-                     input_file='./data/test_bounds_close_to_tile_bounds_x.vrt')
-
-    os.environ['LC_CTYPE'] = lc_ctype
-
-    return ret
-
-
-def test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder():
-    if sys.version_info[0] >= 3:
-        pytest.skip()
-
-    lc_ctype = os.environ.get("LC_CTYPE", "")
-    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
-
-    ret = _test_utf8(should_raise_unicode=False,
-                     quiet=False, should_display_warning=False,
-                     input_file='./data/漢字/test_bounds_close_to_tile_bounds_x.vrt')
-
-    os.environ['LC_CTYPE'] = lc_ctype
-
-    return ret
-
-
 def test_python3_handle_utf8_by_default():
-    if sys.version_info[0] < 3:
-        pytest.skip()
-
-    return _test_utf8(should_raise_unicode=False)
-
-
-def _test_utf8(should_raise_unicode=False,
-               quiet=True,
-               should_display_warning=False,
-               input_file="data/test_utf8_漢字.vrt"):
+    input_file = "data/test_utf8_漢字.vrt"
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
         pytest.skip()
@@ -346,27 +282,16 @@ def _test_utf8(should_raise_unicode=False,
     except OSError:
         pass
 
-    args = '-z 21 %s %s' % (input_file, out_folder)
-    if quiet:
-        args = "-q " + args
+    args = f'-q -z 21 {input_file} {out_folder}'
 
     try:
         ret = test_py_scripts.run_py_script(script_path, 'gdal2tiles', args)
         print(ret)
     except UnicodeEncodeError:
-        if should_raise_unicode:
-            return
         pytest.fail('Should be handling filenames with utf8 characters in this context')
 
-    assert not should_raise_unicode, \
-        'Should not be handling filenames with utf8 characters in this context'
-
-    if should_display_warning:
-        assert "WARNING" in ret and "LC_CTYPE" in ret, \
-            'Should display a warning message about LC_CTYPE variable'
-    else:
-        assert not ("WARNING" in ret and "LC_CTYPE" in ret), \
-            'Should not display a warning message about LC_CTYPE variable'
+    assert not ("WARNING" in ret and "LC_CTYPE" in ret), \
+        'Should not display a warning message about LC_CTYPE variable'
 
     try:
         shutil.rmtree(out_folder)

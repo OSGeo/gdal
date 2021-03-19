@@ -799,3 +799,12 @@ def test_tiff_srs_read_user_defined_geokeys():
     sr = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == ''
     assert sr is not None
+
+
+def test_tiff_srs_read_compoundcrs_without_gtcitation():
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
+
+    ds = gdal.Open('data/gtiff/compdcrs_without_gtcitation.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetName() == 'WGS 84 / UTM zone 32N + EGM08_Geoid'

@@ -121,7 +121,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
     int Unlink( const char *pszFilename ) override;
@@ -361,7 +362,8 @@ int VSISparseFileHandle::Eof()
 VSIVirtualHandle *
 VSISparseFileFilesystemHandler::Open( const char *pszFilename,
                                       const char *pszAccess,
-                                      bool /* bSetError */ )
+                                      bool /* bSetError */,
+                                      CSLConstList /* papszOptions */ )
 
 {
     if( !STARTS_WITH_CI(pszFilename, "/vsisparse/") )

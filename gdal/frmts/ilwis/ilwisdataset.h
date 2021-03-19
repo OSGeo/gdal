@@ -160,7 +160,7 @@ public:
     static GDALDataset *Create(const char* pszFilename,
                                int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char** papszParmList);
+                               char** papszParamList);
 
     virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr  SetGeoTransform( double * ) override;

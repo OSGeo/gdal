@@ -34,6 +34,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <vector>
 #include <string>
 

@@ -236,7 +236,7 @@ Utilities
 ogr2ogr / GDALVectorTranslate() is changed internally to remove the hack
 that was used for the OSM driver to use the new API, when
 ODsCRandomLayerRead is advertized. It checks if the output driver
-advertizes ODsCRandomLayerWrite, and if it does not, emit a warning, but
+advertises ODsCRandomLayerWrite, and if it does not, emit a warning, but
 still goes on proceeding with the conversion using random layer
 reading/writing.
 

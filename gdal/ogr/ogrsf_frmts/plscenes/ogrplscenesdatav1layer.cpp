@@ -105,14 +105,14 @@ OGRFeatureDefn* OGRPLScenesDataV1Layer::GetLayerDefn()
 /************************************************************************/
 
 void OGRPLScenesDataV1Layer::RegisterField(OGRFieldDefn* poFieldDefn,
-                                       const char* pszQueriableJSonName,
+                                       const char* pszQueryableJSonName,
                                        const char* pszPrefixedJSonName)
 {
     const int nIdx = m_poFeatureDefn->GetFieldCount();
     m_oMapPrefixedJSonFieldNameToFieldIdx[pszPrefixedJSonName] = nIdx;
-    if( pszQueriableJSonName )
+    if( pszQueryableJSonName )
     {
-        m_oMapFieldIdxToQueriableJSonFieldName[nIdx] = pszQueriableJSonName;
+        m_oMapFieldIdxToQueryableJSonFieldName[nIdx] = pszQueryableJSonName;
     }
     m_poFeatureDefn->AddFieldDefn(poFieldDefn);
 }
@@ -532,9 +532,9 @@ bool OGRPLScenesDataV1Layer::IsSimpleComparison(const swq_expr_node* poNode)
              poNode->nSubExprCount == 2 &&
              poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
              poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
-             m_oMapFieldIdxToQueriableJSonFieldName.find(
+             m_oMapFieldIdxToQueryableJSonFieldName.find(
                                     poNode->papoSubExpr[0]->field_index) !=
-                                m_oMapFieldIdxToQueriableJSonFieldName.end();
+                                m_oMapFieldIdxToQueryableJSonFieldName.end();
 }
 
 /************************************************************************/
@@ -662,7 +662,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                                     json_object_new_string("RangeFilter"));
                 json_object_object_add(poFilter, "field_name",
                                     json_object_new_string(
-                                        m_oMapFieldIdxToQueriableJSonFieldName[nFieldIdx]));
+                                        m_oMapFieldIdxToQueryableJSonFieldName[nFieldIdx]));
                 json_object* poConfig = json_object_new_object();
                 const double EPS = 1e-8;
                 json_object_object_add(poConfig, "gte",
@@ -681,7 +681,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                                     json_object_new_string("NumberInFilter"));
                 json_object_object_add(poFilter, "field_name",
                                     json_object_new_string(
-                                        m_oMapFieldIdxToQueriableJSonFieldName[nFieldIdx]));
+                                        m_oMapFieldIdxToQueryableJSonFieldName[nFieldIdx]));
                 json_object* poConfig = json_object_new_array();
                 json_object_array_add(poConfig,
                     (poNode->papoSubExpr[1]->field_type == SWQ_INTEGER) ?
@@ -700,7 +700,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                                 json_object_new_string("StringInFilter"));
             json_object_object_add(poFilter, "field_name",
                         json_object_new_string(
-                            m_oMapFieldIdxToQueriableJSonFieldName[nFieldIdx]));
+                            m_oMapFieldIdxToQueryableJSonFieldName[nFieldIdx]));
             json_object* poConfig = json_object_new_array();
             json_object_array_add(poConfig,
                 json_object_new_string(poNode->papoSubExpr[1]->string_value));
@@ -721,7 +721,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                                    json_object_new_string("RangeFilter"));
             json_object_object_add(poFilter, "field_name",
                                    json_object_new_string(
-                                       m_oMapFieldIdxToQueriableJSonFieldName[nFieldIdx]));
+                                       m_oMapFieldIdxToQueryableJSonFieldName[nFieldIdx]));
             json_object* poConfig = json_object_new_object();
             json_object_object_add(poConfig,
                 GetOperatorText(poNode->nOperation),
@@ -745,7 +745,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                                    json_object_new_string("DateRangeFilter"));
             json_object_object_add(poFilter, "field_name",
                     json_object_new_string(
-                        m_oMapFieldIdxToQueriableJSonFieldName[nFieldIdx]));
+                        m_oMapFieldIdxToQueryableJSonFieldName[nFieldIdx]));
             json_object* poConfig = json_object_new_object();
             json_object_object_add(poConfig,
                 GetOperatorText(poNode->nOperation),
@@ -760,9 +760,9 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
               poNode->nOperation == SWQ_IN &&
               poNode->nSubExprCount >= 2 &&
               poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
-              m_oMapFieldIdxToQueriableJSonFieldName.find(
+              m_oMapFieldIdxToQueryableJSonFieldName.find(
                                     poNode->papoSubExpr[0]->field_index) !=
-                                m_oMapFieldIdxToQueriableJSonFieldName.end() )
+                                m_oMapFieldIdxToQueryableJSonFieldName.end() )
     {
         const int nFieldIdx = poNode->papoSubExpr[0]->field_index;
         if( m_poFeatureDefn->GetFieldDefn(nFieldIdx)->GetType() == OFTString )
@@ -772,7 +772,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                                 json_object_new_string("StringInFilter"));
             json_object_object_add(poFilter, "field_name",
                         json_object_new_string(
-                            m_oMapFieldIdxToQueriableJSonFieldName[nFieldIdx]));
+                            m_oMapFieldIdxToQueryableJSonFieldName[nFieldIdx]));
             json_object* poConfig = json_object_new_array();
             json_object_object_add(poFilter, "config", poConfig);
             for( int i=1; i<poNode->nSubExprCount;i++)
@@ -796,7 +796,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                                 json_object_new_string("NumberInFilter"));
             json_object_object_add(poFilter, "field_name",
                         json_object_new_string(
-                            m_oMapFieldIdxToQueriableJSonFieldName[nFieldIdx]));
+                            m_oMapFieldIdxToQueryableJSonFieldName[nFieldIdx]));
             json_object* poConfig = json_object_new_array();
             json_object_object_add(poFilter, "config", poConfig);
             for( int i=1; i<poNode->nSubExprCount;i++)

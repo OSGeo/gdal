@@ -727,6 +727,9 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
           return nullptr;
    }
 
+  if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("MG4LIDAR") )
+      return nullptr;
+
    CPLXMLNode *psInputFile = CPLGetXMLNode( pxmlPCView, "InputFile" );
    if( psInputFile == nullptr )
    {

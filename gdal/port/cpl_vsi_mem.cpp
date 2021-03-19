@@ -167,7 +167,8 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
     int Unlink( const char *pszFilename ) override;
@@ -291,7 +292,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 
 VSIMemHandle::~VSIMemHandle()
 {
-    Close();
+    VSIMemHandle::Close();
 }
 
 /************************************************************************/
@@ -508,7 +509,8 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 VSIVirtualHandle *
 VSIMemFilesystemHandler::Open( const char *pszFilename,
                                const char *pszAccess,
-                               bool bSetError )
+                               bool bSetError,
+                               CSLConstList /* papszOptions */ )
 
 {
     CPLMutexHolder oHolder( &hMutex );

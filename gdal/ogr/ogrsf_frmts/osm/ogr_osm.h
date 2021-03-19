@@ -129,8 +129,8 @@ class OGROSMLayer final: public OGRLayer
     char                  szLaunderedFieldName[256];
     const char*           GetLaunderedFieldName(const char* pszName);
 
-    std::vector<char*>    apszUnsignificantKeys;
-    std::map<const char*, int, ConstCharComp> aoSetUnsignificantKeys;
+    std::vector<char*>    apszInsignificantKeys;
+    std::map<const char*, int, ConstCharComp> aoSetInsignificantKeys;
 
     std::vector<char*>    apszIgnoreKeys;
     std::map<const char*, int, ConstCharComp> aoSetIgnoreKeys;
@@ -209,9 +209,9 @@ class OGROSMLayer final: public OGRLayer
     int                 HasAttributeFilter() const { return m_poAttrQuery != nullptr; }
     int                 EvaluateAttributeFilter(OGRFeature* poFeature);
 
-    void                AddUnsignificantKey(const char* pszK);
+    void                AddInsignificantKey(const char* pszK);
     int                 IsSignificantKey(const char* pszK) const
-        { return aoSetUnsignificantKeys.find(pszK) == aoSetUnsignificantKeys.end(); }
+        { return aoSetInsignificantKeys.find(pszK) == aoSetInsignificantKeys.end(); }
 
     void                AddIgnoreKey(const char* pszK);
     void                AddWarnKey(const char* pszK);
@@ -373,7 +373,7 @@ class OGROSMDataSource final: public OGRDataSource
     bool                bEnableHashedIndex;
     /* values >= 0 are indexes of panReqIds. */
     /*        == -1 for unoccupied */
-    /*        < -1 are expressed as -nIndexToCollisonBuckets-2 where nIndexToCollisonBuckets point to psCollisionBuckets */
+    /*        < -1 are expressed as -nIndexToCollisionBuckets-2 where nIndexToCollisionBuckets point to psCollisionBuckets */
     int                *panHashedIndexes;
     CollisionBucket    *psCollisionBuckets;
     bool                bHashedIndexValid;

@@ -42,11 +42,8 @@ import struct
 def test_numpy_rw_multidim_init():
 
     gdaltest.numpy_drv = None
-    try:
-        # importing gdal_array will allow numpy driver registration
-        from osgeo import gdal_array  # noqa
-    except (ImportError, AttributeError):
-        pytest.skip()
+    # importing gdal_array will allow numpy driver registration
+    pytest.importorskip('osgeo.gdal_array')
 
     gdal.AllRegister()
 

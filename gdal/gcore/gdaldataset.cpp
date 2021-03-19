@@ -2560,7 +2560,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Call the format specific function.                              */
 /* -------------------------------------------------------------------- */
-    else if( eErr == CE_None )
+    else
     {
         eErr = IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
                          nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
@@ -4707,9 +4707,9 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
 
 /**
  \brief Abort any SQL statement running in the data store.
- 
+
  This function can be safely called from any thread (pending that the dataset object is still alive). Driver implementations will make sure that it can be called in a thread-safe way.
- 
+
  This might not be implemented by all drivers. At time of writing, only SQLite, GPKG and PG drivers implement it
 
  This method is the same as the C++ method GDALDataset::AbortSQL()
@@ -6330,7 +6330,7 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
 */
 
 OGRErr GDALDataset::AbortSQL(  )
-{  
+{
   CPLError(CE_Failure, CPLE_NotSupported, "AbortSQL is not supported for this driver.");
   return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -8218,7 +8218,7 @@ GDALRasterBand* GDALDataset::Bands::operator[](size_t iBand)
  \brief Return the root GDALGroup of this dataset.
 
  Only valid for multidimensional datasets.
- 
+
  This is the same as the C function GDALDatasetGetRootGroup().
 
  @since GDAL 3.1

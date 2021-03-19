@@ -455,7 +455,7 @@ EXAMPLE_RECURSIVE      = NO
 # directories that contain image that are included in the documentation (see
 # the \image command).
 
-IMAGE_PATH             = 
+IMAGE_PATH             =
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
@@ -531,12 +531,6 @@ VERBATIM_HEADERS       = YES
 # contains a lot of classes, structs, unions or interfaces.
 
 ALPHABETICAL_INDEX     = NO
-
-# If the alphabetical index is enabled (see ALPHABETICAL_INDEX) then
-# the COLS_IN_ALPHA_INDEX tag can be used to specify the number of columns
-# in which this list will be split (can be a number in the range [1..20])
-
-COLS_IN_ALPHA_INDEX    = 5
 
 # In case all classes in a project start with a common prefix, all
 # classes will be put under the same header in the alphabetical index.
@@ -691,12 +685,6 @@ MAKEINDEX_CMD_NAME     = makeindex
 # save some trees in general.
 
 COMPACT_LATEX          = NO
-
-# The PAPER_TYPE tag can be used to set the paper type that is used
-# by the printer. Possible values are: a4, a4wide, letter, legal and
-# executive. If left blank a4wide will be used.
-
-PAPER_TYPE             = a4wide
 
 # The EXTRA_PACKAGES tag can be to specify one or more names of LaTeX
 # packages that should be included in the LaTeX output.

@@ -13,10 +13,10 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_gff -DFRMT_terragen -DFRMT_gsg -DFRMT_cosar -DFRMT_pds \
 		-DFRMT_adrg -DFRMT_coasp -DFRMT_tsx -DFRMT_blx -DFRMT_til \
 		-DFRMT_r -DFRMT_northwood -DFRMT_saga -DFRMT_xyz -DFRMT_hf2 \
-		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg -DFRMT_e00grid \
+		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg \
 		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_iris -DFRMT_map -DFRMT_cals \
 		-DFRMT_safe -DFRMT_sentinel2 -DFRMT_derived -DFRMT_prf \
-		-DFRMT_sigdem -DFRMT_ignfheightasciigrid -DFRMT_tga -DFRMT_stacta
+		-DFRMT_sigdem -DFRMT_tga -DFRMT_stacta
 
 MOREEXTRA 	=	
 

@@ -347,12 +347,6 @@ rm -f $OUT/csv_fuzzer_seed_corpus.zip
 zip -r $OUT/csv_fuzzer_seed_corpus.zip ./*.csv >/dev/null
 cd $OLDPWD
 
-echo "Building bna_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data/bna
-rm -f $OUT/bna_fuzzer_seed_corpus.zip
-zip -r $OUT/bna_fuzzer_seed_corpus.zip ./*.bna >/dev/null
-cd $OLDPWD
-
 echo "Building xlsx_fuzzer_seed_corpus.zip"
 rm -f $OUT/xlsx_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD

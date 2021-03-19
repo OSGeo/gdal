@@ -649,10 +649,8 @@ def test_tiff_12bitjpeg():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', old_accum)
 
-    if gdal.GetLastErrorMsg().find(
-            'Unsupported JPEG data precision 12') != -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+    if gdal.GetLastErrorMsg().find('Unsupported JPEG data precision 12') != -1:
+        pytest.skip('12bit jpeg not available')
     elif ds is None:
         pytest.fail('failed to open 12bit jpeg file with unexpected error')
 
@@ -1215,16 +1213,9 @@ def test_tiff_direct_and_virtual_mem_io():
             data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type=dt)
             new_vals = []
             for i in range(4 * src_ds.RasterXSize * src_ds.RasterYSize):
-                if sys.version_info >= (3, 0, 0):
-                    new_vals.append(chr(data[2 * i]).encode('latin1'))
-                    new_vals.append(chr(255 - data[2 * i]).encode('latin1'))
-                else:
-                    new_vals.append(data[2 * i])
-                    new_vals.append(chr(255 - ord(data[2 * i])))
-            if sys.version_info >= (3, 0, 0):
-                data = ''.encode('latin1').join(new_vals)
-            else:
-                data = ''.join(new_vals)
+                new_vals.append(chr(data[2 * i]).encode('latin1'))
+                new_vals.append(chr(255 - data[2 * i]).encode('latin1'))
+            data = b''.join(new_vals)
             mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type=dt)
             src_ds = mem_ds
         elif dt == gdal.GDT_CInt16:
@@ -1233,20 +1224,11 @@ def test_tiff_direct_and_virtual_mem_io():
             data = src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, buf_type=dt)
             new_vals = []
             for i in range(4 * src_ds.RasterXSize * src_ds.RasterYSize):
-                if sys.version_info >= (3, 0, 0):
-                    new_vals.append(chr(data[4 * i]).encode('latin1'))
-                    new_vals.append(chr(data[4 * i]).encode('latin1'))
-                    new_vals.append(chr(255 - data[4 * i]).encode('latin1'))
-                    new_vals.append(chr(255 - data[4 * i]).encode('latin1'))
-                else:
-                    new_vals.append(data[4 * i])
-                    new_vals.append(data[4 * i])
-                    new_vals.append(chr(255 - ord(data[4 * i])))
-                    new_vals.append(chr(255 - ord(data[4 * i])))
-            if sys.version_info >= (3, 0, 0):
-                data = ''.encode('latin1').join(new_vals)
-            else:
-                data = ''.join(new_vals)
+                new_vals.append(chr(data[4 * i]).encode('latin1'))
+                new_vals.append(chr(data[4 * i]).encode('latin1'))
+                new_vals.append(chr(255 - data[4 * i]).encode('latin1'))
+                new_vals.append(chr(255 - data[4 * i]).encode('latin1'))
+            data = b''.join(new_vals)
             mem_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, data, buf_type=dt)
             src_ds = mem_ds
 
@@ -1998,15 +1980,12 @@ def test_tiff_read_empty_nodata_tag():
     ds = gdal.Open('data/empty_nodata.tif')
     assert ds.GetRasterBand(1).GetNoDataValue() is None
 
+
 ###############################################################################
 # Check that no auxiliary files are read with a simple Open(), reading
 # imagery and getting IMAGE_STRUCTURE metadata
-
-
+@pytest.mark.skipif(sys.platform != 'linux', reason='Incorrect platform')
 def test_tiff_read_strace_check():
-
-    if not sys.platform.startswith('linux'):
-        pytest.skip()
 
     python_exe = sys.executable
     cmd = "strace -f %s -c \"from osgeo import gdal; " % python_exe + (
@@ -2759,10 +2738,6 @@ def test_tiff_read_huge_implied_number_strips():
 
 
 def test_tiff_read_many_blocks():
-
-    # Runs super slow on some Windows configs
-    if sys.platform == 'win32':
-        pytest.skip()
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':

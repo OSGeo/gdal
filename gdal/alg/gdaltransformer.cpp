@@ -1332,7 +1332,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
                 dfWestLongitudeDeg = x[0];
                 dfEastLongitudeDeg = x[1];
             }
-            if( ret ) 
+            if( ret )
             {
                 CPLDebug("GDAL", "Computing area of interest: %g, %g, %g, %g",
                         dfWestLongitudeDeg, dfSouthLatitudeDeg,
@@ -1455,7 +1455,7 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * case we don't want to use the approximate transformer on the RPC transformation,
  * as the RPC DEM generally involves non-linearities that the approximate
  * transformer will not detect. In such case, we must a non-approximated
- * GenImgProjTransformer, but it might be worthwile to use approximate sub-
+ * GenImgProjTransformer, but it might be worthwhile to use approximate sub-
  * transformers, for example on coordinate reprojection. For example if
  * warping from a source dataset with RPC to a destination dataset with
  * a UTM projection, since the inverse UTM transformation is rather costly.
@@ -1476,7 +1476,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
 {
     char **papszMD = nullptr;
-    GDALRPCInfo sRPCInfo;
+    GDALRPCInfoV2 sRPCInfo;
     const char *pszMethod = CSLFetchNameValue( papszOptions, "SRC_METHOD" );
     if( pszMethod == nullptr )
         pszMethod = CSLFetchNameValue( papszOptions, "METHOD" );
@@ -1667,10 +1667,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
     else if( (pszMethod == nullptr || EQUAL(pszMethod, "RPC"))
              && (papszMD = GDALGetMetadata( hSrcDS, "RPC" )) != nullptr
-             && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
+             && GDALExtractRPCInfoV2( papszMD, &sRPCInfo ) )
     {
         psInfo->pSrcTransformArg =
-            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0, papszOptions );
+            GDALCreateRPCTransformerV2( &sRPCInfo, FALSE, 0, papszOptions );
         if( psInfo->pSrcTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
@@ -1854,10 +1854,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     }
     else if( (pszDstMethod == nullptr || EQUAL(pszDstMethod, "RPC"))
              && (papszMD = GDALGetMetadata( hDstDS, "RPC" )) != nullptr
-             && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
+             && GDALExtractRPCInfoV2( papszMD, &sRPCInfo ) )
     {
         psInfo->pDstTransformArg =
-            GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0, papszOptions );
+            GDALCreateRPCTransformerV2( &sRPCInfo, FALSE, 0, papszOptions );
         if( psInfo->pDstTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
@@ -2777,7 +2777,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
  * @param hSrcSRS the coordinate system for the source coordinate system.
  * @param hDstSRS the coordinate system for the destination coordinate
  * system.
- * @param papszOptions NULL-terminated list of options, or NULL. Currrently
+ * @param papszOptions NULL-terminated list of options, or NULL. Currently
  * supported options are:
  * <ul>
  * <li>AREA_OF_INTEREST=west_long,south_lat,east_long,north_lat: Values in

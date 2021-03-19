@@ -155,11 +155,11 @@ int GTIF_DLL GTIFGetProjTRFInfoEx( void* ctx, /* The void* should be a PJ_CONTEX
                           int nProjTRFCode,
                           char **ppszProjTRFName,
                           short * pnProjMethod,
-                          double * padfProjParms );
+                          double * padfProjParams );
 int GTIF_DLL GTIFGetProjTRFInfo( int nProjTRFCode,
                                 char ** ppszProjTRFName,
                                 short * pnProjMethod,
-                                double * padfProjParms );
+                                double * padfProjParams );
 
 int GTIF_DLL GTIFGetGCSInfoEx( void* ctx, /* The void* should be a PJ_CONTEXT* */
                       int nGCSCode, char ** ppszName,

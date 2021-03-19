@@ -447,14 +447,14 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 
 #if 0
     // TODO(schwehr): Why was this being done but not used?
-    double adfProjParms[15] = { 0.0 };
+    double adfProjParams[15] = { 0.0 };
     if( CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) )
     {
         char **papszTokens = CSLTokenizeString(
             CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) );
 
         for( int i = 0; i < 15 && papszTokens[i] != NULL; i++ )
-            adfProjParms[i] = CPLAtofM( papszTokens[i] );
+            adfProjParams[i] = CPLAtofM( papszTokens[i] );
 
         CSLDestroy( papszTokens );
     }
@@ -780,7 +780,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( EQUAL(pszInterleaving,"BIP") )
     {
         nPixelOffset = nItemSize * nBands;
-        if( poDS->nRasterXSize > INT_MAX / nPixelOffset )
+        if( nPixelOffset == 0 || poDS->nRasterXSize > INT_MAX / nPixelOffset )
             bIntOverflow = true;
         else
         {
@@ -796,7 +796,8 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
                       pszInterleaving );
 
         nPixelOffset = nItemSize;
-        if( poDS->nRasterXSize > INT_MAX / (nPixelOffset * nBands) )
+        if( nPixelOffset == 0 || nBands == 0 ||
+            poDS->nRasterXSize > INT_MAX / (nPixelOffset * nBands) )
             bIntOverflow = true;
         else
         {

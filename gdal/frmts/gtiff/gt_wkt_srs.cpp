@@ -478,9 +478,9 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
         && psDefn->Projection == KvUserDefined
         && !bLinearUnitsMarkedCorrect )
     {
-        for( int iParm = 0; iParm < psDefn->nParms; iParm++ )
+        for( int iParam = 0; iParam < psDefn->nParms; iParam++ )
         {
-            switch( psDefn->ProjParmId[iParm] )
+            switch( psDefn->ProjParmId[iParam] )
             {
               case ProjFalseEastingGeoKey:
               case ProjFalseNorthingGeoKey:
@@ -491,7 +491,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
                 if( psDefn->UOMLengthInMeters != 0
                     && psDefn->UOMLengthInMeters != 1.0 )
                 {
-                    psDefn->ProjParm[iParm] /= psDefn->UOMLengthInMeters;
+                    psDefn->ProjParm[iParam] /= psDefn->UOMLengthInMeters;
                     CPLDebug(
                         "GTIFF",
                         "Converting geokey to accommodate old broken file "
@@ -704,10 +704,12 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GDALGTIFKeyGetDOUBLE( hGTIF, GeogSemiMajorAxisGeoKey,
-                              &(psDefn->SemiMajor), 0, 1 );
-        GDALGTIFKeyGetDOUBLE( hGTIF, GeogInvFlatteningGeoKey,
-                              &dfInvFlattening, 0, 1 );
+        CPL_IGNORE_RET_VAL(
+            GDALGTIFKeyGetDOUBLE( hGTIF, GeogSemiMajorAxisGeoKey,
+                              &(psDefn->SemiMajor), 0, 1 ));
+        CPL_IGNORE_RET_VAL(
+            GDALGTIFKeyGetDOUBLE( hGTIF, GeogInvFlatteningGeoKey,
+                              &dfInvFlattening, 0, 1 ));
         if( std::isinf(dfInvFlattening) )
         {
             // Deal with the non-nominal case of
@@ -727,8 +729,9 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GDALGTIFKeyGetDOUBLE( hGTIF, GeogPrimeMeridianLongGeoKey,
-                              &(psDefn->PMLongToGreenwich), 0, 1 );
+        CPL_IGNORE_RET_VAL(
+            GDALGTIFKeyGetDOUBLE( hGTIF, GeogPrimeMeridianLongGeoKey,
+                              &(psDefn->PMLongToGreenwich), 0, 1 ));
     }
 
     if( !pszAngularUnits )
@@ -1013,18 +1016,18 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
     if( psDefn->Model == ModelTypeProjected && !bGotFromEPSG )
     {
 /* -------------------------------------------------------------------- */
-/*      Make a local copy of parms, and convert back into the           */
+/*      Make a local copy of params, and convert back into the           */
 /*      angular units of the GEOGCS and the linear units of the         */
 /*      projection.                                                     */
 /* -------------------------------------------------------------------- */
-        double adfParm[10] = { 0.0 };
+        double adfParam[10] = { 0.0 };
         int i = 0;  // Used after for.
 
         for( ; i < std::min(10, psDefn->nParms); i++ )
-            adfParm[i] = psDefn->ProjParm[i];
+            adfParam[i] = psDefn->ProjParm[i];
 
         for( ; i < 10; i++ )
-            adfParm[i] = 0.0;
+            adfParam[i] = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Translation the fundamental projection.                         */
@@ -1032,15 +1035,15 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
         switch( psDefn->CTProjection )
         {
           case CT_TransverseMercator:
-            oSRS.SetTM( adfParm[0], adfParm[1],
-                        adfParm[4],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetTM( adfParam[0], adfParam[1],
+                        adfParam[4],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_TransvMercator_SouthOriented:
-            oSRS.SetTMSO( adfParm[0], adfParm[1],
-                          adfParm[4],
-                          adfParm[5], adfParm[6] );
+            oSRS.SetTMSO( adfParam[0], adfParam[1],
+                          adfParam[4],
+                          adfParam[5], adfParam[6] );
             break;
 
           case CT_Mercator:
@@ -1053,14 +1056,14 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
                         "Mercator projection should not define "
                         "both StdParallel1 and ScaleAtNatOrigin.  "
                         "Using StdParallel1 and ignoring ScaleAtNatOrigin." );
-                oSRS.SetMercator2SP( adfParm[2],
-                                     adfParm[0], adfParm[1],
-                                     adfParm[5], adfParm[6]);
+                oSRS.SetMercator2SP( adfParam[2],
+                                     adfParam[0], adfParam[1],
+                                     adfParam[5], adfParam[6]);
             }
             else
-                oSRS.SetMercator( adfParm[0], adfParm[1],
-                                  adfParm[4],
-                                  adfParm[5], adfParm[6] );
+                oSRS.SetMercator( adfParam[0], adfParam[1],
+                                  adfParam[4],
+                                  adfParam[5], adfParam[6] );
 
             // Override hack for google mercator.
             if (psDefn->Projection == 1024 || psDefn->Projection == 9841)
@@ -1074,132 +1077,132 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
             break;
 
           case CT_ObliqueStereographic:
-            oSRS.SetOS( adfParm[0], adfParm[1],
-                        adfParm[4],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetOS( adfParam[0], adfParam[1],
+                        adfParam[4],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_Stereographic:
-            oSRS.SetStereographic( adfParm[0], adfParm[1],
-                        adfParm[4],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetStereographic( adfParam[0], adfParam[1],
+                        adfParam[4],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_ObliqueMercator:  // Hotine.
-            oSRS.SetHOM( adfParm[0], adfParm[1],
-                         adfParm[2], adfParm[3],
-                         adfParm[4],
-                         adfParm[5], adfParm[6] );
+            oSRS.SetHOM( adfParam[0], adfParam[1],
+                         adfParam[2], adfParam[3],
+                         adfParam[4],
+                         adfParam[5], adfParam[6] );
             break;
 
           case CT_HotineObliqueMercatorAzimuthCenter:
-            oSRS.SetHOMAC( adfParm[0], adfParm[1],
-                           adfParm[2], adfParm[3],
-                           adfParm[4],
-                           adfParm[5], adfParm[6] );
+            oSRS.SetHOMAC( adfParam[0], adfParam[1],
+                           adfParam[2], adfParam[3],
+                           adfParam[4],
+                           adfParam[5], adfParam[6] );
             break;
 
           case CT_ObliqueMercator_Laborde:
-            oSRS.SetLOM( adfParm[0], adfParm[1],
-                         adfParm[2],
-                         adfParm[4],
-                         adfParm[5], adfParm[6] );
+            oSRS.SetLOM( adfParam[0], adfParam[1],
+                         adfParam[2],
+                         adfParam[4],
+                         adfParam[5], adfParam[6] );
             break;
 
           case CT_EquidistantConic:
-            oSRS.SetEC( adfParm[0], adfParm[1],
-                        adfParm[2], adfParm[3],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetEC( adfParam[0], adfParam[1],
+                        adfParam[2], adfParam[3],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_CassiniSoldner:
-            oSRS.SetCS( adfParm[0], adfParm[1],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetCS( adfParam[0], adfParam[1],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_Polyconic:
-            oSRS.SetPolyconic( adfParm[0], adfParm[1],
-                               adfParm[5], adfParm[6] );
+            oSRS.SetPolyconic( adfParam[0], adfParam[1],
+                               adfParam[5], adfParam[6] );
             break;
 
           case CT_AzimuthalEquidistant:
-            oSRS.SetAE( adfParm[0], adfParm[1],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetAE( adfParam[0], adfParam[1],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_MillerCylindrical:
-            oSRS.SetMC( adfParm[0], adfParm[1],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetMC( adfParam[0], adfParam[1],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_Equirectangular:
-            oSRS.SetEquirectangular2( adfParm[0], adfParm[1],
-                                      adfParm[2],
-                                      adfParm[5], adfParm[6] );
+            oSRS.SetEquirectangular2( adfParam[0], adfParam[1],
+                                      adfParam[2],
+                                      adfParam[5], adfParam[6] );
             break;
 
           case CT_Gnomonic:
-            oSRS.SetGnomonic( adfParm[0], adfParm[1],
-                              adfParm[5], adfParm[6] );
+            oSRS.SetGnomonic( adfParam[0], adfParam[1],
+                              adfParam[5], adfParam[6] );
             break;
 
           case CT_LambertAzimEqualArea:
-            oSRS.SetLAEA( adfParm[0], adfParm[1],
-                          adfParm[5], adfParm[6] );
+            oSRS.SetLAEA( adfParam[0], adfParam[1],
+                          adfParam[5], adfParam[6] );
             break;
 
           case CT_Orthographic:
-            oSRS.SetOrthographic( adfParm[0], adfParm[1],
-                                  adfParm[5], adfParm[6] );
+            oSRS.SetOrthographic( adfParam[0], adfParam[1],
+                                  adfParam[5], adfParam[6] );
             break;
 
           case CT_Robinson:
-            oSRS.SetRobinson( adfParm[1],
-                              adfParm[5], adfParm[6] );
+            oSRS.SetRobinson( adfParam[1],
+                              adfParam[5], adfParam[6] );
             break;
 
           case CT_Sinusoidal:
-            oSRS.SetSinusoidal( adfParm[1],
-                                adfParm[5], adfParm[6] );
+            oSRS.SetSinusoidal( adfParam[1],
+                                adfParam[5], adfParam[6] );
             break;
 
           case CT_VanDerGrinten:
-            oSRS.SetVDG( adfParm[1],
-                         adfParm[5], adfParm[6] );
+            oSRS.SetVDG( adfParam[1],
+                         adfParam[5], adfParam[6] );
             break;
 
           case CT_PolarStereographic:
-            oSRS.SetPS( adfParm[0], adfParm[1],
-                        adfParm[4],
-                        adfParm[5], adfParm[6] );
+            oSRS.SetPS( adfParam[0], adfParam[1],
+                        adfParam[4],
+                        adfParam[5], adfParam[6] );
             break;
 
           case CT_LambertConfConic_2SP:
-            oSRS.SetLCC( adfParm[2], adfParm[3],
-                         adfParm[0], adfParm[1],
-                         adfParm[5], adfParm[6] );
+            oSRS.SetLCC( adfParam[2], adfParam[3],
+                         adfParam[0], adfParam[1],
+                         adfParam[5], adfParam[6] );
             break;
 
           case CT_LambertConfConic_1SP:
-            oSRS.SetLCC1SP( adfParm[0], adfParm[1],
-                            adfParm[4],
-                            adfParm[5], adfParm[6] );
+            oSRS.SetLCC1SP( adfParam[0], adfParam[1],
+                            adfParam[4],
+                            adfParam[5], adfParam[6] );
             break;
 
           case CT_AlbersEqualArea:
-            oSRS.SetACEA( adfParm[0], adfParm[1],
-                          adfParm[2], adfParm[3],
-                          adfParm[5], adfParm[6] );
+            oSRS.SetACEA( adfParam[0], adfParam[1],
+                          adfParam[2], adfParam[3],
+                          adfParam[5], adfParam[6] );
             break;
 
           case CT_NewZealandMapGrid:
-            oSRS.SetNZMG( adfParm[0], adfParm[1],
-                          adfParm[5], adfParm[6] );
+            oSRS.SetNZMG( adfParam[0], adfParam[1],
+                          adfParam[5], adfParam[6] );
             break;
 
           case CT_CylindricalEqualArea:
-            oSRS.SetCEA( adfParm[0], adfParm[1],
-                         adfParm[5], adfParm[6] );
+            oSRS.SetCEA( adfParam[0], adfParam[1],
+                         adfParam[5], adfParam[6] );
             break;
           default:
             if( oSRS.IsProjected() )
@@ -1243,9 +1246,22 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
     if( (verticalCSType != 0 || verticalDatum != 0 || verticalUnits != 0)
         && (oSRS.IsGeographic() || oSRS.IsProjected() || oSRS.IsLocal()) )
     {
-        if( !GDALGTIFKeyGetASCII( hGTIF, VerticalCitationGeoKey, citation,
+        if( GDALGTIFKeyGetASCII( hGTIF, VerticalCitationGeoKey, citation,
                                   sizeof(citation) ) )
+        {
+            if( STARTS_WITH_CI(citation, "VCS Name = ") )
+            {
+                memmove(citation, citation + strlen("VCS Name = "),
+                        strlen(citation + strlen("VCS Name = ")) + 1);
+                char* pszPipeChar = strchr(citation, '|');
+                if( pszPipeChar )
+                    *pszPipeChar = '\0';
+            }
+        }
+        else
+        {
             strcpy( citation, "unknown" );
+        }
 
         OGRSpatialReference oVertSRS;
         bool bCanBuildCompoundCRS = true;
@@ -1260,6 +1276,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 
         if( bCanBuildCompoundCRS )
         {
+            const std::string osHorizontalName = oSRS.GetName();
 /* -------------------------------------------------------------------- */
 /*      Promote to being a compound coordinate system.                  */
 /* -------------------------------------------------------------------- */
@@ -1280,7 +1297,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
             }
             else
             {
-                oSRS.SetNode( "COMPD_CS", "unknown" );
+                oSRS.SetNode( "COMPD_CS", (osHorizontalName + " + " + citation).c_str() );
             }
 
             oSRS.GetRoot()->AddChild( poOldRoot );
@@ -2996,7 +3013,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     double *padfTiePoints = nullptr;
     double *padfScale = nullptr;
     double *padfMatrix = nullptr;
-    int16 nCount = 0;
+    int16_t nCount = 0;
 
     padfGeoTransform[0] = 0.0;
     padfGeoTransform[1] = 1.0;

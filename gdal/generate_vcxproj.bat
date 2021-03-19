@@ -473,7 +473,7 @@ goto :end
     )
   
     ::  *********************
-    ::  Clib all the branches recursivelly
+    ::  Clib all the branches recursively
     ::  *********************
 
     for /D %%d in (%_path_%\*) do (

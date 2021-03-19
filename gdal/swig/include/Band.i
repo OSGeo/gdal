@@ -391,18 +391,23 @@ public:
 %apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
 %apply (GIntBig *optional_GIntBig) { (GIntBig*) };
 %apply ( int *optional_int ) {(int*)};
+#if defined(SWIGPYTHON)
+%apply (GDALDataType *optional_GDALDataType) { (GDALDataType *buf_type) };
+#else
+%apply (int *optional_int) { (GDALDataType *buf_type) };
+#endif
 %feature( "kwargs" ) WriteRaster;
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
                       GIntBig buf_len, char *buf_string,
                       int *buf_xsize = 0,
                       int *buf_ysize = 0,
-                      int *buf_type = 0,
+                      GDALDataType *buf_type = 0,
                       GIntBig *buf_pixel_space = 0,
                       GIntBig *buf_line_space = 0) {
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
-                                        : (GDALDataType)*buf_type;
+                                        : *buf_type;
     GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     GDALRasterIOExtraArg* psExtraArg = NULL;
@@ -410,6 +415,7 @@ public:
                                  nxsize, nysize, ntype, buf_len, buf_string, pixel_space, line_space, psExtraArg );
   }
 %clear (GIntBig buf_len, char *buf_string);
+%clear (GDALDataType *buf_type);
 %clear (int*);
 %clear (GIntBig*);
 #endif

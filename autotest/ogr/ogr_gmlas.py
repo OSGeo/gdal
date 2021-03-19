@@ -32,14 +32,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from BaseHTTPServer import BaseHTTPRequestHandler
-except ImportError:
-    from http.server import BaseHTTPRequestHandler
-
+from http.server import BaseHTTPRequestHandler
 import os
 import os.path
-import sys
 
 
 import gdaltest
@@ -1698,16 +1693,10 @@ bar""" or \
 
 def test_ogr_gmlas_recoding():
 
-    if sys.version_info >= (3, 0, 0):
-        accent = '\u00e9'
-    else:
-        exec("accent = u'\\u00e9'")
-        accent = accent.encode('UTF-8')
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_recoding.xml')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f['attr'] != accent:
+    if f['attr'] != '\u00e9':
         f.DumpReadable()
         pytest.fail()
 

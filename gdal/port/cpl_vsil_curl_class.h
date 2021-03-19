@@ -39,7 +39,7 @@
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_mem_cache.h"
 
-#include <curl/curl.h>
+#include "cpl_curl_priv.h"
 
 #include <set>
 #include <map>
@@ -48,10 +48,8 @@
 
 //! @cond Doxygen_Suppress
 
-// 7.18.1
-#if LIBCURL_VERSION_NUM >= 0x071201
+// Leave it for backward compatibility, but deprecate.
 #define HAVE_CURLINFO_REDIRECT_URL
-#endif
 
 void VSICurlStreamingClearCache( void ); // from cpl_vsil_curl_streaming.cpp
 
@@ -59,6 +57,14 @@ struct curl_slist* VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL,
                        const char * const* papszOptions);
 struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
                                         struct curl_slist* poSrcToDestroy );
+
+struct curl_slist* VSICurlSetContentTypeFromExt(struct curl_slist* polist,
+                                                const char *pszPath);
+
+struct curl_slist* VSICurlSetCreationHeadersFromOptions(struct curl_slist* headers,
+                                                        CSLConstList papszOptions,
+                                                        const char *pszPath);
+
 namespace cpl {
 
 typedef enum
@@ -113,12 +119,12 @@ struct WriteFuncStruct
     void               *pReadCbkUserData = nullptr;
     bool                bInterrupted = false;
 
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
     // Workaround to ignore extra HTTP response headers from
     // proxies in older versions of curl.
     // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
     bool            bIsProxyConnectHeader = false;
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
 };
 
 struct PutData
@@ -232,7 +238,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
 
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
@@ -310,6 +317,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     CPLString       m_osFilename{}; // e.g "/vsicurl/http://example.com/foo"
     char*           m_pszURL = nullptr;     // e.g "http://example.com/foo"
+    std::string     m_osQueryString{};      // e.g. an Azure SAS
 
     char          **m_papszHTTPOptions = nullptr;
 
@@ -453,7 +461,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                                 const std::string& osFilename,
                                 IVSIS3LikeHandleHelper *poS3HandleHelper,
                                 int nMaxRetry,
-                                double dfRetryDelay);
+                                double dfRetryDelay,
+                                CSLConstList papszOptions);
     virtual CPLString UploadPart(const CPLString& osFilename,
                          int nPartNumber,
                          const std::string& osUploadID,
@@ -519,6 +528,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     CPLString           m_osFilename{};
     IVSIS3LikeHandleHelper  *m_poS3HandleHelper = nullptr;
     bool                m_bUseChunked = false;
+    CPLStringList       m_aosOptions{};
 
     vsi_l_offset        m_nCurOffset = 0;
     int                 m_nBufferOff = 0;
@@ -557,7 +567,8 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
       VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
                         const char* pszFilename,
                         IVSIS3LikeHandleHelper* poS3HandleHelper,
-                        bool bUseChunked );
+                        bool bUseChunked,
+                        CSLConstList papszOptions );
       ~VSIS3WriteHandle() override;
 
       int Seek( vsi_l_offset nOffset, int nWhence ) override;

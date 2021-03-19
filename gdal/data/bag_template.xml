@@ -39,10 +39,10 @@
             <gmd:MD_DimensionNameTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_DimensionNameTypeCode" codeListValue="row">row</gmd:MD_DimensionNameTypeCode>
           </gmd:dimensionName>
           <gmd:dimensionSize>
-            <gco:Integer>${HEIGHT}</gco:Integer>
+            <gco:Integer>${WIDTH}</gco:Integer>
           </gmd:dimensionSize>
           <gmd:resolution>
-            <gco:Measure uom="${RES_UNIT}">${RESY}</gco:Measure>
+            <gco:Measure uom="${RES_UNIT}">${RESX}</gco:Measure>
           </gmd:resolution>
         </gmd:MD_Dimension>
       </gmd:axisDimensionProperties>
@@ -52,10 +52,10 @@
             <gmd:MD_DimensionNameTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_DimensionNameTypeCode" codeListValue="column">column</gmd:MD_DimensionNameTypeCode>
           </gmd:dimensionName>
           <gmd:dimensionSize>
-            <gco:Integer>${WIDTH}</gco:Integer>
+            <gco:Integer>${HEIGHT}</gco:Integer>
           </gmd:dimensionSize>
           <gmd:resolution>
-            <gco:Measure uom="${RES_UNIT}">${RESX}</gco:Measure>
+            <gco:Measure uom="${RES_UNIT}">${RESY}</gco:Measure>
           </gmd:resolution>
         </gmd:MD_Dimension>
       </gmd:axisDimensionProperties>

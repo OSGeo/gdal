@@ -31,7 +31,6 @@ import copy
 import math
 import pickle
 import random
-import sys
 
 
 import gdaltest
@@ -461,7 +460,7 @@ def test_ogr_geom_build_from_edges_1():
     except:
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test OGRBuildPolygonFromEdges() on a multilinestring
 
@@ -491,7 +490,7 @@ def test_ogr_geom_build_from_edges_2():
     except:
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test OGRBuildPolygonFromEdges() on invalid geometries
 
@@ -519,7 +518,7 @@ def test_ogr_geom_build_from_edges_3():
     except:
         pass
 
-    
+
 ###############################################################################
 # Test OGRBuildPolygonFromEdges() and identify exterior ring (#3610)
 
@@ -560,7 +559,7 @@ def test_ogr_geom_build_from_edges_4():
     except:
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test GetArea() on empty linear ring (#2792)
 
@@ -1107,7 +1106,7 @@ def test_ogr_geom_z_empty():
         out_wkt = g2.ExportToIsoWkt()
         assert in_wkt == out_wkt
 
-    
+
 ###############################################################################
 # Test HasCurveGeometry and GetLinearGeometry
 
@@ -1606,7 +1605,7 @@ def test_ogr_geom_circularstring():
         out_wkt = g2.ExportToWkt()
         assert in_wkt == out_wkt
 
-    
+
 ###############################################################################
 # Test OGRCompoundCurve
 
@@ -1871,7 +1870,7 @@ def test_ogr_geom_compoundcurve():
         out_wkt = g2.ExportToWkt()
         assert in_wkt == out_wkt
 
-    
+
 ###############################################################################
 # Test OGRCurvePolygon
 
@@ -2626,7 +2625,7 @@ def test_ogr_geom_getcurvegeometry():
         g1 = g1.GetCurveGeometry()
         assert g1.ExportToWkt() == 'CURVEPOLYGON (CIRCULARSTRING (1.5 2.0,0.5 2.0,1.5 2.0))'
 
-    
+
 ###############################################################################
 # Test OGR_GT_ functions
 
@@ -2843,7 +2842,7 @@ def test_ogr_geom_gt_functions():
     for (gt, res) in tuples:
         assert ogr.GT_GetLinear(gt) == res
 
-    
+
 ###############################################################################
 # Limit cases
 
@@ -2891,7 +2890,7 @@ def test_ogr_geom_api_limit_tests():
 
         p.AddGeometryDirectly(p)
 
-    
+
 ###############################################################################
 # Test Equals
 
@@ -3014,7 +3013,7 @@ def test_ogr_geom_postgis_ewkt_xym():
         geom = ogr.CreateGeometryFromWkt(before)
         assert geom.ExportToIsoWkt() == after, before
 
-    
+
 ###############################################################################
 # Test ogr.wkbCurve / ogr.wkbSurface
 
@@ -3033,7 +3032,7 @@ def test_ogr_geom_curve_surface():
     for (wkb_type, name) in tests:
         assert ogr.GeometryTypeToName(wkb_type) == name
 
-    
+
 ###############################################################################
 # Test importing corrupted WKB
 
@@ -3073,10 +3072,7 @@ def test_ogr_geom_import_corrupted_wkb():
                 else:
                     wkb[i] = 255 - wkb[i]
                 with gdaltest.error_handler():
-                    if sys.version_info >= (3, 0, 0):
-                        g = ogr.CreateGeometryFromWkb(bytes(wkb))
-                    else:
-                        g = ogr.CreateGeometryFromWkb(str(wkb))
+                    g = ogr.CreateGeometryFromWkb(bytes(wkb))
                 if g:
                     g2 = ogr.CreateGeometryFromWkb(g.ExportToIsoWkb())
                     assert g.Equals(g2), (wkt, i, method)
@@ -3085,13 +3081,10 @@ def test_ogr_geom_import_corrupted_wkb():
         # Test truncation of the WKB
         for i in range(len(wkb)):
             with gdaltest.error_handler():
-                if sys.version_info >= (3, 0, 0):
-                    g = ogr.CreateGeometryFromWkb(bytes(wkb[0:i]))
-                else:
-                    g = ogr.CreateGeometryFromWkb(str(wkb[0:i]))
+                g = ogr.CreateGeometryFromWkb(bytes(wkb[0:i]))
             assert g is None, (wkt, i)
 
-    
+
 ###############################################################################
 # Test conversions from/into triangle, TIN, PS
 
@@ -3206,7 +3199,7 @@ def test_ogr_geom_geometrycollection():
         g = ogr.CreateGeometryFromWkt(wkt)
         assert g.ExportToWkt() == wkt
 
-    
+
 ###############################################################################
 # Test fix for #7126
 
@@ -3378,6 +3371,21 @@ def test_ogr_geom_makevalid():
 ###############################################################################
 
 
+def test_ogr_geom_normalize():
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    g = ogr.CreateGeometryFromWkt('POLYGON ((0 1,1 1,1 0,0 0,0 1))')
+    g = g.Normalize()
+    assert g is None or g.ExportToWkt() == 'POLYGON ((0 0,0 1,1 1,1 0,0 0))'
+
+    return 'success'
+
+
+###############################################################################
+
+
 def test_ogr_geom_force_multipolygon_z_to_compound_curve():
 
     g = ogr.CreateGeometryFromWkt('MULTIPOLYGON Z (((0 0 0,0 1 0,1 1 0,0 0 0)))')
@@ -3446,3 +3454,13 @@ def test_ogr_geom_deepcopy():
     assert g2.GetSpatialReference().IsSame(sr)
     sr.ImportFromEPSG(32631)
     assert not g2.GetSpatialReference().IsSame(sr)
+
+###############################################################################
+# Test that setting a Point with NaN is like setting a POINT EMPTY
+
+
+def test_ogr_geom_point_nan():
+
+    geom = ogr.Geometry(type=ogr.wkbPoint)
+    geom.AddPoint_2D(float('nan'), float('nan'))
+    assert geom.IsEmpty()

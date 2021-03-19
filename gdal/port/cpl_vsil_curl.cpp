@@ -574,9 +574,9 @@ void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
     psStruct->pReadCbkUserData = pReadCbkUserData;
     psStruct->bInterrupted = false;
 
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
     psStruct->bIsProxyConnectHeader = false;
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
 }
 
 /************************************************************************/
@@ -606,7 +606,7 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                 {
                     psStruct->nHTTPCode = atoi(pszSpace + 1);
 
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
                     // Workaround to ignore extra HTTP response headers from
                     // proxies in older versions of curl.
                     // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
@@ -624,7 +624,7 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                             psStruct->bIsProxyConnectHeader = true;
                         }
                     }
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
                 }
             }
             else if( STARTS_WITH_CI(pszLine, "Content-Length: ") )
@@ -676,12 +676,12 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                           psStruct->nHTTPCode == 302) )
                         return 0;
                 }
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
                 else if( psStruct->bIsProxyConnectHeader )
                 {
                     psStruct->bIsProxyConnectHeader = false;
                 }
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
                 else
                 {
                     psStruct->bIsInHeader = false;
@@ -846,7 +846,7 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders( bool bSetError, bool bGetHeade
 
     CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
-    CPLString osURL(m_pszURL);
+    CPLString osURL(m_pszURL + m_osQueryString);
     bool bRetryWithGet = false;
     bool bS3LikeRedirect = false;
     int nRetryCount = 0;
@@ -1333,7 +1333,7 @@ CPLString VSICurlHandle::GetRedirectURLIfValid(bool& bHasExpired)
     bHasExpired = false;
     poFS->GetCachedFileProp(m_pszURL, oFileProp);
 
-    CPLString osURL(m_pszURL);
+    CPLString osURL(m_pszURL + m_osQueryString);
     if( oFileProp.bS3LikeRedirect )
     {
         if( time(nullptr) + 1 < oFileProp.nExpireTimestampLocal )
@@ -3098,7 +3098,8 @@ bool VSICurlFilesystemHandler::IsAllowedFilename( const char* pszFilename )
 
 VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
-                                                  bool bSetError )
+                                                  bool bSetError,
+                                                  CSLConstList /* papszOptions */ )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
@@ -3794,12 +3795,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
             // work, then try again with CURLOPT_DIRLISTONLY set.
             if( iTry == 1 )
             {
-// 7.16.4
-#if LIBCURL_VERSION_NUM <= 0x071004
-                curl_easy_setopt(hCurlHandle, CURLOPT_FTPLISTONLY, 1);
-#elif LIBCURL_VERSION_NUM > 0x071004
                 curl_easy_setopt(hCurlHandle, CURLOPT_DIRLISTONLY, 1);
-#endif
             }
 
             VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -4835,18 +4831,12 @@ struct curl_slist* VSICurlSetOptions(
     struct curl_slist* headers = static_cast<struct curl_slist*>(
         CPLHTTPSetOptions(hCurlHandle, pszURL, papszOptions));
 
-// 7.16
-#if LIBCURL_VERSION_NUM >= 0x071000
     long option = CURLFTPMETHOD_SINGLECWD;
     curl_easy_setopt(hCurlHandle, CURLOPT_FTP_FILEMETHOD, option);
-#endif
 
-// 7.12.3
-#if LIBCURL_VERSION_NUM > 0x070C03
     // ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/
     // doesn't like EPSV command,
     curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
-#endif
 
     return headers;
 }
@@ -4869,6 +4859,95 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
     return poDest;
 }
 
+/************************************************************************/
+/*                    VSICurlSetContentTypeFromExt()                    */
+/************************************************************************/
+
+struct curl_slist* VSICurlSetContentTypeFromExt(struct curl_slist* poList,
+                                                const char *pszPath)
+{
+    struct curl_slist* iter = poList;
+    while( iter != nullptr )
+    {
+        if( STARTS_WITH_CI(iter->data, "Content-Type") )
+        {
+            return poList;
+        }
+        iter = iter->next;
+    }
+
+    static const struct
+    {
+        const char* ext;
+        const char* mime;
+    }
+    aosExtMimePairs[] =
+    {
+        {"txt", "text/plain"},
+        {"json", "application/json"},
+        {"tif", "image/tiff"}, {"tiff", "image/tiff"},
+        {"jpg", "image/jpeg"}, {"jpeg", "image/jpeg"},
+        {"jp2", "image/jp2"}, {"jpx", "image/jp2"}, {"j2k", "image/jp2"}, {"jpc", "image/jp2"},
+        {"png", "image/png"},
+    };
+
+    const char *pszExt = CPLGetExtension(pszPath);
+    if( pszExt )
+    {
+        for( const auto& pair: aosExtMimePairs )
+        {
+            if( EQUAL(pszExt, pair.ext) )
+            {
+
+                CPLString osContentType;
+                osContentType.Printf("Content-Type: %s", pair.mime);
+                poList = curl_slist_append(poList, osContentType.c_str());
+#ifdef DEBUG_VERBOSE
+                CPLDebug("HTTP", "Setting %s, based on lookup table.", osContentType.c_str());
+#endif
+                break;
+            }
+        }
+    }
+
+    return poList;
+}
+
+/************************************************************************/
+/*                VSICurlSetCreationHeadersFromOptions()                */
+/************************************************************************/
+
+struct curl_slist* VSICurlSetCreationHeadersFromOptions(struct curl_slist* headers,
+                                                        CSLConstList papszOptions,
+                                                        const char *pszPath)
+{
+    bool bContentTypeFound = false;
+    for( CSLConstList papszIter = papszOptions; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = nullptr;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            if( EQUAL(pszKey, "Content-Type") )
+            {
+                bContentTypeFound = true;
+            }
+            CPLString osVal;
+            osVal.Printf("%s: %s", pszKey, pszValue);
+            headers = curl_slist_append(headers, osVal.c_str());
+        }
+        CPLFree(pszKey);
+    }
+
+    // If Content-type not found in papszOptions, try to set it from the
+    // filename exstension.
+    if( !bContentTypeFound )
+    {
+        headers = VSICurlSetContentTypeFromExt(headers, pszPath);
+    }
+
+    return headers;
+}
 
 #endif // DOXYGEN_SKIP
 //! @endcond

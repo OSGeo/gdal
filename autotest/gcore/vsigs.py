@@ -983,16 +983,13 @@ client_secret = CLIENT_SECRET
     gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
     gdal.Unlink('/vsimem/.boto')
 
+
 ###############################################################################
 # Read credentials from simulated GCE instance
-
-
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_vsigs_read_credentials_gce():
 
     if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
@@ -1058,17 +1055,14 @@ def test_vsigs_read_credentials_gce():
     gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
 
+
 ###############################################################################
 # Read credentials from simulated GCE instance with expiration of the
 # cached credentials
-
-
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_vsigs_read_credentials_gce_expiration():
 
     if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
@@ -1149,13 +1143,6 @@ def test_vsigs_extra_1():
     if not gdaltest.built_against_curl():
         pytest.skip()
 
-    # if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
-    #    print('Missing GS_SECRET_ACCESS_KEY')
-    #    pytest.skip()
-    # elif gdal.GetConfigOption('GS_ACCESS_KEY_ID') is None:
-    #    print('Missing GS_ACCESS_KEY_ID')
-    #    pytest.skip()
-
     gs_resource = gdal.GetConfigOption('GS_RESOURCE')
     if gs_resource is None:
         pytest.skip('Missing GS_RESOURCE')
@@ -1199,10 +1186,16 @@ def test_vsigs_extra_1():
         ret = gdal.Mkdir(subpath, 0)
         assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
 
-        f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
+        f = gdal.VSIFOpenExL(subpath + '/test.txt', 'wb', 0, ['Content-Type=foo', 'Content-Encoding=bar'])
         assert f is not None
         gdal.VSIFWriteL('hello', 1, 5, f)
         gdal.VSIFCloseL(f)
+
+        md = gdal.GetFileMetadata(subpath + '/test.txt', 'HEADERS')
+        assert 'Content-Type' in md
+        assert md['Content-Type'] == 'foo'
+        assert 'Content-Encoding' in md
+        assert md['Content-Encoding'] == 'bar'
 
         ret = gdal.Rmdir(subpath)
         assert ret != 0, \

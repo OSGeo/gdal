@@ -40,7 +40,8 @@ ifeq ($(LIBZ_SETTING),internal)
 XTRA_OPT        :=      $(XTRA_OPT) -I../zlib
 endif
 
-ifeq ($(HAVE_LERC),yes)
+# MRF Lerc support only possible for internal LercLib since it requires Lerc2.h
+ifeq ($(HAVE_LERC),internal)
 LERCV1	= LERCV1
 OBJ	:=	$(OBJ) LERC_band.o
 XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I../../third_party/LercLib
@@ -68,6 +69,6 @@ plugin: $(OBJ)
 iplugin: gdal_mrf.so.1 plugin
 	mkdir -p $(PLUGIN_PATH)
 	cp $< $(PLUGIN_PATH)/gdal_mrf.so
-	
+
 libjpeg12:
 	(cd ../jpeg; $(MAKE) libjpeg12/jcapimin12.c)

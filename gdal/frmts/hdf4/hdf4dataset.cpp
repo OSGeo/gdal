@@ -1154,7 +1154,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                             &nAttrs) != 0 )
                 return nullptr;
 
-            if ( iRank == 1 )  // Skip 1D datsets
+            if ( iRank == 1 )  // Skip 1D datasets
                     continue;
 
             // Do sort of known datasets. We will display only image bands

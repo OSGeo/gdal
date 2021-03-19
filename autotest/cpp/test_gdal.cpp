@@ -133,7 +133,7 @@ namespace tut
 
 #define ENSURE(cond) ensure(#cond, (cond))
 #define ENSURE_EQUALS(a, b) ensure_equals(#a " == " #b, (a), (b))
-    
+
     // Test GDALDataTypeUnion()
     template<> template<> void object::test<6>()
     {
@@ -149,7 +149,7 @@ namespace tut
                 ENSURE( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT2) );
                 ENSURE( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
                         (!GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2)) );
-                
+
                 ENSURE( !(GDALDataTypeIsFloating(eDT1) || GDALDataTypeIsFloating(eDT2)) || GDALDataTypeIsFloating(eDT));
                 ENSURE( !(GDALDataTypeIsSigned(eDT1) || GDALDataTypeIsSigned(eDT2)) || GDALDataTypeIsSigned(eDT));
             }
@@ -1358,12 +1358,6 @@ namespace tut
     // Test TileMatrixSet
     template<> template<> void object::test<20>()
     {
-        // TODO investigate what fails exactly
-        if( !EQUAL(CPLGetConfigOption("GITHUB_WORKFLOW", ""), "") )
-            return;
-        if( !EQUAL(CPLGetConfigOption("APPVEYOR_BUILD_WORKER_IMAGE", ""), "") )
-            return;
-
         {
             auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
             ensure( l.find("GoogleMapsCompatible") != l.end() );
@@ -1380,7 +1374,7 @@ namespace tut
             CPLErrorReset();
             CPLPushErrorHandler(CPLQuietErrorHandler);
             // Invalid JSON
-            ensure( gdal::TileMatrixSet::parse("http://127.0.0.1:98765/example.json") == nullptr );
+            ensure( gdal::TileMatrixSet::parse("http://127.0.0.1:32767/example.json") == nullptr );
             CPLPopErrorHandler();
             ensure( CPLGetLastErrorType() != 0 );
         }

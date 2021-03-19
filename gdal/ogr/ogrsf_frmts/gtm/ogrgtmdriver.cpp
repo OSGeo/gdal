@@ -68,6 +68,13 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
         delete poDS;
         poDS = nullptr;
     }
+
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("GTM") )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
     return poDS;
 }
 
@@ -82,6 +89,11 @@ static GDALDataset *OGRGTMDriverCreate( const char * pszName,
                                         CPL_UNUSED GDALDataType eDT,
                                         char **papszOptions )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("GTM") )
+    {
+        return nullptr;
+    }
+
     CPLAssert( nullptr != pszName );
     CPLDebug( "GTM", "Attempt to create: %s", pszName );
 

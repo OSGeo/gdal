@@ -115,10 +115,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
     path = samples_path
     if path not in sys.path:
         sys.path.append(path)
-    try:
-        import validate_jp2
-    except ImportError:
-        pytest.skip('Cannot run validate_jp2')
+    validate_jp2 = pytest.importorskip('validate_jp2')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
@@ -550,12 +547,7 @@ def test_jp2lura_19():
 
 def test_jp2lura_20():
 
-    try:
-        import xmlvalidate
-    except ImportError:
-        import traceback
-        traceback.print_exc(file=sys.stdout)
-        pytest.skip('Cannot import xmlvalidate')
+    xmlvalidate = pytest.importorskip('xmlvalidate')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET.zip')

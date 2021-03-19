@@ -328,7 +328,7 @@ OGCAPIDataset::~OGCAPIDataset()
         CSLDestroy(papszOptions);
     }
 
-    CloseDependentDatasets();
+    OGCAPIDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -408,10 +408,23 @@ bool OGCAPIDataset::Download(
             CPLStringList* paosHeaders )
 {
     char** papszOptions = nullptr;
+    CPLString osHeaders;
     if( pszAccept )
     {
-        papszOptions = CSLSetNameValue(papszOptions,
-            "HEADERS", (CPLString("Accept: ") + pszAccept).c_str());
+        osHeaders += "Accept: ";
+        osHeaders += pszAccept;
+    }
+    if( pszPostContent )
+    {
+        if( !osHeaders.empty() )
+        {
+            osHeaders += "\r\n";
+        }
+        osHeaders += "Content-Type: application/json";
+    }
+    if( !osHeaders.empty() )
+    {
+        papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders.c_str());
     }
     if( !m_osUserPwd.empty() )
     {
@@ -521,6 +534,9 @@ bool OGCAPIDataset::Download(
     else
     {
         osResult.assign(reinterpret_cast<const char*>(psResult->pabyData), psResult->nDataLen);
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OGCAPI", "%s", osResult.c_str());
+#endif
     }
     CPLHTTPDestroyResult(psResult);
     return true;
@@ -1447,7 +1463,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
             CPLDebug("OGCAPI", "Missing links for a tileset");
             continue;
         }
-        if( pszRequiredTileMatrixSet != nullptr && 
+        if( pszRequiredTileMatrixSet != nullptr &&
             oTileMatrixSetURI.find(pszRequiredTileMatrixSet) == std::string::npos &&
             oTileMatrixSetDefinition.find(pszRequiredTileMatrixSet) == std::string::npos )
         {
@@ -1489,7 +1505,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     }
     if( osTilesetURL.empty() )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, 
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find tilematrixset");
         return false;
     }
@@ -1659,7 +1675,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
             }
             int minCol = std::max(0,
                 static_cast<int>((dfXMin - dfOriX) / tileMatrix.mResX / tileMatrix.mTileWidth));
-            int maxCol = std::min(tileMatrix.mMatrixWidth - 1, 
+            int maxCol = std::min(tileMatrix.mMatrixWidth - 1,
                 static_cast<int>((dfXMax - dfOriX) / tileMatrix.mResX / tileMatrix.mTileWidth));
             int minRow = std::max(0,
                 static_cast<int>((dfOriY - dfYMax) / tileMatrix.mResY / tileMatrix.mTileHeight));
@@ -1821,7 +1837,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                 std::vector<GDALDatasetH> apoStrippedDS;
                 // For each variable matrix width, create a separate WMS dataset
                 // with the correspond strip
-                for( size_t i = 0; i < vmwl.size(); i++) 
+                for( size_t i = 0; i < vmwl.size(); i++)
                 {
                     if( vmwl[i].mCoalesce <= 0 ||
                         (tileMatrix.mMatrixWidth % vmwl[i].mCoalesce) != 0 )
@@ -2311,7 +2327,6 @@ bool OGCAPITiledLayer::IncrementTileIndices()
 
 OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
 {
-    OGRFeature* poSrcFeature = nullptr;
     while( true )
     {
         if( m_poUnderlyingLayer == nullptr )
@@ -2340,10 +2355,10 @@ OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
             FinalizeFeatureDefnWithLayer(m_poUnderlyingLayer);
         }
 
-        poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
+        auto poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
         if( poSrcFeature != nullptr )
         {
-            break;
+            return BuildFeature(poSrcFeature, m_nCurX, m_nCurY);
         }
 
         m_poUnderlyingDS.reset();
@@ -2352,8 +2367,6 @@ OGRFeature* OGCAPITiledLayer::GetNextRawFeature()
         if( !IncrementTileIndices() )
             return nullptr;
     }
-
-    return BuildFeature(poSrcFeature, m_nCurX, m_nCurY);
 }
 
 /************************************************************************/

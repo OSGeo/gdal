@@ -103,6 +103,9 @@ OGRDataSource *AODriver::Open( const char* pszFilename,
   if( !STARTS_WITH_CI(pszFilename, "AO:") )
     return NULL;
 
+  if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("AO") )
+        return nullptr;
+
   //OK, it is our turn, let's pay the price
 
   if (!Init())

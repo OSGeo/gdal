@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <limits>
+#include <new>
 
 CPL_CVSID("$Id$")
 
@@ -83,7 +84,8 @@ OGRSimpleCurve::OGRSimpleCurve( const OGRSimpleCurve& other ) :
     padfZ(nullptr),
     padfM(nullptr)
 {
-    setPoints( other.nPointCount, other.paoPoints, other.padfZ, other.padfM );
+    if( other.nPointCount > 0 )
+        setPoints( other.nPointCount, other.paoPoints, other.padfZ, other.padfM );
 }
 
 /************************************************************************/
@@ -119,6 +121,7 @@ OGRSimpleCurve& OGRSimpleCurve::operator=( const OGRSimpleCurve& other )
     OGRCurve::operator=( other );
 
     setPoints(other.nPointCount, other.paoPoints, other.padfZ, other.padfM);
+    flags = other.flags;
 
     return *this;
 }
@@ -132,28 +135,6 @@ void OGRSimpleCurve::flattenTo2D()
 {
     Make2D();
     setMeasured(FALSE);
-}
-
-/************************************************************************/
-/*                               clone()                                */
-/************************************************************************/
-
-OGRGeometry *OGRSimpleCurve::clone() const
-
-{
-    OGRSimpleCurve *poCurve =
-        OGRGeometryFactory::createGeometry(getGeometryType())->toSimpleCurve();
-
-    poCurve->assignSpatialReference( getSpatialReference() );
-    poCurve->setPoints( nPointCount, paoPoints, padfZ, padfM );
-    if( poCurve->getNumPoints() != nPointCount )
-    {
-        delete poCurve;
-        return nullptr;
-    }
-    poCurve->flags = flags;
-
-    return poCurve;
 }
 
 /************************************************************************/
@@ -396,8 +377,7 @@ double OGRSimpleCurve::getZ( int iVertex ) const
  * \brief Get measure at vertex.
  *
  * Returns the M (measure) value at the indicated vertex.  If no M
- * value is available, 0.0 is returned.  If iVertex is out of range a
- * crash may occur, no internal range checking is performed.
+ * value is available, 0.0 is returned.
  *
  * @param iVertex the vertex to return, between 0 and getNumPoints()-1.
  *
@@ -1830,30 +1810,47 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( const char ** ppszInput,
 std::string OGRSimpleCurve::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
     // LINEARRING or LINESTRING or CIRCULARSTRING
-    std::string wkt = getGeometryName() + wktTypeString(opts.variant);
+    std::string wkt = getGeometryName();
+    wkt += wktTypeString(opts.variant);
     if( IsEmpty() )
     {
         wkt += "EMPTY";
     }
     else
     {
-        wkt += "(";
+        wkt += '(';
 
         OGRBoolean hasZ = Is3D();
         OGRBoolean hasM =
             (opts.variant != wkbVariantIso ? FALSE : IsMeasured());
 
-        for( int i = 0; i < nPointCount; i++ )
+        try
         {
-            if (i > 0)
-                wkt += ",";
+            const int nOrdinatesPerVertex =
+                2 + ((hasZ) ? 1 : 0) + ((hasM) ? 1 : 0);
+            // At least 2 bytes per ordinate: one for the value,
+            // and one for the separator...
+            wkt.reserve(wkt.size() + 2 * nPointCount * nOrdinatesPerVertex);
 
-            wkt += OGRMakeWktCoordinateM(paoPoints[i].x, paoPoints[i].y,
-                                         padfZ ? padfZ[i] : 0.0,
-                                         padfM ? padfM[i] : 0.0,
-                                         hasZ, hasM, opts );
+            for( int i = 0; i < nPointCount; i++ )
+            {
+                if (i > 0)
+                    wkt += ',';
+
+                wkt += OGRMakeWktCoordinateM(paoPoints[i].x, paoPoints[i].y,
+                                             padfZ ? padfZ[i] : 0.0,
+                                             padfM ? padfM[i] : 0.0,
+                                             hasZ, hasM, opts );
+            }
+            wkt += ')';
         }
-        wkt += ")";
+        catch( const std::bad_alloc& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            if (err)
+                *err = OGRERR_FAILURE;
+            return std::string();
+        }
     }
     if (err)
         *err = OGRERR_NONE;
@@ -2711,7 +2708,7 @@ OGRLineString* OGRLineString::CurveToLine(
     CPL_UNUSED double /* dfMaxAngleStepSizeDegrees */,
     CPL_UNUSED const char* const* /* papszOptions */ ) const
 {
-    return clone()->toLineString();
+    return clone();
 }
 
 /************************************************************************/
@@ -2816,6 +2813,15 @@ OGRLinearRing* OGRLineString::CastToLinearRing( OGRLineString* poLS )
     OGRLinearRing* poLR = new OGRLinearRing();
     TransferMembersAndDestroy(poLS, poLR);
     return poLR;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRLineString *OGRLineString::clone() const
+{
+    return new (std::nothrow) OGRLineString(*this);
 }
 
 //! @cond Doxygen_Suppress

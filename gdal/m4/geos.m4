@@ -59,7 +59,9 @@ AC_DEFUN([GEOS_INIT],[
   elif test x"$with_geos" = x"yes" -o x"$with_geos" = x"" ; then
 
     AC_PATH_PROG(GEOS_CONFIG, geos-config, no)
-    ac_geos_config_auto=yes
+    if test x"$with_geos" = x"" ; then
+      ac_geos_config_auto=yes
+    fi
 
   else
 
@@ -129,6 +131,8 @@ AC_DEFUN([GEOS_INIT],[
       LIBS=${GEOS_LIBS}
       ax_save_CFLAGS="${CFLAGS}"
       CFLAGS="${GEOS_CFLAGS}"
+      ax_save_LDFLAGS="${LDFLAGS}"
+      LDFLAGS=""
 
       AC_CHECK_LIB([geos_c],
         [GEOSversion],
@@ -138,12 +142,26 @@ AC_DEFUN([GEOS_INIT],[
       )
 
       if test x"$HAVE_GEOS" = "xno"; then
-          GEOS_CFLAGS=""
+        if test $ac_geos_config_auto = "yes" ; then
+          AC_MSG_WARN([GEOS was found on your system, but the library could not be linked. GEOS support disabled.])
+        else
+          AC_MSG_ERROR([GEOS library could not be linked])
+        fi
+
+        GEOS_CFLAGS=""
+
       fi
 
       CFLAGS="${ax_save_CFLAGS}"
       LIBS="${ax_save_LIBS}"
+      LDFLAGS="${ax_save_LDFLAGS}"
 
+    fi
+
+  else
+
+    if test $ac_geos_config_auto = "no" ; then
+      AC_MSG_ERROR([GEOS support explicitly enabled, but geos-config could not be found])
     fi
 
   fi

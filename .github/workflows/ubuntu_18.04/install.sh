@@ -24,7 +24,7 @@ tar xzf mongo-c-driver-1.13.0.tar.gz && (cd mongo-c-driver-1.13.0 && mkdir build
 tar xzf r3.4.0.tar.gz && (cd mongo-cxx-driver-r3.4.0 && mkdir build_cmake && cd build_cmake && CC='ccache gcc' CXX='ccache g++' cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Debug && make -j3 && sudo make -j3 install)
 
 # Build libspatialite
-fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && (cd sl && fossil open ../libspatialite.fossil && CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr --disable-geos370 && make -j3 && sudo make -j3 install)
+fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && (cd sl && fossil open ../libspatialite.fossil && CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr --disable-geos370 --disable-rttopo && make -j3 && sudo make -j3 install)
 
 # Build librasterlite2
 fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && (cd rl2 && fossil open ../librasterlite2.fossil && CC='ccache gcc' CXX='ccache g++' ./configure --disable-static --prefix=/usr --disable-lz4 --disable-zstd && make -j3 && sudo make -j3 install)

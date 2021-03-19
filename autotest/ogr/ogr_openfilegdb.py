@@ -30,9 +30,7 @@
 ###############################################################################
 
 import os
-import sys
 import shutil
-
 
 import gdaltest
 import ogrtest
@@ -812,27 +810,19 @@ def test_ogr_openfilegdb_9():
 
 
 def fuzz(filename, offset):
-    f = open(filename, "rb+")
-    f.seek(offset, 0)
-    v = ord(f.read(1))
-    f.seek(offset, 0)
-    if sys.version_info >= (3, 0, 0):
-        f.write(('%c' % (255 - v)).encode('ISO-8859-1'))
-    else:
-        f.write('%c' % (255 - v))
-    f.close()
+    with open(filename, "rb+") as f:
+        f.seek(offset, 0)
+        v = ord(f.read(1))
+        f.seek(offset, 0)
+        f.write(chr(255 - v).encode('ISO-8859-1'))
     return (filename, offset, v)
 
 
 def unfuzz(backup):
     (filename, offset, v) = backup
-    f = open(filename, "rb+")
-    f.seek(offset, 0)
-    if sys.version_info >= (3, 0, 0):
-        f.write(('%c' % (v)).encode('ISO-8859-1'))
-    else:
-        f.write('%c' % (v))
-    f.close()
+    with open(filename, "rb+") as f:
+        f.seek(offset, 0)
+        f.write(chr(v).encode('ISO-8859-1'))
 
 
 def test_ogr_openfilegdb_10():

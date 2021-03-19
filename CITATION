@@ -1,6 +1,6 @@
 To cite GDAL/OGR in publications use:
 
-  GDAL/OGR contributors (2020). GDAL/OGR Geospatial Data Abstraction
+  GDAL/OGR contributors (2021). GDAL/OGR Geospatial Data Abstraction
   software Library. Open Source Geospatial Foundation. URL https://gdal.org
 
 A BibTeX entry for LaTeX users is
@@ -9,6 +9,6 @@ A BibTeX entry for LaTeX users is
     title = {{GDAL/OGR} Geospatial Data Abstraction software Library},
     author = {{GDAL/OGR contributors}},
     organization = {Open Source Geospatial Foundation},
-    year = {2020},
+    year = {2021},
     url = {https://gdal.org},
   }

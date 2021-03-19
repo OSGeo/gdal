@@ -24,6 +24,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import contextlib
 import sys
 import pytest
 
@@ -189,7 +190,25 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
         pytest.fail()
 
 ###############################################################################
+# Temporarily enable exceptions
 
+
+@contextlib.contextmanager
+def enable_exceptions():
+    if ogr.GetUseExceptions():
+        try:
+            yield
+        finally:
+            pass
+        return
+
+    ogr.UseExceptions()
+    try:
+        yield
+    finally:
+        ogr.DontUseExceptions()
+
+###############################################################################
 
 def get_wkt_data_series(with_z, with_m, with_gc, with_circular, with_surface):
     basic_wkts = [

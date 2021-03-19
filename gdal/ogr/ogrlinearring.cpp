@@ -409,7 +409,7 @@ int OGRLinearRing::_WkbSize( int _flags ) const
 /*      correct virtual table.                                          */
 /************************************************************************/
 
-OGRGeometry *OGRLinearRing::clone() const
+OGRLinearRing *OGRLinearRing::clone() const
 
 {
     OGRLinearRing *poNewLinearRing = new OGRLinearRing();

@@ -63,14 +63,14 @@ struct GNMStdEdge
     bool bIsBidir;         /**< Whether the edge is bidirectonal */
     double dfDirCost;      /**< Direct cost */
     double dfInvCost;      /**< Inverse cost */
-    bool bIsBloked;        /**< Whether the edge is blocked */
+    bool bIsBlocked;        /**< Whether the edge is blocked */
 };
 
 /** Vertex */
 struct GNMStdVertex
 {
     GNMVECTOR anOutEdgeFIDs; /**< TODO */
-    bool bIsBloked;          /**< Whether the vertex is blocked */
+    bool bIsBlocked;          /**< Whether the vertex is blocked */
 };
 
 /**

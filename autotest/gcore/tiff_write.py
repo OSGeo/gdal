@@ -124,38 +124,22 @@ def test_tiff_write_3():
 
 def test_tiff_write_4():
 
-    try:
-        import numpy
-    except ImportError:
-        pytest.skip()
+    np = pytest.importorskip('numpy')
 
     options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32']
 
     new_ds = gdaltest.tiff_drv.Create('tmp/test_4.tif', 40, 50, 3,
                                       gdal.GDT_Byte, options)
 
-    try:
-        data_red = numpy.zeros((50, 40))
-        data_green = numpy.zeros((50, 40))
-        data_blue = numpy.zeros((50, 40))
-    except AttributeError:
-        import numpy
-        data_red = numpy.zeros((50, 40))
-        data_green = numpy.zeros((50, 40))
-        data_blue = numpy.zeros((50, 40))
+    data_red = np.zeros((50, 40), dtype=np.uint8)
+    data_green = np.zeros((50, 40), dtype=np.uint8)
+    data_blue = np.zeros((50, 40), dtype=np.uint8)
 
     for y in range(50):
         for x in range(40):
             data_red[y][x] = x
             data_green[y][x] = y
             data_blue[y][x] = x + y
-
-    try:
-        data_red = data_red.astype(numpy.uint8)
-        data_green = data_green.astype(numpy.uint8)
-        data_blue = data_blue.astype(numpy.uint8)
-    except AttributeError:
-        pass
 
     new_ds.GetRasterBand(1).WriteArray(data_red)
     new_ds.GetRasterBand(2).WriteArray(data_green)
@@ -2294,10 +2278,8 @@ def test_tiff_write_74():
     gdal.PopErrorHandler()
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', old_accum)
 
-    if gdal.GetLastErrorMsg().find(
-            'Unsupported JPEG data precision 12') != -1:
-        sys.stdout.write('(12bit jpeg not available) ... ')
-        pytest.skip()
+    if gdal.GetLastErrorMsg().find('Unsupported JPEG data precision 12') != -1:
+        pytest.skip('12bit jpeg not available')
 
     for photometric in ('YCBCR', 'RGB'):
 
@@ -3448,11 +3430,8 @@ def test_tiff_write_96(other_options = [], nbands = 1, nbits = 8):
     src_ds = gdaltest.tiff_drv.Create('tmp/tiff_write_96_src.tif', 100, 100, nbands, options = ['NBITS=' + str(nbits)])
     src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    from sys import version_info
-    if version_info >= (3, 0, 0):
-        exec("src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25,25,50,50,b'\\xff',1,1)")
-    else:
-        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25, 25, 50, 50, '\xff', 1, 1)
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
+        25, 25, 50, 50, b'\xff', 1, 1)
     src_ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     expected_cs_mask = src_ds.GetRasterBand(1).GetMaskBand().Checksum()

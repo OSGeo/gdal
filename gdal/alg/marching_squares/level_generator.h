@@ -244,7 +244,7 @@ private:
         return static_cast<int>(dfVal);
     }
 
-    // exponentation base
+    // exponentiation base
     const double base_;
     const double base_ln_;
 };

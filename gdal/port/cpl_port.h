@@ -641,7 +641,7 @@ static inline int CPLIsFinite(double f) { return !__isnan(f) && !__isinf(f); }
 #else
 #  define CPLIsNan(x) isnan(x)
 #  if defined(isinf) || defined(__FreeBSD__)
-/** Return whether a floating-pointer number is +/- infinty */
+/** Return whether a floating-pointer number is +/- infinity */
 #    define CPLIsInf(x) isinf(x)
 /** Return whether a floating-pointer number is finite */
 #    define CPLIsFinite(x) (!isnan(x) && !isinf(x))
@@ -739,20 +739,20 @@ template<> struct CPLStaticAssert<true>
 
 /** Byte-swap a 16 bit pointer */
 #define CPL_SWAP16PTR(x) \
-{                                                                 \
+do {                                                              \
     GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2); \
                                                                   \
     byTemp = _pabyDataT[0];                                       \
     _pabyDataT[0] = _pabyDataT[1];                                \
     _pabyDataT[1] = byTemp;                                       \
-}
+} while(0)
 
 #if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
 
 /** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
-{                                                                 \
+do {                                                              \
     GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4);  \
                                                                   \
@@ -762,11 +762,11 @@ template<> struct CPLStaticAssert<true>
     byTemp = _pabyDataT[1];                                       \
     _pabyDataT[1] = _pabyDataT[2];                                \
     _pabyDataT[2] = byTemp;                                       \
-}
+} while(0)
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAP64PTR(x) \
-{                                                                 \
+do {                                                              \
     GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
                                                                   \
@@ -782,31 +782,31 @@ template<> struct CPLStaticAssert<true>
     byTemp = _pabyDataT[3];                                       \
     _pabyDataT[3] = _pabyDataT[4];                                \
     _pabyDataT[4] = byTemp;                                       \
-}
+} while(0)
 
 #else
 
 /** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
-{                                                                           \
+do {                                                                        \
     GUInt32 _n32;                                                           \
     void* _lx = x;                                                          \
     memcpy(&_n32, _lx, 4);                                                  \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4); \
     _n32 = CPL_SWAP32(_n32);                                                \
     memcpy(_lx, &_n32, 4);                                                  \
-}
+} while(0)
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAP64PTR(x) \
-{                                                                           \
+do {                                                                        \
     GUInt64 _n64;                                                           \
     void* _lx = x;                                                          \
     memcpy(&_n64, _lx, 8);                                                    \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
     _n64 = CPL_SWAP64(_n64);                                                \
     memcpy(_lx, &_n64, 8);                                                    \
-}
+} while(0)
 
 #endif
 
@@ -1204,7 +1204,7 @@ inline C CPLUnsanitizedAdd(A a, B b)
 /* This typedef is for C functions that take char** as argument, but */
 /* with the semantics of a const list. In C, char** is not implicitly cast to */
 /* const char* const*, contrary to C++. So when seen for C++, it is OK */
-/* to expose the prototyes as const char* const*, but for C we keep the */
+/* to expose the prototypes as const char* const*, but for C we keep the */
 /* historical definition to avoid warnings. */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
 /** Type of a constant null-terminated list of nul terminated strings.

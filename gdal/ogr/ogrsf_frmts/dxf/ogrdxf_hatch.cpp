@@ -105,7 +105,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
 
     if( nCode == 0 )
         poDS->UnreadValue();
-   
+
 /* -------------------------------------------------------------------- */
 /*      Obtain a tolerance value used when building the polygon.        */
 /* -------------------------------------------------------------------- */
@@ -637,7 +637,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
             }
             dfY = CPLAtof(szLineBuf);
             bHaveY = true;
-            if( bHaveX && bHaveY && !bHaveBulges )
+            if( bHaveX /* && bHaveY */ && !bHaveBulges )
             {
                 oSmoothPolyline.AddPoint( dfX, dfY, dfElevation, dfBulge );
                 dfBulge = 0.0;

@@ -93,6 +93,16 @@ OGRMultiLineString::operator=( const OGRMultiLineString& other )
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRMultiLineString *OGRMultiLineString::clone() const
+
+{
+    return new (std::nothrow) OGRMultiLineString(*this);
+}
+
+/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 

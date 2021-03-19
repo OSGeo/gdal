@@ -29,8 +29,6 @@
 ###############################################################################
 
 import os
-import sys
-
 
 import gdaltest
 import ogrtest
@@ -655,14 +653,9 @@ def test_ogr_pgdump_9(pg_use_copy='YES'):
     feat.SetField('str', 'ABCDEF')
     lyr.CreateFeature(feat)
 
-    if sys.version_info >= (3, 0, 0):
-        val4 = '\u00e9\u00e9\u00e9\u00e9'
-        val5 = val4 + '\u00e9'
-        val6 = val5 + '\u00e9'
-    else:
-        exec("val4 = u'\\u00e9\\u00e9\\u00e9\\u00e9'")
-        exec("val5 = val4 + u'\\u00e9'")
-        exec("val6 = val5 + u'\\u00e9'")
+    val4 = '\u00e9\u00e9\u00e9\u00e9'
+    val5 = val4 + '\u00e9'
+    val6 = val5 + '\u00e9'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str', val6)

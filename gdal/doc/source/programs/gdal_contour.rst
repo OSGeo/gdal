@@ -55,7 +55,7 @@ be on the right, i.e. a line string goes clockwise around a top.
 .. option:: -amax <name>
 
     Provides a name for the attribute in which to put the maximum elevation of
-    contour polygon. If not provided no maximim elevation attribute is attached.
+    contour polygon. If not provided no maximum elevation attribute is attached.
     Ignored in default line contouring mode.
 
     .. versionadded:: 2.4.0

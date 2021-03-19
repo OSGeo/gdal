@@ -103,6 +103,16 @@ OGRTriangulatedSurface& OGRTriangulatedSurface::operator=(
 }
 
 /************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRTriangulatedSurface *OGRTriangulatedSurface::clone() const
+
+{
+    return new (std::nothrow) OGRTriangulatedSurface(*this);
+}
+
+/************************************************************************/
 /*                          getGeometryName()                           */
 /************************************************************************/
 

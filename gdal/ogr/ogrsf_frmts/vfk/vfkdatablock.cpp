@@ -545,13 +545,11 @@ bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineStri
 
     for( PointList *ring: *papoRing )
     {
-        OGRPoint* poFirst = &(ring->front());
-        OGRPoint* poLast  = &(ring->back());
-        if (!poFirst || !poLast)
-            return false;
+        const OGRPoint& oFirst = ring->front();
+        const OGRPoint& oLast  = ring->back();
 
-        if (oFirstNew.getX() == poLast->getX() &&
-            oFirstNew.getY() == poLast->getY()) {
+        if (oFirstNew.getX() == oLast.getX() &&
+            oFirstNew.getY() == oLast.getY()) {
             PointList oList;
             FillPointList(&oList, poLine);
             /* forward, skip first point */
@@ -560,8 +558,8 @@ bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineStri
         }
 
         if (bBackward &&
-            oFirstNew.getX() == poFirst->getX() &&
-            oFirstNew.getY() == poFirst->getY()) {
+            oFirstNew.getX() == oFirst.getX() &&
+            oFirstNew.getY() == oFirst.getY()) {
             PointList oList;
             FillPointList(&oList, poLine);
             /* backward, skip last point */
@@ -569,8 +567,8 @@ bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineStri
             return true;
         }
 
-        if (oLastNew.getX() == poLast->getX() &&
-            oLastNew.getY() == poLast->getY()) {
+        if (oLastNew.getX() == oLast.getX() &&
+            oLastNew.getY() == oLast.getY()) {
             PointList oList;
             FillPointList(&oList, poLine);
             /* backward, skip first point */
@@ -579,8 +577,8 @@ bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineStri
         }
 
         if (bBackward &&
-            oLastNew.getX() == poFirst->getX() &&
-            oLastNew.getY() == poFirst->getY()) {
+            oLastNew.getX() == oFirst.getX() &&
+            oLastNew.getY() == oFirst.getY()) {
             PointList oList;
             FillPointList(&oList, poLine);
             /* forward, skip last point */

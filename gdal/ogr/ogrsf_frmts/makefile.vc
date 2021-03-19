@@ -5,10 +5,10 @@ GDAL_ROOT	=	..\..
 !IFDEF INCLUDE_OGR_FRMTS
 
 DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
-			avc rec mem vrt csv gmt bna kml gpx \
-			geoconcept xplane georss gtm dxf pgdump gpsbabel \
-			sua openair pds htf aeronavfaa edigeo svg idrisi arcgen \
-			segukooa segy sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
+			avc rec mem vrt csv gmt kml gpx \
+			geoconcept georss gtm dxf pgdump gpsbabel \
+			pds edigeo svg idrisi arcgen \
+			sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
 			$(ARCOBJECTS_DIR) \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
@@ -268,13 +268,13 @@ default:
 				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
 				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
 				 vrt\*.obj csv\*.obj rec\*.obj kml\*.obj \
-				 gmt\*.obj bna\*.obj geoconcept\*.obj \
+				 gmt\*.obj geoconcept\*.obj \
 				 geojson\*.obj geojson\libjson\*.obj \
-				 gpx\*.obj xplane\*.obj georss\*.obj gtm\*.obj \
+				 gpx\*.obj georss\*.obj gtm\*.obj \
 				 dxf\*.obj pgdump\*.obj gpsbabel\*.obj \
-				 sua\*.obj openair\*.obj pds\*.obj htf\*.obj \
-				 aeronavfaa\*.obj edigeo\*.obj svg\*.obj idrisi\*.obj \
-				 arcgen\*.obj segukooa\*.obj segy\*.obj sxf\*.obj \
+				 pds\*.obj \
+				 edigeo\*.obj svg\*.obj idrisi\*.obj \
+				 arcgen\*.obj sxf\*.obj \
 				 openfilegdb\*.obj wasp\*.obj selafin\*.obj jml\*.obj \
 				 vdv\*.obj mvt\*.obj flatgeobuf\*.obj mapml\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \

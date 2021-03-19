@@ -50,15 +50,15 @@ typedef struct {
  * it is left-justified in the offset field.
  */
 typedef struct {
-	uint16 tdir_tag;        /* see below */
-	uint16 tdir_type;       /* data type; see below */
-	uint64 tdir_count;      /* number of items; length in spec */
+	uint16_t tdir_tag;        /* see below */
+	uint16_t tdir_type;       /* data type; see below */
+	uint64_t tdir_count;      /* number of items; length in spec */
 	union {
-		uint16 toff_short;
-		uint32 toff_long;
-		uint64 toff_long8;
+		uint16_t toff_short;
+		uint32_t toff_long;
+		uint64_t toff_long8;
 	} tdir_offset;		/* either offset or the data itself if fits */
-	uint8  tdir_ignore;	/* flag status to ignore tag when parsing tags in tif_dirread.c */
+	uint8_t  tdir_ignore;	/* flag status to ignore tag when parsing tags in tif_dirread.c */
 } TIFFDirEntry;
 
 /*
@@ -69,50 +69,50 @@ typedef struct {
 	/* bit vector of fields that are set */
 	unsigned long td_fieldsset[FIELD_SETLONGS];
 
-	uint32  td_imagewidth, td_imagelength, td_imagedepth;
-	uint32  td_tilewidth, td_tilelength, td_tiledepth;
-	uint32  td_subfiletype;
-	uint16  td_bitspersample;
-	uint16  td_sampleformat;
-	uint16  td_compression;
-	uint16  td_photometric;
-	uint16  td_threshholding;
-	uint16  td_fillorder;
-	uint16  td_orientation;
-	uint16  td_samplesperpixel;
-	uint32  td_rowsperstrip;
-	uint16  td_minsamplevalue, td_maxsamplevalue;
+	uint32_t  td_imagewidth, td_imagelength, td_imagedepth;
+	uint32_t  td_tilewidth, td_tilelength, td_tiledepth;
+	uint32_t  td_subfiletype;
+	uint16_t  td_bitspersample;
+	uint16_t  td_sampleformat;
+	uint16_t  td_compression;
+	uint16_t  td_photometric;
+	uint16_t  td_threshholding;
+	uint16_t  td_fillorder;
+	uint16_t  td_orientation;
+	uint16_t  td_samplesperpixel;
+	uint32_t  td_rowsperstrip;
+	uint16_t  td_minsamplevalue, td_maxsamplevalue;
 	double* td_sminsamplevalue;
 	double* td_smaxsamplevalue;
 	float   td_xresolution, td_yresolution;
-	uint16  td_resolutionunit;
-	uint16  td_planarconfig;
+	uint16_t  td_resolutionunit;
+	uint16_t  td_planarconfig;
 	float   td_xposition, td_yposition;
-	uint16  td_pagenumber[2];
-	uint16* td_colormap[3];
-	uint16  td_halftonehints[2];
-	uint16  td_extrasamples;
-	uint16* td_sampleinfo;
+	uint16_t  td_pagenumber[2];
+	uint16_t* td_colormap[3];
+	uint16_t  td_halftonehints[2];
+	uint16_t  td_extrasamples;
+	uint16_t* td_sampleinfo;
 	/* even though the name is misleading, td_stripsperimage is the number
 	 * of striles (=strips or tiles) per plane, and td_nstrips the total
 	 * number of striles */
-	uint32  td_stripsperimage;  
-	uint32  td_nstrips;              /* size of offset & bytecount arrays */
-	uint64* td_stripoffset_p;        /* should be accessed with TIFFGetStrileOffset */
-	uint64* td_stripbytecount_p;     /* should be accessed with TIFFGetStrileByteCount */
-        uint32  td_stripoffsetbyteallocsize; /* number of elements currently allocated for td_stripoffset/td_stripbytecount. Only used if TIFF_LAZYSTRILELOAD is set */
+	uint32_t  td_stripsperimage;
+	uint32_t  td_nstrips;              /* size of offset & bytecount arrays */
+	uint64_t* td_stripoffset_p;        /* should be accessed with TIFFGetStrileOffset */
+	uint64_t* td_stripbytecount_p;     /* should be accessed with TIFFGetStrileByteCount */
+        uint32_t  td_stripoffsetbyteallocsize; /* number of elements currently allocated for td_stripoffset/td_stripbytecount. Only used if TIFF_LAZYSTRILELOAD is set */
 #ifdef STRIPBYTECOUNTSORTED_UNUSED
 	int     td_stripbytecountsorted; /* is the bytecount array sorted ascending? */
 #endif
         TIFFDirEntry td_stripoffset_entry;    /* for deferred loading */
         TIFFDirEntry td_stripbytecount_entry; /* for deferred loading */
-	uint16  td_nsubifd;
-	uint64* td_subifd;
+	uint16_t  td_nsubifd;
+	uint64_t* td_subifd;
 	/* YCbCr parameters */
-	uint16  td_ycbcrsubsampling[2];
-	uint16  td_ycbcrpositioning;
+	uint16_t  td_ycbcrsubsampling[2];
+	uint16_t  td_ycbcrpositioning;
 	/* Colorimetry parameters */
-	uint16* td_transferfunction[3];
+	uint16_t* td_transferfunction[3];
 	float*	td_refblackwhite;
 	/* CMYK parameters */
 	int     td_inknameslen;
@@ -276,17 +276,17 @@ typedef enum {
 
 struct _TIFFFieldArray {
 	TIFFFieldArrayType type;    /* array type, will be used to determine if IFD is image and such */
-	uint32 allocated_size;      /* 0 if array is constant, other if modified by future definition extension support */
-	uint32 count;               /* number of elements in fields array */
+	uint32_t allocated_size;      /* 0 if array is constant, other if modified by future definition extension support */
+	uint32_t count;               /* number of elements in fields array */
 	TIFFField* fields;          /* actual field info */
 };
 
 struct _TIFFField {
-	uint32 field_tag;                       /* field's tag */
+	uint32_t field_tag;                       /* field's tag */
 	short field_readcount;                  /* read count/TIFF_VARIABLE/TIFF_SPP */
 	short field_writecount;                 /* write count/TIFF_VARIABLE */
 	TIFFDataType field_type;                /* type of associated data */
-	uint32 reserved;                        /* reserved for future extension */
+	uint32_t reserved;                        /* reserved for future extension */
 	TIFFSetGetFieldType set_field_type;     /* type to be passed to TIFFSetField */
 	TIFFSetGetFieldType get_field_type;     /* type to be passed to TIFFGetField */
 	unsigned short field_bit;               /* bit in fieldsset bit vector */
@@ -296,9 +296,9 @@ struct _TIFFField {
 	TIFFFieldArray* field_subfields;        /* if field points to child ifds, child ifd field definition array */
 };
 
-extern int _TIFFMergeFields(TIFF*, const TIFFField[], uint32);
-extern const TIFFField* _TIFFFindOrRegisterField(TIFF *, uint32, TIFFDataType);
-extern  TIFFField* _TIFFCreateAnonField(TIFF *, uint32, TIFFDataType);
+extern int _TIFFMergeFields(TIFF*, const TIFFField[], uint32_t);
+extern const TIFFField* _TIFFFindOrRegisterField(TIFF *, uint32_t, TIFFDataType);
+extern  TIFFField* _TIFFCreateAnonField(TIFF *, uint32_t, TIFFDataType);
 extern int _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag);
 
 #if defined(__cplusplus)

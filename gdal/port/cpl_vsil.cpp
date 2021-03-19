@@ -140,7 +140,7 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
  * Most implementations will return NULL, and a subsequent ReadDir will
  * list all files available in the file's directory. This function will be
  * overridden by VSI FilesystemHandlers that wish to force e.g. an empty list
- * to avoid opening non-existant files on slow filesystems. The return value shall be destroyed with CSLDestroy()
+ * to avoid opening non-existent files on slow filesystems. The return value shall be destroyed with CSLDestroy()
  * @since GDAL 3.2
  */
 char **VSISiblingFiles( const char *pszFilename)
@@ -662,15 +662,15 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     The OVERWRITE strategy (GDAL >= 3.2) will always overwrite the target file
  *     with the source one.
  * </li>
- * <li>NUM_THREADS=integer. Number of threads to use for parallel file copying.
+ * <li>NUM_THREADS=integer. (GDAL >= 3.1) Number of threads to use for parallel file copying.
  *     Only use for when /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ is in source or target.
- *     Since GDAL 3.1</li>
- * <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use to split
+ *     The default is 10 since GDAL 3.3</li>
+ * <li>CHUNK_SIZE=integer. (GDAL >= 3.1) Maximum size of chunk (in bytes) to use to split
  *     large objects when downloading them from /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ to
  *     local file system, or for upload to /vsis3/, /vsiaz/ or /vsiadls/ from local file system.
  *     Only used if NUM_THREADS > 1.
  *     For upload to /vsis3/, this chunk size must be set at least to 5 MB.
- *     Since GDAL 3.1</li>
+ *     The default is 8 MB since GDAL 3.3</li>
  * </ul>
  * @param pProgressFunc Progress callback, or NULL.
  * @param pProgressData User data of progress callback, or NULL.
@@ -876,9 +876,15 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  * The following are supported:
  * <ul>
  * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/, /vsis3/, etc)</li>
- * <li>TAGS: specific to /vsis3/: to get S3 Object tagging information</li>
+ * <li>TAGS:
+ *    <ul>
+ *      <li>/vsis3/: to get S3 Object tagging information</li>
+ *      <li>/vsiaz/: to get blob tags. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags</li>
+ *    </ul>
+ * </li>
  * <li>STATUS: specific to /vsiadls/: returns all system defined properties for a path (seems in practice to be a subset of HEADERS)</li>
  * <li>ACL: specific to /vsiadls/: returns the access control list for a path.</li>
+ * <li>METADATA: specific to /vsiaz/: to set blob metadata. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-metadata. Note: this will be a subset of what pszDomain=HEADERS returns</li>
  * </ul>
  * @param papszOptions Unused. Should be set to NULL.
  *
@@ -903,7 +909,7 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
 /**
  * \brief Set metadata on files.
  *
- * Implemented currently only for /vsis3/ and /vsiadls/
+ * Implemented currently only for /vsis3/, /vsiaz/ and /vsiadls/
  *
  * @param pszFilename the path of the filesystem object to be set.
  * UTF-8 encoded.
@@ -911,10 +917,21 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  * @param pszDomain Metadata domain to set. Depends on the file system.
  * The following are supported:
  * <ul>
- * <li>HEADERS: to set HTTP header</li>
- * <li>TAGS: to set S3 Object tagging information</li>
- * <li>PROPERTIES: specific to /vsiadls/: to set properties. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setProperties.</li>
+ * <li>HEADERS: specific to /vsis3/: to set HTTP headers</li>
+ * <li>TAGS: Content of papszMetadata should be KEY=VALUE pairs.
+ *    <ul>
+ *      <li>/vsis3/: to set S3 Object tagging information</li>
+ *      <li>/vsiaz/: to set blob tags. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags. Note: storageV2 must be enabled on the account</li>
+ *    </ul>
+ * </li>
+ * <li>PROPERTIES:
+ *    <ul>
+ *      <li>to /vsiaz/: to set properties. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-properties.</li>
+ *      <li>to /vsiadls/: to set properties. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setProperties.</li>
+ *    </ul>
+ * </li>
  * <li>ACL: specific to /vsiadls/: to set access control list. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setAccessControl or setAccessControlRecursive. In setAccessControlRecursive, x-ms-acl must be specified in papszMetadata</li>
+ * <li>METADATA: specific to /vsiaz/: to set blob metadata. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-metadata. Content of papszMetadata should be strings in the form x-ms-meta-name=value</li>
  * </ul>
  * @param papszOptions NULL or NULL terminated list of options.
  *                     For /vsiadls/ and pszDomain=ACL, "RECURSIVE=TRUE" can be
@@ -1149,7 +1166,7 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 VSIVirtualHandle *VSIFilesystemHandler::Open( const char *pszFilename,
                                               const char *pszAccess )
 {
-    return Open(pszFilename, pszAccess, false);
+    return Open(pszFilename, pszAccess, false, nullptr);
 }
 
 /************************************************************************/
@@ -1656,6 +1673,51 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess,
                        int bSetError )
 
 {
+    return VSIFOpenEx2L(pszFilename, pszAccess, bSetError, nullptr);
+}
+
+/************************************************************************/
+/*                            VSIFOpenEx2L()                            */
+/************************************************************************/
+
+/**
+ * \brief Open file.
+ *
+ * This function opens a file with the desired access.  Large files (larger
+ * than 2GB) should be supported.  Binary access is always implied and
+ * the "b" does not need to be included in the pszAccess string.
+ *
+ * Note that the "VSILFILE *" returned by this function is
+ * *NOT* a standard C library FILE *, and cannot be used with any functions
+ * other than the "VSI*L" family of functions.  They aren't "real" FILE objects.
+ *
+ * On windows it is possible to define the configuration option
+ * GDAL_FILE_IS_UTF8 to have pszFilename treated as being in the local
+ * encoding instead of UTF-8, restoring the pre-1.8.0 behavior of VSIFOpenL().
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fopen() function.
+ *
+ * @param pszFilename the file to open.  UTF-8 encoded.
+ * @param pszAccess access requested (i.e. "r", "r+", "w")
+ * @param bSetError flag determining whether or not this open call
+ * should set VSIErrors on failure.
+ * @param papszOptions NULL or NULL-terminated list of strings. The content is
+ *                     highly file system dependent. Currently only MIME headers
+ *                     such as Content-Type and Content-Encoding are supported
+ *                     for the /vsis3/, /vsigs/, /vsiaz/, /vsiadls/ file systems.
+ *
+ * @return NULL on failure, or the file handle.
+ *
+ * @since GDAL 3.3
+ */
+
+VSILFILE *VSIFOpenEx2L( const char * pszFilename, const char * pszAccess,
+                        int bSetError, CSLConstList papszOptions )
+
+{
     // Too long filenames can cause excessive memory allocation due to
     // recursion in some filesystem handlers
     constexpr size_t knMaxPath = 8192;
@@ -1666,9 +1728,9 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess,
         VSIFileManager::GetHandler( pszFilename );
 
     VSILFILE* fp = reinterpret_cast<VSILFILE *>(
-        poFSHandler->Open( pszFilename, pszAccess, CPL_TO_BOOL(bSetError) ) );
+        poFSHandler->Open( pszFilename, pszAccess, CPL_TO_BOOL(bSetError), papszOptions ) );
 
-    VSIDebug4( "VSIFOpenExL(%s,%s,%d) = %p",
+    VSIDebug4( "VSIFOpenEx2L(%s,%s,%d) = %p",
                pszFilename, pszAccess, bSetError, fp );
 
     return fp;

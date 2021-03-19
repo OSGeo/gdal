@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import stat
 import sys
 from osgeo import gdal
 
@@ -37,6 +36,7 @@ import gdaltest
 import webserver
 import pytest
 
+pytestmark = pytest.mark.skipif(not gdaltest.built_against_curl(), reason="GDAL not built against curl")
 
 def open_for_read(uri):
     """
@@ -45,126 +45,17 @@ def open_for_read(uri):
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-
-def test_vsiaz_init():
-
-    gdaltest.az_vars = {}
+    az_vars = {}
     for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
                 'AZURE_STORAGE_ACCESS_KEY', 'AZURE_SAS', 'AZURE_NO_SIGN_REQUEST'):
-        gdaltest.az_vars[var] = gdal.GetConfigOption(var)
-        if gdaltest.az_vars[var] is not None:
+        az_vars[var] = gdal.GetConfigOption(var)
+        if az_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
     assert gdal.GetSignedURL('/vsiaz/foo/bar') is None
-
-###############################################################################
-# Error cases
-
-
-def test_vsiaz_real_server_errors():
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
-
-    # Missing AZURE_STORAGE_ACCOUNT
-    gdal.ErrorReset()
-    with gdaltest.error_handler():
-        f = open_for_read('/vsiaz/foo/bar')
-    assert f is None and gdal.VSIGetLastErrorMsg().find('AZURE_STORAGE_ACCOUNT') >= 0
-
-    gdal.ErrorReset()
-    with gdaltest.error_handler():
-        f = open_for_read('/vsiaz_streaming/foo/bar')
-    assert f is None and gdal.VSIGetLastErrorMsg().find('AZURE_STORAGE_ACCOUNT') >= 0
-
-    # Invalid AZURE_STORAGE_CONNECTION_STRING
-    with gdaltest.config_option('AZURE_STORAGE_CONNECTION_STRING', 'invalid'):
-        gdal.ErrorReset()
-        with gdaltest.error_handler():
-            f = open_for_read('/vsiaz/foo/bar')
-        assert f is None
-
-    # Missing AZURE_STORAGE_ACCESS_KEY
-    gdal.ErrorReset()
-    with gdaltest.config_options({'AZURE_STORAGE_ACCOUNT': 'AZURE_STORAGE_ACCOUNT',
-                                  'CPL_AZURE_VM_API_ROOT_URL': 'disabled'}):
-        with gdaltest.error_handler():
-            f = open_for_read('/vsiaz/foo/bar')
-        assert f is None and gdal.VSIGetLastErrorMsg().find('AZURE_STORAGE_ACCESS_KEY') >= 0
-
-    # AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_ACCESS_KEY but invalid
-    gdal.ErrorReset()
-    with gdaltest.config_options({'AZURE_STORAGE_ACCOUNT': 'AZURE_STORAGE_ACCOUNT',
-                                  'AZURE_STORAGE_ACCESS_KEY': 'AZURE_STORAGE_ACCESS_KEY'}):
-        with gdaltest.error_handler():
-            f = open_for_read('/vsiaz/foo/bar.baz')
-        if f is not None:
-            if f is not None:
-                gdal.VSIFCloseL(f)
-            if gdal.GetConfigOption('APPVEYOR') is not None:
-                return
-            pytest.fail(gdal.VSIGetLastErrorMsg())
-
-        gdal.ErrorReset()
-        with gdaltest.error_handler():
-            f = open_for_read('/vsiaz_streaming/foo/bar.baz')
-        assert f is None, gdal.VSIGetLastErrorMsg()
-
-
-###############################################################################
-# Test AZURE_NO_SIGN_REQUEST=YES
-
-
-def test_vsiaz_no_sign_request():
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
-
-    with gdaltest.config_options({ 'AZURE_STORAGE_ACCOUNT': 'naipblobs', 'AZURE_NO_SIGN_REQUEST': 'YES'}):
-        actual_url = gdal.GetActualURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
-        assert actual_url == 'https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif'
-        assert actual_url == gdal.GetSignedURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
-
-        f = open_for_read('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
-        if f is None:
-            if gdaltest.gdalurlopen('https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif') is None:
-                pytest.skip('cannot open URL')
-            pytest.fail()
-
-        gdal.VSIFCloseL(f)
-
-        assert 'm_3008601_ne_16_1_20150804.tif' in gdal.ReadDir('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/')
-
-###############################################################################
-# Test AZURE_SAS option
-
-
-def test_vsiaz_sas():
-
-    if not gdaltest.built_against_curl():
-        pytest.skip()
-
-    # See https://azure.microsoft.com/en-us/services/open-datasets/catalog/naip/ for the value of AZURE_SAS
-    with gdaltest.config_options({ 'AZURE_STORAGE_ACCOUNT': 'naipblobs', 'AZURE_SAS': 'st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D'}):
-        actual_url = gdal.GetActualURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
-        assert actual_url == 'https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif'
-        assert gdal.GetSignedURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif') == 'https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif?st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D'
-
-        f = open_for_read('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
-        if f is None:
-            if gdaltest.gdalurlopen('https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif') is None:
-                pytest.skip('cannot open URL')
-            pytest.fail()
-
-        gdal.VSIFCloseL(f)
-
-        assert 'm_3008601_ne_16_1_20150804.tif' in gdal.ReadDir('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/')
-
-###############################################################################
-
-
-def test_vsiaz_start_webserver():
 
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
@@ -181,6 +72,17 @@ def test_vsiaz_start_webserver():
     gdal.SetConfigOption('AZURE_STORAGE_ACCOUNT', '')
     gdal.SetConfigOption('AZURE_STORAGE_ACCESS_KEY', '')
     gdal.SetConfigOption('CPL_AZURE_TIMESTAMP', 'my_timestamp')
+
+    yield
+
+    # Clearcache needed to close all connections, since the Python server
+    # can only handle one connection at a time
+    gdal.VSICurlClearCache()
+
+    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
+
+    for var in az_vars:
+        gdal.SetConfigOption(var, az_vars[var])
 
 ###############################################################################
 # Test with a fake Azure Blob server
@@ -440,7 +342,7 @@ def test_vsiaz_fake_write():
     gdal.VSICurlClearCache()
 
     # Test creation of BlockBob
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenExL('/vsiaz/test_copy/file.tif', 'wb', 0, ['Content-Encoding=bar'])
     assert f is not None
 
     handler = webserver.SequentialHandler()
@@ -448,11 +350,13 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:juvKZNo5zX5UXmLTK2BnPsezN0DCfUeW8RNZySbwN1o=' or \
+           h['Authorization'] != 'SharedKey myaccount:jqNjm+2wmGAetpQPL2X9UWIrvmbYiOV59pQtyXD35nM=' or \
            'Expect' not in h or h['Expect'] != '100-continue' or \
            'Content-Length' not in h or h['Content-Length'] != '40000' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
-           'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'BlockBlob':
+           'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'BlockBlob' or \
+           'Content-Type' not in h or h['Content-Type'] != 'image/tiff' or \
+           'Content-Encoding' not in h or h['Content-Encoding'] != 'bar':
             sys.stderr.write('Bad headers: %s\n' % str(h))
             request.send_response(403)
             return
@@ -470,7 +374,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', custom_method=method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
         ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
@@ -480,7 +384,7 @@ def test_vsiaz_fake_write():
         gdal.VSIFCloseL(f)
 
     # Simulate illegal read
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     assert f is not None
     with gdaltest.error_handler():
         ret = gdal.VSIFReadL(1, 1, f)
@@ -488,7 +392,7 @@ def test_vsiaz_fake_write():
     gdal.VSIFCloseL(f)
 
     # Simulate illegal seek
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     assert f is not None
     with gdaltest.error_handler():
         ret = gdal.VSIFSeekL(f, 1, 0)
@@ -496,7 +400,7 @@ def test_vsiaz_fake_write():
     gdal.VSIFCloseL(f)
 
     # Simulate failure when putting BlockBob
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     assert f is not None
 
     handler = webserver.SequentialHandler()
@@ -507,7 +411,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', custom_method=method)
 
     if gdal.VSIFSeekL(f, 0, 0) != 0:
         gdal.VSIFCloseL(f)
@@ -542,19 +446,19 @@ def test_vsiaz_fake_write():
             pytest.fail(ret)
 
     # Simulate creation of BlockBob over an existing blob of incompatible type
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     assert f is not None
 
     handler = webserver.SequentialHandler()
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 409)
-    handler.add('DELETE', '/azure/blob/myaccount/test_copy/file.bin', 202)
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 201)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', 409)
+    handler.add('DELETE', '/azure/blob/myaccount/test_copy/file.tif', 202)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', 201)
     with webserver.install_http_handler(handler):
         gdal.VSIFCloseL(f)
 
     # Test creation of AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     assert f is not None
 
@@ -563,7 +467,7 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:cEOpBBlEJNHqKyul2N7ZgyQoznDhPjIn293EWlm4t4o=' or \
+           h['Authorization'] != 'SharedKey myaccount:zmFZkO5IZCidFB/aAtr3oUaT2xg//F2SjyIgWMUoV5g=' or \
            'Content-Length' not in h or h['Content-Length'] != '0' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
            'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'AppendBlob':
@@ -576,7 +480,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', custom_method=method)
 
     def method(request):
         h = request.headers
@@ -599,7 +503,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif?comp=appendblock', custom_method=method)
 
     def method(request):
         h = request.headers
@@ -622,7 +526,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif?comp=appendblock', custom_method=method)
 
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
@@ -633,7 +537,7 @@ def test_vsiaz_fake_write():
 
     # Test failed creation of AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     assert f is not None
 
@@ -645,7 +549,7 @@ def test_vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', custom_method=method)
 
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -657,13 +561,13 @@ def test_vsiaz_fake_write():
 
     # Test failed writing of a block of an AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
-    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.tif', 'wb')
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
     assert f is not None
 
     handler = webserver.SequentialHandler()
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 201)
-    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 403)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif', 201)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.tif?comp=appendblock', 403)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
@@ -1351,146 +1255,62 @@ def test_vsiaz_read_credentials_simulated_azure_vm_expiration():
 
 
 ###############################################################################
+# Test GetFileMetadata () / SetFileMetadata()
 
 
-def test_vsiaz_stop_webserver():
+def test_vsiaz_fake_metadata():
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    # Clearcache needed to close all connections, since the Python server
-    # can only handle one connection at a time
     gdal.VSICurlClearCache()
 
-    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/azure/blob/myaccount/test/foo.bin', 200, {'Content-Length': '3', 'x-ms-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsiaz/test/foo.bin', 'HEADERS')
+        assert 'x-ms-foo' in md
+        assert md['x-ms-foo'] == 'bar'
 
-###############################################################################
-# Nominal cases (require valid credentials)
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 200, {'x-ms-meta-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsiaz/test/foo.bin', 'METADATA')
+        assert 'x-ms-meta-foo' in md
+        assert md['x-ms-meta-foo'] == 'bar'
 
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/test/foo.bin?comp=tags', 200, {},
+                """<Tags><TagSet><Tag><Key>foo</Key><Value>bar</Value></Tag></TagSet></Tags>""")
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsiaz/test/foo.bin', 'TAGS')
+        assert 'foo' in md
+        assert md['foo'] == 'bar'
 
-def test_vsiaz_extra_1():
+    # Error case
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 404)
+    with webserver.install_http_handler(handler):
+        assert gdal.GetFileMetadata('/vsiaz/test/foo.bin', 'METADATA') == {}
 
-    if not gdaltest.built_against_curl():
-        pytest.skip()
+    # SetMetadata()
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=properties', 200, expected_headers={'x-ms-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'x-ms-foo': 'bar'}, 'PROPERTIES')
 
-    az_resource = gdal.GetConfigOption('AZ_RESOURCE')
-    if az_resource is None:
-        pytest.skip('Missing AZ_RESOURCE')
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 200, expected_headers={'x-ms-meta-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'x-ms-meta-foo': 'bar'}, 'METADATA')
 
-    if '/' not in az_resource:
-        path = '/vsiaz/' + az_resource
-        statres = gdal.VSIStatL(path)
-        assert statres is not None and stat.S_ISDIR(statres.mode), \
-            ('%s is not a valid bucket' % path)
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=tags', 204, expected_body=b'')
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'FOO': 'BAR'}, 'TAGS')
 
-        readdir = gdal.ReadDir(path)
-        assert readdir is not None, 'ReadDir() should not return empty list'
-        for filename in readdir:
-            if filename != '.':
-                subpath = path + '/' + filename
-                assert gdal.VSIStatL(subpath) is not None, \
-                    ('Stat(%s) should not return an error' % subpath)
-
-        unique_id = 'vsiaz_test'
-        subpath = path + '/' + unique_id
-        ret = gdal.Mkdir(subpath, 0)
-        assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
-
-        readdir = gdal.ReadDir(path)
-        assert unique_id in readdir, \
-            ('ReadDir(%s) should contain %s' % (path, unique_id))
-
-        ret = gdal.Mkdir(subpath, 0)
-        assert ret != 0, ('Mkdir(%s) repeated should return an error' % subpath)
-
-        ret = gdal.Rmdir(subpath)
-        assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
-
-        readdir = gdal.ReadDir(path)
-        assert unique_id not in readdir, \
-            ('ReadDir(%s) should not contain %s' % (path, unique_id))
-
-        ret = gdal.Rmdir(subpath)
-        assert ret != 0, ('Rmdir(%s) repeated should return an error' % subpath)
-
-        ret = gdal.Mkdir(subpath, 0)
-        assert ret >= 0, ('Mkdir(%s) should not return an error' % subpath)
-
-        f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
-        assert f is not None
-        gdal.VSIFWriteL('hello', 1, 5, f)
-        gdal.VSIFCloseL(f)
-
-        ret = gdal.Rmdir(subpath)
-        assert ret != 0, \
-            ('Rmdir(%s) on non empty directory should return an error' % subpath)
-
-        f = gdal.VSIFOpenL(subpath + '/test.txt', 'rb')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
-        assert data == 'hello'
-        gdal.VSIFCloseL(f)
-
-        assert gdal.Rename(subpath + '/test.txt', subpath + '/test2.txt') == 0
-
-        f = gdal.VSIFOpenL(subpath + '/test2.txt', 'rb')
-        assert f is not None
-        data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
-        assert data == 'hello'
-        gdal.VSIFCloseL(f)
-
-        ret = gdal.Unlink(subpath + '/test2.txt')
-        assert ret >= 0, \
-            ('Unlink(%s) should not return an error' % (subpath + '/test2.txt'))
-
-        ret = gdal.Rmdir(subpath)
-        assert ret >= 0, ('Rmdir(%s) should not return an error' % subpath)
-
-        return
-
-    f = open_for_read('/vsiaz/' + az_resource)
-    assert f is not None
-    ret = gdal.VSIFReadL(1, 1, f)
-    gdal.VSIFCloseL(f)
-
-    assert len(ret) == 1
-
-    # Same with /vsiaz_streaming/
-    f = open_for_read('/vsiaz_streaming/' + az_resource)
-    assert f is not None
-    ret = gdal.VSIFReadL(1, 1, f)
-    gdal.VSIFCloseL(f)
-
-    assert len(ret) == 1
-
-    if False:  # pylint: disable=using-constant-test
-        # we actually try to read at read() time and bSetError = false
-        # Invalid bucket : "The specified bucket does not exist"
-        gdal.ErrorReset()
-        f = open_for_read('/vsiaz/not_existing_bucket/foo')
-        with gdaltest.error_handler():
-            gdal.VSIFReadL(1, 1, f)
-        gdal.VSIFCloseL(f)
-        assert gdal.VSIGetLastErrorMsg() != ''
-
-    # Invalid resource
-    gdal.ErrorReset()
-    f = open_for_read('/vsiaz_streaming/' + az_resource + '/invalid_resource.baz')
-    assert f is None, gdal.VSIGetLastErrorMsg()
-
-    # Test GetSignedURL()
-    signed_url = gdal.GetSignedURL('/vsiaz/' + az_resource)
-    f = open_for_read('/vsicurl_streaming/' + signed_url)
-    assert f is not None
-    ret = gdal.VSIFReadL(1, 1, f)
-    gdal.VSIFCloseL(f)
-
-    assert len(ret) == 1
-
-###############################################################################
-
-
-def test_vsiaz_cleanup():
-
-    for var in gdaltest.az_vars:
-        gdal.SetConfigOption(var, gdaltest.az_vars[var])
+    # Error case
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test/foo.bin?comp=metadata', 404)
+    with webserver.install_http_handler(handler):
+        assert not gdal.SetFileMetadata('/vsiaz/test/foo.bin', {'x-ms-meta-foo': 'bar'}, 'METADATA')

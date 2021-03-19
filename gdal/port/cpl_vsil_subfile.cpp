@@ -93,7 +93,8 @@ class VSISubFileFilesystemHandler final: public VSIFilesystemHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
     int Unlink( const char *pszFilename ) override;
@@ -110,7 +111,7 @@ class VSISubFileFilesystemHandler final: public VSIFilesystemHandler
 
 VSISubFileHandle::~VSISubFileHandle()
 {
-    Close();
+    VSISubFileHandle::Close();
 }
 
 /************************************************************************/
@@ -334,7 +335,8 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
 VSIVirtualHandle *
 VSISubFileFilesystemHandler::Open( const char *pszFilename,
                                    const char *pszAccess,
-                                   bool /* bSetError */ )
+                                   bool /* bSetError */,
+                                   CSLConstList /* papszOptions */ )
 
 {
     if( !STARTS_WITH_CI(pszFilename, "/vsisubfile/") )

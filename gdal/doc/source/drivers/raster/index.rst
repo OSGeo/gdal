@@ -12,6 +12,11 @@ Raster drivers
 
 .. include:: driver_summary.rst
 
+.. note::
+
+    The following drivers have been retired and moved to the
+    https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid, NTv1
+
 ..
     Developer comment: make html includes a hack to hide the table from
     the index.html file. We need to keep it visible so that the top-level
@@ -29,7 +34,6 @@ Raster drivers
    bag
    blx
    bmp
-   bpg
    bsb
    bt
    byn
@@ -52,7 +56,6 @@ Raster drivers
    doq1
    doq2
    dted
-   e00grid
    ecrgtoc
    ecw
    eedai
@@ -60,7 +63,6 @@ Raster drivers
    eir
    elas
    envi
-   epsilon
    esat
    esric
    ers
@@ -92,7 +94,6 @@ Raster drivers
    hfa
    ida
    Idrisi
-   ignfheightasciigrid
    ilwis
    intergraphraster
    iris
@@ -133,7 +134,6 @@ Raster drivers
    ngsgeoid
    ngw
    nitf
-   ntv1
    ntv2
    nwtgrd
    ogcapi

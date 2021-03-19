@@ -449,7 +449,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     CPLString                   m_osDescriptionLCO;
     bool                        m_bHasReadMetadataFromStorage;
     bool                        m_bHasTriedDetectingFID64;
-    GPKGASpatialVariant         m_eASPatialVariant;
+    GPKGASpatialVariant         m_eASpatialVariant;
     std::set<OGRwkbGeometryType> m_eSetBadGeomTypeWarned;
 
     int                         m_nCountInsertInTransactionThreshold = -1;
@@ -547,8 +547,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                                                const char* pszDescription );
     void                SetDeferredSpatialIndexCreation( bool bFlag )
                                 { m_bDeferredSpatialIndexCreation = bFlag; }
-    void                SetASpatialVariant( GPKGASpatialVariant eASPatialVariant )
-                                { m_eASPatialVariant = eASPatialVariant; }
+    void                SetASpatialVariant( GPKGASpatialVariant eASpatialVariant )
+                                { m_eASpatialVariant = eASpatialVariant; }
 
     void                CreateSpatialIndexIfNecessary();
     bool                CreateSpatialIndex(const char* pszTableName = nullptr);

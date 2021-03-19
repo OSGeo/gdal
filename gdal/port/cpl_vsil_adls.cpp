@@ -179,7 +179,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList papszOptions ) override;
 
     int Rename( const char *oldpath, const char *newpath ) override;
     int Unlink( const char *pszFilename ) override;
@@ -233,7 +234,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                                 const std::string& osFilename,
                                 IVSIS3LikeHandleHelper * poS3HandleHelper,
                                 int nMaxRetry,
-                                double dfRetryDelay) override {
+                                double dfRetryDelay,
+                                CSLConstList /* papszOptions */) override {
         return UploadFile(osFilename, Event::CREATE_FILE, 0, nullptr, 0,
                           poS3HandleHelper, nMaxRetry, dfRetryDelay) ?
             std::string("dummy") : std::string();
@@ -1164,7 +1166,8 @@ void VSIADLSFSHandler::ClearCache()
 
 VSIVirtualHandle* VSIADLSFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -1200,7 +1203,7 @@ VSIVirtualHandle* VSIADLSFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -1745,6 +1748,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
                               nullptr));
         headers = curl_slist_append(headers, osSourceHeader.c_str());
         headers = curl_slist_append(headers, "Content-Length: 0");
+        headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = VSICurlMergeHeaders(headers,
                         poAzHandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1791,7 +1795,7 @@ int VSIADLSFSHandler::CopyObject( const char *oldpath, const char *newpath,
             auto poADLSHandleHelper =
                 std::unique_ptr<IVSIS3LikeHandleHelper>(
                     VSIAzureBlobHandleHelper::BuildFromURI(osTargetNameWithoutPrefix, GetFSPrefix()));
-            if( poADLSHandleHelper == nullptr )
+            if( poADLSHandleHelper != nullptr )
                 InvalidateCachedData(poADLSHandleHelper->GetURLNoKVP().c_str());
 
             const CPLString osFilenameWithoutSlash(RemoveTrailingSlash(newpath));
@@ -1869,6 +1873,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
             CPLHTTPSetOptions(hCurlHandle,
                               poHandleHelper->GetURL().c_str(),
                               nullptr));
+        headers = VSICurlSetContentTypeFromExt(headers, osFilename.c_str());
 
         CPLString osContentLength; // leave it in this scope
 
@@ -1883,7 +1888,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString& osFilename,
                                    static_cast<int>(nBufferSize));
             headers = curl_slist_append(headers, osContentLength.c_str());
         }
-        else 
+        else
         {
             curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
             headers = curl_slist_append(headers, "Content-Length: 0");

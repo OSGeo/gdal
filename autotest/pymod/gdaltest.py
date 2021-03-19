@@ -33,14 +33,22 @@ import contextlib
 import math
 import os
 import os.path
+from queue import Queue
+import shlex
+import socket
 import stat
+import subprocess
 import sys
-from sys import version_info
+from threading import Thread
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import pytest
 
 from osgeo import gdal
 from osgeo import osr
-import pytest
 
 cur_name = 'default'
 
@@ -69,11 +77,6 @@ jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
 jp2lura_drv_unregistered = False
-
-if version_info >= (3, 0, 0):
-    import gdaltest_python3 as gdaltestaux
-else:
-    import gdaltest_python2 as gdaltestaux
 
 # Process commandline arguments for stuff like --debug, --locale, --config
 
@@ -1669,11 +1672,122 @@ def enable_exceptions():
 
 
 ###############################################################################
-run_func = gdaltestaux.run_func
-urlescape = gdaltestaux.urlescape
-gdalurlopen = gdaltestaux.gdalurlopen
-spawn_async = gdaltestaux.spawn_async
-wait_process = gdaltestaux.wait_process
-runexternal = gdaltestaux.runexternal
-read_in_thread = gdaltestaux.read_in_thread
-runexternal_out_and_err = gdaltestaux.runexternal_out_and_err
+
+
+def gdalurlopen(url, timeout=10):
+    old_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(timeout)
+    proxy = None
+
+    if 'GDAL_HTTP_PROXY' in os.environ:
+        proxy = os.environ['GDAL_HTTP_PROXY']
+        protocol = 'http'
+
+    if 'GDAL_HTTPS_PROXY' in os.environ and url.startswith('https'):
+        proxy = os.environ['GDAL_HTTPS_PROXY']
+        protocol = 'https'
+
+    if proxy is not None:
+        if 'GDAL_HTTP_PROXYUSERPWD' in os.environ:
+            proxyuserpwd = os.environ['GDAL_HTTP_PROXYUSERPWD']
+            proxy_handler = urllib.request.ProxyHandler(
+                {protocol: f"{protocol}://{proxyuserpwd}@{proxy}"})
+        else:
+            proxyuserpwd = None
+            proxy_handler = urllib.request.ProxyHandler(
+                {protocol: f"{protocol}://{proxy}"})
+
+        opener = urllib.request.build_opener(proxy_handler,
+                                             urllib.request.HTTPHandler)
+
+        urllib.request.install_opener(opener)
+
+    try:
+        handle = urllib.request.urlopen(url)
+        socket.setdefaulttimeout(old_timeout)
+        return handle
+    except urllib.error.HTTPError as e:
+        print(f'HTTP service for {url} is down (HTTP Error: {e.code})')
+        socket.setdefaulttimeout(old_timeout)
+        return None
+    except urllib.error.ContentTooShortError:
+        print(f'HTTP content too short for {url}.')
+        socket.setdefaulttimeout(old_timeout)
+        return None
+    except urllib.error.URLError as e:
+        print(f'HTTP service for {url} is down (URL Error: {e.reason})')
+        socket.setdefaulttimeout(old_timeout)
+        return None
+
+
+def runexternal(cmd, strin=None, check_memleak=True,
+                display_live_on_parent_stdout=False, encoding='latin1'):
+    # pylint: disable=unused-argument
+    command = shlex.split(cmd)
+    if strin is None:
+        p = subprocess.Popen(command, stdout=subprocess.PIPE)
+    else:
+        p = subprocess.Popen(command, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE)
+        p.stdin.write(strin.encode('ascii'))
+        p.stdin.close()
+
+    if p.stdout is not None:
+        if display_live_on_parent_stdout:
+            ret = ''
+            ret_stdout = p.stdout
+            while True:
+                c = ret_stdout.read(1).decode(encoding)
+                if c == '':
+                    break
+                ret = ret + c
+                sys.stdout.write(c)
+        else:
+            ret = p.stdout.read().decode(encoding)
+    else:
+        ret = ''
+
+    waitcode = p.wait()
+    if waitcode != 0:
+        ret = f'{ret}\nERROR ret code = {waitcode}'
+
+    return ret
+
+
+def _read_in_thread(f, q):
+    q.put(f.read())
+    f.close()
+
+
+def runexternal_out_and_err(cmd, check_memleak=True, encoding='ascii'):
+    # pylint: disable=unused-argument
+    command = shlex.split(cmd)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+
+    if p.stdout is not None:
+        q_stdout = Queue()
+        t_stdout = Thread(target=_read_in_thread, args=(p.stdout, q_stdout))
+        t_stdout.start()
+    else:
+        q_stdout = None
+        ret_stdout = ''
+
+    if p.stderr is not None:
+        q_stderr = Queue()
+        t_stderr = Thread(target=_read_in_thread, args=(p.stderr, q_stderr))
+        t_stderr.start()
+    else:
+        q_stderr = None
+        ret_stderr = ''
+
+    if q_stdout is not None:
+        ret_stdout = q_stdout.get().decode(encoding)
+    if q_stderr is not None:
+        ret_stderr = q_stderr.get().decode(encoding)
+
+    waitcode = p.wait()
+    if waitcode != 0:
+        ret_stderr = f'{ret_stderr}\nERROR ret code = {waitcode}'
+
+    return (ret_stdout, ret_stderr)

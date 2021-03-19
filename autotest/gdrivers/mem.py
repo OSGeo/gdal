@@ -29,9 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import ctypes
 import struct
-from osgeo import gdal
 
+from osgeo import gdal
 
 import gdaltest
 import pytest
@@ -107,11 +108,6 @@ def test_mem_2():
     ds = gdal.Open('MEM:::')
     gdal.PopErrorHandler()
     assert ds is None, 'opening MEM dataset should have failed.'
-
-    try:
-        import ctypes
-    except ImportError:
-        pytest.skip()
 
     for libname in ['msvcrt', 'libc.so.6']:
         try:

@@ -1586,7 +1586,7 @@ CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
         m_osRequestPayer,
         "s3",
         osVerb,
-        nullptr, /* exhisting headers */
+        nullptr, /* existing headers */
         osHost,
         m_bUseVirtualHosting
         ? CPLAWSURLEncode("/" + m_osObjectKey, false).c_str() :

@@ -246,6 +246,8 @@ char** GDALMDReaderDigitalGlobe::LoadIMDXmlNode(CPLXMLNode* psNode)
  * GDALLoadRPBXmlNode()
  */
 static const char * const apszRPBMap[] = {
+    RPC_ERR_BIAS,   "image.errBias",
+    RPC_ERR_RAND,   "image.errRand",
     RPC_LINE_OFF,   "image.lineOffset",
     RPC_SAMP_OFF,   "image.sampOffset",
     RPC_LAT_OFF,    "image.latOffset",

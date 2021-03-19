@@ -1021,7 +1021,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 
         const float fMinZAcum =
             (CPL_LSBUINT32PTR(poDS->abyHeader+164+12) - 32768.0f) / 10000.0f;
-        poDS->SetMetadataItem("MINIMUM_Z_TO_ACUMULATE",
+        poDS->SetMetadataItem("MINIMUM_Z_TO_ACCUMULATE",
                               CPLString().Printf("%f", fMinZAcum));
 
         const unsigned short nSecondsOfAccumulation =

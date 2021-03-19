@@ -34,6 +34,8 @@
 #include "ogr_api.h"
 #include "ogr_libs.h"
 
+#include <new>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -86,6 +88,16 @@ OGRPolyhedralSurface& OGRPolyhedralSurface::operator=(
         oMP = other.oMP;
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRPolyhedralSurface *OGRPolyhedralSurface::clone() const
+
+{
+    return new (std::nothrow) OGRPolyhedralSurface(*this);
 }
 
 /************************************************************************/
@@ -157,32 +169,6 @@ void OGRPolyhedralSurface::empty()
     }
     oMP.nGeomCount = 0;
     oMP.papoGeoms = nullptr;
-}
-
-/************************************************************************/
-/*                               clone()                                */
-/************************************************************************/
-
-OGRGeometry* OGRPolyhedralSurface::clone() const
-{
-    OGRPolyhedralSurface *poNewPS =
-        OGRGeometryFactory::createGeometry(getGeometryType())->
-            toPolyhedralSurface();
-
-    poNewPS->assignSpatialReference(getSpatialReference());
-    poNewPS->flags = flags;
-
-    for( auto&& poSubGeom: *this )
-    {
-        if( poNewPS->oMP._addGeometryWithExpectedSubGeometryType(
-                      poSubGeom, getSubGeometryType()) != OGRERR_NONE )
-        {
-            delete poNewPS;
-            return nullptr;
-        }
-    }
-
-    return poNewPS;
 }
 
 /************************************************************************/
@@ -460,35 +446,55 @@ std::string OGRPolyhedralSurface::exportToWkt(const OGRWktOptions& opts,
 std::string OGRPolyhedralSurface::exportToWktInternal(const OGRWktOptions& opts,
                                                       OGRErr *err) const
 {
-    std::string wkt;
-    bool first = true;
-
-    for (int i = 0; i < oMP.nGeomCount; ++i)
+    try
     {
-        OGRGeometry *geom = oMP.papoGeoms[i];
+        std::string wkt(getGeometryName());
+        wkt += wktTypeString(opts.variant);
+        bool first = true;
 
-        std::string tempWkt = geom->exportToWkt(opts, err);
-        if (err && *err != OGRERR_NONE)
-            return std::string();
-        auto pos = tempWkt.find('(');
+        for (int i = 0; i < oMP.nGeomCount; ++i)
+        {
+            OGRGeometry *geom = oMP.papoGeoms[i];
 
-        // Skip empty geoms
-        if (pos == std::string::npos)
-            continue;
-        if (!first)
-            wkt += std::string(",");
-        first = false;
+            OGRErr subgeomErr = OGRERR_NONE;
+            std::string tempWkt = geom->exportToWkt(opts, &subgeomErr);
+            if (subgeomErr != OGRERR_NONE)
+            {
+                if( err )
+                    *err = subgeomErr;
+                return std::string();
+            }
 
-        // Extract the '( ... )' part of the child geometry.
-        wkt += tempWkt.substr(pos);
+            auto pos = tempWkt.find('(');
+
+            // Skip empty geoms
+            if (pos == std::string::npos)
+                continue;
+            if (first)
+                wkt += '(';
+            else
+                wkt += ',';
+            first = false;
+
+            // Extract the '( ... )' part of the child geometry.
+            wkt += tempWkt.substr(pos);
+        }
+
+        if (err)
+            *err = OGRERR_NONE;
+        if( first )
+            wkt += "EMPTY";
+        else
+            wkt += ')';
+        return wkt;
     }
-
-    if (err)
-        *err = OGRERR_NONE;
-    std::string leader = getGeometryName() + wktTypeString(opts.variant);
-    if (wkt.empty())
-        return leader + "EMPTY";
-    return leader + "(" + wkt + ")";
+    catch( const std::bad_alloc& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        if (err)
+            *err = OGRERR_FAILURE;
+        return std::string();
+    }
 }
 //! @endcond
 

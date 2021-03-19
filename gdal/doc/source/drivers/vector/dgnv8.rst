@@ -14,7 +14,7 @@ reading and writing. Each model of the file is represented by a OGR
 layer.
 
 This driver requires to be built against the (non open source) Open
-Design Alliance Teiga library.
+Design Alliance Teigha library.
 
 DGN files are considered to have no georeferencing information through
 OGR. Features will all have the following generic attributes:
@@ -53,7 +53,7 @@ The following element types are supported in reading:
 -  Arc (16): Approximated as a line geometry or a circular string.
 -  Text (17): Treated as a point geometry.
 -  B-Spline (21): Treated as a line geometry.
--  PointString (22): Treatead as multi point.
+-  PointString (22): Treated as multi point.
 -  Shared cell reference (35): Treated as point.
 
 Generally speaking any concept of complex objects, and cells as

@@ -1263,10 +1263,10 @@ bool PDS4FixedWidthTable::ReadFields(const CPLXMLNode* psParent,
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid group_length");
                 return false;
             }
-            int nGroupOneRepititionLength = nGroupLength / nRepetitions;
+            int nGroupOneRepetitionLength = nGroupLength / nRepetitions;
             for( int i = 0; i < nRepetitions; i++ )
             {
-                if( !ReadFields(psIter, nGroupOffset + i * nGroupOneRepititionLength,
+                if( !ReadFields(psIter, nGroupOffset + i * nGroupOneRepetitionLength,
                                 osSuffixFieldName + "_" + CPLSPrintf("%d", i+1)) )
                 {
                     return false;

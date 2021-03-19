@@ -365,7 +365,8 @@ class PDS4Dataset final: public RawDataset
     static PDS4Dataset *CreateInternal(const char *pszFilename,
                                        GDALDataset* poSrcDS,
                                        int nXSize, int nYSize, int nBands,
-                                       GDALDataType eType, char **papszOptions);
+                                       GDALDataType eType,
+                                       const char * const * papszOptions);
 
 public:
     PDS4Dataset();

@@ -32,6 +32,7 @@
 
 #include <cstring>
 #include <cstddef>
+#include <new>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -95,6 +96,16 @@ OGRPolygon& OGRPolygon::operator=( const OGRPolygon& other )
         OGRCurvePolygon::operator=( other );
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRPolygon *OGRPolygon::clone() const
+
+{
+    return new (std::nothrow) OGRPolygon(*this);
 }
 
 /************************************************************************/
@@ -625,7 +636,8 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
 /* -------------------------------------------------------------------- */
 /*      If we have no valid exterior ring, return POLYGON EMPTY.        */
 /* -------------------------------------------------------------------- */
-    wkt = getGeometryName() + wktTypeString(opts.variant);
+    wkt = getGeometryName();
+    wkt += wktTypeString(opts.variant);
     if( getExteriorRing() == nullptr || getExteriorRing()->IsEmpty() )
         wkt += "EMPTY";
 
@@ -635,25 +647,40 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
 
     else
     {
-        bool first(true);
-        wkt += "(";
-        for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+        try
         {
-            OGRLinearRing* poLR = oCC.papoCurves[iRing]->toLinearRing();
-            if( poLR->getNumPoints() )
+            bool first(true);
+            wkt += '(';
+            for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
             {
-                if (!first)
-                    wkt += ',';
-                first = false;
-                std::string tempWkt = poLR->exportToWkt(opts, err);
-                if ( err && *err != OGRERR_NONE )
-                    return std::string();
+                OGRLinearRing* poLR = oCC.papoCurves[iRing]->toLinearRing();
+                if( poLR->getNumPoints() )
+                {
+                    if (!first)
+                        wkt += ',';
+                    first = false;
+                    OGRErr subgeomErr = OGRERR_NONE;
+                    std::string tempWkt = poLR->exportToWkt(opts, &subgeomErr);
+                    if ( subgeomErr != OGRERR_NONE )
+                    {
+                        if( err )
+                            *err = subgeomErr;
+                        return std::string();
+                    }
 
-                // Remove leading "LINEARRING..."
-                wkt += tempWkt.substr(tempWkt.find_first_of('('));
+                    // Remove leading "LINEARRING..."
+                    wkt += tempWkt.substr(tempWkt.find_first_of('('));
+                }
             }
+            wkt += ')';
         }
-        wkt += ')';
+        catch( const std::bad_alloc& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            if (err)
+                *err = OGRERR_FAILURE;
+            return std::string();
+        }
     }
 
     if (err)
@@ -721,7 +748,7 @@ OGRPolygon* OGRPolygon::CurvePolyToPoly(
     CPL_UNUSED double dfMaxAngleStepSizeDegrees,
     CPL_UNUSED const char* const* papszOptions ) const
 {
-    return clone()->toPolygon();
+    return clone();
 }
 
 /************************************************************************/

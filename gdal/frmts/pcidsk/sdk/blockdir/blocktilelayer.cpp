@@ -37,6 +37,7 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
+#include <limits>
 
 #ifdef PCIMAJORVERSION
 #include "raster/memcmp.hh"
@@ -119,7 +120,7 @@ BlockTileLayer::GetTileInfo(uint32 nCol, uint32 nRow)
 /************************************************************************/
 
 /**
- * Syncronizes the block tile layer to disk.
+ * Synchronizes the block tile layer to disk.
  */
 void BlockTileLayer::Sync(void)
 {
@@ -241,12 +242,12 @@ uint32 BlockTileLayer::GetDataTypeSize(void) const
 /************************************************************************/
 
 /**
- * Checks if the specfied tile is valid.
+ * Checks if the specified tile is valid.
  *
  * @param nCol The column of the tile.
  * @param nRow The row of the tile.
  *
- * @return If the specfied tile is valid.
+ * @return If the specified tile is valid.
  */
 bool BlockTileLayer::IsTileValid(uint32 nCol, uint32 nRow)
 {
@@ -347,16 +348,18 @@ bool BlockTileLayer::WriteSparseTile(const void * pData,
     if (bIsSparse)
     {
         BlockTileInfo * psTile = GetTileInfo(nCol, nRow);
+        if( psTile != nullptr ) // TODO: what if it is null
+        {
+            // Free the blocks used by the tile.
+            if (psTile->nOffset != INVALID_OFFSET)
+                FreeBlocks(psTile->nOffset, psTile->nSize);
 
-        // Free the blocks used by the tile.
-        if (psTile->nOffset != INVALID_OFFSET)
-            FreeBlocks(psTile->nOffset, psTile->nSize);
+            psTile->nOffset = INVALID_OFFSET;
 
-        psTile->nOffset = INVALID_OFFSET;
+            psTile->nSize = nValue;
 
-        psTile->nSize = nValue;
-
-        mbModified = true;
+            mbModified = true;
+        }
     }
 
     return bIsSparse;

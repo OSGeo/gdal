@@ -1991,7 +1991,7 @@ def test_gdalwarp_lib_no_crs():
 
 ###############################################################################
 # Test that the warp kernel properly computes the resampling kernel xsize
-# when wraping along the antimeridian (related to #2754)
+# when wrapping along the antimeridian (related to #2754)
 
 def test_gdalwarp_lib_xscale_antimeridian():
 

@@ -247,10 +247,7 @@ def test_gdal_retile_4():
 
 def test_gdal_retile_5():
 
-    try:
-        import numpy as np
-    except (ImportError, AttributeError):
-        pytest.skip()
+    np = pytest.importorskip('numpy')
 
     nodata_value = -3.4028234663852886e+38
     raster_array = np.array(([0.0, 2.0], [-1.0, nodata_value]))

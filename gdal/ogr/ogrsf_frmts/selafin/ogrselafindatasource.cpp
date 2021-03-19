@@ -567,9 +567,8 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
         }
         for (int j=0;j<poHeader->nVar;++j)
         {
-            int nTemp = 0;
             if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+12,SEEK_SET)!=0 ||
-                (nTemp=Selafin::read_floatarray(poHeader->fp,&dfValues,poHeader->nFileSize)) !=poHeader->nPoints ||
+                Selafin::read_floatarray(poHeader->fp,&dfValues,poHeader->nFileSize) !=poHeader->nPoints ||
                 VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+12,SEEK_SET)!=0 ||
                 Selafin::write_floatarray(poHeader->fp,dfValues,poHeader->nPoints)==0) {
                 CPLError( CE_Failure, CPLE_FileIO, "Could not update Selafin file %s.\n",pszName);

@@ -84,8 +84,8 @@ typedef struct
 typedef struct
 {
     unsigned int nNumClassifiedItems;
-//  NWT_CLASSIFIED_ITEM *stClassifedItem[4096]; //hack - it could be up to 64K
-    NWT_CLASSIFIED_ITEM **stClassifedItem;    //hack - it could be up to 64K
+//  NWT_CLASSIFIED_ITEM *stClassifiedItem[4096]; //hack - it could be up to 64K
+    NWT_CLASSIFIED_ITEM **stClassifiedItem;    //hack - it could be up to 64K
 } NWT_CLASSIFIED_DICT;
 
 typedef struct {

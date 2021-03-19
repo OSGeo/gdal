@@ -476,12 +476,7 @@ def test_jp2openjpeg_19():
 
 def test_jp2openjpeg_20():
 
-    try:
-        import xmlvalidate
-    except ImportError:
-        import traceback
-        traceback.print_exc(file=sys.stdout)
-        pytest.skip('Cannot import xmlvalidate')
+    xmlvalidate = pytest.importorskip('xmlvalidate')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET.zip')
@@ -597,7 +592,7 @@ def test_jp2openjpeg_22():
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
     assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
-    assert ds.GetRasterBand(1).Checksum() in [11457, 11450, 11498]
+    assert ds.GetRasterBand(1).Checksum() in [11457, 11450, 11498, 11502]
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
 
@@ -745,10 +740,7 @@ def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=Non
         if path not in sys.path:
             sys.path.append(path)
 
-    try:
-        import validate_jp2
-    except ImportError:
-        pytest.skip('Cannot run validate_jp2')
+    validate_jp2 = pytest.importorskip('validate_jp2')
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')

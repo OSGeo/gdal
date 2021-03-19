@@ -29,9 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
-
-
 from osgeo import gdal
 from osgeo import ogr
 import gdaltest
@@ -306,9 +303,7 @@ def test_ogr_feature_cp_binary():
 
     assert check(dst_feature, 'field_binary', '0123465789ABCDEF')
 
-    expected = '\x01\x23\x46\x57\x89\xAB\xCD\xEF'
-    if sys.version_info >= (3, 0, 0):
-        expected = expected.encode('LATIN1')
+    expected = b'\x01\x23\x46\x57\x89\xAB\xCD\xEF'
     assert dst_feature.GetFieldAsBinary('field_binary') == expected
     assert dst_feature.GetFieldAsBinary(dst_feature.GetDefnRef().GetFieldIndex('field_binary')) == expected
 
@@ -571,9 +566,6 @@ def test_ogr_feature_cp_stringlist():
 # Test SetField() / GetField() with unicode string
 
 def test_ogr_feature_unicode():
-    if sys.version_info >= (3, 0, 0):
-        pytest.skip()
-
     feat_def = ogr.FeatureDefn('test')
 
     field_def = ogr.FieldDefn('field_string', ogr.OFTString)
@@ -583,16 +575,15 @@ def test_ogr_feature_unicode():
     feat_def.AddFieldDefn(field_def)
 
     src_feature = ogr.Feature(feat_def)
-    src_feature.SetField('field_string', 'abc def'.decode('utf-8'))
-    assert src_feature.GetField('field_string') == 'abc def'
-    assert src_feature.GetField('field_string'.decode('utf-8')) == 'abc def'
-
-    src_feature = ogr.Feature(feat_def)
-    src_feature.SetField('field_string'.decode('utf-8'), 'abc def'.decode('utf-8'))
+    src_feature.SetField('field_string', 'abc def')
     assert src_feature.GetField('field_string') == 'abc def'
 
     src_feature = ogr.Feature(feat_def)
-    src_feature.SetField('field_integer64'.decode('utf-8'), 1)
+    src_feature.SetField('field_string', 'abc def')
+    assert src_feature.GetField('field_string') == 'abc def'
+
+    src_feature = ogr.Feature(feat_def)
+    src_feature.SetField('field_integer64', 1)
     assert src_feature.GetField('field_integer64') == 1
 
 ###############################################################################

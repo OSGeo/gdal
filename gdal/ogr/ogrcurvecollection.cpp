@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <new>
 
 #include "ogr_core.h"
 #include "ogr_p.h"
@@ -75,7 +76,7 @@ OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other )
         {
             for( int i = 0; i < nCurveCount; i++ )
             {
-                papoCurves[i] = other.papoCurves[i]->clone()->toCurve();
+                papoCurves[i] = other.papoCurves[i]->clone();
             }
         }
     }
@@ -121,7 +122,7 @@ OGRCurveCollection::operator=( const OGRCurveCollection& other )
             {
                 for( int i = 0; i < nCurveCount; i++ )
                 {
-                    papoCurves[i] = other.papoCurves[i]->clone()->toCurve();
+                    papoCurves[i] = other.papoCurves[i]->clone();
                 }
             }
         }
@@ -296,46 +297,65 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
 std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
     const OGRWktOptions& opts, OGRErr *err) const
 {
-    bool first = true;
-    std::string wkt;
-
-    OGRWktOptions optsModified(opts);
-    optsModified.variant = wkbVariantIso;
-    for (int i = 0; i < nCurveCount; ++i)
+    try
     {
-        OGRGeometry *geom = papoCurves[i];
+        bool first = true;
+        std::string wkt(baseGeom->getGeometryName());
 
-        std::string tempWkt = geom->exportToWkt(optsModified, err);
-        if (err && *err != OGRERR_NONE)
-            return std::string();
+        OGRWktOptions optsModified(opts);
+        optsModified.variant = wkbVariantIso;
+        wkt += baseGeom->wktTypeString(optsModified.variant);
 
-        // A curve collection has a list of linestrings (OGRCompoundCurve),
-        // which should have their leader removed, or a OGRCurvePolygon,
-        // which has leaders for each of its sub-geometries that aren't
-        // linestrings.
-        if (tempWkt.compare(0, strlen("LINESTRING"), "LINESTRING") == 0)
+        for (int i = 0; i < nCurveCount; ++i)
         {
-            auto pos = tempWkt.find('(');
-            if (pos != std::string::npos)
-                tempWkt = tempWkt.substr(pos);
+            OGRGeometry *geom = papoCurves[i];
+
+            OGRErr subgeomErr = OGRERR_NONE;
+            std::string tempWkt = geom->exportToWkt(optsModified, &subgeomErr);
+            if (subgeomErr != OGRERR_NONE)
+            {
+                if( err )
+                    *err = subgeomErr;
+                return std::string();
+            }
+
+            // A curve collection has a list of linestrings (OGRCompoundCurve),
+            // which should have their leader removed, or a OGRCurvePolygon,
+            // which has leaders for each of its sub-geometries that aren't
+            // linestrings.
+            if (tempWkt.compare(0, strlen("LINESTRING"), "LINESTRING") == 0)
+            {
+                auto pos = tempWkt.find('(');
+                if (pos != std::string::npos)
+                    tempWkt = tempWkt.substr(pos);
+            }
+
+            if (tempWkt.find("EMPTY") != std::string::npos)
+                continue;
+
+            if (first)
+                wkt += '(';
+            else
+                wkt += ',';
+            first = false;
+            wkt += tempWkt;
         }
 
-        if (tempWkt.find("EMPTY") != std::string::npos)
-            continue;
-
-        if (!first)
-            wkt += std::string(",");
-        first = false;
-        wkt += tempWkt;
+        if (err)
+            *err = OGRERR_NONE;
+        if( first )
+            wkt += "EMPTY";
+        else
+            wkt += ')';
+        return wkt;
     }
-
-    if (err)
-        *err = OGRERR_NONE;
-    std::string leader = baseGeom->getGeometryName() +
-        baseGeom->wktTypeString(optsModified.variant);
-    if (wkt.empty())
-        return leader + "EMPTY";
-    return leader + "(" + wkt + ")";
+    catch( const std::bad_alloc& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        if (err)
+            *err = OGRERR_FAILURE;
+        return std::string();
+    }
 }
 
 /************************************************************************/

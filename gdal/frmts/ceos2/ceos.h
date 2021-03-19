@@ -234,7 +234,7 @@ typedef struct
     int32     AcquisitionMsec;
     int32     TransmittedPolarization;
     int32     ReceivedPolarization;
-    int32     PulsRepetitionFrequency;
+    int32     PulseRepetitionFrequency;
     int32     SlantRangeFirstPixel;
     int32     SlantRangeMidPixel;
     int32     SlantRangeLastPixel;

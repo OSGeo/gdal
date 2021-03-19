@@ -2,7 +2,7 @@
 # GDAL specific script to extract exported libtiff symbols that can be renamed
 # to keep them internal to GDAL as much as possible
 
-gcc ./*.c -fPIC -shared -o libtiff.so -I. -I../../../port  -DPIXARLOG_SUPPORT -DZIP_SUPPORT -DOJPEG_SUPPORT -DLZMA_SUPPORT -DZSTD_SUPPORT ${ZSTD_INCLUDE} -DWEBP_SUPPORT ${WEBP_INCLUDE}
+gcc ./*.c -fPIC -shared -o libtiff.so -I. -I../../../port  -DPIXARLOG_SUPPORT -DZIP_SUPPORT -DOJPEG_SUPPORT -DLZMA_SUPPORT -DZSTD_SUPPORT ${ZSTD_INCLUDE} -DWEBP_SUPPORT ${WEBP_INCLUDE} -DLERC_SUPPORT -I../../../third_party/LercLib -DHOST_FILLORDER=0
 
 OUT_FILE=gdal_libtiff_symbol_rename.h
 
@@ -89,5 +89,11 @@ EOF
     echo "#endif"
     echo "#ifdef LZMA_SUPPORT"
     echo "#define TIFFInitLZMA gdal_TIFFInitLZMA"
+    echo "#endif"
+    echo "#ifdef WEBP_SUPPORT"
+    echo "#define TIFFInitWebP gdal_TIFFInitWebP"
+    echo "#endif"
+    echo "#ifdef LERC_SUPPORT"
+    echo "#define TIFFInitLERC gdal_TIFFInitLERC"
     echo "#endif"
 } >> $OUT_FILE

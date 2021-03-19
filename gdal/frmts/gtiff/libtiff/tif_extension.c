@@ -39,13 +39,13 @@ int TIFFGetTagListCount( TIFF *tif )
     return td->td_customValueCount;
 }
 
-uint32 TIFFGetTagListEntry( TIFF *tif, int tag_index )
+uint32_t TIFFGetTagListEntry(TIFF *tif, int tag_index )
 
 {
     TIFFDirectory* td = &tif->tif_dir;
 
     if( tag_index < 0 || tag_index >= td->td_customValueCount )
-        return (uint32)(-1);
+        return (uint32_t)(-1);
     else
         return td->td_customValues[tag_index].info->field_tag;
 }

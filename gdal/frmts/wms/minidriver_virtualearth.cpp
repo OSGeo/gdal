@@ -59,10 +59,10 @@ CPLErr WMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config, CPL_UNUSED cha
 
     m_parent_dataset->WMSSetDefaultBlockSize(256, 256);
     m_parent_dataset->WMSSetDefaultDataWindowCoordinates(-MAX_GM, MAX_GM, MAX_GM, -MAX_GM);
-    m_parent_dataset->WMSSetDefaultTileLevel(19);
-    m_parent_dataset->WMSSetDefaultOverviewCount(18);
+    m_parent_dataset->WMSSetDefaultTileLevel(21);
+    m_parent_dataset->WMSSetDefaultOverviewCount(20);
     m_parent_dataset->WMSSetNeedsDataWindow(FALSE);
-    m_projection_wkt = ProjToWKT("EPSG:900913");
+    m_projection_wkt = ProjToWKT("EPSG:3857");
     return CE_None;
 }
 

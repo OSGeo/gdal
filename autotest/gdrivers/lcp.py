@@ -30,6 +30,9 @@
 ###############################################################################
 
 import os
+import random
+import struct
+
 from osgeo import gdal
 
 
@@ -762,11 +765,6 @@ def test_lcp_20():
 
 
 def test_lcp_21():
-    try:
-        import random
-        import struct
-    except ImportError:
-        pytest.skip()
     mem_drv = gdal.GetDriverByName('MEM')
     assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')
@@ -803,12 +801,8 @@ def test_lcp_21():
 
 
 def test_lcp_22():
-    try:
-        import random
-        import struct
-        import numpy
-    except ImportError:
-        pytest.skip()
+    numpy = pytest.importorskip('numpy')
+
     mem_drv = gdal.GetDriverByName('MEM')
     assert mem_drv is not None
     drv = gdal.GetDriverByName('LCP')

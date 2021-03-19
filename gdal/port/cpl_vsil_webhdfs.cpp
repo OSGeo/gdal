@@ -53,6 +53,11 @@ void VSIInstallWebHdfsHandler( void )
 
 #else
 
+#if !CURL_AT_LEAST_VERSION(7,18,2)
+// Needed for CURLINFO_REDIRECT_URL
+#error Need libcurl version 7.18.2 or newer
+#endif
+
 //! @cond Doxygen_Suppress
 #ifndef DOXYGEN_SKIP
 
@@ -88,7 +93,8 @@ public:
 
         VSIVirtualHandle *Open( const char *pszFilename,
                                 const char *pszAccess,
-                                bool bSetError ) override;
+                                bool bSetError,
+                                CSLConstList papszOptions ) override;
         int Unlink( const char *pszFilename ) override;
         int Rmdir( const char *pszFilename ) override;
         int Mkdir( const char *pszDirname, long nMode ) override;
@@ -131,7 +137,6 @@ class VSIWebHDFSHandle final : public VSICurlHandle
 /*                           PatchWebHDFSUrl()                          */
 /************************************************************************/
 
-#ifdef HAVE_CURLINFO_REDIRECT_URL
 static CPLString PatchWebHDFSUrl(const CPLString& osURLIn,
                                  const CPLString& osNewHost)
 {
@@ -152,7 +157,6 @@ static CPLString PatchWebHDFSUrl(const CPLString& osURLIn,
     }
     return osURL;
 }
-#endif
 
 /************************************************************************/
 /*                       GetWebHDFSDataNodeHost()                       */
@@ -161,22 +165,8 @@ static CPLString PatchWebHDFSUrl(const CPLString& osURLIn,
 static CPLString GetWebHDFSDataNodeHost()
 {
     CPLString osDataNodeHost = CPLGetConfigOption("WEBHDFS_DATANODE_HOST", "");
-#ifndef HAVE_CURLINFO_REDIRECT_URL
-    if( !osDataNodeHost.empty() )
-    {
-        static bool bFirstTime = true;
-        if( bFirstTime )
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                 "WEBHDFS_DATANODE_HOST not honored due to too old libcurl");
-            bFirstTime = false;
-        }
-    }
-#endif
     return osDataNodeHost;
 }
-
-#ifdef HAVE_CURLINFO_REDIRECT_URL
 
 /************************************************************************/
 /*                         VSIWebHDFSWriteHandle                        */
@@ -510,23 +500,20 @@ bool VSIWebHDFSWriteHandle::Append()
     return response_code == 200;
 }
 
-#endif // #ifdef HAVE_CURLINFO_REDIRECT_URL
-
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 VSIVirtualHandle* VSIWebHDFSFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-#ifdef HAVE_CURLINFO_REDIRECT_URL
         if( strchr(pszAccess, '+') != nullptr &&
             !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
         {
@@ -549,15 +536,10 @@ VSIVirtualHandle* VSIWebHDFSFSHandler::Open( const char *pszFilename,
             return VSICreateUploadOnCloseFile(poHandle);
         }
         return poHandle;
-#else
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "libcurl >= 7.18.1 for /vsiwebhdfs support");
-        return nullptr;
-#endif
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -1074,11 +1056,7 @@ std::string VSIWebHDFSHandle::DownloadRegion( const vsi_l_offset startOffset,
     WriteFuncStruct sWriteFuncData;
     int nRetryCount = 0;
     double dfRetryDelay = m_dfRetryDelay;
-
-#ifdef HAVE_CURLINFO_REDIRECT_URL
     bool bInRedirect = false;
-#endif
-
     const vsi_l_offset nEndOffset =
         startOffset + nBlocks * VSICURLGetDownloadChunkSize() - 1;
 
@@ -1092,10 +1070,7 @@ retry:
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
-
-#ifdef HAVE_CURLINFO_REDIRECT_URL
     if( !bInRedirect )
-#endif
     {
         osURL += "?op=OPEN&offset=";
         osURL += CPLSPrintf(CPL_FRMT_GUIB, startOffset);
@@ -1107,12 +1082,10 @@ retry:
     struct curl_slist* headers =
         VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
-#ifdef HAVE_CURLINFO_REDIRECT_URL
     if( !m_osDataNodeHost.empty() )
     {
         curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
     }
-#endif
 
     if( ENABLE_DEBUG )
         CPLDebug("WEBHDFS", "Downloading %s...", osURL.c_str());
@@ -1147,7 +1120,6 @@ retry:
     if( ENABLE_DEBUG )
         CPLDebug("WEBHDFS", "Got response_code=%ld", response_code);
 
-#ifdef HAVE_CURLINFO_REDIRECT_URL
     if( !bInRedirect )
     {
         char *pszRedirectURL = nullptr;
@@ -1170,7 +1142,6 @@ retry:
             goto retry;
         }
     }
-#endif
 
     if( response_code != 200 )
     {

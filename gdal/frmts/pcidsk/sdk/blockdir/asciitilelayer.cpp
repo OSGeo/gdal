@@ -183,8 +183,10 @@ void AsciiTileLayer::ReadTileList(void)
     if (128 + nSize > GetLayerSize() || !GetFile()->IsValidFileOffset(128 + nSize))
         return ThrowPCIDSKException("The tile layer is corrupted.");
 
+#if SIZEOF_VOIDP < 8
     if (nSize > std::numeric_limits<size_t>::max())
         return ThrowPCIDSKException("Unable to open extremely large tile layer on 32-bit system.");
+#endif
 
     uint8 * pabyTileList = (uint8 *) malloc(static_cast<size_t>(nSize));
 

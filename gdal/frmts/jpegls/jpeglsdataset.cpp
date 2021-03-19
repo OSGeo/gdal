@@ -423,6 +423,9 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo, bIsDCOM))
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("JPEGLS") )
+        return nullptr;
+
     JlsParameters sParams;
 
 #ifdef CHARLS_2
@@ -505,7 +508,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     if (nBitsPerSample > 16)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupport bitspersample : %d",
+                 "Unsupported bitspersample : %d",
                  nBitsPerSample);
         return nullptr;
     }
@@ -562,6 +565,10 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 GDALProgressFunc /*pfnProgress*/, void * /*pProgressData*/ )
 
 {
+
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("JPEGLS") )
+        return nullptr;
+
     const int  nBands = poSrcDS->GetRasterCount();
     const int  nXSize = poSrcDS->GetRasterXSize();
     const int  nYSize = poSrcDS->GetRasterYSize();

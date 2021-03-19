@@ -33,12 +33,6 @@
 import sys
 import os
 
-try:
-    import numpy  # noqa
-    numpy_available = True
-except ImportError:
-    numpy_available = False
-
 import pytest
 
 sys.path.append('../gcore')
@@ -308,7 +302,8 @@ def test_gdal_rasterize_6():
 
 def test_gdal_rasterize_7():
 
-    if not numpy_available or test_cli_utilities.get_gdal_rasterize_path() is None:
+    pytest.importorskip('numpy')
+    if test_cli_utilities.get_gdal_rasterize_path() is None:
         pytest.skip()
 
     drv = ogr.GetDriverByName('SQLite')

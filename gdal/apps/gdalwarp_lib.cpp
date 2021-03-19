@@ -999,7 +999,6 @@ GDALDatasetH GDALWarpIndirect( const char *pszDest,
                                         pfnProgress,
                                         pProgressData );
             GDALClose(hTmpDS);
-            GDALWarpAppOptionsFree(psOptions);
             return hRet;
         }
         return nullptr;
@@ -1096,7 +1095,6 @@ GDALDatasetH GDALWarpIndirect( const char *pszDest,
         {
             GDALDeleteDataset(GDALGetDriverByName("GTiff"), osTmpFilename);
         }
-        GDALWarpAppOptionsFree(psOptions);
         return hRet;
     }
     return nullptr;
@@ -1160,8 +1158,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS,
             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) == nullptr &&
             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, nullptr ) != nullptr )
         {
-            return GDALWarpIndirect(pszDest, hDriver, nSrcCount, pahSrcDS,
-                                    psOptions, pbUsageError);
+            auto ret = GDALWarpIndirect(pszDest, hDriver, nSrcCount, pahSrcDS,
+                                        psOptions, pbUsageError);
+            GDALWarpAppOptionsFree(psOptions);
+            return ret;
         }
     }
 
@@ -1838,11 +1838,10 @@ static void SetupNoData(const char* pszDest,
                     printf( "Copying nodata values from source %s "
                             "to destination %s.\n",
                             GDALGetDescription(hSrcDS), pszDest );
-                psWO->padfDstNoDataReal[i] = 
+                psWO->padfDstNoDataReal[i] =
                     psWO->padfSrcNoDataReal[i];
 
-                if( i == 0 && psOptions->bCreateOutput &&
-                    !bInitDestSetByUser && iSrc == 0 )
+                if( i == 0 && !bInitDestSetByUser )
                 {
                     /* As we didn't know at the beginning if there was source nodata */
                     /* we have initialized INIT_DEST=0. Override this with NO_DATA now */
@@ -2135,6 +2134,7 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
 #ifdef DEBUG
         // Do not remove this if the #ifdef DEBUG before is still there !
         poDstDS = reinterpret_cast<GDALDataset*>(hDstDS);
+        CPL_IGNORE_RET_VAL(poDstDS);
 #endif
     }
     else

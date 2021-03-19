@@ -58,11 +58,7 @@
 {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, $1);
-%#if PY_VERSION_HEX>=0x03000000
     $result = PyLong_FromString(szTmp, NULL, 10);
-%#else
-    $result = PyInt_FromString(szTmp, NULL, 10);
-%#endif
 }
 
 /*
@@ -465,12 +461,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   }
 }
 
+%typemap(in) ( void *inPythonObject )
+{
+  /* %typemap(in) ( void *inPythonObject ) */
+  $1 = $input;
+}
+
 /*
- * Typemap for buffers with length <-> PyStrings
- * Used in Band::WriteRaster()
- *
- * This typemap has a typecheck also since the WriteRaster()
- * methods are overloaded.
+ * Typemap for methods such as GetFieldAsBinary()
  */
 %typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
 {
@@ -482,11 +480,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
   Py_XDECREF($result);
-%#if PY_VERSION_HEX >= 0x03000000
-  $result = PyBytes_FromStringAndSize( *$2, *$1 );
-%#else
-  $result = PyString_FromStringAndSize( *$2, *$1 );
-%#endif
+  $result = PyByteArray_FromStringAndSize( *$2, *$1 );
 }
 %typemap(freearg) (int *nLen, char **pBuf )
 {
@@ -517,7 +511,6 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         PyErr_Clear();
     }
   }
-%#if PY_VERSION_HEX>=0x03000000
   if (PyUnicode_Check($input))
   {
     size_t safeLen = 0;
@@ -532,36 +525,11 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     }
     $1 = (int) safeLen;
   }
-  else if (PyBytes_Check($input))
-  {
-    Py_ssize_t safeLen = 0;
-    PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
-    if( safeLen > INT_MAX ) {
-      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-    }
-    $1 = (int) safeLen;
-  }
   else
   {
-    PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
     SWIG_fail;
   }
-%#else
-  if (PyString_Check($input))
-  {
-    Py_ssize_t safeLen = 0;
-    PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
-    if( safeLen > INT_MAX ) {
-      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-    }
-    $1 = (int) safeLen;
-  }
-  else
-  {
-    PyErr_SetString(PyExc_TypeError, "not a string");
-    SWIG_fail;
-  }
-%#endif
   ok: ;
 }
 
@@ -577,10 +545,22 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 
-%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) (int alloc = 0)
+%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
 {
   /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
-%#if PY_VERSION_HEX>=0x03000000
+  {
+    if (PyObject_GetBuffer($input, &view, PyBUF_SIMPLE) == 0)
+    {
+      viewIsValid = true;
+      $1 = view.len;
+      $2 = ($2_ltype) view.buf;
+      goto ok;
+    }
+    else
+    {
+        PyErr_Clear();
+    }
+  }
   if (PyUnicode_Check($input))
   {
     size_t safeLen = 0;
@@ -592,36 +572,21 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     if (safeLen) safeLen--;
     $1 = (GIntBig) safeLen;
   }
-  else if (PyBytes_Check($input))
-  {
-    Py_ssize_t safeLen = 0;
-    PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
-    $1 = (GIntBig) safeLen;
-  }
   else
   {
-    PyErr_SetString(PyExc_TypeError, "not a unicode string or a bytes");
+    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
     SWIG_fail;
   }
-%#else
-  if (PyString_Check($input))
-  {
-    Py_ssize_t safeLen = 0;
-    PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
-    $1 = (GIntBig) safeLen;
-  }
-  else
-  {
-    PyErr_SetString(PyExc_TypeError, "not a string");
-    SWIG_fail;
-  }
-%#endif
+  ok: ;
 }
 
 %typemap(freearg) (GIntBig nLen, char *pBuf )
 {
   /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
-  if( alloc$argnum == SWIG_NEWOBJ ) {
+  if( viewIsValid$argnum ) {
+    PyBuffer_Release(&view$argnum);
+  }
+  else if( alloc$argnum == SWIG_NEWOBJ ) {
     delete[] $2;
   }
 }
@@ -631,7 +596,6 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject)
 {
   /* %typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject) */
-%#if PY_VERSION_HEX>=0x03000000
   if (PyBytes_Check($input))
   {
     Py_ssize_t safeLen = 0;
@@ -644,20 +608,6 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     PyErr_SetString(PyExc_TypeError, "not a bytes");
     SWIG_fail;
   }
-%#else
-  if (PyString_Check($input))
-  {
-    Py_ssize_t safeLen = 0;
-    PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
-    $1 = (int) safeLen;
-    $3 = $input;
-  }
-  else
-  {
-    PyErr_SetString(PyExc_TypeError, "not a string");
-    SWIG_fail;
-  }
-%#endif
 }
 
 /* end of required for GDALAsyncReader */
@@ -703,11 +653,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, (*$2)[i]);
     PyObject* val;
-%#if PY_VERSION_HEX>=0x03000000
     val = PyLong_FromString(szTmp, NULL, 10);
-%#else
-    val = PyInt_FromString(szTmp, NULL, 10);
-%#endif
     PyList_SetItem( out, i, val );
   }
   $result = out;
@@ -905,13 +851,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     /* We need to use the dictionary form. */
     Py_ssize_t size = PyMapping_Length( $input );
     if ( size > 0 && size == (int)size) {
-%#if PY_VERSION_HEX < 0x03000000
-      // PyMapping_Items also work with python 2.x  but throws a warning about
-      // -Wwrite-strings warning
-      PyObject *item_list = PyObject_CallMethod($input,const_cast<char*>("items"),NULL);
-%#else
       PyObject *item_list = PyMapping_Items( $input );
-%#endif
       for( int i=0; i<(int)size; i++ ) {
         PyObject *it = PySequence_GetItem( item_list, i );
 
@@ -962,11 +902,7 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
 {
   *pbErr = FALSE;
   /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq)
-#if PY_VERSION_HEX < 0x03000000
-    || PyString_Check(pySeq)
-#endif
-    ) {
+  if ( ! PySequence_Check(pySeq) || PyUnicode_Check(pySeq) ) {
     PyErr_SetString(PyExc_TypeError,"not a sequence");
     *pbErr = TRUE;
     return NULL;
@@ -994,21 +930,12 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
         *pbErr = TRUE;
         return NULL;
       }
-#if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
       papszRet = CSLAddString( papszRet, pszStr );
       Py_XDECREF(pyUTF8Str);
     }
-#if PY_VERSION_HEX >= 0x03000000
     else if (PyBytes_Check(pyObj))
       papszRet = CSLAddString( papszRet, PyBytes_AsString(pyObj) );
-#else
-    else if (PyString_Check(pyObj))
-      papszRet = CSLAddString( papszRet, PyString_AsString(pyObj) );
-#endif
     else
     {
         Py_DECREF(pyObj);
@@ -1592,11 +1519,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
     for ( int i = 0; i < $1; ++i ) {
       char szTmp[32];
       sprintf(szTmp, CPL_FRMT_GUIB, integerarray[i]);
-%#if PY_VERSION_HEX>=0x03000000
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
-%#else
-      PyObject *o =  PyInt_FromString(szTmp, NULL, 10);
-%#endif
       PyList_SetItem($result, i, o );
     }
   }
@@ -1890,7 +1813,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 }
 %}
 
-%typemap(in,numinputs=1,fragment="DecomposeSequenceOf4DCoordinates") (int nCount, double *x, double *y, double *z, double *t) (int foundTime = FALSE) 
+%typemap(in,numinputs=1,fragment="DecomposeSequenceOf4DCoordinates") (int nCount, double *x, double *y, double *z, double *t) (int foundTime = FALSE)
 {
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -2102,7 +2025,6 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 }
 %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)
 {
-%#if PY_VERSION_HEX >= 0x02070000
   /* %typemap(argout) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly)*/
   Py_buffer *buf=(Py_buffer*)malloc(sizeof(Py_buffer));
 
@@ -2151,9 +2073,6 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
   }
   Py_DECREF($result);
   $result = PyMemoryView_FromBuffer(buf);
-%#else
-  PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
-%#endif
 }
 
 
@@ -2373,11 +2292,7 @@ OBJECT_LIST_INPUT(GDALDimensionHS);
   for( size_t i = 0; i < *$2; i++ ) {
       char szTmp[32];
       sprintf(szTmp, CPL_FRMT_GUIB, (*$1)[i]);
-%#if PY_VERSION_HEX>=0x03000000
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
-%#else
-      PyObject *o =  PyInt_FromString(szTmp, NULL, 10);
-%#endif
       PyList_SetItem(list, i, o );
   }
   Py_DECREF($result);
@@ -2489,4 +2404,66 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
   PyTuple_SetItem( r, 3, PyFloat_FromDouble($1[3]));
   PyTuple_SetItem( r, 4, PyLong_FromLong($2[0]));
   $result = t_output_helper($result,r);
+}
+
+
+%typemap(in) GDALRIOResampleAlg
+{
+    // %typemap(in) GDALRIOResampleAlg
+    int val = 0;
+    int ecode = SWIG_AsVal_int($input, &val);
+    if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALRIOResampleAlg");
+    }
+    if( val < 0 ||
+        ( val >= static_cast<int>(GRIORA_RESERVED_START) &&
+          val <= static_cast<int>(GRIORA_RESERVED_END) ) ||
+        val > static_cast<int>(GRIORA_LAST) )
+    {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+    $1 = static_cast< GDALRIOResampleAlg >(val);
+}
+
+
+%typemap(in) GDALDataType
+{
+    // %typemap(in) GDALDataType
+    int val = 0;
+    int ecode = SWIG_AsVal_int($input, &val);
+    if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALDataType");
+    }
+    if( val < GDT_Unknown || val >= GDT_TypeCount )
+    {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    $1 = static_cast<GDALDataType>(val);
+}
+
+%typemap(in) (GDALDataType *optional_GDALDataType) ( GDALDataType val )
+{
+  /* %typemap(in) (GDALDataType *optional_GDALDataType) */
+  int intval = 0;
+  if ( $input == Py_None ) {
+    $1 = NULL;
+  }
+  else if ( SWIG_IsOK(SWIG_AsVal_int($input, &intval)) ) {
+    if( intval < GDT_Unknown || intval >= GDT_TypeCount )
+    {
+        SWIG_exception_fail(SWIG_ValueError, "Invalid value for GDALDataType");
+    }
+    val = static_cast<GDALDataType>(intval);
+    $1 = &val;
+  }
+  else {
+    PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+    SWIG_fail;
+  }
+}
+
+%typemap(typecheck,precedence=0) (GDALDataType *optional_GDALDataType)
+{
+  /* %typemap(typecheck,precedence=0) (GDALDataType *optional_GDALDataType) */
+  $1 = (($input==Py_None) || my_PyCheck_int($input)) ? 1 : 0;
 }

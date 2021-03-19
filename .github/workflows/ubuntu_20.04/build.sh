@@ -9,11 +9,6 @@ fi
 
 cd /build
 
-wget -q https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz
-(cd / && tar xvzf /build/install-libecwj2-3.3-ubuntu-20.04.tar.gz)
-echo "/opt/libecwj2-3.3/lib" > /etc/ld.so.conf.d/libecwj2-3.3.conf
-ldconfig
-
 ccache -M 200M
 ccache -s
 
@@ -51,7 +46,9 @@ CXXFLAGS="-std=c++17 -O1 $ARCH_FLAGS" CFLAGS="-O1 $ARCH_FLAGS" ./configure --pre
     --with-kea=/usr/bin/kea-config \
     --with-tiledb \
     --with-crypto \
-    --with-ecw=/opt/libecwj2-3.3
+    --with-ecw=/opt/libecwj2-3.3 \
+    --with-mrsid=/usr/local --with-jp2mrsid \
+    --with-fgdb=/usr/local/FileGDB_API
 
 make "-j$(nproc)" USER_DEFS=-Werror
 (cd apps; make test_ogrsf  USER_DEFS=-Werror)

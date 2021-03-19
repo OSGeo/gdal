@@ -788,36 +788,40 @@ WriteAttrRecordToDBF( DBFHandle hDBF, int iRecord,
 /* -------------------------------------------------------------------- */
 /*      Handle each of the types.                                       */
 /* -------------------------------------------------------------------- */
-        switch( poSFDefn->GetType() )
+        switch (poSFDefn->GetType())
         {
-          case DDFString:
-            const char *pszValue
-                = poSFDefn->ExtractStringData(pachData, nMaxBytes, NULL);
+            case DDFString:
+            {
+                const char *pszValue = poSFDefn->ExtractStringData(pachData, nMaxBytes, NULL);
 
-            if( iField != -1 )
-                DBFWriteStringAttribute(hDBF, iRecord, iField, pszValue );
+                if (iField != -1)
+                    DBFWriteStringAttribute(hDBF, iRecord, iField, pszValue);
+            }
+        break;
+
+        case DDFFloat:
+            {
+                double dfValue;
+
+                dfValue = poSFDefn->ExtractFloatData(pachData, nMaxBytes,
+                                                     NULL);
+
+                if (iField != -1)
+                    DBFWriteDoubleAttribute(hDBF, iRecord, iField, dfValue);
+            }
             break;
 
-          case DDFFloat:
-            double      dfValue;
+        case DDFInt:
+            {
+                int nValue;
 
-            dfValue = poSFDefn->ExtractFloatData(pachData, nMaxBytes,
-                                                 NULL);
+                nValue = poSFDefn->ExtractIntData(pachData, nMaxBytes, NULL);
 
-            if( iField != -1 )
-                DBFWriteDoubleAttribute( hDBF, iRecord, iField, dfValue );
+                if (iField != -1)
+                    DBFWriteIntegerAttribute(hDBF, iRecord, iField, nValue);
+            }
             break;
-
-          case DDFInt:
-            int         nValue;
-
-            nValue = poSFDefn->ExtractIntData(pachData, nMaxBytes, NULL);
-
-            if( iField != -1 )
-                DBFWriteIntegerAttribute( hDBF, iRecord, iField, nValue );
-            break;
-
-          default:
+        default:
             break;
         }
     } /* next subfield */

@@ -1,6 +1,13 @@
 name: Ubuntu 20.04 build
 
-on: [push, pull_request]
+on:
+    push:
+        paths-ignore:
+            - 'gdal/doc/**'
+    pull_request:
+        paths-ignore:
+            - 'gdal/doc/**'
+
 
 jobs:
 
@@ -53,6 +60,9 @@ jobs:
       - name: Run SWIG CSharp tests
         run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make && make test"
 
+      - name: Build Python sdist package
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python && python3 setup.py sdist"
+
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
-        run: docker run -e CI -e TRAVIS=yes -e GITHUB_WORKFLOW --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"
+        run: docker run -e CI -e TRAVIS=yes -e TRAVIS_BRANCH=ubuntu_2004 -e GITHUB_WORKFLOW --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"

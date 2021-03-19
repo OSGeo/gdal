@@ -1151,6 +1151,41 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 #endif
 
+/*! @cond Doxygen_Suppress */
+#ifdef GDAL_COMPILATION
+#define GDALExtractRPCInfoV1 GDALExtractRPCInfo
+#else
+#define GDALRPCInfo        GDALRPCInfoV2
+#define GDALExtractRPCInfo GDALExtractRPCInfoV2
+#endif
+
+/* Deprecated: use GDALRPCInfoV2 */
+typedef struct
+{
+    double dfLINE_OFF;   /*!< Line offset */
+    double dfSAMP_OFF;   /*!< Sample/Pixel offset */
+    double dfLAT_OFF;    /*!< Latitude offset */
+    double dfLONG_OFF;   /*!< Longitude offset */
+    double dfHEIGHT_OFF; /*!< Height offset */
+
+    double dfLINE_SCALE;   /*!< Line scale */
+    double dfSAMP_SCALE;   /*!< Sample/Pixel scale */
+    double dfLAT_SCALE;    /*!< Latitude scale */
+    double dfLONG_SCALE;   /*!< Longitude scale */
+    double dfHEIGHT_SCALE; /*!< Height scale */
+
+    double adfLINE_NUM_COEFF[20]; /*!< Line Numerator Coefficients */
+    double adfLINE_DEN_COEFF[20]; /*!< Line Denominator Coefficients */
+    double adfSAMP_NUM_COEFF[20]; /*!< Sample/Pixel Numerator Coefficients */
+    double adfSAMP_DEN_COEFF[20]; /*!< Sample/Pixel Denominator Coefficients */
+
+    double dfMIN_LONG; /*!< Minimum longitude */
+    double dfMIN_LAT;  /*!< Minimum latitude */
+    double dfMAX_LONG; /*!< Maximum longitude */
+    double dfMAX_LAT;  /*!< Maximum latitude */
+} GDALRPCInfoV1;
+/*! @endcond */
+
 /** Structure to store Rational Polynomial Coefficients / Rigorous Projection
  * Model. See http://geotiff.maptools.org/rpc_prop.html */
 typedef struct
@@ -1176,9 +1211,16 @@ typedef struct
     double dfMIN_LAT;  /*!< Minimum latitude */
     double dfMAX_LONG; /*!< Maximum longitude */
     double dfMAX_LAT;  /*!< Maximum latitude */
-} GDALRPCInfo;
 
-int CPL_DLL CPL_STDCALL GDALExtractRPCInfo( CSLConstList, GDALRPCInfo * );
+    /* Those fields should be at the end. And all above fields should be the same as in GDALRPCInfoV1 */
+    double dfERR_BIAS;   /*!< Bias error */
+    double dfERR_RAND;   /*!< Random error */
+} GDALRPCInfoV2;
+
+/*! @cond Doxygen_Suppress */
+int CPL_DLL CPL_STDCALL GDALExtractRPCInfoV1( CSLConstList, GDALRPCInfoV1 * );
+/*! @endcond */
+int CPL_DLL CPL_STDCALL GDALExtractRPCInfoV2( CSLConstList, GDALRPCInfoV2 * );
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
@@ -1306,7 +1348,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALRATSetLinearBinning( GDALRasterAttributeTableH,
                                                     double, double );
 int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH,
                                                  double *, double * );
-CPLErr CPL_DLL CPL_STDCALL GDALRATSetTableType( GDALRasterAttributeTableH hRAT, 
+CPLErr CPL_DLL CPL_STDCALL GDALRATSetTableType( GDALRasterAttributeTableH hRAT,
                          const GDALRATTableType eInTableType );
 GDALRATTableType CPL_DLL CPL_STDCALL GDALRATGetTableType( GDALRasterAttributeTableH hRAT);
 CPLErr CPL_DLL CPL_STDCALL GDALRATInitializeFromColorTable(
@@ -1315,7 +1357,7 @@ GDALColorTableH CPL_DLL CPL_STDCALL GDALRATTranslateToColorTable(
     GDALRasterAttributeTableH, int nEntryCount );
 void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH,
                                               FILE * );
-GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL
     GDALRATClone( const GDALRasterAttributeTableH );
 
 void CPL_DLL* CPL_STDCALL

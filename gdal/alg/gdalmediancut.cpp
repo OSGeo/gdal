@@ -421,23 +421,20 @@ GDALComputeMedianCutPCTInternal(
 /* -------------------------------------------------------------------- */
 /*      Initialize the box datastructures.                              */
 /* -------------------------------------------------------------------- */
-    Colorbox *ptr = freeboxes;
-    freeboxes = ptr->next;
+    Colorbox *freeboxes_before = freeboxes;
+    freeboxes = freeboxes_before->next;
     if( freeboxes )
         freeboxes->prev = nullptr;
-    Colorbox *usedboxes = nullptr;  // TODO(schwehr): What?
-    ptr->next = usedboxes;
-    usedboxes = ptr;
-    if( ptr->next )
-        ptr->next->prev = ptr;
 
-    ptr->rmin = 999;
-    ptr->gmin = 999;
-    ptr->bmin = 999;
-    ptr->rmax = -1;
-    ptr->gmax = -1;
-    ptr->bmax = -1;
-    ptr->total = static_cast<GUIntBig>(nXSize) * static_cast<GUIntBig>(nYSize);
+    Colorbox *usedboxes = freeboxes_before;
+    usedboxes->next = nullptr;
+    usedboxes->rmin = 999;
+    usedboxes->gmin = 999;
+    usedboxes->bmin = 999;
+    usedboxes->rmax = -1;
+    usedboxes->gmax = -1;
+    usedboxes->bmax = -1;
+    usedboxes->total = static_cast<GUIntBig>(nXSize) * static_cast<GUIntBig>(nYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Collect histogram.                                              */
@@ -489,12 +486,12 @@ GDALComputeMedianCutPCTInternal(
             const int nGreen = pabyGreenLine[iPixel] >> nColorShift;
             const int nBlue = pabyBlueLine[iPixel] >> nColorShift;
 
-            ptr->rmin = std::min(ptr->rmin, nRed);
-            ptr->gmin = std::min(ptr->gmin, nGreen);
-            ptr->bmin = std::min(ptr->bmin, nBlue);
-            ptr->rmax = std::max(ptr->rmax, nRed);
-            ptr->gmax = std::max(ptr->gmax, nGreen);
-            ptr->bmax = std::max(ptr->bmax, nBlue);
+            usedboxes->rmin = std::min(usedboxes->rmin, nRed);
+            usedboxes->gmin = std::min(usedboxes->gmin, nGreen);
+            usedboxes->bmin = std::min(usedboxes->bmin, nBlue);
+            usedboxes->rmax = std::max(usedboxes->rmax, nRed);
+            usedboxes->gmax = std::max(usedboxes->gmax, nGreen);
+            usedboxes->bmax = std::max(usedboxes->bmax, nBlue);
 
             bool bFirstOccurrence;
             if( psHashHistogram )
@@ -556,7 +553,7 @@ GDALComputeMedianCutPCTInternal(
 /* ==================================================================== */
     while( freeboxes != nullptr )
     {
-        ptr = largest_box(usedboxes);
+        auto ptr = largest_box(usedboxes);
         if( ptr != nullptr )
             splitbox(ptr, histogram, psHashHistogram, nCLevels,
                      &freeboxes, &usedboxes,
@@ -568,16 +565,18 @@ GDALComputeMedianCutPCTInternal(
 /* ==================================================================== */
 /*      STEP 4: assign colors to all boxes                              */
 /* ==================================================================== */
-    ptr = usedboxes;
-    for( int i = 0; ptr != nullptr; ++i, ptr = ptr->next )
     {
-        const GDALColorEntry sEntry = {
-            static_cast<GByte>(((ptr->rmin + ptr->rmax) << nColorShift) / 2),
-            static_cast<GByte>(((ptr->gmin + ptr->gmax) << nColorShift) / 2),
-            static_cast<GByte>(((ptr->bmin + ptr->bmax) << nColorShift) / 2),
-            255
-        };
-        GDALSetColorEntry( hColorTable, i, &sEntry );
+        Colorbox* ptr = usedboxes;
+        for( int i = 0; ptr != nullptr; ++i, ptr = ptr->next )
+        {
+            const GDALColorEntry sEntry = {
+                static_cast<GByte>(((ptr->rmin + ptr->rmax) << nColorShift) / 2),
+                static_cast<GByte>(((ptr->gmin + ptr->gmax) << nColorShift) / 2),
+                static_cast<GByte>(((ptr->bmin + ptr->bmax) << nColorShift) / 2),
+                255
+            };
+            GDALSetColorEntry( hColorTable, i, &sEntry );
+        }
     }
 
 end_and_cleanup:

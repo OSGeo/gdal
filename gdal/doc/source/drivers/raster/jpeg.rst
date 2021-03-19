@@ -98,9 +98,17 @@ Creation Options
 ----------------
 
 JPEG files are created using the "JPEG" driver code. Only Byte band
-types are supported, and only 1 and 3 band (RGB) configurations. JPEG
-file creation is implemented by the batch (CreateCopy) method. YCbCr,
-CMYK or YCbCrK colorspaces are not supported in creation. If the source
+types are supported.
+
+Only 1 (greyscale), 3 band (input should be in RGB colorspace.
+the driver will convert it automatically to YCbCr colorspace for storage, and
+will expose it back as RGB on reading) or 4 band
+(input should already by in CMYK colorspace. It will be exposed as RGB on reading
+by default, unless the :decl_configoption:`GDAL_JPEG_TO_RGB` configuration option
+is set to NO) configurations.
+
+JPEG file creation is implemented by the batch (CreateCopy) method.
+YCbCrK colorspace is not supported in creation. If the source
 dataset has a nodata mask, it will be appended as a zlib compressed mask
 to the JPEG file.
 
@@ -185,7 +193,7 @@ The below tables list the EXIF and GPS tags that can be written.
    appropriate spaces / zeroes
 
 -  The "Number of values" column is the number of values for the item.
-   Might be "variable" if there is no restriction, or a fixed value. Fo
+   Might be "variable" if there is no restriction, or a fixed value. For
    Type=ASCII, the fixed value includes the NUL-terminating byte, so the
    number of actual printable characters is number of values - 1.
 -  The "Optionality" column indicates whether the item should be present
@@ -328,6 +336,27 @@ EXIF_GPSDateStamp         0x001D   ASCII     11               Optional
 EXIF_GPSDifferential      0x001E   SHORT     1                Optional
 EXIF_GPSHPositioningError 0x001F   RATIONAL  1                Optional
 ========================= ======== ========= ================ ===========
+
+FLIR metadata
+-------------
+
+.. versionadded:: 3.3
+
+Metadata encoded according to the FLIR convention (infrared images) is available
+in the ``FLIR`` metadata domain.
+
+Metadata from the following sections is supported:
+
+- Header
+- RawData
+- CameraInfo
+- PaletteInfo
+- GPSInfo
+
+Consult https://exiftool.org/TagNames/FLIR.html for details.
+
+The thermal image data, stored either as raw data or in PNG, is exposed as a
+GDAL subdataset whose name is ``JPEG:"filename.jpg":FLIR_RAW_THERMAL_IMAGE``
 
 See Also
 --------

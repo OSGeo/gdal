@@ -168,7 +168,7 @@ class GDALDAASDataset final: public GDALDataset
                                       GSpacing nBandSpace,
                                       GDALRasterIOExtraArg *psExtraArg) override;
         CPLErr          AdviseRead (int nXOff, int nYOff,
-                                        int nXSize, int nYSize, 
+                                        int nXSize, int nYSize,
                                         int /* nBufXSize */,
                                         int /* nBufYSize */,
                                         GDALDataType /* eBufType */,
@@ -214,10 +214,10 @@ class GDALDAASRasterBand final: public GDALRasterBand
                                       GSpacing nLineSpace,
                                       GDALRasterIOExtraArg *psExtraArg) override;
         CPLErr          AdviseRead (int nXOff, int nYOff,
-                                        int nXSize, int nYSize, 
+                                        int nXSize, int nYSize,
                                         int /* nBufXSize */,
                                         int /* nBufYSize */,
-                                        GDALDataType /* eBufType */, 
+                                        GDALDataType /* eBufType */,
                                         char ** /* papszOptions */) override;
         double          GetNoDataValue(int* pbHasNoData) override;
         GDALColorInterp GetColorInterpretation() override;
@@ -481,7 +481,7 @@ CPLHTTPResult* DAAS_CPLHTTPFetch(const char* pszURL, char** papszOptions)
                  (nHTTPStatus >= 502 && nHTTPStatus <= 504)) &&
                  i < RETRY_COUNT )
             {
-                CPLError( CE_Warning, CPLE_FileIO, 
+                CPLError( CE_Warning, CPLE_FileIO,
                           "Error when downloading %s,"
                           "HTTP status=%d, retrying in %.2fs : %s",
                           pszURL, nHTTPStatus, dfRetryDelay, pszErrorText);
@@ -632,7 +632,7 @@ static CPLJSONObject GetObject(CPLJSONObject& oContainer, const char* pszPath,
     CPLJSONObject oObj = oContainer.GetObj(pszPath);
     if( !oObj.IsValid() )
     {
-        if( bVerboseError ) 
+        if( bVerboseError )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s missing", pszPath);
         }
@@ -678,7 +678,7 @@ static double GetDouble(CPLJSONObject& oContainer, const char* pszPath,
     CPLJSONObject oObj = oContainer.GetObj(pszPath);
     if( !oObj.IsValid() )
     {
-        if( bVerboseError ) 
+        if( bVerboseError )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s missing", pszPath);
         }
@@ -1105,6 +1105,8 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject& oProperties)
             const char* pszJsonName;
             const char* pszGDALName;
         } asRPCSingleValues[] = {
+            { "errBias", RPC_ERR_BIAS},
+            { "errRand", RPC_ERR_RAND},
             { "sampOff", RPC_SAMP_OFF },
             { "lineOff", RPC_LINE_OFF },
             { "latOff",  RPC_LAT_OFF },
@@ -1118,10 +1120,20 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject& oProperties)
         };
         for( size_t i = 0; i < CPL_ARRAYSIZE(asRPCSingleValues); ++i )
         {
-            aoRPC.SetNameValue(asRPCSingleValues[i].pszGDALName,
-                CPLSPrintf("%.18g",
-                    GetDouble(oRPC,
-                        asRPCSingleValues[i].pszJsonName, true, bRPCError)));
+            bool bRPCErrorTmp = false;
+            const bool bVerboseError =
+                !(strcmp(asRPCSingleValues[i].pszGDALName, RPC_ERR_BIAS) == 0 ||
+                  strcmp(asRPCSingleValues[i].pszGDALName, RPC_ERR_RAND) == 0);
+            double dfRPCVal = GetDouble(oRPC, asRPCSingleValues[i].pszJsonName, bVerboseError, bRPCErrorTmp);
+            if (bRPCErrorTmp)
+            {
+                if (bVerboseError)
+                {
+                    bRPCError = true;
+                }
+                continue;
+            }
+            aoRPC.SetNameValue(asRPCSingleValues[i].pszGDALName, CPLSPrintf("%.18g", dfRPCVal));
         }
 
         const struct {
@@ -1680,10 +1692,10 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr GDALDAASDataset::AdviseRead (int nXOff, int nYOff,
-                                   int nXSize, int nYSize, 
+                                   int nXSize, int nYSize,
                                    int nBufXSize,
                                    int nBufYSize,
-                                   GDALDataType /* eBufType */, 
+                                   GDALDataType /* eBufType */,
                                    int /*nBands*/, int* /*panBands*/,
                                    char ** /* papszOptions */)
 {
@@ -1857,10 +1869,10 @@ CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr GDALDAASRasterBand::AdviseRead (int nXOff, int nYOff,
-                                        int nXSize, int nYSize, 
+                                        int nXSize, int nYSize,
                                         int nBufXSize,
                                         int nBufYSize,
-                                        GDALDataType /* eBufType */, 
+                                        GDALDataType /* eBufType */,
                                         char ** /* papszOptions */)
 {
     GDALDAASDataset* poGDS = reinterpret_cast<GDALDAASDataset*>(poDS);
@@ -1927,7 +1939,7 @@ GUInt32 GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff,
     // If AdviseRead() was called before, and the current requested area is
     // in it, check if we can prefetch the whole advised area
     const GIntBig nCacheMax = GDALGetCacheMax64()/2;
-    if( poGDS->m_nXSizeAdvise > 0 && 
+    if( poGDS->m_nXSizeAdvise > 0 &&
         nXOff >= poGDS->m_nXOffAdvise &&
         nYOff >= poGDS->m_nYOffAdvise &&
         nXOff + nXSize <= poGDS->m_nXOffAdvise + poGDS->m_nXSizeAdvise &&
@@ -2042,7 +2054,7 @@ GUInt32 GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff,
             if( anRequestedBands.size() > 1 && poGDS->GetRasterCount() > 1 )
             {
                 const int nThisDTSize = GDALGetDataTypeSizeBytes(eDataType);
-                const GIntBig nUncompressedSizeThisBand = 
+                const GIntBig nUncompressedSizeThisBand =
                     static_cast<GIntBig>(nXBlocks) * nYBlocks *
                             nBlockXSize * nBlockYSize * nThisDTSize;
                 if( nUncompressedSizeThisBand <= poGDS->m_nServerByteLimit &&

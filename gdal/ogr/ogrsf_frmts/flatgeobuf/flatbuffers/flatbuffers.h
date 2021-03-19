@@ -2065,7 +2065,7 @@ class FlatBufferBuilder {
     return reinterpret_cast<T *>(buf_.make_space(vector_size * sizeof(T)));
   }
 
-  // End the vector of structues in the flatbuffers.
+  // End the vector of structures in the flatbuffers.
   // Vector should have previously be started with StartVectorOfStructs().
   template<typename T>
   Offset<Vector<const T *>> EndVectorOfStructs(size_t vector_size) {
@@ -2657,7 +2657,7 @@ inline int LookupEnum(const char **names, const char *name) {
 
 // Minimal reflection via code generation.
 // Besides full-fat reflection (see reflection.h) and parsing/printing by
-// loading schemas (see idl.h), we can also have code generation for mimimal
+// loading schemas (see idl.h), we can also have code generation for minimal
 // reflection data which allows pretty-printing and other uses without needing
 // a schema or a parser.
 // Generate code with --reflect-types (types only) or --reflect-names (names

@@ -31,10 +31,8 @@
 ###############################################################################
 
 import os
-import sys
-
-
 import shutil
+
 import gdaltest
 import ogrtest
 from osgeo import gdal
@@ -369,10 +367,7 @@ def test_ogr_gml_8():
     gml_ds = ogr.Open('data/gml/utf8.gml')
     lyr = gml_ds.GetLayer()
     feat = lyr.GetNextFeature()
-    if sys.version_info >= (3, 0, 0):
-        assert feat.GetFieldAsString('name') == '\xc4\x80liamanu'.encode('latin1').decode('utf-8')
-    else:
-        assert feat.GetFieldAsString('name') == '\xc4\x80liamanu'
+    assert feat.GetFieldAsString('name') == 'Āliamanu'
 
     
 ###############################################################################

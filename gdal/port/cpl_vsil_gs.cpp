@@ -85,7 +85,8 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList papszOptions ) override;
 
     const char* GetOptions() override;
 
@@ -153,7 +154,8 @@ VSICurlHandle* VSIGSFSHandler::CreateFileHandle(const char* pszFilename)
 
 VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -176,7 +178,7 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
         if( poHandleHelper == nullptr )
             return nullptr;
         VSIS3WriteHandle* poHandle =
-            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true);
+            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true, papszOptions);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
@@ -190,7 +192,7 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/

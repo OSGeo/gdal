@@ -784,14 +784,14 @@ int NITFCreate( const char *pszFilename,
 
 #define OVR(width,location,name,text) { 				\
     const char* _text = text; \
-    const char *pszParmValueMacro; 						\
+    const char *pszParamValueMacro; 						\
     size_t to_write; \
-    pszParmValueMacro = CSLFetchNameValue( papszOptions, #name ); 		\
-    if( pszParmValueMacro == NULL )						\
-        pszParmValueMacro = _text;						\
+    pszParamValueMacro = CSLFetchNameValue( papszOptions, #name ); 		\
+    if( pszParamValueMacro == NULL )						\
+        pszParamValueMacro = _text;						\
     bOK &= NITFGotoOffset(fp, location); \
-    to_write = MIN(width,strlen(pszParmValueMacro)); \
-    bOK &= VSIFWriteL(pszParmValueMacro, 1, to_write, fp) == to_write; }
+    to_write = MIN(width,strlen(pszParamValueMacro)); \
+    bOK &= VSIFWriteL(pszParamValueMacro, 1, to_write, fp) == to_write; }
 
 #define WRITE_BYTE(location, val) { \
     char cVal = val; \
@@ -976,11 +976,11 @@ int NITFCreate( const char *pszFilename,
     nOffset = 372;
 
     {
-        const char *pszParmValue;
-        pszParmValue = CSLFetchNameValue( papszOptions, "ICORDS" );
-        if( pszParmValue == NULL )
-            pszParmValue = " ";
-        if( *pszParmValue != ' ' )
+        const char *pszParamValue;
+        pszParamValue = CSLFetchNameValue( papszOptions, "ICORDS" );
+        if( pszParamValue == NULL )
+            pszParamValue = " ";
+        if( *pszParamValue != ' ' )
         {
             OVR(60,nCur+nOffset, IGEOLO, ""                            );
             nOffset += 60;

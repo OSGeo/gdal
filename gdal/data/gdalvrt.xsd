@@ -44,7 +44,7 @@
                     <xs:element name="MaskBand" type="MaskBandType"/>
                     <xs:element name="GDALWarpOptions" type="GDALWarpOptionsType"/> <!-- only if subClass="VRTWarpedDataset" -->
                     <xs:element name="PansharpeningOptions" type="PansharpeningOptionsType"/> <!-- only if subClass="VRTPansharpenedDataset" -->
-                    <xs:element name="Group" type="GroupType"/> <!-- only for multidimensionnal dataset -->
+                    <xs:element name="Group" type="GroupType"/> <!-- only for multidimensional dataset -->
                     <xs:element name="OverviewList" type="OverviewListType"/>
                 </xs:choice>
             </xs:sequence>

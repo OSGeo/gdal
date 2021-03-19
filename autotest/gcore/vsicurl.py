@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from sys import version_info
 import time
 from osgeo import gdal
 from osgeo import ogr
@@ -164,13 +163,8 @@ def test_vsicurl_9():
     if not gdaltest.built_against_curl():
         pytest.skip()
 
-    if version_info >= (3, 0, 0):
-        filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
-    else:
-        exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
-        filename = filename.encode('utf-8')
-
-    ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/' + filename)
+    ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/'
+                   'xx\u4E2D\u6587.\u4E2D\u6587')
     assert ds is not None
 
 ###############################################################################

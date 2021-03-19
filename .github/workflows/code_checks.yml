@@ -1,6 +1,12 @@
 name: Code Checks
 
-on: [push, pull_request]
+on:
+    push:
+        paths-ignore:
+            - 'gdal/doc/**'
+    pull_request:
+        paths-ignore:
+            - 'gdal/doc/**'
 
 jobs:
 
@@ -38,8 +44,8 @@ jobs:
       - name: Run cppcheck test
         run: ./gdal/scripts/cppcheck.sh
 
-  cppcheck_1804:
-    runs-on: ubuntu-18.04
+  cppcheck_2004:
+    runs-on: ubuntu-20.04
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
@@ -48,26 +54,10 @@ jobs:
       - name: Install Requirements
         run: |
           sudo apt update
-          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3
-
-      - name: Cache PROJ build
-        uses: actions/cache@v2
-        with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-cache-cppcheck-1804
-
-      - name: Build PROJ
-        run: |
-            curl http://download.osgeo.org/proj/proj-6.3.2.tar.gz > proj-6.3.2.tar.gz
-            tar xzf proj-6.3.2.tar.gz
-            mv proj-6.3.2 proj
-            cd proj
-            CC="ccache gcc" CXX="ccache g++" CFLAGS=-O0 CXXFLAGS=-O0 ./configure --without-static --prefix=/tmp/projinstall
-            make -j$(nproc)
-            make install -j$(nproc)
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev
 
       - name: Run configure
-        run: (cd gdal && ./configure --with-proj=/tmp/projinstall)
+        run: (cd gdal && ./configure)
 
       - name: Run cppcheck test
         run: ./gdal/scripts/cppcheck.sh
@@ -84,10 +74,10 @@ jobs:
       - name: Detect printf
         run: ./gdal/scripts/detect_printf.sh
 
-      - name: Detect self assigments
+      - name: Detect self assignments
         run: ./gdal/scripts/detect_self_assignment.sh
 
-      - name: Detect suspicous char digit zero
+      - name: Detect suspicious char digit zero
         run: ./gdal/scripts/detect_suspicious_char_digit_zero.sh
 
       - name: Shellcheck
@@ -115,7 +105,7 @@ jobs:
             $FLAKE8 gdal/swig/python/osgeo/utils/auxiliary
 
   doxygen:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2

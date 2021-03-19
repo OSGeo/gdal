@@ -1661,7 +1661,7 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
     }
 
     CPLString osFormat(psOptions ? psOptions->osFormat : "");
-    if( pszDest == nullptr && hDstDS == nullptr )
+    if( pszDest == nullptr /* && hDstDS == nullptr */ )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Both pszDest and hDstDS are NULL.");
@@ -1670,14 +1670,17 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
         return nullptr;
     }
 
-    const bool bCloseOutDSOnError = hDstDS == nullptr;
+    GDALDriver* poDriver = nullptr;
+
 #ifdef this_is_dead_code_for_now
+    const bool bCloseOutDSOnError = hDstDS == nullptr;
     if( pszDest == nullptr )
         pszDest = GDALGetDescription(hDstDS);
 #endif
 
-    GDALDriver* poDriver = nullptr;
+#ifdef this_is_dead_code_for_now
     if( hDstDS == nullptr )
+#endif
     {
         if( osFormat.empty() )
         {
@@ -1720,7 +1723,9 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
         auto poVRTDriver = GDALDriver::FromHandle(GDALGetDriverByName("VRT"));
         if( !poVRTDriver )
         {
+#ifdef this_is_dead_code_for_now
             if( bCloseOutDSOnError )
+#endif
             {
                 GDALClose(hDstDS);
                 hDstDS = nullptr;
@@ -1737,7 +1742,9 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
 
         if( !TranslateInternal(poDstRootGroup, poSrcDS, psOptions) )
         {
+#ifdef this_is_dead_code_for_now
             if( bCloseOutDSOnError )
+#endif
             {
                 GDALClose(hDstDS);
                 hDstDS = nullptr;

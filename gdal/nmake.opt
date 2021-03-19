@@ -916,9 +916,16 @@ ADD_LIBS	=
 # bindings.
 #HAVE_NUMPY=1
 
-# Set HAVE_LERC=0 to disable LERC support
+# Uncomment for external liblerc
+# The only use of external liblerc currently is for the LERC codec of internal libtiff
+# The MRF driver requires internal liblerc to have LERC capabilities
+#HAVE_LERC=external
+#LERC_INCLUDE = -Ic:\dev\liblerc\include
+#LERC_LIB = c:\dev\liblerc\lib\liblerc.lib
+
+# Set HAVE_LERC=no to disable LERC support
 !IFNDEF HAVE_LERC
-HAVE_LERC=1
+HAVE_LERC=internal
 !ENDIF
 
 # Comment out the following if you want to build JPEGLS with CHARLS support
@@ -1149,5 +1156,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(TILEDB_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(MONGODBV3_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) $(CHARLS_LIB) ws2_32.lib \
-	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) \
+	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) $(LERC_LIB) \
     kernel32.lib psapi.lib wbemuuid.lib

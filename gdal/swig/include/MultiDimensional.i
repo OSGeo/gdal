@@ -519,14 +519,10 @@ public:
     {
         return CE_None;
     }
-    if (buf_size + ALIGNMENT_EXTRA < buf_size)
-    {
-        return CE_Failure;
-    }
+
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-%#if PY_VERSION_HEX >= 0x03000000
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
+    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -538,26 +534,10 @@ public:
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf );
-%#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-%#endif
+    char *data = PyByteArray_AsString( (PyObject *)*buf );
     SWIG_PYTHON_THREAD_END_BLOCK;
 
-    GDALDataType ntype  = GDALExtendedDataTypeGetNumericDataType(buffer_datatype);
-    char* data_aligned = get_aligned_buffer(data, ntype);
-    memset(data_aligned, 0, buf_size);
+    memset(data, 0, buf_size);
 
     CPLErr eErr = GDALMDArrayRead( self,
                                    array_start_idx,
@@ -565,8 +545,8 @@ public:
                                    array_step,
                                    &buffer_stride_internal[0],
                                    buffer_datatype,
-                                   data_aligned,
-                                   data_aligned,
+                                   data,
+                                   data,
                                    buf_size ) ? CE_None : CE_Failure;
     if (eErr == CE_Failure)
     {
@@ -574,10 +554,6 @@ public:
         Py_DECREF((PyObject*)*buf);
         SWIG_PYTHON_THREAD_END_BLOCK;
         *buf = NULL;
-    }
-    else
-    {
-        update_buffer_size(*buf, data, data_aligned, buf_size);
     }
 
     return eErr;
@@ -780,8 +756,7 @@ public:
     GDALExtendedDataTypeRelease(selfType);
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-%#if PY_VERSION_HEX >= 0x03000000
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyByteArray_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -793,21 +768,7 @@ public:
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return CE_Failure;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf );
-%#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-%#endif
+    char *data = PyByteArray_AsString( (PyObject *)*buf );
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     memcpy(data, pabyBuf, buf_size);
@@ -890,7 +851,7 @@ public:
   {
      return GDALMDArraySetSpatialRef( self, (OGRSpatialReferenceH)srs ) ? CE_None : CE_Failure;
   }
-  
+
   %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
     return GDALMDArrayGetSpatialRef(self);
@@ -1050,7 +1011,6 @@ public:
     }
 
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-%#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
     {
@@ -1065,21 +1025,6 @@ public:
         return CE_Failure;
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
-%#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
-    if (*buf == NULL)
-    {
-        if( !bUseExceptions )
-        {
-            PyErr_Clear();
-        }
-        SWIG_PYTHON_THREAD_END_BLOCK;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
-        GDALAttributeFreeRawResult(self, pabyBuf, buf_size);
-        return CE_Failure;
-    }
-    char *data = PyString_AsString( (PyObject *)*buf );
-%#endif
     SWIG_PYTHON_THREAD_END_BLOCK;
 
     memcpy(data, pabyBuf, buf_size);
@@ -1216,7 +1161,7 @@ public:
   GDALMDArrayHS* GetIndexingVariable() {
     return GDALDimensionGetIndexingVariable(self);
   }
-  
+
   bool SetIndexingVariable(GDALMDArrayHS* array) {
     return GDALDimensionSetIndexingVariable(self, array);
   }

@@ -29,9 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
-
-
 from osgeo import gdal, gdalconst, ogr
 import gdaltest
 import ogrtest
@@ -70,10 +67,7 @@ def test_ogr2ogr_lib_2():
     gdal.Unlink('/vsimem/sql.txt')
 
     # Test @filename syntax with a UTF-8 BOM
-    if sys.version_info >= (3, 0, 0):
-        gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly'.encode('LATIN1'))
-    else:
-        gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly')
+    gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly'.encode('LATIN1'))
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='@/vsimem/sql.txt')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     gdal.Unlink('/vsimem/sql.txt')

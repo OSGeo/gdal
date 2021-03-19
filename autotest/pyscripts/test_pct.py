@@ -61,11 +61,11 @@ def test_rgb2pct_1():
 
 
 def test_pct2rgb_1():
+    gdal_array = pytest.importorskip('osgeo.gdal_array')
     try:
-        from osgeo import gdal_array
         gdal_array.BandRasterIONumPy
-    except:
-        pytest.skip()
+    except AttributeError:
+        pytest.skip('osgeo.gdal_array.BandRasterIONumPy is unavailable')
 
     script_path = test_py_scripts.get_py_script('pct2rgb')
     if script_path is None:
@@ -134,11 +134,11 @@ def test_rgb2pct_3():
 
 
 def test_pct2rgb_4():
+    gdal_array = pytest.importorskip('osgeo.gdal_array')
     try:
-        from osgeo import gdal_array
         gdal_array.BandRasterIONumPy
-    except (ImportError, AttributeError):
-        pytest.skip()
+    except AttributeError:
+        pytest.skip('osgeo.gdal_array.BandRasterIONumPy is unavailable')
 
     script_path = test_py_scripts.get_py_script('pct2rgb')
     if script_path is None:

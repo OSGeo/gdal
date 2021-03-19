@@ -2434,11 +2434,11 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 /************************************************************************/
 typedef struct
 {
-    int                nSpliteType;
+    int                nSpatialiteType;
     OGRwkbGeometryType eGType;
-} SpliteOGRGeometryTypeTuple;
+} SpatialiteOGRGeometryTypeTuple;
 
-static const SpliteOGRGeometryTypeTuple anTypesMap[] = {
+static const SpatialiteOGRGeometryTypeTuple anTypesMap[] = {
 { OGRSplitePointXY, wkbPoint },
 { OGRSplitePointXYZ, wkbPoint25D },
 { OGRSplitePointXYM, wkbPointM },
@@ -2528,13 +2528,13 @@ OGRErr OGRSQLiteLayer::GetSpatialiteGeometryHeader( const GByte *pabyData,
     if( peType != nullptr || pbIsEmpty != nullptr )
     {
         OGRwkbGeometryType eGType = wkbUnknown;
-        int nSpliteType = 0;
-        memcpy( &nSpliteType, pabyData + 39, 4 );
+        int nSpatialiteType = 0;
+        memcpy( &nSpatialiteType, pabyData + 39, 4 );
         if (NEED_SWAP_SPATIALITE())
-            CPL_SWAP32PTR( &nSpliteType );
+            CPL_SWAP32PTR( &nSpatialiteType );
         for( size_t i = 0; i < CPL_ARRAYSIZE(anTypesMap); ++i )
         {
-            if( anTypesMap[i].nSpliteType == nSpliteType )
+            if( anTypesMap[i].nSpatialiteType == nSpatialiteType )
             {
                 eGType = anTypesMap[i].eGType;
                 break;

@@ -27,9 +27,6 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
-
-
 from osgeo import gdal
 from osgeo import ogr
 import gdaltest
@@ -325,8 +322,8 @@ def test_ogr_sql_13():
 def test_ogr_sql_14():
 
     expect = [
-        'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")',
-        'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")']
+        'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)',
+        'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0",cap:r,j:r)']
 
     ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select ogr_style from small where ogr_geom_wkt LIKE 'POLYGON%'")
@@ -417,43 +414,6 @@ def test_ogr_sql_17():
 
     assert tr
 
-
-###############################################################################
-# Test extended character set
-
-def test_ogr_sql_18():
-
-    if sys.version_info >= (3, 0, 0):
-        pytest.skip()
-
-    name = 'data/shp/departs.vrt'
-
-    ds = ogr.Open(name)
-    assert ds is not None
-
-    sql = 'select * from D\303\251parts'
-    sql_lyr = ds.ExecuteSQL(sql)
-    if sql_lyr is None:
-        ds = None
-        pytest.fail()
-    feat = sql_lyr.GetNextFeature()
-    assert feat is not None
-    feat = None
-
-    ds.ReleaseResultSet(sql_lyr)
-
-    # Test #2221
-    sql = 'select NOMd\303\251PART from D\303\251parts'
-    sql_lyr = ds.ExecuteSQL(sql)
-    if sql_lyr is None:
-        ds = None
-        pytest.fail()
-    feat = sql_lyr.GetNextFeature()
-    assert feat is not None
-    feat = None
-
-    ds.ReleaseResultSet(sql_lyr)
-    ds = None
 
 ###############################################################################
 # Test empty request string

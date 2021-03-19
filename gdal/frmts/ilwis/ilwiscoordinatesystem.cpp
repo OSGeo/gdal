@@ -251,7 +251,7 @@ static const char ILW_Scale_Factor[] = "Scale Factor";
 static const char ILW_Latitude_True_Scale[] = "Latitude of True Scale";
 static const char ILW_Height_Persp_Center[] = "Height Persp. Center";
 
-static double ReadPrjParms(const std::string& section, const std::string& entry, const std::string& filename)
+static double ReadPrjParams(const std::string& section, const std::string& entry, const std::string& filename)
 {
     std::string str = ReadElement(section, entry, filename);
     //string str="";
@@ -261,7 +261,7 @@ static double ReadPrjParms(const std::string& section, const std::string& entry,
     return 0.0;
 }
 
-static int fetchParms(const std::string& csyFileName, double * padfPrjParams)
+static int fetchParams(const std::string& csyFileName, double * padfPrjParams)
 {
     //Fill all projection parameters with zero
     for ( int i = 0; i < 13; i++ )
@@ -273,33 +273,33 @@ static int fetchParms(const std::string& csyFileName, double * padfPrjParams)
     //fetch info about a custom ellipsoid
     if( STARTS_WITH_CI(pszEllips.c_str(), "User Defined") )
     {
-        padfPrjParams[0] = ReadPrjParms("Ellipsoid", "a", csyFileName);
-        padfPrjParams[2] = ReadPrjParms("Ellipsoid", "1/f", csyFileName);
+        padfPrjParams[0] = ReadPrjParams("Ellipsoid", "a", csyFileName);
+        padfPrjParams[2] = ReadPrjParams("Ellipsoid", "1/f", csyFileName);
     }
     else if( STARTS_WITH_CI(pszEllips.c_str(), "Sphere") )
     {
-        padfPrjParams[0] = ReadPrjParms("CoordSystem", "Sphere Radius", csyFileName);
+        padfPrjParams[0] = ReadPrjParams("CoordSystem", "Sphere Radius", csyFileName);
     }
 
-    padfPrjParams[3] = ReadPrjParms("Projection", "False Easting", csyFileName);
-    padfPrjParams[4] = ReadPrjParms("Projection", "False Northing", csyFileName);
+    padfPrjParams[3] = ReadPrjParams("Projection", "False Easting", csyFileName);
+    padfPrjParams[4] = ReadPrjParams("Projection", "False Northing", csyFileName);
 
-    padfPrjParams[5] = ReadPrjParms("Projection", "Central Parallel", csyFileName);
-    padfPrjParams[6] = ReadPrjParms("Projection", "Central Meridian", csyFileName);
+    padfPrjParams[5] = ReadPrjParams("Projection", "Central Parallel", csyFileName);
+    padfPrjParams[6] = ReadPrjParams("Projection", "Central Meridian", csyFileName);
 
-    padfPrjParams[7] = ReadPrjParms("Projection", "Standard Parallel 1", csyFileName);
-    padfPrjParams[8] = ReadPrjParms("Projection", "Standard Parallel 2", csyFileName);
+    padfPrjParams[7] = ReadPrjParams("Projection", "Standard Parallel 1", csyFileName);
+    padfPrjParams[8] = ReadPrjParams("Projection", "Standard Parallel 2", csyFileName);
 
-    padfPrjParams[9] = ReadPrjParms("Projection", "Scale Factor", csyFileName);
-    padfPrjParams[10] = ReadPrjParms("Projection", "Latitude of True Scale", csyFileName);
-    padfPrjParams[11] = ReadPrjParms("Projection", "Zone", csyFileName);
-    padfPrjParams[12] = ReadPrjParms("Projection", ILW_Height_Persp_Center, csyFileName);
+    padfPrjParams[9] = ReadPrjParams("Projection", "Scale Factor", csyFileName);
+    padfPrjParams[10] = ReadPrjParams("Projection", "Latitude of True Scale", csyFileName);
+    padfPrjParams[11] = ReadPrjParams("Projection", "Zone", csyFileName);
+    padfPrjParams[12] = ReadPrjParams("Projection", ILW_Height_Persp_Center, csyFileName);
 
     return true;
 }
 
 /************************************************************************/
-/*                          mapTMParms                                  */
+/*                          mapTMParams                                  */
 /************************************************************************/
 /**
  * fetch the parameters from ILWIS projection definition for
@@ -307,7 +307,7 @@ static int fetchParms(const std::string& csyFileName, double * padfPrjParams)
  * --- Gauss Colombia
  * --- Gauss-Boaga Italy
 **/
-static int mapTMParms(std::string sProj, double dfZone, double &dfFalseEasting, double &dfCentralMeridian)
+static int mapTMParams(std::string sProj, double dfZone, double &dfFalseEasting, double &dfCentralMeridian)
 {
     if( STARTS_WITH_CI(sProj.c_str(), "Gauss-Krueger Germany") )
     {
@@ -416,7 +416,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
 /*      Fetch array containing 13 coordinate system parameters          */
 /* -------------------------------------------------------------------- */
     double     padfPrjParams[13];
-    fetchParms(csyFileName, padfPrjParams);
+    fetchParams(csyFileName, padfPrjParams);
 
     OGRSpatialReference oSRS;
 /* -------------------------------------------------------------------- */
@@ -474,7 +474,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
         //FalseNorthing and CenterLat are always set to 0
         //Scale 1.0 is defined
         //FalseEasting and CentralMeridian are defined by the selected zone
-        mapTMParms("Gauss-Krueger Germany", padfPrjParams[11],
+        mapTMParams("Gauss-Krueger Germany", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
         oSRS.SetProjCS("Gauss-Krueger Germany");
         oSRS.SetTM(  0, padfPrjParams[6],
@@ -486,7 +486,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
         //FalseNorthing and CenterLat are always set to 0
         //Scale 0.9996 is defined
         //FalseEasting and CentralMeridian are defined by the selected zone
-        mapTMParms("Gauss-Boaga Italy", padfPrjParams[11],
+        mapTMParams("Gauss-Boaga Italy", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
         oSRS.SetProjCS("Gauss-Boaga Italy");
         oSRS.SetTM(  0, padfPrjParams[6],
@@ -499,7 +499,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
         // 1.0 used for scale
         // CenterLat is defined 45.1609259259259
         // CentralMeridian is defined by the selected zone
-        mapTMParms("Gauss Colombia", padfPrjParams[11],
+        mapTMParams("Gauss Colombia", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
         oSRS.SetProjCS("Gauss Colombia");
         oSRS.SetTM(  45.1609259259259, padfPrjParams[6],

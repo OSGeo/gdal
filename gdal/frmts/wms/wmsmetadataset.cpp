@@ -28,8 +28,6 @@
 
 #include "wmsmetadataset.h"
 
-CPL_CVSID("$Id$")
-
 int VersionStringToInt(const char *version);
 
 /************************************************************************/
@@ -196,7 +194,7 @@ GDALDataset *GDALWMSMetaDataset::DownloadGetTileService(GDALOpenInfo *poOpenInfo
         return nullptr;
     }
 
-    GDALDataset* poRet = AnalyzeGetTileService(psXML);
+    GDALDataset* poRet = AnalyzeGetTileService(psXML, poOpenInfo);
 
     CPLHTTPDestroyResult(psResult);
     CPLDestroyXMLNode( psXML );
@@ -625,14 +623,27 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeGetCapabilities(CPLXMLNode* psXML,
 /*                          AddTiledSubDataset()                        */
 /************************************************************************/
 
+// tiledWMS only
 void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
-                                            const char* pszTitle)
+                                            const char* pszTitle,
+                                            const char* const* papszChanges)
 {
     CPLString osSubdatasetName = "<GDAL_WMS><Service name=\"TiledWMS\"><ServerUrl>";
     osSubdatasetName += osGetURL;
     osSubdatasetName += "</ServerUrl><TiledGroupName>";
     osSubdatasetName += pszTiledGroupName;
-    osSubdatasetName += "</TiledGroupName></Service></GDAL_WMS>";
+    osSubdatasetName += "</TiledGroupName>";
+
+    for (int i = 0; papszChanges != nullptr && papszChanges[i] != nullptr; i++)
+    {
+        char* key = nullptr;
+        const char* value = CPLParseNameValue(papszChanges[i], &key);
+        if (value != nullptr && key != nullptr)
+            osSubdatasetName += CPLSPrintf("<Change key=\"${%s}\">%s</Change>", key, value);
+        CPLFree(key);
+    }
+
+    osSubdatasetName += "</Service></GDAL_WMS>";
 
     if (pszTitle)
     {
@@ -662,33 +673,51 @@ void GDALWMSMetaDataset::AddTiledSubDataset(const char* pszTiledGroupName,
 /************************************************************************/
 /*                     AnalyzeGetTileServiceRecurse()                   */
 /************************************************************************/
-
-void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML)
+// tiledWMS only
+void GDALWMSMetaDataset::AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpenInfo * poOpenInfo)
 {
+    // Only list tiled groups that contain the string in the open option TiledGroupName, if given
+    char **papszLocalOpenOptions = poOpenInfo ? poOpenInfo->papszOpenOptions : nullptr;
+    CPLString osMatch(CSLFetchNameValueDef(papszLocalOpenOptions, "TiledGroupName",""));
+    osMatch.toupper();
+    // Also pass the change patterns, if provided
+    char **papszChanges = CSLFetchNameValueMultiple(papszLocalOpenOptions, "Change");
+
     CPLXMLNode* psIter = psXML->psChild;
     for(; psIter != nullptr; psIter = psIter->psNext)
     {
-        if (psIter->eType == CXT_Element &&
-            EQUAL(psIter->pszValue, "TiledGroup"))
+        if (psIter->eType == CXT_Element && EQUAL(psIter->pszValue, "TiledGroup"))
         {
-            const char* pszName = CPLGetXMLValue(psIter, "Name", nullptr);
-            const char* pszTitle = CPLGetXMLValue(psIter, "Title", nullptr);
+            const char *pszName = CPLGetXMLValue(psIter, "Name", nullptr);
             if (pszName)
-                AddTiledSubDataset(pszName, pszTitle);
+            {
+                const char* pszTitle = CPLGetXMLValue(psIter, "Title", nullptr);
+                if (osMatch.empty())
+                {
+                    AddTiledSubDataset(pszName, pszTitle, papszChanges);
+                }
+                else
+                {
+                    CPLString osNameUpper(pszName);
+                    osNameUpper.toupper();
+                    if (std::string::npos != osNameUpper.find(osMatch))
+                        AddTiledSubDataset(pszName, pszTitle, papszChanges);
+                }
+            }
         }
-        else if (psIter->eType == CXT_Element &&
-            EQUAL(psIter->pszValue, "TiledGroups"))
+        else if (psIter->eType == CXT_Element && EQUAL(psIter->pszValue, "TiledGroups"))
         {
-            AnalyzeGetTileServiceRecurse(psIter);
+            AnalyzeGetTileServiceRecurse(psIter, poOpenInfo);
         }
     }
+    CPLFree(papszChanges);
 }
 
 /************************************************************************/
 /*                        AnalyzeGetTileService()                       */
 /************************************************************************/
-
-GDALDataset* GDALWMSMetaDataset::AnalyzeGetTileService(CPLXMLNode* psXML)
+// tiledWMS only
+GDALDataset* GDALWMSMetaDataset::AnalyzeGetTileService(CPLXMLNode* psXML, GDALOpenInfo * poOpenInfo)
 {
     const char* pszEncoding = nullptr;
     if (psXML->eType == CXT_Element && strcmp(psXML->pszValue, "?xml") == 0)
@@ -710,7 +739,7 @@ GDALDataset* GDALWMSMetaDataset::AnalyzeGetTileService(CPLXMLNode* psXML)
     poDS->osGetURL = pszURL;
     poDS->osXMLEncoding = pszEncoding ? pszEncoding : "";
 
-    poDS->AnalyzeGetTileServiceRecurse(psTiledPatterns);
+    poDS->AnalyzeGetTileServiceRecurse(psTiledPatterns, poOpenInfo);
 
     return poDS;
 }

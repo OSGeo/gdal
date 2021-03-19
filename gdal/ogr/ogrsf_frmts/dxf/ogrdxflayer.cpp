@@ -1755,7 +1755,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
         poSurface->addGeometryDirectly( poBase1 );
 
         // Create and add the top base
-        OGRLinearRing *poRing2 = poRing1->clone()->toLinearRing();
+        OGRLinearRing *poRing2 = poRing1->clone();
 
         OGRDXFInsertTransformer oTransformer;
         oTransformer.dfZOffset = dfThickness;
@@ -2668,13 +2668,13 @@ OGRDXFFeature *OGRDXFLayer::TranslateASMEntity()
     // freed by the feature
     GByte* pabyData = new GByte[nDataLength];
     memcpy( pabyData, pabyBinaryData, nDataLength );
-    poFeature->SetField( poFeatureDefn->GetFieldIndex( "ASMData" ), 
+    poFeature->SetField( poFeatureDefn->GetFieldIndex( "ASMData" ),
         static_cast<int>( nDataLength ), pabyData );
     delete[] pabyData;
 
     // Set up an affine transformation matrix so the user will be able to
     // transform the resulting 3D geometry
-    poFeature->poASMTransform = 
+    poFeature->poASMTransform =
         std::unique_ptr<OGRDXFAffineTransform>( new OGRDXFAffineTransform() );
 
     poFeature->poASMTransform->SetField( poFeature, "ASMTransform" );
@@ -2794,7 +2794,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
     poFeature->bIsBlockReference = true;
     poFeature->osBlockName = osBlockName;
     poFeature->dfBlockAngle = oTransformer.dfAngle * 180 / M_PI;
-    poFeature->oBlockScale = DXFTriple( oTransformer.dfXScale, 
+    poFeature->oBlockScale = DXFTriple( oTransformer.dfXScale,
         oTransformer.dfYScale, oTransformer.dfZScale );
     poFeature->oOriginalCoords = DXFTriple( oTransformer.dfXOffset,
         oTransformer.dfYOffset, oTransformer.dfZOffset );
@@ -3006,7 +3006,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( GUInt32 nInitialErrorCounter,
 
             // If we are merging features, and this is not text or a block
             // reference, merge it into the GeometryCollection
-            if( bMergeGeometry && 
+            if( bMergeGeometry &&
                 (poSubFeature->GetStyleString() == nullptr ||
                     strstr(poSubFeature->GetStyleString(),"LABEL") == nullptr) &&
                 !poSubFeature->IsBlockReference() &&

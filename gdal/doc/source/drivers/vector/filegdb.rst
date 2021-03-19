@@ -174,7 +174,7 @@ Known Issues
 -  The SDK is known to be unable to open layers with particular spatial
    reference systems. This might be the case if messages "FGDB: Error
    opening XXXXXXX. Skipping it (Invalid function arguments.)" when
-   running "ogrinfo --debug on the.gdb" (reported as warning in GDAL
+   running ``ogrinfo --debug on the.gdb`` (reported as warning in GDAL
    2.0). Using the OpenFileGDB driver will generally solve that issue.
 -  FGDB coordinate snapping will cause geometries to be altered during
    writing. Use the origin and scale layer creation options to control

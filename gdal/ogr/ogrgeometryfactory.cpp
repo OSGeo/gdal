@@ -46,6 +46,7 @@
 #endif
 #include "ogrgeojsonreader.h"
 
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstdlib>
@@ -1200,6 +1201,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
     {
         poGeom = forceToMultiPolygon(poGeom);
+        assert(poGeom);
         eGeomType = wkbMultiPolygon;
     }
 
@@ -1219,6 +1221,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             poGeom = poMPoly;
         }
 
+        assert(poGeom);
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         for( auto&& poPoly: poMPoly )
@@ -1413,6 +1416,8 @@ struct sPolyExtended
 {
     CPL_DISALLOW_COPY_ASSIGN(sPolyExtended)
     sPolyExtended() = default;
+    sPolyExtended(sPolyExtended&&) = default;
+    sPolyExtended& operator= (sPolyExtended&&) = default;
 
     OGRGeometry* poGeometry = nullptr;
     OGRCurvePolygon* poPolygon = nullptr;
@@ -1427,28 +1432,14 @@ struct sPolyExtended
     bool            bIsPolygon = false;
 };
 
-static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)
+static bool OGRGeometryFactoryCompareArea(const sPolyExtended& sPoly1, const sPolyExtended& sPoly2)
 {
-    const sPolyExtended* psPoly1 = reinterpret_cast<const sPolyExtended*>(p1);
-    const sPolyExtended* psPoly2 = reinterpret_cast<const sPolyExtended*>(p2);
-    if( psPoly2->dfArea < psPoly1->dfArea )
-        return -1;
-    else if( psPoly2->dfArea > psPoly1->dfArea )
-        return 1;
-    else
-        return 0;
+    return sPoly2.dfArea < sPoly1.dfArea;
 }
 
-static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
+static bool OGRGeometryFactoryCompareByIndex(const sPolyExtended& sPoly1, const sPolyExtended& sPoly2)
 {
-    const sPolyExtended* psPoly1 = reinterpret_cast<const sPolyExtended*>(p1);
-    const sPolyExtended* psPoly2 = reinterpret_cast<const sPolyExtended*>(p2);
-    if( psPoly1->nInitialIndex < psPoly2->nInitialIndex )
-        return -1;
-    else if( psPoly1->nInitialIndex > psPoly2->nInitialIndex )
-        return 1;
-    else
-        return 0;
+    return sPoly1.nInitialIndex < sPoly2.nInitialIndex;
 }
 
 constexpr int N_CRITICAL_PART_NUMBER = 100;
@@ -1569,7 +1560,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
 /*      Setup per polygon envelope and area information.                */
 /* -------------------------------------------------------------------- */
-    sPolyExtended* asPolyEx = new sPolyExtended[nPolygonCount];
+    std::vector<sPolyExtended> asPolyEx(nPolygonCount);
 
     bool bValidTopology = true;
     bool bMixedUpGeometries = false;
@@ -1689,7 +1680,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 delete asPolyEx[i].poPolygon;
             }
         }
-        delete [] asPolyEx;
+
         if( pbIsValidGeometry )
             *pbIsValidGeometry = TRUE;
         return poCP;
@@ -1739,7 +1730,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 delete asPolyEx[i].poPolygon;
             }
         }
-        delete [] asPolyEx;
+
         if( pbIsValidGeometry )
             *pbIsValidGeometry = TRUE;
         return poRet;
@@ -1819,9 +1810,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     if( !bMixedUpGeometries )
     {
         // STEP 1: Sort polygons by descending area.
-        // TODO(schwehr): Use std::sort.
-        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended),
-              OGRGeometryFactoryCompareArea);
+        std::sort(asPolyEx.begin(), asPolyEx.end(),
+                  OGRGeometryFactoryCompareArea);
     }
     papoPolygons = nullptr;  // Just to use to avoid it afterwards.
 
@@ -2066,8 +2056,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     else
     {
         // STEP 3: Sort again in initial order.
-        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended),
-              OGRGeometryFactoryCompareByIndex);
+        std::sort(asPolyEx.begin(), asPolyEx.end(),
+                  OGRGeometryFactoryCompareByIndex);
 
         // STEP 4: Add holes as rings of their enclosing polygon.
         for( int i = 0; i < nPolygonCount; i++ )
@@ -2105,8 +2095,6 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             geom = poGC;
         }
     }
-
-    delete[] asPolyEx;
 
     return geom;
 }
@@ -3826,7 +3814,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
                     !cache.d->poRevCT->GetTargetCS()->IsSame(poCT->GetSourceCS()) )
                 {
                     delete cache.d->poRevCT;
-                    cache.d->poRevCT = 
+                    cache.d->poRevCT =
                         OGRCreateCoordinateTransformation( &oSRSWGS84,
                                                        poCT->GetSourceCS() );
                     cache.d->bIsNorthPolar = false;
@@ -4878,7 +4866,7 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
 }
 
 /************************************************************************/
-/*                         GetCurveParmeters()                          */
+/*                         GetCurveParameters()                          */
 /************************************************************************/
 
 /**
@@ -4904,7 +4892,7 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
  * @since GDAL 2.0
  */
 
-int OGRGeometryFactory::GetCurveParmeters(
+int OGRGeometryFactory::GetCurveParameters(
     double x0, double y0, double x1, double y1, double x2, double y2,
     double& R, double& cx, double& cy,
     double& alpha0, double& alpha1, double& alpha2 )
@@ -5193,7 +5181,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
 
     OGRLineString* poLine = new OGRLineString();
     bool bIsArc = true;
-    if( !GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+    if( !GetCurveParameters(x0, y0, x1, y1, x2, y2,
                            R, cx, cy, alpha0, alpha1, alpha2))
     {
         bIsArc = false;
@@ -5406,7 +5394,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
     double alpha0_1 = 0.0;
     double alpha1_1 = 0.0;
     double alpha2_1 = 0.0;
-    if( !(OGRGeometryFactory::GetCurveParmeters(p0.getX(), p0.getY(),
+    if( !(OGRGeometryFactory::GetCurveParameters(p0.getX(), p0.getY(),
                             p1.getX(), p1.getY(),
                             p2.getX(), p2.getY(),
                             R_1, cx_1, cy_1,
@@ -5474,7 +5462,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         double alpha2_2 = 0.0;
         // Check that the new candidate arc shares the same
         // radius, center and winding order.
-        if( !(OGRGeometryFactory::GetCurveParmeters(p1.getX(), p1.getY(),
+        if( !(OGRGeometryFactory::GetCurveParameters(p1.getX(), p1.getY(),
                                 p2.getX(), p2.getY(),
                                 p3.getX(), p3.getY(),
                                 R_2, cx_2, cy_2,
@@ -6028,11 +6016,14 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
                 poRet = poCC;
         }
         else
-            poRet = poLS->clone()->toCurve();
+            poRet = poLS->clone();
     }
     else if( poCC != nullptr )
     {
-        poCC->addCurveDirectly(poLSNew ? poLSNew->toCurve() : poCS->toCurve());
+        if( poLSNew )
+            poCC->addCurveDirectly(poLSNew);
+        else
+            poCC->addCurveDirectly(poCS);
         poRet = poCC;
     }
     else if( poLSNew != nullptr )
@@ -6040,7 +6031,7 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
     else if( poCS != nullptr )
         poRet = poCS;
     else
-        poRet = poLS->clone()->toCurve();
+        poRet = poLS->clone();
 
     poRet->assignSpatialReference( poLS->getSpatialReference() );
 
