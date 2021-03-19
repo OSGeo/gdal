@@ -12,7 +12,8 @@ GDAL 1.7.0 and later releases.
 Due to the fact the Java garbage collector works in a separate thread from the main thread, it is necessary to configure GDAL with multi-threading support,
 even if you do not use GDAL API from several Java threads.
 
-The minimum version of Java required to build the Java bindings is Java 1.4.
+The minimum version of Java required to build the Java bindings is Java 7
+
 
 Maven Users
 -----------
