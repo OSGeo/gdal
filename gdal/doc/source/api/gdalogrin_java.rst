@@ -18,7 +18,8 @@ The minimum version of Java required to build the Java bindings is Java 7
 Maven Users
 -----------
 
-As of release 1.11.2 the Java bindings are available from the ​`Maven Central <http://search.maven.org/>`__ repository. All that is needed is to declare a dependency.
+The Java bindings are available from the ​`Maven Central <http://search.maven.org/>`__ repository. All that is needed is to declare a dependency.
+
 
 .. code-block:: xml
 
