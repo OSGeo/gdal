@@ -19,7 +19,8 @@ Maven Users
 
 As of release 1.11.2 the Java bindings are available from the ​`Maven Central <http://search.maven.org/>`__ repository. All that is needed is to declare a dependency.
 
-.. code-block:: maven
+.. code-block:: xml
+
 
    <dependency>
       <groupId>org.gdal</groupId>
