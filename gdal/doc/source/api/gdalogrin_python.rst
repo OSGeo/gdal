@@ -15,7 +15,8 @@ API
 
 Generally speaking the classes and methods mostly match those of the GDAL and OGR C++ classes. An automatically generated API documentation is available on `http://gdal.org/python <http://gdal.org/python>`__.
 It is far from being ideal however : you will essentially get the names of available classes and functions, but few descriptions (except for OGR classes where the OGR C documentation is copied). For more details,
-look at the `GDAL API Tutorial <http://www.gdal.org/gdal_tutorial.html>`__ includes Python examples.
+look at the :ref:`tutorials <tutorials>` includes Python examples.
+
 
 Tutorials
 ---------
