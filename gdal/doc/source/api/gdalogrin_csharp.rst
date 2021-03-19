@@ -4,7 +4,8 @@
 GDAL/OGR In CSharp
 ================================================================================
 
-he GDAL project (primarily Tamas Szekeres) maintains SWIG generated CSharp bindings for GDAL and OGR. Generally speaking the classes and methods mostly match
+The GDAL project (primarily Tamas Szekeres) maintains SWIG generated CSharp bindings for GDAL and OGR. Generally speaking the classes and methods mostly match
+
 those of the GDAL and OGR C++ classes, but there is currently no CSharp specific documentation beyond this site. The CSharp bindings are also usable from other
 .NET languages, such as VB .Net.
 
