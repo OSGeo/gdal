@@ -38,12 +38,6 @@ Useful Links
 
 * This project make images tiles (Superoverlay method) for Google Earth ​`GdalToTiles C# <https://archive.codeplex.com/?p=gdal2tilescsharp>`__
 
-FWTools
--------
-
-One way to get the CSharp bindings is to use FWTools 1.2.0+ for windows. To use these it should be sufficient to add the assemblies in FWTools\csharp to your project,
-and to ensure that FWTools\bin is in your path. See ​`FWTools: Open Source GIS Binary Kit for Windows and Linux <http://fwtools.maptools.org>`__
-
 
 Windows Build SDKs
 ------------------
