@@ -34,7 +34,8 @@ Related Documents
 Useful Links
 ------------
 
-* A variety of example programs in CSharp are available at the `/swig/csharp/apps <http://trac.osgeo.org/gdal/browser/trunk/gdal/swig/csharp/apps>`__ folder of the GDAL project tree.
+* A variety of example programs in CSharp are available at the `/swig/csharp/apps <https://github.com/OSGeo/gdal/tree/master/gdal/swig/csharp/apps>`__ folder of the GDAL project tree.
+
 * This project make images tiles (Superoverlay method) for Google Earth ​`GdalToTiles C# <https://archive.codeplex.com/?p=gdal2tilescsharp>`__
 
 FWTools
