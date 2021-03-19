@@ -4,7 +4,7 @@
 GDAL/OGR In Java
 ================================================================================
 
-The GDAL project has SWIG generated Java bindings for GDAL and OGR. The Java bindings have been substantially reworked for 1.7.0 release. For the 1.5.0 and 1.6.0 releases, they are considered to be broken.
+The GDAL project has SWIG generated Java bindings for GDAL and OGR.
 
 Generally speaking the classes and methods mostly match those of the GDAL and OGR C++ classes. You can find the `​Javadoc <http://gdal.org/java>`__ of the API of the Java bindings for
 GDAL 1.7.0 and later releases.
