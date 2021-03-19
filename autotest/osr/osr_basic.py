@@ -31,7 +31,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+import os
+import subprocess
+import sys
 
 import gdaltest
 from osgeo import osr
@@ -1668,8 +1670,7 @@ def test_osr_GetUTMZone_Projected3D():
 ###############################################################################
 def test_SetPROJAuxDbPaths():
 
-    osr.SetPROJAuxDbPath('../cpp/data/test_aux.db')
-    sr = osr.SpatialReference()
-    assert sr.ImportFromEPSG(4326) == 0
-    assert sr.ImportFromEPSG(111111) == 0
+    subprocess.check_call(
+        [sys.executable, 'osr_basic_subprocess.py'],
+        env=os.environ.copy())
 
