@@ -44,13 +44,18 @@ with control information.
 
 .. option:: -s_srs <srs def>
 
-    Set source spatial reference.
+    Set source spatial reference. If not specified the SRS found in the input
+    dataset will be used.
 
     .. include:: options/srs_def_gdalwarp.rst
 
 .. option:: -t_srs <srs_def>
 
     Set target spatial reference.
+
+    A source SRS must be available for reprojection to occur. The source SRS
+    will be by default the one found in the input dataset when it is available,
+    or as overridden by the user with :option:`-s_srs`
 
     .. include:: options/srs_def_gdalwarp.rst
 

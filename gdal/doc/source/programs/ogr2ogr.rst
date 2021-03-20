@@ -181,17 +181,28 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -a_srs <srs_def>
 
-    Assign an output SRS. Srs_def can be a full WKT definition (hard to escape
-    properly), or a well known definition (i.e. EPSG:4326) or a file with a WKT
-    definition.
+    Assign an output SRS, but without reprojecting (use :option:`-t_srs`
+    to reproject)
+
+    .. include:: options/srs_def.rst
 
 .. option:: -t_srs <srs_def>
 
-    Reproject/transform to this SRS on output.
+    Reproject/transform to this SRS on output, and assign it as output SRS.
+
+    A source SRS must be available for reprojection to occur. The source SRS
+    will be by default the one found in the source layer when it is available,
+    or as overridden by the user with :option:`-s_srs`
+
+    .. include:: options/srs_def.rst
 
 .. option:: -s_srs <srs_def>
 
-    Override source SRS.
+    Override source SRS. If not specified the SRS found in the input layer will
+    be used. This option has only an effect if used together with :option:`-t_srs`
+    to reproject.
+
+    .. include:: options/srs_def.rst
 
 .. option:: -ct <string>
 
@@ -306,7 +317,7 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -makevalid
 
     Run the :cpp:func:`OGRGeometry::MakeValid` operation, followed by
-    :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries 
+    :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries
     to ensure they are valid regarding the rules of the Simple Features specification.
 
     .. versionadded: 3.1 (requires GEOS 3.8 or later)

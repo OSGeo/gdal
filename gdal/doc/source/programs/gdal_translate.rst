@@ -188,13 +188,15 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -a_srs <srs_def>
 
-    Override the projection for the output file.  The<srs_def> may be any of
-    the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
-    the WKT. No reprojection is done.
+    Override the projection for the output file.
+
+    .. include:: options/srs_def.rst
+
+    .. note:: No reprojection is done.
 
 .. option:: -a_scale <value>
 
-    Set band scaling value(no modification of pixel values is done)
+    Set band scaling value (no modification of pixel values is done)
 
     .. versionadded:: 2.3
 
