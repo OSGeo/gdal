@@ -316,8 +316,9 @@ def test_ogr_lvbag_read_zip_4():
 
 def test_ogr_lvbag_fix_invalid_polygon():
 
-    if not ogrtest.have_geos() and not ogrtest.have_sfcgal():
-        pytest.skip()
+    _test = ogr.CreateGeometryFromWkt('POLYGON ((0 0,1 1,0 1,1 0,0 0))')
+    if _test.MakeValid() is None:
+        pytest.skip("MakeValid() not available")
 
     ds = gdal.OpenEx('data/lvbag/inval_polygon.xml', gdal.OF_VECTOR, open_options=['AUTOCORRECT_INVALID_DATA=YES'])
     assert ds is not None, 'cannot open dataset'
@@ -342,8 +343,9 @@ def test_ogr_lvbag_fix_invalid_polygon():
 
 def test_ogr_lvbag_fix_invalid_polygon_to_polygon():
 
-    if not ogrtest.have_geos() and not ogrtest.have_sfcgal():
-        pytest.skip()
+    _test = ogr.CreateGeometryFromWkt('POLYGON ((0 0,1 1,0 1,1 0,0 0))')
+    if _test.MakeValid() is None:
+        pytest.skip("MakeValid() not available")
 
     ds = gdal.OpenEx('data/lvbag/inval_polygon2.xml', gdal.OF_VECTOR, open_options=['AUTOCORRECT_INVALID_DATA=YES'])
     assert ds is not None, 'cannot open dataset'
