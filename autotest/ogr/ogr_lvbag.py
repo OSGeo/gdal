@@ -316,8 +316,6 @@ def test_ogr_lvbag_read_zip_4():
 
 def test_ogr_lvbag_fix_invalid_polygon():
 
-    pytest.skip()
-
     if not ogrtest.have_geos() and not ogrtest.have_sfcgal():
         pytest.skip()
 
@@ -343,8 +341,6 @@ def test_ogr_lvbag_fix_invalid_polygon():
     assert feat is None
 
 def test_ogr_lvbag_fix_invalid_polygon_to_polygon():
-
-    pytest.skip()
 
     if not ogrtest.have_geos() and not ogrtest.have_sfcgal():
         pytest.skip()
