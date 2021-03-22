@@ -1007,6 +1007,8 @@ public:
             return GDALGCPTransform( hTransformArg, FALSE,
                                  nCount, x, y, z, pabSuccess );
     }
+
+    virtual OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 /************************************************************************/
@@ -1074,6 +1076,8 @@ public:
             nResult = poCT2->Transform(nCount, x, y, z, t, pabSuccess);
         return nResult;
     }
+
+    virtual OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 /************************************************************************/
@@ -1140,6 +1144,8 @@ public:
         }
         return true;
     }
+
+    virtual OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 /************************************************************************/

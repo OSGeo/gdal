@@ -1083,6 +1083,8 @@ public:
 
     OGRCoordinateTransformation* Clone() const override { return new GeometryInsertTransformer(*this); }
 
+    virtual OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
+
     int Transform( int nCount,
                      double *x, double *y, double *z = nullptr,
                      double * /*t*/ = nullptr,

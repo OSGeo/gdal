@@ -183,6 +183,8 @@ public:
         }
         return TRUE;
     }
+
+    OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 /************************************************************************/
@@ -273,6 +275,8 @@ public:
     OGRCoordinateTransformation* Clone() const override {
         return new OGRDXFOCSTransformer(*this);
     }
+
+    OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 /************************************************************************/

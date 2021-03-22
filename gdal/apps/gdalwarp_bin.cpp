@@ -156,6 +156,7 @@ MAIN_START(argc, argv)
     int nSrcCount = 0;
 
     EarlySetConfigOptions(argc, argv);
+    CPLDebugOnly("GDAL", "Start");
 
 /* -------------------------------------------------------------------- */
 /*      Register standard GDAL drivers, and process generic GDAL        */

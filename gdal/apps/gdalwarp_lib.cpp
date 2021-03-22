@@ -3680,6 +3680,8 @@ public:
         return new CutlineTransformer(
             GDALCloneTransformer(hSrcImageTransformer));
     }
+
+    virtual OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 static

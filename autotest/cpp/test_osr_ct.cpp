@@ -29,6 +29,7 @@
 #include "cpl_error.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 
 #include <algorithm>
 #include <cmath>
@@ -168,6 +169,91 @@ namespace tut
 
         CPLFree(wktSrs);
         OGR_G_DestroyGeometry(geom);
+    }
+
+    // Test OGRCoordinateTransformation::GetInverse()
+    template<>
+    template<>
+    void object::test<4>()
+    {
+        OGRSpatialReference oSRSSource;
+        oSRSSource.importFromEPSG(4267);
+
+        OGRSpatialReference oSRSTarget;
+        oSRSTarget.importFromEPSG(4269);
+
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(&oSRSSource, &oSRSTarget));
+        ensure( poCT != nullptr );
+        ensure( poCT->GetSourceCS() != nullptr );
+        ensure( poCT->GetSourceCS()->IsSame(&oSRSSource) );
+        ensure( poCT->GetTargetCS() != nullptr );
+        ensure( poCT->GetTargetCS()->IsSame(&oSRSTarget) );
+
+        auto poInverse = std::unique_ptr<OGRCoordinateTransformation>(
+            poCT->GetInverse());
+        ensure( poInverse != nullptr );
+        ensure( poInverse->GetSourceCS() != nullptr );
+        ensure( poInverse->GetSourceCS()->IsSame(&oSRSTarget) );
+        ensure( poInverse->GetTargetCS() != nullptr );
+        ensure( poInverse->GetTargetCS()->IsSame(&oSRSSource) );
+
+        double x = 44;
+        double y = -60;
+        ensure( poCT->Transform(1, &x, &y) );
+        // Check that the transformed point is different but not too far
+        ensure( abs(x - 44) > 1e-10 );
+        ensure( abs(y - -60) > 1e-10 );
+        ensure( abs(x - 44) < 1e-3 );
+        ensure( abs(y - -60) < 1e-3 );
+        const double xTransformed = x;
+        const double yTransformed = y;
+
+        poCT.reset();
+
+        // Check that the transformed point with the inverse transformation
+        // matches the source
+        ensure( poInverse->Transform(1, &x, &y) );
+        ensure_approx_equals( x, 44.0 );
+        ensure_approx_equals( y, -60.0 );
+
+        auto poInvOfInv =std::unique_ptr<OGRCoordinateTransformation>(
+            poInverse->GetInverse());
+        ensure( poInvOfInv != nullptr );
+        ensure( poInvOfInv->GetSourceCS() != nullptr );
+        ensure( poInvOfInv->GetSourceCS()->IsSame(&oSRSSource) );
+        ensure( poInvOfInv->GetTargetCS() != nullptr );
+        ensure( poInvOfInv->GetTargetCS()->IsSame(&oSRSTarget) );
+        ensure( poInvOfInv->Transform(1, &x, &y) );
+        // Check that the transformed point is different but not too far
+        ensure_approx_equals( x, xTransformed );
+        ensure_approx_equals( y, yTransformed );
+    }
+
+    // Test OGRCoordinateTransformation::GetInverse() with a specified coordinate operation
+    template<>
+    template<>
+    void object::test<5>()
+    {
+        OGRCoordinateTransformationOptions options;
+        options.SetCoordinateOperation("+proj=affine +xoff=10", false);
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(nullptr, nullptr, options));
+        ensure( poCT != nullptr );
+
+        auto poInverse = std::unique_ptr<OGRCoordinateTransformation>(
+            poCT->GetInverse());
+        ensure( poInverse != nullptr );
+        ensure( poInverse->GetSourceCS() == nullptr );
+        ensure( poInverse->GetTargetCS() == nullptr );
+
+        poCT.reset();
+
+        double x = 100;
+        double y = 200;
+        ensure( poInverse->Transform(1, &x, &y) );
+        ensure_approx_equals( x, 90.0 );
+        ensure_approx_equals( y, 200.0 );
     }
 
 } // namespace tut
