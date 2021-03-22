@@ -702,7 +702,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     poGeom.reset(poMultiPolygon.release());
                 }
                 else if( poGeomField->GetType() == wkbPolygon
-                    && poGeom->getGeometryType() == wkbMultiPolygon )
+                    && ( poGeom->getGeometryType() == wkbMultiPolygon || poGeom->getGeometryType() == wkbGeometryCollection ) )
                 {
                     const OGRPolygon *poSubGeomLargest = nullptr;
                     for( const auto &poChildGeom : poGeom->toGeometryCollection() )
