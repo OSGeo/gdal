@@ -125,9 +125,11 @@ public:
 
 class VSIIOStream final: public CNCSJPCIOStream
 {
-#if ECWSDK_VERSION >= 54
-    NCS_DELETE_ALL_COPY_AND_MOVE(VSIIOStream)
-#endif
+    VSIIOStream(const VSIIOStream &) = delete;
+    VSIIOStream& operator= (const VSIIOStream&) = delete;
+    VSIIOStream(VSIIOStream &&) = delete;
+    VSIIOStream& operator= (VSIIOStream &&) = delete;
+
     char     *m_Filename;
   public:
 
@@ -186,7 +188,7 @@ class VSIIOStream final: public CNCSJPCIOStream
         {
             return nullptr;
         }
-        
+
         VSIIOStream *pDst = new VSIIOStream();
         pDst->Access(fpNewVSIL, bWritable, bSeekable, m_Filename, startOfJPData, lengthOfJPData);
         return pDst;
