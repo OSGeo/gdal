@@ -363,9 +363,6 @@ def test_ogr_lvbag_fix_invalid_polygon_to_polygon():
     feat = lyr.GetNextFeature()
     assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
 
-    feat = lyr.GetNextFeature()
-    assert feat is None
-
 def test_ogr_lvbag_read_errors():
 
     ds = ogr.Open('data/lvbag/inval_pnd.xml')
