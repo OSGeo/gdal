@@ -697,9 +697,26 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     && poGeom->toGeometryCollection()->getGeometryRef(0)->getGeometryType() == wkbPolygon )
                 {
                     std::unique_ptr<OGRMultiPolygon> poMultiPolygon = std::unique_ptr<OGRMultiPolygon>{ new OGRMultiPolygon };
-                    for (auto &poChildGeom : poGeom->toGeometryCollection())
+                    for( const auto &poChildGeom : poGeom->toGeometryCollection() )
                         poMultiPolygon->addGeometry(poChildGeom);
                     poGeom.reset(poMultiPolygon.release());
+                }
+                else if( poGeomField->GetType() == wkbPolygon
+                    && ( poGeom->getGeometryType() == wkbMultiPolygon || poGeom->getGeometryType() == wkbGeometryCollection ) )
+                {
+                    const OGRPolygon *poSubGeomLargest = nullptr;
+                    for( const auto &poChildGeom : poGeom->toGeometryCollection() )
+                    {
+                        if( poChildGeom->getGeometryType() == wkbPolygon )
+                        {
+                            if ( !poSubGeomLargest )
+                                poSubGeomLargest = poChildGeom->toPolygon();
+                            else if (poChildGeom->toPolygon()->get_Area() > poSubGeomLargest->get_Area())
+                                poSubGeomLargest = poChildGeom->toPolygon();
+                        }
+                    }
+                    if ( poSubGeomLargest )
+                        poGeom.reset(poSubGeomLargest->clone());
                 }
 
                 if( poGeomField->GetSpatialRef() )

@@ -33,7 +33,6 @@
 
 from osgeo import ogr, gdal
 import gdaltest
-import ogrtest
 import pytest
 
 pytestmark = pytest.mark.require_driver('LVBAG')
@@ -314,12 +313,11 @@ def test_ogr_lvbag_read_zip_4():
     assert lyr.GetName() == 'Woonplaats', 'bad layer name'
     assert lyr.GetFeatureCount() > 0
 
-def test_ogr_lvbag_invalid_polygon():
+def test_ogr_lvbag_fix_invalid_polygon():
 
-    pytest.skip()
-
-    if not ogrtest.have_geos() and not ogrtest.have_sfcgal():
-        pytest.skip()
+    _test = ogr.CreateGeometryFromWkt('POLYGON ((0 0,1 1,0 1,1 0,0 0))')
+    if _test.MakeValid() is None:
+        pytest.skip("MakeValid() not available")
 
     ds = gdal.OpenEx('data/lvbag/inval_polygon.xml', gdal.OF_VECTOR, open_options=['AUTOCORRECT_INVALID_DATA=YES'])
     assert ds is not None, 'cannot open dataset'
@@ -341,6 +339,30 @@ def test_ogr_lvbag_invalid_polygon():
 
     feat = lyr.GetNextFeature()
     assert feat is None
+
+def test_ogr_lvbag_fix_invalid_polygon_to_polygon():
+
+    _test = ogr.CreateGeometryFromWkt('POLYGON ((0 0,1 1,0 1,1 0,0 0))')
+    if _test.MakeValid() is None:
+        pytest.skip("MakeValid() not available")
+
+    ds = gdal.OpenEx('data/lvbag/inval_polygon2.xml', gdal.OF_VECTOR, open_options=['AUTOCORRECT_INVALID_DATA=YES'])
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
 
 def test_ogr_lvbag_read_errors():
 
