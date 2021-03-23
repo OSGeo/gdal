@@ -33,7 +33,6 @@
 
 from osgeo import ogr, gdal
 import gdaltest
-import ogrtest
 import pytest
 
 pytestmark = pytest.mark.require_driver('LVBAG')
