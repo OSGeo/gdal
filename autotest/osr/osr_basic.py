@@ -1669,7 +1669,11 @@ def test_osr_GetUTMZone_Projected3D():
 
 ###############################################################################
 def test_SetPROJAuxDbPaths():
-
+    # This test use auxiliary database created with proj 6.3.2
+    # (tested up to 8.0.0) and can be sensitive to future
+    # database structure change.
+    #
+    # See PR https://github.com/OSGeo/gdal/pull/3590
     subprocess.check_call(
         [sys.executable, 'osr_basic_subprocess.py'],
         env=os.environ.copy())

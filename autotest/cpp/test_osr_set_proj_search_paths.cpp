@@ -87,6 +87,11 @@ static void func3(void*)
 
 static void func4()
 {
+    // This test use auxiliary database created with proj 6.3.2
+    // (tested up to 8.0.0) and can be sensitive to future
+    // database structure change.
+    //
+    // See PR https://github.com/OSGeo/gdal/pull/3590
     const char* apszAux0[] = {"data/test_aux.db", nullptr};
     OSRSetPROJAuxDbPaths(apszAux0);
 
