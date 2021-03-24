@@ -29,8 +29,8 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-
-from typing import Optional, Union
+from numbers import Real
+from typing import Optional, Union, Sequence, Tuple
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike
@@ -96,13 +96,77 @@ def get_ovr_count(filename_or_ds: PathOrDS):
         return bnd.GetOverviewCount()
 
 
-def get_ovr_idx(filename_or_ds: PathOrDS, ovr_idx: Optional[int]):
+def get_pixel_size(filename_or_ds: PathOrDS) -> Tuple[Real, Real]:
+    ds = open_ds(filename_or_ds)
+    geo_transform = ds.GetGeoTransform(can_return_null=True)
+    if geo_transform is not None:
+        return geo_transform[1], geo_transform[5]
+    else:
+        return 1, 1
+
+
+def get_sizes_factors_resolutions(filename_or_ds: PathOrDS, dim: Optional[int]=0):
+    ds = open_ds(filename_or_ds)
+    bnd = ds.GetRasterBand(1)
+    ovr_count = bnd.GetOverviewCount()
+    r0 = get_pixel_size(ds)
+    s0 = ds.RasterXSize, ds.RasterYSize
+    f0 = 1, 1
+    sizes = [s0]
+    factors = [f0]
+    resolutions = [r0]
+    for i_overview in range(ovr_count):
+        h_overview = bnd.GetOverview(i_overview)
+        if h_overview is not None:
+            s = h_overview.XSize, h_overview.YSize
+            f = s0[0] / s[0], s0[1] / s[1]
+            r = r0[0] * f[0], r0[1] * f[1]
+            sizes.append(s)
+            factors.append(f)
+            resolutions.append(r)
+    if dim is not None:
+        sizes = [x[dim] for x in sizes]
+        factors = [x[dim] for x in factors]
+        resolutions = [x[dim] for x in resolutions]
+    return sizes, factors, resolutions
+
+
+def get_best_ovr_by_resolutions(requested_res: float, resolutions: Sequence[float]):
+    for ovr, res in enumerate(resolutions):
+        if res > requested_res:
+            return max(0, ovr-1)
+    return len(resolutions)-1
+
+
+def get_ovr_idx(filename_or_ds: PathOrDS,
+                ovr_idx: Optional[int] = None,
+                ovr_res: Optional[Union[int, float]] = None) -> int:
+    """
+    returns a non-negative ovr_idx, from given mutually exclusive ovr_idx (index) or ovr_res (resolution)
+    ovr_idx == None and ovr_res == None => returns 0
+    ovr_idx: int >= 0 => returns the given ovr_idx
+    ovr_idx: int < 0 => -1 is the last overview; -2 is the one before the last and so on
+    ovr_res: float|int => returns the best suitable overview for a given resolution
+             meaning the ovr with the lowest resolution which is higher then the request
+    ovr_idx: float = x => same as (ovr_idx=None, ovr_res=x)
+    """
+    if ovr_res is not None:
+        if ovr_idx is not None:
+            raise Exception(f'ovr_idx({ovr_idx}) and ovr_res({ovr_res}) are mutually exclusive both were set')
+        ovr_idx = float(ovr_res)
     if ovr_idx is None:
-        ovr_idx = 0
-    if ovr_idx < 0:
-        # -1 is the last overview; -2 is the one before the last
-        overview_count = get_ovr_count(open_ds(filename_or_ds))
-        ovr_idx = max(0, overview_count + ovr_idx + 1)
+        return 0
+    if isinstance(ovr_idx, Sequence):
+        ovr_idx = ovr_idx[0]  # in case resolution in both axis were given we'll consider only x resolution
+    if isinstance(ovr_idx, int):
+        if ovr_idx < 0:
+            overview_count = get_ovr_count(filename_or_ds)
+            ovr_idx = max(0, overview_count + 1 + ovr_idx)
+    elif isinstance(ovr_idx, float):
+        _sizes, _factors, resolutions = get_sizes_factors_resolutions(filename_or_ds)
+        ovr_idx = get_best_ovr_by_resolutions(ovr_idx, resolutions)
+    else:
+        raise Exception(f'Got an unexpected overview: {ovr_idx}')
     return ovr_idx
 
 
@@ -138,7 +202,7 @@ class OpenDS:
     def _open_ds(
         filename: PathLike,
         access_mode=gdal.GA_ReadOnly,
-        ovr_idx: Optional[int] = None,
+        ovr_idx: Optional[Union[int, float]] = None,
         open_options: Optional[dict] = None,
         logger=None,
     ):
