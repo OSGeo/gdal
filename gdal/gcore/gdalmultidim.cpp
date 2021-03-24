@@ -6444,7 +6444,7 @@ GDALExtendedDataType GDALExtendedDataType::Create(
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid offset/size");
         return GDALExtendedDataType(GDT_Unknown);
     }
-    if( nTotalSize == 0 )
+    if( nTotalSize == 0 || components.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Empty compound not allowed");
         return GDALExtendedDataType(GDT_Unknown);

@@ -299,6 +299,11 @@ def test_mem_md_datatypes():
 
     comp0 = gdal.EDTComponent.Create('x', 0, gdal.ExtendedDataType.Create(gdal.GDT_Int16))
     comp1 = gdal.EDTComponent.Create('y', 4, gdal.ExtendedDataType.Create(gdal.GDT_Int32))
+
+    with gdaltest.error_handler():
+        assert gdal.ExtendedDataType.CreateCompound("mytype", 8, []) is None
+        assert gdal.ExtendedDataType.CreateCompound("mytype", 2000 * 1000 * 1000, [comp0]) is None
+
     compound_dt = gdal.ExtendedDataType.CreateCompound("mytype", 8, [comp0, comp1])
     assert compound_dt.GetClass() == gdal.GEDTC_COMPOUND
     assert compound_dt.GetName() == 'mytype'
@@ -813,7 +818,7 @@ def test_mem_md_array_slice():
     dim_2 = rg.CreateDimension("dim_2", None, None, 2)
     dim_3 = rg.CreateDimension("dim_3", None, None, 3)
     dim_4 = rg.CreateDimension("dim_4", None, None, 4)
-    
+
     ar = rg.CreateMDArray("nodim", [],
                           gdal.ExtendedDataType.Create(gdal.GDT_Byte))
     assert ar.Write(struct.pack('B', 1)) == gdal.CE_None
