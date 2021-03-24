@@ -99,9 +99,9 @@ API
    .. toctree::
        :maxdepth: 1
 
-       gdalogrin_csharp
-       gdalogrin_java
-       gdalogrin_python
+       csharp
+       java
+       python
 
    There are also other bindings that are developed outside of the GDAL source tree (**note**: those offer APIs not strictly coupled the GDAL/OGR C/C++ API). These include bindings for
 
