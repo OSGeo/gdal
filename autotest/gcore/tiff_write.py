@@ -153,7 +153,7 @@ def test_tiff_write_4():
 
     assert gt == new_ds.GetGeoTransform(), 'Wrong geotransform.'
 
-    new_ds.SetMetadata({'TEST_KEY': 'TestValue'})
+    new_ds.SetMetadata({'TEST_KEY': 'TestValue <>'})
 
     new_ds = None
 
@@ -168,7 +168,7 @@ def test_tiff_write_4():
     assert nd is None, 'Got unexpected nodata value.'
 
     md_dict = new_ds.GetMetadata()
-    assert md_dict['TEST_KEY'] == 'TestValue', 'Missing metadata'
+    assert md_dict['TEST_KEY'] == 'TestValue <>', 'Missing metadata'
 
     new_ds = None
 
