@@ -62,6 +62,10 @@
 
 %typemap(javain) SWIGTYPE *DISOWN "$javaclassname.getCPtrAndDisown($javainput)"
 
+%typemap(in, numinputs=0) JNIEnv *jenv %{
+   $1 = jenv;
+%}
+
 
 /* JAVA TYPEMAPS */
 
@@ -371,6 +375,19 @@
 %typemap(javaout) (GByte* outBytes ) {
     return $jnicall;
   }
+
+/***************************************************
+ * Typemaps for  (jobject outBuffer)
+ ***************************************************/
+
+%typemap(jni) (jobject outBuffer) "jobject"
+%typemap(jtype) (jobject outBuffer)  "java.nio.ByteBuffer"
+%typemap(jstype) (jobject outBuffer)  "java.nio.ByteBuffer"
+%typemap(javain) (jobject outBuffer)  "$javainput"
+%typemap(javaout) (jobject outBuffer) {
+    return $jnicall;
+  }
+
 
 /***************************************************
  * Typemaps for  (const char* stringWithDefaultValue)

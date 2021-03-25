@@ -186,6 +186,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
+%rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
 %rename (Unlink) VSIUnlink;
 %rename (HasThreadSupport) wrapper_HasThreadSupport;
 %rename (NetworkStatsReset) VSINetworkStatsReset;
@@ -519,6 +520,27 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 %clear ( int nBytes, const GByte *pabyData );
 #endif
 #endif
+
+#if defined(SWIGJAVA)
+%inline %{
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, void* nioBuffer, long nioBufferSize) {
+    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) nioBuffer, nioBufferSize, FALSE));
+}
+%}
+#endif
+
+#if defined(SWIGJAVA)
+%apply (jobject outBuffer) {jobject};
+%inline %{
+jobject wrapper_VSIGetMemFileBuffer(JNIEnv *jenv, const char* utf8_path) {
+    vsi_l_offset outBufferLen = 0;
+    GByte* result = VSIGetMemFileBuffer(utf8_path, &outBufferLen, FALSE);
+    return jenv->NewDirectByteBuffer((void*) result, outBufferLen);
+}
+%}
+%clear (jobject outBuffer);
+#endif
+
 
 /* Added in GDAL 1.7.0 */
 VSI_RETVAL VSIUnlink(const char * utf8_path );
