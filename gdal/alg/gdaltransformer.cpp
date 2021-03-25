@@ -958,7 +958,7 @@ typedef struct {
     GDALTransformerFunc pDstTransformer;
 
     // Memorize the value of the CHECK_WITH_INVERT_PROJ at the time we
-    // instanciated the object, to be able to decide if
+    // instantiated the object, to be able to decide if
     // GDALRefreshGenImgProjTransformer() must do something or not.
     bool     bCheckWithInvertPROJ;
 

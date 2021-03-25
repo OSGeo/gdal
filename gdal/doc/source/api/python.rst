@@ -245,7 +245,7 @@ Examples
 One example of GDAL/numpy integration is found in the `val_repl.py <https://github.com/OSGeo/gdal/blob/master/gdal/swig/python/samples/val_repl.py>`__ script.
 
 .. note::
-   **Perfomance Notes**
+   **Performance Notes**
 
    ReadAsArray expects to make an entire copy of a raster band or dataset
    unless the data are explicitly subsetted as part of the function call. For
