@@ -1382,7 +1382,7 @@ int Lerc2::TypeCode(T z, DataType& dtUsed) const
   {
     case DT_Short:
     {
-      char c = (char)z;
+      signed char c = (signed char)z;
       int tc = (T)c == z ? 2 : (T)b == z ? 1 : 0;
       dtUsed = (DataType)(dt - tc);
       return tc;
@@ -1471,7 +1471,7 @@ bool Lerc2::WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed)
   {
     case DT_Char:
     {
-      *((char*)ptr) = (char)z;
+      *((signed char*)ptr) = (signed char)z;
       ptr++;
       break;
     }
@@ -1542,7 +1542,7 @@ double Lerc2::ReadVariableDataType(const Byte** ppByte, DataType dtUsed)
   {
     case DT_Char:
     {
-      char c = *((char*)ptr);
+      signed char c = *((signed char*)ptr);
       *ppByte = ptr + 1;
       return c;
     }
@@ -1606,7 +1606,7 @@ Lerc2::DataType Lerc2::GetDataType(T z) const
 {
   const std::type_info& ti = typeid(z);
 
-       if (ti == typeid(char))            return DT_Char;
+       if (ti == typeid(signed char))     return DT_Char;
   else if (ti == typeid(Byte))            return DT_Byte;
   else if (ti == typeid(short))           return DT_Short;
   else if (ti == typeid(unsigned short))  return DT_UShort;
