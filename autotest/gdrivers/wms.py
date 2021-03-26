@@ -40,7 +40,7 @@ import gdaltest
 import pytest
 
 pytestmark = pytest.mark.require_driver('WMS')
-    
+
 ###############################################################################
 # Open the WMS dataset
 
@@ -407,7 +407,7 @@ def test_wms_8():
     for expected_file in expected_files:
         assert os.path.getmtime(expected_file) > mod_time
 
-    
+
 ###############################################################################
 # Test OnEarth Tiled WMS minidriver
 
@@ -465,7 +465,7 @@ def wms_10():
 
 # Permanently down
 def wms_11():
-    
+
     if gdaltest.skip_on_travis():
         pytest.skip()
 
@@ -520,7 +520,7 @@ def test_wms_12():
                 pytest.fail('open of %s failed.' % name)
             ds = None
 
-    
+
 ###############################################################################
 # Test reading WMS through VRT (test effect of r21866)
 
@@ -567,7 +567,7 @@ def test_wms_14():
         print("(%d, %d)" % (block_xsize, block_ysize))
         pytest.fail('bad block size')
 
-    
+
 ###############################################################################
 # Test reading ArcGIS MapServer JSon definition and CreateCopy()
 
@@ -770,7 +770,7 @@ def test_wms_data_via_mrf():
 
     if mrfdrv is None or 'LERC' not in mrfdrv.GetMetadataItem('DMD_CREATIONOPTIONLIST'):
         pytest.skip()
-    
+
     url = "http://astro.arcgis.com/arcgis/rest/services/OnMars/HiRISE_DEM/ImageServer/tile/${z}/${y}/${x}"
     dstemplate = """<GDAL_WMS>
 <Service name="TMS" ServerUrl="{url}"/>
@@ -782,15 +782,17 @@ def test_wms_data_via_mrf():
     # This is a LERC1 format tile service, DEM in floating point, it can be read as any type
     # The returned no data value can also be set on read, which affects the checksum
     testlist = [
-        ("Byte", 0, 29585), # Same as the default type, NDV not defined
-        ("Float32", 0, 56047), # float, default NDV
-        ("Float32", 32768.32, 33595), # float, Forced NDV
+        # Second checksum is on graviton2
+        ("Byte", 0, (29585, 9838)), # Same as the default type, NDV not defined
+        ("Float32", 0, (56047,)), # float, default NDV
+        ("Float32", 32768.32, (33595,)), # float, Forced NDV
     ]
+
     for dt, ndv, expected_cs in testlist:
         ds = gdal.Open(dstemplate.format(url = url, dt = dt, ndv=ndv))
-        assert ds.GetRasterBand(1).Checksum() == expected_cs, "datatype {} and ndv {}".format(dt, ndv)
+        assert ds.GetRasterBand(1).Checksum() in expected_cs, "datatype {} and ndv {}".format(dt, ndv)
         ds = None
- 
+
 def test_twms_wmsmetadriver():
     gdaltest.gts = """<WMS_Tile_Service version="0.1.0">
   <TiledPatterns>
@@ -881,12 +883,12 @@ def test_twms_inline_configuration():
     except:
         pytest.skip()
 
-    # Try inline base64 configuration 
+    # Try inline base64 configuration
     wms_base64gts = base64.b64encode(gts.encode())
     twms_string = '<GDAL_WMS><Service name="TiledWMS" ServerUrl="{}"><Configuration encoding="base64">{}</Configuration></Service></GDAL_WMS>'.format(
             baseURL, wms_base64gts.decode())
     gdal.FileFromMemBuffer("/vsimem/twms.xml", twms_string)
-    
+
     # Open fails without a TiledGroupName
     ds = gdal.Open("/vsimem/twms.xml")
     assert ds is None, "Expected failure to open"
@@ -916,4 +918,3 @@ def test_wms_cleanup():
         pass
 
 
-    
