@@ -1144,43 +1144,35 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
 
 #define RMF_READ_SHORT(ptr, value, offset)                              \
 do {                                                                    \
+    memcpy(&(value), (GInt16*)((ptr) + (offset)), sizeof(GInt16));      \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
-        (value) = CPL_MSBWORD16(*(GInt16*)((ptr) + (offset)));          \
+        CPL_MSBPTR16(&(value));                                         \
     }                                                                   \
     else                                                                \
     {                                                                   \
-        (value) = CPL_LSBWORD16(*(GInt16*)((ptr) + (offset)));          \
+        CPL_LSBPTR16(&(value));                                         \
     }                                                                   \
 } while( false );
 
 #define RMF_READ_ULONG(ptr, value, offset)                              \
 do {                                                                    \
+    memcpy(&(value), (GUInt32*)((ptr) + (offset)), sizeof(GUInt32));    \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
-        (value) = CPL_MSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+        CPL_MSBPTR32(&(value));                                         \
     }                                                                   \
     else                                                                \
     {                                                                   \
-        (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+        CPL_LSBPTR32(&(value));                                         \
     }                                                                   \
 } while( false );
 
-#define RMF_READ_LONG(ptr, value, offset)                               \
-do {                                                                    \
-    if( poDS->bBigEndian )                                              \
-    {                                                                   \
-        (value) = CPL_MSBWORD32(*(GInt32*)((ptr) + (offset)));          \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)));          \
-    }                                                                   \
-} while( false );
+#define RMF_READ_LONG(ptr, value, offset) RMF_READ_ULONG(ptr, value, offset)
 
 #define RMF_READ_DOUBLE(ptr, value, offset)                             \
 do {                                                                    \
-    (value) = *reinterpret_cast<double*>((ptr) + (offset));             \
+    memcpy(&(value), (double*)((ptr) + (offset)), sizeof(double));      \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
         CPL_MSBPTR64(&(value));                                         \
