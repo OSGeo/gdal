@@ -5948,7 +5948,7 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
  *
  * @since GDAL 1.5.0
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  *
  */
 GDALRasterBand *GDALRasterBand::GetMaskBand()
@@ -6213,7 +6213,7 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
  *
  * @return a valid mask band.
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  *
  */
 int GDALRasterBand::GetMaskFlags()
@@ -6292,7 +6292,7 @@ void GDALRasterBand::InvalidateMaskBand()
  *
  * @return CE_None on success or CE_Failure on an error.
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  * @see GDALDataset::CreateMaskBand()
  *
  */

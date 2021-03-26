@@ -3047,7 +3047,7 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
  *                 specified.
  * @return CE_None on success or CE_Failure on an error.
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  * @see GDALRasterBand::CreateMaskBand()
  *
  */
@@ -3805,7 +3805,7 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
  * should be deallocated by the application at that point.
  *
  * Additional information on asynchronous IO in GDAL may be found at:
- *   http://trac.osgeo.org/gdal/wiki/rfc24_progressive_data_support
+ *   https://gdal.org/development/rfc/rfc24_progressive_data_support.html
  *
  * This method is the same as the C GDALBeginAsyncReader() function.
  *
@@ -3896,7 +3896,7 @@ GDALAsyncReader *GDALDataset::BeginAsyncReader(
  * should be deallocated by the application at that point.
  *
  * Additional information on asynchronous IO in GDAL may be found at:
- *   http://trac.osgeo.org/gdal/wiki/rfc24_progressive_data_support
+ *   https://gdal.org/development/rfc/rfc24_progressive_data_support.html
  *
  * This method is the same as the C++ GDALDataset::BeginAsyncReader() method.
  *
