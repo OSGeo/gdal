@@ -60,8 +60,11 @@ jobs:
       - name: Run SWIG CSharp tests
         run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make && make test"
 
-      - name: Build Python sdist package
+      - name: Build GDAL Python sdist distribution
         run: docker run --rm gdal sh -c "cd /build/gdal/swig/python && python3 setup.py sdist"
+
+      - name: Build gdal-utils Python bdist_wheel distribution
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python/gdal-utils && python3 -m pip install wheel && python3 setup.py bdist_wheel"
 
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
