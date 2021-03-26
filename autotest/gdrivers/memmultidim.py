@@ -183,6 +183,41 @@ def test_mem_md_array_single_dim():
     assert len(got_data) == 2
     assert struct.unpack('B' * 2, got_data) == (0, 0)
 
+    # Test writing a list with only integer values
+    assert myarray.Write([0, 1]) == gdal.CE_None
+    assert struct.unpack('B' * 2, myarray.Read()) == (0, 1)
+
+    # Unsupported type in list
+    with pytest.raises(Exception):
+        myarray.Write([0, 'aa'])
+
+    # Test writing a list with a mix of int and double
+    assert myarray.Write([0, 2.1]) == gdal.CE_None
+    assert struct.unpack('B' * 2, myarray.Read()) == (0, 2)
+
+    # Test writing a list with only double values
+    assert myarray.Write([1.0, 2.1]) == gdal.CE_None
+    assert struct.unpack('B' * 2, myarray.Read()) == (1, 2)
+
+    # Test writing a list with only integer values, but one out of int32 range
+    assert myarray.Write([1, 1 << 31]) == gdal.CE_None
+    assert struct.unpack('B' * 2, myarray.Read()) == (1, 255)
+
+    # Test writing a array
+    for typecode, in_ar, out_tuple in [ ('B', [1, 2], (1, 2)),
+                                        ('h', [-32768, 32767], (0, 255)),
+                                        ('H', [0, 65535], (0, 255)),
+                                        ('i', [-(1<<31), (1<<31)-1], (0, 255)),
+                                        ('I', [0, (1<<32)-1], (0, 255)),
+                                        ('f', [1.0, 2.1], (1, 2)),
+                                        ('d', [2.0, 3.1], (2, 3)) ]:
+        assert myarray.Write(array.array(typecode, in_ar)) == gdal.CE_None
+        assert struct.unpack('B' * 2, myarray.Read()) == out_tuple
+
+    # Unsupported array type
+    with pytest.raises(Exception):
+        myarray.Write(array.array('b', [1, 2]))
+
     assert myarray.AdviseRead() == gdal.CE_None
 
     attr = myarray.CreateAttribute('attr', [],
@@ -219,6 +254,8 @@ def test_mem_md_array_single_dim():
         assert pct >= tab[0]
         tab[0] = pct
         return 1
+
+    got_data = myarray.Read()
 
     tab = [ 0 ]
     copy_ds = drv.CreateCopy('', ds, callback = my_cbk,

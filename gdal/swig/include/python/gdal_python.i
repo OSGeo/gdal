@@ -1103,13 +1103,58 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
            buffer_stride = None,
            buffer_datatype = None):
 
+      dimCount = self.GetDimensionCount()
+
+      # Redirect to numpy-friendly WriteArray() if buffer is a numpy array
+      # and other arguments are compatible
+      if type(buffer).__name__ == 'ndarray' and \
+         count is None and buffer_stride is None and buffer_datatype is None:
+          return self.WriteArray(buffer, array_start_idx=array_start_idx, array_step=array_step)
+
+      # Special case for buffer of type array and 1D arrays
+      if dimCount == 1 and type(buffer).__name__ == 'array' and \
+         count is None and buffer_stride is None and buffer_datatype is None:
+          map_typecode_itemsize_to_gdal = {
+             ('B',1): GDT_Byte,
+             ('h',2): GDT_Int16,
+             ('H',2): GDT_UInt16,
+             ('i',4): GDT_Int32,
+             ('I',4): GDT_UInt32,
+             ('l',4): GDT_Int32,
+             # ('l',8): GDT_Int64,
+             # ('q',8): GDT_Int64,
+             # ('Q',8): GDT_UInt64,
+             ('f', 4): GDT_Float32,
+             ('d', 8): GDT_Float64
+          }
+          key = (buffer.typecode, buffer.itemsize)
+          if key not in map_typecode_itemsize_to_gdal:
+              raise Exception("unhandled type for buffer of type array")
+          buffer_datatype = ExtendedDataType.Create(map_typecode_itemsize_to_gdal[key])
+
+      # Special case for a list of numeric values and 1D arrays
+      elif dimCount == 1 and type(buffer) == type([]) and len(buffer) != 0 \
+           and self.GetDataType().GetClass() != GEDTC_STRING:
+          buffer_datatype = GDT_Int32
+          for v in buffer:
+              if isinstance(v, int):
+                  if v >= (1 << 31) or v < -(1 << 31):
+                      buffer_datatype = GDT_Float64
+              elif isinstance(v, float):
+                  buffer_datatype = GDT_Float64
+              else:
+                  raise ValueError('Only lists with integer or float elements are supported')
+          import array
+          buffer = array.array('d' if buffer_datatype == GDT_Float64 else 'i', buffer)
+          buffer_datatype = ExtendedDataType.Create(buffer_datatype)
+
       if not buffer_datatype:
         buffer_datatype = self.GetDataType()
 
-      is_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and self.GetDimensionCount() == 1
+      is_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and dimCount == 1
 
       if not array_start_idx:
-        array_start_idx = [0] * self.GetDimensionCount()
+        array_start_idx = [0] * dimCount
 
       if not count:
         if is_1d_string:
@@ -1119,7 +1164,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             count = [ dim.GetSize() for dim in self.GetDimensions() ]
 
       if not array_step:
-        array_step = [1] * self.GetDimensionCount()
+        array_step = [1] * dimCount
 
       if not buffer_stride:
         stride = 1
