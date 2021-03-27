@@ -27,17 +27,9 @@ rm autotest/ogr/ogr_sxf.py
 (cd autotest/ogr && pytest ogr_virtualogr.py) || echo "ogr_virtualogr.py failed"
 rm autotest/ogr/ogr_virtualogr.py
 
-# Small floating point difference in results
-(cd autotest/gdrivers && pytest wcs.py) || echo "wcs.py failed"
-rm autotest/gdrivers/wcs.py
-
 # Error on test_nwt_grd_2
 (cd autotest/gdrivers && pytest nwt_grd.py) || echo "nwt_grd.py failed"
 rm autotest/gdrivers/nwt_grd.py
-
-# Not big endian ready ?
-(cd autotest/gdrivers && pytest rmf.py) || echo "rmf.py failed"
-rm autotest/gdrivers/rmf.py
 
 # Run the 2 following before removing netcdf.py, as they depend on it
 (cd autotest/gdrivers && pytest netcdf_multidim.py) || echo "netcdf_multidim.py failed"
@@ -48,9 +40,5 @@ rm autotest/gdrivers/netcdf_cf.py
 
 (cd autotest/gdrivers && pytest netcdf.py) || echo "netcdf.py failed"
 rm autotest/gdrivers/netcdf.py
-
-# Differences in checksums
-(cd autotest/pyscripts && pytest test_gdal_pansharpen.py) || echo "test_gdal_pansharpen.py failed"
-rm autotest/pyscripts/test_gdal_pansharpen.py
 
 cd autotest && $PYTEST
