@@ -76,6 +76,7 @@ AX_CHECK_COMPILE_FLAG([-Wformat -Werror=format-security -Wno-format-nonliteral],
 AX_CHECK_COMPILE_FLAG([-Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-include-dirs], [C_WFLAGS="$C_WFLAGS -Wmissing-include-dirs" CXX_WFLAGS="$CXX_WFLAGS -Wmissing-include-dirs"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Error out on things that will fail with MSVC
 AX_CHECK_COMPILE_FLAG([-Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"],,[$ERROR_ON_UNKNOWN_OPTIONS])
@@ -4180,7 +4181,12 @@ elif test "$with_dods_root" = "yes" ; then
     AC_MSG_ERROR([--with-dods-root requires path to dods root as argument])
 else
     DODS_LIB=$with_dods_root/lib
-    DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
+    DODS_INC="-I$with_dods_root/include"
+    if test -d "$with_dods_root/include/libdap"; then
+       DODS_INC="$DODS_INC -I$with_dods_root/include/libdap";
+    elif test -d "$with_dods_root/include/dap"; then
+       DODS_INC="$DODS_INC -I$with_dods_root/include/dap";
+   fi
     DODS_BIN=$with_dods_root/bin
 
     dnl Check libdap version the sane way (if possible through dap-config)
