@@ -232,18 +232,15 @@ long CADHandle::getAsLong() const
 
 long CADHandle::getAsLong(const std::vector<unsigned char>& handle)
 {
-    long result = 0;
+    unsigned long result = 0;
     if( handle.empty() )
         return result;
     size_t copySize = handle.size();
     if( copySize > sizeof(long) )
         copySize = sizeof(long);
-    memcpy( &result, handle.data(), copySize );
-    // NOTE: Second argument below was previously handle.size(). This was
-    // clearly wrong (consider the case where handle.size() > sizeof(long))
-    // but I don't know what the correct value should be
-    SwapEndianness( result, copySize );
-    return result;
+    for( size_t i = 0; i < copySize; ++i )
+        result = result * 256U + handle[i];
+    return static_cast<long>(result);
 }
 
 bool CADHandle::isNull() const
