@@ -27,10 +27,6 @@ rm autotest/ogr/ogr_sxf.py
 (cd autotest/ogr && pytest ogr_virtualogr.py) || echo "ogr_virtualogr.py failed"
 rm autotest/ogr/ogr_virtualogr.py
 
-# Error on test_nwt_grd_2
-(cd autotest/gdrivers && pytest nwt_grd.py) || echo "nwt_grd.py failed"
-rm autotest/gdrivers/nwt_grd.py
-
 # Run the 2 following before removing netcdf.py, as they depend on it
 (cd autotest/gdrivers && pytest netcdf_multidim.py) || echo "netcdf_multidim.py failed"
 rm autotest/gdrivers/netcdf_multidim.py
