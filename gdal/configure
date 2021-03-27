@@ -20870,6 +20870,27 @@ done
 ENABLE_UFFD=$ENABLE_UFFD
 
 
+case "${host_os}" in
+    linux*)
+        for ac_header in linux/fs.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "linux/fs.h" "ac_cv_header_linux_fs_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_fs_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LINUX_FS_H 1
+_ACEOF
+
+else
+  as_fn_error $? "Unable to find linux/fs.h header" "$LINENO" 5
+fi
+
+done
+
+        ;;
+    *)
+        ;;
+esac
+
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
 $as_echo_n "checking whether byte ordering is bigendian... " >&6; }
 if ${ac_cv_c_bigendian+:} false; then :
