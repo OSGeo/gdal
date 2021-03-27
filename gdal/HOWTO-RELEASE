@@ -48,8 +48,10 @@ Process :
 
 3) Update the VERSION file.
 
-3.1) Update ./swig/python/setup.py version information.
-     And the version of libgdal in ./swig/python/README.rst
+3.1) Update the version information in the following files:
+     - ./swig/python/setup.py (gdal python package)
+     - ./swig/python/gdal-utils/setup.py (gdal-utils python package)
+     - ./swig/python/README.rst (libgdal)
 
 3.2) Update ./swig/include/perl/gdal_perl.i $VERSION and $GDAL_VERSION
 strings to current version. Update also $VERSION in

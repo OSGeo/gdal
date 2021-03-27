@@ -35,7 +35,7 @@ from collections import OrderedDict
 import tempfile
 from typing import Sequence, Union
 
-from osgeo.utils.auxiliary import base
+from osgeo_utils.auxiliary import base
 
 PathOrStrings = Union[base.PathLike, Sequence[str]]
 ColorPaletteOrPathOrStrings = Union['ColorPalette', PathOrStrings]

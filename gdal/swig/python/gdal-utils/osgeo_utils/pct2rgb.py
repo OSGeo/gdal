@@ -35,9 +35,9 @@ import sys
 import numpy as np
 
 from osgeo import gdal
-from osgeo.utils.auxiliary.util import GetOutputDriverFor, open_ds
-from osgeo.utils.auxiliary.color_palette import get_color_palette
-from osgeo.utils.auxiliary.color_table import get_color_table
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
+from osgeo_utils.auxiliary.color_palette import get_color_palette
+from osgeo_utils.auxiliary.color_table import get_color_table
 
 progress = gdal.TermProgress_nocb
 
