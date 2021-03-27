@@ -19,10 +19,6 @@ rm autotest/ogr/ogr_ogdi.py
 (cd autotest/ogr && pytest ogr_cad.py) || echo "ogr_cad.py failed"
 rm autotest/ogr/ogr_cad.py
 
-# Issue with test_ogr_sxf_2
-(cd autotest/ogr && pytest ogr_sxf.py) || echo "ogr_sxf.py failed"
-rm autotest/ogr/ogr_sxf.py
-
 # OSError: /var/snap/lxd/common/lxd/storage-pools/instances/containers/travis-job-rouault-gdal-685450999/rootfs/usr/lib/s390x-linux-gnu/libsqlite3.so.0.8.6: cannot open shared object file: No such file or directory
 (cd autotest/ogr && pytest ogr_virtualogr.py) || echo "ogr_virtualogr.py failed"
 rm autotest/ogr/ogr_virtualogr.py
