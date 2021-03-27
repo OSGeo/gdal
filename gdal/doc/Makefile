@@ -22,7 +22,7 @@ help:
 
 .doxygen_up_to_date:
 	mkdir -p build/xml && cd .. && ((cat Doxyfile | sed "s/PREDEFINED             = /PREDEFINED             = DOXYGEN_XML /"; printf "GENERATE_HTML=NO\nGENERATE_XML=YES\nXML_OUTPUT=doc/build/xml\nXML_PROGRAMLISTING=NO") | doxygen -)
-	mkdir -p build/doxygen_html && cd .. && ((cat Doxyfile; printf "HTML_OUTPUT=doc/build/doxygen_html") | doxygen -)
+	mkdir -p build/doxygen_html && cd .. && ((cat Doxyfile; printf "HTML_OUTPUT=doc/build/doxygen_html\nINLINE_INHERITED_MEMB=YES") | doxygen -)
 	touch .doxygen_up_to_date
 
 generated_rst_files: .doxygen_up_to_date
