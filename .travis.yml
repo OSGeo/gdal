@@ -110,6 +110,25 @@ matrix:
         - BUILD_NAME=s390x
         - DETAILS=""
 
+    - os: linux
+      arch: arm64-graviton2
+      virt: lxd
+      group: edge
+      compiler: gcc
+      language: cpp
+      sudo: false
+      dist: bionic
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      apt:
+        packages:
+          - ccache
+      env:
+        - BUILD_NAME=graviton2
+        - DETAILS=""
+
 #    - os: linux
 #      compiler: gcc
 #      language: cpp
@@ -172,7 +191,7 @@ script:
 notifications:
   irc:
     channels:
-       - "irc.freenode.org#gdal-activity"    
+       - "irc.freenode.org#gdal-activity"
       #- "irc.freenode.org#gdal"
     use_notice: true
     on_success: change

@@ -41,7 +41,7 @@ ErrCode Lerc::ComputeCompressedSize(const void* pData, int version, DataType dt,
 {
   switch (dt)
   {
-  case DT_Char:    return ComputeCompressedSizeTempl((const char*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
+  case DT_Char:    return ComputeCompressedSizeTempl((const signed char*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
   case DT_Byte:    return ComputeCompressedSizeTempl((const Byte*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
   case DT_Short:   return ComputeCompressedSizeTempl((const short*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
   case DT_UShort:  return ComputeCompressedSizeTempl((const unsigned short*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, numBytesNeeded);
@@ -62,7 +62,7 @@ ErrCode Lerc::Encode(const void* pData, int version, DataType dt, int nDim, int 
 {
   switch (dt)
   {
-  case DT_Char:    return EncodeTempl((const char*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
+  case DT_Char:    return EncodeTempl((const signed char*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
   case DT_Byte:    return EncodeTempl((const Byte*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
   case DT_Short:   return EncodeTempl((const short*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
   case DT_UShort:  return EncodeTempl((const unsigned short*)pData, version, nDim, nCols, nRows, nBands, pBitMask, maxZErr, pBuffer, numBytesBuffer, numBytesWritten);
@@ -217,7 +217,7 @@ ErrCode Lerc::Decode(const Byte* pLercBlob, unsigned int numBytesBlob, BitMask* 
 {
   switch (dt)
   {
-  case DT_Char:    return DecodeTempl((char*)pData, pLercBlob, numBytesBlob, nDim, nCols, nRows, nBands, pBitMask);
+  case DT_Char:    return DecodeTempl((signed char*)pData, pLercBlob, numBytesBlob, nDim, nCols, nRows, nBands, pBitMask);
   case DT_Byte:    return DecodeTempl((Byte*)pData, pLercBlob, numBytesBlob, nDim, nCols, nRows, nBands, pBitMask);
   case DT_Short:   return DecodeTempl((short*)pData, pLercBlob, numBytesBlob, nDim, nCols, nRows, nBands, pBitMask);
   case DT_UShort:  return DecodeTempl((unsigned short*)pData, pLercBlob, numBytesBlob, nDim, nCols, nRows, nBands, pBitMask);
@@ -237,7 +237,7 @@ ErrCode Lerc::ConvertToDouble(const void* pDataIn, DataType dt, size_t nDataValu
 {
   switch (dt)
   {
-  case DT_Char:    return ConvertToDoubleTempl((const char*)pDataIn, nDataValues, pDataOut);
+  case DT_Char:    return ConvertToDoubleTempl((const signed char*)pDataIn, nDataValues, pDataOut);
   case DT_Byte:    return ConvertToDoubleTempl((const Byte*)pDataIn, nDataValues, pDataOut);
   case DT_Short:   return ConvertToDoubleTempl((const short*)pDataIn, nDataValues, pDataOut);
   case DT_UShort:  return ConvertToDoubleTempl((const unsigned short*)pDataIn, nDataValues, pDataOut);
@@ -478,7 +478,7 @@ template<class T> ErrCode Lerc::CheckForNaN(const T* arr, int nDim, int nCols, i
 {
   if (!arr || nDim <= 0 || nCols <= 0 || nRows <= 0)
     return ErrCode::WrongParam;
- 
+
 #ifdef CHECK_FOR_NAN
 
   if (typeid(T) == typeid(double) || typeid(T) == typeid(float))
