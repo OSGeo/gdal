@@ -289,6 +289,16 @@ dnl Check for userfaultfd support
 AC_CHECK_HEADERS([linux/userfaultfd.h], [ENABLE_UFFD="yes"], [ENABLE_UFFD="no"], [])
 AC_SUBST(ENABLE_UFFD,$ENABLE_UFFD)
 
+dnl cpl_vsil_unix_stdio_64.h requires linux/fs.h on Linux, and this isn't
+dnl installed by default on Alpine
+case "${host_os}" in
+    linux*)
+        AC_CHECK_HEADERS([linux/fs.h], [], [AC_MSG_ERROR([Unable to find linux/fs.h header])])
+        ;;
+    *)
+        ;;
+esac
+
 AC_C_BIGENDIAN
 
 dnl Check for 64 bit file API
