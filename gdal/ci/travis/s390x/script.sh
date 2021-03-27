@@ -15,10 +15,6 @@ sudo pip3 install -U -r "$PWD/autotest/requirements.txt"
 # Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
 rm autotest/ogr/ogr_ogdi.py
 
-# CAD not ready for big endian
-(cd autotest/ogr && pytest ogr_cad.py) || echo "ogr_cad.py failed"
-rm autotest/ogr/ogr_cad.py
-
 # OSError: /var/snap/lxd/common/lxd/storage-pools/instances/containers/travis-job-rouault-gdal-685450999/rootfs/usr/lib/s390x-linux-gnu/libsqlite3.so.0.8.6: cannot open shared object file: No such file or directory
 (cd autotest/ogr && pytest ogr_virtualogr.py) || echo "ogr_virtualogr.py failed"
 rm autotest/ogr/ogr_virtualogr.py

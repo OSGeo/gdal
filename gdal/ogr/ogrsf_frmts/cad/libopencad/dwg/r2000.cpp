@@ -76,7 +76,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 {
     char bufferPre[255];
     unsigned dHeaderVarsSectionLength = 0;
-    const size_t dSizeOfSectionSize = 4;
+    constexpr size_t dSizeOfSectionSize = sizeof(dHeaderVarsSectionLength);
 
     pFileIO->Seek( sectionLocatorRecords[0].dSeeker, CADFileIO::SeekOrigin::BEG );
     size_t readSize = pFileIO->Read( bufferPre, DWGConstants::SentinelLength );
@@ -99,8 +99,10 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 #endif
 
     readSize = pFileIO->Read( &dHeaderVarsSectionLength, dSizeOfSectionSize );
-        DebugMsg( "Header variables section length: %d\n",
-                  static_cast<int>(dHeaderVarsSectionLength) );
+    const auto dHeaderVarsSectionLengthOriginal = dHeaderVarsSectionLength;
+    FromLSB(dHeaderVarsSectionLength);
+    DebugMsg( "Header variables section length: %d\n",
+              static_cast<int>(dHeaderVarsSectionLength) );
     if(readSize != dSizeOfSectionSize || dHeaderVarsSectionLength > 65536) //NOTE: maybe header section may be bigger
     {
         DebugMsg( "File is corrupted (HEADER_VARS section length too big)" );
@@ -108,7 +110,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     }
 
     CADBuffer buffer(dHeaderVarsSectionLength + dSizeOfSectionSize + 10);
-    buffer.WriteRAW(&dHeaderVarsSectionLength, dSizeOfSectionSize);
+    buffer.WriteRAW(&dHeaderVarsSectionLengthOriginal, dSizeOfSectionSize);
     readSize = pFileIO->Read(buffer.GetRawBuffer(), dHeaderVarsSectionLength + 2 );
     if(readSize != dHeaderVarsSectionLength + 2)
     {
@@ -684,8 +686,8 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
     if( eOptions == OpenOptions::READ_ALL || eOptions == OpenOptions::READ_FAST )
     {
         char   bufferPre[255];
-        size_t dSectionSize = 0;
-        const size_t dSizeOfSectionSize = 4;
+        unsigned dSectionSize = 0;
+        constexpr size_t dSizeOfSectionSize = sizeof(dSectionSize);
 
         pFileIO->Seek( sectionLocatorRecords[1].dSeeker, CADFileIO::SeekOrigin::BEG );
 
@@ -702,6 +704,8 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
 #endif
 
         pFileIO->Read( &dSectionSize, dSizeOfSectionSize );
+        const auto dSectionSizeOriginal = dSectionSize;
+        FromLSB(dSectionSize);
         DebugMsg("Classes section length: %d\n",
                   static_cast<int>(dSectionSize) );
         if(dSectionSize > 65535) {
@@ -712,7 +716,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         }
 
         CADBuffer buffer(dSectionSize + dSizeOfSectionSize + 10);
-        buffer.WriteRAW(&dSectionSize, dSizeOfSectionSize);
+        buffer.WriteRAW(&dSectionSizeOriginal, dSizeOfSectionSize);
         size_t readSize = pFileIO->Read( buffer.GetRawBuffer(), dSectionSize + 2 );
         if(readSize != dSectionSize + 2)
         {
@@ -722,7 +726,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
 
-        size_t dSectionBitSize = (dSectionSize + dSizeOfSectionSize) * 8;
+        const size_t dSectionBitSize = (dSectionSize + dSizeOfSectionSize) * 8;
         while( buffer.PositionBit() < dSectionBitSize - 8)
         {
             CADClass stClass;
@@ -768,7 +772,6 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
 int DWGFileR2000::CreateFileMap()
 {
     size_t nSection = 0;
-    const size_t dSizeOfSectionSize = 2;
 
     typedef pair<long, long> ObjHandleOffset;
     ObjHandleOffset          previousObjHandleOffset;
@@ -782,12 +785,15 @@ int DWGFileR2000::CreateFileMap()
     while( true )
     {
         unsigned short dSectionSize = 0;
+        constexpr size_t dSizeOfSectionSize = sizeof(dSectionSize);
 
         // Read section size
 
         pFileIO->Read( &dSectionSize, dSizeOfSectionSize );
-        unsigned short dSectionSizeOriginal = dSectionSize;
+        const unsigned short dSectionSizeOriginal = dSectionSize;
+#if !defined(CAD_MSB)
         SwapEndianness( dSectionSize, sizeof( dSectionSize ) );
+#endif
 
         DebugMsg( "Object map section #%d size: %d\n",
                   static_cast<int>(++nSection), dSectionSize );
@@ -3811,17 +3817,20 @@ int DWGFileR2000::ReadSectionLocators()
     oHeader.addValue( CADHeader::ACADMAINTVER, abyBuf );
     // TODO: code can be much simplified if CADHandle will be used.
     pFileIO->Read( & dImageSeeker, 4 );
+    FromLSB(dImageSeeker);
     // to do so, == and ++ operators should be implemented.
     DebugMsg( "Image seeker read: %d\n", dImageSeeker );
     imageSeeker = dImageSeeker;
 
     pFileIO->Seek( 2, CADFileIO::SeekOrigin::CUR ); // 19
     pFileIO->Read( & dCodePage, 2 );
+    FromLSB(dCodePage);
     oHeader.addValue( CADHeader::DWGCODEPAGE, dCodePage );
 
     DebugMsg( "DWG Code page: %d\n", dCodePage );
 
     pFileIO->Read( & SLRecordsCount, 4 ); // 21
+    FromLSB(SLRecordsCount);
     // Last vertex is reached. read it and break reading.
     DebugMsg( "Section locator records count: %d\n", SLRecordsCount );
 
@@ -3834,6 +3843,8 @@ int DWGFileR2000::ReadSectionLocators()
         {
             return CADErrorCodes::HEADER_SECTION_READ_FAILED;
         }
+        FromLSB(readRecord.dSeeker);
+        FromLSB(readRecord.dSize);
 
         sectionLocatorRecords.push_back( readRecord );
         DebugMsg( "  Record #%d : %d %d\n", sectionLocatorRecords[i].byRecordNumber, sectionLocatorRecords[i].dSeeker,
