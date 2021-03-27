@@ -1093,13 +1093,13 @@ int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    GDALDataset* poDS = Open( poOpenInfo, nullptr, 0 );
+    auto poDS = Open( poOpenInfo, nullptr, 0 );
     if( poDS == nullptr )
     {
         return nullptr;
     }
 
-    RMFDataset* poCurrentLayer = dynamic_cast<RMFDataset*>( poDS );
+    RMFDataset* poCurrentLayer = poDS;
     RMFDataset* poParent = poCurrentLayer;
     const int   nMaxPossibleOvCount = 64;
 
@@ -1114,7 +1114,7 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
+RMFDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
                               RMFDataset* poParentDS,
                               vsi_l_offset nNextHeaderOffset )
 {

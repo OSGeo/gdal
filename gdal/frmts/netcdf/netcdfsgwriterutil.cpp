@@ -33,16 +33,14 @@ namespace nccfdriver
     SGeometry_Feature::SGeometry_Feature(OGRFeature& ft)
     {
         this->hasInteriorRing = false;
-        OGRGeometry * defnGeometry = ft.GetGeometryRef();
+        const OGRGeometry * geom = ft.GetGeometryRef();
 
-        if (defnGeometry == nullptr)
+        if (geom == nullptr)
         {
             throw SGWriter_Exception_EmptyGeometry();
         }
 
-        OGRGeometry& r_defnGeometry = *defnGeometry;
-
-        OGRwkbGeometryType ogwkt = defnGeometry->getGeometryType();
+        OGRwkbGeometryType ogwkt = geom->getGeometryType();
         this->type = OGRtoRaw(ogwkt);
 
         if (this->type == POINT)
@@ -59,10 +57,10 @@ namespace nccfdriver
 
         else if (this->type == MULTIPOINT)
         {
-            OGRMultiPoint& r_defnGeometryMP = dynamic_cast<OGRMultiPoint&>(r_defnGeometry);
+            const auto mp = geom->toMultiPoint();
 
             // Set total node count
-            this->total_point_count = r_defnGeometryMP.getNumGeometries();
+            this->total_point_count = mp->getNumGeometries();
 
             // The amount of nodes is also the amount of parts
             for(size_t pc = 0; pc < total_point_count; pc++)
@@ -77,14 +75,14 @@ namespace nccfdriver
 
         else if (this->type == LINE)
         {
-            OGRLineString& r_defnGeometryLine = dynamic_cast<OGRLineString&>(r_defnGeometry);
+            const auto line = geom->toLineString();
             // to do: check for std::bad_cast somewhere?
 
             // Get node count
-            this->total_point_count = r_defnGeometryLine.getNumPoints();
+            this->total_point_count = line->getNumPoints();
 
             // Single line: 1 part count == node count
-            this->ppart_node_count.push_back(r_defnGeometryLine.getNumPoints());
+            this->ppart_node_count.push_back(line->getNumPoints());
 
             // One part
             this->total_part_count = 1;
@@ -92,16 +90,16 @@ namespace nccfdriver
 
         else if(this->type == MULTILINE)
         {
-            OGRMultiLineString& r_defnMLS = dynamic_cast<OGRMultiLineString&>(r_defnGeometry);
+            const auto mls = geom->toMultiLineString();
             this->total_point_count = 0;
-            this->total_part_count = r_defnMLS.getNumGeometries();
+            this->total_part_count = mls->getNumGeometries();
 
             // Take each geometry, just add up the corresponding parts
 
-            for(int itrLScount = 0; itrLScount < r_defnMLS.getNumGeometries(); itrLScount++)
+            for(int itrLScount = 0; itrLScount < mls->getNumGeometries(); itrLScount++)
             {
-                OGRLineString & r_LS = dynamic_cast<OGRLineString&>(*r_defnMLS.getGeometryRef(itrLScount));
-                int pt_count = r_LS.getNumPoints();
+                const auto ls = mls->getGeometryRef(itrLScount)->toLineString();
+                int pt_count = ls->getNumPoints();
 
                 this->ppart_node_count.push_back(pt_count);
                 this->total_point_count += pt_count;
@@ -110,22 +108,20 @@ namespace nccfdriver
 
         else if(this->type == POLYGON)
         {
-            OGRPolygon& r_defnPolygon = dynamic_cast<OGRPolygon&>(r_defnGeometry);
+            const auto poly = geom->toPolygon();
 
             this->total_point_count = 0;
             this->total_part_count = 0;
 
             // Get node count
             // First count exterior ring
-            if(r_defnPolygon.getExteriorRing() == nullptr)
+            const auto exterior_ring = poly->getExteriorRing();
+            if(exterior_ring == nullptr)
             {
                 throw SGWriter_Exception_EmptyGeometry();
             }
 
-
-            OGRLinearRing & exterior_ring = *r_defnPolygon.getExteriorRing();
-
-            size_t outer_ring_ct = exterior_ring.getNumPoints();
+            size_t outer_ring_ct = exterior_ring->getNumPoints();
 
             this->total_point_count += outer_ring_ct;
             this->ppart_node_count.push_back(outer_ring_ct);
@@ -136,40 +132,38 @@ namespace nccfdriver
             // Get per part node count (per part RING count)
             // Get part count (in this case it's the amount of RINGS)
 
-            for(int iRingCt = 0; iRingCt < r_defnPolygon.getNumInteriorRings(); iRingCt++)
+            for(int iRingCt = 0; iRingCt < poly->getNumInteriorRings(); iRingCt++)
             {
                 this->hasInteriorRing = true;
-                if(r_defnPolygon.getInteriorRing(iRingCt) == nullptr)
+                const auto iring = poly->getInteriorRing(iRingCt);
+                if(iring == nullptr)
                 {
                     throw SGWriter_Exception_RingOOB();
                 }
 
-                OGRLinearRing & iring = *r_defnPolygon.getInteriorRing(iRingCt);
-                this->total_point_count += iring.getNumPoints();
-                this->ppart_node_count.push_back(iring.getNumPoints());
+                this->total_point_count += iring->getNumPoints();
+                this->ppart_node_count.push_back(iring->getNumPoints());
                 this->total_part_count++;
             }
         }
 
         else if(this->type == MULTIPOLYGON)
         {
-            OGRMultiPolygon& r_defnMPolygon = dynamic_cast<OGRMultiPolygon&>(r_defnGeometry);
+            const auto poMP = geom->toMultiPolygon();
 
             this->total_point_count = 0;
             this->total_part_count = 0;
 
-            for(int itr = 0; itr < r_defnMPolygon.getNumGeometries(); itr++)
+            for(int itr = 0; itr < poMP->getNumGeometries(); itr++)
             {
-                OGRPolygon & r_Pgon = dynamic_cast<OGRPolygon&>(*r_defnMPolygon.getGeometryRef(itr));
-
-                if(r_Pgon.getExteriorRing() == nullptr)
+                const auto poly = poMP->getGeometryRef(itr)->toPolygon();
+                const auto exterior_ring = poly->getExteriorRing();
+                if(exterior_ring == nullptr)
                 {
                     throw SGWriter_Exception_EmptyGeometry();
                 }
 
-                OGRLinearRing & exterior_ring = *r_Pgon.getExteriorRing();
-
-                size_t outer_ring_ct = exterior_ring.getNumPoints();
+                size_t outer_ring_ct = exterior_ring->getNumPoints();
 
                 this->total_point_count += outer_ring_ct;
                 this->ppart_node_count.push_back(outer_ring_ct);
@@ -181,17 +175,17 @@ namespace nccfdriver
                 // Get per part node count (per part RING count)
                 // Get part count (in this case it's the amount of RINGS)
 
-                for(int iRingCt = 0; iRingCt < r_Pgon.getNumInteriorRings(); iRingCt++)
+                for(int iRingCt = 0; iRingCt < poly->getNumInteriorRings(); iRingCt++)
                 {
-                    if(r_Pgon.getInteriorRing(iRingCt) == nullptr)
+                    const auto iring = poly->getInteriorRing(iRingCt);
+                    if(iring == nullptr)
                     {
                         throw SGWriter_Exception_RingOOB();
                     }
 
-                    OGRLinearRing & iring = *r_Pgon.getInteriorRing(iRingCt);
                     this->hasInteriorRing = true;
-                    this->total_point_count += iring.getNumPoints();
-                    this->ppart_node_count.push_back(iring.getNumPoints());
+                    this->total_point_count += iring->getNumPoints();
+                    this->ppart_node_count.push_back(iring->getNumPoints());
                     this->total_part_count++;
                     this->part_at_ind_interior.push_back(true);
                 }
@@ -205,7 +199,7 @@ namespace nccfdriver
             throw SG_Exception_BadFeature();
         }
 
-        this->geometry_ref = ft.GetGeometryRef();
+        this->geometry_ref = geom;
     }
 
     inline void WBuffer::addCount(unsigned long long memuse)
@@ -329,48 +323,43 @@ namespace nccfdriver
     {
     }
 
-    OGRPoint& SGeometry_Feature::getPoint(size_t part_no, int point_index)
+    const OGRPoint& SGeometry_Feature::getPoint(size_t part_no, int point_index) const
     {
         if (this->type == POINT)
         {
             // Point case: always return the single point regardless of any thing
 
-            OGRPoint* as_p_ref = dynamic_cast<OGRPoint*>(this->geometry_ref);
-            CPLAssert(as_p_ref);
-            return  *as_p_ref;
+            const OGRPoint* as_p_ref = geometry_ref->toPoint();
+            return *as_p_ref;
         }
 
         if (this->type == MULTIPOINT)
         {
-            OGRMultiPoint* as_mp_ref = dynamic_cast<OGRMultiPoint*>(this->geometry_ref);
-            CPLAssert(as_mp_ref);
+            const OGRMultiPoint* as_mp_ref = geometry_ref->toMultiPoint();
             int part_ind = static_cast<int>(part_no);
-            OGRPoint * pt = dynamic_cast<OGRPoint*>(as_mp_ref->getGeometryRef(part_ind));
-            CPLAssert(pt);
+            const OGRPoint * pt = as_mp_ref->getGeometryRef(part_ind)->toPoint();
             return *pt;
         }
 
         if (this->type == LINE)
         {
-            OGRLineString* as_line_ref = dynamic_cast<OGRLineString*>(this->geometry_ref);
-            CPLAssert(as_line_ref);
+            const OGRLineString* as_line_ref = geometry_ref->toLineString();
             as_line_ref->getPoint(point_index, &pt_buffer);
         }
 
         if (this->type == MULTILINE)
         {
-            OGRMultiLineString* as_mline_ref = dynamic_cast<OGRMultiLineString*>(this->geometry_ref);
+            const OGRMultiLineString* as_mline_ref = geometry_ref->toMultiLineString();
             CPLAssert(as_mline_ref);
             int part_ind = static_cast<int>(part_no);
-            OGRLineString* lstring = dynamic_cast<OGRLineString*>(as_mline_ref->getGeometryRef(part_ind));
+            const OGRLineString* lstring = as_mline_ref->getGeometryRef(part_ind)->toLineString();
             CPLAssert(lstring);
             lstring->getPoint(point_index, &pt_buffer);
         }
 
         if (this->type == POLYGON)
         {
-            OGRPolygon* as_polygon_ref = dynamic_cast<OGRPolygon*>(this->geometry_ref);
-            CPLAssert(as_polygon_ref);
+            const OGRPolygon* as_polygon_ref = geometry_ref->toPolygon();
             int ring_ind = static_cast<int>(part_no);
 
             if(part_no == 0)
@@ -386,9 +375,7 @@ namespace nccfdriver
 
         if (this->type == MULTIPOLYGON)
         {
-            OGRMultiPolygon* as_mpolygon_ref = dynamic_cast<OGRMultiPolygon*>(this->geometry_ref);
-            CPLAssert(as_mpolygon_ref);
-
+            const OGRMultiPolygon* as_mpolygon_ref = geometry_ref->toMultiPolygon();
             int polygon_num = 0;
             int ring_number = 0;
             int pno_itr = static_cast<int>(part_no);
@@ -396,8 +383,7 @@ namespace nccfdriver
             // Find the right polygon, and the right ring number
             for(int pind = 0; pind < as_mpolygon_ref->getNumGeometries(); pind++)
             {
-                OGRPolygon * itr_poly = dynamic_cast<OGRPolygon*>(as_mpolygon_ref->getGeometryRef(pind));
-                CPLAssert(itr_poly);
+                const OGRPolygon * itr_poly = as_mpolygon_ref->getGeometryRef(pind)->toPolygon();
                 if(pno_itr < (itr_poly->getNumInteriorRings() + 1)) // + 1 is counting the EXTERIOR ring
                 {
                     ring_number = static_cast<int>(pno_itr);
@@ -411,8 +397,7 @@ namespace nccfdriver
                 }
             }
 
-            OGRPolygon* key_polygon = dynamic_cast<OGRPolygon*>(as_mpolygon_ref->getGeometryRef(polygon_num));
-            CPLAssert(key_polygon);
+            const OGRPolygon* key_polygon = as_mpolygon_ref->getGeometryRef(polygon_num)->toPolygon();
 
             if(ring_number == 0)
             {
@@ -478,7 +463,7 @@ namespace nccfdriver
             for(size_t pt_ind = 0; pt_ind < ft.getPerPartNodeCount()[part_no]; pt_ind++)
             {
                 int pt_ind_int = static_cast<int>(pt_ind);
-                OGRPoint& write_pt = ft.getPoint(part_no, pt_ind_int);
+                const OGRPoint& write_pt = ft.getPoint(part_no, pt_ind_int);
 
                 // Write each node coordinate
                 double x = write_pt.getX();
@@ -626,7 +611,6 @@ namespace nccfdriver
                     size_t numEntries = this->varMaxInds.at(wvid);
                     nc_type ncw = t->getType();
                     size_t curWrInd = this->varWriteInds.at(wvid);
-                    OGR_SGFS_Transaction& t_ref = *t;
 
                     // If entry doesn't exist in map, then add it
                     switch (ncw)
@@ -634,72 +618,72 @@ namespace nccfdriver
                         case NC_BYTE:
                         {
                             NCWMapAllocIfNeeded<signed char>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_Byte_Transaction& byte_trn = dynamic_cast<OGR_SGFS_NC_Byte_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<signed char>(wvid, writerMap, curWrInd, numEntries, byte_trn.getData(), this->ncvd);
+                            auto byte_trn = cpl::down_cast<OGR_SGFS_NC_Byte_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<signed char>(wvid, writerMap, curWrInd, numEntries, byte_trn->getData(), this->ncvd);
                             break;
                         }
                         case NC_SHORT:
                         {
                             NCWMapAllocIfNeeded<short>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_Short_Transaction& short_trn = dynamic_cast<OGR_SGFS_NC_Short_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<short>(wvid, writerMap, curWrInd, numEntries, short_trn.getData(), this->ncvd);
+                            auto short_trn = cpl::down_cast<OGR_SGFS_NC_Short_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<short>(wvid, writerMap, curWrInd, numEntries, short_trn->getData(), this->ncvd);
                             break;
                         }
                         case NC_INT:
                         {
                             NCWMapAllocIfNeeded<int>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_Int_Transaction& int_trn = dynamic_cast<OGR_SGFS_NC_Int_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<int>(wvid, writerMap, curWrInd, numEntries, int_trn.getData(), this->ncvd);
+                            auto int_trn = cpl::down_cast<OGR_SGFS_NC_Int_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<int>(wvid, writerMap, curWrInd, numEntries, int_trn->getData(), this->ncvd);
                             break;
                         }
                         case NC_FLOAT:
                         {
                             NCWMapAllocIfNeeded<float>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_Float_Transaction& float_trn = dynamic_cast<OGR_SGFS_NC_Float_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<float>(wvid, writerMap, curWrInd, numEntries, float_trn.getData(), this->ncvd);
+                            auto float_trn = cpl::down_cast<OGR_SGFS_NC_Float_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<float>(wvid, writerMap, curWrInd, numEntries, float_trn->getData(), this->ncvd);
                             break;
                         }
                         case NC_DOUBLE:
                         {
                             NCWMapAllocIfNeeded<double>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_Double_Transaction& double_trn = dynamic_cast<OGR_SGFS_NC_Double_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<double>(wvid, writerMap, curWrInd, numEntries, double_trn.getData(), this->ncvd);
+                            auto double_trn = cpl::down_cast<OGR_SGFS_NC_Double_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<double>(wvid, writerMap, curWrInd, numEntries, double_trn->getData(), this->ncvd);
                             break;
                         }
 #ifdef NETCDF_HAS_NC4
                         case NC_UINT:
                         {
                             NCWMapAllocIfNeeded<unsigned>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_UInt_Transaction& uint_trn = dynamic_cast<OGR_SGFS_NC_UInt_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<unsigned>(wvid, writerMap, curWrInd, numEntries, uint_trn.getData(), this->ncvd);
+                            auto uint_trn = cpl::down_cast<OGR_SGFS_NC_UInt_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<unsigned>(wvid, writerMap, curWrInd, numEntries, uint_trn->getData(), this->ncvd);
                             break;
                         }
                         case NC_UINT64:
                         {
                             NCWMapAllocIfNeeded<unsigned long long>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_UInt64_Transaction& uint64_trn = dynamic_cast<OGR_SGFS_NC_UInt64_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<unsigned long long>(wvid, writerMap, curWrInd, numEntries, uint64_trn.getData(), this->ncvd);
+                            auto uint64_trn = cpl::down_cast<OGR_SGFS_NC_UInt64_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<unsigned long long>(wvid, writerMap, curWrInd, numEntries, uint64_trn->getData(), this->ncvd);
                             break;
                         }
                         case NC_INT64:
                         {
                             NCWMapAllocIfNeeded<long long>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_Int64_Transaction& int64_trn = dynamic_cast<OGR_SGFS_NC_Int64_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<long long>(wvid, writerMap, curWrInd, numEntries, int64_trn.getData(), this->ncvd);
+                            auto int64_trn = cpl::down_cast<OGR_SGFS_NC_Int64_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<long long>(wvid, writerMap, curWrInd, numEntries, int64_trn->getData(), this->ncvd);
                             break;
                         }
                         case NC_UBYTE:
                         {
                             NCWMapAllocIfNeeded<unsigned char>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_UByte_Transaction& ubyte_trn = dynamic_cast<OGR_SGFS_NC_UByte_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<unsigned char>(wvid, writerMap, curWrInd, numEntries, ubyte_trn.getData(), this->ncvd);
+                            auto ubyte_trn = cpl::down_cast<OGR_SGFS_NC_UByte_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<unsigned char>(wvid, writerMap, curWrInd, numEntries, ubyte_trn->getData(), this->ncvd);
                             break;
                         }
                         case NC_USHORT:
                         {
                             NCWMapAllocIfNeeded<unsigned short>(wvid, writerMap, numEntries, varV);
-                            OGR_SGFS_NC_UShort_Transaction& ushort_trn = dynamic_cast<OGR_SGFS_NC_UShort_Transaction&>(t_ref);
-                            NCWMapWriteAndCommit<unsigned short>(wvid, writerMap, curWrInd, numEntries, ushort_trn.getData(), this->ncvd);
+                            auto ushort_trn = cpl::down_cast<OGR_SGFS_NC_UShort_Transaction*>(t.get());
+                            NCWMapWriteAndCommit<unsigned short>(wvid, writerMap, curWrInd, numEntries, ushort_trn->getData(), this->ncvd);
                             break;
                         }
 #endif
@@ -749,7 +733,7 @@ namespace nccfdriver
         {
             OGR_SGFS_Transaction * value = this->transactionQueue.front().release(); // due to delete copy A.K.A uniqueness of unique_ptr
             this->transactionQueue.pop();
-            
+
             return MTPtr(value);
         }
         else

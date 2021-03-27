@@ -147,18 +147,14 @@ def test_vrtmask_3():
 
 
 def test_vrtmask_4():
-    import test_cli_utilities
-    if test_cli_utilities.get_gdalbuildvrt_path() is None:
-        pytest.skip()
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
     md = gtiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/vrtmask_4.vrt ../gcore/data/ycbcr_with_mask.tif')
-
     src_ds = gdal.Open('../gcore/data/ycbcr_with_mask.tif')
+    gdal.BuildVRT('tmp/vrtmask_4.vrt', [src_ds])
     expected_msk_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
     src_ds = None
 
@@ -259,7 +255,7 @@ def test_vrtmask_7():
     with pytest.raises(OSError):
         os.remove('tmp/vrtmask_7_rgba.tif.msk')
         pytest.fail('did not expect tmp/vrtmask_7_rgba.tif.msk')
-    
+
     os.remove('tmp/vrtmask_7_rgbmask.vrt')
 
     assert alpha_cs == expected_msk_cs, 'did not get expected alpha band checksum'

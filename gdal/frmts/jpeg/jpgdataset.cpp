@@ -4105,7 +4105,7 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
         sArgs.bDoPAMInitialize = true;
         sArgs.bUseInternalOverviews = true;
 
-        JPGDataset *poDS = dynamic_cast<JPGDataset *>(Open(&sArgs));
+        auto poDS = Open(&sArgs);
         CPLPopErrorHandler();
         if( poDS )
         {

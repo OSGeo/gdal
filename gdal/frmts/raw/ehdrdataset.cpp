@@ -1674,7 +1674,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
         for( int i = 1; i <= poDS->nBands; i++ )
         {
             EHdrRasterBand *poBand =
-                    dynamic_cast<EHdrRasterBand*>(poDS->GetRasterBand(i));
+                    cpl::down_cast<EHdrRasterBand*>(poDS->GetRasterBand(i));
             poBand->m_poColorTable = poDS->m_poColorTable;
             poBand->m_poRAT = poDS->m_poRAT;
             poBand->SetColorInterpretation(GCI_PaletteIndex);

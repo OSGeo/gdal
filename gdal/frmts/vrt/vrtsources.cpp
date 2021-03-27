@@ -733,18 +733,10 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         if( bGetMaskBand )
         {
           GDALProxyPoolRasterBand *poMaskBand =
-              dynamic_cast<GDALProxyPoolRasterBand *>(
+              cpl::down_cast<GDALProxyPoolRasterBand *>(
               proxyDS->GetRasterBand(nSrcBand) );
-          if( poMaskBand == nullptr )
-          {
-              CPLError(
-                  CE_Fatal, CPLE_AssertionFailed, "dynamic_cast failed." );
-          }
-          else
-          {
-              poMaskBand->AddSrcMaskBandDescription(
-                  eDataType, nBlockXSize, nBlockYSize );
-          }
+          poMaskBand->AddSrcMaskBandDescription(
+              eDataType, nBlockXSize, nBlockYSize );
         }
     }
 

@@ -307,8 +307,7 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
         return CE_Failure;
 
-    GSBGDataset *poGDS = dynamic_cast<GSBGDataset *>(poDS);
-    assert( poGDS != nullptr );
+    GSBGDataset *poGDS = cpl::down_cast<GSBGDataset *>(poDS);
 
     if( pafRowMinZ == nullptr || pafRowMaxZ == nullptr
         || nMinZRow < 0 || nMaxZRow < 0 )
@@ -658,18 +657,7 @@ CPLErr GSBGDataset::GetGeoTransform( double *padfGeoTransform )
     if( padfGeoTransform == nullptr )
         return CE_Failure;
 
-    GSBGRasterBand *poGRB = dynamic_cast<GSBGRasterBand *>(GetRasterBand( 1 ));
-
-    if( poGRB == nullptr )
-    {
-        padfGeoTransform[0] = 0;
-        padfGeoTransform[1] = 1;
-        padfGeoTransform[2] = 0;
-        padfGeoTransform[3] = 0;
-        padfGeoTransform[4] = 0;
-        padfGeoTransform[5] = 1;
-        return CE_Failure;
-    }
+    GSBGRasterBand *poGRB = cpl::down_cast<GSBGRasterBand *>(GetRasterBand( 1 ));
 
     /* check if we have a PAM GeoTransform stored */
     CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -710,9 +698,9 @@ CPLErr GSBGDataset::SetGeoTransform( double *padfGeoTransform )
         return CE_Failure;
     }
 
-    GSBGRasterBand *poGRB = dynamic_cast<GSBGRasterBand *>(GetRasterBand( 1 ));
+    GSBGRasterBand *poGRB = cpl::down_cast<GSBGRasterBand *>(GetRasterBand( 1 ));
 
-    if( poGRB == nullptr || padfGeoTransform == nullptr)
+    if( padfGeoTransform == nullptr)
         return CE_Failure;
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
