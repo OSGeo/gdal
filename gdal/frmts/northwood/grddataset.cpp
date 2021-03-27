@@ -43,9 +43,9 @@
 
 CPL_CVSID("$Id$")
 
-#define NODATA -1.e37f
-#define SCALE16BIT 65534.0
-#define SCALE32BIT 4294967294.0
+constexpr float NODATA = -1.e37f;
+constexpr double SCALE16BIT = 65534.0;
+constexpr double SCALE32BIT = 4294967294.0;
 
 void replaceExt(std::string& s, const std::string& newExt);
 /************************************************************************/
@@ -80,6 +80,9 @@ class NWT_GRDDataset final: public GDALPamDataset {
     // Update the header data with latest changes
     int UpdateHeader();
     int WriteTab();
+
+    NWT_GRDDataset(const NWT_GRDDataset&) = delete;
+    NWT_GRDDataset& operator= (const NWT_GRDDataset&) = delete;
 
 public:
     NWT_GRDDataset();
@@ -153,11 +156,11 @@ NWT_GRDRasterBand::NWT_GRDRasterBand( NWT_GRDDataset * poDSIn, int nBandIn,
         if (poDSIn->pGrd->cFormat == 0x00) {
             eDataType = GDT_Float32;
             dfScale = (poDSIn->pGrd->fZMax - poDSIn->pGrd->fZMin)
-                    / (double) SCALE16BIT;
+                    / SCALE16BIT;
         } else {
             eDataType = GDT_Float32;
             dfScale = (poDSIn->pGrd->fZMax - poDSIn->pGrd->fZMin)
-                    / (double) SCALE32BIT;
+                    / SCALE32BIT;
         }
     }
     else
@@ -172,7 +175,7 @@ NWT_GRDRasterBand::NWT_GRDRasterBand( NWT_GRDDataset * poDSIn, int nBandIn,
 }
 
 double NWT_GRDRasterBand::GetNoDataValue(int *pbSuccess) {
-    NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>(poDS);
+    NWT_GRDDataset *poGDS = cpl::down_cast<NWT_GRDDataset *>(poDS);
     double dRetval;
     if ((nBand == 4) || (poGDS->nBands == 1)) {
         if (pbSuccess != nullptr)
@@ -180,7 +183,7 @@ double NWT_GRDRasterBand::GetNoDataValue(int *pbSuccess) {
         if (dfNoData != 0.0) {
             dRetval = dfNoData;
         } else {
-            dRetval = (double) NODATA;
+            dRetval = NODATA;
         }
 
         return dRetval;
@@ -203,7 +206,7 @@ CPLErr NWT_GRDRasterBand::SetNoDataValue(double dfNoDataIn) {
 }
 
 GDALColorInterp NWT_GRDRasterBand::GetColorInterpretation() {
-    NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>(poDS);
+    NWT_GRDDataset *poGDS = cpl::down_cast<NWT_GRDDataset *>(poDS);
     //return GCI_RGB;
     if ((nBand == 4) || (poGDS->nBands == 1))
         return GCI_GrayIndex;
@@ -225,7 +228,7 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     // Each block is an entire row of the dataset, so the x offset should always be 0
     CPLAssert(nBlockXOff == 0);
-    NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>(poDS);
+    NWT_GRDDataset *poGDS = cpl::down_cast<NWT_GRDDataset *>(poDS);
 
     if( dfScale == 0.0 )
         return CE_Failure;
@@ -243,30 +246,29 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             SEEK_SET);
 
     // Cast pImage to float
-    float *pfImage = reinterpret_cast<float *>(pImage);
+    const float *pfImage = static_cast<const float *>(pImage);
 
     // Initialize output array
-    GByte *pabyRecord = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(
+    GByte *pabyRecord = static_cast<GByte *>(VSI_MALLOC_VERBOSE(
                     nRecordSize));
     if (pabyRecord == nullptr)
-    return CE_Failure;
+        return CE_Failure;
 
     // We only ever write to band 4; RGB bands are basically 'virtual'
     // (i.e. the RGB colour is computed from the raw data).
     // For all intents and purposes, there is essentially 1 band on disk.
-    float fValue;// A single pixel value
-    unsigned short nWrite;// The stretched value to be written
     if (nBand == 1) {
         for (int i = 0; i < nBlockXSize; i++) {
-            fValue = pfImage[i];
+            const float fValue = pfImage[i];
+            unsigned short nWrite;// The stretched value to be written
 
             // We allow data to be interpreted by a user-defined null value
             // (a 'virtual' value, since it is always 0 on disk) or
             // if not defined we default to the GRD standard of -1E37.
             // We allow a little bit of flexibility in that if it is below -1E37
             // it is in all probability still intended as a null value.
-            if ((fValue == dfNoData) || (fValue <= (double)NODATA)) {
-                nWrite = (unsigned short) 0;
+            if ((fValue == dfNoData) || (fValue <= NODATA)) {
+                nWrite = 0;
             }
             else {
                 if (fValue < poGDS->pGrd->fZMin) {
@@ -278,16 +280,16 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 // Data on disk is stretched within the unsigned short range so
                 // we must convert (the inverse of what is done in IReadBlock),
                 // based on the Z value range
-                nWrite = (unsigned short) (((fValue - dfOffset) / dfScale) + 1);
+                nWrite = static_cast<unsigned short>(((fValue - dfOffset) / dfScale) + 1);
             }
+            CPL_LSBPTR16(&nWrite);
             // Copy the result to the byte array (2 bytes per value)
-            memcpy(reinterpret_cast<void *>(pabyRecord + 2 * i),
-                    reinterpret_cast<void *>(&nWrite), 2);
+            memcpy(pabyRecord + 2 * i, &nWrite, 2);
         }
 
         // Write the buffer to disk
         if (VSIFWriteL(pabyRecord, 1, nRecordSize, poGDS->fp)
-                != (size_t) (nRecordSize)) {
+                != static_cast<size_t>(nRecordSize)) {
             CPLError(CE_Failure, CPLE_FileIO,
                     "Failed to write scanline %d to file.\n", nBlockYOff);
             CPLFree(pabyRecord);
@@ -308,24 +310,23 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
         void *pImage) {
-    NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>(poDS);
+    NWT_GRDDataset *poGDS = cpl::down_cast<NWT_GRDDataset *>(poDS);
     if (nBlockXSize > INT_MAX / 2)
         return CE_Failure;
     const int nRecordSize = nBlockXSize * 2;
-    unsigned short raw1;
 
     // Seek to the data position
     VSIFSeekL(poGDS->fp,
             1024 + nRecordSize * static_cast<vsi_l_offset>(nBlockYOff),
             SEEK_SET);
 
-    GByte *pabyRecord = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(
+    GByte *pabyRecord = static_cast<GByte *>(VSI_MALLOC_VERBOSE(
                     nRecordSize));
     if (pabyRecord == nullptr)
-    return CE_Failure;
+        return CE_Failure;
 
     // Read the data
-    if ((int) VSIFReadL(pabyRecord, 1, nRecordSize, poGDS->fp) != nRecordSize) {
+    if (static_cast<int>(VSIFReadL(pabyRecord, 1, nRecordSize, poGDS->fp)) != nRecordSize) {
         CPLFree(pabyRecord);
         return CE_Failure;
     }
@@ -333,41 +334,41 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
     if ((nBand == 4) || (poGDS->nBands == 1))            //Z values
     {
         int bSuccess;
-        double dNoData = GetNoDataValue(&bSuccess);
+        const float fNoData = static_cast<float>(GetNoDataValue(&bSuccess));
         for (int i = 0; i < nBlockXSize; i++) {
-            memcpy(reinterpret_cast<void *>(&raw1),
-                    reinterpret_cast<void *>(pabyRecord + 2 * i), 2);
+            unsigned short raw1;
+            memcpy(&raw1, pabyRecord + 2 * i, 2);
             CPL_LSBPTR16(&raw1);
             if (raw1 == 0) {
-                reinterpret_cast<float *>(pImage)[i] = (float) dNoData; // null value
+                static_cast<float *>(pImage)[i] = fNoData; // null value
             } else {
-                reinterpret_cast<float *>(pImage)[i] =
-                static_cast<float>(dfOffset + ((raw1 - 1) * dfScale));
+                static_cast<float *>(pImage)[i] =
+                    static_cast<float>(dfOffset + ((raw1 - 1) * dfScale));
             }
         }
     } else if (nBand == 1)            // red values
     {
         for (int i = 0; i < nBlockXSize; i++) {
-            memcpy(reinterpret_cast<void *>(&raw1),
-                    reinterpret_cast<void *>(pabyRecord + 2 * i), 2);
+            unsigned short raw1;
+            memcpy(&raw1, pabyRecord + 2 * i, 2);
             CPL_LSBPTR16(&raw1);
-            reinterpret_cast<char *>(pImage)[i] = poGDS->ColorMap[raw1 / 16].r;
+            static_cast<unsigned char *>(pImage)[i] = poGDS->ColorMap[raw1 / 16].r;
         }
     } else if (nBand == 2)            // green
     {
         for (int i = 0; i < nBlockXSize; i++) {
-            memcpy(reinterpret_cast<void *>(&raw1),
-                    reinterpret_cast<void *>(pabyRecord + 2 * i), 2);
+            unsigned short raw1;
+            memcpy(&raw1, pabyRecord + 2 * i, 2);
             CPL_LSBPTR16(&raw1);
-            reinterpret_cast<char *>(pImage)[i] = poGDS->ColorMap[raw1 / 16].g;
+            static_cast<unsigned char *>(pImage)[i] = poGDS->ColorMap[raw1 / 16].g;
         }
     } else if (nBand == 3)            // blue
     {
         for (int i = 0; i < nBlockXSize; i++) {
-            memcpy(reinterpret_cast<void *>(&raw1),
-                    reinterpret_cast<void *>(pabyRecord + 2 * i), 2);
+            unsigned short raw1;
+            memcpy(&raw1, pabyRecord + 2 * i, 2);
             CPL_LSBPTR16(&raw1);
-            reinterpret_cast<char *>(pImage)[i] = poGDS->ColorMap[raw1 / 16].b;
+            static_cast<unsigned char *>(pImage)[i] = poGDS->ColorMap[raw1 / 16].b;
         }
     } else {
         CPLError(CE_Failure, CPLE_IllegalArg, "No band number %d", nBand);
@@ -626,7 +627,7 @@ int NWT_GRDDataset::UpdateHeader() {
     poHeaderBlock->InitNewBlock(fp, 1024);
 
     // Write the header string
-    poHeaderBlock->WriteBytes(5, (GByte *) "HGPC1\0");
+    poHeaderBlock->WriteBytes(5, reinterpret_cast<const GByte *>("HGPC1\0"));
 
     // Version number
     poHeaderBlock->WriteFloat(pGrd->fVersion);
@@ -649,12 +650,12 @@ int NWT_GRDDataset::UpdateHeader() {
 
     // Description String
     int nChar = static_cast<int>(strlen(pGrd->cDescription));
-    poHeaderBlock->WriteBytes(nChar, (GByte*) pGrd->cDescription);
+    poHeaderBlock->WriteBytes(nChar, reinterpret_cast<const GByte*>(pGrd->cDescription));
     poHeaderBlock->WriteZeros(32 - nChar);
 
     // Unit Name String
     nChar = static_cast<int>(strlen(pGrd->cZUnits));
-    poHeaderBlock->WriteBytes(nChar, (GByte *) pGrd->cZUnits);
+    poHeaderBlock->WriteBytes(nChar, reinterpret_cast<const GByte*>(pGrd->cZUnits));
     poHeaderBlock->WriteZeros(32 - nChar);
 
     //Ignore 126 - 141 as unknown usage
@@ -662,7 +663,7 @@ int NWT_GRDDataset::UpdateHeader() {
 
     // Hill shading
     poHeaderBlock->WriteInt16(pGrd->bHillShadeExists ? 1 : 0);
-    poHeaderBlock->WriteInt16((short) 0);
+    poHeaderBlock->WriteInt16(0);
 
     poHeaderBlock->WriteByte(pGrd->cHillShadeBrightness);
     poHeaderBlock->WriteByte(pGrd->cHillShadeContrast);
@@ -671,9 +672,9 @@ int NWT_GRDDataset::UpdateHeader() {
     poHeaderBlock->WriteZeros(110);
 
     // Write spatial reference
-    poHeaderBlock->WriteBytes((int) strlen(pGrd->cMICoordSys),
-            (GByte*) pGrd->cMICoordSys);
-    poHeaderBlock->WriteZeros(256 - (int) strlen(pGrd->cMICoordSys));
+    poHeaderBlock->WriteBytes(static_cast<int>(strlen(pGrd->cMICoordSys)),
+            reinterpret_cast<const GByte*>(pGrd->cMICoordSys));
+    poHeaderBlock->WriteZeros(256 - static_cast<int>(strlen(pGrd->cMICoordSys)));
 
     // Unit code
     poHeaderBlock->WriteByte(static_cast<GByte>(pGrd->iZUnits));
@@ -688,7 +689,7 @@ int NWT_GRDDataset::UpdateHeader() {
     }
 
     poHeaderBlock->WriteByte(byDisplayStatus);
-    poHeaderBlock->WriteInt16((short) 0); //Data Type?
+    poHeaderBlock->WriteInt16(0); //Data Type?
 
     // Colour inflections
     poHeaderBlock->WriteInt16(pGrd->iNumColorInflections);
@@ -829,7 +830,7 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     }
     NWT_GRDDataset *poDS = new NWT_GRDDataset();
     poDS->eAccess = GA_Update;
-    poDS->pGrd = reinterpret_cast<NWT_GRID *>(calloc(1, sizeof(NWT_GRID)));
+    poDS->pGrd = static_cast<NWT_GRID *>(calloc(1, sizeof(NWT_GRID)));
 
     // We currently only support GRD grid types (could potentially support GRC in the papszParamList).
     // Also only support GDT_Float32 as the data type. GRD format allows for data to be stretched to
@@ -855,13 +856,13 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     float fZMin, fZMax;
     // See if the user passed the min/max values
     if (CSLFetchNameValue(papszParamList, "ZMIN") == nullptr) {
-        fZMin = (float) -2E+37;
+        fZMin = static_cast<float>(-2E+37);
     } else {
         fZMin = static_cast<float>(CPLAtof(CSLFetchNameValue(papszParamList, "ZMIN")));
     }
 
     if (CSLFetchNameValue(papszParamList, "ZMAX") == nullptr) {
-        fZMax = (float) 2E+38;
+        fZMax = static_cast<float>(2E+38);
     } else {
         fZMax = static_cast<float>(CPLAtof(CSLFetchNameValue(papszParamList, "ZMAX")));
     }
@@ -1014,7 +1015,7 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
         tmpOptions = CSLSetNameValue(tmpOptions, "ZMIN", sMin);
     }
 
-    GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName("NWT_GRD");
+    GDALDriver *poDriver = GDALDriver::FromHandle(GDALGetDriverByName("NWT_GRD"));
     GDALDataset *poDstDS = poDriver->DefaultCreateCopy(pszFilename, poSrcDS,
             bStrict, tmpOptions, pfnProgress, pProgressData);
 

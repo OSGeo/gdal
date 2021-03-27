@@ -6,6 +6,8 @@ OBJ    =    grddataset.o grcdataset.o northwood.o
 
 CPPFLAGS	:=	 $(CPPFLAGS) $(XTRA_OPT)
 
+CXXFLAGS := $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
