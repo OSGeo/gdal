@@ -614,12 +614,17 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     int nObjectRead = static_cast<int>(
         VSIFReadL(&stRecordHeader, sizeof(SXFRecordHeader), 1, fpSXF));
 
-    if (nObjectRead != 1 || stRecordHeader.nID != IDSXFOBJ)
+    if (nObjectRead != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO, "SXF. Read record failed.");
         return nullptr;
     }
     CPL_LSBPTR32(&(stRecordHeader.nID));
+    if (stRecordHeader.nID != IDSXFOBJ)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "SXF. Read record failed.");
+        return nullptr;
+    }
     CPL_LSBPTR32(&(stRecordHeader.nFullLength));
     CPL_LSBPTR32(&(stRecordHeader.nGeometryLength));
     CPL_LSBPTR32(&(stRecordHeader.nClassifyCode));
