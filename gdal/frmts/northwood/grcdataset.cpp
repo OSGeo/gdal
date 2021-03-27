@@ -57,6 +57,9 @@ class NWT_GRCDataset final : public GDALPamDataset
     char **papszCategories;
     char *pszProjection;
 
+    NWT_GRCDataset(const NWT_GRCDataset&) = delete;
+    NWT_GRCDataset& operator= (const NWT_GRCDataset&) = delete;
+
   protected:
     GDALColorTable * poColorTable;
 
@@ -105,7 +108,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
+    NWT_GRCDataset *poGDS = cpl::down_cast<NWT_GRCDataset *>( poDS );
 
     if( poGDS->pGrd->nBitsPerPixel == 8 )
         eDataType = GDT_Byte;
@@ -189,7 +192,7 @@ double NWT_GRCRasterBand::GetNoDataValue( int *pbSuccess )
 // return an array of null terminated strings for the class names
 char **NWT_GRCRasterBand::GetCategoryNames()
 {
-    NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
+    NWT_GRCDataset *poGDS = cpl::down_cast<NWT_GRCDataset *>( poDS );
 
     return poGDS->papszCategories;
 }
@@ -197,7 +200,7 @@ char **NWT_GRCRasterBand::GetCategoryNames()
 // return the color table
 GDALColorTable *NWT_GRCRasterBand::GetColorTable()
 {
-    NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
+    NWT_GRCDataset *poGDS = cpl::down_cast<NWT_GRCDataset *>( poDS );
 
     return poGDS->poColorTable;
 }
@@ -217,7 +220,7 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       int nBlockYOff,
                                       void *pImage )
 {
-    NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
+    NWT_GRCDataset *poGDS = cpl::down_cast<NWT_GRCDataset *>( poDS );
     const int nBytesPerPixel = poGDS->pGrd->nBitsPerPixel / 8;
     if( nBytesPerPixel <= 0 || nBlockXSize > INT_MAX / nBytesPerPixel )
         return CE_Failure;
@@ -225,8 +228,8 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if( nBand == 1 )
     {                            //grc's are just one band of indices
-        VSIFSeekL( poGDS->fp, 1024 + nRecordSize * (vsi_l_offset)nBlockYOff, SEEK_SET );
-        if( (int)VSIFReadL( pImage, 1, nRecordSize, poGDS->fp ) != nRecordSize )
+        VSIFSeekL( poGDS->fp, 1024 + nRecordSize * static_cast<vsi_l_offset>(nBlockYOff), SEEK_SET );
+        if( static_cast<int>(VSIFReadL( pImage, 1, nRecordSize, poGDS->fp )) != nRecordSize )
             return CE_Failure;
     }
     else
@@ -303,7 +306,7 @@ const char *NWT_GRCDataset::_GetProjectionRef()
             poSpatialRef->Release();
         }
     }
-    return (const char *) pszProjection;
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -350,7 +353,7 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     VSIFSeekL( poDS->fp, 0, SEEK_SET );
     VSIFReadL( poDS->abyHeader, 1, 1024, poDS->fp );
-    poDS->pGrd = reinterpret_cast<NWT_GRID *>( malloc( sizeof (NWT_GRID) ) );
+    poDS->pGrd = static_cast<NWT_GRID *>( malloc( sizeof (NWT_GRID) ) );
 
     poDS->pGrd->fp = poDS->fp;
 

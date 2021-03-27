@@ -439,7 +439,7 @@ void createIP( int index, unsigned char r, unsigned char g, unsigned char b,
 }
 
 void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
-                    char *h )
+                    unsigned char *h )
 {
     HLS hls;
     NWT_RGB rgb;
@@ -447,7 +447,7 @@ void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
     rgb.g = *g;
     rgb.b = *b;
     hls = RGBtoHLS( rgb );
-    hls.l += ((short) *h) * HLSMAX / 256;
+    hls.l = static_cast<short>(hls.l + (*h) * HLSMAX / 256);
     rgb = HLStoRGB( hls );
 
     *r = rgb.r;
