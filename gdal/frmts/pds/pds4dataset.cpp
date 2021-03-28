@@ -1462,7 +1462,7 @@ bool PDS4Dataset::OpenTableDelimited(const char* pszFilename,
 
 // See https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd
 // and https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.sch
-GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
+PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
 {
     if( !Identify(poOpenInfo) )
         return nullptr;
@@ -4506,8 +4506,8 @@ CPLErr PDS4Dataset::Delete( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
-    auto poDS = std::unique_ptr<PDS4Dataset>(
-        dynamic_cast<PDS4Dataset*>(GDALDataset::Open(pszFilename)));
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    auto poDS = std::unique_ptr<PDS4Dataset>(PDS4Dataset::OpenInternal(&oOpenInfo));
     if( poDS == nullptr )
     {
         if( CPLGetLastErrorNo() == 0 )

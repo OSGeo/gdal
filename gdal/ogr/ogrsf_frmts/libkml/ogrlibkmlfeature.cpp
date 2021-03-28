@@ -231,7 +231,7 @@ static void OGRLIBKMLGetMaxDimensions( const char* pszURL,
 
 FeaturePtr feat2kml(
     OGRLIBKMLDataSource * poOgrDS,
-    OGRLayer * poOgrLayer,
+    OGRLIBKMLLayer * poOgrLayer,
     OGRFeature * poOgrFeat,
     KmlFactory * poKmlFactory,
     int bUseSimpleField )
@@ -837,14 +837,7 @@ FeaturePtr feat2kml(
                       poKmlFeature );
 
     /***** fields *****/
-    OGRLIBKMLLayer * const poKmlLayer =
-        dynamic_cast<OGRLIBKMLLayer *>(poOgrLayer);
-    if( poKmlLayer == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "dynamic_cast failed.");
-        return nullptr;
-    }
-    field2kml( poOgrFeat, poKmlLayer, poKmlFactory,
+    field2kml( poOgrFeat, poOgrLayer, poKmlFactory,
                poKmlFeature, bUseSimpleField );
 
     return poKmlFeature;

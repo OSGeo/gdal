@@ -37,7 +37,7 @@
 
 kmldom::FeaturePtr feat2kml(
     OGRLIBKMLDataSource *poOgrDS,
-    OGRLayer * poKOgrLayer,
+    OGRLIBKMLLayer * poKOgrLayer,
     OGRFeature * poOgrFeat,
     kmldom::KmlFactory * poKmlFactory,
     int bUseSimpleField );

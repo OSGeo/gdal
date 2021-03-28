@@ -1606,76 +1606,71 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag,
     }
 
     GDALDAASRasterBand* poBand =
-        dynamic_cast<GDALDAASRasterBand*>(GetRasterBand(1));
-    if( poBand )
-    {
-        std::vector<int> anRequestedBands;
-        if( m_poMaskBand)
-            anRequestedBands.push_back(0);
-        for( int i = 1; i <= GetRasterCount(); i++ )
-            anRequestedBands.push_back(i);
-        GUInt32 nRetryFlags = poBand->PrefetchBlocks(
-                                    nXOff, nYOff, nXSize, nYSize,
-                                    anRequestedBands);
-        int nBlockXSize, nBlockYSize;
-        poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-        int nXOff1 = 0;
-        int nYOff1 = 0;
-        int nXSize1 = 0;
-        int nYSize1 = 0;
-        int nXOff2 = 0;
-        int nYOff2 = 0;
-        int nXSize2 = 0;
-        int nYSize2 = 0;
-        GSpacing nDataShift2 = 0;
-        if( CanSpatiallySplit(nRetryFlags, nXOff, nYOff, nXSize, nYSize,
-                            nBufXSize, nBufYSize,
-                            nBlockXSize, nBlockYSize,
-                            nPixelSpace, nLineSpace,
-                            nXOff1, nYOff1,
-                            nXSize1, nYSize1,
-                            nXOff2, nYOff2,
-                            nXSize2, nYSize2,
-                            nDataShift2) )
-        {
-            GDALRasterIOExtraArg sExtraArg;
-            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        cpl::down_cast<GDALDAASRasterBand*>(GetRasterBand(1));
 
-            CPLErr eErr = IRasterIO(eRWFlag, nXOff1, nYOff1,
-                                    nXSize1, nYSize1,
-                                    pData,
-                                    nXSize1, nYSize1,
-                                    eBufType,
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    &sExtraArg);
-            if( eErr == CE_None )
-            {
-                eErr = IRasterIO(eRWFlag,
-                                    nXOff2, nYOff2,
-                                    nXSize2, nYSize2,
-                                    static_cast<GByte*>(pData) + nDataShift2,
-                                    nXSize2, nYSize2,
-                                    eBufType,
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    &sExtraArg);
-            }
-            return eErr;
-        }
-        else if( (nRetryFlags & RETRY_PER_BAND) && nBands > 1 )
+    std::vector<int> anRequestedBands;
+    if( m_poMaskBand)
+        anRequestedBands.push_back(0);
+    for( int i = 1; i <= GetRasterCount(); i++ )
+        anRequestedBands.push_back(i);
+    GUInt32 nRetryFlags = poBand->PrefetchBlocks(
+                                nXOff, nYOff, nXSize, nYSize,
+                                anRequestedBands);
+    int nBlockXSize, nBlockYSize;
+    poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    int nXOff1 = 0;
+    int nYOff1 = 0;
+    int nXSize1 = 0;
+    int nYSize1 = 0;
+    int nXOff2 = 0;
+    int nYOff2 = 0;
+    int nXSize2 = 0;
+    int nYSize2 = 0;
+    GSpacing nDataShift2 = 0;
+    if( CanSpatiallySplit(nRetryFlags, nXOff, nYOff, nXSize, nYSize,
+                        nBufXSize, nBufYSize,
+                        nBlockXSize, nBlockYSize,
+                        nPixelSpace, nLineSpace,
+                        nXOff1, nYOff1,
+                        nXSize1, nYSize1,
+                        nXOff2, nYOff2,
+                        nXSize2, nYSize2,
+                        nDataShift2) )
+    {
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
+        CPLErr eErr = IRasterIO(eRWFlag, nXOff1, nYOff1,
+                                nXSize1, nYSize1,
+                                pData,
+                                nXSize1, nYSize1,
+                                eBufType,
+                                nBandCount, panBandMap,
+                                nPixelSpace, nLineSpace, nBandSpace,
+                                &sExtraArg);
+        if( eErr == CE_None )
         {
-            for( int iBand = 1; iBand <= nBands; iBand++ )
-            {
-                poBand =
-                    dynamic_cast<GDALDAASRasterBand*>(GetRasterBand(iBand));
-                if( poBand )
-                {
-                    CPL_IGNORE_RET_VAL(poBand->PrefetchBlocks(
-                                            nXOff, nYOff, nXSize, nYSize,
-                                            std::vector<int>{iBand}));
-                }
-            }
+            eErr = IRasterIO(eRWFlag,
+                                nXOff2, nYOff2,
+                                nXSize2, nYSize2,
+                                static_cast<GByte*>(pData) + nDataShift2,
+                                nXSize2, nYSize2,
+                                eBufType,
+                                nBandCount, panBandMap,
+                                nPixelSpace, nLineSpace, nBandSpace,
+                                &sExtraArg);
+        }
+        return eErr;
+    }
+    else if( (nRetryFlags & RETRY_PER_BAND) && nBands > 1 )
+    {
+        for( int iBand = 1; iBand <= nBands; iBand++ )
+        {
+            poBand =
+                cpl::down_cast<GDALDAASRasterBand*>(GetRasterBand(iBand));
+            CPL_IGNORE_RET_VAL(poBand->PrefetchBlocks(
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    std::vector<int>{iBand}));
         }
     }
 

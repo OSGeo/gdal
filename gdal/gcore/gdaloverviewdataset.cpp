@@ -275,13 +275,7 @@ int GDALOverviewDataset::CloseDependentDatasets()
         for( int i = 0; i < nBands; ++i )
         {
             GDALOverviewBand* const band =
-                dynamic_cast<GDALOverviewBand*>(papoBands[i]);
-            if( band == nullptr )
-            {
-                CPLError( CE_Fatal, CPLE_AppDefined,
-                            "OverviewBand cast fail." );
-                return false;
-            }
+                cpl::down_cast<GDALOverviewBand*>(papoBands[i]);
             band->poUnderlyingBand = nullptr;
         }
         if( poMainDS->ReleaseRef() )
@@ -340,14 +334,8 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
          ++iBandIndex )
     {
         GDALOverviewBand *poBand =
-            dynamic_cast<GDALOverviewBand *>(
+            cpl::down_cast<GDALOverviewBand *>(
                 GetRasterBand(panBandMap[iBandIndex]) );
-        if( poBand == nullptr )
-        {
-            eErr = CE_Failure;
-            break;
-        }
-
         GByte *pabyBandData =
             static_cast<GByte *>(pData) + iBandIndex * nBandSpace;
 
@@ -571,7 +559,7 @@ GDALOverviewBand::GDALOverviewBand( GDALOverviewDataset* poDSIn, int nBandIn )
     nRasterYSize = poDSIn->nRasterYSize;
     if( nBandIn == 0 )
     {
-        poUnderlyingBand = 
+        poUnderlyingBand =
             GetOverviewEx(poDSIn->poMainDS->GetRasterBand(1), poDSIn->nOvrLevel)->GetMaskBand();
     }
     else
@@ -622,12 +610,7 @@ GDALRasterBand* GDALOverviewBand::RefUnderlyingRasterBand()
 int GDALOverviewBand::GetOverviewCount()
 {
     GDALOverviewDataset * const poOvrDS =
-        dynamic_cast<GDALOverviewDataset *>(poDS);
-    if( poOvrDS == nullptr )
-    {
-        CPLError( CE_Fatal, CPLE_AppDefined, "OverviewDataset cast fail." );
-        return 0;
-    }
+        cpl::down_cast<GDALOverviewDataset *>(poDS);
     if( poOvrDS->bThisLevelOnly )
         return 0;
     GDALDataset * const poMainDS = poOvrDS->poMainDS;
@@ -646,12 +629,7 @@ GDALRasterBand *GDALOverviewBand::GetOverview( int iOvr )
     if( iOvr < 0 || iOvr >= GetOverviewCount() )
         return nullptr;
     GDALOverviewDataset * const poOvrDS =
-        dynamic_cast<GDALOverviewDataset *>(poDS);
-    if( poOvrDS == nullptr )
-    {
-        CPLError( CE_Fatal, CPLE_AppDefined, "OverviewDataset cast fail." );
-        return nullptr;
-    }
+        cpl::down_cast<GDALOverviewDataset *>(poDS);
     GDALDataset * const poMainDS = poOvrDS->poMainDS;
     GDALRasterBand* poMainBand =
         ( nBand == 0 ) ? poMainDS->GetRasterBand(1)->GetMaskBand() :

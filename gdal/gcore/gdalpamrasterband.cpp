@@ -278,7 +278,9 @@ void GDALPamRasterBand::PamInitialize()
         dynamic_cast<GDALPamDataset *>( poNonPamParentDS );
     if( poParentDS == nullptr ) {
         // Should never happen.
-        CPLAssert(false);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Programming error: found GDALPamRasterBand that is not "
+                 "attached to a GDALPamDataset.");
         return;
     }
 

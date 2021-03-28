@@ -612,7 +612,7 @@ static bool IsMachinePotentiallyEC2Instance()
 #if defined(__linux) || defined(WIN32)
     const auto IsMachinePotentiallyEC2InstanceFromLinuxHost = []()
     {
-        // On the newer Nitro Hypervisor (C5, M5, H1, T3), use 
+        // On the newer Nitro Hypervisor (C5, M5, H1, T3), use
         // /sys/devices/virtual/dmi/id/sys_vendor = 'Amazon EC2' instead.
 
         // On older Xen hypervisor EC2 instances, a /sys/hypervisor/uuid file will
@@ -1612,10 +1612,7 @@ void VSIS3UpdateParams::UpdateMapFromHandle( IVSIS3LikeHandleHelper* poHandleHel
     std::lock_guard<std::mutex> guard(gsMutex);
 
     VSIS3HandleHelper * poS3HandleHelper =
-        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
-    CPLAssert( poS3HandleHelper );
-    if( !poS3HandleHelper )
-        return;
+        cpl::down_cast<VSIS3HandleHelper *>(poHandleHelper);
     goMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
         VSIS3UpdateParams ( poS3HandleHelper );
 }
@@ -1629,10 +1626,7 @@ void VSIS3UpdateParams::UpdateHandleFromMap( IVSIS3LikeHandleHelper* poHandleHel
     std::lock_guard<std::mutex> guard(gsMutex);
 
     VSIS3HandleHelper * poS3HandleHelper =
-        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
-    CPLAssert( poS3HandleHelper );
-    if( !poS3HandleHelper )
-        return;
+        cpl::down_cast<VSIS3HandleHelper *>(poHandleHelper);
     std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
         goMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != goMapBucketsToS3Params.end() )

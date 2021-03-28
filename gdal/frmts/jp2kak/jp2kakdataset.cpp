@@ -451,13 +451,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 if( nDiscardLevels == 0 )
                 {
-                    poBand = dynamic_cast<JP2KAKRasterBand *>(poBaseBand);
-                    if( poBand == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AssertionFailed,
-                                 "dynamic_cast failed.");
-                        return CE_Fatal;
-                    }
+                    poBand = cpl::down_cast<JP2KAKRasterBand *>(poBaseBand);
                 }
                 else
                 {
@@ -465,12 +459,9 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                     for( ; iOver < poBaseBand->GetOverviewCount(); iOver++ )
                     {
-                        poBand = dynamic_cast<JP2KAKRasterBand *>(
+                        poBand = cpl::down_cast<JP2KAKRasterBand *>(
                             poBaseBand->GetOverview( iOver ) );
-                        if( poBand == nullptr )
-                            CPLError(CE_Fatal, CPLE_AppDefined,
-                                     "Dynamic cast failed");
-                        else if( poBand->nDiscardLevels == nDiscardLevels )
+                        if( poBand->nDiscardLevels == nDiscardLevels )
                             break;
                     }
                     if( iOver == poBaseBand->GetOverviewCount() )
@@ -714,12 +705,7 @@ CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling,
     for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
         JP2KAKRasterBand *poBand =
-            dynamic_cast<JP2KAKRasterBand *>(GetRasterBand(iBand + 1));
-        if( poBand == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined, "Dynamic cast failed");
-            return CE_Failure;
-        }
+            cpl::down_cast<JP2KAKRasterBand *>(GetRasterBand(iBand + 1));
         for( int i = 0; i < poBand->nOverviewCount; i++ )
             delete poBand->papoOverviewBand[i];
 

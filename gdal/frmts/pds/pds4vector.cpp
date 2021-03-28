@@ -2453,8 +2453,7 @@ template<class T>
 OGRErr PDS4EditableSynchronizer<T>::EditableSyncToDisk(
                     OGRLayer* poEditableLayer, OGRLayer** ppoDecoratedLayer)
 {
-    auto poOriLayer = dynamic_cast<T*>(*ppoDecoratedLayer);
-    CPLAssert(poOriLayer);
+    auto poOriLayer = cpl::down_cast<T*>(*ppoDecoratedLayer);
 
     CPLString osTmpFilename(poOriLayer->m_osFilename + ".tmp");
     auto poNewLayer = poOriLayer->NewLayer(
@@ -2488,7 +2487,7 @@ OGRErr PDS4EditableSynchronizer<T>::EditableSyncToDisk(
         return OGRERR_FAILURE;
     }
 
-    const auto copyField = [](typename T::Field& oDst, const typename T::Field& oSrc) 
+    const auto copyField = [](typename T::Field& oDst, const typename T::Field& oSrc)
     {
         oDst.m_osDescription = oSrc.m_osDescription;
         oDst.m_osUnit = oSrc.m_osUnit;
@@ -2607,9 +2606,7 @@ PDS4EditableLayer::PDS4EditableLayer(PDS4DelimitedTable* poBaseLayer):
 
 PDS4TableBaseLayer* PDS4EditableLayer::GetBaseLayer() const
 {
-    auto ret = dynamic_cast<PDS4TableBaseLayer*>(OGREditableLayer::GetBaseLayer());
-    assert(ret);
-    return ret;
+    return cpl::down_cast<PDS4TableBaseLayer*>(OGREditableLayer::GetBaseLayer());
 }
 
 /************************************************************************/

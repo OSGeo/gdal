@@ -300,10 +300,7 @@ void VSIOSSFSHandler::UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelp
     CPLMutexHolder oHolder( &hMutex );
 
     VSIOSSHandleHelper * poOSSHandleHelper =
-        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    CPLAssert( poOSSHandleHelper );
-    if( !poOSSHandleHelper )
-        return;
+        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
     oMapBucketsToOSSParams[ poOSSHandleHelper->GetBucket() ] =
         VSIOSSUpdateParams ( poOSSHandleHelper );
 }
@@ -317,10 +314,7 @@ void VSIOSSFSHandler::UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelp
     CPLMutexHolder oHolder( &hMutex );
 
     VSIOSSHandleHelper * poOSSHandleHelper =
-        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    CPLAssert( poOSSHandleHelper );
-    if( !poOSSHandleHelper )
-        return;
+        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
     std::map< CPLString, VSIOSSUpdateParams>::iterator oIter =
         oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
     if( oIter != oMapBucketsToOSSParams.end() )
