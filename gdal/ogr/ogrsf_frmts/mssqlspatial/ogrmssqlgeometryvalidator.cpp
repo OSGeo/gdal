@@ -348,35 +348,9 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRMultiLineString* poGeom)
 /*                         ValidatePolygon()                            */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(const OGRPolygon* poGeom)
-{
-    if (poGeom->IsEmpty())
-        return true;
-
-    for (const auto part: *poGeom)
-    {
-        if (!IsValid(part))
-            return false;
-
-        if (!IsValidPolygonRingCount(part))
-            return false;
-
-        if (!IsValidPolygonRingClosed(part))
-            return false;
-    }
-
-    return true;
-}
-
 void OGRMSSQLGeometryValidator::MakeValid(OGRPolygon* poGeom)
 {
-    if (poGeom->IsEmpty())
-        return;
-
-    for (auto part: *poGeom)
-    {
-        MakeValid(part);
-    }
+    OGRMSSQLGeometryValidator::MakeValid(poGeom->toCurvePolygon());
 
     poGeom->closeRings();
 }

@@ -133,7 +133,6 @@ public:
     bool            IsValid(const OGRSimpleCurve* poGeom);
     bool            IsValid(const OGRCompoundCurve* poGeom);
     bool            IsValid(const OGRMultiLineString* poGeom);
-    bool            IsValid(const OGRPolygon* poGeom);
     bool            IsValid(const OGRCurvePolygon* poGeom);
     bool            IsValid(const OGRMultiPolygon* poGeom);
     bool            IsValid(const OGRGeometryCollection* poGeom);
