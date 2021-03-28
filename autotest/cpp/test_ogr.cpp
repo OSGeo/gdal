@@ -821,6 +821,223 @@ namespace tut
             OGRGeometry* poGeom = &o;
             ensure_equals( poGeom->toSurface(), &o );
         }
+
+        {
+            OGRPoint o;
+            // ensure_equals(o.toPoint(), &o);
+        }
+
+        {
+            OGRLineString o;
+            ensure_equals(o.toCurve(), &o);
+            ensure_equals(o.toSimpleCurve(), &o);
+            // ensure_equals(o.toLineString(), &o);
+
+            {
+                OGRCurve& oRef = o;
+                ensure_equals(oRef.toLineString(), &o);
+            }
+
+            {
+                OGRSimpleCurve& oRef = o;
+                ensure_equals(oRef.toLineString(), &o);
+            }
+        }
+
+        {
+            OGRLinearRing o;
+            ensure_equals(o.toCurve(), &o);
+            ensure_equals(o.toSimpleCurve(), &o);
+            // ensure_equals(o.toLinearRing(), &o);
+
+            {
+                OGRCurve& oRef = o;
+                ensure_equals(oRef.toLinearRing(), &o);
+            }
+            {
+                OGRSimpleCurve& oRef = o;
+                ensure_equals(oRef.toLinearRing(), &o);
+            }
+            {
+                OGRLineString& oRef = o;
+                ensure_equals(oRef.toLinearRing(), &o);
+            }
+        }
+
+        {
+            OGRCircularString o;
+            ensure_equals(o.toCurve(), &o);
+            ensure_equals(o.toSimpleCurve(), &o);
+            // ensure_equals(o.toCircularString(), &o);
+
+            {
+                OGRCurve& oRef = o;
+                ensure_equals(oRef.toCircularString(), &o);
+            }
+
+            {
+                OGRSimpleCurve& oRef = o;
+                ensure_equals(oRef.toCircularString(), &o);
+            }
+        }
+
+        {
+            OGRCompoundCurve o;
+            ensure_equals(o.toCurve(), &o);
+            // ensure_equals(o.toCompoundCurve(), &o);
+
+            {
+                OGRCurve& oRef = o;
+                ensure_equals(oRef.toCompoundCurve(), &o);
+            }
+        }
+
+        {
+            OGRCurvePolygon o;
+            ensure_equals(o.toSurface(), &o);
+            // ensure_equals(o.toCurvePolygon(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toCurvePolygon(), &o);
+            }
+        }
+
+        {
+            OGRPolygon o;
+            ensure_equals(o.toSurface(), &o);
+            ensure_equals(o.toCurvePolygon(), &o);
+            // ensure_equals(o.toPolygon(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toPolygon(), &o);
+            }
+
+            {
+                OGRCurvePolygon& oRef = o;
+                ensure_equals(oRef.toPolygon(), &o);
+            }
+        }
+
+        {
+            OGRTriangle o;
+            ensure_equals(o.toSurface(), &o);
+            ensure_equals(o.toCurvePolygon(), &o);
+            ensure_equals(o.toPolygon(), &o);
+            // ensure_equals(o.toTriangle(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toTriangle(), &o);
+            }
+
+            {
+                OGRCurvePolygon& oRef = o;
+                ensure_equals(oRef.toTriangle(), &o);
+            }
+
+            {
+                OGRPolygon& oRef = o;
+                ensure_equals(oRef.toTriangle(), &o);
+            }
+        }
+
+        {
+            OGRMultiPoint o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            // ensure_equals(o.toMultiPoint(), &o);
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiPoint(), &o);
+            }
+        }
+
+        {
+            OGRMultiCurve o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            // ensure_equals(o.toMultiCurve(), &o);
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiCurve(), &o);
+            }
+        }
+
+        {
+            OGRMultiLineString o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            ensure_equals(o.toMultiCurve(), &o);
+            // ensure_equals(o.toMultiLineString(), &o);
+
+            {
+                OGRMultiCurve& oRef = o;
+                ensure_equals(oRef.toMultiLineString(), &o);
+            }
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiLineString(), &o);
+            }
+        }
+
+        {
+            OGRMultiSurface o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            // ensure_equals(o.toMultiSurface(), &o);
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiSurface(), &o);
+            }
+        }
+
+        {
+            OGRMultiPolygon o;
+            ensure_equals(o.toGeometryCollection(), &o);
+            ensure_equals(o.toMultiSurface(), &o);
+            // ensure_equals(o.toMultiPolygon(), &o);
+
+            {
+                OGRMultiSurface& oRef = o;
+                ensure_equals(oRef.toMultiPolygon(), &o);
+            }
+
+            {
+                OGRGeometryCollection& oRef = o;
+                ensure_equals(oRef.toMultiPolygon(), &o);
+            }
+        }
+
+        {
+            OGRPolyhedralSurface o;
+            ensure_equals(o.toSurface(), &o);
+            // ensure_equals(o.toPolyhedralSurface(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toPolyhedralSurface(), &o);
+            }
+        }
+
+        {
+            OGRTriangulatedSurface o;
+            ensure_equals(o.toSurface(), &o);
+            ensure_equals(o.toPolyhedralSurface(), &o);
+            // ensure_equals(o.toTriangulatedSurface(), &o);
+
+            {
+                OGRSurface& oRef = o;
+                ensure_equals(oRef.toTriangulatedSurface(), &o);
+            }
+
+            {
+                OGRPolyhedralSurface& oRef = o;
+                ensure_equals(oRef.toTriangulatedSurface(), &o);
+            }
+        }
+
     }
 
     template<typename T> void TestIterator(T* obj,
