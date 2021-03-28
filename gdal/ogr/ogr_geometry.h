@@ -2429,6 +2429,12 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     // IGeometry methods
     virtual int getDimension() const override;
 
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRSurface *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toSurface(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRSurface *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toSurface(); }
+
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
@@ -2505,6 +2511,12 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
+
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRPolygon *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toPolygon(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRPolygon *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toPolygon(); }
 
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
@@ -2651,8 +2663,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRErr addGeometry( const OGRGeometry * );
     OGRErr addGeometryDirectly( OGRGeometry *poNewGeom );
     int getNumGeometries() const;
-    OGRGeometry* getGeometryRef(int i);
-    const OGRGeometry* getGeometryRef(int i) const;
+    OGRPolygon* getGeometryRef(int i);
+    const OGRPolygon* getGeometryRef(int i) const;
 
     virtual OGRBoolean  IsEmpty() const override;
     virtual void setCoordinateDimension( int nDimension ) override;
@@ -2730,6 +2742,11 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual OGRTriangulatedSurface *clone() const override;
 
+    /** See OGRPolyhedralSurface::getGeometryRef() */
+    OGRTriangle* getGeometryRef(int i) { return OGRPolyhedralSurface::getGeometryRef(i)->toTriangle(); }
+    /** See OGRPolyhedralSurface::getGeometryRef() */
+    const OGRTriangle* getGeometryRef(int i) const { return OGRPolyhedralSurface::getGeometryRef(i)->toTriangle(); }
+
     // IWks Interface.
     virtual OGRErr addGeometry( const OGRGeometry * ) override;
 
@@ -2796,6 +2813,12 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
+
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRPoint *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toPoint(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRPoint *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toPoint(); }
 
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
@@ -2890,6 +2913,12 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
 
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRCurve *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toCurve(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRCurve *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toCurve(); }
+
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2978,6 +3007,12 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
+
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRLineString *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toLineString(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRLineString *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toLineString(); }
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
