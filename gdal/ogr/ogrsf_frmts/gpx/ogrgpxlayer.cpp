@@ -1535,7 +1535,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                 }
                 else if (nGeometries == 1)
                 {
-                    line = poGeom->toMultiLineString()->getGeometryRef(0)->toLineString();
+                    line = poGeom->toMultiLineString()->getGeometryRef(0);
                 }
                 else
                 {

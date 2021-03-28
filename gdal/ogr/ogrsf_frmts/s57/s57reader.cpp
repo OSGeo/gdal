@@ -322,7 +322,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
         poPoint->SetField( i, poMultiPoint->GetRawFieldRef(i) );
     }
 
-    OGRPoint *poSrcPoint = poMPGeom->getGeometryRef( iPointOffset )->toPoint();
+    OGRPoint *poSrcPoint = poMPGeom->getGeometryRef( iPointOffset );
     iPointOffset++;
     poPoint->SetGeometry( poSrcPoint );
 
@@ -3119,8 +3119,8 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( poDstATTF == nullptr )
         {
-            // Create empty ATTF Field (see GDAL/OGR Bug #1648)" ); 
-            poDstATTF = poTarget->AddField(poModule->FindFieldDefn( "ATTF" ));         
+            // Create empty ATTF Field (see GDAL/OGR Bug #1648)" );
+            poDstATTF = poTarget->AddField(poModule->FindFieldDefn( "ATTF" ));
         }
 
         DDFField *poSrcATTF = poUpdate->FindField( "ATTF" );

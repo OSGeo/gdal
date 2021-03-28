@@ -53,12 +53,11 @@ void GeometryWriter::writePoint(const OGRPoint *p)
 
 void GeometryWriter::writeMultiPoint(const OGRMultiPoint *mp)
 {
-    for (int i = 0; i < mp->getNumGeometries(); i++)
+    for (const auto part: *mp )
     {
-        const auto part = mp->getGeometryRef(i);
         if( !part->IsEmpty() )
         {
-            writePoint(part->toPoint());
+            writePoint(part);
         }
     }
 }
@@ -90,13 +89,11 @@ uint32_t GeometryWriter::writeSimpleCurve(const OGRSimpleCurve *sc)
 void GeometryWriter::writeMultiLineString(const OGRMultiLineString *mls)
 {
     uint32_t e = 0;
-    const auto numGeometries = mls->getNumGeometries();
-    for (int i = 0; i < numGeometries; i++)
+    for (const auto part: *mls)
     {
-        const auto part = mls->getGeometryRef(i);
         if( !part->IsEmpty() )
         {
-            m_ends.push_back(e += writeSimpleCurve(part->toLineString()));
+            m_ends.push_back(e += writeSimpleCurve(part));
         }
     }
 }
@@ -117,8 +114,8 @@ void GeometryWriter::writePolygon(const OGRPolygon *p)
 const Offset<Geometry> GeometryWriter::writeMultiPolygon(const OGRMultiPolygon *mp, int depth)
 {
     std::vector<Offset<Geometry>> parts;
-    for (int i = 0; i < mp->getNumGeometries(); i++) {
-        const auto part = mp->getGeometryRef(i)->toPolygon();
+    for (const auto part: *mp)
+    {
         if( !part->IsEmpty() )
         {
             GeometryWriter writer { m_fbb, part, GeometryType::Polygon, m_hasZ, m_hasM };
@@ -131,8 +128,8 @@ const Offset<Geometry> GeometryWriter::writeMultiPolygon(const OGRMultiPolygon *
 const Offset<Geometry> GeometryWriter::writeGeometryCollection(const OGRGeometryCollection *gc, int depth)
 {
     std::vector<Offset<Geometry>> parts;
-    for (int i = 0; i < gc->getNumGeometries(); i++) {
-        auto part = gc->getGeometryRef(i);
+    for (const auto part: *gc)
+    {
         if( !part->IsEmpty() )
         {
             GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
@@ -145,9 +142,8 @@ const Offset<Geometry> GeometryWriter::writeGeometryCollection(const OGRGeometry
 const Offset<Geometry> GeometryWriter::writeCompoundCurve(const OGRCompoundCurve *cc, int depth)
 {
     std::vector<Offset<Geometry>> parts;
-    for (int i = 0; i < cc->getNumCurves(); i++) {
-        const auto part = cc->getCurve(i);
-        GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
+    for (const auto curve : *cc) {
+        GeometryWriter writer { m_fbb, curve, m_hasZ, m_hasM };
         parts.push_back(writer.write(depth + 1));
     }
     return CreateGeometryDirect(m_fbb, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, m_geometryType, &parts);
@@ -155,12 +151,8 @@ const Offset<Geometry> GeometryWriter::writeCompoundCurve(const OGRCompoundCurve
 
 const Offset<Geometry> GeometryWriter::writeCurvePolygon(const OGRCurvePolygon *cp, int depth)
 {
-    std::vector<const OGRCurve *> curves;
     std::vector<Offset<Geometry>> parts;
-    curves.push_back(cp->getExteriorRingCurve());
-    for (int i = 0; i < cp->getNumInteriorRings(); i++)
-        curves.push_back(cp->getInteriorRingCurve(i));
-    for (auto curve : curves) {
+    for (const auto curve : *cp) {
         GeometryWriter writer { m_fbb, curve, m_hasZ, m_hasM };
         parts.push_back(writer.write(depth + 1));
     }
@@ -170,8 +162,7 @@ const Offset<Geometry> GeometryWriter::writeCurvePolygon(const OGRCurvePolygon *
 const Offset<Geometry> GeometryWriter::writePolyhedralSurface(const OGRPolyhedralSurface *p, int depth)
 {
     std::vector<Offset<Geometry>> parts;
-    for (int i = 0; i < p->getNumGeometries(); i++) {
-        auto part = p->getGeometryRef(i);
+    for (const auto part: *p) {
         GeometryWriter writer { m_fbb, part, m_hasZ, m_hasM };
         parts.push_back(writer.write(depth + 1));
     }
@@ -180,15 +171,15 @@ const Offset<Geometry> GeometryWriter::writePolyhedralSurface(const OGRPolyhedra
 
 void GeometryWriter::writeTIN(const OGRTriangulatedSurface *ts)
 {
-    auto numGeometries = ts->getNumGeometries();
+    const auto numGeometries = ts->getNumGeometries();
     if (numGeometries == 1) {
-        auto lr = ts->getGeometryRef(0)->toTriangle()->getExteriorRing();
+        const auto lr = ts->getGeometryRef(0)->getExteriorRing();
         writeSimpleCurve(lr);
         return;
     }
     uint32_t e = 0;
-    for (int i = 0; i < numGeometries; i++) {
-        auto lr = ts->getGeometryRef(i)->toTriangle()->getExteriorRing();
+    for (const auto part: *ts) {
+        const auto lr = part->getExteriorRing();
         m_ends.push_back(e += writeSimpleCurve(lr));
     }
 }

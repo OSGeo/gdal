@@ -183,7 +183,7 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRMultiPoint* poGeom)
     {
         for (int i = 0; i < poGeom->getNumGeometries(); i++)
         {
-            if (!IsValid(poGeom->getGeometryRef(i)->toPoint()))
+            if (!IsValid(poGeom->getGeometryRef(i)))
                 return false;
         }
     }
@@ -196,7 +196,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRMultiPoint* poGeom)
     {
         for (int i = 0; i < poGeom->getNumGeometries(); i++)
         {
-            MakeValid(poGeom->getGeometryRef(i)->toPoint());
+            MakeValid(poGeom->getGeometryRef(i));
         }
     }
 }
@@ -249,7 +249,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRLineString * poGeom)
 /************************************************************************/
 
 bool OGRMSSQLGeometryValidator::IsValid(OGRCircularString* poGeom)
-{   
+{
     if (!IsValid(poGeom->toSimpleCurve()))
         return false;
 
@@ -317,7 +317,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRCompoundCurve* poGeom)
         case wkbLineString:
             MakeValid(poCurve->toLineString());
             break;
-            
+
         case wkbCircularString:
             MakeValid(poCurve->toCircularString());
             break;
@@ -352,7 +352,7 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRMultiLineString* poGeom)
     {
         for (int i = 0; i < poGeom->getNumGeometries(); i++)
         {
-            if (!IsValid(poGeom->getGeometryRef(i)->toLineString()))
+            if (!IsValid(poGeom->getGeometryRef(i)))
                 return false;
         }
     }
@@ -365,7 +365,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRMultiLineString* poGeom)
     {
         for (int i = 0; i < poGeom->getNumGeometries(); i++)
         {
-            MakeValid(poGeom->getGeometryRef(i)->toLineString());
+            MakeValid(poGeom->getGeometryRef(i));
         }
     }
 }
@@ -471,7 +471,7 @@ bool OGRMSSQLGeometryValidator::IsValid(OGRMultiPolygon* poGeom)
 {
     for (int i = 0; i < poGeom->getNumGeometries(); i++)
     {
-        if (!IsValid(poGeom->getGeometryRef(i)->toPolygon()))
+        if (!IsValid(poGeom->getGeometryRef(i)))
             return false;
     }
     return true;
@@ -481,7 +481,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRMultiPolygon* poGeom)
 {
     for (int i = 0; i < poGeom->getNumGeometries(); i++)
     {
-        MakeValid(poGeom->getGeometryRef(i)->toPolygon());
+        MakeValid(poGeom->getGeometryRef(i));
     }
 }
 

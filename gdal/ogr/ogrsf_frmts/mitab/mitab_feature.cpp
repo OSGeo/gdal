@@ -1983,7 +1983,7 @@ OGRLineString *TABPolyline::GetPartRef(int nPartIndex)
         if (nPartIndex >= 0 &&
             nPartIndex < poMultiLine->getNumGeometries())
         {
-            return poMultiLine->getGeometryRef(nPartIndex)->toLineString();
+            return poMultiLine->getGeometryRef(nPartIndex);
         }
         else
             return nullptr;
@@ -2889,7 +2889,7 @@ int TABPolyline::GetCenter( double &dX, double &dY )
         {
             OGRMultiLineString *poMultiLine = poGeom->toMultiLineString();
             if (poMultiLine->getNumGeometries() > 0)
-                poLine = poMultiLine->getGeometryRef(0)->toLineString();
+                poLine = poMultiLine->getGeometryRef(0);
         }
 
         if (poLine && poLine->getNumPoints() > 0)
@@ -3696,7 +3696,7 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
         {
             OGRPolygon *poPolygon = nullptr;
             if (poMultiPolygon)
-                poPolygon = poMultiPolygon->getGeometryRef(iPoly)->toPolygon();
+                poPolygon = poMultiPolygon->getGeometryRef(iPoly);
             else
                 poPolygon = poGeom->toPolygon();
 
@@ -3756,7 +3756,7 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
         {
             OGRPolygon* poPolygon = nullptr;
             if (poMultiPolygon)
-                poPolygon = poMultiPolygon->getGeometryRef(iPoly)->toPolygon();
+                poPolygon = poMultiPolygon->getGeometryRef(iPoly);
             else
                 poPolygon = poGeom->toPolygon();
 
@@ -3891,7 +3891,7 @@ int TABRegion::GetCenter( double &dX, double &dY )
         {
             OGRMultiPolygon *poMultiPolygon = poGeom->toMultiPolygon();
             if (poMultiPolygon->getNumGeometries() > 0)
-                poPolygon = poMultiPolygon->getGeometryRef(0)->toPolygon();
+                poPolygon = poMultiPolygon->getGeometryRef(0);
         }
         else if (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
         {
