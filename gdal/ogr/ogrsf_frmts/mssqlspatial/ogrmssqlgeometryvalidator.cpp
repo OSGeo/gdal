@@ -233,20 +233,6 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRSimpleCurve* poGeom)
 }
 
 /************************************************************************/
-/*                         ValidateLineString()                         */
-/************************************************************************/
-
-bool OGRMSSQLGeometryValidator::IsValid(const OGRLineString * poGeom)
-{
-    return IsValid(poGeom->toSimpleCurve());
-}
-
-void OGRMSSQLGeometryValidator::MakeValid(OGRLineString * poGeom)
-{
-    MakeValid(poGeom->toSimpleCurve());
-}
-
-/************************************************************************/
 /*                         ValidateCircularString()                     */
 /************************************************************************/
 
@@ -328,20 +314,6 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRCompoundCurve* poGeom)
             break;
         }
     }
-}
-
-/************************************************************************/
-/*                         ValidateLinearRing()                         */
-/************************************************************************/
-
-bool OGRMSSQLGeometryValidator::IsValid(const OGRLinearRing * poGeom)
-{
-    return IsValid(poGeom->toSimpleCurve());
-}
-
-void OGRMSSQLGeometryValidator::MakeValid(OGRLinearRing * poGeom)
-{
-    MakeValid(poGeom->toSimpleCurve());
 }
 
 /************************************************************************/
@@ -502,7 +474,7 @@ bool OGRMSSQLGeometryValidator::IsValid(const OGRGeometry* poGeom)
     case wkbPoint:
         return IsValid(poGeom->toPoint());
     case wkbLineString:
-        return IsValid(poGeom->toLineString());
+        return IsValid(poGeom->toSimpleCurve());
     case wkbPolygon:
         return IsValid(poGeom->toPolygon());
     case wkbCurvePolygon :
@@ -519,8 +491,6 @@ bool OGRMSSQLGeometryValidator::IsValid(const OGRGeometry* poGeom)
         return IsValid(poGeom->toMultiPolygon());
     case wkbGeometryCollection:
         return IsValid(poGeom->toGeometryCollection());
-    case wkbLinearRing:
-        return IsValid(poGeom->toLinearRing());
     default:
         break;
     }
@@ -538,7 +508,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRGeometry* poGeom)
         MakeValid(poGeom->toPoint());
         break;
     case wkbLineString:
-        MakeValid(poGeom->toLineString());
+        MakeValid(poGeom->toSimpleCurve());
         break;
     case wkbPolygon:
         MakeValid(poGeom->toPolygon());
@@ -563,9 +533,6 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRGeometry* poGeom)
         break;
     case wkbGeometryCollection:
         MakeValid(poGeom->toGeometryCollection());
-        break;
-    case wkbLinearRing:
-        MakeValid(poGeom->toLinearRing());
         break;
     default:
         break;

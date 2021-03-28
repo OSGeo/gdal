@@ -129,11 +129,9 @@ public:
     bool            IsValidPolygonRingClosed(const OGRCurve* poGeom);
     bool            IsValid(const OGRPoint* poGeom);
     bool            IsValid(const OGRMultiPoint* poGeom);
-    bool            IsValid(const OGRLineString* poGeom);
     bool            IsValid(const OGRCircularString* poGeom);
     bool            IsValid(const OGRSimpleCurve* poGeom);
     bool            IsValid(const OGRCompoundCurve* poGeom);
-    bool            IsValid(const OGRLinearRing* poGeom);
     bool            IsValid(const OGRMultiLineString* poGeom);
     bool            IsValid(const OGRPolygon* poGeom);
     bool            IsValid(const OGRCurvePolygon* poGeom);
@@ -142,11 +140,9 @@ public:
     bool            IsValid(const OGRGeometry* poGeom);
     void            MakeValid(OGRPoint* poGeom);
     void            MakeValid(OGRMultiPoint* poGeom);
-    void            MakeValid(OGRLineString* poGeom);
     void            MakeValid(OGRCircularString* poGeom);
     void            MakeValid(OGRSimpleCurve* poGeom);
     void            MakeValid(OGRCompoundCurve* poGeom);
-    void            MakeValid(OGRLinearRing* poGeom);
     void            MakeValid(OGRMultiLineString* poGeom);
     void            MakeValid(OGRPolygon* poGeom);
     void            MakeValid(OGRCurvePolygon* poGeom);
