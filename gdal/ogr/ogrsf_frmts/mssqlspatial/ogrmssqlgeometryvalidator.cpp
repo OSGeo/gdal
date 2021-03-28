@@ -118,7 +118,7 @@ bool OGRMSSQLGeometryValidator::IsValidCircularZ(double z1, double z2)
 /*                         IsValidPolygonRingCount()                    */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValidPolygonRingCount(OGRCurve* poGeom)
+bool OGRMSSQLGeometryValidator::IsValidPolygonRingCount(const OGRCurve* poGeom)
 {
     if (poGeom->getNumPoints() < 4)
     {
@@ -134,7 +134,7 @@ bool OGRMSSQLGeometryValidator::IsValidPolygonRingCount(OGRCurve* poGeom)
 /*                         IsValidPolygonRingClosed()                   */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValidPolygonRingClosed(OGRCurve* poGeom)
+bool OGRMSSQLGeometryValidator::IsValidPolygonRingClosed(const OGRCurve* poGeom)
 {
     if (poGeom->get_IsClosed() == FALSE)
     {
@@ -150,7 +150,7 @@ bool OGRMSSQLGeometryValidator::IsValidPolygonRingClosed(OGRCurve* poGeom)
 /*                         ValidatePoint()                              */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRPoint* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRPoint* poGeom)
 {
     if (poGeom->IsEmpty())
         return true;
@@ -177,7 +177,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRPoint* poGeom)
 /*                     ValidateMultiPoint()                             */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRMultiPoint* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRMultiPoint* poGeom)
 {
     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
     {
@@ -205,7 +205,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRMultiPoint* poGeom)
 /*                         ValidateSimpleCurve()                        */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRSimpleCurve* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRSimpleCurve* poGeom)
 {
     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
     {
@@ -234,7 +234,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRSimpleCurve* poGeom)
 /*                         ValidateLineString()                         */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRLineString * poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRLineString * poGeom)
 {
     return IsValid(poGeom->toSimpleCurve());
 }
@@ -248,7 +248,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRLineString * poGeom)
 /*                         ValidateCircularString()                     */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRCircularString* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRCircularString* poGeom)
 {
     if (!IsValid(poGeom->toSimpleCurve()))
         return false;
@@ -283,11 +283,11 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRCircularString* poGeom)
 /*                         ValidateCompoundCurve()                      */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRCompoundCurve* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRCompoundCurve* poGeom)
 {
     for (int i = 0; i < poGeom->getNumCurves(); i++)
     {
-        OGRCurve* poCurve = poGeom->getCurve(i);
+        const OGRCurve* poCurve = poGeom->getCurve(i);
         switch (wkbFlatten(poCurve->getGeometryType()))
         {
         case wkbLineString:
@@ -332,7 +332,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRCompoundCurve* poGeom)
 /*                         ValidateLinearRing()                         */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRLinearRing * poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRLinearRing * poGeom)
 {
     return IsValid(poGeom->toSimpleCurve());
 }
@@ -346,7 +346,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRLinearRing * poGeom)
 /*                     ValidateMultiLineString()                        */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRMultiLineString* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRMultiLineString* poGeom)
 {
     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
     {
@@ -374,7 +374,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRMultiLineString* poGeom)
 /*                         ValidatePolygon()                            */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRPolygon* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRPolygon* poGeom)
 {
     if (poGeom->IsEmpty())
         return true;
@@ -422,7 +422,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRPolygon* poGeom)
 /*                         ValidateCurvePolygon()                       */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRCurvePolygon* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRCurvePolygon* poGeom)
 {
     if (poGeom->IsEmpty())
         return true;
@@ -467,7 +467,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRCurvePolygon* poGeom)
 /*                         ValidateMultiPolygon()                       */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRMultiPolygon* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRMultiPolygon* poGeom)
 {
     for (int i = 0; i < poGeom->getNumGeometries(); i++)
     {
@@ -489,7 +489,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRMultiPolygon* poGeom)
 /*                     ValidateGeometryCollection()                     */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRGeometryCollection* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRGeometryCollection* poGeom)
 {
     for (int i = 0; i < poGeom->getNumGeometries(); i++)
     {
@@ -511,7 +511,7 @@ void OGRMSSQLGeometryValidator::MakeValid(OGRGeometryCollection* poGeom)
 /*                         ValidateGeometry()                           */
 /************************************************************************/
 
-bool OGRMSSQLGeometryValidator::IsValid(OGRGeometry* poGeom)
+bool OGRMSSQLGeometryValidator::IsValid(const OGRGeometry* poGeom)
 {
     if (!poGeom)
         return false;
