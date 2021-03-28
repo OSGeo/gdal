@@ -42,6 +42,10 @@ wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
       GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-fgdb=/usr/local/FileGDB_API "
     fi
 
+    if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$" ; then
+      GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-pdfium=/usr "
+    fi
+
     ./configure --prefix=/usr \
     --without-libtool \
     --with-hide-internal-symbols \
