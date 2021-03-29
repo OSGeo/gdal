@@ -96,9 +96,8 @@ namespace nccfdriver
 
             // Take each geometry, just add up the corresponding parts
 
-            for(int itrLScount = 0; itrLScount < mls->getNumGeometries(); itrLScount++)
+            for( const auto ls: *mls )
             {
-                const auto ls = mls->getGeometryRef(itrLScount)->toLineString();
                 int pt_count = ls->getNumPoints();
 
                 this->ppart_node_count.push_back(pt_count);
@@ -154,9 +153,8 @@ namespace nccfdriver
             this->total_point_count = 0;
             this->total_part_count = 0;
 
-            for(int itr = 0; itr < poMP->getNumGeometries(); itr++)
+            for( const auto poly: *poMP )
             {
-                const auto poly = poMP->getGeometryRef(itr)->toPolygon();
                 const auto exterior_ring = poly->getExteriorRing();
                 if(exterior_ring == nullptr)
                 {
@@ -337,7 +335,7 @@ namespace nccfdriver
         {
             const OGRMultiPoint* as_mp_ref = geometry_ref->toMultiPoint();
             int part_ind = static_cast<int>(part_no);
-            const OGRPoint * pt = as_mp_ref->getGeometryRef(part_ind)->toPoint();
+            const OGRPoint * pt = as_mp_ref->getGeometryRef(part_ind);
             return *pt;
         }
 
@@ -352,7 +350,7 @@ namespace nccfdriver
             const OGRMultiLineString* as_mline_ref = geometry_ref->toMultiLineString();
             CPLAssert(as_mline_ref);
             int part_ind = static_cast<int>(part_no);
-            const OGRLineString* lstring = as_mline_ref->getGeometryRef(part_ind)->toLineString();
+            const OGRLineString* lstring = as_mline_ref->getGeometryRef(part_ind);
             CPLAssert(lstring);
             lstring->getPoint(point_index, &pt_buffer);
         }
@@ -383,7 +381,7 @@ namespace nccfdriver
             // Find the right polygon, and the right ring number
             for(int pind = 0; pind < as_mpolygon_ref->getNumGeometries(); pind++)
             {
-                const OGRPolygon * itr_poly = as_mpolygon_ref->getGeometryRef(pind)->toPolygon();
+                const OGRPolygon * itr_poly = as_mpolygon_ref->getGeometryRef(pind);
                 if(pno_itr < (itr_poly->getNumInteriorRings() + 1)) // + 1 is counting the EXTERIOR ring
                 {
                     ring_number = static_cast<int>(pno_itr);
@@ -397,7 +395,7 @@ namespace nccfdriver
                 }
             }
 
-            const OGRPolygon* key_polygon = as_mpolygon_ref->getGeometryRef(polygon_num)->toPolygon();
+            const OGRPolygon* key_polygon = as_mpolygon_ref->getGeometryRef(polygon_num);
 
             if(ring_number == 0)
             {

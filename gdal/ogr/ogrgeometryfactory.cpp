@@ -4602,10 +4602,9 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     else if( eType == wkbMultiPolygon && eTargetType == wkbTIN )
     {
         OGRMultiPolygon* poMP = poGeom->toMultiPolygon();
-        for( int i = 0; i < poMP->getNumGeometries(); ++i )
+        for( const auto poPoly: *poMP )
         {
-            OGRPolygon* poPoly = poMP->getGeometryRef(i)->toPolygon();
-            OGRLinearRing* poLR = poPoly->getExteriorRing();
+            const OGRLinearRing* poLR = poPoly->getExteriorRing();
             if( !(poLR != nullptr && poLR->getNumPoints() == 4 &&
                   poPoly->getNumInteriorRings() == 0) )
             {
@@ -4614,9 +4613,8 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         }
         OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
         poTS->assignSpatialReference( poGeom->getSpatialReference() );
-        for( int i = 0; i < poMP->getNumGeometries(); ++i )
+        for( const auto poPoly: *poMP )
         {
-            OGRPolygon* poPoly = poMP->getGeometryRef(i)->toPolygon();
             OGRErr eErr = OGRERR_NONE;
             poTS->addGeometryDirectly( new OGRTriangle(*poPoly, eErr) );
         }
@@ -4626,10 +4624,9 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     else if( eType == wkbPolyhedralSurface && eTargetType == wkbTIN )
     {
         OGRPolyhedralSurface* poPS = poGeom->toPolyhedralSurface();
-        for( int i = 0; i < poPS->getNumGeometries(); ++i )
+        for( const auto poPoly: *poPS )
         {
-            OGRPolygon* poPoly = poPS->getGeometryRef(i)->toPolygon();
-            OGRLinearRing* poLR = poPoly->getExteriorRing();
+            const OGRLinearRing* poLR = poPoly->getExteriorRing();
             if( !(poLR != nullptr && poLR->getNumPoints() == 4 &&
                   poPoly->getNumInteriorRings() == 0) )
             {
@@ -4638,9 +4635,8 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         }
         OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
         poTS->assignSpatialReference( poGeom->getSpatialReference() );
-        for( int i = 0; i < poPS->getNumGeometries(); ++i )
+        for( const auto poPoly: *poPS )
         {
-            OGRPolygon* poPoly = poPS->getGeometryRef(i)->toPolygon();
             OGRErr eErr = OGRERR_NONE;
             poTS->addGeometryDirectly( new OGRTriangle(*poPoly, eErr) );
         }

@@ -160,7 +160,7 @@ static void InvertGeometries( GDALDatasetH hDstDS,
             auto poMulti = OGRGeometry::FromHandle(ahGeometries[iGeom])->toMultiPolygon();
             for( int i = 0; i < poMulti->getNumGeometries(); i++ )
             {
-                ProcessPoly( poMulti->getGeometryRef(i)->toPolygon() );
+                ProcessPoly( poMulti->getGeometryRef(i) );
             }
             delete poMulti;
         }

@@ -851,6 +851,77 @@ struct CPL_DLL OGRGeometryUniquePtrDeleter
  */
 typedef std::unique_ptr<OGRGeometry, OGRGeometryUniquePtrDeleter> OGRGeometryUniquePtr;
 
+
+//! @cond Doxygen_Suppress
+#define OGR_FORBID_DOWNCAST_TO(name) \
+    inline OGR ## name * to ## name() = delete; \
+    inline const OGR ## name * to ## name() const = delete;
+
+#define OGR_FORBID_DOWNCAST_TO_POINT              OGR_FORBID_DOWNCAST_TO(Point)
+#define OGR_FORBID_DOWNCAST_TO_CURVE              OGR_FORBID_DOWNCAST_TO(Curve)
+#define OGR_FORBID_DOWNCAST_TO_SIMPLE_CURVE       OGR_FORBID_DOWNCAST_TO(SimpleCurve)
+#define OGR_FORBID_DOWNCAST_TO_LINESTRING         OGR_FORBID_DOWNCAST_TO(LineString)
+#define OGR_FORBID_DOWNCAST_TO_LINEARRING         OGR_FORBID_DOWNCAST_TO(LinearRing)
+#define OGR_FORBID_DOWNCAST_TO_CIRCULARSTRING     OGR_FORBID_DOWNCAST_TO(CircularString)
+#define OGR_FORBID_DOWNCAST_TO_COMPOUNDCURVE      OGR_FORBID_DOWNCAST_TO(CompoundCurve)
+#define OGR_FORBID_DOWNCAST_TO_SURFACE            OGR_FORBID_DOWNCAST_TO(Surface)
+#define OGR_FORBID_DOWNCAST_TO_CURVEPOLYGON       OGR_FORBID_DOWNCAST_TO(CurvePolygon)
+#define OGR_FORBID_DOWNCAST_TO_POLYGON            OGR_FORBID_DOWNCAST_TO(Polygon)
+#define OGR_FORBID_DOWNCAST_TO_TRIANGLE           OGR_FORBID_DOWNCAST_TO(Triangle)
+#define OGR_FORBID_DOWNCAST_TO_MULTIPOINT         OGR_FORBID_DOWNCAST_TO(MultiPoint)
+#define OGR_FORBID_DOWNCAST_TO_MULTICURVE         OGR_FORBID_DOWNCAST_TO(MultiCurve)
+#define OGR_FORBID_DOWNCAST_TO_MULTILINESTRING    OGR_FORBID_DOWNCAST_TO(MultiLineString)
+#define OGR_FORBID_DOWNCAST_TO_MULTISURFACE       OGR_FORBID_DOWNCAST_TO(MultiSurface)
+#define OGR_FORBID_DOWNCAST_TO_MULTIPOLYGON       OGR_FORBID_DOWNCAST_TO(MultiPolygon)
+#define OGR_FORBID_DOWNCAST_TO_GEOMETRYCOLLECTION OGR_FORBID_DOWNCAST_TO(GeometryCollection)
+#define OGR_FORBID_DOWNCAST_TO_POLYHEDRALSURFACE  OGR_FORBID_DOWNCAST_TO(PolyhedralSurface)
+#define OGR_FORBID_DOWNCAST_TO_TIN                OGR_FORBID_DOWNCAST_TO(TriangulatedSurface)
+
+#define OGR_ALLOW_UPCAST_TO(name) \
+    inline OGR ## name * to ## name() { return this; } \
+    inline const OGR ## name * to ## name() const { return this; }
+
+#ifndef SUPPRESS_OGR_ALLOW_CAST_TO_THIS_WARNING
+#define CAST_TO_THIS_WARNING CPL_WARN_DEPRECATED("Casting to this is useless")
+#else
+#define CAST_TO_THIS_WARNING
+#endif
+
+#define OGR_ALLOW_CAST_TO_THIS(name) \
+    inline OGR ## name * to ## name() CAST_TO_THIS_WARNING { return this; } \
+    inline const OGR ## name * to ## name() const CAST_TO_THIS_WARNING { return this; }
+
+#define OGR_FORBID_DOWNCAST_TO_ALL_CURVES \
+    OGR_FORBID_DOWNCAST_TO_CURVE \
+    OGR_FORBID_DOWNCAST_TO_SIMPLE_CURVE \
+    OGR_FORBID_DOWNCAST_TO_LINESTRING \
+    OGR_FORBID_DOWNCAST_TO_LINEARRING \
+    OGR_FORBID_DOWNCAST_TO_CIRCULARSTRING \
+    OGR_FORBID_DOWNCAST_TO_COMPOUNDCURVE
+
+#define OGR_FORBID_DOWNCAST_TO_ALL_SURFACES \
+    OGR_FORBID_DOWNCAST_TO_SURFACE \
+    OGR_FORBID_DOWNCAST_TO_CURVEPOLYGON \
+    OGR_FORBID_DOWNCAST_TO_POLYGON \
+    OGR_FORBID_DOWNCAST_TO_TRIANGLE \
+    OGR_FORBID_DOWNCAST_TO_POLYHEDRALSURFACE \
+    OGR_FORBID_DOWNCAST_TO_TIN
+
+#define OGR_FORBID_DOWNCAST_TO_ALL_SINGLES \
+    OGR_FORBID_DOWNCAST_TO_POINT \
+    OGR_FORBID_DOWNCAST_TO_ALL_CURVES \
+    OGR_FORBID_DOWNCAST_TO_ALL_SURFACES
+
+#define OGR_FORBID_DOWNCAST_TO_ALL_MULTI \
+    OGR_FORBID_DOWNCAST_TO_GEOMETRYCOLLECTION \
+    OGR_FORBID_DOWNCAST_TO_MULTIPOINT \
+    OGR_FORBID_DOWNCAST_TO_MULTICURVE \
+    OGR_FORBID_DOWNCAST_TO_MULTILINESTRING \
+    OGR_FORBID_DOWNCAST_TO_MULTISURFACE \
+    OGR_FORBID_DOWNCAST_TO_MULTIPOLYGON
+
+//! @endcond
+
 /************************************************************************/
 /*                               OGRPoint                               */
 /************************************************************************/
@@ -960,6 +1031,11 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void        swapXY() override;
+
+    OGR_ALLOW_CAST_TO_THIS(Point)
+    OGR_FORBID_DOWNCAST_TO_ALL_CURVES
+    OGR_FORBID_DOWNCAST_TO_ALL_SURFACES
+    OGR_FORBID_DOWNCAST_TO_ALL_MULTI
 };
 
 /************************************************************************/
@@ -1080,6 +1156,11 @@ class CPL_DLL OGRCurve : public OGRGeometry
     static OGRCompoundCurve* CastToCompoundCurve( OGRCurve* puCurve );
     static OGRLineString*    CastToLineString( OGRCurve* poCurve );
     static OGRLinearRing*    CastToLinearRing( OGRCurve* poCurve );
+
+    OGR_FORBID_DOWNCAST_TO_POINT
+    OGR_ALLOW_CAST_TO_THIS(Curve)
+    OGR_FORBID_DOWNCAST_TO_ALL_SURFACES
+    OGR_FORBID_DOWNCAST_TO_ALL_MULTI
 };
 
 //! @cond Doxygen_Suppress
@@ -1292,6 +1373,9 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     virtual void segmentize(double dfMaxLength) override;
 
     virtual void        swapXY() override;
+
+    OGR_ALLOW_UPCAST_TO(Curve)
+    OGR_ALLOW_CAST_TO_THIS(SimpleCurve)
 };
 
 //! @cond Doxygen_Suppress
@@ -1364,6 +1448,9 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
+
+    OGR_ALLOW_UPCAST_TO(SimpleCurve)
+    OGR_ALLOW_CAST_TO_THIS(LineString)
 };
 
 /************************************************************************/
@@ -1454,6 +1541,9 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
+
+    OGR_ALLOW_UPCAST_TO(LineString)
+    OGR_ALLOW_CAST_TO_THIS(LinearRing)
 };
 
 /************************************************************************/
@@ -1554,6 +1644,9 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
+
+    OGR_ALLOW_UPCAST_TO(SimpleCurve)
+    OGR_ALLOW_CAST_TO_THIS(CircularString)
 };
 
 /************************************************************************/
@@ -1806,6 +1899,9 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void        swapXY() override;
+
+    OGR_ALLOW_UPCAST_TO(Curve)
+    OGR_ALLOW_CAST_TO_THIS(CompoundCurve)
 };
 
 //! @cond Doxygen_Suppress
@@ -1847,6 +1943,11 @@ class CPL_DLL OGRSurface : public OGRGeometry
     static OGRPolygon*      CastToPolygon(OGRSurface* poSurface);
     static OGRCurvePolygon* CastToCurvePolygon(OGRSurface* poSurface);
 //! @endcond
+
+    OGR_FORBID_DOWNCAST_TO_POINT
+    OGR_FORBID_DOWNCAST_TO_ALL_CURVES
+    OGR_ALLOW_CAST_TO_THIS(Surface)
+    OGR_FORBID_DOWNCAST_TO_ALL_MULTI
 };
 
 /************************************************************************/
@@ -2002,6 +2103,9 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void        swapXY() override;
+
+    OGR_ALLOW_UPCAST_TO(Surface)
+    OGR_ALLOW_CAST_TO_THIS(CurvePolygon)
 };
 
 //! @cond Doxygen_Suppress
@@ -2140,6 +2244,9 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void closeRings() override;
+
+    OGR_ALLOW_UPCAST_TO(CurvePolygon)
+    OGR_ALLOW_CAST_TO_THIS(Polygon)
 };
 
 //! @cond Doxygen_Suppress
@@ -2212,6 +2319,9 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 //! @cond Doxygen_Suppress
     static OGRGeometry* CastToPolygon( OGRGeometry* poGeom );
 //! @endcond
+
+    OGR_ALLOW_UPCAST_TO(Polygon)
+    OGR_ALLOW_CAST_TO_THIS(Triangle)
 };
 
 /************************************************************************/
@@ -2348,6 +2458,11 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
 
     static OGRGeometryCollection* CastToGeometryCollection(
         OGRGeometryCollection* poSrc );
+
+    OGR_FORBID_DOWNCAST_TO_POINT
+    OGR_FORBID_DOWNCAST_TO_ALL_CURVES
+    OGR_FORBID_DOWNCAST_TO_ALL_SURFACES
+    OGR_ALLOW_CAST_TO_THIS(GeometryCollection)
 };
 
 //! @cond Doxygen_Suppress
@@ -2429,6 +2544,12 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     // IGeometry methods
     virtual int getDimension() const override;
 
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRSurface *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toSurface(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRSurface *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toSurface(); }
+
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
@@ -2442,6 +2563,12 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     static OGRMultiPolygon* CastToMultiPolygon( OGRMultiSurface* poMS );
+
+    OGR_ALLOW_CAST_TO_THIS(MultiSurface)
+    OGR_ALLOW_UPCAST_TO(GeometryCollection)
+    OGR_FORBID_DOWNCAST_TO_MULTIPOINT
+    OGR_FORBID_DOWNCAST_TO_MULTILINESTRING
+    OGR_FORBID_DOWNCAST_TO_MULTICURVE
 };
 
 //! @cond Doxygen_Suppress
@@ -2506,6 +2633,12 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
 
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRPolygon *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toPolygon(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRPolygon *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toPolygon(); }
+
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2535,6 +2668,9 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     static OGRMultiSurface* CastToMultiSurface( OGRMultiPolygon* poMP );
+
+    OGR_ALLOW_CAST_TO_THIS(MultiPolygon)
+    OGR_ALLOW_UPCAST_TO(MultiSurface)
 };
 
 //! @cond Doxygen_Suppress
@@ -2651,8 +2787,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRErr addGeometry( const OGRGeometry * );
     OGRErr addGeometryDirectly( OGRGeometry *poNewGeom );
     int getNumGeometries() const;
-    OGRGeometry* getGeometryRef(int i);
-    const OGRGeometry* getGeometryRef(int i) const;
+    OGRPolygon* getGeometryRef(int i);
+    const OGRPolygon* getGeometryRef(int i) const;
 
     virtual OGRBoolean  IsEmpty() const override;
     virtual void setCoordinateDimension( int nDimension ) override;
@@ -2665,6 +2801,9 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void    assignSpatialReference( OGRSpatialReference * poSR ) override;
+
+    OGR_ALLOW_CAST_TO_THIS(PolyhedralSurface)
+    OGR_ALLOW_UPCAST_TO(Surface)
 };
 
 //! @cond Doxygen_Suppress
@@ -2730,6 +2869,11 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual OGRTriangulatedSurface *clone() const override;
 
+    /** See OGRPolyhedralSurface::getGeometryRef() */
+    OGRTriangle* getGeometryRef(int i) { return OGRPolyhedralSurface::getGeometryRef(i)->toTriangle(); }
+    /** See OGRPolyhedralSurface::getGeometryRef() */
+    const OGRTriangle* getGeometryRef(int i) const { return OGRPolyhedralSurface::getGeometryRef(i)->toTriangle(); }
+
     // IWks Interface.
     virtual OGRErr addGeometry( const OGRGeometry * ) override;
 
@@ -2743,6 +2887,9 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
 
     static OGRPolyhedralSurface *
         CastToPolyhedralSurface( OGRTriangulatedSurface* poTS );
+
+    OGR_ALLOW_CAST_TO_THIS(TriangulatedSurface)
+    OGR_ALLOW_UPCAST_TO(PolyhedralSurface)
 };
 
 //! @cond Doxygen_Suppress
@@ -2797,6 +2944,12 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
 
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRPoint *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toPoint(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRPoint *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toPoint(); }
+
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2833,6 +2986,13 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     // Non-standard.
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
+
+    OGR_ALLOW_CAST_TO_THIS(MultiPoint)
+    OGR_ALLOW_UPCAST_TO(GeometryCollection)
+    OGR_FORBID_DOWNCAST_TO_MULTILINESTRING
+    OGR_FORBID_DOWNCAST_TO_MULTICURVE
+    OGR_FORBID_DOWNCAST_TO_MULTISURFACE
+    OGR_FORBID_DOWNCAST_TO_MULTIPOLYGON
 };
 
 //! @cond Doxygen_Suppress
@@ -2890,6 +3050,12 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
 
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRCurve *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toCurve(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRCurve *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toCurve(); }
+
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2928,6 +3094,12 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     static OGRMultiLineString* CastToMultiLineString(OGRMultiCurve* poMC);
+
+    OGR_ALLOW_CAST_TO_THIS(MultiCurve)
+    OGR_ALLOW_UPCAST_TO(GeometryCollection)
+    OGR_FORBID_DOWNCAST_TO_MULTIPOINT
+    OGR_FORBID_DOWNCAST_TO_MULTISURFACE
+    OGR_FORBID_DOWNCAST_TO_MULTIPOLYGON
 };
 
 //! @cond Doxygen_Suppress
@@ -2979,6 +3151,12 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
 
+    // IGeometryCollection
+    /** See OGRGeometryCollection::getGeometryRef() */
+    OGRLineString *getGeometryRef( int i) { return OGRGeometryCollection::getGeometryRef(i)->toLineString(); }
+    /** See OGRGeometryCollection::getGeometryRef() */
+    const OGRLineString *getGeometryRef( int i ) const { return OGRGeometryCollection::getGeometryRef(i)->toLineString(); }
+
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -3008,6 +3186,12 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     static OGRMultiCurve* CastToMultiCurve( OGRMultiLineString* poMLS );
+
+    OGR_ALLOW_CAST_TO_THIS(MultiLineString)
+    OGR_ALLOW_UPCAST_TO(MultiCurve)
+    OGR_FORBID_DOWNCAST_TO_MULTIPOINT
+    OGR_FORBID_DOWNCAST_TO_MULTISURFACE
+    OGR_FORBID_DOWNCAST_TO_MULTIPOLYGON
 };
 
 //! @cond Doxygen_Suppress

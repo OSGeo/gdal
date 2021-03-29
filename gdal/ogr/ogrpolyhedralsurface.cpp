@@ -817,9 +817,9 @@ int OGRPolyhedralSurface::getNumGeometries() const
  * @return pointer to requested geometry.
  */
 
-OGRGeometry* OGRPolyhedralSurface::getGeometryRef(int i)
+OGRPolygon* OGRPolyhedralSurface::getGeometryRef(int i)
 {
-    return oMP.papoGeoms[i];
+    return oMP.papoGeoms[i]->toPolygon();
 }
 
 /************************************************************************/
@@ -839,9 +839,9 @@ OGRGeometry* OGRPolyhedralSurface::getGeometryRef(int i)
  * @return pointer to requested geometry.
  */
 
-const OGRGeometry* OGRPolyhedralSurface::getGeometryRef(int i) const
+const OGRPolygon* OGRPolyhedralSurface::getGeometryRef(int i) const
 {
-    return oMP.papoGeoms[i];
+    return oMP.papoGeoms[i]->toPolygon();
 }
 
 /************************************************************************/
