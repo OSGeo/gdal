@@ -105,7 +105,9 @@ import org.gdal.osr.SpatialReference;
       else
         return null;
     }
+
 %}
+
 
 %typemap(javacode) GDAL_GCP %{
   public GCP(double x, double y, double z, double pixel, double line)

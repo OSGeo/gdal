@@ -30,10 +30,15 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+import java.nio.file.Paths;
 import org.gdal.gdal.gdal;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
@@ -159,6 +164,39 @@ public class GDALTestIO implements Runnable
         gdal.Unlink(filename);
     }
 
+    public static void testFileFromMemBuffer(String filename) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            FileInputStream fis = new FileInputStream(filename);
+            while (fis.available() > 0) {
+                bos.write(fis.read());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read from file", e);
+        }
+
+        byte[] bytes = bos.toByteArray();
+        ByteBuffer bufferBytes = ByteBuffer.wrap(bytes);
+        gdal.FileFromMemBuffer("/vsimem/test-bytes.tif", bytes);
+        gdal.FileFromMemBuffer("/vsimem/test-bytebuffer.tif", bufferBytes);
+
+
+        Dataset datasetFromBytes = gdal.Open("/vsimem/test-bytes.tif");
+        Dataset datasetFromByteBuffer = gdal.Open("/vsimem/test-bytebuffer.tif");
+
+        if (datasetFromBytes.GetRasterXSize() != datasetFromByteBuffer.getRasterXSize()) {
+            throw new RuntimeException("Different X Sizes " + datasetFromBytes.getRasterXSize() + " vs. " + datasetFromByteBuffer.getRasterXSize());
+        }
+        if (datasetFromBytes.GetRasterYSize() != datasetFromByteBuffer.getRasterYSize()) {
+            throw new RuntimeException("Different Y Sizes " + datasetFromBytes.getRasterYSize() + " vs. " + datasetFromByteBuffer.getRasterYSize());
+        }
+
+        datasetFromBytes.delete();
+        datasetFromByteBuffer.delete();
+        gdal.Unlink("/vsimem/test-bytes.tif");
+        gdal.Unlink("/vsimem/test-bytebuffer.tif");
+    }
+
     public static void main(String[] args) throws InterruptedException
     {
         gdal.AllRegister();
@@ -166,8 +204,12 @@ public class GDALTestIO implements Runnable
         int nbIters = 50;
 
         method = METHOD_JAVA_ARRAYS;
-        if (args.length >= 1 && args[0].equalsIgnoreCase("-dbb"))
+        if (args.length >= 1 && args[0].equalsIgnoreCase("-dbb")) {
             method = METHOD_DBB;
+        } else if (args.length >= 2 && args[0].equalsIgnoreCase("-membuffer")) {
+            testFileFromMemBuffer(args[1]);
+            return;
+        }
 
         Thread t1 = new Thread(new GDALTestIO("/vsimem/test1.tif", nbIters));
         Thread t2 = new Thread(new GDALTestIO("/vsimem/test2.tif", nbIters));

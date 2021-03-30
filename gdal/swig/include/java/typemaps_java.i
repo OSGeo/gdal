@@ -62,11 +62,6 @@
 
 %typemap(javain) SWIGTYPE *DISOWN "$javaclassname.getCPtrAndDisown($javainput)"
 
-%typemap(in, numinputs=0) JNIEnv *jenv %{
-   $1 = jenv;
-%}
-
-
 /* JAVA TYPEMAPS */
 
 /***************************************************
@@ -377,14 +372,27 @@
   }
 
 /***************************************************
- * Typemaps for  (jobject outBuffer)
+ * Typemaps for  (GByte **outBuffer)
  ***************************************************/
 
-%typemap(jni) (jobject outBuffer) "jobject"
-%typemap(jtype) (jobject outBuffer)  "java.nio.ByteBuffer"
-%typemap(jstype) (jobject outBuffer)  "java.nio.ByteBuffer"
-%typemap(javain) (jobject outBuffer)  "$javainput"
-%typemap(javaout) (jobject outBuffer) {
+%typemap(in, numinputs=0) (GByte **out, vsi_l_offset *length) (GByte *out, vsi_l_offset length) {
+  /* GByte** out, vsi_l_offset *length */
+  $1 = &out;
+  $2 = &length;
+}
+
+%typemap(argout) (GByte **out, vsi_l_offset *length) {
+  /* GByte** out, vsi_l_offset *length */
+  $result = jenv->NewByteArray(length$argnum);
+  jenv->SetByteArrayRegion($result, (jsize)0, (jsize)length$argnum, (jbyte*)result);
+  CPLFree(result);
+}
+
+%typemap(jni) (GByte **out, vsi_l_offset *length) "jbyteArray"
+%typemap(jtype) (GByte **out, vsi_l_offset *length) "byte[]"
+%typemap(jstype) (GByte **out, vsi_l_offset *length) "byte[]"
+%typemap(javain) (GByte **out, vsi_l_offset *length) "$javainput"
+%typemap(javaout) (GByte** out, vsi_l_offset *length) {
     return $jnicall;
   }
 

@@ -100,6 +100,7 @@ test:
 	${JAVA_RUN} OSRTransform
 	${JAVA_RUN} gdalmajorobject
 	${JAVA_RUN} GDALTestIO
+	${JAVA_RUN} GDALTestIO -membuffer tmp_test/byte.tif
 	${JAVA_RUN} GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
 	${JAVA_RUN} testgetpoints
 	${JAVA_RUN} ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp

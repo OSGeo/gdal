@@ -186,7 +186,6 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
-%rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
 %rename (Unlink) VSIUnlink;
 %rename (HasThreadSupport) wrapper_HasThreadSupport;
 %rename (NetworkStatsReset) VSINetworkStatsReset;
@@ -487,6 +486,7 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 /* Added in GDAL 1.7.0 */
 
 #if defined(SWIGPYTHON)
+%rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer
 
 %apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const char *pabyData )};
 %inline {
@@ -530,16 +530,21 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, void* nioBuffer, long 
 #endif
 
 #if defined(SWIGJAVA)
-%apply (jobject outBuffer) {jobject};
+
+%rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
+
+%apply (GByte* outBytes) {GByte*};
+%apply (GByte **out, vsi_l_offset *length) {(GByte* out, vsi_l_offset length)};
 %inline %{
-jobject wrapper_VSIGetMemFileBuffer(JNIEnv *jenv, const char* utf8_path) {
-    vsi_l_offset outBufferLen = 0;
-    GByte* result = VSIGetMemFileBuffer(utf8_path, &outBufferLen, FALSE);
-    return jenv->NewDirectByteBuffer((void*) result, outBufferLen);
+GByte* wrapper_VSIGetMemFileBuffer(const char* utf8_path, GByte **out, vsi_l_offset *length) {
+    *out = VSIGetMemFileBuffer(utf8_path, length, FALSE);
+    return *out;
 }
 %}
-%clear (jobject outBuffer);
+%clear (GByte **out, vsi_l_offset *length);
+%clear (GByte* outBytes);
 #endif
+
 
 
 /* Added in GDAL 1.7.0 */
