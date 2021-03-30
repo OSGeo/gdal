@@ -271,6 +271,12 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JP2ECW();
 #endif
 
+#ifdef FRMT_grok
+    // JPEG2000 support using Grok library
+    GDALRegister_JP2Grok();
+#endif
+
+
 #ifdef FRMT_openjpeg
     // JPEG2000 support using OpenJPEG library
     GDALRegister_JP2OpenJPEG();

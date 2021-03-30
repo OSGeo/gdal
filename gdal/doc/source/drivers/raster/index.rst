@@ -107,6 +107,7 @@ Raster drivers
    jp2lura
    jp2mrsid
    jp2openjpeg
+   jp2grok
    jpeg2000
    jpegls
    jpeg

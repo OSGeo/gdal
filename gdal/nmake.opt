@@ -767,6 +767,13 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #OPENJPEG_CFLAGS = -IC:\openjpeg\include\openjpeg-2.X
 #OPENJPEG_LIB = C:\openjpeg\lib\openjp2.lib
 
+# Uncomment for Grok support
+#GROK_ENABLED = YES
+# Note: this must point to the
+# directory where grok.h and grk_config.h are set
+#GROK_CFLAGS = -IC:\grok\include\grok-X
+#OPENJPEG_LIB = C:\grok\lib\grokj2k.lib
+
 #if using an external zlib uncomment the following lines
 #ZLIB_EXTERNAL_LIB = 1
 #ZLIB_INC = -IC:\projects\zlib

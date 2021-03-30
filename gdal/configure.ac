@@ -3381,6 +3381,46 @@ if test "$HAVE_OPENJPEG" != "no" ; then
   OPT_GDAL_FORMATS="openjpeg $OPT_GDAL_FORMATS"
 fi
 
+
+
+dnl ---------------------------------------------------------------------------
+dnl Select a Grok Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(grok,[  --with-grok     Include JPEG-2000 support via Grok library],,)
+
+HAVE_GROK=no
+
+if test "$with_grok" = "no" ; then
+
+  AC_MSG_NOTICE([Grok (JPEG2000) support disabled.])
+
+else
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([GROK], [libgrokj2k >= 9.0.0],
+        [GROK_VERSION=`$PKG_CONFIG --modversion libgrokj2k`],
+        [GROK_VERSION=;])
+
+  if test -n "$GROK_CFLAGS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$GROK_LIBS"
+    AC_CHECK_LIB(grokj2k,grk_version, [HAVE_GROK=yes], [HAVE_GROK=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_GROK" = "yes"; then
+        EXTRA_INCLUDES="$GROK_CFLAGS $EXTRA_INCLUDES"
+        LIBS="$GROK_LIBS $LIBS"
+    fi
+  fi
+fi
+
+if test "$HAVE_GROK" != "no" ; then
+  OPT_GDAL_FORMATS="grok $OPT_GDAL_FORMATS"
+fi
+
 dnl ---------------------------------------------------------------------------
 dnl Select a FGDB API to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -6111,6 +6151,9 @@ LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
 LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
+LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
+LOC_MSG([  Grok support:              ${HAVE_GROK}])
+LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])

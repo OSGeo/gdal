@@ -463,6 +463,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                     aosAllowedDrivers.AddString("JP2ECW");
                     aosAllowedDrivers.AddString("JP2MrSID");
                     aosAllowedDrivers.AddString("JP2OpenJPEG");
+                    aosAllowedDrivers.AddString("JP2Grok");
                     if( bDownloadWholeMetaTile &&
                         (STARTS_WITH(osURL, "/vsis3/") ||
                         STARTS_WITH(osURL, "/vsicurl/")) )

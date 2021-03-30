@@ -379,7 +379,7 @@ void GeoRasterDataset::JP2_Open( GDALAccess /* eAccess */ )
 {
     GDALDriver* poJP2Driver = nullptr;
 
-    static const char * const apszDrivers[] = { "JP2OPENJPEG", "JP2ECW", "JP2MRSID",
+    static const char * const apszDrivers[] = { "JP2GROK", "JP2OPENJPEG", "JP2ECW", "JP2MRSID",
                                                 "JPEG2000", "JP2KAK", nullptr };
 
     // Find at least one available JP2 driver
@@ -430,7 +430,7 @@ void GeoRasterDataset::JP2_Open( GDALAccess /* eAccess */ )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Unable to open JPEG2000 image within GeoRaster dataset.\n%s",
-            "No JPEG2000 capable driver (JP2OPENJPEG, "
+            "No JPEG2000 capable driver (JP2GROK, JP2OPENJPEG, "
             "JP2ECW, JP2MRSID, etc...) is available." );
     }
 }
@@ -447,7 +447,7 @@ void GeoRasterDataset::JP2_CreateCopy( GDALDataset* poJP2DS,
 {
     GDALDriver* poJP2Driver = nullptr;
 
-    static const char * const apszDrivers[] = { "JP2OPENJPEG", "JP2ECW", "JP2MRSID",
+    static const char * const apszDrivers[] = { "JP2GROK", "JP2OPENJPEG", "JP2ECW", "JP2MRSID",
                                                 "JPEG2000", "JP2KAK", nullptr };
 
     // Find at least one available JP2 driver
@@ -571,7 +571,7 @@ void GeoRasterDataset::JP2_CreateCopy( GDALDataset* poJP2DS,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Unable to copy JPEG2000 image within GeoRaster dataset.\n%s",
-            "No JPEG2000 capable driver (JP2OPENJPEG, "
+            "No JPEG2000 capable driver (JP2GROK, JP2OPENJPEG, "
             "JP2ECW, JP2MRSID, etc...) is available." );
         return;
     }

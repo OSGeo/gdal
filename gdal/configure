@@ -34228,6 +34228,273 @@ fi
 
 
 
+# Check whether --with-grok was given.
+if test "${with_grok+set}" = set; then :
+  withval=$with_grok;
+fi
+
+
+HAVE_GROK=no
+
+if test "$with_grok" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: Grok (JPEG2000) support disabled." >&5
+$as_echo "$as_me: Grok (JPEG2000) support disabled." >&6;}
+
+else
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.21
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Grok" >&5
+$as_echo_n "checking for Grok... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$GROK_CFLAGS"; then
+        pkg_cv_GROK_CFLAGS="$GROK_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libgrokj2k >= 8.0.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libgrokj2k >= 8.0.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GROK_CFLAGS=`$PKG_CONFIG --cflags "libgrokj2k >= 8.0.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$GROK_LIBS"; then
+        pkg_cv_GROK_LIBS="$GROK_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libgrokj2k >= 8.0.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libgrokj2k >= 8.0.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GROK_LIBS=`$PKG_CONFIG --libs "libgrokj2k >= 8.0.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GROK_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libgrokj2k >= 8.0.0"`
+        else
+	        GROK_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libgrokj2k >= 8.0.0"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GROK_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                GROK_VERSION=;
+elif test $pkg_failed = untried; then
+	GROK_VERSION=;
+else
+	GROK_CFLAGS=$pkg_cv_GROK_CFLAGS
+	GROK_LIBS=$pkg_cv_GROK_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	GROK_VERSION=`$PKG_CONFIG --modversion libgrokj2k`
+fi
+
+  if test -n "$GROK_CFLAGS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$GROK_LIBS"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for grk_version in -lgrokj2k" >&5
+$as_echo_n "checking for grk_version in -lgrokj2k... " >&6; }
+if ${ac_cv_lib_grokj2k_grk_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgrokj2k  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+const char* grk_version ();
+int
+main ()
+{
+  grk_version ();
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_grokj2k_grk_version=yes
+else
+  ac_cv_lib_grokj2k_grk_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_grokj2k_grk_version" >&5
+$as_echo "$ac_cv_lib_grokj2k_grk_version" >&6; }
+if test "x$ac_cv_lib_grokj2k_grk_version" = xyes; then :
+  HAVE_GROK=yes
+else
+  HAVE_GROK=no
+fi
+
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_GROK" = "yes"; then
+        EXTRA_INCLUDES="$GROK_CFLAGS $EXTRA_INCLUDES"
+        LIBS="$GROK_LIBS $LIBS"
+    fi
+  fi
+fi
+
+if test "$HAVE_GROK" != "no" ; then
+  OPT_GDAL_FORMATS="grok $OPT_GDAL_FORMATS"
+fi
+
+
+
+
+
+
 # Check whether --with-fgdb was given.
 if test "${with_fgdb+set}" = set; then :
   withval=$with_fgdb;
@@ -45036,6 +45303,7 @@ echo "  JPEG 12 bit:               ${JPEG12_ENABLED}"
 
 echo "  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}"
 
+
 if test "x$HAVE_JASPER_UUID" != "x" ; then
 
 echo "  JPEG JasPer support:       ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})"
@@ -45124,6 +45392,9 @@ echo "  OGDI support:              ${HAVE_OGDI}"
 
 
 echo "  OpenCL support:            ${OPENCL_SETTING}"
+
+
+echo "  Grok support:              ${HAVE_GROK}"
 
 
 echo "  OpenJPEG support:          ${HAVE_OPENJPEG}"
