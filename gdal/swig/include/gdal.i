@@ -100,7 +100,9 @@ typedef void OGRLayerShadow;
 typedef void OGRFeatureShadow;
 typedef void OGRGeometryShadow;
 #endif
+
 typedef struct OGRStyleTableHS OGRStyleTableShadow;
+typedef struct OGRFieldDomainHS OGRFieldDomainShadow;
 %}
 #endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
 

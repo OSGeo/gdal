@@ -139,6 +139,8 @@ int OGRMemDataSource::TestCapability( const char *pszCap )
         return TRUE;
     else if( EQUAL(pszCap, ODsCRandomLayerWrite) )
         return TRUE;
+    else if( EQUAL(pszCap, ODsCAddFieldDomain) )
+        return TRUE;
 
     return FALSE;
 }
@@ -154,4 +156,21 @@ OGRLayer *OGRMemDataSource::GetLayer( int iLayer )
         return nullptr;
 
     return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                           AddFieldDomain()                           */
+/************************************************************************/
+
+bool OGRMemDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                      std::string& failureReason)
+{
+    if( GetFieldDomain(domain->GetName()) != nullptr )
+    {
+        failureReason = "A domain of identical name already exists";
+        return false;
+    }
+    const auto domainName = domain->GetName();
+    m_oMapFieldDomains[domainName] = std::move(domain);
+    return true;
 }

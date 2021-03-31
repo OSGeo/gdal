@@ -827,6 +827,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODsCRandomLayerRead     "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
 /* Note the unfortunate trailing space at the end of the string */
 #define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
+#define ODsCAddFieldDomain     "AddFieldDomain"    /**< Dataset capability for supporting AddFieldDomain() (at least partially) */
 
 #define ODrCCreateDataSource   "CreateDataSource"   /**< Driver capability for datasource creation */
 #define ODrCDeleteDataSource   "DeleteDataSource"   /**< Driver capability for datasource deletion */
@@ -960,6 +961,71 @@ typedef enum ogr_style_tool_param_label_id
     OGRSTLabelLast      = 21
 #endif
 } OGRSTLabelParam;
+
+/* -------------------------------------------------------------------- */
+/*                          Field domains                               */
+/* -------------------------------------------------------------------- */
+
+/** Associates a code and a value
+ *
+ * @since GDAL 3.3
+ */
+typedef struct
+{
+    /** Code. Content should be of the type of the OGRFieldDomain */
+    char* pszCode;
+
+    /** Value. Might be NULL */
+    char* pszValue;
+} OGRCodedValue;
+
+/** Type of field domain.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Coded */
+    OFDT_CODED,
+    /** Range (min/max) */
+    OFDT_RANGE,
+    /** Glob (used by GeoPackage) */
+    OFDT_GLOB
+} OGRFieldDomainType;
+
+/** Split policy for field domains.
+ *
+ * When a feature is split in two, defines how the value of attributes
+ * following the domain are computed.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Default value */
+    OFDSP_DEFAULT_VALUE,
+    /** Duplicate */
+    OFDSP_DUPLICATE,
+    /** New values are computed by the ratio of their area/length compared to the area/length of the original feature */
+    OFDSP_GEOMETRY_RATIO
+} OGRFieldDomainSplitPolicy;
+
+/** Merge policy for field domains.
+ *
+ * When a feature is built by merging two features, defines how the value of
+ * attributes following the domain are computed.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Default value */
+    OFDMP_DEFAULT_VALUE,
+    /** Sum */
+    OFDMP_SUM,
+    /** New values are computed as the weighted average of the source values. */
+    OFDMP_GEOMETRY_WEIGHTED
+} OGRFieldDomainMergePolicy;
 
 /* ------------------------------------------------------------------- */
 /*                        Version checking                             */

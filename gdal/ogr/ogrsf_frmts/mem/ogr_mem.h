@@ -143,6 +143,9 @@ class OGRMemDataSource CPL_NON_FINAL: public OGRDataSource
     OGRErr              DeleteLayer( int iLayer ) override;
 
     int                 TestCapability( const char * ) override;
+
+    bool                AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                       std::string& failureReason) override;
 };
 
 /************************************************************************/
