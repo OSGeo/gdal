@@ -6017,7 +6017,8 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
           PyObject *k, *v;
           if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
             Py_DECREF(it);
-            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
+            Py_DECREF(item_list);
+            PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
             SWIG_fail;
           }
           
@@ -6029,6 +6030,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
             GDALPythonFreeCStr(pszK, bFreeK);
             GDALPythonFreeCStr(pszV, bFreeV);
             Py_DECREF(it);
+            Py_DECREF(item_list);
             PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
             SWIG_fail;
           }

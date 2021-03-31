@@ -858,7 +858,8 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         PyObject *k, *v;
         if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
           Py_DECREF(it);
-          PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
+          Py_DECREF(item_list);
+          PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
           SWIG_fail;
         }
 
@@ -870,6 +871,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
             GDALPythonFreeCStr(pszK, bFreeK);
             GDALPythonFreeCStr(pszV, bFreeV);
             Py_DECREF(it);
+            Py_DECREF(item_list);
             PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
             SWIG_fail;
         }
