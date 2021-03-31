@@ -1263,6 +1263,76 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Select a JPEG Library to use, or disable driver.
+dnl libtiff could depend on it so it must appear before.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support (ARG=internal, no or path)],,)
+
+if test "$with_jpeg" = "no" ; then
+
+  JPEG_SETTING=no
+
+  echo "jpeg support disabled."
+
+elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
+
+  AC_CHECK_LIB(jpeg,jpeg_read_scanlines,JPEG_SETTING=external,JPEG_SETTING=internal,)
+  AC_CHECK_HEADERS(jpeglib.h)
+
+  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
+    JPEG_SETTING=internal
+  fi
+
+  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
+    AC_MSG_CHECKING([for width_in_blocks in jpeglib.h])
+
+    rm -f conftest.c
+    echo '#include <stdio.h>' >> conftest.c
+    echo '#include "jpeglib.h"' >> conftest.c
+    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
+    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
+      AC_MSG_RESULT([yes])
+    else
+      AC_MSG_RESULT([no])
+      JPEG_SETTING=internal
+    fi
+    rm -f conftest*
+  fi
+
+  if test "$JPEG_SETTING" = "external" ; then
+    LIBS="-ljpeg $LIBS"
+    echo "using pre-installed libjpeg."
+  else
+    echo "using internal jpeg code."
+  fi
+
+elif test "$with_jpeg" = "internal" ; then
+
+  JPEG_SETTING=internal
+
+  echo "using internal jpeg code."
+
+else
+
+  JPEG_SETTING=external
+  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
+  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
+
+  echo "using libjpeg from $with_jpeg."
+
+fi
+
+AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
+
+if test "$JPEG_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
+fi
+
+
+
+
+dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.
 dnl Proj depends on it so it must appear before.
 dnl ---------------------------------------------------------------------------
@@ -2324,72 +2394,6 @@ fi
 
 AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
 AC_SUBST(GEOTIFF_INCLUDE,$GEOTIFF_INCLUDE)
-
-dnl ---------------------------------------------------------------------------
-dnl Select a JPEG Library to use, or disable driver.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support (ARG=internal, no or path)],,)
-
-if test "$with_jpeg" = "no" ; then
-
-  JPEG_SETTING=no
-
-  echo "jpeg support disabled."
-
-elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
-
-  AC_CHECK_LIB(jpeg,jpeg_read_scanlines,JPEG_SETTING=external,JPEG_SETTING=internal,)
-  AC_CHECK_HEADERS(jpeglib.h)
-
-  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
-    JPEG_SETTING=internal
-  fi
-
-  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
-    AC_MSG_CHECKING([for width_in_blocks in jpeglib.h])
-
-    rm -f conftest.c
-    echo '#include <stdio.h>' >> conftest.c
-    echo '#include "jpeglib.h"' >> conftest.c
-    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
-    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
-      AC_MSG_RESULT([yes])
-    else
-      AC_MSG_RESULT([no])
-      JPEG_SETTING=internal
-    fi
-    rm -f conftest*
-  fi
-
-  if test "$JPEG_SETTING" = "external" ; then
-    LIBS="-ljpeg $LIBS"
-    echo "using pre-installed libjpeg."
-  else
-    echo "using internal jpeg code."
-  fi
-
-elif test "$with_jpeg" = "internal" ; then
-
-  JPEG_SETTING=internal
-
-  echo "using internal jpeg code."
-
-else
-
-  JPEG_SETTING=external
-  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
-  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
-
-  echo "using libjpeg from $with_jpeg."
-
-fi
-
-AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
-
-if test "$JPEG_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
-fi
 
 
 dnl ---------------------------------------------------------------------------

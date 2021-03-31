@@ -800,7 +800,6 @@ TIFF_JPEG12_ENABLED
 JPEG12_ENABLED
 CHARLS_INC
 HAVE_CHARLS
-JPEG_SETTING
 GEOTIFF_INCLUDE
 GEOTIFF_SETTING
 PCIDSK_INCLUDE
@@ -842,6 +841,7 @@ CURL_INC
 CURL_SETTING
 LIBCURL_CONFIG
 TIFF_SETTING
+JPEG_SETTING
 bashcompdir
 PKG_CONFIG
 LTLIBICONV
@@ -992,6 +992,7 @@ with_libdeflate
 enable_rpath
 with_libiconv_prefix
 with_bash_completion
+with_jpeg
 with_libtiff
 with_curl
 with_sqlite3
@@ -1142,7 +1143,6 @@ with_dds
 with_gta
 with_pcidsk
 with_geotiff
-with_jpeg
 with_charls
 with_jpeg12
 with_gif
@@ -2126,6 +2126,7 @@ Optional Packages:
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
   --with-bash-completion=ARG
                           Install Bash completions (ARG=yes or path)
+  --with-jpeg=ARG       Include JPEG support (ARG=internal, no or path)
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
@@ -2146,7 +2147,6 @@ Optional Packages:
   --with-gta=ARG        Include GTA support (ARG=no or libgta tree prefix)
   --with-pcidsk=ARG     Path to external PCIDSK SDK or internal (default)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
-  --with-jpeg=ARG       Include JPEG support (ARG=internal, no or path)
   --with-charls           Include JPEG-Lossless support
   --without-jpeg12        Disable JPEG 8/12bit TIFF support
   --with-gif=ARG        Include GIF support (ARG=internal, no or path)
@@ -24320,6 +24320,133 @@ fi
 
 
 
+# Check whether --with-jpeg was given.
+if test "${with_jpeg+set}" = set; then :
+  withval=$with_jpeg;
+fi
+
+
+if test "$with_jpeg" = "no" ; then
+
+  JPEG_SETTING=no
+
+  echo "jpeg support disabled."
+
+elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jpeg_read_scanlines in -ljpeg" >&5
+$as_echo_n "checking for jpeg_read_scanlines in -ljpeg... " >&6; }
+if ${ac_cv_lib_jpeg_jpeg_read_scanlines+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljpeg  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char jpeg_read_scanlines ();
+int
+main ()
+{
+return jpeg_read_scanlines ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_jpeg_jpeg_read_scanlines=yes
+else
+  ac_cv_lib_jpeg_jpeg_read_scanlines=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jpeg_jpeg_read_scanlines" >&5
+$as_echo "$ac_cv_lib_jpeg_jpeg_read_scanlines" >&6; }
+if test "x$ac_cv_lib_jpeg_jpeg_read_scanlines" = xyes; then :
+  JPEG_SETTING=external
+else
+  JPEG_SETTING=internal
+fi
+
+  for ac_header in jpeglib.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "jpeglib.h" "ac_cv_header_jpeglib_h" "$ac_includes_default"
+if test "x$ac_cv_header_jpeglib_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_JPEGLIB_H 1
+_ACEOF
+
+fi
+
+done
+
+
+  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
+    JPEG_SETTING=internal
+  fi
+
+  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for width_in_blocks in jpeglib.h" >&5
+$as_echo_n "checking for width_in_blocks in jpeglib.h... " >&6; }
+
+    rm -f conftest.c
+    echo '#include <stdio.h>' >> conftest.c
+    echo '#include "jpeglib.h"' >> conftest.c
+    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
+    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      JPEG_SETTING=internal
+    fi
+    rm -f conftest*
+  fi
+
+  if test "$JPEG_SETTING" = "external" ; then
+    LIBS="-ljpeg $LIBS"
+    echo "using pre-installed libjpeg."
+  else
+    echo "using internal jpeg code."
+  fi
+
+elif test "$with_jpeg" = "internal" ; then
+
+  JPEG_SETTING=internal
+
+  echo "using internal jpeg code."
+
+else
+
+  JPEG_SETTING=external
+  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
+  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
+
+  echo "using libjpeg from $with_jpeg."
+
+fi
+
+JPEG_SETTING=$JPEG_SETTING
+
+
+if test "$JPEG_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
+fi
+
+
+
+
+
+
 # Check whether --with-libtiff was given.
 if test "${with_libtiff+set}" = set; then :
   withval=$with_libtiff;
@@ -31084,130 +31211,6 @@ GEOTIFF_SETTING=$GEOTIFF_SETTING
 
 GEOTIFF_INCLUDE=$GEOTIFF_INCLUDE
 
-
-
-
-# Check whether --with-jpeg was given.
-if test "${with_jpeg+set}" = set; then :
-  withval=$with_jpeg;
-fi
-
-
-if test "$with_jpeg" = "no" ; then
-
-  JPEG_SETTING=no
-
-  echo "jpeg support disabled."
-
-elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jpeg_read_scanlines in -ljpeg" >&5
-$as_echo_n "checking for jpeg_read_scanlines in -ljpeg... " >&6; }
-if ${ac_cv_lib_jpeg_jpeg_read_scanlines+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ljpeg  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char jpeg_read_scanlines ();
-int
-main ()
-{
-return jpeg_read_scanlines ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_jpeg_jpeg_read_scanlines=yes
-else
-  ac_cv_lib_jpeg_jpeg_read_scanlines=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jpeg_jpeg_read_scanlines" >&5
-$as_echo "$ac_cv_lib_jpeg_jpeg_read_scanlines" >&6; }
-if test "x$ac_cv_lib_jpeg_jpeg_read_scanlines" = xyes; then :
-  JPEG_SETTING=external
-else
-  JPEG_SETTING=internal
-fi
-
-  for ac_header in jpeglib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "jpeglib.h" "ac_cv_header_jpeglib_h" "$ac_includes_default"
-if test "x$ac_cv_header_jpeglib_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_JPEGLIB_H 1
-_ACEOF
-
-fi
-
-done
-
-
-  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
-    JPEG_SETTING=internal
-  fi
-
-  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for width_in_blocks in jpeglib.h" >&5
-$as_echo_n "checking for width_in_blocks in jpeglib.h... " >&6; }
-
-    rm -f conftest.c
-    echo '#include <stdio.h>' >> conftest.c
-    echo '#include "jpeglib.h"' >> conftest.c
-    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
-    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-      JPEG_SETTING=internal
-    fi
-    rm -f conftest*
-  fi
-
-  if test "$JPEG_SETTING" = "external" ; then
-    LIBS="-ljpeg $LIBS"
-    echo "using pre-installed libjpeg."
-  else
-    echo "using internal jpeg code."
-  fi
-
-elif test "$with_jpeg" = "internal" ; then
-
-  JPEG_SETTING=internal
-
-  echo "using internal jpeg code."
-
-else
-
-  JPEG_SETTING=external
-  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
-  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
-
-  echo "using libjpeg from $with_jpeg."
-
-fi
-
-JPEG_SETTING=$JPEG_SETTING
-
-
-if test "$JPEG_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
-fi
 
 
 
