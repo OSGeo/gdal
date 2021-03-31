@@ -863,22 +863,43 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
           SWIG_fail;
         }
 
+        PyObject* kStr = PyObject_Str(k);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(item_list);
+            SWIG_fail;
+        }
+
+        PyObject* vStr = PyObject_Str(v);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(kStr);
+            Py_DECREF(item_list);
+            SWIG_fail;
+        }
+
         int bFreeK, bFreeV;
-        char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
-        char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
+        char* pszK = GDALPythonObjectToCStr(kStr, &bFreeK);
+        char* pszV = GDALPythonObjectToCStr(vStr, &bFreeV);
         if( pszK == NULL || pszV == NULL )
         {
             GDALPythonFreeCStr(pszK, bFreeK);
             GDALPythonFreeCStr(pszV, bFreeV);
+            Py_DECREF(kStr);
+            Py_DECREF(vStr);
             Py_DECREF(it);
             Py_DECREF(item_list);
-            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
+            PyErr_SetString(PyExc_TypeError,"Cannot get key/value as string");
             SWIG_fail;
         }
-         $1 = CSLAddNameValue( $1, pszK, pszV );
+        $1 = CSLAddNameValue( $1, pszK, pszV );
 
         GDALPythonFreeCStr(pszK, bFreeK);
         GDALPythonFreeCStr(pszV, bFreeV);
+        Py_DECREF(kStr);
+        Py_DECREF(vStr);
         Py_DECREF(it);
       }
       Py_DECREF(item_list);

@@ -419,17 +419,14 @@ def test_basic_test_14():
     ds.SetMetadata({'foo': 'baz'})
     assert ds.GetMetadata_List() == ['foo=baz']
 
-    with pytest.raises(Exception):
-        ds.SetMetadata({'foo': 5})
+    ds.SetMetadata({'foo': 5})
+    assert ds.GetMetadata_List() == ['foo=5']
 
+    ds.SetMetadata({5: 'baz'})
+    assert ds.GetMetadata_List() == ['5=baz']
 
-    with pytest.raises(Exception):
-        ds.SetMetadata({5: 'baz'})
-
-
-    with pytest.raises(Exception):
-        ds.SetMetadata({5: 6})
-
+    ds.SetMetadata({5: 6})
+    assert ds.GetMetadata_List() == ['5=6']
 
     val = '\u00e9ven'
 
@@ -439,13 +436,23 @@ def test_basic_test_14():
     ds.SetMetadata({val: 'baz'})
     assert ds.GetMetadata()[val] == 'baz'
 
+    ds.SetMetadata({val: 5})
+    assert ds.GetMetadata_List() == ['\u00e9ven=5']
+
+    ds.SetMetadata({5: val})
+    assert ds.GetMetadata_List() == ['5=\u00e9ven']
+
+    class ClassWithoutStrRepr:
+        def __init__(self):
+            pass
+        def __str__(self):
+            raise Exception('no string representation')
+
     with pytest.raises(Exception):
-        ds.SetMetadata({val: 5})
-
+        ds.SetMetadata({'a': ClassWithoutStrRepr()})
 
     with pytest.raises(Exception):
-        ds.SetMetadata({5: val})
-
+        ds.SetMetadata({ClassWithoutStrRepr(): 'a'})
 
 
 ###############################################################################
