@@ -146,20 +146,21 @@ static void readraster_releasebuffer(CPLErr eErr,
 
 
   have_warned = 0
-  def deprecation_warn(module, sub_package=None):
-    global have_warned
+  def deprecation_warn(module, sub_package=None, new_module=None):
+      global have_warned
 
-    if have_warned == 1:
-        return
+      if have_warned == 1:
+          return
 
-    have_warned = 1
-    if sub_package:
-        new_module = sub_package+'.'+module
-    else:
-        new_module = module
+      have_warned = 1
+      if sub_package is None or sub_package == 'utils':
+          sub_package = 'osgeo_utils'
+      if new_module is None:
+          new_module = module
+      new_module = '{}.{}'.format(sub_package, new_module)
 
-    from warnings import warn
-    warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module, new_module),
+      from warnings import warn
+      warn('{}.py was placed in a namespace, it is now available as {}' .format(module, new_module),
          DeprecationWarning)
 
 
