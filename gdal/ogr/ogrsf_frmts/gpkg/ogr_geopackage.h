@@ -296,6 +296,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         bool                    HasDataColumnsTable();
         bool                    HasDataColumnConstraintsTable();
+        bool                CreateColumnsTableAndColumnConstraintsTablesIfNecessary();
 
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
