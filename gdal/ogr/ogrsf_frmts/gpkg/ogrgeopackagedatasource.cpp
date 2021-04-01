@@ -3198,6 +3198,9 @@ bool GDALGeoPackageDataset::CreateColumnsTableAndColumnConstraintsTablesIfNecess
 {
     if( !HasDataColumnsTable() )
     {
+        // Geopackage < 1.3 had
+        // CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+        // instead of the unique constraint.
         if( OGRERR_NONE != SQLCommand(GetDB(),
             "CREATE TABLE gpkg_data_columns ("
             "table_name TEXT NOT NULL,"
@@ -3208,8 +3211,7 @@ bool GDALGeoPackageDataset::CreateColumnsTableAndColumnConstraintsTablesIfNecess
             "mime_type TEXT,"
             "constraint_name TEXT,"
             "CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),"
-            "CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) "
-            "REFERENCES gpkg_contents(table_name));") )
+            "CONSTRAINT gdc_tn UNIQUE (table_name, name));") )
         {
             return false;
         }
