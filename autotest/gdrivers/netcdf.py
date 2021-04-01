@@ -1544,7 +1544,7 @@ def test_netcdf_50():
     out_ds = gdal.OpenEx('tmp/netcdf_50.nc', gdal.OF_VECTOR)
     out_lyr = out_ds.GetLayer(0)
     srs = out_lyr.GetSpatialRef().ExportToWkt()
-    assert 'PROJCS["OSGB 1936' in srs
+    assert 'PROJCS["OSGB' in srs
     out_f = out_lyr.GetNextFeature()
     out_f.SetFID(-1)
     out_json = out_f.ExportToJson()
@@ -1751,7 +1751,7 @@ def test_netcdf_53():
     out_ds = gdal.OpenEx('tmp/netcdf_53.nc', gdal.OF_VECTOR)
     out_lyr = out_ds.GetLayer(0)
     srs = out_lyr.GetSpatialRef().ExportToWkt()
-    assert 'PROJCS["OSGB 1936' in srs
+    assert 'PROJCS["OSGB' in srs
     out_f = out_lyr.GetNextFeature()
     out_f.SetFID(-1)
     out_json = out_f.ExportToJson()

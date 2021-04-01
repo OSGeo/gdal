@@ -740,7 +740,7 @@ Definition Table
     assert gt == (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0), \
         'did not get expected geotransform'
 
-    assert wkt.find('OSGB_1936') != -1, 'did not get expected SRS'
+    assert '_1936' in wkt, 'did not get expected SRS'
 
 ###############################################################################
 # Test reading PixelIsPoint file.
@@ -2188,7 +2188,7 @@ def test_tiff_read_nogeoref():
 
     tests = [(None, True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              (None, True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
-             (None, False, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             (None, False, True, True, '_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
              (None, True, False, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              (None, False, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              (None, False, False, False, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
@@ -2199,7 +2199,7 @@ def test_tiff_read_nogeoref():
              ('INTERNAL,WORLDFILE,PAM', True, True, True, 'LOCAL_CS["PAM"]', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
              ('WORLDFILE,PAM,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
              ('PAM,WORLDFILE,INTERNAL', False, False, True, '', (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)),
-             ('TABFILE,WORLDFILE,INTERNAL', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             ('TABFILE,WORLDFILE,INTERNAL', True, True, True, '_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
              ('PAM', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              ('PAM,WORLDFILE', True, True, False, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              ('WORLDFILE', True, True, False, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
@@ -2267,8 +2267,8 @@ def test_tiff_read_inconsistent_georef():
              ('PAM', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              ('PAM,TABFILE', True, True, True, 'LOCAL_CS["PAM"]', (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
              ('WORLDFILE', True, True, True, '', (99.5, 1.0, 0.0, 200.5, 0.0, -1.0)),
-             ('TABFILE', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
-             ('TABFILE,PAM', True, True, True, 'OSGB_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             ('TABFILE', True, True, True, '_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
+             ('TABFILE,PAM', True, True, True, '_1936', (400000.0, 25.0, 0.0, 1300000.0, 0.0, -25.0)),
             ]
 
     for (config_option_value, copy_pam, copy_worldfile, copy_tabfile, expected_srs, expected_gt) in tests:
