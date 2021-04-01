@@ -36,6 +36,7 @@
 #include "cpl_string.h"
 #include "FGdbUtils.h"
 #include "cpl_minixml.h" // the only way right now to extract schema information
+#include "filegdb_gdbtoogrfieldtype.h"
 
 CPL_CVSID("$Id$")
 

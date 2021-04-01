@@ -26,7 +26,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef FILEGDB_FIELDDOMAIN_H
+#define FILEGDB_FIELDDOMAIN_H
+
 #include "cpl_minixml.h"
+#include "filegdb_gdbtoogrfieldtype.h"
 
 static std::unique_ptr<OGRFieldDomain> ParseXMLFieldDomainDef(const std::string& domainDef)
 {
@@ -49,6 +53,20 @@ static std::unique_ptr<OGRFieldDomain> ParseXMLFieldDomainDef(const std::string&
         if( psDomain )
             bIsCodedValueDomain = true;
     }
+    if( psDomain == nullptr )
+    {
+        // Also sometimes found...
+        psDomain = CPLGetXMLNode(oTree.get(), "=typens:GPCodedValueDomain2");
+        if( psDomain )
+            bIsCodedValueDomain = true;
+    }
+    if( psDomain == nullptr )
+    {
+        // Also sometimes found...
+        psDomain = CPLGetXMLNode(oTree.get(), "=GPCodedValueDomain2");
+        if( psDomain )
+            bIsCodedValueDomain = true;
+    }
     bool bIsRangeDomain = false;
     if( psDomain == nullptr )
     {
@@ -59,13 +77,25 @@ static std::unique_ptr<OGRFieldDomain> ParseXMLFieldDomainDef(const std::string&
     }
     if( psDomain == nullptr )
     {
+        // Also sometimes found...
+        psDomain = CPLGetXMLNode(oTree.get(), "=typens:GPRangeDomain2");
+        if( psDomain )
+            bIsRangeDomain = true;
+    }
+    if( psDomain == nullptr )
+    {
+        // Also sometimes found...
+        psDomain = CPLGetXMLNode(oTree.get(), "=GPRangeDomain2");
+        if( psDomain )
+            bIsRangeDomain = true;
+    }
+    if( psDomain == nullptr )
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find root 'Domain' node");
         return nullptr;
     }
-    const char* pszType = CPLGetXMLValue(psDomain, "xsi:type",
-                         bIsCodedValueDomain ? "esri:CodedValueDomain" :
-                         bIsRangeDomain ? "esri:RangeDomain" : "");
+    const char* pszType = CPLGetXMLValue(psDomain, "xsi:type", "");
     const char* pszName = CPLGetXMLValue(psDomain, "DomainName", "");
     const char* pszDescription = CPLGetXMLValue(psDomain, "Description", "");
     const char* pszFieldType = CPLGetXMLValue(psDomain, "FieldType", "");
@@ -77,7 +107,7 @@ static std::unique_ptr<OGRFieldDomain> ParseXMLFieldDomainDef(const std::string&
     }
 
     std::unique_ptr<OGRFieldDomain> domain;
-    if( strcmp(pszType, "esri:CodedValueDomain") == 0 )
+    if( bIsCodedValueDomain || strcmp(pszType, "esri:CodedValueDomain") == 0 )
     {
         const CPLXMLNode* psCodedValues = CPLGetXMLNode(psDomain, "CodedValues");
         if( psCodedValues == nullptr )
@@ -109,7 +139,7 @@ static std::unique_ptr<OGRFieldDomain> ParseXMLFieldDomainDef(const std::string&
             CPLFree(cv.pszValue);
         }
     }
-    else if( strcmp(pszType, "esri:RangeDomain") == 0 )
+    else if( bIsRangeDomain || strcmp(pszType, "esri:RangeDomain") == 0 )
     {
         if( eFieldType != OFTInteger &&
             eFieldType != OFTInteger64 &&
@@ -189,3 +219,5 @@ static std::unique_ptr<OGRFieldDomain> ParseXMLFieldDomainDef(const std::string&
 
     return domain;
 }
+
+#endif // FILEGDB_FIELDDOMAIN_H

@@ -51,6 +51,8 @@
 #include "ogrsf_frmts.h"
 #include "ogr_swq.h"
 
+#include "filegdb_fielddomain.h"
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -404,6 +406,17 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
                 AddLayer( psField->String, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
                           osDefinition, osDocumentation,
                           nullptr, wkbUnknown );
+            }
+        }
+        else if( psField != nullptr &&
+            (strstr(psField->String, "GPCodedValueDomain2") != nullptr ||
+                strstr(psField->String, "GPRangeDomain2") != nullptr) )
+        {
+            auto poDomain = ParseXMLFieldDomainDef(psField->String);
+            if( poDomain )
+            {
+                const auto domainName = poDomain->GetName();
+                m_oMapFieldDomains[domainName] = std::move(poDomain);
             }
         }
     }
