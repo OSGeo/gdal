@@ -20,7 +20,7 @@ sudo apt-get install libogdi3.2-dev
 #sudo pip install pyflakes
 #pyflakes autotest
 #pyflakes gdal/swig/python/gdal-utils/scripts
-#pyflakes gdal/swig/python/samples
+#pyflakes gdal/swig/python/gdal-utils/osgeo_utils/samples
 #psql -c "drop database if exists autotest" -U postgres
 #psql -c "create database autotest" -U postgres
 #psql -c "create extension postgis" -d autotest -U postgres

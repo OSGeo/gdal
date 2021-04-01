@@ -393,7 +393,7 @@ Example on how to use the API:
    CSLDestroy(papszOptions);
 
 A sample Python script
-`gdal_create_pdf.py <https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/swig/python/samples/gdal_create_pdf.py>`__
+`gdal_create_pdf.py <https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/swig/python/gdal-utils/osgeo_utils/samples/gdal_create_pdf.py>`__
 is also available. Starting with GDAL 3.2, the :ref:`gdal_create` utility can
 also be used.
 

@@ -343,7 +343,7 @@ utils_package_root = 'gdal-utils'   # path for gdal-utils sources
 if HAVE_SETUPTOOLS:
     packages = find_packages(utils_package_root)
 else:
-    packages = ['osgeo_utils', 'osgeo_utils.auxiliary']
+    packages = ['osgeo_utils', 'osgeo_utils.auxiliary', 'osgeo_utils.samples']
 packages = ['osgeo'] + packages
 package_dir = {'osgeo': 'osgeo', '': utils_package_root}
 
