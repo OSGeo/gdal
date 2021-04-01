@@ -6,7 +6,7 @@ ogrinfo
 
 .. only:: html
 
-    Lists information about an OGR-supported data source. With SQL statements 
+    Lists information about an OGR-supported data source. With SQL statements
     it is also possible to edit data.
 
 .. Index:: ogrinfo
@@ -22,6 +22,7 @@ Synopsis
             [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [--formats] [[-oo NAME=VALUE] ...]
             [-nomd] [-listmdd] [-mdd domain|`all`]*
             [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|...]
+            [-fielddomain name]
             <datasource_name> [<layer> [<layer> ...]]
 
 Description
@@ -71,10 +72,10 @@ edit data.
 
     Execute the indicated SQL statement and return the result. Starting with
     GDAL 2.1, the ``@filename`` syntax can be used to indicate that the content is
-    in the pointed filename. Data can also be edited with SQL INSERT, UPDATE, 
+    in the pointed filename. Data can also be edited with SQL INSERT, UPDATE,
     DELETE, DROP TABLE, ALTER TABLE etc. Editing capabilities depend on the selected
     ``dialect``.
-    
+
 
 .. option:: -dialect <dialect>
 
@@ -103,6 +104,12 @@ edit data.
 
     If set to ``NO``, the feature dump will not display field values. Default value
     is ``YES``.
+
+.. option:: -fielddomain <domain_name>
+
+    .. versionadded:: 3.3
+
+    Display details about a field domain.
 
 .. option:: -geom YES|NO|SUMMARY|WKT|ISO_WKT
 
@@ -290,9 +297,9 @@ in a layer:
     # 1069126.900,419815.500 1069126.900,419808.200 1069116.500,419798.700
     # 1069117.600,419794.100 1069115.100,419796.300 1069109.100,419801.800
     # 1069106.800,419805.000  1069107.300)
-    
+
 Example of updating a value of an attribute in a shapefile with SQL by using the SQLite dialect:
- 
+
 .. code-block::
- 
+
     ogrinfo test.shp -dialect sqlite -sql "update test set attr='bar' where attr='foo'"

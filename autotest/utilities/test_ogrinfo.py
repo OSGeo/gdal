@@ -549,3 +549,72 @@ def test_ogrinfo_nogeomtype():
             if gdaltest.is_travis_branch('mingw'):
                 return 'expected_fail'
             pytest.fail(ret)
+
+###############################################################################
+# Test field domains
+
+
+def test_ogrinfo_fielddomains():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        pytest.skip()
+    if gdal.GetDriverByName('GPKG') is None:
+        pytest.skip('GPKG driver missing')
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -al ../ogr/data/gpkg/domains.gpkg')
+    assert (err is None or err == ''), 'got error/warning'
+    assert 'with_range_domain_int: Integer (0.0), domain name=range_domain_int' in ret
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -fielddomain range_domain_int ../ogr/data/gpkg/domains.gpkg')
+    assert (err is None or err == ''), 'got error/warning'
+    assert 'Type: range' in ret
+    assert 'Field type: Integer' in ret
+    assert 'Split policy: default value' in ret
+    assert 'Merge policy: default value' in ret
+    assert 'Minimum value: 1' in ret
+    assert 'Maximum value: 2 (excluded)' in ret
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -fielddomain range_domain_int64 ../ogr/data/gpkg/domains.gpkg')
+    assert (err is None or err == ''), 'got error/warning'
+    assert 'Type: range' in ret
+    assert 'Field type: Integer64' in ret
+    assert 'Split policy: default value' in ret
+    assert 'Merge policy: default value' in ret
+    assert 'Minimum value: -1234567890123 (excluded)' in ret
+    assert 'Maximum value: 1234567890123' in ret
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -fielddomain range_domain_real ../ogr/data/gpkg/domains.gpkg')
+    assert (err is None or err == ''), 'got error/warning'
+    assert 'Type: range' in ret
+    assert 'Field type: Real' in ret
+    assert 'Split policy: default value' in ret
+    assert 'Merge policy: default value' in ret
+    assert 'Minimum value: 1.5' in ret
+    assert 'Maximum value: 2.5' in ret
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -fielddomain range_domain_real_inf ../ogr/data/gpkg/domains.gpkg')
+    assert (err is None or err == ''), 'got error/warning'
+    assert 'Type: range' in ret
+    assert 'Field type: Real' in ret
+    assert 'Split policy: default value' in ret
+    assert 'Merge policy: default value' in ret
+    assert 'Minimum value' not in ret
+    assert 'Maximum value' not in ret
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -fielddomain enum_domain ../ogr/data/gpkg/domains.gpkg')
+    assert (err is None or err == ''), 'got error/warning'
+    assert 'Type: coded' in ret
+    assert 'Field type: Integer' in ret
+    assert 'Split policy: default value' in ret
+    assert 'Merge policy: default value' in ret
+    assert '1: one' in ret
+    assert '2' in ret
+    assert '2:' not in ret
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -fielddomain glob_domain ../ogr/data/gpkg/domains.gpkg')
+    assert (err is None or err == ''), 'got error/warning'
+    assert 'Type: glob' in ret
+    assert 'Field type: String' in ret
+    assert 'Split policy: default value' in ret
+    assert 'Merge policy: default value' in ret
+    assert 'Glob: *' in ret
+
