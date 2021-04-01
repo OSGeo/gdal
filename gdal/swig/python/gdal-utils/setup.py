@@ -51,6 +51,7 @@ setup(
     python_requires='>=3.6.0',
     packages=packages,
     package_dir=package_dir,
+    scripts=glob('./scripts/*.py'),
     install_requires=['gdal'],
     extras_require={'numpy': ['numpy > 1.0.0']},
 )

@@ -399,7 +399,7 @@ setup_kwargs = dict(
     python_requires='>=3.6.0',
     data_files=data_files,
     ext_modules=ext_modules,
-    scripts=glob('scripts/*.py'),
+    scripts=glob(utils_package_root + '/scripts/*.py'),
     cmdclass={'build_ext': gdal_ext},
     extras_require={'numpy': ['numpy > 1.0.0']},
 )

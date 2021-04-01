@@ -28,7 +28,7 @@ Examples
 
 * One example of GDAL/numpy integration is found in the val_repl.py script.
 * An assortment of other samples are available in the Python github samples directory at `https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/samples <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/samples>`__ with some description in the `samples README <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/samples/README>`__.
-* Several `GDAL utilities <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/scripts/>`__ are implemented in Python and can be useful examples.
+* Several `GDAL utilities <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/gdal-utils/scripts/>`__ are implemented in Python and can be useful examples.
 * The majority of GDAL regression tests are written in Python. They are available at `https://github.com/OSGeo/gdal/tree/master/autotest <https://github.com/OSGeo/gdal/tree/master/autotest>`__
 
 Gotchas
