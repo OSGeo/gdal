@@ -661,7 +661,7 @@ def test_ogr2ogr_fielddomain_():
     assert domain.GetDomainType() == ogr.OFDT_GLOB
 
     # Test -resolveDomains
-    ds = gdal.VectorTranslate('', src_ds, options='-f Memory -resolveDomains')
+    ds = gdal.VectorTranslate('', src_ds, format='Memory', resolveDomains=True)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 4
