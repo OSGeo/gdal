@@ -45,6 +45,7 @@ Synopsis
             [-mapFieldType type1|All=type2[,type3=type4]*]
             [-fieldmap identity | index1[,index2]*]
             [-splitlistfields] [-maxsubfields val]
+            [-resolveDomains]
             [-explodecollections] [-zfield field_name]
             [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]
             [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
@@ -425,9 +426,17 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -emptyStrAsNull
 
+    .. versionadded:: 3.3
+
     Treat empty string values as null.
 
+.. option:: -resolveDomains
+
     .. versionadded:: 3.3
+
+    When this is specified, any selected field that is linked to a coded field
+    domain will be accompanied by an additional field (``{dstfield}_resolved``),
+    that will contain the description of the coded value.
 
 .. option:: -nomd
 
