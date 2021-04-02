@@ -475,7 +475,8 @@ typedef int OGRErr;
 #define ODsCEmulatedTransactions "EmulatedTransactions"
 #define ODsCMeasuredGeometries  "MeasuredGeometries";
 #define ODsCRandomLayerRead    "RandomLayerRead";
-#define ODsCRandomLayerWrite   "RandomLayerWrite";
+/* Note the unfortunate trailing space at the end of the string */
+#define ODsCRandomLayerWrite   "RandomLayerWrite ";
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
