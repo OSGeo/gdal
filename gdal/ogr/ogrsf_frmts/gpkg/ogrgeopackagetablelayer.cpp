@@ -1062,8 +1062,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     if( m_poDS->HasDataColumnsTable() )
     {
         pszSQL = sqlite3_mprintf(
-            "SELECT column_name, mime_type FROM gpkg_data_columns "
-            "WHERE table_name = '%q'",
+            "SELECT column_name, mime_type, constraint_name FROM gpkg_data_columns "
+            "WHERE table_name = '%q' AND column_name IS NOT NULL",
             m_pszTableName);
         err = SQLQuery(poDb, pszSQL, &oResultTable);
         sqlite3_free(pszSQL);
@@ -1075,14 +1075,24 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     SQLResultGetValue(&oResultTable, 0, iRecord);
                 const char *pszMimeType =
                     SQLResultGetValue(&oResultTable, 1, iRecord);
-                if( pszColumn && pszMimeType &&
-                    EQUAL(pszMimeType, "application/json") )
+                const char *pszConstraintName =
+                    SQLResultGetValue(&oResultTable, 2, iRecord);
+                if( pszMimeType && EQUAL(pszMimeType, "application/json") )
                 {
                     int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
                     if( iIdx >= 0 &&
                         m_poFeatureDefn->GetFieldDefn(iIdx)->GetType() == OFTString)
                     {
                         m_poFeatureDefn->GetFieldDefn(iIdx)->SetSubType(OFSTJSON);
+                    }
+                }
+                else if( pszConstraintName )
+                {
+                    int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
+                    if( iIdx >= 0 )
+                    {
+                        m_poFeatureDefn->GetFieldDefn(iIdx)->SetDomainName(
+                            pszConstraintName);
                     }
                 }
             }
@@ -1420,8 +1430,24 @@ bool OGRGeoPackageTableLayer::DoSpecialProcessingForColumnCreation(
         bool ok = SQLCommand(m_poDS->GetDB(), pszSQL) == OGRERR_NONE;
         sqlite3_free(pszSQL);
         return ok;
-
     }
+
+    else if( !poField->GetDomainName().empty() )
+    {
+        if( !m_poDS->CreateColumnsTableAndColumnConstraintsTablesIfNecessary() )
+            return false;
+
+        char* pszSQL = sqlite3_mprintf(
+            "INSERT INTO gpkg_data_columns (table_name, column_name, name, "
+            "title, description, mime_type, constraint_name) VALUES ("
+            "'%q', '%q', NULL, NULL, NULL, NULL, '%q')",
+            m_pszTableName, poField->GetNameRef(),
+            poField->GetDomainName().c_str());
+        bool ok = SQLCommand(m_poDS->GetDB(), pszSQL) == OGRERR_NONE;
+        sqlite3_free(pszSQL);
+        return ok;
+    }
+
     return true;
 }
 

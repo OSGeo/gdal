@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import os
 import struct
 import sys
@@ -4506,3 +4507,135 @@ def test_ogr_gpkg_deferred_spi_update():
         ds = None
 
     gdal.Unlink('/vsimem/test.gpkg')
+
+
+###############################################################################
+# Test field domains
+
+
+def test_ogr_gpkg_field_domains():
+
+    filename = '/vsimem/test.gpkg'
+
+    # Test write support
+    ds = gdal.GetDriverByName('GPKG').Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+
+    assert ds.TestCapability(ogr.ODsCAddFieldDomain)
+
+    assert ds.GetFieldDomain('does_not_exist') is None
+
+    assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', '', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, False))
+    assert ds.GetFieldDomain('range_domain_int') is not None
+    assert not ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', '', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True))
+
+    assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int64', '', ogr.OFTInteger64, ogr.OFSTNone, -1234567890123, False, 1234567890123, True))
+    assert ds.GetFieldDomain('range_domain_int64') is not None
+
+    assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_real', '', ogr.OFTReal, ogr.OFSTNone, 1.5, True, 2.5, True))
+    assert ds.GetFieldDomain('range_domain_real') is not None
+
+    assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_real_inf', '', ogr.OFTReal, ogr.OFSTNone, -math.inf, True, math.inf, True))
+    assert ds.GetFieldDomain('range_domain_real_inf') is not None
+
+    assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('glob_domain', '', ogr.OFTString, ogr.OFSTNone, '*'))
+    assert ds.GetFieldDomain('glob_domain') is not None
+
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain', '', ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None}))
+    assert ds.GetFieldDomain('enum_domain') is not None
+
+    lyr = ds.CreateLayer('test')
+
+    fld_defn = ogr.FieldDefn('with_range_domain_int', ogr.OFTInteger)
+    fld_defn.SetDomainName('range_domain_int')
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('with_range_domain_int64', ogr.OFTInteger64)
+    fld_defn.SetDomainName('range_domain_int64')
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('with_range_domain_real', ogr.OFTReal)
+    fld_defn.SetDomainName('range_domain_real')
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('with_glob_domain', ogr.OFTString)
+    fld_defn.SetDomainName('glob_domain')
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('with_enum_domain', ogr.OFTInteger)
+    fld_defn.SetDomainName('enum_domain')
+    lyr.CreateField(fld_defn)
+
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    # Test read support
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+
+    domain = ds.GetFieldDomain('range_domain_int')
+    assert domain is not None
+    assert domain.GetName() == 'range_domain_int'
+    assert domain.GetDescription() == ''
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTInteger
+    assert domain.GetMinAsDouble() == 1.0
+    assert domain.IsMinInclusive()
+    assert domain.GetMaxAsDouble() == 2.0
+    assert not domain.IsMaxInclusive()
+
+    domain = ds.GetFieldDomain('range_domain_int64')
+    assert domain is not None
+    assert domain.GetName() == 'range_domain_int64'
+    assert domain.GetDescription() == ''
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTInteger64
+    assert domain.GetMinAsDouble() == -1234567890123
+    assert not domain.IsMinInclusive()
+    assert domain.GetMaxAsDouble() == 1234567890123
+    assert domain.IsMaxInclusive()
+
+    domain = ds.GetFieldDomain('range_domain_real')
+    assert domain is not None
+    assert domain.GetName() == 'range_domain_real'
+    assert domain.GetDescription() == ''
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTReal
+    assert domain.GetMinAsDouble() == 1.5
+    assert domain.IsMinInclusive()
+    assert domain.GetMaxAsDouble() == 2.5
+    assert domain.IsMaxInclusive()
+
+    domain = ds.GetFieldDomain('range_domain_real_inf')
+    assert domain is not None
+    assert domain.GetName() == 'range_domain_real_inf'
+    assert domain.GetDescription() == ''
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTReal
+    assert domain.GetMinAsDouble() == -math.inf
+    assert domain.IsMinInclusive()
+    assert domain.GetMaxAsDouble() == math.inf
+    assert domain.IsMaxInclusive()
+
+    domain = ds.GetFieldDomain('glob_domain')
+    assert domain is not None
+    assert domain.GetName() == 'glob_domain'
+    assert domain.GetDescription() == ''
+    assert domain.GetDomainType() == ogr.OFDT_GLOB
+    assert domain.GetFieldType() == ogr.OFTString
+    assert domain.GetGlob() == '*'
+
+    domain = ds.GetFieldDomain('enum_domain')
+    assert domain is not None
+    assert domain.GetName() == 'enum_domain'
+    assert domain.GetDescription() == ''
+    assert domain.GetDomainType() == ogr.OFDT_CODED
+    assert domain.GetEnumeration() == { "1": "one", "2": None }
+
+    lyr = ds.GetLayerByName('test')
+    lyr_defn = lyr.GetLayerDefn()
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('with_range_domain_int'))
+    assert fld_defn.GetDomainName() == 'range_domain_int'
+
+    ds = None
+
+    gdal.Unlink(filename)
