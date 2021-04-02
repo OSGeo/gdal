@@ -433,7 +433,8 @@ typedef void retGetPoints;
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
 %constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
 %constant char *ODsCRandomLayerRead    = "RandomLayerRead";
-%constant char *ODsCRandomLayerWrite   = "RandomLayerWrite";
+/* Note the unfortunate trailing space at the end of the string */
+%constant char *ODsCRandomLayerWrite   = "RandomLayerWrite ";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
