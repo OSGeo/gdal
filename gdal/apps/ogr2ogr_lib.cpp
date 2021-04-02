@@ -4124,7 +4124,7 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         for( size_t i = 0; i < anSrcFieldIndices.size(); i++ )
         {
             const int iField = anSrcFieldIndices[i];
-            OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
+            const OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
             OGRFieldDefn oFieldDefn( poSrcFieldDefn );
 
             // Avoid creating a field with the same name as the FID column
@@ -4182,6 +4182,40 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                         oFieldDefn.SetName((CPLString(oFieldDefn.GetNameRef()) + szTry).c_str());
                         break;
                     }
+                }
+            }
+
+            // Create field domain in output dataset if not already existing.
+            const auto osDomainName = oFieldDefn.GetDomainName();
+            if( !osDomainName.empty() )
+            {
+                if( m_poDstDS->TestCapability(ODsCAddFieldDomain) &&
+                    m_poDstDS->GetFieldDomain(osDomainName) == nullptr )
+                {
+                    const auto poSrcDomain =
+                        m_poSrcDS->GetFieldDomain(osDomainName);
+                    if( poSrcDomain )
+                    {
+                        std::string failureReason;
+                        if( !m_poDstDS->AddFieldDomain(
+                                std::unique_ptr<OGRFieldDomain>(poSrcDomain->Clone()),
+                                failureReason) )
+                        {
+                            oFieldDefn.SetDomainName(std::string());
+                            CPLDebug("OGR2OGR", "Cannot create domain %s: %s",
+                                     osDomainName.c_str(), failureReason.c_str());
+                        }
+                    }
+                    else
+                    {
+                        CPLDebug("OGR2OGR",
+                                 "Cannot find domain %s in source dataset",
+                                 osDomainName.c_str());
+                    }
+                }
+                if( m_poDstDS->GetFieldDomain(osDomainName) == nullptr )
+                {
+                    oFieldDefn.SetDomainName(std::string());
                 }
             }
 

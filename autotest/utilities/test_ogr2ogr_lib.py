@@ -616,3 +616,26 @@ def test_ogr2ogr_emptyStrAsNull():
     f = lyr.GetNextFeature()
 
     assert f['foo'] is None, 'expected empty string to be transformed to null'
+
+
+###############################################################################
+# Verify propagation of field domains
+
+
+def test_ogr2ogr_fielddomain_():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer')
+    src_fld_defn = ogr.FieldDefn('foo')
+    src_fld_defn.SetDomainName('my_domain')
+    src_lyr.CreateField(src_fld_defn)
+    assert src_ds.AddFieldDomain(ogr.CreateGlobFieldDomain('my_domain', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+
+    ds = gdal.VectorTranslate('', src_ds, format='Memory')
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetDomainName() == 'my_domain'
+    domain = ds.GetFieldDomain('my_domain')
+    assert domain is not None
+    assert domain.GetDomainType() == ogr.OFDT_GLOB
+
