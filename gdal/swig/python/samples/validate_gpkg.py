@@ -1487,9 +1487,7 @@ class GPKGChecker(object):
 
     def _check_schema(self, c):
 
-        # Partial: doesn't check gpkg_data_column_constraints
-
-        self._log('Checking gpkg_schema (partial)')
+        self._log('Checking gpkg_schema')
 
         must_have_gpkg_schema = False
         c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
@@ -1504,10 +1502,28 @@ class GPKGChecker(object):
                              "Wrong scope for gpkg_schema in "
                              "gpkg_extensions")
 
+                self._assert(c.fetchone() is not None, 141,
+                             "There should be exactly 2 rows with " +
+                             "extension_name = " +
+                             "'gpkg_schema' in gpkg_extensions")
+                self._assert(c.fetchone() is None, 141,
+                             "There should be exactly 2 rows with " +
+                             "extension_name = " +
+                             "'gpkg_schema' in gpkg_extensions")
+
+                c.execute("SELECT 1 FROM gpkg_extensions WHERE "
+                          "extension_name = 'gpkg_schema' AND "
+                          "column_name IS NOT NULL")
+                row = c.fetchone()
+                if row is not None:
+                    self._assert(False, 141,
+                                 "gpkg_extensions contains row(s) with " +
+                                 "gpkg_schema and a not-NULL column_name")
+
         c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_data_columns'")
         if c.fetchone() is None:
             if must_have_gpkg_schema:
-                self._log("gpkg_data_columns table missing. Not forbidden by requirements, but odd")
+                self._assert(False, 141, "gpkg_data_columns table missing.")
             else:
                 self._log('... No schema')
             return
@@ -1523,7 +1539,7 @@ class GPKGChecker(object):
             (5, 'mime_type', 'TEXT', 0, None, 0),
             (6, 'constraint_name', 'TEXT', 0, None, 0)
         ]
-        self._check_structure(columns, expected_columns, 107,
+        self._check_structure(columns, expected_columns, 103,
                               'gpkg_data_columns')
 
         c.execute("SELECT table_name, column_name FROM gpkg_data_columns")
@@ -1531,10 +1547,13 @@ class GPKGChecker(object):
         for (table_name, column_name) in rows:
             c.execute("SELECT 1 FROM gpkg_contents WHERE table_name = ?",
                       (table_name,))
-            self._assert(c.fetchone(), 104,
-                         ("table_name = %s " % table_name +
-                          "in gpkg_data_columns refer to non-existing " +
-                          "table/view in gpkg_contents"))
+            if c.fetchone() is None:
+                c.execute("SELECT 1 FROM gpkg_extensions WHERE table_name = ?",
+                          (table_name,))
+                self._assert(c.fetchone(), 104,
+                             ("table_name = %s " % table_name +
+                              "in gpkg_data_columns refer to non-existing " +
+                              "table/view in gpkg_contents or gpkg_extensions"))
 
             try:
                 c.execute("SELECT %s FROM %s" % (_esc_id(column_name),
@@ -1545,6 +1564,103 @@ class GPKGChecker(object):
                               "column_name = %s " % column_name +
                               "in gpkg_data_columns refer to non-existing " +
                               "column"))
+
+        c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_data_column_constraints'")
+        if c.fetchone() is None:
+            self._assert(False, 141, "gpkg_data_column_constraints table missing.")
+
+        c.execute("PRAGMA table_info(gpkg_data_column_constraints)")
+        columns = c.fetchall()
+        expected_columns = [
+            (0, 'constraint_name', 'TEXT', 1, None, 0),
+            (1, 'constraint_type', 'TEXT', 1, None, 0),
+            (2, 'value', 'TEXT', 0, None, 0),
+            (3, 'min', 'NUMERIC', 0, None, 0),
+            (4, 'min_is_inclusive', 'BOOLEAN', 0, None, 0),
+            (5, 'max', 'NUMERIC', 0, None, 0),
+            (6, 'max_is_inclusive', 'BOOLEAN', 0, None, 0),
+            (7, 'description', 'TEXT', 0, None, 0),
+        ]
+        self._check_structure(columns, expected_columns, 107,
+                              'gpkg_data_column_constraints')
+
+        c.execute("SELECT DISTINCT constraint_type FROM " +
+                  "gpkg_data_column_constraints WHERE constraint_type " +
+                  "NOT IN ('range', 'enum', 'glob')")
+        if c.fetchone() is not None:
+            self._assert(False, 108,
+                         "gpkg_data_column_constraints.constraint_type " +
+                         "contains value other than range, enum, glob")
+
+        c.execute("SELECT 1 FROM (SELECT COUNT(constraint_name) AS c FROM " +
+                  "gpkg_data_column_constraints WHERE constraint_type " +
+                  "IN ('range', 'glob') GROUP BY constraint_name) u " +
+                  "WHERE u.c != 1")
+        if c.fetchone() is not None:
+            self._assert(False, 109,
+                         "gpkg_data_column_constraints contains non unique " +
+                         "constraint_name for constraints of type range/glob")
+
+        c.execute("SELECT 1 FROM gpkg_data_column_constraints WHERE " +
+                  "constraint_type = 'range' AND value IS NOT NULL")
+        if c.fetchone() is not None:
+            self._assert(False, 110,
+                         "gpkg_data_column_constraints contains constraint " +
+                         "of type range whose 'value' column is not null")
+
+        c.execute("SELECT 1 FROM gpkg_data_column_constraints WHERE " +
+                  "constraint_type = 'range' AND min IS NULL")
+        if c.fetchone() is not None:
+            self._assert(False, 111,
+                         "gpkg_data_column_constraints contains constraint " +
+                         "of type range whose min value is NULL")
+
+        c.execute("SELECT 1 FROM gpkg_data_column_constraints WHERE " +
+                  "constraint_type = 'range' AND max IS NULL")
+        if c.fetchone() is not None:
+            self._assert(False, 111,
+                         "gpkg_data_column_constraints contains constraint " +
+                         "of type range whose max value is NULL")
+
+        c.execute("SELECT 1 FROM gpkg_data_column_constraints WHERE " +
+                  "constraint_type = 'range' AND min >= max")
+        if c.fetchone() is not None:
+            self._assert(False, 111,
+                         "gpkg_data_column_constraints contains constraint " +
+                         "of type range whose min value is not less than max")
+
+        c.execute("SELECT 1 FROM gpkg_data_column_constraints WHERE " +
+                  "constraint_type = 'range' AND min_is_inclusive NOT IN (0,1)")
+        if c.fetchone() is not None:
+            self._assert(False, 112,
+                         "gpkg_data_column_constraints contains constraint " +
+                         "of type range whose min_is_inclusive value is " +
+                         "not 0 or 1")
+
+        c.execute("SELECT 1 FROM gpkg_data_column_constraints WHERE " +
+                  "constraint_type = 'range' AND max_is_inclusive NOT IN (0,1)")
+        if c.fetchone() is not None:
+            self._assert(False, 112,
+                         "gpkg_data_column_constraints contains constraint " +
+                         "of type range whose max_is_inclusive value is " +
+                         "not 0 or 1")
+
+        for col_name in ('min', 'min_is_inclusive', 'max', 'max_is_inclusive'):
+            c.execute("SELECT 1 FROM gpkg_data_column_constraints WHERE " +
+                      "constraint_type IN ('enum', 'glob') AND " +
+                      col_name + " IS NOT NULL")
+            if c.fetchone() is not None:
+                self._assert(False, 113,
+                             "gpkg_data_column_constraints contains constraint " +
+                             "of type enum or glob whose " + col_name +
+                             " column is not NULL")
+
+        c.execute("SELECT 1 FROM gpkg_data_column_constraints WHERE " +
+                  "constraint_type = 'enum' AND value IS NULL")
+        if c.fetchone() is not None:
+            self._assert(False, 114,
+                         "gpkg_data_column_constraints contains constraint " +
+                         "of type enum whose value column is NULL")
 
     def check(self):
         self._assert(os.path.exists(self.filename), None,
@@ -1677,4 +1793,3 @@ def main(argv):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-
