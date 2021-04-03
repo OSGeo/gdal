@@ -60,6 +60,11 @@ Special SQL requests
 can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content.
 
+Field domains
+~~~~~~~~~~~~~
+
+(GDAL >= 3.3) Coded and range field domains are supported.
+
 Transaction support
 -------------------
 

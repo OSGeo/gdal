@@ -58,7 +58,6 @@ bool GhettoGDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pG
 //
 // GDB API to OGR Field Mapping
 //
-bool GDBToOGRFieldType(const std::string& gdbType, OGRFieldType* ogrType, OGRFieldSubType* pSubType);
 bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType, std::string* gdbType);
 
 //

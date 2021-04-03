@@ -2167,3 +2167,40 @@ def test_ogr_fgdb_alias():
         shutil.rmtree("tmp/alias.gdb")
     except OSError:
         pass
+
+###############################################################################
+# Test reading field domains
+
+
+def test_ogr_fgdb_read_domains():
+
+    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+    with gdaltest.error_handler():
+        assert ds.GetFieldDomain('i_dont_exist') is None
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('MaxSpeed'))
+    assert fld_defn.GetDomainName() == 'SpeedLimit'
+
+    domain = ds.GetFieldDomain('SpeedLimit')
+    assert domain is not None
+    assert domain.GetName() == 'SpeedLimit'
+    assert domain.GetDescription() == 'The maximun speed of the road'
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == fld_defn.GetType()
+    assert domain.GetFieldSubType() == fld_defn.GetSubType()
+    assert domain.GetMinAsDouble() == 40.0
+    assert domain.GetMaxAsDouble() == 100.0
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('MedianType'))
+    assert fld_defn.GetDomainName() == 'MedianType'
+
+    domain = ds.GetFieldDomain('MedianType')
+    assert domain is not None
+    assert domain.GetName() == 'MedianType'
+    assert domain.GetDescription() == 'Road median types.'
+    assert domain.GetDomainType() == ogr.OFDT_CODED
+    assert domain.GetFieldType() == fld_defn.GetType()
+    assert domain.GetFieldSubType() == fld_defn.GetSubType()
+    assert domain.GetEnumeration() == {'0': 'None', '1': 'Cement'}

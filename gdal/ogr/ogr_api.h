@@ -44,6 +44,8 @@
 #include "cpl_minixml.h"
 #include "ogr_core.h"
 
+#include <stdbool.h>
+
 CPL_C_START
 
 /* -------------------------------------------------------------------- */
@@ -329,6 +331,9 @@ typedef void *OGRStyleTableH;
 #endif
 /** Opaque type for a geometry field definition (OGRGeomFieldDefn) */
 typedef struct OGRGeomFieldDefnHS *OGRGeomFieldDefnH;
+
+/** Opaque type for a field domain definition (OGRFieldDomain) */
+typedef struct OGRFieldDomainHS *OGRFieldDomainH;
 #endif /* DEFINE_OGRFeatureH */
 
 /* OGRFieldDefn */
@@ -361,6 +366,8 @@ void   CPL_DLL OGR_Fld_SetUnique( OGRFieldDefnH hDefn, int );
 const char CPL_DLL *OGR_Fld_GetDefault( OGRFieldDefnH hDefn );
 void   CPL_DLL OGR_Fld_SetDefault( OGRFieldDefnH hDefn, const char* );
 int    CPL_DLL OGR_Fld_IsDefaultDriverSpecific( OGRFieldDefnH hDefn );
+const char CPL_DLL* OGR_Fld_GetDomainName( OGRFieldDefnH hDefn );
+void   CPL_DLL OGR_Fld_SetDomainName( OGRFieldDefnH hDefn, const char* );
 
 const char CPL_DLL *OGR_GetFieldTypeName( OGRFieldType );
 const char CPL_DLL *OGR_GetFieldSubTypeName( OGRFieldSubType );
@@ -523,6 +530,44 @@ void   CPL_DLL OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
                                            int bNotNullableOnly,
                                            char** papszOptions );
 int    CPL_DLL OGR_F_Validate( OGRFeatureH, int nValidateFlags, int bEmitError );
+
+/* OGRFieldDomain */
+
+void CPL_DLL OGR_FldDomain_Destroy(OGRFieldDomainH);
+const char CPL_DLL* OGR_FldDomain_GetName(OGRFieldDomainH);
+const char CPL_DLL* OGR_FldDomain_GetDescription(OGRFieldDomainH);
+OGRFieldDomainType CPL_DLL OGR_FldDomain_GetDomainType(OGRFieldDomainH);
+OGRFieldType CPL_DLL OGR_FldDomain_GetFieldType(OGRFieldDomainH);
+OGRFieldSubType CPL_DLL OGR_FldDomain_GetFieldSubType(OGRFieldDomainH);
+OGRFieldDomainSplitPolicy CPL_DLL OGR_FldDomain_GetSplitPolicy(OGRFieldDomainH);
+void CPL_DLL OGR_FldDomain_SetSplitPolicy(OGRFieldDomainH, OGRFieldDomainSplitPolicy);
+OGRFieldDomainMergePolicy CPL_DLL OGR_FldDomain_GetMergePolicy(OGRFieldDomainH);
+void CPL_DLL OGR_FldDomain_SetMergePolicy(OGRFieldDomainH, OGRFieldDomainMergePolicy);
+
+OGRFieldDomainH CPL_DLL OGR_CodedFldDomain_Create(const char* pszName,
+                                                  const char* pszDescription,
+                                                  OGRFieldType eFieldType,
+                                                  OGRFieldSubType eFieldSubType,
+                                                  const OGRCodedValue* enumeration);
+const OGRCodedValue CPL_DLL* OGR_CodedFldDomain_GetEnumeration(OGRFieldDomainH);
+
+OGRFieldDomainH CPL_DLL OGR_RangeFldDomain_Create(const char* pszName,
+                                                  const char* pszDescription,
+                                                  OGRFieldType eFieldType,
+                                                  OGRFieldSubType eFieldSubType,
+                                                  const OGRField* psMin,
+                                                  bool bMinIsInclusive,
+                                                  const OGRField* psMax,
+                                                  bool bMaxIsInclusive);
+const OGRField CPL_DLL *OGR_RangeFldDomain_GetMin(OGRFieldDomainH, bool* pbIsInclusiveOut);
+const OGRField CPL_DLL *OGR_RangeFldDomain_GetMax(OGRFieldDomainH, bool* pbIsInclusiveOut);
+
+OGRFieldDomainH CPL_DLL OGR_GlobFldDomain_Create(const char* pszName,
+                                                  const char* pszDescription,
+                                                  OGRFieldType eFieldType,
+                                                  OGRFieldSubType eFieldSubType,
+                                                  const char* pszGlob);
+const char CPL_DLL *OGR_GlobFldDomain_GetGlob(OGRFieldDomainH);
 
 /* -------------------------------------------------------------------- */
 /*      ogrsf_frmts.h                                                   */

@@ -1062,8 +1062,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     if( m_poDS->HasDataColumnsTable() )
     {
         pszSQL = sqlite3_mprintf(
-            "SELECT column_name, mime_type FROM gpkg_data_columns "
-            "WHERE table_name = '%q'",
+            "SELECT column_name, mime_type, constraint_name FROM gpkg_data_columns "
+            "WHERE table_name = '%q' AND column_name IS NOT NULL",
             m_pszTableName);
         err = SQLQuery(poDb, pszSQL, &oResultTable);
         sqlite3_free(pszSQL);
@@ -1075,14 +1075,24 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     SQLResultGetValue(&oResultTable, 0, iRecord);
                 const char *pszMimeType =
                     SQLResultGetValue(&oResultTable, 1, iRecord);
-                if( pszColumn && pszMimeType &&
-                    EQUAL(pszMimeType, "application/json") )
+                const char *pszConstraintName =
+                    SQLResultGetValue(&oResultTable, 2, iRecord);
+                if( pszMimeType && EQUAL(pszMimeType, "application/json") )
                 {
                     int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
                     if( iIdx >= 0 &&
                         m_poFeatureDefn->GetFieldDefn(iIdx)->GetType() == OFTString)
                     {
                         m_poFeatureDefn->GetFieldDefn(iIdx)->SetSubType(OFSTJSON);
+                    }
+                }
+                else if( pszConstraintName )
+                {
+                    int iIdx = m_poFeatureDefn->GetFieldIndex(pszColumn);
+                    if( iIdx >= 0 )
+                    {
+                        m_poFeatureDefn->GetFieldDefn(iIdx)->SetDomainName(
+                            pszConstraintName);
                     }
                 }
             }
@@ -1408,76 +1418,8 @@ bool OGRGeoPackageTableLayer::DoSpecialProcessingForColumnCreation(
 
     if( poField->GetType() == OFTString && poField->GetSubType() == OFSTJSON )
     {
-        /* A lot of one time setup ! */
-
-        if( !m_poDS->HasDataColumnsTable() )
-        {
-            if( OGRERR_NONE != SQLCommand(m_poDS->GetDB(),
-                "CREATE TABLE gpkg_data_columns ("
-                "table_name TEXT NOT NULL,"
-                "column_name TEXT NOT NULL,"
-                "name TEXT UNIQUE,"
-                "title TEXT,"
-                "description TEXT,"
-                "mime_type TEXT,"
-                "constraint_name TEXT,"
-                "CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),"
-                "CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) "
-                "REFERENCES gpkg_contents(table_name));") )
-            {
-                return false;
-            }
-        }
-        if( !m_poDS->HasDataColumnConstraintsTable() )
-        {
-            if( OGRERR_NONE != SQLCommand(m_poDS->GetDB(),
-                "CREATE TABLE gpkg_data_column_constraints ("
-                "constraint_name TEXT NOT NULL,"
-                "constraint_type TEXT NOT NULL,"
-                "value TEXT,"
-                "min NUMERIC,"
-                "min_is_inclusive BOOLEAN,"
-                "max NUMERIC,"
-                "max_is_inclusive BOOLEAN,"
-                "description TEXT,"
-                "CONSTRAINT gdcc_ntv UNIQUE (constraint_name, "
-                "constraint_type, value));") )
-            {
-                return false;
-            }
-        }
-        if( m_poDS->CreateExtensionsTableIfNecessary() != OGRERR_NONE )
-        {
+        if( !m_poDS->CreateColumnsTableAndColumnConstraintsTablesIfNecessary() )
             return false;
-        }
-        if( SQLGetInteger(m_poDS->GetDB(),
-            "SELECT 1 FROM gpkg_extensions WHERE "
-            "table_name = 'gpkg_data_columns'", nullptr) != 1 )
-        {
-            if( OGRERR_NONE != SQLCommand(m_poDS->GetDB(),
-                "INSERT INTO gpkg_extensions "
-                "(table_name,column_name,extension_name,definition,scope) "
-                "VALUES ('gpkg_data_columns', NULL, 'gpkg_schema', "
-                "'http://www.geopackage.org/spec121/#extension_schema', "
-                "'read-write')") )
-            {
-                return false;
-            }
-        }
-        if( SQLGetInteger(m_poDS->GetDB(),
-            "SELECT 1 FROM gpkg_extensions WHERE "
-            "table_name = 'gpkg_data_column_constraints'", nullptr) != 1 )
-        {
-            if( OGRERR_NONE != SQLCommand(m_poDS->GetDB(),
-                "INSERT INTO gpkg_extensions "
-                "(table_name,column_name,extension_name,definition,scope) "
-                "VALUES ('gpkg_data_column_constraints', NULL, 'gpkg_schema', "
-                "'http://www.geopackage.org/spec121/#extension_schema', "
-                "'read-write')") )
-            {
-                return false;
-            }
-        }
 
         /* Now let's register our column. */
         char* pszSQL = sqlite3_mprintf(
@@ -1488,8 +1430,24 @@ bool OGRGeoPackageTableLayer::DoSpecialProcessingForColumnCreation(
         bool ok = SQLCommand(m_poDS->GetDB(), pszSQL) == OGRERR_NONE;
         sqlite3_free(pszSQL);
         return ok;
-
     }
+
+    else if( !poField->GetDomainName().empty() )
+    {
+        if( !m_poDS->CreateColumnsTableAndColumnConstraintsTablesIfNecessary() )
+            return false;
+
+        char* pszSQL = sqlite3_mprintf(
+            "INSERT INTO gpkg_data_columns (table_name, column_name, name, "
+            "title, description, mime_type, constraint_name) VALUES ("
+            "'%q', '%q', NULL, NULL, NULL, NULL, '%q')",
+            m_pszTableName, poField->GetNameRef(),
+            poField->GetDomainName().c_str());
+        bool ok = SQLCommand(m_poDS->GetDB(), pszSQL) == OGRERR_NONE;
+        sqlite3_free(pszSQL);
+        return ok;
+    }
+
     return true;
 }
 

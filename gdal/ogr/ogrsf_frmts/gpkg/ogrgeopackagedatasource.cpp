@@ -3157,7 +3157,7 @@ const char* GDALGeoPackageDataset::CheckMetadataDomain( const char* pszDomain )
 /*                           HasMetadataTables()                        */
 /************************************************************************/
 
-bool GDALGeoPackageDataset::HasMetadataTables()
+bool GDALGeoPackageDataset::HasMetadataTables() const
 {
     const int nCount = SQLGetInteger(hDB,
                   "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
@@ -3170,7 +3170,7 @@ bool GDALGeoPackageDataset::HasMetadataTables()
 /*                         HasDataColumnsTable()                        */
 /************************************************************************/
 
-bool GDALGeoPackageDataset::HasDataColumnsTable()
+bool GDALGeoPackageDataset::HasDataColumnsTable() const
 {
     const int nCount = SQLGetInteger(hDB,
                 "SELECT 1 FROM sqlite_master WHERE name = 'gpkg_data_columns'"
@@ -3182,12 +3182,92 @@ bool GDALGeoPackageDataset::HasDataColumnsTable()
 /*                    HasDataColumnConstraintsTable()                   */
 /************************************************************************/
 
-bool GDALGeoPackageDataset::HasDataColumnConstraintsTable()
+bool GDALGeoPackageDataset::HasDataColumnConstraintsTable() const
 {
     const int nCount = SQLGetInteger(hDB,
     "SELECT 1 FROM sqlite_master WHERE name = 'gpkg_data_column_constraints'"
     "AND type IN ('table', 'view')", nullptr);
     return nCount == 1;
+}
+
+/************************************************************************/
+/*      CreateColumnsTableAndColumnConstraintsTablesIfNecessary()       */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::CreateColumnsTableAndColumnConstraintsTablesIfNecessary()
+{
+    if( !HasDataColumnsTable() )
+    {
+        // Geopackage < 1.3 had
+        // CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
+        // instead of the unique constraint.
+        if( OGRERR_NONE != SQLCommand(GetDB(),
+            "CREATE TABLE gpkg_data_columns ("
+            "table_name TEXT NOT NULL,"
+            "column_name TEXT NOT NULL,"
+            "name TEXT UNIQUE,"
+            "title TEXT,"
+            "description TEXT,"
+            "mime_type TEXT,"
+            "constraint_name TEXT,"
+            "CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),"
+            "CONSTRAINT gdc_tn UNIQUE (table_name, name));") )
+        {
+            return false;
+        }
+    }
+    if( !HasDataColumnConstraintsTable() )
+    {
+        if( OGRERR_NONE != SQLCommand(GetDB(),
+            "CREATE TABLE gpkg_data_column_constraints ("
+            "constraint_name TEXT NOT NULL,"
+            "constraint_type TEXT NOT NULL,"
+            "value TEXT,"
+            "min NUMERIC,"
+            "min_is_inclusive BOOLEAN,"
+            "max NUMERIC,"
+            "max_is_inclusive BOOLEAN,"
+            "description TEXT,"
+            "CONSTRAINT gdcc_ntv UNIQUE (constraint_name, "
+            "constraint_type, value));") )
+        {
+            return false;
+        }
+    }
+    if( CreateExtensionsTableIfNecessary() != OGRERR_NONE )
+    {
+        return false;
+    }
+    if( SQLGetInteger(GetDB(),
+        "SELECT 1 FROM gpkg_extensions WHERE "
+        "table_name = 'gpkg_data_columns'", nullptr) != 1 )
+    {
+        if( OGRERR_NONE != SQLCommand(GetDB(),
+            "INSERT INTO gpkg_extensions "
+            "(table_name,column_name,extension_name,definition,scope) "
+            "VALUES ('gpkg_data_columns', NULL, 'gpkg_schema', "
+            "'http://www.geopackage.org/spec121/#extension_schema', "
+            "'read-write')") )
+        {
+            return false;
+        }
+    }
+    if( SQLGetInteger(GetDB(),
+        "SELECT 1 FROM gpkg_extensions WHERE "
+        "table_name = 'gpkg_data_column_constraints'", nullptr) != 1 )
+    {
+        if( OGRERR_NONE != SQLCommand(GetDB(),
+            "INSERT INTO gpkg_extensions "
+            "(table_name,column_name,extension_name,definition,scope) "
+            "VALUES ('gpkg_data_column_constraints', NULL, 'gpkg_schema', "
+            "'http://www.geopackage.org/spec121/#extension_schema', "
+            "'read-write')") )
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /************************************************************************/
@@ -5726,6 +5806,8 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return GetUpdate();
+    else if( EQUAL(pszCap, ODsCAddFieldDomain) )
+        return GetUpdate();
 
     return OGRSQLiteBaseDataSource::TestCapability(pszCap);
 }
@@ -7096,4 +7178,477 @@ const char* GDALGeoPackageDataset::GetGeometryTypeString(OGRwkbGeometryType eTyp
         pszGPKGGeomType = "GEOMCOLLECTION";
     }
     return pszGPKGGeomType;
+}
+
+/************************************************************************/
+/*                           GetFieldDomain()                           */
+/************************************************************************/
+
+const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& name) const
+{
+    const auto baseRet = GDALDataset::GetFieldDomain(name);
+    if( baseRet )
+        return baseRet;
+
+    if( !HasDataColumnConstraintsTable() )
+        return nullptr;
+
+    SQLResult oResultTable;
+    // Note: for coded domains, we use a little trick by using a dummy
+    // _{domainname}_domain_description enum that has a single entry whose
+    // description is the description of the main domain.
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT constraint_type, value, min, min_is_inclusive, "
+            "max, max_is_inclusive, description, constraint_name "
+            "FROM gpkg_data_column_constraints "
+            "WHERE constraint_name IN ('%q', '_%q_domain_description') "
+            "AND constraint_type IS NOT NULL "
+            "AND length(constraint_type) < 100 " // to avoid denial of service
+            "AND (value IS NULL OR length(value) < 10000) " // to avoid denial of service
+            "AND (description IS NULL OR length(description) < 10000) " // to avoid denial of service
+            "ORDER BY value "
+            "LIMIT 10000", // to avoid denial of service
+            name.c_str(), name.c_str());
+        const auto err = SQLQuery(hDB, pszSQL, &oResultTable);
+        sqlite3_free(pszSQL);
+        if( err != OGRERR_NONE )
+            return nullptr;
+    }
+    if( oResultTable.nRowCount == 0 )
+    {
+        SQLResultFree(&oResultTable);
+        return nullptr;
+    }
+    if( oResultTable.nRowCount == 10000 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Number of rows returned for field domain %s has been "
+                 "truncated.", name.c_str());
+    }
+
+    // Try to find the field domain data type from fields that implement it
+    int nFieldType = -1;
+    OGRFieldSubType eSubType = OFSTNone;
+    if( HasDataColumnsTable() )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT table_name, column_name FROM gpkg_data_columns WHERE "
+            "constraint_name = '%q' AND table_name IS NOT NULL "
+            "AND column_name IS NOT NULL "
+            "LIMIT 10",
+            name.c_str());
+        SQLResult oResultTable2;
+        const auto err = SQLQuery(hDB, pszSQL, &oResultTable2);
+        sqlite3_free(pszSQL);
+        if( err == OGRERR_NONE && oResultTable2.nRowCount >= 1 )
+        {
+            for ( int iRecord = 0; iRecord < oResultTable2.nRowCount; iRecord++ )
+            {
+                const char* pszTableName = SQLResultGetValue (&oResultTable2, 0, iRecord);
+                const char* pszColumnName = SQLResultGetValue (&oResultTable2, 1, iRecord);
+                OGRLayer* poLayer = const_cast<GDALGeoPackageDataset*>(this)->
+                                                    GetLayerByName(pszTableName);
+                if( poLayer )
+                {
+                    const auto poFDefn = poLayer->GetLayerDefn();
+                    int nIdx = poFDefn->GetFieldIndex(pszColumnName);
+                    if( nIdx >= 0 )
+                    {
+                        const auto poFieldDefn = poFDefn->GetFieldDefn(nIdx);
+                        const auto eType = poFieldDefn->GetType();
+                        if( nFieldType < 0 )
+                        {
+                            nFieldType = eType;
+                            eSubType = poFieldDefn->GetSubType();
+                        }
+                        else if( (eType == OFTInteger64 || eType == OFTReal) && nFieldType == OFTInteger )
+                        {
+                            // ok
+                        }
+                        else if( eType == OFTInteger && (nFieldType == OFTInteger64 || nFieldType == OFTReal) )
+                        {
+                            nFieldType = OFTInteger;
+                            eSubType = OFSTNone;
+                        }
+                        else if( nFieldType != eType )
+                        {
+                            nFieldType = -1;
+                            eSubType = OFSTNone;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        SQLResultFree(&oResultTable2);
+    }
+
+    std::unique_ptr<OGRFieldDomain> poDomain;
+    std::vector<OGRCodedValue> asValues;
+    bool error = false;
+    CPLString osLastConstraintType;
+    int nFieldTypeFromEnumCode = -1;
+    std::string osConstraintDescription;
+    std::string osDescrConstraintName("_");
+    osDescrConstraintName += name;
+    osDescrConstraintName += "_domain_description";
+    for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
+    {
+        const char* pszConstraintType = SQLResultGetValue (&oResultTable, 0, iRecord);
+        const char* pszValue = SQLResultGetValue (&oResultTable, 1, iRecord);
+        const char* pszMin = SQLResultGetValue (&oResultTable, 2, iRecord);
+        const bool bIsMinIncluded = SQLResultGetValueAsInteger(&oResultTable, 3, iRecord) == 1;
+        const char* pszMax = SQLResultGetValue (&oResultTable, 4, iRecord);
+        const bool bIsMaxIncluded = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord) == 1;
+        const char* pszDescription = SQLResultGetValue (&oResultTable, 6, iRecord);
+        const char* pszConstraintName = SQLResultGetValue (&oResultTable, 7, iRecord);
+
+        if( !osLastConstraintType.empty() && osLastConstraintType != "enum" )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Only constraint of type 'enum' can have multiple rows");
+            error = true;
+            break;
+        }
+
+        if( strcmp(pszConstraintType, "enum") == 0 )
+        {
+            if( pszValue == nullptr )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "NULL in 'value' column of enumeration");
+                error = true;
+                break;
+            }
+            if( osDescrConstraintName == pszConstraintName )
+            {
+                if( pszDescription )
+                {
+                    osConstraintDescription = pszDescription;
+                }
+                continue;
+            }
+            if( asValues.empty() )
+            {
+                asValues.reserve( oResultTable.nRowCount + 1 );
+            }
+            OGRCodedValue cv;
+            // intented: the 'value' column in GPKG is actually the code
+            cv.pszCode = VSI_STRDUP_VERBOSE(pszValue);
+            if( cv.pszCode == nullptr )
+            {
+                error = true;
+                break;
+            }
+            if( pszDescription )
+            {
+                cv.pszValue = VSI_STRDUP_VERBOSE(pszDescription);
+                if( cv.pszValue == nullptr )
+                {
+                    VSIFree(cv.pszCode);
+                    error = true;
+                    break;
+                }
+            }
+            else
+            {
+                cv.pszValue = nullptr;
+            }
+
+            // If we can't get the data type from field definition, guess it
+            // from code.
+            if( nFieldType < 0 && nFieldTypeFromEnumCode != OFTString )
+            {
+                switch( CPLGetValueType(cv.pszCode) )
+                {
+                    case CPL_VALUE_INTEGER:
+                    {
+                        if( nFieldTypeFromEnumCode != OFTReal &&
+                            nFieldTypeFromEnumCode != OFTInteger64 )
+                        {
+                            const auto nVal = CPLAtoGIntBig(cv.pszCode);
+                            if( nVal < std::numeric_limits<int>::min() ||
+                                nVal > std::numeric_limits<int>::max() )
+                            {
+                                nFieldTypeFromEnumCode = OFTInteger64;
+                            }
+                            else
+                            {
+                                nFieldTypeFromEnumCode = OFTInteger;
+                            }
+                        }
+                        break;
+                    }
+
+                    case CPL_VALUE_REAL:
+                        nFieldTypeFromEnumCode = OFTReal;
+                        break;
+
+                    case CPL_VALUE_STRING:
+                        nFieldTypeFromEnumCode = OFTString;
+                        break;
+                }
+            }
+
+            asValues.emplace_back(cv);
+        }
+        else if ( strcmp(pszConstraintType, "range") == 0 )
+        {
+            OGRField sMin;
+            OGRField sMax;
+            OGR_RawField_SetUnset(&sMin);
+            OGR_RawField_SetUnset(&sMax);
+            if( nFieldType != OFTInteger && nFieldType != OFTInteger64 )
+                nFieldType = OFTReal;
+            if( pszMin != nullptr &&
+                CPLAtof(pszMin) != -std::numeric_limits<double>::infinity() )
+            {
+                if( nFieldType == OFTInteger )
+                    sMin.Integer = atoi(pszMin);
+                else if( nFieldType == OFTInteger64 )
+                    sMin.Integer64 = CPLAtoGIntBig(pszMin);
+                else /* if( nFieldType == OFTReal ) */
+                    sMin.Real = CPLAtof(pszMin);
+            }
+            if( pszMax != nullptr &&
+                CPLAtof(pszMax) != std::numeric_limits<double>::infinity() )
+            {
+                if( nFieldType == OFTInteger )
+                    sMax.Integer = atoi(pszMax);
+                else if( nFieldType == OFTInteger64 )
+                    sMax.Integer64 = CPLAtoGIntBig(pszMax);
+                else /* if( nFieldType == OFTReal ) */
+                    sMax.Real = CPLAtof(pszMax);
+            }
+            poDomain.reset(new OGRRangeFieldDomain(
+                name, pszDescription ? pszDescription : "",
+                static_cast<OGRFieldType>(nFieldType),
+                eSubType,
+                sMin, bIsMinIncluded,
+                sMax, bIsMaxIncluded));
+        }
+        else if ( strcmp(pszConstraintType, "glob") == 0 )
+        {
+            if( pszValue == nullptr )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "NULL in 'value' column of glob");
+                error = true;
+                break;
+            }
+            if( nFieldType < 0 )
+                nFieldType = OFTString;
+            poDomain.reset(new OGRGlobFieldDomain(
+                name, pszDescription ? pszDescription : "",
+                static_cast<OGRFieldType>(nFieldType),
+                eSubType,
+                pszValue));
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unhandled constraint_type: %s", pszConstraintType);
+            error = true;
+            break;
+        }
+
+        osLastConstraintType = pszConstraintType;
+    }
+
+    SQLResultFree(&oResultTable);
+
+    if( !asValues.empty() )
+    {
+        if( nFieldType < 0 )
+            nFieldType = nFieldTypeFromEnumCode;
+        poDomain.reset(new OGRCodedFieldDomain(
+            name, osConstraintDescription,
+            static_cast<OGRFieldType>(nFieldType), eSubType,
+            std::move(asValues)));
+    }
+
+    if( error )
+    {
+        return nullptr;
+    }
+
+    m_oMapFieldDomains[name] = std::move(poDomain);
+    return GDALDataset::GetFieldDomain(name);
+}
+
+/************************************************************************/
+/*                           AddFieldDomain()                           */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                           std::string& failureReason)
+{
+    const auto domainName = domain->GetName();
+    if( !GetUpdate() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "AddFieldDomain() not supported on read-only dataset");
+        return false;
+    }
+    if( GetFieldDomain(domainName) != nullptr )
+    {
+        failureReason = "A domain of identical name already exists";
+        return false;
+    }
+    if( !CreateColumnsTableAndColumnConstraintsTablesIfNecessary() )
+        return false;
+
+    const auto& osDescription = domain->GetDescription();
+    switch( domain->GetDomainType() )
+    {
+        case OFDT_CODED:
+        {
+            const auto poCodedDomain =
+                cpl::down_cast<const OGRCodedFieldDomain*>(domain.get());
+            if( !osDescription.empty() )
+            {
+                // We use a little trick by using a dummy
+                // _{domainname}_domain_description enum that has a single
+                // entry whose description is the description of the main
+                // domain.
+                char* pszSQL = sqlite3_mprintf(
+                    "INSERT INTO gpkg_data_column_constraints ("
+                    "constraint_name, constraint_type, value, "
+                    "min, min_is_inclusive, max, max_is_inclusive, "
+                    "description) VALUES ("
+                    "'_%q_domain_description', 'enum', '', NULL, NULL, NULL, "
+                    "NULL, %Q)",
+                    domainName.c_str(),
+                    osDescription.c_str());
+                CPL_IGNORE_RET_VAL(SQLCommand(hDB, pszSQL));
+                sqlite3_free(pszSQL);
+            }
+            const auto& enumeration = poCodedDomain->GetEnumeration();
+            for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
+            {
+                char* pszSQL = sqlite3_mprintf(
+                    "INSERT INTO gpkg_data_column_constraints ("
+                    "constraint_name, constraint_type, value, "
+                    "min, min_is_inclusive, max, max_is_inclusive, "
+                    "description) VALUES ("
+                    "'%q', 'enum', '%q', NULL, NULL, NULL, NULL, %Q)",
+                    domainName.c_str(),
+                    enumeration[i].pszCode,
+                    enumeration[i].pszValue);
+                bool ok = SQLCommand(hDB, pszSQL) == OGRERR_NONE;
+                sqlite3_free(pszSQL);
+                if( !ok )
+                    return false;
+            }
+            break;
+        }
+
+        case OFDT_RANGE:
+        {
+            const auto poRangeDomain =
+                cpl::down_cast<const OGRRangeFieldDomain*>(domain.get());
+            const auto eFieldType = poRangeDomain->GetFieldType();
+            if( eFieldType != OFTInteger &&
+                eFieldType != OFTInteger64 &&
+                eFieldType != OFTReal )
+            {
+                failureReason = "Only range domains of numeric type are "
+                                "supported in GeoPackage";
+                return false;
+            }
+
+            double dfMin = -std::numeric_limits<double>::infinity();
+            double dfMax = std::numeric_limits<double>::infinity();
+            bool bMinIsInclusive = true;
+            const auto& sMin = poRangeDomain->GetMin(bMinIsInclusive);
+            bool bMaxIsInclusive = true;
+            const auto& sMax = poRangeDomain->GetMax(bMaxIsInclusive);
+            if( eFieldType == OFTInteger )
+            {
+                if( !OGR_RawField_IsUnset(&sMin))
+                    dfMin = sMin.Integer;
+                if( !OGR_RawField_IsUnset(&sMax))
+                    dfMax = sMax.Integer;
+            }
+            else if( eFieldType == OFTInteger64 )
+            {
+                if( !OGR_RawField_IsUnset(&sMin))
+                    dfMin = static_cast<double>(sMin.Integer64);
+                if( !OGR_RawField_IsUnset(&sMax))
+                    dfMax = static_cast<double>(sMax.Integer64);
+            }
+            else /* if( eFieldType == OFTReal ) */
+            {
+                if( !OGR_RawField_IsUnset(&sMin))
+                    dfMin = sMin.Real;
+                if( !OGR_RawField_IsUnset(&sMax))
+                    dfMax = sMax.Real;
+            }
+
+            sqlite3_stmt* hInsertStmt = nullptr;
+            const char* pszSQL = "INSERT INTO gpkg_data_column_constraints ("
+                "constraint_name, constraint_type, value, "
+                "min, min_is_inclusive, max, max_is_inclusive, "
+                "description) VALUES ("
+                "?, 'range', NULL, ?, ?, ?, ?, ?)";
+            if ( sqlite3_prepare_v2(hDB, pszSQL, -1, &hInsertStmt, nullptr)
+                                                                    != SQLITE_OK )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                            "failed to prepare SQL: %s", pszSQL);
+                return false;
+            }
+            sqlite3_bind_text(hInsertStmt,1,domainName.c_str(),
+                              static_cast<int>(domainName.size()), SQLITE_TRANSIENT);
+            sqlite3_bind_double(hInsertStmt,2,dfMin);
+            sqlite3_bind_int(hInsertStmt,3,bMinIsInclusive ? 1 : 0);
+            sqlite3_bind_double(hInsertStmt,4,dfMax);
+            sqlite3_bind_int(hInsertStmt,5,bMaxIsInclusive ? 1 : 0);
+            if( osDescription.empty() )
+            {
+                sqlite3_bind_null(hInsertStmt,6);
+            }
+            else
+            {
+                sqlite3_bind_text(hInsertStmt,6,osDescription.c_str(),
+                              static_cast<int>(osDescription.size()), SQLITE_TRANSIENT);
+            }
+            const int sqlite_err = sqlite3_step(hInsertStmt);
+            sqlite3_finalize(hInsertStmt);
+            if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "failed to execute insertion: %s",
+                        sqlite3_errmsg( hDB ) );
+                return false;
+            }
+
+            break;
+        }
+
+        case OFDT_GLOB:
+        {
+            const auto poGlobDomain =
+                cpl::down_cast<const OGRGlobFieldDomain*>(domain.get());
+            char* pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_data_column_constraints ("
+                "constraint_name, constraint_type, value, "
+                "min, min_is_inclusive, max, max_is_inclusive, "
+                "description) VALUES ("
+                "'%q', 'glob', '%q', NULL, NULL, NULL, NULL, %Q)",
+                domainName.c_str(),
+                poGlobDomain->GetGlob().c_str(),
+                osDescription.empty() ? nullptr : osDescription.c_str());
+            bool ok = SQLCommand(hDB, pszSQL) == OGRERR_NONE;
+            sqlite3_free(pszSQL);
+            if( !ok )
+                return false;
+
+            break;
+        }
+    }
+
+    m_oMapFieldDomains[domainName] = std::move(domain);
+    return true;
 }

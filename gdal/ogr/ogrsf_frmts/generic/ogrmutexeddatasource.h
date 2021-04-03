@@ -112,6 +112,12 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" ) override;
+
+    virtual const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
+
+    virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                       std::string& failureReason) override;
+
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

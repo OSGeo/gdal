@@ -71,6 +71,9 @@ typedef int OGRwkbGeometryType;
 typedef int OGRFieldType;
 typedef int OGRFieldSubType;
 typedef int OGRJustification;
+typedef int OGRFieldDomainType;
+typedef int OGRFieldDomainSplitPolicy;
+typedef int OGRFieldDomainMergePolicy;
 #else
 %rename (wkbByteOrder) OGRwkbByteOrder;
 typedef enum
@@ -214,7 +217,43 @@ typedef enum
     OJLeft = 1,
     OJRight = 2
 } OGRJustification;
+
+%rename (FieldDomainType) OGRFieldDomainType;
+typedef enum
+{
+    /** Coded */
+    OFDT_CODED = 0,
+    /** Range (min/max) */
+    OFDT_RANGE = 1,
+    /** Glob (used by GeoPackage) */
+    OFDT_GLOB = 2
+} OGRFieldDomainType;
+
+%rename (FieldDomainSplitPolicy) OGRFieldDomainSplitPolicy;
+typedef enum
+{
+    /** Default value */
+    OFDSP_DEFAULT_VALUE,
+    /** Duplicate */
+    OFDSP_DUPLICATE,
+    /** New values are computed by the ratio of their area/length compared to the area/length of the original feature */
+    OFDSP_GEOMETRY_RATIO
+} OGRFieldDomainSplitPolicy;
+
+%rename (FieldDomainMergePolicy) OGRFieldDomainMergePolicy;
+typedef enum
+{
+    /** Default value */
+    OFDMP_DEFAULT_VALUE,
+    /** Sum */
+    OFDMP_SUM,
+    /** New values are computed as the weighted average of the source values. */
+    OFDMP_GEOMETRY_WEIGHTED
+} OGRFieldDomainMergePolicy;
+
+
 #endif
+
 
 %{
 #include <iostream>
@@ -259,10 +298,12 @@ typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
 #endif
+
 typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 typedef struct OGRGeomTransformer OGRGeomTransformerShadow;
 typedef struct _OGRPreparedGeometry OGRPreparedGeometryShadow;
+typedef struct OGRFieldDomainHS OGRFieldDomainShadow;
 %}
 
 #ifdef SWIGJAVA
@@ -386,6 +427,18 @@ typedef void retGetPoints;
 %constant OJLeft = 1;
 %constant OJRight = 2;
 
+%constant OFDT_CODED = 0;
+%constant OFDT_RANGE = 1;
+%constant OFDT_GLOB = 2;
+
+%constant OFDSP_DEFAULT_VALUE = 0;
+%constant OFDSP_DUPLICATE = 1;
+%constant OFDSP_GEOMETRY_RATIO = 2;
+
+%constant OFDMP_DEFAULT_VALUE = 0;
+%constant OFDMP_SUM = 1;
+%constant OFDMP_GEOMETRY_WEIGHTED = 2;
+
 %constant wkbXDR = 0;
 %constant wkbNDR = 1;
 
@@ -435,6 +488,7 @@ typedef void retGetPoints;
 %constant char *ODsCRandomLayerRead    = "RandomLayerRead";
 /* Note the unfortunate trailing space at the end of the string */
 %constant char *ODsCRandomLayerWrite   = "RandomLayerWrite ";
+%constant char *ODsCAddFieldDomain     = "AddFieldDomain";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -2316,6 +2370,15 @@ public:
   int IsDefaultDriverSpecific() {
     return OGR_Fld_IsDefaultDriverSpecific( self );
   }
+
+  const char* GetDomainName() {
+    return OGR_Fld_GetDomainName(self);
+  }
+
+  void SetDomainName(const char* name ) {
+    OGR_Fld_SetDomainName( self, name );
+  }
+
 } /* %extend */
 
 
@@ -3348,6 +3411,193 @@ public:
 } /* %extend */
 
 }; /* class OGRGeomTransformerShadow */
+
+/************************************************************************/
+/*                          OGRFieldDomain                              */
+/************************************************************************/
+
+%rename (FieldDomain) OGRFieldDomainShadow;
+
+class OGRFieldDomainShadow {
+  OGRFieldDomainShadow();
+public:
+%extend {
+
+  ~OGRFieldDomainShadow() {
+    OGR_FldDomain_Destroy(self);
+  }
+
+  const char * GetName() {
+    return OGR_FldDomain_GetName(self);
+  }
+
+  const char * GetDescription() {
+    return OGR_FldDomain_GetDescription(self);
+  }
+
+  OGRFieldType GetFieldType() {
+    return OGR_FldDomain_GetFieldType(self);
+  }
+
+  OGRFieldSubType GetFieldSubType() {
+    return OGR_FldDomain_GetFieldSubType(self);
+  }
+
+  OGRFieldDomainType GetDomainType() {
+    return OGR_FldDomain_GetDomainType(self);
+  }
+
+  OGRFieldDomainSplitPolicy GetSplitPolicy() {
+    return OGR_FldDomain_GetSplitPolicy(self);
+  }
+
+  void SetSplitPolicy(OGRFieldDomainSplitPolicy policy) {
+    OGR_FldDomain_SetSplitPolicy(self, policy);
+  }
+
+  OGRFieldDomainMergePolicy GetMergePolicy() {
+    return OGR_FldDomain_GetMergePolicy(self);
+  }
+
+  void SetMergePolicy(OGRFieldDomainMergePolicy policy) {
+    OGR_FldDomain_SetMergePolicy(self, policy);
+  }
+
+#ifdef SWIGPYTHON
+  const OGRCodedValue* GetEnumeration() {
+    return OGR_CodedFldDomain_GetEnumeration(self);
+  }
+#endif
+
+  double GetMinAsDouble() {
+      const OGRField* psVal = OGR_RangeFldDomain_GetMin(self, NULL);
+      if( psVal == NULL || OGR_RawField_IsUnset(psVal) )
+          return CPLAtof("-inf");
+      const OGRFieldType eType = OGR_FldDomain_GetFieldType(self);
+      if( eType == OFTInteger )
+          return psVal->Integer;
+      if( eType == OFTInteger64 )
+          return psVal->Integer64;
+      if( eType == OFTReal )
+          return psVal->Real;
+      return CPLAtof("-inf");
+  }
+
+  bool IsMinInclusive() {
+      bool isInclusive = false;
+      (void)OGR_RangeFldDomain_GetMin(self, &isInclusive);
+      return isInclusive;
+  }
+
+  double GetMaxAsDouble() {
+      const OGRField* psVal = OGR_RangeFldDomain_GetMax(self, NULL);
+      if( psVal == NULL || OGR_RawField_IsUnset(psVal) )
+          return CPLAtof("inf");
+      const OGRFieldType eType = OGR_FldDomain_GetFieldType(self);
+      if( eType == OFTInteger )
+          return psVal->Integer;
+      if( eType == OFTInteger64 )
+          return psVal->Integer64;
+      if( eType == OFTReal )
+          return psVal->Real;
+      return CPLAtof("inf");
+  }
+
+  bool IsMaxInclusive() {
+      bool isInclusive = false;
+      (void)OGR_RangeFldDomain_GetMax(self, &isInclusive);
+      return isInclusive;
+  }
+
+  const char* GetGlob() {
+      return OGR_GlobFldDomain_GetGlob(self);
+  }
+
+} /* %extend */
+
+}; /* class OGRFieldDomainShadow */
+
+#ifdef SWIGPYTHON
+%newobject CreateCodedFieldDomain;
+%apply Pointer NONNULL {const char* name};
+%inline %{
+static
+OGRFieldDomainShadow* CreateCodedFieldDomain( const char *name,
+                                              const char* description,
+                                              OGRFieldType type,
+                                              OGRFieldSubType subtype,
+                                              const OGRCodedValue* enumeration) {
+  return (OGRFieldDomainShadow*) OGR_CodedFldDomain_Create( name,
+                                                            description,
+                                                            type,
+                                                            subtype,
+                                                            enumeration );
+}
+%}
+%clear const char* name;
+#endif
+
+%newobject CreateRangeFieldDomain;
+%apply Pointer NONNULL {const char* name};
+%inline %{
+static
+OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
+                                              const char* description,
+                                              OGRFieldType type,
+                                              OGRFieldSubType subtype,
+                                              double min,
+                                              bool minIsInclusive,
+                                              double max,
+                                              double maxIsInclusive) {
+  OGRField sMin;
+  if( type == OFTInteger )
+      sMin.Integer = static_cast<int>(min);
+  else if( type == OFTInteger64 )
+      sMin.Integer64 = static_cast<GIntBig>(min);
+  else if( type == OFTReal )
+      sMin.Real = min;
+  else
+      return NULL;
+  OGRField sMax;
+  if( type == OFTInteger )
+      sMax.Integer = static_cast<int>(max);
+  else if( type == OFTInteger64 )
+      sMax.Integer64 = static_cast<GIntBig>(max);
+  else if( type == OFTReal )
+      sMax.Real = max;
+  else
+      return NULL;
+  return (OGRFieldDomainShadow*) OGR_RangeFldDomain_Create( name,
+                                                            description,
+                                                            type,
+                                                            subtype,
+                                                            &sMin,
+                                                            minIsInclusive,
+                                                            &sMax,
+                                                            maxIsInclusive );
+}
+%}
+%clear const char* name;
+
+%newobject CreateGlobFieldDomain;
+%apply Pointer NONNULL {const char* name};
+%apply Pointer NONNULL {const char* glob};
+%inline %{
+static
+OGRFieldDomainShadow* CreateGlobFieldDomain( const char *name,
+                                             const char* description,
+                                             OGRFieldType type,
+                                             OGRFieldSubType subtype,
+                                             const char* glob ) {
+  return (OGRFieldDomainShadow*) OGR_GlobFldDomain_Create( name,
+                                                           description,
+                                                           type,
+                                                           subtype,
+                                                           glob );
+}
+%}
+%clear const char* name;
+%clear const char* glob;
 
 /************************************************************************/
 /*                        Other misc functions.                         */

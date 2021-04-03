@@ -2490,3 +2490,130 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
   /* %typemap(typecheck,precedence=0) (GDALDataType *optional_GDALDataType) */
   $1 = (($input==Py_None) || my_PyCheck_int($input)) ? 1 : 0;
 }
+
+
+
+/*
+ * Typemap OGRCodedValue*<- dict.
+ */
+
+%typemap(in) OGRCodedValue* enumeration
+{
+    /* %typemap(in) OGRCodedValue* enumeration */
+    $1 = NULL;
+
+    if ($input == NULL || !PyMapping_Check($input)) {
+        SWIG_exception_fail(SWIG_ValueError,"Expected dict.");
+    }
+    Py_ssize_t size = PyMapping_Length( $input );
+    $1 = (OGRCodedValue*)CPLCalloc(size+1, sizeof(OGRCodedValue) );
+
+    PyObject *item_list = PyMapping_Items( $input );
+    if( item_list == NULL )
+    {
+      PyErr_SetString(PyExc_TypeError,"Cannot retrieve items");
+      SWIG_fail;
+    }
+
+    for( Py_ssize_t i=0; i<size; i++ ) {
+        PyObject *it = PySequence_GetItem( item_list, i );
+        if( it == NULL )
+        {
+          Py_DECREF(item_list);
+          PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
+          SWIG_fail;
+        }
+
+        PyObject *k, *v;
+        if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
+          Py_DECREF(it);
+          Py_DECREF(item_list);
+          PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
+          SWIG_fail;
+        }
+
+        PyObject* kStr = PyObject_Str(k);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(item_list);
+            SWIG_fail;
+        }
+
+        PyObject* vStr = v != Py_None ? PyObject_Str(v) : Py_None;
+        if( v == Py_None )
+            Py_INCREF(Py_None);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(kStr);
+            Py_DECREF(item_list);
+            SWIG_fail;
+        }
+
+        int bFreeK, bFreeV;
+        char* pszK = GDALPythonObjectToCStr(kStr, &bFreeK);
+        char* pszV = vStr != Py_None ? GDALPythonObjectToCStr(vStr, &bFreeV) : NULL;
+        if( pszK == NULL || (pszV == NULL && vStr != Py_None) )
+        {
+            GDALPythonFreeCStr(pszK, bFreeK);
+            if( pszV )
+                GDALPythonFreeCStr(pszV, bFreeV);
+            Py_DECREF(kStr);
+            Py_DECREF(vStr);
+            Py_DECREF(it);
+            Py_DECREF(item_list);
+            PyErr_SetString(PyExc_TypeError,"Cannot get key/value as string");
+            SWIG_fail;
+        }
+        ($1)[i].pszCode = CPLStrdup(pszK);
+        ($1)[i].pszValue = pszV ? CPLStrdup(pszV) : NULL;
+
+        GDALPythonFreeCStr(pszK, bFreeK);
+        if( pszV )
+            GDALPythonFreeCStr(pszV, bFreeV);
+        Py_DECREF(kStr);
+        Py_DECREF(vStr);
+        Py_DECREF(it);
+    }
+    Py_DECREF(item_list);
+}
+
+%typemap(freearg) OGRCodedValue*
+{
+  /* %typemap(freearg) OGRCodedValue* */
+  if( $1 )
+  {
+      for( size_t i = 0; ($1)[i].pszCode != NULL; ++i )
+      {
+          CPLFree(($1)[i].pszCode);
+          CPLFree(($1)[i].pszValue);
+      }
+  }
+  CPLFree( $1 );
+}
+
+%typemap(out) OGRCodedValue*
+{
+  /* %typemap(out) OGRCodedValue* */
+  if( $1 == NULL )
+  {
+      PyErr_SetString( PyExc_RuntimeError, CPLGetLastErrorMsg() );
+      SWIG_fail;
+  }
+  PyObject *dict = PyDict_New();
+  for( int i = 0; ($1)[i].pszCode != NULL; i++ )
+  {
+    if( ($1)[i].pszValue )
+    {
+        PyObject* val = GDALPythonObjectFromCStr(($1)[i].pszValue);
+        PyDict_SetItemString(dict, ($1)[i].pszCode, val);
+        Py_DECREF(val);
+    }
+    else
+    {
+        PyDict_SetItemString(dict, ($1)[i].pszCode, Py_None);
+    }
+  }
+  $result = dict;
+}

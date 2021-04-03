@@ -709,6 +709,7 @@ def VectorTranslateOptions(options=None, format=None,
          segmentizeMaxDist= None,
          makeValid=False,
          zField=None,
+         resolveDomains=False,
          skipFailures=False,
          limit=None,
          callback=None, callback_data=None):
@@ -739,6 +740,7 @@ def VectorTranslateOptions(options=None, format=None,
           segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
           makeValid --- run MakeValid() on geometries
           zField --- name of field to use to set the Z component of geometries
+          resolveDomains --- whether to create an additional field for each field associated with a coded field domain.
           skipFailures --- whether to skip failures
           limit -- maximum number of features to read per layer
           callback --- callback method
@@ -821,6 +823,8 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-dim', dim]
         if zField is not None:
             new_options += ['-zfield', zField]
+        if resolveDomains:
+            new_options += ['-resolveDomains']
         if skipFailures:
             new_options += ['-skip']
         if limit is not None:
@@ -2471,6 +2475,16 @@ class Dataset(MajorObject):
     def ClearStatistics(self, *args):
         """ClearStatistics(Dataset self)"""
         return _gdal.Dataset_ClearStatistics(self, *args)
+
+
+    def GetFieldDomain(self, *args):
+        """GetFieldDomain(Dataset self, char const * name) -> FieldDomain"""
+        return _gdal.Dataset_GetFieldDomain(self, *args)
+
+
+    def AddFieldDomain(self, *args):
+        """AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
+        return _gdal.Dataset_AddFieldDomain(self, *args)
 
 
     def ReadRaster1(self, *args, **kwargs):

@@ -183,7 +183,7 @@ created or modified. If consistent binary output is required for
 reproducibility, the timestamp can be forced to a specific value by setting the
 :decl_configoption:`OGR_CURRENT_DATE` global configuration option.
 When setting the option, take care to meet the specific time format
-requirement of the GeoPackage standard, 
+requirement of the GeoPackage standard,
 e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 
 Dataset Creation Options
@@ -328,7 +328,7 @@ example with "ogrinfo --format GPKG")
 Level of support of GeoPackage Extensions
 -----------------------------------------
 
-(Restricted to those have a vector scope)
+(Restricted to those that have a vector scope)
 
 .. list-table:: Extensions
    :header-rows: 1
@@ -347,7 +347,7 @@ Level of support of GeoPackage Extensions
      - Yes
    * - `Schema <http://www.geopackage.org/guidance/extensions/schema.html>`__
      - Yes
-     - No
+     - Yes, since GDAL 3.3 (Geopackage constraints exposed as field domains)
    * - `WKT for Coordinate Reference Systems <http://www.geopackage.org/guidance/extensions/wkt_for_crs.md>`__ (WKT v2)
      - Yes
      -  Partially, since GDAL 2.2. GDAL can read databases using this extension, but cannot interpret a SRS entry that has only a WKT v2 entry.

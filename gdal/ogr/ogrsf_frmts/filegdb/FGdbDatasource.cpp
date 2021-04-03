@@ -36,6 +36,8 @@
 #include "FGdbUtils.h"
 #include "cpl_multiproc.h"
 
+#include "filegdb_fielddomain.h"
+
 CPL_CVSID("$Id$")
 
 using std::vector;
@@ -797,4 +799,30 @@ void FGdbDataSource::SetSymlinkFlagOnAllLayers()
     {
         m_layers[i]->SetSymlinkFlag();
     }
+}
+
+/************************************************************************/
+/*                        GetFieldDomain()                              */
+/************************************************************************/
+
+const OGRFieldDomain* FGdbDataSource::GetFieldDomain(const std::string& name) const
+{
+    const auto baseRet = GDALDataset::GetFieldDomain(name);
+    if( baseRet )
+        return baseRet;
+
+    std::string domainDef;
+    const auto hr = m_pGeodatabase->GetDomainDefinition(StringToWString(name), domainDef);
+    if (FAILED(hr))
+    {
+        GDBErr(hr, "Failed in GetDomainDefinition()");
+        return nullptr;
+    }
+
+    auto poDomain = ParseXMLFieldDomainDef(domainDef);
+    if( !poDomain )
+        return nullptr;
+    const auto domainName = poDomain->GetName();
+    m_oMapFieldDomains[domainName] = std::move(poDomain);
+    return GDALDataset::GetFieldDomain(name);
 }

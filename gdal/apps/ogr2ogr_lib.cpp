@@ -298,6 +298,10 @@ struct GDALVectorTranslateOptions
         in source layer */
     bool bForceNullable;
 
+    /*! If set to true, for each field with a coded field domains, create a field that contains
+        the description of the coded value. */
+    bool bResolveDomains;
+
     /*! If set to true, empty string values will be treated as null */
     bool bEmptyStrAsNull;
 
@@ -366,6 +370,13 @@ struct TargetLayerInfo
     std::vector<std::unique_ptr<OGRCoordinateTransformation>> m_apoCT{};
     std::vector<CPLStringList> m_aosTransformOptions{};
     std::vector<int> m_anMap{};
+    struct ResolvedInfo
+    {
+        int nSrcField;
+        const OGRFieldDomain* poDomain;
+    };
+    std::map<int, ResolvedInfo> m_oMapResolved{};
+    std::map<const OGRFieldDomain*, std::map<std::string, std::string>> m_oMapDomainToKV{};
     int          m_iSrcZField = -1;
     int          m_iSrcFIDField = -1;
     int          m_iRequestedSrcGeomField = -1;
@@ -404,6 +415,7 @@ public:
     bool                  m_bExactFieldNameMatch;
     bool                  m_bQuiet;
     bool                  m_bForceNullable;
+    bool                  m_bResolveDomains;
     bool                  m_bUnsetDefault;
     bool                  m_bUnsetFid;
     bool                  m_bPreserveFID;
@@ -1792,6 +1804,11 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-forceNullable");
         return nullptr;
     }
+    if( psOptions->bResolveDomains )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-forceNullable");
+        return nullptr;
+    }
     if( psOptions->bEmptyStrAsNull )
     {
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-emptyStrAsNull");
@@ -2559,6 +2576,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oSetup.m_bExactFieldNameMatch = psOptions->bExactFieldNameMatch;
     oSetup.m_bQuiet = psOptions->bQuiet;
     oSetup.m_bForceNullable = psOptions->bForceNullable;
+    oSetup.m_bResolveDomains = psOptions->bResolveDomains;
     oSetup.m_bUnsetDefault = psOptions->bUnsetDefault;
     oSetup.m_bUnsetFid = psOptions->bUnsetFid;
     oSetup.m_bPreserveFID = psOptions->bPreserveFID;
@@ -3927,6 +3945,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     // Initialize the index-to-index map to -1's
     std::vector<int> anMap(nSrcFieldCount, -1);
 
+    std::map<int, TargetLayerInfo::ResolvedInfo> oMapResolved;
+
     /* Caution : at the time of writing, the MapInfo driver */
     /* returns NULL until a field has been added */
     OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
@@ -4124,7 +4144,7 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         for( size_t i = 0; i < anSrcFieldIndices.size(); i++ )
         {
             const int iField = anSrcFieldIndices[i];
-            OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
+            const OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
             OGRFieldDefn oFieldDefn( poSrcFieldDefn );
 
             // Avoid creating a field with the same name as the FID column
@@ -4185,6 +4205,40 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 }
             }
 
+            // Create field domain in output dataset if not already existing.
+            const auto osDomainName = oFieldDefn.GetDomainName();
+            if( !osDomainName.empty() )
+            {
+                if( m_poDstDS->TestCapability(ODsCAddFieldDomain) &&
+                    m_poDstDS->GetFieldDomain(osDomainName) == nullptr )
+                {
+                    const auto poSrcDomain =
+                        m_poSrcDS->GetFieldDomain(osDomainName);
+                    if( poSrcDomain )
+                    {
+                        std::string failureReason;
+                        if( !m_poDstDS->AddFieldDomain(
+                                std::unique_ptr<OGRFieldDomain>(poSrcDomain->Clone()),
+                                failureReason) )
+                        {
+                            oFieldDefn.SetDomainName(std::string());
+                            CPLDebug("OGR2OGR", "Cannot create domain %s: %s",
+                                     osDomainName.c_str(), failureReason.c_str());
+                        }
+                    }
+                    else
+                    {
+                        CPLDebug("OGR2OGR",
+                                 "Cannot find domain %s in source dataset",
+                                 osDomainName.c_str());
+                    }
+                }
+                if( m_poDstDS->GetFieldDomain(osDomainName) == nullptr )
+                {
+                    oFieldDefn.SetDomainName(std::string());
+                }
+            }
+
             if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
             {
                 /* now that we've created a field, GetLayerDefn() won't return NULL */
@@ -4216,6 +4270,26 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 
                     anMap[iField] = nDstFieldCount;
                     nDstFieldCount ++;
+                }
+            }
+
+            if( m_bResolveDomains && !osDomainName.empty() )
+            {
+                const auto poSrcDomain =
+                        m_poSrcDS->GetFieldDomain(osDomainName);
+                if( poSrcDomain && poSrcDomain->GetDomainType() == OFDT_CODED )
+                {
+                    OGRFieldDefn oResolvedField(
+                        CPLSPrintf("%s_resolved", oFieldDefn.GetNameRef()),
+                        OFTString );
+                    if (poDstLayer->CreateField( &oResolvedField ) == OGRERR_NONE)
+                    {
+                        TargetLayerInfo::ResolvedInfo resolvedInfo;
+                        resolvedInfo.nSrcField = iField;
+                        resolvedInfo.poDomain = poSrcDomain;
+                        oMapResolved[nDstFieldCount] = resolvedInfo;
+                        nDstFieldCount ++;
+                    }
                 }
             }
         }
@@ -4279,6 +4353,21 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         psInfo->m_iRequestedSrcGeomField = -1;
     psInfo->m_bPreserveFID = bPreserveFID;
     psInfo->m_pszCTPipeline = m_pszCTPipeline;
+    psInfo->m_oMapResolved = std::move(oMapResolved);
+    for( const auto& kv: psInfo->m_oMapResolved )
+    {
+        const auto poDomain = kv.second.poDomain;
+        const auto poCodedDomain =
+            cpl::down_cast<const OGRCodedFieldDomain*>(poDomain);
+        const auto enumeration = poCodedDomain->GetEnumeration();
+        std::map<std::string, std::string> oMapCodeValue;
+        for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
+        {
+            oMapCodeValue[enumeration[i].pszCode] =
+                enumeration[i].pszValue ? enumeration[i].pszValue : "";
+        }
+        psInfo->m_oMapDomainToKV[poDomain] = std::move(oMapCodeValue);
+    }
 
     return psInfo;
 }
@@ -4888,6 +4977,26 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 poDstFeature->SetGeomFieldDirectly(iGeom, poDstGeometry);
             }
 
+            if( !psInfo->m_oMapResolved.empty() )
+            {
+                for( const auto& kv: psInfo->m_oMapResolved )
+                {
+                    const int nDstField = kv.first;
+                    const int nSrcField = kv.second.nSrcField;
+                    if( poFeature->IsFieldSetAndNotNull(nSrcField) )
+                    {
+                        const auto poDomain = kv.second.poDomain;
+                        const auto& oMapKV = psInfo->m_oMapDomainToKV[poDomain];
+                        const auto iter = oMapKV.find(
+                            poFeature->GetFieldAsString(nSrcField));
+                        if( iter != oMapKV.end() )
+                        {
+                            poDstFeature->SetField(nDstField, iter->second.c_str());
+                        }
+                    }
+                }
+            }
+
             CPLErrorReset();
             if( poDstLayer->CreateFeature( poDstFeature ) == OGRERR_NONE )
             {
@@ -5117,6 +5226,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->nCoordDim = COORD_DIM_UNCHANGED;
     psOptions->papszDestOpenOptions = nullptr;
     psOptions->bForceNullable = false;
+    psOptions->bResolveDomains = false;
     psOptions->bUnsetDefault = false;
     psOptions->bUnsetFid = false;
     psOptions->bPreserveFID = false;
@@ -5728,6 +5838,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-forceNullable") )
         {
             psOptions->bForceNullable = true;
+        }
+        else if( EQUAL(papszArgv[i],"-resolveDomains") )
+        {
+            psOptions->bResolveDomains = true;
         }
         else if( EQUAL(papszArgv[i],"-unsetDefault") )
         {

@@ -56,6 +56,11 @@ can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content (only available in
 Geodatabases created with ArcGIS 10 or above)
 
+Field domains
+~~~~~~~~~~~~~
+
+(GDAL >= 3.3) Coded and range field domains are supported.
+
 Comparison with the FileGDB driver
 ----------------------------------
 

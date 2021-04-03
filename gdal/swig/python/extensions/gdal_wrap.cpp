@@ -3047,37 +3047,38 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_GIntBig swig_types[36]
 #define SWIGTYPE_p_GUIntBig swig_types[37]
 #define SWIGTYPE_p_OGRFeatureShadow swig_types[38]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[39]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[40]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[41]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[42]
-#define SWIGTYPE_p_StatBuf swig_types[43]
-#define SWIGTYPE_p_Statistics swig_types[44]
-#define SWIGTYPE_p_VSIDIR swig_types[45]
-#define SWIGTYPE_p_VSILFILE swig_types[46]
-#define SWIGTYPE_p_char swig_types[47]
-#define SWIGTYPE_p_double swig_types[48]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[49]
-#define SWIGTYPE_p_int swig_types[50]
-#define SWIGTYPE_p_p_GByte swig_types[51]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[52]
-#define SWIGTYPE_p_p_GDALDimensionHS swig_types[53]
-#define SWIGTYPE_p_p_GDALEDTComponentHS swig_types[54]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[55]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[56]
-#define SWIGTYPE_p_p_GUIntBig swig_types[57]
-#define SWIGTYPE_p_p_OGRLayerShadow swig_types[58]
-#define SWIGTYPE_p_p_char swig_types[59]
-#define SWIGTYPE_p_p_double swig_types[60]
-#define SWIGTYPE_p_p_int swig_types[61]
-#define SWIGTYPE_p_p_p_GDALAttributeHS swig_types[62]
-#define SWIGTYPE_p_p_p_GDALDimensionHS swig_types[63]
-#define SWIGTYPE_p_p_p_GDALEDTComponentHS swig_types[64]
-#define SWIGTYPE_p_p_void swig_types[65]
-#define SWIGTYPE_p_size_t swig_types[66]
-#define SWIGTYPE_p_vsi_l_offset swig_types[67]
-static swig_type_info *swig_types[69];
-static swig_module_info swig_module = {swig_types, 68, 0, 0, 0, 0};
+#define SWIGTYPE_p_OGRFieldDomainShadow swig_types[39]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[40]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[41]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[42]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[43]
+#define SWIGTYPE_p_StatBuf swig_types[44]
+#define SWIGTYPE_p_Statistics swig_types[45]
+#define SWIGTYPE_p_VSIDIR swig_types[46]
+#define SWIGTYPE_p_VSILFILE swig_types[47]
+#define SWIGTYPE_p_char swig_types[48]
+#define SWIGTYPE_p_double swig_types[49]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[50]
+#define SWIGTYPE_p_int swig_types[51]
+#define SWIGTYPE_p_p_GByte swig_types[52]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[53]
+#define SWIGTYPE_p_p_GDALDimensionHS swig_types[54]
+#define SWIGTYPE_p_p_GDALEDTComponentHS swig_types[55]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[56]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[57]
+#define SWIGTYPE_p_p_GUIntBig swig_types[58]
+#define SWIGTYPE_p_p_OGRLayerShadow swig_types[59]
+#define SWIGTYPE_p_p_char swig_types[60]
+#define SWIGTYPE_p_p_double swig_types[61]
+#define SWIGTYPE_p_p_int swig_types[62]
+#define SWIGTYPE_p_p_p_GDALAttributeHS swig_types[63]
+#define SWIGTYPE_p_p_p_GDALDimensionHS swig_types[64]
+#define SWIGTYPE_p_p_p_GDALEDTComponentHS swig_types[65]
+#define SWIGTYPE_p_p_void swig_types[66]
+#define SWIGTYPE_p_size_t swig_types[67]
+#define SWIGTYPE_p_vsi_l_offset swig_types[68]
+static swig_type_info *swig_types[70];
+static swig_module_info swig_module = {swig_types, 69, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3227,7 +3228,9 @@ typedef void OGRLayerShadow;
 typedef void OGRFeatureShadow;
 typedef void OGRGeometryShadow;
 #endif
+
 typedef struct OGRStyleTableHS OGRStyleTableShadow;
+typedef struct OGRFieldDomainHS OGRFieldDomainShadow;
 
 
 /* use this to not return the int returned by GDAL */
@@ -5330,6 +5333,12 @@ SWIGINTERN OGRErr GDALDatasetShadow_RollbackTransaction(GDALDatasetShadow *self)
   }
 SWIGINTERN void GDALDatasetShadow_ClearStatistics(GDALDatasetShadow *self){
       GDALDatasetClearStatistics(self);
+  }
+SWIGINTERN OGRFieldDomainShadow *GDALDatasetShadow_GetFieldDomain(GDALDatasetShadow *self,char const *name){
+    return (OGRFieldDomainShadow*) GDALDatasetGetFieldDomain(self, name);
+  }
+SWIGINTERN bool GDALDatasetShadow_AddFieldDomain(GDALDatasetShadow *self,OGRFieldDomainShadow *fieldDomain){
+      return GDALDatasetAddFieldDomain(self, (OGRFieldDomainH)fieldDomain, NULL);
   }
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
     *buf = NULL;
@@ -19716,11 +19725,6 @@ SWIGINTERN PyObject *_wrap_Dataset_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
     }
   }
   {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
@@ -20812,6 +20816,117 @@ SWIGINTERN PyObject *_wrap_Dataset_ClearStatistics(PyObject *SWIGUNUSEDPARM(self
 #endif
   }
   resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_GetFieldDomain(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRFieldDomainShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Dataset_GetFieldDomain",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_GetFieldDomain" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_GetFieldDomain" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldDomainShadow *)GDALDatasetShadow_GetFieldDomain(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDomainShadow, 0 |  0 );
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_AddFieldDomain(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  OGRFieldDomainShadow *arg2 = (OGRFieldDomainShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Dataset_AddFieldDomain",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_AddFieldDomain" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRFieldDomainShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_AddFieldDomain" "', argument " "2"" of type '" "OGRFieldDomainShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRFieldDomainShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_AddFieldDomain(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -42940,6 +43055,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Dataset_CommitTransaction", _wrap_Dataset_CommitTransaction, METH_VARARGS, (char *)"Dataset_CommitTransaction(Dataset self) -> OGRErr"},
 	 { (char *)"Dataset_RollbackTransaction", _wrap_Dataset_RollbackTransaction, METH_VARARGS, (char *)"Dataset_RollbackTransaction(Dataset self) -> OGRErr"},
 	 { (char *)"Dataset_ClearStatistics", _wrap_Dataset_ClearStatistics, METH_VARARGS, (char *)"Dataset_ClearStatistics(Dataset self)"},
+	 { (char *)"Dataset_GetFieldDomain", _wrap_Dataset_GetFieldDomain, METH_VARARGS, (char *)"Dataset_GetFieldDomain(Dataset self, char const * name) -> FieldDomain"},
+	 { (char *)"Dataset_AddFieldDomain", _wrap_Dataset_AddFieldDomain, METH_VARARGS, (char *)"Dataset_AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
 	 { (char *)"Dataset_ReadRaster1", (PyCFunction) _wrap_Dataset_ReadRaster1, METH_VARARGS | METH_KEYWORDS, (char *)"Dataset_ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
 	 { (char *)"Dataset_swigregister", Dataset_swigregister, METH_VARARGS, NULL},
 	 { (char *)"delete_Group", _wrap_delete_Group, METH_VARARGS, (char *)"delete_Group(Group self)"},
@@ -43315,6 +43432,7 @@ static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (
 static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GUIntBig = {"_p_GUIntBig", "GUIntBig *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRFeatureShadow = {"_p_OGRFeatureShadow", "OGRFeatureShadow *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_OGRFieldDomainShadow = {"_p_OGRFieldDomainShadow", "OGRFieldDomainShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRGeometryShadow = {"_p_OGRGeometryShadow", "OGRGeometryShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRStyleTableShadow = {"_p_OGRStyleTableShadow", "OGRStyleTableShadow *", 0, 0, (void*)0, 0};
@@ -43326,7 +43444,7 @@ static swig_type_info _swigt__p_VSILFILE = {"_p_VSILFILE", "VSILFILE *", 0, 0, (
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|GDALRATFieldType *|OGRFieldType *|RETURN_NONE *|int *|GDALAccess *|OSRAxisMappingStrategy *|OGRwkbByteOrder *|CPLErr *|GDALRWFlag *|OGRJustification *|GDALRATFieldUsage *|GDALTileOrganization *|OGRAxisOrientation *|GDALPaletteInterp *|GDALColorInterp *|GDALRIOResampleAlg *|GDALResampleAlg *|OGRErr *|OGRwkbGeometryType *|GDALDataType *|GDALAsyncStatusType *|GDALRATTableType *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OGRFieldDomainType *|GDALRATFieldType *|OGRFieldType *|RETURN_NONE *|int *|GDALAccess *|OSRAxisMappingStrategy *|OGRwkbByteOrder *|CPLErr *|GDALRWFlag *|OGRJustification *|GDALRATFieldUsage *|GDALTileOrganization *|OGRAxisOrientation *|GDALPaletteInterp *|GDALColorInterp *|GDALRIOResampleAlg *|GDALResampleAlg *|OGRErr *|OGRwkbGeometryType *|GDALDataType *|GDALAsyncStatusType *|GDALRATTableType *|OGRFieldDomainMergePolicy *|OGRFieldDomainSplitPolicy *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GByte = {"_p_p_GByte", "GByte **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALDatasetShadow = {"_p_p_GDALDatasetShadow", "GDALDatasetShadow **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALDimensionHS = {"_p_p_GDALDimensionHS", "GDALDimensionHS **", 0, 0, (void*)0, 0};
@@ -43385,6 +43503,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GIntBig,
   &_swigt__p_GUIntBig,
   &_swigt__p_OGRFeatureShadow,
+  &_swigt__p_OGRFieldDomainShadow,
   &_swigt__p_OGRGeometryShadow,
   &_swigt__p_OGRLayerShadow,
   &_swigt__p_OGRStyleTableShadow,
@@ -43455,6 +43574,7 @@ static swig_cast_info _swigc__p_GDAL_GCP[] = {  {&_swigt__p_GDAL_GCP, 0, 0, 0},{
 static swig_cast_info _swigc__p_GIntBig[] = {  {&_swigt__p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GUIntBig[] = {  {&_swigt__p_GUIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRFeatureShadow[] = {  {&_swigt__p_OGRFeatureShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_OGRFieldDomainShadow[] = {  {&_swigt__p_OGRFieldDomainShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRGeometryShadow[] = {  {&_swigt__p_OGRGeometryShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRLayerShadow[] = {  {&_swigt__p_OGRLayerShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRStyleTableShadow[] = {  {&_swigt__p_OGRStyleTableShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -43525,6 +43645,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GIntBig,
   _swigc__p_GUIntBig,
   _swigc__p_OGRFeatureShadow,
+  _swigc__p_OGRFieldDomainShadow,
   _swigc__p_OGRGeometryShadow,
   _swigc__p_OGRLayerShadow,
   _swigc__p_OGRStyleTableShadow,

@@ -311,6 +311,8 @@ public:
 
   int TestCapability( const char * ) override;
 
+  const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
+
   Geodatabase* GetGDB() { return m_pGeodatabase; }
   bool         GetUpdate() { return m_bUpdate; }
   FGdbDatabaseConnection* GetConnection() { return m_pConnection; }

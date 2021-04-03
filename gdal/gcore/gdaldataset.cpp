@@ -8290,3 +8290,117 @@ void GDALDatasetClearStatistics(GDALDatasetH hDS)
     VALIDATE_POINTER0(hDS, __func__);
     GDALDataset::FromHandle(hDS)->ClearStatistics();
 }
+
+/************************************************************************/
+/*                        GetFieldDomain()                              */
+/************************************************************************/
+
+/** Get a field domain from its name.
+ *
+ * @return the field domain, or nullptr if not found.
+ * @since GDAL 3.3
+ */
+const OGRFieldDomain* GDALDataset::GetFieldDomain(const std::string& name) const
+{
+    const auto iter = m_oMapFieldDomains.find(name);
+    if( iter == m_oMapFieldDomains.end() )
+        return nullptr;
+    return iter->second.get();
+}
+
+/************************************************************************/
+/*                      GDALDatasetGetFieldDomain()                     */
+/************************************************************************/
+
+/** Get a field domain from its name.
+ *
+ * This is the same as the C++ method GDALDataset::GetFieldDomain().
+ *
+ * @param hDS Dataset handle.
+ * @param pszName Name of field domain.
+ * @return the field domain (ownership remains to the dataset), or nullptr if not found.
+ * @since GDAL 3.3
+ */
+OGRFieldDomainH GDALDatasetGetFieldDomain(GDALDatasetH hDS,
+                                          const char* pszName)
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    VALIDATE_POINTER1(pszName, __func__, nullptr);
+    return OGRFieldDomain::ToHandle(
+        const_cast<OGRFieldDomain*>(
+            GDALDataset::FromHandle(hDS)->GetFieldDomain(pszName)));
+}
+
+/************************************************************************/
+/*                         AddFieldDomain()                             */
+/************************************************************************/
+
+/** Add a field domain to the dataset.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of field domains.
+ * At the time of writing (GDAL 3.3), only the Memory and GeoPackage drivers
+ * support this operation. A dataset having at least smoe support for this
+ * operation should report the ODsCAddFieldDomain dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param domain The domain definition.
+ * @param failureReason      Output parameter. Will contain an error message if
+ *                           an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.3
+ */
+bool GDALDataset::AddFieldDomain(CPL_UNUSED std::unique_ptr<OGRFieldDomain>&& domain,
+                                 std::string& failureReason)
+{
+    failureReason = "AddFieldDomain not supported by this driver";
+    return false;
+}
+
+/************************************************************************/
+/*                     GDALDatasetAddFieldDomain()                      */
+/************************************************************************/
+
+/** Add a field domain to the dataset.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of field domains.
+ * At the time of writing (GDAL 3.3), only the Memory and GeoPackage drivers
+ * support this operation. A dataset having at least smoe support for this
+ * operation should report the ODsCAddFieldDomain dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the ppszFailureReason output parameter.
+ *
+ * @param hDS                Dataset handle.
+ * @param hFieldDomain       The domain definition. Contrary to the C++ version,
+ *                           the passed object is copied.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.3
+ */
+bool GDALDatasetAddFieldDomain(GDALDatasetH hDS,
+                               OGRFieldDomainH hFieldDomain,
+                               char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(hFieldDomain, __func__, false);
+    auto poDomain = std::unique_ptr<OGRFieldDomain>(
+                 OGRFieldDomain::FromHandle(hFieldDomain)->Clone());
+    if( poDomain == nullptr )
+        return false;
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->AddFieldDomain(
+             std::move(poDomain), failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}

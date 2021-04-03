@@ -616,3 +616,80 @@ def test_ogr2ogr_emptyStrAsNull():
     f = lyr.GetNextFeature()
 
     assert f['foo'] is None, 'expected empty string to be transformed to null'
+
+
+###############################################################################
+# Verify propagation of field domains
+
+
+def test_ogr2ogr_fielddomain_():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer')
+
+    src_fld_defn = ogr.FieldDefn('foo')
+    src_fld_defn.SetDomainName('my_domain')
+    src_lyr.CreateField(src_fld_defn)
+    assert src_ds.AddFieldDomain(ogr.CreateGlobFieldDomain('my_domain', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+
+    src_fld_defn = ogr.FieldDefn('bar', ogr.OFTInteger)
+    src_fld_defn.SetDomainName('coded_domain')
+    src_lyr.CreateField(src_fld_defn)
+    assert src_ds.AddFieldDomain(ogr.CreateCodedFieldDomain(
+        'coded_domain', 'desc', ogr.OFTString, ogr.OFSTNone, {1: "one", 2: "two", 3: None}))
+
+    src_fld_defn = ogr.FieldDefn('baz', ogr.OFTInteger)
+    src_fld_defn.SetDomainName('non_existant_coded_domain')
+    src_lyr.CreateField(src_fld_defn)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField('foo', 'foo_content')
+    f.SetField('bar', 2)
+    f.SetField('baz', 0)
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField('bar', -1) # does not exist in dictionary
+    src_lyr.CreateFeature(f)
+
+    ds = gdal.VectorTranslate('', src_ds, format='Memory')
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetDomainName() == 'my_domain'
+    domain = ds.GetFieldDomain('my_domain')
+    assert domain is not None
+    assert domain.GetDomainType() == ogr.OFDT_GLOB
+
+    # Test -resolveDomains
+    ds = gdal.VectorTranslate('', src_ds, format='Memory', resolveDomains=True)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldCount() == 4
+
+    fld_defn = lyr_defn.GetFieldDefn(0)
+    assert fld_defn.GetDomainName() == 'my_domain'
+    domain = ds.GetFieldDomain('my_domain')
+    assert domain is not None
+    assert domain.GetDomainType() == ogr.OFDT_GLOB
+
+    fld_defn = lyr_defn.GetFieldDefn(1)
+    assert fld_defn.GetName() == 'bar'
+    assert fld_defn.GetType() == ogr.OFTInteger
+
+    fld_defn = lyr_defn.GetFieldDefn(2)
+    assert fld_defn.GetName() == 'bar_resolved'
+    assert fld_defn.GetType() == ogr.OFTString
+
+    fld_defn = lyr_defn.GetFieldDefn(3)
+    assert fld_defn.GetName() == 'baz'
+    assert fld_defn.GetType() == ogr.OFTInteger
+
+    f = lyr.GetNextFeature()
+    assert f['foo'] == 'foo_content'
+    assert f['bar'] == 2
+    assert f['bar_resolved'] == 'two'
+    assert f['baz'] == 0
+
+    f = lyr.GetNextFeature()
+    assert f['bar'] == -1
+    assert not f.IsFieldSet('bar_resolved')
