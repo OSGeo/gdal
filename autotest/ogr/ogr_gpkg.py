@@ -4543,7 +4543,7 @@ def test_ogr_gpkg_field_domains():
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain', '', ogr.OFTInteger64, ogr.OFSTNone, {1: "one", "2": None}))
     assert ds.GetFieldDomain('enum_domain') is not None
 
-    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int_single', '', ogr.OFTInteger, ogr.OFSTNone, {1: "one"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int_single', 'my desc', ogr.OFTInteger, ogr.OFSTNone, {1: "one"}))
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int', '', ogr.OFTInteger, ogr.OFSTNone, {1: "one", 2: "two"}))
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int64_single_1', '', ogr.OFTInteger64, ogr.OFSTNone, { 1234567890123: "1234567890123"}))
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int64_single_2', '', ogr.OFTInteger64, ogr.OFSTNone, { -1234567890123: "-1234567890123"}))
@@ -4647,6 +4647,7 @@ def test_ogr_gpkg_field_domains():
     assert domain.GetEnumeration() == { "1": "one", "2": None }
 
     domain = ds.GetFieldDomain('enum_domain_guess_int_single')
+    assert domain.GetDescription() == 'my desc'
     assert domain.GetFieldType() == ogr.OFTInteger
 
     domain = ds.GetFieldDomain('enum_domain_guess_int')

@@ -7194,18 +7194,22 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
         return nullptr;
 
     SQLResult oResultTable;
+    // Note: for coded domains, we use a little trick by using a dummy
+    // _{domainname}_domain_description enum that has a single entry whose
+    // description is the description of the main domain.
     {
         char* pszSQL = sqlite3_mprintf(
             "SELECT constraint_type, value, min, min_is_inclusive, "
-            "max, max_is_inclusive, description FROM gpkg_data_column_constraints "
-            "WHERE constraint_name = '%q' "
+            "max, max_is_inclusive, description, constraint_name "
+            "FROM gpkg_data_column_constraints "
+            "WHERE constraint_name IN ('%q', '_%q_domain_description') "
             "AND constraint_type IS NOT NULL "
             "AND length(constraint_type) < 100 " // to avoid denial of service
             "AND (value IS NULL OR length(value) < 10000) " // to avoid denial of service
             "AND (description IS NULL OR length(description) < 10000) " // to avoid denial of service
             "ORDER BY value "
             "LIMIT 10000", // to avoid denial of service
-            name.c_str());
+            name.c_str(), name.c_str());
         const auto err = SQLQuery(hDB, pszSQL, &oResultTable);
         sqlite3_free(pszSQL);
         if( err != OGRERR_NONE )
@@ -7285,6 +7289,10 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
     bool error = false;
     CPLString osLastConstraintType;
     int nFieldTypeFromEnumCode = -1;
+    std::string osConstraintDescription;
+    std::string osDescrConstraintName("_");
+    osDescrConstraintName += name;
+    osDescrConstraintName += "_domain_description";
     for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
     {
         const char* pszConstraintType = SQLResultGetValue (&oResultTable, 0, iRecord);
@@ -7294,6 +7302,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
         const char* pszMax = SQLResultGetValue (&oResultTable, 4, iRecord);
         const bool bIsMaxIncluded = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord) == 1;
         const char* pszDescription = SQLResultGetValue (&oResultTable, 6, iRecord);
+        const char* pszConstraintName = SQLResultGetValue (&oResultTable, 7, iRecord);
 
         if( !osLastConstraintType.empty() && osLastConstraintType != "enum" )
         {
@@ -7311,6 +7320,14 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
                          "NULL in 'value' column of enumeration");
                 error = true;
                 break;
+            }
+            if( osDescrConstraintName == pszConstraintName )
+            {
+                if( pszDescription )
+                {
+                    osConstraintDescription = pszDescription;
+                }
+                continue;
             }
             if( asValues.empty() )
             {
@@ -7446,7 +7463,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
         if( nFieldType < 0 )
             nFieldType = nFieldTypeFromEnumCode;
         poDomain.reset(new OGRCodedFieldDomain(
-            name, std::string(),
+            name, osConstraintDescription,
             static_cast<OGRFieldType>(nFieldType), eSubType,
             std::move(asValues)));
     }
@@ -7489,6 +7506,24 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
         {
             const auto poCodedDomain =
                 cpl::down_cast<const OGRCodedFieldDomain*>(domain.get());
+            if( !osDescription.empty() )
+            {
+                // We use a little trick by using a dummy
+                // _{domainname}_domain_description enum that has a single
+                // entry whose description is the description of the main
+                // domain.
+                char* pszSQL = sqlite3_mprintf(
+                    "INSERT INTO gpkg_data_column_constraints ("
+                    "constraint_name, constraint_type, value, "
+                    "min, min_is_inclusive, max, max_is_inclusive, "
+                    "description) VALUES ("
+                    "'_%q_domain_description', 'enum', '', NULL, NULL, NULL, "
+                    "NULL, %Q)",
+                    domainName.c_str(),
+                    osDescription.c_str());
+                CPL_IGNORE_RET_VAL(SQLCommand(hDB, pszSQL));
+                sqlite3_free(pszSQL);
+            }
             const auto& enumeration = poCodedDomain->GetEnumeration();
             for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
             {
