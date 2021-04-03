@@ -32,9 +32,7 @@
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$")
-
-constexpr int USE_COPY_UNSET = -1;
-
+//
 static CPLString OGRPGDumpEscapeStringList(
     char** papszItems, bool bForInsertOrUpdate,
     OGRPGCommonEscapeStringCbk pfnEscapeString,
@@ -67,25 +65,8 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
     pszFIDColumn(CPLStrdup(pszFIDColumnIn)),
     poFeatureDefn(new OGRFeatureDefn(pszTableName)),
     poDS(poDSIn),
-    bLaunderColumnNames(true),
-    bPreservePrecision(true),
-    bUseCopy(USE_COPY_UNSET),
     bWriteAsHex(CPL_TO_BOOL(bWriteAsHexIn)),
-    bCopyActive(false),
-    bFIDColumnInCopyFields(false),
-    bCreateTable(bCreateTableIn),
-    nUnknownSRSId(-1),
-    nForcedSRSId(-2),
-    nForcedGeometryTypeFlags(-1),
-    bCreateSpatialIndexFlag(true),
-    nPostGISMajor(0),
-    nPostGISMinor(0),
-    iNextShapeId(0),
-    iFIDAsRegularColumnIndex(-1),
-    bAutoFIDOnCreateViaCopy(true),
-    bCopyStatementWithFID(false),
-    bNeedToUpdateSequence(false),
-    papszOverrideColumnTypes(nullptr)
+    bCreateTable(bCreateTableIn)
 {
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType(wkbNone);

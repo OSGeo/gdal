@@ -116,6 +116,9 @@ typedef struct
 
 class OGRPGGeomFieldDefn final: public OGRGeomFieldDefn
 {
+        OGRPGGeomFieldDefn( const OGRPGGeomFieldDefn& ) = delete;
+        OGRPGGeomFieldDefn& operator= ( const OGRPGGeomFieldDefn& ) = delete;
+
     protected:
         OGRPGLayer* poLayer;
 
@@ -152,12 +155,17 @@ class OGRPGFeatureDefn CPL_NON_FINAL: public OGRFeatureDefn
         virtual void UnsetLayer()
         {
             for(int i=0;i<nGeomFieldCount;i++)
-                ((OGRPGGeomFieldDefn*) papoGeomFieldDefn[i])->UnsetLayer();
+                cpl::down_cast<OGRPGGeomFieldDefn*>(papoGeomFieldDefn[i])->UnsetLayer();
         }
 
-        OGRPGGeomFieldDefn* myGetGeomFieldDefn(int i)
+        OGRPGGeomFieldDefn *GetGeomFieldDefn( int i ) override
         {
-            return (OGRPGGeomFieldDefn*) GetGeomFieldDefn(i);
+            return cpl::down_cast<OGRPGGeomFieldDefn*>(OGRFeatureDefn::GetGeomFieldDefn(i));
+        }
+
+        const OGRPGGeomFieldDefn *GetGeomFieldDefn( int i ) const override
+        {
+            return cpl::down_cast<const OGRPGGeomFieldDefn*>(OGRFeatureDefn::GetGeomFieldDefn(i));
         }
 };
 
@@ -167,36 +175,39 @@ class OGRPGFeatureDefn CPL_NON_FINAL: public OGRFeatureDefn
 
 class OGRPGLayer CPL_NON_FINAL: public OGRLayer
 {
-  protected:
-    OGRPGFeatureDefn   *poFeatureDefn;
+    OGRPGLayer( const OGRPGLayer&) = delete;
+    OGRPGLayer& operator=( const OGRPGLayer&) = delete;
 
-    int                 nCursorPage;
-    GIntBig             iNextShapeId;
+  protected:
+    OGRPGFeatureDefn   *poFeatureDefn = nullptr;
+
+    int                 nCursorPage = 0;
+    GIntBig             iNextShapeId = 0;
 
     static char        *GByteArrayToBYTEA( const GByte* pabyData, int nLen);
-    static char        *GeometryToBYTEA( OGRGeometry *, int nPostGISMajor, int nPostGISMinor );
+    static char        *GeometryToBYTEA( const OGRGeometry *, int nPostGISMajor, int nPostGISMinor );
     static GByte       *BYTEAToGByteArray( const char *pszBytea, int* pnLength );
     static OGRGeometry *BYTEAToGeometry( const char *, int bIsPostGIS1 );
     Oid                 GeometryToOID( OGRGeometry * );
     OGRGeometry        *OIDToGeometry( Oid );
 
-    OGRPGDataSource    *poDS;
+    OGRPGDataSource    *poDS = nullptr;
 
-    char               *pszQueryStatement;
+    char               *pszQueryStatement = nullptr;
 
-    char               *pszCursorName;
-    PGresult           *hCursorResult;
-    int                 bInvalidated;
+    char               *pszCursorName = nullptr;
+    PGresult           *hCursorResult = nullptr;
+    int                 bInvalidated = false;
 
-    int                 nResultOffset;
+    int                 nResultOffset = 0;
 
-    int                 bWkbAsOid;
+    int                 bWkbAsOid = false;
 
-    char                *pszFIDColumn;
+    char                *pszFIDColumn = nullptr;
 
-    int                 bCanUseBinaryCursor;
-    int                *m_panMapFieldNameToIndex;
-    int                *m_panMapFieldNameToGeomIndex;
+    int                 bCanUseBinaryCursor = true;
+    int                *m_panMapFieldNameToIndex = nullptr;
+    int                *m_panMapFieldNameToGeomIndex = nullptr;
 
     int                 ParsePGDate( const char *, OGRField * );
 
@@ -225,8 +236,7 @@ class OGRPGLayer CPL_NON_FINAL: public OGRLayer
 
     virtual void        ResetReading() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn() override;
-    virtual OGRPGFeatureDefn *  myGetLayerDefn() { return (OGRPGFeatureDefn*) GetLayerDefn(); }
+    virtual OGRPGFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce ) override;
@@ -252,65 +262,70 @@ class OGRPGLayer CPL_NON_FINAL: public OGRLayer
 
 class OGRPGTableLayer final: public OGRPGLayer
 {
-    int                 bUpdateAccess;
+    OGRPGTableLayer( const OGRPGTableLayer&) = delete;
+    OGRPGTableLayer& operator=( const OGRPGTableLayer&) = delete;
+
+    static constexpr int USE_COPY_UNSET = -10;
+
+    int                 bUpdateAccess = false;
 
     void                BuildWhere();
     CPLString           BuildFields();
     void                BuildFullQueryStatement();
 
-    char               *pszTableName;
-    char               *pszSchemaName;
-    char               *pszDescription;
-    CPLString           osForcedDescription;
-    char               *pszSqlTableName;
-    int                 bTableDefinitionValid;
+    char               *pszTableName = nullptr;
+    char               *pszSchemaName = nullptr;
+    char               *pszDescription = nullptr;
+    CPLString           osForcedDescription{};
+    char               *pszSqlTableName = nullptr;
+    int                 bTableDefinitionValid = -1;
 
-    CPLString           osPrimaryKey;
+    CPLString           osPrimaryKey{};
 
-    int                 bGeometryInformationSet;
+    int                 bGeometryInformationSet = false;
 
     /* Name of the parent table with the geometry definition if it is a derived table or NULL */
-    char               *pszSqlGeomParentTableName;
+    char               *pszSqlGeomParentTableName = nullptr;
 
-    char               *pszGeomColForced;
+    char               *pszGeomColForced = nullptr;
 
-    CPLString           osQuery;
-    CPLString           osWHERE;
+    CPLString           osQuery{};
+    CPLString           osWHERE{};
 
-    int                 bLaunderColumnNames;
-    int                 bPreservePrecision;
-    int                 bUseCopy;
-    int                 bCopyActive;
-    bool                bFIDColumnInCopyFields;
-    int                 bFirstInsertion;
+    int                 bLaunderColumnNames = true;
+    int                 bPreservePrecision = true;
+    int                 bUseCopy = USE_COPY_UNSET;
+    int                 bCopyActive = false;
+    bool                bFIDColumnInCopyFields = false;
+    int                 bFirstInsertion = true;
 
     OGRErr              CreateFeatureViaCopy( OGRFeature *poFeature );
     OGRErr              CreateFeatureViaInsert( OGRFeature *poFeature );
     CPLString           BuildCopyFields();
 
-    int                 bHasWarnedIncompatibleGeom;
+    int                 bHasWarnedIncompatibleGeom = false;
     void                CheckGeomTypeCompatibility(int iGeomField, OGRGeometry* poGeom);
 
-    int                 bRetrieveFID;
-    int                 bHasWarnedAlreadySetFID;
+    int                 bRetrieveFID = true;
+    int                 bHasWarnedAlreadySetFID = false;
 
-    char              **papszOverrideColumnTypes;
-    int                 nForcedSRSId;
-    int                 nForcedGeometryTypeFlags;
-    bool                bCreateSpatialIndexFlag;
-    CPLString           osSpatialIndexType;
-    int                 bInResetReading;
+    char              **papszOverrideColumnTypes = nullptr;
+    int                 nForcedSRSId = UNDETERMINED_SRID;
+    int                 nForcedGeometryTypeFlags = -1;
+    bool                bCreateSpatialIndexFlag = true;
+    CPLString           osSpatialIndexType = "GIST";
+    int                 bInResetReading = false;
 
-    int                 bAutoFIDOnCreateViaCopy;
-    int                 bUseCopyByDefault;
-    bool                bNeedToUpdateSequence;
+    int                 bAutoFIDOnCreateViaCopy = false;
+    int                 bUseCopyByDefault = false;
+    bool                bNeedToUpdateSequence = false;
 
-    int                 bDeferredCreation;
-    CPLString           osCreateTable;
+    int                 bDeferredCreation = false;
+    CPLString           osCreateTable{};
 
-    int                 iFIDAsRegularColumnIndex;
+    int                 iFIDAsRegularColumnIndex = -1;
 
-    CPLString           m_osFirstGeometryFieldName;
+    CPLString           m_osFirstGeometryFieldName{};
 
     std::vector<bool>   m_abGeneratedColumns{};
 
@@ -414,14 +429,17 @@ public:
 
 class OGRPGResultLayer final: public OGRPGLayer
 {
+    OGRPGResultLayer( const OGRPGResultLayer&) = delete;
+    OGRPGResultLayer& operator=( const OGRPGResultLayer&) = delete;
+
     void                BuildFullQueryStatement();
 
-    char                *pszRawStatement;
+    char                *pszRawStatement = nullptr;
 
-    char                *pszGeomTableName;
-    char                *pszGeomTableSchemaName;
+    char                *pszGeomTableName = nullptr;
+    char                *pszGeomTableSchemaName = nullptr;
 
-    CPLString           osWHERE;
+    CPLString           osWHERE{};
 
     virtual CPLString   GetFromClauseForGetExtent() override
         { CPLString osStr("(");
@@ -449,8 +467,12 @@ class OGRPGResultLayer final: public OGRPGLayer
 /************************************************************************/
 /*                           OGRPGDataSource                            */
 /************************************************************************/
+
 class OGRPGDataSource final: public OGRDataSource
 {
+    OGRPGDataSource( const OGRPGDataSource&) = delete;
+    OGRPGDataSource& operator=( const OGRPGDataSource&) = delete;
+
     typedef struct
     {
         int nMajor;
@@ -458,63 +480,64 @@ class OGRPGDataSource final: public OGRDataSource
         int nRelease;
     } PGver;
 
-    OGRPGTableLayer   **papoLayers;
-    int                 nLayers;
+    OGRPGTableLayer   **papoLayers = nullptr;
+    int                 nLayers = 0;
 
-    char               *pszName;
+    char               *pszName = nullptr;
 
-    int                 bDSUpdate;
-    int                 bHavePostGIS;
-    int                 bHaveGeography;
+    int                 bDSUpdate = false;
+    int                 bHavePostGIS = false;
+    int                 bHaveGeography = false;
 
-    int                 bUserTransactionActive;
-    int                 bSavePointActive;
-    int                 nSoftTransactionLevel;
+    int                 bUserTransactionActive = false;
+    int                 bSavePointActive = false;
+    int                 nSoftTransactionLevel = 0;
 
-    PGconn              *hPGConn;
+    PGconn              *hPGConn = nullptr;
 
     OGRErr              DeleteLayer( int iLayer ) override;
 
-    Oid                 nGeometryOID;
-    Oid                 nGeographyOID;
+    Oid                 nGeometryOID = static_cast<Oid>(0);
+    Oid                 nGeographyOID = static_cast<Oid>(0);
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int                 nKnownSRID;
-    int                 *panSRID;
-    OGRSpatialReference **papoSRS;
+    int                 nKnownSRID = 0;
+    int                 *panSRID = nullptr;
+    OGRSpatialReference **papoSRS = nullptr;
 
-    OGRPGTableLayer     *poLayerInCopyMode;
+    OGRPGTableLayer     *poLayerInCopyMode = nullptr;
 
     static void                OGRPGDecodeVersionString(PGver* psVersion, const char* pszVer);
 
-    CPLString           osCurrentSchema;
+    CPLString           osCurrentSchema{};
     CPLString           GetCurrentSchema();
 
-    int                 nUndefinedSRID;
+    // Actual value will be auto-detected if PostGIS >= 2.0 detected.
+    int                 nUndefinedSRID = -1;
 
-    char               *pszForcedTables;
-    char              **papszSchemaList;
-    int                 bHasLoadTables;
-    CPLString           osActiveSchema;
-    int                 bListAllTables;
+    char               *pszForcedTables = nullptr;
+    char              **papszSchemaList = nullptr;
+    int                 bHasLoadTables = false;
+    CPLString           osActiveSchema{};
+    int                 bListAllTables = false;
     void                LoadTables();
 
-    CPLString           osDebugLastTransactionCommand;
+    CPLString           osDebugLastTransactionCommand{};
     OGRErr              DoTransactionCommand(const char* pszCommand);
 
     OGRErr              FlushSoftTransaction();
 
   public:
-    PGver               sPostgreSQLVersion;
-    PGver               sPostGISVersion;
+    PGver               sPostgreSQLVersion = {0,0,0};
+    PGver               sPostGISVersion = {0,0,0};
 
-    int                 bUseBinaryCursor;
-    int                 bBinaryTimeFormatIsInt8;
-    int                 bUseEscapeStringSyntax;
+    int                 bUseBinaryCursor = false;
+    int                 bBinaryTimeFormatIsInt8 = false;
+    int                 bUseEscapeStringSyntax = false;
 
-    bool                m_bHasGeometryColumns;
-    bool                m_bHasSpatialRefSys;
+    bool                m_bHasGeometryColumns = false;
+    bool                m_bHasSpatialRefSys = false;
 
     int                GetUndefinedSRID() const { return nUndefinedSRID; }
 
