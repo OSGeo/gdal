@@ -4524,9 +4524,9 @@ def test_ogr_gpkg_field_domains():
 
     assert ds.GetFieldDomain('does_not_exist') is None
 
-    assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', '', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, False))
+    assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', 'my desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, False))
     assert ds.GetFieldDomain('range_domain_int') is not None
-    assert not ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', '', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True))
+    assert not ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int', 'my desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True))
 
     assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_int64', '', ogr.OFTInteger64, ogr.OFSTNone, -1234567890123, False, 1234567890123, True))
     assert ds.GetFieldDomain('range_domain_int64') is not None
@@ -4537,7 +4537,7 @@ def test_ogr_gpkg_field_domains():
     assert ds.AddFieldDomain(ogr.CreateRangeFieldDomain('range_domain_real_inf', '', ogr.OFTReal, ogr.OFSTNone, -math.inf, True, math.inf, True))
     assert ds.GetFieldDomain('range_domain_real_inf') is not None
 
-    assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('glob_domain', '', ogr.OFTString, ogr.OFSTNone, '*'))
+    assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('glob_domain', 'my desc', ogr.OFTString, ogr.OFSTNone, '*'))
     assert ds.GetFieldDomain('glob_domain') is not None
 
     assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain', '', ogr.OFTInteger64, ogr.OFSTNone, {1: "one", "2": None}))
@@ -4589,7 +4589,7 @@ def test_ogr_gpkg_field_domains():
     domain = ds.GetFieldDomain('range_domain_int')
     assert domain is not None
     assert domain.GetName() == 'range_domain_int'
-    assert domain.GetDescription() == ''
+    assert domain.GetDescription() == 'my desc'
     assert domain.GetDomainType() == ogr.OFDT_RANGE
     assert domain.GetFieldType() == ogr.OFTInteger
     assert domain.GetMinAsDouble() == 1.0
@@ -4633,7 +4633,7 @@ def test_ogr_gpkg_field_domains():
     domain = ds.GetFieldDomain('glob_domain')
     assert domain is not None
     assert domain.GetName() == 'glob_domain'
-    assert domain.GetDescription() == ''
+    assert domain.GetDescription() == 'my desc'
     assert domain.GetDomainType() == ogr.OFDT_GLOB
     assert domain.GetFieldType() == ogr.OFTString
     assert domain.GetGlob() == '*'

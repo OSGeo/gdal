@@ -7405,7 +7405,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
                     sMax.Real = CPLAtof(pszMax);
             }
             poDomain.reset(new OGRRangeFieldDomain(
-                name, std::string(),
+                name, pszDescription ? pszDescription : "",
                 static_cast<OGRFieldType>(nFieldType),
                 eSubType,
                 sMin, bIsMinIncluded,
@@ -7423,7 +7423,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
             if( nFieldType < 0 )
                 nFieldType = OFTString;
             poDomain.reset(new OGRGlobFieldDomain(
-                name, std::string(),
+                name, pszDescription ? pszDescription : "",
                 static_cast<OGRFieldType>(nFieldType),
                 eSubType,
                 pszValue));
@@ -7482,6 +7482,7 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
     if( !CreateColumnsTableAndColumnConstraintsTablesIfNecessary() )
         return false;
 
+    const auto& osDescription = domain->GetDescription();
     switch( domain->GetDomainType() )
     {
         case OFDT_CODED:
@@ -7491,22 +7492,15 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
             const auto& enumeration = poCodedDomain->GetEnumeration();
             for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
             {
-                char* pszSQL = enumeration[i].pszValue ?
-                  sqlite3_mprintf(
+                char* pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_data_column_constraints ("
                     "constraint_name, constraint_type, value, "
                     "min, min_is_inclusive, max, max_is_inclusive, "
                     "description) VALUES ("
-                    "'%q', 'enum', '%q', NULL, NULL, NULL, NULL, '%q')",
+                    "'%q', 'enum', '%q', NULL, NULL, NULL, NULL, %Q)",
                     domainName.c_str(),
-                    enumeration[i].pszCode, enumeration[i].pszValue) :
-                  sqlite3_mprintf(
-                    "INSERT INTO gpkg_data_column_constraints ("
-                    "constraint_name, constraint_type, value, "
-                    "min, min_is_inclusive, max, max_is_inclusive, "
-                    "description) VALUES ("
-                    "'%q', 'enum', '%q', NULL, NULL, NULL, NULL, NULL)",
-                    domainName.c_str(), enumeration[i].pszCode);
+                    enumeration[i].pszCode,
+                    enumeration[i].pszValue);
                 bool ok = SQLCommand(hDB, pszSQL) == OGRERR_NONE;
                 sqlite3_free(pszSQL);
                 if( !ok )
@@ -7562,7 +7556,7 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
                 "constraint_name, constraint_type, value, "
                 "min, min_is_inclusive, max, max_is_inclusive, "
                 "description) VALUES ("
-                "?, 'range', NULL, ?, ?, ?, ?, NULL)";
+                "?, 'range', NULL, ?, ?, ?, ?, ?)";
             if ( sqlite3_prepare_v2(hDB, pszSQL, -1, &hInsertStmt, nullptr)
                                                                     != SQLITE_OK )
             {
@@ -7576,6 +7570,15 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
             sqlite3_bind_int(hInsertStmt,3,bMinIsInclusive ? 1 : 0);
             sqlite3_bind_double(hInsertStmt,4,dfMax);
             sqlite3_bind_int(hInsertStmt,5,bMaxIsInclusive ? 1 : 0);
+            if( osDescription.empty() )
+            {
+                sqlite3_bind_null(hInsertStmt,6);
+            }
+            else
+            {
+                sqlite3_bind_text(hInsertStmt,6,osDescription.c_str(),
+                              static_cast<int>(osDescription.size()), SQLITE_TRANSIENT);
+            }
             const int sqlite_err = sqlite3_step(hInsertStmt);
             sqlite3_finalize(hInsertStmt);
             if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
@@ -7598,9 +7601,10 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
                 "constraint_name, constraint_type, value, "
                 "min, min_is_inclusive, max, max_is_inclusive, "
                 "description) VALUES ("
-                "'%q', 'glob', '%q', NULL, NULL, NULL, NULL, NULL)",
+                "'%q', 'glob', '%q', NULL, NULL, NULL, NULL, %Q)",
                 domainName.c_str(),
-                poGlobDomain->GetGlob().c_str());
+                poGlobDomain->GetGlob().c_str(),
+                osDescription.empty() ? nullptr : osDescription.c_str());
             bool ok = SQLCommand(hDB, pszSQL) == OGRERR_NONE;
             sqlite3_free(pszSQL);
             if( !ok )
