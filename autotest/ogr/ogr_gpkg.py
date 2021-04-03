@@ -4572,6 +4572,10 @@ def test_ogr_gpkg_field_domains():
     # Test read support
     ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
 
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_data_column_constraints')
+    assert sql_lyr is not None
+    ds.ReleaseResultSet(sql_lyr)
+
     domain = ds.GetFieldDomain('range_domain_int')
     assert domain is not None
     assert domain.GetName() == 'range_domain_int'
