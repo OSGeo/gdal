@@ -40,7 +40,6 @@ jobs:
         LIBDEFLATE_URL: "${{ matrix.LIBDEFLATE_URL }}"
         APPVEYOR: true # to skip some tests
         PYTHON_VERSION: "3.7.9"
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true # see https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/
 
     steps:
 
@@ -69,19 +68,19 @@ jobs:
                 $env:WIN64_ARG="WIN64=YES"
                 $env:CMAKE_ARCHITECTURE="x64"
             }
-            echo "::set-env name=PATH::$env:PATH"
-            echo "::set-env name=ARCHITECTURE::$env:ARCHITECTURE"
-            echo "::set-env name=WIN64_ARG::$env:WIN64_ARG"
-            echo "::set-env name=CMAKE_ARCHITECTURE::$env:CMAKE_ARCHITECTURE"
+            echo "PATH=$env:PATH" >> $env:GITHUB_ENV
+            echo "ARCHITECTURE=$env:ARCHITECTURE" >> $env:GITHUB_ENV
+            echo "WIN64_ARG=$env:WIN64_ARG" >> $env:GITHUB_ENV
+            echo "CMAKE_ARCHITECTURE=$env:CMAKE_ARCHITECTURE" >> $env:GITHUB_ENV
 
       - name: Set compiler environment
         shell: cmd
         run: |
             if "%VS_VER%" == "2019" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=%ARCHITECTURE%
-            echo ::set-env name=PATH::%PATH%
-            echo ::set-env name=INCLUDE::%INCLUDE%
-            echo ::set-env name=LIB::%LIB%
-            echo ::set-env name=LIBPATH::%LIBPATH%
+            echo PATH=%PATH%>> %GITHUB_ENV%
+            echo INCLUDE=%INCLUDE%>> %GITHUB_ENV%
+            echo LIB=%LIB%>> %GITHUB_ENV%
+            echo LIBPATH=%LIBPATH%>> %GITHUB_ENV%
 
       - name: Detect AVX2
         shell: bash
