@@ -4540,8 +4540,18 @@ def test_ogr_gpkg_field_domains():
     assert ds.AddFieldDomain(ogr.CreateGlobFieldDomain('glob_domain', '', ogr.OFTString, ogr.OFSTNone, '*'))
     assert ds.GetFieldDomain('glob_domain') is not None
 
-    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain', '', ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain', '', ogr.OFTInteger64, ogr.OFSTNone, {1: "one", "2": None}))
     assert ds.GetFieldDomain('enum_domain') is not None
+
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int_single', '', ogr.OFTInteger, ogr.OFSTNone, {1: "one"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int', '', ogr.OFTInteger, ogr.OFSTNone, {1: "one", 2: "two"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int64_single_1', '', ogr.OFTInteger64, ogr.OFSTNone, { 1234567890123: "1234567890123"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int64_single_2', '', ogr.OFTInteger64, ogr.OFSTNone, { -1234567890123: "-1234567890123"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_int64', '', ogr.OFTInteger64, ogr.OFSTNone, {1: "one", 1234567890123: "1234567890123", 3: "three"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_real_single', '', ogr.OFTReal, ogr.OFSTNone, {1.5: "one dot five"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_real', '', ogr.OFTReal, ogr.OFSTNone, {1: "one", 1.5: "one dot five", 1234567890123: "1234567890123", 3: "three"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_string_single', '', ogr.OFTString, ogr.OFSTNone, {"three": "three"}))
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain_guess_string', '', ogr.OFTString, ogr.OFSTNone, {1: "one", 1.5: "one dot five", "three": "three", 4: "four"}))
 
     lyr = ds.CreateLayer('test')
 
@@ -4561,7 +4571,7 @@ def test_ogr_gpkg_field_domains():
     fld_defn.SetDomainName('glob_domain')
     lyr.CreateField(fld_defn)
 
-    fld_defn = ogr.FieldDefn('with_enum_domain', ogr.OFTInteger)
+    fld_defn = ogr.FieldDefn('with_enum_domain', ogr.OFTInteger64)
     fld_defn.SetDomainName('enum_domain')
     lyr.CreateField(fld_defn)
 
@@ -4633,7 +4643,35 @@ def test_ogr_gpkg_field_domains():
     assert domain.GetName() == 'enum_domain'
     assert domain.GetDescription() == ''
     assert domain.GetDomainType() == ogr.OFDT_CODED
+    assert domain.GetFieldType() == ogr.OFTInteger64
     assert domain.GetEnumeration() == { "1": "one", "2": None }
+
+    domain = ds.GetFieldDomain('enum_domain_guess_int_single')
+    assert domain.GetFieldType() == ogr.OFTInteger
+
+    domain = ds.GetFieldDomain('enum_domain_guess_int')
+    assert domain.GetFieldType() == ogr.OFTInteger
+
+    domain = ds.GetFieldDomain('enum_domain_guess_int64_single_1')
+    assert domain.GetFieldType() == ogr.OFTInteger64
+
+    domain = ds.GetFieldDomain('enum_domain_guess_int64_single_2')
+    assert domain.GetFieldType() == ogr.OFTInteger64
+
+    domain = ds.GetFieldDomain('enum_domain_guess_int64')
+    assert domain.GetFieldType() == ogr.OFTInteger64
+
+    domain = ds.GetFieldDomain('enum_domain_guess_real_single')
+    assert domain.GetFieldType() == ogr.OFTReal
+
+    domain = ds.GetFieldDomain('enum_domain_guess_real')
+    assert domain.GetFieldType() == ogr.OFTReal
+
+    domain = ds.GetFieldDomain('enum_domain_guess_string_single')
+    assert domain.GetFieldType() == ogr.OFTString
+
+    domain = ds.GetFieldDomain('enum_domain_guess_string')
+    assert domain.GetFieldType() == ogr.OFTString
 
     lyr = ds.GetLayerByName('test')
     lyr_defn = lyr.GetLayerDefn()

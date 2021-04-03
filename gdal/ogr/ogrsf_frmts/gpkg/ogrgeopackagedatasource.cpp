@@ -7283,6 +7283,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
     std::vector<OGRCodedValue> asValues;
     bool error = false;
     CPLString osLastConstraintType;
+    int nFieldTypeFromEnumCode = -1;
     for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
     {
         const char* pszConstraintType = SQLResultGetValue (&oResultTable, 0, iRecord);
@@ -7343,6 +7344,42 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
             {
                 cv.pszValue = nullptr;
             }
+
+            // If we can't get the data type from field definition, guess it
+            // from code.
+            if( nFieldType < 0 && nFieldTypeFromEnumCode != OFTString )
+            {
+                switch( CPLGetValueType(cv.pszCode) )
+                {
+                    case CPL_VALUE_INTEGER:
+                    {
+                        if( nFieldTypeFromEnumCode != OFTReal &&
+                            nFieldTypeFromEnumCode != OFTInteger64 )
+                        {
+                            const auto nVal = CPLAtoGIntBig(cv.pszCode);
+                            if( nVal < std::numeric_limits<int>::min() ||
+                                nVal > std::numeric_limits<int>::max() )
+                            {
+                                nFieldTypeFromEnumCode = OFTInteger64;
+                            }
+                            else
+                            {
+                                nFieldTypeFromEnumCode = OFTInteger;
+                            }
+                        }
+                        break;
+                    }
+
+                    case CPL_VALUE_REAL:
+                        nFieldTypeFromEnumCode = OFTReal;
+                        break;
+
+                    case CPL_VALUE_STRING:
+                        nFieldTypeFromEnumCode = OFTString;
+                        break;
+                }
+            }
+
             asValues.emplace_back(cv);
         }
         else if ( strcmp(pszConstraintType, "range") == 0 )
@@ -7413,7 +7450,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
     if( !asValues.empty() )
     {
         if( nFieldType < 0 )
-            nFieldType = OFTString;
+            nFieldType = nFieldTypeFromEnumCode;
         poDomain.reset(new OGRCodedFieldDomain(
             name, std::string(),
             static_cast<OGRFieldType>(nFieldType), eSubType,
