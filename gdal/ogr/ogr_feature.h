@@ -820,8 +820,12 @@ inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr& poFeature) 
  *
  * A field domain is a set of constraints that apply to one or several fields.
  * This is a concept found in File Geodatabase or GeoPackage for example.
- * A field domain can be an enumerated list of (code, value) tuples, a
- * range constraint (min, max), a blob expression.
+ * A field domain can be:
+ * <ul>
+ * <li>OGRCodedFieldDomain: an enumerated list of (code, value) tuples,</li>
+ * <li>OGRRangeFieldDomain: a range constraint (min, max)</li>
+ * <li>OGRGlobFieldDomain: or a glob expression.</li>
+ * </ul>
  *
  * @since GDAL 3.3
  */
