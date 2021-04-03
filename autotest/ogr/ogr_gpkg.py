@@ -4681,3 +4681,76 @@ def test_ogr_gpkg_field_domains():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test error cases in field domains
+
+
+def test_ogr_gpkg_field_domains_errors():
+
+    filename = '/vsimem/test.gpkg'
+
+    ds = gdal.GetDriverByName('GPKG').Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    ds.CreateLayer('test')
+    # The DDL lacks on purpose the NOT NULL constraints on constraint_name and constraint_type
+    ds.ExecuteSQL("CREATE TABLE gpkg_data_column_constraints (" +
+                  "constraint_name TEXT,constraint_type TEXT,value TEXT," +
+                  "min NUMERIC,min_is_inclusive BOOLEAN," +
+                  "max NUMERIC,max_is_inclusive BOOLEAN,description TEXT)")
+
+    ds.ExecuteSQL("INSERT INTO gpkg_data_column_constraints VALUES "+
+                  "('null_constraint_type', NULL, NULL, NULL, NULL, NULL, NULL, NULL)")
+
+    ds.ExecuteSQL("INSERT INTO gpkg_data_column_constraints VALUES "+
+                  "('invalid_constraint_type', 'invalid', NULL, NULL, NULL, NULL, NULL, NULL)")
+
+    ds.ExecuteSQL("INSERT INTO gpkg_data_column_constraints VALUES "+
+                  "('mix_glob_enum', 'glob', '*', NULL, NULL, NULL, NULL, NULL)")
+    ds.ExecuteSQL("INSERT INTO gpkg_data_column_constraints VALUES "+
+                  "('mix_glob_enum', 'enum', 'foo', NULL, NULL, NULL, NULL, 'bar')")
+
+    ds.ExecuteSQL("INSERT INTO gpkg_data_column_constraints VALUES "+
+                  "('null_in_enum_code', 'enum', NULL, NULL, NULL, NULL, NULL, 'bar')")
+
+    ds.ExecuteSQL("INSERT INTO gpkg_data_column_constraints VALUES "+
+                  "('null_in_glob_value', 'glob', NULL, NULL, NULL, NULL, NULL, NULL)")
+
+    ds.ExecuteSQL("INSERT INTO gpkg_data_column_constraints VALUES "+
+                  "('null_in_range', 'range', NULL, NULL, NULL, NULL, NULL, NULL)")
+    ds = None
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+
+    assert ds.GetFieldDomain('null_constraint_type') is None
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert ds.GetFieldDomain('invalid_constraint_type') is None
+        assert gdal.GetLastErrorMsg() != ''
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert ds.GetFieldDomain('mix_glob_enum') is None
+        assert gdal.GetLastErrorMsg() != ''
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert ds.GetFieldDomain('null_in_enum_code') is None
+        assert gdal.GetLastErrorMsg() != ''
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert ds.GetFieldDomain('null_in_glob_value') is None
+        assert gdal.GetLastErrorMsg() != ''
+
+    # This is non conformant, but we accept it
+    domain = ds.GetFieldDomain('null_in_range')
+    assert domain is not None
+    assert domain.GetMinAsDouble() == -math.inf
+    assert domain.GetMaxAsDouble() == math.inf
+
+    ds = None
+
+    gdal.Unlink(filename)
+

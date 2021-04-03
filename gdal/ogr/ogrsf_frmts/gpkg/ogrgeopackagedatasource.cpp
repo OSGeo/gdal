@@ -7199,6 +7199,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
             "SELECT constraint_type, value, min, min_is_inclusive, "
             "max, max_is_inclusive, description FROM gpkg_data_column_constraints "
             "WHERE constraint_name = '%q' "
+            "AND constraint_type IS NOT NULL "
             "AND length(constraint_type) < 100 " // to avoid denial of service
             "AND (value IS NULL OR length(value) < 10000) " // to avoid denial of service
             "AND (description IS NULL OR length(description) < 10000) " // to avoid denial of service
@@ -7293,13 +7294,6 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
         const char* pszMax = SQLResultGetValue (&oResultTable, 4, iRecord);
         const bool bIsMaxIncluded = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord) == 1;
         const char* pszDescription = SQLResultGetValue (&oResultTable, 6, iRecord);
-
-        if( pszConstraintType == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "NULL constraint_type");
-            error = true;
-            break;
-        }
 
         if( !osLastConstraintType.empty() && osLastConstraintType != "enum" )
         {
