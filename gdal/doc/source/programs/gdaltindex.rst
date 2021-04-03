@@ -105,6 +105,12 @@ into the same output projection:
 
     gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp *.tif
 
+- Make a tile index from files listed in a text file :
+
+::
+
+    gdaltindex doq_index.shp --optfile my_list.txt
+
 See also
 --------
 
