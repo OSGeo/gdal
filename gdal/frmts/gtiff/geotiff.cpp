@@ -18774,15 +18774,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 const OGRSpatialReference* GTiffDataset::GetSpatialRef() const
 
 {
+    const_cast<GTiffDataset*>(this)->LoadGeoreferencingAndPamIfNeeded();
     if( m_nGCPCount == 0 )
     {
-        const_cast<GTiffDataset*>(this)->LoadGeoreferencingAndPamIfNeeded();
         const_cast<GTiffDataset*>(this)->LookForProjection();
-
-        return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
 
-    return nullptr;
+    return m_nGCPCount == 0 && !m_oSRS.IsEmpty() ? &m_oSRS : nullptr;
 }
 
 /************************************************************************/
@@ -18939,10 +18937,7 @@ const OGRSpatialReference *GTiffDataset::GetGCPSpatialRef() const
     {
         const_cast<GTiffDataset*>(this)->LookForProjection();
     }
-    if( !m_oSRS.IsEmpty() )
-        return &m_oSRS;
-
-    return nullptr;
+    return m_nGCPCount > 0 && !m_oSRS.IsEmpty() ? &m_oSRS : nullptr;
 }
 
 /************************************************************************/

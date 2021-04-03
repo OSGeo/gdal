@@ -895,7 +895,9 @@ const char *GDALDataset::_GetProjectionRef() { return (""); }
  *
  * Same as the C function GDALGetSpatialRef().
  *
- * When a projection definition is not available, null is returned
+ * When a projection definition is not available, null is returned. If used on
+ * a dataset where there are GCPs and not a geotransform, this method returns
+ * null. Use GetGCPSpatialRef() instead.
  *
  * @since GDAL 3.0
  *
@@ -1583,7 +1585,9 @@ const char *GDALDataset::_GetGCPProjection() { return ""; }
  *
  * Same as the C function GDALGetGCPSpatialRef().
  *
- * When a SRS is not available, null is returned
+ * When a SRS is not available, null is returned. If used on
+ * a dataset where there is a geotransform, and not GCPs, this method returns
+ * null. Use GetSpatialRef() instead.
  *
  * @since GDAL 3.0
  *
