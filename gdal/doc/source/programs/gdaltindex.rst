@@ -89,17 +89,17 @@ tileindex.
 Examples
 --------
 
-Produce a shapefile (``doq_index.shp``) with a record for every
-image that the utility found in the ``doq`` folder. Each record holds
-information that points to the location of the image and also a bounding rectangle
-shape showing the bounds of the image:
+- Produce a shapefile (``doq_index.shp``) with a record for every
+  image that the utility found in the ``doq`` folder. Each record holds
+  information that points to the location of the image and also a bounding rectangle
+  shape showing the bounds of the image:
 
 ::
 
     gdaltindex doq_index.shp doq/*.tif
 
-The :option:`-t_srs` option can also be used to transform all input rasters
-into the same output projection:
+- The :option:`-t_srs` option can also be used to transform all input rasters
+  into the same output projection:
 
 ::
 
