@@ -8385,12 +8385,14 @@ bool GDALDatasetAddFieldDomain(GDALDatasetH hDS,
 {
     VALIDATE_POINTER1(hDS, __func__, false);
     VALIDATE_POINTER1(hFieldDomain, __func__, false);
+    auto poDomain = std::unique_ptr<OGRFieldDomain>(
+                 OGRFieldDomain::FromHandle(hFieldDomain)->Clone());
+    if( poDomain == nullptr )
+        return false;
     std::string failureReason;
     const bool bRet =
         GDALDataset::FromHandle(hDS)->AddFieldDomain(
-             std::unique_ptr<OGRFieldDomain>(
-                 OGRFieldDomain::FromHandle(hFieldDomain)->Clone()),
-             failureReason);
+             std::move(poDomain), failureReason);
     if( ppszFailureReason )
     {
         *ppszFailureReason = failureReason.empty() ?

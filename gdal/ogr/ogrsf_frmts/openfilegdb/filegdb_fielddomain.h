@@ -132,12 +132,7 @@ static std::unique_ptr<OGRFieldDomain> ParseXMLFieldDomainDef(const std::string&
                                        pszDescription,
                                        eFieldType,
                                        eSubType,
-                                       asValues));
-        for( auto& cv: asValues )
-        {
-            CPLFree(cv.pszCode);
-            CPLFree(cv.pszValue);
-        }
+                                       std::move(asValues)));
     }
     else if( bIsRangeDomain || strcmp(pszType, "esri:RangeDomain") == 0 )
     {

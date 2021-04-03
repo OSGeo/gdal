@@ -1725,21 +1725,12 @@ OGRCodedFieldDomain::OGRCodedFieldDomain(const std::string& osName,
                                          const std::string& osDescription,
                                          OGRFieldType eFieldType,
                                          OGRFieldSubType eFieldSubType,
-                                         const std::vector<OGRCodedValue>& asValues):
-    OGRFieldDomain(osName, osDescription, OFDT_CODED, eFieldType, eFieldSubType)
+                                         std::vector<OGRCodedValue>&& asValues):
+    OGRFieldDomain(osName, osDescription, OFDT_CODED, eFieldType, eFieldSubType),
+    m_asValues(std::move(asValues))
 {
-    m_asValues.reserve(asValues.size() + 1);
-    for( const auto& srcCodedValue: asValues )
-    {
-        OGRCodedValue cv;
-        if( srcCodedValue.pszCode == nullptr )
-            break;
-        cv.pszCode = CPLStrdup(srcCodedValue.pszCode);
-        cv.pszValue = srcCodedValue.pszValue ?
-                        CPLStrdup(srcCodedValue.pszValue) : nullptr;
-        m_asValues.emplace_back(cv);
-    }
     // Guard
+    if( m_asValues.empty() || m_asValues.back().pszCode != nullptr )
     {
         OGRCodedValue cv;
         cv.pszCode = nullptr;
@@ -1763,7 +1754,8 @@ OGRCodedFieldDomain::OGRCodedFieldDomain(const std::string& osName,
  *                       set to NULL. The enumeration will be copied.
  *                       Each code should appear only once, but it is the
  *                       responsibility of the user to check it.
- * @return a new handle that should be freed with OGR_FldDomain_Destroy()
+ * @return a new handle that should be freed with OGR_FldDomain_Destroy(),
+ *         or NULL in case of error.
  * @since GDAL 3.3
  */
 OGRFieldDomainH OGR_CodedFldDomain_Create(const char* pszName,
@@ -1774,12 +1766,61 @@ OGRFieldDomainH OGR_CodedFldDomain_Create(const char* pszName,
 {
     VALIDATE_POINTER1(pszName, __func__, nullptr);
     VALIDATE_POINTER1(enumeration, __func__, nullptr);
+    size_t count = 0;
+    for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
+    {
+        ++count;
+    }
     std::vector<OGRCodedValue> asValues;
+    try
+    {
+        asValues.reserve(count + 1);
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        return nullptr;
+    }
+    bool error = false;
     for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
     {
         OGRCodedValue cv;
-        cv.pszCode = enumeration[i].pszCode;
-        cv.pszValue = enumeration[i].pszValue;
+        cv.pszCode = VSI_STRDUP_VERBOSE(enumeration[i].pszCode);
+        if( cv.pszCode == nullptr )
+        {
+            error = true;
+            break;
+        }
+        if( enumeration[i].pszValue )
+        {
+            cv.pszValue = VSI_STRDUP_VERBOSE(enumeration[i].pszValue);
+            if( cv.pszValue == nullptr )
+            {
+                VSIFree(cv.pszCode);
+                error = true;
+                break;
+            }
+        }
+        else
+        {
+            cv.pszValue = nullptr;
+        }
+        asValues.emplace_back(cv);
+    }
+    if( error )
+    {
+        for( auto& cv: asValues )
+        {
+            VSIFree(cv.pszCode);
+            VSIFree(cv.pszValue);
+        }
+        return nullptr;
+    }
+    // Add guard
+    {
+        OGRCodedValue cv;
+        cv.pszCode = nullptr;
+        cv.pszValue = nullptr;
         asValues.emplace_back(cv);
     }
     return OGRFieldDomain::ToHandle(new OGRCodedFieldDomain(
@@ -1787,7 +1828,19 @@ OGRFieldDomainH OGR_CodedFldDomain_Create(const char* pszName,
                                        pszDescription ? pszDescription : "",
                                        eFieldType,
                                        eFieldSubType,
-                                       asValues));
+                                       std::move(asValues)));
+}
+
+/************************************************************************/
+/*                   OGRCodedFieldDomain::Clone()                       */
+/************************************************************************/
+
+OGRCodedFieldDomain* OGRCodedFieldDomain::Clone() const
+{
+    return cpl::down_cast<OGRCodedFieldDomain*>(
+            OGRFieldDomain::FromHandle(OGR_CodedFldDomain_Create(
+                m_osName.c_str(), m_osDescription.c_str(),
+                m_eFieldType, m_eFieldSubType, m_asValues.data())));
 }
 
 /************************************************************************/

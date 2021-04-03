@@ -918,14 +918,11 @@ public:
                         const std::string& osDescription,
                         OGRFieldType eFieldType,
                         OGRFieldSubType eFieldSubType,
-                        const std::vector<OGRCodedValue>& asValues);
+                        std::vector<OGRCodedValue>&& asValues);
 
     ~OGRCodedFieldDomain() override;
 
-    OGRCodedFieldDomain* Clone() const override {
-        return new OGRCodedFieldDomain(m_osName, m_osDescription, m_eFieldType,
-                                       m_eFieldSubType, m_asValues);
-    }
+    OGRCodedFieldDomain* Clone() const override;
 
     /** Get the enumeration as (code, value) pairs.
      * The end of the enumeration is signaled by code == NULL. */

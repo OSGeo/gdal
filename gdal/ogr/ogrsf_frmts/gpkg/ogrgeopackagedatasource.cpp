@@ -7198,7 +7198,12 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
         char* pszSQL = sqlite3_mprintf(
             "SELECT constraint_type, value, min, min_is_inclusive, "
             "max, max_is_inclusive, description FROM gpkg_data_column_constraints "
-            "WHERE constraint_name = '%q' ORDER BY value",
+            "WHERE constraint_name = '%q' "
+            "AND length(constraint_type) < 100 " // to avoid denial of service
+            "AND (value IS NULL OR length(value) < 10000) " // to avoid denial of service
+            "AND (description IS NULL OR length(description) < 10000) " // to avoid denial of service
+            "ORDER BY value "
+            "LIMIT 10000", // to avoid denial of service
             name.c_str());
         const auto err = SQLQuery(hDB, pszSQL, &oResultTable);
         sqlite3_free(pszSQL);
@@ -7210,6 +7215,12 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
         SQLResultFree(&oResultTable);
         return nullptr;
     }
+    if( oResultTable.nRowCount == 10000 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Number of rows returned for field domain %s has been "
+                 "truncated.", name.c_str());
+    }
 
     // Try to find the field domain data type from fields that implement it
     int nFieldType = -1;
@@ -7219,7 +7230,9 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
         char* pszSQL = sqlite3_mprintf(
             "SELECT table_name, column_name FROM gpkg_data_columns WHERE "
             "constraint_name = '%q' AND table_name IS NOT NULL "
-            "AND column_name IS NOT NULL", name.c_str());
+            "AND column_name IS NOT NULL "
+            "LIMIT 10",
+            name.c_str());
         SQLResult oResultTable2;
         const auto err = SQLQuery(hDB, pszSQL, &oResultTable2);
         sqlite3_free(pszSQL);
@@ -7304,10 +7317,32 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
                 error = true;
                 break;
             }
+            if( asValues.empty() )
+            {
+                asValues.reserve( oResultTable.nRowCount + 1 );
+            }
             OGRCodedValue cv;
             // intented: the 'value' column in GPKG is actually the code
-            cv.pszCode = CPLStrdup(pszValue);
-            cv.pszValue = pszDescription ? CPLStrdup(pszDescription) : nullptr;
+            cv.pszCode = VSI_STRDUP_VERBOSE(pszValue);
+            if( cv.pszCode == nullptr )
+            {
+                error = true;
+                break;
+            }
+            if( pszDescription )
+            {
+                cv.pszValue = VSI_STRDUP_VERBOSE(pszDescription);
+                if( cv.pszValue == nullptr )
+                {
+                    VSIFree(cv.pszCode);
+                    error = true;
+                    break;
+                }
+            }
+            else
+            {
+                cv.pszValue = nullptr;
+            }
             asValues.emplace_back(cv);
         }
         else if ( strcmp(pszConstraintType, "range") == 0 )
@@ -7375,21 +7410,16 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
 
     SQLResultFree(&oResultTable);
 
-    if( poDomain == nullptr )
+    if( !asValues.empty() )
     {
         if( nFieldType < 0 )
             nFieldType = OFTString;
         poDomain.reset(new OGRCodedFieldDomain(
             name, std::string(),
             static_cast<OGRFieldType>(nFieldType), eSubType,
-            asValues));
+            std::move(asValues)));
     }
 
-    for( auto& cv: asValues )
-    {
-        CPLFree(cv.pszCode);
-        CPLFree(cv.pszValue);
-    }
     if( error )
     {
         return nullptr;
