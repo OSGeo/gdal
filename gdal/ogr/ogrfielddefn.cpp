@@ -1470,8 +1470,8 @@ void OGR_Fld_SetUnique( OGRFieldDefnH hDefn, int bUniqueIn )
  *
  * By default, none (empty string) is returned.
  *
- * Field domains are attached at the GDALDataset level and should be
- * retrieved with GDALDatasetGetFieldDomain().
+ * Field domains (OGRFieldDomain class) are attached at the GDALDataset level
+ * and should be retrieved with GDALDatasetGetFieldDomain().
  *
  * This method is the same as the C++ method OGRFieldDefn::GetDomainName().
  *
@@ -1494,9 +1494,9 @@ const char* OGR_Fld_GetDomainName( OGRFieldDefnH hDefn )
  *
  * \brief Set the name of the field domain for this field.
  *
- * Field domains are attached at the GDALDataset level.
+ * Field domains (OGRFieldDomain) are attached at the GDALDataset level.
  *
- * This method is the same as the C function OGR_Fld_SetFieldDomain().
+ * This method is the same as the C function OGR_Fld_SetDomainName().
  *
  * @param osDomainName Field domain name.
  * @since GDAL 3.3
@@ -1509,7 +1509,7 @@ const char* OGR_Fld_GetDomainName( OGRFieldDefnH hDefn )
 /**
  * \brief Set the name of the field domain for this field.
  *
- * Field domains are attached at the GDALDataset level.
+ * Field domains (OGRFieldDomain) are attached at the GDALDataset level.
  *
  * This method is the same as the C++ method OGRFieldDefn::SetDomainName().
  *
@@ -1709,6 +1709,8 @@ OGRFieldDomain::~OGRFieldDomain() = default;
 
 /** Destroy a field domain.
  *
+ * This is the same as the C++ method OGRFieldDomain::~OGRFieldDomain()
+ *
  * @param hFieldDomain the field domain.
  * @since GDAL 3.3
  */
@@ -1744,6 +1746,10 @@ OGRCodedFieldDomain::OGRCodedFieldDomain(const std::string& osName,
 /************************************************************************/
 
 /** Creates a new coded field domain.
+ *
+ * This is the same as the C++ method OGRCodedFieldDomain::OGRCodedFieldDomain()
+ * (except that the C function copies the enumeration, whereas the C++
+ * method moves it)
  *
  * @param pszName        Domain name. Should not be NULL.
  * @param pszDescription Domain description (can be NULL)
@@ -1893,6 +1899,8 @@ static OGRField GetUnsetField()
 
 /** Creates a new range field domain.
  *
+ * This is the same as the C++ method OGRRangeFieldDomain::OGRRangeFieldDomain().
+ *
  * @param pszName        Domain name. Should not be NULL.
  * @param pszDescription Domain description (can be NULL)
  * @param eFieldType     Field type. Among OFTInteger, OFTInteger64, OFTReal
@@ -1957,6 +1965,8 @@ OGRGlobFieldDomain::OGRGlobFieldDomain(const std::string& osName,
 
 /** Creates a new blob field domain.
  *
+ * This is the same as the C++ method OGRGlobFieldDomain::OGRGlobFieldDomain()
+ *
  * @param pszName        Domain name. Should not be NULL.
  * @param pszDescription Domain description (can be NULL)
  * @param eFieldType     Field type.
@@ -1987,7 +1997,7 @@ OGRFieldDomainH OGR_GlobFldDomain_Create(const char* pszName,
 
 /** Get the name of the field domain.
  *
- * This is the same as OGRFieldDomain::GetName()
+ * This is the same as the C++ method OGRFieldDomain::GetName()
  *
  * @param hFieldDomain Field domain handle.
  * @return the field domain name.
@@ -2004,7 +2014,7 @@ const char* OGR_FldDomain_GetName(OGRFieldDomainH hFieldDomain)
 
 /** Get the description of the field domain.
  *
- * This is the same as OGRFieldDomain::GetDescription()
+ * This is the same as the C++ method OGRFieldDomain::GetDescription()
  *
  * @param hFieldDomain Field domain handle.
  * @return the field domain description (might be empty string).
@@ -2021,7 +2031,7 @@ const char* OGR_FldDomain_GetDescription(OGRFieldDomainH hFieldDomain)
 
 /** Get the type of the field domain.
  *
- * This is the same as OGRFieldDomain::GetDomainType()
+ * This is the same as the C++ method OGRFieldDomain::GetDomainType()
  *
  * @param hFieldDomain Field domain handle.
  * @return the type of the field domain.
@@ -2038,7 +2048,7 @@ OGRFieldDomainType OGR_FldDomain_GetDomainType(OGRFieldDomainH hFieldDomain)
 
 /** Get the field type of the field domain.
  *
- * This is the same as OGRFieldDomain::GetFieldType()
+ * This is the same as the C++ method OGRFieldDomain::GetFieldType()
  *
  * @param hFieldDomain Field domain handle.
  * @return the field type of the field domain.
@@ -2072,7 +2082,7 @@ OGRFieldSubType OGR_FldDomain_GetFieldSubType(OGRFieldDomainH hFieldDomain)
 
 /** Get the split policy of the field domain.
  *
- * This is the same as OGRFieldDomain::GetSplitPolicy()
+ * This is the same as the C++ method OGRFieldDomain::GetSplitPolicy()
  *
  * @param hFieldDomain Field domain handle.
  * @return the split policy of the field domain.
@@ -2090,7 +2100,7 @@ OGRFieldDomainSplitPolicy OGR_FldDomain_GetSplitPolicy(OGRFieldDomainH hFieldDom
 
 /** Set the split policy of the field domain.
  *
- * This is the same as OGRFieldDomain::SetSplitPolicy()
+ * This is the same as the C++ method OGRFieldDomain::SetSplitPolicy()
  *
  * @param hFieldDomain Field domain handle.
  * @param policy the split policy of the field domain.
@@ -2109,7 +2119,7 @@ void OGR_FldDomain_SetSplitPolicy(OGRFieldDomainH hFieldDomain,
 
 /** Get the split policy of the field domain.
  *
- * This is the same as OGRFieldDomain::GetMergePolicy()
+ * This is the same as the C++ method OGRFieldDomain::GetMergePolicy()
  *
  * @param hFieldDomain Field domain handle.
  * @return the split policy of the field domain.
@@ -2127,7 +2137,7 @@ OGRFieldDomainMergePolicy OGR_FldDomain_GetMergePolicy(OGRFieldDomainH hFieldDom
 
 /** Set the split policy of the field domain.
  *
- * This is the same as OGRFieldDomain::SetMergePolicy()
+ * This is the same as the C++ method OGRFieldDomain::SetMergePolicy()
  *
  * @param hFieldDomain Field domain handle.
  * @param policy the split policy of the field domain.
@@ -2148,7 +2158,7 @@ void OGR_FldDomain_SetMergePolicy(OGRFieldDomainH hFieldDomain,
  *
  * The end of the enumeration is signaled by code == NULL
  *
- * This is the same as OGRCodedFieldDomain::GetEnumeration()
+ * This is the same as the C++ method OGRCodedFieldDomain::GetEnumeration()
  *
  * @param hFieldDomain Field domain handle.
  * @return the (code, value) pairs, or nullptr in case of error.
@@ -2180,7 +2190,7 @@ const OGRCodedValue* OGR_CodedFldDomain_GetEnumeration(OGRFieldDomainH hFieldDom
  * If no minimum value is set, the OGR_RawField_IsUnset() will return true when
  * called on the result.
  *
- * This is the same as OGRRangeFieldDomain::GetMin()
+ * This is the same as the C++ method OGRRangeFieldDomain::GetMin()
  *
  * @param hFieldDomain Field domain handle.
  * @param pbIsInclusiveOut set to true if the minimum is included in the range.
@@ -2219,7 +2229,7 @@ const OGRField *OGR_RangeFldDomain_GetMin(OGRFieldDomainH hFieldDomain,
  * If no maximum value is set, the OGR_RawField_IsUnset() will return true when
  * called on the result.
  *
- * This is the same as OGRRangeFieldDomain::GetMax()
+ * This is the same as the C++ method OGRRangeFieldDomain::GetMax()
  *
  * @param hFieldDomain Field domain handle.
  * @param pbIsInclusiveOut set to true if the maximum is included in the range.
@@ -2253,7 +2263,7 @@ const OGRField *OGR_RangeFldDomain_GetMax(OGRFieldDomainH hFieldDomain,
 
 /** Get the glob expression.
  *
- * This is the same as OGRGlobFieldDomain::GetGlob()
+ * This is the same as the C++ method OGRGlobFieldDomain::GetGlob()
  *
  * @param hFieldDomain Field domain handle.
  * @return the glob expression, or nullptr in case of error

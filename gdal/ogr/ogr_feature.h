@@ -819,12 +819,18 @@ inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr& poFeature) 
  * Definition of a field domain.
  *
  * A field domain is a set of constraints that apply to one or several fields.
- * This is a concept found in File Geodatabase or GeoPackage for example.
+ *
+ * This is a concept found in
+ * <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/an-overview-of-attribute-domains.htm">File Geodatabase<a>
+ * or GeoPackage (using the
+ * <a href="http://www.geopackage.org/spec/#extension_schema">schema extension</a>)
+ * for example.
+ *
  * A field domain can be:
  * <ul>
- * <li>OGRCodedFieldDomain: an enumerated list of (code, value) tuples,</li>
- * <li>OGRRangeFieldDomain: a range constraint (min, max)</li>
- * <li>OGRGlobFieldDomain: or a glob expression.</li>
+ * <li>OGRCodedFieldDomain: an enumerated list of (code, value) tuples.</li>
+ * <li>OGRRangeFieldDomain: a range constraint (min, max).</li>
+ * <li>OGRGlobFieldDomain: a glob expression.</li>
  * </ul>
  *
  * @since GDAL 3.3
@@ -849,27 +855,47 @@ protected:
 /*! @endcond */
 
 public:
-    /** Destructor */
+    /** Destructor.
+     *
+     * This is the same as the C function OGR_FldDomain_Destroy().
+     */
     virtual ~OGRFieldDomain() = 0;
 
-    /** Clone */
+    /** Clone.
+     *
+     * Return a cloned object, or nullptr in case of error.
+     */
     virtual OGRFieldDomain* Clone() const = 0;
 
-    /** Get the name of the field domain */
+    /** Get the name of the field domain.
+     *
+     * This is the same as the C function OGR_FldDomain_GetName().
+     */
     const std::string& GetName() const { return m_osName; }
 
     /** Get the description of the field domain.
      * Empty string if there is none.
+     *
+     * This is the same as the C function OGR_FldDomain_GetDescription().
      */
     const std::string& GetDescription() const { return m_osDescription; }
 
-    /** Get the type of the field domain */
+    /** Get the type of the field domain.
+     *
+     * This is the same as the C function OGR_FldDomain_GetDomainType().
+     */
     OGRFieldDomainType GetDomainType() const { return m_eDomainType; }
 
-    /** Get the field type */
+    /** Get the field type.
+     *
+     * This is the same as the C function OGR_FldDomain_GetFieldType().
+     */
     OGRFieldType GetFieldType() const { return m_eFieldType; }
 
-    /** Get the field subtype */
+    /** Get the field subtype.
+     *
+     * This is the same as the C function OGR_FldDomain_GetFieldSubType().
+     */
     OGRFieldSubType GetFieldSubType() const { return m_eFieldSubType; }
 
     /** Convert a OGRFieldDomain* to a OGRFieldDomainH. */
@@ -880,16 +906,28 @@ public:
     static inline OGRFieldDomain* FromHandle(OGRFieldDomainH hFieldDomain)
         { return reinterpret_cast<OGRFieldDomain*>(hFieldDomain); }
 
-    /** Get the split policy. */
+    /** Get the split policy.
+     *
+     * This is the same as the C function OGR_FldDomain_GetSplitPolicy().
+     */
     OGRFieldDomainSplitPolicy GetSplitPolicy() const { return m_eSplitPolicy; }
 
-    /** Set the split policy. */
+    /** Set the split policy.
+     *
+     * This is the same as the C function OGR_FldDomain_SetSplitPolicy().
+     */
     void SetSplitPolicy(OGRFieldDomainSplitPolicy policy) { m_eSplitPolicy = policy; }
 
-    /** Get the merge policy. */
+    /** Get the merge policy.
+     *
+     * This is the same as the C function OGR_FldDomain_GetMergePolicy().
+     */
     OGRFieldDomainMergePolicy GetMergePolicy() const { return m_eMergePolicy; }
 
-    /** Set the merge policy. */
+    /** Set the merge policy.
+     *
+     * This is the same as the C function OGR_FldDomain_SetMergePolicy().
+     */
     void SetMergePolicy(OGRFieldDomainMergePolicy policy) { m_eMergePolicy = policy; }
 };
 
@@ -910,6 +948,10 @@ private:
 public:
     /** Constructor.
      *
+     * This is the same as the C function OGR_CodedFldDomain_Create()
+     * (except that the C function copies the enumeration, whereas the C++
+     * method moves it)
+     *
      * @param osName         Domain name.
      * @param osDescription  Domain description.
      * @param eFieldType     Field type. Generally numeric. Potentially OFTDateTime
@@ -929,7 +971,10 @@ public:
     OGRCodedFieldDomain* Clone() const override;
 
     /** Get the enumeration as (code, value) pairs.
-     * The end of the enumeration is signaled by code == NULL. */
+     * The end of the enumeration is signaled by code == NULL.
+     *
+     * This is the same as the C function OGR_CodedFldDomain_GetEnumeration().
+     */
     const OGRCodedValue* GetEnumeration() const { return m_asValues.data(); }
 };
 
@@ -948,6 +993,8 @@ private:
 
 public:
     /** Constructor.
+     *
+     * This is the same as the C function OGR_RangeFldDomain_Create().
      *
      * @param osName          Domain name.
      * @param osDescription   Domain description.
@@ -992,6 +1039,8 @@ public:
      * If no minimum value is set, the OGR_RawField_IsUnset() will return true
      * when called on the result.
      *
+     * This is the same as the C function OGR_RangeFldDomain_GetMin().
+     *
      * @param bIsInclusiveOut set to true if the minimum is included in the range.
      */
     const OGRField& GetMin(bool& bIsInclusiveOut) const {
@@ -1006,6 +1055,8 @@ public:
      * If no maximum value is set, the OGR_RawField_IsUnset() will return true
      * when called on the result.
      *
+     * This is the same as the C function OGR_RangeFldDomain_GetMax().
+     *
      * @param bIsInclusiveOut set to true if the maximum is included in the range.
      */
     const OGRField& GetMax(bool& bIsInclusiveOut) const {
@@ -1014,7 +1065,7 @@ public:
     }
 };
 
-/** Definition of a field domain for field content validated by a glob
+/** Definition of a field domain for field content validated by a glob.
  *
  * Globs are matching expression like "*[a-z][0-1]?"
  */
@@ -1028,6 +1079,8 @@ private:
 
 public:
     /** Constructor.
+     *
+     * This is the same as the C function OGR_GlobFldDomain_Create().
      *
      * @param osName          Domain name.
      * @param osDescription   Domain description.
@@ -1047,7 +1100,10 @@ public:
                                       m_osGlob);
     }
 
-    /** Get the glob expression */
+    /** Get the glob expression.
+     *
+     * This is the same as the C function OGR_GlobFldDomain_GetGlob().
+     */
     const std::string& GetGlob() const { return m_osGlob; }
 };
 
