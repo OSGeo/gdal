@@ -605,16 +605,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 {
     CHECK_ENOUGH_BYTES(13);
 
-    GUInt32 nTmp = 0;
-
-    memcpy(&nTmp, pabyCData, 4);
-    const GUInt32 nDataMin = CPL_LSBWORD32(nTmp);
-
-    memcpy(&nTmp, pabyCData + 4, 4);
-    const GInt32 nNumRuns = CPL_LSBWORD32(nTmp);
-
-    memcpy(&nTmp, pabyCData + 8, 4);
-    const GInt32 nDataOffset = CPL_LSBWORD32(nTmp);
+    const GUInt32 nDataMin = CPL_LSBUINT32PTR(pabyCData);
+    const GInt32 nNumRuns = CPL_LSBSINT32PTR(pabyCData + 4);
+    const GInt32 nDataOffset = CPL_LSBSINT32PTR(pabyCData + 8);
 
     const int nNumBits = pabyCData[12];
 

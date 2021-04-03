@@ -44,6 +44,7 @@
 #include <ogr_p.h>
 
 #include <algorithm>
+#include <cstdint>
 
 CPL_CVSID("$Id$")
 
@@ -1545,13 +1546,14 @@ static int OGR_json_double_with_precision_to_string( struct json_object *jso,
                                                      int /* level */,
                                                      int /* flags */)
 {
-    // TODO(schwehr): Explain this casting.
-    const int nPrecision =
+    const void* userData =
 #if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
-        static_cast<int>(reinterpret_cast<GUIntptr_t>(jso->_userdata));
+        jso->_userdata;
 #else
-        static_cast<int>(reinterpret_cast<GUIntptr_t>(json_object_get_userdata(jso)));
+        json_object_get_userdata(jso);
 #endif
+    // Precision is stored as a uintptr_t content casted to void*
+    const uintptr_t nPrecision = reinterpret_cast<uintptr_t>(userData);
     char szBuffer[75] = {};
     const double dfVal =  json_object_get_double(jso);
     if( fabs(dfVal) > 1e50 && !CPLIsInf(dfVal) )
@@ -1560,8 +1562,10 @@ static int OGR_json_double_with_precision_to_string( struct json_object *jso,
     }
     else
     {
+        const bool bPrecisionIsNegative =
+            (nPrecision >> (8 * sizeof(nPrecision)-1)) != 0;
         OGRFormatDouble( szBuffer, sizeof(szBuffer), dfVal, '.',
-                         (nPrecision < 0) ? 15 : nPrecision );
+             bPrecisionIsNegative ? 15 : static_cast<int>(nPrecision) );
     }
     return printbuf_memappend(pb, szBuffer, static_cast<int>(strlen(szBuffer)));
 }
@@ -1604,13 +1608,17 @@ OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
     else
     {
         char szFormatting[32] = {};
+        const void* userData =
 #if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
-        const int nSignificantFigures = (int) (GUIntptr_t) jso->_userdata;
+            jso->_userdata;
 #else
-        const int nSignificantFigures = (int) (GUIntptr_t) json_object_get_userdata(jso);
+            json_object_get_userdata(jso);
 #endif
+        const uintptr_t nSignificantFigures = reinterpret_cast<uintptr_t>(userData);
+        const bool bSignificantFiguresIsNegative =
+            (nSignificantFigures >> (8 * sizeof(nSignificantFigures)-1)) != 0;
         const int nInitialSignificantFigures =
-            nSignificantFigures >= 0 ? nSignificantFigures : 17;
+            bSignificantFiguresIsNegative ? 17 : static_cast<int>(nSignificantFigures);
         CPLsnprintf(szFormatting, sizeof(szFormatting),
                     "%%.%dg", nInitialSignificantFigures);
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer),
@@ -1702,15 +1710,17 @@ OGR_json_float_with_significant_figures_to_string( struct json_object *jso,
     }
     else
     {
+        const void* userData =
 #if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
-        const int nSignificantFigures = static_cast<int>(
-            reinterpret_cast<GUIntptr_t>(jso->_userdata));
+            jso->_userdata;
 #else
-        const int nSignificantFigures = static_cast<int>(
-            reinterpret_cast<GUIntptr_t>(json_object_get_userdata(jso)));
+            json_object_get_userdata(jso);
 #endif
+        const uintptr_t nSignificantFigures = reinterpret_cast<uintptr_t>(userData);
+        const bool bSignificantFiguresIsNegative =
+            (nSignificantFigures >> (8 * sizeof(nSignificantFigures)-1)) != 0;
         const int nInitialSignificantFigures =
-            nSignificantFigures >= 0 ? nSignificantFigures : 8;
+            bSignificantFiguresIsNegative ? 8 : static_cast<int>(nSignificantFigures);
         nSize = OGRFormatFloat(szBuffer, sizeof(szBuffer), fVal,
                                nInitialSignificantFigures, 'g');
     }

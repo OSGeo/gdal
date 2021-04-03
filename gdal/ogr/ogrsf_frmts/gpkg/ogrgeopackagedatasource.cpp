@@ -1191,7 +1191,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             osFilename = CPLString(papszTokens[1]) + ":" + papszTokens[2];
         }
         // GPKG:/vsicurl/http[s]://[user:passwd@]example.com[:8080]/foo.gpkg:bar
-        else if ( nCount >= 4 &&
+        else if ( /*nCount >= 4 && */
                   (EQUAL(papszTokens[1], "/vsicurl/http") ||
                    EQUAL(papszTokens[1], "/vsicurl/https")) )
         {

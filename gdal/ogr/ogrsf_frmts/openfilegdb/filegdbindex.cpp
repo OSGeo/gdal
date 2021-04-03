@@ -876,7 +876,7 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx,
     nValueCountInIdx = GetUInt32(abyTrailer + 10, 0);
     /* CPLDebug("OpenFileGDB", "nValueCountInIdx = %u", nValueCountInIdx); */
     /* negative like in sample_clcV15_esri_v10.gdb/a00000005.FDO_UUID.atx */
-    if( (int)nValueCountInIdx < 0 )
+    if( (nValueCountInIdx >> (8 * sizeof(nValueCountInIdx) - 1)) != 0 )
         return FALSE;
     /* QGIS_TEST_101.gdb/a00000006.FDO_UUID.atx */
     if( nValueCountInIdx == 0 )
@@ -2042,7 +2042,7 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
     nValueCountInIdx = GetUInt32(abyTrailer + 10, 0);
     /* CPLDebug("OpenFileGDB", "nValueCountInIdx = %u", nValueCountInIdx); */
     /* negative like in sample_clcV15_esri_v10.gdb/a00000005.FDO_UUID.atx */
-    if( (int)nValueCountInIdx < 0 )
+    if( (nValueCountInIdx >> (8 * sizeof(nValueCountInIdx) - 1)) != 0 )
         return false;
 
     return ResetInternal();
