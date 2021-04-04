@@ -338,6 +338,11 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 oField.SetType(OFTInteger);
                 oField.SetSubType(OFSTInt16);
             }
+            else if (EQUAL(pszDeclType, "INTEGER_OR_TEXT"))
+            {
+                // Used by PROJ proj.db
+                oField.SetType(OFTString);
+            }
             else if (EQUAL(pszDeclType, "JSONINTEGERLIST"))
             {
                 oField.SetType(OFTIntegerList);
