@@ -488,7 +488,7 @@ def test_ogr_sqlite_10():
         feat_read_2.DumpReadable()
         pytest.fail('GetFeature() result seems to not match expected.')
 
-    
+
 ###############################################################################
 # Test FORMAT=WKB creation option
 
@@ -3057,6 +3057,45 @@ def test_ogr_sqlite_prelude_statements(require_spatialite):
     sql_lyr = ds.ExecuteSQL('SELECT * FROM poly JOIN other.poly USING (eas_id)')
     assert sql_lyr.GetFeatureCount() == 10
     ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
+# Test INTEGER_OR_TEXT affinity
+
+
+def test_ogr_sqlite_integer_or_text():
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
+    ds.ExecuteSQL('CREATE TABLE foo(c INTEGER_OR_TEXT)')
+    ds.ExecuteSQL('INSERT INTO foo VALUES (5)')
+    ds.ExecuteSQL("INSERT INTO foo VALUES ('five')")
+
+    sql_lyr = ds.ExecuteSQL('SELECT typeof(c) FROM foo')
+    f = sql_lyr.GetNextFeature()
+    assert f.GetField(0) == 'integer'
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayer('foo')
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
+    f = lyr.GetNextFeature()
+    assert f['c'] == '5'
+    f = lyr.GetNextFeature()
+    assert f['c'] == 'five'
+
+###############################################################################
+# Test better guessing of columns in a view
+
+
+def test_ogr_sqlite_view_type():
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
+    ds.ExecuteSQL('CREATE TABLE t(c INTEGER)')
+    ds.ExecuteSQL('CREATE TABLE u(d TEXT)')
+    ds.ExecuteSQL("CREATE VIEW v AS SELECT c FROM t UNION ALL SELECT NULL FROM u")
+
+    lyr = ds.GetLayer('v')
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
 
 ###############################################################################
 #
