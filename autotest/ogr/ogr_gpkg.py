@@ -1333,6 +1333,13 @@ def test_ogr_gpkg_19():
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
+
+    # Check that we don't create triggers
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM sqlite_master WHERE type = 'trigger' AND tbl_name IN ('gpkg_metadata', 'gpkg_metadata_reference')")
+    assert sql_lyr.GetFeatureCount() == 0
+    ds.ReleaseResultSet(sql_lyr)
+
     lyr = ds.GetLayer('test_with_md')
     assert lyr.GetMetadataItem('IDENTIFIER') == 'ident'
     assert lyr.GetMetadataItem('DESCRIPTION') == 'desc'
@@ -3346,6 +3353,7 @@ def test_ogr_gpkg_46():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
     lyr.CreateFeature(f)
+    # Note: those definitions of views are non conformant with GPKG 1.3 clarifications on views
     ds.ExecuteSQL('CREATE VIEW my_view AS SELECT geom AS my_geom, fid AS my_fid FROM foo')
     ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 0 )")
     ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 0, 0, 0)")
@@ -3468,7 +3476,9 @@ def test_ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0x27, 0xD9), 4, 1, fp)
+    assert struct.unpack('>I', gdal.VSIFReadL(4, 1, fp))[0] == 10200
+    gdal.VSIFSeekL(fp, 60, 0)
+    gdal.VSIFWriteL(struct.pack('>I', 10201), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
@@ -3482,11 +3492,29 @@ def test_ogr_gpkg_47():
     assert gdal.GetLastErrorMsg() == ''
 
     # Set GPKG 1.3.0
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.3'])
+    # Check user_version
+    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb')
+    gdal.VSIFSeekL(fp, 60, 0)
+    assert struct.unpack('>I', gdal.VSIFReadL(4, 1, fp))[0] == 10300
+    gdal.VSIFCloseL(fp)
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
+    ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
+    assert gdal.GetLastErrorMsg() == ''
+
+    # Set GPKG 1.99.0
     gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.2'])
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0x28, 0x3C), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('>I', 19900), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -4811,6 +4839,47 @@ def test_ogr_gpkg_field_domains_errors():
     assert domain is not None
     assert domain.GetMinAsDouble() == -math.inf
     assert domain.GetMaxAsDouble() == math.inf
+
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test attribute and spatial views
+
+
+def test_ogr_gpkg_views():
+
+    filename = '/vsimem/test_ogr_gpkg_views.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
+    lyr.CreateFeature(f)
+
+    ds.ExecuteSQL('CREATE VIEW geom_view AS SELECT fid AS my_fid, geom AS my_geom FROM foo')
+    ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'geom_view', 'geom_view', 'features', 0 )")
+    ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('geom_view', 'my_geom', 'POINT', 0, 0, 0)")
+
+    ds.ExecuteSQL('CREATE VIEW attr_view AS SELECT fid AS my_fid FROM foo')
+    ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type) VALUES ( 'attr_view', 'attr_view', 'attributes' )")
+
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename)
+    assert ds.GetLayerCount() == 3
+
+    lyr = ds.GetLayerByName('geom_view')
+    assert lyr.GetGeomType() == ogr.wkbPoint
+
+    lyr = ds.GetLayerByName('attr_view')
+    assert lyr.GetGeomType() == ogr.wkbNone
 
     ds = None
 

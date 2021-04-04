@@ -3531,7 +3531,7 @@ void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be dest
 bool GDALGeoPackageDataset::CreateMetadataTables()
 {
     const bool bCreateTriggers =
-        CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
+        CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "NO"));
 
     /* From C.10. gpkg_metadata Table 35. gpkg_metadata Table Definition SQL  */
     CPLString osSQL =
@@ -4086,6 +4086,11 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         {
             m_nApplicationId = GPKG_APPLICATION_ID;
             m_nUserVersion = GPKG_1_2_VERSION;
+        }
+        else if( EQUAL(pszVersion, "1.3") )
+        {
+            m_nApplicationId = GPKG_APPLICATION_ID;
+            m_nUserVersion = GPKG_1_3_VERSION;
         }
     }
 

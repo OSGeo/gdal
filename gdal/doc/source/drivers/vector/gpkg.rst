@@ -192,9 +192,10 @@ Dataset Creation Options
 The following creation options (specific to vector, or common with
 raster) are available:
 
--  **VERSION**\ =AUTO/1.0/1.1/1.2: (GDAL >= 2.2) Set GeoPackage version
+-  **VERSION**\ =AUTO/1.0/1.1/1.2/1.3: (GDAL >= 2.2) Set GeoPackage version
    (for application_id and user_version fields). In AUTO mode, this will
    be equivalent to 1.2 starting with GDAL 2.3.
+   1.3 is available starting with GDAL 3.3
 -  **ADD_GPKG_OGR_CONTENTS**\ =YES/NO: (GDAL >= 2.2) Defines whether to
    add a gpkg_ogr_contents table to keep feature count, and associated
    triggers. Defaults to YES.

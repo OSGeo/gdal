@@ -160,7 +160,7 @@ created or modified. If consistent binary output is required for
 reproducibility, the timestamp can be forced to a specific value by setting the
 :decl_configoption:`OGR_CURRENT_DATE` global configuration option.
 When setting the option, take care to meet the specific time format
-requirement of the GeoPackage standard, 
+requirement of the GeoPackage standard,
 e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 
 
@@ -425,9 +425,10 @@ The following creation options are available:
    grid-value-is-corner: (GDAL >= 2.3) Grid cell encoding. Only used for
    tiled gridded coverage datasets. Defaults to grid-value-is-center,
    when AREA_OR_POINT metadata item is not set.
--  **VERSION**\ =AUTO/1.0/1.1/1.2: (GDAL >= 2.2) Set GeoPackage version
+-  **VERSION**\ =AUTO/1.0/1.1/1.2/1.3: (GDAL >= 2.2) Set GeoPackage version
    (for application_id and user_version fields). In AUTO mode, this will
    be equivalent to 1.2 starting with GDAL 2.3.
+   1.3 is available starting with GDAL 3.3
 -  **ADD_GPKG_OGR_CONTENTS**\ =YES/NO: (GDAL >= 2.2) Defines whether to
    add a gpkg_ogr_contents table to keep feature count for vector
    layers, and associated triggers. Defaults to YES.

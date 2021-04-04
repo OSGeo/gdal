@@ -60,7 +60,8 @@ typedef enum
 static const GUInt32 GP10_APPLICATION_ID = 0x47503130U;
 static const GUInt32 GP11_APPLICATION_ID = 0x47503131U;
 static const GUInt32 GPKG_APPLICATION_ID = 0x47504B47U;
-static const GUInt32 GPKG_1_2_VERSION = 0x000027D8U; // 10200
+static const GUInt32 GPKG_1_2_VERSION = 10200U;
+static const GUInt32 GPKG_1_3_VERSION = 10300U;
 
 static const size_t knApplicationIdPos = 68;
 static const size_t knUserVersionPos = 60;
