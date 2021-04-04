@@ -821,7 +821,7 @@ inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr& poFeature) 
  * A field domain is a set of constraints that apply to one or several fields.
  *
  * This is a concept found in
- * <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/an-overview-of-attribute-domains.htm">File Geodatabase<a>
+ * <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/an-overview-of-attribute-domains.htm">File Geodatabase</a>
  * or GeoPackage (using the
  * <a href="http://www.geopackage.org/spec/#extension_schema">schema extension</a>)
  * for example.
