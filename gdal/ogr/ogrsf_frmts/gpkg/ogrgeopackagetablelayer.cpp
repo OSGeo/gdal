@@ -4707,6 +4707,10 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     {
       oTmpFieldDefn.SetUnique( poNewFieldDefn->IsUnique());
     }
+    if( (nFlagsIn & ALTER_DOMAIN_FLAG) )
+    {
+      oTmpFieldDefn.SetDomainName( poNewFieldDefn->GetDomainName());
+    }
     std::vector<OGRFieldDefn*> apoFields;
     std::vector<OGRFieldDefn*> apoFieldsOld;
     for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
@@ -4927,19 +4931,13 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
                 m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
 
             bool bRunDoSpecialProcessingForColumnCreation = false;
+            bool bDeleteFromGpkgDataColumns = false;
             if (nFlagsIn & ALTER_TYPE_FLAG)
             {
                 if( poFieldDefn->GetSubType() == OFSTJSON &&
                     poNewFieldDefn->GetSubType() == OFSTNone )
                 {
-                    char* pszSQL = sqlite3_mprintf(
-                        "DELETE FROM gpkg_data_columns WHERE "
-                        "lower(table_name) = lower('%q') AND "
-                        "lower(column_name) = lower('%q')",
-                        m_pszTableName,
-                        poNewFieldDefn->GetNameRef() );
-                    eErr = SQLCommand( m_poDS->GetDB(), pszSQL );
-                    sqlite3_free(pszSQL);
+                    bDeleteFromGpkgDataColumns = true;
                 }
                 else if ( poFieldDefn->GetSubType() == OFSTNone &&
                           poNewFieldDefn->GetType() == OFTString &&
@@ -4966,11 +4964,39 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
             if (nFlagsIn & ALTER_DEFAULT_FLAG)
                 poFieldDefn->SetDefault(poNewFieldDefn->GetDefault());
             if (nFlagsIn & ALTER_UNIQUE_FLAG)
-              poFieldDefn->SetUnique(poNewFieldDefn->IsUnique());
+                poFieldDefn->SetUnique(poNewFieldDefn->IsUnique());
+            if ( (nFlagsIn & ALTER_DOMAIN_FLAG) &&
+                poFieldDefn->GetDomainName() != poNewFieldDefn->GetDomainName() )
+            {
+                if( !poFieldDefn->GetDomainName().empty() )
+                {
+                    bDeleteFromGpkgDataColumns = true;
+                }
+
+                if( !poNewFieldDefn->GetDomainName().empty() )
+                {
+                    bRunDoSpecialProcessingForColumnCreation = true;
+                }
+
+                poFieldDefn->SetDomainName(poNewFieldDefn->GetDomainName());
+            }
+
+            if( bDeleteFromGpkgDataColumns )
+            {
+                char* pszSQL = sqlite3_mprintf(
+                    "DELETE FROM gpkg_data_columns WHERE "
+                    "lower(table_name) = lower('%q') AND "
+                    "lower(column_name) = lower('%q')",
+                    m_pszTableName,
+                    poFieldDefn->GetNameRef() );
+                eErr = SQLCommand( m_poDS->GetDB(), pszSQL );
+                sqlite3_free(pszSQL);
+            }
 
             if( bRunDoSpecialProcessingForColumnCreation )
             {
-                DoSpecialProcessingForColumnCreation(poFieldDefn);
+                if( !DoSpecialProcessingForColumnCreation(poFieldDefn) )
+                    eErr = OGRERR_FAILURE;
             }
 
             ResetReading();

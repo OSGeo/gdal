@@ -37122,7 +37122,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ALTER__FLAG",SWIG_From_int(static_cast< int >(8)));
   SWIG_Python_SetConstant(d, "ALTER_DEFAULT_FLAG",SWIG_From_int(static_cast< int >(16)));
   SWIG_Python_SetConstant(d, "ALTER_UNIQUE_FLAG",SWIG_From_int(static_cast< int >(32)));
-  SWIG_Python_SetConstant(d, "ALTER_ALL_FLAG",SWIG_From_int(static_cast< int >(1+2+4+8+16+32)));
+  SWIG_Python_SetConstant(d, "ALTER_DOMAIN_FLAG",SWIG_From_int(static_cast< int >(64)));
+  SWIG_Python_SetConstant(d, "ALTER_ALL_FLAG",SWIG_From_int(static_cast< int >(1+2+4+8+16+32+64)));
   SWIG_Python_SetConstant(d, "F_VAL_NULL",SWIG_From_int(static_cast< int >(0x00000001)));
   SWIG_Python_SetConstant(d, "F_VAL_GEOM_TYPE",SWIG_From_int(static_cast< int >(0x00000002)));
   SWIG_Python_SetConstant(d, "F_VAL_WIDTH",SWIG_From_int(static_cast< int >(0x00000004)));

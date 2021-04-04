@@ -4575,6 +4575,9 @@ def test_ogr_gpkg_field_domains():
     fld_defn.SetDomainName('enum_domain')
     lyr.CreateField(fld_defn)
 
+    fld_defn = ogr.FieldDefn('without_domain_initially', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+
     ds = None
 
     assert validate(filename), 'validation failed'
@@ -4678,6 +4681,64 @@ def test_ogr_gpkg_field_domains():
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('with_range_domain_int'))
     assert fld_defn.GetDomainName() == 'range_domain_int'
+
+    ds = None
+
+    # Test AlterFieldDefn() support
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+
+    # Unset domain name
+    idx = lyr_defn.GetFieldIndex('with_range_domain_int')
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    fld_defn = ogr.FieldDefn(fld_defn.GetName(), fld_defn.GetType())
+    fld_defn.SetDomainName('')
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Change domain name
+    idx = lyr_defn.GetFieldIndex('with_range_domain_int64')
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    fld_defn = ogr.FieldDefn(fld_defn.GetName(), fld_defn.GetType())
+    fld_defn.SetDomainName('with_enum_domain')
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Set domain name
+    idx = lyr_defn.GetFieldIndex('without_domain_initially')
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    fld_defn = ogr.FieldDefn(fld_defn.GetName(), fld_defn.GetType())
+    fld_defn.SetDomainName('range_domain_int')
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    # Don't change anything
+    idx = lyr_defn.GetFieldIndex('with_glob_domain')
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    # Test read support
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+
+    idx = lyr_defn.GetFieldIndex('with_range_domain_int')
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    assert fld_defn.GetDomainName() == ''
+
+    idx = lyr_defn.GetFieldIndex('with_range_domain_int64')
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    assert fld_defn.GetDomainName() == 'with_enum_domain'
+
+    idx = lyr_defn.GetFieldIndex('without_domain_initially')
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    assert fld_defn.GetDomainName() == 'range_domain_int'
+
+    idx = lyr_defn.GetFieldIndex('with_glob_domain')
+    fld_defn = lyr_defn.GetFieldDefn(idx)
+    assert fld_defn.GetDomainName() == 'glob_domain'
 
     ds = None
 
