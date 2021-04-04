@@ -248,20 +248,21 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
     {
         OGRFieldDefn    oField( SQLUnescape(sqlite3_column_name( hStmtIn, iCol )),
                                 OFTString );
+        const char* pszFieldName = oField.GetNameRef();
 
         // In some cases, particularly when there is a real name for
         // the primary key/_rowid_ column we will end up getting the
         // primary key column appearing twice.  Ignore any repeated names.
-        if( poFeatureDefn->GetFieldIndex( oField.GetNameRef() ) != -1 )
+        if( poFeatureDefn->GetFieldIndex( pszFieldName ) != -1 )
             continue;
 
-        if( EQUAL(oField.GetNameRef(), "OGR_NATIVE_DATA") )
+        if( EQUAL(pszFieldName, "OGR_NATIVE_DATA") )
         {
             iOGRNativeDataCol = iCol;
             continue;
         }
 
-        if( EQUAL(oField.GetNameRef(), "OGR_NATIVE_MEDIA_TYPE") )
+        if( EQUAL(pszFieldName, "OGR_NATIVE_MEDIA_TYPE") )
         {
             iOGRNativeMediaTypeCol = iCol;
             continue;
@@ -269,31 +270,31 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
         /* In the case of Spatialite VirtualShape, the PKUID */
         /* should be considered as a primary key */
-        if( bIsVirtualShape && EQUAL(oField.GetNameRef(), "PKUID") )
+        if( bIsVirtualShape && EQUAL(pszFieldName, "PKUID") )
         {
             CPLFree(pszFIDColumn);
-            pszFIDColumn = CPLStrdup(oField.GetNameRef());
+            pszFIDColumn = CPLStrdup(pszFieldName);
         }
 
-        if( pszFIDColumn != nullptr && EQUAL(pszFIDColumn, oField.GetNameRef()))
+        if( pszFIDColumn != nullptr && EQUAL(pszFIDColumn, pszFieldName))
             continue;
 
         // oField.SetWidth( std::max(0,poStmt->GetColSize( iCol )) );
 
-        if( aosIgnoredCols.find( CPLString(oField.GetNameRef()).tolower() ) != aosIgnoredCols.end() )
+        if( aosIgnoredCols.find( CPLString(pszFieldName).tolower() ) != aosIgnoredCols.end() )
         {
             continue;
         }
         if( paosGeomCols != nullptr &&
-            paosGeomCols->find( CPLString(oField.GetNameRef()).tolower() ) != paosGeomCols->end() )
+            paosGeomCols->find( CPLString(pszFieldName).tolower() ) != paosGeomCols->end() )
         {
             OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-                new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
+                new OGRSQLiteGeomFieldDefn(pszFieldName, iCol);
             poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
             continue;
         }
 
-        int nColType = sqlite3_column_type( hStmtIn, iCol );
+        const int nColType = sqlite3_column_type( hStmtIn, iCol );
         switch( nColType )
         {
           case SQLITE_INTEGER:
@@ -323,7 +324,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
         const char * pszDeclType = sqlite3_column_decltype(hStmtIn, iCol);
         //CPLDebug("SQLITE", "decltype(%s) = %s",
-        //         oField.GetNameRef(), pszDeclType ? pszDeclType : "null");
+        //         pszFieldName, pszDeclType ? pszDeclType : "null");
         OGRFieldType eFieldType = OFTString;
         if (pszDeclType != nullptr)
         {
@@ -406,7 +407,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                             eGeomType = wkbSetM(wkbSetZ(eGeomType));
                         OGRSpatialReference* poSRS = poDS->FetchSRS(nSRID);
                         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-                            new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
+                            new OGRSQLiteGeomFieldDefn(pszFieldName, iCol);
                         poGeomFieldDefn->eGeomFormat = OSGF_SpatiaLite;
                         poGeomFieldDefn->SetSpatialRef(poSRS);
                         poGeomFieldDefn->SetType(eGeomType);
@@ -424,11 +425,11 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 if( strstr(pszDeclType, "_deflate") != nullptr )
                 {
                     if( CSLFindString(papszCompressedColumns,
-                                      oField.GetNameRef()) < 0 )
+                                      pszFieldName) < 0 )
                     {
                         papszCompressedColumns = CSLAddString(
-                            papszCompressedColumns, oField.GetNameRef());
-                        CPLDebug("SQLITE", "%s is compressed", oField.GetNameRef());
+                            papszCompressedColumns, pszFieldName);
+                        CPLDebug("SQLITE", "%s is compressed", pszFieldName);
                     }
                 }
             }
@@ -444,8 +445,8 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 eFieldType = OFTTime;
         }
         else if( nColType == SQLITE_TEXT &&
-                 (STARTS_WITH_CI(oField.GetNameRef(), "MIN(") ||
-                  STARTS_WITH_CI(oField.GetNameRef(), "MAX(")))
+                 (STARTS_WITH_CI(pszFieldName, "MIN(") ||
+                  STARTS_WITH_CI(pszFieldName, "MAX(")))
         {
             const char* pszText = reinterpret_cast<const char*>(
                 sqlite3_column_text( hStmtIn, iCol ));
@@ -460,11 +461,11 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
         // Recognise some common geometry column names.
         if( paosGeomCols == nullptr &&
-            (EQUAL(oField.GetNameRef(),"wkt_geometry")
-             || EQUAL(oField.GetNameRef(),"geometry")
-             || STARTS_WITH_CI(oField.GetNameRef(), "asbinary(")
-             || STARTS_WITH_CI(oField.GetNameRef(), "astext(")
-             || (STARTS_WITH_CI(oField.GetNameRef(), "st_") && nColType == SQLITE_BLOB ) )
+            (EQUAL(pszFieldName,"wkt_geometry")
+             || EQUAL(pszFieldName,"geometry")
+             || STARTS_WITH_CI(pszFieldName, "asbinary(")
+             || STARTS_WITH_CI(pszFieldName, "astext(")
+             || (STARTS_WITH_CI(pszFieldName, "st_") && nColType == SQLITE_BLOB ) )
             && (bAllowMultipleGeomFields || poFeatureDefn->GetGeomFieldCount() == 0) )
         {
             if( nColType == SQLITE_BLOB )
@@ -476,7 +477,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                     if( OGRIsBinaryGeomCol( hStmtIn, iCol, oField, eGeomFormat ) )
                     {
                         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-                            new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
+                            new OGRSQLiteGeomFieldDefn(pszFieldName, iCol);
                         poGeomFieldDefn->eGeomFormat = eGeomFormat;
                         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
                         continue;
@@ -488,7 +489,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                     /* we'll also try to decode as SpatialLite if */
                     /* bTriedAsSpatiaLite is not FALSE */
                     OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-                        new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
+                        new OGRSQLiteGeomFieldDefn(pszFieldName, iCol);
                     poGeomFieldDefn->eGeomFormat = OSGF_WKB;
                     poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
                     continue;
@@ -508,7 +509,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                     {
                         eGeomFormat = OSGF_WKT;
                         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-                            new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
+                            new OGRSQLiteGeomFieldDefn(pszFieldName, iCol);
                         poGeomFieldDefn->eGeomFormat = eGeomFormat;
                         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
                     }
@@ -521,7 +522,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 else
                 {
                     OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-                        new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
+                        new OGRSQLiteGeomFieldDefn(pszFieldName, iCol);
                     poGeomFieldDefn->eGeomFormat = OSGF_WKT;
                     poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
                     continue;
@@ -531,11 +532,11 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
         // SpatialLite / Gaia
         if( paosGeomCols == nullptr &&
-            EQUAL(oField.GetNameRef(),"GaiaGeometry")
+            EQUAL(pszFieldName,"GaiaGeometry")
             && (bAllowMultipleGeomFields || poFeatureDefn->GetGeomFieldCount() == 0) )
         {
             OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-                new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
+                new OGRSQLiteGeomFieldDefn(pszFieldName, iCol);
             poGeomFieldDefn->eGeomFormat = OSGF_SpatiaLite;
             poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
             continue;
@@ -553,7 +554,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                                                   eGeomFormat ) )
             {
                 OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-                    new OGRSQLiteGeomFieldDefn(oField.GetNameRef(), iCol);
+                    new OGRSQLiteGeomFieldDefn(pszFieldName, iCol);
                 poGeomFieldDefn->eGeomFormat = eGeomFormat;
                 poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
                 continue;
@@ -561,11 +562,11 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         }
 
         // The rowid is for internal use, not a real column.
-        if( EQUAL(oField.GetNameRef(),"_rowid_") )
+        if( EQUAL(pszFieldName,"_rowid_") )
             continue;
 
         // The OGC_FID is for internal use, not a real user visible column.
-        if( EQUAL(oField.GetNameRef(),"OGC_FID") )
+        if( EQUAL(pszFieldName,"OGC_FID") )
             continue;
 
         /* Config option just in case we would not want that in some cases */
