@@ -235,6 +235,7 @@
 
 %constant CPLES_BackslashQuotable = CPLES_BackslashQuotable;
 %constant CPLES_XML               = CPLES_XML;
+%constant CPLES_XML_BUT_QUOTES    = CPLES_XML_BUT_QUOTES;
 %constant CPLES_URL               = CPLES_URL;
 %constant CPLES_SQL               = CPLES_SQL;
 %constant CPLES_CSV               = CPLES_CSV;

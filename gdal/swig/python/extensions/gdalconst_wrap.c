@@ -3910,6 +3910,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DIM_TYPE_PARAMETRIC",SWIG_FromCharPtr(GDAL_DIM_TYPE_PARAMETRIC));
   SWIG_Python_SetConstant(d, "CPLES_BackslashQuotable",SWIG_From_int((int)(CPLES_BackslashQuotable)));
   SWIG_Python_SetConstant(d, "CPLES_XML",SWIG_From_int((int)(CPLES_XML)));
+  SWIG_Python_SetConstant(d, "CPLES_XML_BUT_QUOTES",SWIG_From_int((int)(CPLES_XML_BUT_QUOTES)));
   SWIG_Python_SetConstant(d, "CPLES_URL",SWIG_From_int((int)(CPLES_URL)));
   SWIG_Python_SetConstant(d, "CPLES_SQL",SWIG_From_int((int)(CPLES_SQL)));
   SWIG_Python_SetConstant(d, "CPLES_CSV",SWIG_From_int((int)(CPLES_CSV)));

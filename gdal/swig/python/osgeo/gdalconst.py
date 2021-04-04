@@ -218,6 +218,7 @@ DIM_TYPE_TEMPORAL = _gdalconst.DIM_TYPE_TEMPORAL
 DIM_TYPE_PARAMETRIC = _gdalconst.DIM_TYPE_PARAMETRIC
 CPLES_BackslashQuotable = _gdalconst.CPLES_BackslashQuotable
 CPLES_XML = _gdalconst.CPLES_XML
+CPLES_XML_BUT_QUOTES = _gdalconst.CPLES_XML_BUT_QUOTES
 CPLES_URL = _gdalconst.CPLES_URL
 CPLES_SQL = _gdalconst.CPLES_SQL
 CPLES_CSV = _gdalconst.CPLES_CSV
