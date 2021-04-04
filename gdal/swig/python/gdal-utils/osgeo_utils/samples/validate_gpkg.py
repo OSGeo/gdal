@@ -380,7 +380,7 @@ class GPKGChecker(object):
             self._assert(len(cols) > 0 and cols[0][2] == 'INTEGER',
                          150, 'view %s has no INTEGER first column' % table_name)
 
-            c.execute("SELECT COUNT(*) - COUNT(DISTINCT %s) FROM %s" % \
+            c.execute("SELECT COUNT(*) - COUNT(DISTINCT %s) FROM %s" %
                       (_esc_id(cols[0][1]), _esc_id(table_name)))
             self._assert(c.fetchone()[0] == 0, 150,
                          'First column of view %s should contain '
@@ -626,6 +626,16 @@ class GPKGChecker(object):
                           "gpkg_geometry_columns which isn't found in " +
                           "gpkg_spatial_ref_sys") % (table_name, srs_id))
 
+        c.execute("SELECT a.table_name, a.srs_id, b.srs_id FROM " +
+                  "gpkg_geometry_columns a, gpkg_contents b " +
+                  "WHERE a.table_name = b.table_name AND a.srs_id != b.srs_id")
+        rows = c.fetchall()
+        for (table_name, a_srs_id, b_srs_id) in rows:
+            self._assert(False, 146,
+                         "Table %s is declared with srs_id %d in "
+                         "gpkg_geometry_columns and %d in gpkg_contents" % \
+                             (table_name, a_srs_id, b_srs_id))
+
     def _check_attribute_user_table(self, c, table_name):
         self._log('Checking attributes table ' + table_name)
 
@@ -653,7 +663,7 @@ class GPKGChecker(object):
             self._assert(len(cols) > 0 and cols[0][2] == 'INTEGER',
                          151, 'view %s has no INTEGER first column' % table_name)
 
-            c.execute("SELECT COUNT(*) - COUNT(DISTINCT %s) FROM %s" % \
+            c.execute("SELECT COUNT(*) - COUNT(DISTINCT %s) FROM %s" %
                       (_esc_id(cols[0][1]), _esc_id(table_name)))
             self._assert(c.fetchone()[0] == 0, 151,
                          'First column of view %s should contain '
