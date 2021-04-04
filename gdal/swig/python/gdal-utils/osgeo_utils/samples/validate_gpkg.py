@@ -370,8 +370,21 @@ class GPKGChecker(object):
         self._assert(found_geom, 24,
                      'table %s has no %s column' %
                      (table_name, geom_column_name))
-        self._assert(count_pkid == 1, 29,
-                     'table %s has no INTEGER PRIMARY KEY' % table_name)
+
+        c.execute("SELECT 1 FROM sqlite_master WHERE "
+                  "type = 'table' AND name = ?", (table_name,))
+        if c.fetchone():
+            self._assert(count_pkid == 1, 29,
+                         'table %s has no INTEGER PRIMARY KEY' % table_name)
+        else:
+            self._assert(len(cols) > 0 and cols[0][2] == 'INTEGER',
+                         150, 'view %s has no INTEGER first column' % table_name)
+
+            c.execute("SELECT COUNT(*) - COUNT(DISTINCT %s) FROM %s" % \
+                      (_esc_id(cols[0][1]), _esc_id(table_name)))
+            self._assert(c.fetchone()[0] == 0, 150,
+                         'First column of view %s should contain '
+                         'unique values' % table_name)
 
         self._assert(z in (0, 1, 2), 27, ("z value of %s is %d. " +
                                           "Expected 0, 1 or 2") % (table_name, z))
@@ -613,6 +626,39 @@ class GPKGChecker(object):
                           "gpkg_geometry_columns which isn't found in " +
                           "gpkg_spatial_ref_sys") % (table_name, srs_id))
 
+    def _check_attribute_user_table(self, c, table_name):
+        self._log('Checking attributes table ' + table_name)
+
+        c.execute('PRAGMA table_info(%s)' % _esc_id(table_name))
+        cols = c.fetchall()
+        count_pkid = 0
+        for (_, name, typ, _, _, pk) in cols:
+            if pk == 1:
+                count_pkid += 1
+                self._assert(typ == 'INTEGER', 119,
+                             ('table %s has a PRIMARY KEY of type %s ' +
+                              'instead of INTEGER') % (table_name, typ))
+
+            else:
+                self._assert(_is_valid_data_type(typ), 5,
+                             'table %s has column %s of unexpected type %s'
+                             % (table_name, name, typ))
+
+        c.execute("SELECT 1 FROM sqlite_master WHERE "
+                  "type = 'table' AND name = ?", (table_name,))
+        if c.fetchone():
+            self._assert(count_pkid == 1, 119,
+                         'table %s has no INTEGER PRIMARY KEY' % table_name)
+        else:
+            self._assert(len(cols) > 0 and cols[0][2] == 'INTEGER',
+                         151, 'view %s has no INTEGER first column' % table_name)
+
+            c.execute("SELECT COUNT(*) - COUNT(DISTINCT %s) FROM %s" % \
+                      (_esc_id(cols[0][1]), _esc_id(table_name)))
+            self._assert(c.fetchone()[0] == 0, 151,
+                         'First column of view %s should contain '
+                         'unique values' % table_name)
+
     def _check_attributes(self, c):
 
         self._log('Checking attributes')
@@ -622,25 +668,7 @@ class GPKGChecker(object):
         if not rows:
             self._log('... No attributes table')
         for (table_name,) in rows:
-            self._log('Checking attributes table ' + table_name)
-
-            c.execute('PRAGMA table_info(%s)' % _esc_id(table_name))
-            cols = c.fetchall()
-            count_pkid = 0
-            for (_, name, typ, _, _, pk) in cols:
-                if pk == 1:
-                    count_pkid += 1
-                    self._assert(typ == 'INTEGER', 119,
-                                 ('table %s has a PRIMARY KEY of type %s ' +
-                                  'instead of INTEGER') % (table_name, typ))
-
-                else:
-                    self._assert(_is_valid_data_type(typ), 5,
-                                 'table %s has column %s of unexpected type %s'
-                                 % (table_name, name, typ))
-
-            self._assert(count_pkid == 1, 119,
-                         'table %s has no INTEGER PRIMARY KEY' % table_name)
+            self._check_attribute_user_table(c, table_name)
 
     def _check_tile_user_table(self, c, table_name, data_type):
 

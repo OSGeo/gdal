@@ -3346,6 +3346,7 @@ def test_ogr_gpkg_46():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
     lyr.CreateFeature(f)
+    # Note: those definitions of views are non conformant with GPKG 1.3 clarifications on views
     ds.ExecuteSQL('CREATE VIEW my_view AS SELECT geom AS my_geom, fid AS my_fid FROM foo')
     ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 0 )")
     ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 0, 0, 0)")
@@ -4811,6 +4812,47 @@ def test_ogr_gpkg_field_domains_errors():
     assert domain is not None
     assert domain.GetMinAsDouble() == -math.inf
     assert domain.GetMaxAsDouble() == math.inf
+
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test attribute and spatial views
+
+
+def test_ogr_gpkg_views():
+
+    filename = '/vsimem/test_ogr_gpkg_views.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
+    lyr.CreateFeature(f)
+
+    ds.ExecuteSQL('CREATE VIEW geom_view AS SELECT fid AS my_fid, geom AS my_geom FROM foo')
+    ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'geom_view', 'geom_view', 'features', 0 )")
+    ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('geom_view', 'my_geom', 'POINT', 0, 0, 0)")
+
+    ds.ExecuteSQL('CREATE VIEW attr_view AS SELECT fid AS my_fid FROM foo')
+    ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type) VALUES ( 'attr_view', 'attr_view', 'attributes' )")
+
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename)
+    assert ds.GetLayerCount() == 3
+
+    lyr = ds.GetLayerByName('geom_view')
+    assert lyr.GetGeomType() == ogr.wkbPoint
+
+    lyr = ds.GetLayerByName('attr_view')
+    assert lyr.GetGeomType() == ogr.wkbNone
 
     ds = None
 
