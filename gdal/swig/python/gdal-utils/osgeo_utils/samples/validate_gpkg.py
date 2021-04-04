@@ -39,6 +39,7 @@ import sys
 # If not available, those tests will be skipped
 try:
     from osgeo import gdal
+    from osgeo import ogr
     has_gdal = True
 except ImportError:
     has_gdal = False
@@ -409,6 +410,7 @@ class GPKGChecker(object):
         for (blob,) in c.fetchall():
             if blob is None:
                 continue
+
             self._assert(len(blob) >= 8, 19, 'Invalid geometry')
             max_size_needed = min(len(blob), 8 + 4 * 2 * 8 + 5)
             blob_ar = struct.unpack('B' * max_size_needed,
@@ -417,6 +419,7 @@ class GPKGChecker(object):
             self._assert(blob_ar[1] == ord('P'), 19, 'Invalid geometry')
             self._assert(blob_ar[2] == 0, 19, 'Invalid geometry')
             flags = blob_ar[3]
+            empty_flag = ((flags >> 3) & 1) == 1
             big_endian = (flags & 1) == 0
             env_ind = (flags >> 1) & 7
             self._assert(((flags >> 5) & 1) == 0, 19,
@@ -424,14 +427,16 @@ class GPKGChecker(object):
                          'allowed')
             self._assert(env_ind <= 4, 19,
                          'Invalid geometry: invalid envelope indicator code')
-            if big_endian:
-                geom_srs_id = struct.unpack('>I' * 1, blob[4:8])[0]
-            else:
-                geom_srs_id = struct.unpack('<I' * 1, blob[4:8])[0]
+            endian_prefix = '>' if big_endian else '<'
+            geom_srs_id = struct.unpack((endian_prefix + 'I') * 1, blob[4:8])[0]
             self._assert(srs_id == geom_srs_id, 33,
                          ('table %s has geometries with SRID %d, ' +
                           'whereas only %d is expected') %
                          (table_name, geom_srs_id, srs_id))
+
+            self._assert(not (empty_flag and env_ind != 0), 152,
+                         "Invalid empty geometry")
+
             if env_ind == 0:
                 coord_dim = 0
             elif env_ind == 1:
@@ -452,12 +457,9 @@ class GPKGChecker(object):
             self._assert(len(blob) >= header_len, 19, 'Invalid geometry')
             wkb_endianness = blob_ar[header_len]
             wkb_big_endian = (wkb_endianness == 0)
-            if wkb_big_endian:
-                wkb_geom_type = struct.unpack(
-                    '>I' * 1, blob[header_len + 1:header_len + 5])[0]
-            else:
-                wkb_geom_type = struct.unpack(
-                    '<I' * 1, blob[header_len + 1:header_len + 5])[0]
+            wkb_endian_prefix = '>' if wkb_big_endian else '<'
+            wkb_geom_type = struct.unpack(
+                (wkb_endian_prefix + 'I') * 1, blob[header_len + 1:header_len + 5])[0]
             self._assert(wkb_geom_type >= 0 and
                          (wkb_geom_type % 1000) < len(wkb_geometries),
                          19, 'Invalid WKB geometry type')
@@ -479,6 +481,14 @@ class GPKGChecker(object):
                              'gpkg_geometry_columns')
 
             found_geom_types.add(wkb_geometries[wkb_geom_type % 1000])
+
+            if has_gdal:
+                geom = ogr.CreateGeometryFromWkb(blob[header_len:])
+                self._assert(geom is not None, 19, 'Invalid geometry')
+
+                self._assert((geom.IsEmpty() and empty_flag) or
+                             (not geom.IsEmpty() and not empty_flag), 152,
+                             'Inconsistent empty_flag vs geometry content')
 
         if geometry_type_name in ('POINT', 'LINESTRING', 'POLYGON',
                                   'MULTIPOINT', 'MULTILINESTRING',
@@ -633,8 +643,8 @@ class GPKGChecker(object):
         for (table_name, a_srs_id, b_srs_id) in rows:
             self._assert(False, 146,
                          "Table %s is declared with srs_id %d in "
-                         "gpkg_geometry_columns and %d in gpkg_contents" % \
-                             (table_name, a_srs_id, b_srs_id))
+                         "gpkg_geometry_columns and %d in gpkg_contents" %
+                         (table_name, a_srs_id, b_srs_id))
 
     def _check_attribute_user_table(self, c, table_name):
         self._log('Checking attributes table ' + table_name)
