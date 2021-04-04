@@ -1004,8 +1004,9 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                 }
                 case SXF_RAT_UNICODE:
                 {
-                    unsigned nLen = (unsigned(stAttInfo.nScale) + 1) * 2;
-                    if(nLen < 2 || nLen > nSemanticsSize || nSemanticsSize - nLen < offset )
+                    uint64_t nLen64 = (static_cast<uint64_t>(stAttInfo.nScale) + 1) * 2;
+                    unsigned nLen = static_cast<unsigned>(nLen64);
+                    if(/* nLen < 2 || */ nLen64 > nSemanticsSize || nSemanticsSize - nLen < offset )
                     {
                         nSemanticsSize = 0;
                         break;

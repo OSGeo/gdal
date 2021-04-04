@@ -955,16 +955,17 @@ INGR_Decode( INGR_Format eFormat, GByte *pabySrcData, GByte *pabyDstData,
 //                                                        INGR_DecodeRunLength()
 // -----------------------------------------------------------------------------
 
-int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
+int CPL_STDCALL INGR_DecodeRunLength( const GByte *pabySrcData, GByte *pabyDstData,
                                       uint32_t nSrcBytes, uint32_t nBlockSize,
                                       uint32_t *pnBytesConsumed )
 {
     unsigned int iInput = 0;
     unsigned int iOutput = 0;
+    const signed char* paschSrcData = reinterpret_cast<const signed char*>(pabySrcData);
 
     while( ( iInput < nSrcBytes ) && ( iOutput < nBlockSize ) )
     {
-        const signed char cAtomHead = (char) pabySrcData[iInput++];
+        const signed char cAtomHead = paschSrcData[iInput++];
 
         if( cAtomHead > 0 )
         {

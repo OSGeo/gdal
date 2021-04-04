@@ -435,7 +435,7 @@ void DGNRad50ToAscii(unsigned short sRad50, char *str )
         /* Map 0..39 to ASCII */
         if (sValue==0)
             ch = ' ';          /* space */
-        else if (sValue >= 1 && sValue <= 26)
+        else if (/*sValue >= 1 &&*/ sValue <= 26)
             ch = (char) (sValue-1+'A');/* printable alpha A..Z */
         else if (sValue == 27)
             ch = '$';          /* dollar */
@@ -443,7 +443,7 @@ void DGNRad50ToAscii(unsigned short sRad50, char *str )
             ch = '.';          /* period */
         else if (sValue == 29)
             ch = ' ';          /* unused char, emit a space instead */
-        else if (sValue >= 30 && sValue <= 39)
+        else if (/*sValue >= 30 &&*/ sValue <= 39)
             ch = (char) (sValue-30+'0');   /* digit 0..9 */
         *str = ch;
         str++;

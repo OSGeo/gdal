@@ -480,7 +480,7 @@ INGR_Decode( INGR_Format eFormat,
              uint32_t *pnBytesConsumed );
 
 int CPL_STDCALL
-INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
+INGR_DecodeRunLength( const GByte *pabySrcData, GByte *pabyDstData,
                       uint32_t nSrcBytes, uint32_t nBlockSize,
                       uint32_t *pnBytesConsumed );
 

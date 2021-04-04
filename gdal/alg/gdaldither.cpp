@@ -110,6 +110,12 @@ typedef struct
 /*                         GDALDitherRGB2PCT()                          */
 /************************************************************************/
 
+static inline bool IsColorCodeSet(GUInt32 nColorCode)
+{
+    return (nColorCode >> 31) == 0;
+}
+
+
 /**
  * 24bit to 8bit conversion with dithering.
  *
@@ -427,7 +433,7 @@ int GDALDitherRGB2PCTInternal(
                         iIndex = psColorIndexMap[nIdx].nIndex;
                         break;
                     }
-                    if( static_cast<int>(psColorIndexMap[nIdx].nColorCode) < 0 )
+                    if( !IsColorCodeSet(psColorIndexMap[nIdx].nColorCode) )
                     {
                         psColorIndexMap[nIdx].nColorCode = nColorCode;
                         iIndex = FindNearestColor(
@@ -441,8 +447,7 @@ int GDALDitherRGB2PCTInternal(
                         iIndex = psColorIndexMap[nIdx].nIndex2;
                         break;
                     }
-                    if( static_cast<int>(psColorIndexMap[nIdx].nColorCode2) <
-                        0 )
+                    if( !IsColorCodeSet(psColorIndexMap[nIdx].nColorCode2) )
                     {
                         psColorIndexMap[nIdx].nColorCode2 = nColorCode;
                         iIndex = FindNearestColor(
@@ -456,8 +461,7 @@ int GDALDitherRGB2PCTInternal(
                         iIndex = psColorIndexMap[nIdx].nIndex3;
                         break;
                     }
-                    if( static_cast<int>(psColorIndexMap[nIdx].nColorCode3) <
-                        0 )
+                    if( !IsColorCodeSet(psColorIndexMap[nIdx].nColorCode3) )
                     {
                         psColorIndexMap[nIdx].nColorCode3 = nColorCode;
                         iIndex = FindNearestColor( nColors, anPCT,
@@ -474,14 +478,11 @@ int GDALDitherRGB2PCTInternal(
                         if( nIdx >= PRIME_FOR_65536 )
                             nIdx -= PRIME_FOR_65536;
                     }
-                    while( static_cast<int>(psColorIndexMap[nIdx].nColorCode)
-                           >= 0 &&
+                    while( IsColorCodeSet(psColorIndexMap[nIdx].nColorCode) &&
                            psColorIndexMap[nIdx].nColorCode != nColorCode &&
-                           static_cast<int>(psColorIndexMap[nIdx].nColorCode2)
-                           >= 0 &&
+                           IsColorCodeSet(psColorIndexMap[nIdx].nColorCode2) &&
                            psColorIndexMap[nIdx].nColorCode2 != nColorCode&&
-                           static_cast<int>(psColorIndexMap[nIdx].nColorCode3)
-                           >= 0 &&
+                           IsColorCodeSet(psColorIndexMap[nIdx].nColorCode3) &&
                            psColorIndexMap[nIdx].nColorCode3 != nColorCode );
                 }
             }

@@ -181,6 +181,11 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     }
 }
 
+static inline bool IsColorCodeSet(GUInt32 nColorCode)
+{
+    return (nColorCode >> 31) == 0;
+}
+
 static inline int FindColorCount( const HashHistogram* psHashHistogram,
                                   GUInt32 nColorCode )
 {
@@ -188,7 +193,7 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
     GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
     while( true )
     {
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode) )
         {
             return 0;
         }
@@ -196,7 +201,7 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
         {
             return psHashHistogram[nIdx].nCount;
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode2) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode2) )
         {
             return 0;
         }
@@ -204,7 +209,7 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
         {
             return psHashHistogram[nIdx].nCount2;
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode3) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode3) )
         {
             return 0;
         }
@@ -219,11 +224,11 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
             if( nIdx >= PRIME_FOR_65536 )
                 nIdx -= PRIME_FOR_65536;
         }
-        while( static_cast<int>(psHashHistogram[nIdx].nColorCode) >= 0 &&
+        while( IsColorCodeSet(psHashHistogram[nIdx].nColorCode) &&
                psHashHistogram[nIdx].nColorCode != nColorCode &&
-               static_cast<int>(psHashHistogram[nIdx].nColorCode2) >= 0 &&
+               IsColorCodeSet(psHashHistogram[nIdx].nColorCode2) &&
                psHashHistogram[nIdx].nColorCode2 != nColorCode&&
-               static_cast<int>(psHashHistogram[nIdx].nColorCode3) >= 0 &&
+               IsColorCodeSet(psHashHistogram[nIdx].nColorCode3) &&
                psHashHistogram[nIdx].nColorCode3 != nColorCode );
     }
 }
@@ -238,7 +243,7 @@ FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
         {
             return &(psHashHistogram[nIdx].nCount);
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode) )
         {
             psHashHistogram[nIdx].nColorCode = nColorCode;
             psHashHistogram[nIdx].nCount = 0;
@@ -248,7 +253,7 @@ FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
         {
             return &(psHashHistogram[nIdx].nCount2);
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode2) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode2) )
         {
             psHashHistogram[nIdx].nColorCode2 = nColorCode;
             psHashHistogram[nIdx].nCount2 = 0;
@@ -258,7 +263,7 @@ FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
         {
             return &(psHashHistogram[nIdx].nCount3);
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode3) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode3) )
         {
             psHashHistogram[nIdx].nColorCode3 = nColorCode;
             psHashHistogram[nIdx].nCount3 = 0;
@@ -271,11 +276,11 @@ FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
             if( nIdx >= PRIME_FOR_65536 )
                 nIdx -= PRIME_FOR_65536;
         }
-        while( static_cast<int>(psHashHistogram[nIdx].nColorCode) >= 0 &&
+        while( IsColorCodeSet(psHashHistogram[nIdx].nColorCode) &&
                psHashHistogram[nIdx].nColorCode != nColorCode &&
-               static_cast<int>(psHashHistogram[nIdx].nColorCode2) >= 0 &&
+               IsColorCodeSet(psHashHistogram[nIdx].nColorCode2) &&
                psHashHistogram[nIdx].nColorCode2 != nColorCode&&
-               static_cast<int>(psHashHistogram[nIdx].nColorCode3) >= 0 &&
+               IsColorCodeSet(psHashHistogram[nIdx].nColorCode3) &&
                psHashHistogram[nIdx].nColorCode3 != nColorCode );
     }
 }

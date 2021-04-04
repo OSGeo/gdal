@@ -174,7 +174,7 @@ void *CPLMalloc( size_t nSize )
 
     CPLVerifyConfiguration();
 
-    if( static_cast<long>(nSize) < 0 )
+    if( (nSize >> (8 * sizeof(nSize) - 1)) != 0 )
     {
         // coverity[dead_error_begin]
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -186,7 +186,7 @@ void *CPLMalloc( size_t nSize )
     void *pReturn = VSIMalloc(nSize);
     if( pReturn == nullptr )
     {
-        if( nSize > 0 && nSize < 2000 )
+        if( nSize < 2000 )
         {
             CPLEmergencyError("CPLMalloc(): Out of memory allocating a small "
                               "number of bytes.");
@@ -232,7 +232,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
         return nullptr;
     }
 
-    if( static_cast<long>(nNewSize) < 0 )
+    if( (nNewSize >> (8 * sizeof(nNewSize) - 1)) != 0 )
     {
         // coverity[dead_error_begin]
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -250,7 +250,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
 
     if( pReturn == nullptr )
     {
-        if( nNewSize > 0 && nNewSize < 2000 )
+        if( nNewSize < 2000 )
         {
             char szSmallMsg[80] = {};
 

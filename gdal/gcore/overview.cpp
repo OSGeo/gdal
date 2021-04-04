@@ -1453,9 +1453,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         const T val = pChunk[iX + static_cast<GPtrDiff_t>(iY) *nChunkXSize];
-                        int nVal = static_cast<int>(val);
-                        if( nVal >= 0 && nVal < nEntryCount &&
-                            aEntries[nVal].c4 )
+                        const unsigned nVal = static_cast<unsigned>(val);
+                        if( nVal < static_cast<unsigned>(nEntryCount) && aEntries[nVal].c4 )
                         {
                             if( bQuadraticMean )
                             {
