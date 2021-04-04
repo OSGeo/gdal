@@ -604,3 +604,99 @@ def test_gdal_getdatatypename():
         gdal.GetDataTypeName(100)
     with pytest.raises(Exception):
         gdal.GetDataTypeName('invalid')
+
+
+def test_gdal_EscapeString():
+
+    assert gdal.EscapeString( b'', gdal.CPLES_XML ) == ''
+
+    assert gdal.EscapeString( b'&', gdal.CPLES_XML ) == '&amp;'
+
+    assert gdal.EscapeString( b'<', gdal.CPLES_XML ) == '&lt;'
+
+    assert gdal.EscapeString( b'>', gdal.CPLES_XML ) == '&gt;'
+
+    assert gdal.EscapeString( b'"', gdal.CPLES_XML ) == '&quot;'
+
+    assert gdal.EscapeString( b'\xEF\xBB\xBF', gdal.CPLES_XML ) == '&#xFEFF;'
+
+    assert gdal.EscapeString( b'\t', gdal.CPLES_XML ) == '\t'
+
+    assert gdal.EscapeString( b'\n', gdal.CPLES_XML ) == '\n'
+
+    assert gdal.EscapeString( b'\x01a', gdal.CPLES_XML ) == 'a'
+
+
+    assert gdal.EscapeString( b'', gdal.CPLES_XML_BUT_QUOTES ) == ''
+
+    assert gdal.EscapeString( b'&', gdal.CPLES_XML_BUT_QUOTES ) == '&amp;'
+
+    assert gdal.EscapeString( b'<', gdal.CPLES_XML_BUT_QUOTES ) == '&lt;'
+
+    assert gdal.EscapeString( b'>', gdal.CPLES_XML_BUT_QUOTES ) == '&gt;'
+
+    assert gdal.EscapeString( b'"', gdal.CPLES_XML_BUT_QUOTES ) == '"'
+
+    assert gdal.EscapeString( b'\xEF\xBB\xBF', gdal.CPLES_XML_BUT_QUOTES ) == '&#xFEFF;'
+
+    assert gdal.EscapeString( b'\t', gdal.CPLES_XML_BUT_QUOTES ) == '\t'
+
+    assert gdal.EscapeString( b'\n', gdal.CPLES_XML_BUT_QUOTES ) == '\n'
+
+    assert gdal.EscapeString( b'\x01a', gdal.CPLES_XML_BUT_QUOTES ) == 'a'
+
+
+    assert gdal.EscapeString( b'', gdal.CPLES_BackslashQuotable ) == ''
+
+    assert gdal.EscapeString( b'a', gdal.CPLES_BackslashQuotable ) == 'a'
+
+    assert gdal.EscapeString( b'\x00x', gdal.CPLES_BackslashQuotable ) == '\\0x'
+
+    assert gdal.EscapeString( b'\x01', gdal.CPLES_BackslashQuotable ) == '\x01'
+
+    assert gdal.EscapeString( b'\\', gdal.CPLES_BackslashQuotable ) == '\\\\'
+
+    assert gdal.EscapeString( b'\n', gdal.CPLES_BackslashQuotable ) == '\\n'
+
+    assert gdal.EscapeString( b'"', gdal.CPLES_BackslashQuotable ) == '\\"'
+
+
+    assert gdal.EscapeString( b'', gdal.CPLES_URL ) == ''
+
+    assert gdal.EscapeString( b'aZAZ09$-_.+!*\'(), ', gdal.CPLES_URL ) == 'aZAZ09$-_.+!*\'(),%20'
+
+
+    assert gdal.EscapeString( b"", gdal.CPLES_SQL ) == ""
+
+    assert gdal.EscapeString( b"a", gdal.CPLES_SQL ) == "a"
+
+    assert gdal.EscapeString( b"a'a", gdal.CPLES_SQL ) == "a''a"
+
+
+    assert gdal.EscapeString( b"", gdal.CPLES_CSV ) == ""
+
+    assert gdal.EscapeString( b"a'b", gdal.CPLES_CSV ) == "a'b"
+
+    assert gdal.EscapeString( b'a"b', gdal.CPLES_CSV ) == '"a""b"'
+
+    assert gdal.EscapeString( b'a,b', gdal.CPLES_CSV ) == '"a,b"'
+
+    assert gdal.EscapeString( b'a,b', gdal.CPLES_CSV ) == '"a,b"'
+
+    assert gdal.EscapeString( b'a\tb', gdal.CPLES_CSV ) == '"a\tb"'
+
+    assert gdal.EscapeString( b'a\nb', gdal.CPLES_CSV ) == '"a\nb"'
+
+    assert gdal.EscapeString( b'a\rb', gdal.CPLES_CSV ) == '"a\rb"'
+
+
+def test_gdal_EscapeString_errors():
+
+    if sys.maxsize > 2**32:
+        pytest.skip('Test not available on 64 bit')
+
+    # Allocation will be < 4 GB, but will fail being > 2 GB
+    assert gdal.EscapeString( b'"' * (((1 << 32)-1) // 6), gdal.CPLES_XML ) is None
+
+    # Allocation will be > 4 GB
+    assert gdal.EscapeString( b'"' * (((1 << 32)-1) // 6 + 1), gdal.CPLES_XML ) is None
