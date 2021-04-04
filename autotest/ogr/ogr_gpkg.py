@@ -3476,7 +3476,7 @@ def test_ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0x27, 0xD9), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('>I', 10201), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
@@ -3490,11 +3490,29 @@ def test_ogr_gpkg_47():
     assert gdal.GetLastErrorMsg() == ''
 
     # Set GPKG 1.3.0
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg')
+    # Set user_version
+    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
+    gdal.VSIFSeekL(fp, 60, 0)
+    gdal.VSIFWriteL(struct.pack('>I', 10300), 4, 1, fp)
+    gdal.VSIFCloseL(fp)
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
+    ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
+    assert gdal.GetLastErrorMsg() == ''
+
+    # Set GPKG 1.99.0
     gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.2'])
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('B' * 4, 0, 0, 0x28, 0x3C), 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('>I', 19900), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():

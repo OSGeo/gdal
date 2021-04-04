@@ -116,8 +116,12 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
     }
     else if(nApplicationId == GPKG_APPLICATION_ID &&
             // Accept any 102XX version
-            !(nUserVersion >= GPKG_1_2_VERSION &&
-              nUserVersion < GPKG_1_2_VERSION + 99))
+            !((nUserVersion >= GPKG_1_2_VERSION &&
+               nUserVersion < GPKG_1_2_VERSION + 99) ||
+            // Accept any 103XX version
+              (nUserVersion >= GPKG_1_3_VERSION &&
+               nUserVersion < GPKG_1_3_VERSION + 99)
+              ))
     {
 #ifdef DEBUG
         if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
@@ -138,7 +142,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
                             "GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
             if( bWarn )
             {
-                if( nUserVersion > GPKG_1_2_VERSION )
+                if( nUserVersion > GPKG_1_3_VERSION )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                               "This version of GeoPackage "
@@ -166,7 +170,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
             }
             else
             {
-                if( nUserVersion > GPKG_1_2_VERSION )
+                if( nUserVersion > GPKG_1_3_VERSION )
                 {
                     CPLDebug( "GPKG",
                               "This version of GeoPackage "
