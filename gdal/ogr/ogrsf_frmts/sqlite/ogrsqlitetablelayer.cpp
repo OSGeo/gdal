@@ -377,13 +377,13 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         aosGeomCols.insert(pszGeomCol);
         std::set<CPLString> aosIgnoredCols(poDS->GetGeomColsForTable(pszTableName));
         aosIgnoredCols.erase(pszGeomCol);
-        BuildFeatureDefn( GetDescription(), hColStmt, &aosGeomCols, aosIgnoredCols);
+        BuildFeatureDefn( GetDescription(),false, hColStmt, &aosGeomCols, aosIgnoredCols);
     }
     else
     {
         std::set<CPLString> aosIgnoredCols;
         const std::set<CPLString>& aosGeomCols(poDS->GetGeomColsForTable(pszTableName));
-        BuildFeatureDefn( GetDescription(), hColStmt,
+        BuildFeatureDefn( GetDescription(), false, hColStmt,
                           (bIsVirtualShape) ? nullptr : &aosGeomCols, aosIgnoredCols );
     }
     sqlite3_finalize( hColStmt );

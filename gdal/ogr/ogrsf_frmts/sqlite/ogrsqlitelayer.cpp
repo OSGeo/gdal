@@ -15,7 +15,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2009-2021, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,6 +46,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <map>
 #include <set>
 
 #include "cpl_conv.h"
@@ -231,6 +232,7 @@ int OGRIsBinaryGeomCol( sqlite3_stmt *hStmt,
 /************************************************************************/
 
 void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
+                                       bool bIsSelect,
                                        sqlite3_stmt *hStmtIn,
                                        const std::set<CPLString>* paosGeomCols,
                                        const std::set<CPLString>& aosIgnoredCols )
@@ -239,6 +241,27 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
     poFeatureDefn = new OGRSQLiteFeatureDefn( pszLayerName );
     poFeatureDefn->SetGeomType(wkbNone);
     poFeatureDefn->Reference();
+
+    std::map<std::string, std::string> oMapTableInfo; // name to type
+    if( !bIsSelect )
+    {
+        // oField.GetNameRef() can be better than sqlite3_column_name() on views
+        SQLResult oResultTable;
+        char* pszSQL = sqlite3_mprintf("PRAGMA table_info('%q')", pszLayerName);
+        CPL_IGNORE_RET_VAL(SQLQuery(poDS->GetDB(), pszSQL, &oResultTable));
+        sqlite3_free(pszSQL);
+        if( oResultTable.nColCount == 6 )
+        {
+            for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
+            {
+                const char *pszName = SQLResultGetValue(&oResultTable, 1, iRecord);
+                const char *pszType = SQLResultGetValue(&oResultTable, 2, iRecord);
+                if( pszName && pszType )
+                    oMapTableInfo[pszName] = pszType;
+            }
+        }
+        SQLResultFree(&oResultTable);
+    }
 
     const int nRawColumns = sqlite3_column_count( hStmtIn );
 
@@ -323,6 +346,12 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         }
 
         const char * pszDeclType = sqlite3_column_decltype(hStmtIn, iCol);
+        if( pszDeclType == nullptr )
+        {
+            auto iter = oMapTableInfo.find(pszFieldName);
+            if( iter != oMapTableInfo.end() )
+                pszDeclType = iter->second.c_str();
+        }
         //CPLDebug("SQLITE", "decltype(%s) = %s",
         //         pszFieldName, pszDeclType ? pszDeclType : "null");
         OGRFieldType eFieldType = OFTString;

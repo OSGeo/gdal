@@ -243,7 +243,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     std::set<CPLString> aosGeomCols;
     std::set<CPLString> aosIgnoredCols;
     aosGeomCols.insert(osGeomColumn);
-    BuildFeatureDefn( pszViewName, hColStmt, &aosGeomCols, aosIgnoredCols );
+    BuildFeatureDefn( pszViewName, false, hColStmt, &aosGeomCols, aosIgnoredCols );
     sqlite3_finalize( hColStmt );
 
 /* -------------------------------------------------------------------- */

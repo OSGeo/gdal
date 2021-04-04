@@ -3082,6 +3082,20 @@ def test_ogr_sqlite_integer_or_text():
     f = lyr.GetNextFeature()
     assert f['c'] == 'five'
 
+###############################################################################
+# Test better guessing of columns in a view
+
+
+def test_ogr_sqlite_view_type():
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
+    ds.ExecuteSQL('CREATE TABLE t(c INTEGER)')
+    ds.ExecuteSQL('CREATE TABLE u(d TEXT)')
+    ds.ExecuteSQL("CREATE VIEW v AS SELECT c FROM t UNION ALL SELECT NULL FROM u")
+
+    lyr = ds.GetLayer('v')
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
 
 ###############################################################################
 #
