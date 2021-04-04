@@ -3531,7 +3531,7 @@ void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be dest
 bool GDALGeoPackageDataset::CreateMetadataTables()
 {
     const bool bCreateTriggers =
-        CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
+        CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "NO"));
 
     /* From C.10. gpkg_metadata Table 35. gpkg_metadata Table Definition SQL  */
     CPLString osSQL =

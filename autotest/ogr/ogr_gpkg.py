@@ -1333,6 +1333,13 @@ def test_ogr_gpkg_19():
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
+
+    # Check that we don't create triggers
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM sqlite_master WHERE type = 'trigger' AND tbl_name IN ('gpkg_metadata', 'gpkg_metadata_reference')")
+    assert sql_lyr.GetFeatureCount() == 0
+    ds.ReleaseResultSet(sql_lyr)
+
     lyr = ds.GetLayer('test_with_md')
     assert lyr.GetMetadataItem('IDENTIFIER') == 'ident'
     assert lyr.GetMetadataItem('DESCRIPTION') == 'desc'
