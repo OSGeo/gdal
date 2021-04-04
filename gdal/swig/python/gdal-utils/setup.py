@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Setup script for gdal-utils.
+from glob import glob
 
 from setuptools import setup, find_packages
 
-__pacakge_name__ = 'gdal-utils'
-__version__ = '3.3.0'
-__author__ = "Frank Warmerdam"
-__author_email__ = "warmerdam@pobox.com"
-__maintainer__ = "Idan Miara"
-__maintainer_email__ = "idan@miara.com"
-__description__ = "gdal-utils: An extension library for GDAL - Geospatial Data Abstraction Library"
-__license_type__ = "MIT"
-__url__ = "http://www.gdal.org"
+from osgeo_utils import (
+    __pacakge_name__,
+    __version__,
+    __author__,
+    __author_email__,
+    __maintainer__,
+    __maintainer_email__,
+    __description__,
+    __license_type__,
+    __url__,
+)
 
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -48,7 +51,7 @@ setup(
     python_requires='>=3.6.0',
     packages=packages,
     package_dir=package_dir,
+    scripts=glob('./scripts/*.py'),
     install_requires=['gdal'],
     extras_require={'numpy': ['numpy > 1.0.0']},
 )
-

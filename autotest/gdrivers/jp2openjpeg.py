@@ -39,6 +39,8 @@ import pytest
 
 import gdaltest
 
+from test_py_scripts import samples_path
+
 pytestmark = pytest.mark.require_driver('JP2OpenJPEG')
 
 ###############################################################################
@@ -736,7 +738,7 @@ def test_jp2openjpeg_25():
 
 def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=None, inspire_tg=True):
 
-    for path in ('../ogr', '../../gdal/swig/python/samples'):
+    for path in ('../ogr', samples_path):
         if path not in sys.path:
             sys.path.append(path)
 
@@ -1331,7 +1333,7 @@ def test_jp2openjpeg_37():
         assert validate('/vsimem/jp2openjpeg_37.jp2', expected_gmljp2=False) != 'fail'
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
-    
+
 ###############################################################################
 # Test non-EPSG SRS (so written with a GML dictionary)
 
@@ -1365,7 +1367,7 @@ def test_jp2openjpeg_38():
     if do_validate:
         assert xmlvalidate.validate(crsdictionary, ogc_schemas_location='tmp/cache/SCHEMAS_OPENGIS_NET')
 
-    
+
 ###############################################################################
 # Test GMLJP2OVERRIDE configuration option and DGIWG GMLJP2
 
@@ -2835,7 +2837,7 @@ def test_jp2openjpeg_49():
         gdal.OpenEx('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=unhandled'])
         assert gdal.GetLastErrorMsg() != '', 'expected warning'
 
-    
+
 ###############################################################################
 # Test opening an image of small dimension with very small tiles (#7012)
 

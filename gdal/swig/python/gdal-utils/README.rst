@@ -31,7 +31,16 @@ Installation
 
 gdal-utils can be installed from pypi.org::
 
-  $ pip install gdal-utils
+  $ python -m pip install gdal-utils
+
+In case you want to run GDAL scripts on Windows,
+If don't have `python.exe` associated with py file extension
+(For instance, because you associate them with your IDE)
+you might want to create batch wrappers for the gdal python scripts,
+Otherwise you won't be able to run the scripts easily.
+To create the batch files, Run the following command (after installing `gdal-utils`):
+
+  $ python -m osgeo_utils.auxiliary.batch_creator
 
 .. _GDAL API Tutorial: https://gdal.org/tutorials/
 .. _GDAL: http://www.gdal.org

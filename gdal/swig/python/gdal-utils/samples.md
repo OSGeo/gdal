@@ -36,7 +36,7 @@ Python interface may be used in your applications.
 `gdal_retile.py`
 
     Script for restructuring data in a tree of regular tiles.
-    (transferred in swig/python/scripts)
+    (transferred in swig/python/gdal-utils/scripts)
 
 `get_soundg.py`
 

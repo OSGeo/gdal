@@ -343,7 +343,7 @@ utils_package_root = 'gdal-utils'   # path for gdal-utils sources
 if HAVE_SETUPTOOLS:
     packages = find_packages(utils_package_root)
 else:
-    packages = ['osgeo_utils', 'osgeo_utils.auxiliary']
+    packages = ['osgeo_utils', 'osgeo_utils.auxiliary', 'osgeo_utils.samples']
 packages = ['osgeo'] + packages
 package_dir = {'osgeo': 'osgeo', '': utils_package_root}
 
@@ -399,7 +399,7 @@ setup_kwargs = dict(
     python_requires='>=3.6.0',
     data_files=data_files,
     ext_modules=ext_modules,
-    scripts=glob('scripts/*.py'),
+    scripts=glob(utils_package_root + '/scripts/*.py'),
     cmdclass={'build_ext': gdal_ext},
     extras_require={'numpy': ['numpy > 1.0.0']},
 )

@@ -50,7 +50,7 @@ Process :
 
 3.1) Update the version information in the following files:
      - ./swig/python/setup.py (gdal python package)
-     - ./swig/python/gdal-utils/setup.py (gdal-utils python package)
+     - ./swig/python/gdal-utils/osgeo_utils/__init__.py (gdal-utils python package)
      - ./swig/python/README.rst (libgdal)
 
 3.2) Update ./swig/include/perl/gdal_perl.i $VERSION and $GDAL_VERSION
@@ -178,33 +178,54 @@ Perl module maintainer to make a CPAN release.
 the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 ( procedure taken from http://peterdowns.com/posts/first-time-with-pypi.html )
 
-a) Install twine https://pypi.org/project/twine/
+15.1) Prerequisite:
+    a) Install twine https://pypi.org/project/twine/
 
-b) Create a $HOME/.pypirc file :
+    b) Create a $HOME/.pypirc file :
 
-[distutils] # this tells distutils what package indexes you can push to
-index-servers = pypi
-                pypitest
+    [distutils] # this tells distutils what package indexes you can push to
+    index-servers = pypi
+                    pypitest
 
-[pypi] # authentication details for live PyPI
-repository: https://upload.pypi.org/legacy/
-username: yourlogin
-password: yourpassword
+    [pypi] # authentication details for live PyPI
+    repository: https://upload.pypi.org/legacy/
+    username: yourlogin
+    password: yourpassword
 
-[pypitest] # authentication details for test PyPI
-repository: https://test.pypi.org/legacy/
-username: yourlogin
-password: yourpassword
+    [pypitest] # authentication details for test PyPI
+    repository: https://test.pypi.org/legacy/
+    username: yourlogin
+    password: yourpassword
 
-c) cd swig/python
+15.2) create gdal sdist and upload to pypi:
 
-d) python setup.py sdist
+    a) cd gdal/swig/python
 
-e) For trial :
-    twine upload dist/GDAL*.gz -r pypitest
+    b) python setup.py sdist
 
-f) For real :
-    twine upload dist/GDAL*.gz
+    c) Check the output:
+        twine check dist/GDAL-*.gz
+
+    d) For trial :
+        twine upload dist/GDAL-*.gz -r pypitest
+
+    e) For real :
+        twine upload dist/GDAL-*.gz
+
+15.3) create gdal-utils wheel and upload to pypi:
+
+    a) cd gdal/swig/python/gdal-utils
+
+    b) python setup.py bdist_wheel
+
+    c) Check the output:
+        twine check dist/gdal-utils-*.whl
+
+    c) For trial :
+        twine upload dist/gdal-utils-*.whl -r pypitest
+
+    d) For real :
+        twine upload dist/gdal-utils-*.whl
 
 16) Build and bundle the java bindings.
 
