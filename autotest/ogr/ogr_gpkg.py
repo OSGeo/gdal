@@ -3476,6 +3476,8 @@ def test_ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
+    assert struct.unpack('>I', gdal.VSIFReadL(4, 1, fp))[0] == 10200
+    gdal.VSIFSeekL(fp, 60, 0)
     gdal.VSIFWriteL(struct.pack('>I', 10201), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
@@ -3490,11 +3492,11 @@ def test_ogr_gpkg_47():
     assert gdal.GetLastErrorMsg() == ''
 
     # Set GPKG 1.3.0
-    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg')
-    # Set user_version
-    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options=['VERSION=1.3'])
+    # Check user_version
+    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL(struct.pack('>I', 10300), 4, 1, fp)
+    assert struct.unpack('>I', gdal.VSIFReadL(4, 1, fp))[0] == 10300
     gdal.VSIFCloseL(fp)
 
     ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update=1)

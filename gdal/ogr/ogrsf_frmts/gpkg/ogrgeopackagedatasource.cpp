@@ -4087,6 +4087,11 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             m_nApplicationId = GPKG_APPLICATION_ID;
             m_nUserVersion = GPKG_1_2_VERSION;
         }
+        else if( EQUAL(pszVersion, "1.3") )
+        {
+            m_nApplicationId = GPKG_APPLICATION_ID;
+            m_nUserVersion = GPKG_1_3_VERSION;
+        }
     }
 
     SoftStartTransaction();
