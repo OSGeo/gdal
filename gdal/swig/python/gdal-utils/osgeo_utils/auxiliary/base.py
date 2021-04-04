@@ -31,13 +31,17 @@
 # ******************************************************************************
 
 import os.path
-from numbers import Number
+from numbers import Real
 from pathlib import Path
-from typing import Sequence, Union, List, Tuple
+from typing import Sequence, Union, List, Tuple, TypeVar, Optional
 from enum import Enum
 
+T = TypeVar("T")
+MaybeSequence = Union[T, Sequence[T]]
 PathLike = Union[str, Path]
 SequanceNotString = Union[List, Tuple]
+Real2D = Tuple[Real, Real]
+OptionalBoolStr = Optional[Union[str, bool]]
 
 
 def enum_to_str(enum_or_str: Union[Enum, str]) -> str:
@@ -65,21 +69,48 @@ def get_extension(filename: PathLike) -> str:
     return ext
 
 
-def is_sequence(f) -> bool:
-    return isinstance(f, Sequence)
-
-
 def get_byte(number: int, i: int):
     """ returns the i-th byte from an integer"""
     return (number & (0xff << (i * 8))) >> (i * 8)
 
 
-def path_join(*args):
+def path_join(*args) -> str:
     return os.path.join(*(str(arg) for arg in args))
 
 
-def num(s: str) -> Number:
+def num(s: Union[int, float, str]) -> Real:
     try:
         return int(s)
     except ValueError:
         return float(s)
+
+
+def num_or_none(s: Optional[Union[int, float, str]]) -> Optional[Real]:
+    try:
+        return num(s)
+    except Exception:
+        return None
+
+
+def is_true(b: OptionalBoolStr, accept_none: bool = False,
+            case_insensitive=True,
+            false_str=('NO', 'FALSE', 'OFF'),
+            true_str=('YES', 'TRUE', 'ON')) -> Optional[bool]:
+    """
+    Returns a boolean value that is represented by a string or a bool
+    correlated to the c++ implementation:
+    https://github.com/OSGeo/gdal/blob/362541e961cf8cab046dfbae1bde8ce559b4cb40/gdal/gcore/gdaldriver.cpp#L1973
+    """
+    if isinstance(b, bool):
+        return b
+    if not b and accept_none:
+        return None
+    if isinstance(b, str):
+        if case_insensitive:
+            b = b.upper()
+        if b in false_str:
+            return False
+        if b in true_str:
+            return True
+    raise Exception(f'{b} is not accepted as a valid boolean-like value')
+
