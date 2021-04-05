@@ -29,13 +29,16 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
+
 from numbers import Real
-from typing import Optional, Union, Sequence, Tuple
+from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike
+from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike, enum_to_str, OptionalBoolStr, is_true
 
 PathOrDS = Union[PathLike, gdal.Dataset]
+DataTypeOrStr = Union[str, int]
+CreationOptions = Optional[Dict[str, Any]]
 
 
 def DoesDriverHandleExtension(drv: gdal.Driver, ext: str):
@@ -218,3 +221,91 @@ class OpenDS:
         open_options = ["{}={}".format(k, v) for k, v in open_options.items()]
 
         return gdal.OpenEx(str(filename), access_mode, open_options=open_options)
+
+
+def get_data_type(data_type: Optional[DataTypeOrStr]):
+    if data_type is None:
+        return None
+    if isinstance(data_type, str):
+        return gdal.GetDataTypeByName(data_type)
+    else:
+        return data_type
+
+
+def get_raster_bands(ds: gdal.Dataset) -> Iterator[gdal.Band]:
+    return (ds.GetRasterBand(i + 1) for i in range(ds.RasterCount))
+
+
+def get_band_types(filename_or_ds: PathOrDS):
+    with OpenDS(filename_or_ds) as ds:
+        return [band.DataType for band in get_raster_bands(ds)]
+
+
+def get_band_minimum(band: gdal.Band):
+    ret = band.GetMinimum()
+    if ret is None:
+        band.ComputeStatistics(0)
+    return band.GetMinimum()
+
+
+def get_raster_band(filename_or_ds: PathOrDS, bnd_index: int = 1, ovr_index: Optional[int] = None):
+    with OpenDS(filename_or_ds) as ds:
+        bnd = ds.GetRasterBand(bnd_index)
+        if ovr_index is not None:
+            bnd = bnd.GetOverview(ovr_index)
+        return bnd
+
+
+def get_raster_minimum(filename_or_ds: PathOrDS, bnd_index: Optional[int] = 1):
+    with OpenDS(filename_or_ds) as ds:
+        if bnd_index is None:
+            return min(get_band_minimum(bnd) for bnd in get_raster_bands(ds))
+        else:
+            bnd = ds.GetRasterBand(bnd_index)
+            return get_band_minimum(bnd)
+
+
+def get_raster_min_max(filename_or_ds: PathOrDS, bnd_index: int = 1):
+    with OpenDS(filename_or_ds) as ds:
+        bnd = ds.GetRasterBand(bnd_index)
+        bnd.ComputeStatistics(0)
+        min_val = bnd.GetMinimum()
+        max_val = bnd.GetMaximum()
+        return min_val, max_val
+
+
+def get_nodatavalue(filename_or_ds: PathOrDS):
+    with OpenDS(filename_or_ds) as ds:
+        band = next(get_raster_bands(ds))
+        return band.GetNoDataValue()
+
+
+def unset_nodatavalue(filename_or_ds: PathOrDS):
+    with OpenDS(filename_or_ds, access_mode=gdal.GA_Update) as ds:
+        for b in get_raster_bands(ds):
+            b.DeleteNoDataValue()
+
+
+def get_metadata_item(filename_or_ds: PathOrDS, key: str, domain: str, default: Any = None):
+    key = key.strip()
+    domain = domain.strip()
+    with OpenDS(filename_or_ds) as ds:
+        metadata_item = ds.GetMetadataItem(key, domain)
+        return metadata_item if metadata_item is not None else default
+
+
+def get_image_structure_metadata(filename_or_ds: PathOrDS, key: str, default: Any = None):
+    return get_metadata_item(filename_or_ds, key=key, domain="IMAGE_STRUCTURE", default=default)
+
+
+def get_bigtiff_creation_option_value(big_tiff: OptionalBoolStr):
+    return "IF_SAFER" if big_tiff is None \
+        else big_tiff if bool(big_tiff) and isinstance(big_tiff, str) \
+        else str(is_true(big_tiff))
+
+
+def get_ext_by_of(of: str):
+    ext = enum_to_str(of).lower()
+    if ext in ['gtiff', 'cog', 'mem']:
+        ext = 'tif'
+    return '.' + ext
