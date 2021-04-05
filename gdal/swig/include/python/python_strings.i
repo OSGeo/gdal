@@ -64,6 +64,13 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
         return NULL;
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
       pszNewStr = (char *) malloc(nLen+1);
+      if( pszNewStr == NULL )
+      {
+          CPLError(CE_Failure, CPLE_OutOfMemory, "Failed to allocate %llu bytes",
+                   (unsigned long long)(nLen + 1));
+          Py_XDECREF(pyUTF8Str);
+          return NULL;
+      }
       memcpy(pszNewStr, pszStr, nLen+1);
       Py_XDECREF(pyUTF8Str);
       *pbToFree = 1;
