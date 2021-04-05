@@ -4737,14 +4737,14 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
         "INSERT INTO gpkg_2d_gridded_coverage_ancillary "
         "(tile_matrix_set_name, datatype, scale, offset, precision, "
         "grid_cell_encoding, uom, field_name, quantity_definition) "
-        "VALUES ('%q', '%s', %.18g, %.18g, %.18g, %s, %s, %s, %s)",
+        "VALUES (%Q, '%s', %.18g, %.18g, %.18g, %Q, %Q, %Q, %Q)",
         m_osRasterTable.c_str(),
         ( m_eTF == GPKG_TF_PNG_16BIT ) ? "integer" : "float",
         m_dfScale, m_dfOffset, m_dfPrecision,
-        ("'" + SQLEscapeLiteral(osGridCellEncoding) + "'").c_str(),
-        osUom.empty() ? "NULL" : ("'" + SQLEscapeLiteral(osUom) + "'").c_str(),
-        ("'" + SQLEscapeLiteral(osFieldName) + "'").c_str(),
-        ("'" + SQLEscapeLiteral(osQuantityDefinition) + "'").c_str());
+        osGridCellEncoding.c_str(),
+        osUom.empty() ? NULL : osUom.c_str(),
+        osFieldName.c_str(),
+        osQuantityDefinition.c_str());
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
 
