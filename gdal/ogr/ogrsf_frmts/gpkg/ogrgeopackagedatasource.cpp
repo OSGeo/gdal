@@ -4742,7 +4742,7 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
         ( m_eTF == GPKG_TF_PNG_16BIT ) ? "integer" : "float",
         m_dfScale, m_dfOffset, m_dfPrecision,
         osGridCellEncoding.c_str(),
-        osUom.empty() ? NULL : osUom.c_str(),
+        osUom.empty() ? nullptr : osUom.c_str(),
         osFieldName.c_str(),
         osQuantityDefinition.c_str());
     osSQL += pszSQL;
