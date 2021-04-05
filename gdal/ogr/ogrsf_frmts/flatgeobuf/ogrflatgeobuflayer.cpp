@@ -1240,7 +1240,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         CPLDebugOnly("FlatGeobuf", "Writing first feature at offset: %lu", static_cast<long unsigned int>(m_writeOffset));
     }
 
-    m_maxFeatureSize = std::max(m_featureBufSize, static_cast<uint32_t>(fbb.GetSize()));
+    m_maxFeatureSize = std::max(m_maxFeatureSize, static_cast<uint32_t>(fbb.GetSize()));
     size_t c = VSIFWriteL(fbb.GetBufferPointer(), 1, fbb.GetSize(), m_poFpWrite);
     if (c == 0)
         return CPLErrorIO("writing feature");

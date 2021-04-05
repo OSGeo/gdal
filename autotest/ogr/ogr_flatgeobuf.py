@@ -755,3 +755,44 @@ def test_ogr_flatgeobuf_editing():
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
     assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+
+@pytest.mark.parametrize('in_wkt,expected_wkt', [
+    ('MULTIPOINT ((0 0), EMPTY)', 'MULTIPOINT ((0 0))'),
+    ('MULTILINESTRING ((0 0,1 1), EMPTY)', 'MULTILINESTRING ((0 0,1 1))'),
+    ('MULTIPOLYGON (((0 0,0 1,1 1,0 0)), EMPTY)', 'MULTIPOLYGON (((0 0,0 1,1 1,0 0)))'),
+    ('GEOMETRYCOLLECTION (POINT (0 0), POINT EMPTY)', 'GEOMETRYCOLLECTION (POINT (0 0))'),
+])
+def test_ogr_flatgeobuf_multi_geometries_with_empty(in_wkt, expected_wkt):
+    wktRoundtrip(in_wkt, expected_wkt)
+
+
+def test_ogr_flatgeobuf_ossfuzz_bug_29462():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+
+    fld_defn = ogr.FieldDefn('str', ogr.OFTString)
+    lyr.CreateField(fld_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str'] = 'X' * 100000
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str'] = 'X'
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['str'] == 'X' * 100000
+    f = lyr.GetNextFeature()
+    assert f['str'] == 'X'
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
