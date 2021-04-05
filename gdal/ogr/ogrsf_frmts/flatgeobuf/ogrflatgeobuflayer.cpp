@@ -39,6 +39,7 @@
 #include "geometrywriter.h"
 
 #include <algorithm>
+#include <new>
 #include <stdexcept>
 
 using namespace flatbuffers;
@@ -1158,7 +1159,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             case OGRFieldType::OFTTime:
             case OGRFieldType::OFTDateTime: {
                 char *str = OGRGetXMLDateTime(field);
-                size_t len = strlen(str);
+                const size_t len = strlen(str);
                 uint32_t l_le = static_cast<uint32_t>(len);
                 CPL_LSBPTR32(&l_le);
                 std::copy(reinterpret_cast<const uint8_t *>(&l_le), reinterpret_cast<const uint8_t *>(&l_le + 1), std::back_inserter(properties));
@@ -1167,27 +1168,48 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
                 break;
             }
             case OGRFieldType::OFTString: {
-                size_t len = strlen(field->String);
-                if (len >= feature_max_buffer_size) {
+                const size_t len = strlen(field->String);
+                if (len >= feature_max_buffer_size ||
+                    properties.size() > feature_max_buffer_size - len) {
                     CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: String too long");
                     return OGRERR_FAILURE;
                 }
+                // Valid cast since feature_max_buffer_size is 2 GB
                 uint32_t l_le = static_cast<uint32_t>(len);
                 CPL_LSBPTR32(&l_le);
                 std::copy(reinterpret_cast<const uint8_t *>(&l_le), reinterpret_cast<const uint8_t *>(&l_le + 1), std::back_inserter(properties));
+                try
+                {
+                    properties.reserve(properties.size() + len);
+                }
+                catch( const std::bad_alloc& )
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory, "ICreateFeature: String too long");
+                    return OGRERR_FAILURE;
+                }
                 std::copy(field->String, field->String + len, std::back_inserter(properties));
                 break;
             }
 
             case OGRFieldType::OFTBinary: {
-                size_t len = field->Binary.nCount;
-                if (len >= feature_max_buffer_size) {
+                const size_t len = field->Binary.nCount;
+                if (len >= feature_max_buffer_size||
+                    properties.size() > feature_max_buffer_size - len) {
                     CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Binary too long");
                     return OGRERR_FAILURE;
                 }
                 uint32_t l_le = static_cast<uint32_t>(len);
                 CPL_LSBPTR32(&l_le);
                 std::copy(reinterpret_cast<const uint8_t *>(&l_le), reinterpret_cast<const uint8_t *>(&l_le + 1), std::back_inserter(properties));
+                try
+                {
+                    properties.reserve(properties.size() + len);
+                }
+                catch( const std::bad_alloc& )
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory, "ICreateFeature: Binary too long");
+                    return OGRERR_FAILURE;
+                }
                 std::copy(field->Binary.paData, field->Binary.paData + len, std::back_inserter(properties));
                 break;
             }
@@ -1216,52 +1238,72 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         return OGRERR_FAILURE;
     }
 
-    GeometryWriter writer { fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM };
-    const auto geometryOffset = writer.write(0);
-    const auto pProperties = properties.empty() ? nullptr : &properties;
-    // TODO: write columns if mixed schema in collection
-    const auto feature = CreateFeatureDirect(fbb, geometryOffset, pProperties);
-    fbb.FinishSizePrefixed(feature);
-
-    OGREnvelope psEnvelope;
-    ogrGeometry->getEnvelope(&psEnvelope);
-
-    if (m_sExtent.IsInit())
-        m_sExtent.Merge(psEnvelope);
-    else
-        m_sExtent = psEnvelope;
-
-    if (m_featuresCount == 0) {
-        if (m_poFpWrite == nullptr) {
-            CPLErrorInvalidPointer("output file handler");
+    try
+    {
+        GeometryWriter writer { fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM };
+        const auto geometryOffset = writer.write(0);
+        const auto pProperties = properties.empty() ? nullptr : &properties;
+        if( properties.size() > feature_max_buffer_size - geometryOffset.o )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "ICreateFeature: Too big feature");
             return OGRERR_FAILURE;
         }
-        writeHeader(m_poFpWrite, 0, nullptr);
-        CPLDebugOnly("FlatGeobuf", "Writing first feature at offset: %lu", static_cast<long unsigned int>(m_writeOffset));
+        // TODO: write columns if mixed schema in collection
+        const auto feature = CreateFeatureDirect(fbb, geometryOffset, pProperties);
+        fbb.FinishSizePrefixed(feature);
+
+        OGREnvelope psEnvelope;
+        ogrGeometry->getEnvelope(&psEnvelope);
+
+        if (m_sExtent.IsInit())
+            m_sExtent.Merge(psEnvelope);
+        else
+            m_sExtent = psEnvelope;
+
+        if (m_featuresCount == 0) {
+            if (m_poFpWrite == nullptr) {
+                CPLErrorInvalidPointer("output file handler");
+                return OGRERR_FAILURE;
+            }
+            writeHeader(m_poFpWrite, 0, nullptr);
+            CPLDebugOnly("FlatGeobuf", "Writing first feature at offset: %lu", static_cast<long unsigned int>(m_writeOffset));
+        }
+
+        m_maxFeatureSize = std::max(m_maxFeatureSize, static_cast<uint32_t>(fbb.GetSize()));
+        size_t c = VSIFWriteL(fbb.GetBufferPointer(), 1, fbb.GetSize(), m_poFpWrite);
+        if (c == 0)
+            return CPLErrorIO("writing feature");
+        if (m_bCreateSpatialIndexAtClose) {
+            const auto item = std::make_shared<FeatureItem>();
+#if defined(__MINGW32__) && __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+            item->size = static_cast<uint32_t>(fbb.GetSize());
+            item->offset = m_writeOffset;
+            item->nodeItem = {
+                psEnvelope.MinX,
+                psEnvelope.MinY,
+                psEnvelope.MaxX,
+                psEnvelope.MaxY,
+                0
+            };
+#if defined(__MINGW32__) && __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
+            m_featureItems.push_back(item);
+        }
+        m_writeOffset += c;
+
+        m_featuresCount++;
+
+        return OGRERR_NONE;
     }
-
-    m_maxFeatureSize = std::max(m_maxFeatureSize, static_cast<uint32_t>(fbb.GetSize()));
-    size_t c = VSIFWriteL(fbb.GetBufferPointer(), 1, fbb.GetSize(), m_poFpWrite);
-    if (c == 0)
-        return CPLErrorIO("writing feature");
-    if (m_bCreateSpatialIndexAtClose) {
-        const auto item = std::make_shared<FeatureItem>();
-        item->size = static_cast<uint32_t>(fbb.GetSize());
-        item->offset = m_writeOffset;
-        item->nodeItem = {
-            psEnvelope.MinX,
-            psEnvelope.MinY,
-            psEnvelope.MaxX,
-            psEnvelope.MaxY,
-            0
-        };
-        m_featureItems.push_back(item);
+    catch( const std::bad_alloc& )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "ICreateFeature: Too big feature");
+        return OGRERR_FAILURE;
     }
-    m_writeOffset += c;
-
-    m_featuresCount++;
-
-    return OGRERR_NONE;
 }
 
 OGRErr OGRFlatGeobufLayer::GetExtent(OGREnvelope* psExtent, int bForce)
