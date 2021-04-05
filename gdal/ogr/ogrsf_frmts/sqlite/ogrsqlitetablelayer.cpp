@@ -272,6 +272,9 @@ const char* OGRSQLiteTableLayer::GetName()
 char **OGRSQLiteTableLayer::GetMetadata( const char *pszDomain )
 
 {
+    // Update GetMetadataItem() optimization that skips calling GetMetadata()
+    // when key != OLMD_FID64 if we add more metadata items.
+
     GetLayerDefn();
     if( !m_bHasTriedDetectingFID64 && pszFIDColumn != nullptr )
     {
@@ -316,6 +319,8 @@ char **OGRSQLiteTableLayer::GetMetadata( const char *pszDomain )
 const char *OGRSQLiteTableLayer::GetMetadataItem( const char * pszName,
                                                   const char * pszDomain )
 {
+    if( !(EQUAL(pszDomain, "") && EQUAL(pszName, OLMD_FID64)) )
+        return nullptr;
     return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
 }
 

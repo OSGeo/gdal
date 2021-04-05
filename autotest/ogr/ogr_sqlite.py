@@ -2282,9 +2282,17 @@ def test_ogr_sqlite_36():
 
     ds = ogr.Open('tmp/ogr_sqlite_36.sqlite')
     lyr = ds.GetLayer(0)
+    assert lyr.GetMetadataItem('') is None
+
+    ds = ogr.Open('tmp/ogr_sqlite_36.sqlite')
+    lyr = ds.GetLayer(0)
     assert lyr.GetMetadataItem(ogr.OLMD_FID64) is not None
     f = lyr.GetNextFeature()
     assert f.GetFID() == 1234567890123
+
+    ds = ogr.Open('tmp/ogr_sqlite_36.sqlite')
+    lyr = ds.GetLayer(0)
+    assert ogr.OLMD_FID64 in lyr.GetMetadata()
 
 ###############################################################################
 # Test not nullable fields
