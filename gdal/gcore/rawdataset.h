@@ -204,7 +204,12 @@ public:
     CPL_DISALLOW_COPY_ASSIGN(RawRasterBand)
 
     bool         NeedsByteOrderChange() const;
-    void         DoByteSwap(void* pBuffer, size_t nValues, bool bDiskToCPU) const;
+    void         DoByteSwap(void* pBuffer, size_t nValues, int nByteSkip, bool bDiskToCPU) const;
+    bool         IsBIP() const;
+    vsi_l_offset ComputeFileOffset(int iLine) const;
+    bool         FlushCurrentLine(bool bNeedUsableBufferAfter);
+    CPLErr       BIPWriteBlock( int nBlockYOff, int nCallingBand, const void* pImage );
+
 };
 
 #ifdef GDAL_COMPILATION

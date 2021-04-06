@@ -560,13 +560,14 @@ int PDS4Dataset::CloseDependentDatasets()
         bHasDroppedRef = FALSE;
         delete m_poExternalDS;
         m_poExternalDS = nullptr;
-    }
 
-    for( int iBand = 0; iBand < nBands; iBand++ )
-    {
-       delete papoBands[iBand];
+        for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+           delete papoBands[iBand];
+           papoBands[iBand] = nullptr;
+        }
+        nBands = 0;
     }
-    nBands = 0;
 
     return bHasDroppedRef;
 }
