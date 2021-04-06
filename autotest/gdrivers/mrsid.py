@@ -32,7 +32,7 @@
 import os
 import shutil
 from osgeo import gdal
-
+from osgeo import osr
 
 import gdaltest
 import pytest
@@ -299,7 +299,8 @@ def test_mrsid_7():
 def test_mrsid_8():
 
     new_gt = (10000, 50, 0, 20000, 0, -50)
-    new_srs = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","27700"]]"""
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(27700)
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdal.GetDriverByName('MrSID').Delete('tmp/mercator.sid')
@@ -310,13 +311,13 @@ def test_mrsid_8():
     ds = gdal.Open('tmp/mercator.sid')
 
     ds.SetGeoTransform(new_gt)
-    ds.SetProjection(new_srs)
+    ds.SetSpatialRef(srs)
     ds.GetRasterBand(1).SetNoDataValue(255)
     ds = None
 
     ds = gdal.Open('tmp/mercator.sid')
 
-    assert new_srs == ds.GetProjectionRef(), 'SRS Override failed.'
+    assert ds.GetSpatialRef().IsSame(srs), 'SRS Override failed.'
 
     assert new_gt == ds.GetGeoTransform(), 'Geotransform Override failed.'
 
