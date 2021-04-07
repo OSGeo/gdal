@@ -1171,7 +1171,8 @@ int TileDBDataset::Identify( GDALOpenInfo * poOpenInfo )
         }
 
         if( poOpenInfo->bIsDirectory ||
-                STARTS_WITH_CI( poOpenInfo->pszFilename, "/VSIS3/" ) )
+            (STARTS_WITH_CI( poOpenInfo->pszFilename, "/VSIS3/" ) &&
+                !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tif")) )
         {
             tiledb::Context ctx;
             CPLString osArrayPath = vsi_to_s3( poOpenInfo->pszFilename );
