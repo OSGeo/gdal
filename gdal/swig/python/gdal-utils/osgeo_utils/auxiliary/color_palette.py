@@ -149,7 +149,7 @@ class ColorPalette:
             return self
         elif base.is_path_like(color_filename_or_lines):
             color_filename_or_lines = open(str(color_filename_or_lines)).readlines()
-        elif not base.is_sequence(color_filename_or_lines):
+        elif not isinstance(color_filename_or_lines, Sequence):
             raise Exception('unknown input {}'.format(color_filename_or_lines))
 
         self.pal.clear()
@@ -328,7 +328,7 @@ def get_file_from_strings(color_palette: ColorPaletteOrPathOrStrings):
         color_palette.write_color_file(temp_color_filename)
     elif base.is_path_like(color_palette):
         color_filename = color_palette
-    elif base.is_sequence(color_palette):
+    elif isinstance(color_palette, Sequence):
         temp_color_filename = tempfile.mktemp(suffix='.txt')
         color_filename = temp_color_filename
         with open(temp_color_filename, 'w') as f:

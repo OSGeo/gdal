@@ -30,12 +30,15 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-from typing import Optional, Union
+from numbers import Real
+from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike
+from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike, enum_to_str, OptionalBoolStr, is_true
 
 PathOrDS = Union[PathLike, gdal.Dataset]
+DataTypeOrStr = Union[str, int]
+CreationOptions = Optional[Dict[str, Any]]
 
 
 def DoesDriverHandleExtension(drv: gdal.Driver, ext: str):
@@ -96,13 +99,77 @@ def get_ovr_count(filename_or_ds: PathOrDS):
         return bnd.GetOverviewCount()
 
 
-def get_ovr_idx(filename_or_ds: PathOrDS, ovr_idx: Optional[int]):
+def get_pixel_size(filename_or_ds: PathOrDS) -> Tuple[Real, Real]:
+    ds = open_ds(filename_or_ds)
+    geo_transform = ds.GetGeoTransform(can_return_null=True)
+    if geo_transform is not None:
+        return geo_transform[1], geo_transform[5]
+    else:
+        return 1, 1
+
+
+def get_sizes_factors_resolutions(filename_or_ds: PathOrDS, dim: Optional[int]=0):
+    ds = open_ds(filename_or_ds)
+    bnd = ds.GetRasterBand(1)
+    ovr_count = bnd.GetOverviewCount()
+    r0 = get_pixel_size(ds)
+    s0 = ds.RasterXSize, ds.RasterYSize
+    f0 = 1, 1
+    sizes = [s0]
+    factors = [f0]
+    resolutions = [r0]
+    for i_overview in range(ovr_count):
+        h_overview = bnd.GetOverview(i_overview)
+        if h_overview is not None:
+            s = h_overview.XSize, h_overview.YSize
+            f = s0[0] / s[0], s0[1] / s[1]
+            r = r0[0] * f[0], r0[1] * f[1]
+            sizes.append(s)
+            factors.append(f)
+            resolutions.append(r)
+    if dim is not None:
+        sizes = [x[dim] for x in sizes]
+        factors = [x[dim] for x in factors]
+        resolutions = [x[dim] for x in resolutions]
+    return sizes, factors, resolutions
+
+
+def get_best_ovr_by_resolutions(requested_res: float, resolutions: Sequence[float]):
+    for ovr, res in enumerate(resolutions):
+        if res > requested_res:
+            return max(0, ovr-1)
+    return len(resolutions)-1
+
+
+def get_ovr_idx(filename_or_ds: PathOrDS,
+                ovr_idx: Optional[int] = None,
+                ovr_res: Optional[Union[int, float]] = None) -> int:
+    """
+    returns a non-negative ovr_idx, from given mutually exclusive ovr_idx (index) or ovr_res (resolution)
+    ovr_idx == None and ovr_res == None => returns 0
+    ovr_idx: int >= 0 => returns the given ovr_idx
+    ovr_idx: int < 0 => -1 is the last overview; -2 is the one before the last and so on
+    ovr_res: float|int => returns the best suitable overview for a given resolution
+             meaning the ovr with the lowest resolution which is higher then the request
+    ovr_idx: float = x => same as (ovr_idx=None, ovr_res=x)
+    """
+    if ovr_res is not None:
+        if ovr_idx is not None:
+            raise Exception(f'ovr_idx({ovr_idx}) and ovr_res({ovr_res}) are mutually exclusive both were set')
+        ovr_idx = float(ovr_res)
     if ovr_idx is None:
-        ovr_idx = 0
-    if ovr_idx < 0:
-        # -1 is the last overview; -2 is the one before the last
-        overview_count = get_ovr_count(open_ds(filename_or_ds))
-        ovr_idx = max(0, overview_count + ovr_idx + 1)
+        return 0
+    if isinstance(ovr_idx, Sequence):
+        ovr_idx = ovr_idx[0]  # in case resolution in both axis were given we'll consider only x resolution
+    if isinstance(ovr_idx, int):
+        if ovr_idx < 0:
+            overview_count = get_ovr_count(filename_or_ds)
+            ovr_idx = max(0, overview_count + 1 + ovr_idx)
+    elif isinstance(ovr_idx, float):
+        _sizes, _factors, resolutions = get_sizes_factors_resolutions(filename_or_ds)
+        ovr_idx = get_best_ovr_by_resolutions(ovr_idx, resolutions)
+    else:
+        raise Exception(f'Got an unexpected overview: {ovr_idx}')
     return ovr_idx
 
 
@@ -138,7 +205,7 @@ class OpenDS:
     def _open_ds(
         filename: PathLike,
         access_mode=gdal.GA_ReadOnly,
-        ovr_idx: Optional[int] = None,
+        ovr_idx: Optional[Union[int, float]] = None,
         open_options: Optional[dict] = None,
         logger=None,
     ):
@@ -154,3 +221,91 @@ class OpenDS:
         open_options = ["{}={}".format(k, v) for k, v in open_options.items()]
 
         return gdal.OpenEx(str(filename), access_mode, open_options=open_options)
+
+
+def get_data_type(data_type: Optional[DataTypeOrStr]):
+    if data_type is None:
+        return None
+    if isinstance(data_type, str):
+        return gdal.GetDataTypeByName(data_type)
+    else:
+        return data_type
+
+
+def get_raster_bands(ds: gdal.Dataset) -> Iterator[gdal.Band]:
+    return (ds.GetRasterBand(i + 1) for i in range(ds.RasterCount))
+
+
+def get_band_types(filename_or_ds: PathOrDS):
+    with OpenDS(filename_or_ds) as ds:
+        return [band.DataType for band in get_raster_bands(ds)]
+
+
+def get_band_minimum(band: gdal.Band):
+    ret = band.GetMinimum()
+    if ret is None:
+        band.ComputeStatistics(0)
+    return band.GetMinimum()
+
+
+def get_raster_band(filename_or_ds: PathOrDS, bnd_index: int = 1, ovr_index: Optional[int] = None):
+    with OpenDS(filename_or_ds) as ds:
+        bnd = ds.GetRasterBand(bnd_index)
+        if ovr_index is not None:
+            bnd = bnd.GetOverview(ovr_index)
+        return bnd
+
+
+def get_raster_minimum(filename_or_ds: PathOrDS, bnd_index: Optional[int] = 1):
+    with OpenDS(filename_or_ds) as ds:
+        if bnd_index is None:
+            return min(get_band_minimum(bnd) for bnd in get_raster_bands(ds))
+        else:
+            bnd = ds.GetRasterBand(bnd_index)
+            return get_band_minimum(bnd)
+
+
+def get_raster_min_max(filename_or_ds: PathOrDS, bnd_index: int = 1):
+    with OpenDS(filename_or_ds) as ds:
+        bnd = ds.GetRasterBand(bnd_index)
+        bnd.ComputeStatistics(0)
+        min_val = bnd.GetMinimum()
+        max_val = bnd.GetMaximum()
+        return min_val, max_val
+
+
+def get_nodatavalue(filename_or_ds: PathOrDS):
+    with OpenDS(filename_or_ds) as ds:
+        band = next(get_raster_bands(ds))
+        return band.GetNoDataValue()
+
+
+def unset_nodatavalue(filename_or_ds: PathOrDS):
+    with OpenDS(filename_or_ds, access_mode=gdal.GA_Update) as ds:
+        for b in get_raster_bands(ds):
+            b.DeleteNoDataValue()
+
+
+def get_metadata_item(filename_or_ds: PathOrDS, key: str, domain: str, default: Any = None):
+    key = key.strip()
+    domain = domain.strip()
+    with OpenDS(filename_or_ds) as ds:
+        metadata_item = ds.GetMetadataItem(key, domain)
+        return metadata_item if metadata_item is not None else default
+
+
+def get_image_structure_metadata(filename_or_ds: PathOrDS, key: str, default: Any = None):
+    return get_metadata_item(filename_or_ds, key=key, domain="IMAGE_STRUCTURE", default=default)
+
+
+def get_bigtiff_creation_option_value(big_tiff: OptionalBoolStr):
+    return "IF_SAFER" if big_tiff is None \
+        else big_tiff if bool(big_tiff) and isinstance(big_tiff, str) \
+        else str(is_true(big_tiff))
+
+
+def get_ext_by_of(of: str):
+    ext = enum_to_str(of).lower()
+    if ext in ['gtiff', 'cog', 'mem']:
+        ext = 'tif'
+    return '.' + ext
