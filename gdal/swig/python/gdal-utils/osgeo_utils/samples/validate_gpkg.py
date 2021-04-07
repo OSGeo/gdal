@@ -31,6 +31,7 @@
 
 import datetime
 import os
+import re
 import sqlite3
 import struct
 import sys
@@ -66,18 +67,29 @@ class GPKGCheckException(Exception):
 
 class GPKGChecker(object):
 
+    BASE_GEOM_TYPES = ('GEOMETRY', 'POINT', 'LINESTRING', 'POLYGON',
+                       'MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON',
+                       'GEOMETRYCOLLECTION')
     EXT_GEOM_TYPES = ('CIRCULARSTRING', 'COMPOUNDCURVE', 'CURVEPOLYGON',
                       'MULTICURVE', 'MULTISURFACE', 'CURVE', 'SURFACE')
 
-    def __init__(self, filename, abort_at_first_error=True, verbose=False):
+    def __init__(self, filename, abort_at_first_error=True,
+                 extra_checks=False,
+                 log_msg=False,
+                 warning_msg=True,
+                 warning_as_error=False):
         self.filename = filename
         self.extended_pragma_info = False
         self.abort_at_first_error = abort_at_first_error
-        self.verbose = verbose
+        self.extra_checks = extra_checks
+        self.log_msg = log_msg
+        self.warning_msg = warning_msg
+        self.warning_as_error = warning_as_error
         self.errors = []
+        self.warnings = []
 
     def _log(self, msg):
-        if self.verbose:
+        if self.log_msg:
             print(msg)
 
     def _assert(self, cond, req, msg):
@@ -90,6 +102,14 @@ class GPKGChecker(object):
                 else:
                     raise GPKGCheckException(msg)
         return cond
+
+    def _warn(self, msg):
+        if self.warning_as_error:
+            self._assert(False, None, msg)
+        else:
+            self.warnings += [msg]
+            if self.warning_msg:
+                print(msg)
 
     def _check_structure(self, columns, expected_columns, req, table_name):
         self._assert(len(columns) == len(expected_columns), req,
@@ -320,6 +340,126 @@ class GPKGChecker(object):
                               "which isn't found in gpkg_spatial_ref_sys") %
                              (table_name, srs_id))
 
+    def _check_user_table_content(self, c, table_name, cols):
+
+        if not self.extra_checks:
+            self._log('Skipping checks on actual table content')
+            return
+
+        self._log('Checking actual table content')
+
+        warned_col = [False for col in cols]
+        c.execute("SELECT %s FROM %s" % (
+            ','.join(("%s,typeof(%s),length(%s)" %
+                      (_esc_id(col[1]), _esc_id(col[1]), _esc_id(col[1]))) for col in cols),
+            _esc_id(table_name)))
+        geom_types = GPKGChecker.BASE_GEOM_TYPES + GPKGChecker.EXT_GEOM_TYPES
+        date_pattern_str = '[0-9]{4}-[0-1][0-9]-[0-3][0-9]'
+        date_pattern = re.compile(date_pattern_str)
+        datetime_pattern = re.compile(
+            date_pattern_str + 'T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9]{3}Z')
+        for row in c.fetchall():
+            for i in range(len(cols)):
+                if warned_col[i]:
+                    continue
+
+                val = row[3*i+0]
+                got_col_type = row[3*i+1].upper()
+                length_value = row[3*i+2]
+                if val is None:
+                    continue
+                expected_col_type = cols[i][2]
+                col_name = cols[i][1]
+
+                if expected_col_type == 'BOOLEAN' and got_col_type == 'INTEGER':
+                    if val not in (0, 1):
+                        warned_col[i] = True
+                        self._warn('In column %s, value %d found whereas 0 or 1 was expected' %
+                                   (col_name, val))
+                        continue
+                    continue
+
+                elif expected_col_type == 'TINYINT' and got_col_type == 'INTEGER':
+                    if val < -128 or val > 127:
+                        warned_col[i] = True
+                        self._warn(
+                            'In column %s, value %d found whereas it was expected to be in [-128,127]' % (col_name, val))
+                        continue
+                    continue
+
+                elif expected_col_type == 'SMALLINT' and got_col_type == 'INTEGER':
+                    if val < -32768 or val > 32767:
+                        warned_col[i] = True
+                        self._warn(
+                            'In column %s, value %d found whereas it was expected to be in [-32768,32767]' % (col_name, val))
+                        continue
+                    continue
+
+                elif expected_col_type == 'MEDIUMINT' and got_col_type == 'INTEGER':
+                    if val < -2147483648 or val > 2147483647:
+                        warned_col[i] = True
+                        self._warn(
+                            'In column %s, value %d found whereas it was expected to be in [-2147483648,2147483647]' % (col_name, val))
+                        continue
+                    continue
+
+                elif expected_col_type in ('INT', 'INTEGER') and got_col_type == 'INTEGER':
+                    continue
+
+                elif expected_col_type in ('FLOAT', 'DOUBLE', 'REAL') and got_col_type == 'REAL':
+                    continue
+
+                elif expected_col_type.startswith('TEXT('):
+                    if got_col_type != 'TEXT':
+                        warned_col[i] = True
+                        self._warn('In column %s, content of type %s found whereas %s was expected' % (
+                            col_name, got_col_type, expected_col_type))
+                        continue
+
+                    expected_max_length = int(expected_col_type[len('TEXT('): -1])
+                    if length_value > expected_max_length:
+                        warned_col[i] = True
+                        self._warn('In column %s, string of length %d found whereas %d max was expected' % (
+                            col_name, length_value, expected_max_length))
+                        continue
+
+                elif expected_col_type.startswith('BLOB('):
+                    if got_col_type != 'BLOB':
+                        warned_col[i] = True
+                        self._warn('In column %s, content of type %s found whereas %s was expected' % (
+                            col_name, got_col_type, expected_col_type))
+                        continue
+
+                    expected_max_length = int(expected_col_type[len('BLOB('): -1])
+                    if length_value > expected_max_length:
+                        warned_col[i] = True
+                        self._warn('In column %s, blob of length %d found whereas %d max was expected' % (
+                            col_name, length_value, expected_max_length))
+                        continue
+
+                elif got_col_type == 'BLOB' and expected_col_type in geom_types:
+                    continue
+
+                elif expected_col_type == 'DATE' and got_col_type == 'TEXT':
+                    if date_pattern.match(val) is None:
+                        warned_col[i] = True
+                        self._warn('In column %s, text %s found which is not a valid DATE' %
+                                   (col_name, val))
+                        continue
+
+                elif expected_col_type == 'DATETIME' and got_col_type == 'TEXT':
+                    if datetime_pattern.match(val) is None:
+                        warned_col[i] = True
+                        self._warn(
+                            'In column %s, text %s found which is not a valid DATETIME' % (col_name, val))
+                        continue
+
+                elif expected_col_type != got_col_type:
+                    warned_col[i] = True
+                    self._warn('In column %s, content of type %s found whereas %s was expected' % (
+                        col_name, got_col_type, expected_col_type))
+                    continue
+
     def _check_vector_user_table(self, c, table_name):
 
         self._log('Checking vector user table ' + table_name)
@@ -338,9 +478,6 @@ class GPKGChecker(object):
         srs_id = rows_gpkg_geometry_columns[0][4]
 
         c.execute('PRAGMA table_info(%s)' % _esc_id(table_name))
-        base_geom_types = ('GEOMETRY', 'POINT', 'LINESTRING', 'POLYGON',
-                           'MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON',
-                           'GEOMETRYCOLLECTION')
         cols = c.fetchall()
         found_geom = False
         count_pkid = 0
@@ -348,7 +485,7 @@ class GPKGChecker(object):
             if name.lower() == geom_column_name.lower():
                 found_geom = True
                 self._assert(
-                    typ in base_geom_types or
+                    typ in GPKGChecker.BASE_GEOM_TYPES or
                     typ in GPKGChecker.EXT_GEOM_TYPES,
                     25, ('invalid type (%s) for geometry ' +
                          'column of table %s') % (typ, table_name))
@@ -377,6 +514,9 @@ class GPKGChecker(object):
         if c.fetchone():
             self._assert(count_pkid == 1, 29,
                          'table %s has no INTEGER PRIMARY KEY' % table_name)
+
+            self._check_user_table_content(c, table_name, cols)
+
         else:
             self._assert(len(cols) > 0 and cols[0][2] == 'INTEGER',
                          150, 'view %s has no INTEGER first column' % table_name)
@@ -403,7 +543,7 @@ class GPKGChecker(object):
                          "gpkg_geom_%s extension should be declared for "
                          "table %s" % (geometry_type_name, table_name))
 
-        wkb_geometries = base_geom_types + GPKGChecker.EXT_GEOM_TYPES
+        wkb_geometries = GPKGChecker.BASE_GEOM_TYPES + GPKGChecker.EXT_GEOM_TYPES
         c.execute("SELECT %s FROM %s " %
                   (_esc_id(geom_column_name), _esc_id(table_name)))
         found_geom_types = set()
@@ -669,6 +809,9 @@ class GPKGChecker(object):
         if c.fetchone():
             self._assert(count_pkid == 1, 119,
                          'table %s has no INTEGER PRIMARY KEY' % table_name)
+
+            self._check_user_table_content(c, table_name, cols)
+
         else:
             self._assert(len(cols) > 0 and cols[0][2] == 'INTEGER',
                          151, 'view %s has no INTEGER first column' % table_name)
@@ -1788,36 +1931,63 @@ class GPKGChecker(object):
             conn.close()
 
 
-def check(filename, abort_at_first_error=True, verbose=False):
+def check(filename,
+          abort_at_first_error=True,
+          verbose=None,  # deprecated
+          extra_checks=False,
+          log_msg=False,
+          warning_msg=True,
+          warning_as_error=False):
+
+    if verbose is not None:
+        if verbose:
+            log_msg = True
+            warning_msg = True
+        else:
+            log_msg = False
+            warning_msg = False
 
     checker = GPKGChecker(filename,
                           abort_at_first_error=abort_at_first_error,
-                          verbose=verbose)
+                          extra_checks=extra_checks,
+                          log_msg=log_msg,
+                          warning_msg=warning_msg,
+                          warning_as_error=warning_as_error)
     checker.check()
     return checker.errors
 
 
 def Usage():
-    print('validate_gpkg.py [[-v]|[-q]] [-k] my.gpkg')
+    print('validate_gpkg.py [[-v]|[-q]] [-k] [--extra] [--warning-as-error] my.gpkg')
     print('')
+    print('-v: verbose mode')
     print('-q: quiet mode')
     print('-k: (try to) keep going when error is encountered')
+    print('--extra: run extra checks, potentially going beyond strict requirements of specification')
+    print('--warning-as-error: turn warnings as errors')
     return 1
 
 
 def main(argv):
     filename = None
-    verbose = False
+    log_msg = False
+    warning_msg = True
     abort_at_first_error = True
+    warning_as_error = False
+    extra_checks = False
     if len(argv) == 1:
         return Usage()
     for arg in argv[1:]:
         if arg == '-k':
             abort_at_first_error = False
         elif arg == '-q':
-            verbose = False
+            warning_msg = False
         elif arg == '-v':
-            verbose = True
+            log_msg = True
+        elif arg == '--extra':
+            extra_checks = True
+        elif arg == '--warning-as-error':
+            warning_as_error = True
         elif arg[0] == '-':
             return Usage()
         else:
@@ -1825,7 +1995,9 @@ def main(argv):
     if filename is None:
         return Usage()
     ret = check(filename, abort_at_first_error=abort_at_first_error,
-                verbose=verbose)
+                extra_checks=extra_checks,
+                log_msg=log_msg, warning_msg=warning_msg,
+                warning_as_error=warning_as_error)
     if not abort_at_first_error:
         if not ret:
             return 0
