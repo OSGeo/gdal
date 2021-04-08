@@ -59,7 +59,7 @@ html_context = {
 }
 
 html_theme_options = {
-    'canonical_url': 'https://gdal.org',
+    'canonical_url': 'https://gdal.org/', # Trailing slash needed to have correct <link rel="canonical" href="..."/> URLs
     'analytics_id': '',  #  Provided by Google in your dashboard
     'logo_only': True,
     'display_version': True,
