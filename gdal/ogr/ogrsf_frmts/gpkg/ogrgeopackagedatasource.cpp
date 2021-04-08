@@ -2796,33 +2796,30 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode()
 }
 
 /************************************************************************/
+/*                       GetCurrentDateEscapedSQL()                      */
+/************************************************************************/
+
+std::string GDALGeoPackageDataset::GetCurrentDateEscapedSQL()
+{
+    const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", nullptr);
+    if( pszCurrentDate )
+        return '\'' + SQLEscapeLiteral(pszCurrentDate) + '\'';
+    return "strftime('%Y-%m-%dT%H:%M:%fZ','now')";
+}
+
+/************************************************************************/
 /*                    UpdateGpkgContentsLastChange()                    */
 /************************************************************************/
 
 OGRErr GDALGeoPackageDataset::UpdateGpkgContentsLastChange(
                                                 const char* pszTableName)
 {
-    const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", nullptr);
-    char *pszSQL = nullptr ;
-
-    if( pszCurrentDate )
-    {
-        pszSQL = sqlite3_mprintf(
+    char *pszSQL =  sqlite3_mprintf(
                     "UPDATE gpkg_contents SET "
-                    "last_change = '%q'"
+                    "last_change = %s "
                     "WHERE lower(table_name) = lower('%q')",
-                    pszCurrentDate,
+                    GetCurrentDateEscapedSQL().c_str(),
                     pszTableName);
-    }
-    else
-    {
-        pszSQL = sqlite3_mprintf(
-                    "UPDATE gpkg_contents SET "
-                    "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
-                    "WHERE lower(table_name) = lower('%q')",
-                    pszTableName);
-    }
-
     OGRErr eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
     return eErr;
@@ -3496,22 +3493,22 @@ void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be dest
             {
                 pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_metadata_reference (reference_scope, table_name, timestamp, md_file_id) VALUES "
-                    "('table', '%q', strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now'), %d)",
-                    pszTableName, (int)nFID);
+                    "('table', '%q', %s, %d)",
+                    pszTableName, GetCurrentDateEscapedSQL().c_str(), (int)nFID);
             }
             else
             {
                 pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_metadata_reference (reference_scope, timestamp, md_file_id) VALUES "
-                    "('geopackage', strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now'), %d)",
-                    (int)nFID);
+                    "('geopackage', %s, %d)",
+                    GetCurrentDateEscapedSQL().c_str(), (int)nFID);
             }
         }
         else
         {
             pszSQL = sqlite3_mprintf(
-                "UPDATE gpkg_metadata_reference SET timestamp = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now') WHERE md_file_id = %d",
-                mdId);
+                "UPDATE gpkg_metadata_reference SET timestamp = %s WHERE md_file_id = %d",
+                GetCurrentDateEscapedSQL().c_str(), mdId);
         }
         SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
