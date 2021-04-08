@@ -316,6 +316,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                                    GDALProgressFunc pfnProgress,
                                                    void * pProgressData );
 
+        static std::string GetCurrentDateEscapedSQL();
+
     protected:
         // Coming from GDALGPKGMBTilesLikePseudoDataset
 
