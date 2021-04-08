@@ -68,7 +68,7 @@ def validate(filename, quiet=False):
         gdal.VSIFCloseL(f)
         open(my_filename, 'wb').write(content)
     try:
-        validate_gpkg.check(my_filename)
+        validate_gpkg.check(my_filename, extra_checks=True, warning_as_error=True)
     except Exception as e:
         if not quiet:
             print(e)

@@ -89,7 +89,7 @@ def _validate_check(filename):
     except ImportError:
         print('Cannot import validate_gpkg')
         return
-    validate_gpkg.check(filename)
+    validate_gpkg.check(filename, extra_checks=True, warning_as_error=True)
 
 
 def validate(filename, quiet=False):
@@ -411,7 +411,7 @@ def test_ogr_gpkg_8():
         feat.SetField('fld_real', 3.14159 / (i + 1))
         feat.SetField('fld_string', 'test string %d test' % i)
         feat.SetField('fld_date', '2014/05/17 ')
-        feat.SetField('fld_datetime', '2014/05/17  12:34:56')
+        feat.SetField('fld_datetime', '2014/12/31  23:59:59.999Z')
         feat.SetFieldBinaryFromHexString('fld_binary', 'fffe')
         feat.SetField('fld_boolean', 1)
         feat.SetField('fld_smallint', -32768)
@@ -428,6 +428,9 @@ def test_ogr_gpkg_8():
     assert lyr.SetFeature(feat) == 0, 'cannot update with empty'
 
     gpkg_ds = None
+
+    assert validate('tmp/gpkg_test.gpkg'), 'validation failed'
+
     gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update=1)
     lyr = gpkg_ds.GetLayerByName('tbl_linestring')
     assert lyr.GetLayerDefn().GetFieldDefn(6).GetSubType() == ogr.OFSTBoolean
@@ -436,7 +439,7 @@ def test_ogr_gpkg_8():
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 10 or feat.GetField(1) != 'test string 0 test' or \
        feat.GetField(2) != 3.14159 or feat.GetField(3) != '2014/05/17' or \
-       feat.GetField(4) != '2014/05/17 12:34:56' or feat.GetField(5) != 'FFFE' or \
+       feat.GetField(4) != '2014/12/31 23:59:59.999+00' or feat.GetField(5) != 'FFFE' or \
        feat.GetField(6) != 1 or feat.GetField(7) != -32768 or feat.GetField(8) != 1.23 or \
        feat.GetField(9) != 1000000000000:
         feat.DumpReadable()
