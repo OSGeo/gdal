@@ -892,7 +892,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_papoOverviewDS(nullptr),
     m_bZoomOther(false),
     m_bInFlushCache(false),
-    m_bTableCreated(false),
     m_osTilingScheme("CUSTOM"),
     m_bMapTableToExtensionsBuilt(false),
     m_bMapTableToContentsBuilt(false)
@@ -925,11 +924,6 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
     GDALGeoPackageDataset::FlushCache();
     FlushMetadata();
-
-    if( eAccess == GA_Update )
-    {
-        CreateOGREmptyTableIfNeeded();
-    }
 
     // Destroy bands now since we don't want
     // GDALGPKGMBTilesLikeRasterBand::FlushCache() to run after dataset
@@ -4577,37 +4571,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         SQLCommand( hDB, "PRAGMA synchronous = OFF" );
     }
 
-    m_bTableCreated = true;
-
     return TRUE;
-}
-
-/************************************************************************/
-/*                     CreateOGREmptyTableIfNeeded()                    */
-/************************************************************************/
-
-void GDALGeoPackageDataset::CreateOGREmptyTableIfNeeded()
-{
-    // The specification makes it compulsory (Req 17) to have at least a
-    // features or tiles table, so create a dummy one.
-    if( m_bTableCreated &&
-        !SQLGetInteger(hDB,
-        "SELECT 1 FROM gpkg_contents WHERE data_type IN "
-        "('features', 'tiles')", nullptr) &&
-        CPLTestBool(CPLGetConfigOption("OGR_GPKG_CREATE_EMPTY_TABLE", "YES")) )
-    {
-        CPLDebug("GPKG", "Creating a dummy ogr_empty_table features table, "
-                "since there is no features or tiles table.");
-        const char* const apszLayerOptions[] = {
-            "SPATIAL_INDEX=NO",
-            "DESCRIPTION=Technical table needed to be conformant with "
-                        "Requirement 17 of the GeoPackage specification",
-            nullptr };
-        CreateLayer("ogr_empty_table", nullptr, wkbUnknown,
-                    const_cast<char**>(apszLayerOptions));
-        // Effectively create the table
-        FlushCache();
-    }
 }
 
 /************************************************************************/
@@ -5329,10 +5293,6 @@ OGRLayer* GDALGeoPackageDataset::GetLayer( int iLayer )
 
 /************************************************************************/
 /*                          ICreateLayer()                              */
-/* Options:                                                             */
-/*   FID = primary key name                                             */
-/*   OVERWRITE = YES|NO, overwrite existing layer?                      */
-/*   SPATIAL_INDEX = YES|NO, TBD                                        */
 /************************************************************************/
 
 OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
@@ -5472,7 +5432,8 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     }
 
     /* Create a blank layer. */
-    OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszLayerName);
+    auto poLayer = std::unique_ptr<OGRGeoPackageTableLayer>(
+        new OGRGeoPackageTableLayer(this, pszLayerName));
 
     OGRSpatialReference* poSRS = nullptr;
     if( poSpatialRef )
@@ -5511,30 +5472,31 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         if( EQUAL(pszASpatialVariant, "GPKG_ATTRIBUTES") )
             eASpatialVariant = GPKG_ATTRIBUTES;
         else if( EQUAL(pszASpatialVariant, "OGR_ASPATIAL") )
-            eASpatialVariant = OGR_ASPATIAL;
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "ASPATIAL_VARIANT=OGR_ASPATIAL is no longer supported");
+            return nullptr;
+        }
         else if( EQUAL(pszASpatialVariant, "NOT_REGISTERED") )
             eASpatialVariant = NOT_REGISTERED;
         else
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
+            CPLError(CE_Failure, CPLE_NotSupported,
                      "Unsupported value for ASPATIAL_VARIANT: %s",
                      pszASpatialVariant);
+            return nullptr;
         }
         poLayer->SetASpatialVariant( eASpatialVariant );
     }
 
     // If there was an ogr_empty_table table, we can remove it
-    if( strcmp(pszLayerName, "ogr_empty_table") != 0 &&
-        eGType != wkbNone )
-    {
-        RemoveOGREmptyTable();
-    }
-
-    m_bTableCreated = true;
+    RemoveOGREmptyTable();
 
     m_papoLayers = (OGRGeoPackageTableLayer**)CPLRealloc(m_papoLayers,  sizeof(OGRGeoPackageTableLayer*) * (m_nLayers+1));
-    m_papoLayers[m_nLayers++] = poLayer;
-    return poLayer;
+    auto poRet = poLayer.release();
+    m_papoLayers[m_nLayers] = poRet;
+    m_nLayers++;
+    return poRet;
 }
 
 /************************************************************************/
@@ -6298,27 +6260,6 @@ bool GDALGeoPackageDataset::HasGDALAspatialExtension()
     bool bHasExtension = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
     SQLResultFree(&oResultTable);
     return bHasExtension;
-}
-
-/************************************************************************/
-/*                  CreateGDALAspatialExtension()                       */
-/************************************************************************/
-
-OGRErr GDALGeoPackageDataset::CreateGDALAspatialExtension()
-{
-    if( CreateExtensionsTableIfNecessary() != OGRERR_NONE )
-        return OGRERR_FAILURE;
-
-    if( HasGDALAspatialExtension() )
-        return OGRERR_NONE;
-
-    const char* pszCreateAspatialExtension =
-        "INSERT INTO gpkg_extensions "
-        "(table_name, column_name, extension_name, definition, scope) "
-        "VALUES "
-        "(NULL, NULL, 'gdal_aspatial', 'http://gdal.org/geopackage_aspatial.html', 'read-write')";
-
-    return SQLCommand(hDB, pszCreateAspatialExtension);
 }
 
 /************************************************************************/

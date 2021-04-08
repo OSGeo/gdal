@@ -52,7 +52,6 @@
 typedef enum
 {
     GPKG_ATTRIBUTES,
-    OGR_ASPATIAL,
     NOT_REGISTERED,
 } GPKGASpatialVariant;
 
@@ -129,8 +128,6 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
     bool                m_bInFlushCache;
 
-    bool                m_bTableCreated;
-
     bool                m_bDateTimeWithTZ = true;
 
     CPLString           m_osTilingScheme;
@@ -199,7 +196,6 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         bool                    HasGriddedCoverageAncillaryTable();
         bool                    CreateTileGriddedTable(char** papszOptions);
 
-        void                    CreateOGREmptyTableIfNeeded();
         void                    RemoveOGREmptyTable();
 
         std::map<CPLString, CPLString> m_oMapNameToType;
@@ -296,7 +292,6 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         OGRSpatialReference* GetSpatialRef( int iSrsId, bool bFallbackToEPSG = false );
         OGRErr              CreateExtensionsTableIfNecessary();
         bool                HasExtensionsTable();
-        OGRErr              CreateGDALAspatialExtension();
         void                SetMetadataDirty() { m_bMetadataDirty = true; }
 
         bool                    HasDataColumnsTable() const;

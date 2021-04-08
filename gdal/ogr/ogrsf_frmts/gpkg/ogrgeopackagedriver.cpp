@@ -465,7 +465,6 @@ COMPRESSION_OPTIONS
 "  <Option name='DESCRIPTION' type='string' description='Description of the layer, as put in the contents table'/>"
 "  <Option name='ASPATIAL_VARIANT' type='string-select' description='How to register non spatial tables' default='GPKG_ATTRIBUTES'>"
 "     <Value>GPKG_ATTRIBUTES</Value>"
-"     <Value>OGR_ASPATIAL</Value>"
 "     <Value>NOT_REGISTERED</Value>"
 "  </Option>"
 "</LayerCreationOptionList>");

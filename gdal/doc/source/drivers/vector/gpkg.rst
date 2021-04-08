@@ -238,19 +238,22 @@ Layer Creation Options
    in the contents table.
 -  **DESCRIPTION**\ =string: Description of the layer, as
    put in the contents table.
--  **ASPATIAL_VARIANT**\ =GPKG_ATTRIBUTES/OGR_ASPATIAL/NOT_REGISTERED:
+-  **ASPATIAL_VARIANT**\ =GPKG_ATTRIBUTES/NOT_REGISTERED:
    (GDAL >=2.2) How to register non spatial tables. Defaults to
    GPKG_ATTRIBUTES in GDAL 2.2 or later (behavior in previous version
    was equivalent to OGR_ASPATIAL). Starting with GeoPackage 1.2, non
    spatial tables are part of the specification. They are recorded with
    data_type="attributes" in the gpkg_contents table. This is only
-   compatible of GDAL 2.2 or later. Priorly, in OGR 2.0 and 2.1, the
-   "aspatial" extension had been developed for similar purposes, so if
-   selecting OGR_ASPATIAL, non spatial tables will be recorded with
-   data_type="aspatial" and the "aspatial" extension was declared in the
-   gpkg_extensions table. It is also possible to use the NOT_REGISTERED
+   compatible of GDAL 2.2 or later.
+   It is also possible to use the NOT_REGISTERED
    option, in which case the non spatial table is not registered at all
    in any GeoPackage system tables.
+   Priorly, in OGR 2.0 and 2.1, the "aspatial" extension had been developed for
+   similar purposes, so if selecting OGR_ASPATIAL, non spatial tables will be
+   recorded with data_type="aspatial" and the "aspatial" extension was declared in the
+   gpkg_extensions table. Starting with GDAL 3.3, OGR_ASPATIAL is no longer
+   available on creation.
+
 
 Metadata
 --------

@@ -1510,27 +1510,6 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
         CPLString osSQL(pszSQL);
         sqlite3_free(pszSQL);
 
-        if( m_poDS->HasExtensionsTable() )
-        {
-            // Suppress gdal_aspatial extension if this was the last
-            // aspatial layer.
-            bool bHasASpatialLayers = false;
-            for(int i=0;i<m_poDS->GetLayerCount();i++)
-            {
-                if( m_poDS->GetLayer(i) != this &&
-                    m_poDS->GetLayer(i)->GetLayerDefn()->GetGeomFieldCount() == 0 )
-                    bHasASpatialLayers = true;
-            }
-            if( !bHasASpatialLayers )
-            {
-                osSQL +=
-                    ";"
-                    "DELETE FROM gpkg_extensions WHERE "
-                    "extension_name = 'gdal_aspatial' "
-                    "AND table_name IS NULL "
-                    "AND column_name IS NULL";
-            }
-        }
         OGRErr err = SQLCommand(m_poDS->GetDB(), osSQL);
         if ( err != OGRERR_NONE )
             return err;
@@ -4117,14 +4096,11 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     const bool bIsSpatial = (eGType != wkbNone);
     if ( bIsSpatial )
         err = RegisterGeometryColumn();
-    else if( m_eASpatialVariant == OGR_ASPATIAL )
-        err = m_poDS->CreateGDALAspatialExtension();
 
     if ( err != OGRERR_NONE )
         return OGRERR_FAILURE;
 
     if( bIsSpatial ||
-        m_eASpatialVariant == OGR_ASPATIAL ||
         m_eASpatialVariant == GPKG_ATTRIBUTES )
     {
         const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
@@ -4138,9 +4114,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
             "INSERT INTO gpkg_contents "
             "(table_name,data_type,identifier,description,last_change,srs_id) VALUES "
             "('%q','%q','%q','%q',%s,%d)",
-            pszLayerName, (bIsSpatial ? "features":
-                          (m_eASpatialVariant == GPKG_ATTRIBUTES) ? "attributes" :
-                          "aspatial"),
+            pszLayerName, (bIsSpatial ? "features": "attributes" ),
             pszIdentifier, pszDescription,
             GDALGeoPackageDataset::GetCurrentDateEscapedSQL().c_str(),
             m_iSrs);

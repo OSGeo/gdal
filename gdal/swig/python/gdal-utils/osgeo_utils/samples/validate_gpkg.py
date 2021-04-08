@@ -301,17 +301,11 @@ class GPKGChecker(object):
         ]
         self._check_structure(columns, expected_columns, 13, 'gpkg_contents')
 
-        c.execute("SELECT 1 FROM gpkg_contents "
-                  "WHERE data_type IN ('features', 'tiles')")
-        self._assert(c.fetchone() is not None, 17,
-                     'gpkg_contents should at least have one table with '
-                     'data_type = features and/or tiles')
-
         c.execute("SELECT table_name, data_type FROM gpkg_contents "
                   "WHERE data_type NOT IN "
                   "('features', 'tiles', 'attributes', '2d-gridded-coverage')")
         ret = c.fetchall()
-        self._assert(len(ret) == 0, 17,
+        self._assert(len(ret) == 0, 17, # no longer required actually...
                      'Unexpected data types in gpkg_contents: %s' % str(ret))
 
         c.execute('SELECT table_name, last_change, srs_id FROM gpkg_contents')
