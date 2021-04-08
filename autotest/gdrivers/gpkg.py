@@ -215,12 +215,6 @@ def test_gpkg_1():
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
 
-    # Check there's no ogr_empty_table
-    sql_lyr = out_ds.ExecuteSQL("SELECT COUNT(*) FROM sqlite_master WHERE name = 'ogr_empty_table'")
-    f = sql_lyr.GetNextFeature()
-    assert f.GetField(0) == 0
-    out_ds.ReleaseResultSet(sql_lyr)
-
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
         assert expected_gt[i] == pytest.approx(got_gt[i], abs=1e-8)
@@ -2489,12 +2483,6 @@ def test_gpkg_39():
     assert validate('/vsimem/gpkg_39.gpkg'), 'validation failed'
 
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
-
-    # Check there a ogr_empty_table
-    sql_lyr = ds.ExecuteSQL("SELECT COUNT(*) FROM sqlite_master WHERE name = 'ogr_empty_table'")
-    f = sql_lyr.GetNextFeature()
-    assert f.GetField(0) == 1
-    ds.ReleaseResultSet(sql_lyr)
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16
     assert ds.GetRasterBand(1).Checksum() == 4672
