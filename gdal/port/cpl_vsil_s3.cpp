@@ -2058,8 +2058,7 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
     CPLString osContentMD5;
     struct CPLMD5Context context;
     CPLMD5Init(&context);
-    CPLMD5Update(&context, reinterpret_cast<unsigned char const *>(pszXML),
-                  static_cast<int>(strlen(pszXML)));
+    CPLMD5Update(&context, pszXML, strlen(pszXML));
     unsigned char hash[16];
     CPLMD5Final(hash, &context);
     char* pszBase64 = CPLBase64Encode(16, hash);
@@ -2368,8 +2367,7 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
     {
         struct CPLMD5Context context;
         CPLMD5Init(&context);
-        CPLMD5Update(&context, reinterpret_cast<unsigned char const *>(osXML.c_str()),
-                    static_cast<int>(osXML.size()));
+        CPLMD5Update(&context, osXML.data(), osXML.size());
         unsigned char hash[16];
         CPLMD5Final(hash, &context);
         char* pszBase64 = CPLBase64Encode(16, hash);
@@ -3170,7 +3168,7 @@ static CPLString ComputeMD5OfLocalFile(VSILFILE* fp)
     while( true )
     {
         size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fp);
-        CPLMD5Update(&context, &abyBuffer[0], static_cast<int>(nRead));
+        CPLMD5Update(&context, &abyBuffer[0], nRead);
         if( nRead < nBufferSize )
         {
             break;

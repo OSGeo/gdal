@@ -62,6 +62,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <limits>
+
 #define PQexec this_is_an_error
 
 CPL_CVSID("$Id$")
@@ -1680,14 +1682,18 @@ OGRGeometry *OGRPGLayer::BYTEAToGeometry( const char *pszBytea, int bIsPostGIS1 
 /*                        GByteArrayToBYTEA()                           */
 /************************************************************************/
 
-char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
+char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, size_t nLen)
 {
+    if( nLen > (std::numeric_limits<size_t>::max() - 1) / 5 )
+        return CPLStrdup("");
     const size_t nTextBufLen = nLen*5+1;
-    char* pszTextBuf = static_cast<char *>(CPLMalloc(nTextBufLen));
+    char* pszTextBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nTextBufLen));
+    if( pszTextBuf == nullptr )
+        return CPLStrdup("");
 
-    int iDst = 0;
+    size_t iDst = 0;
 
-    for( int iSrc = 0; iSrc < nLen; iSrc++ )
+    for( size_t iSrc = 0; iSrc < nLen; iSrc++ )
     {
         if( pabyData[iSrc] < 40 || pabyData[iSrc] > 126
             || pabyData[iSrc] == '\\' )
@@ -1710,9 +1716,12 @@ char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 char *OGRPGLayer::GeometryToBYTEA( const OGRGeometry * poGeometry, int nPostGISMajor, int nPostGISMinor )
 
 {
-    const int nWkbSize = poGeometry->WkbSize();
+    const size_t nWkbSize = poGeometry->WkbSize();
 
-    GByte *pabyWKB = static_cast<GByte *>(CPLMalloc(nWkbSize));
+    GByte *pabyWKB = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nWkbSize));
+    if( pabyWKB == nullptr )
+        return CPLStrdup("");
+
     if( (nPostGISMajor > 2 || (nPostGISMajor == 2 && nPostGISMinor >= 2)) &&
         wkbFlatten(poGeometry->getGeometryType()) == wkbPoint &&
         poGeometry->IsEmpty() )
@@ -1776,9 +1785,16 @@ Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
 
 {
     PGconn *hPGConn = poDS->GetPGConn();
-    const int nWkbSize = poGeometry->WkbSize();
+    const size_t nWkbSize = poGeometry->WkbSize();
+    if( nWkbSize > static_cast<size_t>(std::numeric_limits<int>::max()) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Too large geometry");
+        return 0;
+    }
 
-    GByte *pabyWKB = static_cast<GByte *>(CPLMalloc(nWkbSize));
+    GByte *pabyWKB = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nWkbSize));
+    if( pabyWKB == nullptr )
+        return 0;
     if( poGeometry->exportToWkb( wkbNDR, pabyWKB,
                                  (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc ) != OGRERR_NONE )
         return 0;
@@ -1786,14 +1802,14 @@ Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
     Oid oid = lo_creat( hPGConn, INV_READ|INV_WRITE );
 
     const int fd = lo_open( hPGConn, oid, INV_WRITE );
-    const int nBytesWritten = lo_write( hPGConn, fd, reinterpret_cast<char *>(pabyWKB), nWkbSize );
+    const int nBytesWritten = lo_write( hPGConn, fd, reinterpret_cast<char *>(pabyWKB), static_cast<int>(nWkbSize) );
     lo_close( hPGConn, fd );
 
-    if( nBytesWritten != nWkbSize )
+    if( nBytesWritten != static_cast<int>(nWkbSize) )
     {
         CPLDebug( "PG",
                   "Only wrote %d bytes of %d intended for (fd=%d,oid=%d).\n",
-                  nBytesWritten, nWkbSize, fd, oid );
+                  nBytesWritten, static_cast<int>(nWkbSize), fd, oid );
     }
 
     CPLFree( pabyWKB );

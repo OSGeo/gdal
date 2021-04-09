@@ -46,14 +46,16 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
 %typemap(cscode, noblock="1") OGRGeometryShadow {
   public int ExportToWkb( byte[] buffer, wkbByteOrder byte_order ) {
       int retval;
-      int size = WkbSize();
+      long size = WkbSize();
+      if (size > Int32.MaxValue)
+        throw new ArgumentException("Too big geometry (ExportToWkb)");
       if (buffer.Length < size)
         throw new ArgumentException("Buffer size is small (ExportToWkb)");
 
-      IntPtr ptr = Marshal.AllocHGlobal(size * Marshal.SizeOf(buffer[0]));
+      IntPtr ptr = Marshal.AllocHGlobal((int)size * Marshal.SizeOf(buffer[0]));
       try {
-          retval = ExportToWkb(size, ptr, byte_order);
-          Marshal.Copy(ptr, buffer, 0, size);
+          retval = ExportToWkb((int)size, ptr, byte_order);
+          Marshal.Copy(ptr, buffer, 0, (int)size);
       } finally {
           Marshal.FreeHGlobal(ptr);
       }

@@ -135,7 +135,7 @@ const char * OGRCompoundCurve::getGeometryName() const
 /************************************************************************/
 /*                              WkbSize()                               */
 /************************************************************************/
-int OGRCompoundCurve::WkbSize() const
+size_t OGRCompoundCurve::WkbSize() const
 {
     return oCC.WkbSize();
 }
@@ -156,12 +156,12 @@ OGRErr OGRCompoundCurve::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
 /************************************************************************/
 
 OGRErr OGRCompoundCurve::importFromWkb( const unsigned char * pabyData,
-                                        int nSize,
+                                        size_t nSize,
                                         OGRwkbVariant eWkbVariant,
-                                       int& nBytesConsumedOut )
+                                        size_t& nBytesConsumedOut )
 {
     OGRwkbByteOrder eByteOrder = wkbNDR;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
@@ -169,7 +169,7 @@ OGRErr OGRCompoundCurve::importFromWkb( const unsigned char * pabyData,
         return eErr;
 
     eErr =  oCC.importBodyFromWkb(this, pabyData + nDataOffset, nSize,
-                                 FALSE,  // bAcceptCompoundCurve
+                                 false,  // bAcceptCompoundCurve
                                  addCurveDirectlyFromWkb,
                                  eWkbVariant,
                                  nBytesConsumedOut);

@@ -134,9 +134,9 @@ OGRwkbGeometryType OGRPolyhedralSurface::getGeometryType() const
 /*                              WkbSize()                               */
 /************************************************************************/
 
-int OGRPolyhedralSurface::WkbSize() const
+size_t OGRPolyhedralSurface::WkbSize() const
 {
-    int nSize = 9;
+    size_t nSize = 9;
     for( auto&& poSubGeom: *this )
     {
         nSize += poSubGeom->WkbSize();
@@ -195,14 +195,14 @@ void OGRPolyhedralSurface::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /************************************************************************/
 
 OGRErr OGRPolyhedralSurface::importFromWkb ( const unsigned char * pabyData,
-                                             int nSize,
+                                             size_t nSize,
                                              OGRwkbVariant eWkbVariant,
-                                             int& nBytesConsumedOut )
+                                             size_t& nBytesConsumedOut )
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     oMP.nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     OGRErr eErr = importPreambleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
@@ -230,7 +230,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( const unsigned char * pabyData,
     {
         // Parse the polygons
         const unsigned char* pabySubData = pabyData + nDataOffset;
-        if( nSize < 9 && nSize != -1 )
+        if( nSize < 9 && nSize != static_cast<size_t>(-1) )
             return OGRERR_NOT_ENOUGH_DATA;
 
         OGRwkbGeometryType eSubGeomType;
@@ -248,7 +248,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( const unsigned char * pabyData,
         }
 
         OGRGeometry* poSubGeom = nullptr;
-        int nSubGeomBytesConsumed = -1;
+        size_t nSubGeomBytesConsumed = 0;
         eErr = OGRGeometryFactory::createFromWkb( pabySubData, nullptr,
                                                   &poSubGeom, nSize,
                                                   eWkbVariant,
@@ -269,7 +269,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( const unsigned char * pabyData,
             flags |= OGR_G_MEASURED;
 
         CPLAssert( nSubGeomBytesConsumed > 0 );
-        if( nSize != -1 )
+        if( nSize != static_cast<size_t>(-1) )
         {
             CPLAssert( nSize >= nSubGeomBytesConsumed );
             nSize -= nSubGeomBytesConsumed;
@@ -318,7 +318,7 @@ OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
     else
         memcpy( pabyData+5, &oMP.nGeomCount, 4 );
 
-    int nOffset = 9;
+    size_t nOffset = 9;
 
     // serialize each of the geometries
     for( auto&& poSubGeom: *this )

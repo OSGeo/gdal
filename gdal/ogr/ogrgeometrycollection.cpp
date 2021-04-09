@@ -435,14 +435,14 @@ OGRErr OGRGeometryCollection::removeGeometry( int iGeom, int bDelete )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRGeometryCollection::WkbSize() const
+size_t OGRGeometryCollection::WkbSize() const
 
 {
-    int nSize = 9;
+    size_t nSize = 9;
 
-    for( int i = 0; i < nGeomCount; i++ )
+    for( const auto& poGeom: *this )
     {
-        nSize += papoGeoms[i]->WkbSize();
+        nSize += poGeom->WkbSize();
     }
 
     return nSize;
@@ -453,12 +453,12 @@ int OGRGeometryCollection::WkbSize() const
 /************************************************************************/
 
 OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyData,
-                                                     int nSize, int nRecLevel,
+                                                     size_t nSize, int nRecLevel,
                                                      OGRwkbVariant eWkbVariant,
-                                                     int& nBytesConsumedOut )
+                                                     size_t& nBytesConsumedOut )
 
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     // Arbitrary value, but certainly large enough for reasonable use cases.
     if( nRecLevel == 32 )
     {
@@ -470,7 +470,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
 
     nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     OGRErr eErr = importPreambleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
@@ -498,7 +498,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
     {
         // Parses sub-geometry.
         const unsigned char* pabySubData = pabyData + nDataOffset;
-        if( nSize < 9 && nSize != -1 )
+        if( nSize < 9 && nSize != static_cast<size_t>(-1) )
             return OGRERR_NOT_ENOUGH_DATA;
 
         OGRwkbGeometryType eSubGeomType = wkbUnknown;
@@ -518,7 +518,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
         }
 
         OGRGeometry* poSubGeom = nullptr;
-        int nSubGeomBytesConsumed = -1;
+        size_t nSubGeomBytesConsumed = 0;
         if( OGR_GT_IsSubClassOf(eSubGeomType, wkbGeometryCollection) )
         {
             poSubGeom = OGRGeometryFactory::createGeometry( eSubGeomType );
@@ -553,7 +553,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
             flags |= OGR_G_MEASURED;
 
         CPLAssert( nSubGeomBytesConsumed > 0 );
-        if( nSize != -1 )
+        if( nSize != static_cast<size_t>(-1) )
         {
             CPLAssert( nSize >= nSubGeomBytesConsumed );
             nSize -= nSubGeomBytesConsumed;
@@ -574,9 +574,9 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
 /************************************************************************/
 
 OGRErr OGRGeometryCollection::importFromWkb( const unsigned char * pabyData,
-                                             int nSize,
+                                             size_t nSize,
                                              OGRwkbVariant eWkbVariant,
-                                             int& nBytesConsumedOut )
+                                             size_t& nBytesConsumedOut )
 
 {
     return importFromWkbInternal(pabyData, nSize, 0, eWkbVariant,
@@ -648,7 +648,7 @@ OGRErr OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
         memcpy( pabyData+5, &nGeomCount, 4 );
     }
 
-    int nOffset = 9;
+    size_t nOffset = 9;
 
 /* ==================================================================== */
 /*      Serialize each of the Geoms.                                    */

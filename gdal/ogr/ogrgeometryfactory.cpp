@@ -95,7 +95,7 @@ CPL_CVSID("$Id$")
  *                  of failure. If not NULL, *ppoReturn should be freed with
  *                  OGRGeometryFactory::destroyGeometry() after use.
  * @param nBytes the number of bytes available in pabyData, or -1 if it isn't
- *               known.
+ *               known
  * @param eWkbVariant WKB variant.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
@@ -106,11 +106,11 @@ CPL_CVSID("$Id$")
 OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
                                           OGRSpatialReference * poSR,
                                           OGRGeometry **ppoReturn,
-                                          int nBytes,
+                                          size_t nBytes,
                                           OGRwkbVariant eWkbVariant )
 
 {
-    int nBytesConsumedOutIgnored = -1;
+    size_t nBytesConsumedOutIgnored = 0;
     return createFromWkb( pabyData,
                           poSR,
                           ppoReturn,
@@ -143,7 +143,7 @@ OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
  *                  of failure. If not NULL, *ppoReturn should be freed with
  *                  OGRGeometryFactory::destroyGeometry() after use.
  * @param nBytes the number of bytes available in pabyData, or -1 if it isn't
- *               known.
+ *               known
  * @param eWkbVariant WKB variant.
  * @param nBytesConsumedOut output parameter. Number of bytes consumed.
  *
@@ -156,16 +156,16 @@ OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
 OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
                                           OGRSpatialReference * poSR,
                                           OGRGeometry **ppoReturn,
-                                          int nBytes,
+                                          size_t nBytes,
                                           OGRwkbVariant eWkbVariant,
-                                          int& nBytesConsumedOut )
+                                          size_t& nBytesConsumedOut )
 
 {
     const GByte* l_pabyData = static_cast<const GByte*>(pabyData);
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     *ppoReturn = nullptr;
 
-    if( nBytes < 9 && nBytes != -1 )
+    if( nBytes < 9 && nBytes != static_cast<size_t>(-1) )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -276,6 +276,52 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
                                     OGRSpatialReferenceH hSRS,
                                     OGRGeometryH *phGeometry,
                                     int nBytes )
+
+{
+    return OGRGeometryFactory::createFromWkb(
+        pabyData,
+        OGRSpatialReference::FromHandle(hSRS),
+        reinterpret_cast<OGRGeometry **>(phGeometry),
+        nBytes );
+}
+
+/************************************************************************/
+/*                      OGR_G_CreateFromWkbEx()                         */
+/************************************************************************/
+/**
+ * \brief Create a geometry object of the appropriate type from its
+ * well known binary representation.
+ *
+ * Note that if nBytes is passed as zero, no checking can be done on whether
+ * the pabyData is sufficient.  This can result in a crash if the input
+ * data is corrupt.  This function returns no indication of the number of
+ * bytes from the data source actually used to represent the returned
+ * geometry object.  Use OGR_G_WkbSizeEx() on the returned geometry to
+ * establish the number of bytes it required in WKB format.
+ *
+ * The OGRGeometryFactory::createFromWkb() CPP method is the same as this
+ * function.
+ *
+ * @param pabyData pointer to the input BLOB data.
+ * @param hSRS handle to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+ * @param phGeometry the newly created geometry object will
+ * be assigned to the indicated handle on return.  This will be NULL in case
+ * of failure. If not NULL, *phGeometry should be freed with
+ * OGR_G_DestroyGeometry() after use.
+ * @param nBytes the number of bytes of data available in pabyData, or -1
+ * if it is not known, but assumed to be sufficient.
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ * @since GDAL 3.3
+ */
+
+OGRErr CPL_DLL OGR_G_CreateFromWkbEx( const void *pabyData,
+                                      OGRSpatialReferenceH hSRS,
+                                      OGRGeometryH *phGeometry,
+                                      size_t nBytes )
 
 {
     return OGRGeometryFactory::createFromWkb(

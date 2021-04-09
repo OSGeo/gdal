@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -1797,23 +1798,30 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
             OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
             if( poGeom != nullptr )
             {
-                const int nSize = poGeom->WkbSize();
-                GByte *pabyData = static_cast<GByte *>(CPLMalloc(nSize));
-                if( poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE )
+                const size_t nSize = poGeom->WkbSize();
+                if( nSize > static_cast<size_t>(std::numeric_limits<int>::max()) )
                 {
-                    if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() ==
-                        OFTBinary )
-                    {
-                        poSrcFeat->SetField(iGeomField, nSize, pabyData);
-                    }
-                    else
-                    {
-                        char *pszHexWKB = CPLBinaryToHex(nSize, pabyData);
-                        poSrcFeat->SetField(iGeomField, pszHexWKB);
-                        CPLFree(pszHexWKB);
-                    }
                 }
-                CPLFree(pabyData);
+                else
+                {
+                    GByte *pabyData = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nSize));
+                    if( pabyData &&
+                        poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE )
+                    {
+                        if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() ==
+                            OFTBinary )
+                        {
+                            poSrcFeat->SetField(iGeomField, static_cast<int>(nSize), pabyData);
+                        }
+                        else
+                        {
+                            char *pszHexWKB = CPLBinaryToHex(static_cast<int>(nSize), pabyData);
+                            poSrcFeat->SetField(iGeomField, pszHexWKB);
+                            CPLFree(pszHexWKB);
+                        }
+                    }
+                    CPLFree(pabyData);
+                }
             }
         }
         else if( eGeometryStyle == VGS_Shape )

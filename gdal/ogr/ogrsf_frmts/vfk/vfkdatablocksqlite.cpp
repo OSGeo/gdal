@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <utility>
 
@@ -978,7 +979,7 @@ VFKFeatureSQLiteList VFKDataBlockSQLite::GetFeatures(const char **column, GUIntB
 */
 OGRErr VFKDataBlockSQLite::SaveGeometryToDB(const OGRGeometry *poGeom, int iRowId)
 {
-    int        rc, nWKBLen;
+    int        rc;
     CPLString  osSQL;
 
     sqlite3_stmt *hStmt = nullptr;
@@ -991,20 +992,29 @@ OGRErr VFKDataBlockSQLite::SaveGeometryToDB(const OGRGeometry *poGeom, int iRowI
         return OGRERR_FAILURE;
 
     if (poGeom) {
-        nWKBLen = poGeom->WkbSize();
-        GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
-        poGeom->exportToWkb(wkbNDR, pabyWKB);
-
-        osSQL.Printf("UPDATE %s SET %s = ? WHERE rowid = %d",
-                     m_pszName, GEOM_COLUMN, iRowId);
-        hStmt = poReader->PrepareStatement(osSQL.c_str());
-
-        rc = sqlite3_bind_blob(hStmt, 1, pabyWKB, nWKBLen, CPLFree);
-        if (rc != SQLITE_OK) {
-            sqlite3_finalize(hStmt);
+        const size_t nWKBLen = poGeom->WkbSize();
+        if( nWKBLen > static_cast<size_t>(std::numeric_limits<int>::max()) )
+        {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Storing geometry in DB failed");
+                     "Too large geometry");
             return OGRERR_FAILURE;
+        }
+        GByte *pabyWKB = (GByte *) VSI_MALLOC_VERBOSE(nWKBLen);
+        if( pabyWKB )
+        {
+            poGeom->exportToWkb(wkbNDR, pabyWKB);
+
+            osSQL.Printf("UPDATE %s SET %s = ? WHERE rowid = %d",
+                         m_pszName, GEOM_COLUMN, iRowId);
+            hStmt = poReader->PrepareStatement(osSQL.c_str());
+
+            rc = sqlite3_bind_blob(hStmt, 1, pabyWKB, static_cast<int>(nWKBLen), CPLFree);
+            if (rc != SQLITE_OK) {
+                sqlite3_finalize(hStmt);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Storing geometry in DB failed");
+                return OGRERR_FAILURE;
+            }
         }
     }
     else { /* invalid */

@@ -36,6 +36,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <memory>
 
 #include "cpl_conv.h"
@@ -1279,6 +1280,8 @@ int OGR_G_Equal( OGRGeometryH hGeom, OGRGeometryH hOther )
  *
  * This function is the same as the CPP method OGRGeometry::WkbSize().
  *
+ * Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)
+ *
  * @param hGeom handle on the geometry to get the binary size from.
  * @return size of binary representation in bytes.
  */
@@ -1287,6 +1290,41 @@ int OGR_G_WkbSize( OGRGeometryH hGeom )
 
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_WkbSize", 0 );
+
+    const size_t nSize = OGRGeometry::FromHandle(hGeom)->WkbSize();
+    if( nSize > static_cast<size_t>(std::numeric_limits<int>::max()) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR_G_WkbSize() would return a value beyond int range. "
+                 "Use OGR_G_WkbSizeEx() instead");
+        return 0;
+    }
+    return static_cast<int>(nSize);
+}
+
+/************************************************************************/
+/*                         OGR_G_WkbSizeEx()                            */
+/************************************************************************/
+/**
+ * \brief Returns size of related binary representation.
+ *
+ * This function returns the exact number of bytes required to hold the
+ * well known binary representation of this geometry object.  Its computation
+ * may be slightly expensive for complex geometries.
+ *
+ * This function relates to the SFCOM IWks::WkbSize() method.
+ *
+ * This function is the same as the CPP method OGRGeometry::WkbSize().
+ *
+ * @param hGeom handle on the geometry to get the binary size from.
+ * @return size of binary representation in bytes.
+ * @since GDAL 3.3
+ */
+
+size_t OGR_G_WkbSizeEx( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_WkbSizeEx", 0 );
 
     return OGRGeometry::FromHandle(hGeom)->WkbSize();
 }
@@ -1387,16 +1425,16 @@ void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
  */
 
 OGRErr OGRGeometry::importFromWkb( const GByte* pabyData,
-                                   int nSize, OGRwkbVariant eWkbVariant )
+                                   size_t nSize, OGRwkbVariant eWkbVariant )
 {
-    int nBytesConsumedOutIgnored = -1;
+    size_t nBytesConsumedOutIgnored = 0;
     return importFromWkb( pabyData,
                           nSize, eWkbVariant, nBytesConsumedOutIgnored );
 }
 
 /**
  * \fn OGRErr OGRGeometry::importFromWkb( const unsigned char * pabyData,
- * int nSize, OGRwkbVariant eWkbVariant, int& nBytesConsumedOut );
+ * size_t nSize, OGRwkbVariant eWkbVariant, size_t& nBytesConsumedOut );
  *
  * \brief Assign geometry from well known binary data.
  *
@@ -6171,8 +6209,10 @@ OGRGeometry *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
 char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
                             int nPostGISMajor, int nPostGISMinor )
 {
-    const int nWkbSize = poGeometry->WkbSize();
-    GByte *pabyWKB = static_cast<GByte *>(CPLMalloc(nWkbSize));
+    const size_t nWkbSize = poGeometry->WkbSize();
+    GByte *pabyWKB = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nWkbSize));
+    if( pabyWKB == nullptr )
+        return CPLStrdup("");
 
     if( (nPostGISMajor > 2 || (nPostGISMajor == 2 && nPostGISMinor >= 2)) &&
         wkbFlatten(poGeometry->getGeometryType()) == wkbPoint &&
@@ -6196,8 +6236,19 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     // we add in 8 characters to represent the SRID integer in hex, and
     // one for a null terminator.
 
-    const int pszSize = nWkbSize * 2 + 8 + 1;
-    char *pszTextBuf = static_cast<char *>(CPLMalloc(pszSize));
+    const size_t nTextSize = nWkbSize * 2 + 8 + 1;
+    if( nTextSize > static_cast<size_t>(std::numeric_limits<int>::max()) )
+    {
+        // FIXME: artificial limitation
+        CPLFree( pabyWKB );
+        return CPLStrdup("");
+    }
+    char *pszTextBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nTextSize));
+    if( pszTextBuf == nullptr )
+    {
+        CPLFree( pabyWKB );
+        return CPLStrdup("");
+    }
     char *pszTextBufCurrent = pszTextBuf;
 
     // Convert the 1st byte, which is the endianness flag, to hex.
@@ -6238,7 +6289,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 
     // Copy the rest of the data over - subtract
     // 5 since we already copied 5 bytes above.
-    pszHex = CPLBinaryToHex( nWkbSize - 5, pabyWKB + 5 );
+    pszHex = CPLBinaryToHex( static_cast<int>(nWkbSize - 5), pabyWKB + 5 );
     strcpy(pszTextBufCurrent, pszHex );
     CPLFree ( pszHex );
 
@@ -6253,11 +6304,11 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 
 //! @cond Doxygen_Suppress
 OGRErr OGRGeometry::importPreambleFromWkb( const unsigned char * pabyData,
-                                            int nSize,
+                                            size_t nSize,
                                             OGRwkbByteOrder& eByteOrder,
                                             OGRwkbVariant eWkbVariant )
 {
-    if( nSize < 9 && nSize != -1 )
+    if( nSize < 9 && nSize != static_cast<size_t>(-1) )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -6293,10 +6344,10 @@ OGRErr OGRGeometry::importPreambleFromWkb( const unsigned char * pabyData,
 /************************************************************************/
 
 OGRErr OGRGeometry::importPreambleOfCollectionFromWkb( const unsigned char * pabyData,
-                                                        int& nSize,
-                                                        int& nDataOffset,
+                                                        size_t& nSize,
+                                                        size_t& nDataOffset,
                                                         OGRwkbByteOrder& eByteOrder,
-                                                        int nMinSubGeomSize,
+                                                        size_t nMinSubGeomSize,
                                                         int& nGeomCount,
                                                         OGRwkbVariant eWkbVariant )
 {
@@ -6326,14 +6377,16 @@ OGRErr OGRGeometry::importPreambleOfCollectionFromWkb( const unsigned char * pab
     if( OGR_SWAP( eByteOrder ) )
         nGeomCount = CPL_SWAP32(nGeomCount);
 
-    if( nGeomCount < 0 || nGeomCount > INT_MAX / nMinSubGeomSize )
+    if( nGeomCount < 0 ||
+        static_cast<size_t>(nGeomCount) > std::numeric_limits<size_t>::max() / nMinSubGeomSize )
     {
         nGeomCount = 0;
         return OGRERR_CORRUPT_DATA;
     }
+    const size_t nBufferMinSize = nGeomCount * nMinSubGeomSize;
 
     // Each ring has a minimum of nMinSubGeomSize bytes.
-    if( nSize != -1 && nSize - 9 < nGeomCount * nMinSubGeomSize )
+    if( nSize != static_cast<size_t>(-1) && nSize - 9 < nBufferMinSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -6342,7 +6395,7 @@ OGRErr OGRGeometry::importPreambleOfCollectionFromWkb( const unsigned char * pab
     }
 
     nDataOffset = 9;
-    if( nSize != -1 )
+    if( nSize != static_cast<size_t>(-1) )
     {
         CPLAssert( nSize >= nDataOffset );
         nSize -= nDataOffset;

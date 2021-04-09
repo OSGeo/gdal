@@ -45,6 +45,7 @@
 #include "ogr_core.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 
 CPL_C_START
 
@@ -88,6 +89,8 @@ struct _CPLXMLNode;
 
 OGRErr CPL_DLL OGR_G_CreateFromWkb( const void*, OGRSpatialReferenceH,
                                     OGRGeometryH *, int );
+OGRErr CPL_DLL OGR_G_CreateFromWkbEx( const void*, OGRSpatialReferenceH,
+                                      OGRGeometryH *, size_t );
 OGRErr CPL_DLL OGR_G_CreateFromWkt( char **, OGRSpatialReferenceH,
                                     OGRGeometryH * );
 OGRErr CPL_DLL OGR_G_CreateFromFgf( const void*, OGRSpatialReferenceH,
@@ -126,6 +129,7 @@ OGRErr CPL_DLL OGR_G_ImportFromWkb( OGRGeometryH, const void*, int );
 OGRErr CPL_DLL OGR_G_ExportToWkb( OGRGeometryH, OGRwkbByteOrder, unsigned char*);
 OGRErr CPL_DLL OGR_G_ExportToIsoWkb( OGRGeometryH, OGRwkbByteOrder, unsigned char*);
 int    CPL_DLL OGR_G_WkbSize( OGRGeometryH hGeom );
+size_t CPL_DLL OGR_G_WkbSizeEx( OGRGeometryH hGeom );
 OGRErr CPL_DLL OGR_G_ImportFromWkt( OGRGeometryH, char ** );
 OGRErr CPL_DLL OGR_G_ExportToWkt( OGRGeometryH, char ** );
 OGRErr CPL_DLL OGR_G_ExportToIsoWkt( OGRGeometryH, char ** );

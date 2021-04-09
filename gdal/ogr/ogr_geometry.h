@@ -346,15 +346,15 @@ class CPL_DLL OGRGeometry
                      OGRErr (*pfnAddCurveDirectly)(OGRGeometry* poSelf,
                                                    OGRCurve* poCurve) );
     OGRErr       importPreambleFromWkb( const unsigned char * pabyData,
-                                         int nSize,
+                                         size_t nSize,
                                          OGRwkbByteOrder& eByteOrder,
                                          OGRwkbVariant eWkbVariant );
     OGRErr       importPreambleOfCollectionFromWkb(
                      const unsigned char * pabyData,
-                     int& nSize,
-                     int& nDataOffset,
+                     size_t& nSize,
+                     size_t& nDataOffset,
                      OGRwkbByteOrder& eByteOrder,
-                     int nMinSubGeomSize,
+                     size_t nMinSubGeomSize,
                      int& nGeomCount,
                      OGRwkbVariant eWkbVariant );
     OGRErr       PointOnSurfaceInternal( OGRPoint * poPoint ) const;
@@ -412,13 +412,13 @@ class CPL_DLL OGRGeometry
     virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const = 0;
 
     // IWks Interface.
-    virtual int WkbSize() const = 0;
-    OGRErr importFromWkb( const GByte*, int=-1,
+    virtual size_t WkbSize() const = 0;
+    OGRErr importFromWkb( const GByte*, size_t=-1,
                                   OGRwkbVariant=wkbVariantOldOgc );
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) = 0;
+                                  size_t& nBytesConsumedOut ) = 0;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc ) const = 0;
     virtual OGRErr importFromWkt( const char ** ppszInput ) = 0;
@@ -951,11 +951,11 @@ class CPL_DLL OGRPoint : public OGRGeometry
     OGRPoint& operator=( const OGRPoint& other );
 
     // IWks Interface
-    int WkbSize() const override;
+    size_t WkbSize() const override;
     OGRErr importFromWkb( const unsigned char *,
-                          int,
+                          size_t,
                           OGRwkbVariant,
-                          int& nBytesConsumedOut ) override;
+                          size_t& nBytesConsumedOut ) override;
     OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                         OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -1276,11 +1276,11 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     ConstIterator end() const;
 
     // IWks Interface.
-    virtual int WkbSize() const override;
+    virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
+                                  size_t& nBytesConsumedOut ) override;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -1481,16 +1481,28 @@ class CPL_DLL OGRLinearRing : public OGRLineString
 {
     static OGRLineString*       CasterToLineString( OGRCurve* poCurve );
 
+    // IWks Interface - Note this isn't really a first class object
+    // for the purposes of WKB form.  These methods always fail since this
+    // object can't be serialized on its own.
+    virtual size_t WkbSize() const override;
+    virtual OGRErr importFromWkb( const unsigned char *,
+                                  size_t,
+                                  OGRwkbVariant,
+                                  size_t& nBytesConsumedOut ) override;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
+                                OGRwkbVariant=wkbVariantOldOgc )
+        const override;
+
   protected:
 //! @cond Doxygen_Suppress
     friend class OGRPolygon;
     friend class OGRTriangle;
 
     // These are not IWks compatible ... just a convenience for OGRPolygon.
-    virtual int _WkbSize( int _flags ) const;
+    virtual size_t _WkbSize( int _flags ) const;
     virtual OGRErr _importFromWkb( OGRwkbByteOrder, int _flags,
-                                   const unsigned char *, int,
-                                   int& nBytesConsumedOut );
+                                   const unsigned char *, size_t,
+                                   size_t& nBytesConsumedOut );
     virtual OGRErr _exportToWkb( OGRwkbByteOrder, int _flags,
                                  unsigned char * ) const;
 
@@ -1529,18 +1541,6 @@ class CPL_DLL OGRLinearRing : public OGRLineString
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
-
-    // IWks Interface - Note this isn't really a first class object
-    // for the purposes of WKB form.  These methods always fail since this
-    // object can't be serialized on its own.
-    virtual int WkbSize() const override;
-    virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
-                                  OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
-                                OGRwkbVariant=wkbVariantOldOgc )
-        const override;
 
     OGR_ALLOW_UPCAST_TO(LineString)
     OGR_ALLOW_CAST_TO_THIS(LinearRing)
@@ -1589,9 +1589,9 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
 
     // IWks Interface.
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
+                                  size_t& nBytesConsumedOut ) override;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -1705,23 +1705,23 @@ class CPL_DLL OGRCurveCollection
 
     OGRErr          addCurveDirectly( OGRGeometry* poGeom, OGRCurve* poCurve,
                                       int bNeedRealloc );
-    int             WkbSize() const;
+    size_t          WkbSize() const;
     OGRErr          importPreambleFromWkb( OGRGeometry* poGeom,
                                             const unsigned char * pabyData,
-                                            int& nSize,
-                                            int& nDataOffset,
+                                            size_t& nSize,
+                                            size_t& nDataOffset,
                                             OGRwkbByteOrder& eByteOrder,
-                                            int nMinSubGeomSize,
+                                            size_t nMinSubGeomSize,
                                             OGRwkbVariant eWkbVariant );
     OGRErr      importBodyFromWkb(
                     OGRGeometry* poGeom,
                     const unsigned char * pabyData,
-                    int nSize,
-                    int bAcceptCompoundCurve,
+                    size_t nSize,
+                    bool bAcceptCompoundCurve,
                     OGRErr (*pfnAddCurveDirectlyFromWkb)( OGRGeometry* poGeom,
                                                           OGRCurve* poCurve ),
                     OGRwkbVariant eWkbVariant,
-                    int& nBytesConsumedOut );
+                    size_t& nBytesConsumedOut );
     std::string     exportToWkt(const OGRGeometry *geom, const OGRWktOptions& opts,
                                 OGRErr *err) const;
     OGRErr          exportToWkb( const OGRGeometry* poGeom, OGRwkbByteOrder,
@@ -1818,11 +1818,11 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     const ChildType* const * end() const { return oCC.end(); }
 
     // IWks Interface
-    virtual int WkbSize() const override;
+    virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
+                                  size_t& nBytesConsumedOut ) override;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -2039,11 +2039,11 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual double      get_Area() const override;
 
     // IWks Interface
-    virtual int WkbSize() const override;
+    virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
+                                  size_t& nBytesConsumedOut ) override;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -2194,11 +2194,11 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
         const char* const* papszOptions = nullptr) const override;
 
     // IWks Interface.
-    virtual int WkbSize() const override;
+    virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
+                                  size_t& nBytesConsumedOut ) override;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -2301,9 +2301,9 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 
     // IWks Interface.
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
+                                  size_t& nBytesConsumedOut ) override;
 
     // New methods rewritten from OGRPolygon/OGRCurvePolygon/OGRGeometry.
     virtual OGRErr addRingDirectly( OGRCurve * poNewRing ) override;
@@ -2338,9 +2338,9 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 class CPL_DLL OGRGeometryCollection : public OGRGeometry
 {
     OGRErr      importFromWkbInternal( const unsigned char * pabyData,
-                                       int nSize,
+                                       size_t nSize,
                                        int nRecLevel,
-                                       OGRwkbVariant, int& nBytesConsumedOut );
+                                       OGRwkbVariant, size_t& nBytesConsumedOut );
     OGRErr      importFromWktInternal( const char **ppszInput, int nRecLevel );
 
   protected:
@@ -2397,11 +2397,11 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
         const char* const* papszOptions = nullptr ) const override;
 
     // IWks Interface
-    virtual int WkbSize() const override;
+    virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
+                                  size_t& nBytesConsumedOut ) override;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -2738,13 +2738,13 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     const ChildType* const* end() const { return oMP.end(); }
 
     // IWks Interface.
-    virtual int WkbSize() const override;
+    virtual size_t WkbSize() const override;
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const  override;
     virtual OGRErr importFromWkb( const unsigned char *,
-                                  int,
+                                  size_t,
                                   OGRwkbVariant,
-                                  int& nBytesConsumedOut ) override;
+                                  size_t& nBytesConsumedOut ) override;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -3224,14 +3224,14 @@ class CPL_DLL OGRGeometryFactory
                                          int nRecLevel );
   public:
     static OGRErr createFromWkb( const void *, OGRSpatialReference *,
-                                 OGRGeometry **, int = -1,
+                                 OGRGeometry **, size_t = -1,
                                  OGRwkbVariant=wkbVariantOldOgc );
     static OGRErr createFromWkb( const void * pabyData,
                                  OGRSpatialReference *,
                                  OGRGeometry **,
-                                 int nSize,
+                                 size_t nSize,
                                  OGRwkbVariant eVariant,
-                                 int& nBytesConsumedOut );
+                                 size_t& nBytesConsumedOut );
     static OGRErr createFromWkt( const char* , OGRSpatialReference *,
                                  OGRGeometry ** );
     static OGRErr createFromWkt( const char **, OGRSpatialReference *,

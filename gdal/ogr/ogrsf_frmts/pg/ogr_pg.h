@@ -184,7 +184,7 @@ class OGRPGLayer CPL_NON_FINAL: public OGRLayer
     int                 nCursorPage = 0;
     GIntBig             iNextShapeId = 0;
 
-    static char        *GByteArrayToBYTEA( const GByte* pabyData, int nLen);
+    static char        *GByteArrayToBYTEA( const GByte* pabyData, size_t nLen);
     static char        *GeometryToBYTEA( const OGRGeometry *, int nPostGISMajor, int nPostGISMinor );
     static GByte       *BYTEAToGByteArray( const char *pszBytea, int* pnLength );
     static OGRGeometry *BYTEAToGeometry( const char *, int bIsPostGIS1 );
