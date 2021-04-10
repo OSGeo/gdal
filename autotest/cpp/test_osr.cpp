@@ -314,32 +314,10 @@ namespace tut
         err_ = OSRSetFromUserInput(srs_, "urn:ogc:def:crs:OGC::AUTO42001:-117:33");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
 
-        char* wkt1 = nullptr;
-        err_ = OSRExportToWkt(srs_, &wkt1);
-        ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
+        OGRSpatialReference oSRS;
+        oSRS.importFromEPSG(32611);
 
-        std::string expect("PROJCS[\"unnamed\",GEOGCS[\"WGS 84\","
-                           "DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\","
-                           "6378137,298.257223563,"
-                           "AUTHORITY[\"EPSG\",\"7030\"]],"
-                           "AUTHORITY[\"EPSG\",\"6326\"]],"
-                           "PRIMEM[\"Greenwich\",0,"
-                           "AUTHORITY[\"EPSG\",\"8901\"]],"
-                           "UNIT[\"degree\",0.0174532925199433,"
-                           "AUTHORITY[\"EPSG\",\"9122\"]],"
-                           "AUTHORITY[\"EPSG\",\"4326\"]],"
-                           "PROJECTION[\"Transverse_Mercator\"],"
-                           "PARAMETER[\"latitude_of_origin\",0],"
-                           "PARAMETER[\"central_meridian\",-117],"
-                           "PARAMETER[\"scale_factor\",0.9996],"
-                           "PARAMETER[\"false_easting\",500000],"
-                           "PARAMETER[\"false_northing\",0],"
-                           "UNIT[\"Meter\",1,AUTHORITY[\"EPSG\",\"9001\"]],"
-                           "AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]");
-
-        ensure_equals("AUTO42001 urn lookup not as expected", std::string(wkt1), expect);
-        CPLFree(wkt1);
+        ensure(oSRS.IsSame(OGRSpatialReference::FromHandle(srs_)));
     }
 
     // Test StripTOWGS84IfKnownDatum
