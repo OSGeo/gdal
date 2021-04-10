@@ -393,6 +393,8 @@ def test_ogr_lvbag_old_schema():
     ds = ogr.Open('data/lvbag/lig_old.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 0, 'bad layer count'
+    ds = None
+    gdal.Unlink('data/lvbag/lig_old.gfs')
 
 def test_ogr_lvbag_stringlist_feat():
 
