@@ -148,9 +148,9 @@ class CPL_DLL OGR_SRSNode
  *
  * See <a href="https://gdal.org/tutorials/osr_api_tut.html">the tutorial
  * </a> for more information on how to use this class.
- * 
+ *
  * Consult also the <a href="https://gdal.org/tutorials/wktproblems.html">
- * OGC WKT Coordinate System Issues</a> page for implementation details of 
+ * OGC WKT Coordinate System Issues</a> page for implementation details of
  * WKT in OGR.
  */
 
@@ -161,6 +161,7 @@ class CPL_DLL OGRSpatialReference
 
     void        GetNormInfo() const;
 
+    // No longer used with PROJ >= 8.1.0
     OGRErr      importFromURNPart(const char* pszAuthority,
                                   const char* pszCode,
                                   const char* pszURN);
@@ -850,7 +851,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
 
 /**
  * Context for coordinate transformation.
- * 
+ *
  * @since GDAL 3.0
  */
 

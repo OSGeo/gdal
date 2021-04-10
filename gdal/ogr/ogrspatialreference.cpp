@@ -57,6 +57,15 @@
 #include "proj_experimental.h"
 #include "proj_constants.h"
 
+// Exists since 8.0.1
+#ifndef PROJ_AT_LEAST_VERSION
+#define PROJ_COMPUTE_VERSION(maj,min,patch) ((maj)*10000+(min)*100+(patch))
+#define PROJ_VERSION_NUMBER                 \
+    PROJ_COMPUTE_VERSION(PROJ_VERSION_MAJOR, PROJ_VERSION_MINOR, PROJ_VERSION_PATCH)
+#define PROJ_AT_LEAST_VERSION(maj,min,patch) \
+    (PROJ_VERSION_NUMBER >= PROJ_COMPUTE_VERSION(maj,min,patch))
+#endif
+
 CPL_CVSID("$Id$")
 
 #define STRINGIFY(s) #s
@@ -3758,6 +3767,12 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
                                               const char* pszCode,
                                               const char* pszURN)
 {
+#if PROJ_AT_LEAST_VERSION(8,1,0)
+    (void)pszAuthority;
+    (void)pszCode;
+    (void)pszURN;
+    return OGRERR_FAILURE;
+#else
 /* -------------------------------------------------------------------- */
 /*      Is this an EPSG code? Note that we import it with EPSG          */
 /*      preferred axis ordering for geographic coordinate systems.      */
@@ -3820,6 +3835,7 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
               pszURN );
 
     return OGRERR_FAILURE;
+#endif
 }
 
 /************************************************************************/
@@ -3847,6 +3863,32 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
 OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
 {
+#if PROJ_AT_LEAST_VERSION(8,1,0)
+/* -------------------------------------------------------------------- */
+/*      Is this an IAU code?  Lets try for the IAU2000 dictionary.      */
+/* -------------------------------------------------------------------- */
+    const char* pszIAU = strstr(pszURN, "IAU");
+    if( pszIAU )
+    {
+        const char* pszCode = strchr(pszIAU, ':');
+        if( pszCode )
+        {
+            ++pszCode;
+            if( *pszCode == ':' )
+                ++pszCode;
+            return importFromDict( "IAU2000.wkt", pszCode );
+        }
+    }
+
+    auto obj = proj_create(d->getPROJContext(), pszURN);
+    if( !obj )
+    {
+        return OGRERR_FAILURE;
+    }
+    Clear();
+    d->setPjCRS(obj);
+    return OGRERR_NONE;
+#else
     const char *pszCur = nullptr;
 
     if( STARTS_WITH_CI(pszURN, "urn:ogc:def:crs:") )
@@ -3972,6 +4014,7 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
     }
 
     return eStatus;
+#endif
 }
 
 /************************************************************************/
@@ -3999,6 +4042,16 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 
 {
+#if PROJ_AT_LEAST_VERSION(8,1,0)
+    auto obj = proj_create(d->getPROJContext(), pszURL);
+    if( !obj )
+    {
+        return OGRERR_FAILURE;
+    }
+    Clear();
+    d->setPjCRS(obj);
+    return OGRERR_NONE;
+#else
     const char *pszCur = nullptr;
 
     if( STARTS_WITH_CI(pszURL, "http://opengis.net/def/crs") )
@@ -4126,6 +4179,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
     const char *pszCode = pszCur;
 
     return importFromURNPart( pszAuthority, pszCode, pszURL );
+#endif
 }
 
 /************************************************************************/
@@ -4146,6 +4200,16 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
 
 {
+#if PROJ_AT_LEAST_VERSION(8,1,0)
+    auto obj = proj_create(d->getPROJContext(), pszDefinition);
+    if( !obj )
+    {
+        return OGRERR_FAILURE;
+    }
+    Clear();
+    d->setPjCRS(obj);
+    return OGRERR_NONE;
+#else
     int nProjId, nUnitsId;
     double dfRefLong, dfRefLat = 0.0;
 
@@ -4266,6 +4330,7 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
     }
 
     return OGRERR_NONE;
+#endif
 }
 
 /************************************************************************/
