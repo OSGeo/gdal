@@ -3035,8 +3035,9 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_p_char swig_types[24]
 #define SWIGTYPE_p_p_double swig_types[25]
 #define SWIGTYPE_p_p_int swig_types[26]
-static swig_type_info *swig_types[28];
-static swig_module_info swig_module = {swig_types, 27, 0, 0, 0, 0};
+#define SWIGTYPE_p_size_t swig_types[27]
+static swig_type_info *swig_types[29];
+static swig_module_info swig_module = {swig_types, 28, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -5035,7 +5036,7 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
     return OGR_GFld_SetNullable( self, bNullable );
   }
 
-  OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string,
+  OGRGeometryShadow* CreateGeometryFromWkb( size_t len, char *bin_string,
                                             OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
@@ -5049,6 +5050,121 @@ SWIGINTERN void OGRGeomFieldDefnShadow_SetNullable(OGRGeomFieldDefnShadow *self,
     return (OGRGeometryShadow*) geom;
   }
 
+
+
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_long (PyObject *obj, unsigned long *val) 
+{
+#if PY_VERSION_HEX < 0x03000000
+  if (PyInt_Check(obj)) {
+    long v = PyInt_AsLong(obj);
+    if (v >= 0) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      return SWIG_OverflowError;
+    }
+  } else
+#endif
+  if (PyLong_Check(obj)) {
+    unsigned long v = PyLong_AsUnsignedLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+      return SWIG_OverflowError;
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    unsigned long v = PyLong_AsUnsignedLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      double d;
+      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, 0, ULONG_MAX)) {
+	if (val) *val = (unsigned long)(d);
+	return res;
+      }
+    }
+  }
+#endif
+  return SWIG_TypeError;
+}
+
+
+#if defined(LLONG_MAX) && !defined(SWIG_LONG_LONG_AVAILABLE)
+#  define SWIG_LONG_LONG_AVAILABLE
+#endif
+
+
+#ifdef SWIG_LONG_LONG_AVAILABLE
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_long_SS_long (PyObject *obj, unsigned long long *val)
+{
+  int res = SWIG_TypeError;
+  if (PyLong_Check(obj)) {
+    unsigned long long v = PyLong_AsUnsignedLongLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+      res = SWIG_OverflowError;
+    }
+  } else {
+    unsigned long v;
+    res = SWIG_AsVal_unsigned_SS_long (obj,&v);
+    if (SWIG_IsOK(res)) {
+      if (val) *val = v;
+      return res;
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    const double mant_max = 1LL << DBL_MANT_DIG;
+    double d;
+    res = SWIG_AsVal_double (obj,&d);
+    if (SWIG_IsOK(res) && !SWIG_CanCastAsInteger(&d, 0, mant_max))
+      return SWIG_OverflowError;
+    if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, 0, mant_max)) {
+      if (val) *val = (unsigned long long)(d);
+      return SWIG_AddCast(res);
+    }
+    res = SWIG_TypeError;
+  }
+#endif
+  return res;
+}
+#endif
+
+
+SWIGINTERNINLINE int
+SWIG_AsVal_size_t (PyObject * obj, size_t *val)
+{
+  int res = SWIG_TypeError;
+#ifdef SWIG_LONG_LONG_AVAILABLE
+  if (sizeof(size_t) <= sizeof(unsigned long)) {
+#endif
+    unsigned long v;
+    res = SWIG_AsVal_unsigned_SS_long (obj, val ? &v : 0);
+    if (SWIG_IsOK(res) && val) *val = static_cast< size_t >(v);
+#ifdef SWIG_LONG_LONG_AVAILABLE
+  } else if (sizeof(size_t) <= sizeof(unsigned long long)) {
+    unsigned long long v;
+    res = SWIG_AsVal_unsigned_SS_long_SS_long (obj, val ? &v : 0);
+    if (SWIG_IsOK(res) && val) *val = static_cast< size_t >(v);
+  }
+#endif
+  return res;
+}
 
 
   OGRGeometryShadow* CreateGeometryFromWkt( char **val,
@@ -5193,14 +5309,18 @@ SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkt(OGRGeometryShadow *self,char **a
 SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkt(OGRGeometryShadow *self,char **argout){
     return OGR_G_ExportToIsoWkt(self, argout);
   }
-SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkb(OGRGeometryShadow *self,int *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbXDR){
-    *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen );
+SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbXDR){
+    *nLen = OGR_G_WkbSizeEx( self );
+    *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
+    if( *pBuf == NULL )
+        return 6;
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
-SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkb(OGRGeometryShadow *self,int *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbXDR){
-    *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen );
+SWIGINTERN OGRErr OGRGeometryShadow_ExportToIsoWkb(OGRGeometryShadow *self,size_t *nLen,char **pBuf,OGRwkbByteOrder byte_order=wkbXDR){
+    *nLen = OGR_G_WkbSizeEx( self );
+    *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
+    if( *pBuf == NULL )
+        return 6;
     return OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) *pBuf );
   }
 SWIGINTERN retStringAndCPLFree *OGRGeometryShadow_ExportToGML(OGRGeometryShadow *self,char **options=0){
@@ -5474,9 +5594,46 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Centroid(OGRGeometryShadow *self
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_PointOnSurface(OGRGeometryShadow *self){
     return (OGRGeometryShadow*) OGR_G_PointOnSurface( self );
   }
-SWIGINTERN int OGRGeometryShadow_WkbSize(OGRGeometryShadow *self){
-    return OGR_G_WkbSize(self);
+SWIGINTERN size_t OGRGeometryShadow_WkbSize(OGRGeometryShadow *self){
+    return OGR_G_WkbSizeEx(self);
   }
+
+  #define SWIG_From_long   PyInt_FromLong 
+
+
+SWIGINTERNINLINE PyObject* 
+SWIG_From_unsigned_SS_long  (unsigned long value)
+{
+  return (value > LONG_MAX) ?
+    PyLong_FromUnsignedLong(value) : PyInt_FromLong(static_cast< long >(value));
+}
+
+
+#ifdef SWIG_LONG_LONG_AVAILABLE
+SWIGINTERNINLINE PyObject* 
+SWIG_From_unsigned_SS_long_SS_long  (unsigned long long value)
+{
+  return (value > LONG_MAX) ?
+    PyLong_FromUnsignedLongLong(value) : PyInt_FromLong(static_cast< long >(value));
+}
+#endif
+
+
+SWIGINTERNINLINE PyObject *
+SWIG_From_size_t  (size_t value)
+{    
+#ifdef SWIG_LONG_LONG_AVAILABLE
+  if (sizeof(size_t) <= sizeof(unsigned long)) {
+#endif
+    return SWIG_From_unsigned_SS_long  (static_cast< unsigned long >(value));
+#ifdef SWIG_LONG_LONG_AVAILABLE
+  } else {
+    /* assume sizeof(size_t) <= sizeof(unsigned long long) */
+    return SWIG_From_unsigned_SS_long_SS_long  (static_cast< unsigned long long >(value));
+  }
+#endif
+}
+
 SWIGINTERN int OGRGeometryShadow_GetCoordinateDimension(OGRGeometryShadow *self){
     return OGR_G_GetCoordinateDimension(self);
   }
@@ -15238,7 +15395,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
     if( *arg3 ) {
-      free( *arg4 );
+      VSIFree( *arg4 );
     }
   }
   {
@@ -15253,7 +15410,7 @@ fail:
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
     if( *arg3 ) {
-      free( *arg4 );
+      VSIFree( *arg4 );
     }
   }
   return NULL;
@@ -15336,7 +15493,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_1(PyObject *SWIGUNUSED
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
     if( *arg3 ) {
-      free( *arg4 );
+      VSIFree( *arg4 );
     }
   }
   {
@@ -15355,7 +15512,7 @@ fail:
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
     if( *arg3 ) {
-      free( *arg4 );
+      VSIFree( *arg4 );
     }
   }
   return NULL;
@@ -21532,7 +21689,7 @@ SWIGINTERN PyObject *GeomFieldDefn_swigregister(PyObject *SWIGUNUSEDPARM(self), 
 
 SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  int arg1 ;
+  size_t arg1 ;
   char *arg2 = (char *) 0 ;
   OSRSpatialReferenceShadow *arg3 = (OSRSpatialReferenceShadow *) NULL ;
   int alloc1 = 0 ;
@@ -21549,16 +21706,12 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   
   if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:CreateGeometryFromWkb",kwnames,&obj0,&obj1)) SWIG_fail;
   {
-    /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    /* %typemap(in,numinputs=1) (size_t nLen, char *pBuf ) */
     {
       if (PyObject_GetBuffer(obj0, &view1, PyBUF_SIMPLE) == 0)
       {
-        if( view1.len > INT_MAX ) {
-          PyBuffer_Release(&view1);
-          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-        }
         viewIsValid1 = true;
-        arg1 = (int) view1.len;
+        arg1 = view1.len;
         arg2 = (char *) view1.buf;
         goto ok;
       }
@@ -21576,10 +21729,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
       }
       
       if (safeLen) safeLen--;
-      if( safeLen > INT_MAX ) {
-        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
-      }
-      arg1 = (int) safeLen;
+      arg1 = safeLen;
     }
     else
     {
@@ -21615,7 +21765,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   }
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   {
-    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    /* %typemap(freearg) (size_t *nLen, char *pBuf ) */
     if( viewIsValid1 ) {
       PyBuffer_Release(&view1);
     }
@@ -21627,7 +21777,7 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   return resultobj;
 fail:
   {
-    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    /* %typemap(freearg) (size_t *nLen, char *pBuf ) */
     if( viewIsValid1 ) {
       PyBuffer_Release(&view1);
     }
@@ -22634,12 +22784,12 @@ fail:
 SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
-  int *arg2 = (int *) 0 ;
+  size_t *arg2 = (size_t *) 0 ;
   char **arg3 = (char **) 0 ;
   OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbXDR ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int nLen2 = 0 ;
+  size_t nLen2 = 0 ;
   char *pBuf2 = 0 ;
   int val4 ;
   int ecode4 = 0 ;
@@ -22651,7 +22801,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   OGRErr result;
   
   {
-    /* %typemap(in,numinputs=0) (int *nLen2, char **pBuf2 ) */
+    /* %typemap(in,numinputs=0) (size_t *nLen2, char **pBuf2 ) */
     arg2 = &nLen2;
     arg3 = &pBuf2;
   }
@@ -22698,14 +22848,14 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
     }
   }
   {
-    /* %typemap(argout) (int *nLen, char **pBuf ) */
+    /* %typemap(argout) (size_t *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
     resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
   }
   {
-    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
     if( *arg2 ) {
-      free( *arg3 );
+      VSIFree( *arg3 );
     }
   }
   {
@@ -22718,9 +22868,9 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   return resultobj;
 fail:
   {
-    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
     if( *arg2 ) {
-      free( *arg3 );
+      VSIFree( *arg3 );
     }
   }
   return NULL;
@@ -22730,12 +22880,12 @@ fail:
 SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
-  int *arg2 = (int *) 0 ;
+  size_t *arg2 = (size_t *) 0 ;
   char **arg3 = (char **) 0 ;
   OGRwkbByteOrder arg4 = (OGRwkbByteOrder) wkbXDR ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int nLen2 = 0 ;
+  size_t nLen2 = 0 ;
   char *pBuf2 = 0 ;
   int val4 ;
   int ecode4 = 0 ;
@@ -22747,7 +22897,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   OGRErr result;
   
   {
-    /* %typemap(in,numinputs=0) (int *nLen2, char **pBuf2 ) */
+    /* %typemap(in,numinputs=0) (size_t *nLen2, char **pBuf2 ) */
     arg2 = &nLen2;
     arg3 = &pBuf2;
   }
@@ -22794,14 +22944,14 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
     }
   }
   {
-    /* %typemap(argout) (int *nLen, char **pBuf ) */
+    /* %typemap(argout) (size_t *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
     resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
   }
   {
-    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
     if( *arg2 ) {
-      free( *arg3 );
+      VSIFree( *arg3 );
     }
   }
   {
@@ -22814,9 +22964,9 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   return resultobj;
 fail:
   {
-    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
     if( *arg2 ) {
-      free( *arg3 );
+      VSIFree( *arg3 );
     }
   }
   return NULL;
@@ -26949,7 +27099,7 @@ SWIGINTERN PyObject *_wrap_Geometry_WkbSize(PyObject *SWIGUNUSEDPARM(self), PyOb
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
-  int result;
+  size_t result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:Geometry_WkbSize",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
@@ -26963,7 +27113,7 @@ SWIGINTERN PyObject *_wrap_Geometry_WkbSize(PyObject *SWIGUNUSEDPARM(self), PyOb
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (int)OGRGeometryShadow_WkbSize(arg1);
+      result = OGRGeometryShadow_WkbSize(arg1);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -26975,7 +27125,7 @@ SWIGINTERN PyObject *_wrap_Geometry_WkbSize(PyObject *SWIGUNUSEDPARM(self), PyOb
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  resultobj = SWIG_From_size_t(static_cast< size_t >(result));
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -34607,7 +34757,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GeomFieldDefn_IsNullable", _wrap_GeomFieldDefn_IsNullable, METH_VARARGS, (char *)"GeomFieldDefn_IsNullable(GeomFieldDefn self) -> int"},
 	 { (char *)"GeomFieldDefn_SetNullable", _wrap_GeomFieldDefn_SetNullable, METH_VARARGS, (char *)"GeomFieldDefn_SetNullable(GeomFieldDefn self, int bNullable)"},
 	 { (char *)"GeomFieldDefn_swigregister", GeomFieldDefn_swigregister, METH_VARARGS, NULL},
-	 { (char *)"CreateGeometryFromWkb", (PyCFunction) _wrap_CreateGeometryFromWkb, METH_VARARGS | METH_KEYWORDS, (char *)"CreateGeometryFromWkb(int len, SpatialReference reference=None) -> Geometry"},
+	 { (char *)"CreateGeometryFromWkb", (PyCFunction) _wrap_CreateGeometryFromWkb, METH_VARARGS | METH_KEYWORDS, (char *)"CreateGeometryFromWkb(size_t len, SpatialReference reference=None) -> Geometry"},
 	 { (char *)"CreateGeometryFromWkt", (PyCFunction) _wrap_CreateGeometryFromWkt, METH_VARARGS | METH_KEYWORDS, (char *)"CreateGeometryFromWkt(char ** val, SpatialReference reference=None) -> Geometry"},
 	 { (char *)"CreateGeometryFromGML", _wrap_CreateGeometryFromGML, METH_VARARGS, (char *)"CreateGeometryFromGML(char const * input_string) -> Geometry"},
 	 { (char *)"CreateGeometryFromJson", _wrap_CreateGeometryFromJson, METH_VARARGS, (char *)"CreateGeometryFromJson(char const * input_string) -> Geometry"},
@@ -35905,7 +36055,7 @@ static PyMethodDef SwigMethods[] = {
 		"OGR 1.10 \n"
 		""},
 	 { (char *)"Geometry_WkbSize", _wrap_Geometry_WkbSize, METH_VARARGS, (char *)"\n"
-		"Geometry_WkbSize(Geometry self) -> int\n"
+		"Geometry_WkbSize(Geometry self) -> size_t\n"
 		"\n"
 		"int OGR_G_WkbSize(OGRGeometryH hGeom)\n"
 		"\n"
@@ -36236,6 +36386,7 @@ static swig_type_info _swigt__p_p_GIntBig = {"_p_p_GIntBig", "GIntBig **", 0, 0,
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_double = {"_p_p_double", "double **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_size_t = {"_p_size_t", "size_t *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GDALMajorObjectShadow,
@@ -36265,6 +36416,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_p_char,
   &_swigt__p_p_double,
   &_swigt__p_p_int,
+  &_swigt__p_size_t,
 };
 
 static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_OGRDriverShadow, _p_OGRDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRLayerShadow, _p_OGRLayerShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRDataSourceShadow, _p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
@@ -36294,6 +36446,7 @@ static swig_cast_info _swigc__p_p_GIntBig[] = {  {&_swigt__p_p_GIntBig, 0, 0, 0}
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_double[] = {  {&_swigt__p_p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_size_t[] = {  {&_swigt__p_size_t, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GDALMajorObjectShadow,
@@ -36323,6 +36476,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_p_char,
   _swigc__p_p_double,
   _swigc__p_p_int,
+  _swigc__p_size_t,
 };
 
 

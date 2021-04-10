@@ -2473,12 +2473,12 @@ public:
 %feature( "kwargs" ) CreateGeometryFromWkb;
 %newobject CreateGeometryFromWkb;
 #ifndef SWIGCSHARP
-%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
+%apply (size_t nLen, char *pBuf ) { (size_t len, char *bin_string)};
 #else
 %apply (void *buffer_ptr) {char *bin_string};
 #endif
 %inline %{
-  OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string,
+  OGRGeometryShadow* CreateGeometryFromWkb( size_t len, char *bin_string,
                                             OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom = NULL;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
@@ -2495,7 +2495,7 @@ public:
 %}
 #endif
 #ifndef SWIGCSHARP
-%clear (int len, char *bin_string);
+%clear (size_t len, char *bin_string);
 #else
 %clear (char *bin_string);
 #endif
@@ -2731,34 +2731,60 @@ public:
   }
 
 #ifndef SWIGCSHARP
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA)
 %apply (GByte* outBytes) {GByte*};
-  GByte* ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
-    *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen );
+  GByte* ExportToWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+    *nLen = OGR_G_WkbSizeEx( self );
+    *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
+    if( *pBuf == NULL )
+        return NULL;
     OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
     return (GByte*)*pBuf;
   }
 
-  GByte* ExportToIsoWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
-    *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen );
+  GByte* ExportToIsoWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+    *nLen = OGR_G_WkbSizeEx( self );
+    *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
+    if( *pBuf == NULL )
+        return NULL;
     OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) *pBuf );
     return (GByte*)*pBuf;
   }
 %clear GByte*;
+#elif defined(SWIGPYTHON)
+  %feature("kwargs") ExportToWkb;
+  OGRErr ExportToWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+    *nLen = OGR_G_WkbSizeEx( self );
+    *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
+    if( *pBuf == NULL )
+        return OGRERR_FAILURE;
+    return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
+  }
+
+  %feature("kwargs") ExportToIsoWkb;
+  OGRErr ExportToIsoWkb( size_t *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+    *nLen = OGR_G_WkbSizeEx( self );
+    *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
+    if( *pBuf == NULL )
+        return OGRERR_FAILURE;
+    return OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) *pBuf );
+  }
 #else
   %feature("kwargs") ExportToWkb;
   OGRErr ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen );
+    *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
+    if( *pBuf == NULL )
+        return OGRERR_FAILURE;
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
 
   %feature("kwargs") ExportToIsoWkb;
   OGRErr ExportToIsoWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
-    *pBuf = (char *) malloc( *nLen );
+    *pBuf = (char *) VSI_MALLOC_VERBOSE( *nLen );
+    if( *pBuf == NULL )
+        return OGRERR_FAILURE;
     return OGR_G_ExportToIsoWkb(self, byte_order, (unsigned char*) *pBuf );
   }
 #endif
@@ -3272,8 +3298,8 @@ public:
     return (OGRGeometryShadow*) OGR_G_PointOnSurface( self );
   }
 
-  int WkbSize() {
-    return OGR_G_WkbSize(self);
+  size_t WkbSize() {
+    return OGR_G_WkbSizeEx(self);
   }
 
   int GetCoordinateDimension() {

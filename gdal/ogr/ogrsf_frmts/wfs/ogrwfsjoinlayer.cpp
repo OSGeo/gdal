@@ -602,22 +602,22 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                     if( eType == OFTInteger )
                     {
                         int nVal = poNewFeature->GetFieldAsInteger(i);
-                        CPLMD5Update( &sMD5Context, (const GByte*)&nVal, sizeof(nVal));
+                        CPLMD5Update( &sMD5Context, &nVal, sizeof(nVal));
                     }
                     else if( eType == OFTInteger64 )
                     {
                         GIntBig nVal = poNewFeature->GetFieldAsInteger64(i);
-                        CPLMD5Update( &sMD5Context, (const GByte*)&nVal, sizeof(nVal));
+                        CPLMD5Update( &sMD5Context, &nVal, sizeof(nVal));
                     }
                     else if( eType == OFTReal )
                     {
                         double dfVal = poNewFeature->GetFieldAsDouble(i);
-                        CPLMD5Update( &sMD5Context, (const GByte*)&dfVal, sizeof(dfVal));
+                        CPLMD5Update( &sMD5Context, &dfVal, sizeof(dfVal));
                     }
                     else
                     {
                         const char* pszStr = poNewFeature->GetFieldAsString(i);
-                        CPLMD5Update( &sMD5Context, (const GByte*)pszStr, static_cast<int>(strlen(pszStr)));
+                        CPLMD5Update( &sMD5Context, pszStr, strlen(pszStr));
                     }
                 }
             }
@@ -634,11 +634,14 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
 
                     if( bDistinct )
                     {
-                        int nSize = poGeom->WkbSize();
-                        GByte* pabyGeom = (GByte*)CPLMalloc(nSize);
-                        poGeom->exportToWkb(wkbNDR, pabyGeom);
-                        CPLMD5Update( &sMD5Context, (const GByte*)pabyGeom, nSize);
-                        CPLFree(pabyGeom);
+                        const size_t nSize = poGeom->WkbSize();
+                        GByte* pabyGeom = (GByte*)VSI_MALLOC_VERBOSE(nSize);
+                        if( pabyGeom )
+                        {
+                            poGeom->exportToWkb(wkbNDR, pabyGeom);
+                            CPLMD5Update( &sMD5Context, pabyGeom, nSize);
+                            CPLFree(pabyGeom);
+                        }
                     }
 
                     poNewFeature->SetGeomFieldDirectly(i, poGeom);

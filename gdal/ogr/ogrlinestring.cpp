@@ -186,10 +186,10 @@ void OGRSimpleCurve::setMeasured( OGRBoolean bIsMeasured )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRSimpleCurve::WkbSize() const
+size_t OGRSimpleCurve::WkbSize() const
 
 {
-    return 5 + 4 + 8 * nPointCount * CoordinateDimension();
+    return 5 + 4 + 8 * static_cast<size_t>(nPointCount) * CoordinateDimension();
 }
 
 //! @cond Doxygen_Suppress
@@ -1477,16 +1477,16 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
 /************************************************************************/
 
 OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
-                                      int nSize,
+                                      size_t nSize,
                                       OGRwkbVariant eWkbVariant,
-                                      int& nBytesConsumedOut )
+                                      size_t& nBytesConsumedOut )
 
 {
     OGRwkbByteOrder     eByteOrder;
-    int                 nDataOffset = 0;
+    size_t              nDataOffset = 0;
     int                 nNewNumPoints = 0;
 
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     OGRErr eErr = importPreambleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
@@ -1500,12 +1500,15 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
     // Check if the wkb stream buffer is big enough to store
     // fetched number of points.
     const int dim = CoordinateDimension();
-    int nPointSize = dim*sizeof(double);
-    if( nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize )
+    const size_t nPointSize = dim*sizeof(double);
+    if( nNewNumPoints < 0 ||
+        static_cast<size_t>(nNewNumPoints) > std::numeric_limits<size_t>::max() / nPointSize )
+    {
         return OGRERR_CORRUPT_DATA;
-    int nBufferMinSize = nPointSize * nNewNumPoints;
+    }
+    const size_t nBufferMinSize = nPointSize * nNewNumPoints;
 
-    if( nSize != -1 && nBufferMinSize > nSize )
+    if( nSize != static_cast<size_t>(-1) && nBufferMinSize > nSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -1516,7 +1519,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
     if( nPointCount < nNewNumPoints )
         return OGRERR_FAILURE;
 
-    nBytesConsumedOut = 9 + 8 * nPointCount *
+    nBytesConsumedOut = 9 + 8 * static_cast<size_t>(nPointCount) *
                                     (2 + ((flags & OGR_G_3D) ? 1 : 0)+
                                          ((flags & OGR_G_MEASURED) ? 1 : 0));
 
@@ -1525,7 +1528,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*32, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*32, 8 );
@@ -1534,7 +1537,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
     }
     else if( flags & OGR_G_MEASURED )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfM + i, pabyData + 9 + 16 + i*24, 8 );
@@ -1542,7 +1545,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
     }
     else if( flags & OGR_G_3D )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*24, 8 );
@@ -1550,7 +1553,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
     }
     else if( nPointCount )
     {
-        memcpy( paoPoints, pabyData + 9, 16 * nPointCount );
+        memcpy( paoPoints, pabyData + 9, 16 * static_cast<size_t>(nPointCount) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1558,7 +1561,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             CPL_SWAPDOUBLE( &(paoPoints[i].x) );
             CPL_SWAPDOUBLE( &(paoPoints[i].y) );
@@ -1566,7 +1569,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
 
         if( flags & OGR_G_3D )
         {
-            for( int i = 0; i < nPointCount; i++ )
+            for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
             {
                 CPL_SWAPDOUBLE( padfZ + i );
             }
@@ -1574,7 +1577,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
 
         if( flags & OGR_G_MEASURED )
         {
-            for( int i = 0; i < nPointCount; i++ )
+            for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
             {
                 CPL_SWAPDOUBLE( padfM + i );
             }
@@ -1638,7 +1641,7 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData + 9 + 32*i, paoPoints+i, 16 );
             memcpy( pabyData + 9 + 16 + 32*i, padfZ+i, 8 );
@@ -1647,7 +1650,7 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
     }
     else if( flags & OGR_G_MEASURED )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData + 9 + 24*i, paoPoints+i, 16 );
             memcpy( pabyData + 9 + 16 + 24*i, padfM+i, 8 );
@@ -1655,24 +1658,25 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
     }
     else if( flags & OGR_G_3D )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData + 9 + 24*i, paoPoints+i, 16 );
             memcpy( pabyData + 9 + 16 + 24*i, padfZ+i, 8 );
         }
     }
     else if( nPointCount )
-        memcpy( pabyData+9, paoPoints, 16 * nPointCount );
+        memcpy( pabyData+9, paoPoints, 16 * static_cast<size_t>(nPointCount) );
 
 /* -------------------------------------------------------------------- */
 /*      Swap if needed.                                                 */
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int nCount = CPL_SWAP32( nPointCount );
+        const int nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData+5, &nCount, 4 );
 
-        for( int i = CoordinateDimension() * nPointCount - 1; i >= 0; i-- )
+        const size_t nCoords = CoordinateDimension() * static_cast<size_t>(nPointCount);
+        for( size_t i = 0; i < nCoords; i++ )
         {
             CPL_SWAP64PTR( pabyData + 9 + 8 * i );
         }

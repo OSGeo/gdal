@@ -293,7 +293,7 @@ void OGRPoint::setCoordinateDimension( int nNewDimension )
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRPoint::WkbSize() const
+size_t OGRPoint::WkbSize() const
 
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
@@ -312,12 +312,12 @@ int OGRPoint::WkbSize() const
 /************************************************************************/
 
 OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
-                                int nSize,
+                                size_t nSize,
                                 OGRwkbVariant eWkbVariant,
-                                int& nBytesConsumedOut )
+                                size_t& nBytesConsumedOut )
 
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     OGRwkbByteOrder eByteOrder = wkbNDR;
 
     flags = 0;
@@ -327,7 +327,7 @@ OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    if( nSize != -1 )
+    if( nSize != static_cast<size_t>(-1) )
     {
         if( (nSize < 37) && ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED)) )
             return OGRERR_NOT_ENOUGH_DATA;

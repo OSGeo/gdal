@@ -5870,7 +5870,7 @@ GeomFieldDefn_swigregister(GeomFieldDefn)
 
 
 def CreateGeometryFromWkb(*args, **kwargs):
-    """CreateGeometryFromWkb(int len, SpatialReference reference=None) -> Geometry"""
+    """CreateGeometryFromWkb(size_t len, SpatialReference reference=None) -> Geometry"""
     return _ogr.CreateGeometryFromWkb(*args, **kwargs)
 
 def CreateGeometryFromWkt(*args, **kwargs):
@@ -7543,7 +7543,7 @@ class Geometry(_object):
 
     def WkbSize(self, *args):
         """
-        WkbSize(Geometry self) -> int
+        WkbSize(Geometry self) -> size_t
 
         int OGR_G_WkbSize(OGRGeometryH hGeom)
 

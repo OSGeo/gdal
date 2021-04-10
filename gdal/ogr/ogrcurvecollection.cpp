@@ -134,9 +134,9 @@ OGRCurveCollection::operator=( const OGRCurveCollection& other )
 /*                              WkbSize()                               */
 /************************************************************************/
 
-int OGRCurveCollection::WkbSize() const
+size_t OGRCurveCollection::WkbSize() const
 {
-    int nSize = 9;
+    size_t nSize = 9;
 
     for( auto&& poSubGeom: *this )
     {
@@ -179,10 +179,10 @@ OGRErr OGRCurveCollection::addCurveDirectly( OGRGeometry* poGeom,
 
 OGRErr OGRCurveCollection::importPreambleFromWkb( OGRGeometry* poGeom,
                                                    const unsigned char * pabyData,
-                                                   int& nSize,
-                                                   int& nDataOffset,
+                                                   size_t& nSize,
+                                                   size_t& nDataOffset,
                                                    OGRwkbByteOrder& eByteOrder,
-                                                   int nMinSubGeomSize,
+                                                   size_t nMinSubGeomSize,
                                                    OGRwkbVariant eWkbVariant )
 {
     OGRErr eErr = poGeom->importPreambleOfCollectionFromWkb(
@@ -215,27 +215,27 @@ OGRErr OGRCurveCollection::importPreambleFromWkb( OGRGeometry* poGeom,
 OGRErr OGRCurveCollection::importBodyFromWkb(
     OGRGeometry* poGeom,
     const unsigned char * pabyData,
-    int nSize,
-    int bAcceptCompoundCurve,
+    size_t nSize,
+    bool bAcceptCompoundCurve,
     OGRErr (*pfnAddCurveDirectlyFromWkb)(OGRGeometry* poGeom,
                                          OGRCurve* poCurve),
     OGRwkbVariant eWkbVariant,
-    int& nBytesConsumedOut )
+    size_t& nBytesConsumedOut )
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
 /* -------------------------------------------------------------------- */
 /*      Get the Geoms.                                                  */
 /* -------------------------------------------------------------------- */
     const int nIter = nCurveCount;
     nCurveCount = 0;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     for( int iGeom = 0; iGeom < nIter; iGeom++ )
     {
         OGRGeometry* poSubGeom = nullptr;
 
         // Parses sub-geometry.
         const unsigned char* pabySubData = pabyData + nDataOffset;
-        if( nSize < 9 && nSize != -1 )
+        if( nSize < 9 && nSize != static_cast<size_t>(-1) )
             return OGRERR_NOT_ENOUGH_DATA;
 
         OGRwkbGeometryType eFlattenSubGeomType = wkbUnknown;
@@ -245,7 +245,7 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
         eFlattenSubGeomType = wkbFlatten(eFlattenSubGeomType);
 
         OGRErr eErr = OGRERR_NONE;
-        int nSubGeomBytesConsumedOut = -1;
+        size_t nSubGeomBytesConsumedOut = 0;
         if( (eFlattenSubGeomType != wkbCompoundCurve &&
              OGR_GT_IsCurve(eFlattenSubGeomType)) ||
             (bAcceptCompoundCurve && eFlattenSubGeomType == wkbCompoundCurve) )
@@ -267,7 +267,7 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
         if( eErr == OGRERR_NONE )
         {
             CPLAssert( nSubGeomBytesConsumedOut > 0 );
-            if( nSize != -1 )
+            if( nSize != static_cast<size_t>(-1) )
             {
                 CPLAssert( nSize >= nSubGeomBytesConsumedOut );
                 nSize -= nSubGeomBytesConsumedOut;
@@ -409,7 +409,7 @@ OGRErr OGRCurveCollection::exportToWkb( const OGRGeometry* poGeom,
     }
 
     // TODO(schwehr): Where do these 9 values come from?
-    int nOffset = 9;
+    size_t nOffset = 9;
 
 /* ==================================================================== */
 /*      Serialize each of the Geoms.                                    */

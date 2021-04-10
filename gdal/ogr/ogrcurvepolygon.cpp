@@ -422,7 +422,7 @@ OGRErr OGRCurvePolygon::addRingDirectlyInternal( OGRCurve* poNewRing,
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRCurvePolygon::WkbSize() const
+size_t OGRCurvePolygon::WkbSize() const
 
 {
     return oCC.WkbSize();
@@ -447,14 +447,14 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
 /************************************************************************/
 
 OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
-                                       int nSize,
+                                       size_t nSize,
                                        OGRwkbVariant eWkbVariant,
-                                       int& nBytesConsumedOut )
+                                       size_t& nBytesConsumedOut )
 
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     OGRwkbByteOrder eByteOrder;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
@@ -462,7 +462,7 @@ OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
         return eErr;
 
     eErr = oCC.importBodyFromWkb(this, pabyData + nDataOffset, nSize,
-                                 TRUE,  // bAcceptCompoundCurve
+                                 true,  // bAcceptCompoundCurve
                                  addCurveDirectlyFromWkb,
                                  eWkbVariant,
                                  nBytesConsumedOut );

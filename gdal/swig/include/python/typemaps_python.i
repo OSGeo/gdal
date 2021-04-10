@@ -486,9 +486,30 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( *$1 ) {
-    free( *$2 );
+    VSIFree( *$2 );
   }
 }
+
+%typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen = 0, char *pBuf = 0 )
+{
+  /* %typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+%typemap(argout) (size_t *nLen, char **pBuf )
+{
+  /* %typemap(argout) (size_t *nLen, char **pBuf ) */
+  Py_XDECREF($result);
+  $result = PyByteArray_FromStringAndSize( *$2, *$1 );
+}
+%typemap(freearg) (size_t *nLen, char **pBuf )
+{
+  /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
+  if( *$1 ) {
+    VSIFree( *$2 );
+  }
+}
+
 
 
 %typemap(in,numinputs=1) (int nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
@@ -536,6 +557,53 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(freearg) (int nLen, char *pBuf )
 {
   /* %typemap(freearg) (int *nLen, char *pBuf ) */
+  if( viewIsValid$argnum ) {
+    PyBuffer_Release(&view$argnum);
+  }
+  else if( alloc$argnum == SWIG_NEWOBJ ) {
+    delete[] $2;
+  }
+}
+
+
+%typemap(in,numinputs=1) (size_t nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
+{
+  /* %typemap(in,numinputs=1) (size_t nLen, char *pBuf ) */
+  {
+    if (PyObject_GetBuffer($input, &view, PyBUF_SIMPLE) == 0)
+    {
+      viewIsValid = true;
+      $1 = view.len;
+      $2 = ($2_ltype) view.buf;
+      goto ok;
+    }
+    else
+    {
+        PyErr_Clear();
+    }
+  }
+  if (PyUnicode_Check($input))
+  {
+    size_t safeLen = 0;
+    int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    if (!SWIG_IsOK(ret)) {
+      SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+    }
+
+    if (safeLen) safeLen--;
+    $1 = safeLen;
+  }
+  else
+  {
+    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
+    SWIG_fail;
+  }
+  ok: ;
+}
+
+%typemap(freearg) (size_t nLen, char *pBuf )
+{
+  /* %typemap(freearg) (size_t *nLen, char *pBuf ) */
   if( viewIsValid$argnum ) {
     PyBuffer_Release(&view$argnum);
   }

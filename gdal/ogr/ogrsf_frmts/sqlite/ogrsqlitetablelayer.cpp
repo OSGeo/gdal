@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -2197,11 +2198,22 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
             }
             else if( eGeomFormat == OSGF_WKB )
             {
-                int nWKBLen = poGeom->WkbSize();
-                GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
-
-                poGeom->exportToWkb( wkbNDR, pabyWKB );
-                rc = sqlite3_bind_blob( hStmtIn, nBindField++, pabyWKB, nWKBLen, CPLFree );
+                const size_t nWKBLen = poGeom->WkbSize();
+                if( nWKBLen > static_cast<size_t>(std::numeric_limits<int>::max()) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported, "Too large geometry");
+                    return OGRERR_FAILURE;
+                }
+                GByte *pabyWKB = (GByte *) VSI_MALLOC_VERBOSE(nWKBLen);
+                if( pabyWKB )
+                {
+                    poGeom->exportToWkb( wkbNDR, pabyWKB );
+                    rc = sqlite3_bind_blob( hStmtIn, nBindField++, pabyWKB, static_cast<int>(nWKBLen), CPLFree );
+                }
+                else
+                {
+                    return OGRERR_FAILURE;
+                }
             }
             else if ( eGeomFormat == OSGF_SpatiaLite )
             {

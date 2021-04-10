@@ -196,9 +196,9 @@ bool OGRTriangle::quickValidityCheck() const
 /************************************************************************/
 
 OGRErr OGRTriangle::importFromWkb( const unsigned char *pabyData,
-                                   int nSize,
+                                   size_t nSize,
                                    OGRwkbVariant eWkbVariant,
-                                   int& nBytesConsumedOut )
+                                   size_t& nBytesConsumedOut )
 {
     OGRErr eErr = OGRPolygon::importFromWkb( pabyData, nSize, eWkbVariant,
                                              nBytesConsumedOut );
