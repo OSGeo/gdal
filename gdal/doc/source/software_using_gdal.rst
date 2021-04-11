@@ -112,4 +112,5 @@ Software using GDAL
 - `TravTime  <http://www.geostats.com/product_trav.htm>`_  .NET Application for visualizing, processing and analyzing GPS data for travel time, speed, and de
 - `VectorWorks <http://www.vectorworks.net>`_ The Vectorworks line of software products provides professional design solutions in the AEC, entertainment and landscape design industries.
 - `Vertual Terrain Project  <http://www.vterrain.org>`_  fostering tools for easy construction of the real world in interactive, 3D digital form.
+- `ViRGiS <https://www.virgis.org/>`__ Creating a GIS Platform in Virtual Reality / Mixed Reality
 - `WindNinja  <https://www.firelab.org/project/windninja>`_  wind model for fire behavior modeling.
