@@ -20,8 +20,7 @@ Supported platforms
 -------------------
 
 Currently the interface is compilable and supports the various Win32 and Win64 platforms targeting the Microsoft.NET and the MONO frameworks. The interface is also
-compilable under the GNU Linux/OSX systems for the MONO framework. The compilation steps for the various platforms have been added to the ​`GDAL buildbot <http://buildbot.osgeo.org:8500/>`__ and tested
-regularly.
+compilable under the GNU Linux/OSX systems for the MONO framework.
 
 Related Documents
 -----------------
@@ -36,11 +35,11 @@ Useful Links
 
 * A variety of example programs in CSharp are available at the `/swig/csharp/apps <https://github.com/OSGeo/gdal/tree/master/gdal/swig/csharp/apps>`__ folder of the GDAL project tree.
 
-* This project make images tiles (Superoverlay method) for Google Earth ​`GdalToTiles C# <https://archive.codeplex.com/?p=gdal2tilescsharp>`__
+* The `ViRGiS project <https://www.virgis.org/>`__ makes extensive use of GDAL in c# in a Unity environment.
 
 
 Windows Build SDKs
 ------------------
 
-Tamas Szekeres maintains ​`build SDK packages <http://www.gisinternals.com/sdk>`__ in order to compile GDAL from the sources on Windows. The build system provides daily
+Tamas Szekeres maintains `build SDK packages <http://www.gisinternals.com/sdk>`__ in order to compile GDAL from the sources on Windows. The build system provides daily
 build binary packages for the latest stable and development versions.
