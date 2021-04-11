@@ -757,7 +757,8 @@ OGRErr OGRNGWLayer::SetNextByIndex( GIntBig nIndex )
             if( poDS->HasFeaturePaging() )
             {
                 osUrl = NGWAPI::GetFeaturePage( poDS->GetUrl(), osResourceId, 0, 0,
-                    osFields, osWhere, osSpatialFilter );
+                    osFields, osWhere, osSpatialFilter, poDS->Extensions(), 
+                    poFeatureDefn->IsGeometryIgnored() == TRUE);
             }
             else
             {
@@ -796,7 +797,8 @@ OGRFeature *OGRNGWLayer::GetNextFeature()
 
             osUrl = NGWAPI::GetFeaturePage( poDS->GetUrl(), osResourceId,
                 nPageStart, poDS->GetPageSize(), osFields, osWhere,
-                osSpatialFilter );
+                osSpatialFilter, poDS->Extensions(), 
+                poFeatureDefn->IsGeometryIgnored() == TRUE);
             nPageStart += poDS->GetPageSize();
         }
     }
@@ -805,7 +807,8 @@ OGRFeature *OGRNGWLayer::GetNextFeature()
         if( poDS->HasFeaturePaging() )
         {
             osUrl = NGWAPI::GetFeaturePage( poDS->GetUrl(), osResourceId, 0, 0,
-                osFields, osWhere, osSpatialFilter );
+                osFields, osWhere, osSpatialFilter, poDS->Extensions(),
+                poFeatureDefn->IsGeometryIgnored() == TRUE);
         }
         else
         {
@@ -1003,9 +1006,10 @@ void OGRNGWLayer::FillFields( const CPLJSONArray &oFields )
         OGRFieldType eFieldtype = NGWAPI::NGWFieldTypeToOGRFieldType(
             oField.GetString("datatype"));
         OGRFieldDefn oFieldDefn(osFieldName.c_str(), eFieldtype);
-        poFeatureDefn->AddFieldDefn(&oFieldDefn);
         std::string osFieldId = oField.GetString("id");
         std::string osFieldAlias = oField.GetString("display_name");
+        oFieldDefn.SetAlternativeName(osFieldAlias.c_str());
+        poFeatureDefn->AddFieldDefn(&oFieldDefn);
         std::string osFieldIsLabel = oField.GetString("label_field");
         std::string osFieldGridVisible = oField.GetString("grid_visibility");
 
@@ -1279,12 +1283,20 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
         oField.Add("keyname", poFieldDefn->GetNameRef());
         oField.Add("datatype", NGWAPI::OGRFieldTypeToNGWFieldType(
             poFieldDefn->GetType() ));
+        std::string osFieldAliasName = poFieldDefn->GetAlternativeNameRef();
         // Get alias from metadata.
-        std::string osFieldAliasName = "FIELD_" + std::to_string(iField) + "_ALIAS";
-        const char *pszFieldAlias = GetMetadataItem( osFieldAliasName.c_str() );
-        if( pszFieldAlias )
+        if( osFieldAliasName.empty() )
         {
-            oField.Add("display_name", pszFieldAlias);
+            osFieldAliasName = "FIELD_" + std::to_string(iField) + "_ALIAS";
+            const char *pszFieldAlias = GetMetadataItem( osFieldAliasName.c_str() );
+            if( pszFieldAlias )
+            {
+                oField.Add("display_name", pszFieldAlias);
+            }
+        }
+        else 
+        {
+            oField.Add("display_name", osFieldAliasName);
         }
         oVectorLayerFields.Add(oField);
     }
