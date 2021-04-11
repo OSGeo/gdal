@@ -119,6 +119,10 @@ swig/perl/MYMETA.json
 swig/perl/MYMETA.yml
 swig/perl/Makefile_Geo__GNM
 swig/perl/gnm_wrap.cpp
+swig/csharp/*.cpp
+swig/csharp/*.c
+swig/csharp/*.mdb
+swig/csharp/*.config
 swig/csharp/osr
 swig/csharp/ogr
 swig/csharp/gdal
