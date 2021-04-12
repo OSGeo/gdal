@@ -28,4 +28,6 @@ jobs:
           restore-keys: ${{ runner.os }}-cache-fedora-rawhide-
 
       - name: Build
-        run: docker run --privileged=true -e CI -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock fedora:rawhide $PWD/.github/workflows/fedora_rawhide/start.sh
+        # Downgraded to fedora:34 instead of fedora:rawhide due to conflict between blas-devel-3.9.1-1.fc35.x86_64 and atlas-devel-3.10.3-13.fc34.x86_64
+        # See https://github.com/OSGeo/gdal/runs/2324845532
+        run: docker run --privileged=true -e CI -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock fedora:34 $PWD/.github/workflows/fedora_rawhide/start.sh
