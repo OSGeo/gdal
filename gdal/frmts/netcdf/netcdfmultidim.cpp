@@ -105,7 +105,7 @@ int netCDFSharedResources::GetBelongingGroupOfDim(int startgid, int dimid)
         if( nbDims > 0 )
         {
             std::vector<int> dimids(nbDims);
-            NCDF_ERR(nc_inq_dimids(gid, &nbDims, &dimids[0], FALSE)); 
+            NCDF_ERR(nc_inq_dimids(gid, &nbDims, &dimids[0], FALSE));
             for( int i = 0; i < nbDims; i++ )
             {
                 m_oMapDimIdToGroupId[dimid] = gid;
@@ -553,7 +553,7 @@ netCDFGroup::netCDFGroup(const std::shared_ptr<netCDFSharedResources>& poShared,
         else if( nFormat == NC_FORMAT_NETCDF4_CLASSIC )
         {
             m_aosStructuralInfo.SetNameValue("NC_FORMAT", "NETCDF4_CLASSIC");
-        } 
+        }
     }
 }
 
@@ -1123,7 +1123,7 @@ std::vector<std::shared_ptr<GDALDimension>> netCDFGroup::GetDimensions(CSLConstL
     if( nbDims == 0 )
         return {};
     std::vector<int> dimids(nbDims);
-    NCDF_ERR(nc_inq_dimids(m_gid, &nbDims, &dimids[0], FALSE)); 
+    NCDF_ERR(nc_inq_dimids(m_gid, &nbDims, &dimids[0], FALSE));
     std::vector<std::shared_ptr<GDALDimension>> res;
     for( int i = 0; i < nbDims; i++ )
     {
@@ -1413,7 +1413,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
                             int nIndexingVarGroupId = -1;
                             int nIndexingVarId = -1;
                             if( NCDFResolveVar(poArrayNC->GetGroupId(),
-                                               aosCoordinates[i],
+                                               aosCoordinates[aosCoordinates.size() - 1 - i],
                                                &nIndexingVarGroupId,
                                                &nIndexingVarId,
                                                false) == CE_None )
@@ -2485,7 +2485,7 @@ bool netCDFVariable::IReadWrite(const bool bIsRead,
         }
     }
 
-    if( bUseSlowPath || 
+    if( bUseSlowPath ||
         bufferDataType.GetClass() == GEDTC_COMPOUND ||
         eDT.GetClass() == GEDTC_COMPOUND ||
         (!bIsRead && bufferDataType.GetNumericDataType() != eDT.GetNumericDataType()) ||
@@ -3491,7 +3491,7 @@ bool netCDFAttribute::IWrite(const GUInt64* arrayStartIdx,
     CPLMutexHolderD(&hNCMutex);
 
     if( m_dims.size() == 1 &&
-        (arrayStartIdx[0] != 0 || 
+        (arrayStartIdx[0] != 0 ||
          count[0] != m_dims[0]->GetSize() || arrayStep[0] != 1) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
