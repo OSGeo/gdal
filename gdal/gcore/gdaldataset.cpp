@@ -342,6 +342,7 @@ GDALDataset::~GDALDataset()
     {
         if( papoBands[i] != nullptr )
             delete papoBands[i];
+        papoBands[i] = nullptr;
     }
 
     CPLFree(papoBands);

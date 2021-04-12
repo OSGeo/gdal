@@ -91,6 +91,8 @@ public:
 protected:
     friend class RawDataset;
 
+    static constexpr int NO_SCANLINE_LOADED = -1;
+
     VSILFILE   *fpRawL{};
 
     vsi_l_offset nImgOffset{};
@@ -99,13 +101,16 @@ protected:
     int         nLineSize{};
     ByteOrder   eByteOrder{};
 
-    int         nLoadedScanline{};
+    int         nLoadedScanline = NO_SCANLINE_LOADED;
     void        *pLineBuffer{};
     void        *pLineStart{};
-    int         bDirty{};
+    bool        bNeedFileFlush = false;
+    bool        bLoadedScanlineDirty = false; // true when the buffer has
+                                              // modified content that needs to
+                                              // be pushed to disk
 
     GDALColorTable *poCT{};
-    GDALColorInterp eInterp{};
+    GDALColorInterp eInterp = GCI_Undefined;
 
     char           **papszCategoryNames{};
 
@@ -204,7 +209,12 @@ public:
     CPL_DISALLOW_COPY_ASSIGN(RawRasterBand)
 
     bool         NeedsByteOrderChange() const;
-    void         DoByteSwap(void* pBuffer, size_t nValues, bool bDiskToCPU) const;
+    void         DoByteSwap(void* pBuffer, size_t nValues, int nByteSkip, bool bDiskToCPU) const;
+    bool         IsBIP() const;
+    vsi_l_offset ComputeFileOffset(int iLine) const;
+    bool         FlushCurrentLine(bool bNeedUsableBufferAfter);
+    CPLErr       BIPWriteBlock( int nBlockYOff, int nCallingBand, const void* pImage );
+
 };
 
 #ifdef GDAL_COMPILATION

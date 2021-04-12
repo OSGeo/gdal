@@ -33,9 +33,10 @@
 ###############################################################################
 
 from osgeo import gdal
-
+import struct
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Perform simple read test.
@@ -460,3 +461,57 @@ def test_envi_rotation_180():
     ds = None
 
     gdal.GetDriverByName('ENVI').Delete(filename)
+
+###############################################################################
+# Test writing different interleaving
+
+
+@pytest.mark.parametrize('interleaving', ['bip', 'bil', 'bsq'])
+def test_envi_writing_interleaving(interleaving):
+
+    srcfilename = 'data/envi/envi_rgbsmall_' + interleaving + '.img'
+    dstfilename = '/vsimem/out'
+    try:
+        gdal.Translate(dstfilename, srcfilename,
+                       format = 'ENVI',
+                       creationOptions=['INTERLEAVE=' + interleaving])
+        ref_data = open(srcfilename, 'rb').read()
+        f = gdal.VSIFOpenL(dstfilename, 'rb')
+        if f:
+            got_data = gdal.VSIFReadL(1, len(ref_data), f)
+            gdal.VSIFCloseL(f)
+            assert got_data == ref_data
+    finally:
+        gdal.Unlink(dstfilename)
+        gdal.Unlink(dstfilename + '.hdr')
+
+###############################################################################
+# Test writing different interleaving (larger file)
+
+
+@pytest.mark.parametrize('interleaving', ['bip', 'bil', 'bsq'])
+def test_envi_writing_interleaving_larger_file(interleaving):
+
+    dstfilename = '/vsimem/out'
+    try:
+        xsize = 10000
+        ysize = 10
+        bands = 100
+        with gdaltest.SetCacheMax(xsize * (ysize // 2)):
+            ds = gdal.GetDriverByName('ENVI').Create(dstfilename, xsize, ysize, bands, options = ['INTERLEAVE=' + interleaving])
+            ds.GetRasterBand(1).Fill(1)
+            for i in range(bands):
+                v = struct.pack('B', i+1)
+                ds.GetRasterBand(i+1).WriteRaster(0, 0, xsize, ysize // 2, v * (xsize * (ysize // 2)))
+            for i in range(bands):
+                v = struct.pack('B', i+1)
+                ds.GetRasterBand(i+1).WriteRaster(0, ysize // 2, xsize, ysize // 2, v * (xsize * (ysize // 2)))
+            ds = None
+
+        ds = gdal.Open(dstfilename)
+        for i in range(bands):
+            v = struct.pack('B', i+1)
+            assert ds.GetRasterBand(i+1).ReadRaster() == v * (xsize * ysize)
+    finally:
+        gdal.Unlink(dstfilename)
+        gdal.Unlink(dstfilename + '.hdr')
