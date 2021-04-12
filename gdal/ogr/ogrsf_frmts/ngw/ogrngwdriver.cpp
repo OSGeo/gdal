@@ -460,10 +460,11 @@ void RegisterOGRNGW()
         "   <Option name='USERPWD' scope='raster,vector' type='string' description='Username and password, separated by colon'/>"
         "   <Option name='PAGE_SIZE' scope='vector' type='integer' description='Limit feature count while fetching from server. Default value is -1 - no limit' default='-1'/>"
         "   <Option name='BATCH_SIZE' scope='vector' type='integer' description='Size of feature insert and update operations cache before send to server. If batch size is -1 batch mode is disabled' default='-1'/>"
-        "   <Option name='NATIVE_DATA' scope='vector' type='boolean' description='Whether to store the native Json representation of extensions key' default='NO'/>"
+        "   <Option name='NATIVE_DATA' scope='vector' type='boolean' description='Whether to store the native Json representation of extensions key. If EXTENSIONS not set or empty, NATIVE_DATA defaults to NO' default='NO'/>"
         "   <Option name='CACHE_EXPIRES' scope='raster' type='integer' description='Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web' default='604800'/>"
         "   <Option name='CACHE_MAX_SIZE' scope='raster' type='integer' description='The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted' default='67108864'/>"
         "   <Option name='JSON_DEPTH' scope='raster,vector' type='integer' description='The depth of json response that can be parsed. If depth is greater than this value, parse error occurs' default='32'/>"
+        "   <Option name='EXTENSIONS' scope='vector' type='string' description='Comma separated extensions list. Available are description and attachment' default=''/>"
         "</OpenOptionList>"
     );
 
@@ -475,11 +476,12 @@ void RegisterOGRNGW()
         "   <Option name='USERPWD' scope='raster,vector' type='string' description='Username and password, separated by colon'/>"
         "   <Option name='PAGE_SIZE' scope='vector' type='integer' description='Limit feature count while fetching from server. Default value is -1 - no limit' default='-1'/>"
         "   <Option name='BATCH_SIZE' scope='vector' type='integer' description='Size of feature insert and update operations cache before send to server. If batch size is -1 batch mode is disabled' default='-1'/>"
-        "   <Option name='NATIVE_DATA' scope='vector' type='boolean' description='Whether to store the native Json representation of extensions key' default='NO'/>"
+        "   <Option name='NATIVE_DATA' scope='vector' type='boolean' description='Whether to store the native Json representation of extensions key. If EXTENSIONS not set or empty, NATIVE_DATA defaults to NO' default='NO'/>"
         "   <Option name='CACHE_EXPIRES' scope='raster' type='integer' description='Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web' default='604800'/>"
         "   <Option name='CACHE_MAX_SIZE' scope='raster' type='integer' description='The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted' default='67108864'/>"
         "   <Option name='JSON_DEPTH' scope='raster,vector' type='integer' description='The depth of json response that can be parsed. If depth is greater than this value, parse error occurs' default='32'/>"
         "   <Option name='RASTER_QML_PATH' scope='raster' type='string' description='Raster QMS style path'/>"
+        "   <Option name='EXTENSIONS' scope='vector' type='string' description='Comma separated extensions list. Available are description and attachment' default=''/>"
         "</CreationOptionList>"
     );
 

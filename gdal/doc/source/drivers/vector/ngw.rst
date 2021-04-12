@@ -78,6 +78,8 @@ The following configuration options are available:
    feature native data.
 -  **NGW_JSON_DEPTH**: The depth of json response that can be parsed. If
    depth is greater than this value, parse error occurs.
+-  **NGW_EXTENSIONS**: Comma separated extensions list. Available values are 
+   `description` and `attachment`. This needed to fill native data.
 
 Authentication
 --------------
@@ -160,6 +162,8 @@ The following open options are available:
    feature native data. Default value is NO.
 -  JSON_DEPTH=32 - The depth of json response that can be parsed. If
    depth is greater than this value, parse error occurs.
+-  EXTENSIONS - Comma separated extensions list. Available values are 
+   `description` and `attachment`. This needed to fill native data.
 
 Dataset creation options
 ------------------------
@@ -179,6 +183,8 @@ The following dataset/datasource creation options are available:
    feature native data. Default value is NO.
 -  JSON_DEPTH=32 - The depth of json response that can be parsed. If
    depth is greater than this value, parse error occurs.
+-  EXTENSIONS - Comma separated extensions list. Available values are 
+   `description` and `attachment`. This needed to fill native data.
 
 Layer creation options
 ----------------------
@@ -222,6 +228,9 @@ visibility) map to layer metadata the following way:
    FIELD_0_LABEL_FIELD)
 -  grid visibility -> FIELD_{field number}_GRID_VISIBILITY (for example
    FIELD_0_GRID_VISIBILITY)
+
+Starting from GDAL 3.3 field alias can be set/get via `SetAlternativeName`
+and `GetAlternativeNameRef`.
 
 Filters
 -------
