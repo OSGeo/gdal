@@ -1,1 +1,1 @@
-gdal/LICENSE.TXT
+../gdal/LICENSE.TXT
