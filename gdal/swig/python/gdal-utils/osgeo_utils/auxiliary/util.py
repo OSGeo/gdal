@@ -31,10 +31,11 @@
 # ******************************************************************************
 
 from numbers import Real
-from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator
+from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator, List
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike, enum_to_str, OptionalBoolStr, is_true
+from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike, enum_to_str, OptionalBoolStr, is_true, \
+    MaybeSequence
 
 PathOrDS = Union[PathLike, gdal.Dataset]
 DataTypeOrStr = Union[str, int]
@@ -206,10 +207,15 @@ class OpenDS:
         filename: PathLike,
         access_mode=gdal.GA_ReadOnly,
         ovr_idx: Optional[Union[int, float]] = None,
-        open_options: Optional[dict] = None,
+        open_options: Optional[Union[Dict[str, str], Sequence[str]]] = None,
         logger=None,
     ):
-        open_options = dict(open_options or dict())
+        if not open_options:
+            open_options = dict()
+        elif isinstance(open_options, Sequence):
+            open_options = {k: v for k, v in (s.split('=', 1) for s in open_options)}
+        else:
+            open_options = dict(open_options)
         ovr_idx = get_ovr_idx(filename, ovr_idx)
         if ovr_idx > 0:
             open_options["OVERVIEW_LEVEL"] = ovr_idx - 1  # gdal overview 0 is the first overview (after the base layer)
@@ -309,3 +315,40 @@ def get_ext_by_of(of: str):
     if ext in ['gtiff', 'cog', 'mem']:
         ext = 'tif'
     return '.' + ext
+
+
+def get_band_nums(ds: gdal.Dataset, band_nums: MaybeSequence[int] = None):
+    if not band_nums:
+        band_nums = list(range(1, ds.RasterCount + 1))
+    elif isinstance(band_nums, int):
+        band_nums = [band_nums]
+    return band_nums
+
+
+def get_bands(filename_or_ds: PathOrDS, band_nums: MaybeSequence[int], ovr_idx: Optional[int] = None) -> List[gdal.Band]:
+    ds = open_ds(filename_or_ds)
+    band_nums = get_band_nums(ds, band_nums)
+    bands = []
+    for band_num in band_nums:
+        band: gdal.Band = ds.GetRasterBand(band_num)
+        if band is None:
+            raise Exception(f'Could not get band {band_num} from file {filename_or_ds}')
+        if ovr_idx:
+            band = band.GetOverview(ovr_idx-1)
+            if band is None:
+                raise Exception(f'Could not get overview {ovr_idx} from band {band_num} of file {filename_or_ds}')
+        bands.append(band)
+    return bands
+
+
+def get_scales_and_offsets(bands: MaybeSequence[gdal.Band]) -> Tuple[bool, MaybeSequence[Real], MaybeSequence[Real]]:
+    single_band = not isinstance(bands, Sequence)
+    if single_band:
+        bands = [bands]
+    scales = [bnd.GetScale() or 1 for bnd in bands]
+    offsets = [bnd.GetOffset() or 0 for bnd in bands]
+    is_scaled = any(scale != 1 for scale in scales) or any(offset != 0 for offset in offsets)
+    if single_band:
+        scales, offsets = scales[0], offsets[0]
+    return is_scaled, scales, offsets
+
