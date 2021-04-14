@@ -12,6 +12,22 @@ for development activities, bug reports, and testing. The `Chat`_
 room is for real-time chat activities such as meetings and interactive
 debugging sessions.
 
+Code of Conduct
+---------------
+
+.. only:: html
+
+    GDAL uses a :ref:`code_of_conduct` which governs how we behave in any GDAL
+    forum or event and whenever we will be judged by our actions. We expect it to
+    be honored by everyone who participates in the GDAL community formally or
+    informally, or claims any affiliation with the project.
+
+.. toctree::
+   :hidden:
+
+   code_of_conduct
+
+
 Mailing List
 ------------
 
@@ -63,7 +79,6 @@ Conference
    :target:  https://2021.foss4g.org/
 
 `FOSS4G 2021 <https://2021.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held ONLINE from September 27th to October 2nd 2021.
-
 
 Governance and Community Participation
 --------------------------------------
@@ -120,7 +135,13 @@ from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is availabl
 GDAL Service Providers
 ----------------------
 
+.. only:: html
+
+    GDAL is developed and supported by a rich ecosystem of businesses and
+    individuals around the world. You can consult a list of :ref:`service_providers`
+    who can assist you in getting the best out of your GDAL investment.
+
 .. toctree::
-   :maxdepth: 2
+   :hidden:
 
    service_providers
