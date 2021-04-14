@@ -76,6 +76,14 @@ the health of project:
            :target: https://www.koordinates.com
 
 
+    .. container:: horizontal-logo
+
+        .. image:: ../../images/sponsors/logo-sparkgeo.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://www.sparkgeo.com
+
+
 .. - Supporter level:
 ..  .. _supporter-sponsors:
 ..  .. container:: horizontal-logos
