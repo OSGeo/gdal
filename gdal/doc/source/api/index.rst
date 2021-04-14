@@ -85,6 +85,7 @@ API
 
        python_api_ref
        python_gotchas
+       python_samples
 
 
    `Java API <../java/index.html>`_
