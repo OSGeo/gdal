@@ -47,6 +47,10 @@
 #define LSTATE_INIT_DECODE 0x01
 #define LSTATE_INIT_ENCODE 0x02
 
+#ifndef LERC_AT_LEAST_VERSION
+#define LERC_AT_LEAST_VERSION(maj,min,patch) 0
+#endif
+
 /*
 * State block for each open TIFF file using LERC compression/decompression.
 */
@@ -500,6 +504,9 @@ LERCPreDecode(TIFF* tif, uint16_t s)
         lerc_ret = lerc_decode(
             lerc_data,
             lerc_data_size,
+#if LERC_AT_LEAST_VERSION(3,0,0)
+            use_mask ? 1 : 0,
+#endif
             use_mask ? sp->mask_buffer : NULL,
             ndims,
             sp->segment_width,
@@ -852,6 +859,9 @@ LERCPostEncode(TIFF* tif)
             sp->segment_width,
             sp->segment_height,
             1,
+#if LERC_AT_LEAST_VERSION(3,0,0)
+            use_mask ? 1 : 0,
+#endif
             use_mask ? sp->mask_buffer : NULL,
             sp->maxzerror,
             sp->compressed_buffer,
