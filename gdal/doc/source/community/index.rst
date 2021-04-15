@@ -71,6 +71,13 @@ communication channels in most situations.
 .. _`Freenode`: http://freenode.net
 .. _`#gdal:osgeo.org`: http://matrix.to/#/#gdal:osgeo.org
 
+
+Social media
+------------
+
+You can follow GDAL official news on Twitter: https://twitter.com/GdalOrg
+
+
 Conference
 ----------
 
