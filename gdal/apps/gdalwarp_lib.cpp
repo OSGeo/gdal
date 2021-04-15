@@ -1107,7 +1107,7 @@ GDALDatasetH GDALWarpIndirect( const char *pszDest,
 /**
  * Image reprojection and warping function.
  *
- * This is the equivalent of the <a href="/programs/gdal_warp.html">gdalwarp</a> utility.
+ * This is the equivalent of the <a href="/programs/gdalwarp.html">gdalwarp</a> utility.
  *
  * GDALWarpAppOptions* must be allocated and freed with GDALWarpAppOptionsNew()
  * and GDALWarpAppOptionsFree() respectively.
@@ -4055,7 +4055,7 @@ static bool IsValidSRS( const char *pszUserInput )
  * Allocates a GDALWarpAppOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="/programs/gdal_warp.html">gdalwarp</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdalwarp.html">gdalwarp</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALWarpAppOptionsForBinaryNew() prior to this function. Will be
