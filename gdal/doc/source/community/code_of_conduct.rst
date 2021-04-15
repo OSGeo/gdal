@@ -105,7 +105,7 @@ We strive to:
 Anti-Harassment
 ---------------
 
-Harassment and other exclusionary behaviour are not acceptable.
+Harassment and other exclusionary behavior are not acceptable.
 This includes, but is not limited to:
 
 - Personal insults or discriminatory jokes and language, especially those using racist or sexist terms.
@@ -117,7 +117,7 @@ This includes, but is not limited to:
 - Repeated harassment of others. In general, if someone asks you to stop, then stop.
 - Posting (or threatening to post) other people's personally identifying information ("doxing").
 - Sharing private content, such as emails sent privately or non-publicly, or unlogged forums such as IRC channel history.
-- Advocating for, or encouraging, any of the above behaviour.
+- Advocating for, or encouraging, any of the above behavior.
 
 Reporting Guidelines
 --------------------
@@ -125,7 +125,7 @@ Reporting Guidelines
 If you believe someone is breaking this code of conduct, you may reply to them,
 and point to this code of conduct. Such messages may be in public or in private,
 whatever is most appropriate. Assume good faith; it is more likely that
-participants are unaware of their bad behaviour than that they intentionally try
+participants are unaware of their bad behavior than that they intentionally try
 to degrade the quality of the discussion. Should there be difficulties in
 dealing with the situation, you may report your concerns to event staff, a forum
 leader or the GDAL Board. Serious or persistent offenders may be expelled from
