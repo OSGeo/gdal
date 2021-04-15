@@ -105,7 +105,7 @@ improvements will go on being submitted as code contributions by the interested
 parties in capacity to develop them, or through service providers they might hire
 for that purpose.
 
-Sponsors will not be able to direct particular developments, nor receive prioritary
+Sponsors will not be able to direct particular developments, nor receive priority
 support through the sponsorship program. For such purposes, they may use
 community support or refer to service providers, as for other GDAL users.
 However, we will offer a way to sponsors to give feedback, as detailed afterwards.
