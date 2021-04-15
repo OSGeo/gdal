@@ -562,8 +562,8 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #endif /* defined(AFL_FRIENDLY) && defined(__GNUC__) */
 
 #  if defined(WIN32)
-#    define STRCASECMP(a,b)         (stricmp(a,b))
-#    define STRNCASECMP(a,b,n)      (strnicmp(a,b,n))
+#    define STRCASECMP(a,b)         (_stricmp(a,b))
+#    define STRNCASECMP(a,b,n)      (_strnicmp(a,b,n))
 #  else
 /** Alias for strcasecmp() */
 #    define STRCASECMP(a,b)         (strcasecmp(a,b))
