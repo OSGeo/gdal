@@ -78,6 +78,14 @@ the health of project:
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-mapgears.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://www.mapgears.com
+
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-sparkgeo.png
            :class: img-logos
            :width: 150 px
