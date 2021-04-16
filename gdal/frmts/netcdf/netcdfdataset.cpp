@@ -7596,7 +7596,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         nc_get_att_text(cdfid, NC_GLOBAL, "Conventions",
                                   szConventions) != NC_NOERR )
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
+        CPLDebug("GDAL_netCDF",
                  "No UNIDATA NC_GLOBAL:Conventions attribute");
         // Note that 'Conventions' is always capital 'C' in CF spec.
     }
