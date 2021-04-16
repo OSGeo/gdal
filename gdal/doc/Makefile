@@ -45,6 +45,7 @@ html: generated_rst_files
 	rm -rf build/html/doxygen
 	cp -r build/doxygen_html build/html/doxygen
 	ln -sf ../latex/gdal.pdf build/html
+	cp -f "source/sponsors/Sustainable GDAL Sponsorship Prospectus.pdf" build/html/sponsors
 
 man: generated_rst_files
 	$(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

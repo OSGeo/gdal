@@ -92,9 +92,12 @@ the health of project:
            :target: https://www.sparkgeo.com
 
 
-.. - Supporter level:
-..  .. _supporter-sponsors:
-..  .. container:: horizontal-logos
+- Supporter level:
+
+    .. _supporter-sponsors:
+    .. container:: horizontal-logos
+
+      None listed yet.
 
 
 .. raw:: html
@@ -133,7 +136,7 @@ the health of project:
     $('#platinium-sponsors').randomize('div.horizontal-logo');
     $('#gold-sponsors').randomize('div.horizontal-logo');
     $('#silver-sponsors').randomize('div.horizontal-logo');
-    // $('#supporter-sponsors').randomize('div.horizontal-logo');
+    $('#supporter-sponsors').randomize('div.horizontal-logo');
   </script>
 
 The GDAL Project is hosted by `OSGeo <https://www.osgeo.org>`__, and
@@ -162,17 +165,17 @@ Sponsoring
 If your organization benefits from GDAL we recommend joining the group of
 sponsors above to "pay it forward" and ensure the project has the resources to
 stay healthy and grow. To learn about the benefits of becoming a sponsor at
-various levels start with the
-:ref:`Sustainable GDAL Sponsorship Prospectus <sponsoring-prospectus>`.
+various levels start with the `Sustainable GDAL Sponsorship Prospectus`_.
 If you are interested, need help convincing your key decision-makers, or have
-any questions, don't hesitate to contact gdal-<tbd>@osgeo.org.
+any questions, don't hesitate to contact gdal-sponsors@osgeo.org.
 
 Related resources
 -----------------
 
-- :ref:`Sustainable GDAL Sponsorship Prospectus <sponsoring-prospectus>`.
+- `Sustainable GDAL Sponsorship Prospectus`_.
 - :ref:`Sponsoring frequently asked questions (FAQ) <sponsoring-faq>`.
 
+.. _Sustainable GDAL Sponsorship Prospectus: https://gdal.org/sponsors/Sustainable%20GDAL%20Sponsorship%20Prospectus.pdf
 
 ..
     Developer comment: make html includes a hack to hide the table from
@@ -183,4 +186,3 @@ Related resources
    :maxdepth: 0
 
    faq
-   prospectus

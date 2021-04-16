@@ -41,7 +41,12 @@ We just haven't gotten to you yet :)
 My organization wants to sponsor. How can we do that?
 -----------------------------------------------------
 
-FIXME
+To learn about the benefits of becoming a sponsor at
+various levels start with the `Sustainable GDAL Sponsorship Prospectus`_.
+If you are interested, need help convincing your key decision-makers, or have
+any questions, don't hesitate to contact gdal-sponsors@osgeo.org.
+
+.. _Sustainable GDAL Sponsorship Prospectus: https://gdal.org/sponsors/Sustainable%20GDAL%20Sponsorship%20Prospectus.pdf
 
 What is NumFOCUS and why is the project using that foundation rather than using OSGeo for this effort?
 ------------------------------------------------------------------------------------------------------
@@ -75,7 +80,7 @@ What is the project going to do with the money?
   will submit a proposal to the PSC (RFC-style, but not public) describing the
   tasks and efforts they will seek to achieve. Any substantial efforts with
   external impacts will continue to be required to use the GDAL RFC process as
-  described in RFC FIXME.
+  described in :ref:`rfc-1`.
 
 * Developers will be able submit requests to the GDAL PSC for 'maintenance
   work units', which could encompass ticket i/o and related code improvements,
