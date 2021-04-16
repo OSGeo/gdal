@@ -4,39 +4,30 @@
 Sponsoring FAQ
 ================================================================================
 
-Why is GDAL raising money?
+Why does GDAL need sponsorship?
 --------------------------
 
-GDAL is not hobby software. It is a critical piece of data management and
-processing infrastructure for open source, commercial, and government geospatial software.
-GDAL's primary maintainer can no longer sustain supporting
-maintenance of the project and its core dependencies (PROJ, libgeotiff, etc) as
-part of taking small jobs adding new features to the software.
+GDAL is the most central piece of [Critical Digital 
+Infrastructure](https://www.fordfoundation.org/campaigns/critical-digital-infrastructure-research/) 
+in the geospatial world, serving as the primary building block for data management and processing 
+in open source, commercial, and government geospatial software. But most of the resources to it 
+have gone to the development of new features, while the maintenance burden has only increased with 
+more functionality.
 
-The purpose of raising the money is to provide some substantial long-acting resources
+The purpose of sponsor funding is to provide substantial long-acting resources
 that give the project the ability to address software, testing, and project
 challenges that do not attract individual sponsorship attention. With
 a pool of resources that are not earmarked for features, it can
 attack usability, performance, and modernization challenges that benefit everyone.
-The effort provides at least three years at the proposed level,
-which will give the project time to stage multi-year efforts that do not
-disrupted the existing GDAL user base, and it will provide the baseline
+Sustained funding enables multi-year efforts that do not
+disrupt the existing GDAL user base, and it will provide the baseline
 resources to allow day-to-day maintenance operations to continue uninterrupted.
 
-That's a lot of money. Why so much?
------------------------------------
-
-Maintenance and development of GDAL requires extensive software engineering and
-domain experience. Capable software engineers who can operate in public are also
-a limited resource. The resources provided by this effort will allow maintenance activities to continue
-*and* allow the project to support on boarding additional
-developers to tackle various needs of the project that have been ignored due to
-lack of direct funding interest.
-
-Why didn't you ask my organization?
------------------------------------
-
-We just haven't gotten to you yet :)
+The larger funding levels enabled by sponsorship aim to help GDAL grow to a team of maintainers,
+as is typical in other leading open source projects. The past few years have seen only one maintainer, 
+who has been stretched thin. The resources provided by this effort allow maintenance activities to 
+continue *and* allow the project to support on-boarding additional developers to tackle various needs 
+of the project that have been ignored due to lack of direct funding interest.
 
 My organization wants to sponsor. How can we do that?
 -----------------------------------------------------
