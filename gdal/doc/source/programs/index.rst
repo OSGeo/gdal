@@ -25,6 +25,7 @@ Raster programs
    gdalattachpct
    gdal_merge
    gdal2tiles
+   gdal2xyz
    gdal_rasterize
    gdaltransform
    nearblack
@@ -62,6 +63,7 @@ Raster programs
     - :ref:`gdalattachpct`: Attach a color table to a raster file from an input file.
     - :ref:`gdal_merge`: Mosaics a set of images.
     - :ref:`gdal2tiles`: Generates directory with TMS tiles, KMLs and simple web viewers.
+    - :ref:`gdal2xyz`: Translates a raster file into xyz format.
     - :ref:`gdal_rasterize`: Burns vector geometries into a raster.
     - :ref:`gdaltransform`: Transforms coordinates.
     - :ref:`nearblack`: Convert nearly black/white borders to black.
