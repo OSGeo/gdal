@@ -5,7 +5,7 @@ Sponsoring FAQ
 ================================================================================
 
 Why does GDAL need sponsorship?
---------------------------
+-------------------------------
 
 GDAL is the most central piece of [Critical Digital 
 Infrastructure](https://www.fordfoundation.org/campaigns/critical-digital-infrastructure-research/) 
