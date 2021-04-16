@@ -38,7 +38,8 @@ import numpy as np
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.base import num, PathLike
-from osgeo_utils.auxiliary.util import PathOrDS
+from osgeo_utils.auxiliary.progress import get_progress_callback, OptionalProgressCallback
+from osgeo_utils.auxiliary.util import PathOrDS, get_bands
 from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
 
 
@@ -142,7 +143,8 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
              band_nums: Optional[Sequence[int]] = None, delim=' ',
              skip_nodata: bool = False,
              src_nodata: Optional[Union[Sequence, Number]] = None, dst_nodata: Optional[Union[Sequence, Number]] = None,
-             return_np_arrays: bool = False) -> Optional[Tuple]:
+             return_np_arrays: bool = False, pre_allocate_np_arrays: bool = True,
+             progress_callback: OptionalProgressCallback = ...) -> Optional[Tuple]:
     """
     translates a raster file (or dataset) into xyz format
 
@@ -160,34 +162,30 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
     srcfile - The source dataset filename or dataset object
     dstfile - The output dataset filename; for dstfile=None - if return_np_arrays=False then output will be printed to stdout
     return_np_arrays - return numpy arrays of the result, otherwise returns None
+    pre_allocate_np_arrays - pre-allocated result arrays.
+        Should be faster unless skip_nodata and the input is very sparse thus most data points will be skipped.
+    progress_callback - progress callback function. use None for quiet or Ellipsis for using the default callback
     """
 
     result = None
 
+    progress_callback = get_progress_callback(progress_callback)
+
     # Open source file.
-    srcds = gdal.Open(str(srcfile), gdal.GA_ReadOnly) if isinstance(srcfile, (Path, str)) else srcfile
-    if srcds is None:
+    ds = gdal.Open(str(srcfile), gdal.GA_ReadOnly) if isinstance(srcfile, (Path, str)) else srcfile
+    if ds is None:
         raise Exception(f'Could not open {srcfile}.')
 
-    if not band_nums:
-        band_nums = list(range(1, srcds.RasterCount + 1))
-    elif isinstance(band_nums, int):
-        band_nums = [band_nums]
-    bands = []
-    for band_num in band_nums:
-        band = srcds.GetRasterBand(band_num)
-        if band is None:
-            raise Exception(f'Could not get band {band_num} from file {srcfile}')
-        bands.append(band)
+    bands = get_bands(ds, band_nums)
     band_count = len(bands)
 
-    gt = srcds.GetGeoTransform()
+    gt = ds.GetGeoTransform()
 
     # Collect information on all the source files.
     if srcwin is None:
-        srcwin = (0, 0, srcds.RasterXSize, srcds.RasterYSize)
+        srcwin = (0, 0, ds.RasterXSize, ds.RasterYSize)
 
-    dt, np_dt = GDALTypeCodeAndNumericTypeCodeFromDataSet(srcds)
+    dt, np_dt = GDALTypeCodeAndNumericTypeCodeFromDataSet(ds)
 
     # Open the output file.
     if dstfile is not None:
@@ -205,8 +203,8 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
 
         # Setup an appropriate print format.
         if abs(gt[0]) < 180 and abs(gt[3]) < 180 \
-            and abs(srcds.RasterXSize * gt[1]) < 180 \
-            and abs(srcds.RasterYSize * gt[5]) < 180:
+            and abs(ds.RasterXSize * gt[1]) < 180 \
+            and abs(ds.RasterYSize * gt[5]) < 180:
             frmt = '%.10g' + delim + '%.10g' + delim + '%s'
         else:
             frmt = '%.3f' + delim + '%.3f' + delim + '%s'
@@ -237,20 +235,43 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
         x_skip = y_skip = skip
 
     x_off, y_off, x_size, y_size = srcwin
+    bands_count = len(bands)
+
+    nXBlocks = (x_size - x_off) // x_skip
+    nYBlocks = (y_size - y_off) // y_skip
+    progress_end = nXBlocks * nYBlocks
+    progress_curr = 0
+    progress_prev = -1
+    progress_parts = 100
 
     if return_np_arrays:
-        all_geo_x = all_geo_y = np.empty(0, dtype=np_dt)
-        all_data = np.empty((0, band_count), dtype=np_dt)
+        size = progress_end if pre_allocate_np_arrays else 0
+        all_geo_x = np.empty(size)
+        all_geo_y = np.empty(size)
+        all_data = np.empty((size, band_count), dtype=np_dt)
 
     # Loop emitting data.
+    idx = 0
     for y in range(y_off, y_off + y_size, y_skip):
 
-        data = np.empty((0, x_size), dtype=np_dt)  # dims: (bands, x_size)
-        for band in bands:
+        size = bands_count if pre_allocate_np_arrays else 0
+        data = np.empty((size, x_size), dtype=np_dt)  # dims: (bands_count, x_size)
+        for i_bnd, band in enumerate(bands):
             band_data = band.ReadAsArray(x_off, y, x_size, 1)  # read one band line
-            data = np.append(data, band_data, axis=0)
+            if pre_allocate_np_arrays:
+                data[i_bnd] = band_data[0]
+            else:
+                data = np.append(data, band_data, axis=0)
 
         for x_i in range(0, x_size, x_skip):
+
+            progress_curr += 1
+            if progress_callback:
+                progress_frac = progress_curr / progress_end
+                progress = int(progress_frac * progress_parts)
+                if progress > progress_prev:
+                    progress_prev = progress
+                    progress_callback(progress_frac)
 
             x_i_data = data[:, x_i]   # single pixel, dims: (bands)
             if process_nodata and np.array_equal(src_nodata, x_i_data):
@@ -269,12 +290,22 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
                 line = frmt % (float(geo_x), float(geo_y), band_str)
                 dst_fh.write(line)
             if return_np_arrays:
-                all_geo_x = np.append(all_geo_x, geo_x)
-                all_geo_y = np.append(all_geo_y, geo_y)
-                all_data = np.append(all_data, [x_i_data], axis=0)
+                if pre_allocate_np_arrays:
+                    all_geo_x[idx] = geo_x
+                    all_geo_y[idx] = geo_y
+                    all_data[idx] = x_i_data
+                else:
+                    all_geo_x = np.append(all_geo_x, geo_x)
+                    all_geo_y = np.append(all_geo_y, geo_y)
+                    all_data = np.append(all_data, [x_i_data], axis=0)
+            idx += 1
 
     if return_np_arrays:
         nodata = None if skip_nodata else dst_nodata if replace_nodata else src_nodata
+        if idx != progress_curr:
+            all_geo_x = all_geo_x[:idx]
+            all_geo_y = all_geo_y[:idx]
+            all_data = all_data[:idx, :]
         result = all_geo_x, all_geo_y, all_data.transpose(), nodata
 
     return result
