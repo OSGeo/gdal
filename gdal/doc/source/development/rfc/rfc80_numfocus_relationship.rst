@@ -70,11 +70,6 @@ https://docs.google.com/document/d/1bc5jdpCe1axdyBHxbJnun7e0DTyDoZI_eFYgJYnOhB8/
 A `Pre-approved Grantor/ Grantee Agreement <https://docs.google.com/document/d/12KGmSD_EGWqlzh0fiaHNIiN6xPWgdTy--NYf4QR-5k8/edit>`__
 will also have to be signed by 3 members of the GDAL PSC.
 
-Being linked to NumFOCUS, GDAL might be able to benefit from small grants, funded
-by NumFOCUS general budget, and allocated by the NumFOCUS board to projects it will
-select (among the general pool of projects hosted by NumFOCUS). This point will
-be clarified as our relationship with NumFOCUS matures.
-
 General use of funds
 --------------------
 
