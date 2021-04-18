@@ -43,7 +43,7 @@ def create_flat_raster(filename: Optional[PathLike],
                        fill_value: Optional[Real] = None, nodata_value: Optional[Real] = None,
                        origin: Optional[Sequence[int]] = (500_000, 0), pixel_size: MaybeSequence[int] = 10,
                        epsg: Optional[int] = 32636,
-                       overview_alg: Optional[str] = 'NEAR', overview_list: Optional[Sequence[int]] = None):
+                       overview_alg: Optional[str] = 'NEAR', overview_list: Optional[Sequence[int]] = None) -> gdal.Dataset:
     if filename is None:
         filename = tempfile.mktemp()
     elif not filename:
@@ -85,16 +85,18 @@ def get_creation_options(creation_options: CreationOptions = None,
                          big_tiff: Optional[str] = None,
                          comp: str = None):
     creation_options = dict(creation_options or dict())
-    if sparse_ok is None:
-        sparse_ok = creation_options.get("SPARSE_OK", True)
-    creation_options["SPARSE_OK"] = str(bool(sparse_ok))
 
     driver = driver.lower()
+
     if comp is None:
         comp = creation_options.get("COMPRESS", "DEFLATE")
-    if driver in ['gtiff', 'cog']:
-        creation_options["BIGTIFF"] = get_bigtiff_creation_option_value(big_tiff)
-        creation_options["COMPRESS"] = comp
+    creation_options["BIGTIFF"] = get_bigtiff_creation_option_value(big_tiff)
+    creation_options["COMPRESS"] = comp
+
+    if sparse_ok is None:
+        sparse_ok = creation_options.get("SPARSE_OK", True)
+    sparse_ok = is_true(sparse_ok)
+    creation_options["SPARSE_OK"] = str(sparse_ok)
 
     if tiled is None:
         tiled = creation_options.get("TILED", True)

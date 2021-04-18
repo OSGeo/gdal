@@ -89,17 +89,17 @@ def test_utils_py_1():
     ds = util.open_ds(filename)
     compression = util.get_image_structure_metadata(filename, 'COMPRESSION')
     assert compression == 'DEFLATE'
-    ras_count = util.get_ovr_count(ds)+1
-    assert ras_count == 3
+    ovr_count = util.get_ovr_count(ds)+1
+    assert ovr_count == 3
     pixel_size = util.get_pixel_size(ds)
     assert pixel_size == (10, -10)
 
-    for i in range(-ras_count, ras_count):
-        assert util.get_ovr_idx(filename, ovr_idx=i) == (i if i >= 0 else ras_count+i)
+    for i in range(-ovr_count, ovr_count):
+        assert util.get_ovr_idx(filename, ovr_idx=i) == (i if i >= 0 else ovr_count+i)
 
     for res, ovr in [(5, 0), (10, 0), (11, 0), (19.99, 0), (20, 1), (20.1, 1), (39, 1), (40, 2), (41, 2), (400, 2)]:
         assert util.get_ovr_idx(filename, ovr_res=res) == ovr
-        assert util.get_ovr_idx(filename, ovr_idx=float(res)) == ovr  # noqa secret functionality
+        assert util.get_ovr_idx(filename, float(res)) == ovr  # noqa secret functionality
 
 
 def test_utils_py_cleanup():
