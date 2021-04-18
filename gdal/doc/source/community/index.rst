@@ -118,22 +118,22 @@ Project Steering Committee
 As of April 2006 (following the GDAL/OGR 1.3.2 release) the project has been
 placed in the hands of a Project Steering Committee. This project steering
 committee operates under the rules of :ref:`rfc-1`, and is overall responsible for
-decisions related to the GDAL/OGR project. The current members are:
+decisions related to the GDAL/OGR project. The current members are (@github username):
 
-- Frank Warmerdam
-- Daniel Morissette
-- Howard Butler
-- Tamas Szekeres
-- Even Rouault (chair)
-- Jukka Rahkonen
-- Kurt Schwehr
-- Norman Barker
-- Sean Gillies
-- Mateusz Łoskot
+- Frank Warmerdam      (@warmerdam)
+- Daniel Morissette    (@dmorissette)
+- Howard Butler        (@hobu)
+- Tamas Szekeres       (@szekerest)
+- Even Rouault (chair) (@rouault)
+- Jukka Rahkonen       (@jratike80)
+- Kurt Schwehr         (@schwehr)
+- Norman Barker        (@normanb)
+- Sean Gillies         (@sgillies)
+- Mateusz Łoskot       (@mloskot)
 
 Past members:
 
-- Andrey Kiselev (retired in 2019)
+- Andrey Kiselev       (@strezen) (retired in 2019)
 
 Note that discussion of proposals to the PSC take place on gdal-dev, and input
 from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is available for review.
