@@ -83,6 +83,7 @@ API
    .. toctree::
        :maxdepth: 1
 
+       python
        python_api_ref
        python_gotchas
        python_samples
@@ -102,7 +103,6 @@ API
 
        csharp
        java
-       python
 
    There are also other bindings that are developed outside of the GDAL source tree (**note**: those offer APIs not strictly coupled the GDAL/OGR C/C++ API). These include bindings for
 

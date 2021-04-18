@@ -26,10 +26,22 @@ A cookbook full of recipes for using the Python GDAL/OGR bindings : `http://pcje
 Examples
 --------
 
-* One example of GDAL/numpy integration is found in the val_repl.py script.
-* An assortment of other samples are available in the Python github samples directory at `https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/gdal-utils/osgeo_utils/samples <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/gdal-utils/osgeo_utils/samples>`__ with some description in the `samples README <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/gdal-utils/samples>`__.
-* Several `GDAL utilities <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/gdal-utils/scripts/>`__ are implemented in Python and can be useful examples.
-* The majority of GDAL regression tests are written in Python. They are available at `https://github.com/OSGeo/gdal/tree/master/autotest <https://github.com/OSGeo/gdal/tree/master/autotest>`__
+* An assortment of other samples are available in the Python github samples directory at
+  `https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/gdal-utils/osgeo_utils/samples
+  <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/gdal-utils/osgeo_utils/samples>`__
+  with some description in the :ref:`python_samples`.
+* Several `GDAL utilities <https://github.com/OSGeo/gdal/tree/master/gdal/swig/python/gdal-utils/osgeo_utils/>`__
+  are implemented in Python and can be useful examples.
+* The majority of GDAL regression tests are written in Python. They are available at
+  `https://github.com/OSGeo/gdal/tree/master/autotest <https://github.com/OSGeo/gdal/tree/master/autotest>`__
+* Some examples of GDAL/numpy integration can be found is found in the following scripts:
+  - `gdal_calc.py`
+  - `val_repl.py`
+  - `gdal_merge.py`
+  - `gdal2tiles.py`
+  - `gdal2xyz.py`
+  - `pct2rgb.py`
+  - `gdallocationinfo.py`
 
 Gotchas
 -------
