@@ -6064,13 +6064,6 @@ LOC_MSG([  C++14 support:             ${CXX14_SUPPORT}])
 LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
-if test "x$HAVE_JASPER_UUID" != "x" ; then
-  LOC_MSG([  JasPer support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
-else
-  LOC_MSG([  JasPer support:            ${HAVE_JASPER}])
-fi
-LOC_MSG([  JPEG 12 bit:               ${JPEG12_ENABLED}])
-LOC_MSG([  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}])
 LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
@@ -6095,7 +6088,15 @@ LOC_MSG([  HEIF support:              ${HAVE_HEIF}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
+LOC_MSG([  JPEG 12 bit:               ${JPEG12_ENABLED}])
+LOC_MSG([  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}])
+if test "x$HAVE_JASPER_UUID" != "x" ; then
+  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
+else
+  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER}])
+fi
 LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
+LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 LOC_MSG([  Kea support:               ${HAVE_KEA}])
 LOC_MSG([  LERC support:              ${HAVE_LERC}])
 LOC_MSG([  libdeflate support:        ${LIBDEFLATE_SETTING}])
@@ -6147,7 +6148,6 @@ LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 LOC_MSG([  WebP support:              ${WEBP_SETTING}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
 LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
-LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
