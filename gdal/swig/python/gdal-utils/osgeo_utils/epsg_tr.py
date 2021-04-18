@@ -11,6 +11,7 @@
 # ******************************************************************************
 #  Copyright (c) 2001, Frank Warmerdam
 #  Copyright (c) 2009-2010, 2019, Even Rouault <even dot rouault at spatialys.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -32,23 +33,14 @@
 # ******************************************************************************
 
 import sys
+from argparse import ArgumentParser
+from typing import Optional
 
 from osgeo import osr
 from osgeo import gdal
 
-# =============================================================================
-
-
-def Usage():
-    print('Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]')
-    print('                  [-authority name]')
-    return 1
-
-# =============================================================================
-
 
 def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
-
     if output_format == '-pretty_wkt':
         print('%s:%s' % (auth_name, str(code)))
         print(srs.ExportToPrettyWkt())
@@ -57,7 +49,7 @@ def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
         print(srs.ExportToXML())
 
     if output_format == '-wkt':
-        print('EPSG:%d' % code)
+        print(f'EPSG:{code}')
         print(srs.ExportToWkt())
 
     if output_format == '-proj4':
@@ -70,7 +62,7 @@ def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
             print('<%s> %s <>' % (str(code), out_string))
         else:
             print('# Unable to translate coordinate system '
-                    '%s:%s into PROJ.4 format.' % (auth_name, str(code)))
+                  '%s:%s into PROJ.4 format.' % (auth_name, str(code)))
             print('#')
 
     if output_format == '-postgis':
@@ -97,8 +89,9 @@ def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
         else:
             wkt = gdal.EscapeString(wkt, scheme=gdal.CPLES_SQL)
             proj4text = gdal.EscapeString(proj4text, scheme=gdal.CPLES_SQL)
-            print('INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%d,\'%s\',%d,\'%s\',\'%s\');' %
-                    (int(code), auth_name, int(code), wkt, proj4text))
+            print(
+                'INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (%d,\'%s\',%d,\'%s\',\'%s\');' %
+                (int(code), auth_name, int(code), wkt, proj4text))
 
     # INGRES COPY command input.
     if output_format == '-copy':
@@ -108,43 +101,13 @@ def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
             proj4text = srs.ExportToProj4()
 
             print('%s\t%d%s\t%s\t%d%s\t%d%s\n'
-                    % (str(code), 4, auth_name, str(code), len(wkt), wkt,
-                        len(proj4text), proj4text))
+                  % (str(code), 4, auth_name, str(code), len(wkt), wkt,
+                     len(proj4text), proj4text))
         except:
             pass
 
-# =============================================================================
 
-def main(argv):
-    output_format = '-pretty_wkt'
-    authority = None
-
-    argv = gdal.GeneralCmdLineProcessor(argv)
-    if argv is None:
-        return 0
-
-    # Parse command line arguments.
-
-    i = 1
-    while i < len(argv):
-        arg = argv[i]
-
-        if arg == '-wkt' or arg == '-pretty_wkt' or arg == '-proj4' \
-           or arg == '-postgis' or arg == '-xml' or arg == '-copy':
-            output_format = arg
-
-        elif arg == '-authority':
-            i = i + 1
-            authority = argv[i]
-
-        elif arg[0] == '-':
-            return Usage()
-
-        else:
-            return Usage()
-
-        i = i + 1
-
+def epsg_tr(output_format: str = '-pretty_wkt', authority: Optional[str] = None):
     # Output BEGIN transaction for PostGIS
     if output_format == '-postgis':
         print('BEGIN;')
@@ -152,11 +115,11 @@ def main(argv):
     # loop over all codes to generate output
 
     if authority:
-        authorities = [ authority ]
-    elif output_format == '-postgis' :
-        authorities = [ 'EPSG', 'ESRI' ]
+        authorities = [authority]
+    elif output_format == '-postgis':
+        authorities = ['EPSG', 'ESRI']
     else:
-        authorities = [ 'EPSG', 'ESRI', 'IGNF' ]
+        authorities = ['EPSG', 'ESRI', 'IGNF']
 
     set_srid = set()
     for authority in authorities:
@@ -217,8 +180,29 @@ def main(argv):
     if output_format == '-postgis':
         print('COMMIT;')
         print('VACUUM ANALYZE spatial_ref_sys;')
+    return 0
+
+
+def main(argv):
+    parser = ArgumentParser()
+
+    parser.add_argument("-authority", dest="authority", metavar='name', type=str,
+                        help="Authority name")
+
+    parser.add_argument("-wkt", const='wkt', dest="output_format", action='store_const', help='Well Known Text')
+    parser.add_argument("-pretty_wkt", const='pretty_wkt', dest="output_format", action='store_const',
+                        help='Pretty Well Known Text')
+    parser.add_argument("-proj4", const='proj4', dest="output_format", action='store_const', help='proj string')
+    parser.add_argument("-postgis", const='postgis', dest="output_format", action='store_const', help='postgis')
+    parser.add_argument("-xml", const='xml', dest="output_format", action='store_const', help='XML')
+    parser.add_argument("-copy", const='copy', dest="output_format", action='store_const', help='Table')
+
+    args = parser.parse_args(argv[1:])
+
+    if not args.output_format:
+        args.output_format = 'pretty_wkt'
+    return epsg_tr('-'+args.output_format, args.authority)
 
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-

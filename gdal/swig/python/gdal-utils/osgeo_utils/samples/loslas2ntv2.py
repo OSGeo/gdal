@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id: epsg_tr.py 19102 2010-03-15 23:41:44Z warmerdam $
+#  $Id: loslas2ntv2.py 19102 2010-03-15 23:41:44Z warmerdam $
 #
 #  Project:  LOS/LAS to NTv2 Translator
 #  Purpose:  Translate one or many LOS/LAS sets into an NTv2 datum shift grid
