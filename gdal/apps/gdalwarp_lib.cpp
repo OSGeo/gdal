@@ -1470,6 +1470,11 @@ static void ProcessMetadata(int iSrc,
                 {
                     continue;
                 }
+                // Do not preserve the CACHE_PATH from the WMS driver
+                if( STARTS_WITH_CI(papszMetadata[i], "CACHE_PATH=") )
+                {
+                    continue;
+                }
 
                 papszMetadataNew = CSLAddString(papszMetadataNew, papszMetadata[i]);
             }

@@ -704,7 +704,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if(pbUsageError)
         *pbUsageError = FALSE;
- 
+
     if(psOptions->adfULLR[0] != 0.0 || psOptions->adfULLR[1] != 0.0 || psOptions->adfULLR[2] != 0.0 || psOptions->adfULLR[3] != 0.0)
         bGotBounds = true;
 
@@ -1519,6 +1519,21 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
     }
 
+    {
+        char** papszIter = papszMetadata;
+        while(papszIter && *papszIter)
+        {
+            // Do not preserve the CACHE_PATH from the WMS driver
+            if (STARTS_WITH_CI(*papszIter, "CACHE_PATH="))
+            {
+                CPLFree(*papszIter);
+                memmove(papszIter, papszIter+1, sizeof(char*) * (CSLCount(papszIter+1)+1));
+            }
+            else
+                papszIter++;
+        }
+    }
+
     poVDS->SetMetadata( papszMetadata );
     CSLDestroy( papszMetadata );
     AttachMetadata( static_cast<GDALDatasetH>(poVDS), psOptions->papszMetadataOptions );
@@ -2030,7 +2045,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         // Color interpretation override
         if( psOptions->panColorInterp )
         {
-            if( i < psOptions->nColorInterpSize && 
+            if( i < psOptions->nColorInterpSize &&
                 psOptions->panColorInterp[i] >= 0 )
             {
                 poVRTBand->SetColorInterpretation(
