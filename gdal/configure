@@ -44959,64 +44959,55 @@ echo "  LIBTOOL support:           ${with_libtool}"
 echo ""
 
 
-echo "  LIBZ support:              ${LIBZ_SETTING}"
-
-
-echo "  libdeflate support:        ${LIBDEFLATE_SETTING}"
-
-
-echo "  LIBLZMA support:           ${LIBLZMA_SETTING}"
-
-
-echo "  ZSTD support:              ${ZSTD_SETTING}"
-
-
-echo "  cryptopp support:          ${HAVE_CRYPTOPP}"
-
-
-echo "  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}"
-
-
-echo "  GRASS support:             ${GRASS_SETTING}"
+echo "  Armadillo support:         ${HAVE_ARMADILLO}"
 
 
 echo "  CFITSIO support:           ${FITS_SETTING}"
 
 
-echo "  PCRaster support:          ${PCRASTER_SETTING}"
+echo "  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}"
 
 
-echo "  LIBPNG support:            ${PNG_SETTING}"
+echo "  cryptopp support:          ${HAVE_CRYPTOPP}"
+
+
+echo "  cURL support (wms/wcs/...):${CURL_SETTING}"
 
 
 echo "  DDS support:               ${DDS_SETTING}"
 
 
+echo "  DODS support:              ${HAVE_DODS}"
+
+
+echo "  ECW support:               ${ECW_SETTING}"
+
+
+echo "  Expat support:             ${HAVE_EXPAT}"
+
+
+echo "  EXR support:               ${HAVE_EXR}"
+
+
+echo "  FGDB support:              ${FGDB_ENABLED}"
+
+
+echo "  FreeXL support:            ${HAVE_FREEXL}"
+
+
+echo "  GEORASTER support:         ${HAVE_GEORASTER}"
+
+
+echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
+
+
+echo "  Google libkml support:     ${HAVE_LIBKML}"
+
+
+echo "  GRASS support:             ${GRASS_SETTING}"
+
+
 echo "  GTA support:               ${GTA_SETTING}"
-
-
-echo "  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})"
-
-
-echo "  LIBGEOTIFF support:        ${GEOTIFF_SETTING}"
-
-
-echo "  LIBJPEG support:           ${JPEG_SETTING}"
-
-
-echo "  12 bit JPEG:               ${JPEG12_ENABLED}"
-
-
-echo "  12 bit JPEG-in-TIFF:       ${TIFF_JPEG12_ENABLED}"
-
-
-echo "  LIBGIF support:            ${GIF_SETTING}"
-
-
-echo "  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}"
-
-
-echo "  OGDI support:              ${HAVE_OGDI}"
 
 
 echo "  HDF4 support:              ${HAVE_HDF4}"
@@ -45025,10 +45016,94 @@ echo "  HDF4 support:              ${HAVE_HDF4}"
 echo "  HDF5 support:              ${HAVE_HDF5}"
 
 
+echo "  HDFS support:              ${HDFS_ENABLED}"
+
+
+echo "  HEIF support:              ${HAVE_HEIF}"
+
+
+echo "  INFORMIX DataBlade support:${HAVE_IDB}"
+
+
+echo "  Ingres support:            ${HAVE_INGRES}"
+
+
+echo "  JP2Lura support:           ${HAVE_JP2LURA}"
+
+
+echo "  JPEG 12 bit:               ${JPEG12_ENABLED}"
+
+
+echo "  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}"
+
+if test "x$HAVE_JASPER_UUID" != "x" ; then
+
+echo "  JPEG JasPer support:       ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})"
+
+else
+
+echo "  JPEG JasPer support:       ${HAVE_JASPER}"
+
+fi
+
+echo "  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}"
+
+
+echo "  Kakadu support:            ${HAVE_KAKADU}"
+
+
 echo "  Kea support:               ${HAVE_KEA}"
 
 
-echo "  NetCDF support:            ${NETCDF_SETTING}"
+echo "  LERC support:              ${HAVE_LERC}"
+
+
+echo "  libdeflate support:        ${LIBDEFLATE_SETTING}"
+
+
+echo "  LIBGEOTIFF support:        ${GEOTIFF_SETTING}"
+
+
+echo "  LIBGIF support:            ${GIF_SETTING}"
+
+
+echo "  LIBJPEG support:           ${JPEG_SETTING}"
+
+
+echo "  LIBLZMA support:           ${LIBLZMA_SETTING}"
+
+
+echo "  LIBPNG support:            ${PNG_SETTING}"
+
+
+echo "  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})"
+
+
+echo "  libxml2 support:           ${HAVE_LIBXML2}"
+
+
+echo "  LIBZ support:              ${LIBZ_SETTING}"
+
+
+echo "  MDB support:               ${MDB_ENABLED}"
+
+
+echo "  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}"
+
+
+echo "  MongoDB support:           ${MONGODB_ENABLED}"
+
+
+echo "  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}"
+
+
+echo "  MrSID support:             ${HAVE_MRSID}"
+
+
+echo "  MSG support:               ${HAVE_MSG}"
+
+
+echo "  MySQL support:             ${HAVE_MYSQL}"
 
 if test "$NETCDF_SETTING" = "yes" ; then
 
@@ -45036,97 +45111,61 @@ echo "  NetCDF has netcdf_mem.h:   ${NETCDF_MEM}"
 
 fi
 
-echo "  Kakadu support:            ${HAVE_KAKADU}"
-
-if test "x$HAVE_JASPER_UUID" != "x" ; then
-
-echo "  JasPer support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})"
-
-else
-
-echo "  JasPer support:            ${HAVE_JASPER}"
-
-fi
-
-echo "  OpenJPEG support:          ${HAVE_OPENJPEG}"
-
-
-echo "  ECW support:               ${ECW_SETTING}"
-
-
-echo "  MrSID support:             ${HAVE_MRSID}"
-
-
-echo "  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}"
-
-
-echo "  JP2Lura support:           ${HAVE_JP2LURA}"
-
-
-echo "  MSG support:               ${HAVE_MSG}"
-
-
-echo "  WebP support:              ${WEBP_SETTING}"
-
-
-echo "  cURL support (wms/wcs/...):${CURL_SETTING}"
-
-
-echo "  PostgreSQL support:        ${HAVE_PG}"
-
-
-echo "  LERC support:              ${HAVE_LERC}"
-
-
-echo "  MySQL support:             ${HAVE_MYSQL}"
-
-
-echo "  Ingres support:            ${HAVE_INGRES}"
-
-
-echo "  Xerces-C support:          ${HAVE_XERCES}"
-
-
-echo "  Expat support:             ${HAVE_EXPAT}"
-
-
-echo "  libxml2 support:           ${HAVE_LIBXML2}"
-
-
-echo "  Google libkml support:     ${HAVE_LIBKML}"
-
-
-echo "  ODBC support:              ${ODBC_SETTING}"
-
-
-echo "  FGDB support:              ${FGDB_ENABLED}"
-
-
-echo "  MDB support:               ${MDB_ENABLED}"
-
-
-echo "  PCIDSK support:            ${PCIDSK_SETTING}"
+echo "  NetCDF support:            ${NETCDF_SETTING}"
 
 
 echo "  OCI support:               ${HAVE_OCI}"
 
 
-echo "  GEORASTER support:         ${HAVE_GEORASTER}"
+echo "  ODBC support:              ${ODBC_SETTING}"
+
+
+echo "  OGDI support:              ${HAVE_OGDI}"
+
+
+echo "  OpenCL support:            ${OPENCL_SETTING}"
+
+
+echo "  OpenJPEG support:          ${HAVE_OPENJPEG}"
+
+
+echo "  PCIDSK support:            ${PCIDSK_SETTING}"
+
+
+echo "  PCRaster support:          ${PCRASTER_SETTING}"
+
+
+echo "  PCRE support:              ${HAVE_PCRE}"
+
+
+echo "  PDFium support:            ${HAVE_PDFIUM}"
+
+
+echo "  Podofo support:            ${HAVE_PODOFO}"
+
+
+echo "  Poppler support:           ${HAVE_POPPLER}"
+
+
+echo "  PostgreSQL support:        ${HAVE_PG}"
+
+
+echo "  QHull support:             ${QHULL_SETTING}"
 
 
 echo "  Rasdaman support:          ${RASDAMAN_ENABLED}"
 
 
+echo "  RasterLite2 support:       ${HAVE_RASTERLITE2}"
+
+
 echo "  RDB support:               ${RDB_SETTING}"
 
 
-echo "  DODS support:              ${HAVE_DODS}"
+echo "  SFCGAL support:            ${HAVE_SFCGAL_RESULT}"
 
 
-echo "  SQLite support:            ${HAVE_SQLITE}"
-
-
-echo "  PCRE support:              ${HAVE_PCRE}"
+echo "  SOSI support:              ${SOSI_ENABLED}"
 
 
 echo "  SpatiaLite support:        ${HAVE_SPATIALITE}"
@@ -45137,76 +45176,25 @@ echo "  SpatiaLite shared obj name:${SPATIALITE_SONAME}"
 
 fi
 
-echo "  RasterLite2 support:       ${HAVE_RASTERLITE2}"
+echo "  SQLite support:            ${HAVE_SQLITE}"
 
 
 echo "  Teigha (DWG and DGNv8):    ${HAVE_TEIGHA}"
 
 
-echo "  INFORMIX DataBlade support:${HAVE_IDB}"
-
-
-echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
-
-
-echo "  SFCGAL support:            ${HAVE_SFCGAL_RESULT}"
-
-
-echo "  QHull support:             ${QHULL_SETTING}"
-
-
-echo "  Poppler support:           ${HAVE_POPPLER}"
-
-
-echo "  Podofo support:            ${HAVE_PODOFO}"
-
-
-echo "  PDFium support:            ${HAVE_PDFIUM}"
-
-
-echo "  OpenCL support:            ${OPENCL_SETTING}"
-
-
-echo "  Armadillo support:         ${HAVE_ARMADILLO}"
-
-
-echo "  FreeXL support:            ${HAVE_FREEXL}"
-
-
-echo "  SOSI support:              ${SOSI_ENABLED}"
-
-
-echo "  MongoDB support:           ${MONGODB_ENABLED}"
-
-
-echo "  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}"
-
-
-echo "  HDFS support:              ${HDFS_ENABLED}"
-
-
 echo "  TileDB support:            ${TILEDB_SETTING}"
-
-
-echo "  EXR support:               ${HAVE_EXR}"
-
-
-echo "  HEIF support:              ${HAVE_HEIF}"
 
 
 echo "  userfaultfd support:       ${ENABLE_UFFD}"
 
 
-echo "  misc. gdal formats:       ${GDALFORMATS_ENABLED}"
+echo "  WebP support:              ${WEBP_SETTING}"
 
 
-echo "  disabled gdal formats:    ${GDALFORMATS_DISABLED}"
+echo "  Xerces-C support:          ${HAVE_XERCES}"
 
 
-echo "  misc. ogr formats:        ${OGRFORMATS_ENABLED}"
-
-
-echo "  disabled ogr formats:     ${OGRFORMATS_DISABLED}"
+echo "  ZSTD support:              ${ZSTD_SETTING}"
 
 
 
@@ -45225,6 +45213,24 @@ if test -z "$BINDINGS"; then
 else
     WHAT_BINDINGS="$BINDINGS"
 fi
+
+echo "  misc. gdal formats:       ${GDALFORMATS_ENABLED}"
+
+
+echo "  misc. ogr formats:        ${OGRFORMATS_ENABLED}"
+
+
+echo ""
+
+
+echo "  disabled gdal formats:    ${GDALFORMATS_DISABLED}"
+
+
+echo "  disabled ogr formats:     ${OGRFORMATS_DISABLED}"
+
+
+echo ""
+
 
 echo "  SWIG Bindings:             ${WHAT_BINDINGS}"
 
