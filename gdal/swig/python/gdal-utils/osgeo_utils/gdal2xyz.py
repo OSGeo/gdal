@@ -9,7 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2020, Idan Miara <idan@miara.com>
+# Copyright (c) 2020-2021, Idan Miara <idan@miara.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -29,9 +29,10 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-
 import sys
-from numbers import Number
+import textwrap
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from numbers import Number, Real
 from pathlib import Path
 from typing import Optional, Union, Sequence, Tuple
 import numpy as np
@@ -41,100 +42,6 @@ from osgeo_utils.auxiliary.base import num, PathLike
 from osgeo_utils.auxiliary.progress import get_progress_callback, OptionalProgressCallback
 from osgeo_utils.auxiliary.util import PathOrDS, get_bands
 from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
-
-
-def Usage():
-    print('Usage: gdal2xyz.py [-help]'
-          '                   [-skip factor] [-srcwin xoff yoff width height]'
-          '                   [-b|band band]* [-allbands] [-csv]'
-          '                   [-skipnodata]'
-          '                   [-srcnodata value]* [-dstnodata value]*'
-          '                   src_dataset [dst_dataset]')
-    print('')
-    return 1
-
-
-def main(argv):
-    srcwin = None
-    skip = 1
-    srcfile = None
-    dstfile = None
-    band_nums = []
-    all_bands = False
-    delim = ' '
-    skip_nodata = False
-    src_nodata = []
-    dst_nodata = []
-
-    argv = gdal.GeneralCmdLineProcessor(argv)
-    if argv is None:
-        return 0
-
-    # Parse command line arguments.
-    i = 1
-    while i < len(argv):
-        arg = str(argv[i]).lower()
-        if arg.startswith('--'):
-            arg = arg[1:]
-
-        if arg == '-srcwin':
-            srcwin = (int(argv[i + 1]), int(argv[i + 2]),
-                      int(argv[i + 3]), int(argv[i + 4]))
-            i = i + 4
-
-        elif arg == '-skip':
-            skip = int(argv[i + 1])
-            i = i + 1
-
-        elif arg in ['-b', '-band']:
-            b = int(argv[i + 1])
-            i = i + 1
-            if b:
-                band_nums.append(b)
-            else:
-                all_bands = True
-
-        elif arg == '-allbands':
-            all_bands = True
-
-        elif arg == '-csv':
-            delim = ','
-
-        elif arg in ['-skipnodata', '-skip_nodata']:
-            skip_nodata = True
-
-        elif arg in ['-nodatavalue', '-srcnodata']:
-            src_nodata.append(num(argv[i + 1]))
-            i = i + 1
-
-        elif arg == '-dstnodata':
-            dst_nodata.append(num(argv[i + 1]))
-            i = i + 1
-
-        elif srcfile is None:
-            srcfile = arg
-
-        elif dstfile is None:
-            dstfile = arg
-
-        elif arg == '-help':
-            return Usage()
-
-        else:
-            return Usage()
-
-        i = i + 1
-
-    if srcfile is None:
-        return Usage()
-
-    if all_bands:
-        band_nums = None
-    elif not band_nums:
-        band_nums = 1
-    return gdal2xyz(srcfile=srcfile, dstfile=dstfile, srcwin=srcwin, skip=skip,
-                    band_nums=band_nums, delim=delim,
-                    skip_nodata=skip_nodata, src_nodata=src_nodata, dst_nodata=dst_nodata)
 
 
 def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
@@ -273,7 +180,7 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
                     progress_prev = progress
                     progress_callback(progress_frac)
 
-            x_i_data = data[:, x_i]   # single pixel, dims: (bands)
+            x_i_data = data[:, x_i]  # single pixel, dims: (bands)
             if process_nodata and np.array_equal(src_nodata, x_i_data):
                 if skip_nodata:
                     continue
@@ -309,6 +216,165 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
         result = all_geo_x, all_geo_y, all_data.transpose(), nodata
 
     return result
+
+
+def Usage():
+    print('Usage: gdal2xyz.py [-help]'
+          '                   [-skip factor] [-srcwin xoff yoff width height]'
+          '                   [-b|band band]* [-allbands] [-csv]'
+          '                   [-skipnodata]'
+          '                   [-srcnodata value]* [-dstnodata value]*'
+          '                   src_dataset [dst_dataset]')
+    print('')
+    return 1
+
+
+def main_old(argv):
+    srcwin = None
+    skip = 1
+    srcfile = None
+    dstfile = None
+    band_nums = []
+    all_bands = False
+    delim = ' '
+    skip_nodata = False
+    src_nodata = []
+    dst_nodata = []
+
+    argv = gdal.GeneralCmdLineProcessor(argv)
+    if argv is None:
+        return 0
+
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = str(argv[i]).lower()
+        if arg.startswith('--'):
+            arg = arg[1:]
+
+        if arg == '-srcwin':
+            srcwin = (int(argv[i + 1]), int(argv[i + 2]),
+                      int(argv[i + 3]), int(argv[i + 4]))
+            i = i + 4
+
+        elif arg == '-skip':
+            skip = int(argv[i + 1])
+            i = i + 1
+
+        elif arg in ['-b', '-band']:
+            b = int(argv[i + 1])
+            i = i + 1
+            if b:
+                band_nums.append(b)
+            else:
+                all_bands = True
+
+        elif arg == '-allbands':
+            all_bands = True
+
+        elif arg == '-csv':
+            delim = ','
+
+        elif arg in ['-skipnodata', '-skip_nodata']:
+            skip_nodata = True
+
+        elif arg in ['-nodatavalue', '-srcnodata']:
+            src_nodata.append(num(argv[i + 1]))
+            i = i + 1
+
+        elif arg == '-dstnodata':
+            dst_nodata.append(num(argv[i + 1]))
+            i = i + 1
+
+        elif srcfile is None:
+            srcfile = arg
+
+        elif dstfile is None:
+            dstfile = arg
+
+        elif arg == '-help':
+            return Usage()
+
+        else:
+            return Usage()
+
+        i = i + 1
+
+    if srcfile is None:
+        return Usage()
+
+    if all_bands:
+        band_nums = None
+    elif not band_nums:
+        band_nums = 1
+    return gdal2xyz(srcfile=srcfile, dstfile=dstfile, srcwin=srcwin, skip=skip,
+                    band_nums=band_nums, delim=delim,
+                    skip_nodata=skip_nodata, src_nodata=src_nodata, dst_nodata=dst_nodata)
+
+
+def main(argv):
+    parser = ArgumentParser(
+        formatter_class=RawDescriptionHelpFormatter,
+        description=textwrap.dedent('''\
+            The gdal2xyz utility can be used to translate a raster file into xyz format.
+            It can be used as an alternative to gdal_translate of=xyz,
+            But supporting other options, for example:
+            * Select more then one band;
+            * Skip or replace nodata value;
+            * Return the output as numpy arrays.'''))
+
+    parser.add_argument("-skip", dest="skip", action="store_true", default=1,
+                        help="How many rows/cols to skip in each iteration.")
+
+    parser.add_argument("-srcwin", metavar=('xoff', 'yoff', 'xsize', 'ysize'), dest="srcwin", type=float, nargs=4,
+                        help="Selects a subwindow from the source image for copying based on pixel/line location")
+
+    parser.add_argument("-b", "-band", "--band", dest="band_nums", metavar="band", type=int, nargs='+',
+                        help="Select bands from the input spectral bands for output. "
+                             "Bands are numbered from 1 in the order spectral bands are specified. "
+                             "Multiple -b switches may be used. When no -b switch is used, the first band will be used."
+                             "In order to use all input bands set -allbands or -b 0..")
+
+    parser.add_argument("-allbands", "--allbands", dest="allbands", action="store_true",
+                        help="Select all input bands.")
+
+    parser.add_argument("-csv", dest="delim", const=',', default=' ', action="store_const",
+                        help="Use comma instead of space as a delimiter.")
+
+    parser.add_argument("-skipnodata", "--skipnodata", "-skip_nodata", dest="skip_nodata", action="store_true",
+                        help="Exclude the output lines with nodata value (as determined by srcnodata).")
+
+    parser.add_argument("-srcnodata", '-nodatavalue', dest="src_nodata", type=Real, nargs='*',
+                        help="The nodata value of the dataset (for skipping or replacing) "
+                             "Default (None) - Use the dataset nodata value; "
+                             "Sequence/Number - Use the given nodata value (per band or per dataset).")
+
+    parser.add_argument("-dstnodata", dest="dst_nodata", type=Real, nargs='*',
+                        help="Replace source nodata with a given nodata. "
+                             "Has an effect only if not setting -skipnodata. "
+                             "Default(None) - Use srcnodata, no replacement; "
+                             "Sequence/Number - Replace the srcnodata with the given nodata value "
+                             "(per band or per dataset).")
+
+    parser.add_argument("srcfile", metavar="src_dataset", type=str,
+                        help="The source dataset name. It can be either file name, "
+                             "URL of data source or subdataset name for multi-dataset files.")
+
+    parser.add_argument("dstfile", metavar="dst_dataset", type=str,
+                        help="The destination file name.")
+
+    args = parser.parse_args(argv[1:])
+    if args.allbands:
+        args.band_nums = None
+    elif not args.band_nums:
+        args.band_nums = 1
+    kwargs = vars(args)
+    del kwargs["allbands"]
+    try:
+        return gdal2xyz(**kwargs)
+    except IOError as e:
+        print(e)
+        return 1
 
 
 if __name__ == '__main__':
