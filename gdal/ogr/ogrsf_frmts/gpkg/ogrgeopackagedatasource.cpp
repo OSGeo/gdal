@@ -7277,7 +7277,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
                 asValues.reserve( oResultTable.nRowCount + 1 );
             }
             OGRCodedValue cv;
-            // intented: the 'value' column in GPKG is actually the code
+            // intended: the 'value' column in GPKG is actually the code
             cv.pszCode = VSI_STRDUP_VERBOSE(pszValue);
             if( cv.pszCode == nullptr )
             {

@@ -8341,7 +8341,7 @@ OGRFieldDomainH GDALDatasetGetFieldDomain(GDALDatasetH hDS,
  * Only a few drivers will support this operation, and some of them might only
  * support it only for some types of field domains.
  * At the time of writing (GDAL 3.3), only the Memory and GeoPackage drivers
- * support this operation. A dataset having at least smoe support for this
+ * support this operation. A dataset having at least some support for this
  * operation should report the ODsCAddFieldDomain dataset capability.
  *
  * Anticipated failures will not be emitted through the CPLError()
@@ -8369,7 +8369,7 @@ bool GDALDataset::AddFieldDomain(CPL_UNUSED std::unique_ptr<OGRFieldDomain>&& do
  * Only a few drivers will support this operation, and some of them might only
  * support it only for some types of field domains.
  * At the time of writing (GDAL 3.3), only the Memory and GeoPackage drivers
- * support this operation. A dataset having at least smoe support for this
+ * support this operation. A dataset having at least some support for this
  * operation should report the ODsCAddFieldDomain dataset capability.
  *
  * Anticipated failures will not be emitted through the CPLError()
