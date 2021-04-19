@@ -24,9 +24,9 @@
 
 #if !defined(DO_NOT_DEFINE_GDAL_RELEASE_DATE_AND_GDAL_RELEASE_NAME)
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20219999
+#  define GDAL_RELEASE_DATE     20210419
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "3.3.0dev"
+#  define GDAL_RELEASE_NAME     "3.3.0beta1"
 #endif
 #endif

@@ -127,7 +127,7 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
-LIBGDAL_CURRENT	:=	28
+LIBGDAL_CURRENT	:=	29
 LIBGDAL_REVISION	:=	0
 LIBGDAL_AGE	:=	0
 
