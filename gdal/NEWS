@@ -16,6 +16,7 @@
   - Perl bindings are deprecated. Removal planned for GDAL 3.5. Use Geo::GDAL::FFI instead
 * Removal of BNA, AeronavFAA, HTF, OpenAir, SEGUKOOA, SEGY, SUA, XPlane, BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid, NTV1 drivers. Moved to (unsupported) https://github.com/OSGeo/gdal-extra-drivers repository.
 * Continued code linting (cppcheck, CoverityScan, etc.)
+* Bump of shared lib major version
 
 == Backward compatibility issues ==
 

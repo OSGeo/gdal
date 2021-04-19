@@ -4,6 +4,8 @@
 
  * New GDAL drivers:
  * New OGR drivers:
+ * For feature version, generally: Bump of shared lib major version
+
 
 == New installed files ==
 
