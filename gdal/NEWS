@@ -21,7 +21,7 @@
 
 See MIGRATION_GUIDE.txt
 
-== GDAL/OGR 3.2.0 - General Changes ==
+== GDAL/OGR 3.3.0 - General Changes ==
 
 General:
  * fix build with recent gcc/clang
