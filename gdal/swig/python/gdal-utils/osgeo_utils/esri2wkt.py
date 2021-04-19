@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Simple command line program for translating ESRI .prj files
@@ -9,6 +8,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2000, Frank Warmerdam
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -30,15 +30,28 @@
 # ******************************************************************************
 
 import sys
+from argparse import ArgumentParser
+from pathlib import Path
+from typing import Union
 
 from osgeo import osr
 
-def main(argv):
-    if len(argv) < 2:
-        print('Usage: esri2wkt.py <esri .prj file>')
-        return 1
 
-    prj_fd = open(argv[1])
+def main(argv):
+    parser = ArgumentParser(description='Transforms files from ESRI prj format into WKT format')
+
+    parser.add_argument("filenames", metavar='filename', type=str, nargs='*', help="esri .prj file")
+
+    args = parser.parse_args(argv[1:])
+
+    res = 1
+    for filename in args.filenames:
+        res = esri2wkt(filename)
+    return res
+
+
+def esri2wkt(prj_filename: Union[str, Path]):
+    prj_fd = open(prj_filename)
     prj_lines = prj_fd.readlines()
     prj_fd.close()
 
@@ -49,8 +62,10 @@ def main(argv):
     err = prj_srs.ImportFromESRI(prj_lines)
     if err != 0:
         print('Error = %d' % err)
+        return 1
     else:
         print(prj_srs.ExportToPrettyWkt())
+        return 0
 
 
 if __name__ == '__main__':
