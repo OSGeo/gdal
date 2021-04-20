@@ -132,5 +132,5 @@ NumFOCUS-related sponsorship.
 Voting History
 --------------
 
-TBD
++1 from PSC members EvenR, KurtS, FrankW, MateuszL, DanielM, HowardB and NormanB
 
