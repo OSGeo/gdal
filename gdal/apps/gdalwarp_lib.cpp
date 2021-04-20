@@ -3712,6 +3712,67 @@ double GetMaximumSegmentLength( OGRGeometry* poGeom )
 }
 
 /************************************************************************/
+/*                      RemoveZeroWidthSlivers()                        */
+/*                                                                      */
+/* Such slivers can cause issues after reprojection.                    */
+/************************************************************************/
+
+static void RemoveZeroWidthSlivers( OGRGeometry* poGeom )
+{
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    if( eType == wkbMultiPolygon )
+    {
+        for( auto poSubGeom: *(poGeom->toMultiPolygon()) )
+        {
+            RemoveZeroWidthSlivers(poSubGeom);
+        }
+    }
+    else if( eType == wkbPolygon )
+    {
+        for( auto poSubGeom: *(poGeom->toPolygon()) )
+        {
+            RemoveZeroWidthSlivers(poSubGeom);
+        }
+    }
+    else if( eType == wkbLineString )
+    {
+        OGRLineString* poLS = poGeom->toLineString();
+        int numPoints = poLS->getNumPoints();
+        for(int i = 1; i < numPoints - 1; )
+        {
+            const double x1 = poLS->getX(i-1);
+            const double y1 = poLS->getY(i-1);
+            const double x2 = poLS->getX(i);
+            const double y2 = poLS->getY(i);
+            const double x3 = poLS->getX(i+1);
+            const double y3 = poLS->getY(i+1);
+            const double dx1 = x2 - x1;
+            const double dy1 = y2 - y1;
+            const double dx2 = x3 - x2;
+            const double dy2 = y3 - y2;
+            const double scalar_product = dx1 * dx2 + dy1 * dy2;
+            const double square_scalar_product = scalar_product * scalar_product;
+            const double square_norm1 = dx1 * dx1 + dy1 * dy1;
+            const double square_norm2 = dx2 * dx2 + dy2 * dy2;
+            const double square_norm1_mult_norm2 = square_norm1 * square_norm2;
+            if( scalar_product < 0 &&
+                fabs(square_scalar_product - square_norm1_mult_norm2) <= 1e-15 * square_norm1_mult_norm2 )
+            {
+                CPLDebug("WARP",
+                         "RemoveZeroWidthSlivers: removing point %.10g %.10g",
+                         x2, y2);
+                poLS->removePoint(i);
+                numPoints--;
+            }
+            else
+            {
+                ++i;
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                      TransformCutlineToSource()                      */
 /*                                                                      */
 /*      Transform cutline from its SRS to source pixel/line coordinates.*/
@@ -3721,6 +3782,8 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
                           char ***ppapszWarpOptions, char **papszTO_In )
 
 {
+    RemoveZeroWidthSlivers( OGRGeometry::FromHandle(hCutline) );
+
     OGRGeometryH hMultiPolygon = OGR_G_Clone( hCutline );
 
 /* -------------------------------------------------------------------- */
