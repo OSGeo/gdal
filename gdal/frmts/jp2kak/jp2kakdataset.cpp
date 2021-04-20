@@ -324,6 +324,9 @@ JP2KAKRasterBand::~JP2KAKRasterBand()
 int JP2KAKRasterBand::GetOverviewCount()
 
 {
+    if( !poBaseDS->AreOverviewsEnabled() )
+        return 0;
+
     if( GDALPamRasterBand::GetOverviewCount() > 0 )
         return GDALPamRasterBand::GetOverviewCount();
 
@@ -1328,12 +1331,15 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
     int nDiscardLevels = 0;
     int nResMult = 1;
 
-    while( nDiscardLevels < nResCount - 1 &&
-           nBufXSize * nResMult * 2 < nXSize * 1.01 &&
-           nBufYSize * nResMult * 2 < nYSize * 1.01 )
+    if( AreOverviewsEnabled() )
     {
-        nDiscardLevels++;
-        nResMult *= 2;
+        while( nDiscardLevels < nResCount - 1 &&
+               nBufXSize * nResMult * 2 < nXSize * 1.01 &&
+               nBufYSize * nResMult * 2 < nYSize * 1.01 )
+        {
+            nDiscardLevels++;
+            nResMult *= 2;
+        }
     }
 
     // Prepare component indices list.

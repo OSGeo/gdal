@@ -672,6 +672,14 @@ class CPL_DLL GDALDataset : public GDALMajorObject
         OGRLayer* layer = nullptr;
     };
 
+//! @cond Doxygen_Suppress
+    // SetEnableOverviews() only to be used by GDALOverviewDataset
+    void SetEnableOverviews(bool bEnable);
+
+    // Only to be used by driver's GetOverviewCount() method.
+    bool AreOverviewsEnabled() const;
+//! @endcond
+
 private:
     class Private;
     Private *m_poPrivate;

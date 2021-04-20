@@ -1150,10 +1150,13 @@ end:
 
 int JP2OpenJPEGRasterBand::GetOverviewCount()
 {
+    JP2OpenJPEGDataset *poGDS = cpl::down_cast<JP2OpenJPEGDataset*>(poDS);
+    if( !poGDS->AreOverviewsEnabled() )
+        return 0;
+
     if( GDALPamRasterBand::GetOverviewCount() > 0 )
         return GDALPamRasterBand::GetOverviewCount();
 
-    JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
     return poGDS->nOverviewCount;
 }
 

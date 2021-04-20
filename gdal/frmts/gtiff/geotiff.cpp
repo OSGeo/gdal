@@ -5955,6 +5955,9 @@ void GTiffRasterBand::NullBlock( void *pData )
 int GTiffRasterBand::GetOverviewCount()
 
 {
+    if( !m_poGDS->AreOverviewsEnabled() )
+        return 0;
+
     m_poGDS->ScanDirectories();
 
     if( m_poGDS->m_nOverviewCount > 0 )
