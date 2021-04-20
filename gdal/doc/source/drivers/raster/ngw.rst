@@ -9,7 +9,7 @@ NGW -- NextGIS Web
 
 .. build_dependencies:: libcurl
 
-NextGIS Web - is a server GIS, which allows to store and edit geodata
+NextGIS Web - is a server GIS, which allows storing and editing geodata
 and to display maps in web browser. Also NextGIS Web can share geodata
 with other NextGIS software.
 

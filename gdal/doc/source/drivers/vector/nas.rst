@@ -38,8 +38,8 @@ generated using `xmi2db <https://github.com/norBIT/xmi2db/>`__ (fork of
 `xmi2db <https://github.com/pkorduan/xmi2db>`__) from the official
 application schema.
 
-New in 2.3 is also the option **NAS_NO_RELATION_LAYER** that allows to
-disable populating the table *alkis_beziehungen*. The information found
+New in 2.3 is also the option **NAS_NO_RELATION_LAYER** that allows
+disabling populating the table *alkis_beziehungen*. The information found
 there is redundant to the relation fields also contained in original
 elements/tables. Enabling the option also makes progress reporting
 available.

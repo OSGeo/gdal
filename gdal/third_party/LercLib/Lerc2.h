@@ -57,7 +57,7 @@ NAMESPACE_LERC_START
  *
  *    -- add checksum for the entire byte blob, for more rigorous detection of compressed data corruption
  *    -- for the main bit stuffing routine, use an extra uint buffer for guaranteed memory alignment
- *    -- this also allows to drop the NumExtraBytesToAllocate functions
+ *    -- this also allows dropping the NumExtraBytesToAllocate functions
  *
  *    Lerc2 v4
  *
