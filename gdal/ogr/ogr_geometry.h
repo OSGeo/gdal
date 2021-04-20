@@ -1356,6 +1356,8 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        addPointM( double, double, double );
     void        addPoint( double, double, double, double );
 
+    bool        removePoint( int );
+
     void        getPoints( OGRRawPoint *, double * = nullptr ) const;
     void        getPoints( void* pabyX, int nXStride,
                            void* pabyY, int nYStride,

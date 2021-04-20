@@ -1827,4 +1827,54 @@ namespace tut
         }
     }
 
+    // Test OGRLineString::removePoint()
+    template<>
+    template<>
+    void object::test<20>()
+    {
+        {
+            OGRLineString ls;
+            ls.addPoint(0,1);
+            ls.addPoint(2,3);
+            ls.addPoint(4,5);
+            ensure( !ls.removePoint(-1) );
+            ensure( !ls.removePoint(3) );
+            ensure_equals( ls.getNumPoints(), 3 );
+            ensure( ls.removePoint(1) );
+            ensure_equals( ls.getNumPoints(), 2 );
+            ensure_equals( ls.getX(0), 0.0 );
+            ensure_equals( ls.getY(0), 1.0 );
+            ensure_equals( ls.getX(1), 4.0 );
+            ensure_equals( ls.getY(1), 5.0 );
+            ensure( ls.removePoint(1) );
+            ensure_equals( ls.getNumPoints(), 1 );
+            ensure( ls.removePoint(0) );
+            ensure_equals( ls.getNumPoints(), 0 );
+        }
+        {
+            // With Z, M
+            OGRLineString ls;
+            ls.addPoint(0,1,20,30);
+            ls.addPoint(2,3,40,50);
+            ls.addPoint(4,5,60,70);
+            ensure( !ls.removePoint(-1) );
+            ensure( !ls.removePoint(3) );
+            ensure_equals( ls.getNumPoints(), 3 );
+            ensure( ls.removePoint(1) );
+            ensure_equals( ls.getNumPoints(), 2 );
+            ensure_equals( ls.getX(0), 0.0 );
+            ensure_equals( ls.getY(0), 1.0 );
+            ensure_equals( ls.getZ(0), 20.0 );
+            ensure_equals( ls.getM(0), 30.0 );
+            ensure_equals( ls.getX(1), 4.0 );
+            ensure_equals( ls.getY(1), 5.0 );
+            ensure_equals( ls.getZ(1), 60.0 );
+            ensure_equals( ls.getM(1), 70.0 );
+            ensure( ls.removePoint(1) );
+            ensure_equals( ls.getNumPoints(), 1 );
+            ensure( ls.removePoint(0) );
+            ensure_equals( ls.getNumPoints(), 0 );
+        }
+    }
+
 } // namespace tut
