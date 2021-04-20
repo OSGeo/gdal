@@ -93,6 +93,10 @@ can publish a picture without proper georeferencing too.
 
   Generate verbose output of tile generation.
 
+.. option:: -x, --exclude
+
+  Exclude transparent tiles from result tileset.
+
 .. option:: -q, --quiet
 
   Disable messages and status to stdout
