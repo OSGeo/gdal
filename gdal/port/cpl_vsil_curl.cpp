@@ -732,14 +732,14 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
 static bool VSICurlIsS3LikeSignedURL( const char* pszURL )
 {
     return
-        (strstr(pszURL, ".s3.amazonaws.com/") != nullptr ||
-         strstr(pszURL, ".s3.amazonaws.com:") != nullptr ||
-         strstr(pszURL, ".storage.googleapis.com/") != nullptr ||
-         strstr(pszURL, ".storage.googleapis.com:") != nullptr) &&
-        (strstr(pszURL, "&Signature=") != nullptr ||
-         strstr(pszURL, "?Signature=") != nullptr ||
-         strstr(pszURL, "&X-Amz-Signature=") != nullptr ||
-         strstr(pszURL, "?X-Amz-Signature=") != nullptr);
+        ((strstr(pszURL, ".s3.amazonaws.com/") != nullptr ||
+          strstr(pszURL, ".s3.amazonaws.com:") != nullptr ||
+          strstr(pszURL, ".storage.googleapis.com/") != nullptr ||
+          strstr(pszURL, ".storage.googleapis.com:") != nullptr) &&
+         (strstr(pszURL, "&Signature=") != nullptr ||
+          strstr(pszURL, "?Signature=") != nullptr)) ||
+        strstr(pszURL, "&X-Amz-Signature=") != nullptr ||
+        strstr(pszURL, "?X-Amz-Signature=") != nullptr;
 }
 
 /************************************************************************/
@@ -4288,7 +4288,7 @@ char** VSICurlFilesystemHandler::SiblingFiles( const char *pszFilename )
         return static_cast<char**> (CPLCalloc(1,sizeof(char*)));
     }
     return nullptr;
-    
+
 }
 
 /************************************************************************/
@@ -5135,7 +5135,7 @@ void VSINetworkStatsReset( void )
  *     },
  *     "vsis3":{
  *          [...]
- *     } 
+ *     }
  *   }
  * }
 
