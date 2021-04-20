@@ -49,25 +49,26 @@ def test_overviewds_1():
 # Nominal cases
 
 @pytest.mark.parametrize("externalOverviews", [True, False])
-def test_overviewds_2(externalOverviews):
+def test_overviewds_2(tmp_path, externalOverviews):
 
-    shutil.copy('data/byte.tif', 'tmp')
+    shutil.copy('data/byte.tif', tmp_path)
+    tmpfilename = str(tmp_path.joinpath('byte.tif'))
     if externalOverviews:
-        ds = gdal.Open('tmp/byte.tif')
+        ds = gdal.Open(tmpfilename)
         ds.BuildOverviews('NEAR', overviewlist=[2, 4])
         ds = None
-        ds = gdal.Open('tmp/byte.tif', gdal.GA_Update)
+        ds = gdal.Open(tmpfilename, gdal.GA_Update)
     else:
-        ds = gdal.Open('tmp/byte.tif', gdal.GA_Update)
+        ds = gdal.Open(tmpfilename, gdal.GA_Update)
         ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds.GetRasterBand(1).WriteRaster(2, 2, 5, 5, b'\0' * 25)
     ds.GetRasterBand(1).WriteRaster(2, 2, 1, 1, b'\0')
     ds.GetRasterBand(1).GetOverview(1).WriteRaster(2, 2, 1, 1, b'\0')
     ds = None
 
-    src_ds = gdal.Open('tmp/byte.tif')
+    src_ds = gdal.Open(tmpfilename)
 
-    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=NONE'])
+    ds = gdal.OpenEx(tmpfilename, open_options=['OVERVIEW_LEVEL=NONE'])
     assert ds.RasterXSize == 20 and ds.RasterYSize == 20 and ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetProjectionRef() == src_ds.GetProjectionRef()
@@ -78,7 +79,7 @@ def test_overviewds_2(externalOverviews):
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 10, 10) != src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
     ds = None
 
-    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0only'])
+    ds = gdal.OpenEx(tmpfilename, open_options=['OVERVIEW_LEVEL=0only'])
     assert ds.RasterXSize == 10 and ds.RasterYSize == 10 and ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     expected_data = src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
@@ -90,7 +91,7 @@ def test_overviewds_2(externalOverviews):
     assert got_data != expected_data
     ds = None
 
-    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0'])
+    ds = gdal.OpenEx(tmpfilename, open_options=['OVERVIEW_LEVEL=0'])
     assert ds is not None
     assert ds.RasterXSize == 10 and ds.RasterYSize == 10 and ds.RasterCount == 1
     assert ds.GetProjectionRef() == src_ds.GetProjectionRef()
@@ -121,8 +122,6 @@ def test_overviewds_2(externalOverviews):
     assert not ds.GetMetadata('GEOLOCATION')
     assert ds.GetMetadataItem('RPC', 'FOO') is None
     ds = None
-
-    gdal.GetDriverByName('GTiff').Delete('tmp/byte.tif')
 
 ###############################################################################
 # Test GCP
