@@ -140,7 +140,7 @@ the health of project:
   </script>
 
 The GDAL Project is hosted by `OSGeo <https://www.osgeo.org>`__, and
-`NumFOCUS <https://numfocus.org>`__ serves as the fiscal sponsor,
+`NumFOCUS <https://numfocus.org>`__ will serve as the fiscal sponsor once GDAL's application is completed,
 enabling all sponsorship to go through a 501(c)3 as charitable donations.
 
 .. container:: horizontal-logos
