@@ -291,7 +291,7 @@ template <typename T> T SwigValueInit() {
    SWIG errors code.
 
    Finally, if the SWIG_CASTRANK_MODE is enabled, the result code
-   allows to return the 'cast rank', for example, if you have this
+   allows returning the 'cast rank', for example, if you have this
 
        int food(double)
        int fooi(int);

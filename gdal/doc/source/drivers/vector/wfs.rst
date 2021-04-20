@@ -96,7 +96,7 @@ The WFS driver will automatically detect if server supports paging, when
 requesting a WFS 2.0 server.
 
 Some servers (such as MapServer >= 6.0) support the use of STARTINDEX
-that allows to do the requests per "page", and thus to avoid
+that allows doing the requests per "page", and thus to avoid
 downloading the whole content of the layer in a single request. Paging
 was introduced in WFS 2.0.0 but servers may support it as an vendor
 specific option also with WFS 1.0.0 and 1.1.0. The OGR WFS client will

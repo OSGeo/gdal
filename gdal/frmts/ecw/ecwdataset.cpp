@@ -3117,7 +3117,7 @@ void ECWDataset::ECW2WKTProjection()
         /* have "Upward" orientation (Y coordinates increase "Upward"). */
         /* Setting ECW_ALWAYS_UPWARD=FALSE option relexes that policy   */
         /* and makes the driver rely on the actual Y-resolution         */
-        /* value (sign) of an image. This allows to correctly process   */
+        /* value (sign) of an image. This allows correctly processing   */
         /* rare images with "Downward" orientation, where Y coordinates */
         /* increase "Downward" and Y-resolution is positive.            */
         if( CPLTestBool( CPLGetConfigOption("ECW_ALWAYS_UPWARD","TRUE") ) )
