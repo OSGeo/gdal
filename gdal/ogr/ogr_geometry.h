@@ -413,7 +413,7 @@ class CPL_DLL OGRGeometry
 
     // IWks Interface.
     virtual size_t WkbSize() const = 0;
-    OGRErr importFromWkb( const GByte*, size_t=-1,
+    OGRErr importFromWkb( const GByte*, size_t=static_cast<size_t>(-1),
                                   OGRwkbVariant=wkbVariantOldOgc );
     virtual OGRErr importFromWkb( const unsigned char *,
                                   size_t,
@@ -3224,7 +3224,7 @@ class CPL_DLL OGRGeometryFactory
                                          int nRecLevel );
   public:
     static OGRErr createFromWkb( const void *, OGRSpatialReference *,
-                                 OGRGeometry **, size_t = -1,
+                                 OGRGeometry **, size_t = static_cast<size_t>(-1),
                                  OGRwkbVariant=wkbVariantOldOgc );
     static OGRErr createFromWkb( const void * pabyData,
                                  OGRSpatialReference *,
