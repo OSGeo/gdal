@@ -228,9 +228,10 @@ jobs:
             cd $env:GITHUB_WORKSPACE\gdal\swig\python
             exec { python setup.py build }
             exec { python setup.py install }
-            cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
-            exec { nmake /f makefile.vc interface }
-            exec { nmake /f makefile.vc all $env:WIN64_ARG }
+            # Disabled because of https://github.com/OSGeo/gdal/issues/3711
+            #cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
+            #exec { nmake /f makefile.vc interface }
+            #exec { nmake /f makefile.vc all $env:WIN64_ARG }
             cd $env:GITHUB_WORKSPACE\autotest\cpp
             exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG }
 
@@ -257,5 +258,6 @@ jobs:
             cd $env:GITHUB_WORKSPACE\autotest
             pip install -Ur requirements.txt
             exec { pytest -vv }
-            cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
-            exec { nmake /f makefile.vc test }
+            # Disabled because of https://github.com/OSGeo/gdal/issues/3711
+            #cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
+            #exec { nmake /f makefile.vc test }
