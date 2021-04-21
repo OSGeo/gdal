@@ -384,7 +384,7 @@ def test_gdalwarp_lib_34():
     for i in range(6):
         assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5), 'bad gt'
 
-    
+
 ###############################################################################
 # Test -te_srs
 
@@ -563,7 +563,7 @@ def test_gdalwarp_lib_105():
     with gdaltest.error_handler():
         gdal.Warp('', ['../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif'], format='MEM', dstSRS='EPSG:32645', width=100, height=100)
 
-    
+
 ###############################################################################
 # Test failure in creation
 
@@ -768,7 +768,7 @@ def test_gdalwarp_lib_121():
     with gdaltest.error_handler():
         gdal.wrapper_GDALWarpDestDS(gdal.GetDriverByName('MEM').Create('', 1, 1), [], None, gdal.TermProgress_nocb)
 
-    
+
 ###############################################################################
 # Test unnamed output VRT
 
@@ -832,7 +832,7 @@ def test_gdalwarp_lib_125():
 
         assert out_ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIUM') is None, i
 
-    
+
 ###############################################################################
 # Test cutline with invalid geometry
 
@@ -1095,7 +1095,7 @@ def test_gdalwarp_lib_132():
         gdal.Unlink('/vsimem/test_gdalwarp_lib_132_dst.tif')
         gdal.Unlink('/vsimem/test_gdalwarp_lib_132_dst.tif.aux.xml')
 
-    
+
 ###############################################################################
 # Test cutline with multiple touching polygons
 
@@ -1523,7 +1523,7 @@ def test_gdalwarp_lib_override_default_output_nodata():
         ds = None
         os.unlink('tmp/out.nc')
 
-    
+
 ###############################################################################
 # Test automatting setting (or not) of SKIP_NOSOURCE=YES
 
@@ -2042,6 +2042,23 @@ def test_gdalwarp_lib_scale_offset():
     assert ds.GetRasterBand(1).GetScale() == 1.5
     assert ds.GetRasterBand(1).GetOffset() == 2.5
 
+###############################################################################
+# Test cutline with zero-width sliver
+
+
+def test_gdalwarp_lib_cutline_zero_width_sliver():
+
+    # Geometry valid in EPSG:4326, but that has a zero-width sliver
+    # at point [-90.783634, 33.612466] that results in an invalid geometry in UTM
+    geojson = '{"type": "MultiPolygon", "coordinates": [[[[-90.789474, 33.608456], [-90.789675, 33.609965], [-90.789688, 33.610022], [-90.789668, 33.610318], [-90.78966, 33.610722], [-90.789598, 33.612225], [-90.789593, 33.612305], [-90.78956, 33.612358], [-90.789475, 33.612365], [-90.789072, 33.61237], [-90.788643, 33.612367], [-90.787938, 33.612375], [-90.787155, 33.612393], [-90.785787, 33.612403], [-90.785132, 33.612425], [-90.784582, 33.612435], [-90.783712, 33.612472],     [-90.783634, 33.612466],     [-90.783647, 33.612467], [-90.783198, 33.612472], [-90.781774, 33.61249], [-90.78104, 33.612511], [-90.780976, 33.612288], [-90.781022, 33.612023], [-90.781033, 33.61179], [-90.781019, 33.611549], [-90.781033, 33.611299], [-90.781055, 33.610906], [-90.781055, 33.610575], [-90.781094, 33.610042], [-90.781084, 33.608534], [-90.781924, 33.608439], [-90.781946, 33.607715], [-90.782421, 33.607559], [-90.78367, 33.607845], [-90.783573, 33.609717], [-90.783741, 33.609384], [-90.784017, 33.607994], [-90.784507, 33.608018], [-90.785483, 33.608138], [-90.787171, 33.608301], [-90.789474, 33.608456]]]]}'
+    gdal.FileFromMemBuffer('/vsimem/cutline.geojson', geojson)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 968, 751)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32615)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([690129,30,0,3723432,0,-30])
+    ds = gdal.Warp('', src_ds, format='MEM', cutlineDSName='/vsimem/cutline.geojson')
+    assert ds is not None
 
 ###############################################################################
 # Cleanup
@@ -2063,6 +2080,6 @@ def test_gdalwarp_lib_cleanup():
     except OSError:
         pass
 
-    
+
 
 
