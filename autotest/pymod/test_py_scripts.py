@@ -31,7 +31,10 @@
 
 import os
 import sys
+import shlex
+
 import gdaltest
+import importlib
 
 ###############################################################################
 # Return the path in which the Python script is found
@@ -67,8 +70,19 @@ def get_py_script(script_name):
 # Runs a Python script
 # Alias of run_py_script_as_external_script()
 #
-def run_py_script(script_path, script_name, concatenated_argv):
-    return run_py_script_as_external_script(script_path, script_name, concatenated_argv)
+def run_py_script(script_path: str, script_name: str, concatenated_argv: str,
+                  run_as_script: bool = True, run_as_module: bool = False):
+    result = None
+    if run_as_module:
+        try:
+            module = importlib.import_module('osgeo_utils.' + script_name)
+        except ImportError:
+            module = importlib.import_module('osgeo_utils.samples.' + script_name)
+        argv = [module.__file__] + shlex.split(concatenated_argv)
+        result = module.main(argv)
+    if run_as_script:
+        result = run_py_script_as_external_script(script_path, script_name, concatenated_argv)
+    return result
 
 
 ###############################################################################
