@@ -31,7 +31,7 @@
 ###############################################################################
 import sys
 import textwrap
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from argparse import RawDescriptionHelpFormatter
 from numbers import Number, Real
 from pathlib import Path
 from typing import Optional, Union, Sequence, Tuple
@@ -42,6 +42,7 @@ from osgeo_utils.auxiliary.base import num, PathLike
 from osgeo_utils.auxiliary.progress import get_progress_callback, OptionalProgressCallback
 from osgeo_utils.auxiliary.util import PathOrDS, get_bands
 from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
 
 
 def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
@@ -313,7 +314,7 @@ def main_old(argv):
 
 
 def main(argv):
-    parser = ArgumentParser(
+    parser = GDALArgumentParser(
         formatter_class=RawDescriptionHelpFormatter,
         description=textwrap.dedent('''\
             The gdal2xyz utility can be used to translate a raster file into xyz format.
