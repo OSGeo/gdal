@@ -123,6 +123,8 @@ class GDALDataset::Private
 
     GDALDataset* poParentDataset = nullptr;
 
+    bool m_bOverviewsEnabled = true;
+
     Private() = default;
 };
 
@@ -2065,7 +2067,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
          psExtraArg->eResampleAlg == GRIORA_Lanczos) &&
         !(nXSize == nBufXSize && nYSize == nBufYSize) && nBandCount > 1 )
     {
-        if( nBufXSize < nXSize && nBufYSize < nYSize )
+        if( nBufXSize < nXSize && nBufYSize < nYSize && AreOverviewsEnabled() )
         {
             int bTried = FALSE;
             const CPLErr eErr =
@@ -8405,3 +8407,28 @@ bool GDALDatasetAddFieldDomain(GDALDatasetH hDS,
     }
     return bRet;
 }
+
+//! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                       SetEnableOverviews()                           */
+/************************************************************************/
+
+void GDALDataset::SetEnableOverviews(bool bEnable)
+{
+    if( m_poPrivate )
+    {
+        m_poPrivate->m_bOverviewsEnabled = bEnable;
+    }
+}
+
+/************************************************************************/
+/*                      AreOverviewsEnabled()                           */
+/************************************************************************/
+
+bool GDALDataset::AreOverviewsEnabled() const
+{
+    return m_poPrivate ? m_poPrivate->m_bOverviewsEnabled : true;
+}
+
+//! @endcond
