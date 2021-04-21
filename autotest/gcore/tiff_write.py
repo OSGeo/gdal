@@ -231,6 +231,11 @@ def test_tiff_write_6():
 
     ds = None
 
+    ds = gdal.Open('tmp/test_6.tif')
+    assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'DEFLATE'
+    assert ds.GetMetadataItem('PREDICTOR', 'IMAGE_STRUCTURE') == '2'
+    ds = None
+
     gdaltest.tiff_write_6_failed = False
     gdaltest.tiff_drv.Delete('tmp/test_6.tif')
 
