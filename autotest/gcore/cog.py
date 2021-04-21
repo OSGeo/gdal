@@ -138,6 +138,7 @@ def test_cog_creation_options():
     ds = gdal.Open(filename)
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'DEFLATE'
+    assert ds.GetMetadataItem('PREDICTOR', 'IMAGE_STRUCTURE') is None
     ds = None
     filesize = gdal.VSIStatL(filename).size
     _check_cog(filename)
@@ -153,6 +154,9 @@ def test_cog_creation_options():
                                                            'PREDICTOR=YES',
                                                            'LEVEL=1'])
     assert gdal.VSIStatL(filename).size != filesize
+    ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('PREDICTOR', 'IMAGE_STRUCTURE') == '2'
+    ds = None
 
     gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
                                                 options = ['COMPRESS=DEFLATE',
