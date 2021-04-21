@@ -9,7 +9,7 @@ contributing resources to its success. The following organizations take an
 extra step, providing unrestricted funding every year to maintain and improve
 the health of project:
 
-- Platinium level:
+- Platinum level:
 
   .. _platinium-sponsors:
   .. container:: horizontal-logos
