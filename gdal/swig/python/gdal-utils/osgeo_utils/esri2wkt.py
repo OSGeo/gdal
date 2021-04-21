@@ -30,15 +30,16 @@
 # ******************************************************************************
 
 import sys
-from argparse import ArgumentParser
 from pathlib import Path
 from typing import Union
 
 from osgeo import osr
 
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
+
 
 def main(argv):
-    parser = ArgumentParser(description='Transforms files from ESRI prj format into WKT format')
+    parser = GDALArgumentParser(description='Transforms files from ESRI prj format into WKT format')
 
     parser.add_argument("filenames", metavar='filename', type=str, nargs='*', help="esri .prj file")
 

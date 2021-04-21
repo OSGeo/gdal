@@ -33,11 +33,12 @@
 # ******************************************************************************
 
 import sys
-from argparse import ArgumentParser
 from typing import Optional
 
 from osgeo import osr
 from osgeo import gdal
+
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
 
 
 def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
@@ -184,18 +185,19 @@ def epsg_tr(output_format: str = '-pretty_wkt', authority: Optional[str] = None)
 
 
 def main(argv):
-    parser = ArgumentParser()
+    parser = GDALArgumentParser()
 
     parser.add_argument("-authority", dest="authority", metavar='name', type=str,
                         help="Authority name")
 
-    parser.add_argument("-wkt", const='wkt', dest="output_format", action='store_const', help='Well Known Text')
-    parser.add_argument("-pretty_wkt", const='pretty_wkt', dest="output_format", action='store_const',
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-wkt", const='wkt', dest="output_format", action='store_const', help='Well Known Text')
+    group.add_argument("-pretty_wkt", const='pretty_wkt', dest="output_format", action='store_const',
                         help='Pretty Well Known Text')
-    parser.add_argument("-proj4", const='proj4', dest="output_format", action='store_const', help='proj string')
-    parser.add_argument("-postgis", const='postgis', dest="output_format", action='store_const', help='postgis')
-    parser.add_argument("-xml", const='xml', dest="output_format", action='store_const', help='XML')
-    parser.add_argument("-copy", const='copy', dest="output_format", action='store_const', help='Table')
+    group.add_argument("-proj4", const='proj4', dest="output_format", action='store_const', help='proj string')
+    group.add_argument("-postgis", const='postgis', dest="output_format", action='store_const', help='postgis')
+    group.add_argument("-xml", const='xml', dest="output_format", action='store_const', help='XML')
+    group.add_argument("-copy", const='copy', dest="output_format", action='store_const', help='Table')
 
     args = parser.parse_args(argv[1:])
 

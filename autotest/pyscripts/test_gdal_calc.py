@@ -245,28 +245,28 @@ def test_gdal_calc_py_7():
     opt_files = make_temp_filename_list(test_id, test_count, is_opt=True)
 
     with open(opt_files[0], 'w') as f:
-        f.write('-A {} --calc=A --overwrite --outfile {}'.format(infile, out[0]))
+        f.write(f'-A {infile} --calc=A --overwrite --outfile {out[0]}')
 
     # Lines in optfiles beginning with '#' should be ignored
     with open(opt_files[1], 'w') as f:
-        f.write('-A {} --A_band=2 --calc=A --overwrite --outfile {}'.format(infile, out[1]))
+        f.write(f'-A {infile} --A_band=2 --calc=A --overwrite --outfile {out[1]}')
         f.write('\n# -A_band=1')
 
     # options on separate lines should work, too
-    opts = '-Z {}'.format(infile), '--Z_band=2', '--calc=Z', '--overwrite', '--outfile  {}'.format(out[2])
+    opts = f'-Z {infile}', '--Z_band=2', '--calc=Z', '--overwrite', f'--outfile  {out[2]}'
     with open(opt_files[2], 'w') as f:
         for i in opts:
             f.write(i + '\n')
 
     # double-quoted options should be read as single arguments. Mixed numbers of arguments per line should work.
-    opts = '-Z {} --Z_band=2'.format(infile), '--calc "Z + 0"', '--overwrite --outfile {}'.format(out[3])
+    opts = f'-Z {infile} --Z_band=2', '--calc "Z + 0"', f'--overwrite --outfile {out[3]}'
     with open(opt_files[3], 'w') as f:
         for i in opts:
             f.write(i + '\n')
-
-    for i, checksum in zip(range(test_count), (input_checksum[0], input_checksum[1], input_checksum[1], input_checksum[1])):
-        test_py_scripts.run_py_script(script_path, 'gdal_calc', '--optfile {}'.format(opt_files[i]))
-        check_file(out[i], checksum, i+1)
+    for opt_prefix in ['--optfile ', '@']:
+        for i, checksum in zip(range(test_count), (input_checksum[0], input_checksum[1], input_checksum[1], input_checksum[1])):
+            test_py_scripts.run_py_script(script_path, 'gdal_calc', f'{opt_prefix}{opt_files[i]}')
+            check_file(out[i], checksum, i+1)
 
 
 def test_gdal_calc_py_8():
