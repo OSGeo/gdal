@@ -37,7 +37,7 @@ from typing import Sequence, Union
 
 from osgeo_utils.auxiliary import base
 
-PathOrStrings = Union[base.PathLike, Sequence[str]]
+PathOrStrings = Union[base.PathLikeOrStr, Sequence[str]]
 ColorPaletteOrPathOrStrings = Union['ColorPalette', PathOrStrings]
 
 

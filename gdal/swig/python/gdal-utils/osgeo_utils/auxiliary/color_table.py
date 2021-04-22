@@ -33,7 +33,7 @@ import tempfile
 from typing import Optional
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import PathLike
+from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import open_ds, PathOrDS
 from osgeo_utils.auxiliary.color_palette import get_color_palette, ColorPaletteOrPathOrStrings
 
@@ -102,7 +102,7 @@ def are_equal_color_table(color_table1: gdal.ColorTable, color_table2: gdal.Colo
     return True
 
 
-def write_color_table_to_file(color_table: gdal.ColorTable, color_filename: Optional[PathLike]):
+def write_color_table_to_file(color_table: gdal.ColorTable, color_filename: Optional[PathLikeOrStr]):
     if color_filename is None:
         color_filename = tempfile.mktemp(suffix='.txt')
     os.makedirs(os.path.dirname(str(color_filename)), exist_ok=True)

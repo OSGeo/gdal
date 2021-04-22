@@ -33,11 +33,11 @@ from numbers import Real
 from typing import Sequence, Optional
 
 from osgeo import gdal, osr
-from osgeo_utils.auxiliary.base import PathLike, MaybeSequence, is_true
+from osgeo_utils.auxiliary.base import PathLikeOrStr, MaybeSequence, is_true
 from osgeo_utils.auxiliary.util import get_bigtiff_creation_option_value, get_data_type, DataTypeOrStr, CreationOptions
 
 
-def create_flat_raster(filename: Optional[PathLike],
+def create_flat_raster(filename: Optional[PathLikeOrStr],
                        driver: Optional[str] = None, dt: DataTypeOrStr = gdal.GDT_Byte,
                        size: MaybeSequence[int] = 128, band_count: int = 1, creation_options: CreationOptions = None,
                        fill_value: Optional[Real] = None, nodata_value: Optional[Real] = None,

@@ -38,14 +38,14 @@ from typing import Optional, Union, Sequence, Tuple
 import numpy as np
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import num, PathLike
+from osgeo_utils.auxiliary.base import num, PathLikeOrStr
 from osgeo_utils.auxiliary.progress import get_progress_callback, OptionalProgressCallback
 from osgeo_utils.auxiliary.util import PathOrDS, get_bands
 from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
 
 
-def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
+def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
              srcwin: Optional[Sequence[int]] = None,
              skip: Union[int, Sequence[int]] = 1,
              band_nums: Optional[Sequence[int]] = None, delim=' ',

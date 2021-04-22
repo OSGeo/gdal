@@ -34,10 +34,10 @@ from numbers import Real
 from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator, List
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike, enum_to_str, OptionalBoolStr, is_true, \
+from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLikeOrStr, enum_to_str, OptionalBoolStr, is_true, \
     MaybeSequence
 
-PathOrDS = Union[PathLike, gdal.Dataset]
+PathOrDS = Union[PathLikeOrStr, gdal.Dataset]
 DataTypeOrStr = Union[str, int]
 CreationOptions = Optional[Dict[str, Any]]
 
@@ -47,7 +47,7 @@ def DoesDriverHandleExtension(drv: gdal.Driver, ext: str):
     return exts is not None and exts.lower().find(ext.lower()) >= 0
 
 
-def GetOutputDriversFor(filename: PathLike, is_raster=True):
+def GetOutputDriversFor(filename: PathLikeOrStr, is_raster=True):
     drv_list = []
     ext = get_extension(filename)
     if ext.lower() == 'vrt':
@@ -73,7 +73,7 @@ def GetOutputDriversFor(filename: PathLike, is_raster=True):
     return drv_list
 
 
-def GetOutputDriverFor(filename: PathLike, is_raster=True, default_raster_format='GTiff',
+def GetOutputDriverFor(filename: PathLikeOrStr, is_raster=True, default_raster_format='GTiff',
                        default_vector_format='ESRI Shapefile'):
     if not filename:
         return 'MEM'
@@ -179,7 +179,7 @@ class OpenDS:
 
     def __init__(self, filename_or_ds: PathOrDS, silent_fail=False, *args, **kwargs):
         self.ds: Optional[gdal.Dataset] = None
-        self.filename: Optional[PathLike] = None
+        self.filename: Optional[PathLikeOrStr] = None
         if is_path_like(filename_or_ds):
             self.filename = str(filename_or_ds)
         else:
@@ -204,7 +204,7 @@ class OpenDS:
 
     @staticmethod
     def _open_ds(
-        filename: PathLike,
+        filename: PathLikeOrStr,
         access_mode=gdal.GA_ReadOnly,
         ovr_idx: Optional[Union[int, float]] = None,
         open_options: Optional[Union[Dict[str, str], Sequence[str]]] = None,
