@@ -217,14 +217,12 @@ def test_vsicurl_start_webserver():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    
+
 ###############################################################################
+# Test redirection with Expires= type of signed URLs
 
 
 def test_vsicurl_test_redirect():
-
-    if gdaltest.is_travis_branch('trusty'):
-        pytest.skip('Skipped on trusty branch, but should be investigated')
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
@@ -339,6 +337,124 @@ def test_vsicurl_test_redirect():
     gdal.VSIFCloseL(f)
 
 ###############################################################################
+# Test redirection with X-Amz-Expires= + X-Amz-Date= type of signed URLs
+
+
+def test_vsicurl_test_redirect_x_amz():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_redirect/', 404)
+    # Simulate a big time difference between server and local machine
+    current_time = 1500
+
+    def method(request):
+        response = 'HTTP/1.1 302\r\n'
+        response += 'Server: foo\r\n'
+        response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+        response += 'Location: %s\r\n' % ('http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s' % (gdaltest.webserver_port, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time))))
+        response += '\r\n'
+        request.wfile.write(response.encode('ascii'))
+
+    handler.add('HEAD', '/test_redirect/test.bin', custom_method=method)
+    handler.add('HEAD', '/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s' % time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time)), 403,
+                {'Server': 'foo'}, '')
+
+    def method(request):
+        if 'Range' in request.headers:
+            if request.headers['Range'] == 'bytes=0-16383':
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(200)
+                request.send_header('Content-type', 'text/plain')
+                request.send_header('Content-Range', 'bytes 0-16383/1000000')
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
+                request.end_headers()
+                request.wfile.write(('x' * 16384).encode('ascii'))
+            elif request.headers['Range'] == 'bytes=16384-49151':
+                # Test expiration of the signed URL
+                request.protocol_version = 'HTTP/1.1'
+                request.send_response(403)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+            else:
+                request.send_response(404)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+        else:
+            # After a failed attempt on a HEAD, the client should go there
+            response = 'HTTP/1.1 200\r\n'
+            response += 'Server: foo\r\n'
+            response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+            response += 'Content-type: text/plain\r\n'
+            response += 'Content-Length: 1000000\r\n'
+            response += 'Connection: close\r\n'
+            response += '\r\n'
+            request.wfile.write(response.encode('ascii'))
+
+    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s' % time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time)), custom_method=method)
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_redirect/test.bin' % gdaltest.webserver_port, 'rb')
+    assert f is not None
+
+    gdal.VSIFSeekL(f, 0, 2)
+    if gdal.VSIFTellL(f) != 1000000:
+        gdal.VSIFCloseL(f)
+        pytest.fail(gdal.VSIFTellL(f))
+    gdal.VSIFSeekL(f, 0, 0)
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s' % time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time)), custom_method=method)
+    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s' % time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time)), custom_method=method)
+
+    current_time = int(time.time())
+
+    def method(request):
+        # We should go there after expiration of the first signed URL
+        if 'Range' in request.headers and \
+                request.headers['Range'] == 'bytes=16384-49151':
+            request.protocol_version = 'HTTP/1.1'
+            request.send_response(302)
+            # Return a new signed URL
+            request.send_header('Location', 'http://localhost:%d/foo.s3.amazonaws.com/test_redirected2/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s' % (request.server.port, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time))))
+            request.send_header('Content-Length', 16384)
+            request.end_headers()
+            request.wfile.write(('x' * 16384).encode('ascii'))
+
+    handler.add('GET', '/test_redirect/test.bin', custom_method=method)
+
+    def method(request):
+        # Second signed URL
+        if 'Range' in request.headers and \
+                request.headers['Range'] == 'bytes=16384-49151':
+            request.protocol_version = 'HTTP/1.1'
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Range', 'bytes 16384-16384/1000000')
+            request.send_header('Content-Length', 1)
+            request.end_headers()
+            request.wfile.write('y'.encode('ascii'))
+
+    handler.add('GET', '/foo.s3.amazonaws.com/test_redirected2/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s' % time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time)), custom_method=method)
+
+    with webserver.install_http_handler(handler):
+        content = gdal.VSIFReadL(1, 16383, f).decode('ascii')
+        if len(content) != 16383 or content[0] != 'x':
+            gdal.VSIFCloseL(f)
+            pytest.fail(content)
+        content = gdal.VSIFReadL(1, 2, f).decode('ascii')
+        if content != 'xy':
+            gdal.VSIFCloseL(f)
+            pytest.fail(content)
+
+    gdal.VSIFCloseL(f)
+
+###############################################################################
 # TODO: better testing
 
 
@@ -386,7 +502,7 @@ def test_vsicurl_test_retry():
         assert data == 'foo'
         assert '429' in error_msg
 
-    
+
 ###############################################################################
 
 
