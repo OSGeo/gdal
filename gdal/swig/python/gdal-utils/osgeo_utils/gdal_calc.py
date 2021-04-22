@@ -66,7 +66,7 @@ import numpy
 
 from osgeo import gdal
 from osgeo import gdal_array
-from osgeo_utils.auxiliary.base import is_path_like, PathLike
+from osgeo_utils.auxiliary.base import is_path_like, PathLikeOrStr
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 from osgeo_utils.auxiliary.extent_util import Extent, GT
 from osgeo_utils.auxiliary import extent_util
@@ -526,11 +526,11 @@ def doit(opts):
 ################################################################
 
 
-def Calc(calc: Union[str, Sequence[str]], outfile: Optional[PathLike] = None, NoDataValue: Optional[Number] = None,
+def Calc(calc: Union[str, Sequence[str]], outfile: Optional[PathLikeOrStr] = None, NoDataValue: Optional[Number] = None,
          type: Optional[Union[GDALDataType, str]] = None, format: Optional[str] = None,
          creation_options: Optional[Sequence[str]] = None, allBands: str = '', overwrite: bool = False,
          hideNoData: bool = False, projectionCheck: bool = False,
-         color_table: Optional[Union[PathLike, gdal.ColorTable]] = None,
+         color_table: Optional[Union[PathLikeOrStr, gdal.ColorTable]] = None,
          extent: Optional[Extent] = None, projwin: Optional[Union[Tuple, GeoRectangle]] = None, user_namespace=None,
          debug: bool = False, quiet: bool = False, **input_files):
     """ Perform raster calculations with numpy syntax.

@@ -35,10 +35,10 @@ from pathlib import Path
 from typing import Sequence, Optional, List
 
 import osgeo_utils
-from osgeo_utils.auxiliary.base import PathLike
+from osgeo_utils.auxiliary.base import PathLikeOrStr
 
 
-def batch_creator(filename_list: Sequence[PathLike], batch_content: str = r'@python "%~dp0\%~n0.py" %*'):
+def batch_creator(filename_list: Sequence[PathLikeOrStr], batch_content: str = r'@python "%~dp0\%~n0.py" %*'):
     """
     :param filename_list: list of file names (full path)
     :param batch_content: contents of the wrapper batch file
@@ -67,7 +67,7 @@ def get_sub_modules(module) -> List[str]:
     return sub_modules
 
 
-def batch_creator_by_modules(script_names: Sequence[str] = None, root: Optional[PathLike] = None):
+def batch_creator_by_modules(script_names: Sequence[str] = None, root: Optional[PathLikeOrStr] = None):
     if root is None:
         root = Path(sys.executable).parents[0] / 'Scripts'
     if script_names is None:
