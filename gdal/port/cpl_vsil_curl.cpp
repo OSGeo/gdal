@@ -748,19 +748,49 @@ static bool VSICurlIsS3LikeSignedURL( const char* pszURL )
 
 static GIntBig VSICurlGetExpiresFromS3LikeSignedURL( const char* pszURL )
 {
-    const char* pszExpires = strstr(pszURL, "&Expires=");
-    if( pszExpires == nullptr )
-        pszExpires = strstr(pszURL, "?Expires=");
-    if( pszExpires != nullptr )
-        return CPLAtoGIntBig(pszExpires + strlen("&Expires="));
+    const auto GetParamValue = [pszURL](const char* pszKey) -> const char*
+    {
+        for( const char* pszPrefix: { "&", "?" } )
+        {
+            std::string osNeedle(pszPrefix);
+            osNeedle += pszKey;
+            osNeedle += '=';
+            const char* pszStr = strstr(pszURL, osNeedle.c_str());
+            if( pszStr )
+                return pszStr + osNeedle.size();
+        }
+        return nullptr;
+    };
 
-    pszExpires = strstr(pszURL, "?X-Amz-Expires=");
-    if( pszExpires == nullptr )
-        pszExpires = strstr(pszURL, "?X-Amz-Expires=");
-    if( pszExpires != nullptr )
-        return CPLAtoGIntBig(pszExpires + strlen("&X-Amz-Expires="));
+    {
+        // Expires= is a Unix timestamp
+        const char* pszExpires = GetParamValue("Expires");
+        if( pszExpires != nullptr )
+            return CPLAtoGIntBig(pszExpires);
+    }
 
-    return 0;
+    // X-Amz-Expires= is a delay, to be combined with X-Amz-Date=
+    const char* pszAmzExpires = GetParamValue("X-Amz-Expires");
+    if( pszAmzExpires == nullptr )
+        return 0;
+    const int nDelay = atoi(pszAmzExpires);
+
+    const char* pszAmzDate = GetParamValue("X-Amz-Date");
+    if( pszAmzDate == nullptr )
+        return 0;
+    // pszAmzDate should be YYYYMMDDTHHMMSSZ
+    if( strlen(pszAmzDate) < strlen("YYYYMMDDTHHMMSSZ") )
+        return 0;
+    if( pszAmzDate[strlen("YYYYMMDDTHHMMSSZ")-1] != 'Z' )
+        return 0;
+    struct tm brokendowntime;
+    brokendowntime.tm_year = atoi(std::string(pszAmzDate).substr(0, 4).c_str()) - 1900;
+    brokendowntime.tm_mon = atoi(std::string(pszAmzDate).substr(4, 2).c_str()) - 1;
+    brokendowntime.tm_mday = atoi(std::string(pszAmzDate).substr(6, 2).c_str());
+    brokendowntime.tm_hour = atoi(std::string(pszAmzDate).substr(9, 2).c_str());
+    brokendowntime.tm_min = atoi(std::string(pszAmzDate).substr(11, 2).c_str());
+    brokendowntime.tm_sec = atoi(std::string(pszAmzDate).substr(13, 2).c_str());
+    return CPLYMDHMSToUnixTime(&brokendowntime) + nDelay;
 }
 
 /************************************************************************/
