@@ -47,6 +47,7 @@
 
 %include "python_exceptions.i"
 %include "python_strings.i"
+%include "python_path.i"
 
 %extend OGRDataSourceShadow {
   %pythoncode {

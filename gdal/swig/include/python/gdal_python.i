@@ -142,6 +142,8 @@ static void readraster_releasebuffer(CPLErr eErr,
 
 %}
 
+%include "python_path.i"
+
 %pythoncode %{
 
 
