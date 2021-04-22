@@ -96,6 +96,9 @@ except __builtin__.Exception:
     _newclass = 0
 
 
+from os import fspath
+def path_args(*args):
+    return (fspath(args[0]), *args[1:])
 
 
 have_warned = 0
@@ -119,7 +122,6 @@ def deprecation_warn(module, sub_package=None, new_module=None):
 
 from osgeo.gdalconst import *
 from osgeo import gdalconst
-
 
 import sys
 byteorders = {"little": "<",
@@ -202,7 +204,7 @@ def VSIFReadL(*args):
 
 def VSIGetMemFileBuffer_unsafe(*args):
     """VSIGetMemFileBuffer_unsafe(char const * utf8_path)"""
-    return _gdal.VSIGetMemFileBuffer_unsafe(*args)
+    return _gdal.VSIGetMemFileBuffer_unsafe(*path_args(*args))
 
 
 def InfoOptions(options=None, format='text', deserialize=True,
@@ -1573,7 +1575,7 @@ def VSIErrorReset(*args):
 
 def PushFinderLocation(*args):
     """PushFinderLocation(char const * utf8_path)"""
-    return _gdal.PushFinderLocation(*args)
+    return _gdal.PushFinderLocation(*path_args(*args))
 
 def PopFinderLocation(*args):
     """PopFinderLocation()"""
@@ -1585,19 +1587,19 @@ def FinderClean(*args):
 
 def FindFile(*args):
     """FindFile(char const * pszClass, char const * utf8_path) -> char const *"""
-    return _gdal.FindFile(*args)
+    return _gdal.FindFile(args[0], *path_args(*args[1:]))
 
 def ReadDir(*args):
     """ReadDir(char const * utf8_path, int nMaxFiles=0) -> char **"""
-    return _gdal.ReadDir(*args)
+    return _gdal.ReadDir(*path_args(*args))
 
 def ReadDirRecursive(*args):
     """ReadDirRecursive(char const * utf8_path) -> char **"""
-    return _gdal.ReadDirRecursive(*args)
+    return _gdal.ReadDirRecursive(*path_args(*args))
 
 def OpenDir(*args):
     """OpenDir(char const * utf8_path, int nRecurseDepth=-1, char ** options=None) -> VSIDIR *"""
-    return _gdal.OpenDir(*args)
+    return _gdal.OpenDir(*path_args(*args))
 class DirEntry(_object):
     """Proxy of C++ DirEntry class."""
 
@@ -1675,11 +1677,11 @@ def CPLHexToBinary(*args):
 
 def FileFromMemBuffer(*args):
     """FileFromMemBuffer(char const * utf8_path, GIntBig nBytes)"""
-    return _gdal.FileFromMemBuffer(*args)
+    return _gdal.FileFromMemBuffer(*path_args(*args))
 
 def Unlink(*args):
     """Unlink(char const * utf8_path) -> VSI_RETVAL"""
-    return _gdal.Unlink(*args)
+    return _gdal.Unlink(*path_args(*args))
 
 def UnlinkBatch(*args):
     """UnlinkBatch(char ** files) -> bool"""
@@ -1691,19 +1693,19 @@ def HasThreadSupport(*args):
 
 def Mkdir(*args):
     """Mkdir(char const * utf8_path, int mode) -> VSI_RETVAL"""
-    return _gdal.Mkdir(*args)
+    return _gdal.Mkdir(*path_args(*args))
 
 def Rmdir(*args):
     """Rmdir(char const * utf8_path) -> VSI_RETVAL"""
-    return _gdal.Rmdir(*args)
+    return _gdal.Rmdir(*path_args(*args))
 
 def MkdirRecursive(*args):
     """MkdirRecursive(char const * utf8_path, int mode) -> VSI_RETVAL"""
-    return _gdal.MkdirRecursive(*args)
+    return _gdal.MkdirRecursive(*path_args(*args))
 
 def RmdirRecursive(*args):
     """RmdirRecursive(char const * utf8_path) -> VSI_RETVAL"""
-    return _gdal.RmdirRecursive(*args)
+    return _gdal.RmdirRecursive(*path_args(*args))
 
 def Rename(*args):
     """Rename(char const * pszOld, char const * pszNew) -> VSI_RETVAL"""
@@ -1715,11 +1717,11 @@ def Sync(*args, **kwargs):
 
 def GetActualURL(*args):
     """GetActualURL(char const * utf8_path) -> char const *"""
-    return _gdal.GetActualURL(*args)
+    return _gdal.GetActualURL(*path_args(*args))
 
 def GetSignedURL(*args):
     """GetSignedURL(char const * utf8_path, char ** options=None) -> retStringAndCPLFree *"""
-    return _gdal.GetSignedURL(*args)
+    return _gdal.GetSignedURL(*path_args(*args))
 
 def GetFileSystemsPrefixes(*args):
     """GetFileSystemsPrefixes() -> char **"""
@@ -1727,7 +1729,7 @@ def GetFileSystemsPrefixes(*args):
 
 def GetFileSystemOptions(*args):
     """GetFileSystemOptions(char const * utf8_path) -> char const *"""
-    return _gdal.GetFileSystemOptions(*args)
+    return _gdal.GetFileSystemOptions(*path_args(*args))
 class VSILFILE(_object):
     """Proxy of C++ VSILFILE class."""
 
@@ -1783,23 +1785,23 @@ StatBuf_swigregister(StatBuf)
 
 def VSIStatL(*args):
     """VSIStatL(char const * utf8_path, int nFlags=0) -> int"""
-    return _gdal.VSIStatL(*args)
+    return _gdal.VSIStatL(*path_args(*args))
 
 def GetFileMetadata(*args):
     """GetFileMetadata(char const * utf8_path, char const * domain, char ** options=None) -> char **"""
-    return _gdal.GetFileMetadata(*args)
+    return _gdal.GetFileMetadata(*path_args(*args))
 
 def SetFileMetadata(*args):
     """SetFileMetadata(char const * utf8_path, char ** metadata, char const * domain, char ** options=None) -> bool"""
-    return _gdal.SetFileMetadata(*args)
+    return _gdal.SetFileMetadata(*path_args(*args))
 
 def VSIFOpenL(*args):
     """VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE"""
-    return _gdal.VSIFOpenL(*args)
+    return _gdal.VSIFOpenL(*path_args(*args))
 
 def VSIFOpenExL(*args):
     """VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError=False, char ** options=None) -> VSILFILE"""
-    return _gdal.VSIFOpenExL(*args)
+    return _gdal.VSIFOpenExL(*path_args(*args))
 
 def VSIFEofL(*args):
     """VSIFEofL(VSILFILE fp) -> int"""
@@ -1827,7 +1829,7 @@ def VSIFTruncateL(*args):
 
 def VSISupportsSparseFiles(*args):
     """VSISupportsSparseFiles(char const * utf8_path) -> int"""
-    return _gdal.VSISupportsSparseFiles(*args)
+    return _gdal.VSISupportsSparseFiles(*path_args(*args))
 VSI_RANGE_STATUS_UNKNOWN = _gdal.VSI_RANGE_STATUS_UNKNOWN
 VSI_RANGE_STATUS_DATA = _gdal.VSI_RANGE_STATUS_DATA
 VSI_RANGE_STATUS_HOLE = _gdal.VSI_RANGE_STATUS_HOLE
@@ -1846,7 +1848,7 @@ def VSICurlClearCache(*args):
 
 def VSICurlPartialClearCache(*args):
     """VSICurlPartialClearCache(char const * utf8_path)"""
-    return _gdal.VSICurlPartialClearCache(*args)
+    return _gdal.VSICurlPartialClearCache(*path_args(*args))
 
 def NetworkStatsReset(*args):
     """NetworkStatsReset()"""
@@ -1858,7 +1860,7 @@ def NetworkStatsGetAsSerializedJSON(*args):
 
 def ParseCommandLine(*args):
     """ParseCommandLine(char const * utf8_path) -> char **"""
-    return _gdal.ParseCommandLine(*args)
+    return _gdal.ParseCommandLine(*path_args(*args))
 class MajorObject(_object):
     """Proxy of C++ GDALMajorObjectShadow class."""
 
@@ -1949,22 +1951,22 @@ class Driver(MajorObject):
 
     def Create(self, *args, **kwargs):
         """Create(Driver self, char const * utf8_path, int xsize, int ysize, int bands=1, GDALDataType eType, char ** options=None) -> Dataset"""
-        return _gdal.Driver_Create(self, *args, **kwargs)
+        return _gdal.Driver_Create(self, *path_args(*args), **kwargs)
 
 
     def CreateMultiDimensional(self, *args, **kwargs):
         """CreateMultiDimensional(Driver self, char const * utf8_path, char ** root_group_options=None, char ** options=None) -> Dataset"""
-        return _gdal.Driver_CreateMultiDimensional(self, *args, **kwargs)
+        return _gdal.Driver_CreateMultiDimensional(self, *path_args(*args), **kwargs)
 
 
     def CreateCopy(self, *args, **kwargs):
         """CreateCopy(Driver self, char const * utf8_path, Dataset src, int strict=1, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
-        return _gdal.Driver_CreateCopy(self, *args, **kwargs)
+        return _gdal.Driver_CreateCopy(self, *path_args(*args), **kwargs)
 
 
     def Delete(self, *args):
         """Delete(Driver self, char const * utf8_path) -> CPLErr"""
-        return _gdal.Driver_Delete(self, *args)
+        return _gdal.Driver_Delete(self, *path_args(*args))
 
 
     def Rename(self, *args):
@@ -4470,23 +4472,23 @@ def GetDriver(*args):
 
 def Open(*args):
     """Open(char const * utf8_path, GDALAccess eAccess) -> Dataset"""
-    return _gdal.Open(*args)
+    return _gdal.Open(*path_args(*args))
 
 def OpenEx(*args, **kwargs):
     """OpenEx(char const * utf8_path, unsigned int nOpenFlags=0, char ** allowed_drivers=None, char ** open_options=None, char ** sibling_files=None) -> Dataset"""
-    return _gdal.OpenEx(*args, **kwargs)
+    return _gdal.OpenEx(*path_args(*args), **kwargs)
 
 def OpenShared(*args):
     """OpenShared(char const * utf8_path, GDALAccess eAccess) -> Dataset"""
-    return _gdal.OpenShared(*args)
+    return _gdal.OpenShared(*path_args(*args))
 
 def IdentifyDriver(*args):
     """IdentifyDriver(char const * utf8_path, char ** papszSiblings=None) -> Driver"""
-    return _gdal.IdentifyDriver(*args)
+    return _gdal.IdentifyDriver(*path_args(*args))
 
 def IdentifyDriverEx(*args, **kwargs):
     """IdentifyDriverEx(char const * utf8_path, unsigned int nIdentifyFlags=0, char ** allowed_drivers=None, char ** sibling_files=None) -> Driver"""
-    return _gdal.IdentifyDriverEx(*args, **kwargs)
+    return _gdal.IdentifyDriverEx(*path_args(*args), **kwargs)
 
 def GeneralCmdLineProcessor(*args):
     """GeneralCmdLineProcessor(char ** papszArgv, int nOptions=0) -> char **"""
