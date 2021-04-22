@@ -9,6 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
+# Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -32,10 +33,10 @@
 import os
 import subprocess
 import sys
-
+from pathlib import Path
 
 import gdaltest
-from osgeo import gdal
+from osgeo import gdal, ogr
 import pytest
 
 # Nothing exciting here. Just trying to open non existing files,
@@ -257,57 +258,75 @@ def test_basic_test_10():
 
 def test_basic_test_11():
 
-    ds = gdal.OpenEx('data/byte.tif')
+    class OtherPath:
+        def __init__(self, filename):
+            self.filename = filename
+
+        def __fspath__(self):
+            return self.filename
+
+    raster_filename = 'data/byte.tif'
+
+    for raster_filename0 in (raster_filename, Path(raster_filename), OtherPath(raster_filename)):
+        ds = gdal.Open(raster_filename0)
+        assert ds is not None
+
+        ds = gdal.OpenEx(raster_filename0)
+        assert ds is not None
+
+        ds = gdal.OpenEx(raster_filename0, gdal.OF_RASTER)
+        assert ds is not None
+
+        ds = gdal.OpenEx(raster_filename0, gdal.OF_VECTOR)
+        assert ds is None
+
+    ds = gdal.OpenEx(raster_filename, gdal.OF_RASTER | gdal.OF_VECTOR)
     assert ds is not None
 
-    ds = gdal.OpenEx('data/byte.tif', gdal.OF_RASTER)
+    ds = gdal.OpenEx(raster_filename, gdal.OF_ALL)
     assert ds is not None
 
-    ds = gdal.OpenEx('data/byte.tif', gdal.OF_VECTOR)
-    assert ds is None
-
-    ds = gdal.OpenEx('data/byte.tif', gdal.OF_RASTER | gdal.OF_VECTOR)
+    ds = gdal.OpenEx(raster_filename, gdal.OF_UPDATE)
     assert ds is not None
 
-    ds = gdal.OpenEx('data/byte.tif', gdal.OF_ALL)
+    ds = gdal.OpenEx(raster_filename, gdal.OF_RASTER | gdal.OF_VECTOR | gdal.OF_UPDATE | gdal.OF_VERBOSE_ERROR)
     assert ds is not None
 
-    ds = gdal.OpenEx('data/byte.tif', gdal.OF_UPDATE)
+    ds = gdal.OpenEx(raster_filename, allowed_drivers=[])
     assert ds is not None
 
-    ds = gdal.OpenEx('data/byte.tif', gdal.OF_RASTER | gdal.OF_VECTOR | gdal.OF_UPDATE | gdal.OF_VERBOSE_ERROR)
+    ds = gdal.OpenEx(raster_filename, allowed_drivers=['GTiff'])
     assert ds is not None
 
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers=[])
-    assert ds is not None
-
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers=['GTiff'])
-    assert ds is not None
-
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers=['PNG'])
+    ds = gdal.OpenEx(raster_filename, allowed_drivers=['PNG'])
     assert ds is None
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('data/byte.tif', open_options=['FOO'])
+        ds = gdal.OpenEx(raster_filename, open_options=['FOO'])
     assert ds is not None
 
-    ar_ds = [gdal.OpenEx('data/byte.tif', gdal.OF_SHARED) for _ in range(1024)]
+    ar_ds = [gdal.OpenEx(raster_filename, gdal.OF_SHARED) for _ in range(1024)]
     assert ar_ds[1023] is not None
     ar_ds = None
 
-    ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_RASTER)
-    assert ds is None
+    vector_filename = '../ogr/data/poly.shp'
+    for vector_filename0 in (vector_filename, Path(vector_filename), OtherPath(vector_filename)):
+        ds = ogr.Open(vector_filename0)
+        assert ds is None
 
-    ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_VECTOR)
+        ds = gdal.OpenEx(vector_filename0, gdal.OF_RASTER)
+        assert ds is None
+
+        ds = gdal.OpenEx(vector_filename0, gdal.OF_VECTOR)
+        assert ds is not None
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0) is not None
+        ds.GetLayer(0).GetMetadata()
+
+    ds = gdal.OpenEx(vector_filename, allowed_drivers=['ESRI Shapefile'])
     assert ds is not None
-    assert ds.GetLayerCount() == 1
-    assert ds.GetLayer(0) is not None
-    ds.GetLayer(0).GetMetadata()
 
-    ds = gdal.OpenEx('../ogr/data/poly.shp', allowed_drivers=['ESRI Shapefile'])
-    assert ds is not None
-
-    ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_RASTER | gdal.OF_VECTOR)
+    ds = gdal.OpenEx(vector_filename, gdal.OF_RASTER | gdal.OF_VECTOR)
     assert ds is not None
 
     ds = gdal.OpenEx('non existing')
