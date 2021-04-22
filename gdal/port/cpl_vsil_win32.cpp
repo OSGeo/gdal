@@ -722,7 +722,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
 {
     (void) nFlags;
 
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
+#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
@@ -790,7 +790,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
 int VSIWin32FilesystemHandler::Unlink( const char * pszFilename )
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
+#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
@@ -815,7 +815,7 @@ int VSIWin32FilesystemHandler::Rename( const char *oldpath,
                                            const char *newpath )
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
+#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszOldPath =
@@ -844,7 +844,7 @@ int VSIWin32FilesystemHandler::Mkdir( const char * pszPathname,
 
 {
     (void) nMode;
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
+#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
@@ -868,7 +868,7 @@ int VSIWin32FilesystemHandler::Mkdir( const char * pszPathname,
 int VSIWin32FilesystemHandler::Rmdir( const char * pszPathname )
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
+#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
@@ -893,7 +893,7 @@ char **VSIWin32FilesystemHandler::ReadDirEx( const char *pszPath,
                                              int nMaxFiles )
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
+#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         struct _wfinddata_t c_file;

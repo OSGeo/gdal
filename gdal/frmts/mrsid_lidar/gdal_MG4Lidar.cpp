@@ -780,7 +780,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    MG4PointReader *r = MG4PointReader::create();
    FileIO* io = FileIO::create();
 
-#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
    bool bIsUTF8 =
        CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) );
    wchar_t *pwszFilename = nullptr;
@@ -814,7 +814,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
          delete poDS;
          RELEASE(r);
          RELEASE(io);
-#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
          if ( pwszFilename )
             CPLFree( pwszFilename );
 #endif
@@ -838,7 +838,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       CSLDestroy(papszClipExtent);
    }
 
-#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
    if (bIsUTF8)
    {
       poDS->fileIO->init(pwszFilename, "r");

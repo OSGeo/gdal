@@ -116,7 +116,7 @@
 /* We need __MSVCRT_VERSION__ >= 0x0700 to have "_aligned_malloc" */
 /* Latest versions of mingw32 define it, but with older ones, */
 /* we need to define it manually */
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) && !defined(_UCRT)
 #ifndef __MSVCRT_VERSION__
 #define __MSVCRT_VERSION__ 0x0700
 #endif

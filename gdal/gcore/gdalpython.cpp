@@ -475,7 +475,7 @@ static bool LoadPythonAPI()
         uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
                                      SEM_FAILCRITICALERRORS);
 
-#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601 || defined(_UCRT)
         if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
         {
             wchar_t *pwszFilename =
