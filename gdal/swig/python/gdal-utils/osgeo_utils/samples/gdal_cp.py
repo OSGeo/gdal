@@ -311,7 +311,7 @@ def gdal_cp(argv, progress=None):
         return gdal_cp_recurse(srcfile, targetfile, progress, skip_failure)
 
     (srcdir, pattern) = os.path.split(srcfile)
-    if pattern.find('*') != -1 or pattern.find('?') != -1:
+    if not srcdir.startswith('/vsi') and ('*' in pattern or '?' in pattern):
         return gdal_cp_pattern_match(srcdir, pattern, targetfile, progress, skip_failure)
     return gdal_cp_single(srcfile, targetfile, progress)
 
