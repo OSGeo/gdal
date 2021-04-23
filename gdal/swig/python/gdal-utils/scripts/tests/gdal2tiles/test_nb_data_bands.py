@@ -32,7 +32,7 @@
 from unittest import mock, TestCase
 from osgeo import gdal
 
-import gdal2tiles
+from osgeo_utils import gdal2tiles
 
 
 class NbDataBandsTest(TestCase):

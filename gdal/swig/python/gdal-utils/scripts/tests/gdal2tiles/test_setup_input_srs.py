@@ -31,7 +31,7 @@
 
 from unittest import mock, TestCase
 
-import gdal2tiles
+from osgeo_utils import gdal2tiles
 
 
 class AttrDict(dict):
@@ -55,7 +55,7 @@ class SetupInputSrsTest(TestCase):
         self.mock_dataset.GetRasterBand().GetNoDataValue = mock.MagicMock(
             side_effect=self.nodata_in_input)
 
-    @mock.patch('gdal2tiles.osr')
+    @mock.patch('osgeo_utils.gdal2tiles.osr')
     def test_reads_values_from_input_dataset_with_projection_when_no_options(self, mock_osr):
         expected_srs = mock.MagicMock()
         expected_wkt = "expected_wkt"
@@ -69,7 +69,7 @@ class SetupInputSrsTest(TestCase):
         self.assertEqual(input_srs_wkt, expected_wkt)
         mock_osr.SpatialReference().ImportFromWkt.assert_called_with(expected_wkt)
 
-    @mock.patch('gdal2tiles.osr')
+    @mock.patch('osgeo_utils.gdal2tiles.osr')
     def test_reads_values_from_input_dataset_wout_projection_with_gcps_when_no_options(self,
                                                                                        mock_osr):
         expected_wkt = "expected_wkt"
@@ -88,7 +88,7 @@ class SetupInputSrsTest(TestCase):
 
     # def test_reads_values_from_input_dataset_with_neither_project_nor_gcps(self):
 
-    @mock.patch('gdal2tiles.osr')
+    @mock.patch('osgeo_utils.gdal2tiles.osr')
     def test_uses_the_passed_arguments_in_priority(self, mock_osr):
         option_srs = "o_srs"
         self.DEFAULT_ATTRDICT_OPTIONS['s_srs'] = option_srs

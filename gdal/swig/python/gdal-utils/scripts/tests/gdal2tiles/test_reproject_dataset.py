@@ -33,7 +33,7 @@ from unittest import mock, TestCase
 
 from osgeo import gdal, osr
 
-import gdal2tiles
+from osgeo_utils import gdal2tiles
 
 
 class AttrDict(dict):
@@ -71,7 +71,7 @@ class ReprojectDatasetTest(TestCase):
 
         self.assertEqual(from_ds, to_ds)
 
-    @mock.patch('gdal2tiles.gdal', spec=gdal)
+    @mock.patch('osgeo_utils.gdal2tiles.gdal', spec=gdal)
     def test_returns_warped_vrt_dataset_when_from_srs_different_from_to_srs(self, mock_gdal):
         mock_gdal.AutoCreateWarpedVRT = mock.MagicMock(spec=gdal.Dataset)
         from_ds = mock.MagicMock(spec=gdal.Dataset)

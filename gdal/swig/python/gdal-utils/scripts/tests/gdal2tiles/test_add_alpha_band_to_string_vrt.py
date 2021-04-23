@@ -33,7 +33,7 @@ import os
 from unittest import TestCase
 from xml.etree import ElementTree
 
-import gdal2tiles
+from osgeo_utils import gdal2tiles
 
 
 class AddAlphaBandToStringVrtTest(TestCase):

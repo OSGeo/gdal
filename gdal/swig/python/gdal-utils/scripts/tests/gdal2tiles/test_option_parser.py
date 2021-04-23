@@ -9,6 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2017, Gregory Bataille <gregory.bataille@gmail.com>
+# Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -33,7 +34,7 @@ import os
 import tempfile
 from unittest import mock, TestCase
 
-import gdal2tiles
+from osgeo_utils import gdal2tiles
 
 
 class AttrDict(dict):
@@ -141,7 +142,7 @@ class OptionParserPostProcessingTest(TestCase):
 
         self.assertEqual(options.url, url + "fizz/")
 
-    @mock.patch('gdal2tiles.gdal', spec=AttrDict())
+    @mock.patch('osgeo_utils.gdal2tiles.gdal', spec=AttrDict())
     def test_average_resampling_supported_with_latest_gdal(self, mock_gdal):
         self._setup_gdal_patch(mock_gdal)
         self.DEFAULT_ATTRDICT_OPTIONS['resampling'] = "average"
@@ -149,7 +150,7 @@ class OptionParserPostProcessingTest(TestCase):
         gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
         # No error means it worked as expected
 
-    @mock.patch('gdal2tiles.gdal', spec=AttrDict())
+    @mock.patch('osgeo_utils.gdal2tiles.gdal', spec=AttrDict())
     def test_average_resampling_not_supported_in_old_gdal(self, mock_gdal):
         mock_gdal = self._setup_gdal_patch(mock_gdal)
         del mock_gdal.RegenerateOverview
@@ -159,13 +160,14 @@ class OptionParserPostProcessingTest(TestCase):
             gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
 
     def test_antialias_resampling_supported_with_numpy(self):
-        gdal2tiles.numpy = True
+        gdal2tiles.numpy_available = True
         self.DEFAULT_ATTRDICT_OPTIONS['resampling'] = "antialias"
 
         gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
         # No error means it worked as expected
 
     def test_antialias_resampling_not_supported_wout_numpy(self):
+        gdal2tiles.numpy_available = False
         if hasattr(gdal2tiles, "numpy"):
             del gdal2tiles.numpy
 

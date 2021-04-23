@@ -31,7 +31,7 @@
 
 from unittest import mock, TestCase
 
-import gdal2tiles
+from osgeo_utils import gdal2tiles
 
 
 class AttrDict(dict):
