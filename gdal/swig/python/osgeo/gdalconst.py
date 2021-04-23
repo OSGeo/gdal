@@ -151,6 +151,7 @@ GRA_Min = _gdalconst.GRA_Min
 GRA_Med = _gdalconst.GRA_Med
 GRA_Q1 = _gdalconst.GRA_Q1
 GRA_Q3 = _gdalconst.GRA_Q3
+GRA_Sum = _gdalconst.GRA_Sum
 GPI_Gray = _gdalconst.GPI_Gray
 GPI_RGB = _gdalconst.GPI_RGB
 GPI_CMYK = _gdalconst.GPI_CMYK
