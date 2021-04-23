@@ -23,7 +23,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     libopenexr-dev libheif-dev \
     libdeflate-dev \
     mono-mcs libmono-system-drawing4.0-cil ccache \
-    perl ant
+    perl ant \
+    opencl-c-headers ocl-icd-opencl-dev
 
 # Build likbkea
 KEA_VERSION=1.4.13
