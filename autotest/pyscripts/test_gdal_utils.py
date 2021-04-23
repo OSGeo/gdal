@@ -101,6 +101,14 @@ def test_utils_py_1():
         assert util.get_ovr_idx(filename, ovr_res=res) == ovr
         assert util.get_ovr_idx(filename, float(res)) == ovr  # noqa secret functionality
 
+    # test open_ds with multiple different inputs
+    filename2 = 'tmp/raster2.tif'
+    temp_files.append(filename2)
+    raster_creation.create_flat_raster(filename2)
+    ds_list = util.open_ds([ds, filename2])
+    assert tuple(util.get_ovr_count(ds) for ds in ds_list) == (2, 0)
+    ds_list = None
+
 
 def test_utils_py_cleanup():
     for filename in temp_files:
