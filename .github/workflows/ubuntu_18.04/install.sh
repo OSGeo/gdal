@@ -31,7 +31,10 @@ fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil
 
 # Build proj
 (cd proj && ./autogen.sh && CC='ccache gcc' CXX='ccache g++' CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure  --disable-static --prefix=/usr/local || cat config.log && make -j3)
-sudo sh -c "cd $PWD/proj && make -j3 install && mv /usr/local/lib/libproj.so.15.0.0 /usr/local/lib/libinternalproj.so.15.0.0 && rm /usr/local/lib/libproj.so*  && rm /usr/local/lib/libproj.la && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so.15 && ln -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so"
+sudo sh -c "cd $PWD/proj && make -j3 install"
+sudo sh -c "apt-get remove -y libproj-dev"
+
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # Configure GDAL
 CURRENT_DIR=$PWD
