@@ -46,7 +46,7 @@ wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
       GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-pdfium=/usr "
     fi
 
-    ./configure --prefix=/usr \
+    LDFLAGS="-L/build${PROJ_INSTALL_PREFIX-/usr/local}/lib -linternalproj" ./configure --prefix=/usr \
     --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
