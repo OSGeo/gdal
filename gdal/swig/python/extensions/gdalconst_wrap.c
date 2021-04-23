@@ -3841,6 +3841,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GRA_Med",SWIG_From_int((int)(GRA_Med)));
   SWIG_Python_SetConstant(d, "GRA_Q1",SWIG_From_int((int)(GRA_Q1)));
   SWIG_Python_SetConstant(d, "GRA_Q3",SWIG_From_int((int)(GRA_Q3)));
+  SWIG_Python_SetConstant(d, "GRA_Sum",SWIG_From_int((int)(GRA_Sum)));
   SWIG_Python_SetConstant(d, "GPI_Gray",SWIG_From_int((int)(GPI_Gray)));
   SWIG_Python_SetConstant(d, "GPI_RGB",SWIG_From_int((int)(GPI_RGB)));
   SWIG_Python_SetConstant(d, "GPI_CMYK",SWIG_From_int((int)(GPI_CMYK)));
