@@ -55,7 +55,7 @@ except AttributeError:
 
 def check_file(filename_or_ds, checksum, i=None, bnd_idx=1):
     if gdal_calc.is_path_like(filename_or_ds):
-        ds = gdal.Open(filename_or_ds)
+        ds = gdal.Open(os.fspath(filename_or_ds))
     else:
         ds = filename_or_ds
     assert ds is not None, 'ds{} not found'.format(i if i is not None else '')

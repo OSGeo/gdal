@@ -29,7 +29,7 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-
+import os
 from numbers import Real
 from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator, List
 
@@ -181,7 +181,7 @@ class OpenDS:
         self.ds: Optional[gdal.Dataset] = None
         self.filename: Optional[PathLikeOrStr] = None
         if is_path_like(filename_or_ds):
-            self.filename = str(filename_or_ds)
+            self.filename = os.fspath(filename_or_ds)
         else:
             self.ds = filename_or_ds
         self.args = args

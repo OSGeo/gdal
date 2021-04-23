@@ -27,7 +27,7 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-
+import os
 import tempfile
 from numbers import Real
 from typing import Sequence, Optional
@@ -56,7 +56,7 @@ def create_flat_raster(filename: Optional[PathLikeOrStr],
     drv = gdal.GetDriverByName(driver)
     dt = get_data_type(dt)
     creation_options_list = get_creation_options(creation_options, driver=driver)
-    ds = drv.Create(str(filename), *size, band_count, dt, creation_options_list)
+    ds = drv.Create(os.fspath(filename), *size, band_count, dt, creation_options_list)
 
     if pixel_size and origin:
         if not isinstance(pixel_size, Sequence):

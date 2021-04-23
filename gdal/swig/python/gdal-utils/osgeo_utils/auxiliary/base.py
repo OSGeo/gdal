@@ -61,7 +61,7 @@ def get_extension(filename: PathLikeOrStr) -> str:
     returns the suffix without the leading dot.
     special case for shp.zip
     """
-    if str(filename).lower().endswith('.shp.zip'):
+    if os.fspath(filename).lower().endswith('.shp.zip'):
         return 'shp.zip'
     ext = get_suffix(filename)
     if ext.startswith('.'):
