@@ -39,6 +39,7 @@
 #include <limits.h>
 #include <float.h>
 #include <limits>
+#include <vector>
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
 
@@ -260,9 +261,8 @@ static cl_device_id get_device(OCLVendor *peVendor)
     cl_char vendor_name[1024] = {0};
     cl_char device_name[1024] = {0};
 
-    cl_platform_id platforms[10];
-    cl_uint num_platforms;
-    cl_uint i;
+    std::vector<cl_platform_id> platforms;
+    cl_uint num_platforms = 0;
     cl_device_id preferred_device_id = nullptr;
     int preferred_is_gpu = FALSE;
 
@@ -271,24 +271,29 @@ static cl_device_id get_device(OCLVendor *peVendor)
         return nullptr;
     try
     {
-        err = clGetPlatformIDs( 10, platforms, &num_platforms );
+        err = clGetPlatformIDs( 0, nullptr, &num_platforms );
         if( err != CL_SUCCESS || num_platforms == 0 )
+            return nullptr;
+
+        platforms.resize(num_platforms);
+        err = clGetPlatformIDs( num_platforms, &platforms[0], nullptr );
+        if( err != CL_SUCCESS )
             return nullptr;
     }
     catch( ... )
     {
-        gbBuggyOpenCL = true;   
+        gbBuggyOpenCL = true;
         CPLDebug("OpenCL", "clGetPlatformIDs() threw a C++ exception");
         // This should normally not happen. But that does happen with
-        // intel-opencl 0r2.0-54426 when run under xvfb-run 
+        // intel-opencl 0r2.0-54426 when run under xvfb-run
         return nullptr;
     }
-    
+
     bool bUseOpenCLCPU = CPLTestBool( CPLGetConfigOption("OPENCL_USE_CPU", "FALSE") );
 
     // In case we have several implementations, pick up the non Intel one by
     // default, unless the PREFERRED_OPENCL_VENDOR config option is specified.
-    for( i=0; i<num_platforms;i++)
+    for( cl_uint i=0; i<num_platforms;i++)
     {
         cl_device_id device = nullptr;
         const char* pszBlacklistedVendor;
@@ -322,22 +327,22 @@ static cl_device_id get_device(OCLVendor *peVendor)
         if( num_platforms > 1 )
             CPLDebug( "OpenCL", "Found vendor='%s' / device='%s' (%s implementation).",
                       vendor_name, device_name, (is_gpu) ? "GPU" : "CPU");
-        
+
         pszBlacklistedVendor = CPLGetConfigOption("BLACKLISTED_OPENCL_VENDOR", nullptr);
         if( pszBlacklistedVendor &&
-            EQUAL( reinterpret_cast<const char*>(vendor_name), pszBlacklistedVendor ) ) 
+            EQUAL( reinterpret_cast<const char*>(vendor_name), pszBlacklistedVendor ) )
         {
             CPLDebug("OpenCL", "Blacklisted vendor='%s' / device='%s' implementation skipped",
                      vendor_name, device_name);
             continue;
         }
-            
+
         if( preferred_device_id == nullptr || (is_gpu && !preferred_is_gpu) )
         {
             preferred_device_id = device;
             preferred_is_gpu = is_gpu;
         }
-            
+
         pszPreferredVendor = CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", nullptr);
         if( pszPreferredVendor )
         {
@@ -1320,8 +1325,9 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
         snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernResampler);
 
     //Actually make the program from assembled source
+    const char* pszProgBuf = progBuf;
     program = clCreateProgramWithSource(warper->context, 1,
-                                        const_cast<const char**>(reinterpret_cast<char**>(&progBuf)),
+                                        &pszProgBuf,
                                         nullptr, &err);
     handleErrGoto(err, error_final);
 
@@ -1772,7 +1778,7 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
 #ifdef DEBUG_OPENCL
     size_t start_time = 0;
     size_t end_time;
-    char *vecTxt = "";
+    const char *vecTxt = "";
 #endif
 
     // Use a likely X-dimension which is a power of 2
@@ -1821,7 +1827,7 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
     if (kern == warper->kern4)
         vecTxt = "(vec)";
 
-    CPLDebug("OpenCL", "Kernel Time: %6s %10lu", vecTxt, (long int)((end_time-start_time)/100000));
+    CPLDebug("OpenCL", "Kernel Time: %6s %10lu", vecTxt, static_cast<long int>((end_time-start_time)/100000));
 #endif
 
     handleErr(err = clReleaseEvent(ev));
