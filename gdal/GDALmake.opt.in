@@ -613,7 +613,7 @@ SO_EXT		=	la
 else # HAVE_LIBTOOL
 
 ifeq ($(HAVE_LD_SHARED),yes)
-CONFIG_LIBS	=	$(GDAL_SLIB_LINK) $(LIBS)
+CONFIG_LIBS	=	$(GDAL_SLIB_LINK)
 ifeq ($(MACOSX_FRAMEWORK),yes)
 CONFIG_LIBS_INS	=	-L$(INST_LIB)/unix/lib -lgdal
 else
