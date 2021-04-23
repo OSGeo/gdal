@@ -4,6 +4,19 @@ MIGRATION GUIDE FROM GDAL 3.2 to GDAL 3.3
 - Python bindings:
   * Python 2 is no longer supported per RFC 77. Python 3.6 or later required
   * "osgeo.utils" was replaced by "osgeo_utils" (more details: see RFC78)
+  * The following undocumented, untested utility scripts are no longer installed as system scripts and were moved
+    from "gdal/swig/python/gdal-utils" to: "gdal/swig/python/gdal-utils/samples":
+    - epsg_tr.py
+    - esri2wkt.py
+    - gcps2vec.py
+    - gcps2wld.py
+    - gdal_auth.py
+    - gdalchksum.py
+    - gdalident.py
+    - gdalimport.py
+    - mkgraticule.py
+    In order to import sample script X (i.e. `epsg_tr`) as a module, use: `from osgeo_utils.samples import X`.
+    In order to run it as a script run: `python -m osgeo_utils.samples.X`.
   * packaging:
     - "gdal/swig/python/samples" moved to: "gdal/swig/python/gdal-utils/osgeo_utils/samples"
     - "gdal/swig/python/scripts" moved to: "gdal/swig/python/gdal-utils/scripts"
