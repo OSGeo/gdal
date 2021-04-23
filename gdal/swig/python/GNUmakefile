@@ -14,7 +14,6 @@ SWIGOUTPUTDIR=extensions/
 
 include ../SWIGmake.base
 
-SCRIPTS			= `ls ./scripts/*.py`
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
                         gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
                         gcps2vec.py
@@ -149,7 +148,6 @@ install:
 	fi
 	env PYTHONPATH=$(site_package_dir)$${PYTHONPATH:+:$$PYTHONPATH} \
 		$(PYTHON) setup.py install ${setup_opts}
-	for f in $(SCRIPTS) ; do $(INSTALL) $$f $(DESTDIR)$(INST_BIN) ; done
 
 # see swig/include/python/docs/README to refresh the  ../include/python/docs/ files
 docs:
