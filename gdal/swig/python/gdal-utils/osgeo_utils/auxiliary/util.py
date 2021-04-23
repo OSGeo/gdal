@@ -29,25 +29,26 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-
+import os
 from numbers import Real
 from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator, List
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLike, enum_to_str, OptionalBoolStr, is_true, \
-    MaybeSequence
+from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLikeOrStr, enum_to_str, OptionalBoolStr, \
+    is_true, \
+    MaybeSequence, T
 
-PathOrDS = Union[PathLike, gdal.Dataset]
+PathOrDS = Union[PathLikeOrStr, gdal.Dataset]
 DataTypeOrStr = Union[str, int]
 CreationOptions = Optional[Dict[str, Any]]
 
 
-def DoesDriverHandleExtension(drv: gdal.Driver, ext: str):
+def DoesDriverHandleExtension(drv: gdal.Driver, ext: str) -> bool:
     exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
     return exts is not None and exts.lower().find(ext.lower()) >= 0
 
 
-def GetOutputDriversFor(filename: PathLike, is_raster=True):
+def GetOutputDriversFor(filename: PathLikeOrStr, is_raster=True) -> List[str]:
     drv_list = []
     ext = get_extension(filename)
     if ext.lower() == 'vrt':
@@ -73,8 +74,8 @@ def GetOutputDriversFor(filename: PathLike, is_raster=True):
     return drv_list
 
 
-def GetOutputDriverFor(filename: PathLike, is_raster=True, default_raster_format='GTiff',
-                       default_vector_format='ESRI Shapefile'):
+def GetOutputDriverFor(filename: PathLikeOrStr, is_raster=True, default_raster_format='GTiff',
+                       default_vector_format='ESRI Shapefile') -> str:
     if not filename:
         return 'MEM'
     drv_list = GetOutputDriversFor(filename, is_raster)
@@ -89,12 +90,14 @@ def GetOutputDriverFor(filename: PathLike, is_raster=True, default_raster_format
     return drv_list[0]
 
 
-def open_ds(filename_or_ds: PathOrDS, *args, **kwargs):
+def open_ds(filename_or_ds: MaybeSequence[PathOrDS], *args, **kwargs) -> MaybeSequence[gdal.Dataset]:
+    if not isinstance(filename_or_ds, PathOrDS.__args__):
+        return [open_ds(f) for f in filename_or_ds]
     ods = OpenDS(filename_or_ds, *args, **kwargs)
     return ods.__enter__()
 
 
-def get_ovr_count(filename_or_ds: PathOrDS):
+def get_ovr_count(filename_or_ds: PathOrDS) -> int:
     with OpenDS(filename_or_ds) as ds:
         bnd = ds.GetRasterBand(1)
         return bnd.GetOverviewCount()
@@ -109,7 +112,12 @@ def get_pixel_size(filename_or_ds: PathOrDS) -> Tuple[Real, Real]:
         return 1, 1
 
 
-def get_sizes_factors_resolutions(filename_or_ds: PathOrDS, dim: Optional[int]=0):
+ListOfTupleTT_OrT = List[Union[T, Tuple[T, T]]]
+
+
+def get_sizes_factors_resolutions(filename_or_ds: PathOrDS, dim: Optional[int] = 0) -> \
+     Tuple[ListOfTupleTT_OrT[int], ListOfTupleTT_OrT[Real], ListOfTupleTT_OrT[Real]]:
+
     ds = open_ds(filename_or_ds)
     bnd = ds.GetRasterBand(1)
     ovr_count = bnd.GetOverviewCount()
@@ -135,7 +143,7 @@ def get_sizes_factors_resolutions(filename_or_ds: PathOrDS, dim: Optional[int]=0
     return sizes, factors, resolutions
 
 
-def get_best_ovr_by_resolutions(requested_res: float, resolutions: Sequence[float]):
+def get_best_ovr_by_resolutions(requested_res: Real, resolutions: Sequence[Real]):
     for ovr, res in enumerate(resolutions):
         if res > requested_res:
             return max(0, ovr-1)
@@ -179,9 +187,9 @@ class OpenDS:
 
     def __init__(self, filename_or_ds: PathOrDS, silent_fail=False, *args, **kwargs):
         self.ds: Optional[gdal.Dataset] = None
-        self.filename: Optional[PathLike] = None
+        self.filename: Optional[PathLikeOrStr] = None
         if is_path_like(filename_or_ds):
-            self.filename = str(filename_or_ds)
+            self.filename = os.fspath(filename_or_ds)
         else:
             self.ds = filename_or_ds
         self.args = args
@@ -204,7 +212,7 @@ class OpenDS:
 
     @staticmethod
     def _open_ds(
-        filename: PathLike,
+        filename: PathLikeOrStr,
         access_mode=gdal.GA_ReadOnly,
         ovr_idx: Optional[Union[int, float]] = None,
         open_options: Optional[Union[Dict[str, str], Sequence[str]]] = None,

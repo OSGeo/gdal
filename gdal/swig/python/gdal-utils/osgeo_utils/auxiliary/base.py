@@ -38,8 +38,8 @@ from enum import Enum
 
 T = TypeVar("T")
 MaybeSequence = Union[T, Sequence[T]]
-PathLike = Union[str, Path]
-SequanceNotString = Union[List, Tuple]
+PathLikeOrStr = Union[str, os.PathLike]
+SequenceNotString = Union[List, Tuple]
 Real2D = Tuple[Real, Real]
 OptionalBoolStr = Optional[Union[str, bool]]
 
@@ -49,19 +49,19 @@ def enum_to_str(enum_or_str: Union[Enum, str]) -> str:
 
 
 def is_path_like(s) -> bool:
-    return isinstance(s, PathLike.__args__)
+    return isinstance(s, PathLikeOrStr.__args__)
 
 
-def get_suffix(filename: PathLike) -> str:
+def get_suffix(filename: PathLikeOrStr) -> str:
     return Path(filename).suffix  # same as os.path.splitext(filename)[1]
 
 
-def get_extension(filename: PathLike) -> str:
+def get_extension(filename: PathLikeOrStr) -> str:
     """
     returns the suffix without the leading dot.
     special case for shp.zip
     """
-    if str(filename).lower().endswith('.shp.zip'):
+    if os.fspath(filename).lower().endswith('.shp.zip'):
         return 'shp.zip'
     ext = get_suffix(filename)
     if ext.startswith('.'):

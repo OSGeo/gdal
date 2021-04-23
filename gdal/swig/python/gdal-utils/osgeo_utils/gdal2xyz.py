@@ -33,22 +33,21 @@ import sys
 import textwrap
 from argparse import RawDescriptionHelpFormatter
 from numbers import Number, Real
-from pathlib import Path
 from typing import Optional, Union, Sequence, Tuple
 import numpy as np
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import num, PathLike
+from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.progress import get_progress_callback, OptionalProgressCallback
-from osgeo_utils.auxiliary.util import PathOrDS, get_bands
+from osgeo_utils.auxiliary.util import PathOrDS, get_bands, open_ds
 from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
 
 
-def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
+def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
              srcwin: Optional[Sequence[int]] = None,
              skip: Union[int, Sequence[int]] = 1,
-             band_nums: Optional[Sequence[int]] = None, delim=' ',
+             band_nums: Optional[Sequence[int]] = None, delim: str = ' ',
              skip_nodata: bool = False,
              src_nodata: Optional[Union[Sequence, Number]] = None, dst_nodata: Optional[Union[Sequence, Number]] = None,
              return_np_arrays: bool = False, pre_allocate_np_arrays: bool = True,
@@ -80,7 +79,7 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
     progress_callback = get_progress_callback(progress_callback)
 
     # Open source file.
-    ds = gdal.Open(str(srcfile), gdal.GA_ReadOnly) if isinstance(srcfile, (Path, str)) else srcfile
+    ds = open_ds(srcfile, access_mode=gdal.GA_ReadOnly)
     if ds is None:
         raise Exception(f'Could not open {srcfile}.')
 
@@ -217,100 +216,6 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLike = None,
         result = all_geo_x, all_geo_y, all_data.transpose(), nodata
 
     return result
-
-
-def Usage():
-    print('Usage: gdal2xyz.py [-help]'
-          '                   [-skip factor] [-srcwin xoff yoff width height]'
-          '                   [-b|band band]* [-allbands] [-csv]'
-          '                   [-skipnodata]'
-          '                   [-srcnodata value]* [-dstnodata value]*'
-          '                   src_dataset [dst_dataset]')
-    print('')
-    return 1
-
-
-def main_old(argv):
-    srcwin = None
-    skip = 1
-    srcfile = None
-    dstfile = None
-    band_nums = []
-    all_bands = False
-    delim = ' '
-    skip_nodata = False
-    src_nodata = []
-    dst_nodata = []
-
-    argv = gdal.GeneralCmdLineProcessor(argv)
-    if argv is None:
-        return 0
-
-    # Parse command line arguments.
-    i = 1
-    while i < len(argv):
-        arg = str(argv[i]).lower()
-        if arg.startswith('--'):
-            arg = arg[1:]
-
-        if arg == '-srcwin':
-            srcwin = (int(argv[i + 1]), int(argv[i + 2]),
-                      int(argv[i + 3]), int(argv[i + 4]))
-            i = i + 4
-
-        elif arg == '-skip':
-            skip = int(argv[i + 1])
-            i = i + 1
-
-        elif arg in ['-b', '-band']:
-            b = int(argv[i + 1])
-            i = i + 1
-            if b:
-                band_nums.append(b)
-            else:
-                all_bands = True
-
-        elif arg == '-allbands':
-            all_bands = True
-
-        elif arg == '-csv':
-            delim = ','
-
-        elif arg in ['-skipnodata', '-skip_nodata']:
-            skip_nodata = True
-
-        elif arg in ['-nodatavalue', '-srcnodata']:
-            src_nodata.append(num(argv[i + 1]))
-            i = i + 1
-
-        elif arg == '-dstnodata':
-            dst_nodata.append(num(argv[i + 1]))
-            i = i + 1
-
-        elif srcfile is None:
-            srcfile = arg
-
-        elif dstfile is None:
-            dstfile = arg
-
-        elif arg == '-help':
-            return Usage()
-
-        else:
-            return Usage()
-
-        i = i + 1
-
-    if srcfile is None:
-        return Usage()
-
-    if all_bands:
-        band_nums = None
-    elif not band_nums:
-        band_nums = 1
-    return gdal2xyz(srcfile=srcfile, dstfile=dstfile, srcwin=srcwin, skip=skip,
-                    band_nums=band_nums, delim=delim,
-                    skip_nodata=skip_nodata, src_nodata=src_nodata, dst_nodata=dst_nodata)
 
 
 def main(argv):

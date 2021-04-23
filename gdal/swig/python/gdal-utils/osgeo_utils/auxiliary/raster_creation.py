@@ -27,17 +27,17 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-
+import os
 import tempfile
 from numbers import Real
 from typing import Sequence, Optional
 
 from osgeo import gdal, osr
-from osgeo_utils.auxiliary.base import PathLike, MaybeSequence, is_true
+from osgeo_utils.auxiliary.base import PathLikeOrStr, MaybeSequence, is_true
 from osgeo_utils.auxiliary.util import get_bigtiff_creation_option_value, get_data_type, DataTypeOrStr, CreationOptions
 
 
-def create_flat_raster(filename: Optional[PathLike],
+def create_flat_raster(filename: Optional[PathLikeOrStr],
                        driver: Optional[str] = None, dt: DataTypeOrStr = gdal.GDT_Byte,
                        size: MaybeSequence[int] = 128, band_count: int = 1, creation_options: CreationOptions = None,
                        fill_value: Optional[Real] = None, nodata_value: Optional[Real] = None,
@@ -56,7 +56,7 @@ def create_flat_raster(filename: Optional[PathLike],
     drv = gdal.GetDriverByName(driver)
     dt = get_data_type(dt)
     creation_options_list = get_creation_options(creation_options, driver=driver)
-    ds = drv.Create(str(filename), *size, band_count, dt, creation_options_list)
+    ds = drv.Create(os.fspath(filename), *size, band_count, dt, creation_options_list)
 
     if pixel_size and origin:
         if not isinstance(pixel_size, Sequence):

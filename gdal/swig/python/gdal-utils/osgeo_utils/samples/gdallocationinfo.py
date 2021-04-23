@@ -208,7 +208,7 @@ def gdallocationinfo_util(filename_or_ds: PathOrDS,
     return results
 
 
-def val_at_coord(filename: PathOrDS,
+def val_at_coord(filename: str,
                  longitude: Real, latitude: Real, coordtype_georef: bool,
                  print_xy: bool, print_values: bool):
     """
