@@ -2228,7 +2228,7 @@ int OGRProjCT::TransformWithErrorCodes(
             coord.xyzt.x = x[i];
             coord.xyzt.y = y[i];
             coord.xyzt.z = z ? z[i] : 0;
-            coord.xyzt.t = t ? t[i] : 0;
+            coord.xyzt.t = t ? t[i] : HUGE_VAL;
             proj_errno_reset(pj);
             coord = proj_trans(pj, m_bReversePj ? PJ_INV : PJ_FWD, coord);
             x[i] = coord.xyzt.x;
