@@ -27,10 +27,11 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-
+import os
 import sys
 import argparse
 import shlex
+from abc import ABC, abstractmethod
 from gettext import gettext
 from typing import Union
 from warnings import warn
@@ -46,9 +47,19 @@ class ExtendAction(argparse.Action):
 
 class GDALArgumentParser(argparse.ArgumentParser):
 
-    def __init__(self, fromfile_prefix_chars='@', add_help: Union[str, bool] = True, **kwargs):
+    def __init__(self, title=None, description=None, formatter_class=None,
+                 fromfile_prefix_chars='@', add_help: Union[str, bool] = True, **kwargs):
         custom_help = isinstance(add_help, str)
-        super().__init__(fromfile_prefix_chars=fromfile_prefix_chars,
+        if title:
+            if not description:
+                description = title
+            else:
+                if formatter_class is None:
+                    formatter_class = argparse.RawDescriptionHelpFormatter
+                description = f'{title}\n{"-"*(2+len(title))}\n{description}'
+
+        super().__init__(fromfile_prefix_chars=fromfile_prefix_chars, description=description,
+                         formatter_class=formatter_class,
                          add_help=add_help and not custom_help, **kwargs)
         if custom_help:
             self.add_argument(add_help, action='help', default=argparse.SUPPRESS,
@@ -84,3 +95,72 @@ class GDALArgumentParser(argparse.ArgumentParser):
 
     def convert_arg_line_to_args(self, arg_line):
         return shlex.split(arg_line, comments=True)
+
+
+class GDALScript(ABC):
+    def __init__(self, **kwargs):
+        self.prog = None
+        self.title = None
+        self.description = None
+        self.examples = None
+        self.add_help = True
+        self.optfile_arg = None
+        self._parser = None
+        self.examples = []
+        self.epilog = None
+        self.kwargs = kwargs
+
+    def add_example(self, title, arguments):
+        example = (title, arguments)
+        self.examples.append(example)
+
+    @property
+    def parser(self):
+        if self._parser is None:
+            self._parser = GDALArgumentParser(
+                prog=self.prog, title=self.title, description=self.description,
+                add_help=self.add_help, epilog=self.get_epilog(), **self.kwargs)
+        return self._parser
+
+    @parser.setter
+    def parser(self, value):
+        self._parser = value
+
+    @abstractmethod
+    def get_parser(self, argv) -> GDALArgumentParser:
+        pass
+
+    @abstractmethod
+    def doit(self, **kwargs):
+        pass
+
+    def augment_kwargs(self, kwargs) -> dict:
+        return kwargs
+
+    def parse(self, argv) -> dict:
+        parser = self.get_parser(argv)
+        args = parser.parse_args(argv, optfile_arg=self.optfile_arg)
+        kwargs = vars(args)
+        kwargs = self.augment_kwargs(kwargs)
+        return kwargs
+
+    def main(self, argv) -> int:
+        kwargs = self.parse(argv[1:])
+        try:
+            self.doit(**kwargs)
+            return 0
+        except Exception as e:
+            print(e)
+            return 1
+
+    def get_epilog(self):
+        prog = self.prog
+        if prog is None:
+            prog = os.path.basename(sys.argv[0])
+        example_list = []
+        for idx, (title, args) in enumerate(self.examples):
+            example_list.append(f'example #{idx+1}: {title}\n{prog} {args}')
+        epilog = '\n\n'.join(example_list)
+        if self.epilog:
+            epilog = epilog + '\n\n' + self.epilog
+        return epilog or None
