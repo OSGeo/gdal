@@ -29,7 +29,6 @@ python_install: python
 	if not exist $(GDAL_HOME)\python\script  mkdir $(GDAL_HOME)\python\script
 	set PYTHONPATH=$(GDAL_HOME)\python\Lib\site-packages
 	$(PYDIR)\$(PYEXEC) setup.py install --prefix $(GDAL_HOME)\python
-	$(INSTALL) scripts\*.py $(GDAL_HOME)\python\script
 	cd ..
 
 #d:\Python\debug\Python-2.4\PCbuild\python_d.exe setup.py build   --debug
