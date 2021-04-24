@@ -164,7 +164,7 @@ General creation options
 - **OVERVIEW_COMPRESS=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**:
   Set the compression method (see ``COMPRESS``) to use when storing the overviews in the COG.
   
-  By default (``AUTO``) the overviews will be created with the same predictor as the COG.
+  By default (``AUTO``) the overviews will be created with the same compression method as the COG.
 
 - **OVERVIEW_QUALITY=integer_value**: JPEG/WEBP quality setting. A value of 100 is best
   quality (least compression), and 1 is worst quality (best compression).
