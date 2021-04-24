@@ -1,8 +1,39 @@
+#!/usr/bin/env pytest
+# -*- coding: utf-8 -*-
+###############################################################################
+# $Id$
+#
+# Project:  GDAL/OGR Test Suite
+# Purpose:  gdal2tiles.py testing
+# Author:   Gregory Bataille <gregory.bataille@gmail.com>
+#
+###############################################################################
+# Copyright (c) 2017, Gregory Bataille <gregory.bataille@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+###############################################################################
+
 from unittest import mock, TestCase
 
 from osgeo import gdal, osr
 
-import gdal2tiles
+from osgeo_utils import gdal2tiles
 
 
 class AttrDict(dict):
@@ -40,7 +71,7 @@ class ReprojectDatasetTest(TestCase):
 
         self.assertEqual(from_ds, to_ds)
 
-    @mock.patch('gdal2tiles.gdal', spec=gdal)
+    @mock.patch('osgeo_utils.gdal2tiles.gdal', spec=gdal)
     def test_returns_warped_vrt_dataset_when_from_srs_different_from_to_srs(self, mock_gdal):
         mock_gdal.AutoCreateWarpedVRT = mock.MagicMock(spec=gdal.Dataset)
         from_ds = mock.MagicMock(spec=gdal.Dataset)

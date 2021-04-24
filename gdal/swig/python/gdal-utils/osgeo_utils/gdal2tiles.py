@@ -17,6 +17,7 @@
 ###############################################################################
 # Copyright (c) 2008, Klokan Petr Pridal
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
+# Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -1459,7 +1460,7 @@ def options_post_processing(options: Options, input_file: str, output_folder: st
     # User specified zoom levels
     tminz = None
     tmaxz = None
-    if options.zoom:
+    if hasattr(options, 'zoom') and options.zoom and isinstance(options.zoom, str):
         minmax = options.zoom.split('-', 1)
         zoom_min = minmax[0]
         tminz = int(zoom_min)

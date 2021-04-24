@@ -1,6 +1,37 @@
+#!/usr/bin/env pytest
+# -*- coding: utf-8 -*-
+###############################################################################
+# $Id$
+#
+# Project:  GDAL/OGR Test Suite
+# Purpose:  gdal2tiles.py testing
+# Author:   Gregory Bataille <gregory.bataille@gmail.com>
+#
+###############################################################################
+# Copyright (c) 2017, Gregory Bataille <gregory.bataille@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+###############################################################################
+
 from unittest import mock, TestCase
 
-import gdal2tiles
+from osgeo_utils import gdal2tiles
 
 
 class AttrDict(dict):
@@ -24,7 +55,7 @@ class SetupInputSrsTest(TestCase):
         self.mock_dataset.GetRasterBand().GetNoDataValue = mock.MagicMock(
             side_effect=self.nodata_in_input)
 
-    @mock.patch('gdal2tiles.osr')
+    @mock.patch('osgeo_utils.gdal2tiles.osr')
     def test_reads_values_from_input_dataset_with_projection_when_no_options(self, mock_osr):
         expected_srs = mock.MagicMock()
         expected_wkt = "expected_wkt"
@@ -38,7 +69,7 @@ class SetupInputSrsTest(TestCase):
         self.assertEqual(input_srs_wkt, expected_wkt)
         mock_osr.SpatialReference().ImportFromWkt.assert_called_with(expected_wkt)
 
-    @mock.patch('gdal2tiles.osr')
+    @mock.patch('osgeo_utils.gdal2tiles.osr')
     def test_reads_values_from_input_dataset_wout_projection_with_gcps_when_no_options(self,
                                                                                        mock_osr):
         expected_wkt = "expected_wkt"
@@ -57,7 +88,7 @@ class SetupInputSrsTest(TestCase):
 
     # def test_reads_values_from_input_dataset_with_neither_project_nor_gcps(self):
 
-    @mock.patch('gdal2tiles.osr')
+    @mock.patch('osgeo_utils.gdal2tiles.osr')
     def test_uses_the_passed_arguments_in_priority(self, mock_osr):
         option_srs = "o_srs"
         self.DEFAULT_ATTRDICT_OPTIONS['s_srs'] = option_srs
