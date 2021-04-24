@@ -3490,6 +3490,14 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                                     start, edge, pdfYCoord);
         NCDF_ERR(status);
 
+        nc_type nc_var_dimx_datatype = NC_NAT;
+        status = nc_inq_vartype(nGroupDimXID, nVarDimXID, &nc_var_dimx_datatype);
+        NCDF_ERR(status);
+
+        nc_type nc_var_dimy_datatype = NC_NAT;
+        status = nc_inq_vartype(nGroupDimYID, nVarDimYID, &nc_var_dimy_datatype);
+        NCDF_ERR(status);
+
         if( !poDS->bSwitchedXY )
         {
             // Convert ]180,540] longitude values to ]-180,0].
@@ -3572,7 +3580,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
             // ftp://ftp.cdc.noaa.gov/Datasets/NARR/Dailies/monolevel/vwnd.10m.2015.nc
             // requires a 0.02% tolerance, so let's settle for 0.05%
-            const double dfEps = 0.0005 * std::max(fabs(dfSpacingBegin),
+
+            // For float variables, increase to 0.2% (as seen in https://github.com/OSGeo/gdal/issues/3663)
+            const double dfEpsRel =
+                nc_var_dimx_datatype == NC_FLOAT ? 0.002 : 0.0005;
+
+            const double dfEps = dfEpsRel * std::max(fabs(dfSpacingBegin),
                         std::max(fabs(dfSpacingMiddle), fabs(dfSpacingLast)));
             if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, dfEps) &&
                 IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, dfEps) &&
@@ -3626,9 +3639,10 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                      pdfYCoord[ydim - 2], pdfYCoord[ydim - 1]);
 #endif
 
-            // For Latitude we allow an error of 0.1 degrees for gaussian
-            // gridding (only if this is not a projected SRS).
-            const double dfEps = 0.0005 * std::max(fabs(dfSpacingBegin),
+            const double dfEpsRel =
+                nc_var_dimy_datatype == NC_FLOAT ? 0.002 : 0.0005;
+
+            const double dfEps = dfEpsRel * std::max(fabs(dfSpacingBegin),
                         std::max(fabs(dfSpacingMiddle), fabs(dfSpacingLast)));
             if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, dfEps) &&
                 IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, dfEps) &&
