@@ -1488,9 +1488,6 @@ def options_post_processing(options: Options, input_file: str, output_folder: st
         options.url += os.path.basename(out_path) + '/'
 
     # Supported options
-    if options.resampling == 'average' and not hasattr(gdal, 'RegenerateOverview'):
-        exit_with_error(f'this version of gdal does not support {options.resampling} resampling.')
-
     if options.resampling == 'antialias' and not numpy_available:
         exit_with_error("'antialias' resampling algorithm is not available.",
                         "Install PIL (Python Imaging Library) and numpy.")

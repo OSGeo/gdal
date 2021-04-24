@@ -150,15 +150,6 @@ class OptionParserPostProcessingTest(TestCase):
         gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
         # No error means it worked as expected
 
-    @mock.patch('osgeo_utils.gdal2tiles.gdal', spec=AttrDict())
-    def test_average_resampling_not_supported_in_old_gdal(self, mock_gdal):
-        mock_gdal = self._setup_gdal_patch(mock_gdal)
-        del mock_gdal.RegenerateOverview
-        self.DEFAULT_ATTRDICT_OPTIONS['resampling'] = "average"
-
-        with self.assertRaises(SystemExit):
-            gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
-
     def test_antialias_resampling_supported_with_numpy(self):
         gdal2tiles.numpy_available = True
         self.DEFAULT_ATTRDICT_OPTIONS['resampling'] = "antialias"
