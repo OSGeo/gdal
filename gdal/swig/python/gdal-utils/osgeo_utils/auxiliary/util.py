@@ -49,6 +49,7 @@ def DoesDriverHandleExtension(drv: gdal.Driver, ext: str) -> bool:
 
 
 def GetOutputDriversFor(filename: PathLikeOrStr, is_raster=True) -> List[str]:
+    filename = os.fspath(filename)
     drv_list = []
     ext = get_extension(filename)
     if ext.lower() == 'vrt':
