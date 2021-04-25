@@ -4534,16 +4534,19 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 
     OGRErr eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
 
+    const char* pszFieldName =
+        m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
+
 /* -------------------------------------------------------------------- */
 /*      Update gpkg_extensions if needed.                               */
 /* -------------------------------------------------------------------- */
-    if( m_poDS->HasExtensionsTable() )
+    if( eErr == OGRERR_NONE && m_poDS->HasExtensionsTable() )
     {
         char* pszSQL = sqlite3_mprintf(
             "DELETE FROM gpkg_extensions WHERE lower(table_name) = lower('%q') AND "
             "lower(column_name) = lower('%q')",
             m_pszTableName,
-            m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef() );
+            pszFieldName);
         eErr = SQLCommand( m_poDS->GetDB(), pszSQL );
         sqlite3_free(pszSQL);
     }
@@ -4551,15 +4554,65 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 /* -------------------------------------------------------------------- */
 /*      Update gpkg_data_columns if needed.                             */
 /* -------------------------------------------------------------------- */
-    if( m_poDS->HasDataColumnsTable() )
+    if( eErr == OGRERR_NONE && m_poDS->HasDataColumnsTable() )
     {
         char* pszSQL = sqlite3_mprintf(
             "DELETE FROM gpkg_data_columns WHERE lower(table_name) = lower('%q') AND "
             "lower(column_name) = lower('%q')",
             m_pszTableName,
-            m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef() );
+            pszFieldName);
         eErr = SQLCommand( m_poDS->GetDB(), pszSQL );
         sqlite3_free(pszSQL);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update gpkg_metadata_reference if needed.                       */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE && m_poDS->HasMetadataTables() )
+    {
+        {
+            // Delete from gpkg_metadata metadata records that are only referenced
+            // by the column we are about to drop
+            char* pszSQL = sqlite3_mprintf(
+                    "DELETE FROM gpkg_metadata WHERE id IN ("
+                    "SELECT DISTINCT md_file_id FROM "
+                    "gpkg_metadata_reference WHERE "
+                    "lower(table_name) = lower('%q') "
+                    "AND lower(column_name) = lower('%q') "
+                    "AND md_parent_id is NULL) "
+                    "AND id NOT IN ("
+                    "SELECT DISTINCT md_file_id FROM gpkg_metadata_reference WHERE "
+                    "md_file_id IN ("
+                    "SELECT DISTINCT md_file_id FROM "
+                    "gpkg_metadata_reference WHERE "
+                    "lower(table_name) = lower('%q') "
+                    "AND lower(column_name) = lower('%q') "
+                    "AND md_parent_id is NULL) "
+                    "AND ("
+                    "lower(table_name) <> lower('%q') "
+                    "OR column_name IS NULL "
+                    "OR lower(column_name) <> lower('%q')))",
+                    m_pszTableName,
+                    pszFieldName,
+                    m_pszTableName,
+                    pszFieldName,
+                    m_pszTableName,
+                    pszFieldName);
+            eErr = SQLCommand(m_poDS->GetDB(), pszSQL);
+            sqlite3_free(pszSQL);
+        }
+
+        if( eErr == OGRERR_NONE )
+        {
+            char* pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_metadata_reference WHERE "
+                "lower(table_name) = lower('%q') AND "
+                "lower(column_name) = lower('%q')",
+                m_pszTableName,
+                pszFieldName);
+            eErr = SQLCommand( m_poDS->GetDB(), pszSQL );
+            sqlite3_free(pszSQL);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -4834,6 +4887,21 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     {
         char* pszSQL = sqlite3_mprintf(
             "UPDATE gpkg_data_columns SET column_name = '%q' WHERE "
+            "lower(table_name) = lower('%q') AND lower(column_name) = lower('%q')",
+            poNewFieldDefn->GetNameRef(),
+            m_pszTableName,
+            osOldColName.c_str() );
+        eErr = SQLCommand( hDB, pszSQL );
+        sqlite3_free(pszSQL);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update gpkg_metadata_reference if needed.                       */
+/* -------------------------------------------------------------------- */
+    if( bRenameCol && eErr == OGRERR_NONE && m_poDS->HasMetadataTables() )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_metadata_reference SET column_name = '%q' WHERE "
             "lower(table_name) = lower('%q') AND lower(column_name) = lower('%q')",
             poNewFieldDefn->GetNameRef(),
             m_pszTableName,

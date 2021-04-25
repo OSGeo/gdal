@@ -2649,6 +2649,13 @@ def test_ogr_gpkg_35():
     lyr_nonspatial.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr_nonspatial.CreateField(ogr.FieldDefn('bar_i_will_disappear', ogr.OFTString))
     lyr_nonspatial.CreateField(ogr.FieldDefn('baz', ogr.OFTString))
+
+    # Metadata
+    lyr_nonspatial.SetMetadataItem('FOO', 'BAR')
+    ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('column', 'test_nonspatial', 'bar_i_will_disappear', NULL, '2021-01-01T00:00:00.000Z', 1, NULL)")
+    ds.ExecuteSQL("INSERT INTO gpkg_metadata VALUES (2, 'dataset','http://gdal.org','text/plain','bla')")
+    ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('column', 'test_nonspatial', 'bar_i_will_disappear', NULL, '2021-01-01T00:00:00.000Z', 2, NULL)")
+
     f = ogr.Feature(lyr_nonspatial.GetLayerDefn())
     f.SetFID(10)
     f.SetField('foo', 'fooval')
@@ -2667,6 +2674,17 @@ def test_ogr_gpkg_35():
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
 )""")
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_column_constraints (
+            constraint_name TEXT NOT NULL,
+            constraint_type TEXT NOT NULL,
+            value TEXT,
+            min NUMERIC,
+            min_is_inclusive BOOLEAN,
+            max NUMERIC,
+            max_is_inclusive BOOLEAN,
+            description TEXT,
+            CONSTRAINT gdcc_ntv UNIQUE (constraint_name,
+            constraint_type, value))""")
     ds.ExecuteSQL("INSERT INTO gpkg_data_columns VALUES('test', 'bar_i_will_disappear', 'bar_constraints', NULL, NULL, NULL, NULL)")
     ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'bar_i_will_disappear', 'extension_name', 'definition', 'scope')")
 
@@ -2704,8 +2722,22 @@ def test_ogr_gpkg_35():
 
     ds = None
 
+    assert validate(dbname)
+
     # Try on read-only dataset
     ds = ogr.Open(dbname)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_metadata WHERE id = 1')
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_metadata WHERE id = 2')
+    assert sql_lyr.GetFeatureCount() == 0
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayerByName('test_nonspatial')
+    assert lyr.GetMetadataItem('FOO') == 'BAR'
+
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         ret = lyr.DeleteField(0)
@@ -2750,9 +2782,24 @@ def test_ogr_gpkg_36():
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
 )""")
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_column_constraints (
+            constraint_name TEXT NOT NULL,
+            constraint_type TEXT NOT NULL,
+            value TEXT,
+            min NUMERIC,
+            min_is_inclusive BOOLEAN,
+            max NUMERIC,
+            max_is_inclusive BOOLEAN,
+            description TEXT,
+            CONSTRAINT gdcc_ntv UNIQUE (constraint_name,
+            constraint_type, value))""")
     ds.ExecuteSQL("INSERT INTO gpkg_data_columns VALUES('test', 'foo', 'constraint', NULL, NULL, NULL, NULL)")
-    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'foo', 'extension_name', 'definition', 'scope')")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'foo', 'extension_name', 'definition', 'read-write')")
     ds.ExecuteSQL("CREATE INDEX my_idx ON test(foo)")
+
+    # Metadata
+    lyr.SetMetadataItem('FOO', 'BAR')
+    ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('column', 'test', 'foo', NULL, '2021-01-01T00:00:00.000Z', 1, NULL)")
 
     assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 1
 
@@ -2812,8 +2859,19 @@ def test_ogr_gpkg_36():
 
     ds = None
 
+    assert validate(dbname)
+
     # Try on read-only dataset
     ds = ogr.Open(dbname)
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_data_columns WHERE table_name = 'test' AND column_name = 'baw'")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_metadata_reference WHERE table_name = 'test' AND column_name = 'baw'")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('foo'), ogr.ALTER_ALL_FLAG)
