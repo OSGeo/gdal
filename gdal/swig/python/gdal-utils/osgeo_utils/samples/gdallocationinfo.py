@@ -90,9 +90,9 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
     point_count = len(x)
 
     if not isinstance(x, np.ndarray):
-        x = np.ndarray(x)
+        x = np.array(x)
     if not isinstance(y, np.ndarray):
-        y = np.ndarray(y)
+        y = np.array(y)
 
     if srs is None:
         srs = LocationInfoSRS.PixelLine
