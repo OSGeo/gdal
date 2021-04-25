@@ -10,7 +10,7 @@
 # ******************************************************************************
 #  Copyright (c) 2001, Frank Warmerdam
 #  Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
-#  Copyright (c) 2020, Idan Miara <idan@miara.com>
+#  Copyright (c) 2020-2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -32,9 +32,15 @@
 # ******************************************************************************
 
 import sys
+import textwrap
+from typing import Optional
+
 import numpy as np
 
 from osgeo import gdal
+
+from osgeo_utils.auxiliary.base import PathLikeOrStr
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
 from osgeo_utils.auxiliary.color_palette import get_color_palette
 from osgeo_utils.auxiliary.color_table import get_color_table
@@ -42,80 +48,24 @@ from osgeo_utils.auxiliary.color_table import get_color_table
 progress = gdal.TermProgress_nocb
 
 
-def Usage():
-    print('Usage: pct2rgb.py [-of format] [-b <band>] [-rgba] source_file dest_file')
-    return 1
-
-
-def main(argv):
-    driver = None
-    src_filename = None
-    dst_filename = None
-    pct_filename = None
-    out_bands = 3
-    band_number = 1
-
-    argv = gdal.GeneralCmdLineProcessor(argv)
-    if argv is None:
-        return 0
-
-    # Parse command line arguments.
-    i = 1
-    while i < len(argv):
-        arg = argv[i]
-
-        if arg == '-of' or arg == '-f':
-            i = i + 1
-            driver = argv[i]
-
-        if arg == '-ct':
-            i = i + 1
-            pct_filename = argv[i]
-
-        elif arg == '-b':
-            i = i + 1
-            band_number = int(argv[i])
-
-        elif arg == '-rgba':
-            out_bands = 4
-
-        elif src_filename is None:
-            src_filename = argv[i]
-
-        elif dst_filename is None:
-            dst_filename = argv[i]
-
-        else:
-            return Usage()
-
-        i = i + 1
-
-    if dst_filename is None:
-        return Usage()
-
-    _ds, err = doit(src_filename, pct_filename, dst_filename, band_number, out_bands, driver)
-    return err
-
-
-def doit(src_filename, pct_filename, dst_filename, band_number=1, out_bands=3, driver=None):
+def pct2rgb(src_filename: PathLikeOrStr, pct_filename: Optional[PathLikeOrStr], dst_filename: PathLikeOrStr,
+            band_number: int = 1, out_bands: int = 3, driver_name: Optional[str] = None):
     # Open source file
     src_ds = open_ds(src_filename)
     if src_ds is None:
-        print('Unable to open %s ' % src_filename)
-        return None, 1
+        raise Exception(f'Unable to open {src_filename} ')
 
     src_band = src_ds.GetRasterBand(band_number)
 
     # ----------------------------------------------------------------------------
     # Ensure we recognise the driver.
 
-    if driver is None:
-        driver = GetOutputDriverFor(dst_filename)
+    if driver_name is None:
+        driver_name = GetOutputDriverFor(dst_filename)
 
-    dst_driver = gdal.GetDriverByName(driver)
+    dst_driver = gdal.GetDriverByName(driver_name)
     if dst_driver is None:
-        print('"%s" driver not registered.' % driver)
-        return None, 1
+        raise Exception(f'"{driver_name}" driver not registered.')
 
     # ----------------------------------------------------------------------------
     # Build color table.
@@ -145,7 +95,7 @@ def doit(src_filename, pct_filename, dst_filename, band_number=1, out_bands=3, d
     # ----------------------------------------------------------------------------
     # Create the working file.
 
-    if driver.lower() == 'gtiff':
+    if driver_name.lower() == 'gtiff':
         tif_filename = dst_filename
     else:
         tif_filename = 'temp.tif'
@@ -153,7 +103,6 @@ def doit(src_filename, pct_filename, dst_filename, band_number=1, out_bands=3, d
     gtiff_driver = gdal.GetDriverByName('GTiff')
 
     tif_ds = gtiff_driver.Create(tif_filename, src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
-
 
     # ----------------------------------------------------------------------------
     # We should copy projection information and so forth at this point.
@@ -188,7 +137,57 @@ def doit(src_filename, pct_filename, dst_filename, band_number=1, out_bands=3, d
         tif_ds = None
         gtiff_driver.Delete(tif_filename)
 
-    return dst_ds, 0
+    return dst_ds
+
+
+def doit(**kwargs):
+    try:
+        ds = pct2rgb(**kwargs)
+        return ds, 0
+    except:
+        return None, 1
+
+
+class PCT2RGB(GDALScript):
+    def __init__(self):
+        super().__init__()
+        self.title = 'Convert an 8bit paletted image to 24bit RGB'
+        self.description = textwrap.dedent('''\
+            This utility will convert a pseudo-color band on the input file
+            into an output RGB file of the desired format.''')
+
+    def get_parser(self, argv) -> GDALArgumentParser:
+        parser = self.parser
+
+        parser.add_argument("-of", dest="driver_name", metavar="gdal_format",
+                            help="Select the output format. if not specified, the format is guessed from the extension. "
+                                 "Use the short format name. "
+                                 "Only output formats supporting pseudo-color tables should be used.")
+
+        parser.add_argument("-rgba", dest="out_bands", action="store_const", const=4, default=3,
+                            help="Generate a RGBA file (instead of a RGB file by default).")
+
+        parser.add_argument("-b", "-band", dest="band_number", metavar="band", type=int, default=1,
+                            help="Band to convert to RGB, defaults to 1.")
+
+        parser.add_argument("-pct", dest='pct_filename', type=str,
+                            help="Extract the color table from <palette_file> instead of computing it. "
+                                 "can be used to have a consistent color table for multiple files. "
+                                 "The palette file must be either a raster file in a GDAL supported format with a "
+                                 "palette or a color file in a supported format (txt, qml, qlr).")
+
+        parser.add_argument("src_filename", type=str, help="The input file.")
+
+        parser.add_argument("dst_filename", type=str, help="The output RGB file that will be created.")
+
+        return parser
+
+    def doit(self, **kwargs):
+        return pct2rgb(**kwargs)
+
+
+def main(argv):
+    return PCT2RGB().main(argv)
 
 
 if __name__ == '__main__':
