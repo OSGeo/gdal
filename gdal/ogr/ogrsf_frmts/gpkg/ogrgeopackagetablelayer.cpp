@@ -1336,6 +1336,9 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
     {
         CPLString osCommand;
 
+        // ADD COLUMN has several restrictions
+        // See https://www.sqlite.org/lang_altertable.html#altertabaddcol
+
         osCommand.Printf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
                           SQLEscapeName(m_pszTableName).c_str(),
                           SQLEscapeName(poField->GetNameRef()).c_str(),
@@ -1345,7 +1348,12 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
         if(  !poField->IsNullable() )
             osCommand += " NOT NULL";
         if(  poField->IsUnique() )
+        {
+            // this will fail when SQLCommand() is run, as it is not allowed
+            // by SQLite. This is a bit of an artificial restriction.
+            // We could override it by rewriting the table.
             osCommand += " UNIQUE";
+        }
         if( poField->GetDefault() != nullptr && !poField->IsDefaultDriverSpecific() )
         {
             osCommand += " DEFAULT ";
@@ -1369,15 +1377,14 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
             }
             else
             {
+                // This could fail if it is CURRENT_TIMESTAMP, etc.
                 osCommand += poField->GetDefault();
             }
         }
         else if( !poField->IsNullable() )
         {
-            // This is kind of dumb, but SQLite mandates a DEFAULT value
-            // when adding a NOT NULL column in an ALTER TABLE ADD COLUMN
-            // statement, which defeats the purpose of NOT NULL,
-            // whereas it doesn't in CREATE TABLE
+            // SQLite mandates a DEFAULT value when adding a NOT NULL column in
+            // an ALTER TABLE ADD COLUMN.
             osCommand += " DEFAULT ''";
         }
 
