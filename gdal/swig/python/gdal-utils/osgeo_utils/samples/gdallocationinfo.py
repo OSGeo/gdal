@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 import sys
+import textwrap
 
 from enum import Enum, auto
 from numbers import Real
@@ -43,7 +44,7 @@ from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromD
     NumpyCompatibleArray
 from osgeo_utils.auxiliary.osr_util import transform_points, AnySRS, get_transform, get_srs
 from osgeo_utils.auxiliary.util import PathOrDS, open_ds, get_bands, get_scales_and_offsets, get_band_nums
-from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 
 
 class LocationInfoSRS(Enum):
@@ -255,113 +256,124 @@ def val_at_coord(filename: str,
     return res
 
 
-def main(argv):
-    parser = GDALArgumentParser()
+class GDALLocationInfo(GDALScript):
+    def __init__(self):
+        super().__init__()
+        self.title = 'Raster query tool'
+        self.description = textwrap.dedent('''\
+            The gdallocationinfo utility provide a mechanism to query information about a pixel given its location
+            in one of a variety of coordinate systems. Several reporting options are provided.''')
+        self.interactive_mode = None
 
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("-xml", dest="xml", action="store_true",
-                        help="The output report will be XML formatted for convenient post processing.")
-    group.add_argument("-lifonly", dest="lifonly", action="store_true",
-                        help="The only output is filenames production from the LocationInfo request against "
-                             "the database (i.e. for identifying impacted file from VRT).")
-    group.add_argument("-valonly", dest="valonly", action="store_true",
-                        help="The only output is the pixel values of the selected pixel on each of the selected bands.")
-    parser.add_argument("-plb", dest="plb", action="store_true",
-                        help="The output will be a series of lines in the form of Pixel,Line,band0,band1... "
-                             "for each of the selected bands.")
-    group.add_argument("-quiet", dest="quiet", action="store_true",
-                        help="No output will be printed.")
+    def get_parser(self, argv) -> GDALArgumentParser:
+        parser = self.parser
 
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("-l_srs", dest="srs", metavar='srs_def', type=str,
-                        help="The coordinate system of the input x, y location.")
-    group.add_argument("-geoloc", dest="geoloc", action="store_true",
-                        help="Indicates input x,y points are in the georeferencing system of the image.")
-    group.add_argument("-llgeoloc", dest="llgeoloc", action="store_true",
-                        help="Indicates input x,y points are in the long, lat (geographic) "
-                             "based on the georeferencing system of the image.")
-    group.add_argument("-wgs84", dest="wgs84", action="store_true",
-                        help="Indicates input x,y points are WGS84 long, lat.")
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument("-xml", dest="xml", action="store_true",
+                           help="The output report will be XML formatted for convenient post processing.")
+        group.add_argument("-lifonly", dest="lifonly", action="store_true",
+                           help="The only output is filenames production from the LocationInfo request against "
+                                "the database (i.e. for identifying impacted file from VRT).")
+        group.add_argument("-valonly", dest="valonly", action="store_true",
+                           help="The only output is the pixel values of the selected pixel on each of the selected bands.")
+        parser.add_argument("-plb", dest="plb", action="store_true",
+                            help="The output will be a series of lines in the form of Pixel,Line,band0,band1... "
+                                 "for each of the selected bands.")
+        group.add_argument("-quiet", dest="quiet", action="store_true",
+                           help="No output will be printed.")
 
-    parser.add_argument("-extent_strict", dest="allow_xy_outside_extent", action="store_false",
-                        help="If set, input points outside the raster extent will raise an exception, "
-                             "otherwise a warning will be issued (unless quiet).")
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument("-l_srs", dest="srs", metavar='srs_def', type=str,
+                           help="The coordinate system of the input x, y location.")
+        group.add_argument("-geoloc", dest="geoloc", action="store_true",
+                           help="Indicates input x,y points are in the georeferencing system of the image.")
+        group.add_argument("-llgeoloc", dest="llgeoloc", action="store_true",
+                           help="Indicates input x,y points are in the long, lat (geographic) "
+                                "based on the georeferencing system of the image.")
+        group.add_argument("-wgs84", dest="wgs84", action="store_true",
+                           help="Indicates input x,y points are WGS84 long, lat.")
 
-    parser.add_argument("-interp", dest="resample_alg", action="store_true",
-                        help="If set, a Bilinear interpolation would be used, otherwise the NearestNeighbour sampling.")
+        parser.add_argument("-extent_strict", dest="allow_xy_outside_extent", action="store_false",
+                            help="If set, input points outside the raster extent will raise an exception, "
+                                 "otherwise a warning will be issued (unless quiet).")
 
-    parser.add_argument("-b", dest="band_nums", metavar="band", type=int, nargs='+',
-                        help="Selects a band to query. Multiple bands can be listed. By default all bands are queried.")
+        parser.add_argument("-interp", dest="resample_alg", action="store_true",
+                            help="If set, a Bilinear interpolation would be used, otherwise the NearestNeighbour sampling.")
 
-    parser.add_argument('-overview', dest="ovr_idx", metavar="overview_level", type=int,
-                        help="Query the (overview_level)th overview (overview_level=1 is the 1st overview), "
-                             "instead of the base band. Note that the x,y location (if the coordinate system is "
-                             "pixel/line) must still be given with respect to the base band.")
+        parser.add_argument("-b", dest="band_nums", metavar="band", type=int, nargs='+',
+                            help="Selects a band to query. Multiple bands can be listed. By default all bands are queried.")
 
-    parser.add_argument("-axis_order", dest="gis_order", choices=['gis', 'authority'], type=str,
-                        help="X, Y Axis order: Traditional GIS, Authority complaint or otherwise utility default.")
+        parser.add_argument('-overview', dest="ovr_idx", metavar="overview_level", type=int,
+                            help="Query the (overview_level)th overview (overview_level=1 is the 1st overview), "
+                                 "instead of the base band. Note that the x,y location (if the coordinate system is "
+                                 "pixel/line) must still be given with respect to the base band.")
 
-    parser.add_argument("-oo", dest="open_options", metavar="NAME=VALUE",
-                        help="Dataset open option (format specific).",
-                        nargs='+')
+        parser.add_argument("-axis_order", dest="gis_order", choices=['gis', 'authority'], type=str,
+                            help="X, Y Axis order: Traditional GIS, Authority complaint or otherwise utility default.")
 
-    parser.add_argument("filename_or_ds", metavar="filename", type=str,
-                        help="The source GDAL raster datasource name.")
+        parser.add_argument("-oo", dest="open_options", metavar="NAME=VALUE",
+                            help="Dataset open option (format specific).",
+                            nargs='+')
 
-    parser.add_argument("xy", metavar="x y", nargs='*', type=float,
-                        help="series of X Y pairs of location of target pixel. "
-                             "By default the coordinate system "
-                             "is pixel/line unless -l_srs, -wgs84 or -geoloc supplied.")
+        parser.add_argument("filename_or_ds", metavar="filename", type=str,
+                            help="The source GDAL raster datasource name.")
 
-    args = parser.parse_args(argv[1:])
+        parser.add_argument("xy", metavar="x y", nargs='*', type=float,
+                            help="series of X Y pairs of location of target pixel. "
+                                 "By default the coordinate system "
+                                 "is pixel/line unless -l_srs, -wgs84 or -geoloc supplied.")
 
-    interactive_mode = len(args.xy) <= 1
-    if not interactive_mode:
-        args.x = np.array(args.xy[0::2])
-        args.y = np.array(args.xy[1::2])
+        return parser
 
-    if args.geoloc:
-        args.srs = LocationInfoSRS.SameAsDS_SRS
-    elif args.llgeoloc:
-        args.srs = LocationInfoSRS.SameAsDS_SRS_GeogCS
-    elif args.wgs84:
-        args.srs = 4326
+    def augment_kwargs(self, kwargs) -> dict:
+        self.interactive_mode = len(kwargs['xy']) <= 1
+        if not self.interactive_mode:
+            kwargs['x'] = np.array(kwargs['xy'][0::2])
+            kwargs['y'] = np.array(kwargs['xy'][1::2])
 
-    args.gis_order = \
-        args.srs and (args.srs != LocationInfoSRS.SameAsDS_SRS) if args.gis_order is None \
-        else str(args.gis_order).lower() == 'gis'
+        if kwargs['geoloc']:
+            kwargs['srs'] = LocationInfoSRS.SameAsDS_SRS
+        elif kwargs['llgeoloc']:
+            kwargs['srs'] = LocationInfoSRS.SameAsDS_SRS_GeogCS
+        elif kwargs['wgs84']:
+            kwargs['srs'] = 4326
 
-    if args.xml:
-        args.output_mode = LocationInfoOutput.XML
-    elif args.lifonly:
-        args.output_mode = LocationInfoOutput.LifOnly
-    elif args.valonly:
-        args.output_mode = LocationInfoOutput.ValOnly
-    elif args.plb:
-        args.output_mode = LocationInfoOutput.PixelLineVal
-    elif args.quiet:
-        args.output_mode = LocationInfoOutput.Quiet
-    else:
-        args.output_mode = LocationInfoOutput.PixelLineValVerbose
+        kwargs['gis_order'] = \
+            kwargs['srs'] and (kwargs['srs'] != LocationInfoSRS.SameAsDS_SRS) if kwargs['gis_order'] is None \
+                else str(kwargs['gis_order']).lower() == 'gis'
 
-    args.resample_alg = gdal.GRIORA_Bilinear if args.resample_alg else gdal.GRIORA_NearestNeighbour
+        if kwargs['xml']:
+            kwargs['output_mode'] = LocationInfoOutput.XML
+        elif kwargs['lifonly']:
+            kwargs['output_mode'] = LocationInfoOutput.LifOnly
+        elif kwargs['valonly']:
+            kwargs['output_mode'] = LocationInfoOutput.ValOnly
+        elif kwargs['plb']:
+            kwargs['output_mode'] = LocationInfoOutput.PixelLineVal
+        elif kwargs['quiet']:
+            kwargs['output_mode'] = LocationInfoOutput.Quiet
+        else:
+            kwargs['output_mode'] = LocationInfoOutput.PixelLineValVerbose
 
-    kwargs = vars(args)
-    del kwargs["xy"]
+        kwargs['resample_alg'] = gdal.GRIORA_Bilinear if kwargs['resample_alg'] else gdal.GRIORA_NearestNeighbour
 
-    del kwargs["geoloc"]
-    del kwargs["llgeoloc"]
-    del kwargs["wgs84"]
+        del kwargs["xy"]
 
-    del kwargs["xml"]
-    del kwargs["lifonly"]
-    del kwargs["valonly"]
-    del kwargs["plb"]
-    del kwargs["quiet"]
+        del kwargs["geoloc"]
+        del kwargs["llgeoloc"]
+        del kwargs["wgs84"]
 
-    try:
-        if interactive_mode:
-            is_pixel_line = args.srs == LocationInfoSRS.PixelLine
+        del kwargs["xml"]
+        del kwargs["lifonly"]
+        del kwargs["valonly"]
+        del kwargs["plb"]
+        del kwargs["quiet"]
+
+        return kwargs
+
+    def doit(self, **kwargs):
+        if self.interactive_mode:
+            is_pixel_line = kwargs['srs'] == LocationInfoSRS.PixelLine
             while True:
                 xy = input(f"Enter {'pixel line' if is_pixel_line else 'X Y'} "
                            f"values separated by space, and press Return.\n")
@@ -369,11 +381,11 @@ def main(argv):
                 kwargs['x'], kwargs['y'] = float(xy[0]), float(xy[1])
                 gdallocationinfo_util(**kwargs)
         else:
-            gdallocationinfo_util(**kwargs)
-            return 0
-    except IOError as e:
-        print(e)
-        return 1
+            return gdallocationinfo_util(**kwargs)
+
+
+def main(argv):
+    return GDALLocationInfo().main(argv)
 
 
 if __name__ == '__main__':
