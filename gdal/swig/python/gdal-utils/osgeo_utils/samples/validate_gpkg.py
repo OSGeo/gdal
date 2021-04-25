@@ -1365,19 +1365,14 @@ class GPKGChecker(object):
 
     def _check_column_exists(self, c, table_name, col_name):
 
-        if '\'' not in col_name and '"' not in col_name and ' ' not in col_name:
-            try:
-                c.execute('SELECT %s FROM %s LIMIT 0' % (col_name, _esc_id(table_name)))
-                return True
-            except sqlite3.OperationalError:
-                return False
-
-        c.execute('PRAGMA table_info(%s)' % _esc_id(table_name))
-        cols = c.fetchall()
-        for _, name, _, _, _, _ in cols:
-            if name == col_name:
-                return True
-        return False
+        try:
+            # 'SELECT "col_name" FROM table_name' doesn't work because
+            # it will be interpreted as a literal if the columm does not exist
+            c.execute('SELECT 1 FROM %s t ORDER BY t.%s LIMIT 0' %
+                      (_esc_id(table_name), _esc_id(col_name)))
+            return True
+        except sqlite3.OperationalError:
+            return False
 
     def _check_gpkg_extensions(self, c):
 
