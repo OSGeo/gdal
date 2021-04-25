@@ -1,4 +1,4 @@
-= GDAL/OGR 3.3.0 Release Notes (Preliminary, up to commit 9d7eb6bddd1e4213bdf83217eb74564ce385b242) =
+= GDAL/OGR 3.3.0 Release Notes
 
 == In a nutshell... ==
 
@@ -36,6 +36,7 @@ Build(Unix):
  * configure: Ensure --with-geos/sfcgal fail if unavailable.
  * configure: check presence of linux/fs.h for Linux builds
  * configure: Fix gdal compilation when using proj-8.0.0 and libtiff with static jpeg support
+ * GDALmake.opt.in: in non-libtool LD_SHARED builds, do not link applications against libgdal dependencies, but only against libgdal itself
 
 Build(Windows):
  * add missing makefile.vc for heif
@@ -46,6 +47,8 @@ Port:
  * GOA2GetRefreshToken(): avoid nullptr dereference in some cases
  * /vsicurl/: for debug messages, use the debug key of derived filesystem, such as 'S3' instead of 'VSICURL'
  * /vsicurl/: fix issue when trying to read past end of file.
+ * /vsicurl/: use less restrictive check for S3-like signed URLs to be usable by OpenIO (#3703)
+ * /vsicurl/: fix handling of X-Amz-Expires type of signed URLs (#3703)
  * VSICurlStreamingClearCache(): fix cache clearing for /vsiaz_streaming/
  * /vsimem/, /vsisubfile/: fix memleak if destroying the C++ handle with delete instead of using VSIFCloseL() (ossfuzz #28422 #28446)
  * /vsiaz/: fetch credentials from Azure Active Directory when run from a Azure VM when AZURE_STORAGE_ACCOUNT is set.
@@ -99,8 +102,10 @@ Utilities:
  * gdalinfo: add -approx_stats in synopsis (#3296)
  * gdal_translate -tr: make non-nearest resampling honour the specified resolution to avoid potential sub-pixel misalignment when the spatial extent, resolution and dimensions in pixels don't perfectly match
  * gdal_translate: preserve source block size when not subsetting, and preserve as well COMPRESSION IMAGE_STRUCTURE metadata item
+ * gdal_translate / gdalwarp: do not copy CACHE_PATH metadata item from WMS driver
  * gdalwarp: make -of COG work with multiple input sources when BigTIFF temporary output is needed (#3212)
  * gdalwarp: preserve scale/offset settings of source bands to output (#3232)
+ * gdalwarp: address (one situation of) geometry invalidity when reprojecting the cutline to the source image
  * gdal_create: add a -if option to specify a prototype input file
  * gdal_rasterize: make -i work again (#3124)
  * gdaldem TRI: add a -alg Riley option to use the Riley 1999 formula, for terrestrial use cases (#3320), and make it the new default
@@ -170,6 +175,7 @@ GTiff driver:
    - tif_lerc.c: fix encoding of datasets with NaN values (#3055)
    - TIFFStartStrip(): avoid potential crash in WebP codec when using scanline access on corrupted files (ossfuzz #26650)
  * Export JPEG compression tags to metadata
+ * Report PREDICTOR in IMAGE_STRUCTURE dataset metadata domain (when it is set)
  * avoid setting compoundCRS name to 'unknown' when the GTCitationGeoKey is absent
  * better parse VerticalCitationGeoKey that is in the form 'VCS Name = foo|...'
  * rely on libtiff for LERC codec instead of internal libtiff-only codec previously
@@ -199,7 +205,7 @@ MRF driver:
 
 netCDF driver:
  * fix reading netCDF4/HDF5 files whose HDF5 signature is not at offset 0 (#3188)
- * accept relative variations in X/longitude and Y/latitude spacing of up to 0.05%. Add a GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK config option to ignore those checks if needed (#3244)
+ * accept relative variations in X/longitude and Y/latitude spacing of up to 0.2% for float variables or 0.05% for double. Add a GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK config option to ignore those checks if needed (#3244, #3663)
  * open /vsimem/ files without requiring Linux userfaultfd mechanism
  * Set scope for raster/vector-only options in driver metadata
  * multidim: add a GROUP_BY=SAME_DIMENSION option to GetGroupNames()
@@ -232,6 +238,7 @@ RMF driver:
 TileDB driver:
  * Add support for array versioning (#3293)
  * do not try to identify /vsis3/ files ending with .tif
+ * add /vsigs/ support
 
 VRT driver:
  * add a <UseMaskBand>true</UseMaskBand> element of <ComplexSource> to allow compositing of overlapping sources (#1148)
@@ -274,6 +281,7 @@ Core:
  * OGRGeometry: make sure that the return type of clone() for all classes is their own type
  * OGRGeometry: make getGeometryRef() in subclasses return a better type
  * OGRGeometry: Handle WKB > 2 GB. Add OGR_G_WkbSizeEx() and OGR_G_CreateFromWkbEx()
+ * Add OGRSimpleCurve::removePoint()
 
 OGRSpatialReference:
  * Fix exportToWkt() after morphToESRI() on Geographic/Projected 3D CRS.
@@ -327,6 +335,7 @@ GeoPackage driver:
  * no longer create triggers on gpkg_metadata and gpkg_metadata_reference
  * Take into account OGR_CURRENT_DATE config option in gpkg_metadata_reference table (fixes #3537)
  * Remove creation support for data_type='aspatial' legacy tables
+ * fix update of gpkg_metadata_reference when renaming or dropping a column, and this table references it
 
 GeoJSON driver:
  * writer: avoid invalid .0 suffix to be added to numeric values like 1eXX (#3172)
@@ -356,6 +365,9 @@ NGW driver:
  * Add extensions support.
  * Add alternative field name support.
 
+OAPIF driver:
+ * report url of STAC asset items
+
 ODBC driver:
  * Remove text trimming behavior
 
@@ -379,12 +391,16 @@ SXF driver:
 WFS driver:
  * fix CreateFeature() for WFS 2 (#3323). And for WFS 2, make CreateFeature() and SetFeature() use GML 3
 
+XLSX driver:
+ * fix read cells with inline formatting (#3729)
+
 == SWIG Language Bindings ==
 
 All bindings:
  * avoid nullptr deref if providing some NULL arguments to gdal.Debug() and gdal.GOA2xxxxx() methods
  * fix return type of Dataset.SetSpatialRef()
  * fix expansion of ODsCRandomLayerWrite constant
+ * add missing GRA_Sum constant (#3724)
 
 CSharp bindings:
  * Replace ToInt32 calls with ToInt64 to prevent an ArithmeticException when executing against large images in a 64-bit context.
@@ -408,12 +424,14 @@ Python bindings:
  * Allow list or array types as input of MDArray.Write() for 1D arrays
  * Prepare all samples scripts for reuse
  * Add osgeo_utils.auxiliary submodules for auxiliary functions.
+ * [epsg_tr|esri2wkt|gcps2vec|gcps2wld|gdal_auth|gdalchksum|gdalident|gdalimport|mkgraticule].py - move undocumented untested utils to the `samples` subfolder where they belong
  * Implement correct behavior for copy.copy() and copy.deepcopy() on a Geometry object (#3278)
  * Add CoordinateTransformation.TransformPointWithErrorCode()
  * Remove deprecated NumPy aliases for standard types.
  * Better validation of Band.ReadAsArray() input shape (#3466)
  * Dictionary typemap: accept key/value not being strings
  * Add batch_creator.py, a Windows batch file creator
+ * Fix 'make generate' target on Unix builds (#3696)
 
 = GDAL/OGR 3.2.0 Release Notes =
 
