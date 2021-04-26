@@ -33,7 +33,7 @@ There are a number of ways to get the C# bindings, including but not limited to:
 * The `gisinternals <http://www.gisinternals.com/sdk>`__ site, see below under "Windows Build SDK",
 * The Conda package, see instructions below
 * The gdal.netcore NuGet package, see link below, and
-* For Unity, there is a UPM package that installs GDAL, `available from here <https://openupm.com/packages/com.virgis.gdal/>`__ (currrently Windows only)
+* For Unity, there is a UPM package that installs GDAL, `available from here <https://openupm.com/packages/com.virgis.gdal/?subPage=readme>`__ (currrently Windows only)
 
 
 Related Documents
@@ -41,10 +41,11 @@ Related Documents
    .. toctree::
        :maxdepth: 1
 
-       _csharp_compile
-       _csharp_raster
-       _csharp_vector
-       _csharp_usage
+       csharp_compile
+       csharp_raster
+       csharp_vector
+       csharp_usage
+       csharp_conda
 
 
 Useful Links
@@ -57,6 +58,8 @@ Useful Links
 * A simple (as is) build engine of GDAL 3.2 library for .NET Core. `MaxRev-Dev/gdal.netcore <https://github.com/MaxRev-Dev/gdal.netcore>`__ 
 
 * The `ViRGiS project <https://www.virgis.org/>`__ makes extensive use of GDAL in c# in a Unity environment.
+
+(Please add more links to this section)
 
 
 Windows Build SDKs
