@@ -21,9 +21,10 @@ Supported platforms
 -------------------
 
 Currently the interface is compilable on and supports:
+
 * the various Win32 and Win64 platforms targeting the Microsoft.NET and the MONO frameworks, 
 * GNU Linux/OSX systems using the MONO framework, and
-* Unity systems on Windows, OSX and Linux (currrently only the MONO framework and not IL2CPP).
+* Unity systems on Windows, OSX and Linux (currently only the MONO framework and not IL2CPP).
 
 Getting GDAL for C#
 -------------------

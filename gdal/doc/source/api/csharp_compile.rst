@@ -81,26 +81,18 @@ This command will invoke some of the sample applications.
 .. note For the tests to work the location of the proj.dll should be available in the PATH.
 
 Using MONO on Windows
++++++++++++++++++++++
+
 If you have the Windows version of the MONO package installed you can compile the C# code using the MONO compiler. In this case uncomment the following entry in csharp.opt:
 
-#MONO = YES 
-And make mcs.exe available in the PATH.
+.. describe:: MONO = YES 
 
-Compiling on a WIN64 platform
-You can compile GDAL on a Win64 platform creating either Win32 or Win64 binaries. You should take care of setting up the proper environment variables for the corresponding compiler by using the proper vcvars.bat or using the Visual Studio 2005 x64 command prompt.
+.. note mcs.exe must be in the PATH.
 
-For creating Win64 binaries you should compile the gdal core and the C# interface using the 64 bit compiler version, and specify WIN64=YES in nmake.opt.
-
-Alternatively you can pass this option to the nmake command line as
-
-C:\GDAL\swig\csharp> nmake /f makefile.vc WIN64=YES
-This setting will allow to specify the proper platform (/platform:anycpu) for the csharp compiler.
-
-IMPORTANT NOTICE: The 64 bit version of the gdal will require to have 64 bit versions of the dependent libraries. For example you might have to compile a 64 bit version of the proj.dll so as to run the csharp make test successfully.
 
 Building on Linux/OSX
-TODO
+---------------------
 
-Last modified 10 years ago
-Download in other formats:
-Plain text
+
+.. note This document was ammended from the previous version at 
+
