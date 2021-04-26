@@ -6,7 +6,7 @@ Compiling the C# bindings
 
 This page describes the primary steps when creating the GDAL/OGR C# binaries from the source.
 
-In most cases this is not necessary and it would preferable to use one of the pre-compiled sources, such as GisInternals or Conda, is preferred. 
+In most cases this is not necessary and it would preferable to use one of the pre-compiled sources, such as `GisInternals <https://gisinternals.com/>`__ or Conda.
 
 Building on Windows
 -------------------
@@ -20,8 +20,10 @@ Requirements
 The build environment has the following dependencies:
 
 * nmake / Visual Studio
-.. note:: The `GDAL test scripts <https://github.com/OSGeo/gdal/blob/master/.github/workflows/windows_build.yml>`__ use VS 2019 (MSVC Ver 1920) so it would make sense to use the same versions.
 * SWIG 3/4
+
+.. note:: The `GDAL test scripts <https://github.com/OSGeo/gdal/blob/master/.github/workflows/windows_build.yml>`__ use VS 2019 (MSVC Ver 1920) so it would make sense to use the same versions.
+
 .. note:: `SWIG <http://www.swig.org/>`__ is used to build the API bindings. The GDAL test scripts use version 3 and the conda build use version 4. Both Work.
 
 Build Environment
@@ -33,48 +35,51 @@ You need to set up the build environment. If you are using VS 2019, this might b
 
 ..note:: The :program:`VsDevCmd.bat` command can usually be found in :file:`C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\Common7\\Tools` or the equivalent for the Community Edition.
 
-
-
 If you don't want to bother with executing the proper vcvars*.bat you might use the development environment specific command prompt to accomplish this task. When using a Win64 compilation be careful to activate the x64 version of the command prompt installed on your system.
 
 Creating the SWIG interface code
-For creating the interface the swigwin-1.3.31 package should be downloaded and extracted. You should edit nmake.opt adding the actual location of the swig.exe file.
+++++++++++++++++++++++++++++++++
 
-For creating the interface execute the following command.
+The first step is to generate the SWIG interface code. This will create a set of ``.cs`` definitions that will be compiled into the ``.dll`` files
 
-nmake /f makefile.vc interface 
-Previous Step make's error when regenerates the *PINVOKE.cs files ,so skip to next step ,it will work
+To create the interface execute the following command (from the ``swig\csharp`` directory):
+
+:program:`nmake /f makefile.vc interface`
+
+.. note:: You should edit nmake.opt adding the actual location of the swig.exe file.
 
 Compiling the code
-After creating the interface the code can be compiled as:
+++++++++++++++++++
 
-C:\GDAL\swig\csharp> nmake /f makefile.vc
+After creating the interface the code can be compiled using this command (from the ``swig\csharp`` directory):
+
+:program:`nmake /f makefile.vc`
+
 Upon a successful compilation the following files are created:
 
-gdal_csharp.dll
-ogr_csharp.dll
-osr_csharp.dll
-gdalconst_csharp.dll
-gdal_wrap.dll
-ogr_wrap.dll
-osr_wrap.dll
-gdalconst_wrap.dll
-various sample applications (*.exe)
-*_csharp.dll is the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface. These *_csharp.dll-s will load the corresponding *_wrap.dll which are the unmanaged part of the interface hosting the code of the gdal core.
+* gdal_csharp.dll
+* ogr_csharp.dll
+* osr_csharp.dll
+* gdalconst_csharp.dll
+* gdal_wrap.dll
+* ogr_wrap.dll
+* osr_wrap.dll
+* gdalconst_wrap.dll
+* various sample applications (*.exe)
+
+The *_csharp.dll binaries are the unmanaged part of the interface. You should add a reference to these assemblies for using the classes of the interface. These *_csharp.dll-s will load the corresponding *_wrap.dll which are the unmanaged part of the interface hosting the code of the gdal core.
 
 Testing the successful compilation
-For testing the successful compilation you can use:
+++++++++++++++++++++++++++++++++++
 
-C:\GDAL\swig\csharp> nmake /f makefile.vc test
-This command will invoke some of the sample applications. For the proper execution the location of the proj.dll should be available in the PATH.
+To test the compiled binaries, you can use:
 
-Specifying the MSVC version
-When compiling with the Visual Studio 2005 you might have to specify the compiler version by editing nmake.opt as:
+:program:`nmake /f makefile.vc test`
 
-MSVC_VER=1400
-Alternatively you can pass this option to the nmake command line as
+This command will invoke some of the sample applications. 
 
-C:\GDAL\swig\csharp> nmake /f makefile.vc MSVC_VER=1400
+.. note For the tests to work the location of the proj.dll should be available in the PATH.
+
 Using MONO on Windows
 If you have the Windows version of the MONO package installed you can compile the C# code using the MONO compiler. In this case uncomment the following entry in csharp.opt:
 
