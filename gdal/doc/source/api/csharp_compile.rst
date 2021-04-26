@@ -143,7 +143,7 @@ Upon a successful compilation the following files are created:
 
 The *_csharp.dll binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface.
 
-The *_csharp.dll files will try to load the corresponding *_wrap.dll and are redirected to the lib*csharp.* libraries, which are the unmanaged part of the interface hosting the code of the gdal core,
+The *_csharp.dll files will try to load the corresponding *_wrap.dll and are redirected to the libxxxcsharp.* libraries, which are the unmanaged part of the interface hosting the code of the gdal core,
 by the *.dll.config definitions.
 
 Testing the successful compilation
@@ -171,5 +171,5 @@ This is in more detail in `the Mono documenation <https://www.mono-project.com/d
 
 .. note This document was amended from the previous version at `https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile <https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile>`__
 
-
+April 2021
 
