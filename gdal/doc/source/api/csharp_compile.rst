@@ -80,7 +80,7 @@ To test the compiled binaries, you can use:
 
 This command will invoke some of the sample applications. 
 
-.. note For the tests to work the location of the proj and gdal DLLs should be available in the PATH.
+.. note:: For the tests to work the location of the proj and gdal DLLs should be available in the PATH.
 
 Using MONO on Windows
 +++++++++++++++++++++
@@ -89,7 +89,7 @@ If you have the Windows version of the MONO package installed you can compile th
 
 :program:`MONO = YES` 
 
-.. note mcs.exe must be in the PATH.
+.. note:: mcs.exe must be in the PATH.
 
 
 Building on Linux/OSX
@@ -120,7 +120,7 @@ To create the interface execute the following command (from the ``swig\csharp`` 
 
 :program:`make generate`
 
-.. warning IN versions of GDAL 3.3.0 - this command will create incorrect interfaces without the correct namespace. See `#3670 <https://github.com/OSGeo/gdal/pull/3670/commits/777c9d0e86602740199cf9a4ab44e040c52c2283>`__.
+.. warning:: IN versions of GDAL 3.3.0 - this command will create incorrect interfaces without the correct namespace. See `#3670 <https://github.com/OSGeo/gdal/pull/3670/commits/777c9d0e86602740199cf9a4ab44e040c52c2283>`__.
 
 Compiling the code
 ++++++++++++++++++
@@ -155,7 +155,7 @@ To test the compiled binaries, you can use:
 
 This command will invoke some of the sample applications. 
 
-.. note For the tests to work the location of the proj and gdal libraries should be available in the PATH.
+.. note:: For the tests to work the location of the proj and gdal libraries should be available in the PATH.
 
 Using The Bindings on Unix
 ++++++++++++++++++++++++++
@@ -169,7 +169,6 @@ To run one of the prebuilt executables - you can run them with Mono as follows :
 Both the managed libraries (i.e. the DLLs) and the unmanaged libraries must be available to Mono.
 This is in more detail in `the Mono documenation <https://www.mono-project.com/docs/advanced/pinvoke/>`__ 
 
-.. note This document was amended from the previous version at `https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile <https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile>`__
+.. note:: This document was amended from the previous version at `https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile <https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile>`__
 
-April 2021
 
