@@ -45,4 +45,4 @@ MSDN documentation:
 * `http://msdn2.microsoft.com/en-us/library/ms686206.aspx <http://msdn2.microsoft.com/en-us/library/ms686206.aspx>`__
 * `http://msdn2.microsoft.com/en-us/library/system.environment.setenvironmentvariable.aspx <http://msdn2.microsoft.com/en-us/library/system.environment.setenvironmentvariable.aspx>`__
 
-Instead of the P/Invoke call to :program:`SetEnvironmentVariable()`, you can use C# native method :progra,:`Environment.SetEnvironmentVariable()`. Read the doc carefully, because there are two versions of this method. Unlike the Win32 API call accessed through P/Invoke, the method :program:`Environment.SetEnvironmentVariable()` has an overload that *may* change environment permanently, across processes.
+Instead of the P/Invoke call to :program:`SetEnvironmentVariable()`, you can use C# native method :program:`Environment.SetEnvironmentVariable()`. Read the doc carefully, because there are two versions of this method. Unlike the Win32 API call accessed through P/Invoke, the method :program:`Environment.SetEnvironmentVariable()` has an overload that *may* change environment permanently, across processes.
