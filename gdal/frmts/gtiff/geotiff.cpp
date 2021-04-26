@@ -5845,7 +5845,9 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
 
-    if( m_poGDS->m_bNoDataSet && m_poGDS->m_dfNoDataValue == dfNoData )
+    if( m_poGDS->m_bNoDataSet &&
+        (m_poGDS->m_dfNoDataValue == dfNoData ||
+         (std::isnan(m_poGDS->m_dfNoDataValue) && std::isnan(dfNoData))) )
     {
         m_bNoDataSet = true;
         m_dfNoDataValue = dfNoData;
