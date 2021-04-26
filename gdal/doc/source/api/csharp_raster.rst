@@ -14,30 +14,42 @@ This page will summarize the main aspects of raster data handling related exclus
 The :program:`Band` class contains the following ReadRaster/WriteRaster overloads:
 
 .. code-block:: C#
+
     public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, byte[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, byte[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, short[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, short[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, int[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, int[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, float[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, float[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, double[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, double[] buffer, 
-        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace){}
+        
     public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, IntPtr buffer, i
-        nt buf_xSize, int buf_ySize, DataType buf_type, int pixelSpace, int lineSpace)
+        nt buf_xSize, int buf_ySize, DataType buf_type, int pixelSpace, int lineSpace){}
+  
     public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, IntPtr buffer, 
-        int buf_xSize, int buf_ySize, DataType buf_type, int pixelSpace, int lineSpace)
+        int buf_xSize, int buf_ySize, DataType buf_type, int pixelSpace, int lineSpace){}
 
 The only difference between these functions is the actual type of the buffer parameter.
 The last 2 overloads are the generic overloads and the caller should write the proper marshaling
@@ -56,6 +68,7 @@ Using the buffered read approach
 When reading the image this way the C# API will copy the image data between the C and the C# arrays:
 
 .. code-block:: C#
+
     // Creating a Bitmap to store the GDAL image in
     Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
     // Creating a C# array to hold the image data
@@ -75,6 +88,7 @@ When reading the image this way the C# API will copy the image data between the 
 In this case the interface implementation uses an internally created unmanaged array to transfer the data between the C and C++ part of the code, like:
 
 .. code-block:: C#
+
     public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, byte[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {
         CPLErr retval;
         IntPtr ptr = Marshal.AllocHGlobal(buf_xSize * buf_ySize * Marshal.SizeOf(buffer[0]));
@@ -94,6 +108,7 @@ Using the direct read approach
 Raster data can be read into the C# bitmap directly using the following approach:
 
 .. code-block:: C#
+
     // Creating a Bitmap to store the GDAL image in
     Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
     // Obtaining the bitmap buffer
@@ -119,6 +134,7 @@ Both of the examples prevent the garbage collector from relocating the array dur
 Without using an intermediary array the programmer can also use the following method to read the raster data:
 
 .. code-block:: C#
+
     byte[] buffer = new byte[width * height];
     fixed (IntPtr ptr = buffer) {
     band.ReadRaster(0, 0, width, height, ptr, width, height, 1, width);
@@ -132,6 +148,7 @@ Using indexed / grayscale images
 The :program:`PaletteInterp` enumeration can be used to distinguish between the various type of the image color interpretations.
 
 .. code-block:: C#
+
     Band band = dataset.GetRasterBand(1);
     ColorTable ct = band.GetRasterColorTable();
     if (ct.GetPaletteInterpretation() != PaletteInterp.GPI_RGB)
@@ -142,6 +159,7 @@ The :program:`PaletteInterp` enumeration can be used to distinguish between the 
 When reading images with indexed color representations, the programmer might have to do some extra work copying the palette over:
 
 .. code-block:: C#
+
     // Get the GDAL Band objects from the Dataset
     Band band = dataset.GetRasterBand(1);
     ColorTable ct = band.GetRasterColorTable();
@@ -174,6 +192,7 @@ When reading images with indexed color representations, the programmer might hav
 When reading grayscale images, the programmer should create a sufficient palette for the .NET image.
 
 .. code-block:: C#
+
     // Get the GDAL Band objects from the Dataset
     Band band = ds.GetRasterBand(1);
     // Create a Bitmap to store the GDAL image in
