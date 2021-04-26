@@ -7447,6 +7447,22 @@ def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
     ds = None
     gdal.Unlink(filename)
 
+###############################################################################
+# Test creating overviews with NaN nodata
+
+
+def test_tiff_write_overviews_nan_nodata():
+
+    filename = '/vsimem/test_tiff_write_overviews_nan_nodata.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 32, 32, 1, gdal.GDT_Float32, options=['TILED=YES', 'SPARSE_OK=YES'])
+    ds.GetRasterBand(1).SetNoDataValue(float('nan'))
+    ds.BuildOverviews('NONE', [2, 4])
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    ds = None
+    gdal.Unlink(filename)
+
 
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
