@@ -87,7 +87,7 @@ Using MONO on Windows
 
 If you have the Windows version of the MONO package installed you can compile the C# code using the MONO compiler. In this case uncomment the following entry in csharp.opt:
 
-.. describe:: MONO = YES 
+:program:`MONO = YES` 
 
 .. note mcs.exe must be in the PATH.
 
@@ -143,7 +143,7 @@ Upon a successful compilation the following files are created:
 
 The *_csharp.dll binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface.
 
-These *_csharp.dll-s will try to load the corresponding *_wrap.dll and are redirected to the lib*csharp.* libraries, which are the unmanaged part of the interface hosting the code of the gdal core,
+The *_csharp.dll files will try to load the corresponding *_wrap.dll and are redirected to the lib*csharp.* libraries, which are the unmanaged part of the interface hosting the code of the gdal core,
 by the *.dll.config definitions.
 
 Testing the successful compilation
@@ -170,4 +170,6 @@ Both the managed libraries (i.e. the DLLs) and the unmanaged libraries must be a
 This is in more detail in `the Mono documenation <https://www.mono-project.com/docs/advanced/pinvoke/>`__ 
 
 .. note This document was amended from the previous version at `https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile <https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile>`__
+
+
 
