@@ -9,6 +9,7 @@
 # ******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -30,8 +31,11 @@
 # ******************************************************************************
 
 import sys
+from typing import Optional
 
 from osgeo import gdal
+
+from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
@@ -44,11 +48,11 @@ def Usage():
 def main(argv):
     threshold = 2
     connectedness = 4
-    quiet_flag = 0
+    quiet = False
     src_filename = None
 
     dst_filename = None
-    frmt = None
+    driver_name = None
 
     mask = 'default'
 
@@ -63,7 +67,7 @@ def main(argv):
 
         if arg == '-of' or arg == '-f':
             i = i + 1
-            frmt = argv[i]
+            driver_name = argv[i]
 
         elif arg == '-4':
             connectedness = 4
@@ -72,7 +76,7 @@ def main(argv):
             connectedness = 8
 
         elif arg == '-q' or arg == '-quiet':
-            quiet_flag = 1
+            quiet = True
 
         elif arg == '-st':
             i = i + 1
@@ -106,6 +110,14 @@ def main(argv):
     if src_filename is None:
         return Usage()
 
+    return gdal_sieve(src_filename=src_filename, dst_filename=dst_filename, driver_name=driver_name,
+                      mask=mask, threshold=threshold, connectedness=connectedness, quiet=quiet)
+
+
+def gdal_sieve(src_filename: Optional[str] = None,
+               dst_filename: PathLikeOrStr = None, driver_name: Optional[str] = None, mask: str = 'default',
+               threshold: int = 2, connectedness: int = 4,
+               quiet: bool = False):
     # =============================================================================
     # 	Verify we have next gen bindings with the sievefilter method.
     # =============================================================================
@@ -146,10 +158,10 @@ def main(argv):
     # =============================================================================
 
     if dst_filename is not None:
-        if frmt is None:
-            frmt = GetOutputDriverFor(dst_filename)
+        if driver_name is None:
+            driver_name = GetOutputDriverFor(dst_filename)
 
-        drv = gdal.GetDriverByName(frmt)
+        drv = gdal.GetDriverByName(driver_name)
         dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
                             srcband.DataType)
         wkt = src_ds.GetProjection()
@@ -167,7 +179,7 @@ def main(argv):
     # Invoke algorithm.
     # =============================================================================
 
-    if quiet_flag:
+    if quiet:
         prog_func = None
     else:
         prog_func = gdal.TermProgress_nocb
