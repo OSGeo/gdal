@@ -75,7 +75,7 @@ git checkout -b my_new_feature_branch
 git add my_new_file
 git add my_modifid_message
 git rm old_file
-git commit -a 
+git commit -a
 
 # you may need to resynchronize against master if you need some bugfix
 # or new capability that has been added since you created your branch
@@ -126,3 +126,6 @@ Things you should NOT do
 (For anyone with push rights to github.com/OSGeo/gdal) Never modify a commit or
 the history of anything that has been
 committed to https://github.com/OSGeo/gdal
+
+Committing symbolic links is allowed only under the .github directory in order to
+avoid potential problems on Windows.
