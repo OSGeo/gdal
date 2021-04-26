@@ -10,6 +10,7 @@
 # ******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -31,6 +32,7 @@
 # ******************************************************************************
 
 import sys
+from typing import Optional, Sequence
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
@@ -48,15 +50,15 @@ gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
 
 
 def main(argv):
-    frmt = None
+    driver_name = None
     creation_options = []
-    options = []
+    alg_options = []
     src_filename = None
     src_band_n = 1
     dst_filename = None
     dst_band_n = 1
     creation_type = 'Float32'
-    quiet_flag = 0
+    quiet = False
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
@@ -69,7 +71,7 @@ def main(argv):
 
         if arg == '-of' or arg == '-f':
             i = i + 1
-            frmt = argv[i]
+            driver_name = argv[i]
 
         elif arg == '-co':
             i = i + 1
@@ -81,27 +83,27 @@ def main(argv):
 
         elif arg == '-maxdist':
             i = i + 1
-            options.append('MAXDIST=' + argv[i])
+            alg_options.append('MAXDIST=' + argv[i])
 
         elif arg == '-values':
             i = i + 1
-            options.append('VALUES=' + argv[i])
+            alg_options.append('VALUES=' + argv[i])
 
         elif arg == '-distunits':
             i = i + 1
-            options.append('DISTUNITS=' + argv[i])
+            alg_options.append('DISTUNITS=' + argv[i])
 
         elif arg == '-nodata':
             i = i + 1
-            options.append('NODATA=' + argv[i])
+            alg_options.append('NODATA=' + argv[i])
 
         elif arg == '-use_input_nodata':
             i = i + 1
-            options.append('USE_INPUT_NODATA=' + argv[i])
+            alg_options.append('USE_INPUT_NODATA=' + argv[i])
 
         elif arg == '-fixed-buf-val':
             i = i + 1
-            options.append('FIXED_BUF_VAL=' + argv[i])
+            alg_options.append('FIXED_BUF_VAL=' + argv[i])
 
         elif arg == '-srcband':
             i = i + 1
@@ -112,7 +114,7 @@ def main(argv):
             dst_band_n = int(argv[i])
 
         elif arg == '-q' or arg == '-quiet':
-            quiet_flag = 1
+            quiet = True
 
         elif src_filename is None:
             src_filename = argv[i]
@@ -128,10 +130,28 @@ def main(argv):
     if src_filename is None or dst_filename is None:
         return Usage()
 
+    return gdal_proximity(src_filename=src_filename, src_band_n=src_band_n,
+                          dst_filename=dst_filename, dst_band_n=dst_band_n, driver_name=driver_name,
+                          creation_type=creation_type, creation_options=creation_options,
+                          alg_options=alg_options, quiet=quiet)
+
+
+def gdal_proximity(
+    src_filename: Optional[str] = None,
+    src_band_n: int = 1,
+    dst_filename: Optional[str] = None,
+    dst_band_n: int = 1,
+    driver_name: Optional[str] = None,
+    creation_type: str = 'Float32',
+    creation_options: Optional[Sequence[str]] = None,
+    alg_options: Optional[Sequence[str]] = None,
+    quiet: bool = False):
+
     # =============================================================================
     #    Open source file
     # =============================================================================
-
+    creation_options = creation_options or []
+    alg_options = alg_options or []
     src_ds = gdal.Open(src_filename)
 
     if src_ds is None:
@@ -145,8 +165,8 @@ def main(argv):
     # =============================================================================
 
     try:
-        driver = gdal.IdentifyDriver(dst_filename)
-        if driver is not None:
+        driver_name = gdal.IdentifyDriver(dst_filename)
+        if driver_name is not None:
             dst_ds = gdal.Open(dst_filename, gdal.GA_Update)
             dstband = dst_ds.GetRasterBand(dst_band_n)
         else:
@@ -158,10 +178,10 @@ def main(argv):
     #     Create output file.
     # =============================================================================
     if dst_ds is None:
-        if frmt is None:
-            frmt = GetOutputDriverFor(dst_filename)
+        if driver_name is None:
+            driver_name = GetOutputDriverFor(dst_filename)
 
-        drv = gdal.GetDriverByName(frmt)
+        drv = gdal.GetDriverByName(driver_name)
         dst_ds = drv.Create(dst_filename,
                             src_ds.RasterXSize, src_ds.RasterYSize, 1,
                             gdal.GetDataTypeByName(creation_type), creation_options)
@@ -175,12 +195,12 @@ def main(argv):
     #    Invoke algorithm.
     # =============================================================================
 
-    if quiet_flag:
+    if quiet:
         prog_func = None
     else:
         prog_func = gdal.TermProgress_nocb
 
-    gdal.ComputeProximity(srcband, dstband, options,
+    gdal.ComputeProximity(srcband, dstband, alg_options,
                           callback=prog_func)
 
     srcband = None
