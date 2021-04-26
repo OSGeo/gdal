@@ -37,7 +37,7 @@ You need to set up the build environment. If you are using VS 2019, this might b
 
 If you don't want to bother with executing the proper vcvars*.bat you might use the development environment specific command prompt to accomplish this task. When using a Win64 compilation be careful to activate the x64 version of the command prompt installed on your system.
 
-.. note If you are not running in an environment that has been used to compile GDAL locally, then there are a number of variables that need to be configured. The Conda ``gdal-feedstock`` configuration app can be used as a guideline about how to do that - `build.bat <https://github.com/conda-forge/gdal-feedstock/blob/master/recipe/set_bld_opts.bat>`__.
+.. note:: If you are not running in an environment that has been used to compile GDAL locally, then there are a number of variables that need to be configured. The Conda ``gdal-feedstock`` configuration app can be used as a guideline about how to do that - `build.bat <https://github.com/conda-forge/gdal-feedstock/blob/master/recipe/set_bld_opts.bat>`__.
 
 Creating the SWIG interface code
 ++++++++++++++++++++++++++++++++
@@ -120,7 +120,7 @@ To create the interface execute the following command (from the ``swig\csharp`` 
 
 :program:`make generate`
 
-.. warning:: IN versions of GDAL 3.3.0 - this command will create incorrect interfaces without the correct namespace. See `#3670 <https://github.com/OSGeo/gdal/pull/3670/commits/777c9d0e86602740199cf9a4ab44e040c52c2283>`__.
+.. warning:: In versions of GDAL < 3.3.0 - this command will create incorrect interfaces without the correct namespace. See `#3670 <https://github.com/OSGeo/gdal/pull/3670/commits/777c9d0e86602740199cf9a4ab44e040c52c2283>`__.
 
 Compiling the code
 ++++++++++++++++++
