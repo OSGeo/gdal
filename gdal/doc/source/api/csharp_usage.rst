@@ -22,6 +22,7 @@ Modifying Local Search Path
 If you want to add a folder to PATH during run-time, so you don't have to pollute system PATH permanently, you can do it this way, in C#
 
 .. code-block:: C#
+
     using System.Runtime.InteropServices;
 
     ...
@@ -41,6 +42,7 @@ If you want to add a folder to PATH during run-time, so you don't have to pollut
 
 MSDN documentation:
 
-​*http://msdn2.microsoft.com/en-us/library/ms686206.aspx
-​http://msdn2.microsoft.com/en-us/library/system.environment.setenvironmentvariable.aspx
-Instead of the P/Invoke call to SetEnvironmentVariable, you can use C# native method Environment.SetEnvironmentVariable (AFAIR, available from .NET >= 2.0). Read the doc carefully, because there are two versions of this method. Unlike the Win32 API call accessed through P/Invoke, the method Environment.SetEnvironmentVariable has overloaded version that *may* change environment permanently, across processes.
+* `http://msdn2.microsoft.com/en-us/library/ms686206.aspx <http://msdn2.microsoft.com/en-us/library/ms686206.aspx>`__
+* `http://msdn2.microsoft.com/en-us/library/system.environment.setenvironmentvariable.aspx <http://msdn2.microsoft.com/en-us/library/system.environment.setenvironmentvariable.aspx>`__
+
+Instead of the P/Invoke call to :program:`SetEnvironmentVariable()`, you can use C# native method :progra,:`Environment.SetEnvironmentVariable()`. Read the doc carefully, because there are two versions of this method. Unlike the Win32 API call accessed through P/Invoke, the method :program:`Environment.SetEnvironmentVariable()` has an overload that *may* change environment permanently, across processes.
