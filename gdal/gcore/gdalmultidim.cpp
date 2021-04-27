@@ -4893,7 +4893,7 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetUnscaled() const
 }
 
 /************************************************************************/
-/*                      GDALMDArrayTransposed                           */
+/*                         GDALMDArrayMask                              */
 /************************************************************************/
 
 class GDALMDArrayMask final: public GDALMDArray
