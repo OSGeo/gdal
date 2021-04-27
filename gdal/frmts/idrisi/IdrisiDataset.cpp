@@ -2756,7 +2756,7 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     //      Oblique Stereographic
     //      Albers Equal Area Conic
     //      Sinusoidal
-    //      Cylindrical Equal Area  // 2021/4 added
+    //      Cylindrical Equal Area
 
     if( EQUAL( pszProjName, "Mercator" ) )
     {
@@ -2815,9 +2815,9 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     {
         oSRS.SetSinusoidal( dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUAL( pszProjName, "CylindricalEA" ) || EQUAL( pszProjName, "Cylindrical Equal Area" ))
-    {	
-		oSRS.SetCEA( dfStdP1, dfCenterLong, dfFalseEasting, dfFalseNorthing );
+    else if( EQUAL( pszProjName, "CylindricalEA")) || EQUAL( pszProjName, "Cylindrical Equal Area" ))
+    {
+        oSRS.SetCEA( dfStdP1, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
     else
     {
@@ -3176,15 +3176,14 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         dfScale         = oSRS.GetProjParm( SRS_PP_SCALE_FACTOR, 0.0, nullptr );
         dfStdP1         = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_1, -0.1, nullptr );
         if ( EQUAL(pszProjectionOut, "Cylindrical Equal Area") )
-		{
-			dfStdP2 = -dfStdP1;
-			dfScale = 1.0;
-		} 
-		else
-		{
-			dfStdP2 = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_2, -0.1, nullptr );
-		}
-        //dfStdP2         = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_2, -0.1, nullptr );
+        {
+            dfStdP2 = -dfStdP1;
+            dfScale = 1.0;
+        } 
+        else
+        {
+            dfStdP2 = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_2, -0.1, nullptr );
+        }
         if( dfStdP1 != -0.1 )
         {
             nParameters = 1;
