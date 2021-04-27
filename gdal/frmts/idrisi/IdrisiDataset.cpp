@@ -2815,7 +2815,7 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     {
         oSRS.SetSinusoidal( dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUAL( pszProjName, "CylindricalEA")) || EQUAL( pszProjName, "Cylindrical Equal Area" ))
+    else if( EQUAL( pszProjName, "CylindricalEA") || EQUAL( pszProjName, "Cylindrical Equal Area" ))
     {
         oSRS.SetCEA( dfStdP1, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
