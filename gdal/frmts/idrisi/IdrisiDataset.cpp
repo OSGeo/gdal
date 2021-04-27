@@ -2815,7 +2815,7 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     {
         oSRS.SetSinusoidal( dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
-    else if( EQUAL( pszProjName, "CylindricalEA" ) || EQUAL( pszProjName, "Cylindrical Equal Area" ))    // 2021/4 added
+    else if( EQUAL( pszProjName, "CylindricalEA" ) || EQUAL( pszProjName, "Cylindrical Equal Area" ))
     {	
 		oSRS.SetCEA( dfStdP1, dfCenterLong, dfFalseEasting, dfFalseNorthing );
     }
@@ -3117,7 +3117,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
                      {
                          pszProjectionOut =  "Alber's Equal Area Conic" ;
                      }
-        else if( EQUAL( pszProjName, SRS_PT_CYLINDRICAL_EQUAL_AREA ) )  // added 2021/4
+        else if( EQUAL( pszProjName, SRS_PT_CYLINDRICAL_EQUAL_AREA ) )
                      {
                          pszProjectionOut =  "Cylindrical Equal Area" ;
                      }
@@ -3175,7 +3175,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         dfFalseEasting  = oSRS.GetProjParm( SRS_PP_FALSE_EASTING, 0.0, nullptr );
         dfScale         = oSRS.GetProjParm( SRS_PP_SCALE_FACTOR, 0.0, nullptr );
         dfStdP1         = oSRS.GetProjParm( SRS_PP_STANDARD_PARALLEL_1, -0.1, nullptr );
-        if ( EQUAL(pszProjectionOut, "Cylindrical Equal Area") ) 
+        if ( EQUAL(pszProjectionOut, "Cylindrical Equal Area") )
 		{
 			dfStdP2 = -dfStdP1;
 			dfScale = 1.0;
