@@ -92,7 +92,7 @@ def main(argv):
     infile = None
     outfile = None
     iBand = 1	    # The first band will be converted by default
-    frmt = 'GTiff'
+    driver_name = 'GTiff'
     typ = gdal.GDT_Byte
 
     lsrcaz = None
@@ -177,7 +177,7 @@ def main(argv):
         print('Input image is too small to process, minimum size is 3x3')
         return 3
 
-    out_driver = gdal.GetDriverByName(frmt)
+    out_driver = gdal.GetDriverByName(driver_name)
     outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
     outband = outdataset.GetRasterBand(1)
 
