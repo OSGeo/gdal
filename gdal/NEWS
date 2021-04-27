@@ -1,3 +1,80 @@
+= GDAL/OGR 3.2.3 Release Notes =
+
+The 3.2.3 release is a bug fix release. Note that the GDAL 3.2 series is the last one to support Python versions < 3.6
+
+== GDAL algorithms ==
+
+* GDALSerializeWarpOptions(): fix potential nullptr dereference (CID 1448606)
+
+== GDAL core ==
+
+* LoadPythonAPI(): make it work on Ubuntu 20.04 when python-is-python3 package that symlinks python to python3 is installed
+
+== GDAL drivers ==
+
+BAG driver:
+ * fix inverted width/height info in XML (#3605)
+
+ECW driver:
+ * fix build with original ECW SDK 5.4 (#2776)
+
+GTiff driver:
+ * fix speed of guessing JPEG quality
+ * GTIFF/COG: fix overviews with NaN nodata value
+
+JP2KAK driver:
+ * JP2KAKDataset::Open(): avoid illegal memory access when reading J2K_SUBFILE: (CID 1448644)
+
+JPIPKAK driver:
+ * JPIPKAK: avoid use after free in error code path (CID 1086757)
+
+netCDF driver:
+ * increase tolerance to detect regularly spaced lon/lat arrays when data type is float (#3663)
+ * multidim API: fix retrieval of indexing variable when the indexing variable has more than 1D
+
+NWT_GRD driver:
+ * fix portability issue
+
+RMF driver:
+ * fix portability issues on non-Intel platforms
+
+LercLib: fix portability issue on non-Intel platforms
+
+== OGR core ==
+
+* OGRPoint: make it empty when x or y is NaN (#3542)
+* Prepared geometries: avoid GEOS crash on a Point Empty (#3542)
+
+== OGR drivers ==
+
+AmigoCloud driver:
+ * fix GetFeature (#3569)
+ * fix memleak (CID 1448692)
+
+CAD (libopencad) driver:
+ * fixes for big endian hosts
+
+FlatGeoBuf driver:
+ * fix crash in GetFileList() on a dataset opened in update mode
+ * fix crash when writing features larger than 32 KB (ossfuzz 29462)
+
+GeoPackage driver:
+ * accept GPKG 1.3.x user_version without warning (#2479)
+
+SXF driver:
+ * fix reading on big-endian architectures
+
+XLSX driver:
+ * fix read cells with inline formatting (#3729)
+
+== SWIG bindings ==
+ * fix expansion of ODsCRandomLayerWrite
+ * add missing GRA_Sum constant (#3724)
+
+== Python bindings ==
+
+* setup.py: fix for 'python setup.py sdist' with python3
+
 = GDAL/OGR 3.2.2 Release Notes =
 
 The 3.2.2 release is a bug fix release. Note that the GDAL 3.2 series is the last one to support Python versions < 3.6
