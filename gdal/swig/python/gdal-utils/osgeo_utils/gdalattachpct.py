@@ -39,7 +39,7 @@ from osgeo import gdal
 from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.color_palette import ColorPaletteOrPathOrStrings
 from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
-from osgeo_utils.auxiliary.color_table import get_color_table
+from osgeo_utils.auxiliary.color_table import get_color_table, ColorTableLike
 
 
 def Usage():
@@ -53,6 +53,7 @@ def main(argv):
     pct_filename = None
     src_filename = None
     dst_filename = None
+    driver_name = None
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
@@ -86,7 +87,7 @@ def main(argv):
     return err
 
 
-def doit(src_filename, pct_filename: ColorPaletteOrPathOrStrings,
+def doit(src_filename, pct_filename: Optional[ColorTableLike],
          dst_filename: Optional[PathLikeOrStr] = None, driver_name: Optional[str] = None):
 
     # =============================================================================
