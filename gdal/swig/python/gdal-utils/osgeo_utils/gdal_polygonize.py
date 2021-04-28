@@ -10,6 +10,7 @@
 # ******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -31,90 +32,35 @@
 # ******************************************************************************
 
 import sys
+import textwrap
+from typing import Optional, Union
 
 from osgeo import gdal
 from osgeo import ogr
+
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
-def Usage():
-    print("""gdal_polygonize [-8] [-nomask] [-mask filename] raster_file [-b band|mask]
-                [-q] [-f ogr_format] out_file [layer] [fieldname]""")
-    return 1
+def gdal_polygonize(src_filename: Optional[str] = None, band_number: Union[int, str] = 1,
+                    dst_filename: Optional[str] = None, driver_name: str = 'GTiff',
+                    dst_layername: Optional[str] = None, dst_fieldname: Optional[str] = None,
+                    quiet: bool = False, mask: str = 'default', options: Optional[list] = None,
+                    connectedness8: bool = False):
 
+    if isinstance(band_number, str) and not band_number.startswith('mask'):
+        band_number = int(band_number)
 
-def main(argv):
-    frmt = None
-    options = []
-    quiet_flag = 0
-    src_filename = None
-    src_band_n = 1
+    if connectedness8:
+        options.append('8CONNECTED=8')
 
-    dst_filename = None
-    dst_layername = None
-    dst_fieldname = None
-    dst_field = -1
-
-    mask = 'default'
-
-    argv = gdal.GeneralCmdLineProcessor(argv)
-    if argv is None:
-        return 0
-
-    # Parse command line arguments.
-    i = 1
-    while i < len(argv):
-        arg = argv[i]
-
-        if arg == '-f' or arg == '-of':
-            i = i + 1
-            frmt = argv[i]
-
-        elif arg == '-q' or arg == '-quiet':
-            quiet_flag = 1
-
-        elif arg == '-8':
-            options.append('8CONNECTED=8')
-
-        elif arg == '-nomask':
-            mask = 'none'
-
-        elif arg == '-mask':
-            i = i + 1
-            mask = argv[i]
-
-        elif arg == '-b':
-            i = i + 1
-            if argv[i].startswith('mask'):
-                src_band_n = argv[i]
-            else:
-                src_band_n = int(argv[i])
-
-        elif src_filename is None:
-            src_filename = argv[i]
-
-        elif dst_filename is None:
-            dst_filename = argv[i]
-
-        elif dst_layername is None:
-            dst_layername = argv[i]
-
-        elif dst_fieldname is None:
-            dst_fieldname = argv[i]
-
-        else:
-            return Usage()
-
-        i = i + 1
-
-    if src_filename is None or dst_filename is None:
-        return Usage()
-
-    if frmt is None:
-        frmt = GetOutputDriverFor(dst_filename, is_raster=False)
+    if driver_name is None:
+        driver_name = GetOutputDriverFor(dst_filename, is_raster=False)
 
     if dst_layername is None:
         dst_layername = 'out'
+
+    options = options or []
 
     # =============================================================================
     # 	Verify we have next gen bindings with the polygonize method.
@@ -138,16 +84,16 @@ def main(argv):
         print('Unable to open %s' % src_filename)
         return 1
 
-    if src_band_n == 'mask':
+    if band_number == 'mask':
         srcband = src_ds.GetRasterBand(1).GetMaskBand()
         # Workaround the fact that most source bands have no dataset attached
         options.append('DATASET_FOR_GEOREF=' + src_filename)
-    elif isinstance(src_band_n, str) and src_band_n.startswith('mask,'):
-        srcband = src_ds.GetRasterBand(int(src_band_n[len('mask,'):])).GetMaskBand()
+    elif isinstance(band_number, str) and band_number.startswith('mask,'):
+        srcband = src_ds.GetRasterBand(int(band_number[len('mask,'):])).GetMaskBand()
         # Workaround the fact that most source bands have no dataset attached
         options.append('DATASET_FOR_GEOREF=' + src_filename)
     else:
-        srcband = src_ds.GetRasterBand(src_band_n)
+        srcband = src_ds.GetRasterBand(band_number)
 
     if mask == 'default':
         maskband = srcband.GetMaskBand()
@@ -172,9 +118,9 @@ def main(argv):
     # 	Create output file.
     # =============================================================================
     if dst_ds is None:
-        drv = ogr.GetDriverByName(frmt)
-        if not quiet_flag:
-            print('Creating output %s of format %s.' % (dst_filename, frmt))
+        drv = ogr.GetDriverByName(driver_name)
+        if not quiet:
+            print('Creating output %s of format %s.' % (dst_filename, driver_name))
         dst_ds = drv.CreateDataSource(dst_filename)
 
     # =============================================================================
@@ -185,6 +131,7 @@ def main(argv):
     except:
         dst_layer = None
 
+    dst_field: int = -1
     if dst_layer is None:
 
         srs = src_ds.GetSpatialRef()
@@ -206,7 +153,7 @@ def main(argv):
     # Invoke algorithm.
     # =============================================================================
 
-    if quiet_flag:
+    if quiet:
         prog_func = None
     else:
         prog_func = gdal.TermProgress_nocb
@@ -220,6 +167,73 @@ def main(argv):
     mask_ds = None
 
     return result
+
+
+class GDALPolygonize(GDALScript):
+    def __init__(self):
+        super().__init__()
+        self.title = 'Produces a polygon feature layer from a raster'
+        self.description = textwrap.dedent('''\
+            This utility creates vector polygons for all connected regions of pixels in the raster
+            sharing a common pixel value. Each polygon is created with an attribute indicating
+            the pixel value of that polygon.
+            A raster mask may also be provided to determine which pixels are eligible for processing.
+            The utility will create the output vector datasource if it does not already exist,
+            defaulting to GML format.
+            The utility is based on the GDALPolygonize() function
+            which has additional details on the algorithm.''')
+
+    def get_parser(self, argv) -> GDALArgumentParser:
+        parser = self.parser
+
+        parser.add_argument('-q', "-quiet", dest="quiet", action="store_true",
+                            help="The script runs in quiet mode. "
+                                 "The progress monitor is suppressed and routine messages are not displayed.")
+
+        parser.add_argument("-8", dest='connectedness8', action="store_true",
+                            help="Use 8 connectedness. Default is 4 connectedness.")
+
+        parser.add_argument("-o", dest='options', type=str, action="extend", nargs='*', metavar='name=value',
+                            help="Specify a special argument to the algorithm.")
+
+        parser.add_argument("-mask", dest="mask", type=str, metavar='filename', default='default',
+                            help="Use the first band of the specified file as a validity mask "
+                                 "(zero is invalid, non-zero is valid).")
+
+        parser.add_argument("-nomask", dest="mask", action="store_const", const='none', default='default',
+                            help="Do not use the default validity mask for the input band "
+                                 "(such as nodata, or alpha masks).")
+
+        parser.add_argument("-b", "-band", dest="band_number", metavar="band", type=str, default='1',
+                            help="The band on <raster_file> to build the polygons from. "
+                                 "Starting with GDAL 2.2, the value can also be set to “mask”, "
+                                 "to indicate that the mask band of the first band must be used "
+                                 "(or “mask,band_number” for the mask of a specified band).")
+
+        parser.add_argument("-of", "-f", dest="driver_name", metavar='ogr_format', default='GTiff',
+                            help="Select the output format. "
+                                 "if not specified, the format is guessed from the extension. "
+                                 "Use the short format name.")
+
+        parser.add_argument("src_filename", type=str, help="The source raster file from which polygons are derived.")
+
+        parser.add_argument("dst_filename", type=str,
+                            help="The destination vector file to which the polygons will be written.")
+
+        parser.add_argument("dst_layername", type=str, nargs='?',
+                            help="The name of the layer created to hold the polygon features.")
+
+        parser.add_argument("dst_fieldname", type=str, nargs='?',
+                            help="The name of the field to create (defaults to “DN”).")
+
+        return parser
+
+    def doit(self, **kwargs):
+        return gdal_polygonize(**kwargs)
+
+
+def main(argv):
+    return GDALPolygonize().main(argv)
 
 
 if __name__ == '__main__':

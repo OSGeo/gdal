@@ -38,7 +38,7 @@ from typing import Optional
 from osgeo import osr
 from osgeo import gdal
 
-from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 
 
 def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
@@ -184,26 +184,40 @@ def epsg_tr(output_format: str = '-pretty_wkt', authority: Optional[str] = None)
     return 0
 
 
+class EPSG_Table(GDALScript):
+    def __init__(self):
+        super().__init__()
+        self.title = 'Create WKT and PROJ.4 dictionaries for EPSG GCS/PCS codes'
+
+    def get_parser(self, argv) -> GDALArgumentParser:
+        parser = self.parser
+
+        parser.add_argument("-authority", dest="authority", metavar='name', type=str,
+                            help="Authority name")
+
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument("-wkt", const='wkt', dest="output_format", action='store_const', help='Well Known Text')
+        group.add_argument("-pretty_wkt", const='pretty_wkt', dest="output_format", action='store_const',
+                           help='Pretty Well Known Text')
+        group.add_argument("-proj4", const='proj4', dest="output_format", action='store_const', help='proj string')
+        group.add_argument("-postgis", const='postgis', dest="output_format", action='store_const', help='postgis')
+        group.add_argument("-xml", const='xml', dest="output_format", action='store_const', help='XML')
+        group.add_argument("-copy", const='copy', dest="output_format", action='store_const', help='Table')
+
+        return parser
+
+    def augment_kwargs(self, kwargs) -> dict:
+        if not kwargs.get('output_format'):
+            kwargs['output_format'] = 'pretty_wkt'
+        kwargs['output_format'] = '-'+kwargs['output_format']
+        return kwargs
+
+    def doit(self, **kwargs):
+        return epsg_tr(**kwargs)
+
+
 def main(argv):
-    parser = GDALArgumentParser()
-
-    parser.add_argument("-authority", dest="authority", metavar='name', type=str,
-                        help="Authority name")
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("-wkt", const='wkt', dest="output_format", action='store_const', help='Well Known Text')
-    group.add_argument("-pretty_wkt", const='pretty_wkt', dest="output_format", action='store_const',
-                        help='Pretty Well Known Text')
-    group.add_argument("-proj4", const='proj4', dest="output_format", action='store_const', help='proj string')
-    group.add_argument("-postgis", const='postgis', dest="output_format", action='store_const', help='postgis')
-    group.add_argument("-xml", const='xml', dest="output_format", action='store_const', help='XML')
-    group.add_argument("-copy", const='copy', dest="output_format", action='store_const', help='Table')
-
-    args = parser.parse_args(argv[1:])
-
-    if not args.output_format:
-        args.output_format = 'pretty_wkt'
-    return epsg_tr('-'+args.output_format, args.authority)
+    return EPSG_Table().main(argv)
 
 
 if __name__ == '__main__':

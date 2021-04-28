@@ -128,8 +128,8 @@ def main(argv=None):
         print('ERROR: Python bindings of GDAL 1.10 or later required')
         return 1
 
-    frmt = 'ESRI Shapefile'
-    quiet_flag = 0
+    driver_name = 'ESRI Shapefile'
+    quiet = False
     input_ds_name = None
     input_lyr_name = None
     method_ds_name = None
@@ -158,7 +158,7 @@ def main(argv=None):
 
         if arg == '-f' and i + 1 < len(argv):
             i = i + 1
-            frmt = argv[i]
+            driver_name = argv[i]
 
         elif arg == '-input_ds' and i + 1 < len(argv):
             i = i + 1
@@ -285,7 +285,7 @@ def main(argv=None):
             overwrite = True
 
         elif arg == '-q' or arg == '-quiet':
-            quiet_flag = 1
+            quiet = True
 
         else:
             return Usage()
@@ -368,9 +368,9 @@ def main(argv=None):
             print('Output datasource "%s" exists, but cannot be opened in update mode' % output_ds_name)
             return 1
 
-        drv = ogr.GetDriverByName(frmt)
+        drv = ogr.GetDriverByName(driver_name)
         if drv is None:
-            print('Cannot find driver %s' % frmt)
+            print('Cannot find driver %s' % driver_name)
             return 1
 
         output_ds = drv.CreateDataSource(output_ds_name, options=dsco)
@@ -432,7 +432,7 @@ def main(argv=None):
                     return 1
 
     op = getattr(input_lyr, op_str)
-    if quiet_flag == 0:
+    if not quiet:
         ret = op(method_lyr, output_lyr, options=opt, callback=gdal.TermProgress_nocb)
     else:
         ret = op(method_lyr, output_lyr, options=opt)

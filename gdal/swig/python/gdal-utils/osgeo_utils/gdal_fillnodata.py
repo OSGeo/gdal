@@ -9,6 +9,7 @@
 # ******************************************************************************
 #  Copyright (c) 2008, Frank Warmerdam
 #  Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -30,8 +31,13 @@
 # ******************************************************************************
 
 import sys
+import textwrap
+from numbers import Real
+from typing import Optional
 
 from osgeo import gdal
+
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 
 
 def CopyBand(srcband, dstband):
@@ -41,86 +47,12 @@ def CopyBand(srcband, dstband):
                             buf_type=srcband.DataType)
 
 
-def Usage():
-    print("""gdal_fillnodata [-q] [-md max_distance] [-si smooth_iterations]
-                [-o name=value] [-b band]
-                srcfile [-nomask] [-mask filename] [-of format] [-co name=value]* [dstfile]""")
-    return 1
-
-
-def main(argv):
-    max_distance = 100
-    smoothing_iterations = 0
-    options = []
-    quiet_flag = 0
-    src_filename = None
-    src_band = 1
-
-    dst_filename = None
-    frmt = 'GTiff'
-    creation_options = []
-
-    mask = 'default'
-
-    argv = gdal.GeneralCmdLineProcessor(argv)
-    if argv is None:
-        return 0
-
-    # Parse command line arguments.
-    i = 1
-    while i < len(argv):
-        arg = argv[i]
-
-        if arg == '-of' or arg == '-f':
-            i = i + 1
-            frmt = argv[i]
-
-        elif arg == '-co':
-            i = i + 1
-            creation_options.append(argv[i])
-
-        elif arg == '-q' or arg == '-quiet':
-            quiet_flag = 1
-
-        elif arg == '-si':
-            i = i + 1
-            smoothing_iterations = int(argv[i])
-
-        elif arg == '-b':
-            i = i + 1
-            src_band = int(argv[i])
-
-        elif arg == '-md':
-            i = i + 1
-            max_distance = float(argv[i])
-
-        elif arg == '-nomask':
-            mask = 'none'
-
-        elif arg == '-mask':
-            i = i + 1
-            mask = argv[i]
-
-        elif arg == '-mask':
-            i = i + 1
-            mask = argv[i]
-
-        elif arg[:2] == '-h':
-            return Usage()
-
-        elif src_filename is None:
-            src_filename = argv[i]
-
-        elif dst_filename is None:
-            dst_filename = argv[i]
-
-        else:
-            return Usage()
-
-        i = i + 1
-
-    if src_filename is None:
-        return Usage()
+def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
+                    dst_filename: Optional[str] = None, driver_name: str = 'GTiff',
+                    creation_options: Optional[list] = None, quiet: bool = False, mask: str = 'default',
+                    max_distance: Real = 100, smoothing_iterations: int = 0, options: Optional[list] = None):
+    options = options or []
+    creation_options = creation_options or []
 
     # =============================================================================
     # 	Verify we have next gen bindings with the sievefilter method.
@@ -147,7 +79,7 @@ def main(argv):
         print('Unable to open %s' % src_filename)
         return 1
 
-    srcband = src_ds.GetRasterBand(src_band)
+    srcband = src_ds.GetRasterBand(band_number)
 
     if mask == 'default':
         maskband = srcband.GetMaskBand()
@@ -163,7 +95,7 @@ def main(argv):
 
     if dst_filename is not None:
 
-        drv = gdal.GetDriverByName(frmt)
+        drv = gdal.GetDriverByName(driver_name)
         dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
                             srcband.DataType, creation_options)
         wkt = src_ds.GetProjection()
@@ -192,7 +124,7 @@ def main(argv):
     # Invoke algorithm.
     # =============================================================================
 
-    if quiet_flag:
+    if quiet:
         prog_func = None
     else:
         prog_func = gdal.TermProgress_nocb
@@ -201,12 +133,72 @@ def main(argv):
                              max_distance, smoothing_iterations, options,
                              callback=prog_func)
 
-
     src_ds = None
     dst_ds = None
     mask_ds = None
 
     return result
+
+
+class GDALFillNoData(GDALScript):
+    def __init__(self):
+        super().__init__()
+        self.title = 'Fill raster regions by interpolation from edges'
+        self.description = textwrap.dedent('''\
+            It Fills selection regions (usually nodata areas)
+            by interpolating from valid pixels around the edges of the area.
+            Additional details on the algorithm are available in the GDALFillNodata() docs.''')
+
+    def get_parser(self, argv) -> GDALArgumentParser:
+        parser = self.parser
+
+        parser.add_argument('-q', "-quiet", dest="quiet", action="store_true",
+                            help="The script runs in quiet mode. "
+                                 "The progress monitor is suppressed and routine messages are not displayed.")
+
+        parser.add_argument("-md", dest="max_distance", type=float, default=100, metavar='max_distance',
+                            help="The maximum distance (in pixels) "
+                                 "that the algorithm will search out for values to interpolate. "
+                                 "The default is 100 pixels.")
+
+        parser.add_argument("-si", dest="smoothing_iterations", type=float, default=0, metavar='smoothing_iterations',
+                            help="The number of 3x3 average filter smoothing iterations to run after the interpolation "
+                                 "to dampen artifacts. The default is zero smoothing iterations.")
+
+        parser.add_argument("-o", dest='options', type=str, action="extend", nargs='*', metavar='name=value',
+                            help="Specify a special argument to the algorithm.")
+
+        parser.add_argument("-mask", dest="mask", type=str, metavar='filename', default='default',
+                            help="Use the first band of the specified file as a validity mask "
+                                 "(zero is invalid, non-zero is valid).")
+
+        parser.add_argument("-nomask", dest="mask", action="store_const", const='none', default='default',
+                            help="Do not use the default validity mask for the input band "
+                                 "(such as nodata, or alpha masks).")
+
+        parser.add_argument("-b", "-band", dest="band_number", metavar="band", type=int, default=1,
+                            help="The band to operate on, defaults to 1.")
+
+        parser.add_argument("-of", dest="driver_name", default='GTiff', metavar="gdal_format",
+                            help="Select the output format. Use the short format name.")
+
+        parser.add_argument("-co", dest='creation_options', type=str, action="extend", nargs='*', metavar='name=value',
+                            help="Creation options for the destination dataset.")
+
+        parser.add_argument("src_filename", type=str, help="The source raster file used to identify target pixels. "
+                                                           "Only one band is used.")
+
+        parser.add_argument("dst_filename", type=str, help="The new file to create with the interpolated result. "
+                                                           "If not provided, the source band is updated in place.")
+
+        return parser
+
+    def doit(self, **kwargs):
+        return gdal_fillnodata(**kwargs)
+
+
+def main(argv):
+    return GDALFillNoData().main(argv)
 
 
 if __name__ == '__main__':
