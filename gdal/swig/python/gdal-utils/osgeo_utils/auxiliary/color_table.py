@@ -30,12 +30,14 @@
 
 import os
 import tempfile
-from typing import Optional
+from typing import Optional, Union
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import open_ds, PathOrDS
 from osgeo_utils.auxiliary.color_palette import get_color_palette, ColorPaletteOrPathOrStrings
+
+ColorTableLike = Union[gdal.ColorTable, ColorPaletteOrPathOrStrings]
 
 
 def get_color_table_from_raster(path_or_ds: PathOrDS) -> Optional[gdal.ColorTable]:
@@ -46,8 +48,8 @@ def get_color_table_from_raster(path_or_ds: PathOrDS) -> Optional[gdal.ColorTabl
     return None
 
 
-def get_color_table(color_palette_or_path_or_strings_or_ds: ColorPaletteOrPathOrStrings, min_key=0, max_key=255,
-                    fill_missing_colors=True) -> Optional[gdal.ColorTable]:
+def get_color_table(color_palette_or_path_or_strings_or_ds: Optional[ColorTableLike],
+                    min_key=0, max_key=255, fill_missing_colors=True) -> Optional[gdal.ColorTable]:
     if (color_palette_or_path_or_strings_or_ds is None or
        isinstance(color_palette_or_path_or_strings_or_ds, gdal.ColorTable)):
         return color_palette_or_path_or_strings_or_ds
