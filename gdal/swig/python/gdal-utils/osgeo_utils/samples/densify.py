@@ -8,6 +8,7 @@
 #
 #******************************************************************************
 #  Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -44,15 +45,15 @@ class Translator(object):
         usage = "usage: %prog [options] arg"
         parser = OptionParser(usage)
         g = OptionGroup(parser, "Base options", "Basic Translation Options")
-        g.add_option("-i", "--input", dest="input",
+        g.add_option("-i", "--input", dest="src_filename",
                      help="OGR input data source", metavar="INPUT")
-        g.add_option("-o", "--output", dest='output',
+        g.add_option("-o", "--output", dest='dst_filename',
                      help="OGR output data source", metavar="OUTPUT")
         g.add_option("-n", "--nooverwrite",
                      action="store_false", dest="overwrite",
                      help="Do not overwrite the existing output file")
 
-        g.add_option("-f", "--driver", dest='driver',
+        g.add_option("-of", "-f", "--driver", dest="driver_name",
                      help="OGR output driver.  Defaults to \"ESRI Shapefile\"", metavar="DRIVER")
 
         g.add_option('-w', "--where", dest="where",
@@ -103,8 +104,8 @@ class Translator(object):
         self.translate()
 
     def open(self):
-        if self.options.input:
-            self.in_ds = ogr.Open(self.options.input)
+        if self.options.src_filename:
+            self.in_ds = ogr.Open(self.options.src_filename)
         else:
             raise Exception("No input layer was specified")
         if self.options.layer:
@@ -123,19 +124,21 @@ class Translator(object):
         if self.options.spat:
             self.input.SetSpatialFilterRect(*self.options.spat)
 
-        self.out_drv = ogr.GetDriverByName(self.options.driver)
+        self.out_drv = ogr.GetDriverByName(self.options.driver_name)
 
         if self.options.where:
             self.input.SetAttributeFilter(self.options.where)
 
         if not self.out_drv:
-            raise Exception("The '%s' driver was not found, did you misspell it or is it not available in this GDAL build?" % self.options.driver)
+            raise Exception(
+                f"The '{self.options.driver_name}' driver was not found, did you misspell it or is it not available in this GDAL build?")
         if not self.out_drv.TestCapability('CreateDataSource'):
-            raise Exception("The '%s' driver does not support creating layers, you will have to choose another output driver" % self.options.driver)
-        if not self.options.output:
+            raise Exception(
+                f"The '{self.options.driver_name}' driver does not support creating layers, you will have to choose another output driver")
+        if not self.options.dst_filename:
             raise Exception("No output layer was specified")
-        if self.options.driver == 'ESRI Shapefile':
-            path, filename = os.path.split(os.path.abspath(self.options.output))
+        if self.options.driver_name == 'ESRI Shapefile':
+            path, filename = os.path.split(os.path.abspath(self.options.dst_filename))
             name, _ = os.path.splitext(filename)
             if self.options.overwrite:
                 # special case the Shapefile driver, which behaves specially.
@@ -152,14 +155,14 @@ class Translator(object):
         else:
             dsco = (),
 
-        self.out_ds = self.out_drv.CreateDataSource(self.options.output, dsco)
+        self.out_ds = self.out_drv.CreateDataSource(self.options.dst_filename, dsco)
 
         if self.options.t_srs:
             self.out_srs = osr.SpatialReference()
             self.out_srs.SetFromUserInput(self.options.t_srs)
         else:
             self.out_srs = None
-        self.output = self.out_ds.CreateLayer(self.options.output,
+        self.output = self.out_ds.CreateLayer(self.options.dst_filename,
                                               geom_type=self.input.GetLayerDefn().GetGeomType(),
                                               srs=self.out_srs)
 
