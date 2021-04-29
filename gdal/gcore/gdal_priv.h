@@ -2470,6 +2470,11 @@ public:
     bool AdviseRead(const GUInt64* arrayStartIdx,
                     const size_t* count) const;
 
+    bool IsRegularlySpaced(double& dfStart, double& dfIncrement) const;
+
+    bool GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint,
+                           double adfGeoTransform[6]) const;
+
 //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
 

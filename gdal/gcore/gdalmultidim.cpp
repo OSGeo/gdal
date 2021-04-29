@@ -5453,6 +5453,102 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetMask(CPL_UNUSED
 }
 
 /************************************************************************/
+/*                         IsRegularlySpaced()                          */
+/************************************************************************/
+
+/** Returns whether an array is a 1D regularly spaced array.
+ *
+ * @param[out] dfStart     First value in the array
+ * @param[out] dfIncrement Increment/spacing between consecutive values.
+ * @return true if the array is regularly spaced.
+ */
+bool GDALMDArray::IsRegularlySpaced(double& dfStart, double& dfIncrement) const
+{
+    dfStart = 0;
+    dfIncrement = 0;
+    if( GetDimensionCount() != 1 || GetDataType().GetClass() != GEDTC_NUMERIC )
+        return false;
+    const auto nSize = GetDimensions()[0]->GetSize();
+    if( nSize <= 1 || nSize > 10 * 1000 * 1000 )
+        return false;
+
+    size_t nCount = static_cast<size_t>(nSize);
+    std::vector<double> adfTmp;
+    try
+    {
+        adfTmp.resize(nCount);
+    }
+    catch( const std::exception & )
+    {
+        return false;
+    }
+    const GUInt64 anStart[1] = { 0 };
+    size_t anCount[1] = { nCount };
+    if( !Read(anStart, anCount, nullptr, nullptr,
+              GDALExtendedDataType::Create(GDT_Float64),
+              &adfTmp[0]) )
+    {
+        return false;
+    }
+
+    dfStart = adfTmp[0];
+    dfIncrement = (adfTmp[nCount-1] - adfTmp[0]) / (nCount - 1);
+    for(size_t i = 1; i < nCount; i++ )
+    {
+        if( fabs((adfTmp[i] - adfTmp[i-1]) - dfIncrement) > 1e-3 * fabs(dfIncrement) )
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                         GuessGeoTransform()                          */
+/************************************************************************/
+
+/** Returns whether 2 specified dimensions form a geotransform
+ *
+ * @param nDimX                Index of the X axis.
+ * @param nDimY                Index of the Y axis.
+ * @param bPixelIsPoint        Whether the geotransform should be returned
+ *                             with the pixel-is-point (pixel-center) convention
+ *                             (bPixelIsPoint = true), or with the pixel-is-area
+ *                             (top left corner convention)
+ *                             (bPixelIsPoint = false)
+ * @param[out] adfGeoTransform Computed geotransform
+ * @return true if a geotransform could be computed.
+ */
+bool GDALMDArray::GuessGeoTransform(size_t nDimX, size_t nDimY,
+                                    bool bPixelIsPoint,
+                                    double adfGeoTransform[6]) const
+{
+    const auto& dims(GetDimensions());
+    auto poVarX = dims[nDimX]->GetIndexingVariable();
+    auto poVarY = dims[nDimY]->GetIndexingVariable();
+    double dfXStart = 0.0;
+    double dfXSpacing = 0.0;
+    double dfYStart = 0.0;
+    double dfYSpacing = 0.0;
+    if( poVarX && poVarX->GetDimensionCount() == 1 &&
+        poVarX->GetDimensions()[0]->GetSize() == dims[nDimX]->GetSize() &&
+        poVarY && poVarY->GetDimensionCount() == 1 &&
+        poVarY->GetDimensions()[0]->GetSize() == dims[nDimY]->GetSize() &&
+        poVarX->IsRegularlySpaced(dfXStart, dfXSpacing) &&
+        poVarY->IsRegularlySpaced(dfYStart, dfYSpacing) )
+    {
+        adfGeoTransform[0] = dfXStart - (bPixelIsPoint ? 0 : dfXSpacing / 2);
+        adfGeoTransform[1] = dfXSpacing;
+        adfGeoTransform[2] = 0;
+        adfGeoTransform[3] = dfYStart - (bPixelIsPoint ? 0 : dfYSpacing / 2);
+        adfGeoTransform[4] = 0;
+        adfGeoTransform[5] = dfYSpacing;
+        return true;
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                         GDALDatasetFromArray()                       */
 /************************************************************************/
 
@@ -5484,7 +5580,6 @@ public:
     const char* GetUnitType() override;
 };
 
-
 class GDALDatasetFromArray final: public GDALDataset
 {
     friend class GDALRasterBandFromArray;
@@ -5497,74 +5592,6 @@ class GDALDatasetFromArray final: public GDALDataset
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
 
 public:
-    void GuessGeoTransform()
-    {
-        const auto& dims(m_poArray->GetDimensions());
-        if( dims.size() < 2 )
-            return;
-        auto poVarX = dims[m_iXDim]->GetIndexingVariable();
-        auto poVarY = dims[m_iYDim]->GetIndexingVariable();
-        if( poVarX && poVarX->GetDimensionCount() == 1 &&
-            poVarX->GetDimensions()[0]->GetSize() == dims[m_iXDim]->GetSize() &&
-            poVarY && poVarY->GetDimensionCount() == 1 &&
-            poVarY->GetDimensions()[0]->GetSize() == dims[m_iYDim]->GetSize() &&
-            dims[m_iXDim]->GetSize() > 1 &&
-            dims[m_iXDim]->GetSize() < 10 * 1000 * 1000 &&
-            dims[m_iYDim]->GetSize() > 1 &&
-            dims[m_iYDim]->GetSize() < 10 * 1000 * 1000 )
-        {
-            std::vector<double> adfTmp(static_cast<size_t>(std::max(
-                 dims[m_iXDim]->GetSize(), dims[m_iYDim]->GetSize())));
-            const GUInt64 anStart[1] = { 0 };
-            size_t nCount = static_cast<size_t>(dims[m_iXDim]->GetSize());
-            size_t anCount[1] = { nCount };
-            if( !poVarX->Read(anStart, anCount, nullptr, nullptr,
-                         GDALExtendedDataType::Create(GDT_Float64),
-                         &adfTmp[0]) )
-            {
-                return;
-            }
-
-            double dfSpacing = (adfTmp[nCount-1] - adfTmp[0]) / (nCount - 1);
-            for(size_t i = 1; i < nCount; i++ )
-            {
-                if( fabs((adfTmp[i] - adfTmp[i-1]) - dfSpacing) > 1e-3 * fabs(dfSpacing) )
-                {
-                    return;
-                }
-            }
-            const double dfXStart = adfTmp[0];
-            const double dfXSpacing = dfSpacing;
-
-            nCount = static_cast<size_t>(dims[m_iYDim]->GetSize());
-            anCount[0] = nCount;
-            if( !poVarY->Read(anStart, anCount, nullptr, nullptr,
-                         GDALExtendedDataType::Create(GDT_Float64),
-                         &adfTmp[0]) )
-            {
-                return;
-            }
-            dfSpacing = (adfTmp[nCount-1] - adfTmp[0]) / (nCount - 1);
-            for(size_t i = 1; i < nCount; i++ )
-            {
-                if( fabs((adfTmp[i] - adfTmp[i-1]) - dfSpacing) > 1e-3 * fabs(dfSpacing) )
-                {
-                    return;
-                }
-            }
-            const double dfYStart = adfTmp[0];
-            const double dfYSpacing = dfSpacing;
-            m_bHasGT = true;
-            m_adfGeoTransform[0] = dfXStart - dfXSpacing / 2;
-            m_adfGeoTransform[1] = dfXSpacing;
-            m_adfGeoTransform[2] = 0;
-            m_adfGeoTransform[3] = dfYStart - dfYSpacing / 2;
-            m_adfGeoTransform[4] = 0;
-            m_adfGeoTransform[5] = dfYSpacing;
-        }
-
-    }
-
     GDALDatasetFromArray(const std::shared_ptr<GDALMDArray>& array,
                          size_t iXDim, size_t iYDim):
         m_poArray(array),
@@ -5592,7 +5619,8 @@ public:
             }
         }
 
-        GuessGeoTransform();
+        m_bHasGT = m_poArray->GuessGeoTransform(
+            m_iXDim, m_iYDim, false, m_adfGeoTransform);
 
         const auto attrs(array->GetAttributes());
         for( const auto& attr: attrs )
