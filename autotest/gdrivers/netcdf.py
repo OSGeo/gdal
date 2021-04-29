@@ -2583,7 +2583,7 @@ def test_netcdf_84():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat32
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 523, 'did not get expected checksum'
+    assert cs == 465, 'did not get expected checksum'
 
 # Repeat for Float64
 
@@ -2594,7 +2594,7 @@ def test_netcdf_85():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat64
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 511, 'did not get expected checksum'
+    assert cs == 546, 'did not get expected checksum'
 
 
 # Check for groups support
@@ -4622,6 +4622,18 @@ def test_netcdf_open_vsimem():
     assert ds is not None
     gdal.Unlink('/vsimem/test.nc')
     assert ds.GetRasterBand(1).Checksum() == 14
+
+
+###############################################################################
+# Test opening a file that has coordinates but not georeferenced indexing variables
+
+
+def test_netcdf_open_coords_no_georef_indexing_variables():
+
+    ds = gdal.Open('data/netcdf/sentinel5p_fake.nc')
+    assert ds is not None
+    assert ds.GetGeoTransform(can_return_null=True) is None
+    assert ds.GetMetadata("GEOLOCATION") is not None
 
 
 def test_clean_tmp():
