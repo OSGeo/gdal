@@ -1624,6 +1624,8 @@ void netCDFRasterBand::CheckData( void *pImage, void *pImageNC,
     // Only check first and last block elements since lon must be monotonic.
     const bool bIsSigned = std::numeric_limits<T>::is_signed;
     if( bCheckLongitude && bIsSigned &&
+        !CPLIsEqual((double)((T *)pImage)[0], dfNoDataValue) &&
+        !CPLIsEqual((double)((T *)pImage)[nTmpBlockXSize - 1], dfNoDataValue) &&
         std::min(((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize - 1]) > 180.0 )
     {
         T *ptrImage = static_cast<T*>(pImage);
