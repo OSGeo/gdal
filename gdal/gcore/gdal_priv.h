@@ -2474,6 +2474,8 @@ public:
                                     GUInt64* pnValidCount,
                                     GDALProgressFunc, void *pProgressData );
 
+    virtual std::vector<std::shared_ptr<GDALMDArray>> GetCoordinateVariables() const;
+
     bool AdviseRead(const GUInt64* arrayStartIdx,
                     const size_t* count) const;
 

@@ -6999,6 +6999,33 @@ bool GDALMDArray::SetStatistics( GDALDataset* poDS,
     return false;
 }
 
+/************************************************************************/
+/*                      GetCoordinateVariables()                        */
+/************************************************************************/
+
+/**
+ * \brief Return coordinate variables.
+ *
+ * Coordinate variables are an alternate way of indexing an array that can
+ * be sometimes used. For example, an array collected through remote sensing
+ * might be indexed by (scanline, pixel). But there can be
+ * a longitude and latitude arrays alongside that are also both indexed by
+ * (scanline, pixel), and are referenced from operational arrays for
+ * reprojection purposes.
+ *
+ * For netCDF, this will return the arrays referenced by the "coordinates" attribute.
+ *
+ * This method is the same as the C function GDALMDArrayGetCoordinateVariables().
+ *
+ * @return a vector of arrays
+ *
+ * @since GDAL 3.4
+ */
+
+std::vector<std::shared_ptr<GDALMDArray>> GDALMDArray::GetCoordinateVariables() const
+{
+    return {};
+}
 
 /************************************************************************/
 /*                       ~GDALExtendedDataType()                        */
@@ -9213,6 +9240,57 @@ int GDALMDArrayComputeStatistics( GDALMDArrayH hArray,
         CPL_TO_BOOL(bApproxOK),
         pdfMin, pdfMax, pdfMean, pdfStdDev, pnValidCount,
         pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                 GDALMDArrayGetCoordinateVariables()                  */
+/************************************************************************/
+
+/** Return coordinate variables.
+ *
+ * The returned array must be freed with GDALReleaseArrays(). If only the array itself needs to be
+ * freed, CPLFree() should be called (and GDALMDArrayRelease() on
+ * individual array members).
+ *
+ * This is the same as the C++ method GDALMDArray::GetCoordinateVariables()
+ *
+ * @param hArray Array.
+ * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
+ *
+ * @return an array of *pnCount arrays.
+ * @since 3.4
+ */
+GDALMDArrayH* GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray, size_t *pnCount)
+{
+    VALIDATE_POINTER1( hArray, __func__, nullptr );
+    VALIDATE_POINTER1( pnCount, __func__, nullptr );
+    const auto coordinates(hArray->m_poImpl->GetCoordinateVariables());
+    auto ret = static_cast<GDALMDArrayH*>(
+        CPLMalloc(sizeof(GDALMDArrayH) * coordinates.size()));
+    for( size_t i = 0; i < coordinates.size(); i++ )
+    {
+        ret[i] = new GDALMDArrayHS(coordinates[i]);
+    }
+    *pnCount = coordinates.size();
+    return ret;
+}
+
+/************************************************************************/
+/*                        GDALReleaseArrays()                           */
+/************************************************************************/
+
+/** Free the return of GDALMDArrayGetCoordinateVariables()
+ *
+ * @param arrays return pointer of above methods
+ * @param nCount *pnCount value returned by above methods
+ */
+void GDALReleaseArrays(GDALMDArrayH* arrays, size_t nCount)
+{
+    for( size_t i = 0; i < nCount; i++ )
+    {
+        delete arrays[i];
+    }
+    CPLFree(arrays);
 }
 
 /************************************************************************/

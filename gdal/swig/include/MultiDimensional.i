@@ -371,6 +371,12 @@ public:
 #endif
 
 #if defined(SWIGPYTHON)
+  void GetCoordinateVariables( GDALMDArrayHS*** parrays, size_t* pnCount ) {
+    *parrays = GDALMDArrayGetCoordinateVariables(self, pnCount);
+  }
+#endif
+
+#if defined(SWIGPYTHON)
 %apply ( GUIntBig** pvals, size_t* pnCount ) { (GUIntBig** psizes, size_t* pnCount ) };
   void GetBlockSize( GUIntBig** psizes, size_t* pnCount ) {
     *psizes = GDALMDArrayGetBlockSize(self, pnCount);

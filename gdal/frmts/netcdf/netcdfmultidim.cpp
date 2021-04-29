@@ -463,6 +463,8 @@ public:
 
     bool SetScale(double dfScale, GDALDataType eStorageType) override;
 
+    std::vector<std::shared_ptr<GDALMDArray>> GetCoordinateVariables() const override;
+
     int GetGroupId() const { return m_gid; }
     int GetVarId() const { return m_varid; }
 
@@ -3149,6 +3151,46 @@ std::shared_ptr<GDALAttribute> netCDFVariable::CreateAttribute(
     return netCDFAttribute::Create(m_poShared, m_gid, m_varid,
                                    osName, anDimensions, oDataType,
                                    papszOptions);
+}
+
+/************************************************************************/
+/*                      GetCoordinateVariables()                        */
+/************************************************************************/
+
+std::vector<std::shared_ptr<GDALMDArray>> netCDFVariable::GetCoordinateVariables() const
+{
+    std::vector<std::shared_ptr<GDALMDArray>> ret;
+
+    const auto poCoordinates = GetAttribute("coordinates");
+    if( poCoordinates && poCoordinates->GetDataType().GetClass() == GEDTC_STRING &&
+        poCoordinates->GetDimensionCount() == 0 )
+    {
+        const char* pszCoordinates = poCoordinates->ReadAsString();
+        if( pszCoordinates )
+        {
+            const CPLStringList aosNames(CSLTokenizeString2(pszCoordinates, " ", 0));
+            CPLMutexHolderD(&hNCMutex);
+            for( int i = 0; i < aosNames.size(); i++ )
+            {
+                int nVarId = 0;
+                if( nc_inq_varid(m_gid, aosNames[i], &nVarId) == NC_NOERR )
+                {
+                    ret.emplace_back(netCDFVariable::Create(
+                      m_poShared, m_gid, nVarId,
+                      std::vector<std::shared_ptr<GDALDimension>>(),
+                      nullptr, false));
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Cannot find variable corresponding to coordinate %s",
+                             aosNames[i]);
+                }
+            }
+        }
+    }
+
+    return ret;
 }
 
 /************************************************************************/

@@ -2895,6 +2895,11 @@ class MDArray(_object):
         return _gdal.MDArray_GetDimensions(self, *args)
 
 
+    def GetCoordinateVariables(self, *args):
+        """GetCoordinateVariables(MDArray self)"""
+        return _gdal.MDArray_GetCoordinateVariables(self, *args)
+
+
     def GetBlockSize(self, *args):
         """GetBlockSize(MDArray self)"""
         return _gdal.MDArray_GetBlockSize(self, *args)

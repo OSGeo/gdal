@@ -1613,3 +1613,21 @@ def test_netcdf_multidim_group_by_same_dimension(netcdf_setup):  # noqa
         dims = ar.GetDimensions()
         assert len(dims) == 1
         assert dims[0].GetName() == 'time_01'
+
+
+def test_netcdf_multidim_getcoordinatevariables(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.OpenEx('data/netcdf/expanded_form_of_grid_mapping.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+
+    ar = rg.OpenMDArray('temp')
+    coordinate_vars = ar.GetCoordinateVariables()
+    assert len(coordinate_vars) == 2
+    assert coordinate_vars[0].GetName() == 'lat'
+    assert coordinate_vars[1].GetName() == 'lon'
+
+    assert len(coordinate_vars[0].GetCoordinateVariables()) == 0
+

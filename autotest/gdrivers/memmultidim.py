@@ -155,6 +155,8 @@ def test_mem_md_array_nodim():
     assert copy_myarray
     assert copy_myarray.Read() == got_data
 
+    assert len(myarray.GetCoordinateVariables()) == 0
+
 
 def test_mem_md_array_single_dim():
 

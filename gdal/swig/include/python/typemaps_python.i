@@ -2412,6 +2412,34 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
   CPLFree(*$1);
 }
 
+
+/*
+ * Typemap argout for GDALMDArrayGetIndexingVariables()
+ */
+%typemap(in,numinputs=0) (GDALMDArrayHS*** parrays, size_t* pnCount) ( GDALMDArrayHS** arrays=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (GDALMDArrayHS*** parrays, size_t* pnCount) */
+  $1 = &arrays;
+  $2 = &nCount;
+}
+%typemap(argout) (GDALMDArrayHS*** parrays, size_t* pnCount)
+{
+  /* %typemap(argout) (GDALMDArrayHS*** parrays, size_t* pnCount) */
+  PyObject *list = PyList_New( *$2 );
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem(list, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALMDArrayHS,SWIG_POINTER_OWN) );
+  }
+  Py_DECREF($result);
+  $result = list;
+}
+
+%typemap(freearg) (GDALMDArrayHS*** parrays, size_t* pnCount)
+{
+  /* %typemap(freearg) (GDALMDArrayHS*** parrays, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
 /*
  * Typemap argout for GDALAttributeGetDimensionsSize()
  */
