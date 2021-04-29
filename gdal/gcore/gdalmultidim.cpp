@@ -5572,7 +5572,7 @@ public:
     double GetNoDataValue(int* pbHasNoData) override;
 };
 
-class GDALMDArrayResampledDataset final: public GDALDataset
+class GDALMDArrayResampledDataset final: public GDALPamDataset
 {
     friend class GDALMDArrayResampled;
     friend class GDALMDArrayResampledDatasetRasterBand;
@@ -5587,6 +5587,9 @@ class GDALMDArrayResampledDataset final: public GDALDataset
     std::vector<GUInt64>     m_anOffset{};
     std::vector<size_t>      m_anCount{};
     std::vector<GPtrDiff_t>  m_anStride{};
+
+    std::string m_osFilenameLong{};
+    std::string m_osFilenameLat{};
 
 public:
     GDALMDArrayResampledDataset(const std::shared_ptr<GDALMDArray>& array,
@@ -5609,6 +5612,14 @@ public:
             m_iXDim, m_iYDim, false, m_adfGeoTransform);
 
         SetBand(1, new GDALMDArrayResampledDatasetRasterBand(this));
+    }
+
+    ~GDALMDArrayResampledDataset()
+    {
+        if( !m_osFilenameLong.empty() )
+            VSIUnlink(m_osFilenameLong.c_str());
+        if( !m_osFilenameLat.empty() )
+            VSIUnlink(m_osFilenameLat.c_str());
     }
 
     CPLErr GetGeoTransform(double* padfGeoTransform) override
@@ -5637,6 +5648,25 @@ public:
         }
         return m_poSRS.get();
     }
+
+    void SetGeolocationArray(const std::string& osFilenameLong,
+                             const std::string& osFilenameLat)
+    {
+        m_osFilenameLong = osFilenameLong;
+        m_osFilenameLat = osFilenameLat;
+        CPLStringList aosGeoLoc;
+        aosGeoLoc.SetNameValue("LINE_OFFSET", "0");
+        aosGeoLoc.SetNameValue("LINE_STEP", "1");
+        aosGeoLoc.SetNameValue("PIXEL_OFFSET", "0");
+        aosGeoLoc.SetNameValue("PIXEL_STEP", "1");
+        aosGeoLoc.SetNameValue("SRS", SRS_WKT_WGS84_LAT_LONG); // FIXME?
+        aosGeoLoc.SetNameValue("X_BAND", "1");
+        aosGeoLoc.SetNameValue("X_DATASET", m_osFilenameLong.c_str());
+        aosGeoLoc.SetNameValue("Y_BAND", "1");
+        aosGeoLoc.SetNameValue("Y_DATASET", m_osFilenameLat.c_str());
+        SetMetadata(aosGeoLoc.List(), "GEOLOCATION");
+    }
+
 };
 
 /************************************************************************/
@@ -5969,6 +5999,118 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
         CPLFree(pszDstWKT);
     }
 
+    // Use coordinate variables for geolocation array
+    const auto apoCoordinateVars = poParent->GetCoordinateVariables();
+    bool useGeolocationArray = false;
+    if( apoCoordinateVars.size() >= 2 )
+    {
+        std::shared_ptr<GDALMDArray> poLongVar;
+        std::shared_ptr<GDALMDArray> poLatVar;
+        for( const auto& poCoordVar: apoCoordinateVars )
+        {
+            const auto& osName = poCoordVar->GetName();
+            const auto poAttr = poCoordVar->GetAttribute("standard_name");
+            std::string osStandardName;
+            if( poAttr && poAttr->GetDataType().GetClass() == GEDTC_STRING &&
+                poAttr->GetDimensionCount() == 0 )
+            {
+                const char* pszStandardName = poAttr->ReadAsString();
+                if( pszStandardName )
+                    osStandardName = pszStandardName;
+            }
+            if( osName == "lon" || osName == "longitude" ||
+                osStandardName == "longitude" )
+            {
+                poLongVar = poCoordVar;
+            }
+            else if( osName == "lat" || osName == "latitude" ||
+                     osStandardName == "latitude" )
+            {
+                poLatVar = poCoordVar;
+            }
+        }
+        if( poLatVar != nullptr && poLongVar != nullptr )
+        {
+            const auto longDimCount = poLongVar->GetDimensionCount();
+            const auto& longDims = poLongVar->GetDimensions();
+            const auto latDimCount = poLatVar->GetDimensionCount();
+            const auto& latDims = poLatVar->GetDimensions();
+            const auto xDimSize = aoParentDims[iXDim]->GetSize();
+            const auto yDimSize = aoParentDims[iYDim]->GetSize();
+            if( longDimCount == 1 && longDims[0]->GetSize() == xDimSize &&
+                latDimCount == 1 && latDims[0]->GetSize() == yDimSize )
+            {
+                // Geolocation arrays are 1D, and of consistent size with
+                // the variable
+                useGeolocationArray = true;
+            }
+            else if( (longDimCount == 2 ||
+                     (longDimCount == 3 && longDims[0]->GetSize() == 1)) &&
+                     longDims[longDimCount-2]->GetSize() == yDimSize &&
+                     longDims[longDimCount-1]->GetSize() == xDimSize &&
+                     (latDimCount == 2 ||
+                     (latDimCount == 3 && latDims[0]->GetSize() == 1)) &&
+                     latDims[latDimCount-2]->GetSize() == yDimSize &&
+                     latDims[latDimCount-1]->GetSize() == xDimSize )
+
+            {
+                // Geolocation arrays are 2D (or 3D with first dimension of
+                // size 1, as found in Sentinel 5P products), and of consistent
+                // size with the variable
+                useGeolocationArray = true;
+            }
+            else
+            {
+                CPLDebug("GDAL",
+                         "Longitude and latitude coordinate variables found, "
+                         "but their characteristics are not compatible of using "
+                         "them as geolocation arrays");
+            }
+            if( useGeolocationArray )
+            {
+                CPLDebug("GDAL",
+                         "Setting geolocation array from variables %s and %s",
+                         poLongVar->GetName().c_str(),
+                         poLatVar->GetName().c_str());
+                std::string osFilenameLong = CPLSPrintf("/vsimem/%p/longitude.tif", poParent.get());
+                std::string osFilenameLat = CPLSPrintf("/vsimem/%p/latitude.tif", poParent.get());
+                std::unique_ptr<GDALDataset> poTmpLongDS(
+                    longDimCount == 1 ?
+                      poLongVar->AsClassicDataset(0, 0) :
+                      poLongVar->AsClassicDataset(longDimCount-1, longDimCount-2));
+                auto hTIFFLongDS = GDALTranslate(osFilenameLong.c_str(),
+                                                 GDALDataset::ToHandle(poTmpLongDS.get()),
+                                                 nullptr, nullptr);
+                std::unique_ptr<GDALDataset> poTmpLatDS(
+                    latDimCount == 1 ?
+                      poLatVar->AsClassicDataset(0, 0) :
+                      poLatVar->AsClassicDataset(latDimCount-1, latDimCount-2));
+                auto hTIFFLatDS = GDALTranslate(osFilenameLat.c_str(),
+                                                GDALDataset::ToHandle(poTmpLatDS.get()),
+                                                nullptr, nullptr);
+                const bool bError = ( hTIFFLatDS == nullptr || hTIFFLongDS == nullptr );
+                GDALClose(hTIFFLongDS);
+                GDALClose(hTIFFLatDS);
+                if( bError )
+                {
+                    VSIUnlink(osFilenameLong.c_str());
+                    VSIUnlink(osFilenameLat.c_str());
+                    return nullptr;
+                }
+
+                poParentDS->SetGeolocationArray(osFilenameLong,
+                                                osFilenameLat);
+            }
+        }
+        else
+        {
+            CPLDebug("GDAL",
+                     "Coordinate variables available for %s, but "
+                     "longitude and/or latitude variables were not identified",
+                     poParent->GetName().c_str());
+        }
+    }
+
     // Build gdalwarp arguments
     CPLStringList aosArgv;
 
@@ -5983,6 +6125,9 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
         aosArgv.AddString("-t_srs");
         aosArgv.AddString(osDstWKT.c_str());
     }
+
+    if( useGeolocationArray )
+        aosArgv.AddString("-geoloc");
 
     if( gotXSpacing && gotYSpacing )
     {
