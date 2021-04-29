@@ -2778,6 +2778,16 @@ class Group(_object):
         return _gdal.Group_OpenGroupFromFullname(self, *args)
 
 
+    def GetVectorLayerNames(self, *args):
+        """GetVectorLayerNames(Group self, char ** options=None) -> char **"""
+        return _gdal.Group_GetVectorLayerNames(self, *args)
+
+
+    def OpenVectorLayer(self, *args):
+        """OpenVectorLayer(Group self, char const * name, char ** options=None) -> Layer"""
+        return _gdal.Group_OpenVectorLayer(self, *args)
+
+
     def GetDimensions(self, *args):
         """GetDimensions(Group self, char ** options=None)"""
         return _gdal.Group_GetDimensions(self, *args)

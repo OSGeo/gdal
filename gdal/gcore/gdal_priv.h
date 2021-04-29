@@ -1953,7 +1953,7 @@ public:
 /* ******************************************************************** */
 
 /**
- * Class modeling a named container of GDALAttribute, GDALMDArray or other
+ * Class modeling a named container of GDALAttribute, GDALMDArray, OGRLayer or other
  * GDALGroup. Hence GDALGroup can describe a hierarchy of objects.
  *
  * This is based on the <a href="https://portal.opengeospatial.org/files/81716#_hdf5_group">HDF5 group concept</a>
@@ -1996,6 +1996,10 @@ public:
     virtual std::vector<std::string> GetGroupNames(CSLConstList papszOptions = nullptr) const;
     virtual std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
                                                  CSLConstList papszOptions = nullptr) const;
+
+    virtual std::vector<std::string> GetVectorLayerNames(CSLConstList papszOptions = nullptr) const;
+    virtual OGRLayer* OpenVectorLayer(const std::string& osName,
+                                      CSLConstList papszOptions = nullptr) const;
 
     virtual std::vector<std::shared_ptr<GDALDimension>> GetDimensions(CSLConstList papszOptions = nullptr) const;
 
