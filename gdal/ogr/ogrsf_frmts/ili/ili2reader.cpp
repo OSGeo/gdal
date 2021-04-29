@@ -292,11 +292,14 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
 
       // Add arc endpoint as next start point, if COORD sequence follows.
       DOMElement *nextElem = dynamic_cast<DOMElement *>(lineElem->getNextSibling());
-      char* nextTagName = XMLString::transcode(nextElem->getTagName());
-      if (cmpStr(ILI2_COORD, nextTagName) == 0) {
-        ls->addPoint(ptEnd);
+      if( nextElem )
+      {
+        char* nextTagName = XMLString::transcode(nextElem->getTagName());
+        if (cmpStr(ILI2_COORD, nextTagName) == 0) {
+            ls->addPoint(ptEnd);
+        }
+        XMLString::release(&nextTagName);
       }
-      XMLString::release(&nextTagName);
 
       delete ptEnd;
       delete ptOnArc;
