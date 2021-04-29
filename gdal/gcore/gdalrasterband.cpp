@@ -7346,42 +7346,66 @@ bool GDALMDArrayFromRasterBand::ReadWrite(GDALRWFlag eRWFlag,
                                           const GDALExtendedDataType& bufferDataType,
                                           void* pBuffer) const
 {
-    if( bufferDataType.GetClass() != GEDTC_NUMERIC )
-        return false;
+    constexpr size_t iDimX = 1;
+    constexpr size_t iDimY = 0;
+    return GDALMDRasterIOFromBand(m_poBand, eRWFlag,
+                                  iDimX,
+                                  iDimY,
+                                  arrayStartIdx,
+                                  count,
+                                  arrayStep,
+                                  bufferStride,
+                                  bufferDataType,
+                                  pBuffer);
+}
+
+/************************************************************************/
+/*                       GDALMDRasterIOFromBand()                       */
+/************************************************************************/
+
+bool GDALMDRasterIOFromBand(GDALRasterBand* poBand,
+                            GDALRWFlag eRWFlag,
+                            size_t iDimX,
+                            size_t iDimY,
+                            const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            const GInt64* arrayStep,
+                            const GPtrDiff_t* bufferStride,
+                            const GDALExtendedDataType& bufferDataType,
+                            void* pBuffer)
+{
     const auto eDT(bufferDataType.GetNumericDataType());
     const auto nDTSize(GDALGetDataTypeSizeBytes(eDT));
-    constexpr int kX = 1;
-    constexpr int kY = 0;
-    const int nX = arrayStep[kX] > 0  ?
-        static_cast<int>(arrayStartIdx[kX]) :
-        static_cast<int>(arrayStartIdx[kX] - (count[kX]-1) * -arrayStep[kX]);
-    const int nY = arrayStep[kY] > 0  ?
-        static_cast<int>(arrayStartIdx[kY]) :
-        static_cast<int>(arrayStartIdx[kY] - (count[kY]-1) * -arrayStep[kY]);
-    const int nSizeX = static_cast<int>(count[kX] * ABS(arrayStep[kX]));
-    const int nSizeY = static_cast<int>(count[kY] * ABS(arrayStep[kY]));
+    const int nX = arrayStep[iDimX] > 0  ?
+        static_cast<int>(arrayStartIdx[iDimX]) :
+        static_cast<int>(arrayStartIdx[iDimX] - (count[iDimX]-1) * -arrayStep[iDimX]);
+    const int nY = arrayStep[iDimY] > 0  ?
+        static_cast<int>(arrayStartIdx[iDimY]) :
+        static_cast<int>(arrayStartIdx[iDimY] - (count[iDimY]-1) * -arrayStep[iDimY]);
+    const int nSizeX = static_cast<int>(count[iDimX] * ABS(arrayStep[iDimX]));
+    const int nSizeY = static_cast<int>(count[iDimY] * ABS(arrayStep[iDimY]));
     GByte* pabyBuffer = static_cast<GByte*>(pBuffer);
     int nStrideXSign = 1;
-    if( arrayStep[kX] < 0 )
+    if( arrayStep[iDimX] < 0 )
     {
-        pabyBuffer += (count[kX]-1) * bufferStride[kX] * nDTSize;
+        pabyBuffer += (count[iDimX]-1) * bufferStride[iDimX] * nDTSize;
         nStrideXSign = -1;
     }
     int nStrideYSign = 1;
-    if( arrayStep[kY] < 0 )
+    if( arrayStep[iDimY] < 0 )
     {
-        pabyBuffer += (count[kY]-1) * bufferStride[kY] * nDTSize;
+        pabyBuffer += (count[iDimY]-1) * bufferStride[iDimY] * nDTSize;
         nStrideYSign = -1;
     }
 
-    return m_poBand->RasterIO(eRWFlag,
+    return poBand->RasterIO(eRWFlag,
             nX, nY, nSizeX, nSizeY,
             pabyBuffer,
-            static_cast<int>(count[kX]),
-            static_cast<int>(count[kY]),
+            static_cast<int>(count[iDimX]),
+            static_cast<int>(count[iDimY]),
             eDT,
-            static_cast<GSpacing>(nStrideXSign * bufferStride[kX] * nDTSize),
-            static_cast<GSpacing>(nStrideYSign * bufferStride[kY] * nDTSize),
+            static_cast<GSpacing>(nStrideXSign * bufferStride[iDimX] * nDTSize),
+            static_cast<GSpacing>(nStrideYSign * bufferStride[iDimY] * nDTSize),
             nullptr) == CE_None;
 }
 

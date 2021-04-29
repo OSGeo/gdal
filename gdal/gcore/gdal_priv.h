@@ -2351,6 +2351,7 @@ public:
  */
 class CPL_DLL GDALMDArray: virtual public GDALAbstractMDArray, public GDALIHasAttribute
 {
+    friend class GDALMDArrayResampled;
     std::shared_ptr<GDALMDArray> GetView(const std::vector<GUInt64>& indices) const;
 
     inline std::shared_ptr<GDALMDArray> atInternal(std::vector<GUInt64>& indices) const
@@ -2451,6 +2452,12 @@ public:
 
     virtual std::shared_ptr<GDALMDArray> GetMask(CSLConstList papszOptions) const;
 
+    std::shared_ptr<GDALMDArray>
+        GetResampled( const std::vector<std::shared_ptr<GDALDimension>>& apoNewDims,
+                      GDALRIOResampleAlg resampleAlg,
+                      const OGRSpatialReference* poTargetSRS,
+                      CSLConstList papszOptions ) const;
+
     virtual GDALDataset* AsClassicDataset(size_t iXDim, size_t iYDim) const;
 
     virtual CPLErr GetStatistics( GDALDataset* poDS,
@@ -2508,6 +2515,18 @@ public:
 //! @endcond
 };
 
+//! @cond Doxygen_Suppress
+bool GDALMDRasterIOFromBand(GDALRasterBand* poBand,
+                            GDALRWFlag eRWFlag,
+                            size_t iDimX,
+                            size_t iDimY,
+                            const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            const GInt64* arrayStep,
+                            const GPtrDiff_t* bufferStride,
+                            const GDALExtendedDataType& bufferDataType,
+                            void* pBuffer);
+//! @endcond
 
 /************************************************************************/
 /*                     GDALMDArrayRegularlySpaced                       */

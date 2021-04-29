@@ -3060,6 +3060,11 @@ class MDArray(_object):
         return _gdal.MDArray_ComputeStatistics(self, *args, **kwargs)
 
 
+    def GetResampled(self, *args):
+        """GetResampled(MDArray self, int nDimensions, GDALRIOResampleAlg resample_alg, OSRSpatialReferenceShadow ** srs, char ** options=None) -> MDArray"""
+        return _gdal.MDArray_GetResampled(self, *args)
+
+
     def Read(self,
              array_start_idx = None,
              count = None,

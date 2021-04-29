@@ -940,6 +940,23 @@ public:
   }
 #endif
 
+#if defined(SWIGPYTHON)
+%newobject GetResampled;
+%apply (int object_list_count, GDALDimensionHS **poObjectsItemMaybeNull) {(int nDimensions, GDALDimensionHS **dimensions)};
+%apply (OSRSpatialReferenceShadow **optional_OSRSpatialReferenceShadow) { OSRSpatialReferenceShadow** };
+  GDALMDArrayHS *GetResampled(int nDimensions,
+                              GDALDimensionHS** dimensions,
+                              GDALRIOResampleAlg resample_alg,
+                              OSRSpatialReferenceShadow** srs,
+                              char **options = 0)
+  {
+    return GDALMDArrayGetResampled(self, nDimensions, dimensions,
+                                  resample_alg, srs ? *srs : NULL, options);
+  }
+%clear (int nDimensions, GDALDimensionHS **dimensions);
+%clear OSRSpatialReferenceShadow**;
+#endif
+
 } /* extend */
 }; /* GDALMDArrayH */
 

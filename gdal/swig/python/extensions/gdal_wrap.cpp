@@ -3068,17 +3068,18 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_p_GDAL_GCP swig_types[57]
 #define SWIGTYPE_p_p_GUIntBig swig_types[58]
 #define SWIGTYPE_p_p_OGRLayerShadow swig_types[59]
-#define SWIGTYPE_p_p_char swig_types[60]
-#define SWIGTYPE_p_p_double swig_types[61]
-#define SWIGTYPE_p_p_int swig_types[62]
-#define SWIGTYPE_p_p_p_GDALAttributeHS swig_types[63]
-#define SWIGTYPE_p_p_p_GDALDimensionHS swig_types[64]
-#define SWIGTYPE_p_p_p_GDALEDTComponentHS swig_types[65]
-#define SWIGTYPE_p_p_void swig_types[66]
-#define SWIGTYPE_p_size_t swig_types[67]
-#define SWIGTYPE_p_vsi_l_offset swig_types[68]
-static swig_type_info *swig_types[70];
-static swig_module_info swig_module = {swig_types, 69, 0, 0, 0, 0};
+#define SWIGTYPE_p_p_OSRSpatialReferenceShadow swig_types[60]
+#define SWIGTYPE_p_p_char swig_types[61]
+#define SWIGTYPE_p_p_double swig_types[62]
+#define SWIGTYPE_p_p_int swig_types[63]
+#define SWIGTYPE_p_p_p_GDALAttributeHS swig_types[64]
+#define SWIGTYPE_p_p_p_GDALDimensionHS swig_types[65]
+#define SWIGTYPE_p_p_p_GDALEDTComponentHS swig_types[66]
+#define SWIGTYPE_p_p_void swig_types[67]
+#define SWIGTYPE_p_size_t swig_types[68]
+#define SWIGTYPE_p_vsi_l_offset swig_types[69]
+static swig_type_info *swig_types[71];
+static swig_module_info swig_module = {swig_types, 70, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -6141,6 +6142,10 @@ SWIGINTERN Statistics *GDALMDArrayHS_ComputeStatistics(GDALMDArrayHS *self,GDALD
             return psStatisticsOut;
         CPLFree(psStatisticsOut);
         return NULL;
+  }
+SWIGINTERN GDALMDArrayHS *GDALMDArrayHS_GetResampled(GDALMDArrayHS *self,int nDimensions,GDALDimensionHS **dimensions,GDALRIOResampleAlg resample_alg,OSRSpatialReferenceShadow **srs,char **options=0){
+    return GDALMDArrayGetResampled(self, nDimensions, dimensions,
+                                  resample_alg, srs ? *srs : NULL, options);
   }
 SWIGINTERN void delete_GDALAttributeHS(GDALAttributeHS *self){
     GDALAttributeRelease(self);
@@ -25935,6 +25940,145 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_MDArray_GetResampled(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALMDArrayHS *arg1 = (GDALMDArrayHS *) 0 ;
+  int arg2 ;
+  GDALDimensionHS **arg3 = (GDALDimensionHS **) 0 ;
+  GDALRIOResampleAlg arg4 ;
+  OSRSpatialReferenceShadow **arg5 = (OSRSpatialReferenceShadow **) 0 ;
+  char **arg6 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  OSRSpatialReferenceShadow *val5 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  GDALMDArrayHS *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO|O:MDArray_GetResampled",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MDArray_GetResampled" "', argument " "1"" of type '" "GDALMDArrayHS *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALMDArrayHS * >(argp1);
+  {
+    /*  OBJECT_LIST_INPUT %typemap(in) (int itemcount, GDALDimensionHS *optional_##GDALDimensionHS)*/
+    if ( !PySequence_Check(obj1) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
+    arg3 = (GDALDimensionHS**) CPLMalloc(arg2*sizeof(GDALDimensionHS*));
+    
+    for( int i = 0; i<arg2; i++ ) {
+      PyObject *o = PySequence_GetItem(obj1,i);
+      GDALDimensionHS* rawobjectpointer = NULL;
+      if( o != Py_None )
+      {
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( o, (void**)&rawobjectpointer, SWIGTYPE_p_GDALDimensionHS, SWIG_POINTER_EXCEPTION | 0 ));
+        if (!rawobjectpointer) {
+          Py_DECREF(o);
+          PyErr_SetString(PyExc_TypeError, "object of wrong GDALDimensionHS");
+          SWIG_fail;
+        }
+      }
+      arg3[i] = rawobjectpointer;
+      Py_DECREF(o);
+      
+    }
+  }
+  {
+    // %typemap(in) GDALRIOResampleAlg
+    int val = 0;
+    int ecode = SWIG_AsVal_int(obj2, &val);
+    if (!SWIG_IsOK(ecode)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALRIOResampleAlg");
+    }
+    if( val < 0 ||
+      ( val >= static_cast<int>(GRIORA_RESERVED_START) &&
+        val <= static_cast<int>(GRIORA_RESERVED_END) ) ||
+      val > static_cast<int>(GRIORA_LAST) )
+    {
+      SWIG_exception_fail(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+    arg4 = static_cast< GDALRIOResampleAlg >(val);
+  }
+  {
+    /* %typemap(in) (OSRSpatialReferenceShadow** optional_OSRSpatialReferenceShadow) */
+    if ( obj3 == Py_None ) {
+      arg5 = NULL;
+    }
+    else {
+      void* argp = NULL;
+      int res = SWIG_ConvertPtr(obj3, &argp, SWIGTYPE_p_OSRSpatialReferenceShadow,  0  | 0);
+      if (!SWIG_IsOK(res)) {
+        SWIG_exception_fail(SWIG_ArgError(res), "argument of type != OSRSpatialReferenceShadow");
+      }
+      val5 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp);
+      arg5 = &val5;
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg6 = CSLFromPySequence(obj4, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALMDArrayHS *)GDALMDArrayHS_GetResampled(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALMDArrayHS, SWIG_POINTER_OWN |  0 );
+  {
+    /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALDimensionHS **poObjectsItemMaybeNull)*/
+    CPLFree( arg3 );
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg6 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALDimensionHS **poObjectsItemMaybeNull)*/
+    CPLFree( arg3 );
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg6 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *MDArray_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char *)"O:swigregister", &obj)) return NULL;
@@ -43135,6 +43279,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"MDArray_AsClassicDataset", _wrap_MDArray_AsClassicDataset, METH_VARARGS, (char *)"MDArray_AsClassicDataset(MDArray self, size_t iXDim, size_t iYDim) -> Dataset"},
 	 { (char *)"MDArray_GetStatistics", (PyCFunction) _wrap_MDArray_GetStatistics, METH_VARARGS | METH_KEYWORDS, (char *)"MDArray_GetStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, bool force=True, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"},
 	 { (char *)"MDArray_ComputeStatistics", (PyCFunction) _wrap_MDArray_ComputeStatistics, METH_VARARGS | METH_KEYWORDS, (char *)"MDArray_ComputeStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"},
+	 { (char *)"MDArray_GetResampled", _wrap_MDArray_GetResampled, METH_VARARGS, (char *)"MDArray_GetResampled(MDArray self, int nDimensions, GDALRIOResampleAlg resample_alg, OSRSpatialReferenceShadow ** srs, char ** options=None) -> MDArray"},
 	 { (char *)"MDArray_swigregister", MDArray_swigregister, METH_VARARGS, NULL},
 	 { (char *)"delete_Attribute", _wrap_delete_Attribute, METH_VARARGS, (char *)"delete_Attribute(Attribute self)"},
 	 { (char *)"Attribute_GetName", _wrap_Attribute_GetName, METH_VARARGS, (char *)"Attribute_GetName(Attribute self) -> char const *"},
@@ -43463,6 +43608,7 @@ static swig_type_info _swigt__p_p_GDALRasterBandShadow = {"_p_p_GDALRasterBandSh
 static swig_type_info _swigt__p_p_GDAL_GCP = {"_p_p_GDAL_GCP", "GDAL_GCP **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GUIntBig = {"_p_p_GUIntBig", "GUIntBig **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_OGRLayerShadow = {"_p_p_OGRLayerShadow", "OGRLayerShadow **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_OSRSpatialReferenceShadow = {"_p_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_double = {"_p_p_double", "double **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
@@ -43534,6 +43680,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_p_GDAL_GCP,
   &_swigt__p_p_GUIntBig,
   &_swigt__p_p_OGRLayerShadow,
+  &_swigt__p_p_OSRSpatialReferenceShadow,
   &_swigt__p_p_char,
   &_swigt__p_p_double,
   &_swigt__p_p_int,
@@ -43605,6 +43752,7 @@ static swig_cast_info _swigc__p_p_GDALRasterBandShadow[] = {  {&_swigt__p_p_GDAL
 static swig_cast_info _swigc__p_p_GDAL_GCP[] = {  {&_swigt__p_p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GUIntBig[] = {  {&_swigt__p_p_GUIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_OGRLayerShadow[] = {  {&_swigt__p_p_OGRLayerShadow, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_p_OSRSpatialReferenceShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_double[] = {  {&_swigt__p_p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 0, 0}};
@@ -43676,6 +43824,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_p_GDAL_GCP,
   _swigc__p_p_GUIntBig,
   _swigc__p_p_OGRLayerShadow,
+  _swigc__p_p_OSRSpatialReferenceShadow,
   _swigc__p_p_char,
   _swigc__p_p_double,
   _swigc__p_p_int,

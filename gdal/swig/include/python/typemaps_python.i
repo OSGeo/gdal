@@ -2340,6 +2340,51 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 OBJECT_LIST_INPUT(GDALDimensionHS);
 
 
+%define OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(type)
+%typemap(in, numinputs=1) (int object_list_count, type **poObjectsItemMaybeNull)
+{
+  /*  OBJECT_LIST_INPUT %typemap(in) (int itemcount, type *optional_##type)*/
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
+  $2 = (type**) CPLMalloc($1*sizeof(type*));
+
+  for( int i = 0; i<$1; i++ ) {
+
+      PyObject *o = PySequence_GetItem($input,i);
+      type* rawobjectpointer = NULL;
+      if( o != Py_None )
+      {
+          CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( o, (void**)&rawobjectpointer, SWIGTYPE_p_##type, SWIG_POINTER_EXCEPTION | 0 ));
+          if (!rawobjectpointer) {
+              Py_DECREF(o);
+              PyErr_SetString(PyExc_TypeError, "object of wrong type");
+              SWIG_fail;
+          }
+      }
+      $2[i] = rawobjectpointer;
+      Py_DECREF(o);
+
+  }
+}
+
+%typemap(freearg)  (int object_list_count, type **poObjectsItemMaybeNull)
+{
+  /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, type **poObjectsItemMaybeNull)*/
+  CPLFree( $2 );
+}
+%enddef
+
+OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
+
+
 /*
  * Typemap argout for GDALMDArrayGetDimensions()
  */
@@ -2684,4 +2729,21 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
     }
   }
   $result = dict;
+}
+
+%typemap(in) (OSRSpatialReferenceShadow** optional_OSRSpatialReferenceShadow) ( OSRSpatialReferenceShadow* val )
+{
+  /* %typemap(in) (OSRSpatialReferenceShadow** optional_OSRSpatialReferenceShadow) */
+  if ( $input == Py_None ) {
+    $1 = NULL;
+  }
+  else {
+    void* argp = NULL;
+    int res = SWIG_ConvertPtr($input, &argp, SWIGTYPE_p_OSRSpatialReferenceShadow,  0  | 0);
+    if (!SWIG_IsOK(res)) {
+      SWIG_exception_fail(SWIG_ArgError(res), "argument of type != OSRSpatialReferenceShadow");
+    }
+    val = reinterpret_cast< OSRSpatialReferenceShadow * >(argp);
+    $1 = &val;
+  }
 }
