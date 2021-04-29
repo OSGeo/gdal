@@ -7256,10 +7256,25 @@ public:
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override
     {
-        auto poSRS = m_poDS->GetSpatialRef();
-        if( !poSRS )
+        auto poSrcSRS = m_poDS->GetSpatialRef();
+        if( !poSrcSRS )
             return nullptr;
-        return std::shared_ptr<OGRSpatialReference>(poSRS->Clone());
+        auto poSRS = std::shared_ptr<OGRSpatialReference>(poSrcSRS->Clone());
+
+        auto axisMapping = poSRS->GetDataAxisToSRSAxisMapping();
+        constexpr int iYDim = 0;
+        constexpr int iXDim = 1;
+        for( auto& m: axisMapping )
+        {
+            if( m == 1 )
+                m = iXDim + 1;
+            else if( m == 2 )
+                m = iYDim + 1;
+            else
+                m = 0;
+        }
+        poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
+        return poSRS;
     }
 
     std::vector<GUInt64> GetBlockSize() const override
