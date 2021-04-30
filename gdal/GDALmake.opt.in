@@ -591,10 +591,6 @@ ifeq ($(HAVE_CHARLS),yes)
 GDAL_FORMATS := $(GDAL_FORMATS) jpegls
 endif
 
-ifneq ($(VRC_SETTING),no)
-GDAL_FORMATS += vrc
-endif
-
 #
 # CONFIG_LIBS is what local program should link against, and CONFIG_LIBS_INS
 # is what will be emitted into the gdal-config script that is installed
