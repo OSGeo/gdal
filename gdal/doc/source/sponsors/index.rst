@@ -182,6 +182,8 @@ Related resources
 - `Sustainable GDAL Sponsorship Prospectus`_.
 - :ref:`Sponsoring frequently asked questions (FAQ) <sponsoring-faq>`.
 
+.. Source of the PDF is at https://docs.google.com/document/d/1yhMWeI_LgEXPUkngqOitqcKfp7ov6WsS41v5ulz-kd0/edit#
+
 .. _Sustainable GDAL Sponsorship Prospectus: https://gdal.org/sponsors/Sustainable%20GDAL%20Sponsorship%20Prospectus.pdf
 
 ..
