@@ -18,6 +18,13 @@ the health of project:
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-maxar.png
+           :class: img-logos
+           :width: 250 px
+           :target: https://www.maxar.com
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-microsoft.png
            :class: img-logos
            :width: 250 px
