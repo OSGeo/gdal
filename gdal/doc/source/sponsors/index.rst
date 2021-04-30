@@ -11,7 +11,7 @@ the health of the project:
 
 - Platinum level:
 
-  .. _platinium-sponsors:
+  .. _platinum-sponsors:
   .. container:: horizontal-logos
 
     .. Note: they will appear in randomized order in HTML
@@ -140,7 +140,7 @@ the health of the project:
 
         return this;
     };
-    $('#platinium-sponsors').randomize('div.horizontal-logo');
+    $('#platinum-sponsors').randomize('div.horizontal-logo');
     $('#gold-sponsors').randomize('div.horizontal-logo');
     $('#silver-sponsors').randomize('div.horizontal-logo');
     $('#supporter-sponsors').randomize('div.horizontal-logo');
