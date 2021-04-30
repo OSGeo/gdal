@@ -7,7 +7,7 @@ Sponsors
 GDAL is a truly collaborative effort, with many diverse organizations
 contributing resources to its success. The following organizations take an
 extra step, providing unrestricted funding every year to maintain and improve
-the health of project:
+the health of the project:
 
 - Platinum level:
 
