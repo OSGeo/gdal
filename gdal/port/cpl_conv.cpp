@@ -2165,7 +2165,10 @@ static double proj_strtod(char *nptr, char **endptr)
     // Scan for characters which cause problems with VC++ strtod().
     while( (c = *cp) != '\0')
     {
-        if( c == 'd' || c == 'D' )
+        if( c == 'd' || c == 'D' ||
+            // UTF-8 "DEGREE SIGN" is 0xC2 0xB0 
+            c == static_cast<char>(0xC2) ||
+            c == static_cast<char>(0xB0) )
         {
             // Found one, so NUL it out, call strtod(),
             // then restore it and return.
@@ -2225,6 +2228,11 @@ double CPLDMSToDec( const char *is )
             return tv;
         switch( *s )
         {
+          // UTF-8 "DEGREE SIGN" is 0xC2 0xB0 
+          case static_cast<char>(0xC2):
+              if ( s[1] == static_cast<char>(0xB0) ) ++s;
+              CPL_FALLTHROUGH
+          case static_cast<char>(0xB0):
           case 'D':
           case 'd':
             n = 0; break;
@@ -2307,7 +2315,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 
     char szFormat[30] = {};
     CPLsnprintf(szFormat, sizeof(szFormat),
-                "%%3dd%%2d\'%%%d.%df\"%s",
+                "%%3d°%%2d\'%%%d.%df\"%s",
                 nPrecision+3, nPrecision, pszHemisphere);
 
     static CPL_THREADLOCAL char szBuffer[50] = {};
