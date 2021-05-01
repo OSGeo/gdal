@@ -157,7 +157,7 @@ CPLErr GDALEXRRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         FrameBuffer fb;
         const size_t sizeOfElt = sizeof(float); // sizeof(uint32) as well
-        const auto slice = 
+        const auto slice =
             Slice(eDataType == GDT_Float32 ? FLOAT : UINT,
                     static_cast<char*>(pImage) -
                     (poGDS->m_nDWMinX + nBlockXOff * nBlockXSize +
@@ -759,7 +759,7 @@ GDALDataset* GDALEXRDataset::Open(GDALOpenInfo* poOpenInfo)
                 const Attribute *attr = &iter.attribute();
                 const StringAttribute *stringAttr =
                                 dynamic_cast <const StringAttribute *>(attr);
-                const M33dAttribute* m33DAttr = 
+                const M33dAttribute* m33DAttr =
                                 dynamic_cast <const M33dAttribute *>(attr);
                 if ( stringAttr && strcmp(iter.name(), "gdal:crsWkt") == 0)
                 {
@@ -1015,7 +1015,7 @@ GDALDataset *GDALEXRDataset::CreateCopy( const char* pszFilename,
         if( bPreview )
         {
             const int previewWidth = 100;
-            const int previewHeight = std::max(1, 
+            const int previewHeight = std::max(1,
                 static_cast<int>(static_cast<GIntBig>(previewWidth) * nYSize / nXSize));
             std::vector<PreviewRgba> pixels(previewWidth * previewHeight);
             if( poSrcDS->RasterIO(
@@ -1191,7 +1191,7 @@ GDALDataset *GDALEXRDataset::CreateCopy( const char* pszFilename,
                         FrameBuffer fb;
                         for( int iBand = 0; iBand < nBands; iBand++ )
                         {
-                            const auto slice = 
+                            const auto slice =
                                 Slice(pixelType,
                                     sliceBuffer +
                                         iBand * pixelTypeSize * nChunkXSize * nChunkYSize -
@@ -1351,7 +1351,7 @@ GDALDataset *GDALEXRDataset::CreateCopy( const char* pszFilename,
                 const int nLinesToRead = std::min(nChunkYSize, nYSize - y);
                 for( int iBand = 0; iBand < nBands; iBand++ )
                 {
-                    const auto slice = 
+                    const auto slice =
                         Slice(pixelType,
                             sliceBuffer +
                                 iBand * pixelTypeSize * nXSize * nLinesToRead -
@@ -1831,7 +1831,7 @@ CPLErr GDALEXRWritableRasterBand::IWriteBlock(int nBlockXOff,
         {
             char* const dstPtr = poGDS->m_pSliceBuffer +
                 iBand * poGDS->m_nBufferEltSize * nPixelsInBlock;
-            const auto slice = 
+            const auto slice =
                 Slice(poGDS->m_pixelType,
                       dstPtr -
                         (x * poGDS->m_nBufferEltSize +
@@ -1841,7 +1841,7 @@ CPLErr GDALEXRWritableRasterBand::IWriteBlock(int nBlockXOff,
             fb.insert(poGDS->m_channelNames[iBand], slice);
 
             const void* srcPtr = nullptr;
-            if( iBand+1 == nBand) 
+            if( iBand+1 == nBand)
                 srcPtr = pImage;
             else if( apoBlocks[iBand] )
                 srcPtr = apoBlocks[iBand]->GetDataRef();
