@@ -230,7 +230,7 @@ jobs:
             exec { python setup.py install }
             # Disabled because of https://github.com/OSGeo/gdal/issues/3711
             cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
-            dotnet nuget locals all -clear
+            dotnet nuget locals all --clear
             exec { nmake /f makefile.vc interface }
             exec { nmake /f makefile.vc all $env:WIN64_ARG }
             cd $env:GITHUB_WORKSPACE\autotest\cpp
