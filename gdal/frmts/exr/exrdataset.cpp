@@ -449,6 +449,12 @@ class GDALEXRIOStreamException final: public std::exception
         const char* what() const noexcept override { return m_msg.c_str(); }
 };
 
+#if OPENEXR_VERSION_MAJOR < 3
+typedef Int64 IoType;
+#else
+typedef uint64_t IoType;
+#endif
+
 class GDALEXRIOStream final: public IStream, public OStream
 {
   public:
@@ -459,10 +465,10 @@ class GDALEXRIOStream final: public IStream, public OStream
 
     virtual bool        read (char c[/*n*/], int n) override;
     virtual void        write (const char c[/*n*/], int n) override;
-    virtual Int64       tellg () override;
-    virtual Int64       tellp () override { return tellg(); }
-    virtual void        seekg (Int64 pos) override;
-    virtual void        seekp (Int64 pos) override { return seekg(pos); }
+    virtual IoType      tellg () override;
+    virtual IoType      tellp () override { return tellg(); }
+    virtual void        seekg (IoType pos) override;
+    virtual void        seekp (IoType pos) override { return seekg(pos); }
 
   private:
     VSILFILE* m_fp;
@@ -492,12 +498,12 @@ void GDALEXRIOStream::write (const char c[/*n*/], int n)
     }
 }
 
-Int64 GDALEXRIOStream::tellg ()
+IoType GDALEXRIOStream::tellg ()
 {
-    return static_cast<Int64>(VSIFTellL(m_fp));
+    return static_cast<IoType>(VSIFTellL(m_fp));
 }
 
-void GDALEXRIOStream::seekg (Int64 pos)
+void GDALEXRIOStream::seekg (IoType pos)
 {
     VSIFSeekL(m_fp, static_cast<vsi_l_offset>(pos), SEEK_SET);
 }
