@@ -32,39 +32,64 @@ import tempfile
 from numbers import Real
 from typing import Sequence, Optional
 
-from osgeo import gdal, osr
+from osgeo import gdal
+
+from osgeo_utils.auxiliary import osr_util, extent_util
+
+from osgeo_utils.auxiliary.osr_util import get_srs, AnySRS
 from osgeo_utils.auxiliary.base import PathLikeOrStr, MaybeSequence, is_true
+from osgeo_utils.auxiliary.rectangle import GeoRectangle
 from osgeo_utils.auxiliary.util import get_bigtiff_creation_option_value, get_data_type, DataTypeOrStr, CreationOptions
 
 
 def create_flat_raster(filename: Optional[PathLikeOrStr],
                        driver_name: Optional[str] = None, dt: DataTypeOrStr = gdal.GDT_Byte,
-                       size: MaybeSequence[int] = 128, band_count: int = 1, creation_options: CreationOptions = None,
+                       size: MaybeSequence[int] = None, band_count: int = 1, creation_options: CreationOptions = None,
                        fill_value: Optional[Real] = None, nodata_value: Optional[Real] = None,
                        origin: Optional[Sequence[int]] = (500_000, 0), pixel_size: MaybeSequence[int] = 10,
-                       epsg: Optional[int] = 32636,
-                       overview_alg: Optional[str] = 'NEAR', overview_list: Optional[Sequence[int]] = None) -> gdal.Dataset:
+                       extent: GeoRectangle = None, extent_srs: Optional[AnySRS] = None,
+                       srs: Optional[AnySRS] = 32636,
+                       overview_alg: Optional[str] = 'NEAR', overview_list: Optional[Sequence[int]] = None,
+                       **kwargs) -> gdal.Dataset:
+    if 'epsg' in kwargs:
+        # backwards compatibility
+        srs = kwargs['epsg']
+        del kwargs['epsg']
+
     if filename is None:
         filename = tempfile.mktemp()
     elif not filename:
         filename = ''
+
     if driver_name is None:
         driver_name = 'GTiff' if filename else 'MEM'
-    if not isinstance(size, Sequence):
-        size = (size, size)
-
-    drv = gdal.GetDriverByName(driver_name)
+    driver = gdal.GetDriverByName(driver_name)
     dt = get_data_type(dt)
     creation_options_list = get_creation_options(creation_options, driver_name=driver_name)
-    ds = drv.Create(os.fspath(filename), *size, band_count, dt, creation_options_list)
 
-    if pixel_size and origin:
+    geo_transform = None
+    if pixel_size:
         if not isinstance(pixel_size, Sequence):
             pixel_size = (pixel_size, -pixel_size)
-        ds.SetGeoTransform([origin[0], pixel_size[0], 0, origin[1], 0, pixel_size[1]])
-    if epsg is not None:
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(epsg)
+        if origin:
+            geo_transform = (origin[0], pixel_size[0], 0, origin[1], 0, pixel_size[1])
+        elif extent:
+            if extent_srs is not None:
+                transform = osr_util.get_transform(extent_srs, srs)
+                if transform is not None:
+                    extent = extent_util.transform_extent(extent, transform)
+            size, geo_transform = extent.get_size_and_geotransform(pixel_size=pixel_size)
+
+    if size is None:
+        size = 128
+    if not isinstance(size, Sequence):
+        size = (size, size)
+    ds = driver.Create(os.fspath(filename), *size, band_count, dt, creation_options_list)
+    if geo_transform is not None:
+        ds.SetGeoTransform(geo_transform)
+
+    if srs is not None:
+        srs = get_srs(srs)
         ds.SetSpatialRef(srs)
     for bnd_idx in range(band_count):
         bnd: gdal.Band = ds.GetRasterBand(bnd_idx+1)
