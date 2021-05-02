@@ -62,7 +62,14 @@ for my $type (Geo::GDAL::DataTypes()) {
 # sub DecToPackedDMS ok
 
 my $dms = Geo::GDAL::DecToDMS(62, 'Long');
-ok($dms eq " 62d 0' 0.00\"E", "DecToDMS, got '$dms'"),
+ok($dms =~ " 62[°d] 0' 0.00\"E", "DecToDMS, got '$dms'"),
+$dms = Geo::GDAL::DecToDMS(-62, 'Long');
+ok($dms =~ " 62[°d] 0' 0.00\"W", "DecToDMS W, got '$dms'"),
+my $dms2 = Geo::GDAL::DecToDMS(-26, 'Lat');
+ok($dms2 =~ " 26[°d] 0' 0.00\"S", "DecToDMS S, got '$dms2'"),
+#my $dmsdec = Geo::GDAL::DMSToDec($dms2);
+#ok($dmsdec == -26, "DMSToDec, got '$dmsdec'"),
+
 $dms = Geo::GDAL::DecToPackedDMS(62.15);
 my $dec = Geo::GDAL::PackedDMSToDec($dms);
 $dec = sprintf("%.2f", $dec);
