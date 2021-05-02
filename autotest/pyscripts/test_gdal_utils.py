@@ -34,11 +34,13 @@ from pathlib import Path
 import pytest
 
 # test that osgeo_utils is available, if not skip all tests
+from osgeo import osr
+
 from osgeo_utils.auxiliary.extent_util import Extent
 
 pytest.importorskip('osgeo_utils')
 
-from osgeo_utils.auxiliary import util, raster_creation, base
+from osgeo_utils.auxiliary import util, raster_creation, base, osr_util
 
 temp_files = []
 
@@ -85,10 +87,19 @@ def test_utils_py_1():
     """ test get_ovr_idx, create_flat_raster """
     filename = 'tmp/raster.tif'
     temp_files.append(filename)
-    raster_creation.create_flat_raster(filename, overview_list=[2, 4])
+
+    epsg = 32635
+    raster_creation.create_flat_raster(filename, overview_list=[2, 4], srs=epsg)
     ds = util.open_ds(filename)
+
     compression = util.get_image_structure_metadata(filename, 'COMPRESSION')
     assert compression == 'DEFLATE'
+
+    srs1 = osr_util.get_srs(ds)
+    srs2 = osr.SpatialReference()
+    srs2.ImportFromEPSG(epsg)
+    assert srs2.IsSame(srs1)
+
     ovr_count = util.get_ovr_count(ds)+1
     assert ovr_count == 3
     pixel_size = util.get_pixel_size(ds)
