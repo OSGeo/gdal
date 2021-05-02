@@ -32,7 +32,7 @@ from typing import Union, Tuple, Optional
 import osgeo
 from osgeo import osr, ogr, gdal
 
-from osgeo_utils.auxiliary.numpy_util import NumpyCompatibleArray
+from osgeo_utils.auxiliary.array_util import ArrayLike
 
 AnySRS = Union[str, int, osr.SpatialReference, gdal.Dataset]
 
@@ -78,8 +78,8 @@ def get_transform(src_srs: AnySRS, tgt_srs: AnySRS) -> Optional[osr.CoordinateTr
 
 
 def transform_points(ct: Optional[osr.CoordinateTransformation],
-                     x: NumpyCompatibleArray, y: NumpyCompatibleArray, z: Optional[NumpyCompatibleArray] = None) -> \
-                     Tuple[NumpyCompatibleArray, NumpyCompatibleArray, Optional[NumpyCompatibleArray]]:
+                     x: ArrayLike, y: ArrayLike, z: Optional[ArrayLike] = None) -> \
+                     Tuple[ArrayLike, ArrayLike, Optional[ArrayLike]]:
     if ct is not None:
         if z is None:
             for idx, (x0, y0) in enumerate(zip(x, y)):
