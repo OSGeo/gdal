@@ -27,12 +27,16 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
+import math
+from numbers import Real
+from typing import Sequence, Tuple
+from osgeo_utils.auxiliary.base import Real2D, GeoTransform, Int2D
 
 
 class GeoRectangle:
     __slots__ = ['x', 'y', 'w', 'h']
 
-    def __init__(self, x, y, w, h, allow_negative_size=False):
+    def __init__(self, x: Real, y: Real, w: Real, h: Real, allow_negative_size=False):
         if w <= 0:
             if allow_negative_size:
                 x = x + w
@@ -45,10 +49,10 @@ class GeoRectangle:
                 h = -h
             else:
                 h = 0
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
+        self.x: Real = x
+        self.y: Real = y
+        self.w: Real = w
+        self.h: Real = h
 
     def __eq__(self, other):
         if not isinstance(other, GeoRectangle):
@@ -181,7 +185,7 @@ class GeoRectangle:
             # assert extent == extent_b
             return extent
 
-    def to_pixels(self, pixel_size):
+    def to_pixels(self, pixel_size: Real2D) -> 'GeoRectangle':
         return self.from_xwyh(self.x / pixel_size[0], self.w / pixel_size[0],
                               self.y / pixel_size[1], self.h / pixel_size[1], True)
 
@@ -194,43 +198,43 @@ class GeoRectangle:
         return cls.from_xwyh(pix_origin[0], size[0], pix_origin[1], size[1])
 
     @property
-    def area(self):
+    def area(self) -> Real:
         return self.w * self.h
 
     @property
-    def size(self):
+    def size(self) -> Real2D:
         return self.w, self.h
 
     @property
-    def left(self):
+    def left(self) -> Real:
         return self.x
 
     @property
-    def right(self):
+    def right(self) -> Real:
         return self.x + self.w
 
     @property
-    def down(self):
+    def down(self) -> Real:
         return self.y
 
     @property
-    def up(self):
+    def up(self) -> Real:
         return self.y + self.h
 
     @property
-    def min_x(self):
+    def min_x(self) -> Real:
         return self.x
 
     @property
-    def max_x(self):
+    def max_x(self) -> Real:
         return self.x + self.w
 
     @property
-    def min_y(self):
+    def min_y(self) -> Real:
         return self.y
 
     @property
-    def max_y(self):
+    def max_y(self) -> Real:
         return self.y + self.h
 
     @property
@@ -270,11 +274,25 @@ class GeoRectangle:
     def __hash__(self):
         return hash(self.xywh)
 
+    def contains(self, other: 'GeoRectangle'):
+        return \
+            self.min_x <= other.min_x and \
+            self.max_x >= other.max_x and \
+            self.min_y <= other.min_y and \
+            self.max_y >= other.max_y
 
-def get_points_extent(gt, cols, rows):
+    def get_size_and_geotransform(self, pixel_size: Real2D) -> Tuple[Int2D, GeoTransform]:
+        origin = self.min_x, self.max_y
+        pix_r = self.to_pixels(pixel_size)
+        size = int(math.ceil(pix_r.size[0])), int(math.ceil(pix_r.size[1]))
+        geotransform = (origin[0], pixel_size[0], 0, origin[1], 0, pixel_size[1])
+        return size, geotransform
+
+
+def get_points_extent(gt, cols, rows) -> Sequence[Real2D]:
     """Return list of corner coordinates from a geotransform"""
 
-    def transform_point(px, py):
+    def transform_point(px, py) -> Real2D:
         x = gt[0] + (px * gt[1]) + (py * gt[2])
         y = gt[3] + (px * gt[4]) + (py * gt[5])
         return x, y
@@ -285,4 +303,3 @@ def get_points_extent(gt, cols, rows):
         transform_point(cols, rows),
         transform_point(cols, 0),
     ]
-
