@@ -31,10 +31,12 @@ import math
 import tempfile
 from numbers import Number
 from enum import Enum
-from typing import Optional, Union, Sequence, Dict
+from typing import Optional, Union, Sequence, Dict, Tuple
 
-from osgeo import gdal
+from osgeo import gdal, osr
+
 from osgeo_utils.auxiliary.rectangle import GeoRectangle
+from osgeo_utils.auxiliary.base import GeoTransform
 
 
 class Extent(Enum):
@@ -60,9 +62,6 @@ class GT(Enum):
     INCOMPATIBLE_PIXEL_SIZE = 1
     INCOMPATIBLE_ROTATION = 2
     NON_ZERO_ROTATION = 3
-
-
-GeoTransform = Sequence[Number]
 
 
 def gt_diff(gt0: GeoTransform, gt1: GeoTransform, diff_support: Dict[GT, bool], eps: Union[Number, Dict[GT, Number]]=0.0):
@@ -121,3 +120,49 @@ def make_temp_vrt(ds, extent: GeoRectangle):
     if vrt_ds is None:
         raise Exception("Error! cannot create vrt. Cannot proceed")
     return vrt_filename, vrt_ds
+
+
+def get_geotransform_and_size(ds: gdal.Dataset) -> Tuple[GeoTransform, Tuple[int, int]]:
+    return ds.GetGeoTransform(), (ds.RasterXSize, ds.RasterYSize)
+
+
+def calc_dx_dy_from_extent_and_count(extent: GeoRectangle, sample_count: int) -> Tuple[float, float]:
+    (min_x, max_x, min_y, max_y) = extent.min_max
+    w = max_x - min_x
+    h = max_y - min_y
+    pix_area = w * h / sample_count
+    if pix_area <= 0 or w <= 0 or h <= 0:
+        return 0, 0
+    pix_len = math.sqrt(pix_area)
+    return pix_len, pix_len
+
+
+def transform_extent(extent: GeoRectangle,
+                     transform: osr.CoordinateTransformation, sample_count: int = 1000) -> GeoRectangle:
+    """ returns a transformed extent by transforming sample_count points along a given extent """
+    if transform is None:
+        return extent
+    maxf = float("inf")
+    (out_min_x, out_max_x, out_min_y, out_max_y) = (maxf, -maxf, maxf, -maxf)
+
+    dx, dy = calc_dx_dy_from_extent_and_count(extent, sample_count)
+    if dx == 0:
+        return GeoRectangle.empty()
+
+    y = float(extent.min_y)
+    while y <= extent.max_y + dy:
+        x = float(extent.min_x)
+        while x <= extent.max_x + dx:
+            tx, ty, tz = transform.TransformPoint(x, y)
+            x += dx
+            if not math.isfinite(tz):
+                continue
+            out_min_x = min(out_min_x, tx)
+            out_max_x = max(out_max_x, tx)
+            out_min_y = min(out_min_y, ty)
+            out_max_y = max(out_max_y, ty)
+        y += dy
+
+    return GeoRectangle.from_min_max(out_min_x, out_max_x, out_min_y, out_max_y)
+
+
