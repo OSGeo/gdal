@@ -40,8 +40,8 @@ import numpy as np
 from osgeo import gdalconst, osr, gdal
 
 from osgeo_utils.auxiliary.base import is_path_like
-from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet, NumpyCompatibleArrayOrReal, \
-    NumpyCompatibleArray
+from osgeo_utils.auxiliary.arrays import ArrayLike, ArrayOrScalarLike
+from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
 from osgeo_utils.auxiliary.osr_util import transform_points, AnySRS, get_transform, get_srs
 from osgeo_utils.auxiliary.util import PathOrDS, open_ds, get_bands, get_scales_and_offsets, get_band_nums
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
@@ -67,7 +67,7 @@ CoordinateTransformationOrSRS = Optional[
 
 
 def gdallocationinfo(filename_or_ds: PathOrDS,
-                     x: NumpyCompatibleArrayOrReal, y: NumpyCompatibleArrayOrReal,
+                     x: ArrayOrScalarLike, y: ArrayOrScalarLike,
                      gis_order: bool = False,
                      open_options: Optional[dict] = None,
                      ovr_idx: Optional[int] = None,
@@ -82,9 +82,9 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
     filename = filename_or_ds if is_path_like(filename_or_ds) else ''
     if ds is None:
         raise Exception(f'Could not open {filename}.')
-    if not isinstance(x, NumpyCompatibleArray.__args__):
+    if not isinstance(x, ArrayLike.__args__):
         x = [x]
-    if not isinstance(y, NumpyCompatibleArray.__args__):
+    if not isinstance(y, ArrayLike.__args__):
         y = [y]
     if len(x) != len(y):
         raise Exception(f'len(x)={len(x)} should be the same as len(y)={len(y)}')
@@ -161,7 +161,7 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
 
 
 def gdallocationinfo_util(filename_or_ds: PathOrDS,
-                     x: NumpyCompatibleArrayOrReal, y: NumpyCompatibleArrayOrReal,
+                     x: ArrayOrScalarLike, y: ArrayOrScalarLike,
                      open_options: Optional[dict] = None,
                      band_nums: Optional[Sequence[int]] = None,
                      resample_alg=gdalconst.GRIORA_NearestNeighbour,

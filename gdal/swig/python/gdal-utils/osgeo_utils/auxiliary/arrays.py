@@ -3,11 +3,11 @@
 # ******************************************************************************
 #
 #  Project:  GDAL utils.auxiliary
-#  Purpose:  utility functions for gdal-numpy integration
+#  Purpose:  array and scalar related types functions
 #  Author:   Idan Miara <idan@miara.com>
 #
 # ******************************************************************************
-#  Copyright (c) 2020, Idan Miara <idan@miara.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -28,29 +28,31 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 import array
-from numbers import Real
-from typing import Union, Sequence
+from typing import Union, Sequence, TYPE_CHECKING
 
-from osgeo import gdal, gdal_array
-import numpy as np
+ScalarLike = Union[
+    int,
+    float,
+]
 
-from osgeo_utils.auxiliary.arrays import \
-    ArrayLike as NumpyCompatibleArray, \
-    ArrayOrScalarLike as NumpyCompatibleArrayOrReal  # noqa backwards compatibility
+if TYPE_CHECKING:
+    # avoid "TypeError: Subscripted generics cannot be used with class and instance checks" while using isinstance()
+    ArrayLike = Union[
+        ScalarLike,
+        Sequence[ScalarLike],
+        array.array,
+    ]
+else:
+    ArrayLike = Union[
+        ScalarLike,
+        Sequence,
+        array.array,
+    ]
 
+try:
+    from numpy import ndarray
+    ArrayLike = Union[ArrayLike, ndarray]
+except ImportError:
+    pass
 
-def GDALTypeCodeToNumericTypeCodeEx(buf_type, signed_byte, default=None):
-    typecode = gdal_array.GDALTypeCodeToNumericTypeCode(buf_type)
-    if typecode is None:
-        typecode = default
-
-    if buf_type == gdal.GDT_Byte and signed_byte:
-        typecode = np.int8
-    return typecode
-
-
-def GDALTypeCodeAndNumericTypeCodeFromDataSet(ds):
-    buf_type = ds.GetRasterBand(1).DataType
-    signed_byte = ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
-    np_typecode = GDALTypeCodeToNumericTypeCodeEx(buf_type, signed_byte=signed_byte, default=np.float32)
-    return buf_type, np_typecode
+ArrayOrScalarLike = Union[ArrayLike, ScalarLike]
