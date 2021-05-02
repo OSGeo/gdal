@@ -41,7 +41,9 @@ MaybeSequence = Union[T, Sequence[T]]
 PathLikeOrStr = Union[str, os.PathLike]
 SequenceNotString = Union[List, Tuple]
 Real2D = Tuple[Real, Real]
+Int2D = Tuple[int, int]
 OptionalBoolStr = Optional[Union[str, bool]]
+GeoTransform = Tuple[Real, Real, Real, Real, Real, Real]
 
 
 def enum_to_str(enum_or_str: Union[Enum, str]) -> str:
