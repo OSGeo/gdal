@@ -42,7 +42,9 @@ def get_srs(srs: AnySRS, gis_order: bool = False) -> osr.SpatialReference:
     if isinstance(srs, osr.SpatialReference):
         pass
     elif isinstance(srs, gdal.Dataset):
-        srs = get_srs_from_ds(srs)
+        ds = srs
+        srs = osr.SpatialReference()
+        srs.ImportFromWkt(ds.GetProjection())
     elif isinstance(srs, int):
         srs_ = osr.SpatialReference()
         if srs_.ImportFromEPSG(srs) != ogr.OGRERR_NONE:
@@ -62,10 +64,21 @@ def get_srs(srs: AnySRS, gis_order: bool = False) -> osr.SpatialReference:
     return srs
 
 
-def get_srs_from_ds(ds: gdal.Dataset) -> osr.SpatialReference:
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(ds.GetProjection())
-    return srs
+get_srs_from_ds = get_srs  # for backwards compatibility
+
+
+def get_srs_pj(srs: AnySRS) -> str:
+    srs = get_srs(srs)
+    srs_pj4 = srs.ExportToProj4()
+    return srs_pj4
+
+
+def are_srs_equivalent(srs1: AnySRS, srs2: AnySRS) -> bool:
+    if srs1 == srs2:
+        return True
+    srs1 = get_srs(srs1)
+    srs2 = get_srs(srs2)
+    return srs1.IsSame(srs2)
 
 
 def get_transform(src_srs: AnySRS, tgt_srs: AnySRS) -> Optional[osr.CoordinateTransformation]:
