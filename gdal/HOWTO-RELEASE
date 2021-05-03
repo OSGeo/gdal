@@ -219,13 +219,13 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
     b) python setup.py bdist_wheel
 
     c) Check the output:
-        twine check dist/gdal-utils-*.whl
+        twine check dist/gdal_utils-*.whl
 
     c) For trial :
-        twine upload dist/gdal-utils-*.whl -r pypitest
+        twine upload dist/gdal_utils-*.whl -r pypitest
 
     d) For real :
-        twine upload dist/gdal-utils-*.whl
+        twine upload dist/gdal_utils-*.whl
 
 16) Build and bundle the java bindings.
 
