@@ -386,10 +386,7 @@ def test_cog_small_world_to_web_mercator():
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
-    if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
-        assert got_cs != [0, 0, 0]
-    else:
-        assert got_cs == [26293, 23439, 14955]
+    assert got_cs == [26293, 23439, 14955] or got_cs == [26228, 22085, 12992]
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 17849
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None
