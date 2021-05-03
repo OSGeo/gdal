@@ -7,14 +7,21 @@ Sponsors
 GDAL is a truly collaborative effort, with many diverse organizations
 contributing resources to its success. The following organizations take an
 extra step, providing unrestricted funding every year to maintain and improve
-the health of project:
+the health of the project:
 
 - Platinum level:
 
-  .. _platinium-sponsors:
+  .. _platinum-sponsors:
   .. container:: horizontal-logos
 
     .. Note: they will appear in randomized order in HTML
+
+    .. container:: horizontal-logo
+
+        .. image:: ../../images/sponsors/logo-maxar.png
+           :class: img-logos
+           :width: 250 px
+           :target: https://www.maxar.com
 
     .. container:: horizontal-logo
 
@@ -133,7 +140,7 @@ the health of project:
 
         return this;
     };
-    $('#platinium-sponsors').randomize('div.horizontal-logo');
+    $('#platinum-sponsors').randomize('div.horizontal-logo');
     $('#gold-sponsors').randomize('div.horizontal-logo');
     $('#silver-sponsors').randomize('div.horizontal-logo');
     $('#supporter-sponsors').randomize('div.horizontal-logo');
@@ -174,6 +181,8 @@ Related resources
 
 - `Sustainable GDAL Sponsorship Prospectus`_.
 - :ref:`Sponsoring frequently asked questions (FAQ) <sponsoring-faq>`.
+
+.. Source of the PDF is at https://docs.google.com/document/d/1yhMWeI_LgEXPUkngqOitqcKfp7ov6WsS41v5ulz-kd0/edit#
 
 .. _Sustainable GDAL Sponsorship Prospectus: https://gdal.org/sponsors/Sustainable%20GDAL%20Sponsorship%20Prospectus.pdf
 

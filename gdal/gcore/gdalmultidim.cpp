@@ -392,7 +392,7 @@ std::vector<std::shared_ptr<GDALDimension>> GDALGroup::GetDimensions(
  * The return value should not be freed and is valid until GDALGroup is
  * released or this function called again.
  *
- * This is the same as the C function GDALGroupGetStruturalInfo().
+ * This is the same as the C function GDALGroupGetStructuralInfo().
  */
 CSLConstList GDALGroup::GetStructuralInfo() const
 {
@@ -3242,7 +3242,7 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset* poSrcDS,
  * The return value should not be freed and is valid until GDALMDArray is
  * released or this function called again.
  *
- * This is the same as the C function GDALMDArrayGetStruturalInfo().
+ * This is the same as the C function GDALMDArrayGetStructuralInfo().
  */
 CSLConstList GDALMDArray::GetStructuralInfo() const
 {
@@ -4893,7 +4893,7 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetUnscaled() const
 }
 
 /************************************************************************/
-/*                      GDALMDArrayTransposed                           */
+/*                         GDALMDArrayMask                              */
 /************************************************************************/
 
 class GDALMDArrayMask final: public GDALMDArray
@@ -7425,7 +7425,7 @@ GDALAttributeH *GDALGroupGetAttributes(GDALGroupH hGroup, size_t* pnCount,
  * The return value should not be freed and is valid until GDALGroup is
  * released or this function called again.
  *
- * This is the same as the C++ method GDALGroup::GetStruturalInfo().
+ * This is the same as the C++ method GDALGroup::GetStructuralInfo().
  */
 CSLConstList GDALGroupGetStructuralInfo(GDALGroupH hGroup)
 {
@@ -8241,7 +8241,7 @@ size_t *GDALMDArrayGetProcessingChunkSize(GDALMDArrayH hArray, size_t *pnCount,
  * The return value should not be freed and is valid until GDALMDArray is
  * released or this function called again.
  *
- * This is the same as the C++ method GDALMDArray::GetStruturalInfo().
+ * This is the same as the C++ method GDALMDArray::GetStructuralInfo().
  */
 CSLConstList GDALMDArrayGetStructuralInfo(GDALMDArrayH hArray)
 {

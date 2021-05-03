@@ -63,7 +63,7 @@ def main(argv):
     outNoData = None
     infile = None
     outfile = None
-    frmt = 'GTiff'
+    driver_name = 'GTiff'
     typ = gdal.GDT_Byte
 
     # Parse command line arguments.
@@ -81,7 +81,7 @@ def main(argv):
 
         elif arg == '-of':
             i = i + 1
-            frmt = argv[i]
+            driver_name = argv[i]
 
         elif arg == '-ot':
             i = i + 1
@@ -109,7 +109,7 @@ def main(argv):
 
     indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
-    out_driver = gdal.GetDriverByName(frmt)
+    out_driver = gdal.GetDriverByName(driver_name)
     outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
 
     gt = indataset.GetGeoTransform()

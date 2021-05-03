@@ -181,3 +181,35 @@ def test_numpy_rw_multidim_compound_datatype():
     assert myarray.WriteArray(ar) == gdal.CE_None
     res = myarray.ReadAsArray()
     assert np.array_equal(res, ar)
+
+###############################################################################
+
+
+@pytest.mark.parametrize("datatype", [gdal.GDT_Byte,
+                                      gdal.GDT_Int16,
+                                      gdal.GDT_UInt16,
+                                      gdal.GDT_Int32,
+                                      gdal.GDT_UInt32,
+                                      gdal.GDT_Float32,
+                                      gdal.GDT_Float64,
+                                      gdal.GDT_CInt16,
+                                      gdal.GDT_CInt32,
+                                      gdal.GDT_CFloat32,
+                                      gdal.GDT_CFloat64, ], ids=gdal.GetDataTypeName)
+def test_numpy_rw_multidim_datatype(datatype):
+
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+    import numpy as np
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim = rg.CreateDimension("dim0", None, None, 2)
+    myarray = rg.CreateMDArray("myarray", [ dim ], gdal.ExtendedDataType.Create(datatype))
+    assert myarray
+    numpy_ar = np.reshape(np.arange(0, 2, dtype=np.uint16), (2,))
+    assert myarray.WriteArray(numpy_ar) == gdal.CE_None
+    got = myarray.ReadAsArray()
+    assert np.array_equal(got, numpy_ar)
+    assert np.array_equal(myarray.ReadAsArray(buf_obj = np.zeros(got.shape, got.dtype)), numpy_ar)

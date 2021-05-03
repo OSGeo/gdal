@@ -83,7 +83,7 @@ supported as well as luts of more than 256 input values.
 
 
 def main(argv):
-    frmt = 'GTiff'
+    driver_name = 'GTiff'
     src_filename = None
     dst_filename = None
     src_band_n = 1
@@ -103,7 +103,7 @@ def main(argv):
 
         if arg == '-of':
             i = i + 1
-            frmt = argv[i]
+            driver_name = argv[i]
 
         elif arg == '-co':
             i = i + 1
@@ -185,9 +185,9 @@ def main(argv):
     # ----------------------------------------------------------------------------
     # Open or create output file.
 
-    dst_driver = gdal.GetDriverByName(frmt)
+    dst_driver = gdal.GetDriverByName(driver_name)
     if dst_driver is None:
-        print('"%s" driver not registered.' % frmt)
+        print('"%s" driver not registered.' % driver_name)
         return 1
 
     if dst_ds is None:

@@ -302,7 +302,7 @@ def main(argv=None):
     verbose = 0
     quiet = 0
     names = []
-    frmt = None
+    driver_name = None
     out_file = 'out.tif'
 
     ulx = None
@@ -374,7 +374,7 @@ def main(argv=None):
 
         elif arg == '-f' or arg == '-of':
             i = i + 1
-            frmt = argv[i]
+            driver_name = argv[i]
 
         elif arg == '-co':
             i = i + 1
@@ -408,17 +408,17 @@ def main(argv=None):
         print('No input files selected.')
         return Usage()
 
-    if frmt is None:
-        frmt = GetOutputDriverFor(out_file)
+    if driver_name is None:
+        driver_name = GetOutputDriverFor(out_file)
 
-    Driver = gdal.GetDriverByName(frmt)
-    if Driver is None:
-        print('Format driver %s not found, pick a supported driver.' % frmt)
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        print('Format driver %s not found, pick a supported driver.' % driver_name)
         return 1
 
-    DriverMD = Driver.GetMetadata()
+    DriverMD = driver.GetMetadata()
     if 'DCAP_CREATE' not in DriverMD:
-        print('Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % frmt)
+        print('Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % driver_name)
         return 1
 
     # Collect information on all the source files.
@@ -470,7 +470,7 @@ def main(argv=None):
         else:
             bands = file_infos[0].bands
 
-        t_fh = Driver.Create(out_file, xsize, ysize, bands,
+        t_fh = driver.Create(out_file, xsize, ysize, bands,
                              band_type, create_options)
         if t_fh is None:
             print('Creation failed, terminating gdal_merge.')

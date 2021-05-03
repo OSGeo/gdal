@@ -9,6 +9,7 @@
 #
 ###############################################################################
 #  Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -32,6 +33,9 @@
 import os
 import os.path
 import sys
+from numbers import Real
+from typing import Optional, Sequence, Union, List
+
 from osgeo import gdal
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
@@ -48,34 +52,32 @@ def Usage():
     return -1
 
 
-def gdal_pansharpen(argv):
-
+def main(argv):
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1
 
     pan_name = None
-    last_name = None
+    spectral_names = []
     spectral_ds = []
     spectral_bands = []
-    out_name = None
-    bands = []
+    band_nums = []
     weights = []
-    frmt = None
+    driver_name = None
     creation_options = []
-    callback = gdal.TermProgress_nocb
+    progress_callback = gdal.TermProgress_nocb
     resampling = None
     spat_adjust = None
     verbose_vrt = False
     num_threads = None
     bitdepth = None
-    nodata = None
+    nodata_value = None
 
     i = 1
     argc = len(argv)
     while i < argc:
         if (argv[i] == '-of' or argv[i] == '-f') and i < len(argv) - 1:
-            frmt = argv[i + 1]
+            driver_name = argv[i + 1]
             i = i + 1
         elif argv[i] == '-r' and i < len(argv) - 1:
             resampling = argv[i + 1]
@@ -84,7 +86,7 @@ def gdal_pansharpen(argv):
             spat_adjust = argv[i + 1]
             i = i + 1
         elif argv[i] == '-b' and i < len(argv) - 1:
-            bands.append(int(argv[i + 1]))
+            band_nums.append(int(argv[i + 1]))
             i = i + 1
         elif argv[i] == '-w' and i < len(argv) - 1:
             weights.append(float(argv[i + 1]))
@@ -99,10 +101,10 @@ def gdal_pansharpen(argv):
             bitdepth = argv[i + 1]
             i = i + 1
         elif argv[i] == '-nodata' and i < len(argv) - 1:
-            nodata = argv[i + 1]
+            nodata_value = argv[i + 1]
             i = i + 1
         elif argv[i] == '-q':
-            callback = None
+            progress_callback = None
         elif argv[i] == '-verbose_vrt':
             verbose_vrt = True
         elif argv[i][0] == '-':
@@ -110,45 +112,63 @@ def gdal_pansharpen(argv):
             return Usage()
         elif pan_name is None:
             pan_name = argv[i]
-            pan_ds = gdal.Open(pan_name)
-            if pan_ds is None:
-                return 1
         else:
-            if last_name is not None:
-                pos = last_name.find(',band=')
-                if pos > 0:
-                    spectral_name = last_name[0:pos]
-                    ds = gdal.Open(spectral_name)
-                    if ds is None:
-                        return 1
-                    band_num = int(last_name[pos + len(',band='):])
-                    band = ds.GetRasterBand(band_num)
-                    spectral_ds.append(ds)
-                    spectral_bands.append(band)
-                else:
-                    spectral_name = last_name
-                    ds = gdal.Open(spectral_name)
-                    if ds is None:
-                        return 1
-                    for j in range(ds.RasterCount):
-                        spectral_ds.append(ds)
-                        spectral_bands.append(ds.GetRasterBand(j + 1))
-
-            last_name = argv[i]
+            spectral_names.append(argv[i])
 
         i = i + 1
 
+    dst_filename = spectral_names.pop()
+    return gdal_pansharpen(argv=None,
+                           pan_name=pan_name,
+                           spectral_names=spectral_names, spectral_ds=spectral_ds, spectral_bands=spectral_bands,
+                           band_nums=band_nums, weights=weights,
+                           dst_filename=dst_filename, driver_name=driver_name, creation_options=creation_options,
+                           resampling=resampling, spat_adjust=spat_adjust,
+                           num_threads=num_threads, bitdepth=bitdepth, nodata_value=nodata_value,
+                           verbose_vrt=verbose_vrt,
+                           progress_callback=progress_callback)
+
+
+def gdal_pansharpen(argv: Optional[Sequence[str]] = None,
+                    pan_name: Optional[str] = None,
+                    spectral_names: Optional[Sequence[str]] = None,
+                    spectral_ds: Optional[List[gdal.Dataset]] = None, spectral_bands: Optional[List[gdal.Band]] = None,
+                    band_nums: Optional[Sequence[int]] = None, weights: Optional[Sequence[float]] = None,
+                    dst_filename: Optional[str] = None, driver_name: Optional[str] = None,
+                    creation_options: Optional[Sequence[str]] = None,
+                    resampling: Optional[str] = None, spat_adjust: Optional[str] = None,
+                    num_threads: Optional[Union[int, str]] = None, bitdepth: Optional[Union[int, str]] = None,
+                    nodata_value: Optional[Union[Real, str]] = None,
+                    verbose_vrt: bool = False,
+                    progress_callback: Optional = gdal.TermProgress_nocb):
+    if argv:
+        # this is here for backwards compatibility
+        return main(argv)
+
+    spectral_names = spectral_names or []
+    spectral_ds = spectral_ds or []
+    spectral_bands = spectral_bands or []
+    band_nums = band_nums or []
+    weights = weights or []
+    creation_options = creation_options or []
+
+    if spectral_names:
+        parse_spectral_names(spectral_names=spectral_names, spectral_ds=spectral_ds, spectral_bands=spectral_bands)
+
     if pan_name is None or not spectral_bands:
-        return Usage()
-    out_name = last_name
+        return 1
 
-    if frmt is None:
-        frmt = GetOutputDriverFor(out_name)
+    pan_ds = gdal.Open(pan_name)
+    if pan_ds is None:
+        return 1
 
-    if not bands:
-        bands = [j + 1 for j in range(len(spectral_bands))]
+    if driver_name is None:
+        driver_name = GetOutputDriverFor(dst_filename)
+
+    if not band_nums:
+        band_nums = [j + 1 for j in range(len(spectral_bands))]
     else:
-        for band in bands:
+        for band in band_nums:
             if band < 0 or band > len(spectral_bands):
                 print('Invalid band number in -b: %d' % band)
                 return 1
@@ -158,8 +178,8 @@ def gdal_pansharpen(argv):
         return 1
 
     vrt_xml = """<VRTDataset subClass="VRTPansharpenedDataset">\n"""
-    if bands != [j + 1 for j in range(len(spectral_bands))]:
-        for i, band in enumerate(bands):
+    if band_nums != [j + 1 for j in range(len(spectral_bands))]:
+        for i, band in enumerate(band_nums):
             sband = spectral_bands[band - 1]
             datatype = gdal.GetDataTypeName(sband.DataType)
             colorname = gdal.GetColorInterpretationName(sband.GetColorInterpretation())
@@ -180,25 +200,25 @@ def gdal_pansharpen(argv):
         vrt_xml += """      </AlgorithmOptions>\n"""
 
     if resampling is not None:
-        vrt_xml += '      <Resampling>%s</Resampling>\n' % resampling
+        vrt_xml += f'      <Resampling>{resampling}</Resampling>\n'
 
     if num_threads is not None:
-        vrt_xml += '      <NumThreads>%s</NumThreads>\n' % num_threads
+        vrt_xml += f'      <NumThreads>{num_threads}</NumThreads>\n'
 
     if bitdepth is not None:
-        vrt_xml += '      <BitDepth>%s</BitDepth>\n' % bitdepth
+        vrt_xml += f'      <BitDepth>{bitdepth}</BitDepth>\n'
 
-    if nodata is not None:
-        vrt_xml += '      <NoData>%s</NoData>\n' % nodata
+    if nodata_value is not None:
+        vrt_xml += f'      <NoData>{nodata_value}</NoData>\n'
 
     if spat_adjust is not None:
-        vrt_xml += '      <SpatialExtentAdjustment>%s</SpatialExtentAdjustment>\n' % spat_adjust
+        vrt_xml += f'      <SpatialExtentAdjustment>{spat_adjust}</SpatialExtentAdjustment>\n'
 
     pan_relative = '0'
-    if frmt.upper() == 'VRT':
+    if driver_name.upper() == 'VRT':
         if not os.path.isabs(pan_name):
             pan_relative = '1'
-            pan_name = os.path.relpath(pan_name, os.path.dirname(out_name))
+            pan_name = os.path.relpath(pan_name, os.path.dirname(dst_filename))
 
     vrt_xml += """    <PanchroBand>
       <SourceFilename relativeToVRT="%s">%s</SourceFilename>
@@ -207,17 +227,17 @@ def gdal_pansharpen(argv):
 
     for i, sband in enumerate(spectral_bands):
         dstband = ''
-        for j, band in enumerate(bands):
+        for j, band in enumerate(band_nums):
             if i + 1 == band:
                 dstband = ' dstBand="%d"' % (j + 1)
                 break
 
         ms_relative = '0'
         ms_name = spectral_ds[i].GetDescription()
-        if frmt.upper() == 'VRT':
+        if driver_name.upper() == 'VRT':
             if not os.path.isabs(ms_name):
                 ms_relative = '1'
-                ms_name = os.path.relpath(ms_name, os.path.dirname(out_name))
+                ms_name = os.path.relpath(ms_name, os.path.dirname(dst_filename))
 
         vrt_xml += """    <SpectralBand%s>
       <SourceFilename relativeToVRT="%s">%s</SourceFilename>
@@ -227,32 +247,55 @@ def gdal_pansharpen(argv):
     vrt_xml += """  </PansharpeningOptions>\n"""
     vrt_xml += """</VRTDataset>\n"""
 
-    if frmt.upper() == 'VRT':
-        f = gdal.VSIFOpenL(out_name, 'wb')
+    if driver_name.upper() == 'VRT':
+        f = gdal.VSIFOpenL(dst_filename, 'wb')
         if f is None:
-            print('Cannot create %s' % out_name)
+            print('Cannot create %s' % dst_filename)
             return 1
         gdal.VSIFWriteL(vrt_xml, 1, len(vrt_xml), f)
         gdal.VSIFCloseL(f)
         if verbose_vrt:
-            vrt_ds = gdal.Open(out_name, gdal.GA_Update)
+            vrt_ds = gdal.Open(dst_filename, gdal.GA_Update)
             vrt_ds.SetMetadata(vrt_ds.GetMetadata())
         else:
-            vrt_ds = gdal.Open(out_name)
+            vrt_ds = gdal.Open(dst_filename)
         if vrt_ds is None:
             return 1
 
         return 0
 
     vrt_ds = gdal.Open(vrt_xml)
-    out_ds = gdal.GetDriverByName(frmt).CreateCopy(out_name, vrt_ds, 0, creation_options, callback=callback)
+    out_ds = gdal.GetDriverByName(driver_name).CreateCopy(dst_filename, vrt_ds, 0, creation_options,
+                                                          callback=progress_callback)
     if out_ds is None:
         return 1
     return 0
 
 
-def main(argv):
-    return gdal_pansharpen(argv)
+def parse_spectral_names(spectral_names: Sequence[str],
+                         spectral_ds: List[gdal.Dataset],
+                         spectral_bands: List[gdal.Band]):
+    for spectral_arg in spectral_names:
+        # add selected bands
+        pos = spectral_arg.find(',band=')
+        if pos > 0:
+            spectral_name = spectral_arg[0:pos]
+            ds = gdal.Open(spectral_name)
+            if ds is None:
+                return 1
+            band_num = int(spectral_arg[pos + len(',band='):])
+            band = ds.GetRasterBand(band_num)
+            spectral_ds.append(ds)
+            spectral_bands.append(band)
+        else:
+            # add all bands
+            spectral_name = spectral_arg
+            ds = gdal.Open(spectral_name)
+            if ds is None:
+                return 1
+            for j in range(ds.RasterCount):
+                spectral_ds.append(ds)
+                spectral_bands.append(ds.GetRasterBand(j + 1))
 
 
 if __name__ == '__main__':

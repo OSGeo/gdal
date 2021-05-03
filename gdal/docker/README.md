@@ -14,7 +14,7 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 * Image size: ~ 50 MB
 * Raster drivers: VRT, GTiff, HFA, PNG, JPEG, MEM, JP2OpenJPEG, WEB, GPKG
 * Vector drivers: Shapefile, MapInfo, VRT, Memory, GeoJSON, GPKG, SQLite
-* External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp, libzstd
+* External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp, libzstd, libtiff (no LERC support at time of writing)
 * No GDAL Python
 * Base PROJ grid package
 * Overall licensing terms of the GDAL build: permissive (X/MIT, BSD style, Apache, etc..)
@@ -26,6 +26,7 @@ See [alpine-ultrasmall/Dockerfile](alpine-ultrasmall/Dockerfile)
 * Image size: ~ 59 MB
 * Raster drivers: ultrasmall + built-in + SQLite-based ones + network-based ones
 * Vector drivers: ultrasmall + built-in + most XML-based ones + network-based ones + PostgreSQL
+* Using internal libtiff and libgeotiff
 * External libraries enabled: ultrasmall + libexpat, libpq, libssl
 * No GDAL Python
 * Base PROJ grid package
@@ -38,6 +39,7 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 * Image size: ~ 242 MB
 * Raster drivers: small + netCDF, HDF5, BAG
 * Vector drivers: small + Spatialite, XLS
+* Using internal libtiff and libgeotiff
 * External libraries enabled: small + libgeos, libhdf5, libhdf5, libkea, libnetcdf, libfreexl,
   libspatialite, libxml2, libpoppler, openexr, libheif, libdeflate
 * GDAL Python (Python 3.8)
@@ -53,6 +55,7 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 * Image size: ~ 280 MB
 * Raster drivers: all built-in + JPEG + PNG + JP2OpenJPEG + WEBP +SQLite-based ones + network-based ones
 * Vector drivers: all built-in + XML based ones + SQLite-based ones + network-based ones + PostgreSQL
+* Using internal libtiff and libgeotiff
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
   libzstd, libexpat, libxerces-c, libpq, libssl, libgeos
 * GDAL Python (Python 3.8)
@@ -66,6 +69,7 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 * Image size: ~ 1.48 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
 * Vector drivers: all based on almost all possible free and open-source dependencies
+* Using internal libtiff and libgeotiff
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
   libkml, libpoppler, pdfium, openexr, libheif, libdeflate

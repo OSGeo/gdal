@@ -58,12 +58,12 @@ def check_file(filename_or_ds, checksum, i=None, bnd_idx=1):
         ds = gdal.Open(os.fspath(filename_or_ds))
     else:
         ds = filename_or_ds
-    assert ds is not None, 'ds{} not found'.format(i if i is not None else '')
+    assert ds is not None, f'ds{i if i is not None else ""} not found'
     ds_checksum = ds.GetRasterBand(bnd_idx).Checksum()
     if checksum is None:
-        print('ds{} bnd{} checksum is {}'.format(i, bnd_idx, ds_checksum))
+        print(f'ds{i} bnd{bnd_idx} checksum is {ds_checksum}')
     else:
-        assert ds_checksum == checksum, 'ds{} bnd{} wrong checksum, expected {}, got {}'.format(i, bnd_idx, checksum, ds_checksum)
+        assert ds_checksum == checksum, f'ds{i} bnd{bnd_idx} wrong checksum, expected {checksum}, got {ds_checksum}'
     return ds
 
 
@@ -115,9 +115,12 @@ def test_gdal_calc_py_1():
     test_id, test_count = 1, 3
     out = make_temp_filename_list(test_id, test_count)
 
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --calc=A --overwrite --outfile {}'.format(infile, out[0]))
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --A_band=2 --calc=A --overwrite --outfile {}'.format(infile, out[1]))
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-Z {} --Z_band=2 --calc=Z --overwrite --outfile {}'.format(infile, out[2]))
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-A {infile} --calc=A --overwrite --outfile {out[0]}')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-A {infile} --A_band=2 --calc=A --overwrite --outfile {out[1]}')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-Z {infile} --Z_band=2 --calc=Z --overwrite --outfile {out[2]}')
 
     for i, checksum in zip(range(test_count), (input_checksum[0], input_checksum[1], input_checksum[1])):
         check_file(out[i], checksum, i+1)
@@ -134,13 +137,19 @@ def test_gdal_calc_py_2():
     test_id, test_count = 2, 3
     out = make_temp_filename_list(test_id, test_count)
 
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --A_band 1 -B {} --B_band 2 --calc=A+B --overwrite --outfile {}'.format(infile, infile, out[0]))
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --A_band 1 -B {} --B_band 2 --calc=A*B --overwrite --outfile {}'.format(infile, infile, out[1]))
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --A_band 1 --calc="sqrt(A)" --type=Float32 --overwrite --outfile {}'.format(infile, out[2]))
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-A {infile} --A_band 1 -B {infile} --B_band 2 --calc=A+B '
+                                  f'--overwrite --outfile {out[0]}')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-A {infile} --A_band 1 -B {infile} --B_band 2 --calc=A*B '
+                                  f'--overwrite --outfile {out[1]}')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-A {infile} --A_band 1 --calc="sqrt(A)" --type=Float32 '
+                                  f'--overwrite --outfile {out[2]}')
 
     for i, checksum in zip(range(test_count), (12368, 62785, 47132)):
         check_file(out[i], checksum, i+1)
-#
+
 
 def test_gdal_calc_py_3():
     """ test --allBands option (simple copy) """
@@ -153,7 +162,8 @@ def test_gdal_calc_py_3():
     test_id, test_count = 3, 1
     out = make_temp_filename_list(test_id, test_count)
 
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --allBands A --calc=A --overwrite --outfile {}'.format(infile, out[0]))
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-A {infile} --allBands A --calc=A --overwrite --outfile {out[0]}')
 
     bnd_count = 4
     for i, checksum in zip(range(bnd_count), input_checksum[0:bnd_count]):
@@ -172,15 +182,19 @@ def test_gdal_calc_py_4():
     out = make_temp_filename_list(test_id, test_count)
 
     # some values are clipped to 255, but this doesn't matter... small values were visually checked
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --calc=1 --overwrite --outfile {}'.format(infile, out[0]))
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} -B {} --B_band 1 --allBands A --calc=A+B --NoDataValue=999 --overwrite --outfile {}'.format(infile, out[0], out[1]))
+    test_py_scripts.run_py_script(script_path, 'gdal_calc', f'-A {infile} --calc=1 --overwrite --outfile {out[0]}')
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-A {infile} -B {out[0]} --B_band 1 --allBands A --calc=A+B --NoDataValue=999 '
+                                  f'--overwrite --outfile {out[1]}')
 
     bnd_count = 3
     for i, checksum in zip(range(bnd_count), (29935, 13128, 59092)):
         check_file(out[1], checksum, 2, bnd_idx=i+1)
 
     # these values were not tested
-    test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} -B {} --B_band 1 --allBands A --calc=A*B --NoDataValue=999 --overwrite --outfile {}'.format(infile, infile, out[2]))
+    test_py_scripts.run_py_script(script_path, 'gdal_calc',
+                                  f'-A {infile} -B {infile} --B_band 1 --allBands A --calc=A*B --NoDataValue=999 '
+                                  f'--overwrite --outfile {out[2]}')
 
     bnd_count = 3
     for i, checksum in zip(range(bnd_count), (10025, 62785, 10621)):
@@ -282,8 +296,8 @@ def test_gdal_calc_py_8():
 
     test_py_scripts.run_py_script(
         script_path, 'gdal_calc',
-        '-A {} --A_band=1 -B {} --B_band=2 -Z {} --Z_band=2 --calc=A --calc=B --calc=Z --overwrite --outfile {}'.
-            format(infile, infile, infile, out[0]))
+        f'-A {infile} --A_band=1 -B {infile} --B_band=2 -Z {infile} --Z_band=2 --calc=A --calc=B --calc=Z '
+        f'--overwrite --outfile {out[0]}')
 
     bnd_count = 3
     for i, checksum in zip(range(bnd_count), (input_checksum[0], input_checksum[1], input_checksum[1])):

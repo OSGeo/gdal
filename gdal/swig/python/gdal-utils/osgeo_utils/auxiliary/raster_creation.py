@@ -38,7 +38,7 @@ from osgeo_utils.auxiliary.util import get_bigtiff_creation_option_value, get_da
 
 
 def create_flat_raster(filename: Optional[PathLikeOrStr],
-                       driver: Optional[str] = None, dt: DataTypeOrStr = gdal.GDT_Byte,
+                       driver_name: Optional[str] = None, dt: DataTypeOrStr = gdal.GDT_Byte,
                        size: MaybeSequence[int] = 128, band_count: int = 1, creation_options: CreationOptions = None,
                        fill_value: Optional[Real] = None, nodata_value: Optional[Real] = None,
                        origin: Optional[Sequence[int]] = (500_000, 0), pixel_size: MaybeSequence[int] = 10,
@@ -48,14 +48,14 @@ def create_flat_raster(filename: Optional[PathLikeOrStr],
         filename = tempfile.mktemp()
     elif not filename:
         filename = ''
-    if driver is None:
-        driver = 'GTiff' if filename else 'MEM'
+    if driver_name is None:
+        driver_name = 'GTiff' if filename else 'MEM'
     if not isinstance(size, Sequence):
         size = (size, size)
 
-    drv = gdal.GetDriverByName(driver)
+    drv = gdal.GetDriverByName(driver_name)
     dt = get_data_type(dt)
-    creation_options_list = get_creation_options(creation_options, driver=driver)
+    creation_options_list = get_creation_options(creation_options, driver_name=driver_name)
     ds = drv.Create(os.fspath(filename), *size, band_count, dt, creation_options_list)
 
     if pixel_size and origin:
@@ -78,7 +78,7 @@ def create_flat_raster(filename: Optional[PathLikeOrStr],
 
 
 def get_creation_options(creation_options: CreationOptions = None,
-                         driver: str = 'GTiff',
+                         driver_name: str = 'GTiff',
                          sparse_ok: bool = None,
                          tiled: bool = None,
                          block_size: Optional[int] = None,
@@ -86,7 +86,7 @@ def get_creation_options(creation_options: CreationOptions = None,
                          comp: str = None):
     creation_options = dict(creation_options or dict())
 
-    driver = driver.lower()
+    driver_name = driver_name.lower()
 
     if comp is None:
         comp = creation_options.get("COMPRESS", "DEFLATE")
@@ -103,10 +103,10 @@ def get_creation_options(creation_options: CreationOptions = None,
     tiled = is_true(tiled)
     creation_options["TILED"] = str(tiled)
     if tiled and block_size is not None:
-        if driver == 'gtiff':
+        if driver_name == 'gtiff':
             creation_options["BLOCKXSIZE"] = block_size
             creation_options["BLOCKYSIZE"] = block_size
-        elif driver == 'cog':
+        elif driver_name == 'cog':
             creation_options["BLOCKSIZE"] = block_size
 
     creation_options_list = []

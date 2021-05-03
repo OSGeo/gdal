@@ -279,7 +279,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
     # pylint: disable=unused-argument
     src_filename = None
     dst_filename = None
-    frmt = "ESRI Shapefile"
+    driver_name = "ESRI Shapefile"
     options = Options()
     lco = []
     dsco = []
@@ -299,7 +299,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
             dst_filename = argv[i]
         elif EQUAL(arg, '-f') and i + 1 < len(argv):
             i = i + 1
-            frmt = argv[i]
+            driver_name = argv[i]
 
         elif EQUAL(arg, '-a_srs') and i + 1 < len(argv):
             i = i + 1
@@ -368,7 +368,7 @@ def ogr_dispatch(argv, progress=None, progress_arg=None):
             print('-dsco should not be specified for an existing datasource')
             return 1
     else:
-        dst_ds = ogr.GetDriverByName(frmt).CreateDataSource(dst_filename, options=dsco)
+        dst_ds = ogr.GetDriverByName(driver_name).CreateDataSource(dst_filename, options=dsco)
     if dst_ds is None:
         print('Cannot open or create target datasource %s' % dst_filename)
         return 1

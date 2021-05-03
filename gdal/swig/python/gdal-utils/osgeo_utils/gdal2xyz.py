@@ -31,7 +31,6 @@
 ###############################################################################
 import sys
 import textwrap
-from argparse import RawDescriptionHelpFormatter
 from numbers import Number, Real
 from typing import Optional, Union, Sequence, Tuple
 import numpy as np
@@ -41,7 +40,7 @@ from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.progress import get_progress_callback, OptionalProgressCallback
 from osgeo_utils.auxiliary.util import PathOrDS, get_bands, open_ds
 from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
-from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
+from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 
 
 def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
@@ -218,69 +217,77 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
     return result
 
 
-def main(argv):
-    parser = GDALArgumentParser(
-        formatter_class=RawDescriptionHelpFormatter,
-        description=textwrap.dedent('''\
+class GDAL2XYZ(GDALScript):
+    def __init__(self):
+        super().__init__()
+        self.title = 'Translates a raster file into xyz format'
+        self.description = textwrap.dedent('''\
             The gdal2xyz utility can be used to translate a raster file into xyz format.
             It can be used as an alternative to gdal_translate of=xyz,
             But supporting other options, for example:
             * Select more then one band;
             * Skip or replace nodata value;
-            * Return the output as numpy arrays.'''))
+            * Return the output as numpy arrays.''')
 
-    parser.add_argument("-skip", dest="skip", action="store_true", default=1,
-                        help="How many rows/cols to skip in each iteration.")
+    def get_parser(self, argv) -> GDALArgumentParser:
+        parser = self.parser
 
-    parser.add_argument("-srcwin", metavar=('xoff', 'yoff', 'xsize', 'ysize'), dest="srcwin", type=float, nargs=4,
-                        help="Selects a subwindow from the source image for copying based on pixel/line location")
+        parser.add_argument("-skip", dest="skip", action="store_true", default=1,
+                            help="How many rows/cols to skip in each iteration.")
 
-    parser.add_argument("-b", "-band", "--band", dest="band_nums", metavar="band", type=int, nargs='+',
-                        help="Select bands from the input spectral bands for output. "
-                             "Bands are numbered from 1 in the order spectral bands are specified. "
-                             "Multiple -b switches may be used. When no -b switch is used, the first band will be used."
-                             "In order to use all input bands set -allbands or -b 0..")
+        parser.add_argument("-srcwin", metavar=('xoff', 'yoff', 'xsize', 'ysize'), dest="srcwin", type=float, nargs=4,
+                            help="Selects a subwindow from the source image for copying based on pixel/line location")
 
-    parser.add_argument("-allbands", "--allbands", dest="allbands", action="store_true",
-                        help="Select all input bands.")
+        parser.add_argument("-b", "-band", "--band", dest="band_nums", metavar="band", type=int, nargs='+',
+                            help="Select bands from the input spectral bands for output. "
+                                 "Bands are numbered from 1 in the order spectral bands are specified. "
+                                 "Multiple -b switches may be used. When no -b switch is used, the first band will be used."
+                                 "In order to use all input bands set -allbands or -b 0..")
 
-    parser.add_argument("-csv", dest="delim", const=',', default=' ', action="store_const",
-                        help="Use comma instead of space as a delimiter.")
+        parser.add_argument("-allbands", "--allbands", dest="allbands", action="store_true",
+                            help="Select all input bands.")
 
-    parser.add_argument("-skipnodata", "--skipnodata", "-skip_nodata", dest="skip_nodata", action="store_true",
-                        help="Exclude the output lines with nodata value (as determined by srcnodata).")
+        parser.add_argument("-csv", dest="delim", const=',', default=' ', action="store_const",
+                            help="Use comma instead of space as a delimiter.")
 
-    parser.add_argument("-srcnodata", '-nodatavalue', dest="src_nodata", type=Real, nargs='*',
-                        help="The nodata value of the dataset (for skipping or replacing) "
-                             "Default (None) - Use the dataset nodata value; "
-                             "Sequence/Number - Use the given nodata value (per band or per dataset).")
+        parser.add_argument("-skipnodata", "--skipnodata", "-skip_nodata", dest="skip_nodata", action="store_true",
+                            help="Exclude the output lines with nodata value (as determined by srcnodata).")
 
-    parser.add_argument("-dstnodata", dest="dst_nodata", type=Real, nargs='*',
-                        help="Replace source nodata with a given nodata. "
-                             "Has an effect only if not setting -skipnodata. "
-                             "Default(None) - Use srcnodata, no replacement; "
-                             "Sequence/Number - Replace the srcnodata with the given nodata value "
-                             "(per band or per dataset).")
+        parser.add_argument("-srcnodata", '-nodatavalue', dest="src_nodata", type=Real, nargs='*',
+                            help="The nodata value of the dataset (for skipping or replacing) "
+                                 "Default (None) - Use the dataset nodata value; "
+                                 "Sequence/Number - Use the given nodata value (per band or per dataset).")
 
-    parser.add_argument("srcfile", metavar="src_dataset", type=str,
-                        help="The source dataset name. It can be either file name, "
-                             "URL of data source or subdataset name for multi-dataset files.")
+        parser.add_argument("-dstnodata", dest="dst_nodata", type=Real, nargs='*',
+                            help="Replace source nodata with a given nodata. "
+                                 "Has an effect only if not setting -skipnodata. "
+                                 "Default(None) - Use srcnodata, no replacement; "
+                                 "Sequence/Number - Replace the srcnodata with the given nodata value "
+                                 "(per band or per dataset).")
 
-    parser.add_argument("dstfile", metavar="dst_dataset", type=str,
-                        help="The destination file name.")
+        parser.add_argument("srcfile", metavar="src_dataset", type=str,
+                            help="The source dataset name. It can be either file name, "
+                                 "URL of data source or subdataset name for multi-dataset files.")
 
-    args = parser.parse_args(argv[1:])
-    if args.allbands:
-        args.band_nums = None
-    elif not args.band_nums:
-        args.band_nums = 1
-    kwargs = vars(args)
-    del kwargs["allbands"]
-    try:
+        parser.add_argument("dstfile", metavar="dst_dataset", type=str,
+                            help="The destination file name.")
+
+        return parser
+
+    def augment_kwargs(self, kwargs) -> dict:
+        if kwargs.get('allbands'):
+            kwargs['band_nums'] = None
+        elif not kwargs.get('band_nums'):
+            kwargs['band_nums'] = 1
+        del kwargs["allbands"]
+        return kwargs
+
+    def doit(self, **kwargs):
         return gdal2xyz(**kwargs)
-    except IOError as e:
-        print(e)
-        return 1
+
+
+def main(argv):
+    return GDAL2XYZ().main(argv)
 
 
 if __name__ == '__main__':
