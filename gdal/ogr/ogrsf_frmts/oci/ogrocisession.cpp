@@ -130,9 +130,8 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 
     ub4 eCred = OCI_CRED_RDBMS;
 
-    if( EQUAL(pszDatabaseIn, "") &&
-        EQUAL(pszPasswordIn, "") &&
-        EQUAL(pszUseridIn, "/") )
+    if( EQUAL(pszPasswordIn, "") &&
+        EQUAL(pszUseridIn, "") )
     {
         eCred = OCI_CRED_EXT;
     }
