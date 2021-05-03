@@ -389,7 +389,7 @@ def test_cog_small_world_to_web_mercator():
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
         assert got_cs != [0, 0, 0]
     else:
-        assert got_cs == [26293, 23439, 14955]
+        assert got_cs == [26293, 23439, 14955] or got_cs == [26228, 22085, 12992]
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 17849
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None
