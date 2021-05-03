@@ -1637,6 +1637,7 @@ dnl Check if xtensor-zarr is available.
 dnl ---------------------------------------------------------------------------
 
 ZARR_INCLUDE=""
+ZARR_LIB=""
 
 AC_ARG_WITH(zarr,[  --with-zarr[=ARG]       Include Zarr support (ARG=path)],,)
 
@@ -1651,6 +1652,7 @@ elif test "$with_zarr" = "yes" -o "$with_zarr" = "" ; then
   if test -r "/usr/include/xtensor-zarr/xzarr_hierarchy.hpp" ; then
 
     ZARR_INCLUDE="-I/usr/include"
+    ZARR_LIB="-L/usr/local/lib -lxtensor-zarr-gdal"
     HAVE_ZARR=yes
     echo "xtensor-zarr found - Zarr support enabled"
   else
@@ -1663,6 +1665,7 @@ else
   if test -r "$with_zarr/include/xtensor-zarr/xzarr_hierarchy.hpp" ; then
 
     ZARR_INCLUDE="-I$with_zarr/include"
+    ZARR_LIB="-L$with_zarr/lib -lxtensor-zarr-gdal"
     HAVE_ZARR=yes
     echo "xtensor-zarr found - Zarr support enabled"
   else
@@ -1674,6 +1677,7 @@ fi
 
 AC_SUBST(HAVE_ZARR,$HAVE_ZARR)
 AC_SUBST(ZARR_INCLUDE,$ZARR_INCLUDE)
+AC_SUBST(ZARR_LIB,$ZARR_LIB)
 
 if test "$HAVE_ZARR" != "no" ; then
   OPT_GDAL_FORMATS="zarr $OPT_GDAL_FORMATS"

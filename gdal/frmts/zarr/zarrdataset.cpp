@@ -34,7 +34,8 @@
 #include "xtensor-zarr/xzarr_gdal_store.hpp"
 #include "xtensor-zarr/xzarr_file_system_store.hpp"
 #include "xtensor-io/xio_gzip.hpp"
-//#include "xtensor-io/xio_blosc.hpp"  // TODO
+#include "xtensor-io/xio_zlib.hpp"
+#include "xtensor-io/xio_blosc.hpp"
 
 #include <algorithm>
 
@@ -42,6 +43,21 @@ CPL_CVSID("$Id$")
 
 namespace
 {
+    void xzarr_register_compressors()
+    {
+        static bool xzarr_compressor_registered = false;
+        if (!xzarr_compressor_registered)
+        {
+            xt::xzarr_register_compressor<xt::xzarr_file_system_store, xt::xio_gzip_config>();
+            xt::xzarr_register_compressor<xt::xzarr_file_system_store, xt::xio_zlib_config>();
+            xt::xzarr_register_compressor<xt::xzarr_file_system_store, xt::xio_blosc_config>();
+            xt::xzarr_register_compressor<xt::xzarr_gdal_store, xt::xio_gzip_config>();
+            xt::xzarr_register_compressor<xt::xzarr_gdal_store, xt::xio_zlib_config>();
+            xt::xzarr_register_compressor<xt::xzarr_gdal_store, xt::xio_blosc_config>();
+            xzarr_compressor_registered = true;
+        }
+    }
+
     template <typename T>
     void assign_chunk(void* pImage, xt::zarray& z, int nBlockYSize, int nBlockXSize,
                       int nBlockYOff, int nBlockXOff,
@@ -228,6 +244,7 @@ CPLErr ZarrRasterBand<T>::IReadBlock( CPL_UNUSED int nBlockXOff,
 ZarrDataset::ZarrDataset() :
     fp(nullptr)
 {
+    xzarr_register_compressors();
     std::memset(abyHeader, 0, sizeof(abyHeader));
 }
 
@@ -288,9 +305,6 @@ GDALDataset* ZarrDataset::get_hierarchy(T& store, GDALOpenInfo* poOpenInfo)
 
     try
     {
-        xt::xzarr_register_compressor<T, xt::xio_gzip_config>();
-        //xt::xzarr_register_compressor<T, xt::xio_blosc_config>();  // TODO
-
         // Create a corresponding GDALDataset.
         poDS = new ZarrDataset();
 

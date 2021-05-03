@@ -86,14 +86,14 @@ wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.
 ldconfig
 
 # Install xtensor-zarr and its dependencies
-for requirement in xtensor-stack=xtensor-zarr=xtensor-zarr=0.0.3 \
-                   xtensor-stack=zarray=zarray=0.0.5 \
-                   xtensor-stack=xtensor-io=xtensor-io=0.12.4 \
-                   xtensor-stack=xtensor=xtensor=0.23.4 \
+for requirement in xtensor-stack=xtensor-zarr=xtensor-zarr=0.0.7 \
+                   xtensor-stack=zarray=zarray=0.1.0 \
+                   xtensor-stack=xtensor-io=xtensor-io=0.12.7 \
+                   xtensor-stack=xtensor=xtensor=0.23.8 \
                    xtensor-stack=xtl=xtl=0.7.2 \
-                   xtensor-stack=xsimd=xsimd=7.4.9 \
+                   xtensor-stack=xsimd=xsimd=7.5.0 \
                    nlohmann=json=nlohmann=v3.9.1 \
-                   gulrak=filesystem=ghc=v1.4.0 \
+                   gulrak=filesystem=ghc=v1.3.8 \
                    ; do
     org="$(echo $requirement | cut -d'=' -f1)"
     lib="$(echo $requirement | cut -d'=' -f2)"
@@ -105,3 +105,9 @@ for requirement in xtensor-stack=xtensor-zarr=xtensor-zarr=0.0.3 \
         && mv $lib/include/$inc /usr/include/ \
         && rm -rf $lib
 done
+
+mkdir xtensor-zarr \
+    && wget -q https://anaconda.org/conda-forge/xtensor-zarr/0.0.7/download/linux-64/xtensor-zarr-0.0.7-h4bd325d_1.tar.bz2 -O - \
+        | tar xj -C xtensor-zarr --strip-components=1 \
+    && mv xtensor-zarr/libxtensor-zarr-gdal.so* /usr/local/lib/ \
+    && rm -rf xtensor-zarr

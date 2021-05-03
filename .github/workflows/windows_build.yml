@@ -205,14 +205,14 @@ jobs:
             mkdir xtensor_zarr
             cd xtensor_zarr
             mkdir include
-            exec { git clone --depth=1 -b 0.0.2 https://github.com/xtensor-stack/xtensor-zarr xtensor-zarr}
-            exec { git clone --depth=1 -b master https://github.com/xtensor-stack/zarray zarray}
-            exec { git clone --depth=1 -b 0.12.1 https://github.com/xtensor-stack/xtensor-io xtensor-io}
-            exec { git clone --depth=1 -b 0.23.0 https://github.com/xtensor-stack/xtensor xtensor}
-            exec { git clone --depth=1 -b 0.7.1 https://github.com/xtensor-stack/xtl xtl}
-            exec { git clone --depth=1 -b 7.4.9 https://github.com/xtensor-stack/xsimd xsimd}
+            exec { git clone --depth=1 -b 0.0.7 https://github.com/xtensor-stack/xtensor-zarr xtensor-zarr}
+            exec { git clone --depth=1 -b 0.1.0 https://github.com/xtensor-stack/zarray zarray}
+            exec { git clone --depth=1 -b 0.12.7 https://github.com/xtensor-stack/xtensor-io xtensor-io}
+            exec { git clone --depth=1 -b 0.23.8 https://github.com/xtensor-stack/xtensor xtensor}
+            exec { git clone --depth=1 -b 0.7.2 https://github.com/xtensor-stack/xtl xtl}
+            exec { git clone --depth=1 -b 7.5.0 https://github.com/xtensor-stack/xsimd xsimd}
             exec { git clone --depth=1 -b v3.9.1 https://github.com/nlohmann/json json}
-            exec { git clone --depth=1 -b v1.4.0 https://github.com/gulrak/filesystem ghc}
+            exec { git clone --depth=1 -b v1.3.8 https://github.com/gulrak/filesystem ghc}
             Move-Item -Path xtensor-zarr\include\xtensor-zarr -Destination include\xtensor-zarr -force
             Move-Item -Path zarray\include\zarray -Destination include\zarray -force
             Move-Item -Path xtensor-io\include\xtensor-io -Destination include\xtensor-io -force

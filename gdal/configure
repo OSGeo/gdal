@@ -775,6 +775,7 @@ KEA_INC
 HAVE_KEA
 KEA_CONFIG
 ZARR_INCLUDE
+ZARR_LIB
 HAVE_ZARR
 HDF5_INCLUDE
 HAVE_HDF5
@@ -32843,14 +32844,17 @@ fi
 
 # Check whether --with-zarr was given.
 ZARR_INCLUDE=""
+ZARR_LIB=""
 HAVE_ZARR=no
 if test "${with_zarr+set}" = set; then
   if test "$with_zarr" = "yes" -o "$with_zarr" = "" -a -r /usr/include/xtensor-zarr/xzarr_hierarchy.hpp ; then
     ZARR_INCLUDE="-I/usr/include"
+    ZARR_LIB="-L/usr/loca/lib -lxtensor-zarr-gdal"
     HAVE_ZARR=yes
     echo "xtensor-zarr found - Zarr support enabled"
   elif test -r "$with_zarr/include/xtensor-zarr/xzarr_hierarchy.hpp" ; then
     ZARR_INCLUDE="-I$with_zarr/include"
+    ZARR_LIB="-L$with_zarr/lib -lxtensor-zarr-gdal"
     HAVE_ZARR=yes
     echo "xtensor-zarr found - Zarr support enabled"
   else
