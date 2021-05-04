@@ -6524,7 +6524,7 @@ class Geometry(_object):
 
     def MakeValid(self, *args):
         """
-        MakeValid(Geometry self) -> Geometry
+        MakeValid(Geometry self, char ** options=None) -> Geometry
 
         OGRGeometryH
         OGR_G_MakeValid(OGRGeometryH hGeom)
