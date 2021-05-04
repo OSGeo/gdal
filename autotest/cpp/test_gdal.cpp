@@ -654,6 +654,7 @@ namespace tut
                 GDALExtendedDataType m_dt;
                 std::vector<std::shared_ptr<GDALDimension>> m_dims;
                 std::vector<GUInt64> m_blockSize;
+                const std::string m_osEmptyFilename{};
 
                 static std::vector<std::shared_ptr<GDALDimension>> BuildDims(
                     const std::vector<GUInt64>& sizes)
@@ -698,6 +699,8 @@ namespace tut
                 }
 
                 bool IsWritable() const override { return true; }
+
+                const std::string& GetFilename() const override { return m_osEmptyFilename; }
 
                 static std::shared_ptr<myArray> Create(GDALDataType eDT,
                                 const std::vector<GUInt64>& sizes,

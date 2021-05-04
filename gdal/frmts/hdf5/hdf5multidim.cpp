@@ -323,6 +323,8 @@ public:
 
     bool IsWritable() const override { return !m_poShared->IsReadOnly(); }
 
+    const std::string& GetFilename() const override { return m_poShared->GetFilename(); }
+
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
     const GDALExtendedDataType &GetDataType() const override { return m_dt; }

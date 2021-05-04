@@ -980,6 +980,11 @@ public:
 %clear OSRSpatialReferenceShadow**;
 #endif
 
+  bool Cache( char** options = NULL )
+  {
+      return GDALMDArrayCache(self, options);
+  }
+
 } /* extend */
 }; /* GDALMDArrayH */
 
