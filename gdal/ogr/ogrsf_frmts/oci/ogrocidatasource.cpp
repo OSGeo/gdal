@@ -182,18 +182,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
 
-    if( EQUAL(pszDatabase, "") &&
-        EQUAL(pszPassword, "") &&
-        EQUAL(pszUserid, "") )
-    {
-        /* Use username/password OS Authentication and ORACLE_SID database */
-
-        poSession = OGRGetOCISession( "/", "", "" );
-    }
-    else
-    {
-        poSession = OGRGetOCISession( pszUserid, pszPassword, pszDatabase );
-    }
+    poSession = OGRGetOCISession( pszUserid, pszPassword, pszDatabase );
 
     if( poSession == nullptr )
     {

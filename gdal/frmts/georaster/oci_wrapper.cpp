@@ -246,8 +246,9 @@ OWConnection::OWConnection( const char* pszUserIn,
             "select sys_context('userenv','session_user')\n"
             "from dual\n" );
 
+      pszUser = static_cast<char*>(CPLRealloc(pszUser, OWNAME)); 
       poStmt->Define(pszUser);
-      poStmt->Execute();
+      CPL_IGNORE_RET_VAL(poStmt->Execute());
       delete poStmt;
       CPLDebug("OCI: ", "Implicit User: %s\n", pszUser);
     }
