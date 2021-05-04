@@ -1830,7 +1830,7 @@ std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
 /*                       GetProcessingChunkSize()                       */
 /************************************************************************/
 
-/** \brief Return an optimal chunk size for read/write oerations, given the natural
+/** \brief Return an optimal chunk size for read/write operations, given the natural
  * block size and memory constraints specified.
  *
  * This method will use GetBlockSize() to define a chunk whose dimensions are
@@ -8197,7 +8197,7 @@ GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
 /*                   GDALMDArrayGetProcessingChunkSize()               */
 /************************************************************************/
 
-/** \brief Return an optimal chunk size for read/write oerations, given the natural
+/** \brief Return an optimal chunk size for read/write operations, given the natural
  * block size and memory constraints specified.
  *
  * This method will use GetBlockSize() to define a chunk whose dimensions are
