@@ -390,18 +390,18 @@ static void ThreadFuncAdapter(void* pData)
     // If no transformer assigned to current thread, instantiate one
     if( pTransformerArg == nullptr )
     {
-        std::lock_guard<std::mutex> lock(psThreadData->mutex);
         // This somehow assumes that GDALCloneTransformer() is thread-safe
         // which should normally be the case.
         pTransformerArg =
             GDALCloneTransformer(psThreadData->pTransformerArgInput);
+
+        // Lock for the stop flag and the transformer map.
+        std::lock_guard<std::mutex> lock(psThreadData->mutex);
         if( !pTransformerArg )
         {
             psJob->stopFlag = true;
             return;
         }
-
-        // register in map
         psThreadData->mapThreadToTransformerArg[nThreadId] = pTransformerArg;
     }
 
@@ -469,8 +469,6 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         job.iYMax = static_cast<int>((i + 1) * nDstYSize / nThreads);
         if( poWK->pfnProgress != GDALDummyProgress )
             job.pfnProgress = GWKProgressThread;
-        else
-            job.pfnProgress = nullptr;
         job.pfnFunc = pfnFunc;
         i++;
     }
@@ -511,7 +509,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 /* -------------------------------------------------------------------- */
     psThreadData->poJobQueue->WaitCompletion();
 
-    return !psThreadData->stopFlag ? CE_None : CE_Failure;
+    return psThreadData->stopFlag ? CE_Failure : CE_None;
 }
 
 /************************************************************************/
