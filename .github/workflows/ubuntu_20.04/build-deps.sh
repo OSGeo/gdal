@@ -83,4 +83,18 @@ wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.
   && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
   && echo "/usr/local/FileGDB_API/lib" > /etc/ld.so.conf.d/filegdbapi.conf
 
+# Build and install GEOS (3.10dev)
+GEOS_SHA1=cab7d3cc63dc6ffaa48630b517c9ab69be6505e0
+mkdir geos \
+    && wget -q https://github.com/libgeos/geos/archive/${GEOS_SHA1}.tar.gz -O - \
+        | tar xz -C geos --strip-components=1 \
+    && cd geos \
+    && mkdir build_cmake \
+    && cd build_cmake \
+    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=OFF \
+    && make -j$(nproc) \
+    && make install \
+    && cd ../.. \
+    && rm -rf geos
+
 ldconfig
