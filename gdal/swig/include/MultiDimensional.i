@@ -92,6 +92,16 @@ public:
     return GDALGroupOpenGroupFromFullname(self, name, options);
   }
 
+%apply (char **CSL) {char **};
+  char **GetVectorLayerNames(char** options = 0) {
+    return GDALGroupGetVectorLayerNames( self, options );
+  }
+%clear char **;
+
+  OGRLayerShadow* OpenVectorLayer( const char* name, char** options = 0) {
+    return (OGRLayerShadow*) GDALGroupOpenVectorLayer(self, name, options);
+  }
+
 #if defined(SWIGPYTHON)
   void GetDimensions( GDALDimensionHS*** pdims, size_t* pnCount, char** options = 0 ) {
     *pdims = GDALGroupGetDimensions(self, pnCount, options);

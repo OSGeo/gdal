@@ -36,6 +36,7 @@
 #include "gdal_priv.h"
 #include "gdal_pam.h"
 #include "cpl_safemaths.hpp"
+#include "ogrsf_frmts.h"
 
 #if defined(__clang__) || defined(_MSC_VER)
 #define COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT
@@ -351,6 +352,63 @@ std::vector<std::string> GDALGroup::GetGroupNames(CPL_UNUSED CSLConstList papszO
  */
 std::shared_ptr<GDALGroup> GDALGroup::OpenGroup(CPL_UNUSED const std::string& osName,
                                                 CPL_UNUSED CSLConstList papszOptions) const
+{
+    return nullptr;
+}
+
+/************************************************************************/
+/*                        GetVectorLayerNames()                         */
+/************************************************************************/
+
+/** Return the list of layer names contained in this group.
+ *
+ * @note Driver implementation: optionally implemented. If implemented,
+ * OpenVectorLayer() should also be implemented.
+ *
+ * Drivers known to implement it: OpenFileGDB, FileGDB
+ *
+ * Other drivers will return an empty list. GDALDataset::GetLayerCount() and
+ * GDALDataset::GetLayer() should then be used.
+ *
+ * This is the same as the C function GDALGroupGetVectorLayerNames().
+ *
+ * @param papszOptions Driver specific options determining how layers
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return the vector layer names.
+ * @since GDAL 3.4
+ */
+std::vector<std::string> GDALGroup::GetVectorLayerNames(CPL_UNUSED CSLConstList papszOptions) const
+{
+    return {};
+}
+
+/************************************************************************/
+/*                           OpenVectorLayer()                          */
+/************************************************************************/
+
+/** Open and return a vector layer.
+ *
+ * Due to the historical ownership of OGRLayer* by GDALDataset*, the
+ * lifetime of the returned OGRLayer* is linked to the one of the owner
+ * dataset (contrary to the general design of this class where objects can be
+ * used independently of the object that returned them)
+ *
+ * @note Driver implementation: optionally implemented. If implemented,
+ * GetVectorLayerNames() should also be implemented.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C function GDALGroupOpenVectorLayer().
+ *
+ * @param osName Vector layer name.
+ * @param papszOptions Driver specific options determining how the layer should
+ * be opened.  Pass nullptr for default behavior.
+ *
+ * @return the group, or nullptr.
+ */
+OGRLayer* GDALGroup::OpenVectorLayer(CPL_UNUSED const std::string& osName,
+                                     CPL_UNUSED CSLConstList papszOptions) const
 {
     return nullptr;
 }
@@ -7298,6 +7356,54 @@ GDALGroupH GDALGroupOpenGroup(GDALGroupH hGroup, const char* pszSubGroupName,
     if( !subGroup )
         return nullptr;
     return new GDALGroupHS(subGroup);
+}
+
+/************************************************************************/
+/*                   GDALGroupGetVectorLayerNames()                     */
+/************************************************************************/
+
+/** Return the list of layer names contained in this group.
+ *
+ * This is the same as the C++ method GDALGroup::GetVectorLayerNames().
+ *
+ * @return the group names, to be freed with CSLDestroy()
+ * @since 3.4
+ */
+char **GDALGroupGetVectorLayerNames(GDALGroupH hGroup, CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hGroup, __func__, nullptr );
+    auto names = hGroup->m_poImpl->GetVectorLayerNames(papszOptions);
+    CPLStringList res;
+    for( const auto& name: names )
+    {
+        res.AddString(name.c_str());
+    }
+    return res.StealList();
+}
+
+/************************************************************************/
+/*                      GDALGroupOpenVectorLayer()                      */
+/************************************************************************/
+
+/** Open and return a vector layer.
+ *
+ * This is the same as the C++ method GDALGroup::OpenVectorLayer().
+ *
+ * Note that the vector layer is owned by its parent GDALDatasetH, and thus
+ * the returned handled if only valid while the parent GDALDatasetH is kept
+ * opened.
+ *
+ * @return the vector layer, or nullptr.
+ * @since 3.4
+ */
+OGRLayerH GDALGroupOpenVectorLayer(GDALGroupH hGroup,
+                                   const char* pszVectorLayerName,
+                                   CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hGroup, __func__, nullptr );
+    VALIDATE_POINTER1( pszVectorLayerName, __func__, nullptr );
+    return OGRLayer::ToHandle(hGroup->m_poImpl->OpenVectorLayer(
+        std::string(pszVectorLayerName), papszOptions));
 }
 
 /************************************************************************/
