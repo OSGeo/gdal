@@ -203,36 +203,37 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyUShort( GDALWarpKernel * );
 
 struct GWKJobStruct
 {
-    GDALWarpKernel *poWK;
-    int             iYMin;
-    int             iYMax;
-    std::mutex&    mutex;
+    std::mutex& mutex;
     std::condition_variable& cv;
     int& counter;
     bool& stopFlag;
-    int           (*pfnProgress)(GWKJobStruct* psJob);
-    void           *pTransformerArg;
+    GDALWarpKernel *poWK;
+    int iYMin;
+    int iYMax;
+    int (*pfnProgress)(GWKJobStruct* psJob);
+    void *pTransformerArg;
+    void (*pfnFunc)(void*); // used by GWKRun() to assign the proper pTransformerArg
 
-    void           (*pfnFunc)(void*); // used by GWKRun() to assign the proper pTransformerArg
-
-    GWKJobStruct(std::mutex& mutex, std::condition_variable& cv,
-            int& counter, bool& stopFlag) :
-        mutex(mutex), cv(cv), counter(counter), stopFlag(stopFlag)
+    GWKJobStruct(std::mutex& mutex_, std::condition_variable& cv_,
+            int& counter_, bool& stopFlag_) :
+        mutex(mutex_), cv(cv_), counter(counter_), stopFlag(stopFlag_),
+        poWK(nullptr), iYMin(0), iYMax(0), pfnProgress(nullptr), pTransformerArg(nullptr),
+        pfnFunc(nullptr)
     {}
 } ;
 
 struct GWKThreadData
 {
-    std::unique_ptr<CPLJobQueue> poJobQueue{};
-    std::unique_ptr<std::vector<GWKJobStruct>> threadJobs;
-    int nThreads = 0;
-    int counter = 0;
-    bool stopFlag = false;
-    std::mutex mutex;
-    std::condition_variable cv;
-    bool bTransformerArgInputAssignedToThread = false;
-    void* pTransformerArgInput = nullptr; // owned by calling layer. Not to be destroyed
-    std::map<GIntBig, void*> mapThreadToTransformerArg{};
+    std::unique_ptr<CPLJobQueue> poJobQueue {};
+    std::unique_ptr<std::vector<GWKJobStruct>> threadJobs {};
+    int nThreads {0};
+    int counter {0};
+    bool stopFlag {false};
+    std::mutex mutex {};
+    std::condition_variable cv {};
+    bool bTransformerArgInputAssignedToThread {false};
+    void * pTransformerArgInput {nullptr}; // owned by calling layer. Not to be destroyed
+    std::map<GIntBig, void*> mapThreadToTransformerArg {};
 };
 
 /************************************************************************/
@@ -487,7 +488,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 /* -------------------------------------------------------------------- */
         if( poWK->pfnProgress != GDALDummyProgress )
         {
-            int &counter = psThreadData->counter;
+            int& counter = psThreadData->counter;
             while (counter < nDstYSize)
             {
                 psThreadData->cv.wait(lock);
