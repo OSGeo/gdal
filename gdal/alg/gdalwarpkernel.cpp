@@ -226,8 +226,8 @@ struct GWKThreadData
     std::unique_ptr<CPLJobQueue> poJobQueue{};
     std::unique_ptr<std::vector<GWKJobStruct>> threadJobs;
     int nThreads = 0;
-    int counter;
-    bool stopFlag;
+    int counter = 0;
+    bool stopFlag = false;
     std::mutex mutex;
     std::condition_variable cv;
     bool bTransformerArgInputAssignedToThread = false;
@@ -474,8 +474,9 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         i++;
     }
 
-    std::unique_lock<std::mutex> lock(psThreadData->mutex);
     {
+        std::unique_lock<std::mutex> lock(psThreadData->mutex);
+
         // Start jobs.
         for (auto& job : jobs)
             psThreadData->poJobQueue->SubmitJob( ThreadFuncAdapter,
@@ -4782,7 +4783,6 @@ static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(
 /************************************************************************/
 
 static void GWKGeneralCaseThread( void* pData)
-
 {
     GWKJobStruct* psJob = reinterpret_cast<GWKJobStruct *>(pData);
     GDALWarpKernel *poWK = psJob->poWK;
