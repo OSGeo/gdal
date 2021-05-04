@@ -38323,6 +38323,7 @@ fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: GEOS support disabled" >&5
 $as_echo "GEOS support disabled" >&6; }
     GEOS_CONFIG=no
+    HAVE_GEOS=no
 
   elif test x"$with_geos" = x"yes" -o x"$with_geos" = x"" ; then
 
@@ -38580,15 +38581,13 @@ $as_echo "$as_me: WARNING: GEOS was found on your system, but the library could 
 
   else
 
-    if test $ac_geos_config_auto = "no" ; then
+    if test x"$with_geos" != x"no" -a x"$with_geos" != x ; then
       as_fn_error $? "GEOS support explicitly enabled, but geos-config could not be found" "$LINENO" 5
     fi
 
   fi
 
-HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
-
   { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from GEOS $GEOS_VERSION" >&5
 $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
 
@@ -38602,7 +38601,6 @@ $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
 
   GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
-  HAVE_GEOS_RESULT="yes"
 fi
 
 
@@ -38625,6 +38623,7 @@ fi
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: SFCGAL support disabled" >&5
 $as_echo "SFCGAL support disabled" >&6; }
+    HAVE_SFCGAL=no
     SFCGAL_CONFIG=no
 
   elif test x"$with_sfcgal" = x"yes" -o x"$with_sfcgal" = x"" ; then
@@ -38883,15 +38882,13 @@ $as_echo "$as_me: WARNING: SFCGAL was found on your system, but the library coul
 
   else
 
-    if test $ac_sfcgal_config_auto = "no" ; then
+    if test x"$with_sfcgal" != x"no" -a x"$with_sfcgal" != x ; then
       as_fn_error $? "SFCGAL support explicitly enabled, but sfcgal-config could not be found" "$LINENO" 5
     fi
 
   fi
 
-HAVE_SFCGAL_RESULT="no"
 if test "${HAVE_SFCGAL}" = "yes" ; then
-
   { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from SFCGAL $SFCGAL_VERSION" >&5
 $as_echo "$as_me: Using C API from SFCGAL $SFCGAL_VERSION" >&6;}
 
@@ -38905,7 +38902,6 @@ $as_echo "$as_me: Using C API from SFCGAL $SFCGAL_VERSION" >&6;}
 
   SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
-  HAVE_SFCGAL_RESULT="yes"
 fi
 
 
@@ -44998,7 +44994,7 @@ echo "  FreeXL support:            ${HAVE_FREEXL}"
 echo "  GEORASTER support:         ${HAVE_GEORASTER}"
 
 
-echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
+echo "  GEOS support:              ${HAVE_GEOS}"
 
 
 echo "  Google libkml support:     ${HAVE_LIBKML}"
@@ -45162,7 +45158,7 @@ echo "  RasterLite2 support:       ${HAVE_RASTERLITE2}"
 echo "  RDB support:               ${RDB_SETTING}"
 
 
-echo "  SFCGAL support:            ${HAVE_SFCGAL_RESULT}"
+echo "  SFCGAL support:            ${HAVE_SFCGAL}"
 
 
 echo "  SOSI support:              ${SOSI_ENABLED}"
