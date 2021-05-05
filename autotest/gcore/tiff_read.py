@@ -30,6 +30,7 @@
 import os
 import sys
 import shutil
+import struct
 
 import pytest
 
@@ -3485,3 +3486,20 @@ def test_tiff_read_utf8_encoding_issue_2903():
     ds = None
     os.unlink(tmp_tif_filename)
     os.unlink(tmp_tfw_filename)
+
+###############################################################################
+# Check over precision issue with nodata and Float32 (#3791)
+
+
+def test_tiff_read_overprecision_nodata_float32():
+
+    filename = '/vsimem/test_tiff_read_overprecision_nodata_float32.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1, 1, gdal.GDT_Float32)
+    ds.GetRasterBand(1).SetNoDataValue(-3.4e38)
+    ds.GetRasterBand(1).Fill(-3.4e38)
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == struct.unpack('f', struct.pack('f', -3.4e38))[0]
+    assert struct.unpack('f', ds.GetRasterBand(1).ReadRaster())[0] == ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+    gdal.Unlink(filename)
