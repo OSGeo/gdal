@@ -1017,7 +1017,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
     int nTransparentIdx = -1;
     std::vector<GDALColorEntry> colorEntries;
-    if( poColorTable)
+    if( poColorTable )
         colorEntries = ReadColorTable(*poColorTable, nTransparentIdx);
 
     // Force c4 of nodata entry to 0 so that GDALFindBestEntry() identifies
@@ -1468,15 +1468,15 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     GDALColorEntry color;
                     if( bQuadraticMean )
                     {
-                        color.c1 = static_cast<int>(sqrt(nTotalR / nCount) + 0.5);
-                        color.c2 = static_cast<int>(sqrt(nTotalG / nCount) + 0.5);
-                        color.c3 = static_cast<int>(sqrt(nTotalB / nCount) + 0.5);
+                        color.c1 = static_cast<short>(sqrt(nTotalR / nCount) + 0.5);
+                        color.c2 = static_cast<short>(sqrt(nTotalG / nCount) + 0.5);
+                        color.c3 = static_cast<short>(sqrt(nTotalB / nCount) + 0.5);
                     }
                     else
                     {
-                        color.c1 = static_cast<int>((nTotalR + nCount / 2) / nCount);
-                        color.c2 = static_cast<int>((nTotalG + nCount / 2) / nCount);
-                        color.c3 = static_cast<int>((nTotalB + nCount / 2) / nCount);
+                        color.c1 = static_cast<short>((nTotalR + nCount / 2) / nCount);
+                        color.c2 = static_cast<short>((nTotalG + nCount / 2) / nCount);
+                        color.c3 = static_cast<short>((nTotalB + nCount / 2) / nCount);
                     }
                     pDstScanline[iDstPixel] = static_cast<T>(BestColorEntry(colorEntries, color));
                 }
