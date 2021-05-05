@@ -1271,6 +1271,7 @@ public:
                                                char **papszOptions )  override final;
 
     GDALRasterAttributeTable* GetDefaultRAT() override final;
+    virtual CPLErr SetDefaultRAT(const GDALRasterAttributeTable *) override final;
     virtual CPLErr  GetHistogram(
         double dfMin, double dfMax,
         int nBuckets, GUIntBig * panHistogram,
@@ -1842,6 +1843,12 @@ GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
     return GDALPamRasterBand::GetDefaultRAT();
+}
+
+CPLErr GTiffRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT )
+{
+    m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+    return GDALPamRasterBand::SetDefaultRAT( poRAT );
 }
 
 /************************************************************************/
