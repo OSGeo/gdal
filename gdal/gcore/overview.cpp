@@ -204,9 +204,8 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
 namespace
 {
 
-// Find in the color table the entry whose (c1,c2,c3) value is the closest
-// (using quadratic distance) to the passed (nR,nG,nB) triplet, ignoring
-// transparent entries.
+// Find in the color table the entry whose RGB value is the closest
+// (using quadratic distance) to the test color, ignoring transparent entries.
 int BestColorEntry(const std::vector<GDALColorEntry>& entries, const GDALColorEntry& test)
 {
     int nMinDist = std::numeric_limits<int>::max();
@@ -218,7 +217,6 @@ int BestColorEntry(const std::vector<GDALColorEntry>& entries, const GDALColorEn
         if( entry.c4 == 0 )
             continue;
 
-        //ABELL - This seems likely to overflow.
         int nDist = ((test.c1 - entry.c1) * (test.c1 - entry.c1)) +
                 ((test.c2 - entry.c2) *  (test.c2 - entry.c2)) +
                 ((test.c3 - entry.c3) *  (test.c3 - entry.c3));
