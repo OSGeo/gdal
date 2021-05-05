@@ -1843,7 +1843,7 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             continue;
 
                         size_t idx = static_cast<size_t>(val);
-                        if( idx < colorEntries.size() && colorEntries[idx].c4 )
+                        if( colorEntries[idx].c4 )
                         {
                             const int nWeight = panLineWeight[i];
                             nTotalR += colorEntries[idx].c1 * nWeight;
