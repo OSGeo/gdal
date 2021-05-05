@@ -171,8 +171,8 @@ def test_rat_4():
     assert rat.GetValueAsInt(0, 0) == 222
     ds = None
 
+gdal.GetDriverByName('GTiff').Delete('/tmp/rat_4.tif')
 
 ##############################################################################
-
 
 
