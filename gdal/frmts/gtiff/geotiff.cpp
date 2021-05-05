@@ -14113,6 +14113,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         if( m_nBitsPerSample == 32 && m_nSampleFormat == SAMPLEFORMAT_IEEEFP )
         {
             m_dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
+            m_dfNoDataValue = static_cast<float>(m_dfNoDataValue);
         }
     }
 
