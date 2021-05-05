@@ -39,9 +39,10 @@ import numpy as np
 from osgeo import gdalconst, osr, gdal
 
 from osgeo_utils.auxiliary.base import is_path_like
-from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet, NumpyCompatibleArrayOrReal, \
-    NumpyCompatibleArray
-from osgeo_utils.auxiliary.osr_util import transform_points, AnySRS, get_transform, get_srs
+from osgeo_utils.auxiliary.array_util import ArrayLike, ArrayOrScalarLike
+from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
+from osgeo_utils.auxiliary.osr_util import transform_points, AnySRS, get_transform, get_srs, \
+    get_axis_order_from_gis_order, OAMS_AXIS_ORDER
 from osgeo_utils.auxiliary.util import PathOrDS, open_ds, get_bands, get_scales_and_offsets, get_band_nums
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser
 
@@ -66,8 +67,8 @@ CoordinateTransformationOrSRS = Optional[
 
 
 def gdallocationinfo(filename_or_ds: PathOrDS,
-                     x: NumpyCompatibleArrayOrReal, y: NumpyCompatibleArrayOrReal,
-                     gis_order: bool = False,
+                     x: ArrayOrScalarLike, y: ArrayOrScalarLike,
+                     axis_order: Optional[OAMS_AXIS_ORDER] = None,
                      open_options: Optional[dict] = None,
                      ovr_idx: Optional[int] = None,
                      band_nums: Optional[Sequence[int]] = None,
@@ -81,9 +82,9 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
     filename = filename_or_ds if is_path_like(filename_or_ds) else ''
     if ds is None:
         raise Exception(f'Could not open {filename}.')
-    if not isinstance(x, NumpyCompatibleArray.__args__):
+    if not isinstance(x, ArrayLike.__args__):
         x = [x]
-    if not isinstance(y, NumpyCompatibleArray.__args__):
+    if not isinstance(y, ArrayLike.__args__):
         y = [y]
     if len(x) != len(y):
         raise Exception(f'len(x)={len(x)} should be the same as len(y)={len(y)}')
@@ -108,7 +109,7 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
                 if srs == LocationInfoSRS.SameAsDS_SRS_GeogCS:
                     points_srs = ds_srs.CloneGeogCS()
                 else:
-                    points_srs = get_srs(srs, gis_order=gis_order)
+                    points_srs = get_srs(srs, axis_order=axis_order)
                 ct = get_transform(points_srs, ds_srs)
             x, y, _z = transform_points(ct, x, y)
 
@@ -160,7 +161,7 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
 
 
 def gdallocationinfo_util(filename_or_ds: PathOrDS,
-                     x: NumpyCompatibleArrayOrReal, y: NumpyCompatibleArrayOrReal,
+                     x: ArrayOrScalarLike, y: ArrayOrScalarLike,
                      open_options: Optional[dict] = None,
                      band_nums: Optional[Sequence[int]] = None,
                      resample_alg=gdalconst.GRIORA_NearestNeighbour,
@@ -298,7 +299,7 @@ def main(argv):
                              "instead of the base band. Note that the x,y location (if the coordinate system is "
                              "pixel/line) must still be given with respect to the base band.")
 
-    parser.add_argument("-axis_order", dest="gis_order", choices=['gis', 'authority'], type=str,
+    parser.add_argument("-axis_order", dest="axis_order", choices=['gis', 'authority'], type=str, default=None,
                         help="X, Y Axis order: Traditional GIS, Authority complaint or otherwise utility default.")
 
     parser.add_argument("-oo", dest="open_options", metavar="NAME=VALUE",
@@ -327,9 +328,20 @@ def main(argv):
     elif args.wgs84:
         args.srs = 4326
 
-    args.gis_order = \
-        args.srs and (args.srs != LocationInfoSRS.SameAsDS_SRS) if args.gis_order is None \
-        else str(args.gis_order).lower() == 'gis'
+    axis_order = args.axis_order
+    if isinstance(axis_order, OAMS_AXIS_ORDER):
+        pass
+    else:
+        if isinstance(axis_order, str):
+            gis_order = axis_order.lower() == 'gis'
+        elif axis_order is None:
+            gis_order = args.srs is not None and (args.srs != LocationInfoSRS.SameAsDS_SRS)
+        elif isinstance(axis_order, bool):
+            gis_order = axis_order
+        else:
+            raise Exception(f'Unknown axis order {axis_order}')
+        axis_order = get_axis_order_from_gis_order(gis_order)
+    args.axis_order = axis_order
 
     if args.xml:
         args.output_mode = LocationInfoOutput.XML
