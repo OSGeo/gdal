@@ -3103,8 +3103,8 @@ public:
   }
 
   %newobject MakeValid;
-  OGRGeometryShadow* MakeValid() {
-    return (OGRGeometryShadow*) OGR_G_MakeValid(self);
+  OGRGeometryShadow* MakeValid( char** options = NULL ) {
+    return (OGRGeometryShadow*) OGR_G_MakeValidEx(self, options);
   }
 
   %newobject Normalize;

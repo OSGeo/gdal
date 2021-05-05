@@ -3635,13 +3635,28 @@ static OGRBoolean OGRGEOSBooleanPredicate(
  * If OGR is built without the GEOS >= 3.8 library, this function will return
  * a clone of the input geometry if it is valid, or NULL if it is invalid
  *
+ * @param papszOptions NULL terminated list of options, or NULL. The following
+ * options are available:
+ * <ul>
+ * <li>METHOD=LINEWORK/STRUCTURE.
+ *     LINEWORK is the default method, which combines all rings into a set of
+ *     noded lines and then extracts valid polygons from that linework.
+ *     The STRUCTURE method (requires GEOS >= 3.10 and GDAL >= 3.4) first makes
+ *     all rings valid, then merges shells and
+ *     subtracts holes from shells to generate valid result. Assumes that
+ *     holes and shells are correctly categorized.</li>
+ * <li>KEEP_COLLAPSED=YES/NO. Only for METHOD=STRUCTURE.
+ *     NO (default): collapses are converted to empty geometries
+ *     YES: collapses are converted to a valid geometry of lower dimension.</li>
+ * </ul>
  * @return a newly allocated geometry now owned by the caller, or NULL
  * on failure.
  *
  * @since GDAL 3.0
  */
-OGRGeometry *OGRGeometry::MakeValid() const
+OGRGeometry *OGRGeometry::MakeValid( CSLConstList papszOptions ) const
 {
+    (void)papszOptions;
 #ifndef HAVE_GEOS
     if( IsValid() )
         return clone();
@@ -3678,13 +3693,42 @@ OGRGeometry *OGRGeometry::MakeValid() const
             return clone();
     }
 
+    const bool bStructureMethod = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "METHOD", "LINEWORK"), "STRUCTURE");
+    CPL_IGNORE_RET_VAL(bStructureMethod);
+#if !(GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 10))
+    if( bStructureMethod )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "GEOS 3.10 or later needed for METHOD=STRUCTURE." );
+        return nullptr;
+    }
+#endif
+
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
     GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
     if( hGeosGeom != nullptr )
     {
-        GEOSGeom hGEOSRet = GEOSMakeValid_r( hGEOSCtxt, hGeosGeom );
+        GEOSGeom hGEOSRet;
+#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 10)
+        if( bStructureMethod )
+        {
+            GEOSMakeValidParams* params = GEOSMakeValidParams_create_r(hGEOSCtxt);
+            CPLAssert(params);
+            GEOSMakeValidParams_setMethod_r(
+                hGEOSCtxt, params, GEOS_MAKE_VALID_STRUCTURE);
+            GEOSMakeValidParams_setKeepCollapsed_r(hGEOSCtxt, params,
+                       CPLFetchBool(papszOptions, "KEEP_COLLAPSED", false));
+            hGEOSRet = GEOSMakeValidWithParams_r( hGEOSCtxt, hGeosGeom, params );
+            GEOSMakeValidParams_destroy_r(hGEOSCtxt, params);
+        }
+        else
+#endif
+        {
+            hGEOSRet = GEOSMakeValid_r( hGEOSCtxt, hGeosGeom );
+        }
         GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
 
         if( hGEOSRet != nullptr )
@@ -3735,6 +3779,37 @@ OGRGeometryH OGR_G_MakeValid( OGRGeometryH hGeom )
 
     return reinterpret_cast<OGRGeometryH>(
         reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid());
+}
+
+/************************************************************************/
+/*                         OGR_G_MakeValidEx()                            */
+/************************************************************************/
+
+/**
+ * \brief Attempts to make an invalid geometry valid without losing vertices.
+ *
+ * Already-valid geometries are cloned without further intervention.
+ *
+ * This function is the same as the C++ method OGRGeometry::MakeValid().
+ *
+ * See documentation of that method for possible options.
+ *
+ * @param hGeom The Geometry to make valid.
+ * @param papszOptions Options.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 3.4
+ */
+
+OGRGeometryH OGR_G_MakeValidEx( OGRGeometryH hGeom, CSLConstList papszOptions )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_MakeValidEx", nullptr );
+
+    return reinterpret_cast<OGRGeometryH>(
+        reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid(papszOptions));
 }
 
 /************************************************************************/
