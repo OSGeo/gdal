@@ -1433,6 +1433,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
                         const T val = pChunk[iX + static_cast<GPtrDiff_t>(iY) *nChunkXSize];
+                        // cppcheck-suppress unsignedLessThanZero
                         if (val < 0 || val >= colorEntries.size())
                             continue;
                         size_t idx = static_cast<size_t>(val);
