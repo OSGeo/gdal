@@ -135,6 +135,43 @@ def test_rat_3():
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/rat_3.tif')
+
+###############################################################################
+# Edit an existing RAT (#5451)
+
+
+def test_rat_4():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/tmp/rat_4.tif', 1, 1)
+    rat = gdal.RasterAttributeTable()
+    rat.CreateColumn('VALUE', gdal.GFT_Integer, gdal.GFU_MinMax)
+    rat.CreateColumn('CLASS', gdal.GFT_String, gdal.GFU_Name)
+    rat.SetValueAsInt(0, 0, 111)
+    rat.SetValueAsString(0, 1, 'Class1')
+    ds.GetRasterBand(1).SetDefaultRAT(rat)
+    ds = None
+
+    # Replace existing RAT
+    rat = gdal.RasterAttributeTable()
+    rat.CreateColumn('VALUE', gdal.GFT_Integer, gdal.GFU_MinMax)
+    rat.CreateColumn('CLASS', gdal.GFT_String, gdal.GFU_Name)
+    rat.SetValueAsInt(0, 0, 222)
+    rat.SetValueAsString(0, 1, 'Class1')
+
+    ds = gdal.OpenEx('/tmp/rat_4.tif', gdal.OF_RASTER | gdal.OF_UPDATE)
+    gdal_band = ds.GetRasterBand(1)
+    gdal_band.SetDefaultRAT(rat)
+    ds.FlushCache()
+    ds = None
+
+    ds = gdal.OpenEx('/tmp/rat_4.tif')
+    gdal_band = ds.GetRasterBand(1)
+    rat = gdal_band.GetDefaultRAT()
+    assert rat is not None
+    assert rat.GetValueAsInt(0, 0) == 222
+    ds = None
+
+
 ##############################################################################
 
 
