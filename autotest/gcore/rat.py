@@ -137,7 +137,7 @@ def test_rat_3():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/rat_3.tif')
 
 ###############################################################################
-# Edit an existing RAT (#5451)
+# Edit an existing RAT (#3783)
 
 
 def test_rat_4():
@@ -174,5 +174,4 @@ def test_rat_4():
 gdal.GetDriverByName('GTiff').Delete('/tmp/rat_4.tif')
 
 ##############################################################################
-
 
