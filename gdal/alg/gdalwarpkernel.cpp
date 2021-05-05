@@ -58,6 +58,18 @@
 #include "gdal_thread_pool.h"
 #include "gdalwarpkernel_opencl.h"
 
+/*! GWKAverageOrMode Algorithm */
+enum class AOM {
+    Average = 1,
+    FloatMode = 2,
+    IntMode = 3,
+    Max = 4,
+    Min = 5,
+    Quant = 6,
+    Sum = 7,
+    RMS = 8
+};
+
 // We restrict to 64bit processors because they are guaranteed to have SSE2.
 // Could possibly be used too on 32bit, but we would need to check at runtime.
 #if defined(__x86_64) || defined(_M_X64)
@@ -5761,20 +5773,18 @@ static void GWKAverageOrModeThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Find out which algorithm to use (small optim.)                  */
 /* -------------------------------------------------------------------- */
-    int nAlgo = 0;
+    AOM nAlgo;
 
-    // These vars only used with nAlgo == 3.
+    // These vars only used with AOM::IntMode
     int *panVals = nullptr;
     int nBins = 0;
     int nBinsOffset = 0;
 
-    // Only used with nAlgo = 2.
-    float* pafRealVals = nullptr;
-    float* pafImagVals = nullptr;
-    int* panRealSums = nullptr;
-    int* panImagSums = nullptr;
+    // Only used with AOM::FloatMode
+    std::vector<float> realVals;
+    std::vector<int> realSums;
 
-    // Only used with nAlgo = 6.
+    // Only used with AOM::Quant
     float quant = 0.5;
 
     //To control array allocation only when data type is complex
@@ -5782,11 +5792,11 @@ static void GWKAverageOrModeThread( void* pData)
 
     if( poWK->eResample == GRA_Average )
     {
-        nAlgo = GWKAOM_Average;
+        nAlgo = AOM::Average;
     }
     else if( poWK->eResample == GRA_RMS )
     {
-        nAlgo = GWKAOM_RMS;
+        nAlgo = AOM::RMS;
     }
     else if( poWK->eResample == GRA_Mode )
     {
@@ -5795,7 +5805,7 @@ static void GWKAverageOrModeThread( void* pData)
             poWK->eWorkingDataType == GDT_UInt16 ||
             poWK->eWorkingDataType == GDT_Int16 )
         {
-            nAlgo = GWKAOM_Imode;
+            nAlgo = AOM::IntMode;
 
             // In the case of a paletted or non-paletted byte band,
             // Input values are between 0 and 255.
@@ -5821,49 +5831,38 @@ static void GWKAverageOrModeThread( void* pData)
         }
         else
         {
-            nAlgo = GWKAOM_Fmode;
+            nAlgo = AOM::FloatMode;
 
-            if( nSrcXSize > 0 && nSrcYSize > 0 )
-            {
-                pafRealVals = static_cast<float *>(
-                    VSI_MALLOC3_VERBOSE(nSrcXSize, nSrcYSize, sizeof(float)));
-                panRealSums = static_cast<int *>(
-                    VSI_MALLOC3_VERBOSE(nSrcXSize, nSrcYSize, sizeof(int)));
-                if( pafRealVals == nullptr || panRealSums == nullptr )
-                {
-                    VSIFree(pafRealVals);
-                    VSIFree(panRealSums);
-                    return;
-                }
-            }
+            realVals.resize(nSrcXSize * nSrcYSize);
+            realSums.resize(nSrcXSize * nSrcYSize);
         }
     }
     else if( poWK->eResample == GRA_Max )
     {
-        nAlgo = GWKAOM_Max;
+        nAlgo = AOM::Max;
     }
     else if( poWK->eResample == GRA_Min )
     {
-        nAlgo = GWKAOM_Min;
+        nAlgo = AOM::Min;
     }
     else if( poWK->eResample == GRA_Med )
     {
-        nAlgo = GWKAOM_Quant;
+        nAlgo = AOM::Quant;
         quant = 0.5;
     }
     else if( poWK->eResample == GRA_Q1 )
     {
-        nAlgo = GWKAOM_Quant;
+        nAlgo = AOM::Quant;
         quant = 0.25;
     }
     else if( poWK->eResample == GRA_Q3 )
     {
-        nAlgo = GWKAOM_Quant;
+        nAlgo = AOM::Quant;
         quant = 0.75;
     }
     else if( poWK->eResample == GRA_Sum )
     {
-        nAlgo = GWKAOM_Sum;
+        nAlgo = AOM::Sum;
     }
     else
     {
@@ -5875,7 +5874,7 @@ static void GWKAverageOrModeThread( void* pData)
     }
 
     CPLDebug("GDAL",
-             "GDALWarpKernel():GWKAverageOrModeThread() using algo %d", nAlgo);
+             "GDALWarpKernel():GWKAverageOrModeThread() using algo %d", static_cast<int>(nAlgo));
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... two     */
@@ -6040,7 +6039,7 @@ static void GWKAverageOrModeThread( void* pData)
      dfWeightY)
 
                 // poWK->eResample == GRA_Average.
-                if( nAlgo == GWKAOM_Average )
+                if( nAlgo == AOM::Average )
                 {
                     double dfTotalReal = 0.0;
                     double dfTotalImag = 0.0;
@@ -6090,7 +6089,7 @@ static void GWKAverageOrModeThread( void* pData)
                     }
                 }  // GRA_Average.
                 // poWK->eResample == GRA_RMS.
-                if( nAlgo == GWKAOM_RMS )
+                if( nAlgo == AOM::RMS )
                 {
                     double dfTotalReal = 0.0;
                     double dfTotalImag = 0.0;
@@ -6135,7 +6134,7 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                     }
                 }  // GRA_RMS.
-                else if( nAlgo == GWKAOM_Sum )
+                else if( nAlgo == AOM::Sum )
                 // poWK->eResample == GRA_Sum
                 {
                     double dfTotalReal = 0.0;
@@ -6183,12 +6182,13 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                     }
                 }  // GRA_Sum.
-                else if( nAlgo == GWKAOM_Imode || nAlgo == GWKAOM_Fmode )
+
                 // poWK->eResample == GRA_Mode
+                else if( nAlgo == AOM::IntMode || nAlgo == AOM::FloatMode )
                 {
                     // This code adapted from GDALDownsampleChunk32R_Mode() in
                     // gcore/overview.cpp.
-                    if( nAlgo == GWKAOM_Fmode ) // int32 or float.
+                    if( nAlgo == AOM::FloatMode ) // int32 or float.
                     {
                         // Does it make sense it makes to run a
                         // majority filter on floating point data? But, here it
@@ -6200,9 +6200,7 @@ static void GWKAverageOrModeThread( void* pData)
 
                         for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                         {
-                            for( int iSrcX = iSrcXMin;
-                                 iSrcX < iSrcXMax;
-                                 iSrcX++ )
+                            for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
                             {
                                 iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
@@ -6213,8 +6211,7 @@ static void GWKAverageOrModeThread( void* pData)
 
                                 if( GWKGetPixelValue(
                                         poWK, iBand, iSrcOffset,
-                                        &dfBandDensity, &dfValueRealTmp,
-                                        &dfValueImagTmp ) &&
+                                        &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) &&
                                     dfBandDensity > BAND_DENSITY_THRESHOLD )
                                 {
                                     const float fVal =
@@ -6222,8 +6219,8 @@ static void GWKAverageOrModeThread( void* pData)
 
                                     // Check array for existing entry.
                                     for( i = 0; i < iMaxInd; ++i )
-                                        if( pafRealVals[i] == fVal
-                                            && ++panRealSums[i] > panRealSums[iMaxVal] )
+                                        if( realVals[i] == fVal &&
+                                            ++realSums[i] > realSums[iMaxVal] )
                                         {
                                             iMaxVal = i;
                                             break;
@@ -6232,8 +6229,8 @@ static void GWKAverageOrModeThread( void* pData)
                                     // Add to arr if entry not already there.
                                     if( i == iMaxInd )
                                     {
-                                        pafRealVals[iMaxInd] = fVal;
-                                        panRealSums[iMaxInd] = 1;
+                                        realVals[iMaxInd] = fVal;
+                                        realSums[iMaxInd] = 1;
 
                                         if( iMaxVal < 0 )
                                             iMaxVal = iMaxInd;
@@ -6246,7 +6243,7 @@ static void GWKAverageOrModeThread( void* pData)
 
                         if( iMaxVal != -1 )
                         {
-                            dfValueReal = pafRealVals[iMaxVal];
+                            dfValueReal = realVals[iMaxVal];
                             dfBandDensity = 1;
                             bHasFoundDensity = true;
                         }
@@ -6298,7 +6295,7 @@ static void GWKAverageOrModeThread( void* pData)
                         }
                     }
                 }  // GRA_Mode.
-                else if( nAlgo == GWKAOM_Max )
+                else if( nAlgo == AOM::Max )
                 // poWK->eResample == GRA_Max.
                 {
                     bool bFoundValid = false;
@@ -6340,7 +6337,7 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                     }
                 }  // GRA_Max.
-                else if( nAlgo == GWKAOM_Min )
+                else if( nAlgo == AOM::Min )
                 // poWK->eResample == GRA_Min.
                 {
                     bool bFoundValid = false;
@@ -6382,7 +6379,7 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                     }
                 }  // GRA_Min.
-                else if( nAlgo == GWKAOM_Quant )
+                else if( nAlgo == AOM::Quant )
                 // poWK->eResample == GRA_Med | GRA_Q1 | GRA_Q3.
                 {
                     bool bFoundValid = false;
@@ -6481,11 +6478,4 @@ static void GWKAverageOrModeThread( void* pData)
     CPLFree( pabSuccess );
     CPLFree( pabSuccess2 );
     VSIFree( panVals );
-    VSIFree(pafRealVals);
-    VSIFree(panRealSums);
-    if (bIsComplex)
-    {
-        VSIFree(pafImagVals);
-        VSIFree(panImagSums);
-    }
 }
