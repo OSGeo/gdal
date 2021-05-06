@@ -285,6 +285,7 @@ def test_mem_md_array_string():
     dim = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
     var = rg.CreateMDArray('var', [dim], gdal.ExtendedDataType.CreateString())
     assert var
+    assert var.Read() == [None, None]
     assert var.Write(['', '0123456789']) == gdal.CE_None
     var = rg.OpenMDArray('var')
     assert var
