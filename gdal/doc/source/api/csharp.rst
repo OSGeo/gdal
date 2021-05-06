@@ -54,7 +54,7 @@ Useful Links
 
 * A variety of example programs in CSharp are available at the `/swig/csharp/apps <https://github.com/OSGeo/gdal/tree/master/gdal/swig/csharp/apps>`__ folder of the GDAL project tree.
 
-* The Conda Feedstock - (WIP)
+* The Conda Feedstock 
 
 * A simple (as is) build engine of GDAL 3.2 library for .NET Core. `MaxRev-Dev/gdal.netcore <https://github.com/MaxRev-Dev/gdal.netcore>`__ 
 
