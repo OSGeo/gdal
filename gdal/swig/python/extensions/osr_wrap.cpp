@@ -3777,6 +3777,12 @@ SWIGINTERNINLINE PyObject*
   return PyBool_FromLong(value ? 1 : 0);
 }
 
+SWIGINTERN double OSRSpatialReferenceShadow_GetCoordinateEpoch(OSRSpatialReferenceShadow *self){
+    return OSRGetCoordinateEpoch(self);
+  }
+SWIGINTERN void OSRSpatialReferenceShadow_SetCoordinateEpoch(OSRSpatialReferenceShadow *self,double coordinateEpoch){
+    OSRSetCoordinateEpoch(self, coordinateEpoch);
+  }
 SWIGINTERN int OSRSpatialReferenceShadow_EPSGTreatsAsLatLong(OSRSpatialReferenceShadow *self){
     return OSREPSGTreatsAsLatLong(self);
   }
@@ -6038,6 +6044,86 @@ SWIGINTERN PyObject *_wrap_SpatialReference_IsDynamic(PyObject *SWIGUNUSEDPARM(s
 #endif
   }
   resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_GetCoordinateEpoch(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SpatialReference_GetCoordinateEpoch",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_GetCoordinateEpoch" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (double)OSRSpatialReferenceShadow_GetCoordinateEpoch(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_SetCoordinateEpoch(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:SpatialReference_SetCoordinateEpoch",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetCoordinateEpoch" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetCoordinateEpoch" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    OSRSpatialReferenceShadow_SetCoordinateEpoch(arg1,arg2);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -18012,6 +18098,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_IsLocal", _wrap_SpatialReference_IsLocal, METH_VARARGS, (char *)"SpatialReference_IsLocal(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsVertical", _wrap_SpatialReference_IsVertical, METH_VARARGS, (char *)"SpatialReference_IsVertical(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_IsDynamic", _wrap_SpatialReference_IsDynamic, METH_VARARGS, (char *)"SpatialReference_IsDynamic(SpatialReference self) -> bool"},
+	 { (char *)"SpatialReference_GetCoordinateEpoch", _wrap_SpatialReference_GetCoordinateEpoch, METH_VARARGS, (char *)"SpatialReference_GetCoordinateEpoch(SpatialReference self) -> double"},
+	 { (char *)"SpatialReference_SetCoordinateEpoch", _wrap_SpatialReference_SetCoordinateEpoch, METH_VARARGS, (char *)"SpatialReference_SetCoordinateEpoch(SpatialReference self, double coordinateEpoch)"},
 	 { (char *)"SpatialReference_EPSGTreatsAsLatLong", _wrap_SpatialReference_EPSGTreatsAsLatLong, METH_VARARGS, (char *)"SpatialReference_EPSGTreatsAsLatLong(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_EPSGTreatsAsNorthingEasting", _wrap_SpatialReference_EPSGTreatsAsNorthingEasting, METH_VARARGS, (char *)"SpatialReference_EPSGTreatsAsNorthingEasting(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_SetAuthority", _wrap_SpatialReference_SetAuthority, METH_VARARGS, (char *)"SpatialReference_SetAuthority(SpatialReference self, char const * pszTargetKey, char const * pszAuthority, int nCode) -> OGRErr"},

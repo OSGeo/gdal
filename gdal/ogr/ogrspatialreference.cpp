@@ -131,6 +131,8 @@ struct OGRSpatialReference::Private
     OSRAxisMappingStrategy m_axisMappingStrategy = OAMS_AUTHORITY_COMPLIANT;
     std::vector<int>       m_axisMapping{1,2,3};
 
+    double              m_coordinateEpoch = 0; // as decimal year
+
     Private();
     ~Private();
     Private(const Private&) = delete;
@@ -223,6 +225,8 @@ void OGRSpatialReference::Private::clear()
 
     m_bMorphToESRI = false;
     m_bHasCenterLong = false;
+
+    m_coordinateEpoch = 0.0;
 }
 
 void OGRSpatialReference::Private::setRoot(OGR_SRSNode* poRoot)
@@ -265,7 +269,9 @@ void OGRSpatialReference::Private::refreshProjObj()
         m_poRoot->exportToWkt(&pszWKT);
         auto poRootBackup = m_poRoot;
         m_poRoot = nullptr;
+        const double dfCoordinateEpochBackup = m_coordinateEpoch;
         clear();
+        m_coordinateEpoch = dfCoordinateEpochBackup;
         m_bHasCenterLong = strstr(pszWKT, "CENTER_LONG") != nullptr;
 
         const char* const options[] = { "STRICT=NO", nullptr };
@@ -1243,6 +1249,7 @@ OGRSpatialReference *OGRSpatialReference::Clone() const
     }
     poNewRef->d->m_axisMapping = d->m_axisMapping;
     poNewRef->d->m_axisMappingStrategy = d->m_axisMappingStrategy;
+    poNewRef->d->m_coordinateEpoch = d->m_coordinateEpoch;
     return poNewRef;
 }
 
@@ -8886,6 +8893,7 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
  * <li>IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES/NO. Defaults to NO</li>
  * <li>CRITERION=STRICT/EQUIVALENT/EQUIVALENT_EXCEPT_AXIS_ORDER_GEOGCRS.
  *     Defaults to EQUIVALENT_EXCEPT_AXIS_ORDER_GEOGCRS.</li>
+ * <li>IGNORE_COORDINATE_EPOCH=YES/NO. Defaults to NO</li>
  * </ul>
  *
  * @return TRUE if equivalent or FALSE otherwise.
@@ -8903,6 +8911,13 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
                      "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING", "NO")) )
     {
         if( d->m_axisMapping != poOtherSRS->d->m_axisMapping )
+            return false;
+    }
+
+    if( !CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                     "IGNORE_COORDINATE_EPOCH", "NO")) )
+    {
+        if( d->m_coordinateEpoch != poOtherSRS->d->m_coordinateEpoch )
             return false;
     }
 
@@ -11878,4 +11893,93 @@ int OGRSpatialReference::GetEPSGGeogCS() const
     }
 
     return -1;
+}
+
+/************************************************************************/
+/*                          SetCoordinateEpoch()                        */
+/************************************************************************/
+
+/** Set the coordinate epoch, as decimal year.
+ *
+ * In a dynamic CRS, coordinates of a point on the surface of the Earth may
+ * change with time. To be unambiguous the coordinates must always be qualified
+ * with the epoch at which they are valid. The coordinate epoch is not necessarily
+ * the epoch at which the observation was collected.
+ *
+ * Pedantically the coordinate epoch of an observation belongs to the
+ * observation, and not to the CRS, however it is often more practical to
+ * bind it to the CRS. The coordinate epoch should be specified for dynamic
+ * CRS (see IsDynamic())
+ *
+ * This method is the same as the OSRSetCoordinateEpoch() function.
+ *
+ * @param dfCoordinateEpoch Coordinate epoch as decimal year (e.g. 2021.3)
+ * @since OGR 3.4
+ */
+
+void OGRSpatialReference::SetCoordinateEpoch( double dfCoordinateEpoch )
+{
+    d->m_coordinateEpoch = dfCoordinateEpoch;
+}
+
+/************************************************************************/
+/*                      OSRSetCoordinateEpoch()                         */
+/************************************************************************/
+
+/** \brief Set the coordinate epoch, as decimal year.
+ *
+ * See OGRSpatialReference::SetCoordinateEpoch()
+ *
+ * @since OGR 3.4
+ */
+void OSRSetCoordinateEpoch( OGRSpatialReferenceH hSRS, double dfCoordinateEpoch )
+{
+    VALIDATE_POINTER0( hSRS, "OSRSetCoordinateEpoch" );
+
+    return OGRSpatialReference::FromHandle(hSRS)->SetCoordinateEpoch(dfCoordinateEpoch);
+}
+
+/************************************************************************/
+/*                          GetCoordinateEpoch()                        */
+/************************************************************************/
+
+/** Return the coordinate epoch, as decimal year.
+ *
+ * In a dynamic CRS, coordinates of a point on the surface of the Earth may
+ * change with time. To be unambiguous the coordinates must always be qualified
+ * with the epoch at which they are valid. The coordinate epoch is not necessarily
+ * the epoch at which the observation was collected.
+ *
+ * Pedantically the coordinate epoch of an observation belongs to the
+ * observation, and not to the CRS, however it is often more practical to
+ * bind it to the CRS. The coordinate epoch should be specified for dynamic
+ * CRS (see IsDynamic())
+ *
+ * This method is the same as the OSRGetCoordinateEpoch() function.
+ *
+ * @return coordinateEpoch Coordinate epoch as decimal year (e.g. 2021.3), or 0
+ *                         if not set, or relevant.
+ * @since OGR 3.4
+ */
+
+double OGRSpatialReference::GetCoordinateEpoch() const
+{
+    return d->m_coordinateEpoch;
+}
+
+/************************************************************************/
+/*                      OSRGetCoordinateEpoch()                        */
+/************************************************************************/
+
+/** \brief Get the coordinate epoch, as decimal year.
+ *
+ * See OGRSpatialReference::GetCoordinateEpoch()
+ *
+ * @since OGR 3.4
+ */
+double OSRGetCoordinateEpoch( OGRSpatialReferenceH hSRS )
+{
+    VALIDATE_POINTER1( hSRS, "OSRGetCoordinateEpoch", 0 );
+
+    return OGRSpatialReference::FromHandle(hSRS)->GetCoordinateEpoch();
 }

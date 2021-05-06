@@ -380,6 +380,9 @@ class CPL_DLL OGRSpatialReference
                                const OGRSpatialReference *poHorizSRS,
                                const OGRSpatialReference *poVertSRS );
 
+    void        SetCoordinateEpoch( double dfCoordinateEpoch );
+    double      GetCoordinateEpoch() const;
+
     // cppcheck-suppress functionStatic
     OGRErr      PromoteTo3D( const char* pszName );
     // cppcheck-suppress functionStatic
