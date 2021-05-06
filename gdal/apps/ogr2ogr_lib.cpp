@@ -150,6 +150,9 @@ struct GDALVectorTranslateOptions
         otherwise only SRS assignment is done. */
     char *pszOutputSRSDef;
 
+    /*! Coordinate epoch of output SRS */
+    double dfOutputCoordinateEpoch;
+
     /*! override source SRS */
     char *pszSourceSRSDef;
 
@@ -1860,6 +1863,8 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
                       psOptions->pszOutputSRSDef );
             return nullptr;
         }
+        oOutputSRSHolder.get()->SetCoordinateEpoch(psOptions->dfOutputCoordinateEpoch);
+
         poWrkSrcDS = GDALVectorTranslateWrappedDataset::New(
             poDS, oOutputSRSHolder.get(), psOptions->bTransform);
         if( poWrkSrcDS == nullptr )
@@ -2484,6 +2489,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             if( hDstDS == nullptr ) GDALClose( poODS );
             return nullptr;
         }
+        oOutputSRSHolder.get()->SetCoordinateEpoch(psOptions->dfOutputCoordinateEpoch);
     }
 
 /* -------------------------------------------------------------------- */
@@ -5451,6 +5457,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 psOptions->pszOutputSRSDef = nullptr;
                 psOptions->bNullifyOutputSRS = true;
             }
+        }
+        else if( i+1 < nArgc && EQUAL(papszArgv[i],"-a_coord_epoch") )
+        {
+            psOptions->dfOutputCoordinateEpoch = CPLAtof(papszArgv[++i]);
         }
         else if( i+1 < nArgc && EQUAL(papszArgv[i],"-t_srs") )
         {

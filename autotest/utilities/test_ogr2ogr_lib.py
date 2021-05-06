@@ -693,3 +693,17 @@ def test_ogr2ogr_fielddomain_():
     f = lyr.GetNextFeature()
     assert f['bar'] == -1
     assert not f.IsFieldSet('bar_resolved')
+
+###############################################################################
+# Test -a_coord_epoch
+
+
+def test_ogr2ogr_assign_coord_epoch():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer('layer')
+
+    ds = gdal.VectorTranslate('', src_ds, options = '-f Memory -a_srs EPSG:7665 -a_coord_epoch 2021.3')
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
