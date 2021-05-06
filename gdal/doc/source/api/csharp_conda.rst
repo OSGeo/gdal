@@ -4,7 +4,8 @@
 C# Bindings Conda Package
 ================================================================================
 
-# Installation
+Installation
+------------
 
 GDAL with the C# bindins and example applications can be loaded using
 
@@ -14,7 +15,8 @@ GDAL with the C# bindins and example applications can be loaded using
 
 .. note:: On Mac and Linux, this command will also load Mono
 
-# Usage - Windows
+Usage - Windows
+---------------
 
 .. note:: You can test if the C# bindings are working in a Conda environment by running ..program:`gdal_test`.
 
@@ -31,7 +33,8 @@ For a console app that is run from within the Conda environment (i.e. run ..prog
 For GUI apps or other apps that cannot be run from with the Conda environment then you will have to setup the environment to make the GDAL DLLs available to the app.
 
 
-# Usage - MAc / Linux
+Usage - Mac / Linux
+-------------------
 
 .. note:: You test if the C# bindings are working in a Conda environment by running ..program:`mono $CONDA_PREFIX/lib/gdal_test.exe`
 
@@ -50,7 +53,8 @@ If run in the conda environment, this should work. For something more portable o
 
 The DLLs can also be used in a .NET project, for instance built in VS. Just link the DLLs in a dependencies.
 
-# Differences in the Conda build
+Differences in the Conda build
+------------------------------
 
 The Conda build is in some ways different from the "standard" GDAL build:
 
