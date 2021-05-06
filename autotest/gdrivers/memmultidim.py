@@ -58,6 +58,8 @@ def test_mem_md_basic():
     assert not rg.OpenGroup("not existing")
     assert not rg.OpenGroupFromFullname("not existing")
     assert not rg.GetAttribute("not existing")
+    assert not rg.GetVectorLayerNames()
+    assert not rg.OpenVectorLayer("not existing")
 
 
 def test_mem_md_subgroup():

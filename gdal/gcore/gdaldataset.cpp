@@ -123,6 +123,8 @@ class GDALDataset::Private
 
     GDALDataset* poParentDataset = nullptr;
 
+    bool m_bOverviewsEnabled = true;
+
     Private() = default;
 };
 
@@ -2065,7 +2067,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
          psExtraArg->eResampleAlg == GRIORA_Lanczos) &&
         !(nXSize == nBufXSize && nYSize == nBufYSize) && nBandCount > 1 )
     {
-        if( nBufXSize < nXSize && nBufYSize < nYSize )
+        if( nBufXSize < nXSize && nBufYSize < nYSize && AreOverviewsEnabled() )
         {
             int bTried = FALSE;
             const CPLErr eErr =
@@ -8341,7 +8343,7 @@ OGRFieldDomainH GDALDatasetGetFieldDomain(GDALDatasetH hDS,
  * Only a few drivers will support this operation, and some of them might only
  * support it only for some types of field domains.
  * At the time of writing (GDAL 3.3), only the Memory and GeoPackage drivers
- * support this operation. A dataset having at least smoe support for this
+ * support this operation. A dataset having at least some support for this
  * operation should report the ODsCAddFieldDomain dataset capability.
  *
  * Anticipated failures will not be emitted through the CPLError()
@@ -8369,7 +8371,7 @@ bool GDALDataset::AddFieldDomain(CPL_UNUSED std::unique_ptr<OGRFieldDomain>&& do
  * Only a few drivers will support this operation, and some of them might only
  * support it only for some types of field domains.
  * At the time of writing (GDAL 3.3), only the Memory and GeoPackage drivers
- * support this operation. A dataset having at least smoe support for this
+ * support this operation. A dataset having at least some support for this
  * operation should report the ODsCAddFieldDomain dataset capability.
  *
  * Anticipated failures will not be emitted through the CPLError()
@@ -8405,3 +8407,28 @@ bool GDALDatasetAddFieldDomain(GDALDatasetH hDS,
     }
     return bRet;
 }
+
+//! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                       SetEnableOverviews()                           */
+/************************************************************************/
+
+void GDALDataset::SetEnableOverviews(bool bEnable)
+{
+    if( m_poPrivate )
+    {
+        m_poPrivate->m_bOverviewsEnabled = bEnable;
+    }
+}
+
+/************************************************************************/
+/*                      AreOverviewsEnabled()                           */
+/************************************************************************/
+
+bool GDALDataset::AreOverviewsEnabled() const
+{
+    return m_poPrivate ? m_poPrivate->m_bOverviewsEnabled : true;
+}
+
+//! @endcond

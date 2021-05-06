@@ -19,4 +19,5 @@ GDAL
     api/index
     tutorials/index
     community/index
+    sponsors/index
     contributing/index

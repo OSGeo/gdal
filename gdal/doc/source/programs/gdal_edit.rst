@@ -1,7 +1,7 @@
 .. _gdal_edit:
 
 ================================================================================
-gdal_edit
+gdal_edit.py
 ================================================================================
 
 .. only:: html
@@ -98,7 +98,7 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 2.0
 
-.. option:: -setstatsmin max mean stddev
+.. option:: -setstats min max mean stddev
 
     Store user-defined values for band statistics (minimum, maximum,
     mean and standard deviation). If any of the values is set to None,

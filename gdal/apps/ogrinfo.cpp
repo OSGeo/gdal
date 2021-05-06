@@ -635,6 +635,80 @@ static void RemoveSQLComments(char*& pszSQL)
 }
 
 /************************************************************************/
+/*                           PrintLayerSummary()                        */
+/************************************************************************/
+
+static void PrintLayerSummary(OGRLayer* poLayer, bool bGeomType)
+{
+    printf("%s", poLayer->GetName());
+
+    const char* pszTitle = poLayer->GetMetadataItem("TITLE");
+    if( pszTitle )
+    {
+        printf(" (title: %s)", pszTitle);
+    }
+
+    const int nGeomFieldCount =
+        bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
+    if( nGeomFieldCount > 1 )
+    {
+        printf(" (");
+        for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom++ )
+        {
+            if( iGeom > 0 )
+                printf(", ");
+            OGRGeomFieldDefn* poGFldDefn =
+                poLayer->GetLayerDefn()->
+                    GetGeomFieldDefn(iGeom);
+            printf(
+                "%s",
+                OGRGeometryTypeToName(
+                    poGFldDefn->GetType()));
+        }
+        printf(")");
+    }
+    else if( bGeomType && poLayer->GetGeomType() != wkbUnknown )
+        printf(" (%s)",
+               OGRGeometryTypeToName(
+                   poLayer->GetGeomType()));
+
+    printf("\n");
+}
+
+/************************************************************************/
+/*                       ReportHiearchicalLayers()                      */
+/************************************************************************/
+
+static void ReportHiearchicalLayers(const GDALGroup* group,
+                                    const std::string& indent,
+                                    bool bGeomType)
+{
+    const auto aosVectorLayerNames = group->GetVectorLayerNames();
+    for( const auto& osVectorLayerName: aosVectorLayerNames )
+    {
+        OGRLayer* poLayer = group->OpenVectorLayer(osVectorLayerName);
+        if( poLayer )
+        {
+            printf("%sLayer: ", indent.c_str());
+            PrintLayerSummary(poLayer, bGeomType);
+        }
+    }
+
+    const std::string subIndent(indent + "  ");
+    auto aosSubGroupNames = group->GetGroupNames();
+    for( const auto& osSubGroupName: aosSubGroupNames )
+    {
+        auto poSubGroup = group->OpenGroup(osSubGroupName);
+        if( poSubGroup )
+        {
+            printf("Group %s", indent.c_str());
+            printf("%s:\n", osSubGroupName.c_str());
+            ReportHiearchicalLayers(poSubGroup.get(), subIndent, bGeomType);
+        }
+    }
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -942,6 +1016,7 @@ MAIN_START(nArgc, papszArgv)
     GDALDriver *poDriver = nullptr;
     if( poDS != nullptr )
         poDriver = poDS->GetDriver();
+    const int nLayerCount = poDS ? poDS->GetLayerCount() : 0;
 
 /* -------------------------------------------------------------------- */
 /*      Report failure                                                  */
@@ -1133,12 +1208,23 @@ MAIN_START(nArgc, papszArgv)
         {
             if( iRepeat == 0 )
                 CPLDebug("OGR", "GetLayerCount() = %d\n",
-                         poDS->GetLayerCount());
+                         nLayerCount);
+
+            bool bDone = false;
+            auto poRootGroup = poDS->GetRootGroup();
+            if( !bAllLayers && poRootGroup &&
+                (!poRootGroup->GetGroupNames().empty() ||
+                 !poRootGroup->GetVectorLayerNames().empty()) )
+            {
+                ReportHiearchicalLayers(poRootGroup.get(),
+                                        std::string(), bGeomType);
+                bDone = true;
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-            for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+            for( int iLayer = 0; !bDone && iLayer < nLayerCount; iLayer++ )
             {
                 OGRLayer *poLayer = poDS->GetLayer(iLayer);
 
@@ -1151,39 +1237,8 @@ MAIN_START(nArgc, papszArgv)
 
                 if( !bAllLayers )
                 {
-                    printf("%d: %s", iLayer + 1, poLayer->GetName());
-
-                    const char* pszTitle = poLayer->GetMetadataItem("TITLE");
-                    if( pszTitle )
-                    {
-                        printf(" (title: %s)", pszTitle);
-                    }
-
-                    const int nGeomFieldCount =
-                        bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
-                    if( nGeomFieldCount > 1 )
-                    {
-                        printf(" (");
-                        for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom++ )
-                        {
-                            if( iGeom > 0 )
-                                printf(", ");
-                            OGRGeomFieldDefn* poGFldDefn =
-                                poLayer->GetLayerDefn()->
-                                    GetGeomFieldDefn(iGeom);
-                            printf(
-                                "%s",
-                                OGRGeometryTypeToName(
-                                    poGFldDefn->GetType()));
-                        }
-                        printf(")");
-                    }
-                    else if( bGeomType && poLayer->GetGeomType() != wkbUnknown )
-                        printf(" (%s)",
-                               OGRGeometryTypeToName(
-                                   poLayer->GetGeomType()));
-
-                    printf("\n");
+                    printf("%d: ", iLayer + 1);
+                    PrintLayerSummary(poLayer, bGeomType);
                 }
                 else
                 {

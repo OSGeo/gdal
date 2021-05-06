@@ -154,12 +154,14 @@ class TileDBRasterBand final: public GDALPamRasterBand
 
 };
 
-static CPLString vsi_to_s3( const char* pszUri )
+static CPLString vsi_to_tiledb_uri( const char* pszUri )
 {
     CPLString osUri;
 
     if ( STARTS_WITH_CI( pszUri, "/VSIS3/") )
         osUri.Printf("s3://%s", pszUri + 7);
+    else if ( STARTS_WITH_CI( pszUri, "/VSIGS/") )
+        osUri.Printf("gcs://%s", pszUri + 7);
     else
         osUri = pszUri;
 
@@ -1131,7 +1133,7 @@ CPLErr TileDBDataset::Delete( const char * pszFilename )
     {
         tiledb::Context ctx;
         tiledb::VFS vfs( ctx );
-        CPLString osArrayPath = vsi_to_s3( pszFilename );
+        CPLString osArrayPath = vsi_to_tiledb_uri( pszFilename );
 
         if ( vfs.is_dir( osArrayPath ) )
         {
@@ -1171,11 +1173,12 @@ int TileDBDataset::Identify( GDALOpenInfo * poOpenInfo )
         }
 
         if( poOpenInfo->bIsDirectory ||
-            (STARTS_WITH_CI( poOpenInfo->pszFilename, "/VSIS3/" ) &&
+            ( (STARTS_WITH_CI( poOpenInfo->pszFilename, "/VSIS3/" ) ||
+               STARTS_WITH_CI( poOpenInfo->pszFilename, "/VSIGS/" )) &&
                 !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tif")) )
         {
             tiledb::Context ctx;
-            CPLString osArrayPath = vsi_to_s3( poOpenInfo->pszFilename );
+            CPLString osArrayPath = vsi_to_tiledb_uri( poOpenInfo->pszFilename );
             return tiledb::Object::object( ctx, osArrayPath ).type() == tiledb::Object::Type::Array;
         }
 
@@ -1255,7 +1258,7 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->SetSubdatasetName( pszAttr );
             }
 
-            osArrayPath = vsi_to_s3( poOpenInfo->pszFilename );
+            osArrayPath = vsi_to_tiledb_uri( poOpenInfo->pszFilename );
         }
 
         const char* pszArrayName = CPLGetBasename( osArrayPath );
@@ -2161,7 +2164,7 @@ TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBa
 {
     try
     {
-        CPLString osArrayPath = vsi_to_s3( pszFilename );
+        CPLString osArrayPath = vsi_to_tiledb_uri( pszFilename );
 
         std::unique_ptr<TileDBDataset> poDS(
             TileDBDataset::CreateLL( osArrayPath, nXSize, nYSize,
@@ -2237,7 +2240,7 @@ TileDBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 {
     char** papszCopyOptions = CSLDuplicate( papszOptions );
-    CPLString osArrayPath = vsi_to_s3( pszFilename );
+    CPLString osArrayPath = vsi_to_tiledb_uri( pszFilename );
 
     try
     {

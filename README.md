@@ -36,7 +36,7 @@ See [gdal/docker/](gdal/docker/)
 
 ### Code of Conduct
 
-See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+See [gdal/doc/source/community/code_of_conduct.rst](gdal/doc/source/community/code_of_conduct.rst)
 
 ### Citing GDAL/OGR in publications
 

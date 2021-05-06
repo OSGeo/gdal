@@ -161,6 +161,17 @@ const char szPROFILE_GeoTIFF[] = "GeoTIFF";
 const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
 
 /************************************************************************/
+/*                         GTIFFSupportsPredictor()                     */
+/************************************************************************/
+
+bool GTIFFSupportsPredictor(int nCompression)
+{
+    return nCompression == COMPRESSION_LZW ||
+           nCompression == COMPRESSION_ADOBE_DEFLATE ||
+           nCompression == COMPRESSION_ZSTD;
+}
+
+/************************************************************************/
 /*                          GTIFFSetInExternalOvr()                     */
 /************************************************************************/
 
@@ -1260,6 +1271,7 @@ public:
                                                char **papszOptions )  override final;
 
     GDALRasterAttributeTable* GetDefaultRAT() override final;
+    virtual CPLErr SetDefaultRAT(const GDALRasterAttributeTable *) override final;
     virtual CPLErr  GetHistogram(
         double dfMin, double dfMax,
         int nBuckets, GUIntBig * panHistogram,
@@ -1831,6 +1843,12 @@ GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
     return GDALPamRasterBand::GetDefaultRAT();
+}
+
+CPLErr GTiffRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT )
+{
+    m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+    return GDALPamRasterBand::SetDefaultRAT( poRAT );
 }
 
 /************************************************************************/
@@ -5842,7 +5860,9 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
 
-    if( m_poGDS->m_bNoDataSet && m_poGDS->m_dfNoDataValue == dfNoData )
+    if( m_poGDS->m_bNoDataSet &&
+        (m_poGDS->m_dfNoDataValue == dfNoData ||
+         (std::isnan(m_poGDS->m_dfNoDataValue) && std::isnan(dfNoData))) )
     {
         m_bNoDataSet = true;
         m_dfNoDataValue = dfNoData;
@@ -5955,6 +5975,9 @@ void GTiffRasterBand::NullBlock( void *pData )
 int GTiffRasterBand::GetOverviewCount()
 
 {
+    if( !m_poGDS->AreOverviewsEnabled() )
+        return 0;
+
     m_poGDS->ScanDirectories();
 
     if( m_poGDS->m_nOverviewCount > 0 )
@@ -9275,9 +9298,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             sJob.nHeight = nHeight;
             sJob.nStripOrTile = nStripOrTile;
             sJob.nPredictor = PREDICTOR_NONE;
-            if( m_nCompression == COMPRESSION_LZW ||
-                m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
-                m_nCompression == COMPRESSION_ZSTD )
+            if( GTIFFSupportsPredictor(m_nCompression) )
             {
                 TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &sJob.nPredictor );
             }
@@ -9336,9 +9357,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
     psJob->nHeight = nHeight;
     psJob->nStripOrTile = nStripOrTile;
     psJob->nPredictor = PREDICTOR_NONE;
-    if( m_nCompression == COMPRESSION_LZW ||
-        m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
-        m_nCompression == COMPRESSION_ZSTD )
+    if( GTIFFSupportsPredictor(m_nCompression) )
     {
         TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &psJob->nPredictor );
     }
@@ -10277,9 +10296,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
 /*      Fetch predictor tag                                             */
 /* -------------------------------------------------------------------- */
     uint16_t nPredictor = PREDICTOR_NONE;
-    if( l_nCompression == COMPRESSION_LZW ||
-        l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
-        l_nCompression == COMPRESSION_ZSTD )
+    if( GTIFFSupportsPredictor(l_nCompression) )
     {
         if ( CPLGetConfigOption( "PREDICTOR_OVERVIEW", nullptr ) != nullptr )
         {
@@ -10638,9 +10655,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /*      Fetch predictor tag                                             */
 /* -------------------------------------------------------------------- */
     uint16_t nPredictor = PREDICTOR_NONE;
-    if( m_nCompression == COMPRESSION_LZW ||
-        m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
-        m_nCompression == COMPRESSION_ZSTD )
+    if( GTIFFSupportsPredictor(m_nCompression) )
         TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
 
 /* -------------------------------------------------------------------- */
@@ -14098,6 +14113,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         if( m_nBitsPerSample == 32 && m_nSampleFormat == SAMPLEFORMAT_IEEEFP )
         {
             m_dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
+            m_dfNoDataValue = static_cast<float>(m_dfNoDataValue);
         }
     }
 
@@ -14649,6 +14665,18 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         {
             SetJPEGQualityAndTablesModeFromFile(nQuality, bHasQuantizationTable,
                                                 bHasHuffmanTable);
+        }
+    }
+
+    if( GTIFFSupportsPredictor(m_nCompression) )
+    {
+        uint16_t nPredictor = 0;
+        if( TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor ) &&
+            nPredictor > 1 )
+        {
+            m_oGTiffMDMD.SetMetadataItem( "PREDICTOR",
+                                          CPLSPrintf("%d", nPredictor),
+                                          "IMAGE_STRUCTURE" );
         }
     }
 
@@ -16256,9 +16284,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Set compression related tags.                                   */
 /* -------------------------------------------------------------------- */
-    if( l_nCompression == COMPRESSION_LZW ||
-         l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
-         l_nCompression == COMPRESSION_ZSTD )
+    if( GTIFFSupportsPredictor(l_nCompression) )
         TIFFSetField( l_hTIFF, TIFFTAG_PREDICTOR, nPredictor );
     if( l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
         l_nCompression == COMPRESSION_LERC )

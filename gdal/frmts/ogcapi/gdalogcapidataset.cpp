@@ -1387,7 +1387,11 @@ GDALRasterBand* OGCAPIMapWrapperBand::GetOverview(int nLevel)
 GDALColorInterp OGCAPIMapWrapperBand::GetColorInterpretation()
 {
     OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
-    return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetColorInterpretation();
+    // The WMS driver returns Grey-Alpha for 2 band, RGB(A) for 3 or 4 bands
+    // Restrict that behaviour to Byte only data.
+    if( eDataType == GDT_Byte )
+        return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetColorInterpretation();
+    return GCI_Undefined;
 }
 
 /************************************************************************/

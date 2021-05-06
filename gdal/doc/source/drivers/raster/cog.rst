@@ -38,6 +38,7 @@ General creation options
 -  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512.
 
 -  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**: Set the compression to use.
+   Defaults to ``NONE``.
 
    * ``JPEG`` should generally only be used with
      Byte data (8 bit per channel). But if GDAL is built with internal libtiff and
@@ -161,7 +162,9 @@ General creation options
         like subsetting, etc.) are used.
 
 - **OVERVIEW_COMPRESS=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**:
-  Set the compression method to use when storing the overviews in the COG.
+  Set the compression method (see ``COMPRESS``) to use when storing the overviews in the COG.
+  
+  By default (``AUTO``) the overviews will be created with the same compression method as the COG.
 
 - **OVERVIEW_QUALITY=integer_value**: JPEG/WEBP quality setting. A value of 100 is best
   quality (least compression), and 1 is worst quality (best compression).

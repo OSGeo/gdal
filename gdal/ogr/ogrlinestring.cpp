@@ -864,6 +864,43 @@ void OGRSimpleCurve::addPointM( double x, double y, double m )
 }
 
 /************************************************************************/
+/*                            removePoint()                             */
+/************************************************************************/
+
+/**
+ * \brief Remove a point from a line string.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param nIndex Point index
+ * @since GDAL 3.3
+ */
+
+bool OGRSimpleCurve::removePoint( int nIndex )
+{
+    if( nIndex < 0 || nIndex >= nPointCount )
+        return false;
+    if( nIndex < nPointCount - 1 )
+    {
+        memmove( paoPoints + nIndex, paoPoints + nIndex + 1,
+                 sizeof(OGRRawPoint) * (nPointCount - 1 - nIndex));
+        if( padfZ )
+        {
+            memmove( padfZ + nIndex, padfZ + nIndex + 1,
+                 sizeof(double) * (nPointCount - 1 - nIndex));
+        }
+        if( padfM )
+        {
+            memmove( padfM + nIndex, padfM + nIndex + 1,
+                 sizeof(double) * (nPointCount - 1 - nIndex));
+        }
+    }
+    nPointCount --;
+    return true;
+}
+
+
+/************************************************************************/
 /*                             setPointsM()                             */
 /************************************************************************/
 

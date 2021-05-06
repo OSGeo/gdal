@@ -166,6 +166,7 @@ class OGROpenFileGDBDataSource final: public OGRDataSource
   std::vector <OGRLayer*>        m_apoHiddenLayers;
   char                         **m_papszFiles;
   std::map<std::string, int>     m_osMapNameToIdx;
+  std::shared_ptr<GDALGroup>     m_poRootGroup{};
 
   /* For debugging/testing */
   bool                           bLastSQLUsedOptimizedImplementation;
@@ -177,7 +178,7 @@ class OGROpenFileGDBDataSource final: public OGRDataSource
                                      int nInterestTable);
 
   int                 FileExists(const char* pszFilename);
-  void                AddLayer( const CPLString& osName,
+  OGRLayer*           AddLayer( const CPLString& osName,
                                 int nInterestTable,
                                 int& nCandidateLayers,
                                 int& nLayersSDCOrCDF,
@@ -206,6 +207,8 @@ public:
   virtual int         TestCapability( const char * ) override;
 
   virtual char      **GetFileList() override;
+
+  std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
 };
 
 int OGROpenFileGDBIsComparisonOp(int op);

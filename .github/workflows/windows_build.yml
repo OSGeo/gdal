@@ -229,6 +229,9 @@ jobs:
             exec { python setup.py build }
             exec { python setup.py install }
             cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
+            dotnet nuget locals all --clear
+            dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+            dotnet restore
             exec { nmake /f makefile.vc interface }
             exec { nmake /f makefile.vc all $env:WIN64_ARG }
             cd $env:GITHUB_WORKSPACE\autotest\cpp

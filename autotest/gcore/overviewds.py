@@ -48,19 +48,27 @@ def test_overviewds_1():
 ###############################################################################
 # Nominal cases
 
+@pytest.mark.parametrize("externalOverviews", [True, False])
+def test_overviewds_2(tmp_path, externalOverviews):
 
-def test_overviewds_2():
-
-    shutil.copy('data/byte.tif', 'tmp')
-    ds = gdal.Open('tmp/byte.tif')
-    ds.BuildOverviews('NEAR', overviewlist=[2, 4])
+    shutil.copy('data/byte.tif', tmp_path)
+    tmpfilename = str(tmp_path.joinpath('byte.tif'))
+    if externalOverviews:
+        ds = gdal.Open(tmpfilename)
+        ds.BuildOverviews('NEAR', overviewlist=[2, 4])
+        ds = None
+        ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    else:
+        ds = gdal.Open(tmpfilename, gdal.GA_Update)
+        ds.BuildOverviews('NEAR', overviewlist=[2, 4])
     ds.GetRasterBand(1).WriteRaster(2, 2, 5, 5, b'\0' * 25)
     ds.GetRasterBand(1).WriteRaster(2, 2, 1, 1, b'\0')
+    ds.GetRasterBand(1).GetOverview(1).WriteRaster(2, 2, 1, 1, b'\0')
     ds = None
 
-    src_ds = gdal.Open('tmp/byte.tif')
+    src_ds = gdal.Open(tmpfilename)
 
-    ds = gdal.OpenEx('data/byte.tif', open_options=['OVERVIEW_LEVEL=NONE'])
+    ds = gdal.OpenEx(tmpfilename, open_options=['OVERVIEW_LEVEL=NONE'])
     assert ds.RasterXSize == 20 and ds.RasterYSize == 20 and ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetProjectionRef() == src_ds.GetProjectionRef()
@@ -68,14 +76,22 @@ def test_overviewds_2():
     assert ds.ReadRaster() == src_ds.ReadRaster()
     # Check that subsampled request doesn't use source overviews
     assert ds.ReadRaster(0, 0, 20, 20, 10, 10) != src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 10, 10) != src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
     ds = None
 
-    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0only'])
+    ds = gdal.OpenEx(tmpfilename, open_options=['OVERVIEW_LEVEL=0only'])
     assert ds.RasterXSize == 10 and ds.RasterYSize == 10 and ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    expected_data = src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
+    got_data = ds.ReadRaster(0, 0, 10, 10, 5, 5)
+    assert len(got_data) == len(expected_data)
+    assert got_data != expected_data
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 10, 10, 5, 5)
+    assert len(got_data) == len(expected_data)
+    assert got_data != expected_data
     ds = None
 
-    ds = gdal.OpenEx('tmp/byte.tif', open_options=['OVERVIEW_LEVEL=0'])
+    ds = gdal.OpenEx(tmpfilename, open_options=['OVERVIEW_LEVEL=0'])
     assert ds is not None
     assert ds.RasterXSize == 10 and ds.RasterYSize == 10 and ds.RasterCount == 1
     assert ds.GetProjectionRef() == src_ds.GetProjectionRef()
@@ -95,6 +111,8 @@ def test_overviewds_2():
     got_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
     assert expected_data == got_data
     got_data = ds.ReadRaster(0, 0, 10, 10, 5, 5)
+    assert expected_data == got_data
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 10, 10, 5, 5)
     assert expected_data == got_data
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
     assert ds.GetRasterBand(1).GetMaskBand()
@@ -202,7 +220,7 @@ def test_overviewds_4():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test GEOLOCATION
 
@@ -298,6 +316,7 @@ def test_overviewds_mask():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/test.tif')
 
+
 ###############################################################################
 # Cleanup
 
@@ -320,6 +339,6 @@ def test_overviewds_cleanup():
     except OSError:
         pass
 
-    
+
 
 

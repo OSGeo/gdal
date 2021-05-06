@@ -30,12 +30,14 @@
 
 import os
 import tempfile
-from typing import Optional
+from typing import Optional, Union
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.base import PathLike
+from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import open_ds, PathOrDS
 from osgeo_utils.auxiliary.color_palette import get_color_palette, ColorPaletteOrPathOrStrings
+
+ColorTableLike = Union[gdal.ColorTable, ColorPaletteOrPathOrStrings]
 
 
 def get_color_table_from_raster(path_or_ds: PathOrDS) -> Optional[gdal.ColorTable]:
@@ -46,8 +48,8 @@ def get_color_table_from_raster(path_or_ds: PathOrDS) -> Optional[gdal.ColorTabl
     return None
 
 
-def get_color_table(color_palette_or_path_or_strings_or_ds: ColorPaletteOrPathOrStrings, min_key=0, max_key=255,
-                    fill_missing_colors=True) -> Optional[gdal.ColorTable]:
+def get_color_table(color_palette_or_path_or_strings_or_ds: Optional[ColorTableLike],
+                    min_key=0, max_key=255, fill_missing_colors=True) -> Optional[gdal.ColorTable]:
     if (color_palette_or_path_or_strings_or_ds is None or
        isinstance(color_palette_or_path_or_strings_or_ds, gdal.ColorTable)):
         return color_palette_or_path_or_strings_or_ds
@@ -102,11 +104,11 @@ def are_equal_color_table(color_table1: gdal.ColorTable, color_table2: gdal.Colo
     return True
 
 
-def write_color_table_to_file(color_table: gdal.ColorTable, color_filename: Optional[PathLike]):
+def write_color_table_to_file(color_table: gdal.ColorTable, color_filename: Optional[PathLikeOrStr]):
     if color_filename is None:
         color_filename = tempfile.mktemp(suffix='.txt')
-    os.makedirs(os.path.dirname(str(color_filename)), exist_ok=True)
-    with open(str(color_filename), mode='w') as fp:
+    os.makedirs(os.path.dirname(color_filename), exist_ok=True)
+    with open(color_filename, mode='w') as fp:
         for i in range(color_table.GetCount()):
             color_entry = color_table.GetColorEntry(i)
             color_entry = ' '.join(str(c) for c in color_entry)

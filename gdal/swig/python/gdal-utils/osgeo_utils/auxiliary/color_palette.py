@@ -33,11 +33,12 @@ import re
 from xml.dom import minidom
 from collections import OrderedDict
 import tempfile
-from typing import Sequence, Union
+from typing import Sequence, Union, Optional
 
 from osgeo_utils.auxiliary import base
+from osgeo_utils.auxiliary.base import PathLikeOrStr
 
-PathOrStrings = Union[base.PathLike, Sequence[str]]
+PathOrStrings = Union[base.PathLikeOrStr, Sequence[str]]
 ColorPaletteOrPathOrStrings = Union['ColorPalette', PathOrStrings]
 
 
@@ -141,14 +142,14 @@ class ColorPalette:
                 os.remove(temp_filename)
         return True
 
-    def read_color_file(self, color_filename_or_lines):
+    def read_color_file(self, color_filename_or_lines: Optional[Union[PathLikeOrStr, 'ColorPalette', Sequence]]):
         if isinstance(color_filename_or_lines, ColorPalette):
             return self
         elif color_filename_or_lines is None:
             self.pal.clear()
             return self
         elif base.is_path_like(color_filename_or_lines):
-            color_filename_or_lines = open(str(color_filename_or_lines)).readlines()
+            color_filename_or_lines = open(color_filename_or_lines).readlines()
         elif not isinstance(color_filename_or_lines, Sequence):
             raise Exception('unknown input {}'.format(color_filename_or_lines))
 
@@ -170,11 +171,11 @@ class ColorPalette:
                 pass
             self.pal[key] = color
 
-    def write_color_file(self, color_filename=None):
+    def write_color_file(self, color_filename: Optional[PathLikeOrStr] = None):
         if color_filename is None:
             color_filename = tempfile.mktemp(suffix='.txt')
-        os.makedirs(os.path.dirname(str(color_filename)), exist_ok=True)
-        with open(str(color_filename), mode='w') as fp:
+        os.makedirs(os.path.dirname(color_filename), exist_ok=True)
+        with open(color_filename, mode='w') as fp:
             for key, color in self.pal.items():
                 color_entry = self.color_to_color_entry(color)
                 color_entry = ' '.join(str(c) for c in color_entry)

@@ -126,6 +126,7 @@ typedef enum
     STATE_DEFAULT,
 
     /* for sharedString.xml */
+    STATE_SI,
     STATE_T,
 
     /* for sheet?.xml */

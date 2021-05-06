@@ -126,7 +126,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %perlcode %{
 
 package Geo::OGR;
-our $VERSION = '3.0200'; # this needs to be the same as that in gdal_perl.i
+our $VERSION = '3.0300'; # this needs to be the same as that in gdal_perl.i
 
 Geo::GDAL->import(qw(:INTERNAL));
 

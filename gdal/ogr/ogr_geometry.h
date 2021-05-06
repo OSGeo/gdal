@@ -398,7 +398,7 @@ class CPL_DLL OGRGeometry
     int CoordinateDimension() const;
     virtual OGRBoolean  IsEmpty() const = 0;
     virtual OGRBoolean  IsValid() const;
-    virtual OGRGeometry* MakeValid() const;
+    virtual OGRGeometry* MakeValid(CSLConstList papszOptions = nullptr) const;
     virtual OGRGeometry* Normalize() const;
     virtual OGRBoolean  IsSimple() const;
     /*! Returns whether the geometry has a Z component. */
@@ -413,7 +413,7 @@ class CPL_DLL OGRGeometry
 
     // IWks Interface.
     virtual size_t WkbSize() const = 0;
-    OGRErr importFromWkb( const GByte*, size_t=-1,
+    OGRErr importFromWkb( const GByte*, size_t=static_cast<size_t>(-1),
                                   OGRwkbVariant=wkbVariantOldOgc );
     virtual OGRErr importFromWkb( const unsigned char *,
                                   size_t,
@@ -1355,6 +1355,8 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        addPoint( double, double, double );
     void        addPointM( double, double, double );
     void        addPoint( double, double, double, double );
+
+    bool        removePoint( int );
 
     void        getPoints( OGRRawPoint *, double * = nullptr ) const;
     void        getPoints( void* pabyX, int nXStride,
@@ -3224,7 +3226,7 @@ class CPL_DLL OGRGeometryFactory
                                          int nRecLevel );
   public:
     static OGRErr createFromWkb( const void *, OGRSpatialReference *,
-                                 OGRGeometry **, size_t = -1,
+                                 OGRGeometry **, size_t = static_cast<size_t>(-1),
                                  OGRwkbVariant=wkbVariantOldOgc );
     static OGRErr createFromWkb( const void * pabyData,
                                  OGRSpatialReference *,

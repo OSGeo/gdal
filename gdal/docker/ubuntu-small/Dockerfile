@@ -132,7 +132,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
     fi \
-    && ./configure --prefix=/usr --without-libtool \
+    && LDFLAGS="-L/build${PROJ_INSTALL_PREFIX}/lib -linternalproj" ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
     --with-python \

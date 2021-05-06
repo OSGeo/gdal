@@ -27,36 +27,36 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-
+import os
 import tempfile
 from numbers import Real
 from typing import Sequence, Optional
 
 from osgeo import gdal, osr
-from osgeo_utils.auxiliary.base import PathLike, MaybeSequence, is_true
+from osgeo_utils.auxiliary.base import PathLikeOrStr, MaybeSequence, is_true
 from osgeo_utils.auxiliary.util import get_bigtiff_creation_option_value, get_data_type, DataTypeOrStr, CreationOptions
 
 
-def create_flat_raster(filename: Optional[PathLike],
-                       driver: Optional[str] = None, dt: DataTypeOrStr = gdal.GDT_Byte,
+def create_flat_raster(filename: Optional[PathLikeOrStr],
+                       driver_name: Optional[str] = None, dt: DataTypeOrStr = gdal.GDT_Byte,
                        size: MaybeSequence[int] = 128, band_count: int = 1, creation_options: CreationOptions = None,
                        fill_value: Optional[Real] = None, nodata_value: Optional[Real] = None,
                        origin: Optional[Sequence[int]] = (500_000, 0), pixel_size: MaybeSequence[int] = 10,
                        epsg: Optional[int] = 32636,
-                       overview_alg: Optional[str] = 'NEAR', overview_list: Optional[Sequence[int]] = None):
+                       overview_alg: Optional[str] = 'NEAR', overview_list: Optional[Sequence[int]] = None) -> gdal.Dataset:
     if filename is None:
         filename = tempfile.mktemp()
     elif not filename:
         filename = ''
-    if driver is None:
-        driver = 'GTiff' if filename else 'MEM'
+    if driver_name is None:
+        driver_name = 'GTiff' if filename else 'MEM'
     if not isinstance(size, Sequence):
         size = (size, size)
 
-    drv = gdal.GetDriverByName(driver)
+    drv = gdal.GetDriverByName(driver_name)
     dt = get_data_type(dt)
-    creation_options_list = get_creation_options(creation_options, driver=driver)
-    ds = drv.Create(str(filename), *size, band_count, dt, creation_options_list)
+    creation_options_list = get_creation_options(creation_options, driver_name=driver_name)
+    ds = drv.Create(os.fspath(filename), *size, band_count, dt, creation_options_list)
 
     if pixel_size and origin:
         if not isinstance(pixel_size, Sequence):
@@ -78,33 +78,35 @@ def create_flat_raster(filename: Optional[PathLike],
 
 
 def get_creation_options(creation_options: CreationOptions = None,
-                         driver: str = 'GTiff',
+                         driver_name: str = 'GTiff',
                          sparse_ok: bool = None,
                          tiled: bool = None,
                          block_size: Optional[int] = None,
                          big_tiff: Optional[str] = None,
                          comp: str = None):
     creation_options = dict(creation_options or dict())
-    if sparse_ok is None:
-        sparse_ok = creation_options.get("SPARSE_OK", True)
-    creation_options["SPARSE_OK"] = str(bool(sparse_ok))
 
-    driver = driver.lower()
+    driver_name = driver_name.lower()
+
     if comp is None:
         comp = creation_options.get("COMPRESS", "DEFLATE")
-    if driver in ['gtiff', 'cog']:
-        creation_options["BIGTIFF"] = get_bigtiff_creation_option_value(big_tiff)
-        creation_options["COMPRESS"] = comp
+    creation_options["BIGTIFF"] = get_bigtiff_creation_option_value(big_tiff)
+    creation_options["COMPRESS"] = comp
+
+    if sparse_ok is None:
+        sparse_ok = creation_options.get("SPARSE_OK", True)
+    sparse_ok = is_true(sparse_ok)
+    creation_options["SPARSE_OK"] = str(sparse_ok)
 
     if tiled is None:
         tiled = creation_options.get("TILED", True)
     tiled = is_true(tiled)
     creation_options["TILED"] = str(tiled)
     if tiled and block_size is not None:
-        if driver == 'gtiff':
+        if driver_name == 'gtiff':
             creation_options["BLOCKXSIZE"] = block_size
             creation_options["BLOCKYSIZE"] = block_size
-        elif driver == 'cog':
+        elif driver_name == 'cog':
             creation_options["BLOCKSIZE"] = block_size
 
     creation_options_list = []

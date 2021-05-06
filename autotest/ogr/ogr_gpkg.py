@@ -1920,9 +1920,6 @@ def test_ogr_gpkg_23():
 
 def test_ogr_gpkg_unique():
 
-    if gdaltest.is_travis_branch('trusty_32bit') or gdaltest.is_travis_branch('trusty_clang'):
-        pytest.skip('gcc too old')
-
     ds = ogr.GetDriverByName('GPKG').CreateDataSource('/vsimem/ogr_gpkg_unique.gpkg')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
 
@@ -1949,6 +1946,16 @@ def test_ogr_gpkg_unique():
     fldDef = layerDefinition.GetFieldDefn(2)
     assert fldDef.IsUnique()
 
+    f = ogr.Feature(layerDefinition)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    # Test adding columns after "crystallization"
+    field_defn = ogr.FieldDefn('field_unique_failure', ogr.OFTString)
+    field_defn.SetUnique(1)
+    # Not allowed by sqlite3. Could potentially be improved
+    with gdaltest.error_handler():
+        assert lyr.CreateField(field_defn) == ogr.OGRERR_FAILURE
 
     # Create another layer from SQL to test quoting of fields
     # and indexes
@@ -2649,6 +2656,13 @@ def test_ogr_gpkg_35():
     lyr_nonspatial.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr_nonspatial.CreateField(ogr.FieldDefn('bar_i_will_disappear', ogr.OFTString))
     lyr_nonspatial.CreateField(ogr.FieldDefn('baz', ogr.OFTString))
+
+    # Metadata
+    lyr_nonspatial.SetMetadataItem('FOO', 'BAR')
+    ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('column', 'test_nonspatial', 'bar_i_will_disappear', NULL, '2021-01-01T00:00:00.000Z', 1, NULL)")
+    ds.ExecuteSQL("INSERT INTO gpkg_metadata VALUES (2, 'dataset','http://gdal.org','text/plain','bla')")
+    ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('column', 'test_nonspatial', 'bar_i_will_disappear', NULL, '2021-01-01T00:00:00.000Z', 2, NULL)")
+
     f = ogr.Feature(lyr_nonspatial.GetLayerDefn())
     f.SetFID(10)
     f.SetField('foo', 'fooval')
@@ -2667,6 +2681,17 @@ def test_ogr_gpkg_35():
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
 )""")
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_column_constraints (
+            constraint_name TEXT NOT NULL,
+            constraint_type TEXT NOT NULL,
+            value TEXT,
+            min NUMERIC,
+            min_is_inclusive BOOLEAN,
+            max NUMERIC,
+            max_is_inclusive BOOLEAN,
+            description TEXT,
+            CONSTRAINT gdcc_ntv UNIQUE (constraint_name,
+            constraint_type, value))""")
     ds.ExecuteSQL("INSERT INTO gpkg_data_columns VALUES('test', 'bar_i_will_disappear', 'bar_constraints', NULL, NULL, NULL, NULL)")
     ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'bar_i_will_disappear', 'extension_name', 'definition', 'scope')")
 
@@ -2704,8 +2729,22 @@ def test_ogr_gpkg_35():
 
     ds = None
 
+    assert validate(dbname)
+
     # Try on read-only dataset
     ds = ogr.Open(dbname)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_metadata WHERE id = 1')
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_metadata WHERE id = 2')
+    assert sql_lyr.GetFeatureCount() == 0
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayerByName('test_nonspatial')
+    assert lyr.GetMetadataItem('FOO') == 'BAR'
+
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         ret = lyr.DeleteField(0)
@@ -2750,9 +2789,24 @@ def test_ogr_gpkg_36():
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT fk_gdc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)
 )""")
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_column_constraints (
+            constraint_name TEXT NOT NULL,
+            constraint_type TEXT NOT NULL,
+            value TEXT,
+            min NUMERIC,
+            min_is_inclusive BOOLEAN,
+            max NUMERIC,
+            max_is_inclusive BOOLEAN,
+            description TEXT,
+            CONSTRAINT gdcc_ntv UNIQUE (constraint_name,
+            constraint_type, value))""")
     ds.ExecuteSQL("INSERT INTO gpkg_data_columns VALUES('test', 'foo', 'constraint', NULL, NULL, NULL, NULL)")
-    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'foo', 'extension_name', 'definition', 'scope')")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('test', 'foo', 'extension_name', 'definition', 'read-write')")
     ds.ExecuteSQL("CREATE INDEX my_idx ON test(foo)")
+
+    # Metadata
+    lyr.SetMetadataItem('FOO', 'BAR')
+    ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('column', 'test', 'foo', NULL, '2021-01-01T00:00:00.000Z', 1, NULL)")
 
     assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 1
 
@@ -2812,8 +2866,19 @@ def test_ogr_gpkg_36():
 
     ds = None
 
+    assert validate(dbname)
+
     # Try on read-only dataset
     ds = ogr.Open(dbname)
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_data_columns WHERE table_name = 'test' AND column_name = 'baw'")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_metadata_reference WHERE table_name = 'test' AND column_name = 'baw'")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('foo'), ogr.ALTER_ALL_FLAG)
@@ -4165,19 +4230,19 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
     ds.CreateLayer('test')
     ds.CreateLayer('test2')
     ds = None
+    with gdaltest.error_handler():
+        ds = ogr.Open(filename, update = 1)
+        # inject wrong trigger on purpose with the wrong 'OF "geometry" ' part
+        ds.ExecuteSQL('DROP TRIGGER rtree_test_geometry_update3')
+        wrong_trigger = 'CREATE TRIGGER "rtree_test_geometry_update3" AFTER UPDATE OF "geometry" ON "test" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
+        ds.ExecuteSQL(wrong_trigger)
 
-    ds = ogr.Open(filename, update = 1)
-    # inject wrong trigger on purpose with the wrong 'OF "geometry" ' part
-    ds.ExecuteSQL('DROP TRIGGER rtree_test_geometry_update3')
-    wrong_trigger = 'CREATE TRIGGER "rtree_test_geometry_update3" AFTER UPDATE OF "geometry" ON "test" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
-    ds.ExecuteSQL(wrong_trigger)
+        ds.ExecuteSQL('DROP TRIGGER rtree_test2_geometry_update3')
+        # Test another potential variant (although not generated by OGR)
+        wrong_trigger2 = 'CREATE TRIGGER "rtree_test2_geometry_update3" AFTER UPDATE OF   geometry    ON test2 WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
+        ds.ExecuteSQL(wrong_trigger2)
 
-    ds.ExecuteSQL('DROP TRIGGER rtree_test2_geometry_update3')
-    # Test another potential variant (although not generated by OGR)
-    wrong_trigger2 = 'CREATE TRIGGER "rtree_test2_geometry_update3" AFTER UPDATE OF   geometry    ON test2 WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
-    ds.ExecuteSQL(wrong_trigger2)
-
-    ds = None
+        ds = None
 
     # Open in read-only mode
     ds = ogr.Open(filename)
@@ -4263,7 +4328,7 @@ def test_abort_sql():
     ds = ogr.Open(filename)
 
     def abortAfterDelay():
-        print("Aborting SQL...")
+        #print("Aborting SQL...")
         assert ds.AbortSQL() == ogr.OGRERR_NONE
 
     t = threading.Timer(0.5, abortAfterDelay)
@@ -4281,7 +4346,8 @@ def test_abort_sql():
             )
         SELECT i FROM r WHERE i = 1;"""
 
-    ds.ExecuteSQL(sql)
+    with gdaltest.error_handler():
+        ds.ExecuteSQL(sql)
 
     end = time.time()
     assert int(end - start) < 1
@@ -4290,7 +4356,7 @@ def test_abort_sql():
     ds2 = gdal.OpenEx(filename, gdal.OF_VECTOR)
 
     def abortAfterDelay2():
-        print("Aborting SQL...")
+        #print("Aborting SQL...")
         assert ds2.AbortSQL() == ogr.OGRERR_NONE
 
     t = threading.Timer(0.5, abortAfterDelay2)
@@ -4299,7 +4365,8 @@ def test_abort_sql():
     start = time.time()
 
     # Long running query
-    ds2.ExecuteSQL(sql)
+    with gdaltest.error_handler():
+        ds2.ExecuteSQL(sql)
 
     end = time.time()
     assert int(end - start) < 1

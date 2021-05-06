@@ -8,6 +8,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2012, Frank Warmerdam
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -30,6 +31,7 @@
 
 import math
 import sys
+from typing import Optional
 
 from osgeo import gdal, osr
 
@@ -44,7 +46,7 @@ def fmt_loc(srs_obj, loc):
 ###############################################################################
 
 
-def move(filename, t_srs, s_srs=None, pixel_threshold=None):
+def move(filename: str, t_srs: str, s_srs: Optional[str] = None, pixel_threshold: Optional[float] = None):
 
     # -------------------------------------------------------------------------
     # Open the file.
@@ -194,8 +196,8 @@ def move(filename, t_srs, s_srs=None, pixel_threshold=None):
         print('No error threshold in pixels selected with -et, file not updated.')
 
     else:
-        print("""Maximum check point error is %.5f pixels which exceeds the
-error threshold so the file has not been updated.""" % max_error)
+        print(f"""Maximum check point error is {max_error:.5f} pixels which exceeds the
+                error threshold so the file has not been updated.""")
 
     ds = None
 
@@ -259,7 +261,7 @@ def main(argv):
         print('Target SRS (-t_srs) missing, but required.')
         return Usage()
 
-    move(filename, t_srs, s_srs, pixel_threshold)
+    move(filename, t_srs=t_srs, s_srs=s_srs, pixel_threshold=pixel_threshold)
 
 
 if __name__ == '__main__':

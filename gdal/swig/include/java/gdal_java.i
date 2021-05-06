@@ -67,6 +67,10 @@ import org.gdal.ogr.FieldDomain;
 import org.gdal.osr.SpatialReference;
 %}
 
+%typemap(javaimports) GDALGroupHS %{
+import org.gdal.ogr.Layer;
+%}
+
 
 %pragma(java) modulecode=%{
 

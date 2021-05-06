@@ -12,33 +12,21 @@ on:
 jobs:
 
   clang_static_analyzer_part_1:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Requirements
-        run: ./gdal/ci/travis/csa_part_1/before_install.sh
-
-      - name: Run analysis
-        run: ./gdal/ci/travis/csa_part_1/install.sh
-
-      - name: Parse analysis log
-        run: ./gdal/ci/travis/csa_part_1/script.sh
+      - name: Run
+        run: docker run --rm -v $PWD:$PWD ubuntu:16.04 sh -c "cd $PWD && apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo software-properties-common && DEBIAN_FRONTEND=noninteractive sh ./gdal/ci/travis/csa_part_1/before_install.sh && sh ./gdal/ci/travis/csa_part_1/install.sh && sh ./gdal/ci/travis/csa_part_1/script.sh"
 
   clang_static_analyzer_part_2:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Requirements
-        run: ./gdal/ci/travis/csa_part_2/before_install.sh
-
-      - name: Run analysis
-        run: ./gdal/ci/travis/csa_part_2/install.sh
-
-      - name: Parse analysis log
-        run: ./gdal/ci/travis/csa_part_2/script.sh
+      - name: Run
+        run: docker run --rm -v $PWD:$PWD ubuntu:16.04 sh -c "cd $PWD && apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo software-properties-common && DEBIAN_FRONTEND=noninteractive sh ./gdal/ci/travis/csa_part_2/before_install.sh && sh ./gdal/ci/travis/csa_part_2/install.sh && sh ./gdal/ci/travis/csa_part_2/script.sh"

@@ -234,9 +234,9 @@ typedef enum {
   /*! Min (selects minimum of all non-NODATA contributing pixels) */ GRA_Min=9,
   /*! Med (selects median of all non-NODATA contributing pixels) */ GRA_Med=10,
   /*! Q1 (selects first quartile of all non-NODATA contributing pixels) */ GRA_Q1=11,
-  /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12
-  /*! NOTE: values 13 is reserved for sum */
-
+  /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12,
+  /*! Sum (weighed sum of all non-NODATA contributing pixels). Added in GDAL 3.1 */ GRA_Sum=13,
+  /*! RMS (weighted root mean square (quadratic mean) of all non-NODATA contributing pixels) */ GRA_RMS=14
 } GDALResampleAlg;
 
 %rename (AsyncStatusType) GDALAsyncStatusType;

@@ -8,6 +8,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2012, Frank Warmerdam <warmerdam@pobox.com>
+#  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -36,6 +37,7 @@ from osgeo import gdal
 from osgeo import osr
 
 #######################################################
+from osgeo_utils.auxiliary.base import PathLikeOrStr
 
 
 def compare_metadata(golden_md, new_md, ident, options=None):
@@ -261,7 +263,7 @@ def compare_sds(golden_db, new_db, options=None):
 #######################################################
 
 
-def find_diff(golden_file, new_file, check_sds=False):
+def find_diff(golden_file: PathLikeOrStr, new_file: PathLikeOrStr, check_sds: bool = False):
     # Compare Files
     found_diff = 0
 

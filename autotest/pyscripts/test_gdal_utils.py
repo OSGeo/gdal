@@ -27,7 +27,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-
+import array
 import os
 from pathlib import Path
 
@@ -38,7 +38,7 @@ from osgeo_utils.auxiliary.extent_util import Extent
 
 pytest.importorskip('osgeo_utils')
 
-from osgeo_utils.auxiliary import util, raster_creation, base
+from osgeo_utils.auxiliary import util, raster_creation, base, array_util
 
 temp_files = []
 
@@ -89,17 +89,51 @@ def test_utils_py_1():
     ds = util.open_ds(filename)
     compression = util.get_image_structure_metadata(filename, 'COMPRESSION')
     assert compression == 'DEFLATE'
-    ras_count = util.get_ovr_count(ds)+1
-    assert ras_count == 3
+    ovr_count = util.get_ovr_count(ds) + 1
+    assert ovr_count == 3
     pixel_size = util.get_pixel_size(ds)
     assert pixel_size == (10, -10)
 
-    for i in range(-ras_count, ras_count):
-        assert util.get_ovr_idx(filename, ovr_idx=i) == (i if i >= 0 else ras_count+i)
+    for i in range(-ovr_count, ovr_count):
+        assert util.get_ovr_idx(filename, ovr_idx=i) == (i if i >= 0 else ovr_count + i)
 
     for res, ovr in [(5, 0), (10, 0), (11, 0), (19.99, 0), (20, 1), (20.1, 1), (39, 1), (40, 2), (41, 2), (400, 2)]:
         assert util.get_ovr_idx(filename, ovr_res=res) == ovr
-        assert util.get_ovr_idx(filename, ovr_idx=float(res)) == ovr  # noqa secret functionality
+        assert util.get_ovr_idx(filename, float(res)) == ovr  # noqa secret functionality
+
+    # test open_ds with multiple different inputs
+    filename2 = 'tmp/raster2.tif'
+    temp_files.append(filename2)
+    raster_creation.create_flat_raster(filename2)
+    ds_list = util.open_ds([ds, filename2])
+    assert tuple(util.get_ovr_count(ds) for ds in ds_list) == (2, 0)
+    ds_list = None
+
+
+def test_utils_arrays():
+    scalars = [7, 5.2]
+
+    for scalar in scalars:
+        assert isinstance(scalar, array_util.ScalarLike.__args__)
+        assert isinstance(scalar, array_util.ArrayOrScalarLike.__args__)
+
+    for vec in (scalars, tuple(scalars), array.array('d', scalars), array.array('i', [2, 3])):
+        assert isinstance(vec, array_util.ArrayLike.__args__)
+        assert isinstance(vec, array_util.ArrayOrScalarLike.__args__)
+
+    for not_vec in (None, {1: 2}):
+        assert not isinstance(not_vec, array_util.ArrayLike.__args__)
+        assert not isinstance(not_vec, array_util.ArrayOrScalarLike.__args__)
+
+
+def test_utils_np_arrays():
+    np = pytest.importorskip('numpy')
+    vec_2d = [[1, 2, 3], [4, 5, 6]]
+
+    for dtype in (np.int8, np.int32, np.float64):
+        for vec in (vec_2d[0], vec_2d):
+            arr = np.array(vec, dtype=dtype)
+            assert isinstance(arr, array_util.ArrayLike.__args__)
 
 
 def test_utils_py_cleanup():

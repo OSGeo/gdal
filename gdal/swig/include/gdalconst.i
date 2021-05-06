@@ -119,6 +119,7 @@
 %constant GRA_Med              = GRA_Med;
 %constant GRA_Q1               = GRA_Q1;
 %constant GRA_Q3               = GRA_Q3;
+%constant GRA_Sum              = GRA_Sum;
 
 // GDALPaletteInterp
 %constant GPI_Gray  = GPI_Gray;

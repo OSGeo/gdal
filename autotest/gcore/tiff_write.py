@@ -231,6 +231,11 @@ def test_tiff_write_6():
 
     ds = None
 
+    ds = gdal.Open('tmp/test_6.tif')
+    assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'DEFLATE'
+    assert ds.GetMetadataItem('PREDICTOR', 'IMAGE_STRUCTURE') == '2'
+    ds = None
+
     gdaltest.tiff_write_6_failed = False
     gdaltest.tiff_drv.Delete('tmp/test_6.tif')
 
@@ -7439,6 +7444,22 @@ def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
     got_data = struct.unpack(structType * 2, ds.ReadRaster())
     assert got_data[0] == 0.5
     assert math.isnan(got_data[1])
+    ds = None
+    gdal.Unlink(filename)
+
+###############################################################################
+# Test creating overviews with NaN nodata
+
+
+def test_tiff_write_overviews_nan_nodata():
+
+    filename = '/vsimem/test_tiff_write_overviews_nan_nodata.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 32, 32, 1, gdal.GDT_Float32, options=['TILED=YES', 'SPARSE_OK=YES'])
+    ds.GetRasterBand(1).SetNoDataValue(float('nan'))
+    ds.BuildOverviews('NONE', [2, 4])
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None
     gdal.Unlink(filename)
 

@@ -305,7 +305,7 @@ class GPKGChecker(object):
                   "WHERE data_type NOT IN "
                   "('features', 'tiles', 'attributes', '2d-gridded-coverage')")
         ret = c.fetchall()
-        self._assert(len(ret) == 0, 17, # no longer required actually...
+        self._assert(len(ret) == 0, 17,  # no longer required actually...
                      'Unexpected data types in gpkg_contents: %s' % str(ret))
 
         c.execute('SELECT table_name, last_change, srs_id FROM gpkg_contents')
@@ -1363,6 +1363,17 @@ class GPKGChecker(object):
                             self._log('GDAL not available. '
                                       'Req gpkg_2d_gridded_coverage#15 to gpkg_2d_gridded_coverage#19 not tested')
 
+    def _check_column_exists(self, c, table_name, col_name):
+
+        try:
+            # 'SELECT "col_name" FROM table_name' doesn't work because
+            # it will be interpreted as a literal if the columm does not exist
+            c.execute('SELECT 1 FROM %s t ORDER BY t.%s LIMIT 0' %
+                      (_esc_id(table_name), _esc_id(col_name)))
+            return True
+        except sqlite3.OperationalError:
+            return False
+
     def _check_gpkg_extensions(self, c):
 
         self._log('Checking gpkg_extensions')
@@ -1396,15 +1407,10 @@ class GPKGChecker(object):
             #    'gpkg_extensions, but not in gpkg_contents') % table_name)
 
             if column_name is not None:
-                try:
-                    c.execute('SELECT %s FROM %s' %
-                              (_esc_id(column_name), _esc_id(table_name)))
-                    c.fetchone()
-                except:
-                    self._assert(False, 61,
-                                 ("Column %s of table %s mentioned in " +
-                                  "gpkg_extensions doesn't exist") %
-                                 (column_name, table_name))
+                self._assert(self._check_column_exists(c, table_name, column_name), 61,
+                             ("Column %s of table %s mentioned in " +
+                              "gpkg_extensions doesn't exist") %
+                             (column_name, table_name))
 
         c.execute("SELECT extension_name FROM gpkg_extensions")
         rows = c.fetchall()
@@ -1599,13 +1605,9 @@ class GPKGChecker(object):
             self._assert(column_name is not None, 98,
                          "row in gpkg_metadata_reference with null "
                          "column_name")
-            try:
-                c.execute("SELECT %s FROM %s" %
-                          (_esc_id(column_name), _esc_id(table_name)))
-            except:
-                self._assert(False, 98,
-                             "column %s of %s does not exist" %
-                             (column_name, table_name))
+            self._assert(self._check_column_exists(c, table_name, column_name), 98,
+                         "column %s of %s does not exist" %
+                         (column_name, table_name))
 
         c.execute("SELECT table_name FROM "
                   "gpkg_metadata_reference WHERE "
@@ -1627,7 +1629,7 @@ class GPKGChecker(object):
                          "row in gpkg_metadata_reference with null "
                          "row_id_value")
             c.execute("SELECT 1 FROM %s WHERE ROWID = ?" %
-                      _esc_id(column_name), (row_id_value, ))
+                      _esc_id(table_name), (row_id_value, ))
             self._assert(c.fetchone() is not None, 99,
                          "row %s of %s does not exist" %
                          (str(row_id_value), table_name))
@@ -1740,15 +1742,11 @@ class GPKGChecker(object):
                               "in gpkg_data_columns refer to non-existing " +
                               "table/view in gpkg_contents or gpkg_extensions"))
 
-            try:
-                c.execute("SELECT %s FROM %s" % (_esc_id(column_name),
-                                                 _esc_id(table_name)))
-            except sqlite3.OperationalError:
-                self._assert(False, 105,
-                             ("table_name = %s, " % table_name +
-                              "column_name = %s " % column_name +
-                              "in gpkg_data_columns refer to non-existing " +
-                              "column"))
+            self._assert(self._check_column_exists(c, table_name, column_name), 105,
+                         ("table_name = %s, " % table_name +
+                          "column_name = %s " % column_name +
+                          "in gpkg_data_columns refer to non-existing " +
+                          "column"))
 
         c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_data_column_constraints'")
         if c.fetchone() is None:

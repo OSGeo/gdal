@@ -9,6 +9,7 @@
 #
 ###############################################################################
 # Copyright (c) 2017, Even Rouault <even dot rouault at spatialys dot com>
+# Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -33,9 +34,12 @@ import glob
 import os
 import os.path
 import sys
+from typing import Optional, Sequence
 
 from osgeo import gdal
 from osgeo import ogr
+
+from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
@@ -153,7 +157,7 @@ def process(argv, progress=None, progress_arg=None):
         return Usage()
 
     dst_filename = None
-    output_format = None
+    driver_name = None
     src_datasets = []
     overwrite_ds = False
     overwrite_layer = False
@@ -177,7 +181,7 @@ def process(argv, progress=None, progress_arg=None):
         arg = argv[i]
         if (arg == '-f' or arg == '-of') and i + 1 < len(argv):
             i = i + 1
-            output_format = argv[i]
+            driver_name = argv[i]
         elif arg == '-o' and i + 1 < len(argv):
             i = i + 1
             dst_filename = argv[i]
@@ -251,24 +255,59 @@ def process(argv, progress=None, progress_arg=None):
         print('Missing -o')
         return 1
 
+    return ogrmerge(src_datasets=src_datasets, dst_filename=dst_filename, driver_name=driver_name,
+                    overwrite_ds=overwrite_ds, overwrite_layer=overwrite_layer, update=update, append=append,
+                    single_layer=single_layer, layer_name_template=layer_name_template, skip_failures=skip_failures,
+                    src_geom_types=src_geom_types, field_strategy=field_strategy,
+                    src_layer_field_name=src_layer_field_name, src_layer_field_content=src_layer_field_content,
+                    a_srs=a_srs, s_srs=s_srs, t_srs=t_srs, dsco=dsco, lco=lco,
+                    progress_callback=progress, progress_arg=progress_arg)
+
+
+def ogrmerge(
+    src_datasets: Optional[Sequence[str]] = None,
+    dst_filename: Optional[PathLikeOrStr] = None,
+    driver_name: Optional[str] = None,
+    overwrite_ds: bool = False,
+    overwrite_layer: bool = False,
+    update: bool = False,
+    append: bool = False,
+    single_layer: bool = False,
+    layer_name_template: Optional[str]  = None,
+    skip_failures: bool = False,
+    src_geom_types: Optional[Sequence[int]] = None,
+    field_strategy: Optional[str] = None,
+    src_layer_field_name: Optional[str] = None,
+    src_layer_field_content: Optional[str] = None,
+    a_srs: Optional[str] = None,
+    s_srs: Optional[str] = None,
+    t_srs: Optional[str] = None,
+    dsco: Optional[Sequence[str]] = None,
+    lco: Optional[Sequence[str]] = None,
+    progress_callback: Optional = None, progress_arg: Optional = None):
+
+    src_datasets = src_datasets or []
+    src_geom_types = src_geom_types or []
+    dsco = dsco or []
+    lco = lco or []
     if update:
-        if output_format is not None:
+        if driver_name is not None:
             print('ERROR: -f incompatible with -update')
             return 1
         if dsco:
             print('ERROR: -dsco incompatible with -update')
             return 1
-        output_format = ''
+        driver_name = ''
     else:
-        if output_format is None:
-            output_format = GetOutputDriverFor(dst_filename, is_raster=False)
+        if driver_name is None:
+            driver_name = GetOutputDriverFor(dst_filename, is_raster=False)
 
     if src_layer_field_content is None:
         src_layer_field_content = '{AUTO_NAME}'
     elif src_layer_field_name is None:
         src_layer_field_name = 'source_ds_lyr'
 
-    if not single_layer and output_format == 'ESRI Shapefile' and \
+    if not single_layer and driver_name == 'ESRI Shapefile' and \
        dst_filename.lower().endswith('.shp'):
         print('ERROR: Non-single layer mode incompatible with non-directory '
               'shapefile output')
@@ -285,7 +324,7 @@ def process(argv, progress=None, progress_arg=None):
             layer_name_template = '{AUTO_NAME}'
 
     vrt_filename = None
-    if not EQUAL(output_format, 'VRT'):
+    if not EQUAL(driver_name, 'VRT'):
         dst_ds = gdal.OpenEx(dst_filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
         if dst_ds is not None:
             if not update and not overwrite_ds:
@@ -304,9 +343,9 @@ def process(argv, progress=None, progress_arg=None):
             print('ERROR: Destination dataset does not exist')
             return 1
         if dst_ds is None:
-            drv = gdal.GetDriverByName(output_format)
+            drv = gdal.GetDriverByName(driver_name)
             if drv is None:
-                print('ERROR: Invalid driver: %s' % output_format)
+                print('ERROR: Invalid driver: %s' % driver_name)
                 return 1
             dst_ds = drv.Create(
                 dst_filename, 0, 0, 0, gdal.GDT_Unknown, dsco)
@@ -405,7 +444,7 @@ def process(argv, progress=None, progress_arg=None):
                 writer.open_element('OGRVRTLayer',
                                     attrs={'name': layer_name})
                 attrs = {}
-                if EQUAL(output_format, 'VRT') and \
+                if EQUAL(driver_name, 'VRT') and \
                    os.path.exists(src_dsname) and \
                    not os.path.isabs(src_dsname) and \
                    '/' not in vrt_filename and \
@@ -504,7 +543,7 @@ def process(argv, progress=None, progress_arg=None):
                 writer.open_element('OGRVRTLayer',
                                     attrs={'name': layer_name})
                 attrs = {}
-                if EQUAL(output_format, 'VRT') and \
+                if EQUAL(driver_name, 'VRT') and \
                    os.path.exists(src_dsname) and \
                    not os.path.isabs(src_dsname) and \
                    '/' not in vrt_filename and \
@@ -534,7 +573,7 @@ def process(argv, progress=None, progress_arg=None):
     gdal.VSIFCloseL(f)
 
     ret = 0
-    if not EQUAL(output_format, 'VRT'):
+    if not EQUAL(driver_name, 'VRT'):
         accessMode = None
         if append:
             accessMode = 'append'
@@ -544,7 +583,7 @@ def process(argv, progress=None, progress_arg=None):
                                    accessMode=accessMode,
                                    layerCreationOptions=lco,
                                    skipFailures=skip_failures,
-                                   callback=progress,
+                                   callback=progress_callback,
                                    callback_data=progress_arg)
         if ret == 1:
             ret = 0

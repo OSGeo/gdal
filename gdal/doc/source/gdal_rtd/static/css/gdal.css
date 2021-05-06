@@ -324,3 +324,21 @@ div.service-provider::after {
 div.service-provider-description {
     display: table;
 }
+
+div.horizontal-logo {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+/* Suppress special symbol for external links in supporters section */
+.horizontal-logos a.reference.external::after {
+    content: "";
+}
+
+div.horizontal-logos::after {
+    content: "";
+    clear: both;
+    display: table;
+}
