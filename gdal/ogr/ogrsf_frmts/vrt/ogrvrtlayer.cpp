@@ -1217,7 +1217,7 @@ bool OGRVRTLayer::ResetSourceReading()
 
                 if( !CPLIsInf(sEnvelope.MinX) )
                     osFilter +=
-                        CPLSPrintf("%s > %.15g", pszXField, sEnvelope.MinX);
+                        CPLSPrintf("\"%s\" > %.15g", pszXField, sEnvelope.MinX);
                 else if( sEnvelope.MinX > 0 )
                     osFilter += "0 = 1";
 
@@ -1226,7 +1226,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s < %.15g", pszXField, sEnvelope.MaxX);
+                        CPLSPrintf("\"%s\" < %.15g", pszXField, sEnvelope.MaxX);
                 }
                 else if( sEnvelope.MaxX < 0 )
                 {
@@ -1240,7 +1240,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s > %.15g", pszYField, sEnvelope.MinY);
+                        CPLSPrintf("\"%s\" > %.15g", pszYField, sEnvelope.MinY);
                 }
                 else if( sEnvelope.MinY > 0 )
                 {
@@ -1254,7 +1254,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s < %.15g", pszYField, sEnvelope.MaxY);
+                        CPLSPrintf("\"%s\" < %.15g", pszYField, sEnvelope.MaxY);
                 }
                 else if( sEnvelope.MaxY < 0 )
                 {
