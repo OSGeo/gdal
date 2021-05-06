@@ -63,3 +63,4 @@ This means that there are no :program:`.config` files. Most importantly, this me
 as well as Mono.
 
 * On Windows, the sample apps are built in .NET5 and not .NET CORE 2.1.
+
