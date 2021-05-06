@@ -1116,6 +1116,10 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             osContentLength.Printf("Content-Length: %d", m_nBufferOff);
             headers = curl_slist_append(headers, osContentLength.c_str());
             headers = curl_slist_append(headers, "x-ms-blob-type: AppendBlob");
+            CPLString osAppendPos;
+            vsi_l_offset nStartOffset = m_nCurOffset - m_nBufferOff;
+            osAppendPos.Printf("x-ms-blob-condition-appendpos: " CPL_FRMT_GUIB, nStartOffset);
+            headers = curl_slist_append(headers, osAppendPos.c_str());
         }
 
         headers = VSICurlMergeHeaders(headers,
