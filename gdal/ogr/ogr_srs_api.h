@@ -553,6 +553,7 @@ int CPL_DLL OSRIsProjected( OGRSpatialReferenceH );
 int CPL_DLL OSRIsCompound( OGRSpatialReferenceH );
 int CPL_DLL OSRIsGeocentric( OGRSpatialReferenceH );
 int CPL_DLL OSRIsVertical( OGRSpatialReferenceH );
+int CPL_DLL OSRIsDynamic( OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameVertCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
@@ -1020,7 +1021,7 @@ typedef struct
 } OSRCRSInfo;
 
 /** \brief Structure to describe optional parameters to OSRGetCRSInfoListFromDatabase()
- * 
+ *
  * Unused for now.
  */
 typedef struct OSRCRSListParameters OSRCRSListParameters;

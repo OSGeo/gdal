@@ -858,6 +858,8 @@ OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
             SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         else if ( oSource.d->m_axisMappingStrategy == OAMS_CUSTOM )
             SetDataAxisToSRSAxisMapping( oSource.d->m_axisMapping );
+
+        d->m_coordinateEpoch = oSource.d->m_coordinateEpoch;
     }
 
     return *this;
@@ -8527,6 +8529,90 @@ int OSRIsVertical( OGRSpatialReferenceH hSRS )
     VALIDATE_POINTER1( hSRS, "OSRIsVertical", 0 );
 
     return ToPointer(hSRS)->IsVertical();
+}
+
+/************************************************************************/
+/*                            IsDynamic()                               */
+/************************************************************************/
+
+/**
+ * \brief Check if a CRS is a dynamic CRS.
+ *
+ * A dynamic CRS relies on a dynamic datum, that is a datum that is not
+ * plate-fixed.
+ *
+ * This method is the same as the C function OSRIsDynamic().
+ *
+ * @return true if the CRS is dynamic
+ *
+ * @since OGR 3.4.0
+ */
+
+bool OGRSpatialReference::IsDynamic() const
+
+{
+    bool isDynamic = false;
+    d->refreshProjObj();
+    d->demoteFromBoundCRS();
+    auto ctxt = d->getPROJContext();
+    auto datum = d->m_pj_crs ? proj_crs_get_datum(ctxt, d->m_pj_crs) : nullptr;
+    if( datum )
+    {
+        const auto type = proj_get_type(datum);
+        isDynamic = type == PJ_TYPE_DYNAMIC_GEODETIC_REFERENCE_FRAME ||
+                    type == PJ_TYPE_DYNAMIC_VERTICAL_REFERENCE_FRAME;
+        if( !isDynamic )
+        {
+            const char* auth_name = proj_get_id_auth_name(datum, 0);
+            const char* code = proj_get_id_code(datum, 0);
+            if( auth_name && code && EQUAL(auth_name, "EPSG") && EQUAL(code, "6326") )
+            {
+                isDynamic = true;
+            }
+        }
+        proj_destroy(datum);
+    }
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+    else
+    {
+        auto ensemble = d->m_pj_crs ? proj_crs_get_datum_ensemble(ctxt, d->m_pj_crs) : nullptr;
+        if( ensemble )
+        {
+            auto member = proj_datum_ensemble_get_member(ctxt, ensemble, 0);
+            if( member )
+            {
+                const auto type = proj_get_type(member);
+                isDynamic = type == PJ_TYPE_DYNAMIC_GEODETIC_REFERENCE_FRAME ||
+                            type == PJ_TYPE_DYNAMIC_VERTICAL_REFERENCE_FRAME;
+                proj_destroy(member);
+            }
+            proj_destroy(ensemble);
+        }
+    }
+#endif
+    d->undoDemoteFromBoundCRS();
+    return isDynamic;
+}
+
+/************************************************************************/
+/*                           OSRIsDynamic()                             */
+/************************************************************************/
+/**
+ * \brief Check if a CRS is a dynamic CRS.
+ *
+ * A dynamic CRS relies on a dynamic datum, that is a datum that is not
+ * plate-fixed.
+ *
+ * This function is the same as OGRSpatialReference::IsDynamic().
+ *
+ * @since OGR 3.4.0
+ */
+int OSRIsDynamic( OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRIsDynamic", 0 );
+
+    return ToPointer(hSRS)->IsDynamic();
 }
 
 /************************************************************************/
