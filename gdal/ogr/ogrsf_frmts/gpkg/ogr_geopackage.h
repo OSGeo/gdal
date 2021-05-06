@@ -105,6 +105,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 #endif
     bool                m_bHasGPKGGeometryColumns;
     bool                m_bHasDefinition12_063;
+    bool                m_bHasEpochColumn = false; // whether gpkg_spatial_ref_sys has a epoch column
 
     CPLString           m_osIdentifier;
     bool                m_bIdentifierAsCO;
@@ -220,6 +221,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                                 const char* pszLayerName );
 
         bool                ConvertGpkgSpatialRefSysToExtensionWkt2();
+        void                DetectSpatialRefSysColumns();
 
         std::map<int, bool> m_oSetGPKGLayerWarnings{};
 
