@@ -178,7 +178,7 @@ def test_vsiaz_fake_basic():
                 print(stat_res)
             pytest.fail()
 
-    
+
 ###############################################################################
 # Test ReadDir() with a fake Azure Blob server
 
@@ -486,7 +486,8 @@ def test_vsiaz_fake_write():
         h = request.headers
         if 'Content-Length' not in h or h['Content-Length'] != '10' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
-           'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'AppendBlob':
+           'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'AppendBlob' or \
+           'x-ms-blob-condition-appendpos' not in h or h['x-ms-blob-condition-appendpos'] != '0':
             sys.stderr.write('Bad headers: %s\n' % str(h))
             request.send_response(403)
             return
@@ -509,7 +510,8 @@ def test_vsiaz_fake_write():
         h = request.headers
         if 'Content-Length' not in h or h['Content-Length'] != '6' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
-           'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'AppendBlob':
+           'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'AppendBlob' or \
+           'x-ms-blob-condition-appendpos' not in h or h['x-ms-blob-condition-appendpos'] != '10':
             sys.stderr.write('Bad headers: %s\n' % str(h))
             request.send_response(403)
             return
