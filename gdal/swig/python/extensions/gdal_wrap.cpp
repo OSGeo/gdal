@@ -5804,8 +5804,15 @@ SWIGINTERN CPLErr GDALMDArrayHS_Read(GDALMDArrayHS *self,int nDims1,GUIntBig *ar
         PyObject* obj = PyList_New( nProductCount );
         for( size_t i = 0; i < nProductCount; i++ )
         {
-            PyObject *o = GDALPythonObjectFromCStr( ppszBuffer[i] );
-            PyList_SetItem(obj, i, o );
+            if( !ppszBuffer[i] )
+            {
+                Py_INCREF(Py_None);
+                PyList_SetItem(obj, i, Py_None);
+            }
+            else
+            {
+                PyList_SetItem(obj, i, GDALPythonObjectFromCStr( ppszBuffer[i] ) );
+            }
             VSIFree(ppszBuffer[i]);
         }
         SWIG_PYTHON_THREAD_END_BLOCK;
