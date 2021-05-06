@@ -48,6 +48,7 @@ Synopsis
             [-resolveDomains]
             [-explodecollections] [-zfield field_name]
             [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]
+            [-a_coord_epoch epoch]
             [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
 
 Description
@@ -186,6 +187,14 @@ output coordinate system or even reprojecting the features during translation.
     to reproject)
 
     .. include:: options/srs_def.rst
+
+.. option:: -a_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS. Only taken into account if :option:`-a_srs`
+    is used.
 
 .. option:: -t_srs <srs_def>
 
