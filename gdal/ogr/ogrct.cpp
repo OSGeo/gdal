@@ -918,6 +918,27 @@ OCTNewCoordinateTransformationEx(
 }
 
 /************************************************************************/
+/*                              OCTClone()                              */
+/************************************************************************/
+
+/**
+ * Clone transformation object.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::Clone
+
+ * @since GDAL 3.4
+ */
+
+OGRCoordinateTransformationH
+OCTClone(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTClone", nullptr );
+    return OGRCoordinateTransformation::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->Clone());
+}
+
+/************************************************************************/
 /*                             OGRProjCT()                             */
 /************************************************************************/
 
