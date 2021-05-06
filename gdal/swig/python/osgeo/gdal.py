@@ -2905,6 +2905,11 @@ class MDArray(_object):
         return _gdal.MDArray_GetDimensions(self, *args)
 
 
+    def GetCoordinateVariables(self, *args):
+        """GetCoordinateVariables(MDArray self)"""
+        return _gdal.MDArray_GetCoordinateVariables(self, *args)
+
+
     def GetBlockSize(self, *args):
         """GetBlockSize(MDArray self)"""
         return _gdal.MDArray_GetBlockSize(self, *args)
@@ -3068,6 +3073,11 @@ class MDArray(_object):
     def ComputeStatistics(self, *args, **kwargs):
         """ComputeStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
         return _gdal.MDArray_ComputeStatistics(self, *args, **kwargs)
+
+
+    def GetResampled(self, *args):
+        """GetResampled(MDArray self, int nDimensions, GDALRIOResampleAlg resample_alg, OSRSpatialReferenceShadow ** srs, char ** options=None) -> MDArray"""
+        return _gdal.MDArray_GetResampled(self, *args)
 
 
     def Read(self,

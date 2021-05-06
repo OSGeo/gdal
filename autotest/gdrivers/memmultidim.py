@@ -157,6 +157,8 @@ def test_mem_md_array_nodim():
     assert copy_myarray
     assert copy_myarray.Read() == got_data
 
+    assert len(myarray.GetCoordinateVariables()) == 0
+
 
 def test_mem_md_array_single_dim():
 
@@ -1160,9 +1162,9 @@ def test_mem_md_array_as_classic_dataset():
     data = struct.pack('B' * 3, 0, 1, 2)
     assert ar.Write(data) == gdal.CE_None
     band = ds.GetRasterBand(1)
-    assert len(band.ReadRaster()) == len(data)
-    assert band.ReadRaster() == data
-    assert band.WriteRaster(0, 0, 3, 1, data) == gdal.CE_None
+    assert len(band.ReadRaster(buf_type = gdal.GDT_UInt16)) == len(data) * 2
+    assert band.ReadRaster(buf_type = gdal.GDT_UInt16) == struct.pack('H' * 3, 0, 1, 2)
+    assert band.WriteRaster(0, 0, 3, 1, struct.pack('H' * 3, 0, 1, 2), buf_type = gdal.GDT_UInt16) == gdal.CE_None
     assert band.ReadRaster() == data
 
     ar = rg.CreateMDArray("2d_string", [ dim_y, dim_x ],
