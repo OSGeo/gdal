@@ -93,10 +93,6 @@ class OGRProjCT;
 // type to be inserted in the cache (shared_ptr), and we need to be able to
 // alter the content of the value to release() the unique_ptr value when we
 // find a value in it.
-// In a future improvement (notably to help for the multi-threaded warping),
-// we could let the cached value in the cache and clone it, but for now clone,
-// just instantiates a new OGRProjCT from scratch. The clone method should be
-// improved to do things similar to GetInverse().
 typedef std::string CTCacheKey;
 typedef std::shared_ptr<std::unique_ptr<OGRProjCT>> CTCacheValue;
 static lru11::Cache<CTCacheKey, CTCacheValue>* g_poCTCache = nullptr;
@@ -586,8 +582,11 @@ class OGRProjCT : public OGRCoordinateTransformation
             minx(minxIn), miny(minyIn), maxx(maxxIn), maxy(maxyIn),
             pj(pjIn), osName(osNameIn), osProjString(osProjStringIn),
             accuracy(accuracyIn) {}
-
-        Transformation(const Transformation&) = delete;
+        Transformation(const Transformation& other):
+            minx(other.minx), miny(other.miny), maxx(other.maxx), maxy(other.maxy),
+            pj((other.pj != nullptr) ? (proj_clone(OSRGetProjTLSContext(), other.pj)) : (nullptr)),
+            osName(other.osName), osProjString(other.osProjString),
+            accuracy(other.accuracy) {}
         Transformation(Transformation&& other):
             minx(other.minx), miny(other.miny), maxx(other.maxx), maxy(other.maxy),
             pj(other.pj), osName(std::move(other.osName)),
@@ -613,10 +612,7 @@ class OGRProjCT : public OGRCoordinateTransformation
 
     void ComputeThreshold();
 
-    OGRProjCT(const OGRProjCT& other)
-    {
-        Initialize(other.poSRSSource, other.poSRSTarget, other.m_options);
-    }
+    OGRProjCT(const OGRProjCT& other);
     OGRProjCT& operator= (const OGRProjCT& ) = delete;
 
     static CTCacheKey MakeCacheKey(const OGRSpatialReference* poSRS1,
@@ -944,6 +940,34 @@ OCTClone(OGRCoordinateTransformationH hTransform)
 
 //! @cond Doxygen_Suppress
 OGRProjCT::OGRProjCT()
+{
+}
+
+/************************************************************************/
+/*                  OGRProjCT(const OGRProjCT& other)                   */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+OGRProjCT::OGRProjCT(const OGRProjCT& other) :
+    poSRSSource((other.poSRSSource != nullptr) ? (other.poSRSSource->Clone()) : (nullptr)),
+    bSourceLatLong(other.bSourceLatLong),
+    bSourceWrap(other.bSourceWrap),
+    dfSourceWrapLong(other.dfSourceWrapLong),
+    poSRSTarget((other.poSRSTarget != nullptr) ? (other.poSRSTarget->Clone()) : (nullptr)),
+    bTargetLatLong(other.bTargetLatLong),
+    bTargetWrap(other.bTargetWrap),
+    dfTargetWrapLong(other.dfTargetWrapLong),
+    bWebMercatorToWGS84LongLat(other.bWebMercatorToWGS84LongLat),
+    nErrorCount(other.nErrorCount),
+    dfThreshold(other.dfThreshold),
+    m_pj((other.m_pj != nullptr) ? (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : (nullptr)),
+    m_bReversePj(other.m_bReversePj),
+    m_bEmitErrors(other.m_bEmitErrors),
+    bNoTransform(other.bNoTransform),
+    m_eStrategy(other.m_eStrategy),
+    m_oTransformations(other.m_oTransformations),
+    m_iCurTransformation(other.m_iCurTransformation),
+    m_options(other.m_options)
 {
 }
 
