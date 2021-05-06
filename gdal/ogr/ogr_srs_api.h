@@ -560,6 +560,9 @@ int CPL_DLL OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameEx( OGRSpatialReferenceH, OGRSpatialReferenceH,
                          const char* const *papszOptions );
 
+void CPL_DLL OSRSetCoordinateEpoch( OGRSpatialReferenceH hSRS, double dfCoordinateEpoch );
+double CPL_DLL OSRGetCoordinateEpoch( OGRSpatialReferenceH hSRS );
+
 OGRErr CPL_DLL OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char *pszName );
 OGRErr CPL_DLL OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
 OGRErr CPL_DLL OSRSetGeocCS( OGRSpatialReferenceH hSRS, const char * pszName );

@@ -1729,3 +1729,24 @@ def test_osr_basic_is_dynamic():
     AXIS["Longitude",EAST],
     AUTHORITY["EPSG","4326"]]""")
     assert srs.IsDynamic()
+
+
+###############################################################################
+# Test SetCoordinateEpoch() / GetCoordinateEpoch
+
+
+def test_osr_basic_set_get_coordinate_epoch():
+
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS("WGS84")
+
+    srs.SetCoordinateEpoch(2021.3)
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+    clone = srs.Clone()
+    assert clone.GetCoordinateEpoch() == 2021.3
+    assert srs.IsSame(clone)
+
+    clone.SetCoordinateEpoch(0)
+    assert not srs.IsSame(clone)
+    assert srs.IsSame(clone, ['IGNORE_COORDINATE_EPOCH=YES'])

@@ -393,6 +393,14 @@ public:
     return OSRIsDynamic(self);
   }
 
+  double GetCoordinateEpoch() {
+    return OSRGetCoordinateEpoch(self);
+  }
+
+  void SetCoordinateEpoch(double coordinateEpoch) {
+    OSRSetCoordinateEpoch(self, coordinateEpoch);
+  }
+
   int EPSGTreatsAsLatLong() {
     return OSREPSGTreatsAsLatLong(self);
   }
