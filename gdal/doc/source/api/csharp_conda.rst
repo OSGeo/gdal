@@ -58,8 +58,7 @@ Differences in the Conda build
 
 The Conda build is in some ways different from the "standard" GDAL build:
 
-* On Mac and Linux, the SWIG files are built as :program:`\*_wrap` in line with the windows versions.
-This means that there are no :program:`.config` files. Most importantly, this means that the DLLs can be used in .NET and Unity projects
+* On Mac and Linux, the SWIG files are built as :program:`\*_wrap` in line with the windows versions. This means that there are no :program:`.config` files. Most importantly, this means that the DLLs can be used in .NET and Unity projects
 as well as Mono.
 
 * On Windows, the sample apps are built in .NET5 and not .NET CORE 2.1.

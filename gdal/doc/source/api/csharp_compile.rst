@@ -69,7 +69,7 @@ Upon a successful compilation the following files are created:
 * gdalconst_wrap.dll
 * various sample applications (\*.exe)
 
-The \*_csharp.dll binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface. These \*_csharp.dll-s will load the corresponding *_wrap.dll which are the unmanaged part of the interface hosting the code of the gdal core.
+The \*_csharp.dll binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface. These \*_csharp.dll-s will load the corresponding \*_wrap.dll which are the unmanaged part of the interface hosting the code of the gdal core.
 
 Testing the successful compilation
 ++++++++++++++++++++++++++++++++++
@@ -143,7 +143,7 @@ Upon a successful compilation the following files are created:
 
 The \*_csharp.dll binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface.
 
-The \*_csharp.dll files will try to load the corresponding *_wrap.dll and are redirected to the libxxxcsharp.\* libraries, which are the unmanaged part of the interface hosting the code of the gdal core,
+The \*_csharp.dll files will try to load the corresponding \*_wrap.dll and are redirected to the libxxxcsharp.\* libraries, which are the unmanaged part of the interface hosting the code of the gdal core,
 by the \*.dll.config definitions.
 
 Testing the successful compilation
