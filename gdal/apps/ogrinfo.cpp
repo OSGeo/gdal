@@ -298,7 +298,20 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                       oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
         }
 
-        const auto displayDataAxisMapping = [](const OGRSpatialReference* poSRS) {
+        const auto displayExtraInfoSRS = [](const OGRSpatialReference* poSRS) {
+
+            const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
+            if( dfCoordinateEpoch > 0 )
+            {
+                std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+                if( osCoordinateEpoch.find('.') != std::string::npos )
+                {
+                    while( osCoordinateEpoch.back() == '0' )
+                        osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+                }
+                printf("Coordinate epoch: %s\n", osCoordinateEpoch.c_str());
+            }
+
             const auto mapping = poSRS->GetDataAxisToSRSAxisMapping();
             printf("Data axis to CRS axis mapping: ");
             for( size_t i = 0; i < mapping.size(); i++ )
@@ -338,7 +351,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                 CPLFree(pszWKT);
                 if( poSRS )
                 {
-                    displayDataAxisMapping(poSRS);
+                    displayExtraInfoSRS(poSRS);
                 }
             }
         }
@@ -363,7 +376,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
             CPLFree(pszWKT);
             if( poSRS )
             {
-                displayDataAxisMapping(poSRS);
+                displayExtraInfoSRS(poSRS);
             }
         }
 
