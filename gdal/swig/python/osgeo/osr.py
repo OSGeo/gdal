@@ -442,6 +442,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_IsVertical(self, *args)
 
 
+    def IsDynamic(self, *args):
+        """IsDynamic(SpatialReference self) -> bool"""
+        return _osr.SpatialReference_IsDynamic(self, *args)
+
+
     def EPSGTreatsAsLatLong(self, *args):
         """EPSGTreatsAsLatLong(SpatialReference self) -> int"""
         return _osr.SpatialReference_EPSGTreatsAsLatLong(self, *args)

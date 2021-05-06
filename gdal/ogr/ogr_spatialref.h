@@ -346,6 +346,7 @@ class CPL_DLL OGRSpatialReference
     int         IsDerivedGeographic() const;
     int         IsProjected() const;
     int         IsGeocentric() const;
+    bool        IsDynamic() const;
     int         IsLocal() const;
     int         IsVertical() const;
     int         IsCompound() const;
