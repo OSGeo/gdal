@@ -409,7 +409,7 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
 /* -------------------------------------------------------------------- */
 /*      Swallow pre-white space.                                        */
 /* -------------------------------------------------------------------- */
-    while( *pszInput == ' ' || *pszInput == '\t' )
+    while( *pszInput == ' ' || *pszInput == '\t' || *pszInput == '\n' || *pszInput == '\r' )
         ++pszInput;
 
 /* -------------------------------------------------------------------- */
@@ -448,7 +448,7 @@ const char *OGRWktReadToken( const char * pszInput, char * pszToken )
 /* -------------------------------------------------------------------- */
 /*      Eat any trailing white space.                                   */
 /* -------------------------------------------------------------------- */
-    while( *pszInput == ' ' || *pszInput == '\t' )
+    while( *pszInput == ' ' || *pszInput == '\t' || *pszInput == '\n' || *pszInput == '\r' )
         ++pszInput;
 
     return pszInput;
