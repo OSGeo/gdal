@@ -38,7 +38,7 @@ Usage - Mac / Linux
 
 .. note:: You test if the C# bindings are working in a Conda environment by running :program:`mono $CONDA_PREFIX/lib/gdal_test.exe`
 
-The shared objects (i.e. *.so / *.dylib), the .EXE and .DLL files are all loaded into the .:program:`$CONDA_PREFIX/lib`
+The shared objects (i.e. \*.so / \*.dylib), the .EXE and .DLL files are all loaded into the .:program:`$CONDA_PREFIX/lib`
 folder (not the bin folder as you might expect). This is in line with [the Mono documentation](https://www.mono-project.com/docs/getting-started/application-deployment/).
 
 To run one of the sample applications (e.g. GDALinfo.exe), run :program:`mono $CONDA_PREFIX/lib/GDALinfo.exe`.
@@ -58,7 +58,7 @@ Differences in the Conda build
 
 The Conda build is in some ways different from the "standard" GDAL build:
 
-* On Mac and Linux, the SWIG files are built as :program:`*_wrap` in line with the windows versions.
+* On Mac and Linux, the SWIG files are built as :program:`\*_wrap` in line with the windows versions.
 This means that there are no :program:`.config` files. Most importantly, this means that the DLLs can be used in .NET and Unity projects
 as well as Mono.
 
