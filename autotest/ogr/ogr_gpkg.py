@@ -5105,3 +5105,39 @@ def test_ogr_gpkg_fixup_wrong_mr_column_name_update_trigger():
 
     gdal.Unlink(filename)
     assert 'column_nameIS' not in sql
+
+###############################################################################
+# Test support for CRS coordinate_epoch
+
+
+def test_ogr_gpkg_crs_coordinate_epoch():
+
+    filename = '/vsimem/test_ogr_gpkg_crs_coordinate_epoch.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(7665) # WGS 84 (G1762) (3D)
+    srs.SetCoordinateEpoch(2021.3)
+    ds.CreateLayer('lyr_with_coordinate_epoch', srs=srs)
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258) # ETRS89
+    ds.CreateLayer('lyr_without_coordinate_epoch', srs=srs)
+
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename)
+
+    lyr = ds.GetLayerByName('lyr_with_coordinate_epoch')
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    assert lyr.GetMetadata() == {}
+
+    lyr = ds.GetLayerByName('lyr_without_coordinate_epoch')
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 0
+
+    ds = None
+
+    gdal.Unlink(filename)

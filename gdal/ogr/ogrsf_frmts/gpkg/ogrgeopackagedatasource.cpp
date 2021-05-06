@@ -619,7 +619,9 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     OGRErr err = OGRERR_NONE;
     bool bCanUseAuthorityCode = false;
     const char* const apszIsSameOptions[] = {
-        "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+        "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES",
+        "IGNORE_COORDINATE_EPOCH=YES",
+        nullptr };
     if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 )
     {
         const char* pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);

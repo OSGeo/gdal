@@ -933,6 +933,38 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(m_iSrs);
                     if ( poSRS )
                     {
+                        // Retrieve coordinate epoch
+                        if( m_poDS->HasMetadataTables() )
+                        {
+                            pszSQL = sqlite3_mprintf(
+                                "SELECT md.metadata FROM gpkg_metadata md "
+                                "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
+                                "WHERE md.metadata LIKE 'coordinate_epoch=%%' AND "
+                                "md.md_standard_uri = 'http://gdal.org' AND "
+                                "md.mime_type = 'text/plain' AND "
+                                "lower(mdr.table_name) = lower('%q') "
+                                "LIMIT 1", // to avoid denial of service
+                                m_pszTableName);
+
+                            SQLResult oResult;
+                            err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResult);
+                            sqlite3_free(pszSQL);
+                            if ( err == OGRERR_NONE && oResult.nRowCount == 1 )
+                            {
+                                const char *pszMetadata = SQLResultGetValue(&oResult, 0, 0);
+                                CPLAssert( pszMetadata &&
+                                    STARTS_WITH_CI(pszMetadata, "coordinate_epoch=") );
+
+                                const double dfCoordinateEpoch = CPLAtof(
+                                    pszMetadata + strlen("coordinate_epoch="));
+                                auto poClone = poSRS->Clone();
+                                poSRS->Dereference();
+                                poSRS = poClone;
+                                poSRS->SetCoordinateEpoch(dfCoordinateEpoch);
+                            }
+                            SQLResultFree(&oResult);
+                        }
+
                         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
                         poSRS->Dereference();
                     }
@@ -4208,6 +4240,39 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
             }
         }
 #endif
+
+        const OGRSpatialReference* poSRS = GetSpatialRef();
+        if( poSRS )
+        {
+            const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
+            if( dfCoordinateEpoch > 0 )
+            {
+                std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+                if( osCoordinateEpoch.find('.') != std::string::npos )
+                {
+                    while( osCoordinateEpoch.back() == '0' )
+                        osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+                }
+                if( !m_poDS->HasMetadataTables() )
+                    m_poDS->CreateMetadataTables();
+
+                pszSQL = sqlite3_mprintf(
+                    "INSERT INTO gpkg_metadata (md_scope, md_standard_uri, mime_type, metadata) VALUES "
+                    "('featureType','http://gdal.org','text/plain','coordinate_epoch=%q')",
+                    osCoordinateEpoch.c_str());
+                SQLCommand(m_poDS->GetDB(), pszSQL);
+                sqlite3_free(pszSQL);
+
+                const sqlite_int64 nFID = sqlite3_last_insert_rowid( m_poDS->GetDB() );
+                pszSQL = sqlite3_mprintf(
+                    "INSERT INTO gpkg_metadata_reference (reference_scope, table_name, timestamp, md_file_id) VALUES "
+                    "('table', '%q', %s, %d)",
+                    pszLayerName, m_poDS->GetCurrentDateEscapedSQL().c_str(),
+                                         static_cast<int>(nFID));
+                SQLCommand(m_poDS->GetDB(), pszSQL);
+                sqlite3_free(pszSQL);
+            }
+        }
     }
 
     ResetReading();
@@ -4335,6 +4400,15 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
         if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
             EQUAL(pszMimeType, "text/xml") )
             continue;
+
+        if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            EQUAL(pszMimeType, "text/plain") )
+        {
+            if( STARTS_WITH_CI(pszMetadata, "coordinate_epoch=") )
+            {
+                continue;
+            }
+        }
 
         /*if( strcmp( pszMDStandardURI, "http://www.isotc211.org/2005/gmd" ) == 0 &&
             strcmp( pszMimeType, "text/xml" ) == 0 )
