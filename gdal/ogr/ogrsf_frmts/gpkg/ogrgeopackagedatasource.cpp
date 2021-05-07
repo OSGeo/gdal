@@ -2072,7 +2072,6 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                                         char** papszOpenOptionsIn )
 {
     OGRErr err;
-    SQLResult oResult;
 
     if( dfMinX >= dfMaxX || dfMinY >= dfMaxY )
         return false;
@@ -2085,6 +2084,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     CPLString osGridCellEncoding;
     if( !bIsTiles )
     {
+        SQLResult oResult;
         char* pszSQL = sqlite3_mprintf(
             "SELECT datatype, scale, offset, data_null, precision FROM "
             "gpkg_2d_gridded_coverage_ancillary "
@@ -2223,6 +2223,35 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     {
         m_oSRS = *poSRS;
         poSRS->Release();
+
+        // Retrieve coordinate epoch
+        if( HasMetadataTables() )
+        {
+            char* pszSQL = sqlite3_mprintf(
+                "SELECT md.metadata FROM gpkg_metadata md "
+                "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
+                "WHERE md.metadata LIKE 'coordinate_epoch=%%' AND "
+                "md.md_standard_uri = 'http://gdal.org' AND "
+                "md.mime_type = 'text/plain' AND "
+                "lower(mdr.table_name) = lower('%q') "
+                "LIMIT 1", // to avoid denial of service
+                pszTableName);
+
+            SQLResult oResult;
+            err = SQLQuery(GetDB(), pszSQL, &oResult);
+            sqlite3_free(pszSQL);
+            if ( err == OGRERR_NONE && oResult.nRowCount == 1 )
+            {
+                const char *pszMetadata = SQLResultGetValue(&oResult, 0, 0);
+                CPLAssert( pszMetadata &&
+                    STARTS_WITH_CI(pszMetadata, "coordinate_epoch=") );
+
+                const double dfCoordinateEpoch = CPLAtof(
+                    pszMetadata + strlen("coordinate_epoch="));
+                m_oSRS.SetCoordinateEpoch(dfCoordinateEpoch);
+            }
+            SQLResultFree(&oResult);
+        }
     }
 
     /* Various sanity checks added in the SELECT */
@@ -2269,6 +2298,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     // To avoid denial of service.
     osSQL += " LIMIT 100";
 
+    SQLResult oResult;
     err = SQLQuery(hDB, osSQL.c_str(), &oResult);
     if( err != OGRERR_NONE || oResult.nRowCount == 0 )
     {
@@ -2552,6 +2582,39 @@ CPLErr GDALGeoPackageDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
         sqlite3_free(pszSQL);
         if ( eErr != OGRERR_NONE )
             return CE_Failure;
+    }
+
+    if( !m_oSRS.IsEmpty() )
+    {
+        const double dfCoordinateEpoch = m_oSRS.GetCoordinateEpoch();
+        if( dfCoordinateEpoch > 0 )
+        {
+            std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+            if( osCoordinateEpoch.find('.') != std::string::npos )
+            {
+                while( osCoordinateEpoch.back() == '0' )
+                    osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+            }
+            if( !HasMetadataTables() )
+                CreateMetadataTables();
+
+            char* pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_metadata (md_scope, md_standard_uri, mime_type, metadata) VALUES "
+                "('featureType','http://gdal.org','text/plain','coordinate_epoch=%q')",
+                osCoordinateEpoch.c_str());
+            SQLCommand(GetDB(), pszSQL);
+            sqlite3_free(pszSQL);
+
+            const sqlite_int64 nFID = sqlite3_last_insert_rowid( GetDB() );
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_metadata_reference (reference_scope, table_name, timestamp, md_file_id) VALUES "
+                "('table', '%q', %s, %d)",
+                m_osRasterTable.c_str(),
+                GetCurrentDateEscapedSQL().c_str(),
+                static_cast<int>(nFID));
+            SQLCommand(GetDB(), pszSQL);
+            sqlite3_free(pszSQL);
+        }
     }
 
     return CE_None;
