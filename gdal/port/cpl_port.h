@@ -318,10 +318,6 @@ typedef unsigned int  GUIntptr_t;
 #define CPL_FRMT_GUIB    "%" CPL_FRMT_GB_WITHOUT_PREFIX "u"
 
 /*! @cond Doxygen_Suppress */
-#define GUINTBIG_TO_DOUBLE(x) CPL_STATIC_CAST(double, x)
-/*! @endcond */
-
-/*! @cond Doxygen_Suppress */
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
 #define CPL_INT64_FITS_ON_INT32(x) ((x) >= INT_MIN && (x) <= INT_MAX)
 #else
