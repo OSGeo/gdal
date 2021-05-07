@@ -8562,7 +8562,16 @@ bool OGRSpatialReference::IsDynamic() const
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     auto ctxt = d->getPROJContext();
-    auto datum = d->m_pj_crs ? proj_crs_get_datum(ctxt, d->m_pj_crs) : nullptr;
+    PJ* horiz = nullptr;
+    if( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
+    {
+        horiz = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 0);
+    }
+    else if( d->m_pj_crs )
+    {
+        horiz = proj_clone(ctxt, d->m_pj_crs);
+    }
+    auto datum = horiz ? proj_crs_get_datum(ctxt, horiz) : nullptr;
     if( datum )
     {
         const auto type = proj_get_type(datum);
@@ -8582,7 +8591,7 @@ bool OGRSpatialReference::IsDynamic() const
 #if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
     else
     {
-        auto ensemble = d->m_pj_crs ? proj_crs_get_datum_ensemble(ctxt, d->m_pj_crs) : nullptr;
+        auto ensemble = horiz ? proj_crs_get_datum_ensemble(ctxt, horiz) : nullptr;
         if( ensemble )
         {
             auto member = proj_datum_ensemble_get_member(ctxt, ensemble, 0);
@@ -8597,6 +8606,7 @@ bool OGRSpatialReference::IsDynamic() const
         }
     }
 #endif
+    proj_destroy(horiz);
     d->undoDemoteFromBoundCRS();
     return isDynamic;
 }
