@@ -827,6 +827,33 @@ void OGRGeoJSONReaderStreamingParser::Exception(const char* pszMessage)
 }
 
 /************************************************************************/
+/*                    OGRGeoJSONReadLayerSRS()                         */
+/************************************************************************/
+
+static OGRSpatialReference* OGRGeoJSONReadLayerSRS( json_object* poObj )
+{
+    OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference(poObj);
+    if( poSRS == nullptr )
+    {
+        // If there is none defined, we use 4326.
+        poSRS = new OGRSpatialReference();
+        poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+
+    json_object* poObjCoordEpoch = OGRGeoJSONFindMemberByName( poObj, "coordinate_epoch" );
+    if( json_object_get_type(poObjCoordEpoch) == json_type_double ||
+        json_object_get_type(poObjCoordEpoch) == json_type_int )
+    {
+        const double dfCoordEpoch = json_object_get_double(poObjCoordEpoch);
+        if( dfCoordEpoch > 0 )
+            poSRS->SetCoordinateEpoch(dfCoordEpoch);
+    }
+
+    return poSRS;
+}
+
+/************************************************************************/
 /*                       FirstPassReadLayer()                           */
 /************************************************************************/
 
@@ -992,14 +1019,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
         }
 
         OGRSpatialReference* poSRS =
-                        OGRGeoJSONReadSpatialReference( poRootObj );
-        if( poSRS == nullptr )
-        {
-            // If there is none defined, we use 4326.
-            poSRS = new OGRSpatialReference();
-            poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        }
+                        OGRGeoJSONReadLayerSRS( poRootObj );
         CPLErrorReset();
 
         if( poLayer->GetLayerDefn()->GetGeomType() != wkbNone &&
@@ -1105,7 +1125,7 @@ OGRFeature* OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer* poLayer)
         }
         if( bFinished && bJSonPLikeWrapper_ && nRead - nSkip > 0 )
             nRead --;
-        if( !poStreamingParser_->Parse( 
+        if( !poStreamingParser_->Parse(
                             reinterpret_cast<const char*>(pabyBuffer_ + nSkip),
                             nRead - nSkip, bFinished ) ||
             poStreamingParser_->ExceptionOccurred() )
@@ -1315,15 +1335,7 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
         return;
     }
 
-    OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference( poObj );
-    if( poSRS == nullptr )
-    {
-        // If there is none defined, we use 4326.
-        poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    }
-
+    OGRSpatialReference* poSRS = OGRGeoJSONReadLayerSRS( poObj );
     CPLErrorReset();
 
     // Figure out layer name

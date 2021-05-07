@@ -659,6 +659,7 @@ def test_ogr_geojson_23():
     fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_23.json', 'rb')
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
+    assert 'coordinate_epoch' not in data
 
     gdal.Unlink('/vsimem/ogr_geojson_23.json')
 
@@ -3163,3 +3164,41 @@ def test_ogr_geojson_export_geometry_axis_order():
     # No CRS
     g = ogr.CreateGeometryFromWkt('POINT (2 49)')
     assert json.loads(g.ExportToJson()) == { "type": "Point", "coordinates": [ 2.0, 49.0 ] }
+
+
+###############################################################################
+
+
+def test_ogr_geojson_coordinate_epoch():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+
+    filename = '/vsimem/test_ogr_geojson_coordinate_epoch.json'
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(filename)
+    ds.CreateLayer('foo', srs=srs)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+    filename2 = '/vsimem/test_ogr_geojson_coordinate_epoch2.json'
+    gdal.VectorTranslate(filename2, filename)
+
+    fp = gdal.VSIFOpenL(filename2, 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+    assert data.count('coordinate_epoch') == 1, data
+
+    ds = ogr.Open(filename2)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(filename2)

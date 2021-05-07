@@ -295,7 +295,8 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             json_object_object_foreachC(poObj, it)
             {
                 if( strcmp(it.key, "type") == 0 ||
-                    strcmp(it.key, "features") == 0  )
+                    strcmp(it.key, "features") == 0||
+                    strcmp(it.key, "coordinate_epoch") == 0  )
                 {
                     continue;
                 }
@@ -430,6 +431,22 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             VSIFPrintfL( fpOut_, "\"crs\": %s,\n", pszCRS );
 
             json_object_put(poObjCRS);
+        }
+    }
+
+    if( poSRS )
+    {
+        const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
+        if( dfCoordinateEpoch > 0 )
+        {
+            std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+            if( osCoordinateEpoch.find('.') != std::string::npos )
+            {
+                while( osCoordinateEpoch.back() == '0' )
+                    osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+            }
+            VSIFPrintfL( fpOut_, "\"coordinate_epoch\": %s,\n",
+                         osCoordinateEpoch.c_str() );
         }
     }
 
