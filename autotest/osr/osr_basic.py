@@ -1730,6 +1730,10 @@ def test_osr_basic_is_dynamic():
     AUTHORITY["EPSG","4326"]]""")
     assert srs.IsDynamic()
 
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:9057+3855') # WGS 84 (G1762) + EGM2008 height
+    assert srs.IsDynamic()
+
 
 ###############################################################################
 # Test SetCoordinateEpoch() / GetCoordinateEpoch
