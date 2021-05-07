@@ -77,6 +77,7 @@ class OGRShapeGeomFieldDefn final: public OGRGeomFieldDefn
     char* pszFullName = nullptr;
     mutable bool  bSRSSet = false;
     mutable CPLString osPrjFile{};
+    mutable CPLString osWkt2Filename{};
 
     public:
         OGRShapeGeomFieldDefn( const char* pszFullNameIn,
@@ -97,6 +98,8 @@ class OGRShapeGeomFieldDefn final: public OGRGeomFieldDefn
         OGRSpatialReference* GetSpatialRef() const override;
 
         const CPLString& GetPrjFilename() const { return osPrjFile; }
+
+        const CPLString& GetWkt2Filename() const { return osWkt2Filename; }
 };
 
 /************************************************************************/

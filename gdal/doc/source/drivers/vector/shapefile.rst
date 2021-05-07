@@ -42,6 +42,8 @@ present, it will be read and used to associate a projection with
 features. Starting with GDAL 2.3, a match will be attempted with the
 EPSG databases to identify the SRS of the .prj with an entry in the
 catalog.
+Starting with GDAL 3.4, if a coordinate epoch is associated with a dynamic
+CRS, a WKT:2019 definition is written in a .wkt2 sidecar file.
 
 The read driver assumes that multipart polygons follow the
 specification, that is to say the vertices of outer rings should be

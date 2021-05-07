@@ -387,6 +387,8 @@ void RegisterOGRShape()
                                "Integer Integer64 Real String Date" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
+
     poDriver->pfnOpen = OGRShapeDriverOpen;
     poDriver->pfnIdentify = OGRShapeDriverIdentify;
     poDriver->pfnCreate = OGRShapeDriverCreate;

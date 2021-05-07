@@ -909,11 +909,11 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
             CPLFormFilename( nullptr, pszFilenameWithoutExt, "prj");
 
         poSRS = poSRS->Clone();
-        poSRS->morphToESRI();
 
         char *pszWKT = nullptr;
         VSILFILE *fp = nullptr;
-        if( poSRS->exportToWkt( &pszWKT ) == OGRERR_NONE
+        const char* const apszOptions[] = { "FORMAT=WKT1_ESRI", nullptr };
+        if( poSRS->exportToWkt( &pszWKT, apszOptions ) == OGRERR_NONE
             && (fp = VSIFOpenL( osPrjFile, "wt" )) != nullptr )
         {
             VSIFWriteL( pszWKT, strlen(pszWKT), 1, fp );
@@ -921,8 +921,40 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         }
 
         CPLFree( pszWKT );
+    }
 
-        poSRS->morphFromESRI();
+/* -------------------------------------------------------------------- */
+/*      Write a .wkt2 file if needed.                                   */
+/* -------------------------------------------------------------------- */
+    if( poSRS != nullptr && poSRS->GetCoordinateEpoch() > 0 )
+    {
+        const CPLString osWkt2File =
+            CPLFormFilename( nullptr, pszFilenameWithoutExt, "wkt2");
+
+        char *pszWKT = nullptr;
+        VSILFILE *fp = nullptr;
+        const char* const apszOptions[] = {
+                "FORMAT=WKT2_2019", "MULTILINE=YES", nullptr };
+        if( poSRS->exportToWkt( &pszWKT, apszOptions ) == OGRERR_NONE
+            && (fp = VSIFOpenL( osWkt2File, "wt" )) != nullptr )
+        {
+            std::string osCoordinateEpoch = CPLSPrintf("%f", poSRS->GetCoordinateEpoch());
+            if( osCoordinateEpoch.find('.') != std::string::npos )
+            {
+                while( osCoordinateEpoch.back() == '0' )
+                    osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+            }
+
+            std::string osWKT("COORDINATEMETADATA[\n    ");
+            osWKT += CPLString(pszWKT).replaceAll('\n', "\n    ");
+            osWKT += ",\n    EPOCH[";
+            osWKT += osCoordinateEpoch;
+            osWKT += "]\n]\n";
+            VSIFWriteL( osWKT.data(), osWKT.size(), 1, fp );
+            VSIFCloseL( fp );
+        }
+
+        CPLFree( pszWKT );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1291,7 +1323,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 const char* const* OGRShapeDataSource::GetExtensionsForDeletion()
 {
     static const char * const apszExtensions[] =
-        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind",
+        { "shp", "shx", "dbf", "sbn", "sbx", "prj", "wkt2", "idm", "ind",
           "qix", "cpg",
           "qpj", // QGIS projection file
           nullptr };

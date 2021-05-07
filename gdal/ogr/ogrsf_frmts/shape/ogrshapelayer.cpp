@@ -2144,13 +2144,59 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
     bSRSSet = true;
 
 /* -------------------------------------------------------------------- */
+/*      Is there an associated .wkt2 file we can read?                  */
+/* -------------------------------------------------------------------- */
+    const char  *pszWkt2File = CPLResetExtension( pszFullName, "wkt2" );
+
+    const char * const apszOptions[] = {
+        "EMIT_ERROR_IF_CANNOT_OPEN_FILE=FALSE", nullptr };
+    char **papszLines = CSLLoad2( pszWkt2File, -1, -1, apszOptions );
+    if( papszLines != nullptr )
+    {
+        osWkt2Filename = pszWkt2File;
+
+        CPLString osWKT;
+        for( const char* const* iter = papszLines; *iter; ++iter )
+            osWKT += *iter;
+        CSLDestroy(papszLines);
+        double dfCoordEpoch = 0;
+        if( STARTS_WITH_CI( osWKT.c_str(), "COORDINATEMETADATA[") )
+        {
+            size_t nPos = std::string::npos;
+            // We don't want to match FRAMEEPOCH[
+            for( const char* pszEpoch : { ",EPOCH[", " EPOCH[", "\tEPOCH[",
+                                          "\nEPOCH[", "\rEPOCH[" } )
+            {
+                nPos = osWKT.ifind(pszEpoch);
+                if( nPos != std::string::npos )
+                    break;
+            }
+            if( nPos != std::string::npos )
+            {
+                dfCoordEpoch = CPLAtof(
+                    osWKT.c_str() + nPos + strlen(",EPOCH["));
+                osWKT.resize(nPos);
+                osWKT = osWKT.substr(strlen("COORDINATEMETADATA["));
+            }
+        }
+
+        poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if( poSRS->importFromWkt(osWKT.c_str()) == OGRERR_NONE )
+        {
+            if( dfCoordEpoch > 0 )
+                poSRS->SetCoordinateEpoch(dfCoordEpoch);
+            return poSRS;
+        }
+        delete poSRS;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Is there an associated .prj file we can read?                   */
 /* -------------------------------------------------------------------- */
     const char  *pszPrjFile = CPLResetExtension( pszFullName, "prj" );
 
-    char *apszOptions[] = {
-        const_cast<char *>("EMIT_ERROR_IF_CANNOT_OPEN_FILE=FALSE"), nullptr };
-    char **papszLines = CSLLoad2( pszPrjFile, -1, -1, apszOptions );
+    papszLines = CSLLoad2( pszPrjFile, -1, -1, apszOptions );
     if( papszLines == nullptr )
     {
         pszPrjFile = CPLResetExtension( pszFullName, "PRJ" );
@@ -3478,6 +3524,10 @@ void OGRShapeLayer::AddToFileList( CPLStringList& oFileList )
             OGRShapeGeomFieldDefn* poGeomFieldDefn =
                 cpl::down_cast<OGRShapeGeomFieldDefn*>(GetLayerDefn()->GetGeomFieldDefn(0));
             oFileList.AddString(poGeomFieldDefn->GetPrjFilename());
+
+            const auto& osWkt2Filename = poGeomFieldDefn->GetWkt2Filename();
+            if( !osWkt2Filename.empty() )
+                oFileList.AddString(osWkt2Filename);
         }
         if( CheckForQIX() )
         {
