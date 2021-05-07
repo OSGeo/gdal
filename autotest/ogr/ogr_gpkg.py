@@ -3880,6 +3880,106 @@ def test_ogr_gpkg_56():
     gdal.Unlink('/vsimem/ogr_gpkg_56.gpkg')
 
 ###############################################################################
+# Test creation of a field which is the same as the FID column
+
+
+def test_ogr_gpkg_creation_fid():
+
+    filename = '/vsimem/test_ogr_gpkg_creation_fid.gpkg'
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+
+    lyr = ds.CreateLayer('fid_integer')
+    assert lyr.CreateField(ogr.FieldDefn('fid', ogr.OFTInteger)) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 12
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 12
+    f = lyr.GetFeature(f.GetFID())
+    assert f is not None
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 13
+    f.SetFID(13)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 13
+    f = lyr.GetFeature(f.GetFID())
+    assert f is not None
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    lyr = ds.CreateLayer('fid_integer64')
+    assert lyr.CreateField(ogr.FieldDefn('fid', ogr.OFTInteger64)) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 1234567890123
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 1234567890123
+    f = lyr.GetFeature(f.GetFID())
+    assert f is not None
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 1234567890124
+    f.SetFID(1234567890124)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 1234567890124
+    f = lyr.GetFeature(f.GetFID())
+    assert f is not None
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 1234567890125
+    f.SetFID(1)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) == ogr.OGRERR_FAILURE
+
+    # Simulates the situation of GeoPackage ---QGIS---> Shapefile --> GeoPackage
+    # See https://github.com/qgis/QGIS/pull/43118
+    lyr = ds.CreateLayer('fid_real')
+    fld_defn = ogr.FieldDefn('fid', ogr.OFTReal)
+    fld_defn.SetWidth(20)
+    fld_defn.SetPrecision(0)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 1234567890123
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 1234567890123
+    f = lyr.GetFeature(f.GetFID())
+    assert f is not None
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 1234567890124
+    f.SetFID(1234567890124)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 1234567890124
+    f = lyr.GetFeature(f.GetFID())
+    assert f is not None
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 1234567890123.5
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) == ogr.OGRERR_FAILURE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['fid'] = 1234567890125
+    f.SetFID(1)
+    with gdaltest.error_handler():
+        assert lyr.CreateFeature(f) == ogr.OGRERR_FAILURE
+
+    ds = None
+    gdal.Unlink(filename)
+
+###############################################################################
 # Test opening a corrupted gpkg with duplicated layer names
 
 
