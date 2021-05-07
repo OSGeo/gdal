@@ -70,6 +70,7 @@
         <xs:simpleContent>
             <xs:extension base="xs:string">
                 <xs:attribute name="dataAxisToSRSAxisMapping" type="xs:string"/>
+                <xs:attribute name="coordinateEpoch" type="xs:float"/>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
@@ -183,7 +184,7 @@
                 <xs:element name="Histograms" type="HistogramsType"/>
 
                 <!-- for a VRTSourcedRasterBand. Each element may be repeated -->
-                <xs:element name="SimpleSource" type="SimpleSourceType"/> 
+                <xs:element name="SimpleSource" type="SimpleSourceType"/>
                 <xs:element name="ComplexSource" type="ComplexSourceType"/>
                 <xs:element name="AveragedSource" type="SimpleSourceType"/>
                 <xs:element name="KernelFilteredSource" type="KernelFilteredSourceType"/>
