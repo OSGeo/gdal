@@ -292,7 +292,7 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
 /*                             AddLayer()                              */
 /***********************************************************************/
 
-void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
+OGRLayer* OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
                                          int nInterestTable,
                                          int& nCandidateLayers,
                                          int& nLayersSDCOrCDF,
@@ -335,7 +335,7 @@ void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
                                  "%s layer has a %s file whose format is unhandled",
                                   osName.c_str(), FileExists(osSDC) ? osSDC.c_str() : osCDF.c_str());
                     }
-                    return;
+                    return nullptr;
                 }
             }
 
@@ -345,8 +345,72 @@ void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
                                         osDefinition,
                                         osDocumentation,
                                         pszGeomName, eGeomType));
+            return m_apoLayers.back();
         }
     }
+    return nullptr;
+}
+
+/***********************************************************************/
+/*                      OGROpenFileGDBGroup                            */
+/***********************************************************************/
+
+class OGROpenFileGDBGroup final: public GDALGroup
+{
+protected:
+    friend class OGROpenFileGDBDataSource;
+    std::vector<std::shared_ptr<GDALGroup>> m_apoSubGroups{};
+    std::vector<OGRLayer*> m_apoLayers{};
+
+public:
+    OGROpenFileGDBGroup(const std::string& osParentName, const char* pszName):
+        GDALGroup(osParentName, pszName) {}
+
+    std::vector<std::string> GetGroupNames(CSLConstList papszOptions) const override;
+    std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
+                                         CSLConstList papszOptions) const override;
+
+    std::vector<std::string> GetVectorLayerNames(CSLConstList papszOptions) const override;
+    OGRLayer* OpenVectorLayer(const std::string& osName,
+                              CSLConstList papszOptions) const override;
+};
+
+std::vector<std::string> OGROpenFileGDBGroup::GetGroupNames(CSLConstList) const
+{
+    std::vector<std::string> ret;
+    for( const auto& poSubGroup: m_apoSubGroups )
+        ret.emplace_back(poSubGroup->GetName());
+    return ret;
+}
+
+std::shared_ptr<GDALGroup> OGROpenFileGDBGroup::OpenGroup(const std::string& osName,
+                                                          CSLConstList) const
+{
+    for( const auto& poSubGroup: m_apoSubGroups )
+    {
+        if( poSubGroup->GetName() == osName )
+            return poSubGroup;
+    }
+    return nullptr;
+}
+
+std::vector<std::string> OGROpenFileGDBGroup::GetVectorLayerNames(CSLConstList) const
+{
+    std::vector<std::string> ret;
+    for( const auto& poLayer: m_apoLayers )
+        ret.emplace_back(poLayer->GetName());
+    return ret;
+}
+
+OGRLayer* OGROpenFileGDBGroup::OpenVectorLayer(const std::string& osName,
+                                               CSLConstList) const
+{
+    for( const auto& poLayer: m_apoLayers )
+    {
+        if( poLayer->GetName() == osName )
+            return poLayer;
+    }
+    return nullptr;
 }
 
 /***********************************************************************/
@@ -367,10 +431,12 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
         return FALSE;
 
     int iName = oTable.GetFieldIdx("Name");
+    int iPath = oTable.GetFieldIdx("Path");
     int iDefinition = oTable.GetFieldIdx("Definition");
     int iDocumentation = oTable.GetFieldIdx("Documentation");
-    if( iName < 0 || iDefinition < 0 || iDocumentation < 0 ||
+    if( iName < 0 || iPath < 0 || iDefinition < 0 || iDocumentation < 0 ||
         oTable.GetField(iName)->GetType() != FGFT_STRING ||
+        oTable.GetField(iPath)->GetType() != FGFT_STRING ||
         oTable.GetField(iDefinition)->GetType() != FGFT_XML ||
         oTable.GetField(iDocumentation)->GetType() != FGFT_XML )
     {
@@ -379,6 +445,53 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
         return FALSE;
     }
 
+    auto poRootGroup = std::make_shared<OGROpenFileGDBGroup>(std::string(), "");
+    m_poRootGroup = poRootGroup;
+    std::map<std::string, std::shared_ptr<OGROpenFileGDBGroup>> oMapPathToFeatureDataset;
+
+    // First pass to collect FeatureDatasets
+    for( int i=0;i<oTable.GetTotalRecordCount();i++)
+    {
+        if( !oTable.SelectRow(i) )
+        {
+            if( oTable.HasGotError() )
+                break;
+            continue;
+        }
+
+        const OGRField* psField = oTable.GetFieldValue(iDefinition);
+        if( psField != nullptr &&
+            strstr(psField->String, "DEFeatureDataset") != nullptr )
+        {
+            std::string osName;
+            psField = oTable.GetFieldValue(iName);
+            if( psField != nullptr )
+            {
+                const char* pszName = psField->String;
+                if( pszName )
+                    osName = pszName;
+            }
+
+            std::string osPath;
+            psField = oTable.GetFieldValue(iPath);
+            if( psField != nullptr )
+            {
+                const char* pszPath = psField->String;
+                if( pszPath )
+                    osPath = pszPath;
+            }
+
+            if( !osName.empty() && !osPath.empty() )
+            {
+                auto poSubGroup = std::make_shared<OGROpenFileGDBGroup>(
+                    poRootGroup->GetName(), osName.c_str());
+                oMapPathToFeatureDataset[osPath] = poSubGroup;
+                poRootGroup->m_apoSubGroups.emplace_back(poSubGroup);
+            }
+        }
+    }
+
+    // Now collect layers
     int nCandidateLayers = 0;
     int nLayersSDCOrCDF = 0;
     for( int i=0;i<oTable.GetTotalRecordCount();i++)
@@ -403,9 +516,50 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
             psField = oTable.GetFieldValue(iName);
             if( psField != nullptr )
             {
-                AddLayer( psField->String, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
+                OGRLayer* poLayer =
+                    AddLayer( psField->String, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
                           osDefinition, osDocumentation,
                           nullptr, wkbUnknown );
+                if( poLayer )
+                {
+                    bool bAttachedToFeatureDataset = false;
+
+                    psField = oTable.GetFieldValue(iPath);
+                    if( psField != nullptr )
+                    {
+                        const char* pszPath = psField->String;
+                        if( pszPath )
+                        {
+                            std::string osPath(pszPath);
+                            const auto nPos = osPath.rfind('\\');
+                            if( nPos != 0 && nPos != std::string::npos )
+                            {
+                                std::string osPathParent = osPath.substr(0, nPos);
+                                const auto oIter = oMapPathToFeatureDataset.find(osPathParent);
+                                if( oIter == oMapPathToFeatureDataset.end() )
+                                {
+                                    CPLError(CE_Warning, CPLE_AppDefined,
+                                             "Cannot find feature dataset of "
+                                             "path %s referenced by table %s",
+                                             osPathParent.c_str(),
+                                             pszPath);
+                                }
+                                else
+                                {
+                                    // Add the layer to the group of the corresponding
+                                    // feature dataset
+                                    oIter->second->m_apoLayers.emplace_back(poLayer);
+                                    bAttachedToFeatureDataset = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if( !bAttachedToFeatureDataset )
+                    {
+                        poRootGroup->m_apoLayers.emplace_back(poLayer);
+                    }
+                }
             }
         }
         else if( psField != nullptr &&

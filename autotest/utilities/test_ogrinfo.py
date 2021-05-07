@@ -618,3 +618,20 @@ def test_ogrinfo_fielddomains():
     assert 'Merge policy: default value' in ret
     assert 'Glob: *' in ret
 
+
+###############################################################################
+# Test hiearchical presentation of layers
+
+
+def test_ogrinfo_hiearchical():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        pytest.skip()
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' ../ogr/data/filegdb/featuredataset.gdb')
+    assert (err is None or err == ''), 'got error/warning'
+    assert 'Layer: standalone (Point)' in ret
+    assert 'Group fd1:' in ret
+    assert '  Layer: fd1_lyr1 (Point)' in ret
+    assert '  Layer: fd1_lyr2 (Point)' in ret
+    assert 'Group fd2:' in ret
+    assert '  Layer: fd2_lyr (Point)' in ret

@@ -57,9 +57,22 @@ and metadata of a FileGDB table as XML content (only available in
 Geodatabases created with ArcGIS 10 or above)
 
 Field domains
-~~~~~~~~~~~~~
+-------------
 
-(GDAL >= 3.3) Coded and range field domains are supported.
+.. versionadded:: 3.3
+
+Coded and range field domains are supported.
+
+Hiearchical organization
+------------------------
+
+.. versionadded:: 3.4
+
+The hiearchical organization of tables and feature classes as top-level
+element or within a feature dataset can be explored using the methods
+:cpp:func:`GDALDataset::GetRootGroup`,
+:cpp:func:`GDALGroup::GetGroupNames`, :cpp:func:`GDALGroup::OpenGroup`,
+:cpp:func:`GDALGroup::GetVectorLayerNames` and :cpp:func:`GDALGroup::OpenVectorLayer`
 
 Comparison with the FileGDB driver
 ----------------------------------

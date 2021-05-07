@@ -432,7 +432,7 @@ gwE6fxOLyJDxuWRf\n
     if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
         pytest.skip()
 
-    if ds is None and gdaltest.is_github_workflow_mac():
+    if ds is None and sys.platform == 'darwin':
         print(gdal.GetLastErrorMsg())
         pytest.xfail('Failure. See https://github.com/rouault/gdal/runs/1329425333?check_suite_focus=true')
 

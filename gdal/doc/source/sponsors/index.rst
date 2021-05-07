@@ -101,10 +101,7 @@ the health of the project:
 
 - Supporter level:
 
-    .. _supporter-sponsors:
-    .. container:: horizontal-logos
-
-      None listed yet.
+    `Umbra <https://umbra.space/>`__
 
 
 .. raw:: html
@@ -143,7 +140,7 @@ the health of the project:
     $('#platinum-sponsors').randomize('div.horizontal-logo');
     $('#gold-sponsors').randomize('div.horizontal-logo');
     $('#silver-sponsors').randomize('div.horizontal-logo');
-    $('#supporter-sponsors').randomize('div.horizontal-logo');
+
   </script>
 
 The GDAL Project is hosted by `OSGeo <https://www.osgeo.org>`__, and

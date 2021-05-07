@@ -92,6 +92,16 @@ public:
     return GDALGroupOpenGroupFromFullname(self, name, options);
   }
 
+%apply (char **CSL) {char **};
+  char **GetVectorLayerNames(char** options = 0) {
+    return GDALGroupGetVectorLayerNames( self, options );
+  }
+%clear char **;
+
+  OGRLayerShadow* OpenVectorLayer( const char* name, char** options = 0) {
+    return (OGRLayerShadow*) GDALGroupOpenVectorLayer(self, name, options);
+  }
+
 #if defined(SWIGPYTHON)
   void GetDimensions( GDALDimensionHS*** pdims, size_t* pnCount, char** options = 0 ) {
     *pdims = GDALGroupGetDimensions(self, pnCount, options);
@@ -371,6 +381,12 @@ public:
 #endif
 
 #if defined(SWIGPYTHON)
+  void GetCoordinateVariables( GDALMDArrayHS*** parrays, size_t* pnCount ) {
+    *parrays = GDALMDArrayGetCoordinateVariables(self, pnCount);
+  }
+#endif
+
+#if defined(SWIGPYTHON)
 %apply ( GUIntBig** pvals, size_t* pnCount ) { (GUIntBig** psizes, size_t* pnCount ) };
   void GetBlockSize( GUIntBig** psizes, size_t* pnCount ) {
     *psizes = GDALMDArrayGetBlockSize(self, pnCount);
@@ -495,8 +511,15 @@ public:
         PyObject* obj = PyList_New( nProductCount );
         for( size_t i = 0; i < nProductCount; i++ )
         {
-            PyObject *o = GDALPythonObjectFromCStr( ppszBuffer[i] );
-            PyList_SetItem(obj, i, o );
+            if( !ppszBuffer[i] )
+            {
+                Py_INCREF(Py_None);
+                PyList_SetItem(obj, i, Py_None);
+            }
+            else
+            {
+                PyList_SetItem(obj, i, GDALPythonObjectFromCStr( ppszBuffer[i] ) );
+            }
             VSIFree(ppszBuffer[i]);
         }
         SWIG_PYTHON_THREAD_END_BLOCK;
@@ -938,6 +961,23 @@ public:
         CPLFree(psStatisticsOut);
         return NULL;
   }
+#endif
+
+#if defined(SWIGPYTHON)
+%newobject GetResampled;
+%apply (int object_list_count, GDALDimensionHS **poObjectsItemMaybeNull) {(int nDimensions, GDALDimensionHS **dimensions)};
+%apply (OSRSpatialReferenceShadow **optional_OSRSpatialReferenceShadow) { OSRSpatialReferenceShadow** };
+  GDALMDArrayHS *GetResampled(int nDimensions,
+                              GDALDimensionHS** dimensions,
+                              GDALRIOResampleAlg resample_alg,
+                              OSRSpatialReferenceShadow** srs,
+                              char **options = 0)
+  {
+    return GDALMDArrayGetResampled(self, nDimensions, dimensions,
+                                  resample_alg, srs ? *srs : NULL, options);
+  }
+%clear (int nDimensions, GDALDimensionHS **dimensions);
+%clear OSRSpatialReferenceShadow**;
 #endif
 
 } /* extend */

@@ -1953,7 +1953,7 @@ public:
 /* ******************************************************************** */
 
 /**
- * Class modeling a named container of GDALAttribute, GDALMDArray or other
+ * Class modeling a named container of GDALAttribute, GDALMDArray, OGRLayer or other
  * GDALGroup. Hence GDALGroup can describe a hierarchy of objects.
  *
  * This is based on the <a href="https://portal.opengeospatial.org/files/81716#_hdf5_group">HDF5 group concept</a>
@@ -1996,6 +1996,10 @@ public:
     virtual std::vector<std::string> GetGroupNames(CSLConstList papszOptions = nullptr) const;
     virtual std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
                                                  CSLConstList papszOptions = nullptr) const;
+
+    virtual std::vector<std::string> GetVectorLayerNames(CSLConstList papszOptions = nullptr) const;
+    virtual OGRLayer* OpenVectorLayer(const std::string& osName,
+                                      CSLConstList papszOptions = nullptr) const;
 
     virtual std::vector<std::shared_ptr<GDALDimension>> GetDimensions(CSLConstList papszOptions = nullptr) const;
 
@@ -2351,6 +2355,7 @@ public:
  */
 class CPL_DLL GDALMDArray: virtual public GDALAbstractMDArray, public GDALIHasAttribute
 {
+    friend class GDALMDArrayResampled;
     std::shared_ptr<GDALMDArray> GetView(const std::vector<GUInt64>& indices) const;
 
     inline std::shared_ptr<GDALMDArray> atInternal(std::vector<GUInt64>& indices) const
@@ -2451,6 +2456,12 @@ public:
 
     virtual std::shared_ptr<GDALMDArray> GetMask(CSLConstList papszOptions) const;
 
+    std::shared_ptr<GDALMDArray>
+        GetResampled( const std::vector<std::shared_ptr<GDALDimension>>& apoNewDims,
+                      GDALRIOResampleAlg resampleAlg,
+                      const OGRSpatialReference* poTargetSRS,
+                      CSLConstList papszOptions ) const;
+
     virtual GDALDataset* AsClassicDataset(size_t iXDim, size_t iYDim) const;
 
     virtual CPLErr GetStatistics( GDALDataset* poDS,
@@ -2467,8 +2478,15 @@ public:
                                     GUInt64* pnValidCount,
                                     GDALProgressFunc, void *pProgressData );
 
+    virtual std::vector<std::shared_ptr<GDALMDArray>> GetCoordinateVariables() const;
+
     bool AdviseRead(const GUInt64* arrayStartIdx,
                     const size_t* count) const;
+
+    bool IsRegularlySpaced(double& dfStart, double& dfIncrement) const;
+
+    bool GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint,
+                           double adfGeoTransform[6]) const;
 
 //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
@@ -2503,6 +2521,18 @@ public:
 //! @endcond
 };
 
+//! @cond Doxygen_Suppress
+bool GDALMDRasterIOFromBand(GDALRasterBand* poBand,
+                            GDALRWFlag eRWFlag,
+                            size_t iDimX,
+                            size_t iDimY,
+                            const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            const GInt64* arrayStep,
+                            const GPtrDiff_t* bufferStride,
+                            const GDALExtendedDataType& bufferDataType,
+                            void* pBuffer);
+//! @endcond
 
 /************************************************************************/
 /*                     GDALMDArrayRegularlySpaced                       */

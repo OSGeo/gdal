@@ -4541,14 +4541,11 @@ dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
 GEOS_INIT(3.1.0)
-HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
-
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
   STRIP_SYSTEM_LIBRARY_PATHS("${GEOS_LIBS}")
   GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
-  HAVE_GEOS_RESULT="yes"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -4556,14 +4553,11 @@ dnl Check if SFCGAL library is available.
 dnl ---------------------------------------------------------------------------
 
 SFCGAL_INIT(1.2.2)
-HAVE_SFCGAL_RESULT="no"
 if test "${HAVE_SFCGAL}" = "yes" ; then
-
   AC_MSG_NOTICE([Using C API from SFCGAL $SFCGAL_VERSION])
   STRIP_SYSTEM_LIBRARY_PATHS("${SFCGAL_LIBS}")
   SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
-  HAVE_SFCGAL_RESULT="yes"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -6077,7 +6071,7 @@ LOC_MSG([  EXR support:               ${HAVE_EXR}])
 LOC_MSG([  FGDB support:              ${FGDB_ENABLED}])
 LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
-LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
+LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
 LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  GTA support:               ${GTA_SETTING}])
@@ -6135,7 +6129,7 @@ LOC_MSG([  QHull support:             ${QHULL_SETTING}])
 LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
 LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
 LOC_MSG([  RDB support:               ${RDB_SETTING}])
-LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL_RESULT}])
+LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL}])
 LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 if test "x$SPATIALITE_SONAME" != "x"; then

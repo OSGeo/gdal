@@ -27,15 +27,11 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-import array
-from numbers import Real
-from typing import Union, Sequence
 
 from osgeo import gdal, gdal_array
 import numpy as np
 
-NumpyCompatibleArray = Union[np.ndarray, array.array, Sequence]
-NumpyCompatibleArrayOrReal = Union[NumpyCompatibleArray, Real]
+from osgeo_utils.auxiliary.array_util import ArrayOrScalarLike, ScalarLike
 
 
 def GDALTypeCodeToNumericTypeCodeEx(buf_type, signed_byte, default=None):
@@ -53,3 +49,14 @@ def GDALTypeCodeAndNumericTypeCodeFromDataSet(ds):
     signed_byte = ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
     np_typecode = GDALTypeCodeToNumericTypeCodeEx(buf_type, signed_byte=signed_byte, default=np.float32)
     return buf_type, np_typecode
+
+
+def array_dist(x: ArrayOrScalarLike, y: ArrayOrScalarLike, is_max: bool = True) -> ScalarLike:
+    if isinstance(x, ScalarLike.__args__):
+        return abs(x-y)
+    if not isinstance(x, np.ndarray):
+        x = np.array(x)
+    if not isinstance(y, np.ndarray):
+        y = np.array(y)
+    diff = np.abs(x-y)
+    return np.max(diff) if is_max else np.min(diff)

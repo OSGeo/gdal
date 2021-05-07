@@ -521,22 +521,31 @@ def test_basic_test_17():
     for _ in range(2):
         ogr.UseExceptions()
         gdal.UseExceptions()
+        flag = False
         try:
             gdal.Open('do_not_exist')
+            flag = True
         except RuntimeError:
             pass
+        assert not flag, 'expected failure'
         gdal.DontUseExceptions()
         ogr.DontUseExceptions()
         assert not gdal.GetUseExceptions()
         assert not ogr.GetUseExceptions()
 
+
+def test_basic_test_17_part_2():
+
+    # For some odd reason, this fails on the Travis CI targets after unrelated
+    # changes (https://travis-ci.com/github/OSGeo/gdal/jobs/501940381)
+    if gdaltest.skip_on_travis():
+        pytest.skip()
+
+    from osgeo import ogr
+
     for _ in range(2):
         ogr.UseExceptions()
         gdal.UseExceptions()
-        try:
-            gdal.Open('do_not_exist')
-        except RuntimeError:
-            pass
         flag = False
         try:
             ogr.DontUseExceptions()
