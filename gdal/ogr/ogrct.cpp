@@ -580,11 +580,15 @@ class OGRProjCT : public OGRCoordinateTransformation
     bool        bSourceLatLong = false;
     bool        bSourceWrap = false;
     double      dfSourceWrapLong = 0.0;
+    bool        bSourceIsDynamicCRS = false;
+    double      dfSourceCoordinateEpoch = 0.0;
 
     OGRSpatialReference *poSRSTarget = nullptr;
     bool        bTargetLatLong = false;
     bool        bTargetWrap = false;
     double      dfTargetWrapLong = 0.0;
+    bool        bTargetIsDynamicCRS = false;
+    double      dfTargetCoordinateEpoch = 0.0;
 
     bool        bWebMercatorToWGS84LongLat = false;
 
@@ -1147,9 +1151,17 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     }
 
     if( poSRSSource )
+    {
         bSourceLatLong = CPL_TO_BOOL(poSRSSource->IsGeographic());
+        bSourceIsDynamicCRS = poSRSSource->IsDynamic();
+        dfSourceCoordinateEpoch = poSRSSource->GetCoordinateEpoch();
+    }
     if( poSRSTarget )
+    {
         bTargetLatLong = CPL_TO_BOOL(poSRSTarget->IsGeographic());
+        bTargetIsDynamicCRS = poSRSTarget->IsDynamic();
+        dfTargetCoordinateEpoch = poSRSTarget->GetCoordinateEpoch();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup source and target translations to radians for lat/long    */
@@ -2200,6 +2212,14 @@ int OGRProjCT::TransformWithErrorCodes(
 /*      Select dynamically the best transformation for the data, if     */
 /*      needed.                                                         */
 /* -------------------------------------------------------------------- */
+    const double dfDefaultTime =
+        (bSourceIsDynamicCRS && dfSourceCoordinateEpoch > 0 &&
+         !bTargetIsDynamicCRS) ?
+             dfSourceCoordinateEpoch :
+        (bTargetIsDynamicCRS && dfTargetCoordinateEpoch > 0 &&
+         !bSourceIsDynamicCRS) ?
+             dfTargetCoordinateEpoch :
+             HUGE_VAL;
 
     auto ctx = OSRGetProjTLSContext();
     PJ* pj = m_pj;
@@ -2231,7 +2251,7 @@ int OGRProjCT::TransformWithErrorCodes(
         coord.xyzt.x = avgX;
         coord.xyzt.y = avgY;
         coord.xyzt.z = z ? z[0] : 0;
-        coord.xyzt.t = t ? t[0] : HUGE_VAL;
+        coord.xyzt.t = t ? t[0] : dfDefaultTime;
 
         // We may need several attempts. For example the point at
         // lon=-111.5 lat=45.26 falls into the bounding box of the Canadian
@@ -2367,7 +2387,7 @@ int OGRProjCT::TransformWithErrorCodes(
             coord.xyzt.x = x[i];
             coord.xyzt.y = y[i];
             coord.xyzt.z = z ? z[i] : 0;
-            coord.xyzt.t = t ? t[i] : HUGE_VAL;
+            coord.xyzt.t = t ? t[i] : dfDefaultTime;
             proj_errno_reset(pj);
             coord = proj_trans(pj, m_bReversePj ? PJ_INV : PJ_FWD, coord);
             x[i] = coord.xyzt.x;
@@ -2597,12 +2617,16 @@ OGRCoordinateTransformation* OGRProjCT::GetInverse() const
     poNewCT->bSourceLatLong = bTargetLatLong;
     poNewCT->bSourceWrap = bTargetWrap;
     poNewCT->dfSourceWrapLong = dfTargetWrapLong;
+    poNewCT->bSourceIsDynamicCRS = bTargetIsDynamicCRS;
+    poNewCT->dfSourceCoordinateEpoch = dfTargetCoordinateEpoch;
 
     if( poSRSSource )
         poNewCT->poSRSTarget = poSRSSource->Clone();
     poNewCT->bTargetLatLong = bSourceLatLong;
     poNewCT->bTargetWrap = bSourceWrap;
     poNewCT->dfTargetWrapLong = dfSourceWrapLong;
+    poNewCT->bTargetIsDynamicCRS = bSourceIsDynamicCRS;
+    poNewCT->dfTargetCoordinateEpoch = dfSourceCoordinateEpoch;
 
     poNewCT->ComputeThreshold();
 
