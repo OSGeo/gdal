@@ -292,13 +292,13 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 
 /**
  * \brief Create a new multidimensional dataset with this driver.
- * 
+ *
  * Only drivers that advertise the GDAL_DCAP_MULTIDIM_RASTER capability and
  * implement the pfnCreateMultiDimensional method might return a non nullptr
  * GDALDataset.
  *
  * This is the same as the C function GDALCreateMultiDimensional().
- * 
+ *
  * @param pszFilename  the name of the dataset to create.  UTF-8 encoded.
  * @param papszRootGroupOptions driver specific options regarding the creation
  *                              of the root group. Might be nullptr.
@@ -362,7 +362,7 @@ GDALDataset * GDALDriver::CreateMultiDimensional( const char * pszFilename,
 /************************************************************************/
 
 /** \brief Create a new multidimensional dataset with this driver.
- * 
+ *
  * This is the same as the C++ method GDALDriver::CreateMultiDimensional().
  */
 GDALDatasetH GDALCreateMultiDimensional( GDALDriverH hDriver,
@@ -709,13 +709,15 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
             eErr = CE_None;
     }
 
-    if( eErr == CE_None
-        && poSrcDS->GetProjectionRef() != nullptr
-        && strlen(poSrcDS->GetProjectionRef()) > 0 )
+    if( eErr == CE_None )
     {
-        eErr = poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
-        if( !bStrict )
-            eErr = CE_None;
+        const auto poSrcSRS = poSrcDS->GetSpatialRef();
+        if( poSrcSRS && !poSrcSRS->IsEmpty() )
+        {
+            eErr = poDstDS->SetSpatialRef(poSrcSRS);
+            if( !bStrict )
+                eErr = CE_None;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -755,7 +757,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     {
         poDstDS->SetMetadata(papszXMP, "xml:XMP");
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
