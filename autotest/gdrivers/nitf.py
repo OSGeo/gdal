@@ -3841,6 +3841,26 @@ def test_nitf_invalid_udid():
         'BLOCKA metadata has unexpected value.'
 
 ###############################################################################
+# Test limits on creation
+
+
+def test_nitf_create_too_large_file():
+
+    # Test 1e10 byte limit for a single image
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create('/vsimem/out.ntf', int(1e5), int(1e5))
+    assert gdal.GetLastErrorMsg() != ''
+
+    # Test 1e12 byte limit for while file
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create('/vsimem/out.ntf', int(1e5), int(1e5) // 2, options = ['NUMI=200'])
+    assert gdal.GetLastErrorMsg() != ''
+
+    gdal.Unlink('/vsimem/out.ntf')
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 
