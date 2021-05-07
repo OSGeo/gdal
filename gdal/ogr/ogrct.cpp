@@ -642,9 +642,7 @@ public:
     void SetEmitErrors( bool bEmitErrors ) override
         { m_bEmitErrors = bEmitErrors; }
 
-    OGRCoordinateTransformation* Clone() const override {
-        return new OGRProjCT(*this);
-    }
+    OGRCoordinateTransformation* Clone() const override;
 
     OGRCoordinateTransformation* GetInverse() const override;
 
@@ -2442,6 +2440,30 @@ int OGRProjCT::TransformWithErrorCodes(
 #endif
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+OGRCoordinateTransformation* OGRProjCT::Clone() const
+{
+     std::unique_ptr<OGRProjCT> poNewCT(new OGRProjCT(*this));
+#if (PROJ_VERSION_MAJOR * 10000 + PROJ_VERSION_MINOR * 100 + PROJ_VERSION_PATCH) < 80001
+    // See https://github.com/OSGeo/PROJ/pull/2582
+    // This may fail before PROJ 8.0.1 if the m_pj object is a "meta"
+    // operation being a set of real operations
+    bool bCloneDone = ((m_pj == nullptr) == (poNewCT->m_pj == nullptr));
+    if(!bCloneDone)
+    {
+        poNewCT.reset(new OGRProjCT());
+        if(!poNewCT->Initialize(poSRSSource, poSRSTarget, m_options))
+        {
+            return nullptr;
+        }
+    }
+#endif //PROJ_VERSION
+    return poNewCT.release();
 }
 
 /************************************************************************/
