@@ -490,6 +490,12 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_FEATURE_STYLES     "DCAP_FEATURE_STYLES"
 
+/** Capability set by drivers which support storing/retrieving coordinate epoch for dynamic CRS
+ * @since GDAL 3.4
+ */
+#define GDAL_DCAP_COORDINATE_EPOCH   "DCAP_COORDINATE_EPOCH"
+
+
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal CRS.
  * @since GDAL 3.1
  */
