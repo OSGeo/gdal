@@ -38,6 +38,12 @@
 
 CPL_C_START
 
+/* 1e-12 - 1 */
+#define NITF_MAX_FILE_SIZE 999999999999ULL
+
+/* 1e-10 - 1 */
+#define NITF_MAX_IMAGE_SIZE 9999999999ULL
+
 typedef struct {
     char szSegmentType[3]; /* one of "IM", ... */
 
