@@ -114,7 +114,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
     bool                m_bHasReadMetadataFromStorage;
     bool                m_bMetadataDirty;
     CPLStringList       m_aosSubDatasets{};
-    char               *m_pszProjection;
+    OGRSpatialReference m_oSRS{};
     bool                m_bRecordInsertedInGPKGContent;
     bool                m_bGeoTransformValid;
     double              m_adfGeoTransform[6];
@@ -240,14 +240,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                              const char * pszValue,
                                              const char * pszDomain = "" ) override;
 
-        virtual const char* _GetProjectionRef() override;
-        virtual CPLErr      _SetProjection( const char* pszProjection ) override;
-        const OGRSpatialReference* GetSpatialRef() const override {
-            return GetSpatialRefFromOldGetProjectionRef();
-        }
-        CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-            return OldSetProjectionFromSetSpatialRef(poSRS);
-        }
+        const OGRSpatialReference* GetSpatialRef() const override;
+        CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
         virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
         virtual CPLErr      SetGeoTransform( double* padfGeoTransform ) override;

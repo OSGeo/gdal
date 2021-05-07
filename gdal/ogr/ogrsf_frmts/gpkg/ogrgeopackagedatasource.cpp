@@ -884,7 +884,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_bDescriptionAsCO(false),
     m_bHasReadMetadataFromStorage(false),
     m_bMetadataDirty(false),
-    m_pszProjection(nullptr),
     m_bRecordInsertedInGPKGContent(false),
     m_bGeoTransformValid(false),
     m_nSRID(-1),  // Unknown cartesian.
@@ -951,7 +950,6 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
     CPLFree( m_papoLayers );
     CPLFree( m_papoOverviewDS );
-    CPLFree(m_pszProjection);
 
     std::map<int, OGRSpatialReference*>::iterator oIter =
                                                     m_oMapSrsIdToSrs.begin();
@@ -2223,7 +2221,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     OGRSpatialReference* poSRS = GetSpatialRef( nSRSId );
     if( poSRS )
     {
-        poSRS->exportToWkt(&m_pszProjection);
+        m_oSRS = *poSRS;
         poSRS->Release();
     }
 
@@ -2487,19 +2485,19 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 }
 
 /************************************************************************/
-/*                         GetProjectionRef()                           */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char* GDALGeoPackageDataset::_GetProjectionRef()
+const OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef() const
 {
-    return (m_pszProjection) ? m_pszProjection : "";
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::_SetProjection( const char* pszProjection )
+CPLErr GDALGeoPackageDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
 {
     if( nBands == 0)
     {
@@ -2515,16 +2513,13 @@ CPLErr GDALGeoPackageDataset::_SetProjection( const char* pszProjection )
     }
 
     int nSRID = -1;
-    if( pszProjection == nullptr || pszProjection[0] == '\0' )
+    if( poSRS == nullptr || poSRS->IsEmpty() )
     {
       // nSRID = -1;
     }
     else
     {
-        OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
-            return CE_Failure;
-        nSRID = GetSrsId( oSRS );
+        nSRID = GetSrsId( *poSRS );
     }
 
     const auto poTS = GetTilingScheme(m_osTilingScheme);
@@ -2538,8 +2533,9 @@ CPLErr GDALGeoPackageDataset::_SetProjection( const char* pszProjection )
     }
 
     m_nSRID = nSRID;
-    CPLFree(m_pszProjection);
-    m_pszProjection = pszProjection ? CPLStrdup(pszProjection) : CPLStrdup("");
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     if( m_bRecordInsertedInGPKGContent )
     {
