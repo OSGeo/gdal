@@ -1323,12 +1323,16 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
     oFieldDefn.SetPrecision(0);
 
     if( m_pszFidColumn != nullptr &&
-        EQUAL( oFieldDefn.GetNameRef(), m_pszFidColumn ) &&
-        oFieldDefn.GetType() != OFTInteger &&
-        oFieldDefn.GetType() != OFTInteger64 )
+        EQUAL( poField->GetNameRef(), m_pszFidColumn ) &&
+        poField->GetType() != OFTInteger &&
+        poField->GetType() != OFTInteger64 &&
+        // typically a GeoPackage exported with QGIS as a shapefile and re-imported
+        // See https://github.com/qgis/QGIS/pull/43118
+        !(poField->GetType() == OFTReal && poField->GetWidth() == 20 &&
+          poField->GetPrecision() == 0) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
-                 oFieldDefn.GetNameRef());
+                 poField->GetNameRef());
         return OGRERR_FAILURE;
     }
 
@@ -1695,6 +1699,43 @@ void OGRGeoPackageTableLayer::CheckGeometryType( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                   CheckFIDAndFIDColumnConsistency()                  */
+/************************************************************************/
+
+static bool CheckFIDAndFIDColumnConsistency( const OGRFeature* poFeature,
+                                             int iFIDAsRegularColumnIndex)
+{
+    bool ok = false;
+    if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) )
+    {
+        // nothing to do
+    }
+    else if( poFeature->GetDefnRef()->GetFieldDefn(iFIDAsRegularColumnIndex)->GetType() == OFTReal )
+    {
+        const double dfFID = poFeature->GetFieldAsDouble(iFIDAsRegularColumnIndex);
+        if( dfFID >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+            dfFID <= static_cast<double>(std::numeric_limits<int64_t>::max()) )
+        {
+            const auto nFID = static_cast<GIntBig>(dfFID);
+            if( nFID == poFeature->GetFID() )
+            {
+                ok = true;
+            }
+        }
+    }
+    else if( poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) == poFeature->GetFID() )
+    {
+        ok = true;
+    }
+    if( !ok )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Inconsistent values of FID and field of same name");
+    }
+    return ok;
+}
+
+/************************************************************************/
 /*                      ICreateFeature()                                 */
 /************************************************************************/
 
@@ -1775,19 +1816,38 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             if( poFeature->IsFieldSetAndNotNull( m_iFIDAsRegularColumnIndex ) )
             {
-                poFeature->SetFID(
-                    poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex));
+                if( m_poFeatureDefn->GetFieldDefn(m_iFIDAsRegularColumnIndex)->GetType() == OFTReal )
+                {
+                    bool ok = false;
+                    const double dfFID = poFeature->GetFieldAsDouble(m_iFIDAsRegularColumnIndex);
+                    if( dfFID >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+                        dfFID <= static_cast<double>(std::numeric_limits<int64_t>::max()) )
+                    {
+                        const auto nFID = static_cast<GIntBig>(dfFID);
+                        if( static_cast<double>(nFID) == dfFID )
+                        {
+                            poFeature->SetFID(nFID);
+                            ok = true;
+                        }
+                    }
+                    if( !ok )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                            "Value of FID %g cannot be parsed to an Integer64",
+                            dfFID);
+                        return OGRERR_FAILURE;
+                    }
+                }
+                else
+                {
+                    poFeature->SetFID(
+                        poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex));
+                }
             }
         }
-        else
+        else if( !CheckFIDAndFIDColumnConsistency(poFeature, m_iFIDAsRegularColumnIndex) )
         {
-            if( !poFeature->IsFieldSetAndNotNull( m_iFIDAsRegularColumnIndex ) ||
-                poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex) != poFeature->GetFID() )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                            "Inconsistent values of FID and field of same name");
-                return OGRERR_FAILURE;
-            }
+            return OGRERR_FAILURE;
         }
     }
 
@@ -1945,15 +2005,10 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
     }
 
     /* In case the FID column has also been created as a regular field */
-    if( m_iFIDAsRegularColumnIndex >= 0 )
+    if( m_iFIDAsRegularColumnIndex >= 0 &&
+        !CheckFIDAndFIDColumnConsistency(poFeature, m_iFIDAsRegularColumnIndex) )
     {
-        if( !poFeature->IsFieldSetAndNotNull( m_iFIDAsRegularColumnIndex ) ||
-            poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex) != poFeature->GetFID() )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                        "Inconsistent values of FID and field of same name");
-            return OGRERR_FAILURE;
-        }
+        return OGRERR_FAILURE;
     }
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
