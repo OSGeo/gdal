@@ -120,7 +120,6 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
                 wkt = wkt.substr(strlen("COORDINATEMETADATA["));
             }
         }
-        CPL_IGNORE_RET_VAL(dfCoordEpoch);
 
         if ((org == nullptr || EQUAL(org->c_str(), "EPSG")) && code != 0) {
             m_poSRS->importFromEPSG(code);
@@ -135,6 +134,9 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
         } else if (!wkt.empty()) {
             m_poSRS->importFromWkt(wkt.c_str());
         }
+
+        if( dfCoordEpoch > 0 )
+            m_poSRS->SetCoordinateEpoch( dfCoordEpoch );
     }
 
     m_eGType = getOGRwkbGeometryType();
