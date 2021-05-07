@@ -524,6 +524,58 @@ int OCTCoordinateTransformationOptionsSetBallparkAllowed(
 //! @cond Doxygen_Suppress
 class OGRProjCT : public OGRCoordinateTransformation
 {
+    class PjPtr
+    {
+        PJ* m_pj = nullptr;
+        void reset()
+        {
+            if( m_pj )
+            {
+                proj_assign_context(m_pj, OSRGetProjTLSContext());
+                proj_destroy(m_pj);
+            }
+        }
+    public:
+        PjPtr() : m_pj(nullptr){}
+        explicit PjPtr(PJ* pjIn) : m_pj(pjIn){}
+        ~PjPtr()
+        {
+            reset();
+        }
+        PjPtr(const PjPtr& other) :
+            m_pj((other.m_pj != nullptr) ? 
+                 (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : 
+                 (nullptr))
+        {}
+        PjPtr(PjPtr&& other) :
+            m_pj(other.m_pj)
+        {
+            other.m_pj = nullptr;
+        }
+        PjPtr& operator=(const PjPtr& other)
+        {
+            if(this != &other)
+            {
+                reset();
+                m_pj = (other.m_pj != nullptr) ? 
+                       (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : 
+                       (nullptr);
+            }
+            return *this;
+        }
+        PjPtr& operator=(PJ* pjIn)
+        {
+            if(m_pj != pjIn)
+            {
+                reset();
+                m_pj = pjIn;
+            }
+            return *this;
+        }
+        operator PJ* () { return m_pj; }
+        operator const PJ* () const{ return m_pj; }
+    };
+
     OGRSpatialReference *poSRSSource = nullptr;
     bool        bSourceLatLong = false;
     bool        bSourceWrap = false;
@@ -540,7 +592,7 @@ class OGRProjCT : public OGRCoordinateTransformation
 
     double      dfThreshold = 0.0;
 
-    PJ*         m_pj = nullptr;
+    PjPtr       m_pj{};
     bool        m_bReversePj = false;
 
     bool        m_bEmitErrors = true;
@@ -562,14 +614,13 @@ class OGRProjCT : public OGRCoordinateTransformation
     bool        ListCoordinateOperations(const char* pszSrcSRS,
                                          const char* pszTargetSRS,
                                          const OGRCoordinateTransformationOptions& options );
-
     struct Transformation
     {
         double minx = 0.0;
         double miny = 0.0;
         double maxx = 0.0;
         double maxy = 0.0;
-        PJ* pj = nullptr;
+        PjPtr  pj{};
         CPLString osName{};
         CPLString osProjString{};
         double accuracy = 0.0;
@@ -582,29 +633,6 @@ class OGRProjCT : public OGRCoordinateTransformation
             minx(minxIn), miny(minyIn), maxx(maxxIn), maxy(maxyIn),
             pj(pjIn), osName(osNameIn), osProjString(osProjStringIn),
             accuracy(accuracyIn) {}
-        Transformation(const Transformation& other):
-            minx(other.minx), miny(other.miny), maxx(other.maxx), maxy(other.maxy),
-            pj((other.pj != nullptr) ? (proj_clone(OSRGetProjTLSContext(), other.pj)) : (nullptr)),
-            osName(other.osName), osProjString(other.osProjString),
-            accuracy(other.accuracy) {}
-        Transformation(Transformation&& other):
-            minx(other.minx), miny(other.miny), maxx(other.maxx), maxy(other.maxy),
-            pj(other.pj), osName(std::move(other.osName)),
-            osProjString(std::move(other.osProjString)),
-            accuracy(other.accuracy)
-        {
-            other.pj = nullptr;
-        }
-        Transformation& operator=(const Transformation&) = delete;
-
-        ~Transformation()
-        {
-            if( pj )
-            {
-                proj_assign_context(pj, OSRGetProjTLSContext());
-                proj_destroy(pj);
-            }
-        }
     };
     std::vector<Transformation> m_oTransformations{};
     int m_iCurTransformation = -1;
@@ -958,7 +986,7 @@ OGRProjCT::OGRProjCT(const OGRProjCT& other) :
     bWebMercatorToWGS84LongLat(other.bWebMercatorToWGS84LongLat),
     nErrorCount(other.nErrorCount),
     dfThreshold(other.dfThreshold),
-    m_pj((other.m_pj != nullptr) ? (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : (nullptr)),
+    m_pj(other.m_pj),
     m_bReversePj(other.m_bReversePj),
     m_bEmitErrors(other.m_bEmitErrors),
     bNoTransform(other.bNoTransform),
@@ -984,12 +1012,6 @@ OGRProjCT::~OGRProjCT()
     if( poSRSTarget != nullptr )
     {
         poSRSTarget->Release();
-    }
-
-    if( m_pj )
-    {
-        proj_assign_context(m_pj, OSRGetProjTLSContext());
-        proj_destroy(m_pj);
     }
 }
 
@@ -2106,7 +2128,7 @@ int OGRProjCT::TransformWithErrorCodes(
 /* -------------------------------------------------------------------- */
 
     auto ctx = OSRGetProjTLSContext();
-    auto pj = m_pj;
+    PJ* pj = m_pj;
     if( !bTransformDone && !pj )
     {
         double avgX = 0.0;
@@ -2171,7 +2193,7 @@ int OGRProjCT::TransformWithErrorCodes(
             {
                 break;
             }
-            const auto& transf = m_oTransformations[iBestTransf];
+            auto& transf = m_oTransformations[iBestTransf];
             pj = transf.pj;
             proj_assign_context( pj, ctx );
             if( iBestTransf != m_iCurTransformation )
@@ -2203,7 +2225,7 @@ int OGRProjCT::TransformWithErrorCodes(
             // use the first operation that does not require grids.
             for( int i = 0; i < nOperations; i++ )
             {
-                const auto& transf = m_oTransformations[i];
+                auto& transf = m_oTransformations[i];
                 if( proj_coordoperation_get_grid_used_count(ctx, transf.pj) == 0 )
                 {
                     pj = transf.pj;
