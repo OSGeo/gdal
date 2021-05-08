@@ -45,7 +45,7 @@ To run one of the sample applications (e.g. :file:`GDALinfo.exe`), run :program:
 
 To build a console app in Mono, you can do this in a conda environment simple using a command similar to this (changing the source name to your own):
 
-.. code-block::C#
+.. code-block:: C#
 
     msc /r:gdal_csharp.dll /r:ogr_csharp.dll /r:osr_csharp.dll /r:System.Drawing.dll /out:gdal_test.exe gdal_test.cs
 

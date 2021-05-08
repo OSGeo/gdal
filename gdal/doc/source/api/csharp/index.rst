@@ -36,6 +36,8 @@ There are a number of ways to get the C# bindings, including but not limited to:
 * The gdal.netcore NuGet package, see link below, and
 * For Unity, there is a UPM package that installs GDAL, `available from here <https://openupm.com/packages/com.virgis.gdal/?subPage=readme>`__ (available on Windows, Mac and Linux)
 
+(all of these are community supported)
+
 
 Related Documents
 -----------------
