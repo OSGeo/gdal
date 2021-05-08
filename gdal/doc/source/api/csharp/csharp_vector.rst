@@ -51,10 +51,12 @@ A :file:`DataSource` wraps a OGR source (e.g a filename) and is created as follo
     /* -------------------------------------------------------------------- */
     /*      Open data source.                                               */
     /* -------------------------------------------------------------------- */
-    DataSource ds = Ogr.Open( "... add your own valid OGR source", 0 );
-
-    if (ds == null) {
-        #create an error 
+    using (DataSource ds = Ogr.Open( "... add your own valid OGR source", 0 ))
+    {
+        if (ds == null) {
+            // create an error 
+        }
+        // Do your processing here
     }
 
 Access the Layers
@@ -149,7 +151,7 @@ is defined in a :file:`FieldDefn` object. The fields can be fetched a follows:
                 case FieldType.OFTInteger:
                     value = feature.GetFieldAsInteger(i);
                     break;
-                // Note this is only a sub set of the possible field types
+                // Note this is only a sub-set of the possible field types
             }
             ret.Add(key, value);
         }
@@ -197,7 +199,7 @@ However, often it is better to explicitly define the :file:`CoordinateTransform`
     from_crs.SetWellKnownGeogCS("EPSG:4326");
     
     SpatialReference to_crs = new SpatialReference(null);
-    to_crs.SetWellKnownGeogCS("EPSG:27700");
+    to_crs.ImportFromEPSG(27700);
     
     CoordinateTransform ct = new CoordinateTransform(from_crs, to_crs, new CoordinateTransformationOptions())
         // You can use the CoordinateTransformationOptions to set the operation or area of interet etc
