@@ -4308,6 +4308,7 @@ void GDALRegister_JP2OpenJPEG()
 "</CreationOptionList>"  );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 
     poDriver->pfnIdentify = JP2OpenJPEGDataset::Identify;
     poDriver->pfnOpen = JP2OpenJPEGDataset::Open;

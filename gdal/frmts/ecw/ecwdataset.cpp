@@ -3736,6 +3736,7 @@ void GDALRegister_JP2ECW()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jp2ecw.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 
     poDriver->pfnIdentify = ECWDataset::IdentifyJPEG2000;
     poDriver->pfnOpen = ECWDataset::OpenJPEG2000;

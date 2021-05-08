@@ -2696,6 +2696,7 @@ void GDALRegister_JP2KAK()
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jp2");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jp2 j2k");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

@@ -1405,6 +1405,7 @@ void GDALRegister_JPEG2000()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

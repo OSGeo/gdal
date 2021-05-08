@@ -3610,6 +3610,8 @@ void GDALRegister_MrSID()
         /* for JP2CreateCopy() */
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
+
     poDriver->pfnIdentify = JP2Identify;
     poDriver->pfnOpen = JP2Open;
 

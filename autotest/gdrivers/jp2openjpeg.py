@@ -3004,3 +3004,27 @@ def test_jp2openjpeg_generate_PLT():
 
     gdaltest.jp2openjpeg_drv.Delete(filename)
 
+###############################################################################
+# Test support for coordinate epoch
+
+@pytest.mark.parametrize('geo_encoding', ['GeoJP2', 'GMLJP2', 'GMLJP2v2'])
+def test_jp2openjpeg_coordinate_epoch(geo_encoding):
+
+    tmpfilename = '/vsimem/test_jp2openjpeg_coordinate_epoch.jp2'
+    src_ds = gdal.Translate('', 'data/byte.tif',
+                            options='-of MEM -a_srs EPSG:32611 -a_coord_epoch 2021.3')
+
+    if geo_encoding == 'GeoJP2':
+        creationOptions = ['GeoJP2=YES', 'GMLJP2=NO']
+    elif geo_encoding == 'GMLJP2':
+        creationOptions = ['GeoJP2=NO', 'GMLJP2=YES']
+    else:
+        assert geo_encoding == 'GMLJP2v2'
+        creationOptions = ['GeoJP2=NO', 'GMLJP2V2_DEF=YES']
+    gdal.Translate(tmpfilename, src_ds, creationOptions = creationOptions)
+    ds = gdal.Open(tmpfilename)
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+    gdal.Unlink(tmpfilename)
