@@ -1518,11 +1518,22 @@ static int OGCDatumName2EPSGDatumCode( GTIF * psGTIF,
 int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
 {
-    return GTIFSetFromOGISDefnEx(psGTIF, pszOGCWKT, GEOTIFF_KEYS_STANDARD,
+/* -------------------------------------------------------------------- */
+/*      Create an OGRSpatialReference object corresponding to the       */
+/*      string.                                                         */
+/* -------------------------------------------------------------------- */
+
+    OGRSpatialReference oSRS;
+    if( oSRS.importFromWkt(pszOGCWKT) != OGRERR_NONE )
+    {
+        return FALSE;
+    }
+    return GTIFSetFromOGISDefnEx(psGTIF, OGRSpatialReference::ToHandle(&oSRS) ,
+                                 GEOTIFF_KEYS_STANDARD,
                                  GEOTIFF_VERSION_1_0);
 }
 
-int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
+int GTIFSetFromOGISDefnEx( GTIF * psGTIF, OGRSpatialReferenceH hSRS,
                            GTIFFKeysFlavorEnum eFlavor,
                            GeoTIFFVersionEnum eVersion )
 {
@@ -1530,16 +1541,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 
     GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1, RasterPixelIsArea);
 
-/* -------------------------------------------------------------------- */
-/*      Create an OGRSpatialReference object corresponding to the       */
-/*      string.                                                         */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReference *poSRS = new OGRSpatialReference();
-    if( poSRS->importFromWkt(pszOGCWKT) != OGRERR_NONE )
-    {
-        delete poSRS;
-        return FALSE;
-    }
+    const OGRSpatialReference *poSRS = OGRSpatialReference::FromHandle(hSRS);
 
 /* -------------------------------------------------------------------- */
 /*      Set version number.                                             */
@@ -2573,12 +2575,15 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         char *pszPEString = nullptr;
         // We cheat a bit, but if we have a custom_proj4, do not morph to ESRI
         // so as to keep the EXTENSION PROJ4 node
+        const char* const apszOptionsDefault[] = { nullptr };
+        const char* const apszOptionsEsri[] = { "FORMAT=WKT1_ESRI", nullptr };
+        const char* const * papszOptions = apszOptionsDefault;
         if( !(bUnknownProjection &&
               poSRS->GetExtension("PROJCS", "PROJ4", nullptr) != nullptr) )
         {
-            poSRS->morphToESRI();
+            papszOptions = apszOptionsEsri;
         }
-        poSRS->exportToWkt( &pszPEString );
+        poSRS->exportToWkt( &pszPEString, papszOptions );
         const int peStrLen = static_cast<int>(strlen(pszPEString));
         if(peStrLen > 0)
         {
@@ -2722,7 +2727,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /* -------------------------------------------------------------------- */
     if( nGCS == KvUserDefined || eVersion == GEOTIFF_VERSION_1_0 )
     {
-        OGR_SRSNode *poGCS = poSRS->GetAttrNode( "GEOGCS" );
+        const OGR_SRSNode *poGCS = poSRS->GetAttrNode( "GEOGCS" );
 
         if( poGCS != nullptr && poGCS->GetChild(0) != nullptr )
         {
@@ -2914,10 +2919,6 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         GTIFKeySet( psGTIF, oIter.first, TYPE_ASCII, 0, oIter.second.c_str() );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    delete poSRS;
     return TRUE;
 }
 

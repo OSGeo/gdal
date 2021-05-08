@@ -11100,7 +11100,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
             if( pszProjection && pszProjection[0] &&
                 strstr(pszProjection, "custom_proj4") == nullptr )
             {
-                GTIFSetFromOGISDefnEx( psGTIF, pszProjection,
+                GTIFSetFromOGISDefnEx( psGTIF,
+                                       OGRSpatialReference::ToHandle(&m_oSRS),
                                        m_eGeoTIFFKeysFlavor,
                                        m_eGeoTIFFVersion );
             }
@@ -17788,7 +17789,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
             if( eErr == OGRERR_NONE && strstr(pszWKT, "custom_proj4") == nullptr )
             {
-                GTIFSetFromOGISDefnEx( psGTIF, pszWKT,
+                GTIFSetFromOGISDefnEx( psGTIF,
+                                       OGRSpatialReference::ToHandle(
+                                           const_cast<OGRSpatialReference*>(l_poSRS)),
                                     GetGTIFFKeysFlavor(papszOptions),
                                     GetGeoTIFFVersion(papszOptions) );
             }
