@@ -2562,9 +2562,11 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, OGRSpatialReferenceH hSRS,
 
     // Note that VERTCS is an ESRI "spelling" of VERT_CS so we assume if
     // we find it that we should try to treat this as a PE string.
-    bWritePEString |= (poSRS->GetAttrValue("VERTCS") != nullptr);
-
-    bWritePEString |= (eFlavor == GEOTIFF_KEYS_ESRI_PE);
+    if( eFlavor == GEOTIFF_KEYS_ESRI_PE ||
+        poSRS->GetAttrValue("VERTCS") != nullptr )
+    {
+        bWritePEString = true;
+    }
 
     if( nPCS == KvUserDefined )
     {
