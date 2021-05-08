@@ -720,15 +720,15 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
             bGeoreferencingCompatOfGeoJP2 = true;
             oJP2MD.SetGCPs(poSrcDS->GetGCPCount(),
                     poSrcDS->GetGCPs());
-            oJP2MD.SetProjection(poSrcDS->GetGCPProjection());
+            oJP2MD.SetSpatialRef(poSrcDS->GetGCPSpatialRef());
         }
         else
         {
-            const char* pszWKT = poSrcDS->GetProjectionRef();
-            if (pszWKT != nullptr && pszWKT[0] != '\0')
+            const auto poSRS = poSrcDS->GetSpatialRef();
+            if (poSRS != nullptr && !poSRS->IsEmpty())
             {
                     bGeoreferencingCompatOfGeoJP2 = true;
-                    oJP2MD.SetProjection(pszWKT);
+                    oJP2MD.SetSpatialRef(poSRS);
             }
             double adfGeoTransform[6];
             if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
@@ -737,7 +737,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                     oJP2MD.SetGeoTransform(adfGeoTransform);
             }
             bGeoreferencingCompatOfGMLJP2 =
-                    (pszWKT != nullptr && pszWKT[0] != '\0') &&
+                    poSRS != nullptr && !poSRS->IsEmpty() &&
                     poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None;
         }
         if (poSrcDS->GetMetadata("RPC") != nullptr)

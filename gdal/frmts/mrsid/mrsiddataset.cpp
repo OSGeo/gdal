@@ -1264,11 +1264,10 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         if( oGeo.getWKT() )
         {
             /* Workaround probable issue with GeoDSK 7 on 64bit Linux */
-            if (!(pszProjection != nullptr && !STARTS_WITH_CI(pszProjection, "LOCAL_CS")
+            if (!(m_oSRS.IsEmpty() && !m_oSRS.IsLocal()
                 && STARTS_WITH_CI(oGeo.getWKT(), "LOCAL_CS")))
             {
-                CPLFree( pszProjection );
-                pszProjection =  CPLStrdup( oGeo.getWKT() );
+                m_oSRS.importFromWkt( oGeo.getWKT() );
             }
         }
     }
@@ -1279,7 +1278,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 /*      where LandSat .SID are accompanied by a .met file with the      */
 /*      projection                                                      */
 /* -------------------------------------------------------------------- */
-    if (iZoom == 0 && (pszProjection == nullptr || pszProjection[0] == '\0') &&
+    if (iZoom == 0 && m_oSRS.IsEmpty() &&
         EQUAL(CPLGetExtension(GetDescription()), "sid"))
     {
         const char* pszMETFilename = CPLResetExtension(GetDescription(), "met");
@@ -1313,11 +1312,8 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
             {
                 osMETFilename = pszMETFilename;
 
-                OGRSpatialReference oSRS;
-                oSRS.importFromEPSG(32600 + nUTMZone);
-                CPLFree(pszProjection);
-                pszProjection = nullptr;
-                oSRS.exportToWkt(&pszProjection);
+                m_oSRS.importFromEPSG(32600 + nUTMZone);
+                m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             }
         }
     }
@@ -2624,9 +2620,13 @@ void MrSIDDataset::GetGTIFDefn()
             psDefn->ProjParm[6] = 10000000.0;
     }
 
-    if ( pszProjection )
-        CPLFree( pszProjection );
-    pszProjection = GetOGISDefn( psDefn );
+    char* pszProjection = GetOGISDefn( psDefn );
+    if( pszProjection )
+    {
+        m_oSRS.importFromWkt(pszProjection);
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    CPLFree(pszProjection);
 }
 
 /************************************************************************/
