@@ -18,7 +18,7 @@ GDAL with the C# bindings and example applications can be loaded using
 Usage - Windows
 ---------------
 
-.. note:: You can test if the C# bindings are working in a Conda environment by running :program:`gdal_test`.
+.. note:: You can test if the C# bindings are working in a Conda environment by running :program:`%CONDA_PREFIX%\\Library\\bin\\gcs\\gdal_test`.
 
 The DLLs are loaded into the :file:`%CONDA_PREFIX%\\Library\\bin` folder, as is normal for a Conda environment.
 
