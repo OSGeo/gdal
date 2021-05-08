@@ -4183,6 +4183,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                             queue->dfRetryDelay);
                         if( !osEtag.empty() )
                         {
+                            std::lock_guard<std::mutex> lock(queue->sMutex);
                             iter->second.nCountValidETags ++;
                             iter->second.aosEtags.resize(
                                 std::max(nPartNumber,
