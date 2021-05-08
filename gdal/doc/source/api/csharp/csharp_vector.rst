@@ -126,7 +126,7 @@ access the point coordinates as follows:
 Access a Feature's data fields
 ++++++++++++++++++++++++++++++
 
-Each :file:`Feature` object can a number of data fields associated. The schema for the data fields 
+Each :file:`Feature` object can have a number of data fields associated. The schema for the data fields 
 is defined in a :file:`FieldDefn` object. The fields can be fetched a follows:
 
 .. code-block:: C#
@@ -180,7 +180,7 @@ Reproject a Geometry
 ++++++++++++++++++++
 
 If the :file:`Geometry` has a valid :file:`SpatialReference` defined, then the :file:`Geometry`
-can transformed to a new CRS using this command:
+can be transformed to a new CRS using this command:
 
 .. code-block:: C#
 
