@@ -1697,10 +1697,10 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
     CSLDestroy(papszCreateOptions);
     papszCreateOptions = CSLDuplicate(papszOptions);
 
-    const char* pszFormat = CSLFetchNameValue(papszCreateOptions, "FORMAT");
-    bIsOutputGML3 = pszFormat && EQUAL(pszFormat, "GML3");
-    bIsOutputGML3Deegree = pszFormat && EQUAL(pszFormat, "GML3Deegree");
-    bIsOutputGML32 = pszFormat && EQUAL(pszFormat, "GML3.2");
+    const char* pszFormat = CSLFetchNameValueDef(papszCreateOptions, "FORMAT", "GML3.2");
+    bIsOutputGML3 = EQUAL(pszFormat, "GML3");
+    bIsOutputGML3Deegree = EQUAL(pszFormat, "GML3Deegree");
+    bIsOutputGML32 = EQUAL(pszFormat, "GML3.2");
     if (bIsOutputGML3Deegree || bIsOutputGML32)
         bIsOutputGML3 = true;
 

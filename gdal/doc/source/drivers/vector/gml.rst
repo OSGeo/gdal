@@ -498,6 +498,7 @@ The GML writer supports the following dataset creation options:
    'http://ogr.maptools.org/'. This is the application target namespace.
 -  **FORMAT**: This can be set to :
 
+   -  *GML2* in order to write GML files that follow GML 2.1.2 (Default before GDAL 3.4)
    -  *GML3* in order to write GML files that follow GML 3.1.1 SF-0
       profile.
    -  *GML3Deegree* in order to produce a GML 3.1.1 .XSD
@@ -505,9 +506,8 @@ The GML writer supports the following dataset creation options:
       by GML3 SF-0 profile, but that will be better accepted by some
       software (such as Deegree 3).
    -  *GML3.2*\ in order to write GML files that follow
-      GML 3.2.1 SF-0 profile.
+      GML 3.2.1 SF-0 profile. (Default since GDAL 3.4)
 
-   If not specified, GML2 will be used.
    Non-linear geometries can be written. This is
    only compatible with selecting on of that above GML3 format variant.
    Otherwise, such geometries will be approximating into their closest
