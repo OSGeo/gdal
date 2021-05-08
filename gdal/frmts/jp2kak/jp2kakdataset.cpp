@@ -2506,12 +2506,12 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( poSrcDS->GetGCPCount() > 0 )
         {
-            oJP2MD.SetProjection(poSrcDS->GetGCPProjection());
+            oJP2MD.SetSpatialRef(poSrcDS->GetGCPSpatialRef());
             oJP2MD.SetGCPs(poSrcDS->GetGCPCount(), poSrcDS->GetGCPs());
         }
         else
         {
-            oJP2MD.SetProjection(poSrcDS->GetProjectionRef());
+            oJP2MD.SetSpatialRef(poSrcDS->GetSpatialRef());
             oJP2MD.SetGeoTransform(adfGeoTransform);
         }
 

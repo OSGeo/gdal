@@ -2930,12 +2930,24 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList )
 {
-    return GTIFWktFromMemBufEx( nSize, pabyBuffer, ppszWKT, padfGeoTransform,
+    OGRSpatialReferenceH hSRS = nullptr;
+    if( ppszWKT )
+        *ppszWKT = nullptr;
+    CPLErr eErr = GTIFWktFromMemBufEx( nSize, pabyBuffer, &hSRS, padfGeoTransform,
                                 pnGCPCount, ppasGCPList, nullptr, nullptr );
+    if( eErr == CE_None )
+    {
+        if( hSRS && ppszWKT )
+        {
+            OSRExportToWkt(hSRS, ppszWKT);
+        }
+    }
+    OSRDestroySpatialReference(hSRS);
+    return eErr;
 }
 
 CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
-                            char **ppszWKT, double *padfGeoTransform,
+                            OGRSpatialReferenceH* phSRS, double *padfGeoTransform,
                             int *pnGCPCount, GDAL_GCP **ppasGCPList,
                             int *pbPixelIsPoint, char*** ppapszRPCMD )
 
@@ -2996,17 +3008,21 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     if( ppapszRPCMD )
         *ppapszRPCMD = nullptr;
 
-    GTIFDefn *psGTIFDefn = GTIFAllocDefn();
-
-    if( hGTIF != nullptr && GTIFGetDefn( hGTIF, psGTIFDefn ) )
-        *ppszWKT = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
-    else
-        *ppszWKT = nullptr;
-
+    if( phSRS )
+    {
+        *phSRS = nullptr;
+        if( hGTIF != nullptr )
+        {
+            GTIFDefn *psGTIFDefn = GTIFAllocDefn();
+            if( GTIFGetDefn( hGTIF, psGTIFDefn) )
+            {
+                *phSRS = GTIFGetOGISDefnAsOSR( hGTIF, psGTIFDefn );
+            }
+            GTIFFreeDefn(psGTIFDefn);
+        }
+    }
     if( hGTIF )
         GTIFFree( hGTIF );
-
-    GTIFFreeDefn(psGTIFDefn);
 
 /* -------------------------------------------------------------------- */
 /*      Get geotransform or tiepoints.                                  */
@@ -3099,7 +3115,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
 
     VSIUnlink( szFilename );
 
-    if( *ppszWKT == nullptr )
+    if( phSRS && *phSRS == nullptr )
         return CE_Failure;
 
     return CE_None;
@@ -3113,12 +3129,16 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
                           int nGCPCount, const GDAL_GCP *pasGCPList,
                           int *pnSize, unsigned char **ppabyBuffer )
 {
-    return GTIFMemBufFromWktEx(pszWKT, padfGeoTransform,
-                               nGCPCount,pasGCPList,
-                               pnSize, ppabyBuffer, FALSE, nullptr);
+    OGRSpatialReference oSRS;
+    if( pszWKT != nullptr )
+        oSRS.importFromWkt(pszWKT);
+    return GTIFMemBufFromSRS(OGRSpatialReference::ToHandle(&oSRS),
+                             padfGeoTransform,
+                             nGCPCount,pasGCPList,
+                             pnSize, ppabyBuffer, FALSE, nullptr);
 }
 
-CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
+CPLErr GTIFMemBufFromSRS( OGRSpatialReferenceH hSRS, const double *padfGeoTransform,
                             int nGCPCount, const GDAL_GCP *pasGCPList,
                             int *pnSize, unsigned char **ppabyBuffer,
                             int bPixelIsPoint, char** papszRPCMD )
@@ -3177,11 +3197,13 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
     }
 
     GTIF *hGTIF = nullptr;
-    if( pszWKT != nullptr || bPixelIsPoint )
+    if( hSRS != nullptr || bPixelIsPoint )
     {
         hGTIF = GTIFNew(hTIFF);
-        if( pszWKT != nullptr )
-            GTIFSetFromOGISDefn( hGTIF, pszWKT );
+        if( hSRS != nullptr )
+            GTIFSetFromOGISDefnEx( hGTIF, hSRS,
+                                   GEOTIFF_KEYS_STANDARD,
+                                   GEOTIFF_VERSION_1_0 );
 
         if( bPixelIsPoint )
         {
