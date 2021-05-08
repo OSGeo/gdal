@@ -6,12 +6,12 @@ C# Raster Interface
 
 The GDAL C# interface supports transferring raster data between the C# application and GDAL.
 
-The various Band.ReadRaster, Band.WriteRaster, Dataset.ReadRaster, Dataset.WriteRaster overloads
+The various :file:`Band.ReadRaster`, :file:`Band.WriteRaster`, :file:`Dataset.ReadRaster`, :file:`Dataset.WriteRaster` overloads
 are involved in transferring raster data between the managed and the unmanaged parts of the application.
 
 This page will summarize the main aspects of raster data handling related exclusively to the C# interface.
 
-The :program:`Band` class contains the following ReadRaster/WriteRaster overloads:
+The :file:`Band` class contains the following :file:`ReadRaster`/:file:`WriteRaster` overloads:
 
 .. code-block:: C#
 
@@ -145,7 +145,7 @@ When using this approach the application must be compiled using the :program:`/u
 Using indexed / grayscale images
 ++++++++++++++++++++++++++++++++
 
-The :program:`PaletteInterp` enumeration can be used to distinguish between the various type of the image color interpretations.
+The :file:`PaletteInterp` enumeration can be used to distinguish between the various type of the image color interpretations.
 
 .. code-block:: C#
 
@@ -225,4 +225,4 @@ The following examples demonstrate the usage of the GDAL raster operations menti
 * `GDALReadDirect.cs <https://github.com/OSGeo/gdal/blob/master/gdal/swig/csharp/apps/GDALReadDirect.cs>`__
 * `GDALWrite.cs <https://github.com/OSGeo/gdal/blob/master/gdal/swig/csharp/apps/GDALReadDirect.cs>`__
 
-. note:: This document was amended from the previous version at `https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpRaster <https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpRaster>`__
+.. note:: This document was amended from the previous version at `https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpRaster <https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpRaster>`__
