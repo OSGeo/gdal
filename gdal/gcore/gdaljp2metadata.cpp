@@ -1069,6 +1069,18 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         }
     }
 
+    if( !m_oSRS.IsEmpty() )
+    {
+        const char* pszCoordinateEpoch = strstr(pszCoverage, "<!-- coordinateEpoch=");
+        if( pszCoordinateEpoch )
+        {
+            const double dfCoordinateEpoch = CPLAtof(
+                pszCoordinateEpoch + strlen("<!-- coordinateEpoch="));
+            if( dfCoordinateEpoch > 0 )
+                m_oSRS.SetCoordinateEpoch(dfCoordinateEpoch);
+        }
+    }
+
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( !m_oSRS.IsEmpty() )
     {
@@ -1517,6 +1529,13 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         dfUCY = dfTmp;
     }
 
+    std::string osOptionalCoordinateEpoch;
+    const double dfCoordinateEpoch = m_oSRS.GetCoordinateEpoch();
+    if( dfCoordinateEpoch > 0 )
+    {
+        osOptionalCoordinateEpoch = CPLSPrintf(
+            "    <!-- coordinateEpoch=%f -->\n", dfCoordinateEpoch);
+    }
 /* -------------------------------------------------------------------- */
 /*      For now we hardcode for a minimal instance format.              */
 /* -------------------------------------------------------------------- */
@@ -1528,6 +1547,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
 "   xsi:schemaLocation=\"http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd\">\n"
 "  <gml:boundedBy>\n"
+"%s"
 "    <gml:Envelope srsName=\"%s\">\n"
 "      <gml:lowerCorner>%.15g %.15g</gml:lowerCorner>\n"
 "      <gml:upperCorner>%.15g %.15g</gml:upperCorner>\n"
@@ -1569,6 +1589,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "    </gml:FeatureCollection>\n"
 "  </gml:featureMember>\n"
 "</gml:FeatureCollection>\n",
+             osOptionalCoordinateEpoch.c_str(),
              szSRSName, dfLCX, dfLCY, dfUCX, dfUCY,
              nXSize-1, nYSize-1, szSRSName, adfOrigin[0], adfOrigin[1],
              pszComment,
@@ -2381,9 +2402,19 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         const double dfLLY = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
         const double dfURX = adfGeoTransform[0] + adfGeoTransform[1] * nXSize;
         const double dfURY = adfGeoTransform[3];
+
+        std::string osOptionalCoordinateEpoch;
+        const double dfCoordinateEpoch = m_oSRS.GetCoordinateEpoch();
+        if( dfCoordinateEpoch > 0 )
+        {
+            osOptionalCoordinateEpoch = CPLSPrintf(
+                "       <!-- coordinateEpoch=%f -->\n", dfCoordinateEpoch);
+        }
+
         osGridCoverage.Printf(
 "   <gmljp2:GMLJP2RectifiedGridCoverage gml:id=\"RGC_1_%s\">\n"
 "     <gml:boundedBy>\n"
+"%s"
 "       <gml:Envelope srsDimension=\"2\" srsName=\"%s\">\n"
 "         <gml:lowerCorner>%.15g %.15g</gml:lowerCorner>\n"
 "         <gml:upperCorner>%.15g %.15g</gml:upperCorner>\n"
@@ -2419,6 +2450,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 "     <gmlcov:rangeType>%s</gmlcov:rangeType>\n"
 "   </gmljp2:GMLJP2RectifiedGridCoverage>\n",
             osRootGMLId.c_str(),
+            osOptionalCoordinateEpoch.c_str(),
             szSRSName,
             dfLLX, dfLLY,
             dfURX, dfURY,
