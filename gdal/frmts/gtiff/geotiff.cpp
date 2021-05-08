@@ -20205,6 +20205,8 @@ void GDALRegister_GTiff()
 #define XSTRINGIFY(x) STRINGIFY(x)
     poDriver->SetMetadataItem( "LIBGEOTIFF", XSTRINGIFY(LIBGEOTIFF_VERSION) );
 
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
+
     poDriver->pfnOpen = GTiffDataset::Open;
     poDriver->pfnCreate = GTiffDataset::Create;
     poDriver->pfnCreateCopy = GTiffDataset::CreateCopy;
