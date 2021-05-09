@@ -2730,7 +2730,7 @@ GetConnectionInfo(const char * pszFilename,
     char ** ppszPort, char ** ppszUser, char ** ppszPassword,
     WorkingMode * nMode, GBool * bBrowseDatabase, OutDBResolution* peOutDBResolution )
 {
-    int nPos = -1, i;
+    int nPos = -1, sPos = -1, i;
     char * pszTmp = nullptr;
     char **papszParams = ParseConnectionString(pszFilename);
     if (papszParams == nullptr) {
@@ -2786,24 +2786,25 @@ GetConnectionInfo(const char * pszFilename,
     }
 
     /**
-     * Case 1: There's no database name: Error, you need, at least,
-     * specify a database name (NOTE: insensitive search)
+     * Case 1: There's no database or service name: Error, you need, at least,
+     * specify a database or a service name (NOTE: insensitive search)
      **/
     nPos = CSLFindName(papszParams, "dbname");
-    if (nPos == -1) {
+    sPos = CSLFindName(papszParams, "service");
+
+    if (nPos == -1 && sPos == -1) {
         CPLError(CE_Failure, CPLE_AppDefined,
-                "You must specify at least a db name");
+                "You must specify at least a db name or a service name");
 
         CSLDestroy(papszParams);
 
         return false;
-    }
-
-    *ppszDbname =
-        CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
+    } 
+    
+    *ppszDbname = (nPos != -1) ? CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr)) : nullptr;
 
     /**
-     * Case 2: There's database name, but no table name: activate a flag
+     * Case 2: There's a database or service name, but no table name: activate a flag
      * for browsing the database, fetching all the schemas that contain
      * raster tables
      **/
@@ -2996,7 +2997,8 @@ GetConnectionInfo(const char * pszFilename,
         "Mode: %d\nDbname: %s\nSchema: %s\nTable: %s\nColumn: %s\nWhere: %s\n"
         "Host: %s\nPort: %s\nUser: %s\nPassword: %s\n"
         "Connection String: %s\n",
-        *nMode, *ppszDbname,
+        *nMode, 
+        *ppszDbname ? *ppszDbname : "(null)",
         *ppszSchema ? *ppszSchema : "(null)",
         *ppszTable ? *ppszTable : "(null)",
         *ppszColumn ? *ppszColumn : "(null)",
@@ -3037,8 +3039,7 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
         PostGISRasterDriver * poDriver =
             static_cast<PostGISRasterDriver *>(GDALGetDriverByName("PostGISRaster"));
 
-        poConn = poDriver->GetConnection(*ppszConnectionString,
-                pszDbname, pszHost, pszPort, pszUser);
+        poConn = poDriver->GetConnection(*ppszConnectionString);
 
         if (poConn == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined,
