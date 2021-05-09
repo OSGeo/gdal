@@ -34,7 +34,7 @@ using System;
 
 using OSGeo.OGR;
 using OSGeo.OSR;
-
+using System.Text;
 
 /**
 
@@ -247,6 +247,9 @@ class CreateData {
 
 			if( feat.IsFieldSet( iField ) )
 				Console.WriteLine( feat.GetFieldAsString( iField ) );
+				if ( Encoding.ASCII.GetString(feat.GetFieldAsBinary( iField )) != feat.GetFieldAsString( iField ) ) {
+					En.Exit(-1);
+				}
 			else
 				Console.WriteLine( "(null)" );
 
