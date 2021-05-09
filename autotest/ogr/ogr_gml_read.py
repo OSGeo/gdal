@@ -3822,7 +3822,8 @@ def test_ogr_gml_aixm_elevated_surface():
 
 
 @pytest.mark.parametrize('gml_format', ['GML2','GML3','GML3.2'])
-def test_ogr_gml_srs_name_in_xsd(gml_format):
+@pytest.mark.parametrize('coordinate_epoch', [None, 2021.3])
+def test_ogr_gml_srs_name_in_xsd(gml_format, coordinate_epoch):
 
     if not gdaltest.have_gml_reader:
         pytest.skip()
@@ -3833,6 +3834,9 @@ def test_ogr_gml_srs_name_in_xsd(gml_format):
     ds = ogr.GetDriverByName('GML').CreateDataSource(filename, options=['FORMAT='+gml_format])
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    if coordinate_epoch:
+        srs.SetCoordinateEpoch(coordinate_epoch)
     lyr = ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbMultiPolygon)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('MULTIPOLYGON (((2 49,2 50,3 50,2 49)))'))
@@ -3849,11 +3853,16 @@ def test_ogr_gml_srs_name_in_xsd(gml_format):
     else:
         assert b'<!-- srsName="urn:ogc:def:crs:EPSG::4326" -->' in data
 
+    if coordinate_epoch:
+        assert b'<!-- coordinateEpoch=2021.3 -->' in data
+
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
     assert srs.GetAuthorityCode(None) == '4326'
     assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+    if coordinate_epoch:
+        assert srs.GetCoordinateEpoch() == coordinate_epoch
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == 'MULTIPOLYGON (((2 49,2 50,3 50,2 49)))'
     f = None
@@ -3861,3 +3870,4 @@ def test_ogr_gml_srs_name_in_xsd(gml_format):
 
     gdal.Unlink(filename)
     gdal.Unlink(xsdfilename)
+

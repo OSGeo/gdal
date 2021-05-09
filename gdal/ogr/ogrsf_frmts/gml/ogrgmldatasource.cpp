@@ -1642,6 +1642,11 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
                 m_bInvertAxisOrderIfLatLong ? OAMS_TRADITIONAL_GIS_ORDER : OAMS_AUTHORITY_COMPLIANT);
             if( poSRS2->SetFromUserInput(osSRSName.c_str()) == OGRERR_NONE )
             {
+                const double dfCoordinateEpoch = poProperty->GetCoordinateEpoch();
+                if( dfCoordinateEpoch > 0 )
+                {
+                    poSRS2->SetCoordinateEpoch(dfCoordinateEpoch);
+                }
                 oField.SetSpatialRef(poSRS2);
             }
             poSRS2->Release();
@@ -2472,6 +2477,20 @@ void OGRGMLDataSource::InsertHeader()
                     osSRSNameComment += " -->";
                 }
                 CPLFree(pszSRSName);
+
+                const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
+                if( dfCoordinateEpoch > 0 )
+                {
+                    std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+                    if( osCoordinateEpoch.find('.') != std::string::npos )
+                    {
+                        while( osCoordinateEpoch.back() == '0' )
+                            osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+                    }
+                    osSRSNameComment += "<!-- coordinateEpoch=";
+                    osSRSNameComment += osCoordinateEpoch;
+                    osSRSNameComment += " -->";
+                }
             }
 
             int nMinOccurs = poFieldDefn->IsNullable() ? 0 : 1;

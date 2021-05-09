@@ -487,6 +487,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                     {
                         OGRwkbGeometryType eType = psIter->eType;
                         std::string osSRSName;
+                        double dfCoordinateEpoch = 0;
 
                         // Look if there's a comment restricting to subclasses.
                         const CPLXMLNode* psIter2 = psAttrDef->psNext;
@@ -518,6 +519,14 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                         else
                                             osSRSName.clear();
                                     }
+
+                                    const char* pszCoordEpoch = strstr(
+                                        psIter2->pszValue, "coordinateEpoch=");
+                                    if( pszCoordEpoch )
+                                    {
+                                        dfCoordinateEpoch = CPLAtof(
+                                            pszCoordEpoch + strlen("coordinateEpoch="));
+                                    }
                                 }
                             }
 
@@ -529,6 +538,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                 pszElementName, pszElementName, eType,
                                 nAttributeIndex, bNullable);
                         poDefn->SetSRSName(osSRSName);
+                        poDefn->SetCoordinateEpoch(dfCoordinateEpoch);
 
                         if( poClass->AddGeometryProperty(poDefn) < 0 )
                             delete poDefn;

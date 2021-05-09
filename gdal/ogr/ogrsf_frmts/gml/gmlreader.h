@@ -133,6 +133,7 @@ class CPL_DLL GMLGeometryPropertyDefn
     int         m_nAttributeIndex;
     bool        m_bNullable;
     std::string m_osSRSName{};
+    double      m_dfCoordinateEpoch = 0.0;
 
 public:
         GMLGeometryPropertyDefn( const char *pszName, const char *pszSrcElement,
@@ -152,6 +153,9 @@ public:
 
         void SetSRSName(const std::string& srsName) { m_osSRSName = srsName; }
         const std::string& GetSRSName() const { return m_osSRSName; }
+
+        void SetCoordinateEpoch(double dfCoordinateEpoch) { m_dfCoordinateEpoch = dfCoordinateEpoch; }
+        double GetCoordinateEpoch() const { return m_dfCoordinateEpoch; }
 };
 
 /************************************************************************/
