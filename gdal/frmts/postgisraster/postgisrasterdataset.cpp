@@ -2724,11 +2724,12 @@ GBool PostGISRasterDataset::SetRasterProperties
  * BROWSE_SCHEMA or BROWSE_DATABASE
  **********************************************************************/
 static GBool
-GetConnectionInfo(const char * pszFilename,
-    char ** ppszConnectionString, char ** ppszDbname, char ** ppszSchema, char ** ppszTable,
-    char ** ppszColumn, char ** ppszWhere, char ** ppszHost,
-    char ** ppszPort, char ** ppszUser, char ** ppszPassword,
-    WorkingMode * nMode, GBool * bBrowseDatabase, OutDBResolution* peOutDBResolution )
+GetConnectionInfo(const char *pszFilename, char **ppszConnectionString,
+                  char **ppszService, char **ppszDbname, char **ppszSchema,
+                  char **ppszTable, char **ppszColumn, char **ppszWhere,
+                  char **ppszHost, char **ppszPort, char **ppszUser,
+                  char **ppszPassword, WorkingMode *nMode,
+                  GBool *bBrowseDatabase, OutDBResolution *peOutDBResolution)
 {
     int nPos = -1, sPos = -1, i;
     char * pszTmp = nullptr;
@@ -2802,6 +2803,7 @@ GetConnectionInfo(const char * pszFilename,
     } 
     
     *ppszDbname = (nPos != -1) ? CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr)) : nullptr;
+    *ppszService = (sPos != -1) ? CPLStrdup(CPLParseNameValue(papszParams[sPos], nullptr)) : nullptr;
 
     /**
      * Case 2: There's a database or service name, but no table name: activate a flag
@@ -2998,6 +3000,7 @@ GetConnectionInfo(const char * pszFilename,
         "Host: %s\nPort: %s\nUser: %s\nPassword: %s\n"
         "Connection String: %s\n",
         *nMode, 
+        *ppszService ? *ppszService : "(null)",
         *ppszDbname ? *ppszDbname : "(null)",
         *ppszSchema ? *ppszSchema : "(null)",
         *ppszTable ? *ppszTable : "(null)",
@@ -3023,13 +3026,14 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
     OutDBResolution* peOutDBResolution)
 {
     PGconn * poConn = nullptr;
+    char * pszService = nullptr;
     char * pszDbname = nullptr;
     char * pszHost = nullptr;
     char * pszPort = nullptr;
     char * pszUser = nullptr;
     char * pszPassword = nullptr;
 
-    if (GetConnectionInfo(pszFilename, ppszConnectionString, &pszDbname, ppszSchema,
+    if (GetConnectionInfo(pszFilename, ppszConnectionString, &pszService, &pszDbname, ppszSchema,
         ppszTable, ppszColumn, ppszWhere, &pszHost, &pszPort, &pszUser,
         &pszPassword, nMode, bBrowseDatabase, peOutDBResolution))
     {
@@ -3039,7 +3043,8 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
         PostGISRasterDriver * poDriver =
             static_cast<PostGISRasterDriver *>(GDALGetDriverByName("PostGISRaster"));
 
-        poConn = poDriver->GetConnection(*ppszConnectionString);
+        poConn = poDriver->GetConnection(*ppszConnectionString, pszService,
+                pszDbname, pszHost, pszPort, pszUser);
 
         if (poConn == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined,
