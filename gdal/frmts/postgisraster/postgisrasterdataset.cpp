@@ -2800,8 +2800,8 @@ GetConnectionInfo(const char *pszFilename, char **ppszConnectionString,
         CSLDestroy(papszParams);
 
         return false;
-    } 
-    
+    }
+
     *ppszDbname = (nPos != -1) ? CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr)) : nullptr;
     *ppszService = (sPos != -1) ? CPLStrdup(CPLParseNameValue(papszParams[sPos], nullptr)) : nullptr;
 
@@ -2999,7 +2999,7 @@ GetConnectionInfo(const char *pszFilename, char **ppszConnectionString,
         "Mode: %d\nDbname: %s\nSchema: %s\nTable: %s\nColumn: %s\nWhere: %s\n"
         "Host: %s\nPort: %s\nUser: %s\nPassword: %s\n"
         "Connection String: %s\n",
-        *nMode, 
+        *nMode,
         *ppszService ? *ppszService : "(null)",
         *ppszDbname ? *ppszDbname : "(null)",
         *ppszSchema ? *ppszSchema : "(null)",
@@ -3052,6 +3052,7 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
         }
     }
 
+    CPLFree(pszService);
     CPLFree(pszDbname);
     CPLFree(pszHost);
     CPLFree(pszPort);
