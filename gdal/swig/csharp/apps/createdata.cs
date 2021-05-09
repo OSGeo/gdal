@@ -248,7 +248,7 @@ class CreateData {
 			if( feat.IsFieldSet( iField ) )
 				Console.WriteLine( feat.GetFieldAsString( iField ) );
 				if ( Encoding.ASCII.GetString(feat.GetFieldAsBinary( iField )) != feat.GetFieldAsString( iField ) ) {
-					En.Exit(-1);
+					Environment.Exit(-1);
 				}
 			else
 				Console.WriteLine( "(null)" );
