@@ -2208,10 +2208,12 @@ int OGRProjCT::TransformWithErrorCodes(
         bTransformDone = true;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Select dynamically the best transformation for the data, if     */
-/*      needed.                                                         */
-/* -------------------------------------------------------------------- */
+    // Determine the default coordinate epoch, if not provided in the point to
+    // transform.
+    // For time-dependent transformations, PROJ can currently only do
+    // staticCRS -> dynamicCRS or dynamicCRS -> staticCRS transformations, and
+    // in either case, the coordinate epoch of the dynamicCRS must be provided
+    // as the input time.
     const double dfDefaultTime =
         (bSourceIsDynamicCRS && dfSourceCoordinateEpoch > 0 &&
          !bTargetIsDynamicCRS) ?
@@ -2221,6 +2223,10 @@ int OGRProjCT::TransformWithErrorCodes(
              dfTargetCoordinateEpoch :
              HUGE_VAL;
 
+/* -------------------------------------------------------------------- */
+/*      Select dynamically the best transformation for the data, if     */
+/*      needed.                                                         */
+/* -------------------------------------------------------------------- */
     auto ctx = OSRGetProjTLSContext();
     PJ* pj = m_pj;
     if( !bTransformDone && !pj )
