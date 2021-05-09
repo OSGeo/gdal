@@ -46,7 +46,7 @@ def get_srs(srs_like: AnySRS,
 
     gis_order and axis_order are mutually exclusive
     if gis_order is not None then axis_order is set according to gis_order
-    if axis_order == None -> set axis order to default_axis_order iff the input is not an osr.SpatialRefernce reference,
+    if axis_order == None -> set axis order to default_axis_order iff the input is not an osr.SpatialReference reference,
     otherwise set requested axis_order
     """
     if isinstance(srs_like, osr.SpatialReference):

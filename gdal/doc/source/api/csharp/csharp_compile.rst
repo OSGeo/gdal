@@ -179,7 +179,7 @@ To run one of the prebuilt executables - you can run them with Mono as follows :
 :program:`mono GDALInfo.exe`
 
 Both the managed libraries (i.e. the DLLs) and the unmanaged libraries must be available to Mono.
-This is in more detail in `the Mono documenation <https://www.mono-project.com/docs/advanced/pinvoke/>`__ 
+This is in more detail in `the Mono documentation <https://www.mono-project.com/docs/advanced/pinvoke/>`__ 
 
 .. note:: This document was amended from the previous version at `https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile <https://trac.osgeo.org/gdal/wiki/GdalOgrCsharpCompile>`__
 
