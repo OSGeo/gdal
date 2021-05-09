@@ -2840,6 +2840,8 @@ GetConnectionInfo(const char *pszFilename, char **ppszConnectionString,
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
         }
     } else {
+        *bBrowseDatabase = false;
+
         *ppszTable =
             CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
         /* Delete this pair from params array */
