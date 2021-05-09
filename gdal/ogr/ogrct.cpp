@@ -1163,6 +1163,15 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         dfTargetCoordinateEpoch = poSRSTarget->GetCoordinateEpoch();
     }
 
+    if( bSourceIsDynamicCRS && bTargetIsDynamicCRS &&
+        dfSourceCoordinateEpoch > 0 && dfTargetCoordinateEpoch > 0 &&
+        dfSourceCoordinateEpoch != dfTargetCoordinateEpoch )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Coordinate transformation between different epochs are "
+                 "not currently supported");
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Setup source and target translations to radians for lat/long    */
 /*      systems.                                                        */

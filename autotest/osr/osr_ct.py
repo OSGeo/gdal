@@ -568,3 +568,9 @@ def test_osr_ct_take_into_account_srs_coordinate_epoch():
     x, y, _ = ct.TransformPoint(-29.9999950478, 150.0000022212, 0)
     assert x == pytest.approx(-30, abs=1e-10)
     assert y == pytest.approx(150, abs=1e-10)
+
+    # Not properly supported currently
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ct = osr.CoordinateTransformation(t_2020, t_2030)
+    assert gdal.GetLastErrorMsg() != ''
