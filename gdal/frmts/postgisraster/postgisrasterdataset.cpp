@@ -2908,7 +2908,9 @@ GetConnectionInfo(const char *pszFilename, char **ppszConnectionString,
      * Set application name if not found in connection string
      **********************************************************/
 
-    if (CSLFindName(papszParams, "application_name") == -1 &&
+    if (*bBrowseDatabase == FALSE &&
+        *nMode == ONE_RASTER_PER_TABLE &&
+        CSLFindName(papszParams, "application_name") == -1 &&
         getenv("PGAPPNAME") == nullptr) {
         osConnectionString += "application_name=";
         osConnectionString += "'";
