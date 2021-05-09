@@ -114,6 +114,7 @@ CPLString OGRLIBKMLGetSanitizedNCName( const char* pszName )
 
 OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
                                 OGRwkbGeometryType eGType,
+                                const OGRSpatialReference* poSRS,
                                 OGRLIBKMLDataSource * poOgrDS,
                                 ElementPtr poKmlRoot,
                                 ContainerPtr poKmlContainer,
@@ -153,6 +154,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
     m_poStyleTable = nullptr;
     m_poOgrSRS->SetWellKnownGeogCS( "WGS84" );
     m_poOgrSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if( poSRS )
+        m_poOgrSRS->SetCoordinateEpoch(poSRS->GetCoordinateEpoch());
 
     SetDescription( m_poOgrFeatureDefn->GetName() );
     m_poOgrFeatureDefn->Reference();

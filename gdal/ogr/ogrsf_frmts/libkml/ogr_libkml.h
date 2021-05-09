@@ -87,6 +87,7 @@ class OGRLIBKMLLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
                                 OGRwkbGeometryType eGType,
+                                const OGRSpatialReference* poSRS,
                                 OGRLIBKMLDataSource *poOgrDS,
                                 kmldom::ElementPtr poKmlRoot,
                                 kmldom::ContainerPtr poKmlContainer,
@@ -312,6 +313,7 @@ class OGRLIBKMLDataSource final: public OGRDataSource
 
     OGRLIBKMLLayer           *AddLayer( const char *pszLayerName,
                                         OGRwkbGeometryType eGType,
+                                        const OGRSpatialReference* poSRS,
                                         OGRLIBKMLDataSource * poOgrDS,
                                         kmldom::ElementPtr poKmlRoot,
                                         kmldom::ContainerPtr poKmlContainer,

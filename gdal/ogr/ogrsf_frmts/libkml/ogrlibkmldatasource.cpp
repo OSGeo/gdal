@@ -177,6 +177,25 @@ static void OGRLIBKMLPreProcessInput( std::string& oKml )
 }
 
 /************************************************************************/
+/*                    OGRLIBMLParseCoordinateEpoch()                    */
+/************************************************************************/
+
+static double OGRLIBMLParseCoordinateEpoch( const std::string& osKml )
+{
+    auto nPos = osKml.find("<!-- coordinateEpoch=");
+    if( nPos != std::string::npos )
+    {
+        nPos += strlen("<!-- coordinateEpoch=");
+        auto nEndPos = osKml.find(" -->", nPos);
+        if( nEndPos != std::string::npos )
+        {
+            return CPLAtof(osKml.substr(nPos, nEndPos - nPos).c_str());
+        }
+    }
+    return 0;
+}
+
+/************************************************************************/
 /*                       OGRLIBKMLRemoveSpaces()                        */
 /************************************************************************/
 
@@ -220,14 +239,43 @@ static void OGRLIBKMLRemoveSpaces(
 
 // Substitute deprecated <Snippet> by <snippet> since libkml currently
 // only supports Snippet but ogckml22.xsd has deprecated it in favor of snippet.
-static void OGRLIBKMLPostProcessOutput( std::string& oKml )
+static void OGRLIBKMLPostProcessOutput( std::string& oKml, OGRLayer* poLayer )
 {
     // Manually add <?xml> node since libkml does not produce it currently
     // and this is useful in some circumstances (#5407).
     if( !(oKml[0] == '<' && oKml[1] == '?') )
         oKml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + oKml;
 
-    size_t nPos = 0;
+    // Add coordinate epoch if present
+    size_t nPos = oKml.find("<kml ");
+    if( poLayer != nullptr && nPos != std::string::npos )
+    {
+        nPos = oKml.find('>', nPos);
+        if( nPos != std::string::npos )
+        {
+            const auto poSRS = poLayer->GetSpatialRef();
+            if( poSRS )
+            {
+                const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
+                if( dfCoordEpoch > 0 )
+                {
+                    std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordEpoch);
+                    if( osCoordinateEpoch.find('.') != std::string::npos )
+                    {
+                        while( osCoordinateEpoch.back() == '0' )
+                            osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+                    }
+
+                    oKml = oKml.substr(0, nPos+1) +
+                           "\n  <!-- coordinateEpoch=" +
+                           osCoordinateEpoch +
+                           " -->" +
+                           oKml.substr(nPos + 1);
+                }
+            }
+        }
+    }
+
     while( true )
     {
         nPos = oKml.find("<Snippet>", nPos);
@@ -304,7 +352,7 @@ void OGRLIBKMLDataSource::WriteKml()
 
     std::string oKmlOut;
     oKmlOut = kmldom::SerializePretty( m_poKmlDSKml );
-    OGRLIBKMLPostProcessOutput(oKmlOut);
+    OGRLIBKMLPostProcessOutput(oKmlOut, nLayers > 0 ? papoLayers[0] : nullptr);
 
     if( !oKmlOut.empty() )
     {
@@ -401,7 +449,7 @@ void OGRLIBKMLDataSource::WriteKmz()
         }
 
         std::string oKmlOut = kmldom::SerializePretty( m_poKmlDocKmlRoot );
-        OGRLIBKMLPostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut, nLayers > 0 ? papoLayers[0] : nullptr);
 
         if( CPLCreateFileInZip( hZIP, "doc.kml", nullptr ) != CE_None ||
             CPLWriteFileInZip( hZIP, oKmlOut.data(),
@@ -443,7 +491,7 @@ void OGRLIBKMLDataSource::WriteKmz()
         }
 
         std::string oKmlOut = kmldom::SerializePretty( poKmlKml );
-        OGRLIBKMLPostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut, papoLayers[iLayer]);
 
         if( iLayer == 0 && CPLTestBool( pszUseDocKml ) )
             CPLCreateFileInZip( hZIP, "layers/", nullptr );
@@ -472,7 +520,7 @@ void OGRLIBKMLDataSource::WriteKmz()
 
         poKmlKml->set_feature( m_poKmlStyleKml );
         std::string oKmlOut = kmldom::SerializePretty( poKmlKml );
-        OGRLIBKMLPostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut, nullptr);
 
         if( CPLCreateFileInZip( hZIP, "style/", nullptr ) != CE_None ||
             CPLCreateFileInZip( hZIP, "style/style.kml", nullptr ) != CE_None ||
@@ -517,7 +565,7 @@ void OGRLIBKMLDataSource::WriteDir()
         }
 
         std::string oKmlOut = kmldom::SerializePretty( m_poKmlDocKmlRoot );
-        OGRLIBKMLPostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut, nullptr);
 
         const char *pszOutfile = CPLFormFilename( m_pszName, "doc.kml", nullptr );
 
@@ -566,7 +614,7 @@ void OGRLIBKMLDataSource::WriteDir()
         }
 
         std::string oKmlOut = kmldom::SerializePretty( poKmlKml );
-        OGRLIBKMLPostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut, papoLayers[iLayer]);
 
         const char *pszOutfile = CPLFormFilename(
             m_pszName, papoLayers[iLayer]->GetFileName(), nullptr );
@@ -591,7 +639,7 @@ void OGRLIBKMLDataSource::WriteDir()
 
         poKmlKml->set_feature( m_poKmlStyleKml );
         std::string oKmlOut = kmldom::SerializePretty( poKmlKml );
-        OGRLIBKMLPostProcessOutput(oKmlOut);
+        OGRLIBKMLPostProcessOutput(oKmlOut, nullptr);
 
         const char *pszOutfile =
             CPLFormFilename( m_pszName, "style.kml",  nullptr );
@@ -778,6 +826,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema( const char *pszSchemaUrl )
 OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     const char *pszLayerName,
     OGRwkbGeometryType eGType,
+    const OGRSpatialReference* poSRS,
     OGRLIBKMLDataSource * poOgrDS,
     ElementPtr poKmlRoot,
     ContainerPtr poKmlContainer,
@@ -808,6 +857,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     /***** create the layer *****/
     OGRLIBKMLLayer *poOgrLayer = new OGRLIBKMLLayer( osUniqueLayername,
                                                       eGType,
+                                                      poSRS,
                                                       poOgrDS,
                                                       poKmlRoot,
                                                       poKmlContainer,
@@ -895,7 +945,7 @@ int OGRLIBKMLDataSource::ParseLayers(
             /***** create the layer *****/
 
             AddLayer( oKmlFeatName.c_str(),
-                      wkbUnknown, this,
+                      wkbUnknown, poOgrSRS, this,
                       nullptr, AsContainer( poKmlFeat ), "", FALSE, bUpdate,
                       static_cast<int>(nKmlFeatures) );
 
@@ -1043,6 +1093,7 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
     OGRSpatialReference *poOgrSRS =
         new OGRSpatialReference( SRS_WKT_WGS84_LAT_LONG );
     poOgrSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    poOgrSRS->SetCoordinateEpoch(OGRLIBMLParseCoordinateEpoch(oKmlKml));
 
     /***** parse the kml into the DOM *****/
     std::string oKmlErrors;
@@ -1091,7 +1142,7 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
       }
 
       AddLayer( layername_default.c_str(),
-                wkbUnknown,
+                wkbUnknown, poOgrSRS,
                 this, m_poKmlDSKml, m_poKmlDSContainer, pszFilename, FALSE,
                 bUpdateIn, 1 );
     }
@@ -1163,6 +1214,7 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
     OGRSpatialReference *poOgrSRS =
         new OGRSpatialReference( SRS_WKT_WGS84_LAT_LONG );
     poOgrSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    poOgrSRS->SetCoordinateEpoch(OGRLIBMLParseCoordinateEpoch(oKmlKml));
 
     /***** parse the kml into the DOM *****/
     std::string oKmlErrors;
@@ -1265,7 +1317,8 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
                 /***** create the layer *****/
                 AddLayer( CPLGetBasename
                           ( poKmlHref->get_path().c_str() ),
-                           wkbUnknown, this, poKmlLyrRoot, poKmlLyrContainer,
+                           wkbUnknown, poOgrSRS,
+                           this, poKmlLyrRoot, poKmlLyrContainer,
                            poKmlHref->get_path().c_str(), FALSE, bUpdateIn,
                            static_cast<int>(nKmlFeatures) );
 
@@ -1309,7 +1362,7 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
             }
 
             AddLayer( layername_default.c_str(),
-                      wkbUnknown,
+                      wkbUnknown, poOgrSRS,
                       this, poKmlDocKmlRoot, poKmlContainer,
                       pszFilename, FALSE, bUpdateIn, 1 );
         }
@@ -1395,6 +1448,8 @@ int OGRLIBKMLDataSource::OpenDir( const char *pszFilename, int bUpdateIn )
 
         CPLLocaleC oLocaleForcer;
 
+        poOgrSRS->SetCoordinateEpoch(OGRLIBMLParseCoordinateEpoch(oKmlKml));
+
         /***** parse the kml into the DOM *****/
         std::string oKmlErrors;
         ElementPtr poKmlRoot = OGRLIBKMLParse( oKmlKml, &oKmlErrors );
@@ -1432,7 +1487,7 @@ int OGRLIBKMLDataSource::OpenDir( const char *pszFilename, int bUpdateIn )
 
         /***** create the layer *****/
         AddLayer( CPLGetBasename( osFilePath.c_str() ),
-                  wkbUnknown,
+                  wkbUnknown, poOgrSRS,
                   this, poKmlRoot, poKmlContainer, osFilePath.c_str(), FALSE,
                   bUpdateIn, nFiles );
 
@@ -2148,7 +2203,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer( int iLayer )
 
 OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
     const char *pszLayerName,
-    OGRSpatialReference *,
+    OGRSpatialReference *poSRS,
     OGRwkbGeometryType eGType,
     char **papszOptions )
 {
@@ -2167,7 +2222,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
 
     /***** create the layer *****/
     OGRLIBKMLLayer *poOgrLayer =
-        AddLayer( pszLayerName, eGType, this,
+        AddLayer( pszLayerName, eGType, poSRS, this,
                   nullptr, poKmlLayerContainer, "", TRUE, bUpdate, 1 );
 
     /***** add the layer name as a <Name> *****/
@@ -2195,7 +2250,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
 
 OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
     const char *pszLayerName,
-    OGRSpatialReference *,
+    OGRSpatialReference *poSRS,
     OGRwkbGeometryType eGType,
     char ** /* papszOptions */ )
 {
@@ -2232,7 +2287,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
     }
 
     OGRLIBKMLLayer *poOgrLayer =
-        AddLayer( pszLayerName, eGType, this,
+        AddLayer( pszLayerName, eGType, poSRS, this,
                   nullptr, poKmlDocument,
                   CPLFormFilename( nullptr, pszLayerName, ".kml" ),
                   TRUE, bUpdate, 1 );

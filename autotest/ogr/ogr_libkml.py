@@ -1914,3 +1914,40 @@ def test_ogr_libkml_update_existing_kml():
     assert fc_after == fc_before + 1
 
     gdal.Unlink(filename)
+    
+###############################################################################
+
+
+@pytest.mark.parametrize('ext', ['kml', 'kmz'])
+def test_ogr_libkml_coordinate_epoch(ext):
+
+    if not ogrtest.have_read_libkml:
+        pytest.skip()
+
+    filename = '/vsimem/test_ogr_libkml_coordinate_epoch.' + ext
+
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    lyr = ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbPolygon)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((2 49,2 50,3 50,2 49))'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '4326'
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+    assert srs.GetCoordinateEpoch() == 2021.3
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == 'POLYGON ((2 49 0,2 50 0,3 50 0,2 49 0))'
+    f = None
+    ds = None
+
+    gdal.Unlink(filename)
+
