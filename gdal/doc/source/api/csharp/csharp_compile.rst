@@ -46,37 +46,43 @@ The first step is to generate the SWIG interface code. This will create a set of
 
 To create the interface execute the following command (from the ``swig\csharp`` directory):
 
-:program:`nmake /f makefile.vc interface`
+.. code-block::
 
-.. note:: You should edit nmake.opt adding the actual location of the swig.exe file.
+    nmake /f makefile.vc interface`
+
+.. note:: You should edit nmake.opt adding the actual location of the :file:`swig.exe` file.
 
 Compiling the code
 ++++++++++++++++++
 
 After creating the interface the code can be compiled using this command (from the ``swig\csharp`` directory):
 
-:program:`nmake /f makefile.vc`
+.. code-block::
+
+    nmake /f makefile.vc
 
 Upon a successful compilation the following files are created:
 
-* gdal_csharp.dll
-* ogr_csharp.dll
-* osr_csharp.dll
-* gdalconst_csharp.dll
-* gdal_wrap.dll
-* ogr_wrap.dll
-* osr_wrap.dll
-* gdalconst_wrap.dll
-* various sample applications (\*.exe)
+* :file:`gdal_csharp.dll`
+* :file:`ogr_csharp.dll`
+* :file:`osr_csharp.dll`
+* :file:`gdalconst_csharp.dll`
+* :file:`gdal_wrap.dll`
+* :file:`ogr_wrap.dll`
+* :file:`osr_wrap.dll`
+* :file:`gdalconst_wrap.dll`
+* various sample applications
 
-The \*_csharp.dll binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface. These \*_csharp.dll-s will load the corresponding \*_wrap.dll which are the unmanaged part of the interface hosting the code of the gdal core.
+The :file:`\*_csharp.dll` binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface. These :file:`\*_csharp.dll` files will load the corresponding :file:`\*_wrap.dll` files, which are the unmanaged part of the interface hosting the code of the gdal core.
 
 Testing the successful compilation
 ++++++++++++++++++++++++++++++++++
 
 To test the compiled binaries, you can use:
 
-:program:`nmake /f makefile.vc test`
+.. code-block::
+
+    nmake /f makefile.vc test`
 
 This command will invoke some of the sample applications. 
 
@@ -114,44 +120,50 @@ The conda gdal-feedstock recipe provides an example of how to do that - `build.s
 Creating the SWIG interface code
 ++++++++++++++++++++++++++++++++
 
-The first step is to generate the SWIG interface code. This will create a set of ``.cs`` definitions that will be compiled into the ``.dll`` files
+The first step is to generate the SWIG interface code. This will create a set of :file:`.cs` definitions that will be compiled into the :file:`.dll` files
 
-To create the interface execute the following command (from the ``swig\csharp`` directory):
+To create the interface execute the following command (from the :file:`swig/    csharp` directory):
 
-:program:`make generate`
+.. code-block::
+
+    make generate
 
 .. warning:: In versions of GDAL < 3.3.0 - this command will create incorrect interfaces without the correct namespace. See `#3670 <https://github.com/OSGeo/gdal/pull/3670/commits/777c9d0e86602740199cf9a4ab44e040c52c2283>`__.
 
 Compiling the code
 ++++++++++++++++++
 
-After creating the interface the code can be compiled using this command (from the ``swig\csharp`` directory):
+After creating the interface the code can be compiled using this command (from the :file:`swig/csharp` directory):
 
-:program:`make`
+.. code-block::
+
+    make
 
 Upon a successful compilation the following files are created:
 
-* gdal_csharp.dll and gdal_csharp.dll.config
-* ogr_csharp.dll and ogr_csharp.dll.config
-* osr_csharp.dll and osr_csharp.dll.config
-* gdalconst_csharp.dll and gdalconst_csharp.dll.config
-* libgdalcsharp.so / .dylib etc
-* libogrcsharp.so / .dylib etc
-* libosrcsharp.so / .dylib etc
-* libgdalconst_wrap.so / .dylib etc
-* various sample applications (\*.exe)
+* :file:`gdal_csharp.dll` and :file:`gdal_csharp.dll.config`
+* :file:`ogr_csharp.dll` and :file:`ogr_csharp.dll.config`
+* :file:`osr_csharp.dll` and :file:`osr_csharp.dll.config`
+* :file:`gdalconst_csharp.dll` and :file:`gdalconst_csharp.dll.config`
+* :file:`libgdalcsharp.so / .dylib` etc
+* :file:`libogrcsharp.so / .dylib` etc
+* :file:`libosrcsharp.so / .dylib` etc
+* :file:`libgdalconst_wrap.so / .dylib` etc
+* various sample applications (:file:`\*.exe`)
 
-The \*_csharp.dll binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface.
+The :file:`\*_csharp.dll` binaries are the managed part of the interface. You should add a reference to these assemblies for using the classes of the interface.
 
-The \*_csharp.dll files will try to load the corresponding \*_wrap.dll and are redirected to the libxxxcsharp.\* libraries, which are the unmanaged part of the interface hosting the code of the gdal core,
-by the \*.dll.config definitions.
+The :file:`\*_csharp.dll` files will try to load the corresponding :file:`\*_wrap.dll` and are redirected to the :file:`libxxxcsharp.\*` libraries, which are the unmanaged part of the interface hosting the code of the gdal core,
+by the :file:`\*.dll.config` definitions.
 
 Testing the successful compilation
 ++++++++++++++++++++++++++++++++++
 
 To test the compiled binaries, you can use:
 
-:program:`nmake test`
+.. code-block::
+
+    nmake test
 
 This command will invoke some of the sample applications. 
 

@@ -32,9 +32,11 @@ Getting GDAL for C#
 There are a number of ways to get the C# bindings, including but not limited to:
 
 * The `gisinternals <http://www.gisinternals.com/sdk>`__ site, see below under "Windows Build SDK",
-* The Conda package, see instructions below
+* The `Conda package <https://anaconda.org/conda-forge/gdal-csharp>`__, see instructions below
 * The gdal.netcore NuGet package, see link below, and
-* For Unity, there is a UPM package that installs GDAL, `available from here <https://openupm.com/packages/com.virgis.gdal/?subPage=readme>`__ (currrently Windows only)
+* For Unity, there is a UPM package that installs GDAL, `available from here <https://openupm.com/packages/com.virgis.gdal/?subPage=readme>`__ (available on Windows, Mac and Linux)
+
+(all of these are community supported)
 
 
 Related Documents
@@ -60,7 +62,7 @@ Useful Links
 
 * The `ViRGiS project <https://www.virgis.org/>`__ makes extensive use of GDAL in c# in a Unity environment.
 
-(Please add more links to this section)
+(Please add your project to this section)
 
 
 Windows Build SDKs
