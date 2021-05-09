@@ -977,7 +977,7 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
     if( CSLFetchNameValue( papszOptions, "DATAPOINTER" ) == nullptr )
     {
         const GSpacing nTmp = nPixelSize * GetRasterXSize();
-        GByte* pData = 
+        GByte* pData =
 #if SIZEOF_VOIDP == 4
             ( nTmp > INT_MAX ) ? nullptr :
 #endif
@@ -2166,9 +2166,11 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite,
 {
     const auto nDims = m_aoDims.size();
     const auto nDimsMinus1 = nDims - 1;
-    const bool bSameNumericDT =
+    const bool bBothAreNumericDT =
         srcType.GetClass() == GEDTC_NUMERIC &&
-        dstType.GetClass() == GEDTC_NUMERIC &&
+        dstType.GetClass() == GEDTC_NUMERIC;
+    const bool bSameNumericDT =
+        bBothAreNumericDT &&
         srcType.GetNumericDataType() == dstType.GetNumericDataType();
     const auto nSameDTSize = bSameNumericDT ? srcType.GetSize() : 0;
     const bool bCanUseMemcpyLastDim =
@@ -2225,6 +2227,20 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite,
                     return;
                 }
                 CPLAssert(false);
+            }
+            else if ( bBothAreNumericDT
+#if SIZEOF_VOIDP == 8
+                      && src_inc_offset <= std::numeric_limits<int>::max()
+                      && dst_inc_offset <= std::numeric_limits<int>::max()
+#endif
+                 )
+            {
+                GDALCopyWords64( srcPtr, srcType.GetNumericDataType(),
+                                 static_cast<int>(src_inc_offset),
+                                 dstPtr, dstType.GetNumericDataType(),
+                                 static_cast<int>(dst_inc_offset),
+                                 static_cast<GPtrDiff_t>(nIters) );
+                return;
             }
 
             while(true)
