@@ -3526,6 +3526,24 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         OGRSpatialReference oTargetSRS;
         oTargetSRS.SetFromUserInput(osThisTargetSRS);
         oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        if( oTargetSRS.IsDynamic() )
+        {
+            double dfCoordEpoch = CPLAtof(CSLFetchNameValueDef(papszTO, "COORDINATE_EPOCH", "0"));
+            if( dfCoordEpoch == 0 )
+            {
+                const OGRSpatialReferenceH hSrcSRS = GDALGetSpatialRef( pahSrcDS[0] );
+                const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+                if( hSrcSRS
+                    && (pszMethod == nullptr || EQUAL(pszMethod,"GEOTRANSFORM")) )
+                {
+                    dfCoordEpoch = OSRGetCoordinateEpoch(hSrcSRS);
+                }
+            }
+            if( dfCoordEpoch > 0 )
+                oTargetSRS.SetCoordinateEpoch(dfCoordEpoch);
+        }
+
         if( GDALSetSpatialRef( hDstDS, OGRSpatialReference::ToHandle(&oTargetSRS) ) == CE_Failure ||
             GDALSetGeoTransform( hDstDS, adfDstGeoTransform ) == CE_Failure )
         {

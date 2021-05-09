@@ -2061,6 +2061,19 @@ def test_gdalwarp_lib_cutline_zero_width_sliver():
     assert ds is not None
 
 ###############################################################################
+# Test support for coordinate epoch
+
+
+def test_gdalwarp_lib_coordinate_epoch():
+
+    src_ds = gdal.Translate('', '../gcore/data/byte.tif',
+                            options='-of MEM -a_srs EPSG:32611 -a_coord_epoch 2021.3')
+    ds = gdal.Warp('', src_ds, format='MEM')
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+###############################################################################
 # Cleanup
 
 
