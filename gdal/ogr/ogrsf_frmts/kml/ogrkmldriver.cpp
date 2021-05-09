@@ -159,6 +159,7 @@ void RegisterOGRKML()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Real String" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 
     poDriver->pfnOpen = OGRKMLDriverOpen;
     poDriver->pfnIdentify = OGRKMLDriverIdentify;

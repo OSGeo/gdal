@@ -262,8 +262,12 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
             }
         }
 
+        OGRSpatialReference* poSRSLayer = new OGRSpatialReference(*poSRS);
+        if( poKMLFile_->getCoordinateEpoch() > 0 )
+            poSRSLayer->SetCoordinateEpoch(poKMLFile_->getCoordinateEpoch());
         OGRKMLLayer *poLayer =
-            new OGRKMLLayer( sName.c_str(), poSRS, false, poGeotype, this );
+            new OGRKMLLayer( sName.c_str(), poSRSLayer, false, poGeotype, this );
+        poSRSLayer->Release();
 
         poLayer->SetLayerNumber( nCount );
 
@@ -391,6 +395,19 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     if( GetLayerCount() > 0 )
     {
+        const auto poFirstLayerSRS = GetLayer(0)->GetSpatialRef();
+        if( poSRS && poFirstLayerSRS )
+        {
+            const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
+            const double dfCoordEpochFirstLayer = poFirstLayerSRS->GetCoordinateEpoch();
+            if( dfCoordEpoch != dfCoordEpochFirstLayer )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Writing layers with different coordinate epochs is "
+                         "not supported");
+            }
+        }
+
         if( nLayers_ == 1 && papoLayers_[0]->nWroteFeatureCount_ == 0 )
         {
             VSIFPrintfL( fpOutput_, "<Folder><name>%s</name>\n",
@@ -399,6 +416,26 @@ OGRKMLDataSource::ICreateLayer( const char * pszLayerName,
 
         VSIFPrintfL( fpOutput_, "</Folder>\n" );
         papoLayers_[GetLayerCount()-1]->SetClosedForWriting();
+    }
+    else
+    {
+        if( poSRS )
+        {
+            const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
+            if( dfCoordEpoch > 0 )
+            {
+                std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordEpoch);
+                if( osCoordinateEpoch.find('.') != std::string::npos )
+                {
+                    while( osCoordinateEpoch.back() == '0' )
+                        osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+                }
+                VSIFPrintfL( fpOutput_,
+                             "<!-- coordinateEpoch=%s -->\n",
+                             osCoordinateEpoch.c_str() );
+            }
+        }
+
     }
 
 /* -------------------------------------------------------------------- */

@@ -102,13 +102,24 @@ bool KML::parse()
 
     int nDone = 0;
     int nLen = 0;
-    char aBuf[BUFSIZ] = { 0 };
+    char aBuf[BUFSIZ + 1] = { 0 };
     bool bError = false;
+    bool bFirst = true;
 
     do
     {
         nDataHandlerCounter = 0;
-        nLen = (int)VSIFReadL( aBuf, 1, sizeof(aBuf), pKMLFile_ );
+        nLen = (int)VSIFReadL( aBuf, 1, sizeof(aBuf) - 1, pKMLFile_ );
+        if( bFirst )
+        {
+            bFirst = false;
+            const char* pszCoordEpoch = strstr(aBuf, "<!-- coordinateEpoch=");
+            if( pszCoordEpoch )
+            {
+                dfCoordEpoch_ = CPLAtof(
+                    pszCoordEpoch + strlen("<!-- coordinateEpoch="));
+            }
+        }
         nDone = VSIFEofL(pKMLFile_);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {

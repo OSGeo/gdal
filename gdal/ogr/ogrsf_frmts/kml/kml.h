@@ -81,6 +81,7 @@ public:
     int is25D() const;
     int getNumFeatures();
     Feature* getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount);
+    double getCoordinateEpoch() const { return dfCoordEpoch_; }
 
     void unregisterLayerIfMatchingThisNode(KMLNode* poNode);
 
@@ -112,6 +113,8 @@ private:
     std::string sError_;
     // Current KMLNode.
     KMLNode *poCurrent_;
+
+    double dfCoordEpoch_ = 0.0;
 
     XML_Parser oCurrentParser;
     int nDataHandlerCounter;

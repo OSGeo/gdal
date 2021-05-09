@@ -80,6 +80,8 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     {
         poSRS_->SetWellKnownGeogCS( "WGS84" );
         poSRS_->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        poSRS_->SetCoordinateEpoch( poSRSIn->GetCoordinateEpoch() );
+
         if( !poSRS_->IsSame(poSRSIn) )
         {
             poCT_ = OGRCreateCoordinateTransformation( poSRSIn, poSRS_ );

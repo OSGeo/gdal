@@ -729,4 +729,39 @@ def test_ogr_kml_read_placemark_in_root_and_subfolder():
     lyr = ds.GetLayerByName('SubFolder1')
     assert lyr is not None
     assert lyr.GetFeatureCount() == 1
+    
+###############################################################################
+
+
+def test_ogr_kml_coordinate_epoch():
+
+    if not ogrtest.have_read_kml:
+        pytest.skip()
+
+    filename = '/vsimem/test_ogr_kml_coordinate_epoch.kml'
+
+    ds = ogr.GetDriverByName('KML').CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    lyr = ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbPolygon)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((2 49,2 50,3 50,2 49))'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '4326'
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+    assert srs.GetCoordinateEpoch() == 2021.3
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == 'POLYGON ((2 49,2 50,3 50,2 49))'
+    f = None
+    ds = None
+
+    gdal.Unlink(filename)
 
