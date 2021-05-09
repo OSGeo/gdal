@@ -242,16 +242,20 @@ class CreateData {
 		{
 			FieldDefn fdef = def.GetFieldDefn( iField );
 
-			Console.Write( fdef.GetNameRef() + " (" +
+			Console.Write(fdef.GetNameRef() + " (" +
 				fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
+				FieldType ft = fdef.GetFieldType();
 
-			if( feat.IsFieldSet( iField ) )
-				Console.WriteLine( feat.GetFieldAsString( iField ) );
-				if ( feat.GetFieldAsBinary( iField ).Length <= 0 ) {
+			if (feat.IsFieldSet(iField))
+			{
+				Console.WriteLine(feat.GetFieldAsString(iField));
+				if (ft == FieldType.OFTString && feat.GetFieldAsBinary( iField ).Length <= 0)
+				{
 					Environment.Exit(-1);
 				}
+			}
 			else
-				Console.WriteLine( "(null)" );
+				Console.WriteLine("(null)");
 
 		}
 
