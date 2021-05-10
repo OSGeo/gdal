@@ -2,7 +2,7 @@
 set -eu
 
 if [ "${GDAL_VERSION}" = "master" ]; then
-    GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+    GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
     export GDAL_VERSION
     GDAL_RELEASE_DATE=$(date "+%Y%m%d")
     export GDAL_RELEASE_DATE
@@ -13,7 +13,7 @@ if [ -z "${GDAL_BUILD_IS_RELEASE:-}" ]; then
 fi
 
 mkdir gdal
-wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
+wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     -O - | tar xz -C gdal --strip-components=1
 
 

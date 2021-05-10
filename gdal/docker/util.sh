@@ -17,13 +17,14 @@ fi
 
 usage()
 {
-    echo "Usage: build.sh [--push] [--tag name] [--gdal tag|sha1|master] [--proj tag|sha1|master] [--release]"
+    echo "Usage: build.sh [--push] [--tag name] [--gdal tag|sha1|master] [--gdal-repository repo] [--proj tag|sha1|master] [--release]"
     # Non-documented: --test-python
     echo ""
     echo "--push: push image to Docker hub"
     echo "--tag name: suffix to append to image name. Defaults to 'latest' for non release builds or the GDAL tag name for release builds"
     echo "--gdal tag|sha1|master: GDAL version to use. Defaults to master"
     echo "--proj tag|sha1|master: PROJ version to use. Defaults to master"
+    echo "--gdal-repository repo: github repository. Defaults to OSGeo/gdal"
     echo "--release. Whether this is a release build. In which case --gdal tag must be used."
     echo "--with-debug-symbols/--without-debug-symbols. Whether to include debug symbols. Only applies to ubuntu-full, default is to include for non-release builds."
     exit 1
@@ -31,6 +32,8 @@ usage()
 
 RELEASE=no
 ARCH_PLATFORMS="linux/amd64"
+
+GDAL_REPOSITORY=OSGeo/gdal
 
 while (( "$#" ));
 do
@@ -47,6 +50,12 @@ do
         --gdal)
             shift
             GDAL_VERSION="$1"
+            shift
+        ;;
+
+        --gdal-repository)
+            shift
+            GDAL_REPOSITORY="$1"
             shift
         ;;
 
@@ -238,9 +247,10 @@ fi
 echo "Using PROJ_VERSION=${PROJ_VERSION}"
 
 if test "${GDAL_VERSION}" = "" -o "${GDAL_VERSION}" = "master"; then
-    GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+    GDAL_VERSION=$(curl -Ls "https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD" -H "Accept: application/vnd.github.VERSION.sha")
 fi
 echo "Using GDAL_VERSION=${GDAL_VERSION}"
+echo "Using GDAL_REPOSITORY=${GDAL_REPOSITORY}"
 
 IMAGE_NAME="${TARGET_IMAGE}-${TAG_NAME}"
 BUILDER_IMAGE_NAME="${IMAGE_NAME}_builder"
@@ -250,6 +260,7 @@ if test "${RELEASE}" = "yes"; then
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
         "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
+        "--build-arg" "GDAL_REPOSITORY=${GDAL_REPOSITORY}" \
         "--build-arg" "GDAL_BUILD_IS_RELEASE=YES" \
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
     )
@@ -335,6 +346,7 @@ EOF
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
         "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
+        "--build-arg" "GDAL_REPOSITORY=${GDAL_REPOSITORY}" \
         "--build-arg" "GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}" \
         "--build-arg" "RSYNC_REMOTE=${RSYNC_REMOTE}" \
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
