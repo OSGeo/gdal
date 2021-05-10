@@ -5833,8 +5833,9 @@ static void GWKAverageOrModeThread( void* pData)
         {
             nAlgo = AOM::FloatMode;
 
-            realVals.resize(nSrcXSize * nSrcYSize);
-            realSums.resize(nSrcXSize * nSrcYSize);
+            // Cast to size_t to prevent overflow.
+            realVals.resize(static_cast<size_t>(nSrcXSize) * nSrcYSize);
+            realSums.resize(static_cast<size_t>(nSrcXSize) * nSrcYSize);
         }
     }
     else if( poWK->eResample == GRA_Max )
