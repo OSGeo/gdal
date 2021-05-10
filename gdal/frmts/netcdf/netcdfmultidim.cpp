@@ -67,6 +67,8 @@ public:
 
     void SetIsInGetIndexingVariable(bool b) { m_bIsInIndexingVariable = b; }
     bool GetIsInIndexingVariable() const { return m_bIsInIndexingVariable; }
+
+    const std::string& GetFilename() const { return m_osFilename; }
 };
 
 /************************************************************************/
@@ -424,6 +426,8 @@ public:
     }
 
     bool IsWritable() const override { return !m_poShared->IsReadOnly(); }
+
+    const std::string& GetFilename() const override { return m_poShared->GetFilename(); }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override;
 
@@ -3926,6 +3930,7 @@ GDALDataset* netCDFDataset::CreateMultiDimensional( const char * pszFilename,
     }
 
     auto poSharedResources(std::make_shared<netCDFSharedResources>());
+    poSharedResources->m_osFilename = pszFilename;
     poSharedResources->m_cdfid = cdfid;
     poSharedResources->m_bReadOnly = false;
     poSharedResources->m_bDefineMode = true;

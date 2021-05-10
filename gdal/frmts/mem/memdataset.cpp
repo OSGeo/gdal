@@ -1700,6 +1700,7 @@ class MEMMDArray final: public MEMAbstractMDArray, public GDALMDArray
     bool m_bHasOffset = false;
     GDALDataType m_eOffsetStorageType = GDT_Unknown;
     GDALDataType m_eScaleStorageType = GDT_Unknown;
+    std::string m_osFilename{};
 
 protected:
     MEMMDArray(const std::string& osParentName,
@@ -1721,6 +1722,8 @@ public:
     ~MEMMDArray();
 
     bool IsWritable() const override { return true; }
+
+    const std::string& GetFilename() const override { return m_osFilename; }
 
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override;
 

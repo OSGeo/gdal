@@ -3080,6 +3080,11 @@ class MDArray(_object):
         return _gdal.MDArray_GetResampled(self, *args)
 
 
+    def Cache(self, *args):
+        """Cache(MDArray self, char ** options=None) -> bool"""
+        return _gdal.MDArray_Cache(self, *args)
+
+
     def Read(self,
              array_start_idx = None,
              count = None,

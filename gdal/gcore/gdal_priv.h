@@ -2154,7 +2154,7 @@ public:
                                  FuncProcessPerChunkType pfnFunc,
                                  void* pUserData);
 
-    bool Read(const GUInt64* arrayStartIdx,     // array of size GetDimensionCount()
+    virtual bool Read(const GUInt64* arrayStartIdx,     // array of size GetDimensionCount()
                       const size_t* count,                 // array of size GetDimensionCount()
                       const GInt64* arrayStep,        // step in elements
                       const GPtrDiff_t* bufferStride, // stride in elements
@@ -2378,6 +2378,9 @@ class CPL_DLL GDALMDArray: virtual public GDALAbstractMDArray, public GDALIHasAt
                         double dfMean, double dfStdDev,
                         GUInt64 nValidCount );
 
+    mutable bool m_bHasTriedCachedArray = false;
+    mutable std::shared_ptr<GDALMDArray> m_poCachedArray{};
+
 protected:
 //! @cond Doxygen_Suppress
     GDALMDArray(const std::string& osParentName, const std::string& osName);
@@ -2399,8 +2402,15 @@ public:
                           GDALProgressFunc pfnProgress,
                           void * pProgressData);
 
-    /** Return whether an array is writable; */
+    /** Return whether an array is writable. */
     virtual bool IsWritable() const = 0;
+
+    /** Return the filename that contains that array.
+     *
+     * This is used in particular for caching.
+     *
+     * Might be empty if the array is not linked to a file. */
+    virtual const std::string& GetFilename() const = 0;
 
     virtual CSLConstList GetStructuralInfo() const;
 
@@ -2488,6 +2498,17 @@ public:
     bool GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint,
                            double adfGeoTransform[6]) const;
 
+    bool Cache( CSLConstList papszOptions = nullptr ) const;
+
+    bool Read(const GUInt64* arrayStartIdx,     // array of size GetDimensionCount()
+                      const size_t* count,                 // array of size GetDimensionCount()
+                      const GInt64* arrayStep,        // step in elements
+                      const GPtrDiff_t* bufferStride, // stride in elements
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer,
+                      const void* pDstBufferAllocStart = nullptr,
+                      size_t nDstBufferAllocSize = 0) const override final;
+
 //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
 
@@ -2547,6 +2568,7 @@ class CPL_DLL GDALMDArrayRegularlySpaced: public GDALMDArray
     GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
     std::vector<std::shared_ptr<GDALDimension>> m_dims;
     std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
+    std::string m_osEmptyFilename{};
 
 protected:
 
@@ -2566,6 +2588,8 @@ public:
                 double dfOffsetInIncrement);
 
     bool IsWritable() const override { return false; }
+
+    const std::string& GetFilename() const override { return m_osEmptyFilename; }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override;
 

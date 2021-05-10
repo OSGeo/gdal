@@ -1635,6 +1635,7 @@ GDALMDArrayH CPL_DLL GDALMDArrayGetResampled(GDALMDArrayH hArray,
                                      CSLConstList papszOptions);
 GDALMDArrayH CPL_DLL* GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray, size_t *pnCount) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL GDALReleaseArrays(GDALMDArrayH* arrays, size_t nCount);
+int CPL_DLL GDALMDArrayCache( GDALMDArrayH hArray, CSLConstList papszOptions );
 
 void CPL_DLL GDALAttributeRelease(GDALAttributeH hAttr);
 void CPL_DLL GDALReleaseAttributes(GDALAttributeH* attributes, size_t nCount);

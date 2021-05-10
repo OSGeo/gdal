@@ -1241,6 +1241,7 @@ struct GRIBSharedResource
     VSILFILE* m_fp = nullptr;
     vsi_l_offset m_nOffsetCurData = static_cast<vsi_l_offset>(-1);
     std::vector<double> m_adfCurData{};
+    std::string m_osFilename;
 
     explicit GRIBSharedResource(VSILFILE* fp) : m_fp(fp) {}
 
@@ -1336,6 +1337,8 @@ public:
     void Finalize(GRIBGroup* poGroup, inventoryType *psInv);
 
     bool IsWritable() const override { return false; }
+
+    const std::string& GetFilename() const override { return m_poShared->m_osFilename; }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
@@ -1864,6 +1867,7 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 
 {
     auto poShared = std::make_shared<GRIBSharedResource>(poOpenInfo->fpL);
+    poShared->m_osFilename = poOpenInfo->pszFilename;
     auto poRootGroup = std::make_shared<GRIBGroup>(poShared);
     poOpenInfo->fpL = nullptr;
 

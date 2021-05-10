@@ -7087,6 +7087,7 @@ class GDALMDArrayFromRasterBand final: public GDALMDArray
     std::vector<GByte> m_pabyNoData{};
     std::shared_ptr<GDALMDArray> m_varX{};
     std::shared_ptr<GDALMDArray> m_varY{};
+    std::string m_osFilename{};
 
     bool ReadWrite(GDALRWFlag eRWFlag,
                     const GUInt64* arrayStartIdx,
@@ -7108,7 +7109,8 @@ protected:
         m_poDS(poDS),
         m_poBand(poBand),
         m_dt(GDALExtendedDataType::Create(poBand->GetRasterDataType())),
-        m_osUnit( poBand->GetUnitType() )
+        m_osUnit( poBand->GetUnitType() ),
+        m_osFilename(poDS->GetDescription())
     {
         m_poDS->Reference();
 
@@ -7222,6 +7224,8 @@ public:
     }
 
     bool IsWritable() const override { return m_poDS->GetAccess() == GA_Update; }
+
+    const std::string& GetFilename() const override { return m_osFilename; }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 

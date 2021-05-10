@@ -109,6 +109,8 @@ public:
     HDF5SharedResources() = default;
     ~HDF5SharedResources();
 
+    const std::string& GetFilename() const { return m_osFilename; }
+
     inline hid_t GetHDF5() const { return m_hHDF5; }
     inline bool IsReadOnly() const { return m_bReadOnly; }
 };
