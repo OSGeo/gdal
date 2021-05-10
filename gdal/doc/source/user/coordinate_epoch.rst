@@ -301,3 +301,18 @@ from the source SRS when no SRS related options are specified.
 
 :program:`gdalwarp` preserves the coordinate epoch in the output SRS when appropriate.
 
+
+Support in coordinate transformation
+------------------------------------
+
+The :cpp:class:`OGRCoordinateTransformation` class can perform time-dependent
+transformations between a static and dynamic CRS based on the coordinate epoch
+passed per vertex.
+
+It can also take into account the coordinate epoch associated with a dynamic
+CRS, when doing time-dependent transformations between a static and dynamic CRS.
+If a per-vertex time is specified, it overrides the one associated with the CRS.
+
+Note that dynamic CRS to dynamic CRS transformations are not supported currently.
+
+
