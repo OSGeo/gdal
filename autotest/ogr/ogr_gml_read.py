@@ -796,7 +796,8 @@ def test_ogr_gml_20():
 # Test writing GML3
 
 
-def test_ogr_gml_21(frmt='GML3'):
+@pytest.mark.parametrize('frmt', ['GML3', 'GML3Deegree', 'GML3.2'])
+def test_ogr_gml_21(frmt):
 
     if not gdaltest.have_gml_reader:
         pytest.skip()
@@ -874,14 +875,6 @@ def test_ogr_gml_21(frmt='GML3'):
         line2 = f2.readline()
     f1.close()
     f2.close()
-
-
-def test_ogr_gml_21_deegree3():
-    return test_ogr_gml_21('GML3Deegree')
-
-
-def test_ogr_gml_21_gml32():
-    return test_ogr_gml_21('GML3.2')
 
 ###############################################################################
 # Read a OpenLS DetermineRouteResponse document
@@ -3822,3 +3815,49 @@ def test_ogr_gml_aixm_elevated_surface():
 
     ds = None
     gdal.Unlink('data/gml/aixm_ElevatedSurface.gfs')
+
+
+###############################################################################
+# Test support for XML comment srsName="" in .xsd
+
+
+@pytest.mark.parametrize('gml_format', ['GML2','GML3','GML3.2'])
+def test_ogr_gml_srs_name_in_xsd(gml_format):
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    filename = '/vsimem/test_ogr_gml_srs_name_in_xsd.gml'
+    xsdfilename = filename[0:-4] + '.xsd'
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource(filename, options=['FORMAT='+gml_format])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbMultiPolygon)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('MULTIPOLYGON (((2 49,2 50,3 50,2 49)))'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    f = gdal.VSIFOpenL(xsdfilename, 'rb')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    if gml_format == 'GML2':
+        assert b'<!-- srsName="EPSG:4326" -->' in data
+    else:
+        assert b'<!-- srsName="urn:ogc:def:crs:EPSG::4326" -->' in data
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '4326'
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == 'MULTIPOLYGON (((2 49,2 50,3 50,2 49)))'
+    f = None
+    ds = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(xsdfilename)
