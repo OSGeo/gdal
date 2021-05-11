@@ -1069,6 +1069,8 @@ OCTNewCoordinateTransformationEx( OGRSpatialReferenceH hSourceSRS,
                                   OGRSpatialReferenceH hTargetSRS,
                                   OGRCoordinateTransformationOptionsH hOptions );
 
+OGRCoordinateTransformationH CPL_DLL OCTClone(OGRCoordinateTransformationH hTransform);
+
 void CPL_DLL CPL_STDCALL
       OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
 

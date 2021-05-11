@@ -256,4 +256,100 @@ namespace tut
         ensure_approx_equals( y, 200.0 );
     }
 
+    // Test OGRCoordinateTransformation::Clone()
+    static void test_clone(OGRCoordinateTransformation* poCT,
+                           OGRSpatialReference* poSRSSource,
+                           OGRSpatialReference* poSRSTarget,
+                           const double xSrc, const double ySrc)
+    {
+        ensure(poCT != nullptr);
+        ensure((poCT->GetSourceCS() == nullptr) == 
+               (poSRSSource == nullptr) );
+        if(poSRSSource != nullptr)
+        {
+            ensure(poCT->GetSourceCS()->IsSame(poSRSSource));
+        }
+        ensure((poCT->GetTargetCS() == nullptr) == 
+               (poSRSTarget == nullptr));
+        if(poSRSTarget != nullptr)
+        {
+            ensure(poCT->GetTargetCS()->IsSame(poSRSTarget));
+        }
+        double x = xSrc;
+        double y = ySrc;
+        ensure(poCT->Transform(1, &x, &y));
+        const double xTransformed = x;
+        const double yTransformed = y;
+
+        auto poClone =std::unique_ptr<OGRCoordinateTransformation>(
+            poCT->Clone());
+        ensure(poClone != nullptr );
+        ensure((poClone->GetSourceCS() == nullptr) == 
+               (poSRSSource == nullptr));
+        if(poSRSSource != nullptr)
+        {
+            ensure(poClone->GetSourceCS()->IsSame(poSRSSource));
+        }
+        ensure((poClone->GetTargetCS() == nullptr) == 
+               (poSRSTarget == nullptr));
+        if(poSRSTarget != nullptr)
+        {
+            ensure(poClone->GetTargetCS()->IsSame(poSRSTarget));
+        }
+        x = xSrc;
+        y = ySrc;
+        ensure(poClone->Transform(1, &x, &y));
+        ensure(abs(x - xTransformed) < 1e-15);
+        ensure(abs(y - yTransformed) < 1e-15);
+    }
+    
+    // Test OGRCoordinateTransformation::Clone() with usual case
+    template<>
+    template<>
+    void object::test<6>()
+    {
+        OGRSpatialReference oSRSSource;
+        oSRSSource.importFromEPSG(4267);
+        oSRSSource.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        OGRSpatialReference oSRSTarget;
+        oSRSTarget.importFromEPSG(4269);
+        oSRSTarget.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(&oSRSSource, &oSRSTarget));
+
+        test_clone(poCT.get(), &oSRSSource, &oSRSTarget, 44, -60);
+    }
+
+    // Test OGRCoordinateTransformation::Clone() with a specified coordinate operation
+    template<>
+    template<>
+    void object::test<7>()
+    {
+        OGRCoordinateTransformationOptions options;
+        options.SetCoordinateOperation("+proj=affine +xoff=10", false);
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(nullptr, nullptr, options));
+
+        test_clone(poCT.get(), nullptr, nullptr, 90, 200);
+    }
+    // Test OGRCoordinateTransformation::Clone() with WebMercator->WGS84 special case
+    template<>
+    template<>
+    void object::test<8>()
+    {
+        OGRSpatialReference oSRSSource;
+        oSRSSource.importFromEPSG(3857);
+        oSRSSource.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        OGRSpatialReference oSRSTarget;
+        oSRSTarget.SetWellKnownGeogCS("WGS84");
+        oSRSTarget.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(&oSRSSource, &oSRSTarget));
+
+        test_clone(poCT.get(), &oSRSSource, &oSRSTarget, 44, -60);
+    }
 } // namespace tut

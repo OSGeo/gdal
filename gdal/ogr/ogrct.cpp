@@ -93,10 +93,6 @@ class OGRProjCT;
 // type to be inserted in the cache (shared_ptr), and we need to be able to
 // alter the content of the value to release() the unique_ptr value when we
 // find a value in it.
-// In a future improvement (notably to help for the multi-threaded warping),
-// we could let the cached value in the cache and clone it, but for now clone,
-// just instantiates a new OGRProjCT from scratch. The clone method should be
-// improved to do things similar to GetInverse().
 typedef std::string CTCacheKey;
 typedef std::shared_ptr<std::unique_ptr<OGRProjCT>> CTCacheValue;
 static lru11::Cache<CTCacheKey, CTCacheValue>* g_poCTCache = nullptr;
@@ -528,6 +524,58 @@ int OCTCoordinateTransformationOptionsSetBallparkAllowed(
 //! @cond Doxygen_Suppress
 class OGRProjCT : public OGRCoordinateTransformation
 {
+    class PjPtr
+    {
+        PJ* m_pj = nullptr;
+        void reset()
+        {
+            if( m_pj )
+            {
+                proj_assign_context(m_pj, OSRGetProjTLSContext());
+                proj_destroy(m_pj);
+            }
+        }
+    public:
+        PjPtr() : m_pj(nullptr){}
+        explicit PjPtr(PJ* pjIn) : m_pj(pjIn){}
+        ~PjPtr()
+        {
+            reset();
+        }
+        PjPtr(const PjPtr& other) :
+            m_pj((other.m_pj != nullptr) ? 
+                 (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : 
+                 (nullptr))
+        {}
+        PjPtr(PjPtr&& other) :
+            m_pj(other.m_pj)
+        {
+            other.m_pj = nullptr;
+        }
+        PjPtr& operator=(const PjPtr& other)
+        {
+            if(this != &other)
+            {
+                reset();
+                m_pj = (other.m_pj != nullptr) ? 
+                       (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : 
+                       (nullptr);
+            }
+            return *this;
+        }
+        PjPtr& operator=(PJ* pjIn)
+        {
+            if(m_pj != pjIn)
+            {
+                reset();
+                m_pj = pjIn;
+            }
+            return *this;
+        }
+        operator PJ* () { return m_pj; }
+        operator const PJ* () const{ return m_pj; }
+    };
+
     OGRSpatialReference *poSRSSource = nullptr;
     bool        bSourceLatLong = false;
     bool        bSourceWrap = false;
@@ -544,7 +592,7 @@ class OGRProjCT : public OGRCoordinateTransformation
 
     double      dfThreshold = 0.0;
 
-    PJ*         m_pj = nullptr;
+    PjPtr       m_pj{};
     bool        m_bReversePj = false;
 
     bool        m_bEmitErrors = true;
@@ -566,14 +614,13 @@ class OGRProjCT : public OGRCoordinateTransformation
     bool        ListCoordinateOperations(const char* pszSrcSRS,
                                          const char* pszTargetSRS,
                                          const OGRCoordinateTransformationOptions& options );
-
     struct Transformation
     {
         double minx = 0.0;
         double miny = 0.0;
         double maxx = 0.0;
         double maxy = 0.0;
-        PJ* pj = nullptr;
+        PjPtr  pj{};
         CPLString osName{};
         CPLString osProjString{};
         double accuracy = 0.0;
@@ -586,26 +633,6 @@ class OGRProjCT : public OGRCoordinateTransformation
             minx(minxIn), miny(minyIn), maxx(maxxIn), maxy(maxyIn),
             pj(pjIn), osName(osNameIn), osProjString(osProjStringIn),
             accuracy(accuracyIn) {}
-
-        Transformation(const Transformation&) = delete;
-        Transformation(Transformation&& other):
-            minx(other.minx), miny(other.miny), maxx(other.maxx), maxy(other.maxy),
-            pj(other.pj), osName(std::move(other.osName)),
-            osProjString(std::move(other.osProjString)),
-            accuracy(other.accuracy)
-        {
-            other.pj = nullptr;
-        }
-        Transformation& operator=(const Transformation&) = delete;
-
-        ~Transformation()
-        {
-            if( pj )
-            {
-                proj_assign_context(pj, OSRGetProjTLSContext());
-                proj_destroy(pj);
-            }
-        }
     };
     std::vector<Transformation> m_oTransformations{};
     int m_iCurTransformation = -1;
@@ -613,10 +640,7 @@ class OGRProjCT : public OGRCoordinateTransformation
 
     void ComputeThreshold();
 
-    OGRProjCT(const OGRProjCT& other)
-    {
-        Initialize(other.poSRSSource, other.poSRSTarget, other.m_options);
-    }
+    OGRProjCT(const OGRProjCT& other);
     OGRProjCT& operator= (const OGRProjCT& ) = delete;
 
     static CTCacheKey MakeCacheKey(const OGRSpatialReference* poSRS1,
@@ -646,9 +670,7 @@ public:
     void SetEmitErrors( bool bEmitErrors ) override
         { m_bEmitErrors = bEmitErrors; }
 
-    OGRCoordinateTransformation* Clone() const override {
-        return new OGRProjCT(*this);
-    }
+    OGRCoordinateTransformation* Clone() const override;
 
     OGRCoordinateTransformation* GetInverse() const override;
 
@@ -918,11 +940,60 @@ OCTNewCoordinateTransformationEx(
 }
 
 /************************************************************************/
+/*                              OCTClone()                              */
+/************************************************************************/
+
+/**
+ * Clone transformation object.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::Clone
+
+ * @since GDAL 3.4
+ */
+
+OGRCoordinateTransformationH
+OCTClone(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTClone", nullptr );
+    return OGRCoordinateTransformation::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->Clone());
+}
+
+/************************************************************************/
 /*                             OGRProjCT()                             */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
 OGRProjCT::OGRProjCT()
+{
+}
+
+/************************************************************************/
+/*                  OGRProjCT(const OGRProjCT& other)                   */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+OGRProjCT::OGRProjCT(const OGRProjCT& other) :
+    poSRSSource((other.poSRSSource != nullptr) ? (other.poSRSSource->Clone()) : (nullptr)),
+    bSourceLatLong(other.bSourceLatLong),
+    bSourceWrap(other.bSourceWrap),
+    dfSourceWrapLong(other.dfSourceWrapLong),
+    poSRSTarget((other.poSRSTarget != nullptr) ? (other.poSRSTarget->Clone()) : (nullptr)),
+    bTargetLatLong(other.bTargetLatLong),
+    bTargetWrap(other.bTargetWrap),
+    dfTargetWrapLong(other.dfTargetWrapLong),
+    bWebMercatorToWGS84LongLat(other.bWebMercatorToWGS84LongLat),
+    nErrorCount(other.nErrorCount),
+    dfThreshold(other.dfThreshold),
+    m_pj(other.m_pj),
+    m_bReversePj(other.m_bReversePj),
+    m_bEmitErrors(other.m_bEmitErrors),
+    bNoTransform(other.bNoTransform),
+    m_eStrategy(other.m_eStrategy),
+    m_oTransformations(other.m_oTransformations),
+    m_iCurTransformation(other.m_iCurTransformation),
+    m_options(other.m_options)
 {
 }
 
@@ -941,12 +1012,6 @@ OGRProjCT::~OGRProjCT()
     if( poSRSTarget != nullptr )
     {
         poSRSTarget->Release();
-    }
-
-    if( m_pj )
-    {
-        proj_assign_context(m_pj, OSRGetProjTLSContext());
-        proj_destroy(m_pj);
     }
 }
 
@@ -2063,7 +2128,7 @@ int OGRProjCT::TransformWithErrorCodes(
 /* -------------------------------------------------------------------- */
 
     auto ctx = OSRGetProjTLSContext();
-    auto pj = m_pj;
+    PJ* pj = m_pj;
     if( !bTransformDone && !pj )
     {
         double avgX = 0.0;
@@ -2128,7 +2193,7 @@ int OGRProjCT::TransformWithErrorCodes(
             {
                 break;
             }
-            const auto& transf = m_oTransformations[iBestTransf];
+            auto& transf = m_oTransformations[iBestTransf];
             pj = transf.pj;
             proj_assign_context( pj, ctx );
             if( iBestTransf != m_iCurTransformation )
@@ -2160,7 +2225,7 @@ int OGRProjCT::TransformWithErrorCodes(
             // use the first operation that does not require grids.
             for( int i = 0; i < nOperations; i++ )
             {
-                const auto& transf = m_oTransformations[i];
+                auto& transf = m_oTransformations[i];
                 if( proj_coordoperation_get_grid_used_count(ctx, transf.pj) == 0 )
                 {
                     pj = transf.pj;
@@ -2397,6 +2462,30 @@ int OGRProjCT::TransformWithErrorCodes(
 #endif
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+OGRCoordinateTransformation* OGRProjCT::Clone() const
+{
+     std::unique_ptr<OGRProjCT> poNewCT(new OGRProjCT(*this));
+#if (PROJ_VERSION_MAJOR * 10000 + PROJ_VERSION_MINOR * 100 + PROJ_VERSION_PATCH) < 80001
+    // See https://github.com/OSGeo/PROJ/pull/2582
+    // This may fail before PROJ 8.0.1 if the m_pj object is a "meta"
+    // operation being a set of real operations
+    bool bCloneDone = ((m_pj == nullptr) == (poNewCT->m_pj == nullptr));
+    if(!bCloneDone)
+    {
+        poNewCT.reset(new OGRProjCT());
+        if(!poNewCT->Initialize(poSRSSource, poSRSTarget, m_options))
+        {
+            return nullptr;
+        }
+    }
+#endif //PROJ_VERSION
+    return poNewCT.release();
 }
 
 /************************************************************************/
