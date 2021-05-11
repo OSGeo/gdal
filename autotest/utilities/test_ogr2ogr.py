@@ -962,7 +962,7 @@ def test_ogr2ogr_29():
 
         assert ret == 0
 
-    
+
 ###############################################################################
 # Test -splitlistfields option
 
@@ -1471,13 +1471,13 @@ def test_ogr2ogr_44():
     data = f.read()
     f.close()
 
-    assert data.find('type="gml:MultiPolygonPropertyType"') != -1
+    assert 'type="gml:MultiSurfacePropertyType"' in data
 
     f = open('tmp/test_ogr2ogr_44.gml')
     data = f.read()
     f.close()
 
-    assert data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') != -1
+    assert '<gml:MultiSurface gml:id="test_ogr2ogr_44_src.geom.0"><gml:surfaceMember><gml:Polygon gml:id="test_ogr2ogr_44_src.geom.0.0"><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>' in data
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
     os.unlink('tmp/test_ogr2ogr_44.gml')
@@ -1517,13 +1517,13 @@ def test_ogr2ogr_45():
     data = f.read()
     f.close()
 
-    assert data.find('type="gml:MultiLineStringPropertyType"') != -1
+    assert 'type="gml:MultiCurvePropertyType"' in data
 
     f = open('tmp/test_ogr2ogr_45.gml')
     data = f.read()
     f.close()
 
-    assert data.find('<ogr:geometryProperty><gml:MultiLineString><gml:lineStringMember><gml:LineString><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LineString></gml:lineStringMember></gml:MultiLineString></ogr:geometryProperty>') != -1
+    assert '<gml:MultiCurve gml:id="test_ogr2ogr_45_src.geom.0"><gml:curveMember><gml:LineString gml:id="test_ogr2ogr_45_src.geom.0.0"><gml:posList>0 0 0 1 1 1 0 0</gml:posList></gml:LineString></gml:curveMember></gml:MultiCurve>' in data
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_45_src.shp')
     os.unlink('tmp/test_ogr2ogr_45.gml')
@@ -1558,16 +1558,16 @@ def test_ogr2ogr_46():
     ds = None
 
     for option in ['', ' -tps', ' -order 1', ' -a_srs EPSG:4326', ' -s_srs EPSG:4326 -t_srs EPSG:3857']:
-        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/test_ogr2ogr_46.gml tmp/test_ogr2ogr_46_src.shp -gcp 0 0 2 49 -gcp 0 1 2 50 -gcp 1 0 3 49%s' % option)
+        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_46.gml tmp/test_ogr2ogr_46_src.shp -gcp 0 0 2 49 -gcp 0 1 2 50 -gcp 1 0 3 49%s' % option)
 
         f = open('tmp/test_ogr2ogr_46.gml')
         data = f.read()
         f.close()
 
-        assert not (data.find('2,49') == -1 and data.find('2.0,49.0') == -1 and data.find('222638.') == -1), \
+        assert not ('2,49' not in data and '2.0,49.0' not in data and '222638.' not in data), \
             option
 
-        assert not (data.find('3,50') == -1 and data.find('3.0,50.0') == -1 and data.find('333958.') == -1), \
+        assert not ('3,50' not in data and '3.0,50.0' not in data and '333958.' not in data), \
             option
 
         os.unlink('tmp/test_ogr2ogr_46.gml')
@@ -1616,7 +1616,7 @@ def test_ogr2ogr_47():
         pytest.skip()
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML -t_srs EPSG:4326 tmp/test_ogr2ogr_47_dst.gml tmp/test_ogr2ogr_47_src.gml')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML -dsco FORMAT=GML2 -t_srs EPSG:4326 tmp/test_ogr2ogr_47_dst.gml tmp/test_ogr2ogr_47_src.gml')
 
     f = open('tmp/test_ogr2ogr_47_dst.gml')
     data = f.read()
@@ -1721,7 +1721,7 @@ def test_ogr2ogr_49_bis():
     for i, line in enumerate(lines):
         assert line.strip() == expected_lines[i].strip(), lines
 
-    
+
 ###############################################################################
 # Test -addfields
 
@@ -2348,7 +2348,7 @@ def test_ogr2ogr_65():
         print(ret)
         pytest.fail('expected a warning about probably wrong extension')
 
-    
+
 ###############################################################################
 # Test accidental overriding of dataset when dst and src filenames are the same (#1465)
 
