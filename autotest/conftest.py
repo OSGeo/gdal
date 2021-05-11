@@ -44,10 +44,11 @@ def chdir_to_test_file(request):
     """
     old = os.getcwd()
 
-    os.chdir(os.path.dirname(request.module.__file__))
-    sys.path.insert(0, ".")
+    new_cwd = os.path.dirname(request.module.__file__)
+    os.chdir(new_cwd)
+    sys.path.insert(0, new_cwd)
     yield
-    if sys.path and sys.path[0] == ".":
+    if sys.path and sys.path[0] == new_cwd:
         sys.path.pop(0)
     os.chdir(old)
 
