@@ -125,8 +125,7 @@ def get_transform(src_srs: AnySRS, tgt_srs: AnySRS) -> Optional[osr.CoordinateTr
 
 
 def transform_points(ct: Optional[osr.CoordinateTransformation],
-                     x: ArrayLike, y: ArrayLike, z: Optional[ArrayLike] = None) -> \
-                     Tuple[ArrayLike, ArrayLike, Optional[ArrayLike]]:
+                     x: ArrayLike, y: ArrayLike, z: Optional[ArrayLike] = None) -> None:
     if ct is not None:
         if z is None:
             for idx, (x0, y0) in enumerate(zip(x, y)):
@@ -134,4 +133,3 @@ def transform_points(ct: Optional[osr.CoordinateTransformation],
         else:
             for idx, (x0, y0, z0) in enumerate(zip(x, y, z)):
                 x[idx], y[idx], z[idx] = ct.TransformPoint(x0, y0, z0)
-    return x, y, z
