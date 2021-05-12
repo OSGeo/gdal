@@ -38,6 +38,7 @@ from typing import Union, Sequence, Optional, Tuple
 
 import numpy as np
 from osgeo import gdalconst, osr, gdal
+from osgeo.gdal_array import BandRasterIONumPy
 
 from osgeo_utils.auxiliary.base import is_path_like
 from osgeo_utils.auxiliary.array_util import ArrayLike, ArrayOrScalarLike
@@ -69,16 +70,19 @@ CoordinateTransformationOrSRS = Optional[
 
 def gdallocationinfo(filename_or_ds: PathOrDS,
                      x: ArrayOrScalarLike, y: ArrayOrScalarLike,
+                     srs: CoordinateTransformationOrSRS = None,
                      axis_order: Optional[OAMS_AXIS_ORDER] = None,
                      open_options: Optional[dict] = None,
                      ovr_idx: Optional[int] = None,
                      band_nums: Optional[Sequence[int]] = None,
-                     srs: CoordinateTransformationOrSRS = None,
-                     inline_xy_replacement: bool = True, quiet_mode: bool = True,
+                     inline_xy_replacement: bool = False,
+                     return_ovr_pixel_line: bool = False,
+                     transform_round_digits: Optional[float] = None,
                      allow_xy_outside_extent: bool = True,
                      pixel_offset: Real = -0.5, line_offset: Real = -0.5,
-                     resample_alg=gdalconst.GRIORA_NearestNeighbour) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-
+                     resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                     quiet_mode: bool = True,
+                     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     ds = open_ds(filename_or_ds, open_options=open_options)
     filename = filename_or_ds if is_path_like(filename_or_ds) else ''
     if ds is None:
@@ -91,10 +95,11 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
         raise Exception(f'len(x)={len(x)} should be the same as len(y)={len(y)}')
     point_count = len(x)
 
-    if not isinstance(x, np.ndarray):
-        x = np.array(x)
-    if not isinstance(y, np.ndarray):
-        y = np.array(y)
+    dtype = np.float64
+    if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
+        x = np.array(x, dtype=dtype)
+        y = np.array(y, dtype=dtype)
+        inline_xy_replacement = True
 
     if srs is None:
         srs = LocationInfoSRS.PixelLine
@@ -112,17 +117,27 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
                 else:
                     points_srs = get_srs(srs, axis_order=axis_order)
                 ct = get_transform(points_srs, ds_srs)
-            x, y, _z = transform_points(ct, x, y)
+            if ct is not None:
+                if not inline_xy_replacement:
+                    x = x.copy()
+                    y = y.copy()
+                    inline_xy_replacement = True
+                transform_points(ct, x, y)
+                if transform_round_digits is not None:
+                    x.round(transform_round_digits, out=x)
+                    y.round(transform_round_digits, out=y)
 
         # Read geotransform matrix and calculate corresponding pixel coordinates
-        geomatrix = ds.GetGeoTransform()
-        inv_geometrix = gdal.InvGeoTransform(geomatrix)
-        if inv_geometrix is None:
+        geotransform = ds.GetGeoTransform()
+        inv_geotransform = gdal.InvGeoTransform(geotransform)
+        if inv_geotransform is None:
             raise Exception("Failed InvGeoTransform()")
 
+        # can we inline this transformation ?
         x, y = \
-            (inv_geometrix[0] + inv_geometrix[1] * x + inv_geometrix[2] * y), \
-            (inv_geometrix[3] + inv_geometrix[4] * x + inv_geometrix[5] * y)
+            (inv_geotransform[0] + inv_geotransform[1] * x + inv_geotransform[2] * y), \
+            (inv_geotransform[3] + inv_geotransform[4] * x + inv_geotransform[5] * y)
+        inline_xy_replacement = True
 
     xsize, ysize = ds.RasterXSize, ds.RasterYSize
     bands = get_bands(ds, band_nums, ovr_idx=ovr_idx)
@@ -142,31 +157,45 @@ def gdallocationinfo(filename_or_ds: PathOrDS,
         elif not quiet_mode:
             print(msg)
 
-    pixels = np.clip(x * pixel_fact + pixel_offset, 0, ovr_xsize - 1, out=x if inline_xy_replacement else None)
-    lines = np.clip(y * line_fact + line_offset, 0, ovr_ysize - 1, out=y if inline_xy_replacement else None)
+    if pixel_fact == 1:
+        pixels_q = x
+    elif return_ovr_pixel_line:
+        x *= pixel_fact
+        pixels_q = x
+    else:
+        pixels_q = x * pixel_fact
 
-    for idx, (pixel, line) in enumerate(zip(pixels, lines)):
+    if line_fact == 1:
+        lines_q = y
+    elif return_ovr_pixel_line:
+        y *= line_fact
+        lines_q = y
+    else:
+        lines_q = y * line_fact
+
+    buf_xsize = buf_ysize = 1
+    buf_type, typecode = GDALTypeCodeAndNumericTypeCodeFromDataSet(ds)
+    buf_obj = np.empty([buf_ysize, buf_xsize], dtype=typecode)
+
+    for idx, (pixel, line) in enumerate(zip(pixels_q, lines_q)):
         for bnd_idx, band in enumerate(bands):
-            val = band.ReadAsArray(
-                pixel, line,
-                1, 1, resample_alg=resample_alg)
-            val = val[0][0]
-            results[bnd_idx][idx] = val
+            if BandRasterIONumPy(band, 0, pixel-0.5, line-0.5, 1, 1, buf_obj, buf_type, resample_alg, None, None) == 0:
+                results[bnd_idx][idx] = buf_obj[0][0]
 
     is_scaled, scales, offsets = get_scales_and_offsets(bands)
     if is_scaled:
-        for bnd_idx, scale, offset in enumerate(zip(scales, offsets)):
+        for bnd_idx, (scale, offset) in enumerate(zip(scales, offsets)):
             results[bnd_idx] = results[bnd_idx] * scale + offset
 
-    return pixels, lines, results
+    return x, y, results
 
 
 def gdallocationinfo_util(filename_or_ds: PathOrDS,
-                     x: ArrayOrScalarLike, y: ArrayOrScalarLike,
-                     open_options: Optional[dict] = None,
-                     band_nums: Optional[Sequence[int]] = None,
-                     resample_alg=gdalconst.GRIORA_NearestNeighbour,
-                     output_mode: Optional[LocationInfoOutput] = None, **kwargs):
+                          x: ArrayOrScalarLike, y: ArrayOrScalarLike,
+                          open_options: Optional[dict] = None,
+                          band_nums: Optional[Sequence[int]] = None,
+                          resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                          output_mode: Optional[LocationInfoOutput] = None, **kwargs):
     if output_mode is None:
         output_mode = LocationInfoOutput.Quiet
     if output_mode in [LocationInfoOutput.XML, LocationInfoOutput.LifOnly]:
@@ -235,10 +264,10 @@ def val_at_coord(filename: str,
         (X, Y, height) = ct.TransformPoint(longitude, latitude)
 
     # Read geotransform matrix and calculate corresponding pixel coordinates
-    geomatrix = ds.GetGeoTransform()
-    (success, inv_geometrix) = gdal.InvGeoTransform(geomatrix)
-    x = int(inv_geometrix[0] + inv_geometrix[1] * X + inv_geometrix[2] * Y)
-    y = int(inv_geometrix[3] + inv_geometrix[4] * X + inv_geometrix[5] * Y)
+    geotransform = ds.GetGeoTransform()
+    (success, inv_geotransform) = gdal.InvGeoTransform(geotransform)
+    x = int(inv_geotransform[0] + inv_geotransform[1] * X + inv_geotransform[2] * Y)
+    y = int(inv_geotransform[3] + inv_geotransform[4] * X + inv_geotransform[5] * Y)
 
     if print_xy:
         print('x=%d, y=%d' % (x, y))
