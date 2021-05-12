@@ -32,8 +32,9 @@
 import os
 from numbers import Real
 from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator, List
+from warnings import warn
 
-from osgeo import gdal
+from osgeo import gdal, __version__ as gdal_version_str
 from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLikeOrStr, enum_to_str, OptionalBoolStr, \
     is_true, \
     MaybeSequence, T
@@ -41,6 +42,7 @@ from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLikeOrSt
 PathOrDS = Union[PathLikeOrStr, gdal.Dataset]
 DataTypeOrStr = Union[str, int]
 CreationOptions = Optional[Dict[str, Any]]
+gdal_version = tuple(int(s) for s in str(gdal_version_str).split('.') if s.isdigit())[:3]
 
 
 def DoesDriverHandleExtension(drv: gdal.Driver, ext: str) -> bool:
@@ -216,6 +218,7 @@ class OpenDS:
         filename: PathLikeOrStr,
         access_mode=gdal.GA_ReadOnly,
         ovr_idx: Optional[Union[int, float]] = None,
+        ovr_only: bool = False,
         open_options: Optional[Union[Dict[str, str], Sequence[str]]] = None,
         logger=None,
     ):
@@ -226,8 +229,16 @@ class OpenDS:
         else:
             open_options = dict(open_options)
         ovr_idx = get_ovr_idx(filename, ovr_idx)
-        if ovr_idx > 0:
-            open_options["OVERVIEW_LEVEL"] = ovr_idx - 1  # gdal overview 0 is the first overview (after the base layer)
+        # gdal overview 0 is the first overview (after the base layer)
+        if ovr_idx == 0:
+            if ovr_only:
+                if gdal_version >= (3, 3):
+                    open_options["OVERVIEW_LEVEL"] = 'NONE'
+                else:
+                    raise Exception('You asked to not expose overviews, Which is not supported in your gdal version, '
+                                    'please update your gdal version to gdal >= 3.3 or do not ask to hide overviews')
+        else:  # if ovr_idx > 0:
+            open_options["OVERVIEW_LEVEL"] = f'{ovr_idx - 1}{"only" if ovr_only else ""}'
         if logger is not None:
             s = 'opening file: "{}"'.format(filename)
             if open_options:
@@ -326,7 +337,7 @@ def get_ext_by_of(of: str):
     return '.' + ext
 
 
-def get_band_nums(ds: gdal.Dataset, band_nums: MaybeSequence[int] = None):
+def get_band_nums(ds: gdal.Dataset, band_nums: Optional[MaybeSequence[int]] = None):
     if not band_nums:
         band_nums = list(range(1, ds.RasterCount + 1))
     elif isinstance(band_nums, int):
@@ -334,7 +345,7 @@ def get_band_nums(ds: gdal.Dataset, band_nums: MaybeSequence[int] = None):
     return band_nums
 
 
-def get_bands(filename_or_ds: PathOrDS, band_nums: MaybeSequence[int], ovr_idx: Optional[int] = None) -> List[gdal.Band]:
+def get_bands(filename_or_ds: PathOrDS, band_nums: Optional[MaybeSequence[int]] = None, ovr_idx: Optional[int] = None) -> List[gdal.Band]:
     ds = open_ds(filename_or_ds)
     band_nums = get_band_nums(ds, band_nums)
     bands = []
@@ -350,7 +361,9 @@ def get_bands(filename_or_ds: PathOrDS, band_nums: MaybeSequence[int], ovr_idx: 
     return bands
 
 
-def get_scales_and_offsets(bands: MaybeSequence[gdal.Band]) -> Tuple[bool, MaybeSequence[Real], MaybeSequence[Real]]:
+def get_scales_and_offsets(bands: Union[PathOrDS, MaybeSequence[gdal.Band]]) -> Tuple[bool, MaybeSequence[Real], MaybeSequence[Real]]:
+    if isinstance(bands, PathOrDS.__args__):
+        bands = get_bands(bands)
     single_band = not isinstance(bands, Sequence)
     if single_band:
         bands = [bands]
@@ -360,4 +373,3 @@ def get_scales_and_offsets(bands: MaybeSequence[gdal.Band]) -> Tuple[bool, Maybe
     if single_band:
         scales, offsets = scales[0], offsets[0]
     return is_scaled, scales, offsets
-
