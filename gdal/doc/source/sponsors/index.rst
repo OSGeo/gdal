@@ -106,11 +106,15 @@ the health of the project:
 
     .. container:: horizontal-logo
 
-        `Umbra <https://umbra.space/>`__
+        Myles Sutherland
 
     .. container:: horizontal-logo
 
-        Myles Sutherland
+        `Space Intelligence <https://www.space-intelligence.com//>`__
+
+    .. container:: horizontal-logo
+
+        `Umbra <https://umbra.space/>`__
 
 .. raw:: html
 
