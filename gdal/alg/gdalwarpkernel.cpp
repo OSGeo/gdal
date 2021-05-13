@@ -5833,8 +5833,29 @@ static void GWKAverageOrModeThread( void* pData)
         {
             nAlgo = AOM::FloatMode;
 
-            // Cast to size_t to prevent overflow.
-            realVals.resize(static_cast<size_t>(nSrcXSize) * nSrcYSize);
+            // This could be templated and moved somewhere generic. Just here for discussion.
+            auto makeRaster(int xsize, int ysize) -> vector<float>
+            {
+                bool overflow;
+                size_t size = VSICheckMul2(xsize, ysize, &overflow, ...);
+                if (overflow)
+                {
+                    CPLError(CE_Failure, CPLE_Whatever, "Raster too large");
+                    throw std::bad_alloc();
+                }
+                try
+                {
+                    return std::vector<float>(size);
+                }
+                catch (std::bad_alloc& err)
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                        "Insufficient memory for raster allocation.");
+                    throw;
+                }
+            };
+
+            realVals.swap(makeRaster(nSrcXSize, nSrcYSize));
             realSums.resize(static_cast<size_t>(nSrcXSize) * nSrcYSize);
         }
     }
