@@ -112,7 +112,8 @@ API
        Go <https://github.com/lukeroth/gdal>
        Julia <https://github.com/JuliaGeo/GDAL.jl>
        Lua <https://trac.osgeo.org/gdal/wiki/GdalOgrInLua>
-       Node.js <https://github.com/naturalatlas/node-gdal>
+       Original Node.js bindings <https://github.com/naturalatlas/node-gdal>
+       Node.js fork with full Promise-based async and TypeScript support <https://www.npmjs.com/package/gdal-async>
        Perl <https://metacpan.org/release/Geo-GDAL-FFI>
        PHP <http://dl.maptools.org/dl/php_ogr/php_ogr_documentation.html>
        R <http://cran.r-project.org/web/packages/rgdal/index.html>
