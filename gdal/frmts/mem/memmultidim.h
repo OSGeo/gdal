@@ -169,6 +169,7 @@ protected:
                const GDALExtendedDataType& oType);
 
 public:
+    // MEMAbstractMDArray::Init() should be called afterwards
     static std::shared_ptr<MEMMDArray> Create(const std::string& osParentName,
                const std::string& osName,
                const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
@@ -242,16 +243,12 @@ protected:
                  const std::vector<GUInt64>& anDimensions,
                  const GDALExtendedDataType& oType);
 public:
+    // May return nullptr as it calls MEMAbstractMDArray::Init() which can
+    // fail
     static std::shared_ptr<MEMAttribute> Create(const std::string& osParentName,
                                                 const std::string& osName,
                                                 const std::vector<GUInt64>& anDimensions,
-                                                const GDALExtendedDataType& oType)
-    {
-        auto attr(std::shared_ptr<MEMAttribute>(
-            new MEMAttribute(osParentName, osName, anDimensions, oType)));
-        attr->SetSelf(attr);
-        return attr;
-    }
+                                                const GDALExtendedDataType& oType);
 };
 
 #ifdef _MSC_VER

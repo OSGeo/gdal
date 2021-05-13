@@ -1766,7 +1766,7 @@ std::shared_ptr<GDALAttribute> MEMGroup::CreateAttribute(
     auto newAttr(MEMAttribute::Create(
         (GetFullName() == "/" ? "/" : GetFullName() + "/") + "_GLOBAL_",
         osName, anDimensions, oDataType));
-    if( !newAttr->Init() )
+    if( !newAttr )
         return nullptr;
     m_oMapAttributes[osName] = newAttr;
     return newAttr;
@@ -2280,7 +2280,7 @@ std::shared_ptr<GDALAttribute> MEMMDArray::CreateAttribute(
         return nullptr;
     }
     auto newAttr(MEMAttribute::Create(GetFullName(), osName, anDimensions, oDataType));
-    if( !newAttr->Init() )
+    if( !newAttr )
         return nullptr;
     m_oMapAttributes[osName] = newAttr;
     return newAttr;
@@ -2315,6 +2315,23 @@ MEMAttribute::MEMAttribute(const std::string& osParentName,
     MEMAbstractMDArray(osParentName, osName, BuildDimensions(anDimensions), oType),
     GDALAttribute(osParentName, osName)
 {
+}
+
+/************************************************************************/
+/*                        MEMAttribute::Create()                        */
+/************************************************************************/
+
+std::shared_ptr<MEMAttribute> MEMAttribute::Create(const std::string& osParentName,
+                                                const std::string& osName,
+                                                const std::vector<GUInt64>& anDimensions,
+                                                const GDALExtendedDataType& oType)
+{
+    auto attr(std::shared_ptr<MEMAttribute>(
+        new MEMAttribute(osParentName, osName, anDimensions, oType)));
+    attr->SetSelf(attr);
+    if( !attr->Init() )
+        return nullptr;
+    return attr;
 }
 
 /************************************************************************/
