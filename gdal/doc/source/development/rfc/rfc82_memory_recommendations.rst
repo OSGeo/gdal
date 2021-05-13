@@ -32,7 +32,8 @@ When GDAL came into being the C++ standard library either didn't exist or wasn't
 by many vendors. In addition, compilers were less sophisticated and tools to deal with
 memory issues were costly and difficult to use.
 
-Today, all relevant C++ compilers support the C++ standard through C++11 fully. Most support
+Today, all relevant C++ compilers support the C++ standard through C++11 fully and GDAL
+uses C++11 features (see RFC 68) . Most support
 more recent standards as well. This allows the standard libraries to be used where
 previously C-style memory allocation was the norm. This allows GDAL code to be written with
 using a RAII model rather than a malloc/free (new/delete) model in most cases. Because RAII
@@ -60,6 +61,10 @@ acceptable memory handling for changes to existing code and new additions.
 The point is to specify how memory management
 and handling in GDAL should be done if it were to be have been done from scratch in 2021.
 
+Note that some discussion surrounding these issues has taken place in the past. For context
+see this mailing list history, some of which is out of date:
+https://lists.osgeo.org/pipermail/gdal-dev/2016-May/044298.html
+
 Recommendations
 ---------------
 
@@ -77,7 +82,9 @@ Questions
       ownership requirements that are difficult.  Should the API be maintained in
       perpetuity? Should alternative versions of functions be created that help eliminate
       memory errors for users and simplify handling of data structures internally?
-    - Does acceptance of this RFC eliminate the need for RFC 19?
+    - Does acceptance of this RFC supercede RFC 19?
+
+
 
 Voting History
 --------------
