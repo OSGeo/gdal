@@ -851,6 +851,8 @@ def test_twms_wmsmetadriver():
 # This test requires the GIBS server to be available
 def test_twms_GIBS():
 
+    pytest.skip('Failing because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083')
+
     # if not gdaltest.run_slow_tests():
     #     pytest.skip()
     baseURL = "https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"
