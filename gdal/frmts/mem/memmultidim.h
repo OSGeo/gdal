@@ -107,6 +107,9 @@ class MEMAbstractMDArray: virtual public GDALAbstractMDArray
                     const GDALExtendedDataType& srcType,
                     const GDALExtendedDataType& dstType) const;
 
+    MEMAbstractMDArray(const MEMAbstractMDArray&) = delete;
+    MEMAbstractMDArray& operator= (const MEMAbstractMDArray&) = delete;
+
 protected:
     GDALExtendedDataType m_oType;
 
@@ -161,6 +164,9 @@ class MEMMDArray CPL_NON_FINAL: public MEMAbstractMDArray, public GDALMDArray
     GDALDataType m_eOffsetStorageType = GDT_Unknown;
     GDALDataType m_eScaleStorageType = GDT_Unknown;
     std::string m_osFilename{};
+
+    MEMMDArray(const MEMMDArray&) = delete;
+    MEMMDArray& operator= (const MEMMDArray&) = delete;
 
 protected:
     MEMMDArray(const std::string& osParentName,
