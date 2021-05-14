@@ -42,12 +42,12 @@ I386_PACKAGES="zlib1g-dev:i386 libexpat-dev:i386 liblzma-dev:i386 \
               libxerces-c-dev:i386 libpng12-dev:i386 libgif-dev:i386 \
               libwebp-dev:i386 libicu-dev:i386 libnetcdf-dev:i386 \
               libssl-dev:i386 libsqlite3-dev:i386 \
-              libfreetype6-dev:i386 libfontconfig1-dev:i386 libtiff5-dev:i386"
+              libfreetype6-dev:i386 libfontconfig1-dev:i386 libtiff5-dev:i386 libboost-dev:i386"
 X64_PACKAGES="zlib1g-dev libexpat-dev liblzma-dev \
               libxerces-c-dev libpng12-dev libgif-dev \
               libwebp-dev libicu-dev libnetcdf-dev \
               libssl-dev libsqlite3-dev \
-              libfreetype6-dev libfontconfig1-dev libtiff5-dev"
+              libfreetype6-dev libfontconfig1-dev libtiff5-dev libboost-dev"
 
 if [ "$ARCHITECTURE" = "i386" ]; then
     apt-get install -y $I386_PACKAGES
