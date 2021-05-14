@@ -157,6 +157,12 @@ def get_ovr_idx(filename_or_ds: PathOrDS,
                 ovr_idx: Optional[int] = None,
                 ovr_res: Optional[Union[int, float]] = None) -> int:
     """
+    This function uses a different convention than the GDAL API itself:
+    * ovr_idx = 0 means the full resolution image (GDAL API: no OVERVIEW_LEVEL)
+    * ovr_idx = [1|2|3|...] means the [1st|2nd|3rd|...] overview (GDAL API: OVERVIEW_LEVEL = [0|1|2|...])
+    * ovr_idx = -1 means the last overview (GDAL API: OVERVIEW_LEVEL = bnd.GetOverviewCount())
+    * ovr_idx = -i means the i-th overview from the last (GDAL API: OVERVIEW_LEVEL = bnd.GetOverviewCount()-i+1)
+
     returns a non-negative ovr_idx, from given mutually exclusive ovr_idx (index) or ovr_res (resolution)
     ovr_idx == None and ovr_res == None => returns 0
     ovr_idx: int >= 0 => returns the given ovr_idx
@@ -221,7 +227,19 @@ class OpenDS:
         ovr_only: bool = False,
         open_options: Optional[Union[Dict[str, str], Sequence[str]]] = None,
         logger=None,
-    ):
+    ) -> gdal.Dataset:
+        """
+        opens a gdal Dataset with the given arguments and returns it
+
+        :param filename: filename of the dataset to be opened
+        :param access_mode: access mode to open the dataset
+        :param ovr_idx: the index of the overview of the dataset,
+               Note: uses different numbering then GDAL API itself. read docs of: `get_ovr_idx`
+        :param ovr_only: open the dataset without exposing its overviews
+        :param open_options: gdal open options to be used to open the dataset
+        :param logger: logger to be used to log the opening operation
+        :return: gdal.Dataset
+        """
         if not open_options:
             open_options = dict()
         elif isinstance(open_options, Sequence):
@@ -345,7 +363,16 @@ def get_band_nums(ds: gdal.Dataset, band_nums: Optional[MaybeSequence[int]] = No
     return band_nums
 
 
-def get_bands(filename_or_ds: PathOrDS, band_nums: Optional[MaybeSequence[int]] = None, ovr_idx: Optional[int] = None) -> List[gdal.Band]:
+def get_bands(filename_or_ds: PathOrDS, band_nums: Optional[MaybeSequence[int]] = None, ovr_idx: Optional[int] = None) \
+            -> List[gdal.Band]:
+    """
+    returns a list of gdal bands of the given dataset
+    :param filename_or_ds: filename or the dataset itself
+    :param band_nums: sequence of bands numbers (or a single number)
+    :param ovr_idx: the index of the overview of the dataset,
+           Note: uses different numbering then GDAL API itself. read docs of: `get_ovr_idx`
+    :return:
+    """
     ds = open_ds(filename_or_ds)
     band_nums = get_band_nums(ds, band_nums)
     bands = []
@@ -354,6 +381,7 @@ def get_bands(filename_or_ds: PathOrDS, band_nums: Optional[MaybeSequence[int]] 
         if band is None:
             raise Exception(f'Could not get band {band_num} from file {filename_or_ds}')
         if ovr_idx:
+            ovr_idx = get_ovr_idx(ds, ovr_idx)
             band = band.GetOverview(ovr_idx-1)
             if band is None:
                 raise Exception(f'Could not get overview {ovr_idx} from band {band_num} of file {filename_or_ds}')
