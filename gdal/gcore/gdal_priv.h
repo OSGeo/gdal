@@ -2388,6 +2388,7 @@ protected:
     virtual bool IAdviseRead(const GUInt64* arrayStartIdx,
                              const size_t* count) const;
 
+    virtual bool IsCacheable() const { return true; }
 //! @endcond
 
 public:
