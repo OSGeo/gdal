@@ -36,7 +36,7 @@ compile_nasakeywordhandler = no
 ifeq ($(HAVE_HDF4),yes)
   compile_nasakeywordhandler = yes
 endif
-ifeq ($(shell echo $(GDAL_FORMATS) | grep -w -o pds),pds)
+ifeq ($(shell echo $(GDAL_FORMATS) | grep "pds" >/dev/null && echo "yes" || echo "no"),yes)
   compile_nasakeywordhandler = yes
 endif
 ifeq ($(compile_nasakeywordhandler),yes)
