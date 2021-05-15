@@ -26,7 +26,7 @@ ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
     curl-dev tiff-dev \
-    zlib-dev zstd-dev \
+    zlib-dev zstd-dev xz-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
     py3-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
@@ -251,6 +251,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     fi \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
+    --with-liblzma \
     --with-proj=/usr \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
@@ -300,7 +301,7 @@ RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
         libcurl tiff \
-        zlib zstd-libs\
+        zlib zstd-libs xz-libs \
         libjpeg-turbo libpng libwebp expat \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
