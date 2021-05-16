@@ -3521,6 +3521,80 @@ static void GDALDeregister_ECW( GDALDriver * )
     }
 }
 
+#if ECWSDK_VERSION < 40
+namespace{
+NCSError NCS_CALL EcwFileOpenForReadACB(char *szFileName, void **ppClientData)
+{
+    *ppClientData = VSIFOpenL(szFileName, "rb");
+    if(*ppClientData == nullptr)
+    {
+        return NCS_FILE_OPEN_FAILED;
+    }
+    else
+    {
+        return NCS_SUCCESS;
+    }
+}
+
+NCSError NCS_CALL EcwFileOpenForReadWCB(wchar_t *wszFileName, void **ppClientData)
+{
+    char* szFileName = CPLRecodeFromWChar( wszFileName, CPL_ENC_UCS2, CPL_ENC_UTF8);
+    *ppClientData = VSIFOpenL(szFileName, "rb");
+    CPLFree( szFileName );
+    if(*ppClientData == nullptr)
+    {
+        return NCS_FILE_OPEN_FAILED;
+    }
+    else
+    {
+        return NCS_SUCCESS;
+    }
+}
+
+NCSError NCS_CALL EcwFileCloseCB(void *pClientData)
+{
+    if(0 == VSIFCloseL(reinterpret_cast<VSILFILE*>(pClientData)))
+    {
+        return NCS_SUCCESS;
+    }
+    else
+    {
+        return NCS_FILE_CLOSE_ERROR;
+    }
+}
+
+NCSError NCS_CALL EcwFileReadCB(void *pClientData, void *pBuffer, UINT32 nLength)
+{
+    if(nLength == VSIFReadL(pBuffer, 1, nLength ,reinterpret_cast<VSILFILE*>(pClientData)))
+    {
+        return NCS_SUCCESS;
+    }
+    else
+    {
+        return NCS_FILE_IO_ERROR;
+    }
+}
+
+NCSError NCS_CALL EcwFileSeekCB(void *pClientData, UINT64 nOffset)
+{
+    if(0 == VSIFSeekL(reinterpret_cast<VSILFILE*>(pClientData), nOffset, SEEK_SET))
+    {
+        return NCS_SUCCESS;
+    }
+    else
+    {
+        return NCS_FILE_SEEK_ERROR;
+    }
+}
+
+NCSError NCS_CALL EcwFileTellCB(void *pClientData, UINT64 *pOffset)
+{
+    *pOffset = VSIFTellL(reinterpret_cast<VSILFILE*>(pClientData));
+    return NCS_SUCCESS;
+}
+}//namespace
+#endif // ECWSDK_VERSION < 40
+
 /************************************************************************/
 /*                          GDALRegister_ECW()                          */
 /************************************************************************/
@@ -3539,7 +3613,11 @@ void GDALRegister_ECW()
 
     if( GDALGetDriverByName( "ECW" ) != nullptr )
         return;
-
+#if ECWSDK_VERSION < 40
+    CNCSJPCFileIOStream::SetIOCallbacks(EcwFileOpenForReadACB, EcwFileOpenForReadWCB,
+                                        EcwFileCloseCB, EcwFileReadCB,
+                                        EcwFileSeekCB, EcwFileTellCB);
+#endif // ECWSDK_VERSION < 40
     GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ECW" );

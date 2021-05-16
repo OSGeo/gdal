@@ -1716,9 +1716,6 @@ def test_ecw_46():
 
 def test_ecw_47():
 
-    if gdaltest.ecw_drv.major_version == 3:
-        pytest.skip()
-
     data = open('data/ecw/jrc.ecw', 'rb').read()
     gdal.FileFromMemBuffer('/vsimem/ecw_47.ecw', data)
 
@@ -1729,8 +1726,10 @@ def test_ecw_47():
 
     if gdaltest.ecw_drv.major_version == 5:
         (exp_mean, exp_stddev) = (141.606, 67.2919)
-    else:
+    elif gdaltest.ecw_drv.major_version == 4:
         (exp_mean, exp_stddev) = (140.332, 67.611)
+    elif gdaltest.ecw_drv.major_version == 3:
+        (exp_mean, exp_stddev) = (141.172, 67.3636)
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
