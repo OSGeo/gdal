@@ -20,7 +20,6 @@ Synopsis
                 [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]
                 [-separate] [-b band]* [-sd subdataset]
                 [-allow_projection_difference] [-q]
-                [-optim {[AUTO]/VECTOR/RASTER}]
                 [-addalpha] [-hidenodata]
                 [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
                 [-ignore_srcmaskband]
@@ -167,15 +166,6 @@ changed in later versions.
     When this option is specified, the utility will accept to make a VRT even if the input datasets have
     not the same projection. Note: this does not mean that they will be reprojected. Their projection will
     just be ignored.
-
-.. option:: -optim {[AUTO]/VECTOR/RASTER}}
-
-    Force the algorithm used (results are identical). The raster mode is used in most cases and optimise
-    read/write operations. The vector mode is useful with a decent amount of input features and optimise
-    the CPU use. That mode have to be used with tiled images to be efficient. The auto mode (the default)
-    will chose the algorithm based on input and output properties.
-
-    .. versionadded:: 2.3
 
 .. option:: -a_srs <srs_def>
 
