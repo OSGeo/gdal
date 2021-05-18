@@ -2975,9 +2975,19 @@ class MDArray(_object):
         return _gdal.MDArray_GetNoDataValueAsDouble(self, *args)
 
 
+    def GetNoDataValueAsString(self, *args):
+        """GetNoDataValueAsString(MDArray self) -> retStringAndCPLFree *"""
+        return _gdal.MDArray_GetNoDataValueAsString(self, *args)
+
+
     def SetNoDataValueDouble(self, *args):
         """SetNoDataValueDouble(MDArray self, double d) -> CPLErr"""
         return _gdal.MDArray_SetNoDataValueDouble(self, *args)
+
+
+    def SetNoDataValueString(self, *args):
+        """SetNoDataValueString(MDArray self, char const * nodata) -> CPLErr"""
+        return _gdal.MDArray_SetNoDataValueString(self, *args)
 
 
     def SetNoDataValueRaw(self, *args):

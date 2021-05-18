@@ -275,6 +275,8 @@ def test_mem_md_array_single_dim():
 
     assert myarray.DeleteNoDataValue() == gdal.CE_None
     assert myarray.GetNoDataValueAsDouble() is None
+    with gdaltest.error_handler():
+        assert myarray.GetNoDataValueAsString() is None
 
     assert myarray.SetUnit('foo') == gdal.CE_None
     assert myarray.GetUnit() == 'foo'
@@ -291,6 +293,11 @@ def test_mem_md_array_string():
     assert var
     assert var.Read() == [None, None]
     assert var.Write(['', '0123456789']) == gdal.CE_None
+    assert var.GetNoDataValueAsString() is None
+    assert var.SetNoDataValueString(None) == gdal.CE_None
+    assert var.GetNoDataValueAsString() is None
+    assert var.SetNoDataValueString('123') == gdal.CE_None
+    assert var.GetNoDataValueAsString() == '123'
     var = rg.OpenMDArray('var')
     assert var
     assert var.Read() == ['', '0123456789']
