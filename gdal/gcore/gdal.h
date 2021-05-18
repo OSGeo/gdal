@@ -153,8 +153,8 @@ typedef enum
 } GDALRIOResampleAlg;
 
 /* NOTE to developers: only add members, and if so edit INIT_RASTERIO_EXTRA_ARG */
-/* and INIT_RASTERIO_EXTRA_ARG */
-/** Structure to pass extra arguments to RasterIO() method
+/** Structure to pass extra arguments to RasterIO() method,
+ * must be initialized with INIT_RASTERIO_EXTRA_ARG
   * @since GDAL 2.0
   */
 typedef struct
