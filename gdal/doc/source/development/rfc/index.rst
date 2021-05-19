@@ -88,4 +88,4 @@ RFC list
     rfc78_gdal_utils_package
     rfc79_listing_service_providers
     rfc80_numfocus_relationship
-
+    rfc83_use_of_project_sponsorship
