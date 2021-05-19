@@ -114,7 +114,7 @@ The supervisor will try to keep the following in mind when prioritizing tasks:
   other tasks.
 - Bugs or needs that affect many users should have higher priority.
 - The co-maintainer should be used to take care of work that no one else is
-  willing and able to do (ie. fill the holes, rather than displacing volunteers)
+  willing and able to do (i.e. fill the holes, rather than displacing volunteers)
 - Try to avoid tying up the co-maintainer on one big task for many weeks unless
   directed by the PSC.
 - The co-maintainer should not be directed to do work for which someone else is
@@ -169,7 +169,7 @@ Tasks to achieve a specific development
 
 The GDAL PSC will call for proposals (frequency to be adjusted, but could be per
 quarter year) of proponents that want to achieve a specific development.
-The PSC will indicate the toal budget available and other conditions.
+The PSC will indicate the total budget available and other conditions.
 The PSC may suggest a few ideas that it would want to receive proposals for.
 
 Generally speaking, priority will be given to proposals that address housekeeping
