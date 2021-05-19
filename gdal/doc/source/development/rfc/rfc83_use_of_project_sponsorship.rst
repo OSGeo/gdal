@@ -50,12 +50,12 @@ Scope
   contribution and guide the proponent through the steps to make it accepted:
   identifying issues reported by Continuous Integration, asking for new tests
   to be developed whenever possible, etc. When the contributor is not in capacity
-  to polish his/her contribution, the co-maintainer may do it him/herself.
+  to polish his/her contribution, the co-maintainer may do it themself.
 - Ensuring that fixes that are appropriate for backporting in stable branche(s)
   are backported.
 - Monitoring of project communication channels (mailing list, IRC, Slack
   channels, etc.). The co-maintainer will in particular identify issues that are
-  reported   through that means and ensures that they are captured by a
+  reported through those means and ensures that they are captured by a
   corresponding ticket.
   The co-maintainer may also occasionally answer questions on usage of the
   library and tools, but in-depth support of users is not in the scope of the
@@ -130,7 +130,7 @@ Reporting
 +++++++++
 
 The co-maintainer will produce a monthly report (typically in a shared spreadsheet)
-with the tasks he/she has tackled, typically pointing at tickets and pull requests,
+with the tasks they have tackled, typically pointing at tickets and pull requests,
 and the amount of hours spent during the reported period.
 
 Who can apply ?
