@@ -31,8 +31,7 @@ Scope
 
 - Bug tracker maintenance:
 
-    * Making sure that the reporter provides all details needed for
-      reproducibility.
+    * Validating completeness of bug reports to ensure reproducibility
     * Closing reports that don't respect the guidelines, or are invalid.
     * Tagging the issue with appropriate labels and milestones.
     * When a fix is relevant, addressing the issue with a pull request.
@@ -41,15 +40,15 @@ Scope
     * Tasks that are expected, or are found, to take more than a given time
       should be confirmed with the supervisor.
 
-- Continuous integration maintenance and improvements: the project has several
-  continuous integration configurations. Some of them break regularly due to
+- Continuous Integration maintenance and improvements: the project has several
+  Continuous Integration configurations. Some of them break regularly due to
   external causes (network resources no longer available, change in
   dependencies, etc.). The co-maintainer will take the necessary actions to
   keep them in working state.
 - Review of code and documentation contributions. Such contributions are made
   currently through GitHub pull requests. The co-maintainer will review the
   contribution and guide the proponent through the steps to make it accepted:
-  identifying issues reported by continuous integration, asking for new tests
+  identifying issues reported by Continuous Integration, asking for new tests
   to be developed whenever possible, etc. When the contributor is not in capacity
   to polish his/her contribution, the co-maintainer may do it him/herself.
 - Ensuring that fixes that are appropriate for backporting in stable branche(s)
@@ -64,7 +63,7 @@ Scope
 - Proactive tracking of new versions of libraries that GDAL depends on, and
   address needed changes for compilation and proper runtime behavior
 - Monitor and address reports of static and dynamic analyzers. Currently:
-  OSS-Fuzz,   cppcheck, CLang Static Analyzer, Coverity Scan, gcc&clang
+  OSS-Fuzz,   cppcheck, Clang Static Analyzer, Coverity Scan, gcc&clang
   memory/undefined behavior/etc. analyzers.
 - Documentation improvements
 - Activities related to software releases: writing the release notes,
@@ -83,10 +82,10 @@ component and can come up with a patch, they are also welcome to do it.
 
 A typical share of time could be 75% for GDAL and 25% for the other projects.
 
-GDAL is a vast project. It is not expected that each co-maintainer has expertise
-in all its aspects. Applicants will mention their domains of interest, which can
-evolve over time, and coordinate with other stakeholders in how tasks are
-assigned.
+GDAL is a vast and complex project. It is not expected that each co-maintainer
+has expertise in all its aspects. Applicants will mention their domains of
+interest, which can evolve over time, and coordinate with other stakeholders in
+how tasks are assigned.
 
 Direction
 +++++++++
@@ -184,7 +183,7 @@ A non-exhaustive list of topics that are meant to be addressed per this vehicle 
 - Changes that affect a large part of the code base
 - Speed optimizations
 - Adding / improving support for some platforms
-- Improvements in test suite / continuous integration
+- Improvements in test suite / Continuous Integration
 - Improvements in build system
 - Improvements in documentation
 - Packaging efforts (provided that they use fully reproducible open source build recipes)
