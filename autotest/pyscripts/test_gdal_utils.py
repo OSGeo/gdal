@@ -69,10 +69,15 @@ def test_utils_py_0():
 
     assert base.num(42) == 42
     assert base.num('42') == 42
+    assert isinstance(base.num('42'), int)
 
     assert base.num(42.0) == 42.0
     assert base.num('42.0') == 42.0
+    assert isinstance(base.num('42.0'), float)
     assert base.num('42.') == 42.0
+    assert isinstance(base.num('42.'), float)
+    assert base.num(42.5) == 42.5
+    assert base.num('42.5') == 42.5
 
     assert base.num_or_none('') is None
     assert base.num_or_none(None) is None

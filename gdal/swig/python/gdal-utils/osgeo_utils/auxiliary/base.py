@@ -31,7 +31,7 @@
 # ******************************************************************************
 
 import os.path
-from numbers import Real
+from numbers import Real, Number
 from pathlib import Path
 from typing import Sequence, Union, List, Tuple, TypeVar, Optional
 from enum import Enum
@@ -78,14 +78,17 @@ def path_join(*args) -> str:
     return os.path.join(*(str(arg) for arg in args))
 
 
-def num(s: Union[int, float, str]) -> Real:
-    try:
-        return int(s)
-    except ValueError:
-        return float(s)
+def num(s: Union[Number, str]) -> Number:
+    if isinstance(s, Number):
+        return s
+    else:
+        try:
+            return int(s)
+        except ValueError:
+            return float(s)
 
 
-def num_or_none(s: Optional[Union[int, float, str]]) -> Optional[Real]:
+def num_or_none(s: Optional[Union[Number, str]]) -> Optional[Number]:
     try:
         return num(s)
     except Exception:
