@@ -8,7 +8,7 @@ RFC 80: NumFOCUS relationship and sponsorship program
 Author:        Even Rouault (with content from Chris Holmes)
 Contact:       even.rouault @ spatialys.com
 Started:       2021-Apr-15
-Status:        Development
+Status:        Adopted
 ============== =============================================
 
 Summary
