@@ -961,6 +961,66 @@ OCTClone(OGRCoordinateTransformationH hTransform)
 }
 
 /************************************************************************/
+/*                             OCTGetSourceCS()                         */
+/************************************************************************/
+
+/**
+ * Transformation's source coordinate system reference.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetSourceCS
+
+ * @since GDAL 3.4
+ */
+
+OGRSpatialReferenceH OCTGetSourceCS(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetSourceCS", nullptr );
+    return OGRSpatialReference::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetSourceCS());
+}
+
+/************************************************************************/
+/*                             OCTGetTargetCS()                         */
+/************************************************************************/
+
+/**
+ * Transformation's target coordinate system reference.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetTargetCS
+
+ * @since GDAL 3.4
+ */
+
+OGRSpatialReferenceH OCTGetTargetCS(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetTargetCS", nullptr );
+    return OGRSpatialReference::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetTargetCS());
+}
+
+/************************************************************************/
+/*                             OCTGetInverse()                          */
+/************************************************************************/
+
+/**
+ * Inverse transformation object.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetInverse
+
+ * @since GDAL 3.4
+ */
+
+OGRCoordinateTransformationH CPL_DLL OCTGetInverse(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetInverse", nullptr );
+    return OGRCoordinateTransformation::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetInverse());
+}
+
+/************************************************************************/
 /*                             OGRProjCT()                             */
 /************************************************************************/
 
