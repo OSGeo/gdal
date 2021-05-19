@@ -79,9 +79,9 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     m_featuresCount = m_poHeader->features_count();
     m_geometryType = m_poHeader->geometry_type();
     m_indexNodeSize = m_poHeader->index_node_size();
-    m_hasZ = m_poHeader->hasZ();
-    m_hasM = m_poHeader->hasM();
-    m_hasT = m_poHeader->hasT();
+    m_hasZ = m_poHeader->has_z();
+    m_hasM = m_poHeader->has_m();
+    m_hasT = m_poHeader->has_t();
     const auto envelope = m_poHeader->envelope();
     if( envelope && envelope->size() == 4 )
     {
