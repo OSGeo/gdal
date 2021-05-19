@@ -68,7 +68,7 @@ Scope
 - Documentation improvements
 - Activities related to software releases: writing the release notes,
   issuing release candidates, addressing feedback, finalizing releases
-- For experimented contributors, help on-boarding and assist less experienced
+- For experienced contributors, help on-boarding and assist less experienced
   ones.
 
 Projects that are concerned by such activities: GDAL itself of course, but also
@@ -76,7 +76,7 @@ other, generally smaller, free and open source projects that have been strongly
 tied to it as being required or very common dependencies for GDAL, and don't
 benefit from similar maintenance funds (on the contrary, projects that use GDAL
 don't qualify for being funded by the GDAL sponsorship funds). The current list
-includes PROJ, libtiff, libgeotiff, shapelib, GEOS, openjpeg. If during the
+includes PROJ, libtiff, libgeotiff, shapelib, GEOS, OpenJPEG. If during the
 investigation of an issue, a co-maintainer finds an issue in another open source
 component and can come up with a patch, they are also welcome to do it.
 
