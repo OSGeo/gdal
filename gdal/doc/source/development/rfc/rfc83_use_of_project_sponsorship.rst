@@ -68,8 +68,8 @@ Scope
 - Documentation improvements
 - Activities related to software releases: writing the release notes,
   issuing release candidates, addressing feedback, finalizing releases
-- For experienced contributors, help on-boarding and assist less experienced
-  ones.
+- For experienced contributors, help less experienced contributors get on board
+  and along with GDAL.
 
 Projects that are concerned by such activities: GDAL itself of course, but also
 other, generally smaller, free and open source projects that have been strongly
