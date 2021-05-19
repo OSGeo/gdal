@@ -209,6 +209,12 @@ Decision process
 
 The allocation of funds, through the selection of co-maintainers and grantees of
 specific developments, will be decided by the PSC.
+
+.. note:: The input provided by the Advisory Board regarding maintenance
+          priorities will be taken into account by the PSC, on an equal footing
+          as other input provided by the community, and PSC's own analysis of
+          priorities.
+
 PSC members that apply for funds, or that have a conflict of interest (e.g. working
 in the same company as an applicant), or any other situation of conflict or
 interest, may take part in discussions, but should abstain from voting on
