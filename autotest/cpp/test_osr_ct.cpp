@@ -352,4 +352,42 @@ namespace tut
 
         test_clone(poCT.get(), &oSRSSource, &oSRSTarget, 44, -60);
     }
+
+    // Test OGRCoordinateTransformation in pure "C" API
+    // OCTClone/OCTGetSourceCS/OCTGetTargetCS/OCTGetInverse
+    template<>
+    template<>
+    void object::test<9>()
+    {
+        OGRSpatialReferenceH hSource = OSRNewSpatialReference(nullptr);
+        OGRSpatialReferenceH hTarget = OSRNewSpatialReference(nullptr);
+        ensure(hSource != nullptr);
+        ensure(hTarget != nullptr);
+        ensure(OGRERR_NONE == OSRImportFromEPSG(hSource, 32637));
+        ensure(OGRERR_NONE == OSRSetWellKnownGeogCS(hTarget, "WGS84"));
+        OGRCoordinateTransformationH hTransform =
+            OCTNewCoordinateTransformation(hSource, hTarget);
+        ensure(hTransform != nullptr);
+
+        OGRCoordinateTransformationH hClone = OCTClone(hTransform);
+        ensure(hClone != nullptr);
+
+        OGRCoordinateTransformationH hInvTransform =
+            OCTGetInverse(hTransform);
+        ensure(hInvTransform != nullptr);
+
+        OGRSpatialReferenceH hSourceInternal = OCTGetSourceCS(hTransform);
+        ensure(hSourceInternal != nullptr);
+        OGRSpatialReferenceH hTargetInternal = OCTGetTargetCS(hTransform);
+        ensure(hTargetInternal != nullptr);
+
+        ensure(OSRIsSame(hSource, hSourceInternal));
+        ensure(OSRIsSame(hTarget, hTargetInternal));
+
+        OCTDestroyCoordinateTransformation(hInvTransform);
+        OCTDestroyCoordinateTransformation(hClone);
+        OCTDestroyCoordinateTransformation(hTransform);
+        OSRDestroySpatialReference(hSource);
+        OSRDestroySpatialReference(hTarget);
+    }
 } // namespace tut
