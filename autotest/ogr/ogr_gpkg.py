@@ -5069,3 +5069,39 @@ def test_ogr_gpkg_read_deprecated_gdal_aspatial():
 
     gdal.Unlink(filename)
 
+
+###############################################################################
+# Test fixing up wrong gpkg_metadata_reference_column_name_update trigger (GDAL < 2.4.0)
+
+def test_ogr_gpkg_fixup_wrong_mr_column_name_update_trigger():
+
+    filename = '/vsimem/test_ogr_gpkg_fixup_wrong_mr_column_name_update_trigger.gpkg'
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+    ds.SetMetadata('FOO','BAR')
+    ds = None
+
+    ds = ogr.Open(filename, update = 1)
+    # inject wrong trigger on purpose
+    wrong_trigger = "CREATE TRIGGER 'gpkg_metadata_reference_column_name_update' " + \
+                    "BEFORE UPDATE OF column_name ON 'gpkg_metadata_reference' " + \
+                    "FOR EACH ROW BEGIN " + \
+                    "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference " + \
+                    "violates constraint: column name must be NULL when reference_scope " + \
+                    "is \"geopackage\", \"table\" or \"row\"') " + \
+                    "WHERE (NEW.reference_scope IN ('geopackage','table','row') " + \
+                    "AND NEW.column_nameIS NOT NULL); END;"
+    ds.ExecuteSQL(wrong_trigger)
+    ds = None
+
+    # Open in update mode
+    ds = ogr.Open(filename, update = 1)
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' " + \
+        "AND name = 'gpkg_metadata_reference_column_name_update'")
+    f = sql_lyr.GetNextFeature()
+    sql = f['sql']
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink(filename)
+    assert 'column_nameIS' not in sql
