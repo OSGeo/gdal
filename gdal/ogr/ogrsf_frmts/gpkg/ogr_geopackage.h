@@ -224,6 +224,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         std::map<int, bool> m_oSetGPKGLayerWarnings{};
 
         void                FixupWrongRTreeTrigger();
+        void                FixupWrongMedataReferenceColumnNameUpdate();
 
     public:
                             GDALGeoPackageDataset();
