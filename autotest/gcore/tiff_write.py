@@ -3818,6 +3818,9 @@ Band 1}""".encode('ascii'))
 
 def test_tiff_write_102():
 
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip('requires libgeotiff >= 1.6')
+
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_102.tif', 1, 1)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(7401)
