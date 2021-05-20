@@ -947,7 +947,10 @@ OCTNewCoordinateTransformationEx(
  * Clone transformation object.
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::Clone
-
+ *
+ * @return handle to transformation's clone or NULL on error, 
+ *         must be freed with OCTDestroyCoordinateTransformation
+ *
  * @since GDAL 3.4
  */
 
@@ -968,7 +971,11 @@ OCTClone(OGRCoordinateTransformationH hTransform)
  * Transformation's source coordinate system reference.
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::GetSourceCS
-
+ *
+ * @return handle to transformation's source coordinate system or NULL if not present.
+ *
+ * The ownership of the returned CS belongs to the transformation object.
+ *
  * @since GDAL 3.4
  */
 
@@ -988,7 +995,11 @@ OGRSpatialReferenceH OCTGetSourceCS(OGRCoordinateTransformationH hTransform)
  * Transformation's target coordinate system reference.
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::GetTargetCS
-
+ *
+ * @return handle to transformation's target coordinate system or NULL if not present.
+ *
+ * The ownership of the returned CS belongs to the transformation object.
+ *
  * @since GDAL 3.4
  */
 
@@ -1008,7 +1019,10 @@ OGRSpatialReferenceH OCTGetTargetCS(OGRCoordinateTransformationH hTransform)
  * Inverse transformation object.
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::GetInverse
-
+ *
+ * @return handle to inverse transformation or NULL on error, 
+ *         must be freed with OCTDestroyCoordinateTransformation
+ *
  * @since GDAL 3.4
  */
 
