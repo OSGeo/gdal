@@ -37373,3 +37373,4 @@ SWIG_init(void) {
 #endif
 }
 
+#define POST_PROCESSING_APPLIED

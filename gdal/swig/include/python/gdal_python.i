@@ -992,7 +992,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 %extend GDALMajorObjectShadow {
 %pythoncode %{
   def GetMetadata(self, domain=''):
-    if domain[:4] == 'xml:':
+    if domain and domain[:4] == 'xml:':
       return self.GetMetadata_List(domain)
     return self.GetMetadata_Dict(domain)
 %}

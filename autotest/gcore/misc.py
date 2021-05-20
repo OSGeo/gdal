@@ -288,6 +288,10 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
                 dst_ds = drv.CreateCopy(filename, ds)
                 has_succeeded = dst_ds is not None
+                if dst_ds:
+                    # check that domain == None doesn't crash
+                    dst_ds.GetMetadata(None)
+                    dst_ds.GetMetadataItem('', None)
                 dst_ds = None
 
                 size = 0
