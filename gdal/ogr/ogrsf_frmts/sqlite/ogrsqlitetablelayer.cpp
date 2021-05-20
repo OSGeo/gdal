@@ -320,7 +320,7 @@ char **OGRSQLiteTableLayer::GetMetadata( const char *pszDomain )
 const char *OGRSQLiteTableLayer::GetMetadataItem( const char * pszName,
                                                   const char * pszDomain )
 {
-    if( !(EQUAL(pszDomain, "") && EQUAL(pszName, OLMD_FID64)) )
+    if( !((pszDomain == nullptr || EQUAL(pszDomain, "")) && EQUAL(pszName, OLMD_FID64)) )
         return nullptr;
     return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
 }
