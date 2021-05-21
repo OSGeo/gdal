@@ -1070,6 +1070,9 @@ OCTNewCoordinateTransformationEx( OGRSpatialReferenceH hSourceSRS,
                                   OGRCoordinateTransformationOptionsH hOptions );
 
 OGRCoordinateTransformationH CPL_DLL OCTClone(OGRCoordinateTransformationH hTransform);
+OGRSpatialReferenceH CPL_DLL OCTGetSourceCS(OGRCoordinateTransformationH hTransform);
+OGRSpatialReferenceH CPL_DLL OCTGetTargetCS(OGRCoordinateTransformationH hTransform);
+OGRCoordinateTransformationH CPL_DLL OCTGetInverse(OGRCoordinateTransformationH hTransform);
 
 void CPL_DLL CPL_STDCALL
       OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );

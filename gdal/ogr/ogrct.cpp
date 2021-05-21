@@ -947,7 +947,10 @@ OCTNewCoordinateTransformationEx(
  * Clone transformation object.
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::Clone
-
+ *
+ * @return handle to transformation's clone or NULL on error, 
+ *         must be freed with OCTDestroyCoordinateTransformation
+ *
  * @since GDAL 3.4
  */
 
@@ -958,6 +961,77 @@ OCTClone(OGRCoordinateTransformationH hTransform)
     VALIDATE_POINTER1( hTransform, "OCTClone", nullptr );
     return OGRCoordinateTransformation::ToHandle(
         OGRCoordinateTransformation::FromHandle(hTransform)->Clone());
+}
+
+/************************************************************************/
+/*                             OCTGetSourceCS()                         */
+/************************************************************************/
+
+/**
+ * Transformation's source coordinate system reference.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetSourceCS
+ *
+ * @return handle to transformation's source coordinate system or NULL if not present.
+ *
+ * The ownership of the returned CS belongs to the transformation object.
+ *
+ * @since GDAL 3.4
+ */
+
+OGRSpatialReferenceH OCTGetSourceCS(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetSourceCS", nullptr );
+    return OGRSpatialReference::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetSourceCS());
+}
+
+/************************************************************************/
+/*                             OCTGetTargetCS()                         */
+/************************************************************************/
+
+/**
+ * Transformation's target coordinate system reference.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetTargetCS
+ *
+ * @return handle to transformation's target coordinate system or NULL if not present.
+ *
+ * The ownership of the returned CS belongs to the transformation object.
+ *
+ * @since GDAL 3.4
+ */
+
+OGRSpatialReferenceH OCTGetTargetCS(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetTargetCS", nullptr );
+    return OGRSpatialReference::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetTargetCS());
+}
+
+/************************************************************************/
+/*                             OCTGetInverse()                          */
+/************************************************************************/
+
+/**
+ * Inverse transformation object.
+ *
+ * This is the same as the C++ function OGRCreateCoordinateTransformation::GetInverse
+ *
+ * @return handle to inverse transformation or NULL on error, 
+ *         must be freed with OCTDestroyCoordinateTransformation
+ *
+ * @since GDAL 3.4
+ */
+
+OGRCoordinateTransformationH CPL_DLL OCTGetInverse(OGRCoordinateTransformationH hTransform)
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTGetInverse", nullptr );
+    return OGRCoordinateTransformation::ToHandle(
+        OGRCoordinateTransformation::FromHandle(hTransform)->GetInverse());
 }
 
 /************************************************************************/
