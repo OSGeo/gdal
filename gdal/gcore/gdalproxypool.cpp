@@ -139,6 +139,7 @@ class GDALDatasetPool
 
         static void PreventDestroy();
         static void ForceDestroy();
+        static int GetCurrentSize();
 };
 
 /************************************************************************/
@@ -518,6 +519,20 @@ void GDALDatasetPool::CloseDatasetIfZeroRefCount(
 {
     CPLMutexHolderD( GDALGetphDLMutex() );
     singleton->_CloseDatasetIfZeroRefCount(pszFileName, eAccess, pszOwner);
+}
+
+/************************************************************************/
+/*                  GetCurrentSize()                                    */
+/************************************************************************/
+
+int GDALDatasetPool::GetCurrentSize()
+{
+    return singleton != nullptr ? singleton->currentSize : 0;
+}
+
+int GDALDatasetPoolGetCurrentSize()
+{
+    return GDALDatasetPool::GetCurrentSize();
 }
 
 struct GetMetadataElt

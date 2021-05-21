@@ -2809,6 +2809,7 @@ void GDALNullifyOpenDatasetsList();
 CPLMutex** GDALGetphDMMutex();
 CPLMutex** GDALGetphDLMutex();
 void GDALNullifyProxyPoolSingleton();
+int GDALDatasetPoolGetCurrentSize();
 void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
 GIntBig GDALGetResponsiblePIDForCurrentThread();
 
