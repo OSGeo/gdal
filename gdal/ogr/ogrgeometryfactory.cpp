@@ -6087,13 +6087,16 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
 /**
  * @brief Create geometry from GeoJson fragment.
  * @param pszJsonString The GeoJSON fragment for the geometry.
+ * @param nSize (new in GDAL 3.4) Optional length of the string
+ *              if it is not null-terminated
  * @return a geometry on success, or NULL on error.
  * @since GDAL 2.3
  */
-OGRGeometry* OGRGeometryFactory::createFromGeoJson( const char *pszJsonString )
+OGRGeometry* OGRGeometryFactory::createFromGeoJson(
+    const char *pszJsonString, int nSize )
 {
     CPLJSONDocument oDocument;
-    if( !oDocument.LoadMemory( reinterpret_cast<const GByte*>(pszJsonString)) )
+    if( !oDocument.LoadMemory( reinterpret_cast<const GByte*>(pszJsonString), nSize) )
     {
         return nullptr;
     }
