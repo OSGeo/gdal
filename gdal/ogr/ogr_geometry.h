@@ -3253,7 +3253,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry *createFromGML( const char * );
     static OGRGeometry *createFromGEOS( GEOSContextHandle_t hGEOSCtxt,
                                         GEOSGeom );
-    static OGRGeometry *createFromGeoJson( const char *);
+    static OGRGeometry *createFromGeoJson( const char *, int = -1 );
     static OGRGeometry *createFromGeoJson( const CPLJSONObject &oJSONObject );
 
     static void   destroyGeometry( OGRGeometry * );
