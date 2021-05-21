@@ -384,6 +384,10 @@ static int TestDataset( GDALDriver** ppoDriver )
                poDS->GetDescription(), pszDataSource);
     }
 
+    // Check that pszDomain == nullptr doesn't crash
+    poDS->GetMetadata( nullptr );
+    poDS->GetMetadataItem( "", nullptr );
+
 /* -------------------------------------------------------------------- */
 /*      Process optional SQL request.                                   */
 /* -------------------------------------------------------------------- */
@@ -3453,6 +3457,10 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer,
 
 {
     int bRet = TRUE;
+
+    // Check that pszDomain == nullptr doesn't crash
+    poLayer->GetMetadata( nullptr );
+    poLayer->GetMetadataItem( "", nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Verify that there is no spatial filter in place by default.     */
