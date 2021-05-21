@@ -535,6 +535,11 @@ char **GDALLoadRPBFile( const CPLString& soFilePath )
 
         if( pszRPBVal == nullptr )
         {
+            if (strcmp(apszRPBMap[i], RPC_ERR_RAND) == 0 ||
+                strcmp(apszRPBMap[i], RPC_ERR_BIAS) == 0)
+            {
+                continue;
+            }
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s file found, but missing %s field (and possibly others).",
                       soFilePath.c_str(), apszRPBMap[i+1] );
