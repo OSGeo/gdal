@@ -477,6 +477,12 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64_t* pdiroff)
 		}
 		tif->tif_flags &= ~(TIFF_BEENWRITING|TIFF_BUFFERSETUP);
 	}
+
+	if (TIFFFieldSet(tif,FIELD_COMPRESSION) && (tif->tif_dir.td_compression == COMPRESSION_DEFLATE)) {
+		TIFFWarningExt(tif->tif_clientdata, module,
+	                   "Creating TIFF with legacy Deflate codec identifier, "
+	                   "COMPRESSION_ADOBE_DEFLATE is more widely supported");
+	}
 	dir=NULL;
 	dirmem=NULL;
 	dirsize=0;
@@ -1774,6 +1780,7 @@ static int _WriteAsType(TIFF* tif, uint64_t strile_size, uint64_t uncompressed_t
     else if ( compression == COMPRESSION_JPEG ||
               compression == COMPRESSION_LZW ||
               compression == COMPRESSION_ADOBE_DEFLATE ||
+              compression == COMPRESSION_DEFLATE ||
               compression == COMPRESSION_LZMA ||
               compression == COMPRESSION_LERC ||
               compression == COMPRESSION_ZSTD ||

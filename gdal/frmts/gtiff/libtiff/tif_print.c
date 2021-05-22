@@ -63,13 +63,33 @@ static const char * const orientNames[] = {
 };
 #define	NORIENTNAMES	(sizeof (orientNames) / sizeof (orientNames[0]))
 
+static const struct tagname {
+    uint16_t tag;
+    const char* name;
+} tagnames[] = {
+    { TIFFTAG_GDAL_METADATA, "GDAL Metadata" },
+    { TIFFTAG_GDAL_NODATA, "GDAL NoDataValue" },
+};
+#define NTAGS   (sizeof (tagnames) / sizeof (tagnames[0]))
+
 static void
 _TIFFPrintField(FILE* fd, const TIFFField *fip,
                 uint32_t value_count, void *raw_data)
 {
 	uint32_t j;
-		
-	fprintf(fd, "  %s: ", fip->field_name);
+
+    /* Print a user-friendly name for tags of relatively common use, but */
+    /* which aren't registered by libtiff itself. */
+    const char* field_name = fip->field_name;
+    if( strncmp(fip->field_name, "Tag ", 4) == 0 ) {
+        for( size_t i = 0; i < NTAGS; ++i ) {
+            if( fip->field_tag == tagnames[i].tag ) {
+                field_name = tagnames[i].name;
+                break;
+            }
+        }
+    }
+	fprintf(fd, "  %s: ", field_name);
 
 	for(j = 0; j < value_count; j++) {
 		if(fip->field_type == TIFF_BYTE)
