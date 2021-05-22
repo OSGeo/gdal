@@ -285,16 +285,16 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
          break;
    }
    if (pdsMeta->mstrVersion > 3) {
-      CPLDebug( "GRIB", "Don't understand the parameter table, since center %d-%d used\n"
+      CPLError( CE_Warning, CPLE_AppDefined, "GRIB: Don't understand the parameter table, since center %d-%d used\n"
               "parameter table version %d instead of 3 (international exchange).\n"
-              "Using default for now, but please email arthur.taylor@noaa.gov\n"
+              "Using default for now (which might lead to erroneous interpretation), but please email arthur.taylor@noaa.gov\n"
               "about adding this table to his 'degrib1.c' and 'grib1tab.c' files.",
               center, subcenter, pdsMeta->mstrVersion);
    }
    if (pdsMeta->cat > 127) {
-      CPLDebug( "GRIB", "Parameter %d is > 127, so it falls in the local use section of\n"
+      CPLError(CE_Warning, CPLE_AppDefined, "GRIB: Parameter %d is > 127, so it falls in the local use section of\n"
               "the parameter table (and is undefined on the international table.\n"
-              "Using default for now, but please email arthur.taylor@noaa.gov\n"
+              "Using default for now(which might lead to erroneous interpretation), but please email arthur.taylor@noaa.gov\n"
               "about adding this table to his 'degrib1.c' and 'grib1tab.c' files.",
               pdsMeta->cat);
    }
