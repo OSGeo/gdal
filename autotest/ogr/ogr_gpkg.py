@@ -5119,6 +5119,12 @@ def test_ogr_gpkg_crs_coordinate_epoch():
     srs.SetCoordinateEpoch(2021.3)
     ds.CreateLayer('lyr_with_coordinate_epoch', srs=srs)
 
+    srs.SetCoordinateEpoch(2021.3)
+    ds.CreateLayer('lyr_with_same_coordinate_epoch', srs=srs)
+
+    srs.SetCoordinateEpoch(2021.2)
+    ds.CreateLayer('lyr_with_different_coordinate_epoch', srs=srs)
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4258) # ETRS89
     ds.CreateLayer('lyr_without_coordinate_epoch', srs=srs)
@@ -5129,10 +5135,52 @@ def test_ogr_gpkg_crs_coordinate_epoch():
 
     ds = ogr.Open(filename)
 
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_spatial_ref_sys ORDER BY srs_id')
+    assert sql_lyr.GetFeatureCount() == 6
+
+    sql_lyr.GetNextFeature()
+    sql_lyr.GetNextFeature()
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f['srs_id'] == 4258
+    assert f['organization'] == 'EPSG'
+    assert f['organization_coordsys_id'] == 4258
+    assert f['epoch'] is None
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f['srs_id'] == 4326
+    assert f['organization'] == 'EPSG'
+    assert f['organization_coordsys_id'] == 4326
+    assert f['epoch'] is None
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f['srs_id'] == 100000
+    assert f['organization'] == 'EPSG'
+    assert f['organization_coordsys_id'] == 7665
+    assert f['epoch'] == 2021.3
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f['srs_id'] == 100001
+    assert f['organization'] == 'EPSG'
+    assert f['organization_coordsys_id'] == 7665
+    assert f['epoch'] == 2021.2
+    ds.ReleaseResultSet(sql_lyr)
+
     lyr = ds.GetLayerByName('lyr_with_coordinate_epoch')
     srs = lyr.GetSpatialRef()
     assert srs.GetCoordinateEpoch() == 2021.3
-    assert lyr.GetMetadata() == {}
+
+    lyr = ds.GetLayerByName('lyr_with_same_coordinate_epoch')
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+    lyr = ds.GetLayerByName('lyr_with_different_coordinate_epoch')
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.2
 
     lyr = ds.GetLayerByName('lyr_without_coordinate_epoch')
     srs = lyr.GetSpatialRef()

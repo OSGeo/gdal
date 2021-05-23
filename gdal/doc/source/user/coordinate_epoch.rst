@@ -102,17 +102,9 @@ under the ``FeatureCollection`` object type.
 GeoPackage vector/raster
 ++++++++++++++++++++++++
 
-Each vector/raster table which has an associated coordinate epoch has a corresponding
-row in the ``gpkg_metadata`` table with:
-
-- ``md_standard_uri`` = `http://gdal.org`
-- ``mime_type`` = `text/plain`
-- ``metadata`` = `coordinate_epoch={coordinate_epoch}` where `{coordinate_epoch}` is the value of the coordinate epoch
-
-and an associate row in the ``gpkg_metadata_reference`` table pointing to it,
-according to the requirements of the `gpkg_metadata <http://www.geopackage.org/spec130/index.html#extension_metadata>`__
-extension.
-
+Each vector/raster table which has an associated coordinate epoch encodes it
+in the ``epoch`` column of the ``gpkg_spatial_ref_sys`` table, using an extended
+version of the CRS WKT extension (https://github.com/opengeospatial/geopackage/pull/600).
 
 GeoTIFF
 +++++++
