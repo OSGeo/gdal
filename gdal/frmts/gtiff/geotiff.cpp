@@ -19950,7 +19950,7 @@ CPLString GTiffGetCompressValues(bool& bHasLZW,
             osCompressValues +=
                     "       <Value>CCITTFAX4</Value>";
         }
-        else if( c->scheme == COMPRESSION_LZMA && !bForCOG )
+        else if( c->scheme == COMPRESSION_LZMA )
         {
             bHasLZMA = true;
             osCompressValues +=

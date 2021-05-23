@@ -37,7 +37,7 @@ General creation options
 
 -  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512.
 
--  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**: Set the compression to use.
+-  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD/LZMA]**: Set the compression to use.
    Defaults to ``NONE``.
 
    * ``JPEG`` should generally only be used with
@@ -59,12 +59,12 @@ General creation options
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
--  **LEVEL=integer_value**: DEFLATE/ZSTD/LERC_DEFLATE/LERC_ZSTD compression level.
+-  **LEVEL=integer_value**: DEFLATE/ZSTD/LERC_DEFLATE/LERC_ZSTD/LZMA compression level.
    A lower number will
    result in faster compression but less efficient compression rate.
    1 is the fastest.
 
-   * For DEFLATE, 9 is the slowest/higher compression rate
+   * For DEFLATE/LZMA, 9 is the slowest/higher compression rate
      (or 12 when using a libtiff with libdeflate support). The default is 6.
    * For ZSTD, 22 is the slowest/higher compression rate. The default is 9.
 
@@ -161,7 +161,7 @@ General creation options
         available if general options (i.e. options which are not creation options,
         like subsetting, etc.) are used.
 
-- **OVERVIEW_COMPRESS=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD]**:
+- **OVERVIEW_COMPRESS=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD/LZMA]**:
   Set the compression method (see ``COMPRESS``) to use when storing the overviews in the COG.
   
   By default (``AUTO``) the overviews will be created with the same compression method as the COG.
