@@ -135,7 +135,7 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
  * @param pszFilename the path of a filename to inspect
  * UTF-8 encoded.
  * @return The list of entries, relative to the directory, of all sidecar
- * files available or NULL if the list is not known. 
+ * files available or NULL if the list is not known.
  * Filenames are returned in UTF-8 encoding.
  * Most implementations will return NULL, and a subsequent ReadDir will
  * list all files available in the file's directory. This function will be
@@ -883,7 +883,9 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  *    </ul>
  * </li>
  * <li>STATUS: specific to /vsiadls/: returns all system defined properties for a path (seems in practice to be a subset of HEADERS)</li>
- * <li>ACL: specific to /vsiadls/: returns the access control list for a path.</li>
+ * <li>ACL: specific to /vsiadls/ and /vsigs/: returns the access control list for a path.
+ *     For /vsigs/, a single XML=xml_content string is returned. Refer to https://cloud.google.com/storage/docs/xml-api/get-object-acls
+ * </li>
  * <li>METADATA: specific to /vsiaz/: to set blob metadata. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-metadata. Note: this will be a subset of what pszDomain=HEADERS returns</li>
  * </ul>
  * @param papszOptions Unused. Should be set to NULL.
@@ -930,7 +932,10 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  *      <li>to /vsiadls/: to set properties. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setProperties.</li>
  *    </ul>
  * </li>
- * <li>ACL: specific to /vsiadls/: to set access control list. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setAccessControl or setAccessControlRecursive. In setAccessControlRecursive, x-ms-acl must be specified in papszMetadata</li>
+ * <li>ACL: specific to /vsiadls/ and /vsigs/: to set access control list.
+ * For /vsiadls/, refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setAccessControl or setAccessControlRecursive. In setAccessControlRecursive, x-ms-acl must be specified in papszMetadata.
+ * For /vsigs/, refer to https://cloud.google.com/storage/docs/xml-api/put-object-acls. A single XML=xml_content string should be specified as in papszMetadata.
+ * </li>
  * <li>METADATA: specific to /vsiaz/: to set blob metadata. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-metadata. Content of papszMetadata should be strings in the form x-ms-meta-name=value</li>
  * </ul>
  * @param papszOptions NULL or NULL terminated list of options.
@@ -1054,7 +1059,7 @@ int VSIHasOptimizedReadMultiRange( const char* pszPath )
  * Currently only returns a non-NULL value for network-based virtual file systems.
  * For example "/vsis3/bucket/filename" will be expanded as
  * "https://bucket.s3.amazon.com/filename"
- * 
+ *
  * Note that the lifetime of the returned string, is short, and may be
  * invalidated by any following GDAL functions.
  *
@@ -1275,7 +1280,7 @@ bool VSIFilesystemHandler::Sync( const char* pszSource, const char* pszTarget,
         {
             osTarget = CPLFormFilename(osTarget,
                                        CPLGetFilename(pszSource), nullptr);
-            bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 && 
+            bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 &&
                             !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
         }
         if( bTargetIsFile )

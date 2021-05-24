@@ -758,7 +758,7 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
     else
     {
         const auto osQueryString(GetQueryString(false));
-        if( osQueryString == "?uploads" )
+        if( osQueryString == "?uploads" || osQueryString == "?acl" )
             osCanonicalResource += osQueryString;
     }
 

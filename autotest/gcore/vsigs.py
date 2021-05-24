@@ -407,6 +407,49 @@ def test_vsigs_fake_rename():
         assert gdal.Rename( '/vsigs/test/source.txt', '/vsigs/test/target.txt') == 0
 
 ###############################################################################
+# Test reading/writing ACL
+
+
+def test_vsigs_acl():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt?acl', 200, {}, "<foo/>")
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'ACL')
+    assert 'XML' in md and md['XML'] == '<foo/>'
+
+    # Error cases
+    with gdaltest.error_handler():
+        assert gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'UNSUPPORTED') == {}
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt?acl', 400)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            assert not gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'ACL')
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/test_metadata/foo.txt?acl', 200, expected_body=b'<foo/>')
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
+
+    # Error cases
+    with gdaltest.error_handler():
+        assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {}, 'UNSUPPORTED')
+        assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {}, 'ACL')
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/test_metadata/foo.txt?acl', 400)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
+
+###############################################################################
 # Read credentials with OAuth2 refresh_token
 
 
