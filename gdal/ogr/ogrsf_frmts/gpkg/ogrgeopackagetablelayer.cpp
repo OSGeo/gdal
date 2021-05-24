@@ -725,7 +725,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             sqlite3_free(pszSQL);
             if( err == OGRERR_NONE && oResultFeatureCount.nRowCount == 0 )
             {
-                SQLResultFree(&oResultFeatureCount);
                 pszSQL = sqlite3_mprintf(
                     "SELECT feature_count "
                     "FROM gpkg_ogr_contents "
@@ -748,7 +747,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
                 }
             }
-            SQLResultFree(&oResultFeatureCount);
         }
 #endif
 
@@ -785,7 +783,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             sqlite3_free(pszSQL);
             if( err == OGRERR_NONE && oResultGeomCols.nRowCount == 0 )
             {
-                SQLResultFree(&oResultGeomCols);
                 pszSQL = sqlite3_mprintf(
                         "SELECT table_name, column_name, "
                         "geometry_type_name, srs_id, z, m "
@@ -810,7 +807,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 else /* if ( oResultContents.nRowCount != 1 ) */
                     CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_geometry_columns", m_pszTableName );
 
-                SQLResultFree(&oResultGeomCols);
                 return OGRERR_FAILURE;
             }
 
@@ -828,8 +824,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 bHasZ = CPL_TO_BOOL(m_nZFlag);
                 bHasM = CPL_TO_BOOL(m_nMFlag);
             }
-
-            SQLResultFree(&oResultGeomCols);
         }
     }
 
@@ -855,8 +849,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
         else
             CPLError( CE_Failure, CPLE_AppDefined, "Cannot find table %s", m_pszTableName );
-
-        SQLResultFree(&oResultTable);
         return OGRERR_FAILURE;
     }
 
@@ -942,14 +934,12 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "table '%s' has multiple geometry fields? not legal in gpkg",
                              m_pszTableName);
-                    SQLResultFree(&oResultTable);
                     return OGRERR_FAILURE;
                 }
             }
             else
             {
                 // CPLError( CE_Failure, CPLE_AppDefined, "invalid field type '%s'", pszType );
-                // SQLResultFree(&oResultTable);
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "geometry column '%s' of type '%s' ignored", pszName, pszType);
             }
@@ -1056,8 +1046,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         m_poExtent = new OGREnvelope(oExtent);
     }
 
-    SQLResultFree(&oResultTable);
-
     // Look for sub-types such as JSON
     if( m_poDS->HasDataColumnsTable() )
     {
@@ -1097,7 +1085,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 }
             }
         }
-        SQLResultFree(&oResultTable);
     }
 
     /* Update the columns string */
@@ -2472,7 +2459,6 @@ bool OGRGeoPackageTableLayer::StartDeferredSpatialIndexUpdate()
             }
         }
     }
-    SQLResultFree(&oResult);
     if( m_aoRTreeTriggersSQL.size() != 6 )
     {
         CPLDebug("GPKG", "Could not find expected 6 RTree triggers");
@@ -2652,7 +2638,6 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
                     m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
                 }
             }
-            SQLResultFree( &oResult );
             if( m_nTotalFeatureCount >= 0 )
             {
                 return m_nTotalFeatureCount;
@@ -2764,7 +2749,6 @@ static bool findMinOrMax( GDALGeoPackageDataset* poDS,
             return false;
         }
         const bool bHasValue = oResult.nRowCount != 0;
-        SQLResultFree(&oResult);
         if ( ( isMin && !bHasValue ) || ( !isMin && bHasValue ) )
         {
             minval = val;
@@ -2859,7 +2843,6 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             UpdateContentsToNullExtent();
             err = OGRERR_FAILURE; // we didn't get an extent
         }
-        SQLResultFree(&oResult);
         return err;
     }
 
@@ -4281,7 +4264,6 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
     sqlite3_free(pszSQL);
     if  ( err != OGRERR_NONE )
     {
-        SQLResultFree(&oResult);
         return OGRLayer::GetMetadata( pszDomain );
     }
 
@@ -4351,8 +4333,6 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
             nNonGDALMDILocal ++;
         }
     }
-
-    SQLResultFree(&oResult);
 
     return OGRLayer::GetMetadata(pszDomain);
 }
@@ -4489,8 +4469,6 @@ OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreat
             eErr = SQLCommand( hDB, pszSQLTriggerIdx );
         }
     }
-
-    SQLResultFree( &oTriggers );
 
     return eErr;
 }
@@ -4827,7 +4805,6 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 
     sqlite3 *hDB = m_poDS->GetDB();
     SQLResult oTriggers;
-    SQLResultInit(&oTriggers);
     OGRErr eErr = OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
@@ -5106,8 +5083,6 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     {
         m_poDS->SoftRollbackTransaction();
     }
-
-    SQLResultFree(&oTriggers);
 
     return eErr;
 }

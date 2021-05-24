@@ -37,25 +37,29 @@
 #include <set>
 #include <string>
 
-typedef struct
+class SQLResult
 {
-    char** papszResult;
-    int nRowCount;
-    int nColCount;
-    char *pszErrMsg;
-    int rc;
-} SQLResult;
+    public:
+        char** papszResult;
+        int nRowCount;
+        int nColCount;
+        char *pszErrMsg;
+        int rc;
+
+        SQLResult ();
+        virtual ~SQLResult ();
+
+        void Reset ();
+};
 
 
 OGRErr              SQLCommand(sqlite3 *poDb, const char * pszSQL);
 int                 SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
 GIntBig             SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
 
-OGRErr              SQLResultInit(SQLResult * poResult);
 OGRErr              SQLQuery(sqlite3 *poDb, const char * pszSQL, SQLResult * poResult);
 const char*         SQLResultGetValue(const SQLResult * poResult, int iColumnNum, int iRowNum);
 int                 SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRowNum);
-OGRErr              SQLResultFree(SQLResult * poResult);
 
 int                 SQLiteFieldFromOGR(OGRFieldType eType);
 

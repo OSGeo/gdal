@@ -566,7 +566,6 @@ void OGRSQLiteDataSource::SaveStatistics()
                 nReplaceEventId = atoi(pszEventId);
             }
         }
-        SQLResultFree(&oResult);
 
         const char* pszNow = HasSpatialite4Layout() ?
             "strftime('%Y-%m-%dT%H:%M:%fZ','now')" : "DateTime('now')";

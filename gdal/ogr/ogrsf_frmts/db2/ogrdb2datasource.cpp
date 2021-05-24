@@ -2318,7 +2318,6 @@ void OGRDB2DataSource::CheckUnknownExtensions(int /*bCheckRasterTable*/)
             }
         }
     }
-    SQLResultFree(&oResultTable);
 #endif
 }
 
@@ -2404,7 +2403,6 @@ int OGRDB2DataSource::HasExtensionsTable()
                           "SELECT * FROM sqlite_master WHERE name = 'gpkg_extensions' "
                           "AND type IN ('table', 'view')", &oResultTable);
     int bHasExtensionsTable = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
-    SQLResultFree(&oResultTable);
     return bHasExtensionsTable;
 #endif
     return OGRERR_NONE;

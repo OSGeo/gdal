@@ -3512,7 +3512,6 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
                           atoi(pszMaxY) <= nRowMax;
                 }
             }
-            SQLResultFree(&sResult);
             sqlite3_free(pszSQL);
         }
 
@@ -3549,7 +3548,6 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
                         CPLSPrintf("%.14g", CPLAtof(pszMax)) );
                 }
             }
-            SQLResultFree(&sResult);
             sqlite3_free(pszSQL);
         }
     }

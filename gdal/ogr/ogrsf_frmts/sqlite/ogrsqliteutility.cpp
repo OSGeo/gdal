@@ -41,6 +41,28 @@
 
 CPL_CVSID("$Id$")
 
+
+SQLResult::SQLResult ()
+    : papszResult(nullptr), nRowCount(0), nColCount(0), pszErrMsg(nullptr), rc(0) {}
+
+SQLResult::~SQLResult () {
+    Reset();
+}
+
+void SQLResult::Reset () {
+    if (papszResult) {
+        sqlite3_free_table(papszResult);
+    }
+    if (pszErrMsg) {
+        sqlite3_free(pszErrMsg);
+    }
+    papszResult = nullptr;
+    nRowCount = 0;
+    nColCount = 0;
+    pszErrMsg = nullptr;
+    rc = 0;
+}
+
 /* Runs a SQL command and ignores the result (good for INSERT/UPDATE/CREATE) */
 OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
 {
@@ -65,23 +87,13 @@ OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
     return OGRERR_NONE;
 }
 
-OGRErr SQLResultInit(SQLResult * poResult)
-{
-    poResult->papszResult = nullptr;
-    poResult->pszErrMsg = nullptr;
-    poResult->nRowCount = 0;
-    poResult->nColCount = 0;
-    poResult->rc = 0;
-    return OGRERR_NONE;
-}
-
 OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
 {
     CPLAssert( poDb != nullptr );
     CPLAssert( pszSQL != nullptr );
     CPLAssert( poResult != nullptr );
 
-    SQLResultInit(poResult);
+    poResult->Reset();
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("GPKG", "get_table(%s)", pszSQL);
@@ -99,17 +111,6 @@ OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
                   "sqlite3_get_table(%s) failed: %s", pszSQL, poResult->pszErrMsg );
         return OGRERR_FAILURE;
     }
-
-    return OGRERR_NONE;
-}
-
-OGRErr SQLResultFree(SQLResult * poResult)
-{
-    if ( poResult->papszResult )
-        sqlite3_free_table(poResult->papszResult);
-
-    if ( poResult->pszErrMsg )
-        sqlite3_free(poResult->pszErrMsg);
 
     return OGRERR_NONE;
 }
@@ -383,12 +384,10 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3* poDb,
             else
                 CPLError( CE_Failure, CPLE_AppDefined, "Cannot find table %s", pszTableName );
 
-            SQLResultFree(&oResultTable);
             return uniqueFieldsUC;
         }
         if( std::string(SQLResultGetValue(&oResultTable, 1, 0)) == "view" )
         {
-            SQLResultFree(&oResultTable);
             return uniqueFieldsUC;
         }
 
@@ -413,7 +412,6 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3* poDb,
                 }
             }
         }
-        SQLResultFree(&oResultTable);
 
         // Search indexes:
         pszTableDefinitionSQL = sqlite3_mprintf(
@@ -452,7 +450,6 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3* poDb,
                 }
             }
         }
-        SQLResultFree(&oResultTable);
     }
     catch( const std::regex_error& e )
     {

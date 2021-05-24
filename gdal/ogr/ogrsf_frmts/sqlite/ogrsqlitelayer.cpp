@@ -260,7 +260,6 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                     oMapTableInfo[pszName] = pszType;
             }
         }
-        SQLResultFree(&oResultTable);
     }
 
     const int nRawColumns = sqlite3_column_count( hStmtIn );
