@@ -755,6 +755,8 @@ int VSIRmdir( const char * pszDirname )
  *
  * Starting with GDAL 3.1, /vsis3/ has an efficient implementation of this
  * function.
+ * Starting with GDAL 3.4, /vsigs/ has an efficient implementation of this
+ * function, provided that OAuth2 authentication is used.
  *
  * @return 0 on success or -1 on an error.
  * @since GDAL 2.3

@@ -104,6 +104,7 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
                             CSLConstList papszOptions ) override;
 
     int* UnlinkBatch( CSLConstList papszFiles ) override;
+    int RmdirRecursive( const char* pszDirname ) override;
 };
 
 /************************************************************************/
@@ -716,6 +717,19 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
         }
     }
     return panRet;
+}
+
+/************************************************************************/
+/*                           RmdirRecursive()                           */
+/************************************************************************/
+
+int VSIGSFSHandler::RmdirRecursive( const char* pszDirname )
+{
+    // For debug / testing only
+    const int nBatchSize = std::min(100,
+        atoi(CPLGetConfigOption("CPL_VSIGS_UNLINK_BATCH_SIZE", "100")));
+
+    return RmdirRecursiveInternal(pszDirname, nBatchSize);
 }
 
 /************************************************************************/

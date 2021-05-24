@@ -1988,6 +1988,15 @@ int VSIS3FSHandler::RmdirRecursive( const char* pszDirname )
     if( CPLTestBool(CPLGetConfigOption("CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE", "NO")) )
         return VSIFilesystemHandler::RmdirRecursive(pszDirname);
 
+    // For debug / testing only
+    const int nBatchSize = atoi(CPLGetConfigOption("CPL_VSIS3_UNLINK_BATCH_SIZE", "1000"));
+
+    return RmdirRecursiveInternal(pszDirname, nBatchSize);
+}
+
+int IVSIS3LikeFSHandler::RmdirRecursiveInternal( const char* pszDirname,
+                                                 int nBatchSize)
+{
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsAction oContextAction("RmdirRecursive");
 
@@ -2001,8 +2010,7 @@ int VSIS3FSHandler::RmdirRecursive( const char* pszDirname )
     if( !poDir )
         return -1;
     CPLStringList aosList;
-    // For debug / testing only
-    const int nBatchSize = atoi(CPLGetConfigOption("CPL_VSIS3_UNLINK_BATCH_SIZE", "1000"));
+
     while( true )
     {
         auto entry = poDir->NextDirEntry();

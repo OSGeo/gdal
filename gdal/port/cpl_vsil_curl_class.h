@@ -428,6 +428,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     virtual int      CopyObject( const char *oldpath, const char *newpath,
                                  CSLConstList papszMetadata );
 
+    int RmdirRecursiveInternal( const char* pszDirname, int nBatchSize);
+
     IVSIS3LikeFSHandler() = default;
 
   public:
