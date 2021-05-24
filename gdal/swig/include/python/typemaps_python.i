@@ -535,7 +535,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   if (PyUnicode_Check($input))
   {
     size_t safeLen = 0;
-    int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    int ret;
+    try {
+      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    }
+    catch( const std::exception& )
+    {
+      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+    }
     if (!SWIG_IsOK(ret)) {
       SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
     }
@@ -585,7 +592,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   if (PyUnicode_Check($input))
   {
     size_t safeLen = 0;
-    int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    int ret;
+    try {
+      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    }
+    catch( const std::exception& )
+    {
+      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+    }
     if (!SWIG_IsOK(ret)) {
       SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
     }
@@ -632,7 +646,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   if (PyUnicode_Check($input))
   {
     size_t safeLen = 0;
-    int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    int ret;
+    try {
+      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    }
+    catch( const std::exception& )
+    {
+      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+    }
     if (!SWIG_IsOK(ret)) {
       SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
     }
