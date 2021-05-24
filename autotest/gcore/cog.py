@@ -172,6 +172,14 @@ def test_cog_creation_options():
         assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'ZSTD'
         ds = None
 
+    if '<Value>LZMA' in colist:
+
+        gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                    options = ['COMPRESS=LZMA'])
+        ds = gdal.Open(filename)
+        assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'LZMA'
+        ds = None
+
     if '<Value>WEBP' in colist:
 
         with gdaltest.error_handler():
