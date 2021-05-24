@@ -91,6 +91,9 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
     const char* GetOptions() override;
 
     char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
+
+    // Multipart upload
+    bool SupportsParallelMultipartUpload() const override { return true; }
 };
 
 /************************************************************************/
