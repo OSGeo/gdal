@@ -178,7 +178,7 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
         if( poHandleHelper == nullptr )
             return nullptr;
         VSIS3WriteHandle* poHandle =
-            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true, papszOptions);
+            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, false, papszOptions);
         if( !poHandle->IsOK() )
         {
             delete poHandle;

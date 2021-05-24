@@ -625,19 +625,17 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
         m_dfRetryDelay(CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY))))
 {
-    // AWS S3 does not support chunked PUT in a convenient way, since you must
-    // know in advance the total size... See
-    // http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-streaming.html
-    // So we must use the mulipart upload mechanism.
-    // But this mechanism is not supported by GS. Luckily it does support
-    // standard "Transfer-Encoding: chunked" PUT mechanism
+    // AWS S3, OSS and GCS can use the mulipart upload mechanism, which has
+    // the advantage of being retryable in case of errors.
+    // Swift only supports the "Transfer-Encoding: chunked" PUT mechanism.
     // So two different implementations.
 
     if( !m_bUseChunked )
     {
         const int nChunkSizeMB = atoi(
-            CPLGetConfigOption("VSIS3_CHUNK_SIZE",
-                    CPLGetConfigOption("VSIOSS_CHUNK_SIZE", "50")));
+            CPLGetConfigOption(
+                (std::string("VSI") + poFS->GetDebugKey() +
+                 "_CHUNK_SIZE").c_str(), "50"));
         if( nChunkSizeMB <= 0 || nChunkSizeMB > 1000 )
             m_nBufferSize = 0;
         else
@@ -645,8 +643,8 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
 
         // For testing only !
         const char* pszChunkSizeBytes =
-            CPLGetConfigOption("VSIS3_CHUNK_SIZE_BYTES",
-                CPLGetConfigOption("VSIOSS_CHUNK_SIZE_BYTES", nullptr));
+            CPLGetConfigOption((std::string("VSI") + poFS->GetDebugKey() +
+                                "_CHUNK_SIZE_BYTES").c_str(), nullptr);
         if( pszChunkSizeBytes )
             m_nBufferSize = atoi(pszChunkSizeBytes);
         if( m_nBufferSize <= 0 || m_nBufferSize > 1000 * 1024 * 1024 )
@@ -1499,6 +1497,10 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
         osXML += "</Part>\n";
     }
     osXML += "</CompleteMultipartUpload>\n";
+
+#ifdef DEBUG_VERBOSE
+    CPLDebug(GetDebugKey(), "%s", osXML.c_str());
+#endif
 
     int nRetryCount = 0;
     bool bRetry;

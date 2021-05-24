@@ -755,6 +755,12 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
     if( !m_osBucketObjectKey.empty() &&
         m_osBucketObjectKey.find('/') == std::string::npos )
         osCanonicalResource += "/";
+    else
+    {
+        const auto osQueryString(GetQueryString(false));
+        if( osQueryString == "?uploads" )
+            osCanonicalResource += osQueryString;
+    }
 
     return GetGSHeaders( osVerb,
                          psExistingHeaders,
