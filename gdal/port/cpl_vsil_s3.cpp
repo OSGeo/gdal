@@ -43,6 +43,7 @@
 #include <set>
 #include <map>
 #include <memory>
+#include <utility>
 
 #include "cpl_aws.h"
 
@@ -1667,6 +1668,212 @@ bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
     while( bRetry );
 
     return bSuccess;
+}
+
+/************************************************************************/
+/*                       AbortPendingUploads()                          */
+/************************************************************************/
+
+bool IVSIS3LikeFSHandler::AbortPendingUploads(const char* pszFilename)
+{
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFile oContextFile(pszFilename);
+    NetworkStatisticsAction oContextAction("AbortPendingUploads");
+
+    // coverity[tainted_data]
+    const double dfInitialRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
+                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+
+
+    CPLString osDirnameWithoutPrefix = pszFilename + GetFSPrefix().size();
+    if( !osDirnameWithoutPrefix.empty() &&
+                                osDirnameWithoutPrefix.back() == '/' )
+    {
+        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size()-1);
+    }
+
+    CPLString osBucket(osDirnameWithoutPrefix);
+    CPLString osObjectKey;
+    size_t nSlashPos = osDirnameWithoutPrefix.find('/');
+    if( nSlashPos != std::string::npos )
+    {
+        osBucket = osDirnameWithoutPrefix.substr(0, nSlashPos);
+        osObjectKey = osDirnameWithoutPrefix.substr(nSlashPos+1);
+    }
+
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                                CreateHandleHelper(osBucket, true));
+    if( poHandleHelper == nullptr )
+    {
+        return false;
+    }
+    UpdateHandleFromMap(poHandleHelper.get());
+
+    // For debugging purposes
+    const int nMaxUploads = std::min(1000,
+         atoi(CPLGetConfigOption("CPL_VSIS3_LIST_UPLOADS_MAX", "1000")));
+
+    std::string osKeyMarker;
+    std::string osUploadIdMarker;
+    std::vector<std::pair<std::string, std::string>> aosUploads;
+
+    // First pass: collect (key, uploadId)
+    while( true )
+    {
+        int nRetryCount = 0;
+        double dfRetryDelay = dfInitialRetryDelay;
+        bool bRetry;
+        std::string osXML;
+        bool bSuccess = true;
+
+        do
+        {
+            bRetry = false;
+            CURL* hCurlHandle = curl_easy_init();
+            poHandleHelper->AddQueryParameter("uploads", "");
+            if( !osObjectKey.empty() )
+            {
+                poHandleHelper->AddQueryParameter("prefix", osObjectKey);
+            }
+            if( !osKeyMarker.empty() )
+            {
+                poHandleHelper->AddQueryParameter("key-marker", osKeyMarker);
+            }
+            if( !osUploadIdMarker.empty() )
+            {
+                poHandleHelper->AddQueryParameter("upload-id-marker", osUploadIdMarker);
+            }
+            poHandleHelper->AddQueryParameter("max-uploads",
+                                              CPLSPrintf("%d", nMaxUploads));
+
+            struct curl_slist* headers = static_cast<struct curl_slist*>(
+                CPLHTTPSetOptions(hCurlHandle,
+                                poHandleHelper->GetURL().c_str(),
+                                nullptr));
+            headers = VSICurlMergeHeaders(headers,
+                            poHandleHelper->GetCurlHeaders("GET", headers));
+
+            CurlRequestHelper requestHelper;
+            const long response_code =
+                requestHelper.perform(hCurlHandle, headers, this, poHandleHelper.get());
+
+            NetworkStatisticsLogger::LogGET(requestHelper.sWriteFuncData.nSize);
+
+            if( response_code != 200 )
+            {
+                // Look if we should attempt a retry
+                const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                    static_cast<int>(response_code), dfRetryDelay,
+                    requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
+                if( dfNewRetryDelay > 0 &&
+                    nRetryCount < nMaxRetry )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                                "HTTP error code: %d - %s. "
+                                "Retrying again in %.1f secs",
+                                static_cast<int>(response_code),
+                                poHandleHelper->GetURL().c_str(),
+                                dfRetryDelay);
+                    CPLSleep(dfRetryDelay);
+                    dfRetryDelay = dfNewRetryDelay;
+                    nRetryCount++;
+                    bRetry = true;
+                }
+                else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                    poHandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                        requestHelper.sWriteFuncHeaderData.pBuffer,
+                                                        false) )
+                {
+                    UpdateMapFromHandle(poHandleHelper.get());
+                    bRetry = true;
+                }
+                else
+                {
+                    CPLDebug(GetDebugKey(), "%s",
+                             requestHelper.sWriteFuncData.pBuffer ?
+                                 requestHelper.sWriteFuncData.pBuffer : "(null)");
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "ListMultipartUpload failed");
+                    bSuccess = false;
+                }
+            }
+            else
+            {
+                osXML = requestHelper.sWriteFuncData.pBuffer ? requestHelper.sWriteFuncData.pBuffer : "(null)";
+            }
+
+            curl_easy_cleanup(hCurlHandle);
+        }
+        while( bRetry );
+
+        if( !bSuccess )
+            return false;
+
+#ifdef DEBUG_VERBOSE
+        CPLDebug(GetDebugKey(), "%s", osXML.c_str());
+#endif
+
+        CPLXMLTreeCloser oTree(CPLParseXMLString(osXML.c_str()));
+        if( !oTree )
+            return false;
+
+        const CPLXMLNode* psRoot = CPLGetXMLNode(oTree.get(), "=ListMultipartUploadsResult");
+        if( !psRoot )
+            return false;
+
+        for( const CPLXMLNode* psIter = psRoot->psChild; psIter; psIter = psIter->psNext )
+        {
+            if( !(psIter->eType == CXT_Element && strcmp(psIter->pszValue, "Upload") == 0) )
+                continue;
+            const char* pszKey = CPLGetXMLValue(psIter, "Key", nullptr);
+            const char* pszUploadId = CPLGetXMLValue(psIter, "UploadId", nullptr);
+            if( pszKey && pszUploadId )
+            {
+                aosUploads.emplace_back(
+                    std::pair<std::string, std::string>(pszKey, pszUploadId));
+            }
+        }
+
+        const bool bIsTruncated = CPLTestBool(
+            CPLGetXMLValue(psRoot, "IsTruncated", "false"));
+        if( !bIsTruncated )
+            break;
+
+        osKeyMarker = CPLGetXMLValue(psRoot, "NextKeyMarker", "");
+        osUploadIdMarker = CPLGetXMLValue(psRoot, "NextUploadIdMarker", "");
+    }
+
+    // Second pass: actually abort those pending uploads
+    bool bRet = true;
+    for( const auto& pair: aosUploads )
+    {
+        const auto& osKey = pair.first;
+        const auto& osUploadId = pair.second;
+        CPLDebug(GetDebugKey(), "Abort %s/%s",
+                 osKey.c_str(), osUploadId.c_str());
+
+        auto poSubHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                    CreateHandleHelper((osBucket + '/' + osKey).c_str(), true));
+        if( poSubHandleHelper == nullptr )
+        {
+            bRet = false;
+            continue;
+        }
+        UpdateHandleFromMap(poSubHandleHelper.get());
+
+        if( !AbortMultipart( GetFSPrefix() + osBucket + '/' + osKey,
+                             osUploadId,
+                             poSubHandleHelper.get(),
+                             nMaxRetry,
+                             dfInitialRetryDelay) )
+        {
+            bRet = false;
+        }
+    }
+
+    return bRet;
 }
 
 /************************************************************************/

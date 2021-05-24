@@ -1713,6 +1713,10 @@ def Sync(*args, **kwargs):
     """Sync(char const * pszSource, char const * pszTarget, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> bool"""
     return _gdal.Sync(*args, **kwargs)
 
+def AbortPendingUploads(*args):
+    """AbortPendingUploads(char const * utf8_path) -> bool"""
+    return _gdal.AbortPendingUploads(*args)
+
 def GetActualURL(*args):
     """GetActualURL(char const * utf8_path) -> char const *"""
     return _gdal.GetActualURL(*args)

@@ -716,6 +716,33 @@ int VSISync( const char* pszSource, const char* pszTarget,
 }
 
 /************************************************************************/
+/*                         VSIAbortOngoingUploads()                     */
+/************************************************************************/
+
+/**
+ * \brief Abort ongoing multi-part uploads.
+ *
+ * Abort ongoing multi-part uploads on AWS S3 and Google Cloud Storage. This
+ * can be used in case a process doing such uploads was killed in a unclean way.
+ *
+ * Without effect on other virtual file systems.
+ *
+ * @param pszFilename filename or prefix of a directory into which multipart uploads must be
+ *                    aborted. This can be the root directory of a bucket.  UTF-8 encoded.
+ *
+ * @return TRUE on success or FALSE on an error.
+ * @since GDAL 3.4
+ */
+
+int VSIAbortPendingUploads( const char* pszFilename )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszFilename );
+
+    return poFSHandler->AbortPendingUploads( pszFilename );
+}
+
+/************************************************************************/
 /*                              VSIRmdir()                              */
 /************************************************************************/
 

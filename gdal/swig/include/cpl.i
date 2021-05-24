@@ -176,6 +176,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (MkdirRecursive) VSIMkdirRecursive;
 %rename (Rmdir) VSIRmdir;
 %rename (RmdirRecursive) VSIRmdirRecursive;
+%rename (AbortPendingUploads) VSIAbortPendingUploads;
 %rename (Rename) VSIRename;
 %rename (GetActualURL) VSIGetActualURL;
 %rename (GetSignedURL) wrapper_VSIGetSignedURL;
@@ -589,6 +590,8 @@ bool wrapper_VSISync(const char* pszSource,
 
 %clear (const char* pszSource);
 %clear (const char* pszTarget);
+
+bool VSIAbortPendingUploads(const char *utf8_path );
 
 #endif
 

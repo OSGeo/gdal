@@ -486,6 +486,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                         IVSIS3LikeHandleHelper *poS3HandleHelper,
                         int nMaxRetry,
                         double dfRetryDelay);
+
+    bool    AbortPendingUploads(const char* pszFilename) override;
 };
 
 /************************************************************************/
