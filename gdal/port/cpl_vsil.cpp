@@ -542,6 +542,9 @@ int VSIUnlink( const char * pszFilename )
  *
  * All files should belong to the same file system handler.
  *
+ * This is implemented efficiently for /vsis3/ and /vsigs/ (provided for /vsigs/
+ * that OAuth2 authentication is used).
+ *
  * @param papszFiles NULL terminated list of files. UTF-8 encoded.
  *
  * @return an array of size CSLCount(papszFiles), whose values are TRUE or FALSE

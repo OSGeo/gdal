@@ -934,6 +934,48 @@ client_secret = CLIENT_SECRET
 
     assert data == 'foo'
 
+    # Test UnlinkBatch()
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/batch/storage/v1', 200,
+                {'content-type': 'multipart/mixed; boundary=batch_nWfTDwb9aAhYucqUtdLRWUX93qsJaf3T'},
+                """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+Content-Type: application/http
+Content-ID: <response-1>
+
+HTTP/1.1 204 No Content
+Content-Length: 0
+
+
+-batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+Content-Type: application/http
+Content-ID: <response-2>
+
+HTTP/1.1 204 No Content
+Content-Length: 0
+
+
+--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5--
+""",
+                expected_body = b'--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <1>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/foo HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <2>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/bar%2Fbaz HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n')
+    handler.add('POST', '/batch/storage/v1', 200,
+                {'content-type': 'multipart/mixed; boundary=batch_nWfTDwb9aAhYucqUtdLRWUX93qsJaf3T'},
+                """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+Content-Type: application/http
+Content-ID: <response-3>
+
+HTTP/1.1 204 No Content
+Content-Length: 0
+
+
+--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5--
+""",
+                expected_body = b'--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <3>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/baw HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n')
+    with gdaltest.config_option('CPL_VSIGS_UNLINK_BATCH_SIZE', '2'):
+        with webserver.install_http_handler(handler):
+            ret = gdal.UnlinkBatch(['/vsigs/unlink_batch/foo', '/vsigs/unlink_batch/bar/baz', '/vsigs/unlink_batch/baw'])
+    assert ret
+
+
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
     gdal.Unlink('/vsimem/.boto')
