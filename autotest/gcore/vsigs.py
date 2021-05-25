@@ -57,7 +57,8 @@ def test_vsigs_init():
                 'CPL_GS_CREDENTIALS_FILE',
                 'GS_OAUTH2_REFRESH_TOKEN',
                 'GS_OAUTH2_CLIENT_EMAIL',
-                'GS_OAUTH2_CLIENT_ID'):
+                'GS_OAUTH2_CLIENT_ID',
+                'GS_USER_PROJECT'):
         gdaltest.gs_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.gs_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -70,6 +71,7 @@ def test_vsigs_init():
     gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', '')
     gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', '')
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
+    gdal.SetConfigOption('GS_USER_PROJECT', '')
 
     with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
         assert gdal.GetSignedURL('/vsigs/foo/bar') is None
@@ -142,6 +144,34 @@ def test_vsigs_1():
     with gdaltest.error_handler():
         f = open_for_read('/vsigs_streaming/foo/bar.baz')
     assert f is None and gdal.VSIGetLastErrorMsg() != ''
+
+###############################################################################
+# Test GS_NO_SIGN_REQUEST=YES
+
+
+def test_vsigs_no_sign_request():
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    object_key = 'gcp-public-data-landsat/LC08/01/044/034/LC08_L1GT_044034_20130330_20170310_01_T2/LC08_L1GT_044034_20130330_20170310_01_T2_B1.TIF'
+    expected_url = 'https://storage.googleapis.com/' + object_key
+
+    with gdaltest.config_option('GS_NO_SIGN_REQUEST', 'YES'):
+        actual_url = gdal.GetActualURL('/vsigs/' + object_key)
+        assert actual_url == expected_url
+
+        actual_url = gdal.GetActualURL('/vsigs_streaming/' + object_key)
+        assert actual_url == expected_url
+
+        f = open_for_read('/vsigs/' + object_key)
+
+    if f is None:
+        if gdaltest.gdalurlopen(expected_url) is None:
+            pytest.skip('cannot open URL')
+        pytest.fail()
+    gdal.VSIFCloseL(f)
+
 
 ###############################################################################
 
@@ -244,6 +274,21 @@ def test_vsigs_2():
                 print(stat_res)
             pytest.fail()
 
+    # Test GS_USER_PROJECT
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/gs_fake_bucket/resource_under_requester_pays', 200,
+                {'Content-type': 'text/plain'}, 'foo',
+                expected_headers={
+                    'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:q7i3g4lJD1c4OwiFtn/N/ePxxS0=',
+                    'x-goog-user-project': 'my_project_id'})
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option('GS_USER_PROJECT', 'my_project_id'):
+            f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource_under_requester_pays')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
+
+            assert data == 'foo'
 
 ###############################################################################
 # Test ReadDir() with a fake Google Cloud Storage server
@@ -518,6 +563,20 @@ def test_vsigs_read_credentials_refresh_token_default_gdal_app():
         gdal.VSIFCloseL(f)
 
     assert data == 'foo'
+
+    # Test GS_USER_PROJECT
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/gs_fake_bucket/resource_under_requester_pays', 200,
+                {'Content-type': 'text/plain'}, 'foo',
+                expected_headers={'x-goog-user-project': 'my_project_id'})
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option('GS_USER_PROJECT', 'my_project_id'):
+            f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource_under_requester_pays')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
+
+            assert data == 'foo'
 
     gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
     gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')

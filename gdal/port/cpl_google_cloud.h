@@ -52,6 +52,7 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osAccessKeyId;
         bool      m_bUseHeaderFile;
         GOA2Manager m_oManager;
+        std::string m_osUserProject{};
 
         static bool     GetConfiguration(CSLConstList papszOptions,
                                          CPLString& osSecretAccessKey,
@@ -75,7 +76,8 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
                           const CPLString& osSecretAccessKey,
                           const CPLString& osAccessKeyId,
                           bool bUseHeaderFile,
-                          const GOA2Manager& oManager);
+                          const GOA2Manager& oManager,
+                          const std::string& osUserProject);
        ~VSIGSHandleHelper();
 
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
