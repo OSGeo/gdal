@@ -82,6 +82,8 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
                                                const char* pszFSPrefix,
                                                CSLConstList papszOptions = nullptr);
 
+        bool UsesHMACKey() const;
+
         struct curl_slist* GetCurlHeaders(
             const CPLString& osVerbosVerb,
             const  struct curl_slist* psExistingHeaders,

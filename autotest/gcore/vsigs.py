@@ -53,7 +53,11 @@ def test_vsigs_init():
     for var in ('GS_SECRET_ACCESS_KEY', 'GS_ACCESS_KEY_ID',
                 'GOOGLE_APPLICATION_CREDENTIALS',
                 'CPL_GS_TIMESTAMP', 'CPL_GS_ENDPOINT',
-                'GDAL_HTTP_HEADER_FILE'):
+                'GDAL_HTTP_HEADER_FILE',
+                'CPL_GS_CREDENTIALS_FILE',
+                'GS_OAUTH2_REFRESH_TOKEN',
+                'GS_OAUTH2_CLIENT_EMAIL',
+                'GS_OAUTH2_CLIENT_ID'):
         gdaltest.gs_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.gs_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -70,7 +74,7 @@ def test_vsigs_init():
     with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
         assert gdal.GetSignedURL('/vsigs/foo/bar') is None
 
-    
+
 ###############################################################################
 # Error cases
 
@@ -240,7 +244,7 @@ def test_vsigs_2():
                 print(stat_res)
             pytest.fail()
 
-    
+
 ###############################################################################
 # Test ReadDir() with a fake Google Cloud Storage server
 
@@ -325,138 +329,46 @@ def test_vsigs_write():
         pytest.skip()
 
     gdal.VSICurlClearCache()
-
-    f = gdal.VSIFOpenL('/vsigs/test_copy/file.bin', 'wb')
-    assert f is not None
+    with webserver.install_http_handler(webserver.SequentialHandler()):
+        f = gdal.VSIFOpenL('/vsigs/gs_fake_bucket3/another_file.bin', 'wb')
+        assert f is not None
+        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+        assert gdal.VSIFSeekL(f, 0, 1) == 0
+        assert gdal.VSIFSeekL(f, 0, 2) == 0
+        assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+        assert gdal.VSIFWriteL('bar', 1, 3, f) == 3
 
     handler = webserver.SequentialHandler()
 
     def method(request):
-        request.protocol_version = 'HTTP/1.1'
-        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
-        content = ''
-        while True:
-            numchars = int(request.rfile.readline().strip(), 16)
-            content += request.rfile.read(numchars).decode('ascii')
-            request.rfile.read(2)
-            if numchars == 0:
-                break
-        if len(content) != 40000:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
+        if request.headers['Content-Length'] != '6':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
             request.send_header('Content-Length', 0)
             request.end_headers()
             return
+
+        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+
+        content = request.rfile.read(6).decode('ascii')
+        if content != 'foobar':
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+
         request.send_response(200)
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-    handler.add('PUT', '/test_copy/file.bin', custom_method=method)
+    handler.add('PUT', '/gs_fake_bucket3/another_file.bin', custom_method=method)
+
+    gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
-        ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
-        if ret != 40000:
-            gdal.VSIFCloseL(f)
-            pytest.fail(ret)
         gdal.VSIFCloseL(f)
-
-    # Simulate failure while transmitting
-    f = gdal.VSIFOpenL('/vsigs/test_copy/file.bin', 'wb')
-    assert f is not None
-
-    handler = webserver.SequentialHandler()
-
-    def method(request):
-        request.protocol_version = 'HTTP/1.1'
-        request.send_response(403)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
-
-    handler.add('PUT', '/test_copy/file.bin', custom_method=method)
-    with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
-        if ret != 0:
-            gdal.VSIFCloseL(f)
-            pytest.fail(ret)
-    gdal.VSIFCloseL(f)
-
-    # Simulate failure at end of transfer
-    f = gdal.VSIFOpenL('/vsigs/test_copy/file.bin', 'wb')
-    assert f is not None
-
-    handler = webserver.SequentialHandler()
-
-    def method(request):
-        request.protocol_version = 'HTTP/1.1'
-        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
-        content = ''
-        while True:
-            numchars = int(request.rfile.readline().strip(), 16)
-            content += request.rfile.read(numchars).decode('ascii')
-            request.rfile.read(2)
-            if numchars == 0:
-                break
-        request.send_response(403)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
-
-    handler.add('PUT', '/test_copy/file.bin', custom_method=method)
-    with webserver.install_http_handler(handler):
-        ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
-        if ret != 35000:
-            gdal.VSIFCloseL(f)
-            pytest.fail(ret)
-        with gdaltest.error_handler():
-            ret = gdal.VSIFCloseL(f)
-        assert ret != 0
-
-###############################################################################
-# Test write with retry
-
-
-def test_vsigs_write_retry():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.VSICurlClearCache()
-
-    with gdaltest.config_options({'GDAL_HTTP_MAX_RETRY': '2',
-                                  'GDAL_HTTP_RETRY_DELAY': '0.01'}):
-
-        f = gdal.VSIFOpenL('/vsigs/test_write_retry/put_with_retry.bin', 'wb')
-        assert f is not None
-
-        handler = webserver.SequentialHandler()
-
-        def method(request):
-            request.protocol_version = 'HTTP/1.1'
-            request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
-            content = ''
-            while True:
-                numchars = int(request.rfile.readline().strip(), 16)
-                content += request.rfile.read(numchars).decode('ascii')
-                request.rfile.read(2)
-                if numchars == 0:
-                    break
-            if len(content) != 3:
-                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-                request.send_response(403)
-                request.send_header('Content-Length', 0)
-                request.end_headers()
-                return
-            request.send_response(200)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-
-        handler.add('PUT', '/test_write_retry/put_with_retry.bin', 502)
-        handler.add('PUT', '/test_write_retry/put_with_retry.bin', custom_method=method)
-
-        with gdaltest.error_handler():
-            with webserver.install_http_handler(handler):
-                assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
-                gdal.VSIFCloseL(f)
+    assert gdal.GetLastErrorMsg() == ''
 
 ###############################################################################
 # Test rename
@@ -493,6 +405,49 @@ def test_vsigs_fake_rename():
 
     with webserver.install_http_handler(handler):
         assert gdal.Rename( '/vsigs/test/source.txt', '/vsigs/test/target.txt') == 0
+
+###############################################################################
+# Test reading/writing ACL
+
+
+def test_vsigs_acl():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt?acl', 200, {}, "<foo/>")
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'ACL')
+    assert 'XML' in md and md['XML'] == '<foo/>'
+
+    # Error cases
+    with gdaltest.error_handler():
+        assert gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'UNSUPPORTED') == {}
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt?acl', 400)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            assert not gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'ACL')
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/test_metadata/foo.txt?acl', 200, expected_body=b'<foo/>')
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
+
+    # Error cases
+    with gdaltest.error_handler():
+        assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {}, 'UNSUPPORTED')
+        assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {}, 'ACL')
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/test_metadata/foo.txt?acl', 400)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
 
 ###############################################################################
 # Read credentials with OAuth2 refresh_token
@@ -979,6 +934,48 @@ client_secret = CLIENT_SECRET
 
     assert data == 'foo'
 
+    # Test UnlinkBatch()
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/batch/storage/v1', 200,
+                {'content-type': 'multipart/mixed; boundary=batch_nWfTDwb9aAhYucqUtdLRWUX93qsJaf3T'},
+                """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+Content-Type: application/http
+Content-ID: <response-1>
+
+HTTP/1.1 204 No Content
+Content-Length: 0
+
+
+-batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+Content-Type: application/http
+Content-ID: <response-2>
+
+HTTP/1.1 204 No Content
+Content-Length: 0
+
+
+--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5--
+""",
+                expected_body = b'--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <1>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/foo HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <2>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/bar%2Fbaz HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n')
+    handler.add('POST', '/batch/storage/v1', 200,
+                {'content-type': 'multipart/mixed; boundary=batch_nWfTDwb9aAhYucqUtdLRWUX93qsJaf3T'},
+                """--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5
+Content-Type: application/http
+Content-ID: <response-3>
+
+HTTP/1.1 204 No Content
+Content-Length: 0
+
+
+--batch_phVs0DE8tHbyfvlYTZEeI5_snlh9XJR5--
+""",
+                expected_body = b'--===============7330845974216740156==\r\nContent-Type: application/http\r\nContent-ID: <3>\r\n\r\n\r\nDELETE /storage/v1/b/unlink_batch/o/baw HTTP/1.1\r\n\r\n\r\n--===============7330845974216740156==--\r\n')
+    with gdaltest.config_option('CPL_VSIGS_UNLINK_BATCH_SIZE', '2'):
+        with webserver.install_http_handler(handler):
+            ret = gdal.UnlinkBatch(['/vsigs/unlink_batch/foo', '/vsigs/unlink_batch/bar/baz', '/vsigs/unlink_batch/baw'])
+    assert ret
+
+
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
     gdal.Unlink('/vsimem/.boto')
@@ -1135,6 +1132,14 @@ def test_vsigs_stop_webserver():
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 ###############################################################################
+
+
+def test_vsigs_cleanup():
+
+    for var in gdaltest.gs_vars:
+        gdal.SetConfigOption(var, gdaltest.gs_vars[var])
+
+###############################################################################
 # Nominal cases (require valid credentials)
 
 
@@ -1192,10 +1197,14 @@ def test_vsigs_extra_1():
         gdal.VSIFCloseL(f)
 
         md = gdal.GetFileMetadata(subpath + '/test.txt', 'HEADERS')
-        assert 'Content-Type' in md
-        assert md['Content-Type'] == 'foo'
-        assert 'Content-Encoding' in md
-        assert md['Content-Encoding'] == 'bar'
+        new_md = {}
+        for key in md:
+            new_md[key.lower()] = md[key]
+        md = new_md
+        assert 'content-type' in md
+        assert md['content-type'] == 'foo'
+        assert 'content-encoding' in md
+        assert md['content-encoding'] == 'bar'
 
         ret = gdal.Rmdir(subpath)
         assert ret != 0, \
@@ -1262,11 +1271,3 @@ def test_vsigs_extra_1():
     gdal.VSIFCloseL(f)
 
     assert len(ret) == 1
-
-###############################################################################
-
-
-def test_vsigs_cleanup():
-
-    for var in gdaltest.gs_vars:
-        gdal.SetConfigOption(var, gdaltest.gs_vars[var])

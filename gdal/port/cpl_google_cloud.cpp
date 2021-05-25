@@ -722,6 +722,15 @@ void VSIGSHandleHelper::RebuildURL()
 }
 
 /************************************************************************/
+/*                           UsesHMACKey()                              */
+/************************************************************************/
+
+bool VSIGSHandleHelper::UsesHMACKey() const
+{
+    return m_oManager.GetAuthMethod() == GOA2Manager::NONE;
+}
+
+/************************************************************************/
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
@@ -755,6 +764,12 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
     if( !m_osBucketObjectKey.empty() &&
         m_osBucketObjectKey.find('/') == std::string::npos )
         osCanonicalResource += "/";
+    else
+    {
+        const auto osQueryString(GetQueryString(false));
+        if( osQueryString == "?uploads" || osQueryString == "?acl" )
+            osCanonicalResource += osQueryString;
+    }
 
     return GetGSHeaders( osVerb,
                          psExistingHeaders,

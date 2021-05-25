@@ -428,6 +428,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     virtual int      CopyObject( const char *oldpath, const char *newpath,
                                  CSLConstList papszMetadata );
 
+    int RmdirRecursiveInternal( const char* pszDirname, int nBatchSize);
+
     IVSIS3LikeFSHandler() = default;
 
   public:
@@ -484,6 +486,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                         IVSIS3LikeHandleHelper *poS3HandleHelper,
                         int nMaxRetry,
                         double dfRetryDelay);
+
+    bool    AbortPendingUploads(const char* pszFilename) override;
 };
 
 /************************************************************************/
