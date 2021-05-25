@@ -141,7 +141,8 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
                                  const struct curl_slist* psExistingHeaders,
                                  const CPLString& osCanonicalResource,
                                  const CPLString& osSecretAccessKey,
-                                 const CPLString& osAccessKeyId )
+                                 const CPLString& osAccessKeyId,
+                                 const std::string& osUserProject )
 {
     CPLString osDate = CPLGetConfigOption("CPL_GS_TIMESTAMP", "");
     if( osDate.empty() )
@@ -150,6 +151,8 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
     }
 
     std::map<CPLString, CPLString> oSortedMapHeaders;
+    if( !osUserProject.empty() )
+        oSortedMapHeaders["x-goog-user-project"] = osUserProject;
     CPLString osCanonicalizedHeaders(
         IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
                             oSortedMapHeaders,
@@ -185,6 +188,11 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
         headers, CPLSPrintf("Date: %s", osDate.c_str()));
     headers = curl_slist_append(
         headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+    if( !osUserProject.empty() )
+    {
+        headers = curl_slist_append(
+            headers, CPLSPrintf("x-goog-user-project: %s", osUserProject.c_str()));
+    }
     return headers;
 }
 
@@ -196,14 +204,16 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
                                       const CPLString& osSecretAccessKey,
                                       const CPLString& osAccessKeyId,
                                       bool bUseHeaderFile,
-                                      const GOA2Manager& oManager ) :
+                                      const GOA2Manager& oManager,
+                                      const std::string& osUserProject ) :
     m_osURL(osEndpoint + CPLAWSURLEncode(osBucketObjectKey, false)),
     m_osEndpoint(osEndpoint),
     m_osBucketObjectKey(osBucketObjectKey),
     m_osSecretAccessKey(osSecretAccessKey),
     m_osAccessKeyId(osAccessKeyId),
     m_bUseHeaderFile(bUseHeaderFile),
-    m_oManager(oManager)
+    m_oManager(oManager),
+    m_osUserProject(osUserProject)
 {
     if( m_osBucketObjectKey.find('/') == std::string::npos )
         m_osURL += "/";
@@ -700,12 +710,18 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
         return nullptr;
     }
 
+    // https://cloud.google.com/storage/docs/xml-api/reference-headers#xgooguserproject
+    // The Project ID for an existing Google Cloud project to bill for access
+    // charges associated with the request.
+    const std::string osUserProject = CPLGetConfigOption("GS_USER_PROJECT", "");
+
     return new VSIGSHandleHelper( osEndpoint,
                                   osBucketObject,
                                   osSecretAccessKey,
                                   osAccessKeyId,
                                   !osHeaderFile.empty(),
-                                  oManager );
+                                  oManager,
+                                  osUserProject );
 }
 
 /************************************************************************/
@@ -757,6 +773,12 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
         struct curl_slist *headers=nullptr;
         headers = curl_slist_append(
             headers, CPLSPrintf("Authorization: Bearer %s", pszBearer));
+
+        if( !m_osUserProject.empty() )
+        {
+            headers = curl_slist_append(
+                headers, CPLSPrintf("x-goog-user-project: %s", m_osUserProject.c_str()));
+        }
         return headers;
     }
 
@@ -775,7 +797,8 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
                          psExistingHeaders,
                          osCanonicalResource,
                          m_osSecretAccessKey,
-                         m_osAccessKeyId );
+                         m_osAccessKeyId,
+                         m_osUserProject );
 }
 
 /************************************************************************/

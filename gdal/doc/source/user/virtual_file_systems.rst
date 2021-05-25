@@ -31,8 +31,8 @@ It is possible to chain multiple file system handlers.
     # ogrinfo a shapefile in a zip file on an ftp:
 
     ogrinfo -ro -al -so /vsizip//vsicurl/ftp://user:password@example.com/foldername/file.zip/example.shp
-    
-(Note is also OK to say /vsizip/vsicurl/... with a single slash. (But when writing documentation please still use two.))    
+
+(Note is also OK to say /vsizip/vsicurl/... with a single slash. (But when writing documentation please still use two.))
 
 Drivers supporting virtual file systems
 ---------------------------------------
@@ -288,6 +288,8 @@ Several authentication methods are possible, and are attempted in the following 
 7. (GDAL >= 2.3) Finally if none of the above method succeeds, the code will check if the current machine is a Google Compute Engine instance, and if so will use the permissions associated to it (using the default service account associated with the VM). To force a machine to be detected as a GCE instance (for example for code running in a container with no access to the boot logs), you can set :decl_configoption:`CPL_MACHINE_IS_GCE` to ``YES``.
 
 Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
+
+Starting with GDAL 3.4, the :decl_configoption:`GS_USER_PROJECT` configuration option can be set to a Google Project id (see https://cloud.google.com/storage/docs/xml-api/reference-headers#xgooguserproject) to charge for requests against Requester Pays buckets.
 
 .. versionadded:: 2.2
 
