@@ -907,7 +907,7 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  * @param pszDomain Metadata domain to query. Depends on the file system.
  * The following are supported:
  * <ul>
- * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/, /vsis3/, etc)</li>
+ * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/, /vsis3/, /vsgis/, etc)</li>
  * <li>TAGS:
  *    <ul>
  *      <li>/vsis3/: to get S3 Object tagging information</li>
@@ -943,7 +943,7 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
 /**
  * \brief Set metadata on files.
  *
- * Implemented currently only for /vsis3/, /vsiaz/ and /vsiadls/
+ * Implemented currently only for /vsis3/, /vsigs/, /vsiaz/ and /vsiadls/
  *
  * @param pszFilename the path of the filesystem object to be set.
  * UTF-8 encoded.
@@ -951,7 +951,11 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  * @param pszDomain Metadata domain to set. Depends on the file system.
  * The following are supported:
  * <ul>
- * <li>HEADERS: specific to /vsis3/: to set HTTP headers</li>
+ * <li>HEADERS: specific to /vsis3/ and /vsigs/: to set HTTP headers, such as
+ * "Content-Type", or other file system specific header.
+ * For /vsigs/, this also includes: x-goog-meta-{key}={value}. Note that you
+ * should specify all metadata to be set, as existing metadata will be overriden.
+ * </li>
  * <li>TAGS: Content of papszMetadata should be KEY=VALUE pairs.
  *    <ul>
  *      <li>/vsis3/: to set S3 Object tagging information</li>

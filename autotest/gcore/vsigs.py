@@ -495,6 +495,33 @@ def test_vsigs_acl():
             assert not gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'XML': '<foo/>'}, 'ACL')
 
 ###############################################################################
+# Test reading/writing HEADERS
+
+
+def test_vsigs_headers():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt', 200, {'x-goog-meta-foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsigs/test_metadata/foo.txt', 'HEADERS')
+    assert 'x-goog-meta-foo' in md and md['x-goog-meta-foo'] == 'bar'
+
+    # Write HEADERS domain
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/test_metadata/foo.txt', 200, {},
+                expected_headers = {'x-goog-meta-foo': 'bar',
+                                    'x-goog-metadata-directive': 'REPLACE',
+                                    'x-goog-copy-source': '/test_metadata/foo.txt'})
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsigs/test_metadata/foo.txt', {'x-goog-meta-foo': 'bar'}, 'HEADERS')
+
+
+###############################################################################
 # Read credentials with OAuth2 refresh_token
 
 
