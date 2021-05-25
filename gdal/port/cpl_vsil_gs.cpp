@@ -414,11 +414,17 @@ bool VSIGSFSHandler::SetFileMetadata( const char * pszFilename,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return false;
 
-    if( pszDomain == nullptr || !(EQUAL(pszDomain, "ACL")) )
+    if( pszDomain == nullptr ||
+        !(EQUAL(pszDomain, "HEADERS") || EQUAL(pszDomain, "ACL")) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Only ACL domain is supported");
+                 "Only HEADERS and ACL domain are supported");
         return false;
+    }
+
+    if( EQUAL(pszDomain, "HEADERS") )
+    {
+        return CopyObject(pszFilename, pszFilename, papszMetadata) == 0;
     }
 
     const char* pszXML = CSLFetchNameValue(papszMetadata, "XML");

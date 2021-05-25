@@ -3084,7 +3084,9 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
         headers = curl_slist_append(headers, "Content-Length: 0"); // Required by GCS, but not by S3
         if( papszMetadata && papszMetadata[0] )
         {
-            headers = curl_slist_append(headers, "x-amz-metadata-directive: REPLACE");
+            const char* pszReplaceDirective = poS3HandleHelper->GetMetadataDirectiveREPLACE();
+            if( pszReplaceDirective[0] )
+                headers = curl_slist_append(headers, pszReplaceDirective);
             for( int i = 0; papszMetadata[i]; i++ )
             {
                 char* pszKey = nullptr;

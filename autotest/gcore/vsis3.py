@@ -2667,31 +2667,11 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure():
     handler.add('GET', '/test_bucket/', 200)
     handler.add('GET', '/test_bucket/test/', 404)
     handler.add('PUT', '/test_bucket/test/', 200)
-
-    def method(request):
-        request.protocol_version = 'HTTP/1.1'
-        response = '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>'
-        request.send_response(200)
-        request.send_header('Content-type', 'application/xml')
-        request.send_header('Content-Length', len(response))
-        request.end_headers()
-        request.wfile.write(response.encode('ascii'))
-
-    handler.add('POST', '/test_bucket/test/foo?uploads', custom_method=method)
-
-    def method(request):
-        if request.headers['Content-Length'] != '3':
-            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
-            request.send_response(400)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
-        request.send_response(200)
-        request.send_header('ETag', '"first_etag"')
-        request.send_header('Content-Length', 0)
-        request.end_headers()
-
-    handler.add('PUT', '/test_bucket/test/foo?partNumber=1&uploadId=my_id', 400)
+    handler.add('POST', '/test_bucket/test/foo?uploads', 200, {'Content-type': 'application:/xml'},
+                b'<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
+    handler.add('PUT', '/test_bucket/test/foo?partNumber=1&uploadId=my_id', 200,
+                {'ETag':  '"first_etag"'},
+                expected_headers = {'Content-Length': '3'})
     handler.add('DELETE', '/test_bucket/test/foo?uploadId=my_id', 204)
 
     with gdaltest.config_options({'VSIS3_SIMULATE_THREADING': 'YES',
@@ -2732,30 +2712,18 @@ def test_vsis3_metadata():
 
     # Write HEADERS domain
     handler = webserver.SequentialHandler()
-
-    def method(request):
-        if request.headers['foo'] != 'bar':
-            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
-            request.send_response(400)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
-        request.send_response(200)
-        request.end_headers()
-
-    handler.add('PUT', '/test_metadata/foo.txt', custom_method=method)
+    handler.add('PUT', '/test_metadata/foo.txt', 200, {},
+                expected_headers = {'foo': 'bar',
+                                    'x-amz-metadata-directive': 'REPLACE',
+                                    'x-amz-copy-source': '/test_metadata/foo.txt'})
     with webserver.install_http_handler(handler):
         assert gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {'foo': 'bar'}, 'HEADERS')
 
 
     # Write TAGS domain
     handler = webserver.SequentialHandler()
-
-    def method(request):
-        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
-
-        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
-        if content != """<?xml version="1.0" encoding="UTF-8"?>
+    handler.add('PUT', '/test_metadata/foo.txt?tagging', 200,
+                expected_body = b"""<?xml version="1.0" encoding="UTF-8"?>
 <Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <TagSet>
     <Tag>
@@ -2764,18 +2732,7 @@ def test_vsis3_metadata():
     </Tag>
   </TagSet>
 </Tagging>
-""":
-            sys.stderr.write('Did not get expected content: %s\n' % content)
-            request.send_response(400)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
-
-        request.send_response(200)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
-
-    handler.add('PUT', '/test_metadata/foo.txt?tagging', custom_method=method)
+""")
     with webserver.install_http_handler(handler):
         assert gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {'foo': 'bar'}, 'TAGS')
 

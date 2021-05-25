@@ -95,6 +95,7 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
         const CPLString& GetURL() const override { return m_osURL; }
 
         CPLString GetCopySourceHeader() const override { return "x-goog-copy-source"; }
+        const char* GetMetadataDirectiveREPLACE() const override { return "x-goog-metadata-directive: REPLACE"; }
 
         CPLString GetSignedURL(CSLConstList papszOptions);
 
