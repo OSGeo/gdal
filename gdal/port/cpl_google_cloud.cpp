@@ -144,6 +144,12 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
                                  const CPLString& osAccessKeyId,
                                  const std::string& osUserProject )
 {
+    if( osSecretAccessKey.empty() )
+    {
+        // GS_NO_SIGN_REQUEST=YES case
+        return nullptr;
+    }
+
     CPLString osDate = CPLGetConfigOption("CPL_GS_TIMESTAMP", "");
     if( osDate.empty() )
     {
@@ -330,6 +336,11 @@ bool VSIGSHandleHelper::GetConfiguration(CSLConstList papszOptions,
     osSecretAccessKey.clear();
     osAccessKeyId.clear();
     osHeaderFile.clear();
+
+    if( CPLTestBool(CPLGetConfigOption("GS_NO_SIGN_REQUEST", "NO")) )
+    {
+        return true;
+    }
 
     osSecretAccessKey =
         CPLGetConfigOption("GS_SECRET_ACCESS_KEY", "");
@@ -675,8 +686,8 @@ bool VSIGSHandleHelper::GetConfiguration(CSLConstList papszOptions,
     osMsg.Printf("GS_SECRET_ACCESS_KEY+GS_ACCESS_KEY_ID, "
                  "GS_OAUTH2_REFRESH_TOKEN or "
                  "GOOGLE_APPLICATION_CREDENTIALS or "
-                 "GS_OAUTH2_PRIVATE_KEY+GS_OAUTH2_CLIENT_EMAIL configuration "
-                 "options and %s not defined",
+                 "GS_OAUTH2_PRIVATE_KEY+GS_OAUTH2_CLIENT_EMAIL and %s, "
+                 "or GS_NO_SIGN_REQUEST=YES configuration options not defined",
                  osCredentials.c_str());
 
     CPLDebug("GS", "%s", osMsg.c_str());

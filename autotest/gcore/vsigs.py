@@ -146,6 +146,34 @@ def test_vsigs_1():
     assert f is None and gdal.VSIGetLastErrorMsg() != ''
 
 ###############################################################################
+# Test GS_NO_SIGN_REQUEST=YES
+
+
+def test_vsigs_no_sign_request():
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    object_key = 'gcp-public-data-landsat/LC08/01/044/034/LC08_L1GT_044034_20130330_20170310_01_T2/LC08_L1GT_044034_20130330_20170310_01_T2_B1.TIF'
+    expected_url = 'https://storage.googleapis.com/' + object_key
+
+    with gdaltest.config_option('GS_NO_SIGN_REQUEST', 'YES'):
+        actual_url = gdal.GetActualURL('/vsigs/' + object_key)
+        assert actual_url == expected_url
+
+        actual_url = gdal.GetActualURL('/vsigs_streaming/' + object_key)
+        assert actual_url == expected_url
+
+        f = open_for_read('/vsigs/' + object_key)
+
+    if f is None:
+        if gdaltest.gdalurlopen(expected_url) is None:
+            pytest.skip('cannot open URL')
+        pytest.fail()
+    gdal.VSIFCloseL(f)
+
+
+###############################################################################
 
 
 def test_vsigs_start_webserver():
