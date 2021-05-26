@@ -271,7 +271,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     const double dfTargetPixels = (static_cast<double>(nXSize) * nYSize * OVERSAMPLE_FACTOR);
     const double dfPixelSize = sqrt((dfMaxX - dfMinX) * (dfMaxY - dfMinY)
                               / dfTargetPixels);
-    if( dfPixelSize == 0.0 ) 
+    if( dfPixelSize == 0.0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid pixel size for backmap");
         return false;
@@ -471,11 +471,11 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 
 
     //Each pixel in the backmap may have multiple entries.
-    //We now go in average it out using the weights 
+    //We now go in average it out using the weights
     for( size_t i = 0; i < nBMXYCount; i++ )
     {
         //Setting these to -1 for backward compatibility
-        if (pabyValidFlag[i] == 0) 
+        if (pabyValidFlag[i] == 0)
         {
             psTransform->pafBackMapX[i] = -1.0;
             psTransform->pafBackMapY[i] = -1.0;
@@ -483,7 +483,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
         else
         {
             //Check if pixel was only touch during neighbor scan
-            //But no real weight was added as source point matched 
+            //But no real weight was added as source point matched
             //backmap grid node
             if (wgtsBackMap[i] > 0)
             {
