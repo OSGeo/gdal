@@ -7,12 +7,13 @@ Sponsoring FAQ
 Why does GDAL need sponsorship?
 -------------------------------
 
-GDAL is the most central piece of [Critical Digital 
-Infrastructure](https://www.fordfoundation.org/campaigns/critical-digital-infrastructure-research/) 
+GDAL is the most central piece of `Critical Digital Infrastructure`_ 
 in the geospatial world, serving as the primary building block for data management and processing 
-in open source, commercial, and government geospatial software. But most of the resources to it 
+in open source, commercial, and government geospatial software. But most of its resources  
 have gone to the development of new features, while the maintenance burden has only increased with 
 more functionality.
+
+.. _Critical Digital Infrastructure: https://www.fordfoundation.org/campaigns/critical-digital-infrastructure-research/
 
 The purpose of sponsor funding is to provide substantial long-acting resources
 that give the project the ability to address software, testing, and project
@@ -98,7 +99,7 @@ What is the project going to do with the money?
 How can the resources be used?
 ------------------------------
 
-The funds cannot be used benefit an individual contributor or be directed by a
+The funds cannot be used to benefit an individual contributor or be directed by a
 contributor through the non-profit organization. For example, a fictional
 Imagery Corp cannot fund NumFOCUS with explicit intent to have those resources
 used to fix bugs or add features that benefit Imagery Corp. Imagery Corp can
