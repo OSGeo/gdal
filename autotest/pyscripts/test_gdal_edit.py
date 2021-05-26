@@ -54,18 +54,15 @@ def test_gdal_edit_py_1():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdal_edit_py.tif')
 
     if sys.platform == 'win32':
         # Passing utf-8 characters doesn't at least please Wine...
         val = 'fake-utf8'
         val_encoded = val
-    elif sys.version_info >= (3, 0, 0):
+    else:
         val = '\u00e9ven'
         val_encoded = val
-    else:
-        exec("val = u'\\u00e9ven'")
-        val_encoded = val.encode('utf-8')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', 'tmp/test_gdal_edit_py.tif -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 123 -mo FOO=BAR -units metre -mo UTF8=' + val_encoded + ' -mo ' + val_encoded + '=UTF8')
 
@@ -104,7 +101,7 @@ def test_gdal_edit_py_1b():
         pytest.skip()
 
     image = 'tmp/test_gdal_edit_py.tif'
-    shutil.copy('../gcore/data/byte.tif', image)
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', image)
 
     for points, expected in (
         ('2 50 3 50 2 49', (2, 0.05, 0, 50, 0, -0.05)),  # not rotated
@@ -125,7 +122,7 @@ def test_gdal_edit_py_2():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdal_edit_py.tif')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -unsetgt")
 
@@ -148,7 +145,7 @@ def test_gdal_edit_py_3():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdal_edit_py.tif')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -a_srs ''")
 
@@ -171,7 +168,7 @@ def test_gdal_edit_py_4():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
     band = ds.GetRasterBand(1)
     band.ComputeStatistics(False)
@@ -194,9 +191,9 @@ def test_gdal_edit_py_4():
 
     with pytest.raises(OSError):
         os.stat('tmp/test_gdal_edit_py.tif.aux.xml')
-    
 
-    
+
+
 ###############################################################################
 # Test -stats
 
@@ -207,13 +204,13 @@ def test_gdal_edit_py_5():
     if script_path is None:
         pytest.skip()
 
+    gdal_array = pytest.importorskip('osgeo.gdal_array')
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.BandRasterIONumPy
-    except:
-        pytest.skip()
+        gdal_array.BandRasterIONumPy
+    except AttributeError:
+        pytest.skip('osgeo.gdal_array.BandRasterIONumPy is unavailable')
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
     band = ds.GetRasterBand(1)
     array = band.ReadAsArray()
@@ -261,7 +258,7 @@ def test_gdal_edit_py_6():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdal_edit_py.tif')
 
     # original values should be min=74, max=255, mean=126.765 StdDev=22.928470838676
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -setstats None None None None")
@@ -300,22 +297,22 @@ def test_gdal_edit_py_7():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdal_edit_py.tif')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -scale 2 -offset 3")
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     assert ds.GetRasterBand(1).GetScale() == 2
-    assert ds.GetRasterBand(1).GetOffset() == 3  
+    assert ds.GetRasterBand(1).GetOffset() == 3
     ds = None
-    
-    shutil.copy('../gcore/data/1bit_2bands.tif', 'tmp/test_gdal_edit_py.tif')
+
+    shutil.copy(test_py_scripts.get_data_path('gcore') + '1bit_2bands.tif', 'tmp/test_gdal_edit_py.tif')
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -scale 2 4 -offset 10 20")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     for i in [1, 2]:
         assert ds.GetRasterBand(i).GetScale() == i*2
         assert ds.GetRasterBand(i).GetOffset() == i*10
-        
+
     ds = None
 
 ###############################################################################
@@ -329,7 +326,7 @@ def test_gdal_edit_py_8():
         pytest.skip()
 
     gdal.Translate('tmp/test_gdal_edit_py.tif',
-                   '../gcore/data/byte.tif',
+                   test_py_scripts.get_data_path('gcore') + 'byte.tif',
                    options='-b 1 -b 1 -b 1 -b 1 -co PHOTOMETRIC=RGB -co ALPHA=NO')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -colorinterp_4 alpha")
@@ -351,7 +348,7 @@ def test_gdal_edit_py_unsetrpc():
     if script_path is None:
         pytest.skip()
 
-    gdal.Translate('tmp/test_gdal_edit_py.tif', '../gcore/data/byte_rpc.tif')
+    gdal.Translate('tmp/test_gdal_edit_py.tif', test_py_scripts.get_data_path('gcore') + 'byte_rpc.tif')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit',
                                   "tmp/test_gdal_edit_py.tif -unsetrpc")

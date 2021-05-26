@@ -29,15 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from sys import version_info
+import ctypes
+
 from osgeo import gdal
 import pytest
-
-
-try:
-    import ctypes
-except ImportError:
-    pass
 
 import gdaltest
 
@@ -67,11 +62,6 @@ def setup():
 
     gdal_handle_init = True
 
-    try:
-        ctypes.cdll
-    except ImportError:
-        pytest.skip('cannot find ctypes')
-
     name = find_libgdal()
     if name is None:
         pytest.skip()
@@ -92,18 +82,17 @@ def setup():
         gdal_handle_stdcall.GDALVersionInfo.restype = ctypes.c_char_p
 
         dynamic_version = gdal_handle_stdcall.GDALVersionInfo(None)
-        if version_info >= (3, 0, 0):
-            dynamic_version = str(dynamic_version, 'utf-8')
+        dynamic_version = dynamic_version.decode('utf-8')
 
         if dynamic_version != static_version:
             gdal_handle = None
             gdal_handle_stdcall = None
-            pytest.skip('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
+            pytest.skip(f'dynamic version({dynamic_version}) does not match '
+                        f'static version ({static_version})')
 
         return gdal_handle
     except Exception:
-        print('cannot find gdal shared object')
-        pytest.skip()
+        pytest.skip('cannot find gdal shared object')
 
 ###############################################################################
 # Call GDALDestroyDriverManager()
@@ -169,17 +158,11 @@ def test_testnonboundtoswig_GDALSimpleImageWarp():
     out_ds.SetProjection(wkt)
     out_ds = None
 
-    filename = 'data/byte.tif'
-    if version_info >= (3, 0, 0):
-        filename = bytes(filename, 'utf-8')
-
+    filename = b'data/byte.tif'
     native_in_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_ReadOnly)
     assert native_in_ds is not None
 
-    filename = '/vsimem/out.tif'
-    if version_info >= (3, 0, 0):
-        filename = bytes(filename, 'utf-8')
-
+    filename = b'/vsimem/out.tif'
     native_out_ds = gdal_handle_stdcall.GDALOpen(filename, gdal.GA_Update)
     assert native_out_ds is not None
 
@@ -285,9 +268,7 @@ def test_testnonboundtoswig_VRTDerivedBands():
     gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.argtypes = [ctypes.c_char_p, DerivedPixelFuncType]
     gdal_handle_stdcall.GDALAddDerivedBandPixelFunc.restype = ctypes.c_int
 
-    funcName = "pyDerivedPixelFunc"
-    if version_info >= (3, 0, 0):
-        funcName = bytes(funcName, 'utf-8')
+    funcName = b"pyDerivedPixelFunc"
     ret = gdal_handle_stdcall.GDALAddDerivedBandPixelFunc(funcName, my_cDerivedPixelFunc)
     assert ret == 0
 

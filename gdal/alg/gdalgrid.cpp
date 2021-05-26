@@ -2460,55 +2460,55 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
     *ppOptions = nullptr;
 
-    char **papszParms = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
+    char **papszParams = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
 
-    if( CSLCount(papszParms) < 1 )
+    if( CSLCount(papszParams) < 1 )
     {
-        CSLDestroy( papszParms );
+        CSLDestroy( papszParams );
         return CE_Failure;
     }
 
-    if( EQUAL(papszParms[0], szAlgNameInvDist) )
+    if( EQUAL(papszParams[0], szAlgNameInvDist) )
     {
         *peAlgorithm = GGA_InverseDistanceToAPower;
     }
-    else if( EQUAL(papszParms[0], szAlgNameInvDistNearestNeighbor) )
+    else if( EQUAL(papszParams[0], szAlgNameInvDistNearestNeighbor) )
     {
         *peAlgorithm = GGA_InverseDistanceToAPowerNearestNeighbor;
     }
-    else if( EQUAL(papszParms[0], szAlgNameAverage) )
+    else if( EQUAL(papszParams[0], szAlgNameAverage) )
     {
         *peAlgorithm = GGA_MovingAverage;
     }
-    else if( EQUAL(papszParms[0], szAlgNameNearest) )
+    else if( EQUAL(papszParams[0], szAlgNameNearest) )
     {
         *peAlgorithm = GGA_NearestNeighbor;
     }
-    else if( EQUAL(papszParms[0], szAlgNameMinimum) )
+    else if( EQUAL(papszParams[0], szAlgNameMinimum) )
     {
         *peAlgorithm = GGA_MetricMinimum;
     }
-    else if( EQUAL(papszParms[0], szAlgNameMaximum) )
+    else if( EQUAL(papszParams[0], szAlgNameMaximum) )
     {
         *peAlgorithm = GGA_MetricMaximum;
     }
-    else if( EQUAL(papszParms[0], szAlgNameRange) )
+    else if( EQUAL(papszParams[0], szAlgNameRange) )
     {
         *peAlgorithm = GGA_MetricRange;
     }
-    else if( EQUAL(papszParms[0], szAlgNameCount) )
+    else if( EQUAL(papszParams[0], szAlgNameCount) )
     {
         *peAlgorithm = GGA_MetricCount;
     }
-    else if( EQUAL(papszParms[0], szAlgNameAverageDistance) )
+    else if( EQUAL(papszParams[0], szAlgNameAverageDistance) )
     {
         *peAlgorithm = GGA_MetricAverageDistance;
     }
-    else if( EQUAL(papszParms[0], szAlgNameAverageDistancePts) )
+    else if( EQUAL(papszParams[0], szAlgNameAverageDistancePts) )
     {
         *peAlgorithm = GGA_MetricAverageDistancePts;
     }
-    else if( EQUAL(papszParms[0], szAlgNameLinear) )
+    else if( EQUAL(papszParams[0], szAlgNameLinear) )
     {
         *peAlgorithm = GGA_Linear;
     }
@@ -2516,8 +2516,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Unsupported gridding method \"%s\"",
-                  papszParms[0] );
-        CSLDestroy( papszParms );
+                  papszParams[0] );
+        CSLDestroy( papszParams );
         return CE_Failure;
     }
 
@@ -2536,30 +2536,30 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
                 static_cast<GDALGridInverseDistanceToAPowerOptions *>(
                     *ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParms, "power" );
+            const char *pszValue = CSLFetchNameValue( papszParams, "power" );
             poPowerOpts->dfPower = pszValue ? CPLAtofM(pszValue) : 2.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "smoothing" );
+            pszValue = CSLFetchNameValue( papszParams, "smoothing" );
             poPowerOpts->dfSmoothing = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            pszValue = CSLFetchNameValue( papszParams, "radius1" );
             poPowerOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            pszValue = CSLFetchNameValue( papszParams, "radius2" );
             poPowerOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            pszValue = CSLFetchNameValue( papszParams, "angle" );
             poPowerOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "max_points" );
+            pszValue = CSLFetchNameValue( papszParams, "max_points" );
             poPowerOpts->nMaxPoints = static_cast<GUInt32>(
                 pszValue ? CPLAtofM(pszValue) : 0);
 
-            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            pszValue = CSLFetchNameValue( papszParams, "min_points" );
             poPowerOpts->nMinPoints = static_cast<GUInt32>(
                 pszValue ? CPLAtofM(pszValue) : 0);
 
-            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             break;
@@ -2576,24 +2576,24 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
                     GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
                         *ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParms, "power" );
+            const char *pszValue = CSLFetchNameValue( papszParams, "power" );
             poPowerOpts->dfPower = pszValue ? CPLAtofM(pszValue) : 2.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "smoothing" );
+            pszValue = CSLFetchNameValue( papszParams, "smoothing" );
             poPowerOpts->dfSmoothing = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "radius" );
+            pszValue = CSLFetchNameValue( papszParams, "radius" );
             poPowerOpts->dfRadius = pszValue ? CPLAtofM(pszValue) : 1.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "max_points" );
+            pszValue = CSLFetchNameValue( papszParams, "max_points" );
             poPowerOpts->nMaxPoints = static_cast<GUInt32>(
                 pszValue ? CPLAtofM(pszValue) : 12);
 
-            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            pszValue = CSLFetchNameValue( papszParams, "min_points" );
             poPowerOpts->nMinPoints = static_cast<GUInt32>(
                 pszValue ? CPLAtofM(pszValue) : 0);
 
-            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             break;
@@ -2606,20 +2606,20 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridMovingAverageOptions * const poAverageOpts =
                 static_cast<GDALGridMovingAverageOptions *>(*ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
             poAverageOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            pszValue = CSLFetchNameValue( papszParams, "radius2" );
             poAverageOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            pszValue = CSLFetchNameValue( papszParams, "angle" );
             poAverageOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            pszValue = CSLFetchNameValue( papszParams, "min_points" );
             poAverageOpts->nMinPoints = static_cast<GUInt32>(
                 pszValue ? CPLAtofM(pszValue) : 0);
 
-            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poAverageOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             break;
@@ -2632,16 +2632,16 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridNearestNeighborOptions * const poNeighborOpts =
                 static_cast<GDALGridNearestNeighborOptions *>(*ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
             poNeighborOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            pszValue = CSLFetchNameValue( papszParams, "radius2" );
             poNeighborOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            pszValue = CSLFetchNameValue( papszParams, "angle" );
             poNeighborOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poNeighborOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
             break;
         }
@@ -2658,19 +2658,19 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridDataMetricsOptions * const poMetricsOptions =
                 static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParms, "radius1" );
+            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
             poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "radius2" );
+            pszValue = CSLFetchNameValue( papszParams, "radius2" );
             poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "angle" );
+            pszValue = CSLFetchNameValue( papszParams, "angle" );
             poMetricsOptions->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            pszValue = CSLFetchNameValue( papszParams, "min_points" );
             poMetricsOptions->nMinPoints = pszValue ? atoi(pszValue) : 0;
 
-            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poMetricsOptions->dfNoDataValue =
                 pszValue ? CPLAtofM(pszValue) : 0.0;
             break;
@@ -2683,15 +2683,15 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridLinearOptions * const poLinearOpts =
                 static_cast<GDALGridLinearOptions *>(*ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParms, "radius" );
+            const char *pszValue = CSLFetchNameValue( papszParams, "radius" );
             poLinearOpts->dfRadius = pszValue ? CPLAtofM(pszValue) : -1.0;
 
-            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poLinearOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
             break;
          }
     }
 
-    CSLDestroy( papszParms );
+    CSLDestroy( papszParams );
     return CE_None;
 }

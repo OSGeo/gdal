@@ -164,6 +164,16 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
+/*      ULink                                                           */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "ULink" );
+    oField.SetType( OFTString );
+    oField.SetSubType( OFSTJSON );
+    oField.SetWidth( 0 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
 /*      Create template feature for evaluating simple expressions.      */
 /* -------------------------------------------------------------------- */
     poEvalFeature = new OGRFeature( poFeatureDefn );
@@ -329,13 +339,68 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     int anMSLink[MAX_LINK];
     anMSLink[0] = 0;
 
+    CPLJSONObject uLinkData;
+
     int iLink = 0;
     int nLinkCount = 0;
+    int uLinkCount = 0;
 
-    unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, nullptr,
-                              anEntityNum + iLink, anMSLink + iLink, nullptr );
+    int nLinkType = 0;
+    int nLinkSize = 0;
+
+    // coverity[tained_data]
+    unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
+                              anEntityNum + iLink, anMSLink + iLink, &nLinkSize);
+
     while( pabyData )
     {
+        CPLJSONArray previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+        if (!previousValues.IsValid() )
+        {
+            uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
+            previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+        }
+        CPLJSONArray rawWords;
+        for( int i=0; i < nLinkSize-1; i+=2 )
+        {
+            rawWords.Add( CPLSPrintf("0x%02x%02x", pabyData[i+1], pabyData[i] ) );
+        }
+        CPLJSONObject theNewObject = CPLJSONObject();
+        theNewObject.Add( "size", nLinkSize );
+        previousValues.Add( theNewObject );
+        switch( nLinkType )
+        {
+            case 24721: // OdDgDBLinkage::kOracle
+            {
+                theNewObject.Add( "raw", rawWords );
+                theNewObject.Add( "type", "Oracle" );
+            }
+            break;
+            case 32047: // OdDgDBLinkage::kODBC
+            {
+                theNewObject.Add( "raw", rawWords );
+                theNewObject.Add( "type", "ODBC" );
+            }
+            break;
+            case 6549: // 0x1995 Application ID by IPCC/Portugal
+            {
+                theNewObject.Add( "domain", CPLSPrintf("0x%02x", pabyData[5] ) );
+                theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pabyData[4] ) );
+                theNewObject.Add( "family", CPLSPrintf("0x%02x", pabyData[7] ) );
+                theNewObject.Add( "object", CPLSPrintf("0x%02x", pabyData[6] ) );
+                theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pabyData[5], pabyData[4], pabyData[7], pabyData[6] ) );
+                theNewObject.Add( "type", "IPCC/Portugal" );
+            }
+            break;
+            default:
+            {
+                theNewObject.Add( "raw", rawWords );
+                theNewObject.Add( "type", "unknown" );
+            }
+            break;
+        }
+
+        uLinkCount++;
         iLink++;
 
         if( anEntityNum[nLinkCount] != 0 || anMSLink[nLinkCount] != 0 )
@@ -350,14 +415,19 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         anEntityNum[nLinkCount] = 0;
         anMSLink[nLinkCount] = 0;
 
-        pabyData = DGNGetLinkage( hDGN, psElement, iLink, nullptr,
+        // coverity[tained_data]
+        pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                                   anEntityNum+nLinkCount, anMSLink+nLinkCount,
-                                  nullptr );
+                                  &nLinkSize);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Apply attribute linkage to feature.                             */
 /* -------------------------------------------------------------------- */
+    if( uLinkCount > 0 )
+    {
+        poFeature->SetField( "ULink", uLinkData.ToString().c_str() );
+    }
     if( nLinkCount > 0 )
     {
         if( EQUAL(pszLinkFormat,"FIRST") )

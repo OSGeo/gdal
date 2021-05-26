@@ -29,12 +29,8 @@
 ###############################################################################
 
 import glob
-
 import pytest
-
-
 from osgeo import gdal
-
 import gdaltest
 
 
@@ -65,6 +61,8 @@ mrf_list = [
     ('../../gcore/data/float64.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
     ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 50054, [50054], []),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=LERC', 'INTERLEAVE=PIXEL']),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=LERC', 'OPTIONS=V1:1', 'INTERLEAVE=PIXEL']),
     ('small_world_pct.tif', 14890, [14890], ['COMPRESS=PPNG']),
     ('byte.tif', 4672, [4603, 4652], ['COMPRESS=JPEG', 'QUALITY=99']),
     # following expected checksums are for: gcc 4.4 debug, mingw/vc9 32-bit, mingw-w64/vc12 64bit, MacOSX
@@ -73,6 +71,8 @@ mrf_list = [
     ('rgbsmall.tif', 21212, [21261, 21209, 21254, 21215], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
     ('rgbsmall.tif', 21212, [21283, 21127, 21278, 21124], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
     ('jpeg/12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
+    # checksum depends on floating point precision
+    ('f32nan_data.tif', 54061, [54052, 54050], ['COMPRESS=LERC', 'OPTIONS=V1:Yes LERC_PREC:0.01']),
 ]
 
 
@@ -86,7 +86,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     if 'COMPRESS=LERC' in options and 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
         pytest.skip()
 
-    if src_filename == 'jpeg/12bit_rose_extract.jpg':
+    if 'jpg' in src_filename:
         import jpeg
         jpeg.test_jpeg_1()
         if gdaltest.jpeg_version == '9b':
@@ -106,6 +106,9 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
             check_minmax = False
     return ut.testCreateCopy(check_minmax=check_minmax)
 
+def cleanup(base = '/vsimem/out.'):
+    for ext in ['mrf', 'mrf.aux.xml', 'idx', 'ppg', 'til', 'lrc', 'pjg']:
+        gdal.Unlink(base + ext)
 
 def test_mrf_zen_test():
     result = 'success'
@@ -156,15 +159,9 @@ def test_mrf_overview_nnb_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == expected_cs, dt
+        assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
-
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.ppg')
-        gdal.Unlink('/vsimem/out.til')
-
+        cleanup()
     
 
 def test_mrf_overview_nnb_with_nodata_fact_2():
@@ -184,15 +181,9 @@ def test_mrf_overview_nnb_with_nodata_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == expected_cs, dt
+        assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
-
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.ppg')
-        gdal.Unlink('/vsimem/out.til')
-
+        cleanup()
     
 
 def test_mrf_overview_avg_fact_2():
@@ -212,16 +203,10 @@ def test_mrf_overview_avg_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == expected_cs, dt
+        assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
+        cleanup()
 
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.ppg')
-        gdal.Unlink('/vsimem/out.til')
-
-    
 
 def test_mrf_overview_avg_with_nodata_fact_2():
 
@@ -241,13 +226,9 @@ def test_mrf_overview_avg_with_nodata_fact_2():
 
         ds = gdal.Open('/vsimem/out.mrf')
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == expected_cs, dt
+        assert cs == expected_cs, gdal.GetDataTypeName(dt)
         ds = None
-
-        gdal.Unlink('/vsimem/out.mrf')
-        gdal.Unlink('/vsimem/out.mrf.aux.xml')
-        gdal.Unlink('/vsimem/out.idx')
-        gdal.Unlink('/vsimem/out.til')
+        cleanup()
 
     
 def test_mrf_nnb_overview_partial_block():
@@ -261,11 +242,7 @@ def test_mrf_nnb_overview_partial_block():
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 1087
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_overview_nnb_implicit_level():
@@ -291,11 +268,7 @@ def test_mrf_overview_nnb_implicit_level():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_overview_external():
@@ -310,13 +283,7 @@ def test_mrf_overview_external():
     expected_cs = 1087
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.mrf.ovr')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_lerc_nodata():
@@ -333,12 +300,7 @@ def test_mrf_lerc_nodata():
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.lrc')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_lerc_with_huffman():
@@ -353,17 +315,38 @@ def test_mrf_lerc_with_huffman():
     expected_cs = 31204
     assert cs == expected_cs
     ds = None
+    cleanup()
 
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.lrc')
-    gdal.Unlink('/vsimem/out.til')
+def test_raw_lerc():
+    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
 
+    # Defaults to LERC2
+    for opt in 'OPTIONS=V1:1', None:
+        co = ['COMPRESS=LERC']
+        if opt:
+            co.append(opt)
+        gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
+                        creationOptions = co)
+        ds = gdal.Open('/vsimem/out.lrc')
+        with gdaltest.error_handler():
+            cs = ds.GetRasterBand(1).Checksum()
+        expected_cs = 4819
+        assert cs == expected_cs
+        ds = None
+        # Test open options for raw LERC1, it accepts NDV and datatype overrides
+        if opt:
+            ds = gdal.OpenEx('/vsimem/out.lrc', open_options = ['@NDV=100, @datatype=UInt32'])
+            with gdaltest.error_handler():
+                cs = ds.GetRasterBand(1).Checksum()
+            print(cs, opt)
+            assert cs == 60065
+            ds = None
+        cleanup()
 
 def test_mrf_cached_source():
 
-    # Caching MRF
+    # Test empty cache creation
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                    creationOptions=['CACHEDSOURCE=invalid_source', 'NOCOPY=TRUE'])
     ds = gdal.Open('/vsimem/out.mrf')
@@ -372,15 +355,7 @@ def test_mrf_cached_source():
     expected_cs = 0
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
-
-    gdal.Unlink('tmp/byte.idx')
-    gdal.Unlink('tmp/byte.ppg')
+    cleanup()
 
     open('tmp/byte.tif', 'wb').write(open('data/byte.tif', 'rb').read())
     gdal.Translate('tmp/out.mrf', 'tmp/byte.tif', format='MRF',
@@ -397,18 +372,12 @@ def test_mrf_cached_source():
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
+    cleanup('tmp/out.')
 
     # Caching MRF in mp_safe mode
-
-    gdal.Unlink('tmp/out.mrf')
-    gdal.Unlink('tmp/out.mrf.aux.xml')
-    gdal.Unlink('tmp/out.idx')
-    gdal.Unlink('tmp/out.ppg')
-    gdal.Unlink('tmp/out.til')
-
     open('tmp/byte.tif', 'wb').write(open('data/byte.tif', 'rb').read())
     open('tmp/out.mrf', 'wt').write(
-        """<MRF_META>
+"""<MRF_META>
   <CachedSource>
     <Source>byte.tif</Source>
   </CachedSource>
@@ -416,10 +385,6 @@ def test_mrf_cached_source():
     <Size x="20" y="20" c="1" />
     <PageSize x="512" y="512" c="1" />
   </Raster>
-  <GeoTags>
-    <BoundingBox minx="440720.00000000" miny="3750120.00000000" maxx="441920.00000000" maxy="3751320.00000000" />
-    <Projection>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</Projection>
-  </GeoTags>
 </MRF_META>""")
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
@@ -427,16 +392,18 @@ def test_mrf_cached_source():
     assert cs == expected_cs
     ds = None
 
+    # Read it again, from the cache
     gdal.Unlink('tmp/byte.tif')
     ds = gdal.Open('tmp/out.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
+    # No cleanup, will test cloning next
 
     # Cloning MRF
     open('tmp/cloning.mrf', 'wt').write(
-        """<MRF_META>
+"""<MRF_META>
   <CachedSource>
     <Source clone="true">out.mrf</Source>
   </CachedSource>
@@ -444,56 +411,32 @@ def test_mrf_cached_source():
     <Size x="20" y="20" c="1" />
     <PageSize x="512" y="512" c="1" />
   </Raster>
-  <GeoTags>
-    <BoundingBox minx="440720.00000000" miny="3750120.00000000" maxx="441920.00000000" maxy="3751320.00000000" />
-    <Projection>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</Projection>
-  </GeoTags>
 </MRF_META>""")
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
+    cleanup('tmp/out.')
 
-    gdal.Unlink('tmp/out.mrf')
-    gdal.Unlink('tmp/out.mrf.aux.xml')
-    gdal.Unlink('tmp/out.idx')
-    gdal.Unlink('tmp/out.ppg')
-    gdal.Unlink('tmp/out.til')
-
+    # Read it again, from the cache
     ds = gdal.Open('tmp/cloning.mrf')
     cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 4672
     assert cs == expected_cs
     ds = None
-
-    gdal.Unlink('tmp/cloning.mrf')
-    gdal.Unlink('tmp/cloning.mrf.aux.xml')
-    gdal.Unlink('tmp/cloning.idx')
-    gdal.Unlink('tmp/cloning.ppg')
-    gdal.Unlink('tmp/cloning.til')
-
+    cleanup('tmp/cloning.')
 
 def test_mrf_versioned():
-
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
 
     # Caching MRF
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF')
     gdal.FileFromMemBuffer('/vsimem/out.mrf',
-                           """<MRF_META>
+"""<MRF_META>
   <Raster versioned="on">
     <Size x="20" y="20" c="1" />
     <PageSize x="512" y="512" c="1" />
   </Raster>
-  <GeoTags>
-    <BoundingBox minx="440720.00000000" miny="3750120.00000000" maxx="441920.00000000" maxy="3751320.00000000" />
-    <Projection>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</Projection>
-  </GeoTags>
 </MRF_META>""")
     ds = gdal.Open('/vsimem/out.mrf', gdal.GA_Update)
     ds.GetRasterBand(1).Fill(0)
@@ -521,39 +464,29 @@ def test_mrf_versioned():
         ds = gdal.Open('/vsimem/out.mrf:MRF:V2')
     assert ds is None
 
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
+    cleanup()
 
 
 def test_mrf_cleanup():
 
     files = [
-        'jpeg/12bit_rose_extract.jpg.*',
+        '12bit_rose_extract.jpg.*',
         'byte.tif.*',
         'int16.tif.*',
-        'out.idx',
-        'out.mrf',
-        'out.mrf.aux.xml',
-        'out.ppg',
         'rgbsmall.tif.*',
-        'small_world_pct.tif.*',
+        'small_world*',
         'float32.tif.*',
         'float64.tif.*',
         'int32.tif.*',
         'uint16.tif.*',
         'uint32.tif.*',
         'utmsmall.tif.*',
-        'cloning.*']
+        'cloning.*',
+        'f32nan_data.*'
+        ]
 
     for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
         gdal.Unlink(f)
 
-    gdal.Unlink('/vsimem/out.mrf')
-    gdal.Unlink('/vsimem/out.mrf.aux.xml')
-    gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
-    gdal.Unlink('/vsimem/out.til')
-
+    cleanup()
+    cleanup('tmp/out.')

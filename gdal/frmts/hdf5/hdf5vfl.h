@@ -107,7 +107,7 @@ static const H5FD_class_t HDF5_vsil_g = {
     H5FD_FLMAP_DICHOTOMY        /* fl_map */
 };
 
-typedef struct  {
+typedef struct HDF5_vsil_t {
     H5FD_t          pub;            /* must be first */
     VSILFILE       *fp = nullptr;
     haddr_t         eoa = 0;

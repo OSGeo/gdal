@@ -1,0 +1,1 @@
+../gdal/LICENSE.TXT

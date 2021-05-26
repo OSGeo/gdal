@@ -944,9 +944,9 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
           dfDoubleRet = nIntRet;
 
           if( chItemType == 'e'
-              && nIntRet >= 0 && nIntRet < CSLCount(papszEnumNames) )
+              && nNumber < static_cast<unsigned>(CSLCount(papszEnumNames)) )
           {
-              pszStringRet = papszEnumNames[nIntRet];
+              pszStringRet = papszEnumNames[nNumber];
           }
       }
       break;

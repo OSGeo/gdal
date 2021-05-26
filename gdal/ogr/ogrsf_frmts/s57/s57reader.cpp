@@ -322,7 +322,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
         poPoint->SetField( i, poMultiPoint->GetRawFieldRef(i) );
     }
 
-    OGRPoint *poSrcPoint = poMPGeom->getGeometryRef( iPointOffset )->toPoint();
+    OGRPoint *poSrcPoint = poMPGeom->getGeometryRef( iPointOffset );
     iPointOffset++;
     poPoint->SetGeometry( poSrcPoint );
 
@@ -411,6 +411,12 @@ bool S57Reader::SetOptions( char ** papszOptionsIn )
         nOptionFlags |= S57M_RECODE_BY_DSSI;
     else
         nOptionFlags &= ~S57M_RECODE_BY_DSSI;
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_LIST_AS_STRING );
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
+        nOptionFlags |= S57M_LIST_AS_STRING;
+    else
+        nOptionFlags &= ~S57M_LIST_AS_STRING;
 
     return true;
 }
@@ -964,8 +970,9 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 
         OGRFieldDefn *poFldDefn
             = poFeature->GetDefnRef()->GetFieldDefn( iField );
-        if( poFldDefn->GetType() == OFTInteger
-            || poFldDefn->GetType() == OFTReal )
+        const auto eType = poFldDefn->GetType();
+        if( eType == OFTInteger
+            || eType == OFTReal )
         {
             if( strlen(pszValue) == 0 )
             {
@@ -979,8 +986,16 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
             else
                 poFeature->SetField( iField, pszValue );
         }
+        else if( eType == OFTStringList )
+        {
+            char** papszTokens = CSLTokenizeString2(pszValue, ",", 0);
+            poFeature->SetField( iField, papszTokens );
+            CSLDestroy(papszTokens);
+        }
         else
+        {
             poFeature->SetField( iField, pszValue );
+        }
 
         CPLFree(pszValueToFree);
     }
@@ -2864,6 +2879,8 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         DDFField *poSrcSG2D = poUpdate->FindField( "SG2D" );
         DDFField *poDstSG2D = poTarget->FindField( "SG2D" );
 
+        const int nCCUI = poUpdate->GetIntSubfield( "SGCC", 0, "CCUI", 0 );
+
         /* If we don't have SG2D, check for SG3D */
         if( poDstSG2D == nullptr )
         {
@@ -2872,28 +2889,30 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             {
                 poSrcSG2D = poUpdate->FindField("SG3D");
             }
+            else
+            {
+                if ( nCCUI != 1 )
+                {
+                    // CPLAssert( false );
+                    return false;
+                }
+
+                poTarget->AddField(poTarget->GetModule()->FindFieldDefn("SG2D"));
+                poDstSG2D = poTarget->FindField("SG2D");
+                if (poDstSG2D == nullptr) {
+                    // CPLAssert( false );
+                    return false;
+                }
+
+                // Delete null default data that was created
+                poTarget->SetFieldRaw( poDstSG2D, 0, nullptr, 0 );
+            }
         }
 
-        const int nCCUI = poUpdate->GetIntSubfield( "SGCC", 0, "CCUI", 0 );
-
-        if( (poSrcSG2D == nullptr && nCCUI != 2)
-            || (poDstSG2D == nullptr && nCCUI != 1) )
+        if( poSrcSG2D == nullptr && nCCUI != 2 )
         {
             // CPLAssert( false );
             return false;
-        }
-
-        if (poDstSG2D == nullptr)
-        {
-            poTarget->AddField(poTarget->GetModule()->FindFieldDefn("SG2D"));
-            poDstSG2D = poTarget->FindField("SG2D");
-            if (poDstSG2D == nullptr) {
-                // CPLAssert( false );
-                return false;
-            }
-
-            // Delete null default data that was created
-            poTarget->SetFieldRaw( poDstSG2D, 0, nullptr, 0 );
         }
 
         int nCoordSize = poDstSG2D->GetFieldDefn()->GetFixedWidth();
@@ -3100,8 +3119,8 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( poDstATTF == nullptr )
         {
-            // Create empty ATTF Field (see GDAL/OGR Bug #1648)" ); 
-            poDstATTF = poTarget->AddField(poModule->FindFieldDefn( "ATTF" ));         
+            // Create empty ATTF Field (see GDAL/OGR Bug #1648)" );
+            poDstATTF = poTarget->AddField(poModule->FindFieldDefn( "ATTF" ));
         }
 
         DDFField *poSrcATTF = poUpdate->FindField( "ATTF" );

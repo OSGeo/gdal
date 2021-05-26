@@ -143,8 +143,8 @@ use Geo::GDAL::Const;
 # Note that the 1/100000 digits may be used to create more than one
 # CPAN release from one GDAL release.
 
-our $VERSION = '3.0100';
-our $GDAL_VERSION = '3.1.0';
+our $VERSION = '3.0300';
+our $GDAL_VERSION = '3.3.0';
 
 =pod
 
@@ -206,6 +206,13 @@ L<https://opensource.org/licenses/MIT>
 L<https://trac.osgeo.org/gdal>
 
 =cut
+
+unless ($ENV{GDAL_PERL_BINDINGS_OK}) {
+    my $msg = "NOTE: GDAL Perl Bindings are deprecated and will be removed in version 3.5.\n";
+    $msg .= "NOTE: Please use Geo::GDAL::FFI instead.\n";
+    $msg .= "NOTE: To remove this message define environment variable GDAL_PERL_BINDINGS_OK.\n";
+    warn $msg;
+}
 
 use Scalar::Util 'blessed';
 use vars qw/

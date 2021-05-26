@@ -89,7 +89,7 @@ void RegisterOGRPLSCENES()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Planet Labs Scenes API" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_plscenes.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/plscenes.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLSCENES:" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

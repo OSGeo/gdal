@@ -38,40 +38,83 @@ CPL_CVSID("$Id$")
 /*
   Update modes:
 
-       <geaenderteObjekte>
-                <wfs:Transaction version="1.0.0" service="WFS">
-                        <wfs:Delete typeName="AX_BesondereFlurstuecksgrenze">
-                                <ogc:Filter>
-                                        <ogc:FeatureId fid="DENW18AL0000nANA20120117T130819Z" />
-                                </ogc:Filter>
-                        </wfs:Delete>
-                        <wfsext:Replace vendorId="AdV" safeToIgnore="false">
-                                <AP_PTO gml:id="DENW18AL0000pewY20131011T071138Z">
-                                       [...]
-                                </AP_PTO>
-                                <ogc:Filter>
-                                        <ogc:FeatureId fid="DENW18AL0000pewY20120117T143330Z" />
-                                </ogc:Filter>
-                        </wfsext:Replace>
-                        <wfs:Update typeName="AX_KommunalesGebiet">
-                                <wfs:Property>
-                                        <wfs:Name>adv:lebenszeitintervall/adv:AA_Lebenszeitintervall/adv:endet</wfs:Name>
-                                        <wfs:Value>2012-08-14T12:32:30Z</wfs:Value>
-                                </wfs:Property>
-                                <wfs:Property>
-                                        <wfs:Name>adv:anlass</wfs:Name>
-                                        <wfs:Value>000000</wfs:Value>
-                                </wfs:Property>
-                                <wfs:Property>
-                                        <wfs:Name>adv:anlass</wfs:Name>
-                                        <wfs:Value>010102</wfs:Value>
-                                </wfs:Property>
-                                <ogc:Filter>
-                                        <ogc:FeatureId fid="DENW11AL000062WD20111016T122010Z" />
-                                </ogc:Filter>
-                        </wfs:Update>
-                </wfs:Transaction>
-        </geaenderteObjekte>
+GID<7
+    <wfs:Transaction version="1.0.0" service="WFS">
+        <wfs:Delete typeName="AX_BesondereFlurstuecksgrenze">
+            <ogc:Filter>
+                <ogc:FeatureId fid="DENW18AL0000nANA20120117T130819Z" />
+            </ogc:Filter>
+        </wfs:Delete>
+        <wfsext:Replace vendorId="AdV" safeToIgnore="false">
+            <AP_PTO gml:id="DENW18AL0000pewY20131011T071138Z">
+                [...]
+            </AP_PTO>
+            <ogc:Filter>
+                <ogc:FeatureId fid="DENW18AL0000pewY20120117T143330Z" />
+            </ogc:Filter>
+        </wfsext:Replace>
+        <wfs:Update typeName="AX_KommunalesGebiet">
+            <wfs:Property>
+                <wfs:Name>adv:lebenszeitintervall/adv:AA_Lebenszeitintervall/adv:endet</wfs:Name>
+                <wfs:Value>2012-08-14T12:32:30Z</wfs:Value>
+            </wfs:Property>
+            <wfs:Property>
+                <wfs:Name>adv:anlass</wfs:Name>
+                <wfs:Value>000000</wfs:Value>
+            </wfs:Property>
+            <wfs:Property>
+                <wfs:Name>adv:anlass</wfs:Name>
+                <wfs:Value>010102</wfs:Value>
+            </wfs:Property>
+            <ogc:Filter>
+                <ogc:FeatureId fid="DENW11AL000062WD20111016T122010Z" />
+            </ogc:Filter>
+        </wfs:Update>
+    </wfs:Transaction>
+
+GID>=7
+    <wfs:Transaction>
+        <wfs:Insert>
+            <AX_Flurstueck gml:id="DEBY0000F0000001">
+                …
+            </AX_Flurstueck>
+            <AX_Gebaeude gml:id="DEBY0000G0000001">
+                …
+            </AX_Gebaeude>
+        </wfs:Insert>
+        <wfs:Replace>
+            <AX_Flurstueck gml:id="DEBY0000F0000002">
+                …
+            </AX_Flurstueck>
+            <fes:Filter>
+                <fes:ResourceId rid="DEBY0000F000000220010101T000000Z"/>
+            </fes:Filter>
+        </wfs:Replace>
+        <wfs:Delete typeNames=“AX_Buchungsstelle”>
+            <fes:Filter>
+                <fes:ResourceId rid="DEBY0000B000000320010101T000000Z"/>
+                <fes:ResourceId rid="DEBY0000B000000420010101T000000Z"/>
+                …
+            </fes:Filter>
+        </wfs:Delete>
+        <wfs:Update typeNames="adv:AX_Flurstueck">
+            <wfs:Property>
+                <wfs:ValueReference>adv:lebenszeitintervall/adv:AA_Lebenszeitintervall/adv:endet</wfs:ValueReference>
+                    <wfs:Value>2007-11-13T12:00:00Z</wfs:Value>
+                </wfs:Property>
+            <wfs:Property>
+            <wfs:ValueReference>adv:anlass</wfs:ValueReference>
+                 <wfs:Value>000000</wfs:Value>
+            </wfs:Property>
+            <wfs:Property>
+                 <wfs:ValueReference>adv:anlass</wfs:ValueReference>
+                 <wfs:Value>010102</wfs:Value>
+            </wfs:Property>
+            <wfs:Filter>
+                 <fes:ResourceId rid="DEBY123412345678"/>
+            </wfs:Filter>
+        </wfs:Update>
+    </wfs:Transaction>
 */
 
 /************************************************************************/
@@ -153,12 +196,13 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 
 #ifdef DEBUG_VERBOSE
     CPLDebug( "NAS",
-              "%*sstartElement %s m_bIgnoreFeature:%d depth:%d "
-              "depthFeature:%d featureClass:%s",
-              m_nDepth, "", m_osElementName.c_str(),
+              "[%d] startElement %s m_bIgnoreFeature:%d m_nDepth:%d "
+              "m_nDepthFeature:%d featureClass:%s lastComponent:%s",
+              m_nDepth, m_osElementName.c_str(),
               m_bIgnoreFeature, m_nDepth, m_nDepthFeature,
               poState->m_poFeature ? poState->m_poFeature->
-                  GetClass()->GetElementName() : "(no feature)"
+                  GetClass()->GetElementName() : "(no feature)",
+              m_poReader->GetState()->GetLastComponent()
             );
 #endif
 
@@ -224,9 +268,10 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 /*      Is this the ogc:Filter element in a update operation            */
 /*      (wfs:Delete, wfsext:Replace or wfs:Update)?                     */
 /*      specialized sort of feature.                                    */
+/*      Issue a "Delete" feature for each ResourceId                    */
 /* -------------------------------------------------------------------- */
-    else if( m_nDepthFeature == 0 &&
-             m_osElementName == "Filter"
+    else if( m_nDepthFeature == 0
+             && (m_osElementName == "Filter" || m_osElementName == "ResourceId")
              && (pszLast = m_poReader->GetState()->GetLastComponent()) != nullptr
              && (EQUAL(pszLast,"Delete") || EQUAL(pszLast,"Replace") ||
                  EQUAL(pszLast,"Update")) )
@@ -286,7 +331,19 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 
         m_poReader->SetFeaturePropertyDirectly(
             "typeName", CPLStrdup(m_osLastTypeName) );
-        m_poReader->SetFeaturePropertyDirectly( "context", CPLStrdup(pszLast) );
+        m_poReader->SetFeaturePropertyDirectly(
+            "context", CPLStrdup(pszLast) );
+
+        if( EQUAL( pszLast, "Delete" )
+            && m_osElementName == "ResourceId" )
+        {
+            char *rid = CPLStrdup("");
+
+            m_poReader->CheckForRID( attrs, &rid);
+
+            m_poReader->SetFeaturePropertyDirectly(
+                    "FeatureId", rid );
+        }
 
         if( EQUAL( pszLast, "Replace" ) )
         {
@@ -306,8 +363,8 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
                  it != m_LastOccasions.end();
                  ++it )
             {
-              m_poReader->SetFeaturePropertyDirectly(
-                  "anlass", CPLStrdup(*it) );
+                m_poReader->SetFeaturePropertyDirectly(
+                    "anlass", CPLStrdup(*it) );
             }
 
             m_osLastEnded = "";
@@ -350,8 +407,8 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
             transcode( attrs.getValue( nIndex ), m_osLastReplacingFID );
 
 #ifdef DEBUG_VERBOSE
-            CPLDebug( "NAS", "%*s### Replace typeName=%s replacedBy=%s",
-                      m_nDepth, "", m_osLastTypeName.c_str(),
+            CPLDebug( "NAS", "[%d] ### Replace typeName=%s replacedBy=%s",
+                      m_nDepth, m_osLastTypeName.c_str(),
                       m_osLastReplacingFID.c_str() );
 #endif
         }
@@ -384,13 +441,22 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
     else if( m_nUpdateOrDeleteDepth == 0 &&
              (m_osElementName == "Delete" || m_osElementName == "Update") )
     {
-        const XMLCh Name[] = { 't', 'y', 'p', 'e', 'N', 'a', 'm', 'e', '\0' };
+        const XMLCh Name0[] = { 't', 'y', 'p', 'e', 'N', 'a', 'm', 'e', '\0' };
 
-        int nIndex = attrs.getIndex( Name );
-
-        if( nIndex != -1 )
+        int nIndex0 = attrs.getIndex( Name0 );
+        if( nIndex0 != -1 )
         {
-            transcode( attrs.getValue( nIndex ), m_osLastTypeName );
+            transcode( attrs.getValue( nIndex0 ), m_osLastTypeName );
+        }
+        else
+        {
+            const XMLCh Name1[] = { 't', 'y', 'p', 'e', 'N', 'a', 'm', 'e', 's', '\0' };
+
+            int nIndex1 = attrs.getIndex( Name1 );
+            if( nIndex1 != -1 )
+            {
+                transcode( attrs.getValue( nIndex1 ), m_osLastTypeName );
+            }
         }
 
         m_osLastSafeToIgnore = "";
@@ -412,7 +478,8 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 
     else if ( m_nNameOrValueDepth == 0 &&
               m_bInUpdateProperty && ( m_osElementName == "Name" ||
-                                       m_osElementName == "Value" ) )
+                                       m_osElementName == "Value" ||
+                                       m_osElementName == "ValueReference" ) )
     {
         // collect attribute name or value
         CPLFree( m_pszCurField );
@@ -461,6 +528,8 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
         // primarily this is for wfs:Delete operation's FeatureId attribute.
         if( m_osElementName == "FeatureId" )
             m_poReader->CheckForFID( attrs, &m_pszCurField );
+        else if( m_osElementName == "ResourceId" )
+            m_poReader->CheckForRID( attrs, &m_pszCurField );
     }
 
 /* -------------------------------------------------------------------- */
@@ -509,8 +578,8 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("NAS",
-              "%*sendElement %s m_bIgnoreFeature:%d depth:%d depthFeature:%d featureClass:%s",
-              m_nDepth, "", m_osElementName.c_str(),
+              "[%d] endElement %s m_bIgnoreFeature:%d m_nDepth:%d m_nDepthFeature:%d featureClass:%s",
+              m_nDepth, m_osElementName.c_str(),
               m_bIgnoreFeature, m_nDepth, m_nDepthFeature,
               poState->m_poFeature ? poState->m_poFeature->GetClass()->GetElementName() : "(no feature)"
             );
@@ -518,7 +587,8 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
 
    if( m_bInUpdateProperty )
    {
-       if( m_osElementName == "Name" && m_nDepth == m_nNameOrValueDepth )
+       if( m_nDepth == m_nNameOrValueDepth &&
+           (m_osElementName == "Name" || m_osElementName == "ValueReference") )
        {
            m_osLastPropertyName = m_pszCurField ? m_pszCurField : "";
            CPLFree(m_pszCurField);
@@ -584,7 +654,15 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
     {
         CPLAssert( poState->m_poFeature != nullptr );
 
-        m_poReader->SetFeaturePropertyDirectly( poState->osPath.c_str(), m_pszCurField );
+        // keep using "featureid" for GID 7
+        const char *pszPath;
+        if( EQUAL( poState->m_poFeature->GetClass()->GetElementName(), "Delete" )
+            && poState->osPath == "ResourceId" )
+            pszPath = "FeatureId";
+        else
+            pszPath = poState->osPath.c_str();
+
+        m_poReader->SetFeaturePropertyDirectly( pszPath, m_pszCurField );
         m_pszCurField = nullptr;
     }
 
@@ -711,6 +789,17 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
              && (pszLast=poState->m_poFeature->GetClass()->GetElementName())
                 != nullptr
              && ( EQUAL(pszLast, "Delete") || EQUAL(pszLast, "Update") ) )
+    {
+        m_nDepthFeature = 0;
+        m_poReader->PopState();
+    }
+
+    else if( m_nDepth >= m_nDepthFeature
+             && poState->m_poFeature != nullptr
+             && m_osElementName == "ResourceId"
+             && (pszLast=poState->m_poFeature->GetClass()->GetElementName())
+                != nullptr
+             && EQUAL(pszLast, "Delete") )
     {
         m_nDepthFeature = 0;
         m_poReader->PopState();

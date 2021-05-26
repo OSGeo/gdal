@@ -176,7 +176,10 @@ def check_if_has_ogr_pg():
     path = '../ogr'
     if path not in sys.path:
         sys.path.append(path)
-    import ogr_pg
+    try:
+        import ogr_pg
+    except:
+        pytest.skip()
     ogr_pg.test_ogr_pg_1()
     if gdaltest.pg_ds is None:
         pytest.skip()
@@ -519,24 +522,24 @@ def test_ogr2ogr_18():
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -wrapdateline -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp')
 
-    expected_wkt = 'MULTIPOLYGON (((-179.667822828781 36.0983491954137,-179.974688335419 27.0898861430767,-180.0 27.0904291236983,-180.0 36.1071354433546,-179.667822828781 36.0983491954137)),((180.0 27.0904291237411,179.017505655195 27.1079795236252,179.222391385437 36.1240958321293,180.0 36.1071354433546,180.0 27.0904291237411)))'
+    expected_wkt = 'MULTIPOLYGON (((179.222391385437 36.124095832137,180.0 36.1071354434926,180.0 36.107135443432,180.0 27.0904291237556,179.017505655194 27.1079795236266,179.222391385437 36.124095832137)),((-180 36.1071354434425,-179.667822828784 36.0983491954849,-179.974688335432 27.0898861430914,-180 27.0904291237129,-180 27.090429123727,-180 36.107135443432,-180 36.1071354434425)))'
+    expected_wkt2 = 'MULTIPOLYGON (((179.017505655194 27.1079795236266,179.222391385437 36.124095832137,180.0 36.1071354434926,180.0 36.107135443432,180.0 27.0904291237556,179.017505655194 27.1079795236266)),((-180 27.090429123727,-180 36.107135443432,-180 36.1071354434425,-179.667822828784 36.0983491954849,-179.974688335432 27.0898861430914,-180 27.0904291237129,-180 27.090429123727)))' # with geos OverlayNG
+    expected_wkt3 = 'MULTIPOLYGON (((180.0 36.1071354434926,180.0 36.107135443432,180.0 27.0904291237556,179.017505655194 27.1079795236266,179.222391385437 36.124095832137,180.0 36.1071354434926)),((-179.667822828784 36.0983491954849,-179.974688335432 27.0898861430914,-180 27.0904291237129,-180 27.090429123727,-180 36.107135443432,-180 36.1071354434425,-179.667822828784 36.0983491954849)))'
 
-    expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
     ds = ogr.Open('tmp/wrapdateline_dst.shp')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     got_wkt = feat.GetGeometryRef().ExportToWkt()
-    ret = ogrtest.check_feature_geometry(feat, expected_geom)
+    ok = ogrtest.check_feature_geometry(feat, expected_wkt) == 0 or \
+         ogrtest.check_feature_geometry(feat, expected_wkt2) == 0 or \
+         ogrtest.check_feature_geometry(feat, expected_wkt3) == 0
     feat.Destroy()
-    expected_geom.Destroy()
     ds.Destroy()
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_src.shp')
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/wrapdateline_dst.shp')
 
-    if ret == 0:
-        return
-    pytest.fail(got_wkt)
+    assert ok, got_wkt
 
 ###############################################################################
 # Test -clipsrc
@@ -959,7 +962,7 @@ def test_ogr2ogr_29():
 
         assert ret == 0
 
-    
+
 ###############################################################################
 # Test -splitlistfields option
 
@@ -1468,13 +1471,13 @@ def test_ogr2ogr_44():
     data = f.read()
     f.close()
 
-    assert data.find('type="gml:MultiPolygonPropertyType"') != -1
+    assert 'type="gml:MultiSurfacePropertyType"' in data
 
     f = open('tmp/test_ogr2ogr_44.gml')
     data = f.read()
     f.close()
 
-    assert data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') != -1
+    assert '<gml:MultiSurface gml:id="test_ogr2ogr_44_src.geom.0"><gml:surfaceMember><gml:Polygon gml:id="test_ogr2ogr_44_src.geom.0.0"><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface>' in data
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
     os.unlink('tmp/test_ogr2ogr_44.gml')
@@ -1514,13 +1517,13 @@ def test_ogr2ogr_45():
     data = f.read()
     f.close()
 
-    assert data.find('type="gml:MultiLineStringPropertyType"') != -1
+    assert 'type="gml:MultiCurvePropertyType"' in data
 
     f = open('tmp/test_ogr2ogr_45.gml')
     data = f.read()
     f.close()
 
-    assert data.find('<ogr:geometryProperty><gml:MultiLineString><gml:lineStringMember><gml:LineString><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LineString></gml:lineStringMember></gml:MultiLineString></ogr:geometryProperty>') != -1
+    assert '<gml:MultiCurve gml:id="test_ogr2ogr_45_src.geom.0"><gml:curveMember><gml:LineString gml:id="test_ogr2ogr_45_src.geom.0.0"><gml:posList>0 0 0 1 1 1 0 0</gml:posList></gml:LineString></gml:curveMember></gml:MultiCurve>' in data
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_45_src.shp')
     os.unlink('tmp/test_ogr2ogr_45.gml')
@@ -1555,16 +1558,16 @@ def test_ogr2ogr_46():
     ds = None
 
     for option in ['', ' -tps', ' -order 1', ' -a_srs EPSG:4326', ' -s_srs EPSG:4326 -t_srs EPSG:3857']:
-        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/test_ogr2ogr_46.gml tmp/test_ogr2ogr_46_src.shp -gcp 0 0 2 49 -gcp 0 1 2 50 -gcp 1 0 3 49%s' % option)
+        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_46.gml tmp/test_ogr2ogr_46_src.shp -gcp 0 0 2 49 -gcp 0 1 2 50 -gcp 1 0 3 49%s' % option)
 
         f = open('tmp/test_ogr2ogr_46.gml')
         data = f.read()
         f.close()
 
-        assert not (data.find('2,49') == -1 and data.find('2.0,49.0') == -1 and data.find('222638.') == -1), \
+        assert not ('2,49' not in data and '2.0,49.0' not in data and '222638.' not in data), \
             option
 
-        assert not (data.find('3,50') == -1 and data.find('3.0,50.0') == -1 and data.find('333958.') == -1), \
+        assert not ('3,50' not in data and '3.0,50.0' not in data and '333958.' not in data), \
             option
 
         os.unlink('tmp/test_ogr2ogr_46.gml')
@@ -1613,7 +1616,7 @@ def test_ogr2ogr_47():
         pytest.skip()
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML -t_srs EPSG:4326 tmp/test_ogr2ogr_47_dst.gml tmp/test_ogr2ogr_47_src.gml')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML -dsco FORMAT=GML2 -t_srs EPSG:4326 tmp/test_ogr2ogr_47_dst.gml tmp/test_ogr2ogr_47_src.gml')
 
     f = open('tmp/test_ogr2ogr_47_dst.gml')
     data = f.read()
@@ -1718,7 +1721,7 @@ def test_ogr2ogr_49_bis():
     for i, line in enumerate(lines):
         assert line.strip() == expected_lines[i].strip(), lines
 
-    
+
 ###############################################################################
 # Test -addfields
 
@@ -1901,15 +1904,15 @@ def test_ogr2ogr_53():
     os.unlink('tmp/test_ogr2ogr_53.kml')
 
     # Default behaviour with a driver that does not GDAL_DMD_CREATIONFIELDDATATYPES
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f BNA tmp/test_ogr2ogr_53.bna tmp/test_ogr2ogr_53.csv -nlt POINT')
+    #gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f BNA tmp/test_ogr2ogr_53.bna tmp/test_ogr2ogr_53.csv -nlt POINT')
 
-    f = open('tmp/test_ogr2ogr_53.bna', 'rt')
-    content = f.read()
-    f.close()
+    #f = open('tmp/test_ogr2ogr_53.bna', 'rt')
+    #content = f.read()
+    #f.close()
 
-    assert '"123456789012.0"' in content
+    #assert '"123456789012.0"' in content
 
-    os.unlink('tmp/test_ogr2ogr_53.bna')
+    #os.unlink('tmp/test_ogr2ogr_53.bna')
 
     # with -mapFieldType
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f KML tmp/test_ogr2ogr_53.kml tmp/test_ogr2ogr_53.csv -mapFieldType Integer64=String')
@@ -2345,7 +2348,7 @@ def test_ogr2ogr_65():
         print(ret)
         pytest.fail('expected a warning about probably wrong extension')
 
-    
+
 ###############################################################################
 # Test accidental overriding of dataset when dst and src filenames are the same (#1465)
 

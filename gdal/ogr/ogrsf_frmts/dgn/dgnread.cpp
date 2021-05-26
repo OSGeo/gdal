@@ -498,8 +498,10 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               return nullptr;
           }
           DGNElemMultiPoint *psLine = static_cast<DGNElemMultiPoint *>(
-              CPLCalloc(sizeof(DGNElemMultiPoint)+(count-1)*sizeof(DGNPoint),
+              VSI_CALLOC_VERBOSE(sizeof(DGNElemMultiPoint)+(count-1)*sizeof(DGNPoint),
                         1));
+          if( psLine == nullptr )
+              return nullptr;
           psElement = (DGNElemCore *) psLine;
           psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );

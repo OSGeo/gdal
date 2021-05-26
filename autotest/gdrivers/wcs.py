@@ -30,19 +30,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+from http.server import BaseHTTPRequestHandler
 import os
 import numbers
 import re
 import shutil
-
-try:
-    import urllib.parse as urlparse
-except ImportError:
-    import urlparse
-try:
-    from BaseHTTPServer import BaseHTTPRequestHandler
-except ImportError:
-    from http.server import BaseHTTPRequestHandler
+import urllib.parse
 
 import pytest
 
@@ -69,7 +62,7 @@ def test_wcs_1():
     gdaltest.wcs_ds = None
     if gdaltest.wcs_drv is None:
         pytest.skip()
-    
+
 ###############################################################################
 # Open the GeoServer WCS service.
 
@@ -297,8 +290,8 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             f = open('/tmp/log.txt', 'a')
             f.write('GET %s\n' % self.path)
             f.close()
-        split = urlparse.urlparse(self.path)
-        query = urlparse.parse_qs(split.query)
+        split = urllib.parse.urlparse(self.path)
+        query = urllib.parse.parse_qs(split.query)
         query2 = {}
         for key in query:
             query2[key.lower()] = query[key]
@@ -308,19 +301,26 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         test = ''
         if 'test' in query2:
             test = query2['test'][0]
-        key = server + '-' + version
-        if key in urls and test in urls[key]:
-            _, got = self.path.split('SERVICE=WCS')
-            got = re.sub('\&test=.*', '', got)
-            _, have = urls[key][test].split('SERVICE=WCS')
-            have += '&server=' + server
-            if got == have:
-                ok = 'ok'
-            else:
-                ok = "not ok\ngot:  " + got + "\nhave: " + have
-                global wcs_6_ok
-                wcs_6_ok = False
-            print('test ' + server + ' ' + test + ' WCS ' + version + ' ' + ok)
+
+        if gdaltest.is_travis_branch('s390x') or gdaltest.is_travis_branch('graviton2'):
+            # cannot strictly compare URL due to subtle difference of roundings
+            # in BOUNDINGBOX computations.
+            pass
+        else:
+            key = server + '-' + version
+            if key in urls and test in urls[key]:
+                _, got = self.path.split('SERVICE=WCS')
+                got = re.sub(r'\&test=.*', '', got)
+                _, have = urls[key][test].split('SERVICE=WCS')
+                have += '&server=' + server
+                if got == have:
+                    ok = 'ok'
+                else:
+                    ok = "not ok\ngot:  " + got + "\nhave: " + have
+                    global wcs_6_ok
+                    wcs_6_ok = False
+                print('test ' + server + ' ' + test + ' WCS ' + version + ' ' + ok)
+
         self.Respond(request, server, version, test)
 
 
@@ -534,7 +534,7 @@ def test_wcs_cleanup():
     except OSError:
         pass
 
-    
+
 
 
 

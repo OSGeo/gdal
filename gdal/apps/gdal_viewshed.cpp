@@ -44,15 +44,15 @@ static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
-       "gdal_viewshed [-b <band>]\n"
-       "              [-a_nodata <value>] [-f <formatname>]\n"
-       "              [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]\n"
-       "              -ox <observer_x> -oy <observer_y>\n"
-       "              [-vv <visibility>] [-iv <invisibility>]\n"
-       "              [-ov <out_of_range>] [-cc <curvature_coef>]\n"
-       "              [[-co NAME=VALUE] ...]\n"
-       "              [-q] [-om <output mode>]\n"
-       "              <src_filename> <dst_filename>\n");
+       "Usage: gdal_viewshed [-b <band>]\n"
+       "                     [-a_nodata <value>] [-f <formatname>]\n"
+       "                     [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]\n"
+       "                     -ox <observer_x> -oy <observer_y>\n"
+       "                     [-vv <visibility>] [-iv <invisibility>]\n"
+       "                     [-ov <out_of_range>] [-cc <curvature_coef>]\n"
+       "                     [[-co NAME=VALUE] ...]\n"
+       "                     [-q] [-om <output mode>]\n"
+       "                     <src_filename> <dst_filename>\n");
 
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);

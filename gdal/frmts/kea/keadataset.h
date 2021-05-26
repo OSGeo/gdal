@@ -43,7 +43,7 @@ class KEADataset final: public GDALPamDataset
     static H5::H5File *CreateLL( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char ** papszParmList  );
+                                  char ** papszParamList  );
 
 public:
     // constructor/destructor
@@ -57,9 +57,9 @@ public:
     static GDALDataset *Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char **  papszParmList );
+                                  char **  papszParamList );
     static GDALDataset *CreateCopy( const char * pszFilename, GDALDataset *pSrcDs,
-                                int bStrict, char **  papszParmList,
+                                int bStrict, char **  papszParamList,
                                 GDALProgressFunc pfnProgress, void *pProgressData );
 
     // virtual methods for dealing with transform and projection

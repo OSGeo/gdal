@@ -542,7 +542,7 @@ Changes in drivers
    REC, S57, SDTS, SEGUKOOA, SEGY, SOSI, SQLite, SUA, SVG, TIGER, VFK,
    VRT, WFS
 
--  Long driver descrption is set for most OGR drivers.
+-  Long driver description is set for most OGR drivers.
 
 -  All classes deriving from OGRLayer have been modified to call
    SetDescription() with the value of

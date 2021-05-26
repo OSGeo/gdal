@@ -95,7 +95,7 @@ void RegisterOGRWFS()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "OGC WFS (Web Feature Service)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_wfs.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/wfs.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WFS:" );
 

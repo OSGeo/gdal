@@ -2,12 +2,12 @@
 
 import sphinx.locale
 import docutils.statemachine
-sphinx.locale.admonitionlabels['shortname'] = u''
-sphinx.locale.admonitionlabels['built_in_by_default'] = u'' #u'Built-in by default'
-sphinx.locale.admonitionlabels['supports_create'] = u'' #u'Supports Create()'
-sphinx.locale.admonitionlabels['supports_createcopy'] = u'' #u'Supports CreateCopy()'
-sphinx.locale.admonitionlabels['supports_georeferencing'] = u'' #u'Supports georeferencing'
-sphinx.locale.admonitionlabels['supports_virtualio'] = u'' #u'Supports VirtualIO'
+sphinx.locale.admonitionlabels['shortname'] = ''
+sphinx.locale.admonitionlabels['built_in_by_default'] = ''  # 'Built-in by default'
+sphinx.locale.admonitionlabels['supports_create'] = ''  # 'Supports Create()'
+sphinx.locale.admonitionlabels['supports_createcopy'] = ''  # 'Supports CreateCopy()'
+sphinx.locale.admonitionlabels['supports_georeferencing'] = ''  # 'Supports georeferencing'
+sphinx.locale.admonitionlabels['supports_virtualio'] = ''  # 'Supports VirtualIO'
 
 def setup(app):
     app.add_node(shortname,

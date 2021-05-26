@@ -19,7 +19,7 @@ Synopsis
 
     gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-arrayoption NAME=VALUE]*
                  [-detailed] [-nopretty] [-array {array_name}] [-limit {number}]
-                 <datasetname>
+                 [-stats] <datasetname>
 
 Description
 -----------
@@ -60,6 +60,13 @@ The following command line parameters can appear in any order
     Option passed to :cpp:func:`GDALGroup::GetMDArrayNames` to filter reported
     arrays. Such option is format specific. Consult driver documentation.
     This option may be used several times.
+
+.. option:: -stats
+
+    Read and display image statistics. Force computation if no
+    statistics are stored in an image.
+
+    .. versionadded:: 3.2
 
 C API
 -----

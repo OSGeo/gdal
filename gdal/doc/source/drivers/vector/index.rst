@@ -12,6 +12,12 @@ Vector drivers
 
 .. include:: driver_summary.rst
 
+
+.. note::
+
+    The following drivers have been retired and moved to the
+    https://github.com/OSGeo/gdal-extra-drivers repository: AeronavFAA, BNA, HTF, OpenAir, SEGUKOOA, SEGY, SUA, XPlane
+
 ..
     Developer comment: make html includes a hack to hide the table from
     the index.html file. We need to keep it visible so that the top-level
@@ -20,13 +26,11 @@ Vector drivers
 .. toctree::
    :maxdepth: 1
 
-   aeronavfaa
    amigocloud
    ao
    arcgen
    avcbin
    avce00
-   bna
    cad
    carto
    cloudant
@@ -59,7 +63,6 @@ Vector drivers
    gpx
    grass
    gtm
-   htf
    idb
    idrisi
    ili
@@ -86,7 +89,6 @@ Vector drivers
    odbc
    ods
    ogdi
-   openair
    openfilegdb
    osm
    pdf
@@ -96,15 +98,11 @@ Vector drivers
    pg
    plscenes
    s57
-   sde
    sdts
-   segukooa
-   segy
    selafin
    shapefile
    sosi
    sqlite
-   sua
    svg
    sxf
    tiger
@@ -117,4 +115,3 @@ Vector drivers
    wfs
    xls
    xlsx
-   xplane

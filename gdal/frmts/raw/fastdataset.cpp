@@ -969,7 +969,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLFree( pszTemp );
 
     // Read 15 USGS projection parameters
-    double adfProjParms[15] = { 0.0 };
+    double adfProjParams[15] = { 0.0 };
     pszTemp = strstr( pszHeader, USGS_PARAMETERS );
     if ( pszTemp && !EQUAL( pszTemp, "" ) )
     {
@@ -979,7 +979,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             pszTemp = strpbrk( pszTemp, "-.0123456789" );
             if ( pszTemp )
             {
-                adfProjParms[i] = CPLScanDouble( pszTemp, VALUE_SIZE );
+                adfProjParams[i] = CPLScanDouble( pszTemp, VALUE_SIZE );
                 pszTemp = strpbrk( pszTemp, " \t" );
             }
             if (pszTemp == nullptr )
@@ -1065,7 +1065,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         // Create projection definition
         OGRSpatialReference oSRS;
         OGRErr eErr =
-            oSRS.importFromUSGS( iProjSys, iZone, adfProjParms, iDatum, bAnglesInPackedDMSFormat );
+            oSRS.importFromUSGS( iProjSys, iZone, adfProjParams, iDatum, bAnglesInPackedDMSFormat );
         if ( eErr != OGRERR_NONE )
             CPLDebug( "FAST", "Import projection from USGS failed: %d", eErr );
         oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );

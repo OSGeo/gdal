@@ -204,13 +204,23 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
         strstr(reinterpret_cast<char *>(psResult->pabyData), "invalid_grant")
         != nullptr )
     {
-        CPLString osURL;
-        osURL.Seize(GOA2GetAuthorizationURL(pszScope));
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to use a OAuth2 authorization code multiple times.  "
-                 "Request a fresh authorization token at %s.",
-                 osURL.c_str());
         CPLHTTPDestroyResult(psResult);
+        if( pszScope == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attempt to use a OAuth2 authorization code multiple times. "
+                     "Use GOA2GetAuthorizationURL(scope) with a valid scope to "
+                     "request a fresh authorization token.");
+        }
+        else
+        {
+            CPLString osURL;
+            osURL.Seize(GOA2GetAuthorizationURL(pszScope));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Attempt to use a OAuth2 authorization code multiple times. "
+                    "Request a fresh authorization token at %s.",
+                    osURL.c_str());
+        }
         return nullptr;
     }
 

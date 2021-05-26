@@ -12,8 +12,7 @@ OGR_OBJ =	ogrlibkmldriver.o ogrlibkmldatasource.o ogrlibkmllayer.o
 
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
-CPPFLAGS := -I. -I.. -I../.. -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg \
-	-I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogrsf_frmts $(LIBKML_INCLUDE) $(CPPFLAGS)
+CPPFLAGS := -I. $(CPPFLAGS) $(LIBKML_INCLUDE)
 
 #CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
 

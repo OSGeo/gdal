@@ -40,8 +40,8 @@
 #include <vector>
 #include <algorithm>
 
-#define TIFF_GEOTIFF_STRING "TIFF/GeoTIFF"
-#define BIGTIFF_GEOTIFF_STRING "BigTIFF/GeoTIFF"
+#define TIFF_GEOTIFF_STRING "TIFF 6.0"
+#define BIGTIFF_GEOTIFF_STRING "TIFF 6.0"
 #define PREEXISTING_BINARY_FILE \
     "Binary file pre-existing PDS4 label. This comment is used by GDAL to " \
     "avoid deleting the binary file when the label is deleted. Keep it to " \
@@ -560,13 +560,14 @@ int PDS4Dataset::CloseDependentDatasets()
         bHasDroppedRef = FALSE;
         delete m_poExternalDS;
         m_poExternalDS = nullptr;
-    }
 
-    for( int iBand = 0; iBand < nBands; iBand++ )
-    {
-       delete papoBands[iBand];
+        for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+           delete papoBands[iBand];
+           papoBands[iBand] = nullptr;
+        }
+        nBands = 0;
     }
-    nBands = 0;
 
     return bHasDroppedRef;
 }
@@ -951,7 +952,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                           CPLString(osProjName).replaceAll(' ','_').c_str());
             if( psProjParamNode == nullptr &&
                 // typo in https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.sch
-                EQUAL(osProjName, "Orothographic") ) 
+                EQUAL(osProjName, "Orothographic") )
             {
                 psProjParamNode = CPLGetXMLNode(psMapProjection, "Orthographic");
             }
@@ -967,7 +968,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                 if( !bGotCenterLon )
                 {
                     dfCenterLon = GetAngularValue(psProjParamNode,
-                                    "straight_vertical_longitude_from_pole", 
+                                    "straight_vertical_longitude_from_pole",
                                     &bGotCenterLon);
                 }
                 dfCenterLat = GetAngularValue(psProjParamNode,
@@ -1462,7 +1463,7 @@ bool PDS4Dataset::OpenTableDelimited(const char* pszFilename,
 
 // See https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd
 // and https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.sch
-GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
+PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
 {
     if( !Identify(poOpenInfo) )
         return nullptr;
@@ -2186,7 +2187,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         m_papszCreationOptions, "BOUNDING_DEGREES");
     double dfWest = std::min(std::min(adfX[0], adfX[1]),
                              std::min(adfX[2], adfX[3]));
-    double dfEast = std::max(std::max(adfX[0], adfX[1]), 
+    double dfEast = std::max(std::max(adfX[0], adfX[1]),
                              std::max(adfX[2], adfX[3]));
     double dfNorth = std::max(std::max(adfY[0], adfY[1]),
                               std::max(adfY[2], adfY[3]));
@@ -2427,13 +2428,13 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         {
             CPLXMLNode* psOLA = CPLCreateXMLNode(nullptr, CXT_Element,
                                     (osPrefix + "Oblique_Line_Azimuth").c_str());
-            CPLAddXMLAttributeAndValue( 
+            CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psOLA,
                     (osPrefix + "azimuthal_angle").c_str(),
                     CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_AZIMUTH, 0.0))),
                 "unit", "deg");;
             // Not completely sure of this
-            CPLAddXMLAttributeAndValue( 
+            CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psOLA,
                     (osPrefix + "azimuth_measure_point_longitude").c_str(),
                     CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))),
@@ -2498,24 +2499,24 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                                     (osPrefix + "Oblique_Line_Point").c_str());
             CPLXMLNode* psOLPG1 = CPLCreateXMLNode(psOLP, CXT_Element,
                                     (osPrefix + "Oblique_Line_Point_Group").c_str());
-            CPLAddXMLAttributeAndValue( 
+            CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psOLPG1,
                     (osPrefix + "oblique_line_latitude").c_str(),
                     CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1, 0.0))),
                 "unit", "deg");
-            CPLAddXMLAttributeAndValue( 
+            CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psOLPG1,
                     (osPrefix + "oblique_line_longitude").c_str(),
                     CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1, 0.0))),
                 "unit", "deg");
             CPLXMLNode* psOLPG2 = CPLCreateXMLNode(psOLP, CXT_Element,
                                     (osPrefix + "Oblique_Line_Point_Group").c_str());
-            CPLAddXMLAttributeAndValue( 
+            CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psOLPG2,
                     (osPrefix + "oblique_line_latitude").c_str(),
                     CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2, 0.0))),
                 "unit", "deg");
-            CPLAddXMLAttributeAndValue( 
+            CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psOLPG2,
                     (osPrefix + "oblique_line_longitude").c_str(),
                     CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2, 0.0))),
@@ -2770,7 +2771,7 @@ void PDS4Dataset::SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
     {
         CPLString osVal(psNode->pszValue);
 
-        if( strstr(psNode->pszValue, "${TITLE}") != nullptr && 
+        if( strstr(psNode->pszValue, "${TITLE}") != nullptr &&
             CSLFetchNameValue(papszDict, "VAR_TITLE") == nullptr )
         {
             const CPLString osTitle(CPLGetFilename(GetDescription()));
@@ -3514,6 +3515,26 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
 
             WriteGeoreferencing(psCart, osWKT, pszCARTVersion);
         }
+
+        const char* pszVertDir = CSLFetchNameValue(m_papszCreationOptions,
+                                                   "VAR_VERTICAL_DISPLAY_DIRECTION");
+        if( pszVertDir )
+        {
+            CPLXMLNode* psVertDirNode = CPLGetXMLNode(psDisciplineArea,
+              "disp:Display_Settings.disp:Display_Direction."
+              "disp:vertical_display_direction");
+            if( psVertDirNode == nullptr )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "PDS4 template lacks a disp:vertical_display_direction element where to write %s",
+                         pszVertDir);
+            }
+            else
+            {
+                CPLDestroyXMLNode(psVertDirNode->psChild);
+                psVertDirNode->psChild = CPLCreateXMLNode(nullptr, CXT_Text, pszVertDir);
+            }
+        }
     }
     else
     {
@@ -3901,8 +3922,11 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
 PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
                                          GDALDataset* poSrcDS,
                                          int nXSize, int nYSize, int nBands,
-                                         GDALDataType eType, char **papszOptions)
+                                         GDALDataType eType,
+                                         const char * const * papszOptionsIn)
 {
+    CPLStringList aosOptions(papszOptionsIn);
+
     if( nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown )
     {
         // Vector file creation
@@ -3914,8 +3938,8 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         poDS->m_osXMLFilename = pszFilename;
         poDS->m_bCreateHeader = true;
         poDS->m_bStripFileAreaObservationalFromTemplate = true;
-        poDS->m_papszCreationOptions = CSLDuplicate(papszOptions);
-        poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
+        poDS->m_papszCreationOptions = CSLDuplicate(aosOptions.List());
+        poDS->m_bUseSrcLabel = aosOptions.FetchBool("USE_SRC_LABEL", true);
         return poDS;
     }
 
@@ -3940,7 +3964,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         return nullptr;
     }
 
-    const char* pszArrayType = CSLFetchNameValueDef(papszOptions,
+    const char* pszArrayType = aosOptions.FetchNameValueDef(
                                     "ARRAY_TYPE", "Array_3D_Image");
     const bool bIsArray2D = STARTS_WITH(pszArrayType, "Array_2D");
     if( nBands > 1 && bIsArray2D )
@@ -3958,8 +3982,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     int nLineOffset, nPixelOffset;
     vsi_l_offset nBandOffset;
 
-    const char* pszInterleave = CSLFetchNameValueDef(
-        papszOptions, "INTERLEAVE", "BSQ");
+    const char* pszInterleave = aosOptions.FetchNameValueDef("INTERLEAVE", "BSQ");
     if( bIsArray2D )
         pszInterleave = "BIP";
 
@@ -4001,15 +4024,14 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         return nullptr;
     }
 
-    const char* pszImageFormat = CSLFetchNameValueDef(papszOptions,
-                                                       "IMAGE_FORMAT",
+    const char* pszImageFormat = aosOptions.FetchNameValueDef("IMAGE_FORMAT",
                                                        "RAW");
-    const char* pszImageExtension = CSLFetchNameValueDef(papszOptions,
+    const char* pszImageExtension = aosOptions.FetchNameValueDef(
         "IMAGE_EXTENSION", EQUAL(pszImageFormat, "RAW") ? "img" : "tif");
-    CPLString osImageFilename(CSLFetchNameValueDef(papszOptions,
+    CPLString osImageFilename(aosOptions.FetchNameValueDef(
         "IMAGE_FILENAME", CPLResetExtension(pszFilename, pszImageExtension)));
 
-    const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
+    const bool bAppend = aosOptions.FetchBool("APPEND_SUBDATASET", false);
     if( bAppend )
     {
         GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
@@ -4037,7 +4059,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     vsi_l_offset nBaseOffset = 0;
     bool bIsLSB = true;
     CPLString osHeaderParsingStandard;
-    const bool bCreateLabelOnly = CPLFetchBool(papszOptions, "CREATE_LABEL_ONLY", false);
+    const bool bCreateLabelOnly = aosOptions.FetchBool("CREATE_LABEL_ONLY", false);
     if( bCreateLabelOnly )
     {
         if( poSrcDS == nullptr )
@@ -4106,6 +4128,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
             else if( EQUAL(pszDriverName, "FITS") )
             {
                 osHeaderParsingStandard = "FITS 3.0";
+                aosOptions.SetNameValue("VAR_VERTICAL_DISPLAY_DIRECTION", "Bottom to Top");
             }
         }
     }
@@ -4214,8 +4237,8 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     poDS->m_bCreateHeader = true;
     poDS->m_bStripFileAreaObservationalFromTemplate = true;
     poDS->m_osInterleave = pszInterleave;
-    poDS->m_papszCreationOptions = CSLDuplicate(papszOptions);
-    poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
+    poDS->m_papszCreationOptions = CSLDuplicate(aosOptions.List());
+    poDS->m_bUseSrcLabel = aosOptions.FetchBool("USE_SRC_LABEL", true);
     poDS->m_bIsLSB = bIsLSB;
     poDS->m_osHeaderParsingStandard = osHeaderParsingStandard;
     poDS->m_bCreatedFromExistingBinaryFile = bCreateLabelOnly;
@@ -4484,8 +4507,8 @@ CPLErr PDS4Dataset::Delete( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
-    auto poDS = std::unique_ptr<PDS4Dataset>(
-        dynamic_cast<PDS4Dataset*>(GDALDataset::Open(pszFilename)));
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    auto poDS = std::unique_ptr<PDS4Dataset>(PDS4Dataset::OpenInternal(&oOpenInfo));
     if( poDS == nullptr )
     {
         if( CPLGetLastErrorNo() == 0 )

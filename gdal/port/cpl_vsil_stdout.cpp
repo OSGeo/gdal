@@ -84,7 +84,8 @@ class VSIStdoutFilesystemHandler final : public VSIFilesystemHandler
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
 };
@@ -209,7 +210,8 @@ int VSIStdoutHandle::Close()
 VSIVirtualHandle *
 VSIStdoutFilesystemHandler::Open( const char * /* pszFilename */,
                                   const char *pszAccess,
-                                  bool /* bSetError */ )
+                                  bool /* bSetError */,
+                                  CSLConstList /* papszOptions */ )
 {
     if ( strchr(pszAccess, 'r') != nullptr ||
          strchr(pszAccess, '+') != nullptr )
@@ -252,7 +254,8 @@ class VSIStdoutRedirectFilesystemHandler final : public VSIFilesystemHandler
   public:
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
 };
@@ -388,7 +391,8 @@ int VSIStdoutRedirectHandle::Close()
 VSIVirtualHandle *
 VSIStdoutRedirectFilesystemHandler::Open( const char *pszFilename,
                                           const char *pszAccess,
-                                          bool /* bSetError */ )
+                                          bool /* bSetError */,
+                                          CSLConstList /* papszOptions */ )
 
 {
     if ( strchr(pszAccess, 'r') != nullptr ||

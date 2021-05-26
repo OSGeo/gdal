@@ -170,13 +170,13 @@ def test_proj(src_srs, src_xyz, src_error,
             pytest.skip()
         search_paths = osr.GetPROJSearchPaths()
         found = False
-        for path in search_paths:
-            if os.path.exists(os.path.join(path, grid_name)):
-                found = True
-                break
+        if search_paths:
+            for path in search_paths:
+                if os.path.exists(os.path.join(path, grid_name)):
+                    found = True
+                    break
         if not found:
-            #print( 'Did not find GRID:%s' % grid_name )
-            pytest.skip()
+            pytest.skip(f'Did not find GRID:{grid_name}')
 
     src = osr.SpatialReference()
     assert src.SetFromUserInput(src_srs) == 0, \

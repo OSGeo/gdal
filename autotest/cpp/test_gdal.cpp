@@ -133,7 +133,7 @@ namespace tut
 
 #define ENSURE(cond) ensure(#cond, (cond))
 #define ENSURE_EQUALS(a, b) ensure_equals(#a " == " #b, (a), (b))
-    
+
     // Test GDALDataTypeUnion()
     template<> template<> void object::test<6>()
     {
@@ -149,7 +149,7 @@ namespace tut
                 ENSURE( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT2) );
                 ENSURE( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
                         (!GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2)) );
-                
+
                 ENSURE( !(GDALDataTypeIsFloating(eDT1) || GDALDataTypeIsFloating(eDT2)) || GDALDataTypeIsFloating(eDT));
                 ENSURE( !(GDALDataTypeIsSigned(eDT1) || GDALDataTypeIsSigned(eDT2)) || GDALDataTypeIsSigned(eDT));
             }
@@ -654,6 +654,7 @@ namespace tut
                 GDALExtendedDataType m_dt;
                 std::vector<std::shared_ptr<GDALDimension>> m_dims;
                 std::vector<GUInt64> m_blockSize;
+                const std::string m_osEmptyFilename{};
 
                 static std::vector<std::shared_ptr<GDALDimension>> BuildDims(
                     const std::vector<GUInt64>& sizes)
@@ -698,6 +699,8 @@ namespace tut
                 }
 
                 bool IsWritable() const override { return true; }
+
+                const std::string& GetFilename() const override { return m_osEmptyFilename; }
 
                 static std::shared_ptr<myArray> Create(GDALDataType eDT,
                                 const std::vector<GUInt64>& sizes,
@@ -1358,10 +1361,6 @@ namespace tut
     // Test TileMatrixSet
     template<> template<> void object::test<20>()
     {
-        // TODO investigate what fails exactly
-        if( EQUAL(CPLGetConfigOption("GITHUB_WORKFLOW", ""), "MacOS build") )
-            return;
-
         {
             auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
             ensure( l.find("GoogleMapsCompatible") != l.end() );
@@ -1378,7 +1377,7 @@ namespace tut
             CPLErrorReset();
             CPLPushErrorHandler(CPLQuietErrorHandler);
             // Invalid JSON
-            ensure( gdal::TileMatrixSet::parse("http://127.0.0.1:98765/example.json") == nullptr );
+            ensure( gdal::TileMatrixSet::parse("http://127.0.0.1:32767/example.json") == nullptr );
             CPLPopErrorHandler();
             ensure( CPLGetLastErrorType() != 0 );
         }
@@ -1417,7 +1416,7 @@ namespace tut
 
         // Inline JSON with minimal structure
         {
-            auto poTMS = gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":1.0}] }");
+            auto poTMS = gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":1.0}] }");
             ensure( poTMS != nullptr );
             ensure( poTMS->haveAllLevelsSameTopLeft() );
             ensure( poTMS->haveAllLevelsSameTileSize() );
@@ -1428,7 +1427,7 @@ namespace tut
         // Invalid scaleDenominator
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":0.0}] }") == nullptr);
+            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":0.0}] }") == nullptr);
             CPLPopErrorHandler();
         }
 
@@ -1498,8 +1497,8 @@ namespace tut
             const auto &tm = poTMS->tileMatrixList()[0];
             ensure_equals( tm.mId, "0" );
             ensure_equals( tm.mScaleDenominator, 279541132.014358 );
-            ensure_equals( tm.mResX, tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180) );
-            ensure( fabs(tm.mResX - 180. / 256) < 1e-14 );
+            ensure( fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180)) < 1e-10 );
+            ensure( fabs(tm.mResX - 180. / 256) < 1e-10 );
             ensure_equals( tm.mResY, tm.mResX );
             ensure_equals( tm.mTopLeftX, -180.0 );
             ensure_equals( tm.mTopLeftY, 90.0 );
@@ -1567,6 +1566,192 @@ namespace tut
             ensure_equals( vmw.mMinTileRow, 0 );
             ensure_equals( vmw.mMaxTileRow, 1 );
         }
+
+        {
+            auto poTMS = gdal::TileMatrixSet::parse(
+                "{"
+                "    \"identifier\" : \"CDBGlobalGrid\","
+                "    \"title\" : \"CDBGlobalGrid\","
+                "    \"boundingBox\" : {"
+                "        \"crs\" : \"http://www.opengis.net/def/crs/EPSG/0/4326\","
+                "        \"lowerCorner\" : ["
+                "            -90,"
+                "            -180"
+                "        ],"
+                "        \"upperCorner\" : ["
+                "            90,"
+                "            180"
+                "        ]"
+                "    },"
+                "    \"supportedCRS\" : \"http://www.opengis.net/def/crs/EPSG/0/4326\","
+                "    \"wellKnownScaleSet\" : \"http://www.opengis.net/def/wkss/OGC/1.0/CDBGlobalGrid\","
+                "    \"tileMatrices\" : ["
+                "        {"
+                "            \"identifier\" : \"-10\","
+                "            \"scaleDenominator\" : 397569609.975977063179,"
+                "            \"matrixWidth\" : 360,"
+                "            \"matrixHeight\" : 180,"
+                "            \"tileWidth\" : 1,"
+                "            \"tileHeight\" : 1,"
+                "            \"topLeftCorner\" : ["
+                "                90,"
+                "                -180"
+                "            ],"
+                "            \"variableMatrixWidths\" : ["
+                "                {"
+                "                \"coalesce\" : 12,"
+                "                \"minTileRow\" : 0,"
+                "                \"maxTileRow\" : 0"
+                "                },"
+                "                {"
+                "                \"coalesce\" : 12,"
+                "                \"minTileRow\" : 179,"
+                "                \"maxTileRow\" : 179"
+                "                }"
+                "            ]"
+                "        }"
+                "    ]"
+                "}");
+            ensure( poTMS != nullptr );
+            ensure_equals( poTMS->tileMatrixList().size(), 1U );
+            const auto &tm = poTMS->tileMatrixList()[0];
+            ensure_equals( tm.mVariableMatrixWidthList.size(), 2U );
+            const auto& vmw = tm.mVariableMatrixWidthList[0];
+            ensure_equals( vmw.mCoalesce, 12 );
+            ensure_equals( vmw.mMinTileRow, 0 );
+            ensure_equals( vmw.mMaxTileRow, 0 );
+        }
     }
 
+    // Test that PCIDSK GetMetadataItem() return is stable
+    template<> template<> void object::test<21>()
+    {
+        GDALDatasetUniquePtr poDS(
+            GDALDriver::FromHandle(
+                GDALGetDriverByName("PCIDSK"))->Create("/vsimem/tmp.pix", 1, 1, 1, GDT_Byte, nullptr));
+        ensure( poDS != nullptr );
+        poDS->SetMetadataItem("FOO", "BAR");
+        poDS->SetMetadataItem("BAR", "BAZ");
+        poDS->GetRasterBand(1)->SetMetadataItem("FOO", "BAR");
+        poDS->GetRasterBand(1)->SetMetadataItem("BAR", "BAZ");
+
+        {
+            const char* psz1 = poDS->GetMetadataItem("FOO");
+            const char* psz2 = poDS->GetMetadataItem("BAR");
+            const char* pszNull = poDS->GetMetadataItem("I_DONT_EXIST");
+            const char* psz3 = poDS->GetMetadataItem("FOO");
+            const char* pszNull2 = poDS->GetMetadataItem("I_DONT_EXIST");
+            const char* psz4 = poDS->GetMetadataItem("BAR");
+            ensure( psz1 != nullptr );
+            ensure( psz2 != nullptr );
+            ensure( psz3 != nullptr );
+            ensure( psz4 != nullptr );
+            ensure( pszNull == nullptr );
+            ensure( pszNull2 == nullptr );
+            ensure_equals( psz1, psz3 );
+            ensure( psz1 != psz2 );
+            ensure_equals( psz2, psz4 );
+            ensure_equals( std::string(psz1), "BAR" );
+            ensure_equals( std::string(psz2), "BAZ" );
+        }
+
+        {
+            auto poBand = poDS->GetRasterBand(1);
+            const char* psz1 = poBand->GetMetadataItem("FOO");
+            const char* psz2 = poBand->GetMetadataItem("BAR");
+            const char* pszNull = poBand->GetMetadataItem("I_DONT_EXIST");
+            const char* psz3 = poBand->GetMetadataItem("FOO");
+            const char* pszNull2 = poBand->GetMetadataItem("I_DONT_EXIST");
+            const char* psz4 = poBand->GetMetadataItem("BAR");
+            ensure( psz1 != nullptr );
+            ensure( psz2 != nullptr );
+            ensure( psz3 != nullptr );
+            ensure( psz4 != nullptr );
+            ensure( pszNull == nullptr );
+            ensure( pszNull2 == nullptr );
+            ensure_equals( psz1, psz3 );
+            ensure( psz1 != psz2 );
+            ensure_equals( psz2, psz4 );
+            ensure_equals( std::string(psz1), "BAR" );
+            ensure_equals( std::string(psz2), "BAZ" );
+        }
+
+        poDS.reset();
+        VSIUnlink("/vsimem/tmp.pix");
+    }
+
+    // Test GDALBufferHasOnlyNoData()
+    template<> template<> void object::test<22>()
+    {
+        /* bool CPL_DLL GDALBufferHasOnlyNoData(const void* pBuffer,
+                                     double dfNoDataValue,
+                                     size_t nWidth, size_t nHeight,
+                                     size_t nLineStride,
+                                     size_t nComponents,
+                                     int nBitsPerSample,
+                                     GDALBufferSampleFormat nSampleFormat);
+         */
+        ensure( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x01", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 1, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x00", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 2, 2, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+                                        0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+
+        uint8_t uint8val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint8val, 1.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint8val, 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint8val, 128 + 1, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+
+        int8_t int8val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int8val, -1.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int8val, 0.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int8val, 256, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+
+        uint16_t uint16val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint16val, 1.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint16val, 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint16val, 65536 + 1, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+
+        int16_t int16val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int16val, -1.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int16val, 0.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int16val, 32768, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+
+        uint32_t uint32val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint32val, 1.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint32val, 0.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint32val, static_cast<double>(0x100000000LL + 1),
+                                         1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+
+        int32_t int32val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int32val, -1.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int32val, 0.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int32val, 0x80000000, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+
+        float float32val = -1;
+        ensure( GDALBufferHasOnlyNoData(&float32val, -1.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32val, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32val, 1e50, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+
+        float float32nan = std::numeric_limits<float>::quiet_NaN();
+        ensure( GDALBufferHasOnlyNoData(&float32nan, float32nan, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32nan, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+
+        double float64val = -1;
+        ensure( GDALBufferHasOnlyNoData(&float64val, -1.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float64val, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+
+        double float64nan = std::numeric_limits<double>::quiet_NaN();
+        ensure( GDALBufferHasOnlyNoData(&float64nan, float64nan, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float64nan, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+    }
 } // namespace tut

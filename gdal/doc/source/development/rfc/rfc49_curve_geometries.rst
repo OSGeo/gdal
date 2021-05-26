@@ -342,7 +342,7 @@ New methods
     * their corresponding linear geometry type (see OGR_GT_GetLinear()), by
     * possibly approximating circular arcs they may contain.
     * Regarding conversion from linear geometry types to curve geometry types, only
-    * "wraping" will be done. No attempt to retrieve potential circular arcs by
+    * "wrapping" will be done. No attempt to retrieve potential circular arcs by
     * de-approximating stroking will be done. For that, OGRGeometry::getCurveGeometry()
     * can be used.
     *

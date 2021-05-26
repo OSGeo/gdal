@@ -116,13 +116,43 @@ The **dataAxisToSRSAxisMapping** attribute is allowed since GDAL 3.0 to describe
     </VRTRasterBand>
   </MaskBand>
 
+- **OverviewList**: (GDAL >= 3.2.0, not valid for VRTPansharpenedDataset)
+  This elements contains a list of overview factors, separated by space, to
+  create "virtual overviews". For example ``2 4``. It can be used so that bands
+  of the VRT datasets declare overviews. This only makes sense to use if the
+  sources added in those bands have themselves overviews compatible of the
+  declared factor. It is generally not needed to use this mechanism, since
+  downsampling pixel requests on a VRT dataset/band are able to use  of the
+  sources, even when the VRT bands do not declare them. One situation where
+  explicit overviews are needed at the VRT level is for example warping a VRT
+  to a lower resolution.
+  This element can also be used to an existing VRT dataset by running
+  :cpp:func:`GDALDataset::BuildOverviews` or :program:`gdaladdo` with the
+  :decl_configoption:`VRT_VIRTUAL_OVERVIEWS` configuration option set to ``YES``.
+  Virtual overviews have the least priority compared to the **Overview** element
+  at the **VRTRasterBand** level, or to materialized .vrt.ovr files.
+
 
 - **VRTRasterBand**: This represents one band of a dataset.
 
 VRTRasterBand
 +++++++++++++
 
-It will have a dataType attribute with the type of the pixel data associated with this band (use names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64) and the band this element represents (1 based).  This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, etc.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
+The attributes for VRTRasterBand are:
+
+- **dataType** (optional): type of the pixel data associated with this band (use
+  names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64).
+  If not specified, defaults to 1
+ 
+- **band** (optional): band number this element represents (1 based).
+
+- **blockXSize** (optional, GDAL >= 3.3): block width.
+  If not specified, defaults to the minimum of the raster width and 128.
+
+- **blockYSize** (optional, GDAL >= 3.3): block height.
+  If not specified, defaults to the minimum of the raster height and 128.
+
+This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, etc.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
 
 The allowed subelements for VRTRasterBand are :
 
@@ -132,7 +162,7 @@ The allowed subelements for VRTRasterBand are :
 
   <ColorInterp>Gray</ColorInterp>:
 
-- **NoDataValue**: If this element exists a raster band has a nodata value associated with, of the value given as data in the element.
+- **NoDataValue**: If this element exists a raster band has a nodata value associated with, of the value given as data in the element. This must not be confused with the NODATA element of a VRTComplexSource element.
 
 .. code-block:: xml
 
@@ -241,7 +271,7 @@ The allowed subelements for VRTRasterBand are :
 
 - **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
 
-- **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value.
+- **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value, or starting with GDAL 3.3, with the <UseMaskBand>true</UseMaskBand> element.
 
 - **KernelFilteredSource**: The KernelFilteredSource_ is a pixel source derived from the Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements, but it also passes the data through a simple filtering kernel specified with the Kernel element.
 
@@ -261,12 +291,6 @@ rectangle of source data should be mapped into the VRTRasterBands space.
 The relativeToVRT attribute on the SourceFilename indicates whether the
 filename should be interpreted as relative to the .vrt file (value is 1)
 or not relative to the .vrt file (value is 0).  The default is 0.
-
-The shared attribute, on the SourceFilename indicates whether the
-dataset should be shared (value is 1) or not (value is 0). The default is 1.
-If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
-shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
-option can be set to 0 to force non-shared mode.
 
 Some characteristics of the source band can be specified in the optional
 SourceProperties tag to enable the VRT driver to differ the opening of the source
@@ -351,7 +375,10 @@ the blue band or 4 for the alpha band.
 When transforming the source values the operations are executed
 in the following order:
 
-- Nodata masking
+- Masking, if the NODATA element is set or, starting with GDAL 3.3,
+  if the UseMaskBand is set to true and the source band has a mask band.
+  Note that this is binary masking only, so no alpha blending is done if the
+  mask band is actually an alpha band with non-0 or non-255 values.
 - Color table expansion
 - For linear scaling, applying the scale ratio, then scale offset
 - For non-linear scaling, apply (DstMax-DstMin) * pow( (SrcValue-SrcMin) / (SrcMax-SrcMin), Exponent) + DstMin
@@ -366,7 +393,7 @@ in the following order:
       <ScaleRatio>1</ScaleRatio>
       <ColorTableComponent>1</ColorTableComponent>
       <LUT>0:0,2345.12:64,56789.5:128,2364753.02:255</LUT>
-      <NODATA>0</NODATA>
+      <NODATA>0</NODATA>  <!-- if the mask is a mask or alpha band, use <UseMaskBand>true</UseMaskBand> -->
       <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </ComplexSource>
@@ -436,7 +463,12 @@ Except if (from top priority to lesser priority) :
 
 - The **Overview** element is present in the VRTRasterBand element. See above.
 - or external .vrt.ovr overviews are built
-- (starting with GDAL 2.1) if the VRTRasterBand are made of a single SimpleSource or ComplexSource that has overviews. Those "virtual" overviews will be hidden by external .vrt.ovr overviews that might be built later.
+- (starting with GDAL 3.2) explicit virtual overviews, if a **OverviewList** element
+  is declared in the VRTDataset element (see above).
+  Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
+- (starting with GDAL 2.1) implicit virtual overviews, if the VRTRasterBand are made of
+  a single SimpleSource or ComplexSource that has overviews.
+  Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
 
 .vrt Descriptions for Raw Files
 -------------------------------
@@ -1334,16 +1366,14 @@ VRTRasterBands, in addition to the pansharpened bands.
 
 In addition to the above mentioned required PanchroBand and SpectralBand elements,
 the PansharpeningOptions element may have the following children elements :
+
 - **Algorithm**: to specify the pansharpening algorithm. Currently, only WeightedBrovey is supported.
 - **AlgorithmOptions**: to specify the options of the pansharpening algorithm. With WeightedBrovey algorithm, the only supported option is a **Weights** child element whose content must be a comma separated list of real values assigning the weight of each of the declared input spectral bands. There must be as many values as declared input spectral bands.
-- **Resampling**: the resampling kernel used to resample the spectral bands to the resolution of the panchromatic band. Can be one of Cubic (default), Average,
-Near, CubicSpline, Bilinear, Lanczos.
+- **Resampling**: the resampling kernel used to resample the spectral bands to the resolution of the panchromatic band. Can be one of Cubic (default), Average, Near, CubicSpline, Bilinear, Lanczos.
 - **NumThreads**: Number of worker threads. Integer number or ALL_CPUS. If this option is not set, the GDAL_NUM_THREADS configuration option will be queried (its value can also be set to an integer or ALL_CPUS)
 - **BitDepth**: Can be used to specify the bit depth of the panchromatic and spectral bands (e.g. 12). If not specified, the NBITS metadata item from the panchromatic band will be used if it exists.
 - **NoData**: Nodata value to take into account for panchromatic and spectral bands. It will be also used as the output nodata value. If not specified and all input bands have the same nodata value, it will be implicitly used (unless the special None value is put in NoData to prevent that).
-- **SpatialExtentAdjustment**: Can be one of **Union** (default), **Intersection**, **None** or **NoneWithoutWarning**. Controls the behavior when panchromatic
-and spectral bands have not the same geospatial extent. By default, Union will take the union of all spatial extents. Intersection the intersection of all spatial extents.
-None will not proceed to any adjustment at all (might be useful if the geotransform are somehow dummy, and the top-left and bottom-right corners of all bands match), but will emit a warning. NoneWithoutWarning is the same as None, but in a silent way.
+- **SpatialExtentAdjustment**: Can be one of **Union** (default), **Intersection**, **None** or **NoneWithoutWarning**. Controls the behavior when panchromatic and spectral bands have not the same geospatial extent. By default, Union will take the union of all spatial extents. Intersection the intersection of all spatial extents. None will not proceed to any adjustment at all (might be useful if the geotransform are somehow dummy, and the top-left and bottom-right corners of all bands match), but will emit a warning. NoneWithoutWarning is the same as None, but in a silent way.
 
 The below examples creates a VRT dataset with 4 bands. The first band is the
 panchromatic band. The 3 following bands are than red, green, blue pansharpened

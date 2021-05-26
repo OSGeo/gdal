@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPixelInterleavedChannel class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,8 +31,6 @@
 #include "channel/cpixelinterleavedchannel.h"
 #include <cassert>
 #include <cstring>
-
-#include "cpl_port.h"
 
 using namespace PCIDSK;
 
@@ -67,7 +65,7 @@ CPixelInterleavedChannel::~CPixelInterleavedChannel()
 /************************************************************************/
 
 int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
-                                         int win_xoff, int win_yoff, 
+                                         int win_xoff, int win_yoff,
                                          int win_xsize, int win_ysize )
 
 {
@@ -88,7 +86,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
     if( win_xoff < 0 || win_xoff + win_xsize > GetBlockWidth()
         || win_yoff < 0 || win_yoff + win_ysize > GetBlockHeight() )
     {
-        return ThrowPCIDSKException(0, 
+        return ThrowPCIDSKException(0,
             "Invalid window in ReadBloc(): win_xoff=%d,win_yoff=%d,xsize=%d,ysize=%d",
             win_xoff, win_yoff, win_xsize, win_ysize );
     }
@@ -102,7 +100,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
 /* -------------------------------------------------------------------- */
 /*      Read and lock the scanline.                                     */
 /* -------------------------------------------------------------------- */
-    uint8 *pixel_buffer = (uint8 *) 
+    uint8 *pixel_buffer = (uint8 *)
         file->ReadAndLockBlock( block_index, win_xoff, win_xsize);
 
 /* -------------------------------------------------------------------- */
@@ -147,10 +145,25 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
                 src += pixel_group-4;
             }
         }
+        else if( pixel_size == 8 )
+        {
+            for( i = win_xsize; i != 0; i-- )
+            {
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                src += pixel_group-8;
+            }
+        }
         else
             return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
-    
+
     file->UnlockBlock( false );
 
 /* -------------------------------------------------------------------- */
@@ -162,8 +175,12 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
     return 1;
 }
 
+/************************************************************************/
+/*                             CopyPixels()                             */
+/************************************************************************/
+
 template <typename T>
-static void CopyPixels(const T* const src, T* const dst,
+void CopyPixels(const T* const src, T* const dst,
                 std::size_t offset, std::size_t count)
 {
     for (std::size_t i = 0; i < count; i++)
@@ -200,9 +217,20 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /*      reasonably efficiently.  We might consider adding faster        */
 /*      cases for 16/32bit data that is word aligned.                   */
 /* -------------------------------------------------------------------- */
-    // TODO: fixup for the complex case
     if( pixel_size == pixel_group )
+    {
         memcpy( pixel_buffer, buffer, pixel_size * width );
+
+        if( needs_swap )
+        {
+            bool complex = IsDataTypeComplex( GetType() );
+
+            if( complex )
+                SwapData( pixel_buffer, pixel_size/2, width*2 );
+            else
+                SwapData( pixel_buffer, pixel_size, width );
+        }
+    }
     else
     {
         int i;
@@ -233,6 +261,8 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
         }
         else if( pixel_size == 4 )
         {
+            bool complex = IsDataTypeComplex( GetType() );
+
             for( i = width; i != 0; i-- )
             {
                 *(dst++) = *(src++);
@@ -241,21 +271,47 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
                 *(dst++) = *(src++);
 
                 if( needs_swap )
-                    SwapData( dst-4, 4, 1);
+                {
+                    if( complex )
+                        SwapData( dst-4, 2, 2);
+                    else
+                        SwapData( dst-4, 4, 1);
+                }
 
                 dst += pixel_group-4;
+            }
+        }
+        else if( pixel_size == 8 )
+        {
+            bool complex = IsDataTypeComplex( GetType() );
 
+            for( i = width; i != 0; i-- )
+            {
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+
+                if( needs_swap )
+                {
+                    if( complex )
+                        SwapData( dst-8, 4, 2);
+                    else
+                        SwapData( dst-8, 8, 1);
+                }
+
+                dst += pixel_group-8;
             }
         }
         else
             return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
-    
-    file->UnlockBlock( true );
 
-/* -------------------------------------------------------------------- */
-/*      Do byte swapping if needed.                                     */
-/* -------------------------------------------------------------------- */
+    file->UnlockBlock( true );
 
     return 1;
 }

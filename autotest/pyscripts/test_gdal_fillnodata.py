@@ -46,7 +46,7 @@ def test_gdal_fillnodata_1():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/byte.tif tmp/test_gdal_fillnodata_1.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', test_py_scripts.get_data_path('gcore') + 'byte.tif tmp/test_gdal_fillnodata_1.tif')
 
     ds = gdal.Open('tmp/test_gdal_fillnodata_1.tif')
     assert ds.GetRasterBand(1).Checksum() == 4672
@@ -63,7 +63,7 @@ def test_gdal_fillnodata_2():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/nodata_byte.tif tmp/test_gdal_fillnodata_2.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', test_py_scripts.get_data_path('gcore') + 'nodata_byte.tif tmp/test_gdal_fillnodata_2.tif')
 
     ds = gdal.Open('tmp/test_gdal_fillnodata_2.tif')
     assert ds.GetRasterBand(1).GetNoDataValue() == 0, \
@@ -82,8 +82,5 @@ def test_gdal_fillnodata_cleanup():
             os.remove(filename)
         except OSError:
             pass
-
-    
-
 
 

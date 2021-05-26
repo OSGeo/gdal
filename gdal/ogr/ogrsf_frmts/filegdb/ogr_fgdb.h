@@ -88,6 +88,7 @@ protected:
 
   bool  m_suppressColumnMappingError;
   bool  m_forceMulti;
+  bool  m_bTimeInUTC = false;
 
   bool OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature);
 
@@ -223,6 +224,8 @@ protected:
 
   bool GDBToOGRFields(CPLXMLNode* psFields);
   bool ParseGeometryDef(CPLXMLNode* psGeometryDef);
+
+  static
   bool ParseSpatialReference(CPLXMLNode* psSpatialRefNode, std::string* pOutWkt,
                              std::string* pOutWKID, std::string* pOutLatestWKID);
 
@@ -239,7 +242,6 @@ protected:
 
   std::wstring m_wstrSubfields;
   std::wstring m_wstrWhereClause;
-  OGRGeometry* m_pOGRFilterGeometry;
 
   bool        m_bFilterDirty; //optimization to avoid multiple calls to search until necessary
 
@@ -274,12 +276,14 @@ protected:
 /************************************************************************/
 
 class FGdbDatabaseConnection;
+class OGRFileGDBGroup;
 
 class FGdbDataSource final: public OGRDataSource
 {
   CPLString             m_osFSName;
   CPLString             m_osPublicName;
   std::set<OGRLayer*>   m_oSetSelectLayers;
+  std::shared_ptr<GDALGroup>     m_poRootGroup{};
 
   int        FixIndexes();
   int        bPerLayerCopyingForTransaction;
@@ -309,6 +313,10 @@ public:
 
   int TestCapability( const char * ) override;
 
+  const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
+
+  std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
+
   Geodatabase* GetGDB() { return m_pGeodatabase; }
   bool         GetUpdate() { return m_bUpdate; }
   FGdbDatabaseConnection* GetConnection() { return m_pConnection; }
@@ -331,7 +339,8 @@ public:
   */
 protected:
   bool LoadLayers(const std::wstring & parent);
-  bool OpenFGDBTables(const std::wstring &type,
+  bool OpenFGDBTables(OGRFileGDBGroup* group,
+                      const std::wstring &type,
                       const std::vector<std::wstring> &layers);
 
   FGdbDriver* m_poDriver;

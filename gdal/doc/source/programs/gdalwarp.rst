@@ -44,13 +44,18 @@ with control information.
 
 .. option:: -s_srs <srs def>
 
-    Set source spatial reference.
+    Set source spatial reference. If not specified the SRS found in the input
+    dataset will be used.
 
     .. include:: options/srs_def_gdalwarp.rst
 
 .. option:: -t_srs <srs_def>
 
     Set target spatial reference.
+
+    A source SRS must be available for reprojection to occur. The source SRS
+    will be by default the one found in the input dataset when it is available,
+    or as overridden by the user with :option:`-s_srs`
 
     .. include:: options/srs_def_gdalwarp.rst
 
@@ -126,7 +131,11 @@ with control information.
 
 .. option:: -tr <xres> <yres>
 
-    Set output file resolution (in target georeferenced units)
+    Set output file resolution (in target georeferenced units).
+
+    If not specified (or not deduced from -te and -ts), gdalwarp will generate
+    an output raster with xres=yres, and that even when using gdalwarp in scenarios
+    not involving reprojection.
 
 .. option:: -tap
 
@@ -178,6 +187,8 @@ with control information.
     ``lanczos``: Lanczos windowed sinc resampling.
 
     ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
+
+    ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
 
     ``mode``: mode resampling, selects the value which appears most often of all the sampled points.
 

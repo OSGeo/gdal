@@ -29,9 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
-
-
 from osgeo import gdal, gdalconst, ogr
 import gdaltest
 import ogrtest
@@ -70,10 +67,7 @@ def test_ogr2ogr_lib_2():
     gdal.Unlink('/vsimem/sql.txt')
 
     # Test @filename syntax with a UTF-8 BOM
-    if sys.version_info >= (3, 0, 0):
-        gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly'.encode('LATIN1'))
-    else:
-        gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly')
+    gdal.FileFromMemBuffer('/vsimem/sql.txt', '\xEF\xBB\xBFselect * from poly'.encode('LATIN1'))
     ds = gdal.VectorTranslate('', srcDS, format='Memory', SQLStatement='@/vsimem/sql.txt')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     gdal.Unlink('/vsimem/sql.txt')
@@ -226,7 +220,7 @@ def test_ogr2ogr_lib_11():
     else:
         assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 5
 
-    
+
 ###############################################################################
 # Test callback
 
@@ -274,7 +268,7 @@ def test_ogr2ogr_lib_14():
     except RuntimeError:
         pass
 
-    
+
 ###############################################################################
 # Test non existing zfield
 
@@ -321,7 +315,7 @@ def test_ogr2ogr_lib_16():
             print(wkt_before)
             pytest.fail(dim)
 
-    
+
 ###############################################################################
 # Test gdal.VectorTranslate(dst_ds, ...) without accessMode specified (#6612)
 
@@ -535,7 +529,6 @@ def test_ogr2ogr_lib_ct_no_srs():
     assert ogrtest.check_feature_geometry(f, "POLYGON ((-479819.84375 4765180.5,-479690.1875 4765259.5,-479647.0 4765369.5,-479730.375 4765400.5,-480039.03125 4765539.5,-480035.34375 4765558.5,-480159.78125 4765610.5,-480202.28125 4765482.0,-480365.0 4765015.5,-480389.6875 4764950.0,-480133.96875 4764856.5,-480080.28125 4764979.5,-480082.96875 4765049.5,-480088.8125 4765139.5,-480059.90625 4765239.5,-480019.71875 4765319.5,-479980.21875 4765409.5,-479909.875 4765370.0,-479859.875 4765270.0,-479819.84375 4765180.5))") == 0
 
 
-
 ###############################################################################
 # Test -nlt CONVERT_TO_LINEAR -nlt PROMOTE_TO_MULTI
 
@@ -589,3 +582,114 @@ def test_ogr2ogr_lib_makevalid():
     assert ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))") == 0
     f = lyr.GetNextFeature()
     assert ogrtest.check_feature_geometry(f, "POLYGON ((0 0,0 1,0.5 1.0,1 1,1 0,0 0))") == 0
+
+
+
+###############################################################################
+# Test SQLStatement with -sql @filename syntax
+
+
+def test_ogr2ogr_lib_sql_filename():
+
+    with gdaltest.tempfile('/vsimem/my.sql', """-- initial comment\nselect\n'--''--' as literalfield,* from --comment\npoly\n-- trailing comment"""):
+        ds = gdal.VectorTranslate('', '../ogr/data/poly.shp', options = '-f Memory -sql @/vsimem/my.sql')
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 10
+    assert lyr.GetLayerDefn().GetFieldIndex('literalfield') == 0
+
+
+###############################################################################
+# Verify -emptyStrAsNull
+
+def test_ogr2ogr_emptyStrAsNull():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    lyr = src_ds.CreateLayer('layer')
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = ''
+    lyr.CreateFeature(f)
+
+    ds = gdal.VectorTranslate('', src_ds, format='Memory', emptyStrAsNull=True)
+
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+
+    assert f['foo'] is None, 'expected empty string to be transformed to null'
+
+
+###############################################################################
+# Verify propagation of field domains
+
+
+def test_ogr2ogr_fielddomain_():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer')
+
+    src_fld_defn = ogr.FieldDefn('foo')
+    src_fld_defn.SetDomainName('my_domain')
+    src_lyr.CreateField(src_fld_defn)
+    assert src_ds.AddFieldDomain(ogr.CreateGlobFieldDomain('my_domain', 'desc', ogr.OFTString, ogr.OFSTNone, '*'))
+
+    src_fld_defn = ogr.FieldDefn('bar', ogr.OFTInteger)
+    src_fld_defn.SetDomainName('coded_domain')
+    src_lyr.CreateField(src_fld_defn)
+    assert src_ds.AddFieldDomain(ogr.CreateCodedFieldDomain(
+        'coded_domain', 'desc', ogr.OFTString, ogr.OFSTNone, {1: "one", 2: "two", 3: None}))
+
+    src_fld_defn = ogr.FieldDefn('baz', ogr.OFTInteger)
+    src_fld_defn.SetDomainName('non_existant_coded_domain')
+    src_lyr.CreateField(src_fld_defn)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField('foo', 'foo_content')
+    f.SetField('bar', 2)
+    f.SetField('baz', 0)
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField('bar', -1) # does not exist in dictionary
+    src_lyr.CreateFeature(f)
+
+    ds = gdal.VectorTranslate('', src_ds, format='Memory')
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetDomainName() == 'my_domain'
+    domain = ds.GetFieldDomain('my_domain')
+    assert domain is not None
+    assert domain.GetDomainType() == ogr.OFDT_GLOB
+
+    # Test -resolveDomains
+    ds = gdal.VectorTranslate('', src_ds, format='Memory', resolveDomains=True)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldCount() == 4
+
+    fld_defn = lyr_defn.GetFieldDefn(0)
+    assert fld_defn.GetDomainName() == 'my_domain'
+    domain = ds.GetFieldDomain('my_domain')
+    assert domain is not None
+    assert domain.GetDomainType() == ogr.OFDT_GLOB
+
+    fld_defn = lyr_defn.GetFieldDefn(1)
+    assert fld_defn.GetName() == 'bar'
+    assert fld_defn.GetType() == ogr.OFTInteger
+
+    fld_defn = lyr_defn.GetFieldDefn(2)
+    assert fld_defn.GetName() == 'bar_resolved'
+    assert fld_defn.GetType() == ogr.OFTString
+
+    fld_defn = lyr_defn.GetFieldDefn(3)
+    assert fld_defn.GetName() == 'baz'
+    assert fld_defn.GetType() == ogr.OFTInteger
+
+    f = lyr.GetNextFeature()
+    assert f['foo'] == 'foo_content'
+    assert f['bar'] == 2
+    assert f['bar_resolved'] == 'two'
+    assert f['baz'] == 0
+
+    f = lyr.GetNextFeature()
+    assert f['bar'] == -1
+    assert not f.IsFieldSet('bar_resolved')

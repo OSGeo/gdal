@@ -85,8 +85,9 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             const char* pszJPEGQuality,
                             const char* pszJPEGTablesMode,
                             const char* pszNoData,
-                            CPL_UNUSED const uint32* panLercAddCompressionAndVersion,
-                            bool bDeferStrileArrayWriting )
+                            CPL_UNUSED const uint32_t* panLercAddCompressionAndVersion,
+                            bool bDeferStrileArrayWriting,
+                            const char *pszWebpLevel)
 
 {
     const toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
@@ -132,9 +133,7 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                       panExtraSampleValues );
     }
 
-    if( nCompressFlag == COMPRESSION_LZW ||
-        nCompressFlag == COMPRESSION_ADOBE_DEFLATE ||
-        nCompressFlag == COMPRESSION_ZSTD )
+    if( GTIFFSupportsPredictor(nCompressFlag) )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
 
 /* -------------------------------------------------------------------- */
@@ -172,13 +171,18 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
         }
     }
 
-#ifdef HAVE_LERC
+    if (nCompressFlag == COMPRESSION_WEBP  && pszWebpLevel != nullptr)
+    {
+        const int nWebpLevel = atoi(pszWebpLevel);
+        if ( nWebpLevel >= 1 )
+            TIFFSetField( hTIFF, TIFFTAG_WEBP_LEVEL, nWebpLevel );
+    }
+
     if( nCompressFlag == COMPRESSION_LERC && panLercAddCompressionAndVersion )
     {
         TIFFSetField(hTIFF, TIFFTAG_LERC_PARAMETERS, 2,
                      panLercAddCompressionAndVersion);
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Write no data value if we have one.                             */
@@ -546,6 +550,8 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     if( nBands == 3 )
         nPhotometric = PHOTOMETRIC_RGB;
     else if( papoBandList[0]->GetColorTable() != nullptr
+             && (papoBandList[0]->GetRasterDataType() == GDT_Byte ||
+                 papoBandList[0]->GetRasterDataType() == GDT_UInt16)
              && !STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
     {
         nPhotometric = PHOTOMETRIC_PALETTE;
@@ -647,8 +653,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 /*      Figure out the predictor value to use.                          */
 /* -------------------------------------------------------------------- */
     int nPredictor = PREDICTOR_NONE;
-    if( nCompression == COMPRESSION_LZW ||
-        nCompression == COMPRESSION_ADOBE_DEFLATE )
+    if( GTIFFSupportsPredictor(nCompression) )
     {
         const char* pszPredictor = papszOptions ?
             CSLFetchNameValue(papszOptions, "PREDICTOR") :
@@ -849,7 +854,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         pszNoData = osNoData.c_str();
     }
 
-    std::vector<uint16> anExtraSamples;
+    std::vector<uint16_t> anExtraSamples;
     for( int i = GTIFFGetMaxColorChannels(nPhotometric)+1; i <= nBands; i++ )
     {
         if( papoBandList[i-1]->GetColorInterpretation() == GCI_AlphaBand )
@@ -910,7 +915,10 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                                 CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", nullptr ),
                              pszNoData,
                              nullptr,
-                             false
+                             false,
+                             papszOptions ?
+                                CSLFetchNameValue(papszOptions, "WEBP_LEVEL") :
+                                CPLGetConfigOption( "WEBP_LEVEL_OVERVIEW", nullptr )
                            ) == 0 )
         {
             XTIFFClose( hOTIFF );
@@ -968,6 +976,19 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                       nJpegQuality );
         GTIFFSetJpegQuality(GDALDataset::ToHandle(hODS), nJpegQuality);
     }
+    const char* pszWebpLevel =
+        papszOptions ?
+            CSLFetchNameValue(papszOptions, "WEBP_LEVEL") :
+            CPLGetConfigOption( "WEBP_LEVEL_OVERVIEW", nullptr );
+    if( nCompression == COMPRESSION_WEBP && pszWebpLevel != nullptr )
+    {
+        const int nWebpLevel = atoi(pszWebpLevel);
+        if ( nWebpLevel >= 1 )
+        {
+            TIFFSetField( hTIFF, TIFFTAG_WEBP_LEVEL, nWebpLevel );
+            GTIFFSetWebPLevel(GDALDataset::ToHandle(hODS), nWebpLevel);
+        }
+    }
 
     const char* pszJPEGTablesMode =
         papszOptions ?
@@ -1004,6 +1025,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
          papoBandList[0]->GetColorTable() == nullptr &&
          (STARTS_WITH_CI(pszResampling, "NEAR") ||
           EQUAL(pszResampling, "AVERAGE") ||
+          EQUAL(pszResampling, "RMS") ||
           EQUAL(pszResampling, "GAUSS") ||
           EQUAL(pszResampling, "CUBIC") ||
           EQUAL(pszResampling, "CUBICSPLINE") ||
@@ -1029,12 +1051,20 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
             const double noDataValue = poSrcBand->GetNoDataValue(&bHasNoData);
             if( bHasNoData )
                 poDstBand->SetNoDataValue(noDataValue);
+            std::vector<bool> abDstOverviewAssigned(1 + poDstBand->GetOverviewCount());
 
             for( int i = 0; i < nOverviews && eErr == CE_None; i++ )
             {
+                const bool bDegenerateOverview =
+                    panOverviewListSorted != nullptr &&
+                    (poSrcBand->GetXSize() >> panOverviewListSorted[i]) == 0 &&
+                    (poSrcBand->GetYSize() >> panOverviewListSorted[i]) == 0;
+
                 for( int j = -1; j < poDstBand->GetOverviewCount() &&
                                  eErr == CE_None; j++ )
                 {
+                    if( abDstOverviewAssigned[1+j] )
+                        continue;
                     GDALRasterBand * poOverview =
                             (j < 0 ) ? poDstBand : poDstBand->GetOverview( j );
                     if( poOverview == nullptr )
@@ -1052,11 +1082,16 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                                                 poOverview->GetYSize(),
                                                 poSrcBand->GetYSize());
 
-                        bMatch = ( nOvFactor == panOverviewListSorted[i]
+                        bMatch = nOvFactor == panOverviewListSorted[i]
                             || nOvFactor == GDALOvLevelAdjust2(
                                                 panOverviewListSorted[i],
                                                 poSrcBand->GetXSize(),
-                                                poSrcBand->GetYSize() ) );
+                                                poSrcBand->GetYSize() )
+                            // Deal with edge cases where overview levels lead to
+                            // degenerate 1x1 overviews
+                            || (bDegenerateOverview &&
+                                poOverview->GetXSize() == 1 &&
+                                poOverview->GetYSize() == 1 );
                     }
                     else
                     {
@@ -1068,12 +1103,14 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                     }
                     if( bMatch )
                     {
+                        abDstOverviewAssigned[j+1] = true;
                         papapoOverviewBands[iBand][i] = poOverview;
                         if( bHasNoData )
                             poOverview->SetNoDataValue(noDataValue);
                         break;
                     }
                 }
+
                 CPLAssert( papapoOverviewBands[iBand][i] != nullptr );
             }
         }

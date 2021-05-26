@@ -3,7 +3,7 @@ GDAL_ROOT = ..
 
 EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
-		-DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
+		-DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif -DFRMT_esric \
 		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem -DFRMT_l1b \
 		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp -DFRMT_rmf \
 		-DFRMT_nitf -DFRMT_pcidsk -DFRMT_airsar -DFRMT_rs2 \
@@ -13,10 +13,10 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_gff -DFRMT_terragen -DFRMT_gsg -DFRMT_cosar -DFRMT_pds \
 		-DFRMT_adrg -DFRMT_coasp -DFRMT_tsx -DFRMT_blx -DFRMT_til \
 		-DFRMT_r -DFRMT_northwood -DFRMT_saga -DFRMT_xyz -DFRMT_hf2 \
-		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg -DFRMT_e00grid \
+		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg \
 		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_iris -DFRMT_map -DFRMT_cals \
 		-DFRMT_safe -DFRMT_sentinel2 -DFRMT_derived -DFRMT_prf \
-		-DFRMT_sigdem -DFRMT_ignfheightasciigrid
+		-DFRMT_sigdem -DFRMT_tga -DFRMT_stacta
 
 MOREEXTRA 	=	
 
@@ -146,15 +146,7 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_grib
 !ENDIF
 
 !IFDEF CURL_LIB
-EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_wcs -DFRMT_wms -DFRMT_plmosaic -DFRMT_wmts -DFRMT_rda -DFRMT_eeda -DFRMT_daas
-!ENDIF
-
-!IFDEF SDE_ENABLED
-!IF "$(SDE_PLUGIN)" != "YES"
-EXTRAFLAGS  	= 	$(EXTRAFLAGS) -DFRMT_sde
-!ELSE
-PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_sde
-!ENDIF
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_wcs -DFRMT_wms -DFRMT_plmosaic -DFRMT_wmts -DFRMT_rda -DFRMT_eeda -DFRMT_daas -DFRMT_ogcapi
 !ENDIF
 
 !IFDEF RASDAMAN_ENABLED
@@ -213,6 +205,14 @@ EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_rdb
 
 !IFDEF CRUNCH_INC
 EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_dds
+!ENDIF
+
+!IFDEF OPENEXR_INC
+EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_exr
+!ENDIF
+
+!IFDEF HEIF_INC
+EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_heif
 !ENDIF
 
 default:	o\gdalallregister.obj subdirs

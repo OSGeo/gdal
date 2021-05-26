@@ -2433,9 +2433,9 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
         const enum json_type eJSonType(json_object_get_type(poVal));
         if( eJSonType == json_type_array )
         {
-            const auto nLength = json_object_array_length(poVal);
+            auto nLength = json_object_array_length(poVal);
             char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
-            auto i = decltype(nLength)(0);
+            decltype(nLength) i = 0; // Used after for.
             for( ; i < nLength; i++ )
             {
                 json_object* poRow = json_object_array_get_idx(poVal, i);
@@ -2705,23 +2705,14 @@ lh_entry* OGRGeoJSONFindMemberEntryByName( json_object* poObj,
     if( nullptr == pszName || nullptr == poObj)
         return nullptr;
 
-    json_object* poTmp = poObj;
-
-    json_object_iter it;
-    it.key = nullptr;
-    it.val = nullptr;
-    it.entry = nullptr;
-    if( nullptr != json_object_get_object(poTmp) &&
-        nullptr != json_object_get_object(poTmp)->head )
+    if( nullptr != json_object_get_object(poObj) )
     {
-        it.entry = json_object_get_object(poTmp)->head;
-        while( it.entry != nullptr )
+        lh_entry* entry = json_object_get_object(poObj)->head;
+        while( entry != nullptr )
         {
-            it.key = (char*)it.entry->k;
-            it.val = (json_object*)it.entry->v;
-            if( EQUAL( it.key, pszName ) )
-                return it.entry;
-            it.entry = it.entry->next;
+            if( EQUAL( static_cast<const char*>(entry->k), pszName ) )
+                return entry;
+            entry = entry->next;
         }
     }
 

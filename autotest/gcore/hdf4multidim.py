@@ -95,6 +95,7 @@ def test_hdf4multidim_hdfeos_swath():
                                                 17318, 17317,
                                                 17318, 17317)
 
+
     got_data = array.Read(array_start_idx = [13, 0], count = [3, 2],
                           buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Int32))
     assert len(got_data) == 3 * 2 * 4
@@ -119,6 +120,9 @@ def test_hdf4multidim_hdfeos_swath():
     assert struct.unpack('h' * 6, got_data) == (0, 17318, 17318,
                                                 0, 17317, 17317)
 
+    ds = gdal.OpenEx('tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf', gdal.OF_MULTIDIM_RASTER, open_options = ['LIST_SDS=YES'])
+    rg = ds.GetRootGroup()
+    assert rg.GetGroupNames() == ['swaths', 'scientific_datasets']
 
 ###############################################################################
 # Test reading HDFEOS GRID products
@@ -187,6 +191,10 @@ def test_hdf4multidim_hdfeos_grid():
     YDim = MOD_Grid_500m_Surface_Reflectance.OpenMDArray('YDim')
     assert YDim
     assert not MOD_Grid_500m_Surface_Reflectance.OpenMDArray('foo')
+
+    ds = gdal.OpenEx('tmp/cache/MOD09A1.A2010041.h06v03.005.2010051001103.hdf', gdal.OF_MULTIDIM_RASTER, open_options = ['LIST_SDS=YES'])
+    rg = ds.GetRootGroup()
+    assert rg.GetGroupNames() == ['eos_grids', 'scientific_datasets']
 
 
 ###############################################################################
@@ -257,6 +265,12 @@ def test_hdf4multidim_gdal_sds_3d():
     assert len(got_data) == 2 * 2
     assert struct.unpack('B' * 4, got_data) == (107, 123,
                                                 115, 132)
+
+    got_data = array.Transpose([2,1,0]).Read(array_start_idx = [0, 0, 0], count = [1, 2, 2])
+    assert len(got_data) == 2 * 2
+    assert struct.unpack('B' * 4, got_data) == (107, 115,
+                                                123, 132)
+
     assert array.GetSpatialRef()
 
     X = dims[0].GetIndexingVariable()

@@ -32,6 +32,8 @@
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
 
+#include <mutex>
+
 //! @cond Doxygen_Suppress
 
 CPL_CVSID("$Id$")
@@ -88,8 +90,15 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
     {
         osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
     }
+    if( osStorageKeyB64.empty() )
+    {
+        struct curl_slist *headers=nullptr;
+        headers = curl_slist_append(
+            headers, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
+        return headers;
+    }
 
-    CPLString osMsVersion("2015-02-21");
+    CPLString osMsVersion("2019-12-12");
     std::map<CPLString, CPLString> oSortedMapMSHeaders;
     oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
     oSortedMapMSHeaders["x-ms-date"] = osDate;
@@ -159,21 +168,23 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
 /************************************************************************/
 VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
                                             const CPLString& osEndpoint,
-                                            const CPLString& osBlobEndpoint,
                                             const CPLString& osBucket,
                                             const CPLString& osObjectKey,
                                             const CPLString& osStorageAccount,
                                             const CPLString& osStorageKey,
-                                            bool bUseHTTPS ) :
-    m_osURL(BuildURL(osEndpoint, osBlobEndpoint, osStorageAccount,
-            osBucket, osObjectKey, bUseHTTPS)),
+                                            const CPLString& osSAS,
+                                            bool bUseHTTPS,
+                                            bool bFromManagedIdentities ) :
+    m_osURL(BuildURL(osEndpoint, osStorageAccount,
+            osBucket, osObjectKey, osSAS, bUseHTTPS)),
     m_osEndpoint(osEndpoint),
-    m_osBlobEndpoint(osBlobEndpoint),
     m_osBucket(osBucket),
     m_osObjectKey(osObjectKey),
     m_osStorageAccount(osStorageAccount),
     m_osStorageKey(osStorageKey),
-    m_bUseHTTPS(bUseHTTPS)
+    m_osSAS(osSAS),
+    m_bUseHTTPS(bUseHTTPS),
+    m_bFromManagedIdendities(bFromManagedIdentities)
 {
 }
 
@@ -214,20 +225,140 @@ CPLString AzureCSGetParameter(const CPLString& osStr, const char* pszKey,
 }
 
 /************************************************************************/
+/*                          ParseSimpleJson()                           */
+/*                                                                      */
+/*      Return a string list of name/value pairs extracted from a       */
+/*      JSON doc.  The EC2 IAM web service returns simple JSON          */
+/*      responses.  The parsing as done currently is very fragile       */
+/*      and depends on JSON documents being in a very very simple       */
+/*      form.                                                           */
+/************************************************************************/
+
+static CPLStringList ParseSimpleJson(const char *pszJson)
+
+{
+/* -------------------------------------------------------------------- */
+/*      We are expecting simple documents like the following with no    */
+/*      hierarchy or complex structure.                                 */
+/* -------------------------------------------------------------------- */
+/*
+    {
+    "Code" : "Success",
+    "LastUpdated" : "2017-07-03T16:20:17Z",
+    "Type" : "AWS-HMAC",
+    "AccessKeyId" : "bla",
+    "SecretAccessKey" : "bla",
+    "Token" : "bla",
+    "Expiration" : "2017-07-03T22:42:58Z"
+    }
+*/
+
+    CPLStringList oWords(
+        CSLTokenizeString2(pszJson, " \n\t,:{}", CSLT_HONOURSTRINGS ));
+    CPLStringList oNameValue;
+
+    for( int i=0; i < oWords.size(); i += 2 )
+    {
+        oNameValue.SetNameValue(oWords[i], oWords[i+1]);
+    }
+
+    return oNameValue;
+}
+
+/************************************************************************/
+/*                GetConfigurationFromManagedIdentities()               */
+/************************************************************************/
+
+std::mutex gMutex;
+static CPLString gosAccessToken;
+static GIntBig gnGlobalExpiration = 0;
+
+
+bool VSIAzureBlobHandleHelper::GetConfigurationFromManagedIdentities(
+                                                    CPLString& osAccessToken)
+{
+    std::lock_guard<std::mutex> guard(gMutex);
+    time_t nCurTime;
+    time(&nCurTime);
+    // Try to reuse credentials if they are still valid, but
+    // keep one minute of margin...
+    if( !gosAccessToken.empty() && nCurTime < gnGlobalExpiration - 60 )
+    {
+        osAccessToken = gosAccessToken;
+        return true;
+    }
+
+    // coverity[tainted_data]
+    const CPLString osRootURL(
+        CPLGetConfigOption("CPL_AZURE_VM_API_ROOT_URL", "http://169.254.169.254"));
+    if( osRootURL == "disabled" )
+        return false;
+
+    // Fetch credentials
+    CPLStringList oResponse;
+    const char* const apszOptions[] = { "HEADERS=Metadata: true", nullptr };
+    CPLHTTPResult* psResult = CPLHTTPFetch(
+        (osRootURL + "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F").c_str(),
+        apszOptions );
+    if( psResult )
+    {
+        if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
+        {
+            const CPLString osJSon =
+                    reinterpret_cast<char*>(psResult->pabyData);
+            oResponse = ParseSimpleJson(osJSon);
+            if( oResponse.FetchNameValue("error") )
+            {
+                CPLDebug("AZURE", "Cannot retrieve managed identities credentials: %s",
+                         osJSon.c_str());
+            }
+        }
+        CPLHTTPDestroyResult(psResult);
+    }
+    osAccessToken = oResponse.FetchNameValueDef("access_token", "");
+    const GIntBig nExpiresOn = CPLAtoGIntBig(oResponse.FetchNameValueDef("expires_on", ""));
+    if( !osAccessToken.empty() && nExpiresOn > 0 )
+    {
+        gosAccessToken = osAccessToken;
+        gnGlobalExpiration = nExpiresOn;
+        CPLDebug("AZURE", "Storing credentials until " CPL_FRMT_GIB,
+                 gnGlobalExpiration);
+    }
+
+    return !osAccessToken.empty();
+}
+
+/************************************************************************/
+/*                             ClearCache()                             */
+/************************************************************************/
+
+void VSIAzureBlobHandleHelper::ClearCache()
+{
+    std::lock_guard<std::mutex> guard(gMutex);
+    gosAccessToken.clear();
+    gnGlobalExpiration = 0;
+}
+
+/************************************************************************/
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
 bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
+                                                Service eService,
                                                 bool& bUseHTTPS,
                                                 CPLString& osEndpoint,
-                                                CPLString& osBlobEndpoint,
                                                 CPLString& osStorageAccount,
-                                                CPLString& osStorageKey)
+                                                CPLString& osStorageKey,
+                                                CPLString& osSAS,
+                                                bool& bFromManagedIdentities)
 {
+    bFromManagedIdentities = false;
+
+    const CPLString osServicePrefix ( eService == Service::BLOB ? "blob" : "dfs" );
     bUseHTTPS = CPLTestBool(CPLGetConfigOption("CPL_AZURE_USE_HTTPS", "YES"));
     osEndpoint =
         CPLGetConfigOption("CPL_AZURE_ENDPOINT",
-                                    "blob.core.windows.net");
+                                (osServicePrefix + ".core.windows.net").c_str());
 
     const CPLString osStorageConnectionString(
         CSLFetchNameValueDef(papszOptions, "AZURE_STORAGE_CONNECTION_STRING",
@@ -245,16 +376,20 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
             osStorageConnectionString, "DefaultEndpointsProtocol", false));
         bUseHTTPS = (osProtocol != "http");
 
-        osBlobEndpoint = AzureCSGetParameter(
+        CPLString osBlobEndpoint = AzureCSGetParameter(
             osStorageConnectionString, "BlobEndpoint", false);
-        if( osBlobEndpoint.empty() )
+        if( !osBlobEndpoint.empty() )
+        {
+            osEndpoint = osBlobEndpoint;
+        }
+        else
         {
             CPLString osEndpointSuffix(AzureCSGetParameter(
                 osStorageConnectionString, "EndpointSuffix", false));
             if( STARTS_WITH(osEndpointSuffix, "127.0.0.1") )
                 osEndpoint = osEndpointSuffix;
             else if( !osEndpointSuffix.empty() )
-                osEndpoint = "blob." + osEndpointSuffix;
+                osEndpoint = osServicePrefix + "." + osEndpointSuffix;
         }
 
         return true;
@@ -271,18 +406,35 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                 CPLGetConfigOption("AZURE_STORAGE_ACCESS_KEY", ""));
             if( osStorageKey.empty() )
             {
-                const char* pszMsg =
-                    "AZURE_STORAGE_ACCESS_KEY configuration option "
-                    "not defined";
-                CPLDebug("AZURE", "%s", pszMsg);
-                VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
-                return false;
+                osSAS = CPLGetConfigOption("AZURE_SAS", "");
+                if( osSAS.empty() )
+                {
+                    if( CPLTestBool(CPLGetConfigOption("AZURE_NO_SIGN_REQUEST", "NO")) )
+                    {
+                        return true;
+                    }
+
+                    CPLString osAccessToken;
+                    if( GetConfigurationFromManagedIdentities(osAccessToken) )
+                    {
+                        bFromManagedIdentities = true;
+                        return true;
+                    }
+
+                    const char* pszMsg =
+                        "AZURE_STORAGE_ACCESS_KEY or AZURE_SAS or AZURE_NO_SIGN_REQUEST configuration option "
+                        "not defined";
+                    CPLDebug("AZURE", "%s", pszMsg);
+                    VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
+                    return false;
+                }
             }
             return true;
         }
     }
+
     const char* pszMsg = "Missing AZURE_STORAGE_ACCOUNT+"
-                         "AZURE_STORAGE_ACCESS_KEY or "
+                         "(AZURE_STORAGE_ACCESS_KEY or AZURE_SAS or AZURE_NO_SIGN_REQUEST) or "
                          "AZURE_STORAGE_CONNECTION_STRING "
                          "configuration options";
     CPLDebug("AZURE", "%s", pszMsg);
@@ -296,18 +448,33 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
 /************************************************************************/
 
 VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* pszURI,
-                                                    const char* /*pszFSPrefix*/,
+                                                    const char* pszFSPrefix,
                                                     CSLConstList papszOptions )
 {
+    if( strcmp(pszFSPrefix, "/vsiaz/") != 0 &&
+        strcmp(pszFSPrefix, "/vsiaz_streaming/") != 0 &&
+        strcmp(pszFSPrefix, "/vsiadls/") != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unsupported FS prefix");
+        return nullptr;
+    }
+
+    const auto eService = strcmp(pszFSPrefix, "/vsiaz/") == 0 ||
+                          strcmp(pszFSPrefix, "/vsiaz_streaming/") == 0 ?
+                                                Service::BLOB : Service::ADLS;
+
     bool bUseHTTPS = true;
     CPLString osStorageAccount;
     CPLString osStorageKey;
     CPLString osEndpoint;
-    CPLString osBlobEndpoint;
+    CPLString osSAS;
+    bool bFromManagedIdentities = false;
 
-    if( !GetConfiguration(papszOptions,
-                    bUseHTTPS, osEndpoint, osBlobEndpoint,
-                    osStorageAccount, osStorageKey) )
+    if( !GetConfiguration(papszOptions, eService,
+                    bUseHTTPS, osEndpoint,
+                    osStorageAccount, osStorageKey, osSAS,
+                    bFromManagedIdentities) )
     {
         return nullptr;
     }
@@ -324,12 +491,13 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
     }
 
     return new VSIAzureBlobHandleHelper( osEndpoint,
-                                 osBlobEndpoint,
                                   osBucket,
                                   osObjectKey,
                                   osStorageAccount,
                                   osStorageKey,
-                                  bUseHTTPS );
+                                  osSAS,
+                                  bUseHTTPS,
+                                  bFromManagedIdentities );
 }
 
 /************************************************************************/
@@ -337,18 +505,14 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
 /************************************************************************/
 
 CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
-                                             const CPLString& osBlobEndpoint,
                                              const CPLString& osStorageAccount,
                                              const CPLString& osBucket,
                                              const CPLString& osObjectKey,
+                                             const CPLString& osSAS,
                                              bool bUseHTTPS)
 {
     CPLString osURL = (bUseHTTPS) ? "https://" : "http://";
-    if( !osBlobEndpoint.empty() )
-    {
-        osURL = osBlobEndpoint;
-    }
-    else if( STARTS_WITH(osEndpoint, "127.0.0.1") )
+    if( STARTS_WITH(osEndpoint, "127.0.0.1") )
     {
         osURL += osEndpoint + "/azure/blob/" + osStorageAccount;
     }
@@ -360,6 +524,8 @@ CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
     osURL += CPLAWSURLEncode(osBucket,false);
     if( !osObjectKey.empty() )
         osURL += "/" + CPLAWSURLEncode(osObjectKey,false);
+    if( !osSAS.empty() )
+        osURL += '?' + osSAS;
     return osURL;
 }
 
@@ -370,9 +536,22 @@ CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
 
 void VSIAzureBlobHandleHelper::RebuildURL()
 {
-    m_osURL = BuildURL(m_osEndpoint, m_osBlobEndpoint, m_osStorageAccount,
-                       m_osBucket, m_osObjectKey, m_bUseHTTPS);
+    m_osURL = BuildURL(m_osEndpoint, m_osStorageAccount,
+                       m_osBucket, m_osObjectKey, CPLString(), m_bUseHTTPS);
     m_osURL += GetQueryString(false);
+    if( !m_osSAS.empty() )
+        m_osURL += (m_oMapQueryParameters.empty() ? '?' : '&') + m_osSAS;
+}
+
+/************************************************************************/
+/*                        GetSASQueryString()                           */
+/************************************************************************/
+
+std::string VSIAzureBlobHandleHelper::GetSASQueryString() const
+{
+    if( !m_osSAS.empty() )
+        return '?' + m_osSAS;
+    return std::string();
 }
 
 /************************************************************************/
@@ -385,6 +564,19 @@ VSIAzureBlobHandleHelper::GetCurlHeaders( const CPLString& osVerb,
                                           const void *,
                                           size_t ) const
 {
+    if( m_bFromManagedIdendities )
+    {
+        CPLString osAccessToken;
+        if( !GetConfigurationFromManagedIdentities(osAccessToken) )
+            return nullptr;
+
+        struct curl_slist *headers=nullptr;
+        headers = curl_slist_append(
+            headers, CPLSPrintf("Authorization: Bearer %s", osAccessToken.c_str()));
+        headers = curl_slist_append(headers, "x-ms-version: 2019-12-12");
+        return headers;
+    }
+
     CPLString osResource("/" + m_osBucket);
     if( !m_osObjectKey.empty() )
         osResource += "/" + CPLAWSURLEncode(m_osObjectKey,false);
@@ -403,6 +595,9 @@ VSIAzureBlobHandleHelper::GetCurlHeaders( const CPLString& osVerb,
 
 CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
 {
+    if( m_osStorageKey.empty() )
+        return m_osURL;
+
     CPLString osStartDate(CPLGetAWS_SIGN4_Timestamp());
     const char* pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
     if( pszStartDate )
@@ -474,6 +669,6 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
 }
 
 
-#endif
+#endif // HAVE_CURL
 
 //! @endcond

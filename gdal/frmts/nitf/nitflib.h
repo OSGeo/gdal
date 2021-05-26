@@ -38,6 +38,12 @@
 
 CPL_C_START
 
+/* 1e-12 - 1 */
+#define NITF_MAX_FILE_SIZE 999999999999ULL
+
+/* 1e-10 - 1 */
+#define NITF_MAX_IMAGE_SIZE 9999999999ULL
+
 typedef struct {
     char szSegmentType[3]; /* one of "IM", ... */
 
@@ -262,6 +268,8 @@ int       CPL_DLL  NITFDESGetTRE(   NITFDES* psDES,
 void      CPL_DLL  NITFDESFreeTREData( char* pabyTREData );
 
 int       CPL_DLL  NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName);
+
+CPLXMLNode CPL_DLL *NITFDESGetXml(NITFFile*, int iSegment);
 
 /* -------------------------------------------------------------------- */
 /*      These are really intended to be private helper stuff for the    */

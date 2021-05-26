@@ -162,7 +162,7 @@ class HDF4ImageDataset final: public HDF4Dataset
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char ** papszParmList );
+                                 GDALDataType eType, char ** papszParamList );
     virtual void        FlushCache( void ) override;
     CPLErr              GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr      SetGeoTransform( double * ) override;
@@ -1465,7 +1465,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
             == OGRERR_NONE )
         {
             CPLDebug( "HDF4Image",
-                      "GCTP Parms = %g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
+                      "GCTP Params = %g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,"
                       "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g",
                       adfGCTP[0],
                       adfGCTP[1],
@@ -1614,16 +1614,16 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
         return;
     }
 
-    double adfParms[15];
-    for( int iParm = 0; iParm < 15; iParm++ )
-        adfParms[iParm] = CPLAtof( papszTokens[iParm] );
+    double adfParams[15];
+    for( int iParam = 0; iParam < 15; iParam++ )
+        adfParams[iParam] = CPLAtof( papszTokens[iParam] );
     CSLDestroy( papszTokens );
 
 /* -------------------------------------------------------------------- */
 /*      Convert into an SRS.                                            */
 /* -------------------------------------------------------------------- */
 
-    if( oSRS.importFromUSGS( nSys, nZone, adfParms, nDatum ) != OGRERR_NONE )
+    if( oSRS.importFromUSGS( nSys, nZone, adfParams, nDatum ) != OGRERR_NONE )
         return;
 
     CPLFree( pszProjection );
@@ -2502,7 +2502,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 
             char *pszProjLine =
                 CPLStrdup(CPLSPrintf("MPMETHOD%s", pszBand));
-            char *pszParmsLine =
+            char *pszParamsLine =
                 CPLStrdup(CPLSPrintf("PROJECTIONPARAMETERS%s",
                                      pszBand));
             char *pszZoneLine =
@@ -2517,9 +2517,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             const char *pszProj =
                 CSLFetchNameValue( papszLocalMetadata,
                                    pszProjLine );
-            const char *pszParms =
+            const char *pszParams =
                 CSLFetchNameValue( papszLocalMetadata,
-                                   pszParmsLine );
+                                   pszParamsLine );
             const char *pszZone =
                 CSLFetchNameValue( papszLocalMetadata,
                                    pszZoneLine );
@@ -2532,8 +2532,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             CPLDebug( "HDF4Image",
                       "Projection %s=%s, parameters %s=%s, "
                       "zone %s=%s",
-                      pszProjLine, pszProj, pszParmsLine,
-                      pszParms, pszZoneLine, pszZone );
+                      pszProjLine, pszProj, pszParamsLine,
+                      pszParams, pszZoneLine, pszZone );
             CPLDebug( "HDF4Image", "Ellipsoid %s=%s",
                       pszEllipsoidLine, pszEllipsoid );
 #endif
@@ -2556,27 +2556,27 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                     iEllipsoid = 8L;
             }
 #endif
-            char **papszParms = pszParms ?
-                CSLTokenizeString2( pszParms, ",", CSLT_HONOURSTRINGS ) : nullptr;
-            int nParms = CSLCount(papszParms);
-            if( nParms >= 15 )
-                nParms = 15;
-            double adfProjParms[15] = {};
-            for( int i = 0; i < nParms; i++)
-                adfProjParms[i] = CPLAtof( papszParms[i] );
-            for ( int i = nParms; i < 15; i++)
-                adfProjParms[i] = 0.0;
+            char **papszParams = pszParams ?
+                CSLTokenizeString2( pszParams, ",", CSLT_HONOURSTRINGS ) : nullptr;
+            int nParams = CSLCount(papszParams);
+            if( nParams >= 15 )
+                nParams = 15;
+            double adfProjParams[15] = {};
+            for( int i = 0; i < nParams; i++)
+                adfProjParams[i] = CPLAtof( papszParams[i] );
+            for ( int i = nParams; i < 15; i++)
+                adfProjParams[i] = 0.0;
 
             // Create projection definition
             oSRS.importFromUSGS( iProjSys, iZone,
-                                 adfProjParms, iEllipsoid );
+                                 adfProjParams, iEllipsoid );
             oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
             oSRS.exportToWkt( &pszGCPProjection );
 
-            CSLDestroy( papszParms );
+            CSLDestroy( papszParams );
             CPLFree( pszEllipsoidLine );
             CPLFree( pszZoneLine );
-            CPLFree( pszParmsLine );
+            CPLFree( pszParamsLine );
             CPLFree( pszProjLine );
         }
 
@@ -3189,10 +3189,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 int32 iProjCode = 0;
                 int32 iZoneCode = 0;
                 int32 iSphereCode = 0;
-                double adfProjParms[15];
+                double adfProjParams[15];
 
                 if( GDprojinfo( hGD, &iProjCode, &iZoneCode,
-                                &iSphereCode, adfProjParms) >= 0 )
+                                &iSphereCode, adfProjParams) >= 0 )
                 {
 #ifdef DEBUG
                     CPLDebug( "HDF4Image",
@@ -3204,7 +3204,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                               static_cast<long>( iSphereCode ) );
 #endif
                     poDS->oSRS.importFromUSGS( iProjCode, iZoneCode,
-                                               adfProjParms, iSphereCode,
+                                               adfProjParams, iSphereCode,
                                                USGS_ANGLE_RADIANS );
 
                     CPLFree( poDS->pszProjection );

@@ -17,13 +17,10 @@ cd ../..
 cd swig/java
 make test
 cd ../..
-cd swig/csharp
-make test
-cd ../..
 # CPP unit tests
 cd ../autotest
 cd cpp
-GDAL_SKIP=JP2ECW make quick_test
+make quick_test
 # Compile and test vsipreload
 make vsipreload.so
 LD_PRELOAD=./vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw
@@ -36,7 +33,7 @@ wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
 unzip PGeoTest.zip
 cd ../../..
 
-export PYTHONPATH=/usr/lib/python2.7/dist-packages
+export PYTHONPATH=/usr/lib/python3.5/dist-packages
 
 # Run ogr_fgdb.py in isolation from the rest
 $PYTEST ogr/ogr_fgdb.py
@@ -48,4 +45,4 @@ PYTESTARGS="--ignore ogr/ogr_fgdb.py"
 PYTESTARGS="$PYTESTARGS --ignore ogr/ogr_pgeo.py"
 
 # Run all the Python autotests
-GDAL_SKIP="JP2ECW ECW" $PYTEST $PYTESTARGS
+$PYTEST $PYTESTARGS

@@ -1889,7 +1889,7 @@ public class Dataset:public Band GetRasterBand(int nBandId)
  *
  * @return the projection string.
  *
- * @see <a href="http://www.gdal.org/ogr/osr_tutorial.html">OSR tutorial</a>
+ * @see <a href="https://gdal.org/tutorials/osr_api_tut.html">OSR tutorial</a>
  */
 public class Dataset:public String GetProjection()
 
@@ -1905,7 +1905,7 @@ public class Dataset:public String GetProjection()
  *
  * @return the projection string.
  *
- * @see <a href="http://www.gdal.org/ogr/osr_tutorial.html">OSR tutorial</a>
+ * @see <a href="https://gdal.org/tutorials/osr_api_tut.html">OSR tutorial</a>
  */
 public class Dataset:public String GetProjectionRef()
 
@@ -8790,7 +8790,7 @@ public class Geometry:public String GetGeometryName()
 /**
  * Fetch geometry from a geometry container.
  * <p>
- * This function returns an handle to a geometry within the container.
+ * This function returns a handle to a geometry within the container.
  * The returned geometry remains owned by the container, and should not be
  * modified.  The handle is only valid until the next change to the
  * geometry container.  Use Clone() to make a copy.
@@ -10155,7 +10155,7 @@ public class ogr:public static Geometry ForceToMultiLineString(Geometry geom)
  * SRS using GetAttrValue(), but in special cases the underlying parse tree
  * (or OGR_SRSNode objects) can be accessed more directly.
  * <p>
- * See <a href="http://www.gdal.org/ogr/osr_tutorial.html">the tutorial</a> for more information on
+ * See <a href="https://gdal.org/tutorials/osr_api_tut.html">the tutorial</a> for more information on
  * how to use this class.
  */
 public class SpatialReference
@@ -10270,12 +10270,12 @@ public class SpatialReference:public int ExportToMICoordSys(String[] argout)
  *
  * @param units an already allocated array of 1 string to receive units definition
  *
- * @param parms an already allocated array of 17 doubles to receive the 17
+ * @param params an already allocated array of 17 doubles to receive the 17
  * projection parameters will be assigned. See importFromPCI() for the list of parameters.
  *
  * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
-public class SpatialReference:public int ExportToPCI(String[] proj, String[] units, double[] parms)
+public class SpatialReference:public int ExportToPCI(String[] proj, String[] units, double[] params)
 
 /**
  * Convert this SRS into a nicely formatted WKT string for display to a person.
@@ -10354,7 +10354,7 @@ public class SpatialReference:public int ExportToProj4(String[] argout)
  * @param zone an already allocated array of 1 integer to receive the zone for UTM and State Plane
  * projection.
  *
- * @param parms n already allocated array of 15 doubles to receive
+ * @param params n already allocated array of 15 doubles to receive
  * 15 projection parameters. See importFromUSGS() for
  * the list of parameters.
  *
@@ -10363,7 +10363,7 @@ public class SpatialReference:public int ExportToProj4(String[] argout)
  * @return 0 on success. Otherwise throws a RuntimeException() (or an error code if DontUseExceptions() has been called).
  */
 
-public class SpatialReference:public int ExportToUSGS(int[] projsys, int[] zone, double[] parms, int[] datum)
+public class SpatialReference:public int ExportToUSGS(int[] projsys, int[] zone, double[] params, int[] datum)
 
 /**
  * Convert this SRS into WKT format.
@@ -11050,7 +11050,7 @@ public class SpatialReference:public int ImportFromUSGS(int iProjSys, int iZone,
  * </pre>
  *
  * If the datum code is negative, the first two values in the parameter array
- * (parm) are used to define the values as follows:
+ * (param) are used to define the values as follows:
  *
  * <ul>
  *
@@ -11909,9 +11909,125 @@ public class CoordinateTransformation:public double[] TransformPoint(double x, d
  * <p>
  * The provided array will be modified in place.
  *
- * @param pointArray an array of coordinates. Each coordinate can be either 2D or 3D
+ * @param pointArray an array of coordinates. Each coordinate can be either 2D, 3D or 4D
  */
 public class CoordinateTransformation:public void TransformPoints(double[][] pointArray)
+
+/**
+ * Transform point from source to destination space.
+ *
+ * @param argout array of 4 double values where the transformed coordinates will be put.
+ * @param x input x value
+ * @param y input y value
+ * @param z input z value
+ * @param t input t value
+ * @return the error code. 0 means no error.
+ *         See osrConstants.PROJ_ERR_xxxxx enumerated code for the possible error codes.
+ * @since GDAL 3.3 and PROJ 8
+ */
+public class CoordinateTransformation:public int TransformPointWithErrorCode(double[] argout, double x, double y, double z, double t)
+
+/**
+ * Transform points from source to destination space.
+ * <p>
+ * The provided array will be modified in place.
+ *
+ * @param pointArray an array of coordinates. Each coordinate can be either 2D, 3D or 4D
+ * @return an array of integer with the error codes for each coordinate. 0 means no error.
+ *         See osrConstants.PROJ_ERR_xxxxx enumerated code for the possible error codes.
+ * @since GDAL 3.3 and PROJ 8
+ */
+public class CoordinateTransformation:public int[] TransformPointsWithErrorCodes(double[][] pointArray)
+
+
+/**
+ * Class of error codes typically related to coordinate operation initialization,
+ * typically when creating a PJ* object from a PROJ string.
+ *
+ * Some of them can also be emitted during coordinate transformation,
+ * like PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID in case the resource loading
+ * is deferred until it is really needed.
+ */
+public interface osrConstants:public final static int PROJ_ERR_INVALID_OP
+
+/**
+ * Invalid pipeline structure, missing +proj argument, etc.
+ */
+public interface osrConstants:public final static int PROJ_ERR_INVALID_OP_WRONG_SYNTAX
+
+/**
+ *Missing required operation parameter
+ */
+public interface osrConstants:public final static int PROJ_ERR_INVALID_OP_MISSING_ARG
+
+/**
+ *One of the operation parameter has an illegal value.
+ */
+public interface osrConstants:public final static int PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE
+
+/**
+ * Mutually exclusive arguments.
+ */
+public interface osrConstants:public final static int PROJ_ERR_INVALID_OP_MUTUALLY_EXCLUSIVE_ARGS
+
+/**
+ * File not found or with invalid content (particular case of PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE)
+ */
+public interface osrConstants:public final static int PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID
+
+
+/**
+ * Class of error codes related to transformation on a specific coordinate.
+ */
+public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM
+
+/**
+ * Invalid input coordinate. e.g a latitude > 90°.
+ */
+public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM_INVALID_COORD
+
+/**
+ * Coordinate is outside of the projection domain. e.g approximate mercator with \|longitude - lon_0\| > 90°,
+ * or iterative convergence method failed.
+ */
+public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN
+
+/**
+ * No operation found, e.g if no match the required accuracy, or if ballpark transformations
+ * were asked to not be used and they would be only such candidate.
+ */
+public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM_NO_OPERATION
+
+/**
+ * Point to transform falls outside grid/subgrid/TIN.
+ */
+public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID
+
+/**
+ * Point to transform falls in a grid cell that evaluates to nodata.
+ */
+public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM_GRID_AT_NODATA
+
+
+/**
+ * Class of error codes that do not fit into one of the above class.
+ */
+public interface osrConstants:public final static int PROJ_ERR_OTHER
+
+/**
+ * Error related to a misuse of PROJ API.
+ */
+public interface osrConstants:public final static int PROJ_ERR_OTHER_API_MISUSE
+
+/**
+ * No inverse method available.
+ */
+public interface osrConstants:public final static int PROJ_ERR_OTHER_NO_INVERSE_OP
+
+/**
+ * Failure when accessing a network resource.
+ */
+public interface osrConstants:public final static int PROJ_ERR_OTHER_NETWORK_ERROR
 
 
 /* Class osr */
@@ -12083,7 +12199,7 @@ public interface ogrConstants:public final static int wkbMultiPolygon25D
 public interface ogrConstants:public final static int wkbGeometryCollection25D
 
 /**
- * MSB/Sun/Motoroloa: Most Significant Byte First
+ * MSB/Sun/Motorola: Most Significant Byte First
  */
 public interface ogrConstants:public final static int wkbXDR
 

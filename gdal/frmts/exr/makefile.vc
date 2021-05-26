@@ -1,7 +1,7 @@
 
 OBJ	= exrdataset.obj
 
-EXTRAFLAGS = $(EXR_INC)
+EXTRAFLAGS = $(OPENEXR_INC)
 
 GDAL_ROOT	=	..\..
 

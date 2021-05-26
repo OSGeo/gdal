@@ -28,7 +28,7 @@ Open options
 ------------
 
 Starting with GDAL 2.3, the following open options can be specified
-(typically with the "-oo name=value" parameters of ogrinfo or ogr2ogr):
+(typically with the ``-oo name=value`` parameters of ogrinfo or ogr2ogr):
 
 -  **SUPPRESS_GEOMETRY**\ =YES/NO (defaults to NO). Setting it to YES
    will skip resolving geometry. All layers will be recognized with no
@@ -42,7 +42,7 @@ Starting with GDAL 2.3, the following open options can be specified
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
-(set with "--config key value" on GDAL command line utilities)
+(set with ``--config key value`` on GDAL command line utilities)
 
 The driver uses SQLite as a backend database
 when reading VFK data. By default, SQLite database is created in a

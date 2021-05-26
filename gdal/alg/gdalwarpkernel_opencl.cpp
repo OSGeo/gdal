@@ -39,6 +39,7 @@
 #include <limits.h>
 #include <float.h>
 #include <limits>
+#include <vector>
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
 
@@ -260,9 +261,8 @@ static cl_device_id get_device(OCLVendor *peVendor)
     cl_char vendor_name[1024] = {0};
     cl_char device_name[1024] = {0};
 
-    cl_platform_id platforms[10];
-    cl_uint num_platforms;
-    cl_uint i;
+    std::vector<cl_platform_id> platforms;
+    cl_uint num_platforms = 0;
     cl_device_id preferred_device_id = nullptr;
     int preferred_is_gpu = FALSE;
 
@@ -271,24 +271,29 @@ static cl_device_id get_device(OCLVendor *peVendor)
         return nullptr;
     try
     {
-        err = clGetPlatformIDs( 10, platforms, &num_platforms );
+        err = clGetPlatformIDs( 0, nullptr, &num_platforms );
         if( err != CL_SUCCESS || num_platforms == 0 )
+            return nullptr;
+
+        platforms.resize(num_platforms);
+        err = clGetPlatformIDs( num_platforms, &platforms[0], nullptr );
+        if( err != CL_SUCCESS )
             return nullptr;
     }
     catch( ... )
     {
-        gbBuggyOpenCL = true;   
+        gbBuggyOpenCL = true;
         CPLDebug("OpenCL", "clGetPlatformIDs() threw a C++ exception");
         // This should normally not happen. But that does happen with
-        // intel-opencl 0r2.0-54426 when run under xvfb-run 
+        // intel-opencl 0r2.0-54426 when run under xvfb-run
         return nullptr;
     }
-    
+
     bool bUseOpenCLCPU = CPLTestBool( CPLGetConfigOption("OPENCL_USE_CPU", "FALSE") );
 
     // In case we have several implementations, pick up the non Intel one by
     // default, unless the PREFERRED_OPENCL_VENDOR config option is specified.
-    for( i=0; i<num_platforms;i++)
+    for( cl_uint i=0; i<num_platforms;i++)
     {
         cl_device_id device = nullptr;
         const char* pszBlacklistedVendor;
@@ -322,22 +327,22 @@ static cl_device_id get_device(OCLVendor *peVendor)
         if( num_platforms > 1 )
             CPLDebug( "OpenCL", "Found vendor='%s' / device='%s' (%s implementation).",
                       vendor_name, device_name, (is_gpu) ? "GPU" : "CPU");
-        
+
         pszBlacklistedVendor = CPLGetConfigOption("BLACKLISTED_OPENCL_VENDOR", nullptr);
         if( pszBlacklistedVendor &&
-            EQUAL( reinterpret_cast<const char*>(vendor_name), pszBlacklistedVendor ) ) 
+            EQUAL( reinterpret_cast<const char*>(vendor_name), pszBlacklistedVendor ) )
         {
             CPLDebug("OpenCL", "Blacklisted vendor='%s' / device='%s' implementation skipped",
                      vendor_name, device_name);
             continue;
         }
-            
+
         if( preferred_device_id == nullptr || (is_gpu && !preferred_is_gpu) )
         {
             preferred_device_id = device;
             preferred_is_gpu = is_gpu;
         }
-            
+
         pszPreferredVendor = CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", nullptr);
         if( pszPreferredVendor )
         {
@@ -621,659 +626,664 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     const char *outType;
     const char *dUseVec = "";
     const char *dVecf = "float";
-    const char *kernGenFuncs =
+    const char *kernGenFuncs = R""""(
 // ********************* General Funcs ********************
-"void clampToDst(float fReal,\n"
-                "__global outType *dstPtr,\n"
-                "unsigned int iDstOffset,\n"
-                "__constant float *fDstNoDataReal,\n"
-                "int bandNum);\n"
-"void setPixel(__global outType *dstReal,\n"
-                "__global outType *dstImag,\n"
-                "__global float *dstDensity,\n"
-                "__global int *nDstValid,\n"
-                "__constant float *fDstNoDataReal,\n"
-                "const int bandNum,\n"
-                "vecf fDensity, vecf fReal, vecf fImag);\n"
-"int getPixel(__read_only image2d_t srcReal,\n"
-                "__read_only image2d_t srcImag,\n"
-                "__global float *fUnifiedSrcDensity,\n"
-                "__global int *nUnifiedSrcValid,\n"
-                "__constant char *useBandSrcValid,\n"
-                "__global int *nBandSrcValid,\n"
-                "const int2 iSrc,\n"
-                "int bandNum,\n"
-                "vecf *fDensity, vecf *fReal, vecf *fImag);\n"
-"int isValid(__global float *fUnifiedSrcDensity,\n"
-                "__global int *nUnifiedSrcValid,\n"
-                "float2 fSrcCoords );\n"
-"float2 getSrcCoords(__read_only image2d_t srcCoords);\n"
+void clampToDst(float fReal,
+                __global outType *dstPtr,
+                unsigned int iDstOffset,
+                __constant float *fDstNoDataReal,
+                int bandNum);
+void setPixel(__global outType *dstReal,
+                __global outType *dstImag,
+                __global float *dstDensity,
+                __global int *nDstValid,
+                __constant float *fDstNoDataReal,
+                const int bandNum,
+                vecf fDensity, vecf fReal, vecf fImag);
+int getPixel(__read_only image2d_t srcReal,
+                __read_only image2d_t srcImag,
+                __global float *fUnifiedSrcDensity,
+                __global int *nUnifiedSrcValid,
+                __constant char *useBandSrcValid,
+                __global int *nBandSrcValid,
+                const int2 iSrc,
+                int bandNum,
+                vecf *fDensity, vecf *fReal, vecf *fImag);
+int isValid(__global float *fUnifiedSrcDensity,
+                __global int *nUnifiedSrcValid,
+                float2 fSrcCoords );
+float2 getSrcCoords(__read_only image2d_t srcCoords);
 
-"#ifdef USE_CLAMP_TO_DST_FLOAT\n"
-"void clampToDst(float fReal,\n"
-                "__global outType *dstPtr,\n"
-                "unsigned int iDstOffset,\n"
-                "__constant float *fDstNoDataReal,\n"
-                "int bandNum)\n"
-"{\n"
-    "dstPtr[iDstOffset] = fReal;\n"
-"}\n"
-"#else\n"
-"void clampToDst(float fReal,\n"
-                "__global outType *dstPtr,\n"
-                "unsigned int iDstOffset,\n"
-                "__constant float *fDstNoDataReal,\n"
-                "int bandNum)\n"
-"{\n"
-    "fReal *= dstMaxVal;\n"
+#ifdef USE_CLAMP_TO_DST_FLOAT
+void clampToDst(float fReal,
+                __global outType *dstPtr,
+                unsigned int iDstOffset,
+                __constant float *fDstNoDataReal,
+                int bandNum)
+{
+    dstPtr[iDstOffset] = fReal;
+}
+#else
+void clampToDst(float fReal,
+                __global outType *dstPtr,
+                unsigned int iDstOffset,
+                __constant float *fDstNoDataReal,
+                int bandNum)
+{
+    fReal *= dstMaxVal;
 
-    "if (fReal < dstMinVal)\n"
-        "dstPtr[iDstOffset] = (outType)dstMinVal;\n"
-    "else if (fReal > dstMaxVal)\n"
-        "dstPtr[iDstOffset] = (outType)dstMaxVal;\n"
-    "else\n"
-        "dstPtr[iDstOffset] = (dstMinVal < 0) ? (outType)floor(fReal + 0.5f) : (outType)(fReal + 0.5f);\n"
+    if (fReal < dstMinVal)
+        dstPtr[iDstOffset] = (outType)dstMinVal;
+    else if (fReal > dstMaxVal)
+        dstPtr[iDstOffset] = (outType)dstMaxVal;
+    else
+        dstPtr[iDstOffset] = (dstMinVal < 0) ? (outType)floor(fReal + 0.5f) : (outType)(fReal + 0.5f);
 
-    "if (useDstNoDataReal && bandNum >= 0 &&\n"
-        "fDstNoDataReal[bandNum] == dstPtr[iDstOffset])\n"
-    "{\n"
-        "if (dstPtr[iDstOffset] == dstMinVal)\n"
-            "dstPtr[iDstOffset] = dstMinVal + 1;\n"
-        "else\n"
-            "dstPtr[iDstOffset] = dstPtr[iDstOffset] - 1;\n"
-    "}\n"
-"}\n"
-"#endif\n"
+    if (useDstNoDataReal && bandNum >= 0 &&
+        fDstNoDataReal[bandNum] == dstPtr[iDstOffset])
+    {
+        if (dstPtr[iDstOffset] == dstMinVal)
+            dstPtr[iDstOffset] = dstMinVal + 1;
+        else
+            dstPtr[iDstOffset] = dstPtr[iDstOffset] - 1;
+    }
+}
+#endif
 
-"void setPixel(__global outType *dstReal,\n"
-              "__global outType *dstImag,\n"
-              "__global float *dstDensity,\n"
-              "__global int *nDstValid,\n"
-              "__constant float *fDstNoDataReal,\n"
-              "const int bandNum,\n"
-              "vecf fDensity, vecf fReal, vecf fImag)\n"
-"{\n"
-    "unsigned int iDstOffset = get_global_id(1)*iDstWidth + get_global_id(0);\n"
+void setPixel(__global outType *dstReal,
+              __global outType *dstImag,
+              __global float *dstDensity,
+              __global int *nDstValid,
+              __constant float *fDstNoDataReal,
+              const int bandNum,
+              vecf fDensity, vecf fReal, vecf fImag)
+{
+    unsigned int iDstOffset = get_global_id(1)*iDstWidth + get_global_id(0);
 
-"#ifdef USE_VEC\n"
-    "if (fDensity.x < 0.00001f && fDensity.y < 0.00001f &&\n"
-        "fDensity.z < 0.00001f && fDensity.w < 0.00001f ) {\n"
+#ifdef USE_VEC
+    if (fDensity.x < 0.00001f && fDensity.y < 0.00001f &&
+        fDensity.z < 0.00001f && fDensity.w < 0.00001f ) {
 
-        "fReal = 0.0f;\n"
-        "fImag = 0.0f;\n"
+        fReal = 0.0f;
+        fImag = 0.0f;
 
-    "} else if (fDensity.x < 0.9999f || fDensity.y < 0.9999f ||\n"
-               "fDensity.z < 0.9999f || fDensity.w < 0.9999f ) {\n"
-        "vecf fDstReal, fDstImag;\n"
-        "float fDstDensity;\n"
+    } else if (fDensity.x < 0.9999f || fDensity.y < 0.9999f ||
+               "fDensity.z < 0.9999f || fDensity.w < 0.9999f ) {
+        vecf fDstReal, fDstImag;
+        float fDstDensity;
 
-        "fDstReal.x = dstReal[iDstOffset];\n"
-        "fDstReal.y = dstReal[iDstOffset+iDstHeight*iDstWidth];\n"
-        "fDstReal.z = dstReal[iDstOffset+iDstHeight*iDstWidth*2];\n"
-        "fDstReal.w = dstReal[iDstOffset+iDstHeight*iDstWidth*3];\n"
-        "if (useImag) {\n"
-            "fDstImag.x = dstImag[iDstOffset];\n"
-            "fDstImag.y = dstImag[iDstOffset+iDstHeight*iDstWidth];\n"
-            "fDstImag.z = dstImag[iDstOffset+iDstHeight*iDstWidth*2];\n"
-            "fDstImag.w = dstImag[iDstOffset+iDstHeight*iDstWidth*3];\n"
-        "}\n"
-"#else\n"
-    "if (fDensity < 0.00001f) {\n"
+        fDstReal.x = dstReal[iDstOffset];
+        fDstReal.y = dstReal[iDstOffset+iDstHeight*iDstWidth];
+        fDstReal.z = dstReal[iDstOffset+iDstHeight*iDstWidth*2];
+        fDstReal.w = dstReal[iDstOffset+iDstHeight*iDstWidth*3];
+        if (useImag) {
+            fDstImag.x = dstImag[iDstOffset];
+            fDstImag.y = dstImag[iDstOffset+iDstHeight*iDstWidth];
+            fDstImag.z = dstImag[iDstOffset+iDstHeight*iDstWidth*2];
+            fDstImag.w = dstImag[iDstOffset+iDstHeight*iDstWidth*3];
+        }
+#else
+    if (fDensity < 0.00001f) {
 
-        "fReal = 0.0f;\n"
-        "fImag = 0.0f;\n"
+        fReal = 0.0f;
+        fImag = 0.0f;
 
-    "} else if (fDensity < 0.9999f) {\n"
-        "vecf fDstReal, fDstImag;\n"
-        "float fDstDensity;\n"
+    } else if (fDensity < 0.9999f) {
+        vecf fDstReal, fDstImag;
+        float fDstDensity;
 
-        "fDstReal = dstReal[iDstOffset];\n"
-        "if (useImag)\n"
-            "fDstImag = dstImag[iDstOffset];\n"
-"#endif\n"
+        fDstReal = dstReal[iDstOffset];
+        if (useImag)
+            fDstImag = dstImag[iDstOffset];
+#endif
 
-        "if (useDstDensity)\n"
-            "fDstDensity = dstDensity[iDstOffset];\n"
-        "else if (useDstValid &&\n"
-                 "!((nDstValid[iDstOffset>>5] & (0x01 << (iDstOffset & 0x1f))) ))\n"
-            "fDstDensity = 0.0f;\n"
-        "else\n"
-            "fDstDensity = 1.0f;\n"
+        if (useDstDensity)
+            fDstDensity = dstDensity[iDstOffset];
+        else if (useDstValid &&
+                 !((nDstValid[iDstOffset>>5] & (0x01 << (iDstOffset & 0x1f))) ))
+            fDstDensity = 0.0f;
+        else
+            fDstDensity = 1.0f;
 
-        "vecf fDstInfluence = (1.0f - fDensity) * fDstDensity;\n"
+        vecf fDstInfluence = (1.0f - fDensity) * fDstDensity;
 
         // Density should be checked for <= 0.0 & handled by the calling function
-        "fReal = (fReal * fDensity + fDstReal * fDstInfluence) / (fDensity + fDstInfluence);\n"
-        "if (useImag)\n"
-            "fImag = (fImag * fDensity + fDstImag * fDstInfluence) / (fDensity + fDstInfluence);\n"
-    "}\n"
+        fReal = (fReal * fDensity + fDstReal * fDstInfluence) / (fDensity + fDstInfluence);
+        if (useImag)
+            fImag = (fImag * fDensity + fDstImag * fDstInfluence) / (fDensity + fDstInfluence);
+    }
 
-"#ifdef USE_VEC\n"
-    "clampToDst(fReal.x, dstReal, iDstOffset, fDstNoDataReal, bandNum);\n"
-    "clampToDst(fReal.y, dstReal, iDstOffset+iDstHeight*iDstWidth, fDstNoDataReal, bandNum);\n"
-    "clampToDst(fReal.z, dstReal, iDstOffset+iDstHeight*iDstWidth*2, fDstNoDataReal, bandNum);\n"
-    "clampToDst(fReal.w, dstReal, iDstOffset+iDstHeight*iDstWidth*3, fDstNoDataReal, bandNum);\n"
-    "if (useImag) {\n"
-        "clampToDst(fImag.x, dstImag, iDstOffset, fDstNoDataReal, -1);\n"
-        "clampToDst(fImag.y, dstImag, iDstOffset+iDstHeight*iDstWidth, fDstNoDataReal, -1);\n"
-        "clampToDst(fImag.z, dstImag, iDstOffset+iDstHeight*iDstWidth*2, fDstNoDataReal, -1);\n"
-        "clampToDst(fImag.w, dstImag, iDstOffset+iDstHeight*iDstWidth*3, fDstNoDataReal, -1);\n"
-    "}\n"
-"#else\n"
-    "clampToDst(fReal, dstReal, iDstOffset, fDstNoDataReal, bandNum);\n"
-    "if (useImag)\n"
-        "clampToDst(fImag, dstImag, iDstOffset, fDstNoDataReal, -1);\n"
-"#endif\n"
-"}\n"
+#ifdef USE_VEC
+    clampToDst(fReal.x, dstReal, iDstOffset, fDstNoDataReal, bandNum);
+    clampToDst(fReal.y, dstReal, iDstOffset+iDstHeight*iDstWidth, fDstNoDataReal, bandNum);
+    clampToDst(fReal.z, dstReal, iDstOffset+iDstHeight*iDstWidth*2, fDstNoDataReal, bandNum);
+    clampToDst(fReal.w, dstReal, iDstOffset+iDstHeight*iDstWidth*3, fDstNoDataReal, bandNum);
+    if (useImag) {
+        clampToDst(fImag.x, dstImag, iDstOffset, fDstNoDataReal, -1);
+        clampToDst(fImag.y, dstImag, iDstOffset+iDstHeight*iDstWidth, fDstNoDataReal, -1);
+        clampToDst(fImag.z, dstImag, iDstOffset+iDstHeight*iDstWidth*2, fDstNoDataReal, -1);
+        clampToDst(fImag.w, dstImag, iDstOffset+iDstHeight*iDstWidth*3, fDstNoDataReal, -1);
+    }
+#else
+    clampToDst(fReal, dstReal, iDstOffset, fDstNoDataReal, bandNum);
+    if (useImag)
+        clampToDst(fImag, dstImag, iDstOffset, fDstNoDataReal, -1);
+#endif
+}
 
-"int getPixel(__read_only image2d_t srcReal,\n"
-             "__read_only image2d_t srcImag,\n"
-             "__global float *fUnifiedSrcDensity,\n"
-             "__global int *nUnifiedSrcValid,\n"
-             "__constant char *useBandSrcValid,\n"
-             "__global int *nBandSrcValid,\n"
-             "const int2 iSrc,\n"
-             "int bandNum,\n"
-             "vecf *fDensity, vecf *fReal, vecf *fImag)\n"
-"{\n"
-    "int iSrcOffset = 0, iBandValidLen = 0, iSrcOffsetMask = 0;\n"
-    "int bHasValid = FALSE;\n"
+int getPixel(__read_only image2d_t srcReal,
+             __read_only image2d_t srcImag,
+             __global float *fUnifiedSrcDensity,
+             __global int *nUnifiedSrcValid,
+             __constant char *useBandSrcValid,
+             __global int *nBandSrcValid,
+             const int2 iSrc,
+             int bandNum,
+             vecf *fDensity, vecf *fReal, vecf *fImag)
+{
+    int iSrcOffset = 0, iBandValidLen = 0, iSrcOffsetMask = 0;
+    int bHasValid = FALSE;
 
     // Clamp the src offset values if needed
-    "if(useUnifiedSrcDensity | useUnifiedSrcValid | useUseBandSrcValid){\n"
-        "int iSrcX = iSrc.x;\n"
-        "int iSrcY = iSrc.y;\n"
+    if(useUnifiedSrcDensity | useUnifiedSrcValid | useUseBandSrcValid){
+        int iSrcX = iSrc.x;
+        int iSrcY = iSrc.y;
 
         // Needed because the offset isn't clamped in OpenCL hardware
-        "if(iSrcX < 0)\n"
-            "iSrcX = 0;\n"
-        "else if(iSrcX >= iSrcWidth)\n"
-            "iSrcX = iSrcWidth - 1;\n"
+        if(iSrcX < 0)
+            iSrcX = 0;
+        else if(iSrcX >= iSrcWidth)
+            iSrcX = iSrcWidth - 1;
 
-        "if(iSrcY < 0)\n"
-            "iSrcY = 0;\n"
-        "else if(iSrcY >= iSrcHeight)\n"
-            "iSrcY = iSrcHeight - 1;\n"
+        if(iSrcY < 0)
+            iSrcY = 0;
+        else if(iSrcY >= iSrcHeight)
+            iSrcY = iSrcHeight - 1;
 
-        "iSrcOffset = iSrcY*iSrcWidth + iSrcX;\n"
-        "iBandValidLen = 1 + ((iSrcWidth*iSrcHeight)>>5);\n"
-        "iSrcOffsetMask = (0x01 << (iSrcOffset & 0x1f));\n"
-    "}\n"
+        iSrcOffset = iSrcY*iSrcWidth + iSrcX;
+        iBandValidLen = 1 + ((iSrcWidth*iSrcHeight)>>5);
+        iSrcOffsetMask = (0x01 << (iSrcOffset & 0x1f));
+    }
 
-    "if (useUnifiedSrcValid &&\n"
-        "!((nUnifiedSrcValid[iSrcOffset>>5] & iSrcOffsetMask) ) )\n"
-        "return FALSE;\n"
+    if (useUnifiedSrcValid &&
+        !((nUnifiedSrcValid[iSrcOffset>>5] & iSrcOffsetMask) ) )
+        return FALSE;
 
-"#ifdef USE_VEC\n"
-    "if (!useUseBandSrcValid || !useBandSrcValid[bandNum] ||\n"
-        "((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*bandNum    ] & iSrcOffsetMask)) )\n"
-        "bHasValid = TRUE;\n"
+#ifdef USE_VEC
+    if (!useUseBandSrcValid || !useBandSrcValid[bandNum] ||
+        ((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*bandNum    ] & iSrcOffsetMask)) )
+        bHasValid = TRUE;
 
-    "if (!useUseBandSrcValid || !useBandSrcValid[bandNum+1] ||\n"
-        "((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*(1+bandNum)] & iSrcOffsetMask)) )\n"
-        "bHasValid = TRUE;\n"
+    if (!useUseBandSrcValid || !useBandSrcValid[bandNum+1] ||
+        ((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*(1+bandNum)] & iSrcOffsetMask)) )
+        bHasValid = TRUE;
 
-    "if (!useUseBandSrcValid || !useBandSrcValid[bandNum+2] ||\n"
-        "((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*(2+bandNum)] & iSrcOffsetMask)) )\n"
-        "bHasValid = TRUE;\n"
+    if (!useUseBandSrcValid || !useBandSrcValid[bandNum+2] ||
+        ((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*(2+bandNum)] & iSrcOffsetMask)) )
+        bHasValid = TRUE;
 
-    "if (!useUseBandSrcValid || !useBandSrcValid[bandNum+3] ||\n"
-        "((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*(3+bandNum)] & iSrcOffsetMask)) )\n"
-        "bHasValid = TRUE;\n"
-"#else\n"
-    "if (!useUseBandSrcValid || !useBandSrcValid[bandNum] ||\n"
-        "((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*bandNum    ] & iSrcOffsetMask)) )\n"
-        "bHasValid = TRUE;\n"
-"#endif\n"
+    if (!useUseBandSrcValid || !useBandSrcValid[bandNum+3] ||
+        ((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*(3+bandNum)] & iSrcOffsetMask)) )
+        bHasValid = TRUE;
+#else
+    if (!useUseBandSrcValid || !useBandSrcValid[bandNum] ||
+        ((nBandSrcValid[(iSrcOffset>>5)+iBandValidLen*bandNum    ] & iSrcOffsetMask)) )
+        bHasValid = TRUE;
+#endif
 
-    "if (!bHasValid)\n"
-        "return FALSE;\n"
+    if (!bHasValid)
+        return FALSE;
 
-    "const sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE |\n"
-                            "CLK_ADDRESS_CLAMP_TO_EDGE |\n"
-                            "CLK_FILTER_NEAREST;\n"
+    const sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE |
+                            CLK_ADDRESS_CLAMP_TO_EDGE |
+                            CLK_FILTER_NEAREST;
 
-"#ifdef USE_VEC\n"
-    "(*fReal) = read_imagef(srcReal, samp, iSrc);\n"
-    "if (useImag)\n"
-        "(*fImag) = read_imagef(srcImag, samp, iSrc);\n"
-"#else\n"
-    "(*fReal) = read_imagef(srcReal, samp, iSrc).x;\n"
-    "if (useImag)\n"
-        "(*fImag) = read_imagef(srcImag, samp, iSrc).x;\n"
-"#endif\n"
+#ifdef USE_VEC
+    (*fReal) = read_imagef(srcReal, samp, iSrc);
+    if (useImag)
+        (*fImag) = read_imagef(srcImag, samp, iSrc);
+#else
+    (*fReal) = read_imagef(srcReal, samp, iSrc).x;
+    if (useImag)
+        (*fImag) = read_imagef(srcImag, samp, iSrc).x;
+#endif
 
-    "if (useUnifiedSrcDensity) {\n"
-        "(*fDensity) = fUnifiedSrcDensity[iSrcOffset];\n"
-    "} else {\n"
-        "(*fDensity) = 1.0f;\n"
-        "return TRUE;\n"
-    "}\n"
+    if (useUnifiedSrcDensity) {
+        (*fDensity) = fUnifiedSrcDensity[iSrcOffset];
+    } else {
+        (*fDensity) = 1.0f;
+        return TRUE;
+    }
 
-"#ifdef USE_VEC\n"
-    "return  (*fDensity).x > 0.0000001f || (*fDensity).y > 0.0000001f ||\n"
-            "(*fDensity).z > 0.0000001f || (*fDensity).w > 0.0000001f;\n"
-"#else\n"
-    "return (*fDensity) > 0.0000001f;\n"
-"#endif\n"
-"}\n"
+#ifdef USE_VEC
+    return  (*fDensity).x > 0.0000001f || (*fDensity).y > 0.0000001f ||
+            (*fDensity).z > 0.0000001f || (*fDensity).w > 0.0000001f;
+#else
+    return (*fDensity) > 0.0000001f;
+#endif
+}
 
-"int isValid(__global float *fUnifiedSrcDensity,\n"
-            "__global int *nUnifiedSrcValid,\n"
-            "float2 fSrcCoords )\n"
-"{\n"
-    "if (fSrcCoords.x < 0.0f || fSrcCoords.y < 0.0f)\n"
-        "return FALSE;\n"
+int isValid(__global float *fUnifiedSrcDensity,
+            __global int *nUnifiedSrcValid,
+            float2 fSrcCoords )
+{
+    if (fSrcCoords.x < 0.0f || fSrcCoords.y < 0.0f)
+        return FALSE;
 
-    "int iSrcX = (int) (fSrcCoords.x - 0.5f);\n"
-    "int iSrcY = (int) (fSrcCoords.y - 0.5f);\n"
+    int iSrcX = (int) (fSrcCoords.x - 0.5f);
+    int iSrcY = (int) (fSrcCoords.y - 0.5f);
 
-    "if( iSrcX < 0 || iSrcX >= iSrcWidth || iSrcY < 0 || iSrcY >= iSrcHeight )\n"
-        "return FALSE;\n"
+    if( iSrcX < 0 || iSrcX >= iSrcWidth || iSrcY < 0 || iSrcY >= iSrcHeight )
+        return FALSE;
 
-    "int iSrcOffset = iSrcX + iSrcY * iSrcWidth;\n"
+    int iSrcOffset = iSrcX + iSrcY * iSrcWidth;
 
-    "if (useUnifiedSrcDensity && fUnifiedSrcDensity[iSrcOffset] < 0.00001f)\n"
-        "return FALSE;\n"
+    if (useUnifiedSrcDensity && fUnifiedSrcDensity[iSrcOffset] < 0.00001f)
+        return FALSE;
 
-    "if (useUnifiedSrcValid &&\n"
-        "!(nUnifiedSrcValid[iSrcOffset>>5] & (0x01 << (iSrcOffset & 0x1f))) )\n"
-        "return FALSE;\n"
+    if (useUnifiedSrcValid &&
+        !(nUnifiedSrcValid[iSrcOffset>>5] & (0x01 << (iSrcOffset & 0x1f))) )
+        return FALSE;
 
-    "return TRUE;\n"
-"}\n"
+    return TRUE;
+}
 
-"float2 getSrcCoords(__read_only image2d_t srcCoords)\n"
-"{\n"
+float2 getSrcCoords(__read_only image2d_t srcCoords)
+{
     // Find an appropriate place to sample the coordinates so we're still
     // accurate after linear interpolation.
-    "int nDstX = get_global_id(0);\n"
-    "int nDstY = get_global_id(1);\n"
-    "float2  fDst = (float2)((0.5f * (float)iCoordMult + nDstX) /\n"
-                                "(float)((ceil((iDstWidth  - 1) / (float)iCoordMult) + 1) * iCoordMult), \n"
-                            "(0.5f * (float)iCoordMult + nDstY) /\n"
-                                "(float)((ceil((iDstHeight - 1) / (float)iCoordMult) + 1) * iCoordMult));\n"
+    int nDstX = get_global_id(0);
+    int nDstY = get_global_id(1);
+    float2  fDst = (float2)((0.5f * (float)iCoordMult + nDstX) /
+                                (float)((ceil((iDstWidth  - 1) / (float)iCoordMult) + 1) * iCoordMult),
+                            (0.5f * (float)iCoordMult + nDstY) /
+                                (float)((ceil((iDstHeight - 1) / (float)iCoordMult) + 1) * iCoordMult));
 
     // Check & return when the thread group overruns the image size
-    "if (nDstX >= iDstWidth || nDstY >= iDstHeight)\n"
-        "return (float2)(-99.0f, -99.0f);\n"
+    if (nDstX >= iDstWidth || nDstY >= iDstHeight)
+        return (float2)(-99.0f, -99.0f);
 
-    "const sampler_t samp =  CLK_NORMALIZED_COORDS_TRUE |\n"
-                            "CLK_ADDRESS_CLAMP_TO_EDGE |\n"
-                            "CLK_FILTER_LINEAR;\n"
+    const sampler_t samp =  CLK_NORMALIZED_COORDS_TRUE |
+                            CLK_ADDRESS_CLAMP_TO_EDGE |
+                            CLK_FILTER_LINEAR;
 
-    "float4  fSrcCoords = read_imagef(srcCoords,samp,fDst);\n"
+    float4  fSrcCoords = read_imagef(srcCoords,samp,fDst);
 
-    "return (float2)(fSrcCoords.x, fSrcCoords.y);\n"
-"}\n";
+    return (float2)(fSrcCoords.x, fSrcCoords.y);
+}
+)"""";
 
-    const char *kernBilinear =
+    const char *kernBilinear = R""""(
 // ************************ Bilinear ************************
-"__kernel void resamp(__read_only image2d_t srcCoords,\n"
-                    "__read_only image2d_t srcReal,\n"
-                    "__read_only image2d_t srcImag,\n"
-                    "__global float *fUnifiedSrcDensity,\n"
-                    "__global int *nUnifiedSrcValid,\n"
-                    "__constant char *useBandSrcValid,\n"
-                    "__global int *nBandSrcValid,\n"
-                    "__global outType *dstReal,\n"
-                    "__global outType *dstImag,\n"
-                    "__constant float *fDstNoDataReal,\n"
-                    "__global float *dstDensity,\n"
-                    "__global int *nDstValid,\n"
-                    "const int bandNum)\n"
-"{\n"
-    "float2  fSrc = getSrcCoords(srcCoords);\n"
-    "if (!isValid(fUnifiedSrcDensity, nUnifiedSrcValid, fSrc))\n"
-        "return;\n"
+__kernel void resamp(__read_only image2d_t srcCoords,
+                    __read_only image2d_t srcReal,
+                    __read_only image2d_t srcImag,
+                    __global float *fUnifiedSrcDensity,
+                    __global int *nUnifiedSrcValid,
+                    __constant char *useBandSrcValid,
+                    __global int *nBandSrcValid,
+                    __global outType *dstReal,
+                    __global outType *dstImag,
+                    __constant float *fDstNoDataReal,
+                    __global float *dstDensity,
+                    __global int *nDstValid,
+                    const int bandNum)
+{
+    float2  fSrc = getSrcCoords(srcCoords);
+    if (!isValid(fUnifiedSrcDensity, nUnifiedSrcValid, fSrc))
+        return;
 
-    "int     iSrcX = (int) floor(fSrc.x - 0.5f);\n"
-    "int     iSrcY = (int) floor(fSrc.y - 0.5f);\n"
-    "float   fRatioX = 1.5f - (fSrc.x - iSrcX);\n"
-    "float   fRatioY = 1.5f - (fSrc.y - iSrcY);\n"
-    "vecf    fReal, fImag, fDens;\n"
-    "vecf    fAccumulatorReal = 0.0f, fAccumulatorImag = 0.0f;\n"
-    "vecf    fAccumulatorDensity = 0.0f;\n"
-    "float   fAccumulatorDivisor = 0.0f;\n"
+    int     iSrcX = (int) floor(fSrc.x - 0.5f);
+    int     iSrcY = (int) floor(fSrc.y - 0.5f);
+    float   fRatioX = 1.5f - (fSrc.x - iSrcX);
+    float   fRatioY = 1.5f - (fSrc.y - iSrcY);
+    vecf    fReal, fImag, fDens;
+    vecf    fAccumulatorReal = 0.0f, fAccumulatorImag = 0.0f;
+    vecf    fAccumulatorDensity = 0.0f;
+    float   fAccumulatorDivisor = 0.0f;
 
-    "if ( iSrcY >= 0 && iSrcY < iSrcHeight ) {\n"
-        "float fMult1 = fRatioX * fRatioY;\n"
-        "float fMult2 = (1.0f-fRatioX) * fRatioY;\n"
+    if ( iSrcY >= 0 && iSrcY < iSrcHeight ) {
+        float fMult1 = fRatioX * fRatioY;
+        float fMult2 = (1.0f-fRatioX) * fRatioY;
 
                 // Upper Left Pixel
-                "if ( iSrcX >= 0 && iSrcX < iSrcWidth\n"
-                         "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                                                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX, iSrcY),\n"
-                                                "bandNum, &fDens, &fReal, &fImag))\n"
-                "{\n"
-                        "fAccumulatorDivisor += fMult1;\n"
-                        "fAccumulatorReal += fReal * fMult1;\n"
-                        "fAccumulatorImag += fImag * fMult1;\n"
-                        "fAccumulatorDensity += fDens * fMult1;\n"
-                "}\n"
+                if ( iSrcX >= 0 && iSrcX < iSrcWidth
+                         && getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                                                useBandSrcValid, nBandSrcValid, (int2)(iSrcX, iSrcY),
+                                                bandNum, &fDens, &fReal, &fImag))
+                {
+                        fAccumulatorDivisor += fMult1;
+                        fAccumulatorReal += fReal * fMult1;
+                        fAccumulatorImag += fImag * fMult1;
+                        fAccumulatorDensity += fDens * fMult1;
+                }
 
                 // Upper Right Pixel
-                "if ( iSrcX+1 >= 0 && iSrcX+1 < iSrcWidth\n"
-                        "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                                                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY),\n"
-                                                "bandNum, &fDens, &fReal, &fImag))\n"
-                "{\n"
-                        "fAccumulatorDivisor += fMult2;\n"
-                        "fAccumulatorReal += fReal * fMult2;\n"
-                        "fAccumulatorImag += fImag * fMult2;\n"
-                        "fAccumulatorDensity += fDens * fMult2;\n"
-                "}\n"
-    "}\n"
+                if ( iSrcX+1 >= 0 && iSrcX+1 < iSrcWidth
+                        && getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                                                useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY),
+                                                bandNum, &fDens, &fReal, &fImag))
+                {
+                        fAccumulatorDivisor += fMult2;
+                        fAccumulatorReal += fReal * fMult2;
+                        fAccumulatorImag += fImag * fMult2;
+                        fAccumulatorDensity += fDens * fMult2;
+                }
+    }
 
-    "if ( iSrcY+1 >= 0 && iSrcY+1 < iSrcHeight ) {\n"
-        "float fMult1 = fRatioX * (1.0f-fRatioY);\n"
-        "float fMult2 = (1.0f-fRatioX) * (1.0f-fRatioY);\n"
+    if ( iSrcY+1 >= 0 && iSrcY+1 < iSrcHeight ) {
+        float fMult1 = fRatioX * (1.0f-fRatioY);
+        float fMult2 = (1.0f-fRatioX) * (1.0f-fRatioY);
 
         // Lower Left Pixel
-                "if ( iSrcX >= 0 && iSrcX < iSrcWidth\n"
-                        "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                                                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX, iSrcY+1),\n"
-                                                "bandNum, &fDens, &fReal, &fImag))\n"
-                "{\n"
-                        "fAccumulatorDivisor += fMult1;\n"
-                        "fAccumulatorReal += fReal * fMult1;\n"
-                        "fAccumulatorImag += fImag * fMult1;\n"
-                        "fAccumulatorDensity += fDens * fMult1;\n"
-                "}\n"
+                if ( iSrcX >= 0 && iSrcX < iSrcWidth
+                        && getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                                                useBandSrcValid, nBandSrcValid, (int2)(iSrcX, iSrcY+1),
+                                                bandNum, &fDens, &fReal, &fImag))
+                {
+                        fAccumulatorDivisor += fMult1;
+                        fAccumulatorReal += fReal * fMult1;
+                        fAccumulatorImag += fImag * fMult1;
+                        fAccumulatorDensity += fDens * fMult1;
+                }
 
                 // Lower Right Pixel
-                "if ( iSrcX+1 >= 0 && iSrcX+1 < iSrcWidth\n"
-                        "&& getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                                                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY+1),\n"
-                                                "bandNum, &fDens, &fReal, &fImag))\n"
-                "{\n"
-                        "fAccumulatorDivisor += fMult2;\n"
-                        "fAccumulatorReal += fReal * fMult2;\n"
-                        "fAccumulatorImag += fImag * fMult2;\n"
-                        "fAccumulatorDensity += fDens * fMult2;\n"
-                "}\n"
-    "}\n"
+                if ( iSrcX+1 >= 0 && iSrcX+1 < iSrcWidth
+                        && getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                                                useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY+1),
+                                                bandNum, &fDens, &fReal, &fImag))
+                {
+                        fAccumulatorDivisor += fMult2;
+                        fAccumulatorReal += fReal * fMult2;
+                        fAccumulatorImag += fImag * fMult2;
+                        fAccumulatorDensity += fDens * fMult2;
+                }
+    }
 
     // Compute and save final pixel
-    "if ( fAccumulatorDivisor < 0.00001f ) {\n"
-        "setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,\n"
-                "0.0f, 0.0f, 0.0f );\n"
-    "} else if ( fAccumulatorDivisor < 0.99999f || fAccumulatorDivisor > 1.00001f ) {\n"
-        "setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,\n"
-                "fAccumulatorDensity / fAccumulatorDivisor,\n"
-                "fAccumulatorReal / fAccumulatorDivisor,\n"
-"#if useImag != 0\n"
-                "fAccumulatorImag / fAccumulatorDivisor );\n"
-"#else\n"
-                "0.0f );\n"
-"#endif\n"
-    "} else {\n"
-        "setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,\n"
-                "fAccumulatorDensity, fAccumulatorReal, fAccumulatorImag );\n"
-    "}\n"
-"}\n";
+    if ( fAccumulatorDivisor < 0.00001f ) {
+        setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,
+                0.0f, 0.0f, 0.0f );
+    } else if ( fAccumulatorDivisor < 0.99999f || fAccumulatorDivisor > 1.00001f ) {
+        setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,
+                fAccumulatorDensity / fAccumulatorDivisor,
+                fAccumulatorReal / fAccumulatorDivisor,
+#if useImag != 0
+                fAccumulatorImag / fAccumulatorDivisor );
+#else
+                0.0f );
+#endif
+    } else {
+        setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,
+                fAccumulatorDensity, fAccumulatorReal, fAccumulatorImag );
+    }
+}
+)"""";
 
-    const char *kernCubic =
+    const char *kernCubic = R""""(
 // ************************ Cubic ************************
-"vecf cubicConvolution(float dist1, float dist2, float dist3,\n"
-                        "vecf f0, vecf f1, vecf f2, vecf f3);\n"
+vecf cubicConvolution(float dist1, float dist2, float dist3,
+                        vecf f0, vecf f1, vecf f2, vecf f3);
 
-"vecf cubicConvolution(float dist1, float dist2, float dist3,\n"
-                       "vecf f0, vecf f1, vecf f2, vecf f3)\n"
-"{\n"
-   "return (  f1\n"
-       "+ 0.5f * (dist1*(f2 - f0)\n"
-               "+ dist2*(2.0f*f0 - 5.0f*f1 + 4.0f*f2 - f3)\n"
-               "+ dist3*(3.0f*(f1 - f2) + f3 - f0)));\n"
-"}\n"
+vecf cubicConvolution(float dist1, float dist2, float dist3,
+                       vecf f0, vecf f1, vecf f2, vecf f3)
+{
+   return (  f1
+       + 0.5f * (dist1*(f2 - f0)
+               + dist2*(2.0f*f0 - 5.0f*f1 + 4.0f*f2 - f3)
+               + dist3*(3.0f*(f1 - f2) + f3 - f0)));
+}
 
 // ************************ Cubic ************************
-"__kernel void resamp(__read_only image2d_t srcCoords,\n"
-                     "__read_only image2d_t srcReal,\n"
-                     "__read_only image2d_t srcImag,\n"
-                     "__global float *fUnifiedSrcDensity,\n"
-                     "__global int *nUnifiedSrcValid,\n"
-                     "__constant char *useBandSrcValid,\n"
-                     "__global int *nBandSrcValid,\n"
-                     "__global outType *dstReal,\n"
-                     "__global outType *dstImag,\n"
-                     "__constant float *fDstNoDataReal,\n"
-                     "__global float *dstDensity,\n"
-                     "__global int *nDstValid,\n"
-                     "const int bandNum)\n"
-"{\n"
-    "int i;\n"
-    "float2  fSrc = getSrcCoords(srcCoords);\n"
+__kernel void resamp(__read_only image2d_t srcCoords,
+                     __read_only image2d_t srcReal,
+                     __read_only image2d_t srcImag,
+                     __global float *fUnifiedSrcDensity,
+                     __global int *nUnifiedSrcValid,
+                     __constant char *useBandSrcValid,
+                     __global int *nBandSrcValid,
+                     __global outType *dstReal,
+                     __global outType *dstImag,
+                     __constant float *fDstNoDataReal,
+                     __global float *dstDensity,
+                     __global int *nDstValid,
+                     const int bandNum)
+{
+    int i;
+    float2  fSrc = getSrcCoords(srcCoords);
 
-    "if (!isValid(fUnifiedSrcDensity, nUnifiedSrcValid, fSrc))\n"
-        "return;\n"
+    if (!isValid(fUnifiedSrcDensity, nUnifiedSrcValid, fSrc))
+        return;
 
-    "int     iSrcX = (int) floor( fSrc.x - 0.5f );\n"
-    "int     iSrcY = (int) floor( fSrc.y - 0.5f );\n"
-    "float   fDeltaX = fSrc.x - 0.5f - (float)iSrcX;\n"
-    "float   fDeltaY = fSrc.y - 0.5f - (float)iSrcY;\n"
-    "float   fDeltaX2 = fDeltaX * fDeltaX;\n"
-    "float   fDeltaY2 = fDeltaY * fDeltaY;\n"
-    "float   fDeltaX3 = fDeltaX2 * fDeltaX;\n"
-    "float   fDeltaY3 = fDeltaY2 * fDeltaY;\n"
-    "vecf    afReal[4], afDens[4];\n"
-"#if useImag != 0\n"
-    "vecf    afImag[4];\n"
-"#else\n"
-    "vecf    fImag = 0.0f;\n"
-"#endif\n"
+    int     iSrcX = (int) floor( fSrc.x - 0.5f );
+    int     iSrcY = (int) floor( fSrc.y - 0.5f );
+    float   fDeltaX = fSrc.x - 0.5f - (float)iSrcX;
+    float   fDeltaY = fSrc.y - 0.5f - (float)iSrcY;
+    float   fDeltaX2 = fDeltaX * fDeltaX;
+    float   fDeltaY2 = fDeltaY * fDeltaY;
+    float   fDeltaX3 = fDeltaX2 * fDeltaX;
+    float   fDeltaY3 = fDeltaY2 * fDeltaY;
+    vecf    afReal[4], afDens[4];
+#if useImag != 0
+    vecf    afImag[4];
+#else
+    vecf    fImag = 0.0f;
+#endif
 
     // Loop over rows
-    "for (i = -1; i < 3; ++i)\n"
-    "{\n"
-        "vecf    fReal1 = 0.0f, fReal2 = 0.0f, fReal3 = 0.0f, fReal4 = 0.0f;\n"
-        "vecf    fDens1 = 0.0f, fDens2 = 0.0f, fDens3 = 0.0f, fDens4 = 0.0f;\n"
-        "int hasPx;\n"
-"#if useImag != 0\n"
-        "vecf    fImag1 = 0.0f, fImag2 = 0.0f, fImag3 = 0.0f, fImag4 = 0.0f;\n"
+    for (i = -1; i < 3; ++i)
+    {
+        vecf    fReal1 = 0.0f, fReal2 = 0.0f, fReal3 = 0.0f, fReal4 = 0.0f;
+        vecf    fDens1 = 0.0f, fDens2 = 0.0f, fDens3 = 0.0f, fDens4 = 0.0f;
+        int hasPx;
+#if useImag != 0
+        vecf    fImag1 = 0.0f, fImag2 = 0.0f, fImag3 = 0.0f, fImag4 = 0.0f;
 
         //Get all the pixels for this row
-        "hasPx  = getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                        "useBandSrcValid, nBandSrcValid, (int2)(iSrcX-1, iSrcY+i),\n"
-                        "bandNum, &fDens1, &fReal1, &fImag1);\n"
+        hasPx  = getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                        useBandSrcValid, nBandSrcValid, (int2)(iSrcX-1, iSrcY+i),
+                        bandNum, &fDens1, &fReal1, &fImag1);
 
-        "hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                        "useBandSrcValid, nBandSrcValid, (int2)(iSrcX  , iSrcY+i),\n"
-                        "bandNum, &fDens2, &fReal2, &fImag2);\n"
+        hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                        useBandSrcValid, nBandSrcValid, (int2)(iSrcX  , iSrcY+i),
+                        bandNum, &fDens2, &fReal2, &fImag2);
 
-        "hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                        "useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY+i),\n"
-                        "bandNum, &fDens3, &fReal3, &fImag3);\n"
+        hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                        useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY+i),
+                        bandNum, &fDens3, &fReal3, &fImag3);
 
-        "hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                        "useBandSrcValid, nBandSrcValid, (int2)(iSrcX+2, iSrcY+i),\n"
-                        "bandNum, &fDens4, &fReal4, &fImag4);\n"
-"#else\n"
+        hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                        useBandSrcValid, nBandSrcValid, (int2)(iSrcX+2, iSrcY+i),
+                        bandNum, &fDens4, &fReal4, &fImag4);
+#else
         //Get all the pixels for this row
-        "hasPx  = getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX-1, iSrcY+i),\n"
-                "bandNum, &fDens1, &fReal1, &fImag);\n"
+        hasPx  = getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                useBandSrcValid, nBandSrcValid, (int2)(iSrcX-1, iSrcY+i),
+                bandNum, &fDens1, &fReal1, &fImag);
 
-        "hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX  , iSrcY+i),\n"
-                "bandNum, &fDens2, &fReal2, &fImag);\n"
+        hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                useBandSrcValid, nBandSrcValid, (int2)(iSrcX  , iSrcY+i),
+                bandNum, &fDens2, &fReal2, &fImag);
 
-        "hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY+i),\n"
-                "bandNum, &fDens3, &fReal3, &fImag);\n"
+        hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                useBandSrcValid, nBandSrcValid, (int2)(iSrcX+1, iSrcY+i),
+                bandNum, &fDens3, &fReal3, &fImag);
 
-        "hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,\n"
-                "useBandSrcValid, nBandSrcValid, (int2)(iSrcX+2, iSrcY+i),\n"
-                "bandNum, &fDens4, &fReal4, &fImag);\n"
-"#endif\n"
+        hasPx |= getPixel(srcReal, srcImag, fUnifiedSrcDensity, nUnifiedSrcValid,
+                useBandSrcValid, nBandSrcValid, (int2)(iSrcX+2, iSrcY+i),
+                bandNum, &fDens4, &fReal4, &fImag);
+#endif
 
         // Shortcut if no px
-        "if (!hasPx) {\n"
-            "afDens[i+1] = 0.0f;\n"
-            "afReal[i+1] = 0.0f;\n"
-"#if useImag != 0\n"
-            "afImag[i+1] = 0.0f;\n"
-"#endif\n"
-            "continue;\n"
-        "}\n"
+        if (!hasPx) {
+            afDens[i+1] = 0.0f;
+            afReal[i+1] = 0.0f;
+#if useImag != 0
+            afImag[i+1] = 0.0f;
+#endif
+            continue;
+        }
 
         // Process this row
-        "afDens[i+1] = cubicConvolution(fDeltaX, fDeltaX2, fDeltaX3, fDens1, fDens2, fDens3, fDens4);\n"
-        "afReal[i+1] = cubicConvolution(fDeltaX, fDeltaX2, fDeltaX3, fReal1, fReal2, fReal3, fReal4);\n"
-"#if useImag != 0\n"
-        "afImag[i+1] = cubicConvolution(fDeltaX, fDeltaX2, fDeltaX3, fImag1, fImag2, fImag3, fImag4);\n"
-"#endif\n"
-    "}\n"
+        afDens[i+1] = cubicConvolution(fDeltaX, fDeltaX2, fDeltaX3, fDens1, fDens2, fDens3, fDens4);
+        afReal[i+1] = cubicConvolution(fDeltaX, fDeltaX2, fDeltaX3, fReal1, fReal2, fReal3, fReal4);
+#if useImag != 0
+        afImag[i+1] = cubicConvolution(fDeltaX, fDeltaX2, fDeltaX3, fImag1, fImag2, fImag3, fImag4);
+#endif
+    }
 
     // Compute and save final pixel
-    "setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,\n"
-             "cubicConvolution(fDeltaY, fDeltaY2, fDeltaY3, afDens[0], afDens[1], afDens[2], afDens[3]),\n"
-             "cubicConvolution(fDeltaY, fDeltaY2, fDeltaY3, afReal[0], afReal[1], afReal[2], afReal[3]),\n"
-"#if useImag != 0\n"
-             "cubicConvolution(fDeltaY, fDeltaY2, fDeltaY3, afImag[0], afImag[1], afImag[2], afImag[3]) );\n"
-"#else\n"
-             "fImag );\n"
-"#endif\n"
-"}\n";
+    setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,
+             cubicConvolution(fDeltaY, fDeltaY2, fDeltaY3, afDens[0], afDens[1], afDens[2], afDens[3]),
+             cubicConvolution(fDeltaY, fDeltaY2, fDeltaY3, afReal[0], afReal[1], afReal[2], afReal[3]),
+#if useImag != 0
+             cubicConvolution(fDeltaY, fDeltaY2, fDeltaY3, afImag[0], afImag[1], afImag[2], afImag[3]) );
+#else
+             fImag );
+#endif
+}
+)"""";
 
-    const char *kernResampler =
+
+    const char *kernResampler = R""""(
 // ************************ LanczosSinc ************************
 
-"float lanczosSinc( float fX, float fR );\n"
-"float bSpline( float x );\n"
+float lanczosSinc( float fX, float fR );
+float bSpline( float x );
 
-"float lanczosSinc( float fX, float fR )\n"
-"{\n"
-    "if ( fX > fR || fX < -fR)\n"
-        "return 0.0f;\n"
-    "if ( fX == 0.0f )\n"
-        "return 1.0f;\n"
+float lanczosSinc( float fX, float fR )
+{
+    if ( fX > fR || fX < -fR)
+        return 0.0f;
+    if ( fX == 0.0f )
+        return 1.0f;
 
-    "float fPIX = PI * fX;\n"
-    "return ( sin(fPIX) / fPIX ) * ( sin(fPIX / fR) * fR / fPIX );\n"
-"}\n"
+    float fPIX = PI * fX;
+    return ( sin(fPIX) / fPIX ) * ( sin(fPIX / fR) * fR / fPIX );
+}
 
 // ************************ Bicubic Spline ************************
 
-"float bSpline( float x )\n"
-"{\n"
-    "float xp2 = x + 2.0f;\n"
-    "float xp1 = x + 1.0f;\n"
-    "float xm1 = x - 1.0f;\n"
-    "float xp2c = xp2 * xp2 * xp2;\n"
+float bSpline( float x )
+{
+    float xp2 = x + 2.0f;
+    float xp1 = x + 1.0f;
+    float xm1 = x - 1.0f;
+    float xp2c = xp2 * xp2 * xp2;
 
-    "return (((xp2 > 0.0f)?((xp1 > 0.0f)?((x > 0.0f)?((xm1 > 0.0f)?\n"
-                                                     "-4.0f * xm1*xm1*xm1:0.0f) +\n"
-                                         "6.0f * x*x*x:0.0f) +\n"
-                           "-4.0f * xp1*xp1*xp1:0.0f) +\n"
-             "xp2c:0.0f) ) * 0.166666666666666666666f;\n"
-"}\n"
+    return (((xp2 > 0.0f)?((xp1 > 0.0f)?((x > 0.0f)?((xm1 > 0.0f)?
+                                                     -4.0f * xm1*xm1*xm1:0.0f) +
+                                         6.0f * x*x*x:0.0f) +
+                           -4.0f * xp1*xp1*xp1:0.0f) +
+             xp2c:0.0f) ) * 0.166666666666666666666f;
+}
 
 // ************************ General Resampler ************************
 
-"__kernel void resamp(__read_only image2d_t srcCoords,\n"
-                     "__read_only image2d_t srcReal,\n"
-                     "__read_only image2d_t srcImag,\n"
-                     "__global float *fUnifiedSrcDensity,\n"
-                     "__global int *nUnifiedSrcValid,\n"
-                     "__constant char *useBandSrcValid,\n"
-                     "__global int *nBandSrcValid,\n"
-                     "__global outType *dstReal,\n"
-                     "__global outType *dstImag,\n"
-                     "__constant float *fDstNoDataReal,\n"
-                     "__global float *dstDensity,\n"
-                     "__global int *nDstValid,\n"
-                     "const int bandNum)\n"
-"{\n"
-    "float2  fSrc = getSrcCoords(srcCoords);\n"
+__kernel void resamp(__read_only image2d_t srcCoords,
+                     __read_only image2d_t srcReal,
+                     __read_only image2d_t srcImag,
+                     __global float *fUnifiedSrcDensity,
+                     __global int *nUnifiedSrcValid,
+                     __constant char *useBandSrcValid,
+                     __global int *nBandSrcValid,
+                     __global outType *dstReal,
+                     __global outType *dstImag,
+                     __constant float *fDstNoDataReal,
+                     __global float *dstDensity,
+                     __global int *nDstValid,
+                     const int bandNum)
+{
+    float2  fSrc = getSrcCoords(srcCoords);
 
-    "if (!isValid(fUnifiedSrcDensity, nUnifiedSrcValid, fSrc))\n"
-        "return;\n"
+    if (!isValid(fUnifiedSrcDensity, nUnifiedSrcValid, fSrc))
+        return;
 
-    "int     iSrcX = floor( fSrc.x - 0.5f );\n"
-    "int     iSrcY = floor( fSrc.y - 0.5f );\n"
-    "float   fDeltaX = fSrc.x - 0.5f - (float)iSrcX;\n"
-    "float   fDeltaY = fSrc.y - 0.5f - (float)iSrcY;\n"
+    int     iSrcX = floor( fSrc.x - 0.5f );
+    int     iSrcY = floor( fSrc.y - 0.5f );
+    float   fDeltaX = fSrc.x - 0.5f - (float)iSrcX;
+    float   fDeltaY = fSrc.y - 0.5f - (float)iSrcY;
 
-    "vecf  fAccumulatorReal = 0.0f, fAccumulatorImag = 0.0f;\n"
-    "vecf  fAccumulatorDensity = 0.0f;\n"
-    "float fAccumulatorWeight = 0.0f;\n"
-    "int   i, j;\n"
+    vecf  fAccumulatorReal = 0.0f, fAccumulatorImag = 0.0f;
+    vecf  fAccumulatorDensity = 0.0f;
+    float fAccumulatorWeight = 0.0f;
+    int   i, j;
 
     // Loop over pixel rows in the kernel
-    "for ( j = nFiltInitY; j <= nYRadius; ++j )\n"
-    "{\n"
-        "float   fWeight1;\n"
-        "int2 iSrc = (int2)(0, iSrcY + j);\n"
+    for ( j = nFiltInitY; j <= nYRadius; ++j )
+    {
+        float   fWeight1;
+        int2 iSrc = (int2)(0, iSrcY + j);
 
         // Skip sampling over edge of image
-        "if ( iSrc.y < 0 || iSrc.y >= iSrcHeight )\n"
-            "continue;\n"
+        if ( iSrc.y < 0 || iSrc.y >= iSrcHeight )
+            continue;
 
         // Select the resampling algorithm
-        "if ( doCubicSpline )\n"
+        if ( doCubicSpline )
             // Calculate the Y weight
-            "fWeight1 = ( fYScale < 1.0f ) ?\n"
-                "bSpline(((float)j) * fYScale) * fYScale :\n"
-                "bSpline(((float)j) - fDeltaY);\n"
-        "else\n"
-            "fWeight1 = ( fYScale < 1.0f ) ?\n"
-                "lanczosSinc(j * fYScale, fYFilter) * fYScale :\n"
-                "lanczosSinc(j - fDeltaY, fYFilter);\n"
+            fWeight1 = ( fYScale < 1.0f ) ?
+                bSpline(((float)j) * fYScale) * fYScale :
+                bSpline(((float)j) - fDeltaY);
+        else
+            fWeight1 = ( fYScale < 1.0f ) ?
+                lanczosSinc(j * fYScale, fYFilter) * fYScale :
+                lanczosSinc(j - fDeltaY, fYFilter);
 
         // Iterate over pixels in row
-        "for ( i = nFiltInitX; i <= nXRadius; ++i )\n"
-        "{\n"
-            "float fWeight2;\n"
-            "vecf fDensity = 0.0f, fReal, fImag;\n"
-            "iSrc.x = iSrcX + i;\n"
+        for ( i = nFiltInitX; i <= nXRadius; ++i )
+        {
+            float fWeight2;
+            vecf fDensity = 0.0f, fReal, fImag;
+            iSrc.x = iSrcX + i;
 
             // Skip sampling at edge of image
             // Skip sampling when invalid pixel
-            "if ( iSrc.x < 0 || iSrc.x >= iSrcWidth || \n"
-                  "!getPixel(srcReal, srcImag, fUnifiedSrcDensity,\n"
-                            "nUnifiedSrcValid, useBandSrcValid, nBandSrcValid,\n"
-                            "iSrc, bandNum, &fDensity, &fReal, &fImag) )\n"
-                "continue;\n"
+            if ( iSrc.x < 0 || iSrc.x >= iSrcWidth ||
+                  !getPixel(srcReal, srcImag, fUnifiedSrcDensity,
+                            nUnifiedSrcValid, useBandSrcValid, nBandSrcValid,
+                            iSrc, bandNum, &fDensity, &fReal, &fImag) )
+                continue;
 
             // Choose among possible algorithms
-            "if ( doCubicSpline )\n"
+            if ( doCubicSpline )
                 // Calculate & save the X weight
-                "fWeight2 = fWeight1 * ((fXScale < 1.0f ) ?\n"
-                    "bSpline((float)i * fXScale) * fXScale :\n"
-                    "bSpline(fDeltaX - (float)i));\n"
-            "else\n"
+                fWeight2 = fWeight1 * ((fXScale < 1.0f ) ?
+                    bSpline((float)i * fXScale) * fXScale :
+                    bSpline(fDeltaX - (float)i));
+            else
                 // Calculate & save the X weight
-                "fWeight2 = fWeight1 * ((fXScale < 1.0f ) ?\n"
-                    "lanczosSinc(i * fXScale, fXFilter) * fXScale :\n"
-                    "lanczosSinc(i - fDeltaX, fXFilter));\n"
+                fWeight2 = fWeight1 * ((fXScale < 1.0f ) ?
+                    lanczosSinc(i * fXScale, fXFilter) * fXScale :
+                    lanczosSinc(i - fDeltaX, fXFilter));
 
             // Accumulate!
-            "fAccumulatorReal += fReal * fWeight2;\n"
-            "fAccumulatorImag += fImag * fWeight2;\n"
-            "fAccumulatorDensity += fDensity * fWeight2;\n"
-            "fAccumulatorWeight += fWeight2;\n"
-        "}\n"
-    "}\n"
+            fAccumulatorReal += fReal * fWeight2;
+            fAccumulatorImag += fImag * fWeight2;
+            fAccumulatorDensity += fDensity * fWeight2;
+            fAccumulatorWeight += fWeight2;
+        }
+    }
 
-    "if ( fAccumulatorWeight < 0.000001f ) {\n"
-        "setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,\n"
-                 "0.0f, 0.0f, 0.0f);\n"
-    "} else if ( fAccumulatorWeight < 0.99999f || fAccumulatorWeight > 1.00001f ) {\n"
+    if ( fAccumulatorWeight < 0.000001f ) {
+        setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,
+                 0.0f, 0.0f, 0.0f);
+    } else if ( fAccumulatorWeight < 0.99999f || fAccumulatorWeight > 1.00001f ) {
         // Calculate the output taking into account weighting
-        "setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,\n"
-                 "fAccumulatorDensity / fAccumulatorWeight,\n"
-                 "fAccumulatorReal / fAccumulatorWeight,\n"
-"#if useImag != 0\n"
-                 "fAccumulatorImag / fAccumulatorWeight );\n"
-"#else\n"
-                 "0.0f );\n"
-"#endif\n"
-    "} else {\n"
-        "setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,\n"
-                 "fAccumulatorDensity, fAccumulatorReal, fAccumulatorImag);\n"
-    "}\n"
-"}\n";
+        setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,
+                 fAccumulatorDensity / fAccumulatorWeight,
+                 fAccumulatorReal / fAccumulatorWeight,
+#if useImag != 0
+                 fAccumulatorImag / fAccumulatorWeight );
+#else
+                 0.0f );
+#endif
+    } else {
+        setPixel(dstReal, dstImag, dstDensity, nDstValid, fDstNoDataReal, bandNum,
+                 fAccumulatorDensity, fAccumulatorReal, fAccumulatorImag);
+    }
+}
+)"""";
 
     //Defines based on image format
     switch (warper->imageFormat) {
@@ -1320,8 +1330,9 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
         snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernResampler);
 
     //Actually make the program from assembled source
+    const char* pszProgBuf = progBuf;
     program = clCreateProgramWithSource(warper->context, 1,
-                                        const_cast<const char**>(reinterpret_cast<char**>(&progBuf)),
+                                        &pszProgBuf,
                                         nullptr, &err);
     handleErrGoto(err, error_final);
 
@@ -1772,7 +1783,7 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
 #ifdef DEBUG_OPENCL
     size_t start_time = 0;
     size_t end_time;
-    char *vecTxt = "";
+    const char *vecTxt = "";
 #endif
 
     // Use a likely X-dimension which is a power of 2
@@ -1821,7 +1832,7 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
     if (kern == warper->kern4)
         vecTxt = "(vec)";
 
-    CPLDebug("OpenCL", "Kernel Time: %6s %10lu", vecTxt, (long int)((end_time-start_time)/100000));
+    CPLDebug("OpenCL", "Kernel Time: %6s %10lu", vecTxt, static_cast<long int>((end_time-start_time)/100000));
 #endif
 
     handleErr(err = clReleaseEvent(ev));

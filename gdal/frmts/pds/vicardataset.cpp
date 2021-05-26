@@ -606,7 +606,7 @@ static void basic_decode(const unsigned char* code,
             {
                 buf[ip] = static_cast<unsigned char>(nval);
                 runInt--;
-                continue; 
+                continue;
             }
             unsigned char val = grab1(3, code, code_size, buffer_pos, bit1ptr);
 
@@ -880,7 +880,7 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
         VSIFReadL( &nSize, 1, sizeof(nSize), poGDS->fpImage);
         CPL_LSBPTR32(&nSize);
         if( (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC &&
-             nSize < sizeof(GUInt32)) ||
+             nSize <= sizeof(GUInt32)) ||
             (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 &&
              nSize == 0) )
         {
@@ -2960,14 +2960,14 @@ void GDALRegister_VICAR()
 "  </Option>"
 "  <Option name='TARGET_NAME' type='string' description='Value of "
     "MAP.TARGET_NAME'/>"
-"  <Option name='USE_SRC_LABEL' type='boolean'"
+"  <Option name='USE_SRC_LABEL' type='boolean' "
     "description='Whether to use source label in VICAR to VICAR conversions' "
     "default='YES'/>"
-"  <Option name='USE_SRC_MAP' type='boolean'"
+"  <Option name='USE_SRC_MAP' type='boolean' "
     "description='Whether to use MAP property from source label in "
                  "VICAR to VICAR conversions' "
     "default='NO'/>"
-"  <Option name='LABEL' type='string'"
+"  <Option name='LABEL' type='string' "
     "description='Label to use, either as a JSON string or a filename containing one'/>"
 "  <Option name='COMPRESS' type='string-select' "
     "description='Compression method' default='NONE'>"

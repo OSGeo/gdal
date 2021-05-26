@@ -164,6 +164,9 @@ def test_hdf5_multidim_var_alldatatypes():
     assert len(data) == 2 * 8
     assert struct.unpack('ihihh', data) == (1, 2, 3, 4, 0)
 
+    assert struct.unpack('i' * 2, var['x'].Read()) == (1, 3)
+    assert struct.unpack('h' * 2, var['y'].Read()) == (2, 4)
+
     var = rg.OpenMDArray('custom_type_3_elts_var')
     dt = var.GetDataType()
     assert dt.GetClass() == gdal.GEDTC_COMPOUND
@@ -245,6 +248,16 @@ def test_hdf5_multidim_read_array():
 
     data = var.Read(array_start_idx = [1, 1, 1], count = [3, 2, 2], buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_UInt16))
     assert struct.unpack('H' * (len(data) // 2), data) == got_data_ref
+
+    # Test reading from slice (most optimized path)
+    data = var.Read(array_start_idx = [3, 0, 0], count = [1, 2, 3])
+    data_from_slice = var[3].Read(count = [2, 3])
+    assert data_from_slice == data
+
+    # Test reading from slice (slow path)
+    data = var.Read(array_start_idx = [3, 0 + (2-1) * 2, 0 + (3-1) * 1], count = [1, 2, 3], array_step = [1, -2, -1])
+    data_from_slice = var[3].Read(array_start_idx = [0 + (2-1) * 2, 0 + (3-1) * 1], count = [2, 3], array_step = [-2, -1])
+    assert data_from_slice == data
 
     # 4D
     var = rg.OpenMDArray('ubyte_t2_z2_y2_x2_var')
@@ -386,7 +399,7 @@ def test_hdf5_netcdf_dimensions():
     rg = ds.GetRootGroup()
 
     assert rg.GetAttribute('CDI')
- 
+
     dims = rg.GetDimensions()
     assert len(dims) == 3
 

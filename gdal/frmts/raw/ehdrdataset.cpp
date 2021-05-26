@@ -1674,7 +1674,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
         for( int i = 1; i <= poDS->nBands; i++ )
         {
             EHdrRasterBand *poBand =
-                    dynamic_cast<EHdrRasterBand*>(poDS->GetRasterBand(i));
+                    cpl::down_cast<EHdrRasterBand*>(poDS->GetRasterBand(i));
             poBand->m_poColorTable = poDS->m_poColorTable;
             poBand->m_poRAT = poDS->m_poRAT;
             poBand->SetColorInterpretation(GCI_PaletteIndex);
@@ -1702,7 +1702,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
 GDALDataset *EHdrDataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char **papszParmList )
+                                  char **papszParamList )
 
 {
     // Verify input options.
@@ -1763,13 +1763,13 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
     // Decide how many bits the file should have.
     int nBits = GDALGetDataTypeSize(eType);
 
-    if( CSLFetchNameValue(papszParmList, "NBITS") != nullptr )
-        nBits = atoi(CSLFetchNameValue(papszParmList, "NBITS"));
+    if( CSLFetchNameValue(papszParamList, "NBITS") != nullptr )
+        nBits = atoi(CSLFetchNameValue(papszParamList, "NBITS"));
 
     const int nRowBytes = (nBits * nXSize + 7) / 8;
 
     // Check for signed byte.
-    const char *pszPixelType = CSLFetchNameValue(papszParmList, "PIXELTYPE");
+    const char *pszPixelType = CSLFetchNameValue(papszParamList, "PIXELTYPE");
     if( pszPixelType == nullptr )
         pszPixelType = "";
 

@@ -975,7 +975,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s is missing a required parameter (number of pixels, "
-                  "number of lines,\nnumber of bands, bytes per pixel, or "
+                  "number of lines,\number of bands, bytes per pixel, or "
                   "data organization).",
                   pszWorkname );
         CPLFree(pszWorkname);

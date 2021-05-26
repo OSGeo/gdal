@@ -90,15 +90,20 @@ class GDALWMSMetaDataset final: public GDALPamDataset
                                      const char* pszMaxX = nullptr,
                                      const char* pszMaxY = nullptr);
 
+    // tiledWMS only
     void                AddTiledSubDataset(const char* pszTiledGroupName,
-                                           const char* pszTitle);
+                                           const char* pszTitle,
+                                           const char* const* papszChanges);
 
-    void                AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML);
+    // tiledWMS only
+    void                AnalyzeGetTileServiceRecurse(CPLXMLNode* psXML, GDALOpenInfo* poOpenInfo);
 
+    // WMS-C only
     void                AddWMSCSubDataset(WMSCTileSetDesc& oWMSCTileSetDesc,
                                           const char* pszTitle,
                                           CPLString osTransparent);
 
+    // WMS-C only
     void                ParseWMSCTileSets(CPLXMLNode* psXML);
 
   public:
@@ -112,11 +117,14 @@ class GDALWMSMetaDataset final: public GDALPamDataset
                                                CPLString osFormat = "",
                                                CPLString osTransparent = "",
                                                CPLString osPreferredSRS = "");
-    static GDALDataset* AnalyzeGetTileService(CPLXMLNode* psXML);
     static GDALDataset* AnalyzeTileMapService(CPLXMLNode* psXML);
 
     static GDALDataset* DownloadGetCapabilities(GDALOpenInfo *poOpenInfo);
+
+    // tiledWMS only
     static GDALDataset* DownloadGetTileService(GDALOpenInfo *poOpenInfo);
+    // tiledWMS only
+    static GDALDataset* AnalyzeGetTileService(CPLXMLNode* psXML, GDALOpenInfo* poOpenInfo);
 };
 
 #endif // WMS_METADATASET_H_INCLUDED

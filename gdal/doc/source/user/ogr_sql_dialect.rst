@@ -17,18 +17,18 @@ An alternate "dialect", the SQLite dialect, can be used
 instead of the OGRSQL dialect. Refer to the :ref:`sql_sqlite_dialect` page for more details.
 
 The OGRLayer class also supports applying an attribute query filter to
-features returned using the OGRLayer::SetAttributeFilter() method.  The
+features returned using the :cpp:func:`OGRLayer::SetAttributeFilter()` method.  The
 syntax for the attribute filter is the same as the WHERE clause in the
 OGR SQL SELECT statement.  So everything here with regard to the WHERE
-clause applies in the context of the SetAttributeFilter() method.
+clause applies in the context of the ``SetAttributeFilter()`` method.
 
 SELECT
 ------
 
 The SELECT statement is used to fetch layer features (analogous to table
 rows in an RDBMS) with the result of the query represented as a temporary layer
-of features.   The layers of the datasource are analogous to tables in an
-RDBMS and feature attributes are analogous to column values.  The simplest
+of features. The layers of the datasource are analogous to tables in an
+RDBMS and feature attributes are analogous to column values. The simplest
 form of OGR SQL SELECT statement looks like this:
 
 .. code-block::
@@ -36,14 +36,15 @@ form of OGR SQL SELECT statement looks like this:
     SELECT * FROM polylayer
 
 In this case all features are fetched from the layer named "polylayer", and
-all attributes of those features are returned.  This is essentially
-equivalent to accessing the layer directly.  In this example the "*"
+all attributes of those features are returned. This is essentially
+equivalent to accessing the layer directly. In this example the "*"
 is the list of fields to fetch from the layer, with "*" meaning that all
 fields should be fetched.
 
 This slightly more sophisticated form still pulls all features from the layer
-but the schema will only contain the EAS_ID and PROP_VALUE attributes.   Any
-other attributes would be discarded.
+but the schema will only contain the geometry column and the EAS_ID and PROP_VALUE
+attributes. With OGR SQL dialect the geometry column is always included in the
+result so it does not need to appear in the SQL statement.
 
 .. code-block::
 
@@ -56,8 +57,8 @@ WHERE clause, and sorting the results might look like:
 
     SELECT * from polylayer WHERE prop_value > 220000.0 ORDER BY prop_value DESC
 
-This select statement will produce a table with just one feature, with one
-attribute (named something like "count_eas_id") containing the number of
+This select statement will produce a table with just one feature, with geometry
+and one attribute (named something like "count_eas_id") containing the number of
 distinct values of the eas_id attribute.
 
 .. code-block::
@@ -338,7 +339,7 @@ ORDER BY
 ++++++++
 
 The ``ORDER BY`` clause is used force the returned features to be reordered
-into sorted order (ascending or descending) on one of the field values.
+into sorted order (ascending or descending) on one or multiple fields.
 Ascending (increasing) order is the default if neither the ASC or DESC keyword
 is provided.  For example:
 
@@ -348,6 +349,7 @@ is provided.  For example:
     SELECT * FROM property ORDER BY prop_value
     SELECT * FROM property ORDER BY prop_value ASC
     SELECT DISTINCT zip_code FROM property ORDER BY zip_code
+    SELECT * FROM property ORDER BY prop_value ASC, another_field DESC
 
 Note that ORDER BY clauses cause two passes through the feature set.  One to
 build an in-memory table of field values corresponded with feature ids, and
@@ -535,12 +537,29 @@ the feature id, but it may be explicitly included using a syntax like:
 
     SELECT FID, * FROM nation
 
+Geometry field
+++++++++++++++
+
+The OGR SQL dialect adds the geometry field of the datasource to the result set
+by default. Users do not need to select the geometry explicitly but it is still
+possible to do so. Common use case is when geometry is the only field that is needed.
+In this case the name of the geometry field to be used in the SQL statement is the
+name returned by :cpp:func:`OGRLayer::GetGeometryColumn`. If the method returns
+an empty string then a special name "_ogr_geometry_" must be used. The name begins
+with an underscore and SQL syntax requires that it must appear between double quotes.
+In addition the command line interpreter may require that double quotes are escaped
+and the final SELECT statement could look like:
+
+.. code-block::
+
+    SELECT "_ogr_geometry_" FROM nation
+    
 OGR_GEOMETRY
 ++++++++++++
 
 Some of the data sources (like MapInfo tab) can handle geometries of different
 types within the same layer. The ``OGR_GEOMETRY`` special field represents
-the geometry type returned by OGRGeometry::getGeometryName() and can be used to
+the geometry type returned by :cpp:func:`OGRGeometry::getGeometryName` and can be used to
 distinguish the various types. By using this field one can select particular
 types of the geometries like:
 

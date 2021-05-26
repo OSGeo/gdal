@@ -105,7 +105,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
 
     if( nCode == 0 )
         poDS->UnreadValue();
-   
+
 /* -------------------------------------------------------------------- */
 /*      Obtain a tolerance value used when building the polygon.        */
 /* -------------------------------------------------------------------- */
@@ -637,7 +637,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
             }
             dfY = CPLAtof(szLineBuf);
             bHaveY = true;
-            if( bHaveX && bHaveY && !bHaveBulges )
+            if( bHaveX /* && bHaveY */ && !bHaveBulges )
             {
                 oSmoothPolyline.AddPoint( dfX, dfY, dfElevation, dfBulge );
                 dfBulge = 0.0;
@@ -681,8 +681,12 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
         return OGRERR_FAILURE;
     }
 
-    oSmoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
-    poGC->addGeometryDirectly( oSmoothPolyline.Tessellate() );
+    // Only process polylines with at least 2 vertices
+    if( nVertexCount >= 2 )
+    {
+        oSmoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
+        poGC->addGeometryDirectly( oSmoothPolyline.Tessellate() );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Skip through source boundary objects if present.                */

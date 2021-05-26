@@ -16,12 +16,7 @@ personal geodatabase via ODBC but does not depend on any ESRI
 middle-ware.
 
 Personal Geodatabases are accessed by passing the file name of the .mdb
-file to be accessed as the data source name. On Windows, no ODBC DSN is
-required. On Linux, there are problems with DSN-less connection due to
-incomplete or buggy implementation of this feature in the `MDB
-Tools <http://mdbtools.sourceforge.net/>`__ package, So, it is required
-to configure Data Source Name (DSN) if the MDB Tools driver is used
-(check instructions below).
+file to be accessed as the data source name.
 
 In order to facilitate compatibility with different configurations, the
 PGEO_DRIVER_TEMPLATE Config Option was added to provide a way to
@@ -64,8 +59,10 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 #. Install `unixODBC <http://www.unixodbc.org>`__ >= 2.2.11
-#. Install `MDB Tools <http://mdbtools.sourceforge.net/>`__ >= 0.6. I
-   also tested with 0.5.99 (0.6 pre-release).
+#. Install MDB Tools. While the official upstream of MDB Tools is abandoned and
+   contains many bugs which prevent correct parsing of Personal Geodatabase geometry
+   data, the maintained fork at `https://github.com/evanmiller/mdbtools <https://github.com/evanmiller/mdbtools>`__
+   contains all required fixes to allow GDAL to successfully read Personal Geodatabases.
 
 (On Ubuntu 8.04 : sudo apt-get install unixodbc libmdbodbc)
 
@@ -81,6 +78,12 @@ There are two configuration files for unixODBC:
    entries) available to all users.
 -  ~/.odbc.ini - this is the private file where users can put their own
    ODBC data sources.
+
+Editing the odbc.ini files is only required if you want to setup an ODBC
+Data Source Name (DSN) so that Personal Geodatabase files can be directly
+accessed via DSN. This is entirely optional, as the PGeo driver will automatically
+handle the required connection parameters for you if a direct .mdb file name
+is used instead.
 
 Format of configuration files is very simple:
 
@@ -117,8 +120,8 @@ file.
 -  Description - put short description of this driver definition.
 -  Driver - full path of ODBC driver for MDB Tools.
 
-2. ODBC data source configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2. ODBC data source configuration (optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In this section, I use 'sample.mdb' as a name of Personal Geodatabase,
 so replace this name with your own database.
@@ -171,8 +174,12 @@ First, check if you have PGeo driver built in OGR:
      PGeo
      ...
 
-Now, you can access your Personal Geodatabase. As a data source use
-PGeo:<DSN> where <DSN> is a name of DSN entry you put to your .odbc.ini.
+Now, you can access your Personal Geodatabase. If you've setup a DSN for the
+Personal Geodatabase (as detailed in section 2 above), the data source should be
+PGeo:<DSN> where <DSN> is the name of DSN entry you put to your .odbc.ini.
+
+Alternatively, you can pass a .mdb filename directly to OGR to avoid manual
+creation of the DSN.
 
 ::
 
@@ -199,8 +206,7 @@ Resources
 
 -  `About ESRI
    Geodatabase <http://www.esri.com/software/arcgis/geodatabase/index.html>`__
--  `[mdbtools-dev] DSN-less connection not
-   supported? <http://sourceforge.net/mailarchive/message.php?msg_id=5998236>`__
+-  `evanmiller's maintained fork of MDB Tools <https://github.com/evanmiller/mdbtools>`__
 
 See also
 --------

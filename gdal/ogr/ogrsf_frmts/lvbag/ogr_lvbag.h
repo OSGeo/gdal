@@ -42,37 +42,14 @@ typedef enum
 } LayerType;
 
 /**
- * Deleter for unique pointer.
- *
- * This functor will free the XML kept resources once the unique pointer goes
- * out of scope or is reset.
+ * Layer pool unique pointer.
  */
-
-struct XMLParserUniquePtrDeleter
-{
-    void operator()(XML_Parser oParser) const noexcept
-    {
-        XML_ParserFree(oParser);
-    }
-};
-
-/**
- * XML parser unique pointer type.
- *
- * The XML parser unique pointer holds the resources used by the parser for as long
- * as the pointers stays inscope. Once the pointer leaves operation scope the deleter
- * is called and the resources are freed.
- */
-
-typedef std::unique_ptr<XML_ParserStruct, XMLParserUniquePtrDeleter> XMLParserUniquePtr;
-
-using LayerUniquePtr = std::unique_ptr<OGRLayer>;
 using LayerPoolUniquePtr = std::unique_ptr<OGRLayerPool>;
 
 /**
  * Vector holding pointers to OGRLayer.
  */
-using LayerVector = std::vector<std::pair<LayerType, LayerUniquePtr>>;
+using LayerVector = std::vector<std::pair<LayerType, OGRLayerUniquePtr>>;
 
 }
 
@@ -85,9 +62,8 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     CPL_DISALLOW_COPY_ASSIGN(OGRLVBAGLayer)
 
     OGRFeatureDefn     *poFeatureDefn;
-    OGRFeature         *poFeature;
+    OGRFeature         *m_poFeature = nullptr;
     VSILFILE           *fp;
-    int                 nNextFID;
     CPLString           osFilename;
     
     typedef enum
@@ -99,22 +75,35 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     
     FileDescriptorState eFileDescriptorsState;
 
-    OGRLVBAG::XMLParserUniquePtr  oParser;
+    OGRExpatUniquePtr   oParser;
     
     bool                bSchemaOnly;
     bool                bHasReadSchema;
+    bool                bFixInvalidData;
+    bool                bLegacyId;
     
+    typedef enum
+    {
+        ADDRESS_PRIMARY,
+        ADDRESS_SECONDARY,
+    } AddressRefState;
+
+    int                 nNextFID;
     int                 nCurrentDepth;
     int                 nGeometryElementDepth;
     int                 nFeatureCollectionDepth;
     int                 nFeatureElementDepth;
     int                 nAttributeElementDepth;
+
+    AddressRefState     eAddressRefState;
     
     CPLString           osElementString;
+    CPLString           osAttributeString;
     bool                bCollectData;
 
     char                aBuf[BUFSIZ];
 
+    void                AddSpatialRef(OGRwkbGeometryType eTypeIn);
     void                AddOccurrenceFieldDefn();
     void                AddIdentifierFieldDefn();
     void                AddDocumentFieldDefn();
@@ -140,7 +129,7 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     friend class OGRLVBAGDataSource;
 
 public:
-    explicit OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn );
+    explicit OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, char **papszOpenOptions );
     ~OGRLVBAGLayer();
 
     void                ResetReading() override;
@@ -167,7 +156,7 @@ class OGRLVBAGDataSource final: public GDALDataset
 public:
                         OGRLVBAGDataSource();
 
-    int                 Open( const char* pszFilename );
+    int                 Open( const char* pszFilename, char **papszOpenOptions );
 
     int                 GetLayerCount() override;
     OGRLayer*           GetLayer( int ) override;

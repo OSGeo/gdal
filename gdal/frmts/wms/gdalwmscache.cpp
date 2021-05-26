@@ -52,7 +52,8 @@ public:
         m_osPostfix(""),
         m_nDepth(2),
         m_nExpires(604800),   // 7 days
-        m_nMaxSize(67108864)  // 64 Mb
+        m_nMaxSize(67108864),  // 64 Mb
+        m_nCleanThreadRunTimeout(120)  // 3 min
     {
         const char *pszCacheDepth = CPLGetXMLValue( pConfig, "Depth", "2" );
         if( pszCacheDepth != nullptr )
@@ -68,9 +69,22 @@ public:
             m_nExpires = atoi( pszCacheExpires );
             CPLDebug("WMS", "Cache expires in %d sec", m_nExpires);
         }
+
         const char *pszCacheMaxSize = CPLGetXMLValue( pConfig, "MaxSize", nullptr );
         if( pszCacheMaxSize != nullptr )
             m_nMaxSize = atol( pszCacheMaxSize );
+
+        const char *pszCleanThreadRunTimeout = CPLGetXMLValue( pConfig, "CleanTimeout", nullptr );
+        if( pszCleanThreadRunTimeout != nullptr )
+        {
+            m_nCleanThreadRunTimeout = atoi( pszCleanThreadRunTimeout );
+            CPLDebug("WMS", "Clean Thread Run Timeout is %d sec", m_nCleanThreadRunTimeout);
+        }
+    }
+
+    virtual int GetCleanThreadRunTimeout() override
+    {
+        return m_nCleanThreadRunTimeout;
     }
 
     virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) override
@@ -198,12 +212,12 @@ private:
     int m_nDepth;
     int m_nExpires;
     long m_nMaxSize;
+    int m_nCleanThreadRunTimeout;
 };
 
 //------------------------------------------------------------------------------
 // GDALWMSCache
 //------------------------------------------------------------------------------
-#define CLEAN_THREAD_RUN_TIMEOUT 120 // 3 min
 
 GDALWMSCache::GDALWMSCache() :
     m_osCachePath("./gdalwmscache"),
@@ -260,7 +274,10 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
         if( result == CE_None )
         {
             // Start clean thread
-            if( !m_bIsCleanThreadRunning && time(nullptr) - m_nCleanThreadLastRunTime > CLEAN_THREAD_RUN_TIMEOUT)
+            int cleanThreadRunTimeout = m_poCache->GetCleanThreadRunTimeout();
+            if(  cleanThreadRunTimeout > 0 &&
+                !m_bIsCleanThreadRunning && 
+                time(nullptr) - m_nCleanThreadLastRunTime > cleanThreadRunTimeout ) 
             {
                 if( m_hThread )
                     CPLJoinThread(m_hThread);

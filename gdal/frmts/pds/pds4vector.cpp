@@ -78,6 +78,7 @@ bool PDS4TableBaseLayer::RenameFileTo(const char* pszNewName)
 {
     if( m_fp )
         VSIFCloseL(m_fp);
+    m_fp = nullptr;
     CPLString osBackup(pszNewName);
     osBackup += ".bak";
     VSIRename(pszNewName, osBackup);
@@ -1082,6 +1083,7 @@ static OGRFieldType GetFieldTypeFromPDS4DataType(const char* pszDataType,
 
 bool PDS4FixedWidthTable::ReadTableDef(const CPLXMLNode* psTable)
 {
+    CPLAssert( m_fp == nullptr );
     m_fp = VSIFOpenL(m_osFilename,
                      (m_poDS->GetAccess() == GA_ReadOnly ) ? "rb" : "r+b");
     if( !m_fp )
@@ -1261,10 +1263,10 @@ bool PDS4FixedWidthTable::ReadFields(const CPLXMLNode* psParent,
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid group_length");
                 return false;
             }
-            int nGroupOneRepititionLength = nGroupLength / nRepetitions;
+            int nGroupOneRepetitionLength = nGroupLength / nRepetitions;
             for( int i = 0; i < nRepetitions; i++ )
             {
-                if( !ReadFields(psIter, nGroupOffset + i * nGroupOneRepititionLength,
+                if( !ReadFields(psIter, nGroupOffset + i * nGroupOneRepetitionLength,
                                 osSuffixFieldName + "_" + CPLSPrintf("%d", i+1)) )
                 {
                     return false;
@@ -1432,6 +1434,7 @@ bool PDS4FixedWidthTable::InitializeNewLayer(
                                 OGRwkbGeometryType eGType,
                                 const char* const* papszOptions)
 {
+    CPLAssert( m_fp == nullptr );
     m_fp = VSIFOpenL(m_osFilename, "wb+");
     if( !m_fp )
     {
@@ -2065,6 +2068,7 @@ OGRErr PDS4DelimitedTable::CreateField( OGRFieldDefn *poFieldIn, int )
 
 bool PDS4DelimitedTable::ReadTableDef(const CPLXMLNode* psTable)
 {
+    CPLAssert( m_fp == nullptr );
     m_fp = VSIFOpenL(m_osFilename,
                      (m_poDS->GetAccess() == GA_ReadOnly ) ? "rb" : "r+b");
     if( !m_fp )
@@ -2367,6 +2371,7 @@ bool PDS4DelimitedTable::InitializeNewLayer(
                                 OGRwkbGeometryType eGType,
                                 const char* const* papszOptions)
 {
+    CPLAssert( m_fp == nullptr );
     m_fp = VSIFOpenL(m_osFilename, "wb+");
     if( !m_fp )
     {
@@ -2448,8 +2453,7 @@ template<class T>
 OGRErr PDS4EditableSynchronizer<T>::EditableSyncToDisk(
                     OGRLayer* poEditableLayer, OGRLayer** ppoDecoratedLayer)
 {
-    auto poOriLayer = dynamic_cast<T*>(*ppoDecoratedLayer);
-    CPLAssert(poOriLayer);
+    auto poOriLayer = cpl::down_cast<T*>(*ppoDecoratedLayer);
 
     CPLString osTmpFilename(poOriLayer->m_osFilename + ".tmp");
     auto poNewLayer = poOriLayer->NewLayer(
@@ -2483,7 +2487,7 @@ OGRErr PDS4EditableSynchronizer<T>::EditableSyncToDisk(
         return OGRERR_FAILURE;
     }
 
-    const auto copyField = [](typename T::Field& oDst, const typename T::Field& oSrc) 
+    const auto copyField = [](typename T::Field& oDst, const typename T::Field& oSrc)
     {
         oDst.m_osDescription = oSrc.m_osDescription;
         oDst.m_osUnit = oSrc.m_osUnit;
@@ -2602,9 +2606,7 @@ PDS4EditableLayer::PDS4EditableLayer(PDS4DelimitedTable* poBaseLayer):
 
 PDS4TableBaseLayer* PDS4EditableLayer::GetBaseLayer() const
 {
-    auto ret = dynamic_cast<PDS4TableBaseLayer*>(OGREditableLayer::GetBaseLayer());
-    assert(ret);
-    return ret;
+    return cpl::down_cast<PDS4TableBaseLayer*>(OGREditableLayer::GetBaseLayer());
 }
 
 /************************************************************************/

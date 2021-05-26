@@ -60,7 +60,7 @@ Getting Dataset Information
 
 As described in the :ref:`raster_data_model`, a :cpp:class:`GDALDataset` contains a list of raster bands, all pertaining to the same area, and having the same resolution. It also has metadata, a coordinate system, a georeferencing transform, size of raster and various other information.
 
-In the particular, but common, case of a "north up" image without any rotation or shearing, the georeferencing transform takes the following form :
+In the particular, but common, case of a "north up" image without any rotation or shearing, the georeferencing transform :ref:`geotransforms_tut` takes the following form :
 
 .. code-block:: c
 

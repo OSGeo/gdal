@@ -495,7 +495,7 @@
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( nLen$argnum ) {
-    free( pBuf$argnum );
+    VSIFree( pBuf$argnum );
   }
 }
 
@@ -504,6 +504,41 @@
 %typemap(jstype) (int *nLen, char **pBuf ) "byte[]"
 %typemap(javain) (int *nLen, char **pBuf ) "$javainput"
 %typemap(javaout) (int *nLen, char **pBuf ) {
+    return $jnicall;
+  }
+
+/***************************************************
+ * Typemaps for  (size_t *nLen, char **pBuf)
+ ***************************************************/
+
+%typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen, char *pBuf )
+{
+  /* %typemap(in) (size_t *nLen, char **pBuf ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+
+%typemap(argout) (size_t *nLen, char **pBuf )
+{
+  /* %typemap(argout) (size_t *nLen, char **pBuf ) */
+  jbyteArray byteArray = jenv->NewByteArray(nLen$argnum);
+  jenv->SetByteArrayRegion(byteArray, (jsize)0, (jsize)nLen$argnum, (jbyte*)pBuf$argnum);
+  $result = byteArray;
+}
+
+%typemap(freearg) (size_t *nLen, char **pBuf )
+{
+  /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
+  if( nLen$argnum ) {
+    VSIFree( pBuf$argnum );
+  }
+}
+
+%typemap(jni) (size_t *nLen, char **pBuf ) "jbyteArray"
+%typemap(jtype) (size_t *nLen, char **pBuf ) "byte[]"
+%typemap(jstype) (size_t *nLen, char **pBuf ) "byte[]"
+%typemap(javain) (size_t *nLen, char **pBuf ) "$javainput"
+%typemap(javaout) (size_t *nLen, char **pBuf ) {
     return $jnicall;
   }
 
@@ -1693,6 +1728,123 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(jstype) ( int nCount, double *x, double *y, double *z ) "double[][]"
 %typemap(javain) ( int nCount, double *x, double *y, double *z ) "$javainput"
 %typemap(javaout) ( int nCount, double *x, double *y, double *z ) {
+    return $jnicall;
+  }
+
+/***************************************************
+ * Typemaps for ( int nCount, double *x, double *y, double *z, double *t )
+ ***************************************************/
+
+%typemap(in) ( int nCount, double *x, double *y, double *z, double *t ) (int xyzLen)
+{
+    /* %typemap(in) ( int nCount, double *x, double *y, double *z, double *t ) (int xyzLen) */
+    $1 = ($input) ? jenv->GetArrayLength($input) : 0;
+    xyzLen = $1;
+    $2 = (double*)CPLMalloc($1 * sizeof(double));
+    $3 = (double*)CPLMalloc($1 * sizeof(double));
+    $4 = (double*)CPLMalloc($1 * sizeof(double));
+    $5 = (double*)CPLMalloc($1 * sizeof(double));
+    int i;
+    for (i = 0; i<$1; i++) {
+        jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
+        if (doubleArray == NULL)
+        {
+            CPLFree ($2);
+            CPLFree ($3);
+            CPLFree ($4);
+            CPLFree ($5);
+            SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
+            return $null;
+        }
+        int nDim = jenv->GetArrayLength(doubleArray);
+        if (nDim != 2 && nDim != 3 && nDim != 4)
+        {
+            CPLFree ($2);
+            CPLFree ($3);
+            CPLFree ($4);
+            CPLFree ($5);
+            SWIG_JavaThrowException(jenv, SWIG_JavaIllegalArgumentException, "wrong array dimensions");
+            return $null;
+        }
+        double* pElements = jenv->GetDoubleArrayElements(doubleArray, NULL);
+        $2[i] = pElements[0];
+        $3[i] = pElements[1];
+        if (nDim == 3 || nDim == 4)
+            $4[i] = pElements[2];
+        else
+            $4[i] = 0;
+        if (nDim == 4)
+            $5[i] = pElements[3];
+        else
+            $5[i] = 0;
+        jenv->ReleaseDoubleArrayElements(doubleArray, pElements, JNI_ABORT);
+    }
+}
+
+%typemap(argout) ( int nCount, double *x, double *y, double *z, double *t )
+{
+    /* %typemap(argout) ( int nCount, double *x, double *y, double *z, double *t ) */
+    int i;
+    for (i = 0; i<$1; i++) {
+        jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
+        int nDim = jenv->GetArrayLength(doubleArray);
+        jenv->SetDoubleArrayRegion(doubleArray, (jsize)0, (jsize)1, &$2[i]);
+        jenv->SetDoubleArrayRegion(doubleArray, (jsize)1, (jsize)1, &$3[i]);
+        if (nDim == 3 || nDim == 4)
+            jenv->SetDoubleArrayRegion(doubleArray, (jsize)2, (jsize)1, &$4[i]);
+        if (nDim == 4)
+            jenv->SetDoubleArrayRegion(doubleArray, (jsize)3, (jsize)1, &$5[i]);
+    }
+    CPLFree($2);
+    CPLFree($3);
+    CPLFree($4);
+    CPLFree($5);
+}
+
+%typemap(jni) ( int nCount, double *x, double *y, double *z, double *t ) "jobjectArray"
+%typemap(jtype) ( int nCount, double *x, double *y, double *z, double *t ) "double[][]"
+%typemap(jstype) ( int nCount, double *x, double *y, double *z, double *t ) "double[][]"
+%typemap(javain) ( int nCount, double *x, double *y, double *z, double *t ) "$javainput"
+
+
+%typemap(in,numinputs=0) (int* pnCountOut, int** outErrorCodes) ( int nPoints = 0, int* errorCodes = NULL )
+{
+  /* %typemap(in,numinputs=0) (int* pnCountOut, int** outErrorCodes) */
+  $1 = &nPoints;
+  $2 = &errorCodes;
+}
+
+%typemap(argout)  (int* pnCountOut, int** outErrorCodes)
+{
+  /* %typemap(argout)  (int* pnCountOut, int** outErrorCodes) */
+  int nPointCount = *($1);
+  const int* errorCodes = *($2);
+  jintArray intArray = jenv->NewIntArray(nPointCount);
+  jenv->SetIntArrayRegion(intArray, (jsize)0, (jsize)nPointCount, (jint*)errorCodes);
+  *(jintArray *)&jresult = intArray;
+}
+
+%typemap(freearg)  (int* pnCountOut, int** outErrorCodes)
+{
+  /* %typemap(freearg)  (int* pnCountOut, int** outErrorCodes) */
+  int* errorCodes = *($2);
+  VSIFree(errorCodes);
+}
+
+%typemap(jni) (int* pnCountOut, int** outErrorCodes) "jintArray"
+%typemap(jtype) (int* pnCountOut, int** outErrorCodes) "int[]"
+%typemap(jstype) (int* pnCountOut, int** outErrorCodes) "int[]"
+%typemap(javain) (int* pnCountOut, int** outErrorCodes) "$javainput"
+%typemap(javaout) (int* pnCountOut, int** outErrorCodes) {
+    return $jnicall;
+  }
+
+
+%typemap(jni) ( int *outIntArray ) "jintArray"
+%typemap(jtype) ( int *outIntArray ) "int[]"
+%typemap(jstype) ( int *outIntArray ) "int[]"
+%typemap(javain) ( int *outIntArray ) "$javainput"
+%typemap(javaout) ( int *outIntArray ) {
     return $jnicall;
   }
 

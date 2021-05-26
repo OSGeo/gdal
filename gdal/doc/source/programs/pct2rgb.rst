@@ -1,7 +1,7 @@
 .. _pct2rgb:
 
 ================================================================================
-pct2rgb
+pct2rgb.py
 ================================================================================
 
 .. only:: html
@@ -23,7 +23,7 @@ Description
 This utility will convert a pseudo-color band on the input file into an output
 RGB file of the desired format.
 
-.. program:: gdaladdo
+.. program:: pct2rgb
 
 .. option:: -of <format>
 

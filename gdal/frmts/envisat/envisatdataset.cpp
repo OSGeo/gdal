@@ -506,7 +506,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
     }
     else
     {
-        CPLDebug( "EnvisatDataset", "Unexpectd size of 'Tie points ADS' !"
+        CPLDebug( "EnvisatDataset", "Unexpected size of 'Tie points ADS' !"
                 " received=%d expected=%d or %d" , nDSRSize ,
                 50*nTPPerLine+13, 8*nTPPerLine+13 ) ;
         return;

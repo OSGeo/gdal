@@ -44,7 +44,22 @@ The following command line parameters can appear in any order.
     not specified, the format is guessed when possible from the extension of the
     destination filename.
 
-.. include:: options/co.rst
+.. option:: -co <NAME=VALUE>
+
+    Many formats have one or more optional creation options that can be
+    used to control particulars about the file created.
+
+    The creation options available vary by format driver, and some
+    simple formats have no creation options at all. A list of options
+    supported for a format can be listed with the
+    :ref:`--formats <raster_common_options_formats>`
+    command line option but the documentation for the format is the
+    definitive source of information on driver creation options.
+    See :ref:`raster_drivers` format
+    specific documentation for legal creation options for each format.
+
+    Array-level creation options may be passed by prefixing them with ``ARRAY:``.
+    See :cpp:func:`GDALGroup::CopyFrom` for further details regarding such options.
 
 .. option:: -array <array_spec>
 
@@ -57,7 +72,7 @@ The following command line parameters can appear in any order.
     with the syntax:
     name={src_array_name}[,dstname={dst_array_name}][,transpose=[{axis1},{axis2},...][,view={view_expr}]
 
-    [{axis1},{axis2},...] is the argumet of  :cpp:func:`GDALMDArray::Transpose`.
+    [{axis1},{axis2},...] is the argument of  :cpp:func:`GDALMDArray::Transpose`.
     For example, transpose=[1,0] switches the axis order of a 2D array.
 
     {view_expr} is the value of the *viewExpr* argument of :cpp:func:`GDALMDArray::GetView`
@@ -69,7 +84,7 @@ The following command line parameters can appear in any order.
 
     Instead of converting the whole dataset, select one group, and possibly
     perform operations on it. This option can be specified several times to
-    operate on different groups. If only one group is specified, its contet will be
+    operate on different groups. If only one group is specified, its content will be
     copied directly to the target root group. If several ones are specified,
     they are copied under the target root group
 

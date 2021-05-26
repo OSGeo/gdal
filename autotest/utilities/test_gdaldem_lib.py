@@ -231,7 +231,6 @@ def test_gdaldem_lib_hillshade_compute_edges_float():
 
 def test_gdaldem_lib_hillshade_azimuth():
 
-    from sys import version_info
     src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 1)
     src_ds.SetGeoTransform([2, 0.01, 0, 49, 0, -0.01])
     sr = osr.SpatialReference()
@@ -241,9 +240,8 @@ def test_gdaldem_lib_hillshade_azimuth():
         data = ''
         for i in range(100):
             val = 255 - 5 * max(abs(50 - i), abs(50 - j))
-            data = data + ('%c' % (val))
-        if version_info >= (3, 0, 0):
-            data = bytes(data, 'ISO-8859-1')
+            data = data + chr(val)
+        data = data.encode('ISO-8859-1')
         src_ds.GetRasterBand(1).WriteRaster(0, j, 100, 1, data)
 
     # Light from the east
@@ -338,11 +336,40 @@ def test_gdaldem_lib_color_relief():
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', colorSelection='nearest_color_entry')
+    assert ds.GetRasterBand(1).Checksum() == 57296
+
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', colorSelection='exact_color_entry')
+    assert ds.GetRasterBand(1).Checksum() == 0
+
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', colorSelection='linear_interpolation')
+    assert ds.GetRasterBand(1).Checksum() == 55009
+
+    with pytest.raises(ValueError):
+        gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', colorSelection='unsupported')
+
     ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', addAlpha=True)
     assert ds.RasterCount == 4, 'Bad RasterCount'
 
     src_ds = None
     ds = None
+
+
+def test_gdaldem_lib_color_relief_nodata_value():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    colorFilename = '/vsimem/color_file.txt'
+    gdal.FileFromMemBuffer(colorFilename, """nv 255 255 255""")
+
+    with gdaltest.error_handler():
+        ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename=colorFilename)
+    assert ds.GetRasterBand(1).Checksum() == 0
+
+    src_ds.GetRasterBand(1).SetNoDataValue(1)
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename=colorFilename)
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+    gdal.Unlink(colorFilename)
 
 ###############################################################################
 # Test gdaldem tpi
@@ -360,17 +387,32 @@ def test_gdaldem_lib_tpi():
     ds = None
 
 ###############################################################################
-# Test gdaldem tri
+# Test gdaldem tri with Wilson formula
 
 
-def test_gdaldem_lib_tri():
+def test_gdaldem_lib_tri_wilson():
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM', alg='Wilson')
+    assert ds is not None
+
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 61143, 'Bad checksum'
+
+    ds = None
+
+###############################################################################
+# Test gdaldem tri with Riley formula
+
+
+def test_gdaldem_lib_tri_riley():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.DEMProcessing('', src_ds, 'tri', format='MEM')
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 61143, 'Bad checksum'
+    assert cs == 41233, 'Bad checksum'
 
     ds = None
 

@@ -32,9 +32,7 @@
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$")
-
-constexpr int USE_COPY_UNSET = -1;
-
+//
 static CPLString OGRPGDumpEscapeStringList(
     char** papszItems, bool bForInsertOrUpdate,
     OGRPGCommonEscapeStringCbk pfnEscapeString,
@@ -67,25 +65,8 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
     pszFIDColumn(CPLStrdup(pszFIDColumnIn)),
     poFeatureDefn(new OGRFeatureDefn(pszTableName)),
     poDS(poDSIn),
-    bLaunderColumnNames(true),
-    bPreservePrecision(true),
-    bUseCopy(USE_COPY_UNSET),
     bWriteAsHex(CPL_TO_BOOL(bWriteAsHexIn)),
-    bCopyActive(false),
-    bFIDColumnInCopyFields(false),
-    bCreateTable(bCreateTableIn),
-    nUnknownSRSId(-1),
-    nForcedSRSId(-2),
-    nForcedGeometryTypeFlags(-1),
-    bCreateSpatialIndexFlag(true),
-    nPostGISMajor(0),
-    nPostGISMinor(0),
-    iNextShapeId(0),
-    iFIDAsRegularColumnIndex(-1),
-    bAutoFIDOnCreateViaCopy(true),
-    bCopyStatementWithFID(false),
-    bNeedToUpdateSequence(false),
-    papszOverrideColumnTypes(nullptr)
+    bCreateTable(bCreateTableIn)
 {
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType(wkbNone);
@@ -1224,6 +1205,8 @@ CPLString OGRPGCommonLayerGetType( OGRFieldDefn& oField,
     {
         if (oField.GetSubType() == OFSTJSON )
             pszFieldType = CPLGetConfigOption("OGR_PG_JSON_TYPE", "JSON");
+        else if (oField.GetSubType() == OFSTUUID )
+            pszFieldType = CPLGetConfigOption("OGR_PG_UUID_TYPE", "UUID");
         else if (oField.GetWidth() > 0 && oField.GetWidth() < 10485760 && bPreservePrecision )
             pszFieldType = CPLSPrintf( "VARCHAR(%d)",  oField.GetWidth() );
         else
@@ -1454,6 +1437,11 @@ bool OGRPGCommonLayerSetType( OGRFieldDefn& oField,
     {
         oField.SetType( OFTString );
         oField.SetSubType( OFSTJSON );
+    }
+    else if( EQUAL(pszType,"uuid") )
+    {
+        oField.SetType( OFTString );
+        oField.SetSubType( OFSTUUID );
     }
     else
     {

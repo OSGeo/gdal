@@ -5,6 +5,8 @@ OBJ	=	hfaband.obj hfadataset.obj hfadictionary.obj hfaentry.obj \
 
 GDAL_ROOT	=	..\..
 
+EXTRAFLAGS = $(PROJ_INCLUDE)
+
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)

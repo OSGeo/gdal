@@ -645,7 +645,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 
 {
     DDFRecord *poRec = MakeRecord();
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    const OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
 /* -------------------------------------------------------------------- */
 /*      Add the VRID field.                                             */
@@ -666,7 +666,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     if( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
-        OGRPoint *poPoint = poGeom->toPoint();
+        const OGRPoint *poPoint = poGeom->toPoint();
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
                    || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC );
@@ -687,7 +687,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
     else if( poGeom != nullptr
              && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
     {
-        OGRMultiPoint *poMP = poGeom->toMultiPoint();
+        const OGRMultiPoint *poMP = poGeom->toMultiPoint();
         const int nVCount = poMP->getNumGeometries();
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
@@ -699,7 +699,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 
         for( int i = 0; i < nVCount; i++ )
         {
-            OGRPoint *poPoint = poMP->getGeometryRef( i )->toPoint();
+            const OGRPoint *poPoint = poMP->getGeometryRef( i );
             padfX[i] = poPoint->getX();
             padfY[i] = poPoint->getY();
             padfZ[i] = poPoint->getZ();
@@ -718,7 +718,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
     else if( poGeom != nullptr
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
-        OGRLineString *poLS = poGeom->toLineString();
+        const OGRLineString *poLS = poGeom->toLineString();
         const int nVCount = poLS->getNumPoints();
 
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VE );
@@ -1015,11 +1015,11 @@ bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
     for( int iAttr = 0; papszAttrList[iAttr] != nullptr; iAttr++ )
     {
         const int iField = poFeature->GetFieldIndex( papszAttrList[iAttr] );
-        OGRFieldType eFldType =
-            poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
-
         if( iField < 0 )
             continue;
+
+        const OGRFieldType eFldType =
+            poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
 
         if( !poFeature->IsFieldSetAndNotNull( iField ) )
             continue;
@@ -1033,15 +1033,29 @@ bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         memcpy( achRawData + nRawSize, &nATTL, 2 );
         nRawSize += 2;
 
-        const char *pszATVL = poFeature->GetFieldAsString( iField );
+        CPLString osATVL;
+        if( eFldType == OFTStringList )
+        {
+            const char* const* papszTokens = poFeature->GetFieldAsStringList(iField);
+            for( auto papszIter = papszTokens; papszIter && *papszIter; ++papszIter )
+            {
+                if( !osATVL.empty() )
+                    osATVL += ',';
+                osATVL += *papszIter;
+            }
+        }
+        else
+        {
+            osATVL = poFeature->GetFieldAsString( iField );
+        }
 
         // Special hack to handle special "empty" marker in integer fields.
-        if( atoi(pszATVL) == EMPTY_NUMBER_MARKER
-            && (eFldType == OFTInteger || eFldType == OFTReal) )
-            pszATVL = "";
+        if( (eFldType == OFTInteger || eFldType == OFTReal) &&
+            atoi(osATVL) == EMPTY_NUMBER_MARKER  )
+            osATVL.clear();
 
         // Watch for really long data.
-        if( strlen(pszATVL) + nRawSize + 10 > sizeof(achRawData) )
+        if( osATVL.size() + nRawSize + 10 > sizeof(achRawData) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Too much ATTF data for fixed buffer size." );
@@ -1049,8 +1063,11 @@ bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         }
 
         // copy data into record buffer.
-        memcpy( achRawData + nRawSize, pszATVL, strlen(pszATVL) );
-        nRawSize += static_cast<int>(strlen(pszATVL));
+        if( !osATVL.empty() )
+        {
+            memcpy( achRawData + nRawSize, osATVL.data(), osATVL.size() );
+            nRawSize += static_cast<int>(osATVL.size());
+        }
         achRawData[nRawSize++] = DDF_UNIT_TERMINATOR;
 
         nACount++;

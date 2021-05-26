@@ -206,6 +206,8 @@ bool OGRODBCMDBDriver::FindDriverLib()
     };
     const int nLibNames = sizeof(aszDefaultLibName) / sizeof(aszDefaultLibName[0]);
     const char* libPath[] = {
+        "/usr/lib64",
+        "/usr/local/lib64",
         "/usr/lib",
         "/usr/local/lib"
     };
@@ -295,7 +297,7 @@ void RegisterOGRPGeo()
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Personal GeoDatabase" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pgeo.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgeo.html" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

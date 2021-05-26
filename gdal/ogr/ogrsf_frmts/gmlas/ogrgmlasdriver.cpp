@@ -89,7 +89,7 @@ void RegisterOGRGMLAS()
                                "Geography Markup Language (GML) "
                                "driven by application schemas" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gml xml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gmlas.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gmlas.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, szGMLAS_PREFIX );
 
@@ -137,7 +137,6 @@ void RegisterOGRGMLAS()
 "Space separated list of filenames of XML schemas that apply to the data file'/>"
 "  <Option name='" + szCONFIG_FILE_OPTION + "' type='string' "
             "description='Filename of the configuration file'/>"
-            "'Space separated list of filenames of XML schemas that apply'/>"
 "  <Option name='" +szLAYERS_OPTION + "' type='string' "
             "description='Comma separated list of layer names to export'/>"
 "  <Option name='" + szSRSNAME_FORMAT_OPTION + "' type='string-select' "

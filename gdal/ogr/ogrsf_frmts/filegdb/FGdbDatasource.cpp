@@ -36,10 +36,74 @@
 #include "FGdbUtils.h"
 #include "cpl_multiproc.h"
 
+#include "filegdb_fielddomain.h"
+
 CPL_CVSID("$Id$")
 
 using std::vector;
 using std::wstring;
+
+/***********************************************************************/
+/*                         OGRFileGDBGroup                             */
+/***********************************************************************/
+
+class OGRFileGDBGroup final: public GDALGroup
+{
+protected:
+    friend class FGdbDataSource;
+    std::vector<std::shared_ptr<GDALGroup>> m_apoSubGroups{};
+    std::vector<OGRLayer*> m_apoLayers{};
+
+public:
+    OGRFileGDBGroup(const std::string& osParentName, const char* pszName):
+        GDALGroup(osParentName, pszName) {}
+
+    std::vector<std::string> GetGroupNames(CSLConstList papszOptions) const override;
+    std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
+                                         CSLConstList papszOptions) const override;
+
+    std::vector<std::string> GetVectorLayerNames(CSLConstList papszOptions) const override;
+    OGRLayer* OpenVectorLayer(const std::string& osName,
+                              CSLConstList papszOptions) const override;
+};
+
+std::vector<std::string> OGRFileGDBGroup::GetGroupNames(CSLConstList) const
+{
+    std::vector<std::string> ret;
+    for( const auto& poSubGroup: m_apoSubGroups )
+        ret.emplace_back(poSubGroup->GetName());
+    return ret;
+}
+
+std::shared_ptr<GDALGroup> OGRFileGDBGroup::OpenGroup(const std::string& osName,
+                                                          CSLConstList) const
+{
+    for( const auto& poSubGroup: m_apoSubGroups )
+    {
+        if( poSubGroup->GetName() == osName )
+            return poSubGroup;
+    }
+    return nullptr;
+}
+
+std::vector<std::string> OGRFileGDBGroup::GetVectorLayerNames(CSLConstList) const
+{
+    std::vector<std::string> ret;
+    for( const auto& poLayer: m_apoLayers )
+        ret.emplace_back(poLayer->GetName());
+    return ret;
+}
+
+OGRLayer* OGRFileGDBGroup::OpenVectorLayer(const std::string& osName,
+                                               CSLConstList) const
+{
+    for( const auto& poLayer: m_apoLayers )
+    {
+        if( poLayer->GetName() == osName )
+            return poLayer;
+    }
+    return nullptr;
+}
 
 /************************************************************************/
 /*                          FGdbDataSource()                           */
@@ -162,16 +226,7 @@ int FGdbDataSource::Open(const char * pszNewName, int bUpdate,
     m_bUpdate = CPL_TO_BOOL(bUpdate);
     m_poOpenFileGDBDrv = (GDALDriver*) GDALGetDriverByName("OpenFileGDB");
 
-    std::vector<std::wstring> typesRequested;
-
-    // We're only interested in Tables, Feature Datasets and Feature Classes
-    typesRequested.push_back(L"Feature Class");
-    typesRequested.push_back(L"Table");
-    typesRequested.push_back(L"Feature Dataset");
-
-    bool rv = LoadLayers(L"\\");
-
-    return rv;
+    return LoadLayers(L"\\");
 }
 
 /************************************************************************/
@@ -257,7 +312,8 @@ int FGdbDataSource::ReOpen()
 /*                          OpenFGDBTables()                            */
 /************************************************************************/
 
-bool FGdbDataSource::OpenFGDBTables(const std::wstring &type,
+bool FGdbDataSource::OpenFGDBTables(OGRFileGDBGroup* group,
+                                    const std::wstring &type,
                                     const std::vector<std::wstring> &layers)
 {
 #ifdef DISPLAY_RELATED_DATASETS
@@ -339,6 +395,7 @@ bool FGdbDataSource::OpenFGDBTables(const std::wstring &type,
         }
 
         m_layers.push_back(pLayer);
+        group->m_apoLayers.emplace_back(pLayer);
     }
     return true;
 }
@@ -354,13 +411,16 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
     std::vector<wstring> featuredatasets;
     fgdbError hr;
 
+    auto poRootGroup = std::make_shared<OGRFileGDBGroup>(std::string(), "");
+    m_poRootGroup = poRootGroup;
+
     /* Find all the Tables in the root */
     if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(root, L"Table", tables)) )
     {
         return GDBErr(hr, "Error reading Tables in " + WStringToString(root));
     }
     /* Open the tables we found */
-    if ( !tables.empty() && ! OpenFGDBTables(L"Table", tables) )
+    if ( !tables.empty() && ! OpenFGDBTables(poRootGroup.get(), L"Table", tables) )
         return false;
 
     /* Find all the Feature Classes in the root */
@@ -369,7 +429,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
         return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(root));
     }
     /* Open the tables we found */
-    if ( !featureclasses.empty() && ! OpenFGDBTables(L"Feature Class", featureclasses) )
+    if ( !featureclasses.empty() && ! OpenFGDBTables(poRootGroup.get(), L"Feature Class", featureclasses) )
         return false;
 
     /* Find all the Feature Datasets in the root */
@@ -380,93 +440,24 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
     /* Look for Feature Classes inside the Feature Dataset */
     for ( unsigned int i = 0; i < featuredatasets.size(); i++ )
     {
+        const std::string featureDatasetPath(WStringToString(featuredatasets[i]));
         if ( FAILED(hr = m_pGeodatabase->GetChildDatasets(featuredatasets[i], L"Feature Class", featureclasses)) )
         {
-            return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(featuredatasets[i]));
+            return GDBErr(hr, "Error reading Feature Classes in " + featureDatasetPath);
         }
-        if ( !featureclasses.empty() && ! OpenFGDBTables(L"Feature Class", featureclasses) )
+        std::string featureDatasetName(featureDatasetPath);
+        if( !featureDatasetName.empty() && featureDatasetPath[0] == '\\' )
+            featureDatasetName = featureDatasetName.substr(1);
+        auto poFeatureDatasetGroup = std::make_shared<OGRFileGDBGroup>(
+            poRootGroup->GetName(), featureDatasetName.c_str());
+        poRootGroup->m_apoSubGroups.emplace_back(poFeatureDatasetGroup);
+        if ( !featureclasses.empty() && !
+            OpenFGDBTables(poFeatureDatasetGroup.get(), L"Feature Class", featureclasses) )
             return false;
     }
 
     return true;
 }
-
-#if 0
-/************************************************************************/
-/*                            LoadLayersOld()                              */
-/************************************************************************/
-
-/* Old recursive LoadLayers. Removed in favor of simple one that only
-   looks at FeatureClasses and Tables. */
-
-// Flattens out hierarchical GDB structure.
-bool FGdbDataSource::LoadLayersOld(const std::vector<wstring> & datasetTypes,
-                                const wstring & parent)
-{
-    long hr = S_OK;
-
-    // I didn't find an API to give me the type of the dataset based on name - I am *not*
-    // parsing XML for something like this - in the meantime I can use this hack to see
-    // if the dataset had any children whatsoever - if so, then I won't attempt to open it
-    // otherwise, do attempt to do that
-
-    bool childrenFound = false;
-    bool errorsEncountered = false;
-
-    for (size_t dsTypeIndex = 0; dsTypeIndex < datasetTypes.size(); dsTypeIndex++)
-    {
-        std::vector<wstring> childDatasets;
-        m_pGeodatabase->GetChildDatasets( parent, datasetTypes[dsTypeIndex], childDatasets);
-
-        if (!childDatasets.empty())
-        {
-            //it is a container of other datasets
-
-            for (size_t childDatasetIndex = 0;
-                 childDatasetIndex < childDatasets.size();
-                 childDatasetIndex++)
-            {
-                childrenFound = true;
-
-                // do something with it
-                // For now, we just ignore dataset containers and only open the children
-                // std::wcout << datasetTypes[dsTypeIndex] << L" " << childDatasets[childDatasetIndex] << std::endl;
-
-                if (!LoadLayersOld(datasetTypes, childDatasets[childDatasetIndex]))
-                    errorsEncountered = true;
-            }
-        }
-    }
-
-    //it is a full fledged dataset itself without children - open it (except the root)
-
-    if ((!childrenFound) && parent != L"\\")
-    {
-        // wcout << "Opening " << parent << "...";
-        Table* pTable = new Table;
-        if (FAILED(hr = m_pGeodatabase->OpenTable(parent,*pTable)))
-        {
-            delete pTable;
-            return GDBErr(hr, "Error opening " + WStringToString(parent));
-        }
-
-        FGdbLayer* pLayer = new FGdbLayer;
-
-        //pLayer has ownership of the table pointer as soon Initialize is called
-        if (!pLayer->Initialize(this, pTable, parent))
-        {
-            delete pLayer;
-
-            return GDBErr(hr, "Error initializing OGRLayer for " +
-                          WStringToString(parent));
-        }
-
-        m_layers.push_back(pLayer);
-    }
-
-    return !errorsEncountered;
-}
-#endif
 
 /************************************************************************/
 /*                            DeleteLayer()                             */
@@ -797,4 +788,30 @@ void FGdbDataSource::SetSymlinkFlagOnAllLayers()
     {
         m_layers[i]->SetSymlinkFlag();
     }
+}
+
+/************************************************************************/
+/*                        GetFieldDomain()                              */
+/************************************************************************/
+
+const OGRFieldDomain* FGdbDataSource::GetFieldDomain(const std::string& name) const
+{
+    const auto baseRet = GDALDataset::GetFieldDomain(name);
+    if( baseRet )
+        return baseRet;
+
+    std::string domainDef;
+    const auto hr = m_pGeodatabase->GetDomainDefinition(StringToWString(name), domainDef);
+    if (FAILED(hr))
+    {
+        GDBErr(hr, "Failed in GetDomainDefinition()");
+        return nullptr;
+    }
+
+    auto poDomain = ParseXMLFieldDomainDef(domainDef);
+    if( !poDomain )
+        return nullptr;
+    const auto domainName = poDomain->GetName();
+    m_oMapFieldDomains[domainName] = std::move(poDomain);
+    return GDALDataset::GetFieldDomain(name);
 }

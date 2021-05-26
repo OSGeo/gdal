@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 import shutil
 from osgeo import ogr
@@ -38,15 +39,15 @@ import gdaltest
 import ogrtest
 import pytest
 
+# Skip all tests if we aren't on Windows.
+pytestmark = pytest.mark.skipif(sys.platform != 'win32', reason='Incorrect platform')
+
+
 ###############################################################################
 # Basic testing
 
 
 def test_ogr_odbc_1():
-
-    ogrtest.odbc_drv = None
-    if sys.platform != 'win32':
-        pytest.skip()
 
     ogrtest.odbc_drv = ogr.GetDriverByName('ODBC')
     if ogrtest.odbc_drv is None:
@@ -135,6 +136,11 @@ def test_ogr_odbc_2():
     if ogrtest.odbc_drv is None:
         pytest.skip()
 
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
+    if ds is None:
+        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
+        pytest.skip()
+
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -142,6 +148,77 @@ def test_ogr_odbc_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/odbc.mdb')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+###############################################################################
+# Test that alternative MS Access file extensions can be read
+
+
+def test_extensions():
+    if ogrtest.odbc_drv is None:
+        pytest.skip()
+
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
+    if ds is None:
+        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
+        pytest.skip()
+
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.style')
+    assert ds is not None
+    lyr = ds.GetLayerByName('Line Symbols')
+    assert lyr is not None
+
+    if os.environ.get('GITHUB_WORKFLOW', '') != 'Windows builds':
+        # can't run this on Github "Windows builds" workflow, as that has the older
+        # 'Microsoft Access Driver (*.mdb)' ODBC driver only, which doesn't support accdb
+        # databases
+        ds = ogrtest.odbc_drv.Open('data/mdb/empty.accdb')
+        assert ds is not None
+
+
+###############################################################################
+# Test reading mdb with null memo fields (https://github.com/OSGeo/gdal/pull/3458)
+
+
+def test_null_memo():
+    if ogrtest.odbc_drv is None:
+        pytest.skip()
+
+    ds = ogrtest.odbc_drv.Open('data/mdb/null_memo.mdb')
+    if ds is None:
+        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
+        pytest.skip()
+
+    lyr = ds.GetLayerByName('PROP')
+    expected_str = [
+        [7400002, '1', 0, 0, '0101', None, 981.156, 900, None, None, None, '0', '0', '2', '0', None, None, None, None,
+         '4000', None, None, None, '01', '074', 285310, 4250300, 'Κ', None],
+        [7400013, '2', 0, 0, '0101', None, 391.468, 368.15, None, None, None, '0', '0', '1', '0', None, None,
+         None, None, '4000', None, None, None, '01', '074', 285273.0, 4250275.0, 'Κ', None],
+        [7400014, '3', 0, 0, '0101', None, 1109.932, 850.5, None, None, None, '0', '0', '2', '1', None, None,
+         None, None, '4000', None, None, None, '01', '074', 285273.401, 4250229.261, 'Κ', None],
+        [7400015.0, '4', 1, 0, '0201', 'Ι', None, None, None, None, 510.0, None, None, '2', None, None, None,
+         None, None, None, None, None, None, '01', '074', 285273.401, 4250229.261, 'Κ', None],
+        [7400016.0, '5', 1, 1, '0401', '4', None, 111.63, None, None, None, '0', '0', '2', None, 300, 1000,
+         500, 1000, '4000', None, None, None, '01', '074', 285273.401, 4250229.261, 'Κ', None],
+        [7400017.0, '6', 1, 2, '0401', '2', None, 111.63, None, None, None, '0', '0', '2', None, 300, 1000,
+         500, 1000, '4000', None, None, None, '01', '074', 285275.0, 4250227.0, 'Κ', None],
+        ]
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        attrs = [feat.GetField(n) for n in range(29)]
+        for k in range(29):
+            if k in (5, 22, 27):
+                # skip some attributes which exhibit cross-platform variations -- they aren't relevant for this test!
+                continue
+
+            if attrs[k] != expected_str[i][k]:
+                feat.DumpReadable()
+                pytest.fail(str(k) + ': ' + str(attrs[k]) + ' <> ' + str(expected_str[i][k]))
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
 
 ###############################################################################
 # Cleanup
@@ -152,6 +229,3 @@ def test_ogr_odbc_cleanup():
         pytest.skip()
 
     gdal.Unlink('tmp/odbc.mdb')
-
-
-

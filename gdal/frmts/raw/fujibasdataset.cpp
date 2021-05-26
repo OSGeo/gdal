@@ -111,6 +111,9 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
         == nullptr )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("FUJIBAS") )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      Load the header file.                                           */
 /* -------------------------------------------------------------------- */

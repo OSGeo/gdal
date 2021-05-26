@@ -181,7 +181,7 @@
   }
 %}
 
-%typemap(csfinalize) SWIGTYPE %{
+%typemap(csdispose) SWIGTYPE %{
   ~$csclassname() {
     Dispose();
   }
@@ -191,7 +191,7 @@
   }
 %}
 
-%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
+%typemap(csdisposing, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
   lock(this) {
       if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwn) {
         swigCMemOwn = false;
@@ -203,7 +203,7 @@
     }
   }
 
-%typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public") TYPE {
+%typemap(csdisposing_derived, methodname="Dispose", methodmodifiers="public") TYPE {
   lock(this) {
       if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwn) {
         swigCMemOwn = false;

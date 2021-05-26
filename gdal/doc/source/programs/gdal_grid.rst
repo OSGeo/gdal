@@ -24,7 +24,7 @@ Synopsis
               [-clipsrcsql sql_statement] [-clipsrclayer layer]
               [-clipsrcwhere expression]
               [-l layername]* [-where expression] [-sql select_statement]
-              [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]
+              [-txe xmin xmax] [-tye ymin ymax] [-tr xres yres] [-outsize xsize ysize]
               [-a algorithm[:parameter1=value1]*] [-q]
               <src_datasource> <dst_filename>
 
@@ -40,7 +40,7 @@ configuration option to parallelize the processing. The value to specify is
 the number of worker threads, or ``ALL_CPUS`` to use all the cores/CPUs of the
 computer.
 
-.. program:: gdaladdo
+.. program:: gdal_grid
 
 .. include:: options/ot.rst
 
@@ -54,16 +54,24 @@ computer.
 
     Set georeferenced Y extents of output file to be created.
 
+.. option:: -tr <xres> <yres>
+
+    Set output file resolution (in target georeferenced units).
+    Note that :option:`-tr` just works in combination with a valid input from :option:`-txe` and :option:`-tye`
+
+    .. versionadded:: 3.2
+
 .. option:: -outsize <xsize ysize>
 
     Set the size of the output file in pixels and lines.
+    Note that :option:`-outsize` cannot be used with :option:`-tr`
 
 .. option:: -a_srs <srs_def>
 
     Override the projection for the
     output file.  The <i>srs_def> may be any of the usual GDAL/OGR forms,
     complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
-    No reprojection is done. 
+    No reprojection is done.
 
 .. option:: -zfield <field_name>
 
@@ -130,7 +138,7 @@ computer.
 .. option:: -where <expression>
 
     An optional SQL WHERE style query expression to be applied to select features
-    to process from the input layer(s). 
+    to process from the input layer(s).
 
 .. option:: -sql <select_statement>
 

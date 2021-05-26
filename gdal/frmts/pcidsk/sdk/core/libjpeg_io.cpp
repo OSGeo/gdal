@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,8 +33,6 @@
 #include "pcidsk_exception.h"
 #include <cassert>
 #include <cstdio>
-
-#include "cpl_port.h"
 
 using namespace PCIDSK;
 
@@ -63,6 +61,13 @@ static void JpegError(j_common_ptr cinfo)
     char buf[256];
 
     cinfo->err->format_message(cinfo, buf);
+
+    // Make sure we destroy the context before throwing an exception.
+    if (cinfo->is_decompressor)
+        jpeg_destroy_decompress((j_decompress_ptr) cinfo);
+    else
+        jpeg_destroy_compress((j_compress_ptr) cinfo);
+
     return ThrowPCIDSKException( "%s", buf );
 }
 
@@ -110,6 +115,8 @@ void PCIDSK::LibJPEG_DecompressBlock(
     if (sJCompInfo.image_width != (unsigned int)xsize ||
         sJCompInfo.image_height != (unsigned int)ysize)
     {
+        jpeg_destroy_decompress( &sJCompInfo );
+
         return ThrowPCIDSKException("Tile Size wrong in LibJPEG_DecompressTile(), got %dx%d, expected %dx%d.",
                              sJCompInfo.image_width,
                              sJCompInfo.image_height,
@@ -166,7 +173,7 @@ void PCIDSK::LibJPEG_CompressBlock(
     sJCompInfo.dest = &sDstMgr;
     sJCompInfo.err = jpeg_std_error(&sErrMgr);
     sJCompInfo.err->output_message = JpegError;
-    
+
     sJCompInfo.image_width = xsize;
     sJCompInfo.image_height = ysize;
     sJCompInfo.input_components = 1;
@@ -175,24 +182,24 @@ void PCIDSK::LibJPEG_CompressBlock(
     jpeg_set_defaults(&sJCompInfo);
     jpeg_set_quality(&sJCompInfo, quality, TRUE );
     jpeg_start_compress(&sJCompInfo, TRUE );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Write all the scanlines at once.                                */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < ysize; i++ )
     {
         uint8   *pabyLine = src_data + i*xsize;
-        
+
         jpeg_write_scanlines( &sJCompInfo, (JSAMPARRAY)&pabyLine, 1 );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     jpeg_finish_compress( &sJCompInfo );
 
     dst_bytes = static_cast<int>(dst_bytes - sDstMgr.free_in_buffer);
-    
+
     jpeg_destroy_compress( &sJCompInfo );
 }
 

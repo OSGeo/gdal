@@ -231,7 +231,7 @@ So if you want to  `catch warnings as well as errors <https://gis.stackexchange.
 
    def error_handler(err_level, err_no, err_msg):
 
-      if err_class >= gdal.CE_Warning:
+      if err_level >= gdal.CE_Warning:
          raise RuntimeError(err_level, err_no, err_msg) #this exception does not propagate back to main thread!
 
    if __name__=='__main__':

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<product>
+  <adsHeader>
+    <missionId>S1A</missionId>
+    <productType>SLC</productType>
+    <polarisation>VV</polarisation>
+    <mode>WV</mode>
+    <swath>WV1</swath>
+    <startTime>2016-05-10T10:16:03.843410</startTime>
+    <stopTime>2016-05-10T10:16:06.826137</stopTime>
+    <absoluteOrbitNumber>11195</absoluteOrbitNumber>
+    <missionDataTakeId>69281</missionDataTakeId>
+    <imageNumber>001</imageNumber>
+  </adsHeader>
+  <imageAnnotation>
+    <imageInformation>
+      <productFirstLineUtcTime>2016-05-10T10:16:03.843410</productFirstLineUtcTime>
+      <productLastLineUtcTime>2016-05-10T10:16:06.826137</productLastLineUtcTime>
+      <ascendingNodeTime>2016-05-10T09:38:08.925424</ascendingNodeTime>
+      <anchorTime>2016-05-10T10:16:03.843410</anchorTime>
+      <productComposition>Individual</productComposition>
+      <sliceNumber>0</sliceNumber>
+      <sliceList count="0"/>
+      <slantRangeTime>5.046045966132076e-03</slantRangeTime>
+      <pixelValue>Complex</pixelValue>
+      <outputPixels>16 bit Signed Integer</outputPixels>
+      <rangePixelSpacing>1.497576e+00</rangePixelSpacing>
+      <azimuthPixelSpacing>4.124774e+00</azimuthPixelSpacing>
+      <azimuthTimeInterval>6.059988896297211e-04</azimuthTimeInterval>
+      <azimuthFrequency>1.650168040094962e+03</azimuthFrequency>
+      <numberOfSamples>5681</numberOfSamples>
+      <numberOfLines>4923</numberOfLines>
+      <zeroDopMinusAcqTime>3.234900000000000e-01</zeroDopMinusAcqTime>
+      <incidenceAngleMidSwath>2.408609509578423e+01</incidenceAngleMidSwath>
+      <imageStatistics>
+        <outputDataMean>
+          <re>3.626027e-01</re>
+          <im>-5.332760e-02</im>
+        </outputDataMean>
+        <outputDataStdDev>
+          <re>4.774104e+02</re>
+          <im>4.771895e+02</im>
+        </outputDataStdDev>
+      </imageStatistics>
+    </imageInformation>
+  </imageAnnotation>
+  <geolocationGrid>
+    <geolocationGridPointList count="1">
+      <geolocationGridPoint>
+        <azimuthTime>2016-05-10T10:16:03.843397</azimuthTime>
+        <slantRangeTime>5.046045966132076e-03</slantRangeTime>
+        <line>0</line>
+        <pixel>0</pixel>
+        <latitude>4.173435353976264e+01</latitude>
+        <longitude>-5.980263505017974e+01</longitude>
+        <height>0.000000000000000e+00</height>
+        <incidenceAngle>2.325540810313387e+01</incidenceAngle>
+        <elevationAngle>2.083444323039390e+01</elevationAngle>
+      </geolocationGridPoint>
+    </geolocationGridPointList>
+  </geolocationGrid>
+</product>

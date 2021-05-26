@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sl-bag-extract:bagStand
+    xmlns:DatatypenNEN3610="www.kadaster.nl/schemas/lvbag/imbag/datatypennen3610/v20200601"
+    xmlns:Objecten="www.kadaster.nl/schemas/lvbag/imbag/objecten/v20200601"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:Historie="www.kadaster.nl/schemas/lvbag/imbag/historie/v20200601"
+    xmlns:Objecten-ref="www.kadaster.nl/schemas/lvbag/imbag/objecten-ref/v20200601"
+    xmlns:nen5825="www.kadaster.nl/schemas/lvbag/imbag/nen5825/v20200601"
+    xmlns:KenmerkInOnderzoek="www.kadaster.nl/schemas/lvbag/imbag/kenmerkinonderzoek/v20200601"
+    xmlns:selecties-extract="http://www.kadaster.nl/schemas/lvbag/extract-selecties/v20200601"
+    xmlns:sl-bag-extract="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20200601"
+    xmlns:sl="http://www.kadaster.nl/schemas/standlevering-generiek/1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:schemaLocation="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20200601 http://www.kadaster.nl/schemas/bag-verstrekkingen/extract-deelbestand-lvc/v20200601/BagvsExtractDeelbestandExtractLvc-2.1.0.xsd">
+    <sl-bag-extract:bagInfo>
+        <selecties-extract:Gebied-Registratief>
+            <selecties-extract:Gebied-NLD />
+        </selecties-extract:Gebied-Registratief>
+        <selecties-extract:LVC-Extract>
+            <selecties-extract:StandTechnischeDatum>2020-12-08</selecties-extract:StandTechnischeDatum>
+        </selecties-extract:LVC-Extract>
+    </sl-bag-extract:bagInfo>
+    <sl:standBestand>
+        <sl:dataset>LVBAG</sl:dataset>
+        <sl:inhoud>
+            <sl:gebied>Nederland</sl:gebied>
+            <sl:leveringsId>0000000001</sl:leveringsId>
+            <sl:objectTypen>
+                <sl:objectType>VBO</sl:objectType>
+            </sl:objectTypen>
+        </sl:inhoud>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Verblijfsobject>
+                    <Objecten:heeftAlsHoofdadres>
+                        <Objecten-ref:NummeraanduidingRef domein="NL.IMBAG.Nummeraanduiding">0879200000005729</Objecten-ref:NummeraanduidingRef>
+                    </Objecten:heeftAlsHoofdadres>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>3</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2011-08-30</Historie:beginGeldigheid>
+                            <Historie:eindGeldigheid>2020-11-10</Historie:eindGeldigheid>
+                            <Historie:tijdstipRegistratie>2011-08-30T14:55:37.000</Historie:tijdstipRegistratie>
+                            <Historie:eindRegistratie>2020-11-10T13:26:17.718</Historie:eindRegistratie>
+                            <Historie:BeschikbaarLV>
+                                <Historie:tijdstipRegistratieLV>2011-08-30T15:02:10.219</Historie:tijdstipRegistratieLV>
+                                <Historie:tijdstipEindRegistratieLV>2020-11-10T13:44:51.818</Historie:tijdstipEindRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                    <Objecten:identificatie domein="NL.IMBAG.Verblijfsobject">0879010000005729</Objecten:identificatie>
+                    <Objecten:geometrie>
+                        <Objecten:punt>
+                            <gml:Point srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3">
+                                <gml:pos>104939.0 387125.1 0.0</gml:pos>
+                            </gml:Point>
+                        </Objecten:punt>
+                    </Objecten:geometrie>
+                    <Objecten:gebruiksdoel>woonfunctie</Objecten:gebruiksdoel>
+                    <Objecten:gebruiksdoel>gezondheidszorgfunctie</Objecten:gebruiksdoel>
+                    <Objecten:oppervlakte>59</Objecten:oppervlakte>
+                    <Objecten:status>Verblijfsobject in gebruik (niet ingemeten)</Objecten:status>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2011-08-30</Objecten:documentdatum>
+                    <Objecten:documentnummer>BAG/COR/2011/00096</Objecten:documentnummer>
+                    <Objecten:maaktDeelUitVan>
+                        <Objecten-ref:PandRef domein="NL.IMBAG.Pand">0879100000019832</Objecten-ref:PandRef>
+                    </Objecten:maaktDeelUitVan>
+                </Objecten:Verblijfsobject>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
+    </sl:standBestand>
+</sl-bag-extract:bagStand>

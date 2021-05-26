@@ -49,9 +49,9 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
         char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
 
-    const char* pszBaseName = CPLGetBasename(pszPath);
-    const char* pszDirName = CPLGetDirname(pszPath);
-    size_t nBaseNameLen = strlen(pszBaseName);
+    const CPLString osBaseName = CPLGetBasename(pszPath);
+    const CPLString osDirName = CPLGetDirname(pszPath);
+    const size_t nBaseNameLen = osBaseName.size();
     if( nBaseNameLen > 511 )
         return;
 
@@ -62,8 +62,8 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
     size_t i;
     for(i = 0; i < nBaseNameLen; i++)
     {
-        szMetadataName[i] = pszBaseName[i];
-        if(STARTS_WITH_CI(pszBaseName + i, "_rgb_") || STARTS_WITH_CI(pszBaseName + i, "_pan_"))
+        szMetadataName[i] = osBaseName[i];
+        if(STARTS_WITH_CI(osBaseName.c_str() + i, "_rgb_") || STARTS_WITH_CI(osBaseName.c_str() + i, "_pan_"))
         {
             break;
         }
@@ -71,7 +71,7 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
 
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_metadata.txt", 14);
-    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osIMDSourceFilename = CPLFormFilename( osDirName,
                                                         szMetadataName, nullptr );
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
@@ -80,7 +80,7 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
     else
     {
         CPLStrlcpy(szMetadataName + i, "_METADATA.TXT", 14);
-        osIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, nullptr );
+        osIMDSourceFilename = CPLFormFilename( osDirName, szMetadataName, nullptr );
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = osIMDSourceFilename;
@@ -89,18 +89,18 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
 
     // get _rpc.txt file
 
-    CPLString osRPBSourceFilename = CPLFormFilename( pszDirName,
-                                                        CPLSPrintf("%s_rpc",
-                                                        pszBaseName),
-                                                        "txt" );
+    CPLString osRPBSourceFilename = CPLFormFilename( osDirName,
+                                                     (osBaseName + "_rpc").c_str(),
+                                                     "txt" );
     if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
         m_osRPBSourceFilename = osRPBSourceFilename;
     }
     else
     {
-        osRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("%s_RPC",
-                                                pszBaseName), "TXT" );
+        osRPBSourceFilename = CPLFormFilename( osDirName,
+                                               (osBaseName + "_RPC").c_str(),
+                                               "TXT" );
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
             m_osRPBSourceFilename = osRPBSourceFilename;

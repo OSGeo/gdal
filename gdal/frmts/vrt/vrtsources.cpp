@@ -111,7 +111,8 @@ VRTSimpleSource::VRTSimpleSource() :
     m_dfNoDataValue(VRT_NODATA_UNSET),
     m_nMaxValue(0),
     m_bRelativeToVRTOri(-1),
-    m_nExplicitSharedStatus(-1)
+    m_nExplicitSharedStatus(-1),
+    m_bDropRefOnSrcBand(true)
 {}
 
 /************************************************************************/
@@ -134,7 +135,8 @@ VRTSimpleSource::VRTSimpleSource( const VRTSimpleSource* poSrcSource,
     m_dfNoDataValue(poSrcSource->m_dfNoDataValue),
     m_nMaxValue(poSrcSource->m_nMaxValue),
     m_bRelativeToVRTOri(-1),
-    m_nExplicitSharedStatus(poSrcSource->m_nExplicitSharedStatus)
+    m_nExplicitSharedStatus(poSrcSource->m_nExplicitSharedStatus),
+    m_bDropRefOnSrcBand(poSrcSource->m_bDropRefOnSrcBand)
 {}
 
 /************************************************************************/
@@ -144,6 +146,9 @@ VRTSimpleSource::VRTSimpleSource( const VRTSimpleSource* poSrcSource,
 VRTSimpleSource::~VRTSimpleSource()
 
 {
+    if( !m_bDropRefOnSrcBand )
+        return;
+
     if( m_poMaskBandMainBand != nullptr )
     {
         if( m_poMaskBandMainBand->GetDataset() != nullptr )
@@ -215,7 +220,7 @@ void VRTSimpleSource::SetSrcMaskBand( GDALRasterBand *poNewSrcBand )
 static double RoundIfCloseToInt(double dfValue)
 {
     double dfClosestInt = floor(dfValue + 0.5);
-    return (fabs( dfValue - dfClosestInt ) < 1e-5) ? dfClosestInt : dfValue;
+    return (fabs( dfValue - dfClosestInt ) < 1e-3) ? dfClosestInt : dfValue;
 }
 
 /************************************************************************/
@@ -728,18 +733,10 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         if( bGetMaskBand )
         {
           GDALProxyPoolRasterBand *poMaskBand =
-              dynamic_cast<GDALProxyPoolRasterBand *>(
+              cpl::down_cast<GDALProxyPoolRasterBand *>(
               proxyDS->GetRasterBand(nSrcBand) );
-          if( poMaskBand == nullptr )
-          {
-              CPLError(
-                  CE_Fatal, CPLE_AssertionFailed, "dynamic_cast failed." );
-          }
-          else
-          {
-              poMaskBand->AddSrcMaskBandDescription(
-                  eDataType, nBlockXSize, nBlockYSize );
-          }
+          poMaskBand->AddSrcMaskBandDescription(
+              eDataType, nBlockXSize, nBlockYSize );
         }
     }
 
@@ -2173,6 +2170,11 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
     CPLFree( psSrc->pszValue );
     psSrc->pszValue = CPLStrdup( "ComplexSource" );
 
+    if( m_bUseMaskBand )
+    {
+        CPLSetXMLValue( psSrc, "UseMaskBand", "true" );
+    }
+
     if( m_bNoDataSet )
     {
         CPLSetXMLValue( psSrc, "NODATA", VRTSerializeNoData(
@@ -2318,6 +2320,12 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         {
             m_dfNoDataValue = GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
         }
+    }
+
+    const char* pszUseMaskBand = CPLGetXMLValue(psSrc, "UseMaskBand", nullptr);
+    if( pszUseMaskBand )
+    {
+        m_bUseMaskBand = CPLTestBool(pszUseMaskBand);
     }
 
     if( CPLGetXMLValue(psSrc, "LUT", nullptr) != nullptr )
@@ -2588,14 +2596,27 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     GDALColorTable* poColorTable = nullptr;
     const bool bIsComplex = CPL_TO_BOOL( GDALDataTypeIsComplex(eBufType) );
     const int nWordSize = GDALGetDataTypeSizeBytes(eWrkDataType);
-    const bool bNoDataSetIsNan = m_bNoDataSet && CPLIsNan(m_dfNoDataValue);
-    const bool bNoDataSetAndNotNan = m_bNoDataSet && !CPLIsNan(m_dfNoDataValue) &&
-                                GDALIsValueInRange<WorkingDT>(m_dfNoDataValue);
-    const auto fWorkingDataTypeNoData = static_cast<WorkingDT>(m_dfNoDataValue);
+
+    // If no explicit <NODATA> is set, but UseMaskBand is set, and the band
+    // has a nodata value, then use it as if it was set as <NODATA>
+    int bNoDataSet = m_bNoDataSet;
+    double dfNoDataValue = m_dfNoDataValue;
+    if( !m_bNoDataSet && m_bUseMaskBand &&
+        m_poRasterBand->GetMaskFlags() == GMF_NODATA )
+    {
+        dfNoDataValue = m_poRasterBand->GetNoDataValue(&bNoDataSet);
+    }
+
+    const bool bNoDataSetIsNan = bNoDataSet && CPLIsNan(dfNoDataValue);
+    const bool bNoDataSetAndNotNan = bNoDataSet && !CPLIsNan(dfNoDataValue) &&
+                                GDALIsValueInRange<WorkingDT>(dfNoDataValue);
+    const auto fWorkingDataTypeNoData = static_cast<WorkingDT>(dfNoDataValue);
+    std::vector<GByte> abyMask;
 
     WorkingDT *pafData = nullptr;
     if( m_eScalingType == VRT_SCALING_LINEAR &&
-        m_bNoDataSet == FALSE &&
+        bNoDataSet == FALSE &&
+        !m_bUseMaskBand &&
         m_dfScaleRatio == 0 )
     {
 /* -------------------------------------------------------------------- */
@@ -2641,6 +2662,41 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
             return eErr;
         }
 
+        // Allocate and read mask band if needed
+        if( !bNoDataSet && m_bUseMaskBand &&
+            (m_poRasterBand->GetMaskFlags() != GMF_ALL_VALID ||
+             m_poRasterBand->GetColorInterpretation() == GCI_AlphaBand ||
+             m_poMaskBandMainBand != nullptr) )
+        {
+            try
+            {
+                abyMask.resize(nOutXSize * nOutYSize);
+            }
+            catch( const std::exception& )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Out of memory when allocating mask buffer");
+                CPLFree( pafData );
+                return CE_Failure;
+            }
+            auto poMaskBand = (m_poRasterBand->GetColorInterpretation() == GCI_AlphaBand ||
+                               m_poMaskBandMainBand != nullptr) ?
+                m_poRasterBand : m_poRasterBand->GetMaskBand();
+            if( poMaskBand->RasterIO( GF_Read,
+                                      nReqXOff, nReqYOff,
+                                      nReqXSize, nReqYSize,
+                                      &abyMask[0],
+                                      nOutXSize, nOutYSize,
+                                      GDT_Byte,
+                                      1,
+                                      static_cast<GSpacing>(nOutXSize),
+                                      psExtraArg ) != CE_None )
+            {
+                CPLFree( pafData );
+                return CE_Failure;
+            }
+        }
+
         if( m_nColorTableComponent != 0 )
         {
             poColorTable = m_poRasterBand->GetColorTable();
@@ -2658,22 +2714,24 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 /*      Selectively copy into output buffer with nodata masking,        */
 /*      and/or scaling.                                                 */
 /* -------------------------------------------------------------------- */
+    int idxBuffer = 0;
     for( int iY = 0; iY < nOutYSize; iY++ )
     {
-        for( int iX = 0; iX < nOutXSize; iX++ )
-        {
-            GByte *pDstLocation =
-                static_cast<GByte *>(pData)
-                + nPixelSpace * iX
-                + static_cast<GPtrDiff_t>(nLineSpace) * iY;
+        GByte *pDstLocation = static_cast<GByte *>(pData)
+            + static_cast<GPtrDiff_t>(nLineSpace) * iY;
 
+        for( int iX = 0; iX < nOutXSize;
+                        iX++, pDstLocation += nPixelSpace, idxBuffer++ )
+        {
             if( pafData && !bIsComplex )
             {
-                WorkingDT fResult = pafData[iX + iY * nOutXSize];
+                WorkingDT fResult = pafData[idxBuffer];
                 if( bNoDataSetIsNan && CPLIsNan(fResult) )
                     continue;
                 if( bNoDataSetAndNotNan &&
                     ARE_REAL_EQUAL(fResult, fWorkingDataTypeNoData) )
+                    continue;
+                if( !abyMask.empty() && abyMask[idxBuffer] == 0 )
                     continue;
 
                 if( m_nColorTableComponent )
@@ -2767,8 +2825,8 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
             else if( pafData && bIsComplex )
             {
                 WorkingDT afResult[2] = {
-                    pafData[2 * (iX + iY * nOutXSize)],
-                    pafData[2 * (iX + iY * nOutXSize) + 1] };
+                    pafData[2 * idxBuffer],
+                    pafData[2 * idxBuffer + 1] };
 
                 // Do not use color table.
                 if( m_eScalingType == VRT_SCALING_LINEAR )

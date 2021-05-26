@@ -42,7 +42,7 @@ def _verify_raster_band_checksums(filename, expected_cs=[]):
     ds = gdal.Open(filename)
     if ds is None:
         pytest.fail('cannot open output file "%s"' % filename)
-    
+
     num_bands = len(expected_cs)
     for i in range(num_bands):
         if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
@@ -57,7 +57,7 @@ def test_gdal2tiles_py_simple():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld.tif')
+    shutil.copy(test_py_scripts.get_data_path('gdrivers')+'small_world.tif', 'tmp/out_gdal2tiles_smallworld.tif')
 
     os.chdir('tmp')
     test_py_scripts.run_py_script(
@@ -70,14 +70,14 @@ def test_gdal2tiles_py_simple():
 
     _verify_raster_band_checksums(
         'tmp/out_gdal2tiles_smallworld/0/0/0.png',
-        expected_cs = [25314, 28114, 6148, 59026]
+        expected_cs = [31420, 32522, 16314, 17849]
     )
 
     for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
         assert os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename), \
             ('%s missing' % filename)
 
-    
+
 
 def test_gdal2tiles_py_zoom_option():
 
@@ -93,11 +93,11 @@ def test_gdal2tiles_py_zoom_option():
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q --force-kml --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q --force-kml --processes=2 -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
 
     _verify_raster_band_checksums(
         'tmp/out_gdal2tiles_smallworld/1/0/0.png',
-        expected_cs = [8130, 10496, 65274, 63715]
+        expected_cs = [24063, 23632, 14707, 17849]
     )
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
@@ -132,7 +132,7 @@ def test_gdal2tiles_py_resampling_option():
             script_path,
             'gdal2tiles',
             '-q --resampling={0} {1} {2}'.format(
-                resample, '../gdrivers/data/small_world.tif', out_dir))
+                resample, test_py_scripts.get_data_path('gdrivers')+'small_world.tif', out_dir))
 
         # very basic check
         ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
@@ -140,38 +140,43 @@ def test_gdal2tiles_py_resampling_option():
             pytest.fail('resample option {0!r} failed'.format(resample))
         ds = None
 
+    shutil.rmtree(out_dir, ignore_errors=True)
+
 
 def test_gdal2tiles_py_xyz():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld_xyz.tif')
+    try:
+        shutil.copy(test_py_scripts.get_data_path('gdrivers')+'small_world.tif', 'tmp/out_gdal2tiles_smallworld_xyz.tif')
 
-    os.chdir('tmp')
-    ret = test_py_scripts.run_py_script(
-        script_path,
-        'gdal2tiles',
-        '-q --xyz --zoom=0-1 out_gdal2tiles_smallworld_xyz.tif')
-    os.chdir('..')
+        os.chdir('tmp')
+        ret = test_py_scripts.run_py_script(
+            script_path,
+            'gdal2tiles',
+            '-q --xyz --zoom=0-1 out_gdal2tiles_smallworld_xyz.tif')
+        os.chdir('..')
 
-    assert 'ERROR ret code' not in ret
+        assert 'ERROR ret code' not in ret
 
-    os.unlink('tmp/out_gdal2tiles_smallworld_xyz.tif')
+        os.unlink('tmp/out_gdal2tiles_smallworld_xyz.tif')
 
-    _verify_raster_band_checksums(
-        'tmp/out_gdal2tiles_smallworld_xyz/0/0/0.png',
-        expected_cs = [30616, 31851, 9392, 63557]
-    )
-    _verify_raster_band_checksums(
-        'tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png',
-        expected_cs = [25095, 27337, 10068, 63699]
-    )
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld_xyz/0/0/0.png',
+            expected_cs = [31747, 33381, 18447, 17849]
+        )
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png',
+            expected_cs = [15445, 16942, 13681, 17849]
+        )
 
-    for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
-        assert os.path.exists('tmp/out_gdal2tiles_smallworld_xyz/' + filename), \
-            ('%s missing' % filename)
-
+        for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html']:
+            assert os.path.exists('tmp/out_gdal2tiles_smallworld_xyz/' + filename), \
+                ('%s missing' % filename)
+        assert not os.path.exists('tmp/out_gdal2tiles_smallworld_xyz/tilemapresource.xml')
+    finally:
+        shutil.rmtree('tmp/out_gdal2tiles_smallworld_xyz')
 
 def test_gdal2tiles_py_invalid_srs():
     """
@@ -182,8 +187,8 @@ def test_gdal2tiles_py_invalid_srs():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gdrivers/data/test_nosrs.vrt', 'tmp/out_gdal2tiles_test_nosrs.vrt')
-    shutil.copy('../gdrivers/data/byte.tif', 'tmp/byte.tif')
+    shutil.copy(test_py_scripts.get_data_path('gdrivers')+'test_nosrs.vrt', 'tmp/out_gdal2tiles_test_nosrs.vrt')
+    shutil.copy(test_py_scripts.get_data_path('gdrivers')+'byte.tif', 'tmp/byte.tif')
 
     os.chdir('tmp')
     # try running on image with missing SRS
@@ -201,6 +206,7 @@ def test_gdal2tiles_py_invalid_srs():
 
     os.unlink('tmp/out_gdal2tiles_test_nosrs.vrt')
     os.unlink('tmp/byte.tif')
+    shutil.rmtree('tmp/out_gdal2tiles_test_nosrs')
 
     assert 'ERROR ret code = 2' in ret
     assert 'ERROR ret code' not in ret2
@@ -234,7 +240,7 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
             'Case of tile not getting any data not handled properly '
             '(tiles at the border of the image)')
 
-    
+
 
 def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
     """
@@ -262,73 +268,9 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
             'Case of low level tile not getting any data not handled properly '
             '(tile at a zoom level too low)')
 
-    
-
-def test_python2_handles_utf8_by_default():
-    if sys.version_info[0] >= 3:
-        pytest.skip()
-
-    return _test_utf8(should_raise_unicode=False)
-
-
-@pytest.mark.skip("This behaviour doesn't actually work as expected")
-def test_python2_gives_warning_if_bad_lc_ctype_and_non_ascii_chars():
-    if sys.version_info[0] >= 3:
-        pytest.skip()
-
-    lc_ctype = os.environ.get("LC_CTYPE", "")
-    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
-
-    ret = _test_utf8(should_raise_unicode=False, quiet=False, should_display_warning=True)
-
-    os.environ['LC_CTYPE'] = lc_ctype
-
-    return ret
-
-
-def test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars():
-    if sys.version_info[0] >= 3:
-        pytest.skip()
-
-    lc_ctype = os.environ.get("LC_CTYPE", "")
-    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
-
-    ret = _test_utf8(should_raise_unicode=False,
-                     quiet=False, should_display_warning=False,
-                     input_file='./data/test_bounds_close_to_tile_bounds_x.vrt')
-
-    os.environ['LC_CTYPE'] = lc_ctype
-
-    return ret
-
-
-def test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder():
-    if sys.version_info[0] >= 3:
-        pytest.skip()
-
-    lc_ctype = os.environ.get("LC_CTYPE", "")
-    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
-
-    ret = _test_utf8(should_raise_unicode=False,
-                     quiet=False, should_display_warning=False,
-                     input_file='./data/漢字/test_bounds_close_to_tile_bounds_x.vrt')
-
-    os.environ['LC_CTYPE'] = lc_ctype
-
-    return ret
-
 
 def test_python3_handle_utf8_by_default():
-    if sys.version_info[0] < 3:
-        pytest.skip()
-
-    return _test_utf8(should_raise_unicode=False)
-
-
-def _test_utf8(should_raise_unicode=False,
-               quiet=True,
-               should_display_warning=False,
-               input_file="data/test_utf8_漢字.vrt"):
+    input_file = "data/test_utf8_漢字.vrt"
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
         pytest.skip()
@@ -340,27 +282,16 @@ def _test_utf8(should_raise_unicode=False,
     except OSError:
         pass
 
-    args = '-z 21 %s %s' % (input_file, out_folder)
-    if quiet:
-        args = "-q " + args
+    args = f'-q -z 21 {input_file} {out_folder}'
 
     try:
         ret = test_py_scripts.run_py_script(script_path, 'gdal2tiles', args)
         print(ret)
     except UnicodeEncodeError:
-        if should_raise_unicode:
-            return
         pytest.fail('Should be handling filenames with utf8 characters in this context')
 
-    assert not should_raise_unicode, \
-        'Should not be handling filenames with utf8 characters in this context'
-
-    if should_display_warning:
-        assert "WARNING" in ret and "LC_CTYPE" in ret, \
-            'Should display a warning message about LC_CTYPE variable'
-    else:
-        assert not ("WARNING" in ret and "LC_CTYPE" in ret), \
-            'Should not display a warning message about LC_CTYPE variable'
+    assert not ("WARNING" in ret and "LC_CTYPE" in ret), \
+        'Should not display a warning message about LC_CTYPE variable'
 
     try:
         shutil.rmtree(out_folder)
@@ -377,7 +308,7 @@ def test_gdal2tiles_py_cleanup():
         except Exception:
             pass
 
-    
+
 
 def test_exclude_transparent_tiles():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
@@ -410,11 +341,126 @@ def test_exclude_transparent_tiles():
         assert ['22705.png'] == dir_files, \
             ('Generated empty tiles for row 21900: %s' % dir_files)
 
-        return
-
     finally:
         shutil.rmtree(output_folder)
 
 
+def test_gdal2tiles_py_profile_raster():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        '-q -p raster -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
+
+    if sys.platform != 'win32':
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld/0/0/0.kml',
+            expected_cs = [29839, 34244, 42706, 64319]
+        )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/0/0/0.png',
+        expected_cs = [10125, 10802, 27343, 48852]
+    )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/1/0/0.png',
+        expected_cs = [62125, 59756, 43894, 38539]
+    )
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
 
 
+def test_gdal2tiles_py_profile_raster_xyz():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        '-q -p raster --xyz -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
+
+    if sys.platform != 'win32':
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld/0/0/0.kml',
+            expected_cs = [27644, 31968, 38564, 64301]
+        )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/0/0/0.png',
+        expected_cs = [11468, 10719, 27582, 48827]
+    )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/1/0/0.png',
+        expected_cs = [60550, 62572, 46338, 38489]
+    )
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+
+def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        '-q -p geodetic --tmscompatible --xyz -z 0-1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld')
+
+    if sys.platform != 'win32':
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld/0/0/0.kml',
+            expected_cs = [12361, 18212, 21827, 5934]
+        )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/0/0/0.png',
+        expected_cs = [8560, 8031, 7209, 17849]
+    )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/1/0/0.png',
+        expected_cs = [2799, 3468, 8686, 17849]
+    )
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+
+def test_gdal2tiles_py_mapml():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.rmtree('tmp/out_gdal2tiles_mapml', ignore_errors=True)
+
+    gdal.Translate('tmp/byte_APS.tif', test_py_scripts.get_data_path('gcore') + 'byte.tif',
+                   options='-a_srs EPSG:5936 -a_ullr 0 40 40 0')
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        '-q -p APSTILE -w mapml -z 16-18 --url "https://foo" tmp/byte_APS.tif tmp/out_gdal2tiles_mapml')
+
+    mapml = open('tmp/out_gdal2tiles_mapml/mapml.mapml', 'rb').read().decode('utf-8')
+    #print(mapml)
+    assert '<extent units="APSTILE">' in mapml
+    assert '<input name="z" type="zoom" value="18" min="16" max="18" />' in mapml
+    assert '<input name="x" type="location" axis="column" units="tilematrix" min="122496" max="122496" />' in mapml
+    assert '<input name="y" type="location" axis="row" units="tilematrix" min="139647" max="139647" />' in mapml
+    assert '<link tref="https://foo/out_gdal2tiles_mapml/{z}/{x}/{y}.png" rel="tile" />' in mapml
+
+    shutil.rmtree('tmp/out_gdal2tiles_mapml', ignore_errors=True)
+    gdal.Unlink('tmp/byte_APS.tif')

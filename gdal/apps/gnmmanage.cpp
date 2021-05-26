@@ -535,28 +535,30 @@ MAIN_START(nArgc, papszArgv)
         {
             Usage( CPLSPrintf("%s driver not available", pszFormat) );
         }
-
-        char** papszMD = poDriver->GetMetadata();
-
-        if( !CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
-            Usage("not a GNM driver");
-
-        poDS = cpl::down_cast<GNMNetwork*>(poDriver->Create( pszPath, 0, 0, 0, GDT_Unknown,
-                                              papszDSCO ));
-
-        if (nullptr == poDS)
-        {
-            fprintf(stderr, "\nFAILURE: Failed to create network in a new dataset at "
-                    "%s and with driver %s\n", CPLFormFilename(pszPath,
-                    pszNetworkName, nullptr) ,pszFormat);
-            nRet = 1;
-        }
         else
         {
-            if (bQuiet == FALSE)
-                printf("\nNetwork created successfully in a "
-                   "new dataset at %s\n", CPLFormFilename(pszPath,
-                    pszNetworkName, nullptr));
+            char** papszMD = poDriver->GetMetadata();
+
+            if( !CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
+                Usage("not a GNM driver");
+
+            poDS = cpl::down_cast<GNMNetwork*>(poDriver->Create( pszPath, 0, 0, 0, GDT_Unknown,
+                                                papszDSCO ));
+
+            if (nullptr == poDS)
+            {
+                fprintf(stderr, "\nFAILURE: Failed to create network in a new dataset at "
+                        "%s and with driver %s\n", CPLFormFilename(pszPath,
+                        pszNetworkName, nullptr) ,pszFormat);
+                nRet = 1;
+            }
+            else
+            {
+                if (bQuiet == FALSE)
+                    printf("\nNetwork created successfully in a "
+                    "new dataset at %s\n", CPLFormFilename(pszPath,
+                        pszNetworkName, nullptr));
+            }
         }
     }
     else if(stOper == op_import)

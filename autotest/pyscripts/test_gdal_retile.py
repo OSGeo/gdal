@@ -51,7 +51,7 @@ def test_gdal_retile_1():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile ../gcore/data/byte.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
 
     ds = gdal.Open('tmp/outretile/byte_1_1.tif')
     assert ds.GetRasterBand(1).Checksum() == 4672
@@ -86,7 +86,7 @@ def test_gdal_retile_2():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile2 ../gcore/data/rgba.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile2 ' + test_py_scripts.get_data_path('gcore') + 'rgba.tif')
 
     ds = gdal.Open('tmp/outretile2/2/rgba_1_1.tif')
     assert ds.GetRasterBand(1).Checksum() == 35, 'wrong checksum for band 1'
@@ -182,7 +182,7 @@ def test_gdal_retile_4():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -ps 8 7 -overlap 3 -targetDir tmp/outretile4 ../gcore/data/byte.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -ps 8 7 -overlap 3 -targetDir tmp/outretile4 ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
 
     expected_results = [['tmp/outretile4/byte_1_1.tif', 8, 7],
                         ['tmp/outretile4/byte_1_2.tif', 8, 7],
@@ -211,7 +211,7 @@ def test_gdal_retile_4():
         assert ds.RasterYSize == height, filename
         ds = None
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 1 -ps 8 8 -overlap 4 -targetDir tmp/outretile4 ../gcore/data/byte.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 1 -ps 8 8 -overlap 4 -targetDir tmp/outretile4 ' + test_py_scripts.get_data_path('gcore') + 'byte.tif')
 
     expected_results = [['tmp/outretile4/byte_1_1.tif', 8, 8],
                         ['tmp/outretile4/byte_1_2.tif', 8, 8],
@@ -247,12 +247,7 @@ def test_gdal_retile_4():
 
 def test_gdal_retile_5():
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-        import numpy as np
-    except (ImportError, AttributeError):
-        pytest.skip()
+    np = pytest.importorskip('numpy')
 
     nodata_value = -3.4028234663852886e+38
     raster_array = np.array(([0.0, 2.0], [-1.0, nodata_value]))

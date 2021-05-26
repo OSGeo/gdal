@@ -240,8 +240,9 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount( int bForce )
     GIntBig nFeatureCount = -1;
     if( m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
     {
-        const CPLString osNewURL =
+        CPLString osNewURL =
             CPLURLAddKVP(poDS->GetURL(), "returnCountOnly", "true");
+        osNewURL = CPLURLAddKVP(osNewURL, "resultRecordCount", nullptr);
         CPLErrorReset();
         CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, nullptr );
         if( pResult != nullptr &&
@@ -278,6 +279,7 @@ OGRErr OGRESRIFeatureServiceLayer::GetExtent( OGREnvelope *psExtent,
     OGRErr eErr = OGRERR_FAILURE;
     CPLString osNewURL =
         CPLURLAddKVP(poDS->GetURL(), "returnExtentOnly", "true");
+    osNewURL = CPLURLAddKVP(osNewURL, "resultRecordCount", nullptr);
     osNewURL = CPLURLAddKVP(osNewURL, "f", "geojson");
     CPLErrorReset();
     CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, nullptr );
@@ -342,7 +344,7 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
         if( nUserSetRecordCount > poFirst->GetLayer(0)->GetFeatureCount() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Specificied resultRecordCount=%d is greater than "
+                     "Specified resultRecordCount=%d is greater than "
                      "the maximum %d supported by the server",
                      nUserSetRecordCount,
                      static_cast<int>(poFirst->GetLayer(0)->GetFeatureCount()));
@@ -438,6 +440,18 @@ static int OGRGeoJSONDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
     {
         return -1;
     }
+
+    // If this looks like a file that can be handled by the STACTA driver,
+    // and that one is available, then don't identify the file.
+    const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
+    if( pszHeader != nullptr &&
+        strstr(pszHeader, "\"stac_extensions\"") != nullptr &&
+        strstr(pszHeader, "\"tiled-assets\"") != nullptr &&
+        GDALGetDriverByName("STACTA") != nullptr )
+    {
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -632,7 +646,7 @@ void RegisterOGRGeoJSON()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoJSON" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "json geojson" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_geojson.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/geojson.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

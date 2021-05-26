@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Support for reading and manipulating PCIDSK Ephemeris Segments
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
  ****************************************************************************/
 #ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKEPHEMERIS_SEG_H
 #define INCLUDE_PCIDSK_SEGMENT_PCIDSKEPHEMERIS_SEG_H
- 
+
 #include "pcidsk_ephemeris.h"
 #include "segment/cpcidsksegment.h"
 
@@ -52,12 +52,16 @@ namespace PCIDSK {
             }
             mpoEphemeris = new EphemerisSeg_t(oEph);
             mbModified = true;
+
+            //we set loaded to true to trigger the Write during synchronize
+            //else if the segment has just been created it will not be saved.
+            this->loaded_ = true;
         }
 
         //synchronize the segment on disk.
         void Synchronize() override;
     private:
-        
+
         // Helper housekeeping functions
         void Load();
         void Write();
@@ -69,7 +73,7 @@ namespace PCIDSK {
         PCIDSKBuffer seg_data;
         bool loaded_;
         bool mbModified;
-        void ReadAvhrrEphemerisSegment(int, 
+        void ReadAvhrrEphemerisSegment(int,
                                        EphemerisSeg_t *);
         void ReadAvhrrScanlineRecord(int nPos,
                                      AvhrrLine_t *psScanlineRecord);
@@ -80,7 +84,7 @@ namespace PCIDSK {
         void WriteAvhrrInt32(int nValue, unsigned char* pbyBuf);
         EphemerisSeg_t *BinaryToEphemeris( int nStartBlock );
         void EphemerisToBinary( EphemerisSeg_t *, int );
-        double ConvertDeg(double degree, int mode);  
+        double ConvertDeg(double degree, int mode);
     };
 }
 

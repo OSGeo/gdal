@@ -165,6 +165,7 @@ CPLErr OGRGeomediaLayer::BuildFeatureDefn( const char *pszLayerName,
             break;
 
           case SQL_C_TIMESTAMP:
+          case SQL_C_TYPE_TIMESTAMP:
             oField.SetType( OFTDateTime );
             break;
 

@@ -41,6 +41,8 @@
 #include "minidriver_arcgis_server.h"
 #include "minidriver_iip.h"
 #include "minidriver_mrf.h"
+#include "minidriver_ogcapimaps.h"
+#include "minidriver_ogcapicoverage.h"
 
 #include "cpl_json.h"
 
@@ -84,6 +86,18 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 
     CPLString osBaseURL = pszBaseURL;
     /* Remove all keywords to get base URL */
+
+    if( osBBOXOrder.empty() && !osCRS.empty() &&
+        VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0") )
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput(osCRS);
+        oSRS.AutoIdentifyEPSG();
+        if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
+        {
+            osBBOXOrder = "yxYX";
+        }
+    }
 
     osBaseURL = CPLURLAddKVP(osBaseURL, "VERSION", nullptr);
     osBaseURL = CPLURLAddKVP(osBaseURL, "REQUEST", nullptr);
@@ -743,6 +757,9 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     const char* pszFilename = poOpenInfo->pszFilename;
     const char* pabyHeader = (const char *) poOpenInfo->pabyHeader;
 
+    if (!Identify(poOpenInfo))
+        return nullptr;
+
     if (poOpenInfo->nHeaderBytes == 0 &&
         STARTS_WITH_CI(pszFilename, "<GDAL_WMS>"))
     {
@@ -810,7 +827,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
         if (psXML == nullptr)
             return nullptr;
-        GDALDataset* poRet = GDALWMSMetaDataset::AnalyzeGetTileService(psXML);
+        GDALDataset* poRet = GDALWMSMetaDataset::AnalyzeGetTileService(psXML, poOpenInfo);
         CPLDestroyXMLNode( psXML );
         return poRet;
     }
@@ -935,9 +952,16 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 /* -------------------------------------------------------------------- */
     if (ds != nullptr)
     {
-        ds->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
-        ds->SetDescription( poOpenInfo->pszFilename );
-        ds->TryLoadXML();
+        if (poOpenInfo->pszFilename && poOpenInfo->pszFilename[0] == '<')
+        {
+            ds->nPamFlags = GPF_DISABLED;
+        }
+        else
+        {
+            ds->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+            ds->SetDescription(poOpenInfo->pszFilename);
+            ds->TryLoadXML();
+        }
     }
 
     return ds;
@@ -1041,6 +1065,12 @@ void WMSDeregister(CPL_UNUSED GDALDriver *d) {
 /*                          GDALRegister_WMS()                          */
 /************************************************************************/
 
+//
+// Do not define any open options here!
+// Doing so will enable checking the open options, which will generate warnings for
+// undeclared options which may be handled by individual minidrivers
+//
+
 void GDALRegister_WMS()
 
 {
@@ -1057,6 +1087,8 @@ void GDALRegister_WMS()
     RegisterMinidriver(AGS);
     RegisterMinidriver(IIP);
     RegisterMinidriver(MRF);
+    RegisterMinidriver(OGCAPIMaps);
+    RegisterMinidriver(OGCAPICoverage);
 
     GDALDriver *poDriver = new GDALDriver();
 

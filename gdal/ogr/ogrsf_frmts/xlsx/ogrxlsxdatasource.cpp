@@ -528,15 +528,19 @@ static void SetField(OGRFeature* poFeature,
         strcmp(pszCellType, "datetime_ms") == 0)
     {
         struct tm sTm;
-        double dfNumberOfDaysSince1900 = CPLAtof(pszValue);
-        GIntBig nUnixTime = (GIntBig)((dfNumberOfDaysSince1900 -
-                                       NUMBER_OF_DAYS_BETWEEN_1900_AND_1970 )*
-                                                NUMBER_OF_SECONDS_PER_DAY);
+        const double dfNumberOfDaysSince1900 = CPLAtof(pszValue);
+        if( !(std::fabs(dfNumberOfDaysSince1900) < 365.0 * 10000) )
+            return;
+        double dfNumberOfSecsSince1900 = dfNumberOfDaysSince1900 * NUMBER_OF_SECONDS_PER_DAY;
+        if( std::fabs(dfNumberOfSecsSince1900 - std::round(dfNumberOfSecsSince1900)) < 1e-3 )
+            dfNumberOfSecsSince1900 = std::round(dfNumberOfSecsSince1900);
+        const GIntBig nUnixTime = static_cast<GIntBig>(dfNumberOfSecsSince1900) -
+                static_cast<GIntBig>(NUMBER_OF_DAYS_BETWEEN_1900_AND_1970) * NUMBER_OF_SECONDS_PER_DAY;
         CPLUnixTimeToYMDHMS(nUnixTime, &sTm);
 
         if (eType == OFTTime || eType == OFTDate || eType == OFTDateTime)
         {
-            double fFracSec = fmod(fmod(dfNumberOfDaysSince1900,1) * 3600 * 24, 1);
+            double fFracSec = fmod(dfNumberOfSecsSince1900, 1);
             poFeature->SetField(i, sTm.tm_year + 1900, sTm.tm_mon + 1, sTm.tm_mday,
                                 sTm.tm_hour, sTm.tm_min,
                                 static_cast<float>(sTm.tm_sec + fFracSec), 0 );
@@ -553,7 +557,7 @@ static void SetField(OGRFeature* poFeature,
         }
         else /* if (strcmp(pszCellType, "datetime") == 0) */
         {
-            double fFracSec = fmod(fmod(dfNumberOfDaysSince1900,1) * 3600 * 24, 1);
+            double fFracSec = fmod(dfNumberOfSecsSince1900, 1);
             poFeature->SetField(i,
                                 sTm.tm_year + 1900, sTm.tm_mon + 1, sTm.tm_mday,
                                 sTm.tm_hour, sTm.tm_min,
@@ -1000,7 +1004,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                         }
                         else if( eFieldType == OFTInteger &&
                                  poFieldDefn->GetSubType() == OFSTBoolean &&
-                                 eValType == OFTInteger && 
+                                 eValType == OFTInteger &&
                                  eValSubType != OFSTBoolean )
                         {
                             poFieldDefn->SetSubType(OFSTNone);
@@ -1170,10 +1174,18 @@ void OGRXLSXDataSource::startElementSSCbk(const char *pszNameIn,
     {
         case STATE_DEFAULT:
         {
+            if (strcmp(pszNameIn,"si") == 0)
+            {
+                PushState(STATE_SI);
+                osCurrentString = "";
+            }
+            break;
+        }
+        case STATE_SI:
+        {
             if (strcmp(pszNameIn,"t") == 0)
             {
                 PushState(STATE_T);
-                osCurrentString = "";
             }
             break;
         }
@@ -1202,7 +1214,8 @@ void OGRXLSXDataSource::endElementSSCbk(CPL_UNUSED const char *pszNameIn)
     switch(stateStack[nStackDepth].eVal)
     {
         case STATE_DEFAULT: break;
-        case STATE_T:
+        case STATE_T: break;
+        case STATE_SI:
         {
             if (stateStack[nStackDepth].nBeginDepth == nDepth)
             {
@@ -1245,6 +1258,7 @@ void OGRXLSXDataSource::dataHandlerSSCbk(const char *data, int nLen)
     switch(stateStack[nStackDepth].eVal)
     {
         case STATE_DEFAULT: break;
+        case STATE_SI:      break;
         case STATE_T:       osCurrentString.append(data, nLen); break;
         default:            break;
     }
@@ -2292,6 +2306,8 @@ void OGRXLSXDataSource::FlushCache()
             return;
         }
     }
+
+    CPLConfigOptionSetter oZip64Disable("CPL_CREATE_ZIP64", "NO", false);
 
     /* Maintain new ZIP files opened */
     CPLString osTmpFilename(CPLSPrintf("/vsizip/%s", pszName));

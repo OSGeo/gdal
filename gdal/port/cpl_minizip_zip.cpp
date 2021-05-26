@@ -637,9 +637,9 @@ static int LoadCentralDirectoryRecord(zip64_internal* pziinit)
   uLong uL;
 
   uLong number_disk;          /* number of the current dist, used for
-                              spaning ZIP, unsupported, always 0*/
+                              spanning ZIP, unsupported, always 0*/
   uLong number_disk_with_CD;  /* number the the disk with central dir, used
-                              for spaning ZIP, unsupported, always 0*/
+                              for spanning ZIP, unsupported, always 0*/
   ZPOS64_T number_entry;
   ZPOS64_T number_entry_CD;      /* total number of entries in
                                 the central dir
@@ -840,6 +840,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     zlib_filefunc_def* pzlib_filefunc_def )
 {
     zip64_internal ziinit;
+    memset(&ziinit, 0, sizeof(ziinit));
 
     if (pzlib_filefunc_def==nullptr)
         cpl_fill_fopen_filefunc(&ziinit.z_filefunc);

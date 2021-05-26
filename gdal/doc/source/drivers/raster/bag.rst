@@ -14,9 +14,11 @@ a specific product profile in an HDF5 file, but a custom driver exists
 to present the data in a more convenient manner than is available
 through the generic HDF5 driver.
 
-BAG files have two or three image bands representing Elevation (band 1),
-Uncertainty (band 2) and Nominal Elevation (band 3) values for each cell
-in a raster grid area.
+BAG files have two image bands representing Elevation (band 1),
+Uncertainty (band 2) values for each cell in a raster grid area.
+Nominal Elevation values may also be present, and starting with GDAL 3.2, any
+2D array of numeric data type and with the same dimensions as Elevation present
+under BAG_root will be reported as a GDAL band.
 
 The geotransform and coordinate system is extracted from the internal
 XML metadata provided with the dataset. However, some products may have
@@ -32,9 +34,26 @@ Driver capabilities
 
 .. supports_createcopy::
 
+.. supports_create::
+
+    This driver supports the :cpp:func:`GDALDriver::Create` operation
+
+    .. versionadded:: 3.2
+
 .. supports_georeferencing::
 
 .. supports_virtualio::
+
+Open options
+------------
+
+For open options specific to variable resolution, see following chapter.
+
+Other open options are:
+
+- REPORT_VERTCRS=YES/NO (starting with GDAL 3.2). Defaults to YES. To report
+  the vertical CRS from BAG XML metadata as the vertical component of a
+  compound CRS. If set to NO, only the horizontal part will be reported.
 
 Variable resolution (VR) grid support
 -------------------------------------
@@ -85,9 +104,8 @@ MODE open option:
    the driver will find the nodes of the supergrids that fall into that
    cell. By default, it will select the node with the maximum elevation
    value to populate the cell value. Or if no node of any supergrid are
-   found, the cell value will be set to the nodata value. Interpolation
-   of cells at nodata value can also be done using a inverse distance
-   weighting interpolation. Overviews are reported: note that, those
+   found, the cell value will be set to the nodata value.
+   Overviews are reported: note that, those
    overviews correspond to resampled grids computed with different
    values of the RESX and RESY parameters, but using the same value
    population rules (and not nearest neighbour resampling of the full
@@ -130,7 +148,7 @@ MODE open option:
       of supergrids available. If this value is specified and none of
       RES_STRATEGY, RESX or RESY is specified, this will also be used as
       the resolution for the resampled grid.
-   -  VALUE_POPULATION=MIN/MAX/MEAN: Which value population strategy to
+   -  VALUE_POPULATION=MIN/MAX/MEAN/COUNT: Which value population strategy to
       apply to compute the resampled cell values. This default to MAX:
       the elevation value of a target cell is the maximum elevation of
       all supergrid nodes (potentially filtered with RES_FILTER_MIN
@@ -139,9 +157,11 @@ MODE open option:
       maximum elevation si reached. If no supergrid node fall into the
       target cell, the nodata value is set. The MIN strategy is similar,
       except that this is the minimum elevation value among intersecting
-      nodes that is selected. The MEAN strategy use the mean value of
+      nodes that is selected. The MEAN strategy uses the mean value of
       the elevation of intersecting nodes, and the maximum uncertainty
       of those nodes.
+      The COUNT strategy (GDAL >= 3.2) exposes one single UInt32 band where
+      each target cell contains the count of supergrid nodes that fall into it.
    -  SUPERGRIDS_MASK=YES/NO. Default to NO. If set to YES, instead of
       the elevation and uncertainty band, the dataset contains a single
       Byte band which is boolean valued. For a target cell, if at least
@@ -151,12 +171,38 @@ MODE open option:
       if elevation values at nodata are due to no source supergrid node
       falling into them, or if that/those supergrid nodes were
       themselves at the nodata value.
-   -  INTERPOLATION=NO/INVDIST. Default to NO. If set to INVDIST, a
-      inverse distance weighting interpolation of nodata values is
-      applied after the above describe value population. Interpolation
-      cannot be used together with SUPERGRIDS_MASK=YES.
    -  NODATA_VALUE=value. Override the default value, which is usually
       1000000.
+
+Spatial metadata support
+------------------------
+
+Starting with GDAL 3.2, GDAL can expose BAG files with `spatial metadata
+<https://github.com/OpenNavigationSurface/BAG/issues/2>`__.
+
+When such spatial metadata is present, the subdataset list will include
+names of the form 'BAG:"{filename}":georef_metadata:{name_of_layer}'
+where ``name_of_layer`` is the name of a subgroup under ``/BAG_root/Georef_metadata``
+
+The values of the ``keys`` dataset under each metadata layer are used as the
+GDAL raster value. And the corresponding ``values`` dataset is exposed as a
+GDAL Raster Attribute Table associated to the GDAL raster band. If ``keys``
+is absent, record 1 of ``values`` is assumed to be met for each elevation point
+that does not match the nodata value of the elevation band.
+
+When variable resolution grids are present, the MODE=LIST_SUPERGRIDS open option
+will cause subdatasets of names of the form 'BAG:"{filename}":georef_metadata:{name_of_layer}:{y}:{x}'
+to be reported. When opening such a subdataset, the ``varres_keys`` dataset will
+be used to populate the GDAL raster value.
+If ``varres_keys`` is absent, record 1 of ``values`` is assumed to be met for
+each elevation point that does not match the nodata value of the variable resolution
+elevation band.
+
+Tracking list support
+---------------------
+
+When the dataset is opened in vector mode (ogrinfo, ogr2ogr, etc.), the tracking_list
+dataset will be reported as a OGR vector layer
 
 Creation support
 ----------------
@@ -277,8 +323,7 @@ Usage examples
       $ gdalinfo BAG:"data/test_vr.bag":supergrid:3:5
 
 -  Converting a BAG in resampling mode with default parameters (use of
-   minimum resolution of supergrids, MAX value population rule, no
-   interpolation):
+   minimum resolution of supergrids, MAX value population rule):
 
    ::
 
@@ -297,13 +342,6 @@ Usage examples
    ::
 
       $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo SUPERGRIDS_MASK=YES out.tif
-
--  Converting a BAG in resampling mode, with interpolation of nodata
-   values.
-
-   ::
-
-      $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo INTERPOLATION=INVDIST out.tif
 
 -  Converting a BAG in resampling mode, by filtering on supergrid
    resolutions (and the resampled grid will use 4 meter resolution by
@@ -327,6 +365,12 @@ Usage examples
    ::
 
       $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo RESX=5 -oo RESY=5 out.bag -co "VAR_ABSTRACT=My abstract"
+
+-  Displaying the tracking list:
+
+   ::
+
+      $ ogrinfo -al data/my.bal
 
 See Also
 --------

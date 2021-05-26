@@ -88,7 +88,7 @@ void RegisterOGRTopoJSON()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "TopoJSON" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "json topojson" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_topojson.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/topojson.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList/>");

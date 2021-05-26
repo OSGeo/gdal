@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<product>
+  <adsHeader>
+    <missionId>S1A</missionId>
+    <productType>SLC</productType>
+    <polarisation>VV</polarisation>
+    <mode>WV</mode>
+    <swath>WV2</swath>
+    <startTime>2016-05-10T10:16:18.532516</startTime>
+    <stopTime>2016-05-10T10:16:21.424949</stopTime>
+    <absoluteOrbitNumber>11195</absoluteOrbitNumber>
+    <missionDataTakeId>69281</missionDataTakeId>
+    <imageNumber>002</imageNumber>
+  </adsHeader>
+  <imageAnnotation>
+    <imageInformation>
+      <productFirstLineUtcTime>2016-05-10T10:16:18.532516</productFirstLineUtcTime>
+      <productLastLineUtcTime>2016-05-10T10:16:21.424949</productLastLineUtcTime>
+      <ascendingNodeTime>2016-05-10T09:38:08.925424</ascendingNodeTime>
+      <anchorTime>2016-05-10T10:16:18.532516</anchorTime>
+      <productComposition>Individual</productComposition>
+      <sliceNumber>0</sliceNumber>
+      <sliceList count="0"/>
+      <slantRangeTime>5.666623024116185e-03</slantRangeTime>
+      <pixelValue>Complex</pixelValue>
+      <outputPixels>16 bit Signed Integer</outputPixels>
+      <rangePixelSpacing>2.745555e+00</rangePixelSpacing>
+      <azimuthPixelSpacing>4.107765e+00</azimuthPixelSpacing>
+      <azimuthTimeInterval>6.059988896297211e-04</azimuthTimeInterval>
+      <azimuthFrequency>1.650168040094962e+03</azimuthFrequency>
+      <numberOfSamples>4500</numberOfSamples>
+      <numberOfLines>4774</numberOfLines>
+      <zeroDopMinusAcqTime>3.655930000000000e-01</zeroDopMinusAcqTime>
+      <incidenceAngleMidSwath>3.711177315261106e+01</incidenceAngleMidSwath>
+      <imageStatistics>
+        <outputDataMean>
+          <re>-1.147264e-01</re>
+          <im>-2.517945e-01</im>
+        </outputDataMean>
+        <outputDataStdDev>
+          <re>1.159687e+02</re>
+          <im>1.159497e+02</im>
+        </outputDataStdDev>
+      </imageStatistics>
+    </imageInformation>
+  </imageAnnotation>
+  <geolocationGrid>
+    <geolocationGridPointList count="2">
+      <geolocationGridPoint>
+        <azimuthTime>2016-05-10T10:16:18.532496</azimuthTime>
+        <slantRangeTime>5.666623024116185e-03</slantRangeTime>
+        <line>0</line>
+        <pixel>0</pixel>
+        <latitude>4.116983157947665e+01</latitude>
+        <longitude>-6.221518227799406e+01</longitude>
+        <height>0.000000000000000e+00</height>
+        <incidenceAngle>3.646227634785103e+01</incidenceAngle>
+        <elevationAngle>3.236794247105636e+01</elevationAngle>
+      </geolocationGridPoint>
+      <geolocationGridPoint>
+        <azimuthTime>2016-05-10T10:16:18.532501</azimuthTime>
+        <slantRangeTime>5.674865392444088e-03</slantRangeTime>
+        <line>0</line>
+        <pixel>450</pixel>
+        <latitude>4.117314024547147e+01</latitude>
+        <longitude>-6.223950727533213e+01</longitude>
+        <height>0.000000000000000e+00</height>
+        <incidenceAngle>3.659322755864712e+01</incidenceAngle>
+        <elevationAngle>3.248023492910899e+01</elevationAngle>
+      </geolocationGridPoint>
+    </geolocationGridPointList>
+  </geolocationGrid>
+</product>

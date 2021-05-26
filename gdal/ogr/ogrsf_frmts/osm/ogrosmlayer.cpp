@@ -125,8 +125,8 @@ OGROSMLayer::~OGROSMLayer()
     for( int i=0; i<static_cast<int>(apszNames.size()); i++ )
         CPLFree(apszNames[i]);
 
-    for( int i=0; i<static_cast<int>(apszUnsignificantKeys.size()); i++ )
-        CPLFree(apszUnsignificantKeys[i]);
+    for( int i=0; i<static_cast<int>(apszInsignificantKeys.size()); i++ )
+        CPLFree(apszInsignificantKeys[i]);
 
     for( int i=0; i<static_cast<int>(apszIgnoreKeys.size()); i++ )
         CPLFree(apszIgnoreKeys[i]);
@@ -952,14 +952,14 @@ const OGREnvelope* OGROSMLayer::GetSpatialFilterEnvelope()
 }
 
 /************************************************************************/
-/*                        AddUnsignificantKey()                         */
+/*                        AddInsignificantKey()                         */
 /************************************************************************/
 
-void OGROSMLayer::AddUnsignificantKey( const char* pszK )
+void OGROSMLayer::AddInsignificantKey( const char* pszK )
 {
     char* pszKDup = CPLStrdup(pszK);
-    apszUnsignificantKeys.push_back(pszKDup);
-    aoSetUnsignificantKeys[pszKDup] = 1;
+    apszInsignificantKeys.push_back(pszKDup);
+    aoSetInsignificantKeys[pszKDup] = 1;
 }
 
 /************************************************************************/

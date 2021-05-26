@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  PNM Driver
- * Purpose:  Portable anymap file format imlementation
+ * Purpose:  Portable anymap file format implementation
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

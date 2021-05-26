@@ -188,10 +188,19 @@ class GDALInfo {
                 }
             }
 
+            SpatialReference srsDef = ds.GetSpatialRef();
+            if (srsDef != null)
+            {
+                string wkt;
+                srsDef.ExportToPrettyWkt(out wkt, 0);
+                Console.WriteLine("Coordinate System is (via GetSpatialRef):");
+                Console.WriteLine(wkt);
+            }
+
             /* -------------------------------------------------------------------- */
             /*      Report GCPs.                                                    */
             /* -------------------------------------------------------------------- */
-            if( ds.GetGCPCount( ) > 0 )
+            if ( ds.GetGCPCount( ) > 0 )
             {
                 Console.WriteLine( "GCP Projection: ", ds.GetGCPProjection());
                 GCP[] GCPs = ds.GetGCPs();

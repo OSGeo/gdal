@@ -75,23 +75,14 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
     PyObject* poPyBuffer;
     const size_t nSize = static_cast<size_t>(nHeight) * nWidth *
                                     GDALGetDataTypeSizeBytes(eType);
-    if( PyBuffer_FromReadWriteMemory )
+    Py_buffer pybuffer;
+    if( PyBuffer_FillInfo(&pybuffer, nullptr, static_cast<char*>(pBuffer),
+                          nSize,
+                          0, PyBUF_FULL) != 0)
     {
-        // Python 2
-        poPyBuffer = PyBuffer_FromReadWriteMemory(pBuffer, nSize);
+        return nullptr;
     }
-    else
-    {
-        // Python 3
-        Py_buffer pybuffer;
-        if( PyBuffer_FillInfo(&pybuffer, nullptr, static_cast<char*>(pBuffer),
-                              nSize,
-                              0, PyBUF_FULL) != 0)
-        {
-            return nullptr;
-        }
-        poPyBuffer = PyMemoryView_FromBuffer(&pybuffer);
-    }
+    poPyBuffer = PyMemoryView_FromBuffer(&pybuffer);
     PyObject* pArgsCreateArray = PyTuple_New(4);
     PyTuple_SetItem(pArgsCreateArray, 0, poPyBuffer);
     const char* pszDataType = nullptr;
@@ -115,9 +106,9 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
             break;
     }
     PyTuple_SetItem(pArgsCreateArray, 1,
-                PyString_FromStringAndSize(pszDataType, strlen(pszDataType)));
-    PyTuple_SetItem(pArgsCreateArray, 2, PyInt_FromLong(nHeight));
-    PyTuple_SetItem(pArgsCreateArray, 3, PyInt_FromLong(nWidth));
+                PyBytes_FromStringAndSize(pszDataType, strlen(pszDataType)));
+    PyTuple_SetItem(pArgsCreateArray, 2, PyLong_FromLong(nHeight));
+    PyTuple_SetItem(pArgsCreateArray, 3, PyLong_FromLong(nWidth));
     PyObject* poNumpyArray = PyObject_Call(pCreateArray, pArgsCreateArray, nullptr);
     Py_DecRef(pArgsCreateArray);
     if (PyErr_Occurred())
@@ -1088,13 +1079,13 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         PyObject* pyArgs = PyTuple_New(10);
         PyTuple_SetItem(pyArgs, 0, pyArgInputArray);
         PyTuple_SetItem(pyArgs, 1, poPyDstArray);
-        PyTuple_SetItem(pyArgs, 2, PyInt_FromLong(nXOff));
-        PyTuple_SetItem(pyArgs, 3, PyInt_FromLong(nYOff));
-        PyTuple_SetItem(pyArgs, 4, PyInt_FromLong(nXSize));
-        PyTuple_SetItem(pyArgs, 5, PyInt_FromLong(nYSize));
-        PyTuple_SetItem(pyArgs, 6, PyInt_FromLong(nRasterXSize));
-        PyTuple_SetItem(pyArgs, 7, PyInt_FromLong(nRasterYSize));
-        PyTuple_SetItem(pyArgs, 8, PyInt_FromLong(nBufferRadius));
+        PyTuple_SetItem(pyArgs, 2, PyLong_FromLong(nXOff));
+        PyTuple_SetItem(pyArgs, 3, PyLong_FromLong(nYOff));
+        PyTuple_SetItem(pyArgs, 4, PyLong_FromLong(nXSize));
+        PyTuple_SetItem(pyArgs, 5, PyLong_FromLong(nYSize));
+        PyTuple_SetItem(pyArgs, 6, PyLong_FromLong(nRasterXSize));
+        PyTuple_SetItem(pyArgs, 7, PyLong_FromLong(nRasterYSize));
+        PyTuple_SetItem(pyArgs, 8, PyLong_FromLong(nBufferRadius));
 
         double adfGeoTransform[6];
         adfGeoTransform[0] = 0;
@@ -1119,7 +1110,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             const char* pszValue =
                 m_poPrivate->m_oFunctionArgs[i].second.c_str();
             PyDict_SetItemString(pyKwargs, pszKey,
-                PyString_FromStringAndSize(pszValue, strlen(pszValue)));
+                PyBytes_FromStringAndSize(pszValue, strlen(pszValue)));
         }
 
         // Call user function

@@ -35,25 +35,6 @@ namespace GDAL
 {
 
 /************************************************************************/
-/*                         HDF5SharedResources                          */
-/************************************************************************/
-
-class HDF5SharedResources
-{
-    friend class ::HDF5Dataset;
-
-    bool m_bReadOnly = true;
-    hid_t            m_hHDF5 = 0;
-    CPLString        m_osFilename{};
-public:
-    HDF5SharedResources() = default;
-    ~HDF5SharedResources();
-
-    inline hid_t GetHDF5() const { return m_hHDF5; }
-    inline bool IsReadOnly() const { return m_bReadOnly; }
-};
-
-/************************************************************************/
 /*                               HDF5Group                              */
 /************************************************************************/
 
@@ -341,6 +322,8 @@ public:
     }
 
     bool IsWritable() const override { return !m_poShared->IsReadOnly(); }
+
+    const std::string& GetFilename() const override { return m_poShared->GetFilename(); }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
@@ -1490,11 +1473,43 @@ static void FreeDynamicMemory(GByte* pabyPtr, hid_t hDataType)
 }
 
 /************************************************************************/
+/*                   CreateMapTargetComponentsToSrc()                   */
+/************************************************************************/
+
+static std::vector<unsigned> CreateMapTargetComponentsToSrc(
+                hid_t hSrcDataType, const GDALExtendedDataType& dstDataType)
+{
+    CPLAssert( H5Tget_class(hSrcDataType) == H5T_COMPOUND );
+    CPLAssert( dstDataType.GetClass() == GEDTC_COMPOUND );
+
+    const unsigned nMembers = H5Tget_nmembers(hSrcDataType);
+    std::map<std::string, unsigned> oMapSrcCompNameToIdx;
+    for(unsigned i = 0; i < nMembers; i++ )
+    {
+        char* pszName = H5Tget_member_name(hSrcDataType, i);
+        if( pszName )
+            oMapSrcCompNameToIdx[pszName] = i;
+    }
+
+    std::vector<unsigned> ret;
+    const auto& comps = dstDataType.GetComponents();
+    ret.reserve(comps.size());
+    for( const auto& comp: comps )
+    {
+        auto oIter = oMapSrcCompNameToIdx.find(comp->GetName());
+        CPLAssert( oIter != oMapSrcCompNameToIdx.end() );
+        ret.emplace_back(oIter->second);
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*                            CopyValue()                               */
 /************************************************************************/
 
 static void CopyValue(const GByte* pabySrcBuffer, hid_t hSrcDataType,
-                      GByte* pabyDstBuffer, const GDALExtendedDataType& dstDataType)
+                      GByte* pabyDstBuffer, const GDALExtendedDataType& dstDataType,
+                      const std::vector<unsigned>& mapDstCompsToSrcComps)
 {
     const auto klass = H5Tget_class(hSrcDataType);
     if( klass == H5T_STRING )
@@ -1522,7 +1537,6 @@ static void CopyValue(const GByte* pabySrcBuffer, hid_t hSrcDataType,
     }
     else if( klass == H5T_COMPOUND )
     {
-        const unsigned nMembers = H5Tget_nmembers(hSrcDataType);
         if( dstDataType.GetClass() != GEDTC_COMPOUND )
         {
             // Typically source is complex data type
@@ -1538,14 +1552,16 @@ static void CopyValue(const GByte* pabySrcBuffer, hid_t hSrcDataType,
         else
         {
             const auto& comps = dstDataType.GetComponents();
-            CPLAssert( nMembers == comps.size() );
-            for( unsigned i = 0; i < nMembers; i++ )
+            CPLAssert( comps.size() == mapDstCompsToSrcComps.size() );
+            const std::vector<unsigned> empty;
+            for( size_t iDst = 0; iDst < comps.size(); ++iDst )
             {
-                auto hMemberType = H5Tget_member_type(hSrcDataType, i);
-                CopyValue( pabySrcBuffer + H5Tget_member_offset(hSrcDataType, i),
-                        hMemberType,
-                        pabyDstBuffer + comps[i]->GetOffset(),
-                        comps[i]->GetType() );
+                const unsigned iSrc = mapDstCompsToSrcComps[iDst];
+                auto hMemberType = H5Tget_member_type(hSrcDataType, iSrc);
+                CopyValue( pabySrcBuffer + H5Tget_member_offset(hSrcDataType, iSrc),
+                           hMemberType,
+                           pabyDstBuffer + comps[iDst]->GetOffset(),
+                           comps[iDst]->GetType(), empty );
                 H5Tclose(hMemberType);
             }
         }
@@ -1553,7 +1569,7 @@ static void CopyValue(const GByte* pabySrcBuffer, hid_t hSrcDataType,
     else if( klass == H5T_ENUM )
     {
         auto hParent = H5Tget_super(hSrcDataType);
-        CopyValue(pabySrcBuffer, hParent, pabyDstBuffer, dstDataType);
+        CopyValue(pabySrcBuffer, hParent, pabyDstBuffer, dstDataType, {});
         H5Tclose(hParent);
     }
     else
@@ -1610,12 +1626,19 @@ static void CopyToFinalBuffer(void* pDstBuffer,
     const GByte* pabySrcBuffer = static_cast<const GByte*>(pTemp);
     pabyDstBufferStack[0] = static_cast<GByte*>(pDstBuffer);
     size_t iDim = 0;
+    const auto mapDstCompsToSrcComps =
+        (H5Tget_class(hSrcDataType) == H5T_COMPOUND &&
+         bufferDataType.GetClass() == GEDTC_COMPOUND) ?
+        CreateMapTargetComponentsToSrc(hSrcDataType, bufferDataType) :
+        std::vector<unsigned>();
+
 lbl_next_depth:
     if( iDim == nDims )
     {
         CopyValue(
             pabySrcBuffer, hSrcDataType,
-            pabyDstBufferStack[nDims], bufferDataType);
+            pabyDstBufferStack[nDims], bufferDataType,
+            mapDstCompsToSrcComps);
     }
     else
     {
@@ -1657,21 +1680,21 @@ bool HDF5Array::IRead(const GUInt64* arrayStartIdx,
     size_t nEltCount = 1;
     for( size_t i = 0; i < nDims; ++i )
     {
-        if( arrayStep[i] < 0 || bufferStride[i] < 0)
+        if( count[i] != 1 && (arrayStep[i] < 0 || bufferStride[i] < 0) )
         {
             return ReadSlow(arrayStartIdx, count, arrayStep, bufferStride,
                             bufferDataType, pDstBuffer);
         }
         anOffset[i] = static_cast<hsize_t>(arrayStartIdx[i]);
         anCount[i] = static_cast<hsize_t>(count[i]);
-        anStep[i] = static_cast<hsize_t>(arrayStep[i]);
+        anStep[i] = static_cast<hsize_t>(count[i] == 1 ? 1 : arrayStep[i]);
         nEltCount *= count[i];
     }
     size_t nCurStride = 1;
     for( size_t i = nDims; i > 0; )
     {
         --i;
-        if( static_cast<size_t>(bufferStride[i]) != nCurStride )
+        if( count[i] != 1 && static_cast<size_t>(bufferStride[i]) != nCurStride )
         {
             return ReadSlow(arrayStartIdx, count, arrayStep, bufferStride,
                             bufferDataType, pDstBuffer);
@@ -1871,6 +1894,12 @@ static void CopyAllAttrValuesInto(size_t nDims,
     std::vector<size_t> anStackCount(nDims);
     std::vector<const GByte*> pabySrcBufferStack(nDims + 1);
     std::vector<GByte*> pabyDstBufferStack(nDims + 1);
+    const auto mapDstCompsToSrcComps =
+        (H5Tget_class(hSrcBufferType) == H5T_COMPOUND &&
+         bufferDataType.GetClass() == GEDTC_COMPOUND) ?
+        CreateMapTargetComponentsToSrc(hSrcBufferType, bufferDataType) :
+        std::vector<unsigned>();
+
     pabySrcBufferStack[0] = static_cast<const GByte*>(pabySrcBuffer);
     if( nDims > 0 )
         pabySrcBufferStack[0] += arrayStartIdx[0] * nSrcDataTypeSize;
@@ -1881,7 +1910,8 @@ lbl_next_depth:
     {
         CopyValue(
             pabySrcBufferStack[nDims], hSrcBufferType,
-            pabyDstBufferStack[nDims], bufferDataType);
+            pabyDstBufferStack[nDims], bufferDataType,
+            mapDstCompsToSrcComps);
     }
     else
     {
@@ -2089,25 +2119,45 @@ GDALDataset *HDF5Dataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
-    H5G_stat_t oStatbuf;
-    if(  H5Gget_objinfo(hHDF5, "/", FALSE, &oStatbuf) < 0 )
-    {
-        return nullptr;
-    }
-    auto hGroup = H5Gopen(hHDF5, "/");
-    if( hGroup < 0 )
-    {
-        H5Fclose(hHDF5);
-        return nullptr;
-    }
-
     auto poSharedResources = std::make_shared<GDAL::HDF5SharedResources>();
     poSharedResources->m_hHDF5 = hHDF5;
 
+    auto poGroup(OpenGroup(poSharedResources));
+    if( poGroup == nullptr )
+    {
+        return nullptr;
+    }
+
     auto poDS(new HDF5Dataset());
-    poDS->m_poRootGroup.reset(new GDAL::HDF5Group(std::string(), "/",
-                                            poSharedResources, {},
-                                            hGroup,
-                                            oStatbuf.objno));
+    poDS->m_poRootGroup = poGroup;
+
+    poDS->SetDescription(poOpenInfo->pszFilename);
+
+    // Setup/check for pam .aux.xml.
+    poDS->TryLoadXML();
+
     return poDS;
+}
+
+/************************************************************************/
+/*                            OpenGroup()                               */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources)
+{
+    H5G_stat_t oStatbuf;
+    if(  H5Gget_objinfo(poSharedResources->m_hHDF5, "/", FALSE, &oStatbuf) < 0 )
+    {
+        return nullptr;
+    }
+    auto hGroup = H5Gopen(poSharedResources->m_hHDF5, "/");
+    if( hGroup < 0 )
+    {
+        return nullptr;
+    }
+
+    return std::shared_ptr<GDALGroup>(new GDAL::HDF5Group(std::string(), "/",
+                                                          poSharedResources, {},
+                                                          hGroup,
+                                                          oStatbuf.objno));
 }

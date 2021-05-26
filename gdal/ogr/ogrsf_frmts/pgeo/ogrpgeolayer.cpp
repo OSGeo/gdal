@@ -168,6 +168,7 @@ CPLErr OGRPGeoLayer::BuildFeatureDefn( const char *pszLayerName,
             break;
 
           case SQL_C_TIMESTAMP:
+          case SQL_C_TYPE_TIMESTAMP:
             oField.SetType( OFTDateTime );
             break;
 
@@ -364,7 +365,7 @@ void OGRPGeoLayer::LookupSRID( int nSRID )
 
     if( pszSRText[0] == '{' )
     {
-        CPLDebug( "PGEO", "Ignoreing GUID SRTEXT: %s", pszSRText );
+        CPLDebug( "PGEO", "Ignoring GUID SRTEXT: %s", pszSRText );
         return;
     }
 

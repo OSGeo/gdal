@@ -33,6 +33,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogrsf_frmts.h"
+#include "ogr_swq.h"
 #include "commonutils.h"
 
 #include <algorithm>
@@ -382,6 +383,10 @@ static int TestDataset( GDALDriver** ppoDriver )
                "      different from user name `%s'.\n",
                poDS->GetDescription(), pszDataSource);
     }
+
+    // Check that pszDomain == nullptr doesn't crash
+    poDS->GetMetadata( nullptr );
+    poDS->GetMetadataItem( "", nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Process optional SQL request.                                   */
@@ -1352,7 +1357,11 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
                CPLGetLastErrorMsg());
     }
 
+    // Drivers might or might not emit errors when attempting to iterate
+    // after EOF
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     auto poFeat = LOG_ACTION(poLayer->GetNextFeature());
+    CPLPopErrorHandler();
     if( poFeat != nullptr )
     {
         bRet = FALSE;
@@ -2364,7 +2373,10 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS,
 /* -------------------------------------------------------------------- */
 
     CPLString osAttributeFilter;
-    if( pszFieldName[0] == '\0' || strchr(pszFieldName, '_') || strchr(pszFieldName, ' ') )
+    const bool bMustQuoteAttrName =
+        pszFieldName[0] == '\0' || strchr(pszFieldName, '_') ||
+        strchr(pszFieldName, ' ') || swq_is_reserved_keyword(pszFieldName);
+    if( bMustQuoteAttrName )
     {
         osAttributeFilter = "\"";
         osAttributeFilter += pszFieldName;
@@ -2422,7 +2434,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS,
 /* -------------------------------------------------------------------- */
 /*      Construct exclusive filter.                                     */
 /* -------------------------------------------------------------------- */
-    if( pszFieldName[0] == '\0' || strchr(pszFieldName, '_') || strchr(pszFieldName, ' ') )
+    if( bMustQuoteAttrName )
     {
         osAttributeFilter = "\"";
         osAttributeFilter += pszFieldName;
@@ -3326,11 +3338,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     DestroyFeatureAndNullify(poLayerFeat);
     DestroyFeatureAndNullify(poSQLFeat);
 
-    if( poSQLLyr )
-    {
-        LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
-        poSQLLyr = nullptr;
-    }
+    LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
 
     /* Try ResetReading(), GetNextFeature(), ResetReading(), GetNextFeature() */
     poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr));
@@ -3449,6 +3457,10 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer,
 
 {
     int bRet = TRUE;
+
+    // Check that pszDomain == nullptr doesn't crash
+    poLayer->GetMetadata( nullptr );
+    poLayer->GetMetadataItem( "", nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Verify that there is no spatial filter in place by default.     */

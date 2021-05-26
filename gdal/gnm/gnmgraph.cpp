@@ -47,7 +47,7 @@ void GNMGraph::AddVertex(GNMGFID nFID)
         return;
 
     GNMStdVertex stVertex;
-    stVertex.bIsBloked = false;
+    stVertex.bIsBlocked = false;
     m_mstVertices[nFID] = stVertex;
 }
 
@@ -92,7 +92,7 @@ void GNMGraph::AddEdge(GNMGFID nConFID, GNMGFID nSrcFID, GNMGFID nTgtFID,
     stEdge.bIsBidir = bIsBidir;
     stEdge.dfDirCost = dfCost;
     stEdge.dfInvCost = dfInvCost;
-    stEdge.bIsBloked = false;
+    stEdge.bIsBlocked = false;
 
     m_mstEdges[nConFID] = stEdge;
 
@@ -138,7 +138,7 @@ void GNMGraph::ChangeBlockState(GNMGFID nFID, bool bBlock)
     std::map<GNMGFID, GNMStdVertex>::iterator itv = m_mstVertices.find(nFID);
     if(itv != m_mstVertices.end())
     {
-        itv->second.bIsBloked = bBlock;
+        itv->second.bIsBlocked = bBlock;
         return;
     }
 
@@ -146,7 +146,7 @@ void GNMGraph::ChangeBlockState(GNMGFID nFID, bool bBlock)
     std::map<GNMGFID, GNMStdEdge>::iterator ite = m_mstEdges.find(nFID);
     if (ite != m_mstEdges.end())
     {
-        ite->second.bIsBloked = bBlock;
+        ite->second.bIsBlocked = bBlock;
     }
 }
 
@@ -154,7 +154,7 @@ bool GNMGraph::CheckVertexBlocked(GNMGFID nFID) const
 {
     std::map<GNMGFID, GNMStdVertex>::const_iterator it = m_mstVertices.find(nFID);
     if (it != m_mstVertices.end())
-        return it->second.bIsBloked;
+        return it->second.bIsBlocked;
     return false;
 }
 
@@ -163,13 +163,13 @@ void GNMGraph::ChangeAllBlockState(bool bBlock)
     for(std::map<GNMGFID, GNMStdVertex>::iterator itv = m_mstVertices.begin();
         itv != m_mstVertices.end(); ++itv)
     {
-        itv->second.bIsBloked = bBlock;
+        itv->second.bIsBlocked = bBlock;
     }
 
     for(std::map<GNMGFID, GNMStdEdge>::iterator ite = m_mstEdges.begin();
         ite != m_mstEdges.end(); ++ite)
     {
-        ite->second.bIsBloked = bBlock;
+        ite->second.bIsBlocked = bBlock;
     }
 }
 
@@ -472,7 +472,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
     LPGNMCONSTVECTOR panOutcomeEdgeId;
 
     size_t i;
-    GNMGFID nCurrenVertId, nCurrentEdgeId, nTargetVertId;
+    GNMGFID nCurrentVertId, nCurrentEdgeId, nTargetVertId;
     double dfCurrentEdgeCost, dfCurrentVertMark, dfNewVertexMark;
     std::map<GNMGFID, GNMStdEdge>::const_iterator ite;
 
@@ -483,13 +483,13 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
         // In multimap the first cost is the minimal.
         it = to_see.begin();
 
-        nCurrenVertId = it->second;
+        nCurrentVertId = it->second;
         dfCurrentVertMark = it->first;
         snSeen.insert(it->second);
         to_see.erase(it);
 
         // For all neighbours for the current vertex.
-        panOutcomeEdgeId = GetOutEdges(nCurrenVertId);
+        panOutcomeEdgeId = GetOutEdges(nCurrentVertId);
         if(nullptr == panOutcomeEdgeId)
             continue;
 
@@ -498,7 +498,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
             nCurrentEdgeId = panOutcomeEdgeId->operator[](i);
 
             ite = mstEdges.find(nCurrentEdgeId);
-            if(ite == mstEdges.end() || ite->second.bIsBloked)
+            if(ite == mstEdges.end() || ite->second.bIsBlocked)
                 continue;
 
             // We go in any edge from source to target so we take only
@@ -507,7 +507,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
 
             // While we see outcome edges of current vertex id we definitely
             // know that target vertex id will be target for current edge id.
-            nTargetVertId = GetOppositVertex(nCurrentEdgeId, nCurrenVertId);
+            nTargetVertId = GetOppositVertex(nCurrentEdgeId, nCurrentVertId);
 
             // Calculate a new mark assuming the full path cost (mark of the
             // current vertex) to this vertex.

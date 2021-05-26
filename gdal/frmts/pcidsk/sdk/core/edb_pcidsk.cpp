@@ -1,12 +1,12 @@
 /******************************************************************************
  *
- * Purpose:  Implementation of the EDB interface that works only for 
+ * Purpose:  Implementation of the EDB interface that works only for
  *           links to another PCIDSK database.  This is mostly useful
  *           for testing - practical use is minimal.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,7 @@ using namespace PCIDSK;
 class PCIDSK_EDBFile final : public EDBFile
 {
     mutable PCIDSKFile *file;
-    
+
 public:
 
     explicit PCIDSK_EDBFile( PCIDSKFile *file_in ) { file = file_in; }
@@ -166,9 +166,9 @@ int PCIDSK_EDBFile::ReadBlock( int channel,
                                int win_xsize, int win_ysize )
 
 {
-    return 
-        file->GetChannel(channel)->ReadBlock( block_index, buffer, 
-                                              win_xoff, win_yoff, 
+    return
+        file->GetChannel(channel)->ReadBlock( block_index, buffer,
+                                              win_xoff, win_yoff,
                                               win_xsize, win_ysize );
 }
 

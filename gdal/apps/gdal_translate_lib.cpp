@@ -281,6 +281,9 @@ struct GDALTranslateOptions
     // value, or -1 if no override.
     int nColorInterpSize;
     int* panColorInterp;
+
+    /*! does not copy source XMP into destination dataset (when TRUE) */
+    bool bNoXMP;
 };
 
 /************************************************************************/
@@ -664,7 +667,7 @@ static double AdjustNoDataValue( double dfInputNoDataValue,
  * @param pszDest the destination dataset path.
  * @param hSrcDataset the source dataset handle.
  * @param psOptionsIn the options struct returned by GDALTranslateOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occurred or NULL.
+ * @param pbUsageError pointer to a integer output variable to store if any usage error has occurred or NULL.
  * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
  *
  * @since GDAL 2.1
@@ -701,7 +704,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if(pbUsageError)
         *pbUsageError = FALSE;
- 
+
     if(psOptions->adfULLR[0] != 0.0 || psOptions->adfULLR[1] != 0.0 || psOptions->adfULLR[2] != 0.0 || psOptions->adfULLR[3] != 0.0)
         bGotBounds = true;
 
@@ -1117,7 +1120,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         && psOptions->nGCPCount == 0 && !bGotBounds
         && psOptions->pszOutputSRS == nullptr && !psOptions->bSetNoData && !psOptions->bUnsetNoData
         && psOptions->nRGBExpand == 0 && !psOptions->bNoRAT
-        && psOptions->panColorInterp == nullptr )
+        && psOptions->panColorInterp == nullptr
+        && !psOptions->bNoXMP )
     {
 
         // For gdal_translate_fuzzer
@@ -1182,12 +1186,16 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     int nOXSize = 0;
     int nOYSize = 0;
 
-    double adfGeoTransform[6] = {};
+    bool bHasSrcGeoTransform = false;
+    double adfSrcGeoTransform[6] = {};
+    if( GDALGetGeoTransform( hSrcDataset, adfSrcGeoTransform ) == CE_None )
+        bHasSrcGeoTransform = true;
+
     if( psOptions->dfXRes != 0.0 )
     {
-        if( !(GDALGetGeoTransform( hSrcDataset, adfGeoTransform ) == CE_None &&
+        if( !(bHasSrcGeoTransform &&
               psOptions->nGCPCount == 0 &&
-              adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0) )
+              adfSrcGeoTransform[2] == 0.0 && adfSrcGeoTransform[4] == 0.0) )
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
                      "The -tr option was used, but there's no geotransform or it is\n"
@@ -1197,10 +1205,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
         const double dfOXSize =
             psOptions->adfSrcWin[2] /
-            psOptions->dfXRes * adfGeoTransform[1] + 0.5;
+            psOptions->dfXRes * adfSrcGeoTransform[1] + 0.5;
         const double dfOYSize =
             psOptions->adfSrcWin[3] /
-            psOptions->dfYRes * fabs(adfGeoTransform[5]) + 0.5;
+            psOptions->dfYRes * fabs(adfSrcGeoTransform[5]) + 0.5;
         if( dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) ||
             dfOYSize < 1 || !GDALIsValueInRange<int>(dfOXSize) )
         {
@@ -1366,40 +1374,45 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
     }
 
+    bool bHasDstGeoTransform = false;
+    double adfDstGeoTransform[6] = {};
+
     if( bGotBounds )
     {
-        adfGeoTransform[0] = psOptions->adfULLR[0];
-        adfGeoTransform[1] = (psOptions->adfULLR[2] - psOptions->adfULLR[0]) / nOXSize;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = psOptions->adfULLR[1];
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = (psOptions->adfULLR[3] - psOptions->adfULLR[1]) / nOYSize;
+        bHasDstGeoTransform = true;
+        adfDstGeoTransform[0] = psOptions->adfULLR[0];
+        adfDstGeoTransform[1] = (psOptions->adfULLR[2] - psOptions->adfULLR[0]) / nOXSize;
+        adfDstGeoTransform[2] = 0.0;
+        adfDstGeoTransform[3] = psOptions->adfULLR[1];
+        adfDstGeoTransform[4] = 0.0;
+        adfDstGeoTransform[5] = (psOptions->adfULLR[3] - psOptions->adfULLR[1]) / nOYSize;
 
-        poVDS->SetGeoTransform( adfGeoTransform );
+        poVDS->SetGeoTransform( adfDstGeoTransform );
     }
 
-    else if( GDALGetGeoTransform( hSrcDataset, adfGeoTransform ) == CE_None
-        && psOptions->nGCPCount == 0 )
+    else if( bHasSrcGeoTransform && psOptions->nGCPCount == 0 )
     {
-        adfGeoTransform[0] += psOptions->adfSrcWin[0] * adfGeoTransform[1]
-            + psOptions->adfSrcWin[1] * adfGeoTransform[2];
-        adfGeoTransform[3] += psOptions->adfSrcWin[0] * adfGeoTransform[4]
-            + psOptions->adfSrcWin[1] * adfGeoTransform[5];
+        bHasDstGeoTransform = true;
+        memcpy( adfDstGeoTransform, adfSrcGeoTransform, 6 * sizeof(double) );
+        adfDstGeoTransform[0] += psOptions->adfSrcWin[0] * adfDstGeoTransform[1]
+            + psOptions->adfSrcWin[1] * adfDstGeoTransform[2];
+        adfDstGeoTransform[3] += psOptions->adfSrcWin[0] * adfDstGeoTransform[4]
+            + psOptions->adfSrcWin[1] * adfDstGeoTransform[5];
 
         const double dfX = static_cast<double>(nOXSize);
         const double dfY = static_cast<double>(nOYSize);
-        adfGeoTransform[1] *= psOptions->adfSrcWin[2] / dfX;
-        adfGeoTransform[2] *= psOptions->adfSrcWin[3] / dfY;
-        adfGeoTransform[4] *= psOptions->adfSrcWin[2] / dfX;
-        adfGeoTransform[5] *= psOptions->adfSrcWin[3] / dfY;
+        adfDstGeoTransform[1] *= psOptions->adfSrcWin[2] / dfX;
+        adfDstGeoTransform[2] *= psOptions->adfSrcWin[3] / dfY;
+        adfDstGeoTransform[4] *= psOptions->adfSrcWin[2] / dfX;
+        adfDstGeoTransform[5] *= psOptions->adfSrcWin[3] / dfY;
 
         if( psOptions->dfXRes != 0.0 )
         {
-            adfGeoTransform[1] = psOptions->dfXRes;
-            adfGeoTransform[5] = (adfGeoTransform[5] > 0) ? psOptions->dfYRes : -psOptions->dfYRes;
+            adfDstGeoTransform[1] = psOptions->dfXRes;
+            adfDstGeoTransform[5] = (adfDstGeoTransform[5] > 0) ? psOptions->dfYRes : -psOptions->dfYRes;
         }
 
-        poVDS->SetGeoTransform( adfGeoTransform );
+        poVDS->SetGeoTransform( adfDstGeoTransform );
     }
 
     if( psOptions->nGCPCount != 0 )
@@ -1443,6 +1456,18 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
     double adfDstWin[4] =
         {0.0, 0.0, static_cast<double>(nOXSize), static_cast<double>(nOYSize)};
+
+    // When specifying -tr with non-nearest resampling, make sure that the
+    // size of target window precisely matches the requested resolution, to
+    // avoid any shift.
+    if( bHasSrcGeoTransform && bHasDstGeoTransform &&
+        psOptions->dfXRes != 0.0 &&
+        psOptions->pszResampling != nullptr &&
+        !EQUALN(psOptions->pszResampling, "NEAR", 4) )
+    {
+        adfDstWin[2] = psOptions->adfSrcWin[2] * adfSrcGeoTransform[1] / adfDstGeoTransform[1];
+        adfDstWin[3] = psOptions->adfSrcWin[3] * fabs(adfSrcGeoTransform[5] / adfDstGeoTransform[5]);
+    }
 
     double adfSrcWinOri[4];
     static_assert(sizeof(adfSrcWinOri) == sizeof(psOptions->adfSrcWin),
@@ -1494,6 +1519,21 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
     }
 
+    {
+        char** papszIter = papszMetadata;
+        while(papszIter && *papszIter)
+        {
+            // Do not preserve the CACHE_PATH from the WMS driver
+            if (STARTS_WITH_CI(*papszIter, "CACHE_PATH="))
+            {
+                CPLFree(*papszIter);
+                memmove(papszIter, papszIter+1, sizeof(char*) * (CSLCount(papszIter+1)+1));
+            }
+            else
+                papszIter++;
+        }
+    }
+
     poVDS->SetMetadata( papszMetadata );
     CSLDestroy( papszMetadata );
     AttachMetadata( static_cast<GDALDatasetH>(poVDS), psOptions->papszMetadataOptions );
@@ -1501,6 +1541,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     const char* pszInterleave = GDALGetMetadataItem(hSrcDataset, "INTERLEAVE", "IMAGE_STRUCTURE");
     if (pszInterleave)
         poVDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
+
+    {
+        const char* pszCompression = poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        if( pszCompression )
+        {
+            poVDS->SetMetadataItem("COMPRESSION", pszCompression, "IMAGE_STRUCTURE");
+        }
+    }
 
     /* ISIS3 metadata preservation */
     char** papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
@@ -1537,6 +1585,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         if( papszMD_VICAR != nullptr)
             poVDS->SetMetadata( papszMD_VICAR, "json:VICAR" );
     }
+
+    // Copy XMP metadata
+    if( !psOptions->bNoXMP )
+    {
+        char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
+        if (papszXMP != nullptr && *papszXMP != nullptr)
+        {
+            poVDS->SetMetadata(papszXMP, "xml:XMP");
+        }
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Transfer metadata that remains valid if the spatial             */
@@ -1757,7 +1816,15 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Create this band.                                               */
 /* -------------------------------------------------------------------- */
-        poVDS->AddBand( eBandType, nullptr );
+        CPLStringList aosAddBandOptions;
+        if( bSpatialArrangementPreserved )
+        {
+            int nSrcBlockXSize, nSrcBlockYSize;
+            poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
+            aosAddBandOptions.SetNameValue("BLOCKXSIZE", CPLSPrintf("%d", nSrcBlockXSize));
+            aosAddBandOptions.SetNameValue("BLOCKYSIZE", CPLSPrintf("%d", nSrcBlockYSize));
+        }
+        poVDS->AddBand( eBandType, aosAddBandOptions.List() );
         VRTSourcedRasterBand *poVRTBand =
             static_cast<VRTSourcedRasterBand *>(poVDS->GetRasterBand( i+1 ));
         if (nSrcBand < 0)
@@ -1784,6 +1851,12 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown && psOptions->pszResampling == nullptr )
         {
             poVRTBand->SetMetadataItem("PIXELTYPE", pszPixelType, "IMAGE_STRUCTURE");
+        }
+
+        const char* pszCompression = poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        if( pszCompression )
+        {
+            poVRTBand->SetMetadataItem("COMPRESSION", pszCompression, "IMAGE_STRUCTURE");
         }
 
 /* -------------------------------------------------------------------- */
@@ -1972,7 +2045,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         // Color interpretation override
         if( psOptions->panColorInterp )
         {
-            if( i < psOptions->nColorInterpSize && 
+            if( i < psOptions->nColorInterpSize &&
                 psOptions->panColorInterp[i] >= 0 )
             {
                 poVRTBand->SetColorInterpretation(
@@ -2152,7 +2225,7 @@ static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand
         {
             GDALRasterAttributeTable *poNewRAT = poSrcBand->GetDefaultRAT()->Clone();
 
-            // strip histogram data (as definied by the source RAT)
+            // strip histogram data (as defined by the source RAT)
             poNewRAT->RemoveStatistics();
             if( poNewRAT->GetColumnCount() )
             {
@@ -2304,6 +2377,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     psOptions->dfYRes = 0.0;
     psOptions->pszProjSRS = nullptr;
     psOptions->nLimitOutSize = 0;
+    psOptions->bNoXMP = false;
 
     bool bParsedMaskArgument = false;
     bool bOutsideExplicitlySet = false;
@@ -2816,6 +2890,12 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                     psOptionsForBinary->papszAllowInputDrivers, papszArgv[i] );
             }
         }
+
+        else if (EQUAL(papszArgv[i], "-noxmp"))
+        {
+            psOptions->bNoXMP = true;
+        }
+
 
         else if( papszArgv[i][0] == '-' )
         {

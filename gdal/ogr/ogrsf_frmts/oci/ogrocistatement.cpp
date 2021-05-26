@@ -291,10 +291,10 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /* -------------------------------------------------------------------- */
     for( nRawColumnCount = 0; true; nRawColumnCount++ )
     {
-        OCIParam     *hParmDesc;
+        OCIParam     *hParamDesc;
 
         if( OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError,
-                         (dvoid**)&hParmDesc,
+                         (dvoid**)&hParamDesc,
                          (ub4) nRawColumnCount+1 ) != OCI_SUCCESS )
             break;
     }
@@ -312,10 +312,10 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
     poDefn->SetGeomType(wkbNone);
     poDefn->Reference();
 
-    for( int iParm = 0; iParm < nRawColumnCount; iParm++ )
+    for( int iParam = 0; iParam < nRawColumnCount; iParam++ )
     {
         OGRFieldDefn oField( "", OFTString );
-        OCIParam     *hParmDesc;
+        OCIParam     *hParamDesc;
         ub2          nOCIType;
         ub4          nOCILen;
 
@@ -324,11 +324,11 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /* -------------------------------------------------------------------- */
         if( poSession->Failed(
             OCIParamGet( hStatement, OCI_HTYPE_STMT, poSession->hError,
-                         (dvoid**)&hParmDesc, (ub4) iParm+1 ),
+                         (dvoid**)&hParamDesc, (ub4) iParam+1 ),
             "OCIParamGet") )
             return CE_Failure;
 
-        if( poSession->GetParmInfo( hParmDesc, &oField, &nOCIType, &nOCILen )
+        if( poSession->GetParamInfo( hParamDesc, &oField, &nOCIType, &nOCILen )
             != CE_None )
             return CE_Failure;
 
@@ -342,18 +342,18 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
             }
             else
             {
-                panFieldMap[iParm] = -1;
+                panFieldMap[iParam] = -1;
                 continue;
             }
         }
 
         poDefn->AddFieldDefn( &oField );
-        panFieldMap[iParm] = poDefn->GetFieldCount() - 1;
+        panFieldMap[iParam] = poDefn->GetFieldCount() - 1;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare a binding.                                              */
 /* -------------------------------------------------------------------- */
-        int nBufWidth = 256, nOGRField = panFieldMap[iParm];
+        int nBufWidth = 256, nOGRField = panFieldMap[iParam];
         OCIDefine *hDefn = nullptr;
 
         if( oField.GetWidth() > 0 )
@@ -374,7 +374,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 
         if( poSession->Failed(
             OCIDefineByPos( hStatement, &hDefn, poSession->hError,
-                            iParm+1,
+                            iParam+1,
                             (ub1 *) papszCurColumn[nOGRField], nBufWidth,
                             SQLT_STR, panCurColumnInd + nOGRField,
                             nullptr, nullptr, OCI_DEFAULT ),

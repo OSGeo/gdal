@@ -1,0 +1,38 @@
+<VRTDataset rasterXSize="1" rasterYSize="1" subClass="VRTWarpedDataset">
+  <GeoTransform>  3.3333333333333331e-01,  3.3333333333333331e-01,  0.0000000000000000e+00,  6.6666666666666663e-01,  0.0000000000000000e+00, -3.3333333333333331e-01</GeoTransform>
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTWarpedRasterBand">
+    <NoDataValue>-1.7e+308</NoDataValue>
+    <ColorInterp>Gray</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>1</BlockXSize>
+  <BlockYSize>1</BlockYSize>
+  <GDALWarpOptions>
+    <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
+    <ResampleAlg>Average</ResampleAlg>
+    <WorkingDataType>Float64</WorkingDataType>
+    <Option name="INIT_DEST">NO_DATA</Option>
+    <Option name="ERROR_OUT_IF_EMPTY_SOURCE_WINDOW">FALSE</Option>
+    <SourceDataset relativeToVRT="1">4by4.tif</SourceDataset>
+    <Transformer>
+      <ApproxTransformer>
+        <MaxError>0.125</MaxError>
+        <BaseTransformer>
+          <GenImgProjTransformer>
+            <SrcGeoTransform>0,0.25,0,1,0,-0.25</SrcGeoTransform>
+            <SrcInvGeoTransform>-0,4,0,4,0,-4</SrcInvGeoTransform>
+            <DstGeoTransform>0.333333333333333315,0.333333333333333315,0,0.66666666666666663,0,-0.333333333333333315</DstGeoTransform>
+            <DstInvGeoTransform>-1,3,0,2,0,-3</DstInvGeoTransform>
+          </GenImgProjTransformer>
+        </BaseTransformer>
+      </ApproxTransformer>
+    </Transformer>
+    <BandList>
+      <BandMapping src="1" dst="1">
+        <SrcNoDataReal>-1.7e+308</SrcNoDataReal>
+        <SrcNoDataImag>0</SrcNoDataImag>
+        <DstNoDataReal>-1.7e+308</DstNoDataReal>
+        <DstNoDataImag>0</DstNoDataImag>
+      </BandMapping>
+    </BandList>
+  </GDALWarpOptions>
+</VRTDataset>

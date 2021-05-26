@@ -414,14 +414,14 @@ int HFAClose( HFAHandle hHFA )
 
     if( hHFA->pProParameters != nullptr )
     {
-        Eprj_ProParameters *psProParms = (Eprj_ProParameters *)
+        Eprj_ProParameters *psProParams = (Eprj_ProParameters *)
             hHFA->pProParameters;
 
-        CPLFree(psProParms->proExeName);
-        CPLFree(psProParms->proName);
-        CPLFree(psProParms->proSpheroid.sphereName);
+        CPLFree(psProParams->proExeName);
+        CPLFree(psProParams->proName);
+        CPLFree(psProParams->proSpheroid.sphereName);
 
-        CPLFree(psProParms);
+        CPLFree(psProParams);
     }
 
     if( hHFA->pDatum != nullptr )
@@ -1316,7 +1316,7 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
         return nullptr;
 
     // Allocate the structure.
-    Eprj_ProParameters *psProParms = static_cast<Eprj_ProParameters *>(
+    Eprj_ProParameters *psProParams = static_cast<Eprj_ProParameters *>(
         CPLCalloc(sizeof(Eprj_ProParameters), 1));
 
     // Fetch the fields.
@@ -1324,35 +1324,35 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
     if( proType != EPRJ_INTERNAL && proType != EPRJ_EXTERNAL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for proType");
-        CPLFree(psProParms);
+        CPLFree(psProParams);
         return nullptr;
     }
-    psProParms->proType = static_cast<Eprj_ProType>(proType);
-    psProParms->proNumber = poMIEntry->GetIntField("proNumber");
-    psProParms->proExeName = CPLStrdup(poMIEntry->GetStringField("proExeName"));
-    psProParms->proName = CPLStrdup(poMIEntry->GetStringField("proName"));
-    psProParms->proZone = poMIEntry->GetIntField("proZone");
+    psProParams->proType = static_cast<Eprj_ProType>(proType);
+    psProParams->proNumber = poMIEntry->GetIntField("proNumber");
+    psProParams->proExeName = CPLStrdup(poMIEntry->GetStringField("proExeName"));
+    psProParams->proName = CPLStrdup(poMIEntry->GetStringField("proName"));
+    psProParams->proZone = poMIEntry->GetIntField("proZone");
 
     for( int i = 0; i < 15; i++ )
     {
         char szFieldName[40] = {};
 
         snprintf(szFieldName, sizeof(szFieldName), "proParams[%d]", i);
-        psProParms->proParams[i] = poMIEntry->GetDoubleField(szFieldName);
+        psProParams->proParams[i] = poMIEntry->GetDoubleField(szFieldName);
     }
 
-    psProParms->proSpheroid.sphereName =
+    psProParams->proSpheroid.sphereName =
         CPLStrdup(poMIEntry->GetStringField("proSpheroid.sphereName"));
-    psProParms->proSpheroid.a = poMIEntry->GetDoubleField("proSpheroid.a");
-    psProParms->proSpheroid.b = poMIEntry->GetDoubleField("proSpheroid.b");
-    psProParms->proSpheroid.eSquared =
+    psProParams->proSpheroid.a = poMIEntry->GetDoubleField("proSpheroid.a");
+    psProParams->proSpheroid.b = poMIEntry->GetDoubleField("proSpheroid.b");
+    psProParams->proSpheroid.eSquared =
         poMIEntry->GetDoubleField("proSpheroid.eSquared");
-    psProParms->proSpheroid.radius =
+    psProParams->proSpheroid.radius =
         poMIEntry->GetDoubleField("proSpheroid.radius");
 
-    hHFA->pProParameters = (void *)psProParms;
+    hHFA->pProParameters = (void *)psProParams;
 
-    return psProParms;
+    return psProParams;
 }
 
 /************************************************************************/
@@ -1490,20 +1490,20 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
     for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {
         // Create a new Projection if there isn't one present already.
-        HFAEntry *poProParms =
+        HFAEntry *poProParams =
             hHFA->papoBand[iBand]->poNode->GetNamedChild("Projection");
-        if( poProParms == nullptr )
+        if( poProParams == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Can't add Eprj_Datum with no Eprj_ProjParameters.");
             return CE_Failure;
         }
 
-        HFAEntry *poDatumEntry = poProParms->GetNamedChild("Datum");
+        HFAEntry *poDatumEntry = poProParams->GetNamedChild("Datum");
         if( poDatumEntry == nullptr )
         {
             poDatumEntry =
-                HFAEntry::New(hHFA, "Datum", "Eprj_Datum", poProParms);
+                HFAEntry::New(hHFA, "Datum", "Eprj_Datum", poProParams);
         }
 
         poDatumEntry->MarkDirty();

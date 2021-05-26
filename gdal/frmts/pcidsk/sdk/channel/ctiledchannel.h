@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CTiledChannel raster access strategy
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,12 +32,9 @@
 #include "pcidsk_buffer.h"
 #include "channel/cpcidskchannel.h"
 
-#include <vector>
-#include <string>
-
 namespace PCIDSK
 {
-    class SysVirtualFile;
+    class BlockTileLayer;
 /************************************************************************/
 /*                            CTiledChannel                             */
 /*                                                                      */
@@ -49,9 +46,9 @@ namespace PCIDSK
     {
 
     public:
-        CTiledChannel( PCIDSKBuffer &image_header, 
+        CTiledChannel( PCIDSKBuffer &image_header,
                        uint64 ih_offset,
-                       PCIDSKBuffer &file_header, 
+                       PCIDSKBuffer &file_header,
                        int channelnum,
                        CPCIDSKFile *file,
                        eChanType pixel_type );
@@ -69,18 +66,17 @@ namespace PCIDSK
         virtual int WriteBlock( int block_index, void *buffer ) override;
 
         virtual void Synchronize() override;
-        
-        
-        
+
+
+
     private:
         int                      image;
-        mutable int              tile_count;
-        mutable int              tiles_per_row;
-        mutable int              tiles_per_col;
-        mutable SysVirtualFile  *vfile;
-        mutable std::string      compression;
-        
+        mutable BlockTileLayer * mpoTileLayer;
+
         void                     EstablishAccess() const;
+
+        void                     ReadTile(void * pData, uint32 nCol, uint32 nRow);
+
         void                     RLEDecompressBlock( PCIDSKBuffer &oCompressed,
                                                      PCIDSKBuffer &oDecompressed );
         void                     RLECompressBlock( PCIDSKBuffer &oUncompressed,
@@ -89,21 +85,6 @@ namespace PCIDSK
                                                       PCIDSKBuffer &oDecompressed );
         void                     JPEGCompressBlock( PCIDSKBuffer &oDecompressed,
                                                     PCIDSKBuffer &oCompressed );
-
-        bool                     IsTileEmpty(void* buffer) const;
-
-        // managed paged list of tile offsets and sizes.
-        void                     GetTileInfo( int tile_index,
-                                              uint64 &offset, int &size );
-        void                     SetTileInfo( int tile_index,
-                                              uint64 offset, int size );
-        void                     LoadTileInfoBlock( int tile_info_block );
-        void                     SaveTileInfoBlock( int tile_info_block );
-
-        static const int                           tile_block_size = 4096;
-        mutable std::vector< std::vector<uint64> > tile_offsets;
-        mutable std::vector< std::vector<int> >    tile_sizes;
-        mutable std::vector<bool>                  tile_info_dirty;
     };
 } // end namespace PCIDSK
 

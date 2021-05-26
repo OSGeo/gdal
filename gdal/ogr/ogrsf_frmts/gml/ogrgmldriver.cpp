@@ -142,12 +142,17 @@ void RegisterOGRGML()
                                "Geography Markup Language (GML)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gml" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gml xml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gml.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gml.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='XSD' type='string' description='Name of the related application schema file (.xsd).'/>"
-"  <Option name='GFS_TEMPLATE' type='string' description='Filename of a .gfs template file to appli.'/>"
+"  <Option name='GFS_TEMPLATE' type='string' description='Filename of a .gfs template file to apply.'/>"
+"  <Option name='WRITE_GFS' type='string-select' description='Whether to write a .gfs file' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
 "  <Option name='FORCE_SRS_DETECTION' type='boolean' description='Force a full scan to detect the SRS of layers.' default='NO'/>"
 "  <Option name='EMPTY_AS_NULL' type='boolean' description='Force empty fields to be reported as NULL. Set to NO so that not-nullable fields can be exposed' default='YES'/>"
 "  <Option name='GML_ATTRIBUTES_TO_OGR_FIELDS' type='boolean' description='Whether GML attributes should be reported as OGR fields' default='NO'/>"
@@ -195,7 +200,7 @@ void RegisterOGRGML()
 "  <Option name='PREFIX' type='string' description='Prefix for the application target namespace.' default='ogr'/>"
 "  <Option name='STRIP_PREFIX' type='boolean' description='Whether to avoid writing the prefix of the application target namespace in the GML file.' default='NO'/>"
 "  <Option name='TARGET_NAMESPACE' type='string' description='Application target namespace.' default='http://ogr.maptools.org/'/>"
-"  <Option name='FORMAT' type='string-select' description='Version of GML to use' default='GML2'>"
+"  <Option name='FORMAT' type='string-select' description='Version of GML to use' default='GML3.2'>"
 "    <Value>GML2</Value>"
 "    <Value>GML3</Value>"
 "    <Value>GML3.2</Value>"
@@ -208,7 +213,7 @@ void RegisterOGRGML()
 "    <Value>OGC_URN</Value>"
 "    <Value>OGC_URL</Value>"
 "  </Option>"
-"  <Option name='WRITE_FEATURE_BOUNDED_BY' type='boolean' description='Whether to write <gml:boundedBy> element for each feature with GML3* versions' default='YES'/>"
+"  <Option name='WRITE_FEATURE_BOUNDED_BY' type='boolean' description='Whether to write &lt;gml:boundedBy&gt; element for each feature with GML3* versions' default='YES'/>"
 "  <Option name='SPACE_INDENTATION' type='boolean' description='Whether to indent the output for readability' default='YES'/>"
 "  <Option name='SRSDIMENSION_LOC' type='string-select' description='(only valid for FORMAT=GML3xx) Location where to put srsDimension attribute' default='POSLIST'>"
 "    <Value>POSLIST</Value>"

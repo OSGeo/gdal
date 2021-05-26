@@ -92,7 +92,7 @@ pszNewName:  the name of the layer to create.
 papszOptions:  a StringList of name=value options. Options are driver
 specific.
 
-an handle to the layer, or NULL if an error occurs. ";
+a handle to the layer, or NULL if an error occurs. ";
 
 %feature("docstring")  DeleteLayer "OGRErr
 OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)
@@ -131,7 +131,7 @@ hDS:  handle to the data source from which to get the layer.
 
 pszLayerName:  Layer the layer name of the layer to fetch.
 
-an handle to the layer, or NULL if the layer is not found or an error
+a handle to the layer, or NULL if the layer is not found or an error
 occurs. ";
 
 %feature("docstring")  ExecuteSQL "OGRLayerH
@@ -171,7 +171,7 @@ use their dedicated SQL engine, unless OGRSQL is explicitly passed as
 the dialect. Starting with OGR 1.10, the SQLITE dialect can also be
 used.
 
-an handle to a OGRLayer containing the results of the query.
+a handle to a OGRLayer containing the results of the query.
 Deallocate with OGR_DS_ReleaseResultSet(). ";
 
 %feature("docstring")  ReleaseResultSet "void
@@ -189,7 +189,7 @@ Deprecated Use GDALDatasetReleaseResultSet() in GDAL 2.0
 Parameters:
 -----------
 
-hDS:  an handle to the data source on which was executed an SQL query.
+hDS:  a handle to the data source on which was executed an SQL query.
 
 hLayer:  handle to the result of a previous OGR_DS_ExecuteSQL() call.
 ";
@@ -260,7 +260,7 @@ hDS:  handle to the data source from which to get the layer.
 
 iLayer:  a layer number between 0 and OGR_DS_GetLayerCount()-1.
 
-an handle to the layer, or NULL if iLayer is out of range or an error
+a handle to the layer, or NULL if iLayer is out of range or an error
 occurs. ";
 
 %feature("docstring")  GetName "const char*

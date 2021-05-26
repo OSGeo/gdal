@@ -18,12 +18,10 @@ i386 chroot "$chroot" sh -c "cd $PWD/autotest/cpp && make vsipreload.so"
 
 mv autotest/gcore/vsigs.py autotest/gcore/vsigs.py.disabled
 
-# install pip and use it to install test dependencies
-sudo i386 chroot "$chroot" sh -c "curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | python"
-sudo i386 chroot "$chroot" pip install -U -r "$PWD/autotest/requirements.txt"
+# https://travis-ci.com/github/OSGeo/gdal/jobs/399684890
+# import issues of ogr_pg from ../ogr
+mv autotest/utilities/test_ogr2ogr.py autotest/utilities/test_ogr2ogr.py.disabled
+mv autotest/pyscripts/test_ogr2ogr_py.py autotest/pyscripts/test_ogr2ogr_py.py.disabled
 
 # Run all the Python autotests
 i386 chroot "$chroot" sh -c "cd $PWD/autotest && $PYTEST"
-
-# Run Shellcheck
-shellcheck -e SC2086,SC2046 $(find $PWD/gdal -name '*.sh' -a -not -name ltmain.sh)

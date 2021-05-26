@@ -143,8 +143,24 @@ value_expr:
         {
             $$ = new swq_expr_node( SWQ_AND );
             $$->field_type = SWQ_BOOLEAN;
-            $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $3 );
+
+            if( $1->eNodeType == SNT_OPERATION &&
+                $1->nOperation == SWQ_AND  )
+            {
+                // Temporary non-binary formulation
+                $$->nSubExprCount = $1->nSubExprCount;
+                $$->papoSubExpr = $1->papoSubExpr;
+                $$->PushSubExpression( $3 );
+
+                $1->nSubExprCount = 0;
+                $1->papoSubExpr= nullptr;
+                delete $1;
+            }
+            else
+            {
+                $$->PushSubExpression( $1 );
+                $$->PushSubExpression( $3 );
+            }
         }
 
     | value_expr SWQT_OR value_expr

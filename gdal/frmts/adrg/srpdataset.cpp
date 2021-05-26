@@ -729,7 +729,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 // TODO: Translate to English or state why this should not be in
                 // English.
                 // Date de production du produit : QAL.QUV.DAT1
-                // Num�ro d'�dition  du produit : QAL.QUV.EDN
+                // Numero d'edition  du produit : QAL.QUV.EDN
 
                 const int EDN =
                     record->GetIntSubfield( "QUV", 0, "EDN", 0, &bSuccess );
@@ -1372,7 +1372,7 @@ char** SRPDataset::GetIMGListFromGEN(const char* pszFileName,
             if ( strcmp(RTY, "GIN") != 0 )
                 continue;
 
-            /* make sure that the GEN file is part of a SRP dataset, not an ADRG dataset, by checking that the GEN field does not contain a NWO subfield */
+            /* make sure that the GEN file is part of a SRP dataset, not an ADRG dataset, by checking that the GEN field does not contain a NOW subfield */
             const char* NWO = record->GetStringSubfield("GEN", 0, "NWO", 0);
             if( NWO )
             {

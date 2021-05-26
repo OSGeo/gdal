@@ -300,3 +300,45 @@ div[class ^= "admonition shortname"] > p.admonition-title {
 .build_dependencies .admonition-title::before{
     content: '\f129'; /* info */
 }
+
+/* For service_providers.rst */
+img.img-logos {
+    float: left;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+/* For service_providers.rst */
+div.service-provider {
+    margin: 50px;
+}
+
+/* For service_providers.rst */
+div.service-provider::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+/* For service_providers.rst */
+div.service-provider-description {
+    display: table;
+}
+
+div.horizontal-logo {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+/* Suppress special symbol for external links in supporters section */
+.horizontal-logos a.reference.external::after {
+    content: "";
+}
+
+div.horizontal-logos::after {
+    content: "";
+    clear: both;
+    display: table;
+}

@@ -1498,6 +1498,8 @@ class TABMAPFile
     const CPLString& GetEncoding() const;
     void SetEncoding( const CPLString& );
 
+    static bool IsValidObjType(int nObjType);
+
 #ifdef DEBUG
     void Dump(FILE *fpOut = nullptr);
     void DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,

@@ -143,7 +143,7 @@ void RegisterOGRSXF()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Storage and eXchange Format" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sxf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/sxf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sxf" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

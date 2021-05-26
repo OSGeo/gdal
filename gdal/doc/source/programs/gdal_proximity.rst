@@ -1,7 +1,7 @@
 .. _gdal_proximity:
 
 ================================================================================
-gdal_proximity
+gdal_proximity.py
 ================================================================================
 
 .. only:: html
@@ -17,7 +17,7 @@ Synopsis
 
     gdal_proximity.py <srcfile> <dstfile> [-srcband n] [-dstband n]
                       [-of format] [-co name=value]*
-                      [-ot Byte/Int16/Int32/Float32/etc]
+                      [-ot Byte/UInt16/UInt32/Float32/etc]
                       [-values n,n,n] [-distunits PIXEL/GEO]
                       [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
                       [-fixed-buf-val n]
@@ -30,7 +30,7 @@ the distance from the center of each pixel to the center of the nearest
 pixel identified as a target pixel.  Target pixels are those in the source
 raster for which the raster pixel value is in the set of target pixel values.
 
-.. program:: gdaladdo
+.. program:: gdal_proximity
 
 .. option:: <srcfile>
 
@@ -54,7 +54,11 @@ raster for which the raster pixel value is in the set of target pixel values.
 
 .. include:: options/co.rst
 
-.. include:: options/ot.rst
+.. option:: -ot <type>
+
+    Specify a data type supported by the driver, which may be one of the
+    following: ``Byte``, ``UInt16``, ``Int16``, ``UInt32``, ``Int32``,
+    ``Float32`` (default), or ``Float64``.
 
 .. option:: -values <n>,<n>,<n>
 

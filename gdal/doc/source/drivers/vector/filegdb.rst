@@ -60,6 +60,24 @@ Special SQL requests
 can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content.
 
+Field domains
+-------------
+
+.. versionadded:: 3.3
+
+Coded and range field domains are supported.
+
+Hiearchical organization
+------------------------
+
+.. versionadded:: 3.4
+
+The hiearchical organization of tables and feature classes as top-level
+element or within a feature dataset can be explored using the methods
+:cpp:func:`GDALDataset::GetRootGroup`,
+:cpp:func:`GDALGroup::GetGroupNames`, :cpp:func:`GDALGroup::OpenGroup`,
+:cpp:func:`GDALGroup::GetVectorLayerNames` and :cpp:func:`GDALGroup::OpenVectorLayer`
+
 Transaction support
 -------------------
 
@@ -174,7 +192,7 @@ Known Issues
 -  The SDK is known to be unable to open layers with particular spatial
    reference systems. This might be the case if messages "FGDB: Error
    opening XXXXXXX. Skipping it (Invalid function arguments.)" when
-   running "ogrinfo --debug on the.gdb" (reported as warning in GDAL
+   running ``ogrinfo --debug on the.gdb`` (reported as warning in GDAL
    2.0). Using the OpenFileGDB driver will generally solve that issue.
 -  FGDB coordinate snapping will cause geometries to be altered during
    writing. Use the origin and scale layer creation options to control

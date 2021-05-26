@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Interface representing access to a PCIDSK Binary Segment
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,12 +29,12 @@
 
 namespace PCIDSK {
 //! Interface to PCIDSK Binary segment.
-    class PCIDSKBinarySegment 
+    class PCIDSKBinarySegment
     {
     public:
         virtual const char* GetBuffer(void) const = 0;
         virtual unsigned int GetBufferSize(void) const = 0;
-        virtual void SetBuffer(const char* pabyBuf, 
+        virtual void SetBuffer(const char* pabyBuf,
             unsigned int nBufSize) = 0;
 
         // Virtual destructor

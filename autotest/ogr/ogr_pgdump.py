@@ -29,8 +29,6 @@
 ###############################################################################
 
 import os
-import sys
-
 
 import gdaltest
 import ogrtest
@@ -169,7 +167,7 @@ def test_ogr_pgdump_2():
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);""") == -1 or \
        sql.find("""COPY "another_schema"."tpoly" ("the_geom", "area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
        sql.find("0103000020E61000000100000005000000000000C01A481D4100000080072D524100000060AA461D4100000080FF2C52410000006060461D41000000400C2D5241000000A0DF471D4100000000142D5241000000C01A481D4100000080072D5241	5268.813	170	35043413	\\N") == -1 or \
-       sql.find("""\.""") == -1 or \
+       sql.find(r"""\.""") == -1 or \
        sql.find("""COMMIT;""") == -1))
 
 
@@ -655,14 +653,9 @@ def test_ogr_pgdump_9(pg_use_copy='YES'):
     feat.SetField('str', 'ABCDEF')
     lyr.CreateFeature(feat)
 
-    if sys.version_info >= (3, 0, 0):
-        val4 = '\u00e9\u00e9\u00e9\u00e9'
-        val5 = val4 + '\u00e9'
-        val6 = val5 + '\u00e9'
-    else:
-        exec("val4 = u'\\u00e9\\u00e9\\u00e9\\u00e9'")
-        exec("val5 = val4 + u'\\u00e9'")
-        exec("val6 = val5 + u'\\u00e9'")
+    val4 = '\u00e9\u00e9\u00e9\u00e9'
+    val5 = val4 + '\u00e9'
+    val6 = val5 + '\u00e9'
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str', val6)

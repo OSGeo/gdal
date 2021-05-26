@@ -119,6 +119,8 @@ GDALDriverManager::GDALDriverManager()
 {
     CPLAssert( poDM == nullptr );
 
+    CPLLoadConfigOptionsFromPredefinedFiles();
+
 /* -------------------------------------------------------------------- */
 /*      We want to push a location to search for data files             */
 /*      supporting GDAL/OGR such as EPSG csv files, S-57 definition     */
@@ -236,6 +238,12 @@ GDALDriverManager::~GDALDriverManager()
     PamCleanProxyDB();
 
 /* -------------------------------------------------------------------- */
+/*      Cleanup any memory allocated by the OGRSpatialReference         */
+/*      related subsystem.                                              */
+/* -------------------------------------------------------------------- */
+    OSRCleanup();
+
+/* -------------------------------------------------------------------- */
 /*      Blow away all the finder hints paths.  We really should not     */
 /*      be doing all of them, but it is currently hard to keep track    */
 /*      of those that actually belong to us.                            */
@@ -243,12 +251,6 @@ GDALDriverManager::~GDALDriverManager()
     CPLFinderClean();
     CPLFreeConfig();
     CPLCleanupSharedFileMutex();
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup any memory allocated by the OGRSpatialReference         */
-/*      related subsystem.                                              */
-/* -------------------------------------------------------------------- */
-    OSRCleanup();
 
 #ifdef HAVE_XERCES
     OGRCleanupXercesMutex();
@@ -911,4 +913,32 @@ void CPL_STDCALL GDALDestroyDriverManager( void )
         delete poDM;
         poDM = nullptr;
     }
+}
+
+/************************************************************************/
+/*        GDALIsDriverDeprecatedForGDAL35StillEnabled()                 */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a deprecated driver is explicitly enabled by the user
+ */
+
+bool GDALIsDriverDeprecatedForGDAL35StillEnabled(const char* pszDriverName, const char* pszExtraMsg)
+{
+    CPLString osConfigOption;
+    osConfigOption.Printf("GDAL_ENABLE_DEPRECATED_DRIVER_%s", pszDriverName);
+    if( CPLTestBool(CPLGetConfigOption(osConfigOption.c_str(), "NO")) )
+    {
+        return true;
+    }
+    CPLError(CE_Failure, CPLE_AppDefined,
+        "Driver %s is considered for removal in GDAL 3.5.%s You are invited "
+        "to convert any dataset in that format to another more common one ."
+        "If you need this driver in future GDAL versions, create a ticket at "
+        "https://github.com/OSGeo/gdal (look first for an existing one first) to "
+        "explain how critical it is for you (but the GDAL project may still "
+        "remove it), and to enable it now, set the %s "
+        "configuration option / environment variable to YES",
+        pszDriverName, pszExtraMsg, osConfigOption.c_str());
+    return false;
 }

@@ -8,7 +8,7 @@
 # Author:   Dmitry Baryshnikov <polimax@mail.ru>
 #
 ###############################################################################
-# Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
+# Copyright (c) 2018-2021, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ def check_availability(url):
     # Sandbox cleans at 1:05 on monday (UTC)
     now = datetime.utcnow()
     if now.weekday() == 0:
-        if now.hour >= 1 and now.hour < 3:
+        if now.hour >= 0 and now.hour < 4:
             return False
 
     version_url = url + '/api/component/pyramid/pkg_version'
@@ -66,7 +66,7 @@ def check_availability(url):
         count = quota_json['count']
         if limit is None or count is None:
             return True
-        return limit - count > 10
+        return limit - count > 15
     except:
         return False
 
@@ -124,10 +124,11 @@ def test_ngw_2():
 
 def test_ngw_3():
 
-    if gdaltest.ngw_drv is None:
+    if gdaltest.ngw_drv is None or gdaltest.ngw_ds is None:
         pytest.skip()
 
     if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_ds = None
         gdaltest.ngw_drv = None
         pytest.skip()
 
@@ -143,10 +144,11 @@ def test_ngw_3():
 
 def test_ngw_4():
 
-    if gdaltest.ngw_drv is None:
+    if gdaltest.ngw_drv is None or gdaltest.ngw_ds is None:
         pytest.skip()
 
     if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_ds = None
         gdaltest.ngw_drv = None
         pytest.skip()
 
@@ -202,6 +204,7 @@ def test_ngw_6():
         pytest.skip()
 
     if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_ds = None
         gdaltest.ngw_drv = None
         pytest.skip()
 
@@ -284,6 +287,11 @@ def test_ngw_cleanup():
 
     if gdaltest.ngw_drv is None:
         pytest.skip()
+    
+    if check_availability(gdaltest.ngw_test_server) == False:
+        gdaltest.ngw_ds = None
+        gdaltest.ngw_drv = None
+        pytest.skip()    
 
     if gdaltest.group_id is not None:
         delete_url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + gdaltest.group_id

@@ -76,7 +76,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
 
     int Stat        ( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
     int Unlink      ( const char * pszFilename ) override;
@@ -86,6 +87,7 @@ public:
     char **ReadDir  ( const char *pszDirname ) override
                         { return ReadDirEx(pszDirname, 0); }
     char **ReadDirEx( const char * pszDirname, int nMaxFiles ) override;
+    char **SiblingFiles( const char * pszFilename ) override;
     int HasOptimizedReadMultiRange(const char* pszPath ) override;
     
 };

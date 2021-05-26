@@ -67,7 +67,7 @@ public:
                                         int nr_rows,
                                         int nrBands,
                                         GDALDataType gdalType,
-                                        char** papszParmList);
+                                        char** papszParamList);
 
   static GDALDataset* createCopy       (char const* filename,
                                         GDALDataset* source,
@@ -113,7 +113,7 @@ public:
   // CREATORS
   //----------------------------------------------------------------------------
 
-  explicit          PCRasterDataset     (MAP* map);
+  explicit          PCRasterDataset     (MAP* map, GDALAccess eAccess);
 
   /* virtual */    ~PCRasterDataset    ();
 

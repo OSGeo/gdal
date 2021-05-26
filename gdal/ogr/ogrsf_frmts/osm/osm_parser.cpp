@@ -1986,7 +1986,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
             }
             psCtxt->pabyBlob = pabyBlobNew;
         }
-        // Given how Protocol buffer work, we can merge sevaral buffers
+        // Given how Protocol buffer work, we can merge several buffers
         // by just appending them to the previous ones.
         if( VSIFReadL(psCtxt->pabyBlob + nBlobSizeAcc, 1,
                       nBlobSize, psCtxt->fp) != nBlobSize )

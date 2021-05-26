@@ -5,7 +5,7 @@
  * Author:   Björn Harrtell <bjorn at wololo dot org>
  *
  ******************************************************************************
- * Copyright (c) 2018-2019, Björn Harrtell <bjorn at wololo dot org>
+ * Copyright (c) 2018-2020, Björn Harrtell <bjorn at wololo dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
+#include "ogreditablelayer.h"
 
 #include "header_generated.h"
 #include "feature_generated.h"
@@ -53,15 +54,16 @@ struct FeatureItem : FlatGeobuf::Item {
     uint64_t offset;
 };
 
-// used to associate a feature index with offset
-// as the result of a spatial query to be able
-// to sort them on offset for read optimization
-struct IndexOffset {
-    uint64_t index;
-    uint64_t offset;
+class OGRFlatGeobufBaseLayerInterface CPL_NON_FINAL
+{
+    public:
+        virtual ~OGRFlatGeobufBaseLayerInterface();
+
+        virtual const std::string& GetFilename() const = 0;
+        virtual OGRLayer* GetLayer() = 0;
 };
 
-class OGRFlatGeobufLayer final : public OGRLayer
+class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerInterface
 {
     private:
         std::string m_osFilename;
@@ -94,6 +96,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
 
         // creation
         bool m_create = false;
+        bool m_update = false;
         std::vector<std::shared_ptr<FlatGeobuf::Item>> m_featureItems; // feature item description used to create spatial index
         bool m_bCreateSpatialIndexAtClose = true;
         bool m_bVerifyBuffers = true;
@@ -101,7 +104,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         VSILFILE *m_poFpWrite = nullptr;
         uint64_t m_writeOffset = 0; // current write offset
         uint16_t m_indexNodeSize = 0;
-        std::string m_oTempFile; // holds generated temp file name for two pass writing
+        std::string m_osTempFile; // holds generated temp file name for two pass writing
         uint32_t m_maxFeatureSize  = 0;
 
         // shared
@@ -121,11 +124,16 @@ class OGRFlatGeobufLayer final : public OGRLayer
         void Create();
         void writeHeader(VSILFILE *poFp, uint64_t featuresCount, std::vector<double> *extentVector);
 
-        OGRwkbGeometryType getOGRwkbGeometryType();
+        // construction
+        OGRFlatGeobufLayer(const FlatGeobuf::Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset, bool update);
+        OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, bool bCreateSpatialIndexAtClose, VSILFILE *poFpWrite, std::string &osTempFile);
+
     public:
-        OGRFlatGeobufLayer(const FlatGeobuf::Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset);
-        OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, VSILFILE *poFpWrite, const std::string& oTempFile, bool bCreateSpatialIndexAtClose);
         virtual ~OGRFlatGeobufLayer();
+
+        static OGRFlatGeobufLayer *Open(const FlatGeobuf::Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset, bool update);
+        static OGRFlatGeobufLayer *Open(const char* pszFilename, VSILFILE *fp, bool bVerifyBuffers, bool update);
+        static OGRFlatGeobufLayer *Create(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, bool bCreateSpatialIndexAtClose, char **papszOptions);
 
         virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
         virtual OGRFeature *GetNextFeature() override;
@@ -137,26 +145,47 @@ class OGRFlatGeobufLayer final : public OGRLayer
         virtual OGRFeatureDefn *GetLayerDefn() override { return m_poFeatureDefn; }
         virtual GIntBig GetFeatureCount(int bForce) override;
         virtual OGRErr GetExtent(OGREnvelope* psExtent, int bForce) override;
-        virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
+        virtual OGRErr GetExtent( int iGeomField, OGREnvelope *psExtent,
                                        int bForce ) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
         void VerifyBuffers( int bFlag ) { m_bVerifyBuffers = CPL_TO_BOOL(bFlag); }
 
-        const std::string& GetFilename() const { return m_osFilename; }
+        const std::string& GetFilename() const override { return m_osFilename; }
+        OGRLayer* GetLayer() override { return this; }
+
+        static std::string GetTempFilePath(const CPLString &fileName, CSLConstList papszOptions);
+        static VSILFILE *CreateOutputFile(const CPLString &pszFilename, CSLConstList papszOptions, bool isTemp);
+
+        uint16_t GetIndexNodeSize() const { return m_indexNodeSize; }
+        OGRwkbGeometryType getOGRwkbGeometryType();
+};
+
+class OGRFlatGeobufEditableLayer final: public OGREditableLayer, public OGRFlatGeobufBaseLayerInterface
+{
+    public:
+        OGRFlatGeobufEditableLayer(OGRFlatGeobufLayer *poFlatGeobufLayer, char **papszOpenOptions);
+
+        virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
+
+        const std::string&  GetFilename() const override {
+            return static_cast<OGRFlatGeobufLayer *>(m_poDecoratedLayer)->GetFilename();
+        }
+        OGRLayer* GetLayer() override { return this; }
 };
 
 class OGRFlatGeobufDataset final: public GDALDataset
 {
     private:
-        std::vector<std::unique_ptr<OGRFlatGeobufLayer>> m_apoLayers;
+        std::vector<std::unique_ptr<OGRFlatGeobufBaseLayerInterface>> m_apoLayers;
         bool m_bCreate = false;
+        bool m_bUpdate = false;
         bool m_bIsDir = false;
 
         bool OpenFile(const char* pszFilename, VSILFILE* fp, bool bVerifyBuffers);
 
     public:
-        explicit OGRFlatGeobufDataset(const char *pszName, bool bIsDir, bool bCreate);
+        OGRFlatGeobufDataset(const char *pszName, bool bIsDir, bool bCreate, bool bUpdate);
         ~OGRFlatGeobufDataset();
 
         static GDALDataset *Open(GDALOpenInfo*);
@@ -176,7 +205,6 @@ class OGRFlatGeobufDataset final: public GDALDataset
         virtual int GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
         char** GetFileList() override;
 };
-
 
 #endif /* ndef OGR_FLATGEOBUF_H_INCLUDED */
 

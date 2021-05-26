@@ -46,6 +46,7 @@
 #endif
 #include "ogrgeojsonreader.h"
 
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstdlib>
@@ -94,7 +95,7 @@ CPL_CVSID("$Id$")
  *                  of failure. If not NULL, *ppoReturn should be freed with
  *                  OGRGeometryFactory::destroyGeometry() after use.
  * @param nBytes the number of bytes available in pabyData, or -1 if it isn't
- *               known.
+ *               known
  * @param eWkbVariant WKB variant.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
@@ -105,11 +106,11 @@ CPL_CVSID("$Id$")
 OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
                                           OGRSpatialReference * poSR,
                                           OGRGeometry **ppoReturn,
-                                          int nBytes,
+                                          size_t nBytes,
                                           OGRwkbVariant eWkbVariant )
 
 {
-    int nBytesConsumedOutIgnored = -1;
+    size_t nBytesConsumedOutIgnored = 0;
     return createFromWkb( pabyData,
                           poSR,
                           ppoReturn,
@@ -142,7 +143,7 @@ OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
  *                  of failure. If not NULL, *ppoReturn should be freed with
  *                  OGRGeometryFactory::destroyGeometry() after use.
  * @param nBytes the number of bytes available in pabyData, or -1 if it isn't
- *               known.
+ *               known
  * @param eWkbVariant WKB variant.
  * @param nBytesConsumedOut output parameter. Number of bytes consumed.
  *
@@ -155,16 +156,16 @@ OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
 OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
                                           OGRSpatialReference * poSR,
                                           OGRGeometry **ppoReturn,
-                                          int nBytes,
+                                          size_t nBytes,
                                           OGRwkbVariant eWkbVariant,
-                                          int& nBytesConsumedOut )
+                                          size_t& nBytesConsumedOut )
 
 {
     const GByte* l_pabyData = static_cast<const GByte*>(pabyData);
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     *ppoReturn = nullptr;
 
-    if( nBytes < 9 && nBytes != -1 )
+    if( nBytes < 9 && nBytes != static_cast<size_t>(-1) )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -275,6 +276,52 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
                                     OGRSpatialReferenceH hSRS,
                                     OGRGeometryH *phGeometry,
                                     int nBytes )
+
+{
+    return OGRGeometryFactory::createFromWkb(
+        pabyData,
+        OGRSpatialReference::FromHandle(hSRS),
+        reinterpret_cast<OGRGeometry **>(phGeometry),
+        nBytes );
+}
+
+/************************************************************************/
+/*                      OGR_G_CreateFromWkbEx()                         */
+/************************************************************************/
+/**
+ * \brief Create a geometry object of the appropriate type from its
+ * well known binary representation.
+ *
+ * Note that if nBytes is passed as zero, no checking can be done on whether
+ * the pabyData is sufficient.  This can result in a crash if the input
+ * data is corrupt.  This function returns no indication of the number of
+ * bytes from the data source actually used to represent the returned
+ * geometry object.  Use OGR_G_WkbSizeEx() on the returned geometry to
+ * establish the number of bytes it required in WKB format.
+ *
+ * The OGRGeometryFactory::createFromWkb() CPP method is the same as this
+ * function.
+ *
+ * @param pabyData pointer to the input BLOB data.
+ * @param hSRS handle to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+ * @param phGeometry the newly created geometry object will
+ * be assigned to the indicated handle on return.  This will be NULL in case
+ * of failure. If not NULL, *phGeometry should be freed with
+ * OGR_G_DestroyGeometry() after use.
+ * @param nBytes the number of bytes of data available in pabyData, or -1
+ * if it is not known, but assumed to be sufficient.
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ * @since GDAL 3.3
+ */
+
+OGRErr CPL_DLL OGR_G_CreateFromWkbEx( const void *pabyData,
+                                      OGRSpatialReferenceH hSRS,
+                                      OGRGeometryH *phGeometry,
+                                      size_t nBytes )
 
 {
     return OGRGeometryFactory::createFromWkb(
@@ -1200,6 +1247,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
     {
         poGeom = forceToMultiPolygon(poGeom);
+        assert(poGeom);
         eGeomType = wkbMultiPolygon;
     }
 
@@ -1219,6 +1267,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             poGeom = poMPoly;
         }
 
+        assert(poGeom);
         poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         for( auto&& poPoly: poMPoly )
@@ -1413,6 +1462,8 @@ struct sPolyExtended
 {
     CPL_DISALLOW_COPY_ASSIGN(sPolyExtended)
     sPolyExtended() = default;
+    sPolyExtended(sPolyExtended&&) = default;
+    sPolyExtended& operator= (sPolyExtended&&) = default;
 
     OGRGeometry* poGeometry = nullptr;
     OGRCurvePolygon* poPolygon = nullptr;
@@ -1427,28 +1478,14 @@ struct sPolyExtended
     bool            bIsPolygon = false;
 };
 
-static int OGRGeometryFactoryCompareArea(const void* p1, const void* p2)
+static bool OGRGeometryFactoryCompareArea(const sPolyExtended& sPoly1, const sPolyExtended& sPoly2)
 {
-    const sPolyExtended* psPoly1 = reinterpret_cast<const sPolyExtended*>(p1);
-    const sPolyExtended* psPoly2 = reinterpret_cast<const sPolyExtended*>(p2);
-    if( psPoly2->dfArea < psPoly1->dfArea )
-        return -1;
-    else if( psPoly2->dfArea > psPoly1->dfArea )
-        return 1;
-    else
-        return 0;
+    return sPoly2.dfArea < sPoly1.dfArea;
 }
 
-static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
+static bool OGRGeometryFactoryCompareByIndex(const sPolyExtended& sPoly1, const sPolyExtended& sPoly2)
 {
-    const sPolyExtended* psPoly1 = reinterpret_cast<const sPolyExtended*>(p1);
-    const sPolyExtended* psPoly2 = reinterpret_cast<const sPolyExtended*>(p2);
-    if( psPoly1->nInitialIndex < psPoly2->nInitialIndex )
-        return -1;
-    else if( psPoly1->nInitialIndex > psPoly2->nInitialIndex )
-        return 1;
-    else
-        return 0;
+    return sPoly1.nInitialIndex < sPoly2.nInitialIndex;
 }
 
 constexpr int N_CRITICAL_PART_NUMBER = 100;
@@ -1569,7 +1606,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
 /*      Setup per polygon envelope and area information.                */
 /* -------------------------------------------------------------------- */
-    sPolyExtended* asPolyEx = new sPolyExtended[nPolygonCount];
+    std::vector<sPolyExtended> asPolyEx(nPolygonCount);
 
     bool bValidTopology = true;
     bool bMixedUpGeometries = false;
@@ -1689,7 +1726,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 delete asPolyEx[i].poPolygon;
             }
         }
-        delete [] asPolyEx;
+
         if( pbIsValidGeometry )
             *pbIsValidGeometry = TRUE;
         return poCP;
@@ -1739,7 +1776,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 delete asPolyEx[i].poPolygon;
             }
         }
-        delete [] asPolyEx;
+
         if( pbIsValidGeometry )
             *pbIsValidGeometry = TRUE;
         return poRet;
@@ -1819,9 +1856,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     if( !bMixedUpGeometries )
     {
         // STEP 1: Sort polygons by descending area.
-        // TODO(schwehr): Use std::sort.
-        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended),
-              OGRGeometryFactoryCompareArea);
+        std::sort(asPolyEx.begin(), asPolyEx.end(),
+                  OGRGeometryFactoryCompareArea);
     }
     papoPolygons = nullptr;  // Just to use to avoid it afterwards.
 
@@ -2066,8 +2102,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     else
     {
         // STEP 3: Sort again in initial order.
-        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended),
-              OGRGeometryFactoryCompareByIndex);
+        std::sort(asPolyEx.begin(), asPolyEx.end(),
+                  OGRGeometryFactoryCompareByIndex);
 
         // STEP 4: Add holes as rings of their enclosing polygon.
         for( int i = 0; i < nPolygonCount; i++ )
@@ -2105,8 +2141,6 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             geom = poGC;
         }
     }
-
-    delete[] asPolyEx;
 
     return geom;
 }
@@ -2924,12 +2958,17 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                 {
                     double dfMaxSmallDiffLong = 0;
                     bool bHasBigDiff = false;
+                    bool bOnlyAtPlusMinus180 = poLS->getNumPoints() > 0 &&
+                        ( fabs(fabs(poLS->getX(0)) - 180) < 1e-10 );
                     // Detect big gaps in longitude.
                     for( int i = 1; i < poLS->getNumPoints(); i++ )
                     {
                         const double dfPrevX = poLS->getX(i-1) + dfXOffset;
                         const double dfX = poLS->getX(i) + dfXOffset;
                         const double dfDiffLong = fabs(dfX - dfPrevX);
+                        if( fabs(fabs(poLS->getX(i)) - 180) > 1e-10 )
+                            bOnlyAtPlusMinus180 = false;
+
                         if( dfDiffLong > dfDiffSpace &&
                             ((dfX > dfLeftBorderX &&
                               dfPrevX < dfRightBorderX) ||
@@ -2939,7 +2978,8 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                         else if( dfDiffLong > dfMaxSmallDiffLong )
                             dfMaxSmallDiffLong = dfDiffLong;
                     }
-                    if( bHasBigDiff && dfMaxSmallDiffLong < dfDateLineOffset )
+                    if( bHasBigDiff && !bOnlyAtPlusMinus180 &&
+                        dfMaxSmallDiffLong < dfDateLineOffset )
                     {
                         if( eGeomType == wkbLineString )
                             bSplitLineStringAtDateline = true;
@@ -3255,21 +3295,33 @@ static bool IsPolarToWGS84( OGRCoordinateTransformation* poCT,
         // Surprisingly, pole south projects correctly back &
         // forth for antarctic polar stereographic.  Therefore, check that
         // the projected value is not too big.
-        fabs(x) < 1e10 && fabs(y) < 1e10 &&
-        poCT->Transform(1, &x, &y) &&
-        fabs(y - 90.0) < 1e-10 )
+        fabs(x) < 1e10 && fabs(y) < 1e10 )
     {
-        bIsNorthPolar = true;
+        double x_tab[] = {x, x - 1e5, x + 1e5};
+        double y_tab[] = {y, y - 1e5, y + 1e5};
+        if( poCT->Transform(3, x_tab, y_tab) &&
+            fabs(y_tab[0] - (90.0)) < 1e-10 &&
+            fabs(x_tab[2] - x_tab[1]) > 170 &&
+            fabs(y_tab[2] - y_tab[1]) < 1e-10 )
+        {
+            bIsNorthPolar = true;
+        }
     }
 
     x = 0.0;
     y = -90.0;
     if( poRevCT->Transform( 1, &x, &y ) &&
-        fabs(x) < 1e10 && fabs(y) < 1e10 &&
-        poCT->Transform(1, &x, &y) &&
-        fabs(y - (-90.0)) < 1e-10 )
+        fabs(x) < 1e10 && fabs(y) < 1e10 )
     {
-        bIsSouthPolar = true;
+        double x_tab[] = {x, x - 1e5, x + 1e5};
+        double y_tab[] = {y, y - 1e5, y + 1e5};
+        if( poCT->Transform(3, x_tab, y_tab) &&
+            fabs(y_tab[0] - (-90.0)) < 1e-10 &&
+            fabs(x_tab[2] - x_tab[1]) > 170 &&
+            fabs(y_tab[2] - y_tab[1]) < 1e-10 )
+        {
+            bIsSouthPolar = true;
+        }
     }
 
     poCT->SetEmitErrors(bBackupEmitErrors);
@@ -3597,92 +3649,69 @@ static OGRGeometry* TransformBeforeAntimeridianToWGS84(
 
     const double EPS = 1e-9;
 
-    // Build a multipolygon (in projected space) with 2 parts: one part left
-    // of the antimeridian, one part east
-    const OGRwkbGeometryType eType = wkbFlatten(poDstGeom->getGeometryType());
-
-    // If we have lines, then to get better accuracy of the intersection with
-    // the main geometry, we need to add extra points
-    const bool bHasLines = (eType == wkbLineString ||
-                            eType == wkbMultiLineString);
-
-    OGRLinearRing* poLR1 = new OGRLinearRing();
-    poLR1->addPoint( sEnvelope.MinX, sEnvelope.MinY );
-    if( bHasLines )
+    // Build a very thin polygon cutting the antimeridian at our points
+    OGRLinearRing* poLR = new OGRLinearRing;
     {
-        double x = 180.0 - EPS;
+        double x = 180.0-EPS;
         double y = aoPoints[0].y-EPS;
         poRevCT->Transform(1, &x, &y);
-        poLR1->addPoint( x, y );
+        poLR->addPoint( x, y );
     }
     for( const auto& oPoint: aoPoints )
     {
-        double x = 180.0 - EPS;
+        double x = 180.0-EPS;
         double y = oPoint.y;
         poRevCT->Transform(1, &x, &y);
-        poLR1->addPoint( x, y );
+        poLR->addPoint( x, y );
     }
-    if( bHasLines )
     {
-        double x = 180.0 - EPS;
+        double x = 180.0-EPS;
         double y = aoPoints.back().y+EPS;
         poRevCT->Transform(1, &x, &y);
-        poLR1->addPoint( x, y );
+        poLR->addPoint( x, y );
     }
-    poLR1->addPoint( sEnvelope.MinX, sEnvelope.MaxY );
-    poLR1->addPoint( sEnvelope.MinX, sEnvelope.MinY );
-    OGRPolygon* poPoly1 = new OGRPolygon();
-    poPoly1->addRingDirectly( poLR1 );
-
-
-    OGRLinearRing* poLR2 = new OGRLinearRing();
-    poLR2->addPoint( sEnvelope.MaxX, sEnvelope.MinY );
-    if( bHasLines )
     {
-        double x = -180.0 + EPS;
+        double x = 180.0+EPS;
+        double y = aoPoints.back().y+EPS;
+        poRevCT->Transform(1, &x, &y);
+        poLR->addPoint( x, y );
+    }
+    for( size_t i = aoPoints.size(); i > 0; )
+    {
+        --i;
+        const OGRRawPoint& oPoint = aoPoints[i];
+        double x = 180.0+EPS;
+        double y = oPoint.y;
+        poRevCT->Transform(1, &x, &y);
+        poLR->addPoint( x, y );
+    }
+    {
+        double x = 180.0+EPS;
         double y = aoPoints[0].y-EPS;
         poRevCT->Transform(1, &x, &y);
-        poLR2->addPoint( x, y );
+        poLR->addPoint( x, y );
     }
-    for( const auto& oPoint: aoPoints )
-    {
-        double x = -180.0 + EPS;
-        double y = oPoint.y;
-        poRevCT->Transform(1, &x, &y);
-        poLR2->addPoint( x, y );
-    }
-    if( bHasLines )
-    {
-        double x = -180.0 + EPS;
-        double y = aoPoints.back().y+EPS;
-        poRevCT->Transform(1, &x, &y);
-        poLR2->addPoint( x, y );
-    }
-    poLR2->addPoint( sEnvelope.MaxX, sEnvelope.MaxY );
-    poLR2->addPoint( sEnvelope.MaxX, sEnvelope.MinY );
-    OGRPolygon* poPoly2 = new OGRPolygon();
-    poPoly2->addRingDirectly( poLR2 );
+    poLR->closeRings();
 
-    OGRMultiPolygon oMP;
-    oMP.addGeometryDirectly(poPoly1);
-    oMP.addGeometryDirectly(poPoly2);
+    OGRPolygon oPolyToCut;
+    oPolyToCut.addRingDirectly(poLR);
 
 #if DEBUG_VERBOSE
     char* pszWKT = NULL;
-    oMP.exportToWkt(&pszWKT);
-    CPLDebug("OGR", "MP without antimeridian: %s", pszWKT);
+    oPolyToCut.exportToWkt(&pszWKT);
+    CPLDebug("OGR", "Geometry to cut: %s", pszWKT);
     CPLFree(pszWKT);
 #endif
 
     // Get the geometry without the antimeridian
-    OGRGeometry* poInter = poDstGeom->Intersection(&oMP);
+    OGRGeometry* poInter = poDstGeom->Difference(&oPolyToCut);
     if( poInter != nullptr )
     {
         delete poDstGeom;
         poDstGeom = poInter;
+        bNeedPostCorrectionOut = true;
     }
 
-    bNeedPostCorrectionOut = true;
     return poDstGeom;
 }
 
@@ -3831,7 +3860,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
                     !cache.d->poRevCT->GetTargetCS()->IsSame(poCT->GetSourceCS()) )
                 {
                     delete cache.d->poRevCT;
-                    cache.d->poRevCT = 
+                    cache.d->poRevCT =
                         OGRCreateCoordinateTransformation( &oSRSWGS84,
                                                        poCT->GetSourceCS() );
                     cache.d->bIsNorthPolar = false;
@@ -4619,10 +4648,9 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     else if( eType == wkbMultiPolygon && eTargetType == wkbTIN )
     {
         OGRMultiPolygon* poMP = poGeom->toMultiPolygon();
-        for( int i = 0; i < poMP->getNumGeometries(); ++i )
+        for( const auto poPoly: *poMP )
         {
-            OGRPolygon* poPoly = poMP->getGeometryRef(i)->toPolygon();
-            OGRLinearRing* poLR = poPoly->getExteriorRing();
+            const OGRLinearRing* poLR = poPoly->getExteriorRing();
             if( !(poLR != nullptr && poLR->getNumPoints() == 4 &&
                   poPoly->getNumInteriorRings() == 0) )
             {
@@ -4631,9 +4659,8 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         }
         OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
         poTS->assignSpatialReference( poGeom->getSpatialReference() );
-        for( int i = 0; i < poMP->getNumGeometries(); ++i )
+        for( const auto poPoly: *poMP )
         {
-            OGRPolygon* poPoly = poMP->getGeometryRef(i)->toPolygon();
             OGRErr eErr = OGRERR_NONE;
             poTS->addGeometryDirectly( new OGRTriangle(*poPoly, eErr) );
         }
@@ -4643,10 +4670,9 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     else if( eType == wkbPolyhedralSurface && eTargetType == wkbTIN )
     {
         OGRPolyhedralSurface* poPS = poGeom->toPolyhedralSurface();
-        for( int i = 0; i < poPS->getNumGeometries(); ++i )
+        for( const auto poPoly: *poPS )
         {
-            OGRPolygon* poPoly = poPS->getGeometryRef(i)->toPolygon();
-            OGRLinearRing* poLR = poPoly->getExteriorRing();
+            const OGRLinearRing* poLR = poPoly->getExteriorRing();
             if( !(poLR != nullptr && poLR->getNumPoints() == 4 &&
                   poPoly->getNumInteriorRings() == 0) )
             {
@@ -4655,9 +4681,8 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         }
         OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
         poTS->assignSpatialReference( poGeom->getSpatialReference() );
-        for( int i = 0; i < poPS->getNumGeometries(); ++i )
+        for( const auto poPoly: *poPS )
         {
-            OGRPolygon* poPoly = poPS->getGeometryRef(i)->toPolygon();
             OGRErr eErr = OGRERR_NONE;
             poTS->addGeometryDirectly( new OGRTriangle(*poPoly, eErr) );
         }
@@ -4883,7 +4908,7 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
 }
 
 /************************************************************************/
-/*                         GetCurveParmeters()                          */
+/*                         GetCurveParameters()                          */
 /************************************************************************/
 
 /**
@@ -4909,7 +4934,7 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
  * @since GDAL 2.0
  */
 
-int OGRGeometryFactory::GetCurveParmeters(
+int OGRGeometryFactory::GetCurveParameters(
     double x0, double y0, double x1, double y1, double x2, double y2,
     double& R, double& cx, double& cy,
     double& alpha0, double& alpha1, double& alpha2 )
@@ -5198,7 +5223,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
 
     OGRLineString* poLine = new OGRLineString();
     bool bIsArc = true;
-    if( !GetCurveParmeters(x0, y0, x1, y1, x2, y2,
+    if( !GetCurveParameters(x0, y0, x1, y1, x2, y2,
                            R, cx, cy, alpha0, alpha1, alpha2))
     {
         bIsArc = false;
@@ -5411,7 +5436,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
     double alpha0_1 = 0.0;
     double alpha1_1 = 0.0;
     double alpha2_1 = 0.0;
-    if( !(OGRGeometryFactory::GetCurveParmeters(p0.getX(), p0.getY(),
+    if( !(OGRGeometryFactory::GetCurveParameters(p0.getX(), p0.getY(),
                             p1.getX(), p1.getY(),
                             p2.getX(), p2.getY(),
                             R_1, cx_1, cy_1,
@@ -5479,7 +5504,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         double alpha2_2 = 0.0;
         // Check that the new candidate arc shares the same
         // radius, center and winding order.
-        if( !(OGRGeometryFactory::GetCurveParmeters(p1.getX(), p1.getY(),
+        if( !(OGRGeometryFactory::GetCurveParameters(p1.getX(), p1.getY(),
                                 p2.getX(), p2.getY(),
                                 p3.getX(), p3.getY(),
                                 R_2, cx_2, cy_2,
@@ -6033,11 +6058,14 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
                 poRet = poCC;
         }
         else
-            poRet = poLS->clone()->toCurve();
+            poRet = poLS->clone();
     }
     else if( poCC != nullptr )
     {
-        poCC->addCurveDirectly(poLSNew ? poLSNew->toCurve() : poCS->toCurve());
+        if( poLSNew )
+            poCC->addCurveDirectly(poLSNew);
+        else
+            poCC->addCurveDirectly(poCS);
         poRet = poCC;
     }
     else if( poLSNew != nullptr )
@@ -6045,7 +6073,7 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
     else if( poCS != nullptr )
         poRet = poCS;
     else
-        poRet = poLS->clone()->toCurve();
+        poRet = poLS->clone();
 
     poRet->assignSpatialReference( poLS->getSpatialReference() );
 
@@ -6059,13 +6087,16 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
 /**
  * @brief Create geometry from GeoJson fragment.
  * @param pszJsonString The GeoJSON fragment for the geometry.
+ * @param nSize (new in GDAL 3.4) Optional length of the string
+ *              if it is not null-terminated
  * @return a geometry on success, or NULL on error.
  * @since GDAL 2.3
  */
-OGRGeometry* OGRGeometryFactory::createFromGeoJson( const char *pszJsonString )
+OGRGeometry* OGRGeometryFactory::createFromGeoJson(
+    const char *pszJsonString, int nSize )
 {
     CPLJSONDocument oDocument;
-    if( !oDocument.LoadMemory( reinterpret_cast<const GByte*>(pszJsonString)) )
+    if( !oDocument.LoadMemory( reinterpret_cast<const GByte*>(pszJsonString), nSize) )
     {
         return nullptr;
     }

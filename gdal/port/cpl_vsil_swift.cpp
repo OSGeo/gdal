@@ -33,6 +33,8 @@
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_vsil_curl_class.h"
 
+#include <errno.h>
+
 #include <algorithm>
 #include <set>
 #include <map>
@@ -225,7 +227,7 @@ protected:
         IVSIS3LikeHandleHelper* CreateHandleHelper(
             const char* pszURI, bool bAllowNoObject) override;
 
-        CPLString GetFSPrefix() override { return "/vsiswift/"; }
+        CPLString GetFSPrefix() const override { return "/vsiswift/"; }
 
         char** GetFileList( const char *pszFilename,
                             int nMaxFiles,
@@ -239,7 +241,8 @@ public:
 
         VSIVirtualHandle *Open( const char *pszFilename,
                                 const char *pszAccess,
-                                bool bSetError ) override;
+                                bool bSetError,
+                                CSLConstList papszOptions ) override;
 
         int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                 int nFlags ) override;
@@ -283,19 +286,24 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
 
 VSIVirtualHandle* VSISwiftFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        /*if( strchr(pszAccess, '+') != nullptr)
+        if( strchr(pszAccess, '+') != nullptr &&
+            !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "w+ not supported for /vsiSwift. Only w");
+                        "w+ not supported for /vsiswift, unless "
+                        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
+            errno = EACCES;
             return nullptr;
-        }*/
+        }
+
         VSISwiftHandleHelper* poHandleHelper =
             VSISwiftHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str());
@@ -303,17 +311,21 @@ VSIVirtualHandle* VSISwiftFSHandler::Open( const char *pszFilename,
             return nullptr;
         UpdateHandleFromMap(poHandleHelper);
         VSIS3WriteHandle* poHandle =
-            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true);
+            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true, papszOptions);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
-            poHandle = nullptr;
+            return nullptr;
+        }
+        if( strchr(pszAccess, '+') != nullptr)
+        {
+            return VSICreateUploadOnCloseFile(poHandle);
         }
         return poHandle;
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/

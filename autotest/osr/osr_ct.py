@@ -31,11 +31,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import sys
 
 from osgeo import gdal
 from osgeo import osr
 from osgeo import ogr
+import gdaltest
 import pytest
 
 
@@ -141,7 +143,7 @@ def test_osr_ct_4():
         assert result[i][0] == pytest.approx(452772.06, abs=0.01) and result[i][1] == pytest.approx(3540544.89, abs=0.01) and result[i][2] == pytest.approx(0.0, abs=0.01), \
             'Wrong LL to UTM result'
 
-    
+
 ###############################################################################
 # Same test, but with any sequence of tuples instead of a tuple of tuple
 # New in NG bindings (#3020)
@@ -165,15 +167,16 @@ def test_osr_ct_5():
         assert result[i][0] == pytest.approx(452772.06, abs=0.01) and result[i][1] == pytest.approx(3540544.89, abs=0.01) and result[i][2] == pytest.approx(0.0, abs=0.01), \
             'Wrong LL to UTM result'
 
-    
+
 ###############################################################################
 # Test osr.CreateCoordinateTransformation() method
 
 
 def test_osr_ct_6():
 
-    ct = osr.CreateCoordinateTransformation(None, None)
-    assert ct is None
+    with gdaltest.error_handler():
+        ct = osr.CreateCoordinateTransformation(None, None)
+        assert ct is None
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
@@ -192,7 +195,7 @@ def test_osr_ct_6():
         assert result[i][0] == pytest.approx(452772.06, abs=0.01) and result[i][1] == pytest.approx(3540544.89, abs=0.01) and result[i][2] == pytest.approx(0.0, abs=0.01), \
             'Wrong LL to UTM result'
 
-    
+
 ###############################################################################
 # Actually perform a simple Pseudo Mercator to LL conversion.
 
@@ -230,7 +233,7 @@ def test_osr_ct_7():
         print('Expected: %s' % expected_pnt.ExportToWkt())
         pytest.fail('Failed to transform from Pseudo Mercator to LL')
 
-    
+
 ###############################################################################
 # Test WebMercator -> WGS84 optimized transform
 
@@ -444,3 +447,87 @@ def test_osr_ct_lon_wrap():
     x, y, _ = ct.TransformPoint(-25, 60, 0)
     assert x == pytest.approx(-25 + 360, abs=1e-12)
     assert y == pytest.approx(60, abs=1e-12)
+
+###############################################################################
+# Test ct.TransformPointWithErrorCode
+
+
+def test_osr_ct_transformpointwitherrorcode():
+
+    if osr.GetPROJVersionMajor() < 8:
+        # Issue before PROJ 8
+        pytest.skip()
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("+proj=longlat +ellps=GRS80")
+    t = osr.SpatialReference()
+    t.SetFromUserInput("+proj=tmerc +ellps=GRS80")
+    ct = osr.CoordinateTransformation(s, t)
+    assert ct
+
+    x, y, z, t, error_code = ct.TransformPointWithErrorCode(1, 2, 3, 4)
+    assert x == pytest.approx(111257.80439304397, rel=1e-10)
+    assert y == pytest.approx(221183.3401672801, rel=1e-10)
+    assert z == 3
+    assert t == 4
+    assert error_code == 0
+
+    x, y, z, t, error_code = ct.TransformPointWithErrorCode(90, 0, 0, 0)
+    assert math.isinf(x)
+    assert error_code == osr.PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN
+
+###############################################################################
+# Test CoordinateTransformationOptions.SetDesiredAccuracy
+
+
+def test_osr_ct_options_accuracy():
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("EPSG:4326")
+    t = osr.SpatialReference()
+    t.SetFromUserInput("EPSG:4258") # ETRS89
+    options = osr.CoordinateTransformationOptions()
+    options.SetDesiredAccuracy(0.05)
+    with gdaltest.error_handler():
+        ct = osr.CoordinateTransformation(s, t, options)
+    try:
+        ct.TransformPoint(49, 2, 0)
+        assert False
+    except:
+        pass
+
+
+###############################################################################
+# Test CoordinateTransformationOptions.SetBallparkAllowed
+
+
+def test_osr_ct_options_ballpark_disallowed():
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("EPSG:4267") # NAD27
+    t = osr.SpatialReference()
+    t.SetFromUserInput("EPSG:4258") # ETRS89
+    options = osr.CoordinateTransformationOptions()
+    options.SetBallparkAllowed(False)
+    with gdaltest.error_handler():
+        ct = osr.CoordinateTransformation(s, t, options)
+    try:
+        ct.TransformPoint(49, 2, 0)
+        assert False
+    except:
+        pass
+
+
+###############################################################################
+# Test that we pass a neutral time when not explicitly specified
+
+
+def test_osr_ct_non_specified_time_with_time_dependent_transformation():
+
+    options = osr.CoordinateTransformationOptions()
+    options.SetOperation('+proj=pipeline +step +proj=axisswap +order=2,1 +step +proj=unitconvert +xy_in=deg +z_in=m +xy_out=rad +z_out=m +step +proj=cart +ellps=GRS80 +step +inv +proj=helmert +dx=0.0008 +dy=-0.0006 +dz=-0.0014 +drx=6.67e-05 +dry=-0.0007574 +drz=-5.13e-05 +ds=-7e-05 +t_epoch=2010 +convention=coordinate_frame +step +inv +proj=cart +ellps=GRS80 +step +proj=unitconvert +xy_in=rad +z_in=m +xy_out=deg +z_out=m +step +proj=axisswap +order=2,1')
+    ct = osr.CoordinateTransformation(None, None, options)
+    assert ct
+    x, y, _ = ct.TransformPoint(50, -40, 0)
+    assert x == pytest.approx(50, abs=1e-10)
+    assert y == pytest.approx(-40, abs=1e-10)

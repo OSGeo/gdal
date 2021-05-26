@@ -423,11 +423,14 @@ def _test_tiff_srs(sr, expect_fail):
     ds.SetSpatialRef(sr)
     ds = None
 
+    # The GeoTIFF driver is smart enough to figure out that a CRS with
+    # '+proj=longlat +datum=WGS84' is EPSG:4326
+    if sr.GetAuthorityCode(None) is None and '+proj=longlat +datum=WGS84' in sr.ExportToProj4():
+        sr.ImportFromEPSG(4326)
+
     ds = gdal.Open('/vsimem/TestTiffSRS.tif')
-    wkt = ds.GetProjectionRef()
-    sr2 = osr.SpatialReference()
-    sr2.SetFromUserInput(wkt)
-    if 'Miller' in wkt:
+    sr2 = ds.GetSpatialRef()
+    if 'Miller' in sr2.ExportToWkt():
         # Trick so that the EXTENSION node with a PROJ string including +R_A is added
         sr2.ImportFromProj4(sr2.ExportToProj4())
     ds = None
@@ -438,6 +441,8 @@ def _test_tiff_srs(sr, expect_fail):
         if expect_fail:
             pytest.xfail('did not get expected SRS. known to be broken currently. FIXME!')
 
+        #print(sr.ExportToWkt(['FORMAT=WKT2_2019']))
+        #print(sr2.ExportToWkt(['FORMAT=WKT2_2019']))
         print(sr)
         print(sr2)
         assert False, 'did not get expected SRS'
@@ -462,7 +467,8 @@ epsg_list = [
     [5221, True],  # krovak east-north
     [2066, False],  # cass
     [2964, False],  # aea
-    [3410, False],  # cea
+    #[3410, False],  # cea spherical, method=9834. EPSG:3410 is now deprecated
+    [6933, False],  # cea ellipsoidal, method=9835
     #[3786, False],  # eqc spherical, method=9823. EPSG:3786 is now deprecated
     [32663, False],  # eqc elliptical, method=9842
     [4087, False],  # eqc WGS 84 / World Equidistant Cylindrical method=1028
@@ -500,6 +506,8 @@ def test_tiff_srs(use_epsg_code, epsg_code, epsg_proj4_broken):
         sr.SetFromUserInput('ESRI:' + str(epsg_code))
     else:
         sr.ImportFromEPSG(epsg_code)
+        sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
     expect_fail = False
     if use_epsg_code == 0:
         proj4str = sr.ExportToProj4()
@@ -631,8 +639,12 @@ def test_tiff_srs_write_epsg26711_3855_geotiff1_1():
 def test_tiff_srs_read_epsg32631_4979_geotiff1_1():
     ds = gdal.Open('data/epsg32631_4979_geotiff1_1.tif')
     sr = ds.GetSpatialRef()
-    # PROJ 6.0 didn't include the ID of the base CRS
-    assert sr.ExportToWkt().replace(',ID["EPSG",4979]','') == 'PROJCRS["WGS 84 / UTM zone 31N",BASEGEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4979]],CONVERSION["UTM zone 31N",METHOD["Transverse Mercator",ID["EPSG",9807]],PARAMETER["Latitude of natural origin",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",3,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9996,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",500000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",0,LENGTHUNIT["metre",1],ID["EPSG",8807]],ID["EPSG",16031]],CS[Cartesian,3],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1]],AXIS["ellipsoidal height (h)",up,ORDER[3],LENGTHUNIT["metre",1]]]'.replace(',ID["EPSG",4979]','')
+    assert sr.IsProjected()
+    assert sr.GetAxesCount() == 3
+    assert sr.GetName() == 'WGS 84 / UTM zone 31N'
+    sr_geog = osr.SpatialReference()
+    sr_geog.CopyGeogCSFrom(sr)
+    assert sr_geog.GetAuthorityCode(None) == '4979'
 
 
 def test_tiff_srs_write_vertical_perspective():
@@ -787,3 +799,43 @@ def test_tiff_srs_read_user_defined_geokeys():
     sr = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == ''
     assert sr is not None
+
+
+def test_tiff_srs_read_compoundcrs_without_gtcitation():
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
+
+    ds = gdal.Open('data/gtiff/compdcrs_without_gtcitation.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetName() == 'WGS 84 / UTM zone 32N + EGM08_Geoid'
+
+
+def test_tiff_srs_read_getspatialref_getgcpspatialref():
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is None
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetGCPSpatialRef() is None
+    assert ds.GetSpatialRef() is not None
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is None
+    assert ds.GetGCPSpatialRef() is None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetSpatialRef() is None
+    assert ds.GetGCPSpatialRef() is not None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetSpatialRef() is None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetSpatialRef() is None
+    assert ds.GetSpatialRef() is None

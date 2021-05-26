@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test basic integration with Numeric Python.
+# Purpose:  Test basic integration with numpy.
 # Author:   Frank Warmerdam, warmerdam@pobox.com
 #
 ###############################################################################
@@ -29,29 +29,23 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
-
 import gdaltest
 from osgeo import gdal
 import pytest
 
+
+# All tests will be skipped if numpy or gdal_array are unavailable.
+numpy = pytest.importorskip('numpy')
+gdal_array = pytest.importorskip('osgeo.gdal_array')
+
 ###############################################################################
-# verify that we can load Numeric python, and find the Numpy driver.
+# verify that we can load the deprecated gdalnumeric module
 
 
 def test_numpy_rw_1():
 
-    gdaltest.numpy_drv = None
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except (ImportError, AttributeError):
-        pytest.skip()
-
-    gdal.AllRegister()
-
-    gdaltest.numpy_drv = gdal.GetDriverByName('NUMPY')
-    assert gdaltest.numpy_drv is not None, 'NUMPY driver not found!'
+    from osgeo import gdalnumeric
+    gdalnumeric.zeros
 
 ###############################################################################
 # Load a test file into a memory Numpy array, and verify the checksum.
@@ -59,15 +53,10 @@ def test_numpy_rw_1():
 
 def test_numpy_rw_2():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    from osgeo import gdalnumeric
-
-    array = gdalnumeric.LoadFile('data/utmsmall.tif')
+    array = gdal_array.LoadFile('data/utmsmall.tif')
     assert array is not None, 'Failed to load utmsmall.tif into array'
 
-    ds = gdalnumeric.OpenArray(array)
+    ds = gdal_array.OpenArray(array)
     assert ds is not None, 'Failed to open memory array as dataset.'
 
     bnd = ds.GetRasterBand(1)
@@ -80,9 +69,6 @@ def test_numpy_rw_2():
 
 def test_numpy_rw_3():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/cint_sar.tif')
     array = ds.ReadAsArray()
 
@@ -93,9 +79,6 @@ def test_numpy_rw_3():
 
 
 def test_numpy_rw_4():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/byte.tif')
     array = ds.GetRasterBand(1).ReadAsArray(0, 0, 20, 20, 5, 5)
@@ -109,12 +92,7 @@ def test_numpy_rw_4():
 
 def test_numpy_rw_5():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    from osgeo import gdalnumeric
-
-    array = gdalnumeric.LoadFile('data/rgbsmall.tif', 35, 21, 1, 1)
+    array = gdal_array.LoadFile('data/rgbsmall.tif', 35, 21, 1, 1)
 
     assert array[0][0][0] == 78, 'value read improperly.'
 
@@ -122,13 +100,12 @@ def test_numpy_rw_5():
 
     assert array[2][0][0] == 24, 'value read improperly.'
 
-    array = gdalnumeric.LoadFile('data/rgbsmall.tif', buf_xsize=1, buf_ysize=1, resample_alg=gdal.GRIORA_Bilinear)
+    array = gdal_array.LoadFile('data/rgbsmall.tif', buf_xsize=1, buf_ysize=1, resample_alg=gdal.GRIORA_Bilinear)
     assert array.shape[0] == 3 and array.shape[1] == 1 and array.shape[2] == 1, \
         'wrong array shape.'
     assert array[0][0][0] == 70 and array[1][0][0] == 97 and array[2][0][0] == 29, \
         'value read improperly.'
 
-    import numpy
     array = numpy.zeros([3, 1, 1], dtype=numpy.uint8)
     ds = gdal.Open('data/rgbsmall.tif')
     ds.ReadAsArray(buf_obj=array, resample_alg=gdal.GRIORA_Bilinear)
@@ -141,19 +118,13 @@ def test_numpy_rw_5():
 
 def test_numpy_rw_6():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    from osgeo import gdalnumeric
-
     ds = gdal.Open('data/byte.tif')
     array = numpy.zeros([ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     array_res = ds.GetRasterBand(1).ReadAsArray(buf_obj=array)
 
     assert array is array_res
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
 ###############################################################################
@@ -162,19 +133,13 @@ def test_numpy_rw_6():
 
 def test_numpy_rw_7():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    from osgeo import gdalnumeric
-
     ds = gdal.Open('data/byte.tif')
     array = numpy.zeros([1, ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     array_res = ds.ReadAsArray(buf_obj=array)
 
     assert array is array_res
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
     # Try again with a 2D array
@@ -183,7 +148,7 @@ def test_numpy_rw_7():
 
     assert array is array_res
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
     # With a multi band file
@@ -193,7 +158,7 @@ def test_numpy_rw_7():
 
     assert array is array_res
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     assert ds2.GetRasterBand(1).Checksum() == ds.GetRasterBand(1).Checksum()
 
 ###############################################################################
@@ -202,29 +167,20 @@ def test_numpy_rw_7():
 
 def test_numpy_rw_8():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    from osgeo import gdalnumeric
-
     ds = gdal.Open('data/rgbsmall.tif')
     array = numpy.zeros([ds.RasterCount, ds.RasterYSize, ds.RasterXSize], numpy.uint8)
     ds.ReadAsArray(buf_obj=array)
 
-    ds2 = gdalnumeric.OpenArray(array)
+    ds2 = gdal_array.OpenArray(array)
     for i in range(1, ds.RasterCount):
         assert ds2.GetRasterBand(i).Checksum() == ds.GetRasterBand(i).Checksum()
 
-    
+
 ###############################################################################
 # Test Band.WriteArray()
 
 
 def test_numpy_rw_9():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/byte.tif')
     array = ds.ReadAsArray()
@@ -242,11 +198,6 @@ def test_numpy_rw_9():
 
 
 def test_numpy_rw_10():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/signed8.tif', 2, 1, options=['PIXELTYPE=SIGNEDBYTE'])
     ar = numpy.empty([1, 2], dtype=numpy.int8)
@@ -272,12 +223,6 @@ def test_numpy_rw_10():
 
 
 def test_numpy_rw_11():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    from osgeo import gdal_array
 
     type_tuples = [('uint8', gdal.GDT_Byte, numpy.uint8, 255),
                    ('uint16', gdal.GDT_UInt16, numpy.uint16, 65535),
@@ -328,17 +273,12 @@ def test_numpy_rw_11():
            (type_tuple[0] != 'float32' and ar3[0][0] != type_tuple[3])), \
             'did not get expected result (2)'
 
-    
+
 ###############################################################################
 # Test array with slices (#3542)
 
 
 def test_numpy_rw_12():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
 
     ar = numpy.empty([2, 2], dtype=numpy.uint8)
     ar[0][0] = 0
@@ -364,11 +304,6 @@ def test_numpy_rw_12():
 
 def test_numpy_rw_13():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-
     drv = gdal.GetDriverByName('MEM')
     ds = drv.Create('', 2, 1, 1, gdal.GDT_Byte)
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
@@ -381,7 +316,7 @@ def test_numpy_rw_13():
     with pytest.raises(Exception, match='array does not have '
                              'corresponding GDAL data type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar)
-    
+
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
@@ -389,7 +324,7 @@ def test_numpy_rw_13():
                              'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
-    
+
 
     # Same with 3 dimensions
     ar = numpy.empty([1, 1, 2], dtype=numpy.uint8)
@@ -397,7 +332,7 @@ def test_numpy_rw_13():
                              'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=2,
                                         buf_ysize=2)
-    
+
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
@@ -405,7 +340,7 @@ def test_numpy_rw_13():
                              'with array shape'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar, buf_xsize=1,
                                         buf_ysize=1)
-    
+
 
     # Inconsistent data type
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
@@ -413,7 +348,7 @@ def test_numpy_rw_13():
                              'with array type'):
         ds.GetRasterBand(1).ReadAsArray(buf_obj=ar,
                                         buf_type=gdal.GDT_Int16)
-    
+
 
     # This one should be OK !
     ar = numpy.zeros([1, 2], dtype=numpy.uint8)
@@ -453,21 +388,21 @@ def test_numpy_rw_13():
     with pytest.raises(Exception, match='array does not have '
                              'corresponding GDAL data type'):
         ds.ReadAsArray(buf_obj=ar)
-    
+
 
     # Try call with inconsistent parameters.
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
     with pytest.raises(Exception, match='Specified buf_ysize not consistent '
                              'with array shape'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=2, buf_ysize=2)
-    
+
 
     # With 2 dimensions
     ar = numpy.empty([1, 2], dtype=numpy.uint8)
     with pytest.raises(Exception, match='Array should have 3 '
                              'dimensions'):
         ds.ReadAsArray(buf_obj=ar)
-    
+
 
     # Try call with inconsistent parameters
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
@@ -484,7 +419,7 @@ def test_numpy_rw_13():
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
     with pytest.raises(Exception, match='Specified buf_type not consistent with array type'):
         ds.ReadAsArray(buf_obj=ar, buf_type=gdal.GDT_Int16)
-    
+
 
     # Not enough space in first dimension
     ar = numpy.empty([2, 1, 2], dtype=numpy.uint8)
@@ -547,15 +482,10 @@ def numpy_rw_14_progress_callback_2(pct, message, user_data):
 
 def test_numpy_rw_14():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
     # Progress not implemented yet
     if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
        gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
         pytest.skip()
-
-    import numpy
 
     ds = gdal.Open('data/byte.tif')
 
@@ -611,12 +541,6 @@ def test_numpy_rw_14():
 
 def test_numpy_rw_15():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    from osgeo import gdal_array
-
     array = numpy.empty([1, 1, 1], numpy.uint8)
     ds = gdal_array.OpenArray(array)
     gt = ds.GetGeoTransform(can_return_null=True)
@@ -630,12 +554,6 @@ def test_numpy_rw_15():
 
 
 def test_numpy_rw_16():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    from osgeo import gdal_array
 
     # 1D
     array = numpy.empty([1], numpy.uint8)
@@ -661,12 +579,6 @@ def test_numpy_rw_16():
 
 def test_numpy_rw_17():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    from osgeo import gdal_array
-
     # Disabled by default
     array = numpy.empty([1, 1], numpy.uint8)
     with gdaltest.error_handler():
@@ -688,13 +600,6 @@ def test_numpy_rw_17():
 
 
 def test_numpy_rw_18():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    import numpy.random
-    from osgeo import gdal_array
 
     img = numpy.random.randint(0, 255, size=(256, 200, 3)).astype('uint8')
     ds = gdal_array.OpenArray(img, interleave='pixel')
@@ -718,9 +623,6 @@ def test_numpy_rw_18():
 # The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
 
 def test_numpy_rw_failure_in_readasarray():
-
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/idontexist2.vrt')
     assert ds is not None
@@ -748,12 +650,6 @@ def test_numpy_rw_failure_in_readasarray():
 
 def test_numpy_rw_gdal_array_openarray_permissions():
 
-    if gdaltest.numpy_drv is None:
-        pytest.skip()
-
-    import numpy
-    from osgeo import gdal_array
-
     # Writeable array
     ar = numpy.zeros([1, 1], dtype=numpy.uint8)
     ds = gdal_array.OpenArray(ar)
@@ -768,9 +664,149 @@ def test_numpy_rw_gdal_array_openarray_permissions():
         assert ds.GetRasterBand(1).Fill(1) != 0
     assert ds.GetRasterBand(1).Checksum()  == 0
 
+    # Cannot read in non-writeable array
+    with gdaltest.error_handler():
+        assert ds.ReadAsArray(buf_obj = ar) is None
+        assert ds.GetRasterBand(1).ReadAsArray(buf_obj = ar) is None
 
-def test_numpy_rw_cleanup():
-    gdaltest.numpy_drv = None
+
+###############################################################################
+# Test ReadAsArray RMS subsampling.
+
+def test_numpy_rw_rms_resemple_alg():
+
+    wrk_ds = gdal.Open('../gdrivers/data/int16.tif')
+    assert wrk_ds is not None, 'Failed to open test dataset.'
+
+    res = wrk_ds.ReadAsArray(0, 0,
+                             wrk_ds.RasterXSize,
+                             wrk_ds.RasterYSize,
+                             buf_xsize=wrk_ds.RasterXSize//2,
+                             buf_ysize=wrk_ds.RasterYSize//2,
+                             resample_alg=gdal.GRIORA_RMS)
+    cs = res.sum()
+    exp_cs = 12773
+
+    assert cs == exp_cs, 'got wrong rms sum'
 
 
 
+###############################################################################
+# Test Dataset.ReadAsArray() with band_list
+
+def test_numpy_rw_dataset_read_as_array():
+
+    wrk_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
+
+    assert numpy.array_equal(wrk_ds.ReadAsArray(band_list=[2]),
+                             wrk_ds.GetRasterBand(2).ReadAsArray())
+
+    assert numpy.array_equal(wrk_ds.ReadAsArray(band_list=[2,1]),
+                             numpy.stack(
+                                 [wrk_ds.GetRasterBand(2).ReadAsArray(),
+                                  wrk_ds.GetRasterBand(1).ReadAsArray()]))
+
+
+
+
+###############################################################################
+# Test Dataset.WriteArray()
+
+def test_numpy_rw_dataset_writearray():
+
+    # Write 2D array in single-band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    ar = numpy.array([[0,1,2],[3,4,5]], dtype=numpy.uint8)
+    assert ds.WriteArray(ar) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # Use WriteRaster interface
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    assert ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ar.astype(numpy.uint32)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    with pytest.raises(Exception):
+        ds.WriteArray(None)
+
+    with pytest.raises(Exception):
+        ds.WriteArray('not an array')
+
+    # 1D array
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([0, 1, 2], dtype=numpy.uint8))
+
+    # Too big 2D array in X
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[0,1,2,10],[3,4,5,20]], dtype=numpy.uint8))
+
+    # Write 3D array in single-band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    ar = numpy.array([[[0,1,2],[3,4,5]]], dtype=numpy.uint8)
+    assert ds.WriteArray(ar) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar[0])
+
+    # ar.shape[0] != 1
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[[0,1,2],[3,4,5]],[[0,1,2],[3,4,5]]]))
+
+    # Write 3D array in two-band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    ar = numpy.array([[[0,1,2],[3,4,5]],[[10,11,12],[13,14,15]]], dtype=numpy.uint8)
+    assert ds.WriteRaster(0,0,3,2,memoryview(ar)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # Non-native data type
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteArray(ar.astype(numpy.int32)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # interleave='pixel'
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteArray(numpy.transpose(ar, (1,2,0)), interleave='pixel') == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # band_list
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteArray(ar[::-1,...], band_list=[2,1]) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # Use WriteRaster interface
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2, 2)
+    assert ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ar.astype(numpy.uint32)) == 0
+    assert numpy.array_equal(ds.ReadAsArray(), ar)
+
+    # 2D array
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[0,1,2,0],[3,4,5,0]]))
+
+    # Too big 3D array in X
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[[0,1,2,0],[3,4,5,0]],[[10,11,12,0],[13,14,15,0]]]))
+
+    # Too big 3D array in Y
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[[0,1,2],[3,4,5],[3,4,5]],[[10,11,12],[13,14,15],[13,14,15]]]))
+
+    # Too big 3D array in band dimension
+    with pytest.raises(Exception):
+        ds.WriteArray(numpy.array([[[0,1,2],[3,4,5]],[[10,11,12],[13,14,15]],[[10,11,12],[13,14,15]]]))
+
+
+###############################################################################
+# Test Band.ReadAsArray() error cases
+
+
+def test_numpy_rw_band_read_as_array_error_cases():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    band = ds.GetRasterBand(1)
+    assert band.ReadAsArray(buf_obj = numpy.empty((3,2), dtype=numpy.uint8)) is not None
+    assert band.ReadAsArray(buf_obj = numpy.empty((1, 3,2), dtype=numpy.uint8)) is not None
+
+    # 1D
+    with pytest.raises(Exception, match='expected array of dimension 2 or 3'):
+        band.ReadAsArray(buf_obj = numpy.empty((3,), dtype=numpy.uint8))
+
+    # 3D of wrong size in first dimension
+    with pytest.raises(Exception, match='expected size of first dimension should be 0'):
+        band.ReadAsArray(buf_obj = numpy.empty((2, 3,2), dtype=numpy.uint8))

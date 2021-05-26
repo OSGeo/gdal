@@ -52,6 +52,9 @@ static GDALDataset *OGRDB2DriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRDB2DriverIdentify(poOpenInfo) )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("DB2") )
+        return nullptr;
+
     CPLDebug( "OGRDB2DriverOpen", "pszFilename: '%s'",
               poOpenInfo->pszFilename);
 
@@ -78,6 +81,9 @@ static GDALDataset* OGRDB2DriverCreate( const char * pszFilename,
                                         GDALDataType eDT,
                                         char **papszOptions )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("DB2") )
+        return nullptr;
+
     OGRDB2DataSource   *poDS = new OGRDB2DataSource();
     CPLDebug( "OGRDB2DriverCreate", "pszFilename: '%s'", pszFilename);
     CPLDebug( "OGRDB2DriverCreate", "eDT: %d", eDT);
@@ -119,7 +125,7 @@ void RegisterOGRDB2()
     poDriver->SetDescription( "DB2ODBC" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "IBM DB2 Spatial Database" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_db2.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/db2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 #define COMPRESSION_OPTIONS \
 "  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>" \

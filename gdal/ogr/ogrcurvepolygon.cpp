@@ -100,25 +100,10 @@ OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
 /*                               clone()                                */
 /************************************************************************/
 
-OGRGeometry *OGRCurvePolygon::clone() const
+OGRCurvePolygon *OGRCurvePolygon::clone() const
 
 {
-    OGRCurvePolygon *poNewPolygon =
-        OGRGeometryFactory::createGeometry(getGeometryType())->
-            toCurvePolygon();
-    poNewPolygon->assignSpatialReference( getSpatialReference() );
-    poNewPolygon->flags = flags;
-
-    for( int i = 0; i < oCC.nCurveCount; i++ )
-    {
-        if( poNewPolygon->addRing( oCC.papoCurves[i] ) != OGRERR_NONE )
-        {
-            delete poNewPolygon;
-            return nullptr;
-        }
-    }
-
-    return poNewPolygon;
+    return new (std::nothrow) OGRCurvePolygon(*this);
 }
 
 /************************************************************************/
@@ -362,7 +347,7 @@ OGRErr  OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
 OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
 
 {
-    OGRCurve* poNewRingCloned = poNewRing->clone()->toCurve();
+    OGRCurve* poNewRingCloned = poNewRing->clone();
     OGRErr eErr = addRingDirectly(poNewRingCloned);
     if( eErr != OGRERR_NONE )
         delete poNewRingCloned;
@@ -437,7 +422,7 @@ OGRErr OGRCurvePolygon::addRingDirectlyInternal( OGRCurve* poNewRing,
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRCurvePolygon::WkbSize() const
+size_t OGRCurvePolygon::WkbSize() const
 
 {
     return oCC.WkbSize();
@@ -462,14 +447,14 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
 /************************************************************************/
 
 OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
-                                       int nSize,
+                                       size_t nSize,
                                        OGRwkbVariant eWkbVariant,
-                                       int& nBytesConsumedOut )
+                                       size_t& nBytesConsumedOut )
 
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     OGRwkbByteOrder eByteOrder;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
@@ -477,7 +462,7 @@ OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
         return eErr;
 
     eErr = oCC.importBodyFromWkb(this, pabyData + nDataOffset, nSize,
-                                 TRUE,  // bAcceptCompoundCurve
+                                 true,  // bAcceptCompoundCurve
                                  addCurveDirectlyFromWkb,
                                  eWkbVariant,
                                  nBytesConsumedOut );

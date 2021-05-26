@@ -30,7 +30,7 @@
 ###############################################################################
 
 import os
-import array
+import struct
 from osgeo import gdal
 
 
@@ -460,7 +460,7 @@ def test_hfa_nodata_write():
     ds = drv.Create('tmp/nodata.img', 7, 7, 1, gdal.GDT_Byte)
 
     p = [1, 2, 1, 4, 1, 2, 1]
-    raw_data = array.array('h', p).tostring()
+    raw_data = b''.join(struct.pack('h', x) for x in p)
 
     for line in range(7):
         ds.WriteRaster(0, line, 7, 1, raw_data,

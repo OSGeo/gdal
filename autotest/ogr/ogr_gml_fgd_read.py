@@ -31,7 +31,6 @@
 
 
 
-import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
@@ -45,13 +44,9 @@ import pytest
 
 _fgd_dir = 'data/gml_jpfgd/'
 
-
 ###############################################################################
-# Test reading Japanese FGD GML (v4) ElevPt file
-
-def test_ogr_gml_fgd_1():
-
-    gdaltest.have_gml_fgd_reader = 0
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     # open FGD GML file
     ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
@@ -61,8 +56,14 @@ def test_ogr_gml_fgd_1():
             pytest.skip()
         pytest.fail('failed to open test file.')
 
-    # we have gml reader for fgd
-    gdaltest.have_gml_fgd_reader = 1
+
+###############################################################################
+# Test reading Japanese FGD GML (v4) ElevPt file
+
+def test_ogr_gml_fgd_1():
+
+    # open FGD GML file
+    ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
 
     # check number of layers
     assert ds.GetLayerCount() == 1, 'Wrong layer count'
@@ -86,8 +87,6 @@ def test_ogr_gml_fgd_1():
 # Test reading Japanese FGD GML (v4) BldA file
 
 def test_ogr_gml_fgd_2():
-    if not gdaltest.have_gml_fgd_reader:
-        pytest.skip()
 
     # open FGD GML file
     ds = ogr.Open(_fgd_dir + 'BldA.xml')
@@ -109,10 +108,3 @@ def test_ogr_gml_fgd_2():
     assert not ogrtest.check_feature_geometry(feat, wkt), 'Wrong geometry'
 
     assert feat.GetField('devDate') == '2017-03-07', 'Wrong attribute value'
-
-###############################################################################
-# List test cases
-
-
-
-

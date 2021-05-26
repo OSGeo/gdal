@@ -104,7 +104,7 @@ class OGRElasticLayer final: public OGRLayer {
 
     CPLString                             m_osScrollID;
     GIntBig                               m_iCurID;
-    GIntBig                               m_nNextFID;
+    GIntBig                               m_nNextFID; // for creation
     int                                   m_iCurFeatureInPage;
     std::vector<OGRFeature*>              m_apoCachedFeatures;
     bool                                  m_bEOF;
@@ -118,6 +118,20 @@ class OGRElasticLayer final: public OGRLayer {
     bool                                  m_bDotAsNestedField;
 
     bool                                  m_bAddPretty;
+    bool                                  m_bGeoShapeAsGeoJSON;
+
+    CPLString                             m_osSingleQueryTimeout;
+    double                                m_dfSingleQueryTimeout = 0;
+    double                                m_dfFeatureIterationTimeout = 0;
+    //! Timestamp after which the query must be terminated
+    double                                m_dfEndTimeStamp = 0;
+
+    GIntBig                               m_nReadFeaturesSinceResetReading = 0;
+    GIntBig                               m_nSingleQueryTerminateAfter = 0;
+    GIntBig                               m_nFeatureIterationTerminateAfter = 0;
+    CPLString                             m_osSingleQueryTerminateAfter;
+
+    bool                                  m_bUseSingleQueryParams = false;
 
     bool                                  PushIndex();
     CPLString                             BuildMap();
@@ -157,6 +171,8 @@ class OGRElasticLayer final: public OGRLayer {
                                                     swq_expr_node* poValNode );
     json_object*                          TranslateSQLToFilter(swq_expr_node* poNode);
     json_object*                          BuildSort();
+
+    void                                  AddTimeoutTerminateAfterToURL( CPLString& osURL );
 
 public:
                         OGRElasticLayer( const char* pszLayerName,
@@ -243,7 +259,8 @@ public:
     int                 m_nFeatureCountToEstablishFeatureDefn;
     bool                m_bJSonField;
     bool                m_bFlattenNestedAttributes;
-    int                 m_nMajorVersion;
+    int                 m_nMajorVersion = 0;
+    int                 m_nMinorVersion = 0;
 
     int Open(GDALOpenInfo* poOpenInfo);
 

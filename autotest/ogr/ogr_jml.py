@@ -37,18 +37,19 @@ from osgeo import osr
 from osgeo import gdal
 import pytest
 
+pytestmark = pytest.mark.require_driver('JML')
 
-def test_ogr_jml_init():
 
-    ds = ogr.Open('data/jml/test.jml')
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-    if ds is None:
-        gdaltest.jml_read_support = 0
-    else:
-        gdaltest.jml_read_support = 1
-        ds = None
+    gdaltest.jml_read_support = ogr.Open('data/jml/test.jml') is not None
 
-    
+    yield
+
+    gdal.Unlink('/vsimem/ogr_jml.jml')
+
 ###############################################################################
 # Test reading
 
@@ -601,14 +602,6 @@ def test_ogr_jml_read_srs():
     assert lyr.GetSpatialRef().ExportToWkt().find('4326') >= 0
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef() is not None
-
-###############################################################################
-#
-
-
-def test_ogr_jml_cleanup():
-
-    gdal.Unlink('/vsimem/ogr_jml.jml')
 
 
 

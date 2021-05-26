@@ -119,8 +119,9 @@ VSIPluginFilesystemHandler::~VSIPluginFilesystemHandler()
 
 
 VSIVirtualHandle* VSIPluginFilesystemHandler::Open( const char *pszFilename,
-                                                  const char *pszAccess,
-                                                  bool bSetError )
+                                                    const char *pszAccess,
+                                                    bool bSetError,
+                                                    CSLConstList /* papszOptions */ )
 {
     if( !IsValidFilename(pszFilename) )
         return nullptr;
@@ -131,7 +132,13 @@ VSIVirtualHandle* VSIPluginFilesystemHandler::Open( const char *pszFilename,
         }
         return nullptr;
     }
-    return new VSIPluginHandle(this, cbData);
+    if ( m_cb->nBufferSize==0 ) {
+        return new VSIPluginHandle(this, cbData);
+    } else {
+        return VSICreateCachedFile(
+            new VSIPluginHandle(this, cbData), m_cb->nBufferSize,
+            (m_cb->nCacheSize<m_cb->nBufferSize) ? m_cb->nBufferSize : m_cb->nCacheSize);
+    }
 }
 
 const char* VSIPluginFilesystemHandler::GetCallbackFilename(const char *pszFilename) {
@@ -312,6 +319,15 @@ char ** VSIPluginFilesystemHandler::ReadDirEx( const char * pszDirname, int nMax
         return nullptr;
     if (m_cb->read_dir != nullptr) {
         return m_cb->read_dir(m_cb->pUserData, GetCallbackFilename(pszDirname),nMaxFiles);
+    }
+    return nullptr;
+}
+
+char ** VSIPluginFilesystemHandler::SiblingFiles( const char * pszFilename ) {
+    if( !IsValidFilename(pszFilename) )
+        return nullptr;
+    if (m_cb->sibling_files != nullptr) {
+        return m_cb->sibling_files(m_cb->pUserData, GetCallbackFilename(pszFilename));
     }
     return nullptr;
 }

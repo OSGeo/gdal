@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSKSegment class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -83,7 +83,7 @@ std::string CPCIDSKSegment::GetMetadataValue( const std::string &key ) const
 /************************************************************************/
 /*                          SetMetadataValue()                          */
 /************************************************************************/
-void CPCIDSKSegment::SetMetadataValue( const std::string &key, const std::string &value ) 
+void CPCIDSKSegment::SetMetadataValue( const std::string &key, const std::string &value )
 {
     metadata->SetMetadataValue(key,value);
 }
@@ -106,7 +106,9 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
     PCIDSKBuffer segptr( segment_pointer, 32 );
 
     segment_flag = segptr.buffer[0];
-    segment_type = (eSegType) (atoi(segptr.Get(1,3)));
+    const int segment_type_int = atoi(segptr.Get(1,3));
+    segment_type = EQUAL(SegmentTypeName(segment_type_int), "UNKNOWN") ?
+        SEG_UNKNOWN : static_cast<eSegType>(segment_type_int);
     data_offset = atouint64(segptr.Get(12,11));
     if( data_offset == 0 )
         data_offset = 0; // throw exception maybe ?
@@ -119,7 +121,9 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
         data_offset = (data_offset-1) * 512;
     }
     data_size = atouint64(segptr.Get(23,9));
-    if( data_size > std::numeric_limits<uint64>::max() / 512 )
+    data_size_limit = 999999999ULL * 512;
+
+    if( data_size > 999999999ULL )
     {
         return ThrowPCIDSKException("too large data_size");
     }
@@ -138,7 +142,7 @@ void CPCIDSKSegment::LoadSegmentHeader()
     header.SetSize(1024);
 
     file->ReadFromFile( header.buffer, data_offset, 1024 );
-    
+
     // Read the history from the segment header. PCIDSK supports
     // 8 history entries per segment.
     std::string hist_msg;
@@ -151,12 +155,12 @@ void CPCIDSKSegment::LoadSegmentHeader()
         // so do some extra processing to cleanup.  FUN records on segment
         // 3 of eltoro.pix are an example of this.
         size_t size = hist_msg.size();
-        while( size > 0 
+        while( size > 0
                && (hist_msg[size-1] == ' ' || hist_msg[size-1] == '\0') )
             size--;
 
         hist_msg.resize(size);
-        
+
         history_.push_back(hist_msg);
     }
 }
@@ -182,29 +186,13 @@ void CPCIDSKSegment::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
 {
     if( offset+size+1024 > data_size )
-        return ThrowPCIDSKException( 
-            "Attempt to read past end of segment %d (%u bytes at offset %u)",
-            segment, (unsigned int) offset, (unsigned int) size );
+        return ThrowPCIDSKException("Attempt to read past end of segment %d: "
+                                    "Segment Size: " PCIDSK_FRMT_UINT64 ", "
+                                    "Read Offset: " PCIDSK_FRMT_UINT64 ", "
+                                    "Read Size: " PCIDSK_FRMT_UINT64,
+                                    segment, data_size, offset, size);
+
     file->ReadFromFile( buffer, offset + data_offset + 1024, size );
-}
-
-/************************************************************************/
-/*                        CheckFileBigEnough()                          */
-/************************************************************************/
-
-void CPCIDSKSegment::CheckFileBigEnough( uint64 bytes_to_read )
-
-{
-    file->CheckFileBigEnough( bytes_to_read );
-}
-
-/************************************************************************/
-/*                           GetUpdatable()                             */
-/************************************************************************/
-
-bool CPCIDSKSegment::GetUpdatable() const
-{
-    return file->GetUpdatable();
 }
 
 /************************************************************************/
@@ -216,24 +204,21 @@ void CPCIDSKSegment::WriteToFile( const void *buffer, uint64 offset, uint64 size
     if( offset+size > data_size-1024 )
     {
         CPCIDSKFile *poFile = dynamic_cast<CPCIDSKFile *>(file);
-        
+
         if (poFile == nullptr) {
             return ThrowPCIDSKException("Attempt to dynamic_cast the file interface "
                 "to a CPCIDSKFile failed. This is a programmer error, and should "
                 "be reported to your software provider.");
         }
-        
-        if( !IsAtEOF() )
-            poFile->MoveSegmentToEOF( segment );
 
-        uint64 blocks_to_add = 
+        uint64 blocks_to_add =
             ((offset+size+511) - (data_size - 1024)) / 512;
 
         // prezero if we aren't directly writing all the new blocks.
-        poFile->ExtendSegment( segment, blocks_to_add, 
+        poFile->ExtendSegment( segment, blocks_to_add,
                              !(offset == data_size - 1024
                                && size == blocks_to_add * 512) );
-        data_size += blocks_to_add * 512;
+        // ExtendSegment() will call LoadSegmentPointer() to update data_size.
     }
 
     assert(file); // avoid CLang Static Analyzer false positive
@@ -270,10 +255,15 @@ void CPCIDSKSegment::SetDescription( const std::string &description )
 
 bool CPCIDSKSegment::IsAtEOF()
 {
-    if( 512 * file->GetFileSize() == data_offset + data_size )
-        return true;
-    else
-        return false;
+    return data_offset + data_size == file->GetFileSize() * 512;
+}
+
+/************************************************************************/
+/*                               CanExtend()                            */
+/************************************************************************/
+bool CPCIDSKSegment::CanExtend(uint64 size) const
+{
+    return data_size + size <= data_size_limit;
 }
 
 /************************************************************************/
@@ -327,7 +317,7 @@ void CPCIDSKSegment::PushHistory( const std::string &app,
 
     memcpy( history + 0, app.c_str(), MY_MIN(app.size(),7) );
     history[7] = ':';
-    
+
     memcpy( history + 8, message.c_str(), MY_MIN(message.size(),56) );
     memcpy( history + 64, current_time, 16 );
 
@@ -347,19 +337,19 @@ void CPCIDSKSegment::PushHistory( const std::string &app,
 /*      and destination are permitted.                                  */
 /************************************************************************/
 
-void CPCIDSKSegment::MoveData( uint64 src_offset, uint64 dst_offset, 
+void CPCIDSKSegment::MoveData( uint64 src_offset, uint64 dst_offset,
                                uint64 size_in_bytes )
 
 {
     bool copy_backwards = false;
 
     // We move things backwards if the areas overlap and the destination
-    // is further on in the segment. 
+    // is further on in the segment.
     if( dst_offset > src_offset
         && src_offset + size_in_bytes > dst_offset )
         copy_backwards = true;
 
-    
+
     // Move the segment data to the new location.
     uint8 copy_buf[16384];
     uint64 bytes_to_go;
@@ -374,11 +364,11 @@ void CPCIDSKSegment::MoveData( uint64 src_offset, uint64 dst_offset,
 
         if( copy_backwards )
         {
-            ReadFromFile( copy_buf, 
-                          src_offset + bytes_to_go - bytes_this_chunk, 
+            ReadFromFile( copy_buf,
+                          src_offset + bytes_to_go - bytes_this_chunk,
                           bytes_this_chunk );
-            WriteToFile( copy_buf, 
-                         dst_offset + bytes_to_go - bytes_this_chunk, 
+            WriteToFile( copy_buf,
+                         dst_offset + bytes_to_go - bytes_this_chunk,
                          bytes_this_chunk );
         }
         else

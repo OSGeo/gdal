@@ -29,12 +29,14 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
+#include <cassert>
 #include "ogr_fgdb.h"
 #include "ogrpgeogeometry.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "FGdbUtils.h"
 #include "cpl_minixml.h" // the only way right now to extract schema information
+#include "filegdb_gdbtoogrfieldtype.h"
 
 CPL_CVSID("$Id$")
 
@@ -89,7 +91,7 @@ void FGdbBaseLayer::CloseGDBObjects()
 
 OGRFeature* FGdbBaseLayer::GetNextFeature()
 {
-    while (1) //want to skip errors
+    while (true) //want to skip errors
     {
         if (m_pEnumRows == nullptr)
             return nullptr;
@@ -123,7 +125,12 @@ OGRFeature* FGdbBaseLayer::GetNextFeature()
             continue; //skip feature
         }
 
-        return pOGRFeature;
+        if( (m_poFilterGeom == nullptr
+             || FilterGeometry( pOGRFeature->GetGeometryRef() )) )
+        {
+            return pOGRFeature;
+        }
+        delete pOGRFeature;
     }
 }
 
@@ -131,7 +138,7 @@ OGRFeature* FGdbBaseLayer::GetNextFeature()
 /*                              FGdbLayer()                             */
 /************************************************************************/
 FGdbLayer::FGdbLayer():
-    m_pDS(nullptr), m_pTable(nullptr), m_wstrSubfields(L"*"), m_pOGRFilterGeometry(nullptr),
+    m_pDS(nullptr), m_pTable(nullptr), m_wstrSubfields(L"*"),
     m_bFilterDirty(true),
     m_bLaunderReservedKeywords(true)
 {
@@ -156,12 +163,6 @@ FGdbLayer::FGdbLayer():
 FGdbLayer::~FGdbLayer()
 {
     FGdbLayer::CloseGDBObjects();
-
-    if (m_pOGRFilterGeometry)
-    {
-        OGRGeometryFactory::destroyGeometry(m_pOGRFilterGeometry);
-        m_pOGRFilterGeometry = nullptr;
-    }
 
     for(size_t i = 0; i < m_apoByteArrays.size(); i++ )
         delete m_apoByteArrays[i];
@@ -820,6 +821,7 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     //printf("nLastWrittenOffset = %d\n", nLastWrittenOffset);
     if( nLastWrittenOffset > 0 || bDisableSparsePages )
     {
+        assert( nOutMaxFID >= 1 );
         SET_BIT(pabyBlockMapOut, (nOutMaxFID - 1) / 1024);
         nNonEmptyPages ++;
         if( nLastWrittenOffset < 1024 * nRecordSize )
@@ -1702,9 +1704,14 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
     /* We know nothing about Scale, so zero it out */
     CPLCreateXMLElementAndValue(defn_xml,"Scale", "0");
 
-    /*  Attempt to preserve the original fieldname */
-    if (fieldname != fieldname_clean)
+    const char* pszAlternativeName = oField.GetAlternativeNameRef();
+    if( pszAlternativeName != nullptr && pszAlternativeName[0] )
     {
+        CPLCreateXMLElementAndValue(defn_xml, "AliasName", pszAlternativeName);
+    }
+    else if (fieldname != fieldname_clean)
+    {
+        /*  Attempt to preserve the original fieldname */
         CPLCreateXMLElementAndValue(defn_xml, "AliasName", fieldname.c_str());
     }
 
@@ -2487,8 +2494,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         CPLCreateXMLElementAndValue(defn_xml,"HasM", (has_m ? "true" : "false"));
         CPLCreateXMLElementAndValue(defn_xml,"HasZ", (has_z ? "true" : "false"));
 
-        /* TODO: Handle spatial indexes (layer creation option?) */
-        CPLCreateXMLElementAndValue(defn_xml,"HasSpatialIndex", "false");
+        CPLCreateXMLElementAndValue(defn_xml,"HasSpatialIndex", "true");
 
         /* These field are required for Arcmap to display aliases correctly */
         CPLCreateXMLNode(defn_xml, CXT_Element, "AreaFieldName");
@@ -2600,6 +2606,8 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
         && EQUAL(pDataElementNode->pszValue,"esri:DataElement") )
     {
         CPLXMLNode *psNode;
+
+        m_bTimeInUTC = CPLTestBool(CPLGetXMLValue(pDataElementNode, "IsTimeInUTC", "false"));
 
         for( psNode = pDataElementNode->psChild;
         psNode != nullptr;
@@ -2869,11 +2877,13 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
 
             CPLXMLNode* psFieldItemNode;
             std::string fieldName;
+            std::string fieldAlias;
             std::string fieldType;
             int nLength = 0;
             //int nPrecision = 0;
             int bNullable = TRUE;
             std::string osDefault;
+            std::string osDomainName;
 
             // loop through all items in Field element
             //
@@ -2889,6 +2899,13 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                         char* pszUnescaped = CPLUnescapeString(
                             psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
                         fieldName = pszUnescaped;
+                        CPLFree(pszUnescaped);
+                    }
+                    else if (EQUAL(psFieldItemNode->pszValue,"AliasName"))
+                    {
+                        char* pszUnescaped = CPLUnescapeString(
+                            psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
+                        fieldAlias = pszUnescaped;
                         CPLFree(pszUnescaped);
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"Type") )
@@ -2918,6 +2935,13 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                     else if (EQUAL(psFieldItemNode->pszValue,"DefaultValue"))
                     {
                         osDefault = CPLGetXMLValue(psFieldItemNode, nullptr, "");
+                    }
+                    // NOTE: when using the GetDefinition() API, the domain name
+                    // is set in <Domain><DomainName>, whereas the raw XML is
+                    // just <DomainName>
+                    else if (EQUAL(psFieldItemNode->pszValue,"Domain"))
+                    {
+                        osDomainName = CPLGetXMLValue(psFieldItemNode, "DomainName", "");
                     }
                 }
             }
@@ -2953,6 +2977,11 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             //TODO: Optimization - modify m_wstrSubFields so it only fetches fields that are mapped
 
             OGRFieldDefn fieldTemplate( fieldName.c_str(), ogrType);
+            if( fieldAlias != fieldName )
+            {
+                // The SDK generates an alias even with it is not explicitly written
+                fieldTemplate.SetAlternativeName(fieldAlias.c_str());
+            }
             fieldTemplate.SetSubType(eSubType);
             /* On creation (GDBFieldTypeToWidthPrecision) if string width is 0, we pick up */
             /* 65535 by default to mean unlimited string length, but we don't want */
@@ -3003,6 +3032,10 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                                nYear, nMonth, nDay, nHour, nMinute, (int)(fSecond + 0.5)));
                     }
                 }
+            }
+            if( !osDomainName.empty() )
+            {
+                fieldTemplate.SetDomainName(osDomainName);
             }
 
             m_pFeatureDefn->AddFieldDefn( &fieldTemplate );
@@ -3057,7 +3090,7 @@ void FGdbLayer::ResetReading()
 
     EndBulkLoad();
 
-    if (m_pOGRFilterGeometry && !m_pOGRFilterGeometry->IsEmpty())
+    if (m_poFilterGeom && !m_poFilterGeom->IsEmpty())
     {
         // Search spatial
         // As of beta1, FileGDB only supports bbox searched, if we have GEOS installed,
@@ -3065,7 +3098,7 @@ void FGdbLayer::ResetReading()
 
         OGREnvelope ogrEnv;
 
-        m_pOGRFilterGeometry->getEnvelope(&ogrEnv);
+        m_poFilterGeom->getEnvelope(&ogrEnv);
 
         //spatial query
         FileGDBAPI::Envelope env(ogrEnv.MinX, ogrEnv.MaxX, ogrEnv.MinY, ogrEnv.MaxY);
@@ -3092,33 +3125,8 @@ void FGdbLayer::ResetReading()
 
 void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 {
-    if( !InstallFilter(pOGRGeom) )
-        return;
-
-    if (m_pOGRFilterGeometry)
-    {
-        OGRGeometryFactory::destroyGeometry(m_pOGRFilterGeometry);
-        m_pOGRFilterGeometry = nullptr;
-    }
-
-    if (pOGRGeom == nullptr || pOGRGeom->IsEmpty())
-    {
-        m_bFilterDirty = true;
-
-        return;
-    }
-
-    m_pOGRFilterGeometry = pOGRGeom->clone();
-
-    // NOTE: This is really special behavior: no other driver, nor core, does
-    // reprojection of filter geometry to source layer SRS. Should perhaps
-    // be removed for consistency
-    if( m_pOGRFilterGeometry->getSpatialReference() != nullptr )
-    {
-        m_pOGRFilterGeometry->transformTo(m_pSRS);
-    }
-
     m_bFilterDirty = true;
+    OGRLayer::SetSpatialFilter(pOGRGeom);
 }
 
 /************************************************************************/
@@ -3373,7 +3381,8 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
                 }
 
                 pOutFeature->SetField(i, val.tm_year + 1900, val.tm_mon + 1,
-                                      val.tm_mday, val.tm_hour, val.tm_min, (float)val.tm_sec);
+                                      val.tm_mday, val.tm_hour, val.tm_min, (float)val.tm_sec,
+                                      m_bTimeInUTC ? 100 : 0);
             // Examine test data to figure out how to extract that
             }
             break;
@@ -3473,7 +3482,7 @@ GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
 
     EndBulkLoad();
 
-    if (m_pOGRFilterGeometry != nullptr || !m_wstrWhereClause.empty())
+    if (m_poFilterGeom != nullptr || !m_wstrWhereClause.empty())
     {
         ResetReading();
         if (m_pEnumRows == nullptr)
@@ -3496,7 +3505,33 @@ GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
             {
                 break;
             }
-            nFeatures ++;
+
+            if( m_poFilterGeom == nullptr )
+            {
+                nFeatures++;
+            }
+            else
+            {
+                ShapeBuffer gdbGeometry;
+                if (FAILED(hr = row.GetGeometry(gdbGeometry)))
+                {
+                    continue;
+                }
+
+                OGRGeometry* pOGRGeo = nullptr;
+                if( !GDBGeometryToOGRGeometry(m_forceMulti, &gdbGeometry, m_pSRS, &pOGRGeo) || pOGRGeo == nullptr)
+                {
+                    delete pOGRGeo;
+                    continue;
+                }
+
+                if( FilterGeometry( pOGRGeo ) )
+                {
+                    nFeatures ++;
+                }
+
+                delete pOGRGeo;
+            }
         }
         ResetReading();
         return nFeatures;
@@ -3540,7 +3575,7 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
     if( m_pTable == nullptr )
         return OGRERR_FAILURE;
 
-    if (m_pOGRFilterGeometry != nullptr || !m_wstrWhereClause.empty() ||
+    if (m_poFilterGeom != nullptr || !m_wstrWhereClause.empty() ||
         m_strShapeFieldName.empty())
     {
         const int nFieldCount = m_pFeatureDefn->GetFieldCount();
@@ -3710,13 +3745,13 @@ int FGdbLayer::TestCapability( const char* pszCap )
         return TRUE;
 
     else if (EQUAL(pszCap,OLCFastFeatureCount))
-        return m_pOGRFilterGeometry == nullptr && m_wstrWhereClause.empty();
+        return m_poFilterGeom == nullptr && m_wstrWhereClause.empty();
 
     else if (EQUAL(pszCap,OLCFastSpatialFilter))
         return TRUE;
 
     else if (EQUAL(pszCap,OLCFastGetExtent))
-        return m_pOGRFilterGeometry == nullptr && m_wstrWhereClause.empty();
+        return m_poFilterGeom == nullptr && m_wstrWhereClause.empty();
 
     else if (EQUAL(pszCap,OLCCreateField)) /* CreateField() */
         return m_pDS->GetUpdate();

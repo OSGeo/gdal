@@ -554,7 +554,10 @@ static bool ProcessError( CPLHTTPResult *psResult )
 /*      sufficient.                                                     */
 /* -------------------------------------------------------------------- */
     if( CPLGetLastErrorNo() != 0 )
+    {
+        CPLHTTPDestroyResult( psResult );
         return TRUE;
+    }
 
     return false;
 }
@@ -1404,24 +1407,24 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture HTTP parameters.                                        */
 /* -------------------------------------------------------------------- */
-    const char  *pszParm;
+    const char  *pszParam;
 
     poDS->papszHttpOptions =
         CSLSetNameValue(poDS->papszHttpOptions,
                         "TIMEOUT",
                         CPLGetXMLValue( service, "Timeout", "30" ) );
 
-    pszParm = CPLGetXMLValue( service, "HTTPAUTH", nullptr );
-    if( pszParm )
+    pszParam = CPLGetXMLValue( service, "HTTPAUTH", nullptr );
+    if( pszParam )
         poDS->papszHttpOptions =
             CSLSetNameValue( poDS->papszHttpOptions,
-                             "HTTPAUTH", pszParm );
+                             "HTTPAUTH", pszParam );
 
-    pszParm = CPLGetXMLValue( service, "USERPWD", nullptr );
-    if( pszParm )
+    pszParam = CPLGetXMLValue( service, "USERPWD", nullptr );
+    if( pszParam )
         poDS->papszHttpOptions =
             CSLSetNameValue( poDS->papszHttpOptions,
-                             "USERPWD", pszParm );
+                             "USERPWD", pszParam );
 
 /* -------------------------------------------------------------------- */
 /*      If we don't have the DescribeCoverage result for this           */

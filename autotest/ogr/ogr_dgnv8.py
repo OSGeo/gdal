@@ -37,27 +37,13 @@ import ogrtest
 from osgeo import gdal, ogr
 import pytest
 
-###############################################################################
-# Verify we can open the test file.
-
-
-def test_ogr_dgnv8_1():
-
-    gdaltest.dgnv8_drv = ogr.GetDriverByName('DGNv8')
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
-    ds = ogr.Open('data/dgnv8/test_dgnv8.dgn')
-    assert ds is not None, 'failed to open test file.'
+pytestmark = pytest.mark.require_driver('DGNv8')
 
 ###############################################################################
 # Compare with a reference CSV dump
 
 
 def test_ogr_dgnv8_2():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
 
     gdal.VectorTranslate('/vsimem/ogr_dgnv8_2.csv', 'data/dgnv8/test_dgnv8.dgn',
                          options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
@@ -78,9 +64,6 @@ def test_ogr_dgnv8_2():
 
 def test_ogr_dgnv8_3():
 
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -100,9 +83,6 @@ def test_ogr_dgnv8_3():
 
 
 def test_ogr_dgnv8_4():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
 
     tmp_dgn = 'tmp/ogr_dgnv8_4.dgn'
     gdal.VectorTranslate(tmp_dgn, 'data/dgnv8/test_dgnv8.dgn', format='DGNv8')
@@ -128,9 +108,6 @@ def test_ogr_dgnv8_4():
 
 def test_ogr_dgnv8_5():
 
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
     tmp_dgn = 'tmp/ogr_dgnv8_5.dgn'
     options = ['APPLICATION=application',
                'TITLE=title',
@@ -144,7 +121,7 @@ def test_ogr_dgnv8_5():
                'CATEGORY=category',
                'MANAGER=manager',
                'COMPANY=company']
-    ds = gdaltest.dgnv8_drv.CreateDataSource(tmp_dgn, options=options)
+    ds = ogr.GetDriverByName('DGNv8').CreateDataSource(tmp_dgn, options=options)
     lyr = ds.CreateLayer('my_layer')
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
@@ -156,7 +133,7 @@ def test_ogr_dgnv8_5():
     ds = None
 
     tmp2_dgn = 'tmp/ogr_dgnv8_5_2.dgn'
-    gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn, 'TITLE=another_title'])
+    ogr.GetDriverByName('DGNv8').CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn, 'TITLE=another_title'])
     ds = ogr.Open(tmp2_dgn)
     assert ds.GetMetadataItem('TITLE', 'DGN') == 'another_title' and ds.GetMetadataItem('APPLICATION', 'DGN') == 'application', \
         ds.GetMetadata('DGN')
@@ -165,7 +142,7 @@ def test_ogr_dgnv8_5():
     assert lyr.GetFeatureCount() == 0
     ds = None
 
-    ds = gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn])
+    ds = ogr.GetDriverByName('DGNv8').CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn])
     lyr = ds.CreateLayer('a_layer', options=['DESCRIPTION=my_layer', 'DIM=2'])
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 3)'))
@@ -183,13 +160,3 @@ def test_ogr_dgnv8_5():
 
     gdal.Unlink(tmp_dgn)
     gdal.Unlink(tmp2_dgn)
-
-
-###############################################################################
-#  Cleanup
-
-def test_ogr_dgnv8_cleanup():
-
-    pass
-
-

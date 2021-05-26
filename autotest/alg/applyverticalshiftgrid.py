@@ -186,7 +186,7 @@ def test_applyverticalshiftgrid_3():
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
                                          options=['RESAMPLING=CUBIC'])
     cs = out_ds.GetRasterBand(1).Checksum()
-    assert cs == 4841 or cs == 4854
+    assert cs in (4841, 4854, 4842) # 4842 on Mac / Conda
 
 ###############################################################################
 # Test nodata

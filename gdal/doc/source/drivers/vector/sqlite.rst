@@ -15,7 +15,7 @@ The driver can handle "regular" SQLite databases, as well as Spatialite
 databases (spatial enabled SQLite databases). The type of an existing
 database can be checked from the SQLITE debug info value "OGR style
 SQLite DB found/ SpatiaLite DB found/SpatiaLite v4 DB found" obtained by
-running **"ogrinfo db.sqlite --debug on"**
+running ``ogrinfo db.sqlite --debug on``
 
 Starting with GDAL 2.2, the SQLite driver can also read databases with
 :ref:`RasterLite2 raster coverages <raster.rasterlite2>`.
@@ -166,7 +166,7 @@ layer, can be created with one of the following SQL statement :
 
 where :
 
--  *datasource_name* is the connetion string to any OGR datasource.
+-  *datasource_name* is the connection string to any OGR datasource.
 -  *update_mode* = 0 for read-only mode (default value) or 1 for update
    mode.
 -  *layer_name* = the name of a layer of the opened datasource.
@@ -235,6 +235,16 @@ Dataset open options
 -  **LIST_VIRTUAL_OGR**\ =YES/NO: This may be "YES" to force VirtualOGR
    virtual tables to be listed. This should only be enabled on trusted
    datasources to avoid potential safety issues.
+-  **PRELUDE_STATEMENTS**\ =string (GDAL >= 3.2). SQL statement(s) to
+   send on the SQLite3 connection before any other ones. In
+   case of several statements, they must be separated with the
+   semi-column (;) sign. This option may be useful
+   to `attach another database <https://www.sqlite.org/lang_attach.html>`__
+   to the current one and issue cross-database requests.
+
+   .. note::
+        The other database must be of a type recognized by this driver, so
+        its geometry blobs are properly recognized (so typically not a GeoPackage one)
 
 Database Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -408,6 +418,14 @@ Example
        my_table" \
     -nln "location" \
     -s_srs "EPSG:4326"
+
+- Perform a join between 2 SQLite/Spatialite databases:
+
+.. code-block::
+
+    ogrinfo my_spatial.db \
+        -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \
+        -oo PRELUDE_STATEMENTS="ATTACH DATABASE 'other.db' AS other_schema"
 
 Credits
 -------

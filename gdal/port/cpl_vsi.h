@@ -158,6 +158,7 @@ typedef FILE VSILFILE;
 
 VSILFILE CPL_DLL *  VSIFOpenL( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 VSILFILE CPL_DLL *  VSIFOpenExL( const char *, const char *, int ) CPL_WARN_UNUSED_RESULT;
+VSILFILE CPL_DLL *  VSIFOpenEx2L( const char *, const char *, int, CSLConstList ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFCloseL( VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFSeekL( VSILFILE *, vsi_l_offset, int ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 vsi_l_offset CPL_DLL VSIFTellL( VSILFILE * ) CPL_WARN_UNUSED_RESULT;
@@ -312,6 +313,7 @@ GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 char CPL_DLL **VSIReadDir( const char * );
 char CPL_DLL **VSIReadDirRecursive( const char *pszPath );
 char CPL_DLL **VSIReadDirEx( const char *pszPath, int nMaxFiles );
+char CPL_DLL **VSISiblingFiles( const char *pszPath );
 
 /** Opaque type for a directory iterator */
 typedef struct VSIDIR VSIDIR;
@@ -369,9 +371,13 @@ int CPL_DLL VSISync( const char* pszSource, const char* pszTarget,
                       GDALProgressFunc pProgressFunc,
                       void *pProgressData,
                       char*** ppapszOutputs );
+int CPL_DLL VSIAbortPendingUploads( const char* pszFilename );
 
 char CPL_DLL *VSIStrerror( int );
 GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
+
+void CPL_DLL VSINetworkStatsReset( void );
+char CPL_DLL *VSINetworkStatsGetAsSerializedJSON( char** papszOptions );
 
 /* ==================================================================== */
 /*      Install special file access handlers.                           */
@@ -391,6 +397,7 @@ void VSIInstallGSFileHandler(void);
 void VSIInstallGSStreamingFileHandler(void);
 void VSIInstallAzureFileHandler(void);
 void VSIInstallAzureStreamingFileHandler(void);
+void VSIInstallADLSFileHandler(void);
 void VSIInstallOSSFileHandler(void);
 void VSIInstallOSSStreamingFileHandler(void);
 void VSIInstallSwiftFileHandler(void);
@@ -422,17 +429,17 @@ typedef size_t (*VSIWriteFunction)(const void* ptr, size_t size, size_t nmemb, F
 void CPL_DLL VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream );
 
 /**
- * Return information about a handle. Optional (driver dependent) 
+ * Return information about a handle. Optional (driver dependent)
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginStatCallback)          ( void *pUserData, const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-/** 
- * Remove handle by name. Optional 
+/**
+ * Remove handle by name. Optional
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginUnlinkCallback)        ( void *pUserData, const char *pszFilename );
-/** 
- * Rename handle. Optional 
+/**
+ * Rename handle. Optional
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginRenameCallback)        ( void *pUserData, const char *oldpath, const char *newpath );
@@ -442,69 +449,78 @@ typedef int            (*VSIFilesystemPluginRenameCallback)        ( void *pUser
  */
 typedef int            (*VSIFilesystemPluginMkdirCallback)         ( void *pUserData, const char *pszDirname, long nMode );
 /**
- *  Delete Directory. Optional 
+ *  Delete Directory. Optional
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginRmdirCallback)         ( void *pUserData, const char *pszDirname );
-/** 
- * List directory content. Optional 
+/**
+ * List directory content. Optional
  * @since GDAL 3.0
  */
 typedef char**         (*VSIFilesystemPluginReadDirCallback)       ( void *pUserData, const char *pszDirname, int nMaxFiles );
-/** 
+/**
+ * List related files. Must return NULL if unknown, or a list of relative filenames
+ * that can be opened along the main file. If no other file than pszFilename needs to
+ * be opened, return static_cast<char**> (CPLCalloc(1,sizeof(char*)));
+ *
+ * Optional
+ * @since GDAL 3.2
+ */
+typedef char**         (*VSIFilesystemPluginSiblingFilesCallback)       ( void *pUserData, const char *pszDirname );
+/**
  * Open a handle. Mandatory. Returns an opaque pointer that will be used in subsequent file I/O calls.
  * Should return null and/or set errno if the handle does not exist or the access mode is incorrect.
  * @since GDAL 3.0
  */
 typedef void*          (*VSIFilesystemPluginOpenCallback)          ( void *pUserData, const char *pszFilename, const char *pszAccess );
-/** 
- * Return current position in handle. Mandatory 
+/**
+ * Return current position in handle. Mandatory
  * @since GDAL 3.0
  */
 typedef vsi_l_offset   (*VSIFilesystemPluginTellCallback)          ( void *pFile );
-/** 
- * Seek to position in handle. Mandatory except for write only handles 
+/**
+ * Seek to position in handle. Mandatory except for write only handles
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginSeekCallback)          ( void *pFile, vsi_l_offset nOffset, int nWhence );
-/** 
+/**
  * Read data from current position, returns the number of blocks correctly read.
  * Mandatory except for write only handles
  * @since GDAL 3.0
  */
 typedef size_t         (*VSIFilesystemPluginReadCallback)          ( void *pFile, void *pBuffer, size_t nSize, size_t nCount );
-/** 
- * Read from multiple offsets. Optional, will be replaced by multiple calls to Read() if not provided 
+/**
+ * Read from multiple offsets. Optional, will be replaced by multiple calls to Read() if not provided
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginReadMultiRangeCallback)( void *pFile, int nRanges, void ** ppData,
                                                                      const vsi_l_offset* panOffsets, const size_t* panSizes );
-/** 
- * Get empty ranges. Optional 
+/**
+ * Get empty ranges. Optional
  * @since GDAL 3.0
  */
 typedef VSIRangeStatus (*VSIFilesystemPluginGetRangeStatusCallback)( void *pFile, vsi_l_offset nOffset, vsi_l_offset nLength );
-/** 
- * Has end of file been reached. Mandatory? for read handles. 
+/**
+ * Has end of file been reached. Mandatory? for read handles.
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginEofCallback)           ( void *pFile );
-/** 
- * Write bytes at current offset. Mandatory for writable handles 
+/**
+ * Write bytes at current offset. Mandatory for writable handles
  * @since GDAL 3.0
  */
 typedef size_t         (*VSIFilesystemPluginWriteCallback)         ( void *pFile, const void *pBuffer, size_t nSize,size_t nCount);
-/** 
- * Sync written bytes. Optional 
+/**
+ * Sync written bytes. Optional
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginFlushCallback)         ( void *pFile );
-/** 
- * Truncate handle. Mandatory (driver dependent?) for write handles 
+/**
+ * Truncate handle. Mandatory (driver dependent?) for write handles
  */
 typedef int            (*VSIFilesystemPluginTruncateCallback)      ( void *pFile, vsi_l_offset nNewSize );
-/** 
- * Close file handle. Optional 
+/**
+ * Close file handle. Optional
  * @since GDAL 3.0
  */
 typedef int            (*VSIFilesystemPluginCloseCallback)         ( void *pFile );
@@ -517,9 +533,9 @@ typedef int            (*VSIFilesystemPluginCloseCallback)         ( void *pFile
  * @since GDAL 3.0
  */
 typedef struct {
-    /** 
+    /**
      * Optional opaque pointer passed back to filemanager callbacks (e.g. open, stat, rmdir)
-     */ 
+     */
     void                                        *pUserData;
     VSIFilesystemPluginStatCallback             stat; /**< stat handle by name (rw)*/
     VSIFilesystemPluginUnlinkCallback           unlink; /**< unlink handle by name ()*/
@@ -538,15 +554,18 @@ typedef struct {
     VSIFilesystemPluginFlushCallback            flush; /**< sync bytes (w) */
     VSIFilesystemPluginTruncateCallback         truncate; /**< truncate handle (w?) */
     VSIFilesystemPluginCloseCallback            close; /**< close handle  (rw) */
-/* 
+    size_t                                      nBufferSize; /**< buffer small reads (makes handler read only) */
+    size_t                                      nCacheSize; /**< max mem to use per file when buffering */
+    VSIFilesystemPluginSiblingFilesCallback     sibling_files; /**< list related files*/
+/*
     Callbacks are defined as a struct allocated by a call to VSIAllocFilesystemPluginCallbacksStruct
     in order to try to maintain ABI stability when eventually adding a new member.
     Any callbacks added to this struct SHOULD be added to the END of this struct
 */
 } VSIFilesystemPluginCallbacksStruct;
 
-/** 
- * return a VSIFilesystemPluginCallbacksStruct to be populated at runtime with handler callbacks 
+/**
+ * return a VSIFilesystemPluginCallbacksStruct to be populated at runtime with handler callbacks
  * @since GDAL 3.0
  */
 VSIFilesystemPluginCallbacksStruct CPL_DLL *VSIAllocFilesystemPluginCallbacksStruct( void );

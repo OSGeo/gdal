@@ -80,7 +80,6 @@ build_ogr_specialized_fuzzer shape OGRRegisterAll "/vsimem/test.tar" "/vsitar//v
 build_ogr_specialized_fuzzer mitab_mif OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.mif"
 build_ogr_specialized_fuzzer mitab_tab OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.tab"
 build_ogr_specialized_fuzzer csv RegisterOGRCSV "/vsimem/test.csv" "/vsimem/test.csv"
-build_ogr_specialized_fuzzer bna RegisterOGRBNA "/vsimem/test.bna" "/vsimem/test.bna"
 build_ogr_specialized_fuzzer wasp RegisterOGRWAsP "/vsimem/test.map" "/vsimem/test.map"
 build_ogr_specialized_fuzzer xlsx RegisterOGRXLSX "/vsimem/test.xlsx" "/vsitar/{/vsimem/test.xlsx}"
 build_ogr_specialized_fuzzer ods RegisterOGRODS "/vsimem/test.ods" "/vsitar/{/vsimem/test.ods}"

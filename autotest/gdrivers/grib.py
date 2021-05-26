@@ -65,7 +65,11 @@ def test_grib_1():
 def test_grib_2():
 
     tst = gdaltest.GDALTest('GRIB', 'grib/Sample_QuikSCAT.grb', 4, 50714)
-    return tst.testOpen()
+    tst.testOpen()
+
+    ds = gdal.Open('data/grib/Sample_QuikSCAT.grb')
+    assert ds.GetRasterBand(1).GetNoDataValue() == 9999.0
+    assert ds.GetRasterBand(1).GetNoDataValue() == 9999.0 # do it again to test correct caching
 
 ###############################################################################
 # This file has different raster sizes for some of the products, which
@@ -112,28 +116,21 @@ def test_grib_read_units():
     shutil.copy('data/grib/ds.mint.bin', 'tmp/ds.mint.bin')
     ds = gdal.Open('tmp/ds.mint.bin')
     md = ds.GetRasterBand(1).GetMetadata()
-    if md['GRIB_UNIT'] != '[C]' or md['GRIB_COMMENT'] != 'Minimum temperature [C]':
-        print(md)
-        return
+    assert md['GRIB_UNIT'] == '[C]'
+    assert md['GRIB_COMMENT'] == 'Minimum temperature [C]'
     ds.GetRasterBand(1).ComputeStatistics(False)
-    if ds.GetRasterBand(1).GetMinimum() != pytest.approx(13, abs=1):
-        print(ds.GetRasterBand(1).GetMinimum())
-        return
+    assert ds.GetRasterBand(1).GetMinimum() == pytest.approx(13, abs=1)
     ds = None
 
     os.unlink('tmp/ds.mint.bin.aux.xml')
 
-    gdal.SetConfigOption('GRIB_NORMALIZE_UNITS', 'NO')
-    ds = gdal.Open('tmp/ds.mint.bin')
-    gdal.SetConfigOption('GRIB_NORMALIZE_UNITS', None)
+    with gdaltest.config_option('GRIB_NORMALIZE_UNITS', 'NO'):
+        ds = gdal.Open('tmp/ds.mint.bin')
+        ds.GetRasterBand(1).ComputeStatistics(False)
     md = ds.GetRasterBand(1).GetMetadata()
-    if md['GRIB_UNIT'] != '[K]' or md['GRIB_COMMENT'] != 'Minimum temperature [K]':
-        print(md)
-        return
-    ds.GetRasterBand(1).ComputeStatistics(False)
-    if ds.GetRasterBand(1).GetMinimum() != pytest.approx(286, abs=1):
-        print(ds.GetRasterBand(1).GetMinimum())
-        return
+    assert md['GRIB_UNIT'] == '[K]'
+    assert md['GRIB_COMMENT'] == 'Minimum temperature [K]'
+    assert ds.GetRasterBand(1).GetMinimum() == pytest.approx(286, abs=1)
     ds = None
 
     gdal.GetDriverByName('GRIB').Delete('tmp/ds.mint.bin')
@@ -150,10 +147,8 @@ def test_grib_read_geotransform_one_n_or_n_one():
     egt = (-114.25, 0.5, 0.0, 47.250, 0.0, -0.5)
     gt = ds.GetGeoTransform()
     ds = None
-    if gt != egt:
-        print(gt, '!=', egt)
-        pytest.fail('Invalid geotransform')
-    
+    assert gt == egt
+
 ###############################################################################
 # This is more a /vsizip/ file test than a GRIB one, but could not easily
 # come up with a pure /vsizip/ test case, so here's a real world use
@@ -177,8 +172,8 @@ def test_grib_grib2_test_grib_pds_all_bands():
     ds = None
     assert md is not None, 'Failed to fetch pds numbers (#5144)'
 
-    gdal.SetConfigOption('GRIB_PDS_ALL_BANDS', 'OFF')
-    ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
+    with gdaltest.config_option('GRIB_PDS_ALL_BANDS', 'OFF'):
+        ds = gdal.Open('/vsizip/data/grib/gfs.t00z.mastergrb2f03.zip/gfs.t00z.mastergrb2f03')
     assert ds is not None
     band = ds.GetRasterBand(2)
     md = band.GetMetadataItem('GRIB_PDS_TEMPLATE_NUMBERS')
@@ -257,6 +252,9 @@ def test_grib_grib1_read_rotated_pole_lonlat():
 
     assert ds.RasterXSize == 726 and ds.RasterYSize == 550, \
         'Did not get expected dimensions'
+
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert ds.GetRasterBand(1).GetNoDataValue() is None # do it again to test correct caching
 
     projection = ds.GetProjectionRef()
     expected_projection_proj_7 = 'GEOGCRS["Coordinate System imported from GRIB file",BASEGEOGCRS["Coordinate System imported from GRIB file",DATUM["unnamed",ELLIPSOID["Sphere",6367470,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (GRIB convention)",METHOD["Pole rotation (GRIB convention)"],PARAMETER["Latitude of the southern pole (GRIB convention)",-30,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Longitude of the southern pole (GRIB convention)",-15,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Axis rotation (GRIB convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]'
@@ -1215,28 +1213,113 @@ def test_grib_grib2_write_temperatures():
 
 ###############################################################################
 
+@pytest.mark.parametrize('datatype', [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName)
+def test_grib_grib2_write_nodata(datatype):
 
-def test_grib_grib2_write_nodata():
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, datatype)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).SetNoDataValue(123)
+    tmpfilename = '/vsimem/out.grb2'
+    options = [
+        'DATA_ENCODING=COMPLEX_PACKING'
+    ]
+    gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
 
-    for src_type in [ gdal.GDT_Byte, gdal.GDT_Float32 ]:
-        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, src_type)
-        src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
-        sr = osr.SpatialReference()
-        sr.SetFromUserInput('WGS84')
-        src_ds.SetProjection(sr.ExportToWkt())
-        src_ds.GetRasterBand(1).SetNoDataValue(123)
-        tmpfilename = '/vsimem/out.grb2'
-        options = [
-            'DATA_ENCODING=COMPLEX_PACKING'
-        ]
-        gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 123
+    got_vals = struct.unpack(4 * 'd', ds.ReadRaster())
+    ds = None
+    gdal.Unlink(tmpfilename)
+    for i in range(4):
+        assert got_vals[i] == 0.0
 
-        ds = gdal.Open(tmpfilename)
-        assert ds.GetRasterBand(1).GetNoDataValue() == 123
-        ds = None
-        gdal.Unlink(tmpfilename)
+###############################################################################
 
-    
+@pytest.mark.parametrize('datatype', [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName)
+def test_grib_grib2_write_nodata_only(datatype):
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, datatype)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).SetNoDataValue(12.3)
+    src_ds.WriteRaster(0, 0, 2, 2,
+                        struct.pack(4 * 'f', 12.3, 12.3, 12.3, 12.3),
+                        buf_type=gdal.GDT_Float32)
+    tmpfilename = '/vsimem/out.grb2'
+    options = [
+        'DATA_ENCODING=COMPLEX_PACKING'
+    ]
+    gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+
+    ds = gdal.Open(tmpfilename)
+    if datatype == gdal.GDT_Byte:
+        assert ds.GetRasterBand(1).GetNoDataValue() == 12
+    else:
+        assert ds.GetRasterBand(1).GetNoDataValue() == pytest.approx(12.3, rel=1e-4)
+    got_vals = struct.unpack(4 * 'd', ds.ReadRaster())
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if datatype == gdal.GDT_Byte:
+        expected_vals = (12, 12, 12, 12)
+    else:
+        expected_vals = (12.3, 12.3, 12.3, 12.3)
+    assert got_vals == pytest.approx(expected_vals, rel=1e-4)
+
+###############################################################################
+
+@pytest.mark.parametrize('datatype', [gdal.GDT_Byte, gdal.GDT_Float32], ids=gdal.GetDataTypeName)
+def test_grib_grib2_write_full_OneData(datatype):
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, datatype)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).SetNoDataValue(123)
+    src_ds.WriteRaster(0, 0, 2, 2,
+                    struct.pack(4 * 'f', 25.4, 25.4, 25.4, 25.4),
+                    buf_type=gdal.GDT_Float32)
+    tmpfilename = '/vsimem/out.grb2'
+    options = [
+        'DATA_ENCODING=COMPLEX_PACKING'
+    ]
+    gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 123
+    got_vals = struct.unpack(4 * 'd', ds.ReadRaster())
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if (datatype == gdal.GDT_Byte):
+        expected_vals = (25, 25, 25, 25)
+    else:
+        expected_vals = (25.4, 25.4, 25.4, 25.4)
+    assert got_vals == pytest.approx(expected_vals, rel=1e-4)
+
+###############################################################################
+
+def test_grib_grib2_write_mix_nodata_and_a_single_data():
+    src_ds = gdal.Open('data/grib/one_value_and_nodata_points.grb2')
+    tmpfilename = '/vsimem/out.grb2'
+    options = [
+        'DATA_ENCODING=COMPLEX_PACKING',
+    ]
+    gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+    src_ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 9999
+    got_vals = struct.unpack(400 * 'd', ds.ReadRaster())
+    ds = None
+    gdal.Unlink(tmpfilename)
+    assert got_vals[0] == 9999
+    assert got_vals[6] == pytest.approx(0.01, rel=1e-4)
+
 ###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 
@@ -1304,3 +1387,36 @@ def test_grib_grib2_scan_flag_not_64():
     gt = ds.GetGeoTransform()
     expected_gt = (-3272421.457337171, 2539.703, 0.0, 3790842.1060354356, 0.0, -2539.703)
     assert gt == pytest.approx(expected_gt, rel=1e-6)
+
+
+###############################################################################
+# Test reading message with subgrids
+
+
+def test_grib_grib2_read_subgrids():
+
+    # data/grib/subgrids.grib2 generated with:
+    # gdal_translate ../autotest/gcore/data/byte.tif band1.tif
+    # gdal_translate ../autotest/gcore/data/byte.tif band2.tif -scale 0 255 255 0
+    # gdalbuildvrt -separate tmp.vrt band1.tif band2.tif
+    # gdal_translate tmp.vrt ../autotest/gdrivers/data/grib/subgrids.grib2 -co "BAND_1_PDS_TEMPLATE_ASSEMBLED_VALUES=2 2 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "BAND_2_PDS_TEMPLATE_ASSEMBLED_VALUES=2 3 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "IDS=CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=2 LOCAL_TABLE=1 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2020-09-26T00:00:00Z PROD_STATUS=0(Operational) TYPE=1(Forecast)" -co WRITE_SUBGRIDS=YES
+    ds = gdal.Open('data/grib/subgrids.grib2')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(2).Checksum() == 4563
+    expected_ids = "CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=2 LOCAL_TABLE=0 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2020-09-26T00:00:00Z PROD_STATUS=0(Operational) TYPE=1(Forecast)"
+    assert ds.GetRasterBand(1).GetMetadataItem('GRIB_IDS') == expected_ids
+    assert ds.GetRasterBand(2).GetMetadataItem('GRIB_IDS') == expected_ids
+    assert ds.GetRasterBand(1).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '2 2 2 0 84 0 0 1 0 220 0 0 255 0 0'
+    assert ds.GetRasterBand(2).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '2 3 2 0 84 0 0 1 0 220 0 0 255 0 0'
+
+
+###############################################################################
+# Test reading message with subgrids with second subgrid reusing the bitmap from the first one
+# Fixes https://github.com/OSGeo/gdal/issues/3099
+
+def test_grib_grib2_read_subgrids_reuse_bitmap():
+
+    # File generated with gdal_translate ../autotest/gdrivers/data/grib/subgrids.grib2 ../autotest/gdrivers/data/grib/subgrids_reuse_bitmap.grib2 --config GRIB_WRITE_BITMAP_TEST YES -co "BAND_1_PDS_TEMPLATE_ASSEMBLED_VALUES=2 2 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "BAND_2_PDS_TEMPLATE_ASSEMBLED_VALUES=2 3 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "IDS=CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=2 LOCAL_TABLE=1 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2020-09-26T00:00:00Z PROD_STATUS=0(Operational) TYPE=1(Forecast)" -co WRITE_SUBGRIDS=YES -co "DATA_ENCODING=SIMPLE_PACKING"
+    ds = gdal.Open('data/grib/subgrids_reuse_bitmap.grib2')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(2).Checksum() == 4563

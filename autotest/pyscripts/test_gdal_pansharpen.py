@@ -45,7 +45,7 @@ def test_gdal_pansharpen_1():
     if script_path is None:
         pytest.skip()
 
-    src_ds = gdal.Open('../gdrivers/data/small_world.tif')
+    src_ds = gdal.Open(test_py_scripts.get_data_path('gdrivers')+'small_world.tif')
     src_data = src_ds.GetRasterBand(1).ReadRaster()
     gt = src_ds.GetGeoTransform()
     wkt = src_ds.GetProjectionRef()
@@ -59,14 +59,16 @@ def test_gdal_pansharpen_1():
     pan_ds.GetRasterBand(1).WriteRaster(0, 0, 800, 400, src_data, 400, 200)
     pan_ds = None
 
-    test_py_scripts.run_py_script(script_path, 'gdal_pansharpen', ' tmp/small_world_pan.tif ../gdrivers/data/small_world.tif tmp/out.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_pansharpen', ' tmp/small_world_pan.tif '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out.tif')
 
     ds = gdal.Open('tmp/out.tif')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     ds = None
     gdal.GetDriverByName('GTiff').Delete('tmp/out.tif')
 
-    assert cs == [4735, 10000, 9742]
+    assert cs in ([4735, 10000, 9742],
+                  [4731, 9991, 9734] # s390x or graviton2
+                 )
 
 ###############################################################################
 # Full options
@@ -78,14 +80,17 @@ def test_gdal_pansharpen_2():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'gdal_pansharpen', ' -q -b 3 -b 1 -bitdepth 8 -threads ALL_CPUS -spat_adjust union -w 0.33333333333333333 -w 0.33333333333333333 -w 0.33333333333333333 -of VRT -r cubic tmp/small_world_pan.tif ../gdrivers/data/small_world.tif,band=1 ../gdrivers/data/small_world.tif,band=2 ../gdrivers/data/small_world.tif,band=3 tmp/out.vrt')
+    test_py_scripts.run_py_script(script_path, 'gdal_pansharpen', ' -q -b 3 -b 1 -bitdepth 8 -threads ALL_CPUS -spat_adjust union -w 0.33333333333333333 -w 0.33333333333333333 -w 0.33333333333333333 -of VRT -r cubic tmp/small_world_pan.tif '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif,band=1 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif,band=2 '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif,band=3 tmp/out.vrt')
 
     ds = gdal.Open('tmp/out.vrt')
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
     ds = None
     gdal.GetDriverByName('VRT').Delete('tmp/out.vrt')
 
-    assert cs == [9742, 4735]
+    assert cs in ([9742, 4735],
+                  [9734, 4731] # s390x or graviton2
+                 )
+
 
 ###############################################################################
 # Cleanup

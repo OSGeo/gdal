@@ -37,6 +37,13 @@ from osgeo import ogr
 import pytest
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+###############################################################################
 # Common usage tests.
 
 ds = None
@@ -86,9 +93,6 @@ def is_same(A, B):
 def test_algebra_setup():
 
     global ds, A, B, C, pointInB, D1, D2, empty
-
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     # Create three memory layers for intersection.
 
@@ -157,8 +161,6 @@ def test_algebra_setup():
 
 
 def test_algebra_intersection():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     recreate_layer_C()
 
@@ -186,10 +188,10 @@ def test_algebra_intersection():
             break
 
         g = feat.GetGeometryRef()
-        if g.Equals(f1[0]):
+        if ogrtest.check_feature_geometry(g, f1[0]) == 0:
             assert feat.GetField('A') == f1[1] and feat.GetField('B') == f1[2], \
                 'Did not get expected field values.'
-        elif g.Equals(f2[0]):
+        elif ogrtest.check_feature_geometry(g, f2[0]) == 0:
             assert feat.GetField('A') == f2[1] and feat.GetField('B') == f2[2], \
                 'Did not get expected field values.'
         else:
@@ -218,10 +220,10 @@ def test_algebra_intersection():
             break
 
         g = feat.GetGeometryRef()
-        if g.Equals(f1[0]):
+        if ogrtest.check_feature_geometry(g, f1[0]) == 0:
             assert feat.GetField('A') == f1[1] and feat.GetField('B') == f1[2], \
                 'Did not get expected field values. (1)'
-        elif g.Equals(f2[0]):
+        elif ogrtest.check_feature_geometry(g, f2[0]) == 0:
             assert feat.GetField('A') == f2[1] and feat.GetField('B') == f2[2], \
                 'Did not get expected field values. (2)'
         else:
@@ -240,8 +242,6 @@ def test_algebra_intersection():
 
 
 def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     driver = ogr.GetDriverByName('MEMORY')
     ds = driver.CreateDataSource('ds')
@@ -303,8 +303,6 @@ def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
 
 
 def test_algebra_union():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     recreate_layer_C()
 
@@ -312,21 +310,19 @@ def test_algebra_union():
 
     err = A.Union(B, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
 
-        assert C.GetFeatureCount() == 5, \
-            ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 5, \
+        ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Union(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
 
-        assert C.GetFeatureCount() == 5, \
-            ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 5, \
+        ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -334,10 +330,9 @@ def test_algebra_union():
 
     err = D1.Union(D2, C, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
 
-        assert is_same(D1, C), 'D1 != C'
+    assert is_same(D1, C), 'D1 != C'
 
     recreate_layer_C()
 
@@ -345,17 +340,13 @@ def test_algebra_union():
 
     err = B.Union(pointInB, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Union')
 
-        assert C.GetFeatureCount() == 2, \
-            ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 2, \
+        ('Layer.Union returned ' + str(C.GetFeatureCount()) + ' features')
 
-    
 
 def test_algebra_symdifference():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     recreate_layer_C()
 
@@ -363,21 +354,19 @@ def test_algebra_symdifference():
 
     err = A.SymDifference(B, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
 
-        assert C.GetFeatureCount() == 3, \
-            ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 3, \
+        ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.SymDifference(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
 
-        assert C.GetFeatureCount() == 3, \
-            ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 3, \
+        ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -385,16 +374,13 @@ def test_algebra_symdifference():
 
     err = D1.SymDifference(D2, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.SymDifference')
 
     assert C.GetFeatureCount() == 0, \
         ('Layer.SymDifference returned ' + str(C.GetFeatureCount()) + ' features')
 
 
 def test_algebra_identify():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     recreate_layer_C()
 
@@ -402,21 +388,19 @@ def test_algebra_identify():
 
     err = A.Identity(B, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
 
-        assert C.GetFeatureCount() == 4, \
-            ('Layer.Identity returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 4, \
+        ('Layer.Identity returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Identity(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
 
-        assert C.GetFeatureCount() == 4, \
-            ('Layer.Identity returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 4, \
+        ('Layer.Identity returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -424,16 +408,12 @@ def test_algebra_identify():
 
     err = D1.Identity(D2, C, ['KEEP_LOWER_DIMENSION_GEOMETRIES=NO'])
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Identity')
 
-        assert is_same(D1, C), 'D1 != C'
+    assert is_same(D1, C), 'D1 != C'
 
-    
 
 def test_algebra_update():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     recreate_layer_C()
 
@@ -441,21 +421,19 @@ def test_algebra_update():
 
     err = A.Update(B, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
 
-        assert C.GetFeatureCount() == 3, \
-            ('Layer.Update returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 3, \
+        ('Layer.Update returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Update(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
 
-        assert C.GetFeatureCount() == 3, \
-            ('Layer.Update returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 3, \
+        ('Layer.Update returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -463,16 +441,12 @@ def test_algebra_update():
 
     err = D1.Update(D2, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Update')
 
-        assert is_same(D1, C), 'D1 != C'
+    assert is_same(D1, C), 'D1 != C'
 
-    
 
 def test_algebra_clip():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     recreate_layer_C()
 
@@ -480,21 +454,19 @@ def test_algebra_clip():
 
     err = A.Clip(B, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
 
-        assert C.GetFeatureCount() == 2, \
-            ('Layer.Clip returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 2, \
+        ('Layer.Clip returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Clip(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
 
-        assert C.GetFeatureCount() == 2, \
-            ('Layer.Clip returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 2, \
+        ('Layer.Clip returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -502,16 +474,12 @@ def test_algebra_clip():
 
     err = D1.Update(D2, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Clip')
 
-        assert is_same(D1, C), 'D1 != C'
+    assert is_same(D1, C), 'D1 != C'
 
-    
 
 def test_algebra_erase():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     recreate_layer_C()
 
@@ -519,21 +487,19 @@ def test_algebra_erase():
 
     err = A.Erase(B, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
 
-        assert C.GetFeatureCount() == 2, \
-            ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 2, \
+        ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
     err = A.Erase(B, C, options=['PROMOTE_TO_MULTI=YES'])
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
 
-        assert C.GetFeatureCount() == 2, \
-            ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
+    assert C.GetFeatureCount() == 2, \
+        ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
 
     recreate_layer_C()
 
@@ -541,8 +507,7 @@ def test_algebra_erase():
 
     err = D1.Erase(D2, C)
 
-    if ogrtest.have_geos():
-        assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
+    assert err == 0, ('got non-zero result code ' + str(err) + ' from Layer.Erase')
 
     assert C.GetFeatureCount() == 0, \
         ('Layer.Erase returned ' + str(C.GetFeatureCount()) + ' features')
@@ -575,8 +540,6 @@ def test_algebra_erase():
 
 
 def test_algebra_cleanup():
-    if not ogrtest.have_geos():
-        pytest.skip()
 
     global ds, A, B, C, pointInB, D1, D2, empty
 

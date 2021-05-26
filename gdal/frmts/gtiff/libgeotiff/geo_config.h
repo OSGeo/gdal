@@ -4,7 +4,7 @@
 
 #include "cpl_config.h"
 
-#ifndef COVERITY_SCAN
+#ifndef __COVERITY__
 #include "cpl_string.h"
 #ifdef sprintf
 #undef sprintf

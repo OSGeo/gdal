@@ -67,7 +67,7 @@ class WKT2WKB {
 
         Geometry geom = Geometry.CreateFromWkt(args[0]);
 
-		int wkbSize = geom.WkbSize();
+		long wkbSize = geom.WkbSize();
         if (wkbSize > 0)
         {
             byte[] wkb = new byte[wkbSize];

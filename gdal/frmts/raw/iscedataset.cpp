@@ -317,7 +317,7 @@ void ISCEDataset::FlushCache( void )
                                  "createCoordinate" );
     CPLCreateXMLElementAndValue( psCoordinate1Node,
                                  "doc",
-                                 "First coordinate of a 2D image (witdh)." );
+                                 "First coordinate of a 2D image (width)." );
     /* Property name */
     psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
                                   CXT_Element,
@@ -647,6 +647,12 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
     }
     const GDALDataType eDataType = GDALGetDataTypeByName( pszDataType );
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+    if( nDTSize == 0 )
+    {
+        delete poDS;
+        CSLDestroy( papszXmlProps );
+        return nullptr;
+    }
     const char *pszScheme = CSLFetchNameValue( papszXmlProps, "SCHEME" );
     int nPixelOffset = 0;
     int nLineOffset = 0;

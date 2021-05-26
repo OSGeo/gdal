@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSKFile class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@ namespace PCIDSK
 /************************************************************************/
     class CPCIDSKFile final: public PCIDSKFile
     {
-        friend PCIDSKFile PCIDSK_DLL *Open( std::string filename, 
+        friend PCIDSKFile PCIDSK_DLL *Open( std::string filename,
             std::string access, const PCIDSKInterfaces *interfaces );
     public:
 
@@ -60,21 +60,25 @@ namespace PCIDSK
 
         PCIDSKChannel  *GetChannel( int band ) override;
         PCIDSKSegment  *GetSegment( int segment ) override;
-        std::vector<PCIDSKSegment *> GetSegments() override;
 
-        PCIDSKSegment  *GetSegment( int type, std::string name,
+        PCIDSKSegment  *GetSegment( int type, const std::string & name,
             int previous = 0 ) override;
+        unsigned GetSegmentID(int segment, const std::string & name = {},
+                              unsigned previous = 0) const override;
+        std::vector<unsigned> GetSegmentIDs(int segment,
+                  const std::function<bool(const char *,unsigned)> & oFilter) const override;
+
         int  CreateSegment( std::string name, std::string description,
             eSegType seg_type, int data_blocks ) override;
         void DeleteSegment( int segment ) override;
-        void CreateOverviews( int chan_count, int *chan_list, 
+        void CreateOverviews( int chan_count, int *chan_list,
             int factor, std::string resampling ) override;
 
         int       GetWidth() const override { return width; }
         int       GetHeight() const override { return height; }
         int       GetChannels() const override { return channel_count; }
         std::string GetInterleaving() const override { return interleaving; }
-        bool      GetUpdatable() const override { return updatable; } 
+        bool      GetUpdatable() const override { return updatable; }
         uint64    GetFileSize() const override { return file_size; }
 
         // the following are only for pixel interleaved IO
@@ -86,7 +90,6 @@ namespace PCIDSK
 
         void      WriteToFile( const void *buffer, uint64 offset, uint64 size ) override;
         void      ReadFromFile( void *buffer, uint64 offset, uint64 size ) override;
-        void      CheckFileBigEnough( uint64 bytes_to_read ) override;
 
         std::string GetFilename() const { return base_filename; }
 
@@ -96,19 +99,24 @@ namespace PCIDSK
         bool      GetEDBFileDetails( EDBFile** file_p, Mutex **io_mutex_p,
                                      std::string filename );
 
-        std::string GetMetadataValue( const std::string& key ) override 
+        std::string GetUniqueEDBFilename() override;
+
+        std::map<int,int> GetEDBChannelMap(std::string oExtFilename) override;
+
+        std::string GetMetadataValue( const std::string& key ) override
             { return metadata.GetMetadataValue(key); }
-        void        SetMetadataValue( const std::string& key, const std::string& value ) override 
+        void        SetMetadataValue( const std::string& key, const std::string& value ) override
             { metadata.SetMetadataValue(key,value); }
-        std::vector<std::string> GetMetadataKeys() override 
+        std::vector<std::string> GetMetadataKeys() override
             { return metadata.GetMetadataKeys(); }
 
         void      Synchronize() override;
 
     // not exposed to applications.
-        void      ExtendFile( uint64 blocks_requested, bool prezero = false );
+        void      ExtendFile( uint64 blocks_requested,
+                              bool prezero = false, bool writedata = true );
         void      ExtendSegment( int segment, uint64 blocks_to_add,
-            bool prezero = false );
+                                 bool prezero = false, bool writedata = true );
         void      MoveSegmentToEOF( int segment );
 
     private:
@@ -117,7 +125,7 @@ namespace PCIDSK
         void         InitializeFromHeader();
 
         std::string  base_filename;
-        
+
         int          width;
         int          height;
         int          channel_count;

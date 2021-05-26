@@ -494,6 +494,7 @@ static bool RequiresUnixPathSeparator(const char* pszPath)
             STARTS_WITH(pszPath, "/vsigs_streaming/") ||
             STARTS_WITH(pszPath, "/vsiaz/") ||
             STARTS_WITH(pszPath, "/vsiaz_streaming/") ||
+            STARTS_WITH(pszPath, "/vsiadls/") ||
             STARTS_WITH(pszPath, "/vsioss/") ||
             STARTS_WITH(pszPath, "/vsioss_streaming/") ||
             STARTS_WITH(pszPath, "/vsiswift/") ||
@@ -818,7 +819,9 @@ int CPLIsFilenameRelative( const char *pszFilename )
 {
     if( (pszFilename[0] != '\0'
          && (STARTS_WITH(pszFilename+1, ":\\")
-             || STARTS_WITH(pszFilename+1, ":/")))
+             || STARTS_WITH(pszFilename+1, ":/")
+             || strstr(pszFilename+1,"://") // http://, ftp:// etc....
+            ))
         || STARTS_WITH(pszFilename, "\\\\?\\")  // Windows extended Length Path.
         || pszFilename[0] == '\\'
         || pszFilename[0] == '/' )

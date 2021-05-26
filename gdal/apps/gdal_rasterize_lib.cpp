@@ -72,8 +72,8 @@ static void InvertGeometries( GDALDatasetH hDstDS,
                               std::vector<OGRGeometryH> &ahGeometries )
 
 {
-    OGRGeometryH hCollection =
-        OGR_G_CreateGeometry( wkbGeometryCollection );
+    OGRGeometryH hInvertMultiPolygon =
+        OGR_G_CreateGeometry( wkbMultiPolygon );
 
 /* -------------------------------------------------------------------- */
 /*      Create a ring that is a bit outside the raster dataset.         */
@@ -114,16 +114,60 @@ static void InvertGeometries( GDALDatasetH hDstDS,
     OGRGeometryH hUniversePoly = OGR_G_CreateGeometry(wkbPolygon);
     OGR_G_AddGeometryDirectly( hUniversePoly, hUniverseRing );
 
-    OGR_G_AddGeometryDirectly( hCollection, hUniversePoly );
+    OGR_G_AddGeometryDirectly( hInvertMultiPolygon, hUniversePoly );
 
 /* -------------------------------------------------------------------- */
-/*      Add the rest of the geometries into our collection.             */
+/*      Add outer rings of polygons as inner rings of hUniversePoly     */
+/*      and inner rings as sub-polygons.                                */
 /* -------------------------------------------------------------------- */
+    bool bFoundNonPoly = false;
     for( unsigned int iGeom = 0; iGeom < ahGeometries.size(); iGeom++ )
-        OGR_G_AddGeometryDirectly( hCollection, ahGeometries[iGeom] );
+    {
+        const auto eGType = OGR_GT_Flatten(OGR_G_GetGeometryType( ahGeometries[iGeom] ));
+        if( eGType != wkbPolygon && eGType != wkbMultiPolygon )
+        {
+            if( !bFoundNonPoly )
+            {
+                bFoundNonPoly = true;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Ignoring non-polygon geometries in -i mode");
+            }
+            OGR_G_DestroyGeometry( ahGeometries[iGeom] );
+            continue;
+        }
+
+        const auto ProcessPoly = [hUniversePoly, hInvertMultiPolygon](OGRPolygon* poPoly)
+        {
+            for( int i = poPoly->getNumInteriorRings() - 1; i >= 0; --i )
+            {
+                auto poNewPoly = new OGRPolygon();
+                poNewPoly->addRingDirectly(poPoly->stealInteriorRing(i));
+                OGRGeometry::FromHandle(hInvertMultiPolygon)->toMultiPolygon()->
+                    addGeometryDirectly(poNewPoly);
+            }
+            OGRGeometry::FromHandle(hUniversePoly)->toPolygon()->addRingDirectly(
+                poPoly->stealExteriorRing());
+        };
+
+        if( eGType == wkbPolygon )
+        {
+            auto poPoly = OGRGeometry::FromHandle(ahGeometries[iGeom])->toPolygon();
+            ProcessPoly(poPoly);
+            delete poPoly;
+        }
+        else
+        {
+            auto poMulti = OGRGeometry::FromHandle(ahGeometries[iGeom])->toMultiPolygon();
+            for( int i = 0; i < poMulti->getNumGeometries(); i++ )
+            {
+                ProcessPoly( poMulti->getGeometryRef(i) );
+            }
+            delete poMulti;
+        }
+    }
 
     ahGeometries.resize(1);
-    ahGeometries[0] = hCollection;
+    ahGeometries[0] = hInvertMultiPolygon;
 }
 
 /************************************************************************/
@@ -567,7 +611,7 @@ struct GDALRasterizeOptions
  * @param hDstDS the destination dataset or NULL.
  * @param hSrcDataset the source dataset handle.
  * @param psOptionsIn the options struct returned by GDALRasterizeOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occurred or NULL.
+ * @param pbUsageError pointer to a integer output variable to store if any usage error has occurred or NULL.
  * @return the output dataset (new dataset that must be closed using GDALClose(), or hDstDS is not NULL) or NULL in case of error.
  *
  * @since GDAL 2.1
@@ -1072,7 +1116,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             if (psOptions->nXSize <= 0 || psOptions->nYSize <= 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Wrong value for -outsize parameter.");
+                         "Wrong value for -ts parameter.");
                 GDALRasterizeOptionsFree(psOptions);
                 return nullptr;
             }

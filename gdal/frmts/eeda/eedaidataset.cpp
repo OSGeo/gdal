@@ -144,7 +144,7 @@ class GDALEEDAIRasterBand final: public GDALRasterBand
                                     GDALDataType eDT,
                                     bool bSignedByte);
                 virtual ~GDALEEDAIRasterBand();
- 
+
                 virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
@@ -861,7 +861,7 @@ GUInt32 GDALEEDAIRasterBand::PrefetchBlocks(int nXOff, int nYOff,
         {
             if( bQueryAllBands && poGDS->GetRasterCount() > 1 )
             {
-                const GIntBig nUncompressedSizeThisBand = 
+                const GIntBig nUncompressedSizeThisBand =
                     static_cast<GIntBig>(nXBlocks) * nYBlocks *
                             nBlockXSize * nBlockYSize * nThisDTSize;
                 if( nUncompressedSizeThisBand <= SERVER_BYTE_LIMIT &&
@@ -1051,91 +1051,86 @@ GDALEEDAIDataset::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     GDALEEDAIRasterBand* poBand =
-        dynamic_cast<GDALEEDAIRasterBand*>(GetRasterBand(1));
-    if( poBand )
+        cpl::down_cast<GDALEEDAIRasterBand*>(GetRasterBand(1));
+
+    GUInt32 nRetryFlags = poBand->PrefetchBlocks(
+                                nXOff, nYOff, nXSize, nYSize,
+                                nBufXSize, nBufYSize,
+                                m_bQueryMultipleBands);
+    int nBlockXSize, nBlockYSize;
+    poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    if( (nRetryFlags & RETRY_SPATIAL_SPLIT) &&
+        nXSize == nBufXSize && nYSize == nBufYSize && nYSize > nBlockYSize )
     {
-        GUInt32 nRetryFlags = poBand->PrefetchBlocks(
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
+        int nHalf = std::max(nBlockYSize,
+                         ((nYSize / 2 ) / nBlockYSize) * nBlockYSize);
+        CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff,
+                                nXSize, nHalf,
+                                pData,
+                                nXSize, nHalf,
+                                eBufType,
+                                nBandCount, panBandMap,
+                                nPixelSpace, nLineSpace, nBandSpace,
+                                &sExtraArg);
+        if( eErr == CE_None )
+        {
+            eErr = IRasterIO(eRWFlag,
+                                nXOff, nYOff + nHalf,
+                                nXSize, nYSize - nHalf,
+                                static_cast<GByte*>(pData) +
+                                    nHalf * nLineSpace,
+                                nXSize, nYSize - nHalf,
+                                eBufType,
+                                nBandCount, panBandMap,
+                                nPixelSpace, nLineSpace, nBandSpace,
+                                &sExtraArg);
+        }
+        return eErr;
+    }
+    else if( (nRetryFlags & RETRY_SPATIAL_SPLIT) &&
+        nXSize == nBufXSize && nYSize == nBufYSize && nXSize > nBlockXSize )
+    {
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
+        int nHalf = std::max(nBlockXSize,
+                         ((nXSize / 2 ) / nBlockXSize) * nBlockXSize);
+        CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff,
+                                nHalf, nYSize,
+                                pData,
+                                nHalf, nYSize,
+                                eBufType,
+                                nBandCount, panBandMap,
+                                nPixelSpace, nLineSpace, nBandSpace,
+                                &sExtraArg);
+        if( eErr == CE_None )
+        {
+            eErr = IRasterIO(eRWFlag,
+                                nXOff + nHalf, nYOff,
+                                nXSize - nHalf, nYSize,
+                                static_cast<GByte*>(pData) +
+                                        nHalf * nPixelSpace,
+                                nXSize - nHalf, nYSize,
+                                eBufType,
+                                nBandCount, panBandMap,
+                                nPixelSpace, nLineSpace, nBandSpace,
+                                &sExtraArg);
+        }
+        return eErr;
+    }
+    else if( (nRetryFlags & RETRY_PER_BAND) &&
+             m_bQueryMultipleBands && nBands > 1 )
+    {
+        for( int iBand = 1; iBand <= nBands; iBand++ )
+        {
+            poBand =
+                cpl::down_cast<GDALEEDAIRasterBand*>(GetRasterBand(iBand));
+            CPL_IGNORE_RET_VAL(poBand->PrefetchBlocks(
                                     nXOff, nYOff, nXSize, nYSize,
-                                    nBufXSize, nBufYSize,
-                                    m_bQueryMultipleBands);
-        int nBlockXSize, nBlockYSize;
-        poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-        if( (nRetryFlags & RETRY_SPATIAL_SPLIT) &&
-            nXSize == nBufXSize && nYSize == nBufYSize && nYSize > nBlockYSize )
-        {
-            GDALRasterIOExtraArg sExtraArg;
-            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-
-            int nHalf = std::max(nBlockYSize,
-                             ((nYSize / 2 ) / nBlockYSize) * nBlockYSize);
-            CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff,
-                                    nXSize, nHalf,
-                                    pData,
-                                    nXSize, nHalf,
-                                    eBufType,
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    &sExtraArg);
-            if( eErr == CE_None )
-            {
-                eErr = IRasterIO(eRWFlag,
-                                    nXOff, nYOff + nHalf,
-                                    nXSize, nYSize - nHalf,
-                                    static_cast<GByte*>(pData) +
-                                        nHalf * nLineSpace,
-                                    nXSize, nYSize - nHalf,
-                                    eBufType,
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    &sExtraArg);
-            }
-            return eErr;
-        }
-        else if( (nRetryFlags & RETRY_SPATIAL_SPLIT) &&
-            nXSize == nBufXSize && nYSize == nBufYSize && nXSize > nBlockXSize )
-        {
-            GDALRasterIOExtraArg sExtraArg;
-            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-
-            int nHalf = std::max(nBlockXSize,
-                             ((nXSize / 2 ) / nBlockXSize) * nBlockXSize);
-            CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff,
-                                    nHalf, nYSize,
-                                    pData,
-                                    nHalf, nYSize,
-                                    eBufType,
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    &sExtraArg);
-            if( eErr == CE_None )
-            {
-                eErr = IRasterIO(eRWFlag,
-                                    nXOff + nHalf, nYOff,
-                                    nXSize - nHalf, nYSize,
-                                    static_cast<GByte*>(pData) +
-                                            nHalf * nPixelSpace,
-                                    nXSize - nHalf, nYSize,
-                                    eBufType,
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace,
-                                    &sExtraArg);
-            }
-            return eErr;
-        }
-        else if( (nRetryFlags & RETRY_PER_BAND) &&
-                 m_bQueryMultipleBands && nBands > 1 )
-        {
-            for( int iBand = 1; iBand <= nBands; iBand++ )
-            {
-                poBand =
-                    dynamic_cast<GDALEEDAIRasterBand*>(GetRasterBand(iBand));
-                if( poBand )
-                {
-                    CPL_IGNORE_RET_VAL(poBand->PrefetchBlocks(
-                                            nXOff, nYOff, nXSize, nYSize,
-                                            nBufXSize, nBufYSize, false));
-                }
-            }
+                                    nBufXSize, nBufYSize, false));
         }
     }
 

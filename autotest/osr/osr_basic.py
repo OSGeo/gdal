@@ -31,7 +31,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+import os
+import subprocess
+import sys
 
 import gdaltest
 from osgeo import osr
@@ -62,10 +64,10 @@ def test_osr_basic_1():
             (osr.SRS_PP_FALSE_EASTING, 500000.0),
             (osr.SRS_PP_FALSE_NORTHING, 0.0)]
 
-    for parm in parm_list:
-        value = utm_srs.GetProjParm(parm[0], -1111)
-        assert value == pytest.approx(parm[1], abs=.00000000000010), ('got %g for %s instead of %g.'
-                                 % (value, parm[0], parm[1]))
+    for param in parm_list:
+        value = utm_srs.GetProjParm(param[0], -1111)
+        assert value == pytest.approx(param[1], abs=.00000000000010), ('got %g for %s instead of %g.'
+                                 % (value, param[0], param[1]))
 
     auth_list = [('GEOGCS', '4326'),
                  ('DATUM', '6326')]
@@ -81,7 +83,7 @@ def test_osr_basic_1():
                                  % (utm_srs.GetAuthorityName(auth[0]),
                                      auth[1], auth[0]))
 
-    
+
 ###############################################################################
 # Simple default NAD83 State Plane zone.
 
@@ -99,11 +101,11 @@ def test_osr_basic_2():
             (osr.SRS_PP_FALSE_EASTING, 2000000.0),
             (osr.SRS_PP_FALSE_NORTHING, 500000.0)]
 
-    for parm in parm_list:
-        value = srs.GetProjParm(parm[0], -1111)
-        assert gdaltest.approx_equal(parm[1], value), \
+    for param in parm_list:
+        value = srs.GetProjParm(param[0], -1111)
+        assert gdaltest.approx_equal(param[1], value), \
             ('got %.16g for %s instead of %.16g.'
-                                 % (value, parm[0], parm[1]))
+                                 % (value, param[0], param[1]))
 
     auth_list = [('GEOGCS', '4269'),
                  ('DATUM', '6269'),
@@ -121,7 +123,7 @@ def test_osr_basic_2():
                                  % (srs.GetAuthorityCode(auth[0]),
                                     auth[1], auth[0]))
 
-    
+
 ###############################################################################
 # NAD83 State Plane zone, but overridden to be in Feet.
 
@@ -142,11 +144,11 @@ def test_osr_basic_3():
             (osr.SRS_PP_FALSE_EASTING, 6561666.666666667),
             (osr.SRS_PP_FALSE_NORTHING, 1640416.666666667)]
 
-    for parm in parm_list:
-        value = srs.GetProjParm(parm[0], -1111)
-        assert gdaltest.approx_equal(parm[1], value), \
+    for param in parm_list:
+        value = srs.GetProjParm(param[0], -1111)
+        assert gdaltest.approx_equal(param[1], value), \
             ('got %.16g for %s instead of %.16g.'
-                                 % (value, parm[0], parm[1]))
+                                 % (value, param[0], param[1]))
 
     auth_list = [('GEOGCS', '4269'),
                  ('DATUM', '6269')]
@@ -207,9 +209,14 @@ def test_osr_basic_4():
 def test_osr_basic_5():
 
     wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC:1.3:CRS84')
+    assert 'GEOGCS["WGS 84' in wkt_1
+    assert 'AXIS["Longitude",EAST],AXIS["Latitude",NORTH]' in wkt_1
+    assert '4326' not in wkt_1
+
     wkt_2 = osr.GetUserInputAsWKT('WGS84')
-    assert wkt_1 == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Longitude",EAST],AXIS["Latitude",NORTH]]'
-    assert wkt_2 == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+    assert 'GEOGCS["WGS 84' in wkt_2
+    assert 'AXIS["Latitude",NORTH],AXIS["Longitude",EAST]' in wkt_2
+    assert '4326' in wkt_2
 
 ###############################################################################
 # Test URN support for EPSG
@@ -236,15 +243,20 @@ def test_osr_basic_6():
         print(wkt_1)
         pytest.fail('EPSG:4326 urn lookup not as expected.')
 
-    
+
 ###############################################################################
 # Test URN support for auto projection.
 
 
 def test_osr_basic_7():
 
-    wkt = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC::AUTO42001:-117:33')
-    assert wkt.find('GEOGCS["WGS 84"') > 0 and wkt.find('PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]') > 0, 'AUTO42001 urn lookup not as expected.'
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('urn:ogc:def:crs:OGC::AUTO42001:-117:33')
+
+    srs_ref = osr.SpatialReference()
+    srs_ref.ImportFromEPSG(32611)
+    assert srs.IsSame(srs_ref)
+
 
 ###############################################################################
 # Test the SetLinearUnitsAndUpdateParameters() method.
@@ -518,7 +530,7 @@ def test_osr_basic_16():
     with gdaltest.error_handler():
         assert srs.SetFromUserInput("""GEOGCS["foo"]""") != 0
 
-    
+
 ###############################################################################
 # Test OGC URL support
 
@@ -1613,6 +1625,9 @@ def test_osr_promote_to_3D():
     assert sr.PromoteTo3D() == 0
     assert sr.GetAuthorityCode(None) == '4979'
 
+    assert sr.DemoteTo2D() == 0
+    assert sr.GetAuthorityCode(None) == '4326'
+
 
 def test_osr_SetVerticalPerspective():
 
@@ -1643,3 +1658,33 @@ def test_osr_SpatialReference_invalid_wkt_in_constructor():
 
     with pytest.raises(RuntimeError):
         osr.SpatialReference('invalid')
+
+
+###############################################################################
+# Check GetUTMZone() on a Projected 3D CRS
+
+def test_osr_GetUTMZone_Projected3D():
+
+    utm_srs = osr.SpatialReference()
+    # Southern hemisphere
+    utm_srs.SetUTM(11, 0)
+    utm_srs.SetWellKnownGeogCS('WGS84')
+
+    assert utm_srs.GetUTMZone() == -11
+
+    utm_srs.PromoteTo3D()
+
+    assert utm_srs.GetUTMZone() == -11
+
+
+###############################################################################
+def test_SetPROJAuxDbPaths():
+    # This test use auxiliary database created with proj 6.3.2
+    # (tested up to 8.0.0) and can be sensitive to future
+    # database structure change.
+    #
+    # See PR https://github.com/OSGeo/gdal/pull/3590
+    subprocess.check_call(
+        [sys.executable, 'osr_basic_subprocess.py'],
+        env=os.environ.copy())
+

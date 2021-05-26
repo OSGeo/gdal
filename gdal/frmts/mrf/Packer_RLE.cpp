@@ -1,5 +1,5 @@
 /*
-Copyright 2016-2017 Esri
+Copyright 2016-2021 Esri
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -24,8 +24,8 @@ Contributors:  Lucian Plesea
 #include <cstring>
 #include <vector>
 #include <algorithm>
-#include "marfa.h"
 
+#include "marfa.h"
 #include "Packer_RLE.h"
 
 NAMESPACE_MRF_START
@@ -61,11 +61,7 @@ inline static int run_length(const Byte *s, int max_count)
   return max_count;
 }
 
-static void ret_now_debug()
-{
-}
-
-#define RET_NOW do { ret_now_debug(); return static_cast<size_t>(next - reinterpret_cast<Byte *>(obuf)); } while(0)
+#define RET_NOW do { return static_cast<size_t>(next - reinterpret_cast<Byte *>(obuf)); } while(0)
 
 //
 // C compress function, returns compressed size
@@ -211,4 +207,3 @@ int RLEC3Packer::store(storage_manager *src, storage_manager *dst)
 }
 
 NAMESPACE_MRF_END
-

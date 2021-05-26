@@ -30,6 +30,7 @@ def gather_redirects(src_dir):
     fetch('./drivers/raster', output, 'frmt')
     fetch('./drivers/vector', output, 'drv')
 
+    output.update({ 'drv_shape.html' : os.path.join('./drivers/vector', 'shapefile') + '.html' })
     output.update({ 'drv_geopackage.html' : os.path.join('./drivers/vector', 'gpkg') + '.html' })
     output.update({ 'geopackage_aspatial.html' : os.path.join('./drivers/vector', 'geopackage_aspatial') + '.html' })
     output.update({ 'drv_geopackage_raster.html' : os.path.join('./drivers/raster', 'gpkg') + '.html' })

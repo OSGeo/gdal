@@ -84,3 +84,4 @@ Links
 
 -  `MapML specification <https://maps4html.org/MapML/spec>`_
 -  `MapML schemas <https://github.com/Maps4HTML/MapML/tree/gh-pages/schema>`_
+-  :ref:`gdal2tiles` mapml output

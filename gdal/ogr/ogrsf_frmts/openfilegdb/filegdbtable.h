@@ -126,24 +126,27 @@ class FileGDBGeomField: public FileGDBField
 {
         friend class FileGDBTable;
 
-        std::string       osWKT;
-        int               bHasZ;
-        int               bHasM;
-        double            dfXOrigin;
-        double            dfYOrigin;
-        double            dfXYScale;
-        double            dfMOrigin;
-        double            dfMScale;
-        double            dfZOrigin;
-        double            dfZScale;
-        double            dfXYTolerance;
-        double            dfMTolerance;
-        double            dfZTolerance;
-        double            dfXMin;
-        double            dfYMin;
-        double            dfXMax;
-        double            dfYMax;
-        int               bHas3D;
+        std::string       osWKT{};
+        int               bHasZOriginScaleTolerance = 0;
+        int               bHasMOriginScaleTolerance = 0;
+        double            dfXOrigin = 0;
+        double            dfYOrigin = 0;
+        double            dfXYScale = 0;
+        double            dfMOrigin = 0;
+        double            dfMScale = 0;
+        double            dfZOrigin = 0;
+        double            dfZScale = 0;
+        double            dfXYTolerance = 0;
+        double            dfMTolerance = 0;
+        double            dfZTolerance = 0;
+        double            dfXMin = 0;
+        double            dfYMin = 0;
+        double            dfZMin = 0;
+        double            dfMMin = 0;
+        double            dfXMax = 0;
+        double            dfYMax = 0;
+        double            dfZMax = 0;
+        double            dfMMax = 0;
 
     public:
         explicit          FileGDBGeomField(FileGDBTable* poParent);
@@ -153,11 +156,15 @@ class FileGDBGeomField: public FileGDBField
 
         double             GetXMin() const { return dfXMin; }
         double             GetYMin() const { return dfYMin; }
+        double             GetZMin() const { return dfZMin; } // only valid for m_bGeomTypeHasZ
+        double             GetMMin() const { return dfMMin; } // only valid for m_bGeomTypeHasM
         double             GetXMax() const { return dfXMax; }
         double             GetYMax() const { return dfYMax; }
+        double             GetZMax() const { return dfZMax; } // only valid for m_bGeomTypeHasZ
+        double             GetMMax() const { return dfMMax; } // only valid for m_bGeomTypeHasM
 
-        int                HasZ() const { return bHasZ; }
-        int                HasM() const { return bHasM; }
+        int                HasZOriginScaleTolerance() const { return bHasZOriginScaleTolerance; }
+        int                HasMOriginScaleTolerance() const { return bHasMOriginScaleTolerance; }
 
         double             GetXOrigin() const { return dfXOrigin; }
         double             GetYOrigin() const { return dfYOrigin; }
@@ -171,8 +178,6 @@ class FileGDBGeomField: public FileGDBField
         double             GetMOrigin() const { return dfMOrigin; }
         double             GetMScale() const { return dfMScale; }
         double             GetMTolerance() const { return dfMTolerance; }
-
-        int                Has3D() const { return bHas3D; }
 };
 
 /************************************************************************/
@@ -227,6 +232,8 @@ class FileGDBTable
         int                         bHasReadGDBIndexes;
         std::vector<FileGDBIndex*>  apoIndexes;
 
+        int                         m_nHasSpatialIndex = -1;
+
         GUIntBig                    nOffsetFieldDesc;
         GUInt32                     nFieldDescLength;
 
@@ -252,11 +259,15 @@ class FileGDBTable
         /* OGRFieldType                eCurFieldType; */
 
         FileGDBTableGeometryType    eTableGeomType;
+        bool                        m_bGeomTypeHasZ = false;
+        bool                        m_bGeomTypeHasM = false;
         int                         nValidRecordCount;
         int                         nTotalRecordCount;
         int                         iGeomField;
         int                         nCountNullableFields;
         int                         nNullableFieldsSizeInBytes;
+
+        std::vector<double>         m_adfSpatialIndexGridResolution{};
 
         GUInt32                     nBufferMaxSize;
         GByte*                      pabyBuffer;
@@ -284,6 +295,8 @@ class FileGDBTable
 
        const std::string&       GetFilename() const { return osFilename; }
        FileGDBTableGeometryType GetGeometryType() const { return eTableGeomType; }
+       bool                     GetGeomTypeHasZ() const { return m_bGeomTypeHasZ; }
+       bool                     GetGeomTypeHasM() const { return m_bGeomTypeHasM; }
        int                      GetValidRecordCount() const { return nValidRecordCount; }
        int                      GetTotalRecordCount() const { return nTotalRecordCount; }
        int                      GetFieldCount() const { return (int)apoFields.size(); }
@@ -298,6 +311,7 @@ class FileGDBTable
 
        int                      GetIndexCount();
        const FileGDBIndex*      GetIndex(int i) const { return apoIndexes[i]; }
+       bool                     HasSpatialIndex();
 
        vsi_l_offset             GetOffsetInTableForRow(int iRow);
 
@@ -309,11 +323,12 @@ class FileGDBTable
        int                      HasGotError() const { return bError; }
        int                      GetCurRow() const { return nCurRow; }
        int                      IsCurRowDeleted() const { return bIsDeleted; }
-       const OGRField*          GetFieldValue(int iCol);
+       OGRField*                GetFieldValue(int iCol);
 
        int                      GetFeatureExtent(const OGRField* psGeomField,
                                                  OGREnvelope* psOutFeatureEnvelope);
 
+       const std::vector<double>& GetSpatialIndexGridResolution() const { return m_adfSpatialIndexGridResolution; }
        void                     InstallFilterEnvelope(const OGREnvelope* psFilterEnvelope);
        int                      DoesGeometryIntersectsFilterEnvelope(const OGRField* psGeomField);
 };
@@ -367,10 +382,24 @@ class FileGDBIterator
                                                     int bAscending);
         static FileGDBIterator*      BuildNot(FileGDBIterator* poIterBase);
         static FileGDBIterator*      BuildAnd(FileGDBIterator* poIter1,
-                                              FileGDBIterator* poIter2);
+                                              FileGDBIterator* poIter2,
+                                              bool bTakeOwnershipOfIterators);
         static FileGDBIterator*      BuildOr(FileGDBIterator* poIter1,
                                              FileGDBIterator* poIter2,
                                              int bIteratorAreExclusive = FALSE);
+};
+
+/************************************************************************/
+/*                      FileGDBSpatialIndexIterator                     */
+/************************************************************************/
+
+class FileGDBSpatialIndexIterator: virtual public FileGDBIterator
+{
+    public:
+        virtual bool                 SetEnvelope(const OGREnvelope& sFilterEnvelope) = 0;
+
+        static FileGDBSpatialIndexIterator* Build(FileGDBTable* poParent,
+                                                  const OGREnvelope& sFilterEnvelope);
 };
 
 /************************************************************************/

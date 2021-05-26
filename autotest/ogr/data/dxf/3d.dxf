@@ -1053,6 +1053,36 @@ outerblk
 230
 -1.0
   0
+INSERT
+  5
+CC6
+330
+1F
+100
+AcDbEntity
+  8
+0
+ 62
+   255
+100
+AcDbBlockReference
+  2
+innerblk
+ 10
+-100.0
+ 20
+300.0
+ 30
+200.0
+ 50
+90.0
+210
+0.0
+220
+1.0
+230
+0.0
+  0
 ENDSEC
   0
 SECTION

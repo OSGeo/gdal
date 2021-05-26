@@ -262,6 +262,7 @@ class OGRSQLiteLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpatial
     int                 bIsVirtualShape;
 
     void                BuildFeatureDefn( const char *pszLayerName,
+                                          bool bIsSelect,
                                           sqlite3_stmt *hStmt,
                                           const std::set<CPLString>* paosGeomCols,
                                           const std::set<CPLString>& aosIgnoredCols);
@@ -740,13 +741,15 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
 
     virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName ) = 0;
 
+    virtual OGRErr     AbortSQL() override;
+
     virtual OGRErr      StartTransaction(int bForce = FALSE) override;
     virtual OGRErr      CommitTransaction() override;
     virtual OGRErr      RollbackTransaction() override;
 
     virtual int         TestCapability( const char * ) override;
 
-    virtual void *GetInternalHandle( const char * ) override;
+    virtual void        *GetInternalHandle( const char * ) override;
 
     OGRErr              SoftStartTransaction();
     OGRErr              SoftCommitTransaction();
@@ -767,8 +770,6 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
-
-    char              **papszOpenOptions;
 
     void                AddSRIDToCache(int nId, OGRSpatialReference * poSRS );
 

@@ -14,7 +14,7 @@ reading and writing. Each model of the file is represented by a OGR
 layer.
 
 This driver requires to be built against the (non open source) Open
-Design Alliance Teiga library.
+Design Alliance Teigha library.
 
 DGN files are considered to have no georeferencing information through
 OGR. Features will all have the following generic attributes:
@@ -25,6 +25,7 @@ OGR. Features will all have the following generic attributes:
 -  ColorIndex: The color index from the dgn palette.
 -  Weight: The drawing weight (thickness) for the element.
 -  Style: The style value for the element.
+-  ULink: User data linkage (multiple user data linkages may exist for each element).
 
 Driver capabilities
 -------------------
@@ -52,12 +53,23 @@ The following element types are supported in reading:
 -  Arc (16): Approximated as a line geometry or a circular string.
 -  Text (17): Treated as a point geometry.
 -  B-Spline (21): Treated as a line geometry.
--  PointString (22): Treatead as multi point.
+-  PointString (22): Treated as multi point.
 -  Shared cell reference (35): Treated as point.
 
 Generally speaking any concept of complex objects, and cells as
 associated components is lost. Each component of a complex object or
 cell is treated as a independent feature.
+
+User data linkage
+-----------------
+
+A DGN element may have multiple user data linkages. Each linkage has 
+a user id, application id and a number of words of data. The user 
+data linkage output reports the data for each different application id.
+
+For unknown application ids, the raw data is reported as hexadecimal 
+words (16bit). Is up to the user how to decode the user data, depending 
+on the application id.
 
 Styling Information
 -------------------
@@ -148,6 +160,17 @@ The layer creation supports the following options:
    not specified, from the seed file.
 -  **DIM=**\ *2/3*: Dimension (ie 2D vs 3D) of the layer. By default, 3,
    unless the model is reused from the seed file.
+
+
+Building
+--------
+
+See :ref:`ODA platform support <vector.oda>` for building GDAL with ODA support.
+
+.. toctree::
+   :hidden:
+
+   oda
 
 --------------
 

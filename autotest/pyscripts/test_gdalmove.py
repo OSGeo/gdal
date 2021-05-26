@@ -46,7 +46,7 @@ def test_gdalmove_1():
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdalmove_1.tif')
+    shutil.copy(test_py_scripts.get_data_path('gcore') + 'byte.tif', 'tmp/test_gdalmove_1.tif')
 
     test_py_scripts.run_py_script(script_path, 'gdalmove', '-s_srs "+proj=utm +zone=11 +ellps=clrk66 +towgs84=0,0,0 +no_defs" -t_srs EPSG:32611 tmp/test_gdalmove_1.tif -et 1')
 
@@ -71,8 +71,4 @@ def test_gdalmove_cleanup():
             os.remove(filename)
         except OSError:
             pass
-
-    
-
-
 

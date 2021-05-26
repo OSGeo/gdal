@@ -90,7 +90,7 @@ void RegisterOGRGRASS()
     poDriver->SetDescription( "GRASS" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS Vectors (5.7+)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_grass.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/grass.html" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

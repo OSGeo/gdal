@@ -1,7 +1,7 @@
 .. _gdal_polygonize:
 
 ================================================================================
-gdal_polygonize
+gdal_polygonize.py
 ================================================================================
 
 .. only:: html
@@ -31,7 +31,7 @@ exist, defaulting to GML format.
 The utility is based on the ::cpp:func:`GDALPolygonize` function which has additional
 details on the algorithm.
 
-.. program:: gdaladdo
+.. program:: gdal_polygonize
 
 .. option:: -8
 

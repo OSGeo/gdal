@@ -428,7 +428,6 @@ OGRSQLiteDataSource::OGRSQLiteDataSource() :
     nKnownSRID(0),
     panSRID(nullptr),
     papoSRS(nullptr),
-    papszOpenOptions(nullptr),
     bHaveGeometryColumns(FALSE),
     bIsSpatiaLiteDB(FALSE),
     bSpatialite4Layout(FALSE),
@@ -511,7 +510,6 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
-    CSLDestroy( papszOpenOptions );
 }
 
 /************************************************************************/
@@ -631,7 +629,7 @@ bool OGRSQLiteBaseDataSource::SetCacheSize()
     const char* pszSqliteCacheMB = CPLGetConfigOption("OGR_SQLITE_CACHE", nullptr);
     if (pszSqliteCacheMB != nullptr)
     {
-        const GIntBig iSqliteCacheBytes = 
+        const GIntBig iSqliteCacheBytes =
             static_cast<GIntBig>(atoi( pszSqliteCacheMB )) * 1024 * 1024;
 
         /* querying the current PageSize */
@@ -943,6 +941,7 @@ void *OGRSQLiteBaseDataSource::GetInternalHandle( const char * pszKey )
         return hDB;
     return nullptr;
 }
+
 
 /************************************************************************/
 /*                               Create()                               */
@@ -1425,7 +1424,7 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                 if( STARTS_WITH(pszLine, "--") )
                     continue;
 
-                // Blacklist a few words tat might have security implications
+                // Reject a few words tat might have security implications
                 // Basically we just want to allow CREATE TABLE and INSERT INTO
                 if( CPLString(pszLine).ifind("ATTACH") != std::string::npos ||
                     CPLString(pszLine).ifind("DETACH") != std::string::npos ||
@@ -1537,6 +1536,13 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
         return OpenRasterSubDataset( pszNewName );
     }
 #endif
+
+    const char* pszPreludeStatements = CSLFetchNameValue(papszOpenOptions, "PRELUDE_STATEMENTS");
+    if( pszPreludeStatements )
+    {
+        if( SQLCommand(hDB, pszPreludeStatements) != OGRERR_NONE )
+            return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we have a GEOMETRY_COLUMNS tables, initialize on the basis   */
@@ -3773,4 +3779,14 @@ void OGRSQLiteBaseDataSource::SetEnvelopeForSQL(const CPLString& osSQL,
                                             const OGREnvelope& oEnvelope)
 {
     oMapSQLEnvelope[osSQL] = oEnvelope;
+}
+
+/************************************************************************/
+/*                         AbortSQL()                                   */
+/************************************************************************/
+
+OGRErr OGRSQLiteBaseDataSource::AbortSQL()
+{
+    sqlite3_interrupt( hDB );
+    return OGRERR_NONE;
 }

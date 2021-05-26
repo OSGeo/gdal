@@ -354,7 +354,6 @@ public:
     return GDALGetProjectionRef( self );
   }
 
-#ifndef SWIGCSHARP
   %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
     OGRSpatialReferenceH ref = GDALGetSpatialRef(self);
@@ -362,7 +361,6 @@ public:
        ref = OSRClone( ref );
     return (OSRSpatialReferenceShadow*) ref;
   }
-#endif
 
   %apply Pointer NONNULL {char const *prj};
   CPLErr SetProjection( char const *prj ) {
@@ -370,12 +368,10 @@ public:
   }
   %clear char const *prj;
 
-#ifndef SWIGCSHARP
-  void SetSpatialRef(OSRSpatialReferenceShadow* srs)
+  CPLErr SetSpatialRef(OSRSpatialReferenceShadow* srs)
   {
-     GDALSetSpatialRef( self, (OGRSpatialReferenceH)srs );
+     return GDALSetSpatialRef( self, (OGRSpatialReferenceH)srs );
   }
-#endif
 
 #ifdef SWIGPYTHON
 %feature("kwargs") GetGeoTransform;
@@ -517,7 +513,11 @@ public:
 %apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
 %apply (GIntBig *optional_GIntBig) { (GIntBig*) };
 %apply (int *optional_int) { (int*) };
+#if defined(SWIGPYTHON)
+%apply (GDALDataType *optional_GDALDataType) { (GDALDataType *buf_type) };
+#else
 %apply (int *optional_int) { (GDALDataType *buf_type) };
+#endif
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
                       GIntBig buf_len, char *buf_string,
@@ -979,6 +979,11 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL) */
 
+
+OGRErr AbortSQL() {
+    return GDALDatasetAbortSQL(self);
+}
+
 #ifndef SWIGJAVA
   %feature( "kwargs" ) StartTransaction;
 #endif
@@ -996,6 +1001,25 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   {
     return GDALDatasetRollbackTransaction(self);
   }
+
+  void ClearStatistics()
+  {
+      GDALDatasetClearStatistics(self);
+  }
+
+  %apply Pointer NONNULL {const char* name};
+  OGRFieldDomainShadow* GetFieldDomain(const char* name)
+  {
+    return (OGRFieldDomainShadow*) GDALDatasetGetFieldDomain(self, name);
+  }
+  %clear const char* name;
+
+  %apply Pointer NONNULL {OGRFieldDomainShadow* fieldDomain};
+  bool AddFieldDomain(OGRFieldDomainShadow* fieldDomain)
+  {
+      return GDALDatasetAddFieldDomain(self, (OGRFieldDomainH)fieldDomain, NULL);
+  }
+  %clear OGRFieldDomainShadow* fieldDomain;
 
 } /* extend */
 }; /* GDALDatasetShadow */

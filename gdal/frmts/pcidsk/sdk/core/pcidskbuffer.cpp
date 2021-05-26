@@ -2,10 +2,10 @@
  *
  * Purpose:  Implementation of the PCIDSKBuffer class.  This class is for
  *           convenient parsing and formatting of PCIDSK ASCII headers.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -195,16 +195,8 @@ double PCIDSKBuffer::GetDouble( int offset, int size ) const
         if( value_str[i] == 'D' )
             value_str[i] = 'E';
     }
-#ifdef PCIDSK_INTERNAL
-    return CPLAtof(value_str.c_str());
-#else
-    std::stringstream oStream;
-    oStream << value_str;
-    double dValue = 0.0;
-    oStream >> dValue;
 
-    return dValue;
-#endif
+    return CPLAtof(value_str.c_str());
 }
 
 /************************************************************************/
@@ -243,6 +235,17 @@ void PCIDSKBuffer::PutBin(double value, int offset)
 }
 
 /************************************************************************/
+/*                              PutBin(int16)                           */
+/************************************************************************/
+
+void PCIDSKBuffer::PutBin(int16 value, int offset)
+{
+    const char * pszValue = (const char *) &value;
+
+    memcpy(buffer + offset, pszValue, sizeof(int16));
+}
+
+/************************************************************************/
 /*                             Put(uint64)                              */
 /************************************************************************/
 
@@ -262,7 +265,7 @@ void PCIDSKBuffer::Put( uint64 value, int offset, int size )
 /*                             Put(double)                              */
 /************************************************************************/
 
-void PCIDSKBuffer::Put( double value, int offset, int size, 
+void PCIDSKBuffer::Put( double value, int offset, int size,
                         const char *fmt )
 
 {

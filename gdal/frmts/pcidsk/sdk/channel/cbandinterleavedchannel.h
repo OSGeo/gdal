@@ -2,13 +2,13 @@
  *
  * Purpose:  Declaration of the CBandInterleavedChannel class.
  *
- * This class is used to implement band interleaved channels within a 
+ * This class is used to implement band interleaved channels within a
  * PCIDSK file (which are always packed, and FILE interleaved data from
- * external raw files which may not be packed. 
- * 
+ * external raw files which may not be packed.
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,9 +50,9 @@ namespace PCIDSK
     class CBandInterleavedChannel : public CPCIDSKChannel
     {
     public:
-        CBandInterleavedChannel( PCIDSKBuffer &image_header, 
+        CBandInterleavedChannel( PCIDSKBuffer &image_header,
             uint64 ih_offset,
-            PCIDSKBuffer &file_header, 
+            PCIDSKBuffer &file_header,
             int channelnum,
             CPCIDSKFile *file,
             uint64 image_offset,
@@ -64,11 +64,11 @@ namespace PCIDSK
             int xsize=-1, int ysize=-1 ) override;
         virtual int WriteBlock( int block_index, void *buffer ) override;
 
-        virtual void GetChanInfo( std::string &filename, uint64 &image_offset, 
-                                  uint64 &pixel_offset, uint64 &line_offset, 
+        virtual void GetChanInfo( std::string &filename, uint64 &image_offset,
+                                  uint64 &pixel_offset, uint64 &line_offset,
                                   bool &little_endian ) const override;
-        virtual void SetChanInfo( std::string filename, uint64 image_offset, 
-                                  uint64 pixel_offset, uint64 line_offset, 
+        virtual void SetChanInfo( std::string filename, uint64 image_offset,
+                                  uint64 pixel_offset, uint64 line_offset,
                                   bool little_endian ) override;
 
     private:

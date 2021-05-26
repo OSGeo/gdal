@@ -1,9 +1,9 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,18 +13,16 @@
 GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-OBJ	=	Packer_RLE.obj Tif_band.obj Raw_band.obj PNG_band.obj JPEG_band.obj JPNG_band.obj\
+OBJ	=	Packer_RLE.obj Tif_band.obj PNG_band.obj JPEG_band.obj JPNG_band.obj\
     mrf_band.obj mrf_overview.obj mrf_util.obj marfa_dataset.obj
 
 PLUGIN_DLL =	gdal_mrf.dll
 
-!IF "$(HAVE_LERC)" == "1"
-# If the LERC folder exists, build LERC support
-!IF EXIST(libLERC)
-LIBLERC = libLERC.obj
-EXTRAFLAGS	= -DLERC -IlibLERC -I../../third_party/LercLib $(EXTRAFLAGS)
-OBJ = $(LIBLERC) LERC_Band.obj $(OBJ)
-!ENDIF
+# MRF Lerc support only possible for internal LercLib since it requires Lerc2.h
+!IF "$(HAVE_LERC)" == "internal"
+LERC1 = Lerc1Image.obj
+EXTRAFLAGS	= -DLERC -ILERCV1 -I../../third_party/LercLib $(EXTRAFLAGS)
+OBJ = $(LERC1) LERC_Band.obj $(OBJ)
 !ENDIF
 
 !IFDEF JPEG_EXTERNAL_LIB
@@ -63,9 +61,9 @@ default:	$(OBJ)
 
 $(OBJ): marfa.h
 
-!IFDEF LIBLERC
-$(LIBLERC):
-	cd libLERC
+!IFDEF LERC1
+$(LERC1):
+	cd LERCV1
 	nmake /f makefile.vc
 	cd ..
 !ENDIF
@@ -77,8 +75,8 @@ clean:
 	-del *.lib
 	-del *.manifest
 	-del *.exe
-!IFDEF LIBLERC
-	cd libLERC
+!IFDEF LERC1
+	cd LERCV1
 	nmake /f makefile.vc clean
 	cd ..
 !ENDIF
@@ -86,8 +84,8 @@ clean:
 #
 # Building the MRF as a windows plugin works only then the internal jpeg and png are used
 # It also requires these custom steps:
-# 
-# - building static libraries: 
+#
+# - building static libraries:
 #	../jpeg/jpeglib/libjpeg.lib
 #	Optional ../jpeg/jpeglib12/libjpeg12.lib
 #	../zlib/libz.lib

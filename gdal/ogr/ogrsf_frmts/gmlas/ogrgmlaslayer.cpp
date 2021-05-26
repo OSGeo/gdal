@@ -1461,7 +1461,15 @@ OGRFeatureDefn* OGRGMLASLayer::GetLayerDefn()
             !m_poDS->GetConf().m_oXLinkResolution.m_aoURLSpecificRules.empty() )
         {
             if( m_poReader == nullptr )
+            {
                 InitReader();
+                // Avoid keeping too many file descriptor opened
+                if( m_fpGML != nullptr )
+                    m_poDS->PushUnusedGMLFilePointer(m_fpGML);
+                m_fpGML = nullptr;
+                delete m_poReader;
+                m_poReader = nullptr;
+            }
         }
     }
     return m_poFeatureDefn;

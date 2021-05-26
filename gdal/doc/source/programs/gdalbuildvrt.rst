@@ -20,9 +20,9 @@ Synopsis
                 [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]
                 [-separate] [-b band]* [-sd subdataset]
                 [-allow_projection_difference] [-q]
-                [-optim {[AUTO]/VECTOR/RASTER}]
                 [-addalpha] [-hidenodata]
                 [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
+                [-ignore_srcmaskband]
                 [-a_srs srs_def]
                 [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
                 [-oo NAME=VALUE]*
@@ -120,6 +120,19 @@ changed in later versions.
     is written in the NODATA element of each ComplexSource element. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
 
+.. option:: -ignore_srcmaskband
+
+    .. versionadded:: 3.3
+
+    Starting with GDAL 3.3, if a source has a mask band (internal/external mask
+    band, or alpha band), a <ComplexSource> element is created by default with
+    a <UseMaskBand>true</UseMaskBand> child element, to instruct the VRT driver
+    to use the mask band of the source to mask pixels being composited. This is
+    a generalization of the NODATA element.
+    When specifying the -ignore_srcmaskband option, the mask band of sources will
+    not be taken into account, and in case of overlapping between sources, the
+    last one will override previous ones in areas of overlap.
+
 .. option:: -b <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
@@ -153,15 +166,6 @@ changed in later versions.
     When this option is specified, the utility will accept to make a VRT even if the input datasets have
     not the same projection. Note: this does not mean that they will be reprojected. Their projection will
     just be ignored.
-
-.. option:: -optim {[AUTO]/VECTOR/RASTER}}
-
-    Force the algorithm used (results are identical). The raster mode is used in most cases and optimise
-    read/write operations. The vector mode is useful with a decent amount of input features and optimise
-    the CPU use. That mode have to be used with tiled images to be efficient. The auto mode (the default)
-    will chose the algorithm based on input and output properties.
-
-    .. versionadded:: 2.3
 
 .. option:: -a_srs <srs_def>
 

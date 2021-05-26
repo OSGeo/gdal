@@ -24,16 +24,30 @@ Contributors:  Thomas Maurer
 #ifndef LERC_API_INCLUDE_GUARD
 #define LERC_API_INCLUDE_GUARD
 
+/* To avoid symbol clashes with external libLerc */
+#ifdef GDAL_COMPILATION
+#define LERCDLL_API
+#define lerc_computeCompressedSize           gdal_lerc_computeCompressedSize
+#define lerc_encode                          gdal_lerc_encode
+#define lerc_computeCompressedSizeForVersion gdal_lerc_computeCompressedSizeForVersion
+#define lerc_encodeForVersion                gdal_lerc_encodeForVersion
+#define lerc_getBlobInfo                     gdal_lerc_getBlobInfo
+#define lerc_decode                          gdal_lerc_decode
+#define lerc_decodeToDouble                  gdal_lerc_decodeToDouble
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifndef LERCDLL_API
 #if defined(_MSC_VER)
   #define LERCDLL_API __declspec(dllexport)
 #elif __GNUC__ >= 4
   #define LERCDLL_API __attribute__((visibility("default")))
 #else
   #define LERCDLL_API
+#endif
 #endif
 
 

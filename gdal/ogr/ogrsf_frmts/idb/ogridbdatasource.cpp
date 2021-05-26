@@ -39,10 +39,10 @@ CPL_CVSID("$Id$")
 OGRIDBDataSource::OGRIDBDataSource()
 
 {
-    pszName = NULL;
-    papoLayers = NULL;
+    pszName = nullptr;
+    papoLayers = nullptr;
     nLayers = 0;
-    poConn = 0;
+    poConn = nullptr;
     bDSUpdate = FALSE;
 }
 
@@ -62,7 +62,7 @@ OGRIDBDataSource::~OGRIDBDataSource()
 
     CPLFree( papoLayers );
 
-    if (poConn != NULL && poConn->IsOpen() ) 
+    if (poConn != nullptr && poConn->IsOpen() )
     {
            poConn->Close();
            CPLDebug( "OGR_IDB",
@@ -77,27 +77,27 @@ OGRIDBDataSource::~OGRIDBDataSource()
 /************************************************************************/
 
 int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
-                             int bTestOpen )
+                             int /* bTestOpen */ )
 
 {
-    CPLAssert( poConn == NULL );
+    CPLAssert( poConn == nullptr );
 
 /* -------------------------------------------------------------------- */
 /*  URL: DBI:dbname=.. server=.. user=.. pass=.. table=..               */
 /*  Any of params is optional, table param can repeat more than once    */
 /* -------------------------------------------------------------------- */
-    char * pszDbName    = NULL;
-    char * pszServer    = NULL;
-    char * pszUser      = NULL;
-    char * pszPass      = NULL;
-    char **papszTables  = NULL;
-    char **papszGeomCol = NULL;
+    char * pszDbName    = nullptr;
+    char * pszServer    = nullptr;
+    char * pszUser      = nullptr;
+    char * pszPass      = nullptr;
+    char **papszTables  = nullptr;
+    char **papszGeomCol = nullptr;
 
     char ** papszTokens = CSLTokenizeString2(pszNewName + 4, " ", 0);
-    char * pszToken = 0;
+    char * pszToken = nullptr;
     int i = 0;
 
-    while ( pszToken = papszTokens[i++] )
+    while ( (pszToken = papszTokens[i++]) != nullptr )
     {
         if ( STARTS_WITH_CI(pszToken, "dbname=") )
             pszDbName = CPLStrdup( pszToken + 7 );
@@ -132,7 +132,7 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 
     poConn = new ITConnection( oDbInfo );
 
-    poConn->AddCallback( IDBErrorHandler, 0 );
+    poConn->AddCallback( IDBErrorHandler, nullptr );
 
     if( !poConn->Open() )
     {
@@ -151,7 +151,7 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 /*      If no explicit list of tables was given, check for a list in    */
 /*      a geometry_columns table.                                       */
 /* -------------------------------------------------------------------- */
-    if( papszTables == NULL )
+    if( papszTables == nullptr )
     {
         ITCursor oCurr( *poConn );
 
@@ -159,7 +159,7 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
                           " geometry_type FROM geometry_columns" ) &&
             oCurr.Open(ITCursor::ReadOnly) )
         {
-            ITRow * row = 0;
+            ITRow * row = nullptr;
             while( (row = oCurr.NextRow()) )
             {
                 papszTables =
@@ -175,14 +175,14 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Otherwise our final resort is to return all tables as           */
 /*      non-spatial tables.                                             */
 /* -------------------------------------------------------------------- */
-    if( papszTables == NULL )
+    if( papszTables == nullptr )
     {
         ITCursor oTableList( *poConn );
 
         if ( oTableList.Prepare("select tabname from systables where tabtype='T' and tabid > 99") &&
              oTableList.Open(ITCursor::ReadOnly) )
         {
-            ITRow * row = 0;
+            ITRow * row = nullptr;
             while( (row = oTableList.NextRow()) )
             {
                 papszTables =
@@ -202,10 +202,10 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 /*      (non-spatial).                                                  */
 /* -------------------------------------------------------------------- */
     for( int iTable = 0;
-         papszTables != NULL && papszTables[iTable] != NULL;
+         papszTables != nullptr && papszTables[iTable] != nullptr;
          iTable++ )
     {
-        char * pszGeomCol = NULL;
+        char * pszGeomCol = nullptr;
 
         if( strlen(papszGeomCol[iTable]) > 0 )
             pszGeomCol = papszGeomCol[iTable];
@@ -272,7 +272,7 @@ OGRLayer *OGRIDBDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -303,7 +303,7 @@ OGRLayer * OGRIDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Error execute SQL: %s", pszSQLCommand );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -313,7 +313,7 @@ OGRLayer * OGRIDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         delete poCurr;
         CPLErrorReset();
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -322,7 +322,7 @@ OGRLayer * OGRIDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     OGRIDBSelectLayer* poLayer = new OGRIDBSelectLayer( this, poCurr );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;

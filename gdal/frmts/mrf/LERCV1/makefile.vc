@@ -1,0 +1,20 @@
+GDAL_ROOT	=	..\..\..
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	= Lerc1Image.obj
+
+HEADERS = Lerc1Image.h
+
+LERCV1 = LERCV1.obj
+
+EXTRAFLAGS      = -DLERC
+
+default:    $(LERCV1)
+
+$(OBJ):	$(HEADERS)
+
+$(LERCV1):	$(OBJ)
+        lib /out:..\$(LERCV1) $(OBJ)
+
+clean:
+	-del ..\$(LERCV1) $(OBJ)

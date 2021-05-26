@@ -116,8 +116,12 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
     }
     else if(nApplicationId == GPKG_APPLICATION_ID &&
             // Accept any 102XX version
-            !(nUserVersion >= GPKG_1_2_VERSION &&
-              nUserVersion < GPKG_1_2_VERSION + 99))
+            !((nUserVersion >= GPKG_1_2_VERSION &&
+               nUserVersion < GPKG_1_2_VERSION + 99) ||
+            // Accept any 103XX version
+              (nUserVersion >= GPKG_1_3_VERSION &&
+               nUserVersion < GPKG_1_3_VERSION + 99)
+              ))
     {
 #ifdef DEBUG
         if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
@@ -138,7 +142,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
                             "GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
             if( bWarn )
             {
-                if( nUserVersion > GPKG_1_2_VERSION )
+                if( nUserVersion > GPKG_1_3_VERSION )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                               "This version of GeoPackage "
@@ -166,7 +170,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
             }
             else
             {
-                if( nUserVersion > GPKG_1_2_VERSION )
+                if( nUserVersion > GPKG_1_3_VERSION )
                 {
                     CPLDebug( "GPKG",
                               "This version of GeoPackage "
@@ -314,7 +318,7 @@ class GDALGPKGDriver final: public GDALDriver
 };
 
 #define COMPRESSION_OPTIONS \
-"  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='AUTO'>" \
+"  <Option name='TILE_FORMAT' type='string-select' scope='raster' description='Format to use to create tiles' default='AUTO'>" \
 "    <Value>AUTO</Value>" \
 "    <Value>PNG_JPEG</Value>" \
 "    <Value>PNG</Value>" \
@@ -323,9 +327,9 @@ class GDALGPKGDriver final: public GDALDriver
 "    <Value>WEBP</Value>" \
 "    <Value>TIFF</Value>" \
 "  </Option>" \
-"  <Option name='QUALITY' type='int' min='1' max='100' description='Quality for JPEG and WEBP tiles' default='75'/>" \
-"  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>" \
-"  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>"
+"  <Option name='QUALITY' type='int' min='1' max='100' scope='raster' description='Quality for JPEG and WEBP tiles' default='75'/>" \
+"  <Option name='ZLEVEL' type='int' min='1' max='9' scope='raster' description='DEFLATE compression level for PNG tiles' default='6'/>" \
+"  <Option name='DITHER' type='boolean' scope='raster' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>"
 
 void GDALGPKGDriver::InitializeCreationOptionList()
 {
@@ -335,15 +339,15 @@ void GDALGPKGDriver::InitializeCreationOptionList()
 
     const char* pszCOBegin =
 "<CreationOptionList>"
-"  <Option name='RASTER_TABLE' type='string' description='Name of tile user table'/>"
-"  <Option name='APPEND_SUBDATASET' type='boolean' description='Set to YES to add a new tile user table to an existing GeoPackage instead of replacing it' default='NO'/>"
-"  <Option name='RASTER_IDENTIFIER' type='string' description='Human-readable identifier (e.g. short name)'/>"
-"  <Option name='RASTER_DESCRIPTION' type='string' description='Human-readable description'/>"
-"  <Option name='BLOCKSIZE' type='int' description='Block size in pixels' default='256' max='4096'/>"
-"  <Option name='BLOCKXSIZE' type='int' description='Block width in pixels' default='256' max='4096'/>"
-"  <Option name='BLOCKYSIZE' type='int' description='Block height in pixels' default='256' max='4096'/>"
+"  <Option name='RASTER_TABLE' type='string' scope='raster' description='Name of tile user table'/>"
+"  <Option name='APPEND_SUBDATASET' type='boolean' scope='raster' description='Set to YES to add a new tile user table to an existing GeoPackage instead of replacing it' default='NO'/>"
+"  <Option name='RASTER_IDENTIFIER' type='string' scope='raster' description='Human-readable identifier (e.g. short name)'/>"
+"  <Option name='RASTER_DESCRIPTION' type='string' scope='raster' description='Human-readable description'/>"
+"  <Option name='BLOCKSIZE' type='int' scope='raster' description='Block size in pixels' default='256' max='4096'/>"
+"  <Option name='BLOCKXSIZE' type='int' scope='raster' description='Block width in pixels' default='256' max='4096'/>"
+"  <Option name='BLOCKYSIZE' type='int' scope='raster' description='Block height in pixels' default='256' max='4096'/>"
 COMPRESSION_OPTIONS
-"  <Option name='TILING_SCHEME' type='string' description='Which tiling scheme to use: pre-defined value or custom inline/outline JSON definition' default='CUSTOM'>"
+"  <Option name='TILING_SCHEME' type='string' scope='raster' description='Which tiling scheme to use: pre-defined value or custom inline/outline JSON definition' default='CUSTOM'>"
 "    <Value>CUSTOM</Value>"
 "    <Value>GoogleCRS84Quad</Value>"
 "    <Value>PseudoTMS_GlobalGeodetic</Value>"
@@ -351,12 +355,12 @@ COMPRESSION_OPTIONS
 
             const char* pszCOEnd =
 "  </Option>"
-"  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' description='Strategy to determine zoom level. Only used for TILING_SCHEME != CUSTOM' default='AUTO'>"
+"  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' scope='raster' description='Strategy to determine zoom level. Only used for TILING_SCHEME != CUSTOM' default='AUTO'>"
 "    <Value>AUTO</Value>"
 "    <Value>LOWER</Value>"
 "    <Value>UPPER</Value>"
 "  </Option>"
-"  <Option name='RESAMPLING' type='string-select' description='Resampling algorithm. Only used for TILING_SCHEME != CUSTOM' default='BILINEAR'>"
+"  <Option name='RESAMPLING' type='string-select' scope='raster' description='Resampling algorithm. Only used for TILING_SCHEME != CUSTOM' default='BILINEAR'>"
 "    <Value>NEAREST</Value>"
 "    <Value>BILINEAR</Value>"
 "    <Value>CUBIC</Value>"
@@ -379,6 +383,11 @@ COMPRESSION_OPTIONS
 "     <Value>1.0</Value>"
 "     <Value>1.1</Value>"
 "     <Value>1.2</Value>"
+"     <Value>1.3</Value>"
+"  </Option>"
+"  <Option name='DATETIME_FORMAT' type='string-select' description='How to encode DateTime not in UTC' default='WITH_TZ'>"
+"     <Value>WITH_TZ</Value>"
+"     <Value>UTC</Value>"
 "  </Option>"
 #ifdef ENABLE_GPKG_OGR_CONTENTS
 "  <Option name='ADD_GPKG_OGR_CONTENTS' type='boolean' description='Whether to add a gpkg_ogr_contents table to keep feature count' default='YES'/>"
@@ -421,25 +430,26 @@ void RegisterOGRGeoPackage()
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoPackage" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpkg" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_geopackage.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/geopackage.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 UInt16 Float32" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
-"  <Option name='LIST_ALL_TABLES' type='string-select' description='Whether all tables, including those non listed in gpkg_contents, should be listed' default='AUTO'>"
+"  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including those non listed in gpkg_contents, should be listed' default='AUTO'>"
 "    <Value>AUTO</Value>"
 "    <Value>YES</Value>"
 "    <Value>NO</Value>"
 "  </Option>"
-"  <Option name='TABLE' type='string' description='Name of tile user-table'/>"
-"  <Option name='ZOOM_LEVEL' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
-"  <Option name='BAND_COUNT' type='int' min='1' max='4' description='Number of raster bands' default='4'/>"
-"  <Option name='MINX' type='float' description='Minimum X of area of interest'/>"
-"  <Option name='MINY' type='float' description='Minimum Y of area of interest'/>"
-"  <Option name='MAXX' type='float' description='Maximum X of area of interest'/>"
-"  <Option name='MAXY' type='float' description='Maximum Y of area of interest'/>"
-"  <Option name='USE_TILE_EXTENT' type='boolean' description='Use tile extent of content to determine area of interest' default='NO'/>"
-"  <Option name='WHERE' type='string' description='SQL WHERE clause to be appended to tile requests'/>"
+"  <Option name='TABLE' type='string' scope='raster' description='Name of tile user-table'/>"
+"  <Option name='ZOOM_LEVEL' type='integer' scope='raster' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
+"  <Option name='BAND_COUNT' type='int' min='1' max='4' scope='raster' description='Number of raster bands' default='4'/>"
+"  <Option name='MINX' type='float' scope='raster' description='Minimum X of area of interest'/>"
+"  <Option name='MINY' type='float' scope='raster' description='Minimum Y of area of interest'/>"
+"  <Option name='MAXX' type='float' scope='raster' description='Maximum X of area of interest'/>"
+"  <Option name='MAXY' type='float' scope='raster' description='Maximum Y of area of interest'/>"
+"  <Option name='USE_TILE_EXTENT' type='boolean' scope='raster' description='Use tile extent of content to determine area of interest' default='NO'/>"
+"  <Option name='WHERE' type='string' scope='raster' description='SQL WHERE clause to be appended to tile requests'/>"
 COMPRESSION_OPTIONS
+"  <Option name='PRELUDE_STATEMENTS' type='string' scope='raster,vector' description='SQL statement(s) to send on the SQLite connection before any other ones'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
@@ -455,7 +465,6 @@ COMPRESSION_OPTIONS
 "  <Option name='DESCRIPTION' type='string' description='Description of the layer, as put in the contents table'/>"
 "  <Option name='ASPATIAL_VARIANT' type='string-select' description='How to register non spatial tables' default='GPKG_ATTRIBUTES'>"
 "     <Value>GPKG_ATTRIBUTES</Value>"
-"     <Value>OGR_ASPATIAL</Value>"
 "     <Value>NOT_REGISTERED</Value>"
 "  </Option>"
 "</LayerCreationOptionList>");

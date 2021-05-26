@@ -1,7 +1,7 @@
 .. _gdal2tiles:
 
 ================================================================================
-gdal2tiles
+gdal2tiles.py
 ================================================================================
 
 .. only:: html
@@ -21,7 +21,7 @@ Synopsis
                   [-w webviewer] [-t title] [-c copyright]
                   [--processes=NB_PROCESSES] [--xyz]
                   --tilesize=PIXELS
-                  [-g googlekey] [-b bingkey] input_file [output_dir]
+                  [-g googlekey] [-b bingkey] input_file [output_dir] [COMMON_OPTIONS]
 
 Description
 -----------
@@ -42,15 +42,23 @@ can publish a picture without proper georeferencing too.
 .. note::
 
     Inputs with non-Byte data type (i.e. ``Int16``, ``UInt16``,...) will be clamped to
-    the ``Byte`` data type, causing wrong results. To awoid this it is necessary to
+    the ``Byte`` data type, causing wrong results. To avoid this it is necessary to
     rescale input to the ``Byte`` data type using `gdal_translate` utility.
 
+.. note::
 
-.. program:: gdal_translate
+    Config options of the input drivers may have an effect on the output of gdal2tiles. An example driver config option is GDAL_PDF_DPI, which can be found at :ref:`configoptions`
+
+
+.. program:: gdal2tiles
 
 .. option:: -p <PROFILE>, --profile=<PROFILE>
 
   Tile cutting profile (mercator, geodetic, raster) - default 'mercator' (Google Maps compatible).
+
+  Starting with GDAL 3.2, additional profiles are available from tms_XXXX.json files
+  placed in GDAL data directory (provided all zoom levels use same origin, tile dimensions,
+  and resolution between consecutive zoom levels vary by a factor of two).
 
 .. option:: -r <RESAMPLING>, --resampling=<RESAMPLING>
 
@@ -63,7 +71,6 @@ can publish a picture without proper georeferencing too.
 .. option:: --xyz
 
   Generate XYZ tiles (OSM Slippy Map standard) instead of TMS.
-  Only for mercator profile.
   In the default mode (TMS), tiles at y=0 are the southern-most tiles, whereas
   in XYZ mode (used by OGC WMTS too), tiles at y=0 are the northern-most tiles.
 
@@ -71,7 +78,7 @@ can publish a picture without proper georeferencing too.
 
 .. option:: -z <ZOOM>, --zoom=<ZOOM>
 
-  Zoom levels to render (format:'2-5' or '10').
+  Zoom levels to render (format:'2-5', '10-' or '10').
 
 .. option:: -e, --resume
 
@@ -80,11 +87,15 @@ can publish a picture without proper georeferencing too.
 .. option:: -a <NODATA>, --srcnodata=<NODATA>
 
   Value in the input dataset considered as transparent. If the input dataset
-  had already an associate nodata value, it is overriden by the specified value.
+  had already an associate nodata value, it is overridden by the specified value.
 
 .. option:: -v, --verbose
 
   Generate verbose output of tile generation.
+
+.. option:: -x, --exclude
+
+  Exclude transparent tiles from result tileset.
 
 .. option:: -q, --quiet
 
@@ -138,7 +149,7 @@ Options for generated HTML viewers a la Google Maps
 
 .. option:: -w <WEBVIEWER>, --webviewer=<WEBVIEWER>
 
-  Web viewer to generate (all, google, openlayers, leaflet, none) - default 'all'.
+  Web viewer to generate (all, google, openlayers, leaflet, mapml, none) - default 'all'.
 
 .. option:: -t <TITLE>, --title=<TITLE>
 
@@ -161,6 +172,30 @@ Options for generated HTML viewers a la Google Maps
 
     gdal2tiles.py is a Python script that needs to be run against Python GDAL binding.
 
+MapML options
++++++++++++++
+
+MapML support is new to GDAL 3.2. When --webviewer=mapml is specified,
+--xyz is implied, as well as --tmscompatible if --profile=geodetic.
+
+The following profiles are supported:
+
+- mercator: mapped to OSMTILE MapML tiling scheme
+- geodetic: mapped to WGS84 MapML tiling scheme
+- APSTILE: from the tms_MapML_APSTILE.json data file
+
+The generated MapML file in the output directory is ``mapml.mapl``
+
+Available options are:
+
+.. option:: --mapml-template=<filename>
+
+    Filename of a template mapml file where variables will
+    be substituted. If not specified, the generic
+    template_tiles.mapml file from GDAL data resources
+    will be used
+
+The --url option is also used to substitute ``${URL}`` in the template MapML file.
 
 Examples
 --------
@@ -170,3 +205,10 @@ Basic example:
 .. code-block::
 
   gdal2tiles.py --zoom=2-5 input.tif output_folder
+
+
+MapML generation:
+
+.. code-block::
+
+  gdal2tiles.py --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder

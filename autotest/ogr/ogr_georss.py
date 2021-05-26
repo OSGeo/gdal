@@ -38,8 +38,11 @@ from osgeo import osr
 from osgeo import gdal
 import pytest
 
+pytestmark = pytest.mark.require_driver('GeoRSS')
 
-def test_ogr_georss_init():
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     ds = ogr.Open('data/georss/atom_rfc_sample.xml')
     if ds is None:
@@ -50,7 +53,7 @@ def test_ogr_georss_init():
 
     gdaltest.have_gml_reader = 0
     try:
-        ds = ogr.Open('data/gm/ionic_wfs.gml')
+        ds = ogr.Open('data/gml/ionic_wfs.gml')
         if ds is not None:
             gdaltest.have_gml_reader = 1
             ds = None
@@ -76,6 +79,21 @@ def test_ogr_georss_init():
                                   ('content_type', 'xhtml', ogr.OFTString),
                                   ('content_xml_lang', 'en', ogr.OFTString),
                                   ('content_xml_base', 'http://diveintomark.org/', ogr.OFTString)]
+
+    yield
+
+    list_files = ['tmp/test_rss2.xml', 'tmp/test_atom.xml', 'tmp/test32631.rss', 'tmp/broken.rss', 'tmp/nonstandard.rss']
+    for filename in list_files:
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+
+    files = os.listdir('data')
+    for filename in files:
+        if len(filename) > 13 and filename[-13:] == '.resolved.gml':
+            os.unlink('data/georss/' + filename)
+
 
 ###############################################################################
 # Used by ogr_georss_1 and ogr_georss_1ter
@@ -542,25 +560,3 @@ def test_ogr_georss_15():
 
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/georssinmem')
-
-###############################################################################
-#
-
-
-def test_ogr_georss_cleanup():
-
-    list_files = ['tmp/test_rss2.xml', 'tmp/test_atom.xml', 'tmp/test32631.rss', 'tmp/broken.rss', 'tmp/nonstandard.rss']
-    for filename in list_files:
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
-
-    files = os.listdir('data')
-    for filename in files:
-        if len(filename) > 13 and filename[-13:] == '.resolved.gml':
-            os.unlink('data/georss/' + filename)
-
-    
-
-

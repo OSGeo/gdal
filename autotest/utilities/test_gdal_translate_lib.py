@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import struct
 
 
 from osgeo import gdal
@@ -259,14 +260,23 @@ def test_gdal_translate_lib_12():
 
 def test_gdal_translate_lib_13():
 
-    ds = gdal.Open('../gcore/data/byte.tif')
-    ds = gdal.Translate('tmp/test13.tif', ds, metadataOptions=['TIFFTAG_DOCUMENTNAME=test13'])
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+
+    ds = gdal.Translate('/vsimem/test13.tif', src_ds, metadataOptions=['TIFFTAG_DOCUMENTNAME=test13'])
     assert ds is not None
 
     md = ds.GetMetadata()
     assert 'TIFFTAG_DOCUMENTNAME' in md, 'Did not get TIFFTAG_DOCUMENTNAME'
-
     ds = None
+    gdal.Unlink('/vsimem/test13.tif')
+
+    ds = gdal.Translate('/vsimem/test13.tif', src_ds, metadataOptions='TIFFTAG_DOCUMENTNAME=test13')
+    assert ds is not None
+
+    md = ds.GetMetadata()
+    assert 'TIFFTAG_DOCUMENTNAME' in md, 'Did not get TIFFTAG_DOCUMENTNAME'
+    ds = None
+    gdal.Unlink('/vsimem/test13.tif')
 
 ###############################################################################
 # Test creationOptions
@@ -295,7 +305,7 @@ def test_gdal_translate_lib_100():
 
     # Will create an implicit options structure
     with gdaltest.error_handler():
-        gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress)
+        gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress_nocb)
 
     # Null dest name
     try:
@@ -455,6 +465,61 @@ def test_gdal_translate_lib_110():
 
     ds = None
 
+
+###############################################################################
+# Test noxmp options
+
+
+def test_gdal_translate_lib_111():
+
+    ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
+    new_ds = gdal.Translate('tmp/test111noxmp.tif', ds, options='-noxmp')
+    assert new_ds is not None
+    xmp = new_ds.GetMetadata('xml:XMP')
+    new_ds = None
+    assert xmp is None
+
+    # codepath if some other options are set is different, creating a VRTdataset
+    new_ds = gdal.Translate('tmp/test111notcopied.tif', ds, nogcp='True')
+    assert new_ds is not None
+    new_ds = None
+    new_ds = gdal.Open('tmp/test111notcopied.tif')
+    xmp = new_ds.GetMetadata('xml:XMP')
+    new_ds = None
+    assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong output file without XMP'
+
+    # normal codepath calling CreateCopy directly
+    new_ds = gdal.Translate('tmp/test111.tif', ds)
+    assert new_ds is not None
+    new_ds = None
+    new_ds = gdal.Open('tmp/test111.tif')
+    xmp = new_ds.GetMetadata('xml:XMP')
+    new_ds = None
+    assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong output file without XMP'
+
+    ds = None
+
+
+def test_gdal_translate_lib_112():
+
+    ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
+    new_ds = gdal.Translate('tmp/test112noxmp.tif', ds, options='-of COG -noxmp')
+    assert new_ds is not None
+    xmp = new_ds.GetMetadata('xml:XMP')
+    new_ds = None
+    assert xmp is None
+
+    new_ds = gdal.Translate('tmp/test112.tif', ds, format='COG')
+    assert new_ds is not None
+    new_ds = None
+    new_ds = gdal.Open('tmp/test112.tif')
+    xmp = new_ds.GetMetadata('xml:XMP')
+    new_ds = None
+    assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong output file without XMP'
+
+    ds = None
+
+
 ###############################################################################
 # Test gdal_translate foo.tif foo.tif.ovr
 
@@ -474,6 +539,83 @@ def test_gdal_translate_lib_generate_ovr():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/foo.tif')
 
+
+###############################################################################
+# Test gdal_translate -tr with non-nearest resample
+
+def _get_src_ds_test_gdal_translate_lib_tr_non_nearest():
+
+    src_w = 5
+    src_h = 3
+    src_ds = gdal.GetDriverByName('MEM').Create('', src_w, src_h)
+    src_ds.SetGeoTransform([100, 10, 0, 1000, 0, -10])
+    src_ds.WriteRaster(0, 0, src_w, src_h,
+                       struct.pack('B' * src_w * src_h,
+                                   100, 100, 200, 200, 10,
+                                   100, 100, 200, 200, 20,
+                                   30,  30,  30,  30,  30))
+    return src_ds
+
+def test_gdal_translate_lib_tr_non_nearest_case_1():
+
+    ds = gdal.Translate('',
+                        _get_src_ds_test_gdal_translate_lib_tr_non_nearest(),
+                        resampleAlg = gdal.GRA_Average,
+                        format = 'MEM', xRes = 20, yRes = 20)
+    assert ds.RasterXSize == 3 # case where we round up
+    assert ds.RasterYSize == 2
+    assert struct.unpack('B' * 6, ds.ReadRaster()) == (100, 200, 15,
+                                                       30,  30,  30)
+
+def test_gdal_translate_lib_tr_non_nearest_case_2():
+
+    ds = gdal.Translate('',
+                        _get_src_ds_test_gdal_translate_lib_tr_non_nearest(),
+                        resampleAlg = gdal.GRA_Average,
+                        format = 'MEM', xRes = 40, yRes = 20)
+    assert ds.RasterXSize == 1 # case where we round down
+    assert ds.RasterYSize == 2
+    assert struct.unpack('B' * 2, ds.ReadRaster()) == (150, 30)
+
+
+def test_gdal_translate_lib_tr_non_nearest_case_3():
+
+    ds = gdal.Translate('',
+                        _get_src_ds_test_gdal_translate_lib_tr_non_nearest(),
+                        resampleAlg = gdal.GRA_Average,
+                        format = 'MEM', xRes = 25, yRes = 20)
+    assert ds.RasterXSize == 2 # case where src_w * src_res / dst_res is integer
+    assert ds.RasterYSize == 2
+    assert struct.unpack('B' * 4, ds.ReadRaster()) == (120, 126,
+                                                       30, 30)
+
+
+def test_gdal_translate_lib_tr_non_nearest_oversampling():
+
+    ds = gdal.Translate('',
+                        _get_src_ds_test_gdal_translate_lib_tr_non_nearest(),
+                        resampleAlg = gdal.GRA_Bilinear,
+                        format = 'MEM', xRes = 4, yRes = 10)
+    assert ds.RasterXSize == 13
+    assert ds.RasterYSize == 3
+    assert 0 not in struct.unpack('B' * 13 * 3, ds.ReadRaster())
+
+
+def test_gdal_translate_lib_preserve_block_size():
+
+    src_ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/tmp.tif', 256, 256, 1, options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=64'])
+
+    # VRT created by CreateCopy() of VRT driver
+    ds = gdal.Translate('', src_ds, format = 'VRT')
+    assert ds.GetRasterBand(1).GetBlockSize() == [32, 64]
+
+    # VRT created by GDALTranslate()
+    ds = gdal.Translate('', src_ds, format = 'VRT', metadataOptions=['FOO=BAR'])
+    assert ds.GetRasterBand(1).GetBlockSize() == [32, 64]
+    src_ds = None
+    gdal.Unlink('/vsimem/tmp.tif')
+
 ###############################################################################
 # Cleanup
 
@@ -488,8 +630,4 @@ def test_gdal_translate_lib_cleanup():
             os.remove('tmp/test' + str(i + 1) + '.tif.aux.xml')
         except OSError:
             pass
-
-    
-
-
 

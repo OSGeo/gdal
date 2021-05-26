@@ -871,15 +871,12 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevelIn,
         STARTS_WITH_CI(reinterpret_cast<const char *>(pabyData),
                        "StartWaveletsImage$$"))
     {
-        if (GDALGetDriverByName("EPSILON") == nullptr)
-        {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Rasterlite driver doesn't support WAVELET compressed "
-                     "images if EPSILON driver is not compiled");
+                     "Rasterlite driver no longer support WAVELET compressed "
+                     "images");
             OGR_F_Destroy(hFeat);
             OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
             return FALSE;
-        }
     }
 
     CPLString osMemFileName;
@@ -1483,8 +1480,8 @@ void GDALRegister_Rasterlite()
 "   <Option name='TILED' type='boolean' default='YES' description='Use tiling'/>"
 "   <Option name='BLOCKXSIZE' type='int' default='256' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' default='256' description='Tile Height'/>"
-"   <Option name='DRIVER' type='string' default='GTiff' description='GDAL driver to use for storing tiles' default='GTiff'/>"
-"   <Option name='COMPRESS' type='string' default='(GTiff driver) Compression method' default='NONE'/>"
+"   <Option name='DRIVER' type='string' description='GDAL driver to use for storing tiles' default='GTiff'/>"
+"   <Option name='COMPRESS' type='string' description='(GTiff driver) Compression method' default='NONE'/>"
 "   <Option name='QUALITY' type='int' description='(JPEG-compressed GTiff, JPEG and WEBP drivers) JPEG/WEBP Quality 1-100' default='75'/>"
 "   <Option name='PHOTOMETRIC' type='string-select' description='(GTiff driver) Photometric interpretation'>"
 "       <Value>MINISBLACK</Value>"
@@ -1497,8 +1494,6 @@ void GDALRegister_Rasterlite()
 "       <Value>ICCLAB</Value>"
 "       <Value>ITULAB</Value>"
 "   </Option>"
-"   <Option name='TARGET' type='int' description='(EPSILON driver) target size reduction as a percentage of the original (0-100)' default='96'/>"
-"   <Option name='FILTER' type='string' description='(EPSILON driver) Filter ID' default='daub97lift'/>"
 "</CreationOptionList>" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

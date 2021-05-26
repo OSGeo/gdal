@@ -48,6 +48,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 
 CPL_CVSID("$Id$")
 

@@ -427,6 +427,18 @@ Multidimensional API support
 The netCDF driver supports the :ref:`multidim_raster_data_model` for reading and
 creation operations.
 
+The :cpp:func:`GDALGroup::GetGroupNames` method supports the following options:
+
+- GROUP_BY=SAME_DIMENSION. If set, single-dimensional variables will be exposed
+  as a "virtual" subgroup. This enables the user to get a clearer organization of
+  variables, for example in datasets where variables belonging to different
+  trajectories are indexed by different dimensions but mixed in the same netCDF
+  group.
+
+The :cpp:func:`GDALGroup::OpenGroup` method supports the following options:
+
+- GROUP_BY=SAME_DIMENSION. See above description
+
 The :cpp:func:`GDALGroup::GetMDArrayNames` method supports the following options:
 
 - SHOW_ALL=YES/NO. Defaults to NO. If set to YES, all variables will be listed.
@@ -442,6 +454,27 @@ The :cpp:func:`GDALGroup::GetMDArrayNames` method supports the following options
 - SHOW_TIME=YES/NO. Defaults to YES. If set to NO,
   single-dimensional variables whose ``standard_name`` attribute is "time"
   will not be listed.
+- GROUP_BY=SAME_DIMENSION. If set, single-dimensional variables will not be listed
+
+The :cpp:func:`GDALGroup::CreateMDArray` method supports the following options:
+
+- NC_TYPE=NC_CHAR/NC_BYTE/NC_INT64/NC_UINT64: to overload the netCDF data type
+  normally deduced from the GDAL data type passed to CreateMDArray().
+  NC_CHAR can only be used for strings of a fixed size.
+- BLOCKSIZE=size_dim0,size_dim1,...,size_dimN: to set the netCDF chunk size,
+  as set by nc_def_var_chunking(). There must be exactly as many values as the
+  number of dimensions passed to CreateMDArray()
+- COMPRESS=DEFLATE: to ask for deflate compression
+- ZLEVEL=number: DEFLATE compression level (1-9)
+- CHECKSUM=YES/NO: Whether to turn on Fletcher32 checksums. Checksum generation
+  requires chunking, and if no explicit chunking has been asked with the
+  BLOCKSIZE option, a default one will be used. Defaults to NO.
+- FILTER=filterid,param1,...,paramN: Define a filter (typically a compression
+  method) used for writing. This should be a list of numeric values, separated
+  by commas. The first value is the filter id (list of potential values at
+  https://support.hdfgroup.org/services/contributions.html#filters) and following
+  values are per-filter parameters. More details about netCDF-4 filter support at
+  https://www.unidata.ucar.edu/software/netcdf/docs/md__Users_wfisher_Desktop_docs_netcdf-c_docs_filters.html
 
 Driver building
 ---------------

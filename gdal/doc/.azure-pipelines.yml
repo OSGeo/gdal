@@ -28,6 +28,8 @@ jobs:
           set -e
           python3 --version
           sphinx-build --version
+          # Workaround: docutils 0.17 is incompatible with sphinx_rtd_theme==0.5.2. See https://github.com/readthedocs/sphinx_rtd_theme/issues/1115 . Fixes https://github.com/OSGeo/gdal/issues/3658
+          pip3 install docutils==0.16
         displayName: 'Sphinx version'
       - script: |
           set -e
@@ -63,8 +65,8 @@ jobs:
           cp gdal/doc/build/latex/gdal.pdf gdal-docs
           cp gdal/data/gdalicon.png gdal-docs # For GDAL autotest...
           cd gdal-docs
-          wget https://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
-          wget https://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
+          wget http://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
+          wget http://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
           unzip -q /tmp/javadoc.zip
           tar xzf /tmp/python-doc.tar.gz
           git init

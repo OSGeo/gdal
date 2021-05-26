@@ -33,6 +33,7 @@
 //! @cond Doxygen_Suppress
 
 #include "gdal_priv.h"
+#include <map>
 
 class GDALPamRasterBand;
 
@@ -103,6 +104,17 @@ public:
     CPLString   osAuxFilename{};
 
     int         bHasMetadata = false;
+
+    struct Statistics
+    {
+        bool bApproxStats;
+        double dfMin;
+        double dfMax;
+        double dfMean;
+        double dfStdDev;
+        GUInt64 nValidCount;
+    };
+    std::map<CPLString, Statistics> oMapMDArrayStatistics{};
 };
 //! @endcond
 
@@ -139,6 +151,8 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     CPLErr  TryLoadAux(char **papszSiblingFiles = nullptr);
     CPLErr  TrySaveAux();
+
+    void SerializeMDArrayStatistics(CPLXMLNode* psDSTree);
 
     virtual const char *BuildPamFilename();
 
@@ -180,6 +194,8 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     char **GetFileList(void) override;
 
+    void ClearStatistics() override;
+
 //! @cond Doxygen_Suppress
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
 
@@ -188,6 +204,18 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                             int nListBands, int *panBandList,
                             GDALProgressFunc pfnProgress,
                             void * pProgressData ) override;
+
+    bool GetMDArrayStatistics( const char* pszMDArrayId,
+                               bool *pbApprox,
+                               double *pdfMin, double *pdfMax,
+                               double *pdfMean, double *pdfStdDev,
+                               GUInt64 *pnValidCount );
+
+    void StoreMDArrayStatistics( const char* pszMDArrayId,
+                                 bool bApprox,
+                                 double dfMin, double dfMax,
+                                 double dfMean, double dfStdDev,
+                                 GUInt64 nValidCount );
 
     // "semi private" methods.
     void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }

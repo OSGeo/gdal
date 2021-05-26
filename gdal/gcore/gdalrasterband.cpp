@@ -323,7 +323,7 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If pixel and line spaceing are defaulted assign reasonable      */
+/*      If pixel and line spacing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
@@ -455,7 +455,7 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  * The following code would efficiently compute a histogram of eight bit
  * raster data.  Note that the final block may be partial ... data beyond
  * the edge of the underlying raster band in these edge blocks is of an
- * undermined value.
+ * undetermined value.
  *
 \code{.cpp}
  CPLErr GetHistogram( GDALRasterBand *poBand, GUIntBig *panHistogram )
@@ -2184,7 +2184,7 @@ int CPL_STDCALL GDALHasArbitraryOverviews( GDALRasterBandH hBand )
 int GDALRasterBand::GetOverviewCount()
 
 {
-    if( poDS != nullptr && poDS->oOvManager.IsInitialized() )
+    if( poDS != nullptr && poDS->oOvManager.IsInitialized() && poDS->AreOverviewsEnabled() )
         return poDS->oOvManager.GetOverviewCount( nBand );
 
     return 0;
@@ -2226,7 +2226,7 @@ int CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH hBand )
 GDALRasterBand * GDALRasterBand::GetOverview( int i )
 
 {
-    if( poDS != nullptr && poDS->oOvManager.IsInitialized() )
+    if( poDS != nullptr && poDS->oOvManager.IsInitialized() && poDS->AreOverviewsEnabled() )
         return poDS->oOvManager.GetOverview( nBand, i );
 
     return nullptr;
@@ -2369,7 +2369,7 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
  * from a practical point of view.
  *
  * @param pszResampling one of "NEAREST", "GAUSS", "CUBIC", "AVERAGE", "MODE",
- * "AVERAGE_MAGPHASE" or "NONE" controlling the downsampling method applied.
+ * "AVERAGE_MAGPHASE" "RMS" or "NONE" controlling the downsampling method applied.
  * @param nOverviews number of overviews to build.
  * @param panOverviewList the list of overview decimation factors to build.
  * @param pfnProgress a function to call to report progress, or NULL.
@@ -4866,6 +4866,8 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount
  * Once computed, the statistics will generally be "set" back on the
  * raster band using SetStatistics().
  *
+ * Cached statistics can be cleared with GDALDataset::ClearStatistics().
+ *
  * This method is the same as the C function GDALComputeRasterStatistics().
  *
  * @param bApproxOK If TRUE statistics may be computed based on overviews
@@ -5946,7 +5948,7 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
  *
  * @since GDAL 1.5.0
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  *
  */
 GDALRasterBand *GDALRasterBand::GetMaskBand()
@@ -6211,7 +6213,7 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
  *
  * @return a valid mask band.
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  *
  */
 int GDALRasterBand::GetMaskFlags()
@@ -6290,7 +6292,7 @@ void GDALRasterBand::InvalidateMaskBand()
  *
  * @return CE_None on success or CE_Failure on an error.
  *
- * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see https://gdal.org/development/rfc/rfc15_nodatabitmask.html
  * @see GDALDataset::CreateMaskBand()
  *
  */
@@ -6529,6 +6531,7 @@ void GDALRasterBand::IncDirtyBlocks( int nInc )
 /*                            ReportError()                             */
 /************************************************************************/
 
+#ifndef DOXYGEN_XML
 /**
  * \brief Emits an error related to a raster band.
  *
@@ -6569,6 +6572,7 @@ void GDALRasterBand::ReportError( CPLErr eErrClass, CPLErrorNum err_no,
     }
     va_end(args);
 }
+#endif
 
 /************************************************************************/
 /*                           GetVirtualMemAuto()                        */
@@ -7083,6 +7087,7 @@ class GDALMDArrayFromRasterBand final: public GDALMDArray
     std::vector<GByte> m_pabyNoData{};
     std::shared_ptr<GDALMDArray> m_varX{};
     std::shared_ptr<GDALMDArray> m_varY{};
+    std::string m_osFilename{};
 
     bool ReadWrite(GDALRWFlag eRWFlag,
                     const GUInt64* arrayStartIdx,
@@ -7104,7 +7109,8 @@ protected:
         m_poDS(poDS),
         m_poBand(poBand),
         m_dt(GDALExtendedDataType::Create(poBand->GetRasterDataType())),
-        m_osUnit( poBand->GetUnitType() )
+        m_osUnit( poBand->GetUnitType() ),
+        m_osFilename(poDS->GetDescription())
     {
         m_poDS->Reference();
 
@@ -7219,6 +7225,8 @@ public:
 
     bool IsWritable() const override { return m_poDS->GetAccess() == GA_Update; }
 
+    const std::string& GetFilename() const override { return m_osFilename; }
+
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_dims; }
 
     const GDALExtendedDataType &GetDataType() const override { return m_dt; }
@@ -7228,30 +7236,49 @@ public:
     const void* GetRawNoDataValue() const override
     { return m_pabyNoData.empty() ? nullptr: m_pabyNoData.data(); }
 
-    double GetOffset(bool* pbHasOffset) const override
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override
     {
         int bHasOffset = false;
         double dfRes = m_poBand->GetOffset(&bHasOffset);
         if( pbHasOffset )
             *pbHasOffset = CPL_TO_BOOL(bHasOffset);
+        if( peStorageType )
+            *peStorageType = GDT_Unknown;
         return dfRes;
     }
 
-    double GetScale(bool* pbHasScale) const override
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override
     {
         int bHasScale = false;
         double dfRes = m_poBand->GetScale(&bHasScale);
         if( pbHasScale )
             *pbHasScale = CPL_TO_BOOL(bHasScale);
+        if( peStorageType )
+            *peStorageType = GDT_Unknown;
         return dfRes;
     }
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override
     {
-        auto poSRS = m_poDS->GetSpatialRef();
-        if( !poSRS )
+        auto poSrcSRS = m_poDS->GetSpatialRef();
+        if( !poSrcSRS )
             return nullptr;
-        return std::shared_ptr<OGRSpatialReference>(poSRS->Clone());
+        auto poSRS = std::shared_ptr<OGRSpatialReference>(poSrcSRS->Clone());
+
+        auto axisMapping = poSRS->GetDataAxisToSRSAxisMapping();
+        constexpr int iYDim = 0;
+        constexpr int iXDim = 1;
+        for( auto& m: axisMapping )
+        {
+            if( m == 1 )
+                m = iXDim + 1;
+            else if( m == 2 )
+                m = iYDim + 1;
+            else
+                m = 0;
+        }
+        poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
+        return poSRS;
     }
 
     std::vector<GUInt64> GetBlockSize() const override
@@ -7323,42 +7350,66 @@ bool GDALMDArrayFromRasterBand::ReadWrite(GDALRWFlag eRWFlag,
                                           const GDALExtendedDataType& bufferDataType,
                                           void* pBuffer) const
 {
-    if( bufferDataType.GetClass() != GEDTC_NUMERIC )
-        return false;
+    constexpr size_t iDimX = 1;
+    constexpr size_t iDimY = 0;
+    return GDALMDRasterIOFromBand(m_poBand, eRWFlag,
+                                  iDimX,
+                                  iDimY,
+                                  arrayStartIdx,
+                                  count,
+                                  arrayStep,
+                                  bufferStride,
+                                  bufferDataType,
+                                  pBuffer);
+}
+
+/************************************************************************/
+/*                       GDALMDRasterIOFromBand()                       */
+/************************************************************************/
+
+bool GDALMDRasterIOFromBand(GDALRasterBand* poBand,
+                            GDALRWFlag eRWFlag,
+                            size_t iDimX,
+                            size_t iDimY,
+                            const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            const GInt64* arrayStep,
+                            const GPtrDiff_t* bufferStride,
+                            const GDALExtendedDataType& bufferDataType,
+                            void* pBuffer)
+{
     const auto eDT(bufferDataType.GetNumericDataType());
     const auto nDTSize(GDALGetDataTypeSizeBytes(eDT));
-    constexpr int kX = 1;
-    constexpr int kY = 0;
-    const int nX = arrayStep[kX] > 0  ?
-        static_cast<int>(arrayStartIdx[kX]) :
-        static_cast<int>(arrayStartIdx[kX] - (count[kX]-1) * -arrayStep[kX]);
-    const int nY = arrayStep[kY] > 0  ?
-        static_cast<int>(arrayStartIdx[kY]) :
-        static_cast<int>(arrayStartIdx[kY] - (count[kY]-1) * -arrayStep[kY]);
-    const int nSizeX = static_cast<int>(count[kX] * ABS(arrayStep[kX]));
-    const int nSizeY = static_cast<int>(count[kY] * ABS(arrayStep[kY]));
+    const int nX = arrayStep[iDimX] > 0  ?
+        static_cast<int>(arrayStartIdx[iDimX]) :
+        static_cast<int>(arrayStartIdx[iDimX] - (count[iDimX]-1) * -arrayStep[iDimX]);
+    const int nY = arrayStep[iDimY] > 0  ?
+        static_cast<int>(arrayStartIdx[iDimY]) :
+        static_cast<int>(arrayStartIdx[iDimY] - (count[iDimY]-1) * -arrayStep[iDimY]);
+    const int nSizeX = static_cast<int>(count[iDimX] * ABS(arrayStep[iDimX]));
+    const int nSizeY = static_cast<int>(count[iDimY] * ABS(arrayStep[iDimY]));
     GByte* pabyBuffer = static_cast<GByte*>(pBuffer);
     int nStrideXSign = 1;
-    if( arrayStep[kX] < 0 )
+    if( arrayStep[iDimX] < 0 )
     {
-        pabyBuffer += (count[kX]-1) * bufferStride[kX] * nDTSize;
+        pabyBuffer += (count[iDimX]-1) * bufferStride[iDimX] * nDTSize;
         nStrideXSign = -1;
     }
     int nStrideYSign = 1;
-    if( arrayStep[kY] < 0 )
+    if( arrayStep[iDimY] < 0 )
     {
-        pabyBuffer += (count[kY]-1) * bufferStride[kY] * nDTSize;
+        pabyBuffer += (count[iDimY]-1) * bufferStride[iDimY] * nDTSize;
         nStrideYSign = -1;
     }
 
-    return m_poBand->RasterIO(eRWFlag,
+    return poBand->RasterIO(eRWFlag,
             nX, nY, nSizeX, nSizeY,
             pabyBuffer,
-            static_cast<int>(count[kX]),
-            static_cast<int>(count[kY]),
+            static_cast<int>(count[iDimX]),
+            static_cast<int>(count[iDimY]),
             eDT,
-            static_cast<GSpacing>(nStrideXSign * bufferStride[kX] * nDTSize),
-            static_cast<GSpacing>(nStrideYSign * bufferStride[kY] * nDTSize),
+            static_cast<GSpacing>(nStrideXSign * bufferStride[iDimX] * nDTSize),
+            static_cast<GSpacing>(nStrideYSign * bufferStride[iDimY] * nDTSize),
             nullptr) == CE_None;
 }
 

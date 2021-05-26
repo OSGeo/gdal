@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Support for reading and manipulating PCIDSK Toutin Segments
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
  ****************************************************************************/
 #ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
 #define INCLUDE_PCIDSK_SEGMENT_PCIDSKTOUTINMODEL_H
- 
+
 #include "pcidsk_toutin.h"
 #include "segment/cpcidsksegment.h"
 #include "segment/cpcidskephemerissegment.h"
@@ -47,7 +47,7 @@ namespace PCIDSK {
         //synchronize the segment on disk.
         void Synchronize() override;
     private:
-        
+
         // Helper housekeeping functions
         void Load();
         void Write();

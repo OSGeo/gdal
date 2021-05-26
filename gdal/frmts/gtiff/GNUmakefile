@@ -14,10 +14,11 @@ TIFF_OPTS	:=	-DINTERNAL_LIBTIFF -Ilibtiff $(TIFF_OPTS)
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
 TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBTIFF_SYMBOLS $(TIFF_OPTS)
 endif
-ifeq ($(HAVE_LERC),yes)
-OBJ := $(OBJ) tif_lerc.o
-TIFF_OPTS	:=	-DHAVE_LERC -I../../third_party/LercLib $(TIFF_OPTS)
+
+ifeq ($(LIBDEFLATE_SETTING),yes)
+TIFF_OPTS 	:=	$(TIFF_OPTS) -DLIBDEFLATE_SUPPORT
 endif
+
 endif
 
 ifeq ($(GEOTIFF_SETTING),internal)
@@ -26,33 +27,17 @@ TIFF_OPTS	:=	-DINTERNAL_LIBGEOTIFF -Ilibgeotiff $(TIFF_OPTS)
 ifeq ($(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS),yes)
 TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS $(TIFF_OPTS)
 endif
-ifeq ($(LIBZ_SETTING),internal)
-TIFF_OPTS :=      -I../zlib  $(TIFF_OPTS)
 endif
-
-endif
-
-JPEG_FLAGS =
 
 ifneq ($(JPEG_SETTING),no)
-JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg -DHAVE_LIBJPEG
+TIFF_OPTS 	:=	$(TIFF_OPTS) -I../jpeg -DHAVE_LIBJPEG
 endif
 
 ifeq ($(JPEG_SETTING),internal)
-JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg/libjpeg
+TIFF_OPTS 	:=	$(TIFF_OPTS) -I../jpeg/libjpeg
 endif
 
-ZSTD_FLAGS =
-ifeq ($(ZSTD_SETTING),yes)
-ZSTD_FLAGS 	:=	-DZSTD_SUPPORT
-endif
-
-WEBP_FLAGS =
-ifeq ($(WEBP_SETTING),yes)
-WEBP_FLAGS 	:=	-DWEBP_SUPPORT
-endif
-
-CPPFLAGS	:=	 -I.. $(JPEG_FLAGS) $(ZSTD_FLAGS) $(WEBP_FLAGS) $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
+CPPFLAGS	:=	 -I.. $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
 # issue with $(WARN_OLD_STYLE_CAST) with x86_64-w64-mingw32-g++. See https://travis-ci.org/OSGeo/gdal/jobs/375654138
@@ -84,3 +69,8 @@ lib-geotiff:
 	(cd libgeotiff; $(MAKE) install-obj)
 
 install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
+
+generate_quant_table_md5sum: generate_quant_table_md5sum.cpp
+	$(CXX) -O2 -g -Wall generate_quant_table_md5sum.cpp -o generate_quant_table_md5sum -I../../port -I../../gcore -I../../ogr -L../../ -lgdal
+	./generate_quant_table_md5sum > quant_table_md5sum.h
+	$(RM) -f generate_quant_table_md5sum

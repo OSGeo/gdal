@@ -2,10 +2,10 @@
  *
  * Purpose:  Declaration of the PCIDSKException class. All exceptions thrown
  *           by the PCIDSK library will be of this type.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,11 +40,11 @@ namespace PCIDSK
 /*                              Exception                               */
 /************************************************************************/
 
-    class PCIDSKException : public std::exception
+    class PCIDSK_DLL PCIDSKException : public std::exception
     {
         friend void PCIDSK_DLL ThrowPCIDSKException( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
         friend int PCIDSK_DLL ThrowPCIDSKException( int ret_unused, const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
-        friend void* PCIDSK_DLL ThrowPCIDSKExceptionPtr( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
+        friend void PCIDSK_DLL * ThrowPCIDSKExceptionPtr( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
         PCIDSKException() {}
     public:
         PCIDSKException(const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
@@ -58,7 +58,7 @@ namespace PCIDSK
 
     void PCIDSK_DLL ThrowPCIDSKException( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
     int PCIDSK_DLL ThrowPCIDSKException( int ret_unused, const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
-    void* PCIDSK_DLL ThrowPCIDSKExceptionPtr( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
+    void PCIDSK_DLL * ThrowPCIDSKExceptionPtr( const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(1,2);
 
 } // end namespace PCIDSK
 

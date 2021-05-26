@@ -426,8 +426,8 @@ GMLASReader::~GMLASReader()
     for( size_t i = 0; i < m_aoStackContext.size(); i++ )
     {
         if( i == 0 ||
-            (i > 0 && m_aoStackContext[i].m_poFeature !=
-                                        m_aoStackContext[i-1].m_poFeature) )
+            m_aoStackContext[i].m_poFeature !=
+                                        m_aoStackContext[i-1].m_poFeature )
         {
             CPLDebug("GMLAS",
                      "Delete feature m_aoStackContext[%d].m_poFeature=%p",

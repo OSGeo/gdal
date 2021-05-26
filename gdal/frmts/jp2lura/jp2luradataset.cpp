@@ -229,7 +229,7 @@ JP2LuraDataset::~JP2LuraDataset()
 /*                            Identify()                                */
 /************************************************************************/
 
-constexpr unsigned char jpc_header[] = {0xff,0x4f};
+constexpr unsigned char jpc_header[] = {0xff,0x4f,0xff,0x51}; // SOC + RSIZ markers
 constexpr unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
 int JP2LuraDataset::Identify( GDALOpenInfo * poOpenInfo )
@@ -2572,7 +2572,7 @@ void GDALRegister_JP2Lura()
 "       <Value>Accurate</Value>"
 "   </Option>"
 "   <Option name='RATE' type='int' description='"
-        "When specifyig this value, the target compressed file size will be "
+        "When specifying this value, the target compressed file size will be "
         "the uncompressed file size divided by RATE. In general the "
         "achieved rate will be exactly the requested size or a few bytes "
         "lower. Will force use of irreversible wavelet. "

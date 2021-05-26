@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Primary public include file for PCIDSK SDK.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #ifndef INCLUDE_PCIDSKSEGMENT_H
 #define INCLUDE_PCIDSKSEGMENT_H
 
@@ -41,14 +41,15 @@ namespace PCIDSK
 
 //! Public interface for the PCIDSK Segment Type
 
-    class PCIDSKSegment 
+    class PCIDSKSegment
     {
     public:
         virtual ~PCIDSKSegment() {}
 
         virtual void Initialize() {}
 
-        virtual bool GetUpdatable() const = 0;
+        virtual void LoadSegmentPointer( const char *segment_pointer ) = 0;
+
         virtual void WriteToFile( const void *buffer, uint64 offset, uint64 size)=0;
         virtual void ReadFromFile( void *buffer, uint64 offset, uint64 size ) = 0;
 
@@ -58,14 +59,16 @@ namespace PCIDSK
         virtual int         GetSegmentNumber() = 0;
         virtual bool        IsContentSizeValid() const = 0;
         virtual uint64      GetContentSize() = 0;
+        virtual uint64      GetContentOffset() = 0;
         virtual bool        IsAtEOF() = 0;
+        virtual bool        CanExtend(uint64 size) const = 0;
 
         virtual void        SetDescription( const std::string &description) = 0;
 
         virtual std::string GetMetadataValue( const std::string &key ) const = 0;
         virtual void SetMetadataValue( const std::string &key, const std::string &value ) = 0;
         virtual std::vector<std::string> GetMetadataKeys() const = 0;
-        
+
         virtual std::vector<std::string> GetHistoryEntries() const = 0;
         virtual void SetHistoryEntries( const std::vector<std::string> &entries ) = 0;
         virtual void PushHistory(const std::string &app,

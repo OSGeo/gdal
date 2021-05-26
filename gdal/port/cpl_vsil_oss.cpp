@@ -32,6 +32,8 @@
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_vsil_curl_class.h"
 
+#include <errno.h>
+
 #include <algorithm>
 #include <set>
 #include <map>
@@ -76,7 +78,7 @@ protected:
         IVSIS3LikeHandleHelper* CreateHandleHelper(
             const char* pszURI, bool bAllowNoObject) override;
 
-        CPLString GetFSPrefix() override { return "/vsioss/"; }
+        CPLString GetFSPrefix() const override { return "/vsioss/"; }
 
         void ClearCache() override;
 
@@ -86,7 +88,8 @@ public:
 
         VSIVirtualHandle *Open( const char *pszFilename,
                                 const char *pszAccess,
-                                bool bSetError ) override;
+                                bool bSetError,
+                                CSLConstList papszOptions ) override;
 
         const char* GetOptions() override;
 
@@ -127,19 +130,24 @@ class VSIOSSHandle final : public IVSIS3LikeHandle
 
 VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError)
+                                        bool bSetError,
+                                        CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        /*if( strchr(pszAccess, '+') != nullptr)
+        if( strchr(pszAccess, '+') != nullptr &&
+            !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "w+ not supported for /vsioss. Only w");
+                        "w+ not supported for /vsioss, unless "
+                        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
+            errno = EACCES;
             return nullptr;
-        }*/
+        }
+
         VSIOSSHandleHelper* poHandleHelper =
             VSIOSSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str(), false);
@@ -147,17 +155,21 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
             return nullptr;
         UpdateHandleFromMap(poHandleHelper);
         VSIS3WriteHandle* poHandle =
-            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, false);
+            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, false, papszOptions);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
-            poHandle = nullptr;
+            return nullptr;
+        }
+        if( strchr(pszAccess, '+') != nullptr)
+        {
+            return VSICreateUploadOnCloseFile(poHandle);
         }
         return poHandle;
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -288,10 +300,7 @@ void VSIOSSFSHandler::UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelp
     CPLMutexHolder oHolder( &hMutex );
 
     VSIOSSHandleHelper * poOSSHandleHelper =
-        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    CPLAssert( poOSSHandleHelper );
-    if( !poOSSHandleHelper )
-        return;
+        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
     oMapBucketsToOSSParams[ poOSSHandleHelper->GetBucket() ] =
         VSIOSSUpdateParams ( poOSSHandleHelper );
 }
@@ -305,10 +314,7 @@ void VSIOSSFSHandler::UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelp
     CPLMutexHolder oHolder( &hMutex );
 
     VSIOSSHandleHelper * poOSSHandleHelper =
-        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    CPLAssert( poOSSHandleHelper );
-    if( !poOSSHandleHelper )
-        return;
+        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
     std::map< CPLString, VSIOSSUpdateParams>::iterator oIter =
         oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
     if( oIter != oMapBucketsToOSSParams.end() )

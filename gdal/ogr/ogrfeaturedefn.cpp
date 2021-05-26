@@ -378,7 +378,7 @@ const OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField ) const
  * from.
  * @param iField the field to fetch, between 0 and GetFieldCount()-1.
  *
- * @return an handle to an internal field definition object or NULL if invalid
+ * @return a handle to an internal field definition object or NULL if invalid
  * index.  This object should not be modified or freed by the application.
  */
 
@@ -730,7 +730,7 @@ const OGRGeomFieldDefn *OGRFeatureDefn::GetGeomFieldDefn( int iGeomField ) const
  * @param iGeomField the geometry field to fetch, between 0 and
  * GetGeomFieldCount() - 1.
  *
- * @return an handle to an internal field definition object or NULL if invalid
+ * @return a handle to an internal field definition object or NULL if invalid
  * index.  This object should not be modified or freed by the application.
  *
  * @since GDAL 1.11

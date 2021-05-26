@@ -30,6 +30,8 @@
 import os
 import sys
 import shutil
+import time
+import threading
 
 import pytest
 
@@ -2007,7 +2009,7 @@ def test_ogr_pg_43():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    ds = ogr.Open('PG:' + gdaltest.pg_connection_string + ' schemas=public,AutoTest-schema', update=1)
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string + " application_name='foo\\\\ \\'bar' schemas = 'public,AutoTest-schema'", update=1)
 
     # tpoly without schema refers to the active schema, that is to say public
     found = ogr_pg_check_layer_in_list(ds, 'tpoly')
@@ -4654,6 +4656,37 @@ def test_ogr_pg_unique():
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
 ###############################################################################
+# Test UUID datatype support
+
+def test_ogr_pg_uuid():
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    lyr = gdaltest.pg_ds.CreateLayer('test_ogr_pg_uuid')
+
+    fd = ogr.FieldDefn('uid', ogr.OFTString)
+    fd.SetSubType(ogr.OFSTUUID)
+
+    assert lyr.CreateField(fd) == 0
+
+    lyr.StartTransaction()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['uid'] = '6f9619ff-8b86-d011-b42d-00c04fc964ff'
+    lyr.CreateFeature(f)
+    lyr.CommitTransaction()
+    
+    test_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=0)
+    lyr = test_ds.GetLayer('test_ogr_pg_uuid')
+    fd = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fd.GetType() == ogr.OFTString
+    assert fd.GetSubType() == ogr.OFSTUUID
+    f = lyr.GetNextFeature()
+
+    assert f.GetField(0) == '6f9619ff-8b86-d011-b42d-00c04fc964ff'
+
+    test_ds.Destroy()
+
+###############################################################################
 #
 
 
@@ -4723,6 +4756,7 @@ def test_ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_86')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_87')
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_json')
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:test_ogr_pg_uuid')
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:AutoTest-schema.tpoly')
@@ -4732,6 +4766,48 @@ def test_ogr_pg_table_cleanup():
     # Drop 'AutoTest-schema' (here, double quotes are required)
     gdaltest.pg_ds.ExecuteSQL('DROP SCHEMA \"AutoTest-schema\" CASCADE')
     gdal.PopErrorHandler()
+
+###############################################################################
+# Test AbortSQL
+
+def test_abort_sql():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    def abortAfterDelay():
+        print("Aborting SQL...")
+        assert gdaltest.pg_ds.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    sql = "SELECT pg_sleep(3)"
+    gdaltest.pg_ds.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1
+
+    # Same test with a GDAL dataset
+    ds2 = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, gdal.OF_VECTOR)
+
+    def abortAfterDelay2():
+        print("Aborting SQL...")
+        assert ds2.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay2)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    ds2.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1
 
 
 def test_ogr_pg_cleanup():

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  PCIDSK library utility functions - private
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,7 @@
 namespace PCIDSK
 {
     class IOInterfaces;
-    
+
     /************************************************************************/
     /*                          Utility functions.                          */
     /************************************************************************/
@@ -54,32 +54,47 @@ namespace PCIDSK
 #define STARTS_WITH_CI(x,y) EQUALN(x,y,strlen(y))
 #define STARTS_WITH(x,y) (std::strncmp(x,y,strlen(y)) == 0)
 #endif
-  
+
     void   SwapData( void* const data, const int size, const int wcount );
     bool   BigEndianSystem(void);
     void   GetCurrentDateTime( char *out_datetime );
 
-    void   ParseTileFormat( std::string full_text, int &block_size, 
-                            std::string &compression );
-    void   SwapPixels(void* const data, 
-                      const eChanType type, 
+    void   ParseTileFormat(std::string oOptions, int & nTileSize,
+                           std::string & oCompress);
+
+    void   SwapPixels(void* const data,
+                      const eChanType type,
                       const std::size_t count);
 
-    std::vector<double> ProjParmsFromText( std::string geosys, 
-                                           std::string parms );
-    std::string         ProjParmsToText( std::vector<double> );
+    std::string         ParseLinkedFilename(std::string oOptions);
 
-    std::string         MergeRelativePath( const PCIDSK::IOInterfaces *,
-                                           std::string base,
-                                           std::string src_filename );
+    std::vector<double> ProjParamsFromText( std::string geosys,
+                                           std::string params );
+    std::string         ProjParamsToText( std::vector<double> );
+
+    std::string         DefaultMergeRelativePath(const PCIDSK::IOInterfaces *,
+                                                 const std::string& base,
+                                                 const std::string& src_filename);
     std::string         ExtractPath( std::string );
-    
+
     void LibJPEG_DecompressBlock(
         uint8 *src_data, int src_bytes, uint8 *dst_data, int dst_bytes,
         int xsize, int ysize, eChanType pixel_type );
     void LibJPEG_CompressBlock(
         uint8 *src_data, int src_bytes, uint8 *dst_data, int &dst_bytes,
         int xsize, int ysize, eChanType pixel_type, int quality );
+
+    void LibKAKADU_DecompressBlock
+        (PCIDSK::eChanType eChanType,
+         uint8 * pabySrcBuffer, int nSrcBufferSize,
+         uint8 * pabyDstBuffer, int nDstBufXSize,
+         int nXSize, int nYSize, int nChanCount);
+    void LibKAKADU_CompressBlock
+        (PCIDSK::eChanType eChanType,
+         uint8 * pabyDstBuffer, int nDstBufferSize,
+         uint8 * pabySrcBuffer, int nSrcBufXSize,
+         int nXSize, int nYSize, int nChanCount,
+         int & nCompressSize, double dfQuality);
 
     void                DefaultDebug( const char * );
     void                Debug( void (*)(const char *), const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);

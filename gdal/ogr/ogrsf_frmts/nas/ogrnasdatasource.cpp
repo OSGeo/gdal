@@ -95,6 +95,7 @@ int OGRNASDataSource::Open( const char * pszNewName )
     pszName = CPLStrdup( pszNewName );
 
     bool bHaveSchema = false;
+    bool bHaveTemplate = false;
     const char *pszGFSFilename;
     VSIStatBufL sGFSStatBuf;
 
@@ -110,6 +111,8 @@ int OGRNASDataSource::Open( const char * pszNewName )
                      pszNASTemplateName );
             return FALSE;
         }
+
+        bHaveTemplate = true;
 
         CPLDebug("NAS", "Schema loaded.");
     }
@@ -159,7 +162,8 @@ int OGRNASDataSource::Open( const char * pszNewName )
 /*      Save the schema file if possible.  Do not make a fuss if we     */
 /*      cannot.  It could be read-only directory or something.          */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && poReader->GetClassCount() > 0 &&
+    if( !bHaveTemplate && !bHaveSchema &&
+        poReader->GetClassCount() > 0 &&
         !STARTS_WITH_CI(pszNewName, "/vsitar/") &&
         !STARTS_WITH_CI(pszNewName, "/vsizip/") &&
         !STARTS_WITH_CI(pszNewName, "/vsigzip/vsi") &&
@@ -381,7 +385,8 @@ void OGRNASDataSource::PopulateRelations()
             const char *pszValue = CPLParseNameValue( papszOBProperties[i],
                                                       &l_pszName );
 
-            if( STARTS_WITH_CI(pszValue, "urn:adv:oid:")
+            if( l_pszName != nullptr && pszValue != nullptr
+                && STARTS_WITH_CI(pszValue, "urn:adv:oid:")
                 && psGMLId != nullptr && psGMLId->nSubProperties == 1 )
             {
                 poRelationLayer->AddRelation( psGMLId->papszSubProperties[0],

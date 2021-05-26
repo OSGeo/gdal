@@ -232,7 +232,7 @@ The following methods are added/modified to the OGRFieldDefn class
     * low-level layers to do the job. So retrieving the feature from the layer is
     * recommended.
     *
-    * The accepted values are NULL, a numeric value, a litteral value enclosed
+    * The accepted values are NULL, a numeric value, a literal value enclosed
     * between single quote characters (and inner single quote characters escaped by
     * repetition of the single quote character),
     * CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or
@@ -269,7 +269,7 @@ The following methods are added/modified to the OGRFieldDefn class
     * \brief Returns whether the default value is driver specific.
     *
     * Driver specific default values are those that are *not* NULL, a numeric value,
-    * a litteral value enclosed between single quote characters, CURRENT_TIMESTAMP,
+    * a literal value enclosed between single quote characters, CURRENT_TIMESTAMP,
     * CURRENT_TIME, CURRENT_DATE or datetime literal value.
     *
     * This method is the same as the C function OGR_Fld_IsDefaultDriverSpecific().
@@ -278,7 +278,7 @@ The following methods are added/modified to the OGRFieldDefn class
     * @since GDAL 2.0
     */
 
-SetDefault() validates that a string litteral beginning with ' is
+SetDefault() validates that a string literal beginning with ' is
 properly escaped.
 
 IsDefaultDriverSpecific() returns TRUE if the value set does not belong
@@ -413,7 +413,7 @@ interfaces.
    and DEFAULT on read, through new attributes "nullable" and "default"
    (driver documentation and data/ogrvrt.xsd updated)
 -  GML: supports NOT NULL (for attribute and multiple geometry field) on
-   creation/read. DEFAULT not trully supported (no way to express it in
+   creation/read. DEFAULT not truly supported (no way to express it in
    .xsd AFAIK), but on creation, unset fields with a NOT NULL constraint
    and DEFAULT values will be filled by using FillUnsetWithDefault() so
    as to generate valid XML.

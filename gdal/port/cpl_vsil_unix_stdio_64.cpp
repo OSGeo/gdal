@@ -156,7 +156,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
     int Unlink( const char *pszFilename ) override;
@@ -612,7 +613,8 @@ VSIUnixStdioFilesystemHandler::~VSIUnixStdioFilesystemHandler()
 VSIVirtualHandle *
 VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
                                      const char *pszAccess,
-                                     bool bSetError )
+                                     bool bSetError,
+                                     CSLConstList /* papszOptions */ )
 
 {
     FILE *fp = VSI_FOPEN64( pszFilename, pszAccess );

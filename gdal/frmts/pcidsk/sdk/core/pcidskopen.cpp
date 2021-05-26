@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the Open() function.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ using namespace PCIDSK;
 /************************************************************************/
 
 /**
- * Open a PCIDSK (.pix) file. 
+ * Open a PCIDSK (.pix) file.
  *
  * This function attempts to open the named file, with the indicated
  * access and the provided set of system interface methods.
@@ -49,9 +49,9 @@ using namespace PCIDSK;
  * @param filename the name of the PCIDSK file to access.
  * @param access either "r" for read-only, or "r+" for read-write access.
  * @param interfaces Either NULL to use default interfaces, or a pointer
- * to a populated interfaces object. 
+ * to a populated interfaces object.
  *
- * @return a pointer to a file object for accessing the PCIDSK file. 
+ * @return a pointer to a file object for accessing the PCIDSK file.
  */
 
 PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
@@ -75,7 +75,7 @@ PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
 
     char header_check[6];
 
-    if( interfaces->io->Read( header_check, 1, 6, io_handle ) != 6 
+    if( interfaces->io->Read( header_check, 1, 6, io_handle ) != 6
         || memcmp(header_check,"PCIDSK",6) != 0 )
     {
         interfaces->io->Close( io_handle );
@@ -88,7 +88,7 @@ PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
 /* -------------------------------------------------------------------- */
 
     CPCIDSKFile *file = new CPCIDSKFile( filename );
-    
+
     file->interfaces = *interfaces;
     file->io_handle = io_handle;
     file->io_mutex = interfaces->CreateMutex();

@@ -1539,8 +1539,9 @@ typedef struct {
     sp->bit = BitsAvail;						\
     sp->data = BitAcc;							\
     sp->EOLcnt = EOLcnt;						\
-    rawcc -= (int)((unsigned char *) cp - rawcp);			\
-    rawcp = (unsigned char *) cp;					\
+    /* below updates not needed in AIG case */                          \
+    /* rawcc -= (int)((unsigned char *) cp - rawcp); */			\
+    /* rawcp = (unsigned char *) cp; */					\
 } while (0)
 
 /*

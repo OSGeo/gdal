@@ -35,6 +35,7 @@ from osgeo import gdal
 import pytest
 
 import gdaltest
+from test_py_scripts import samples_path
 
 ###############################################################################
 # Verify we have the JP2OpenJPEG driver.
@@ -48,7 +49,7 @@ def test_validate_jp2_1():
         pytest.skip()
 
 
-    path = '../../gdal/swig/python/samples'
+    path = samples_path
     if path not in sys.path:
         sys.path.append(path)
 
@@ -81,7 +82,7 @@ def validate(filename, inspire_tg=True, expected_gmljp2=True, oidoc=None):
         except (ImportError, AttributeError):
             ogc_schemas_location = 'disabled'
 
-    path = '../../gdal/swig/python/samples'
+    path = samples_path
     if path not in sys.path:
         sys.path.append(path)
 
@@ -132,7 +133,7 @@ def test_validate_jp2_2():
                        'ERROR[INSPIRE_TG, Conformance class A.8.6]: count(OrthoImageryCoverage.rangeType.field)(=1) != Csiz(=2) ',
                        'ERROR[PROFILE_1, Conformance class A.8.14]: SPcod_xcb_minus_2 = 5, whereas max allowed for Profile 1 is 4']
 
-    if error_report.error_array != expected_errors:
+    if set(error_report.error_array) != set(expected_errors):
         import pprint
         pp = pprint.PrettyPrinter()
         pp.pprint(error_report.error_array)
@@ -147,13 +148,13 @@ def test_validate_jp2_2():
         'WARNING[INSPIRE_TG]: "uuid" box not at expected index',
         'WARNING[INSPIRE_TG, Recommendation 39]: No user-defined precincts 0 defined'
     ]
-    if error_report.warning_array != expected_warnings:
+    if set(error_report.warning_array) != set(expected_warnings):
         import pprint
         pp = pprint.PrettyPrinter()
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    
+
 ###############################################################################
 # Another highly corrupted file
 
@@ -207,7 +208,7 @@ def test_validate_jp2_3():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    
+
 ###############################################################################
 # Another highly corrupted file
 
@@ -248,7 +249,7 @@ def test_validate_jp2_4():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    
+
 ###############################################################################
 # Slightly less corrupted file. Test mainly issues with JP2boxes and color table
 # Also a RGN marker
@@ -293,7 +294,7 @@ def test_validate_jp2_5():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    
+
 ###############################################################################
 # Nominal case with single band data
 
@@ -320,7 +321,7 @@ def test_validate_jp2_6():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    
+
 ###############################################################################
 # Nominal case with RGBA data
 
@@ -347,7 +348,7 @@ def test_validate_jp2_7():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    
+
 ###############################################################################
 # Nominal case with color table data
 
@@ -374,7 +375,7 @@ def test_validate_jp2_8():
         pp.pprint(error_report.warning_array)
         pytest.fail('did not get expected errors')
 
-    
+
 ###############################################################################
 
 
@@ -383,6 +384,6 @@ def test_validate_jp2_cleanup():
     if gdaltest.has_validate_jp2_and_build_jp2:
         gdaltest.reregister_all_jpeg2000_drivers()
 
-    
+
 
 

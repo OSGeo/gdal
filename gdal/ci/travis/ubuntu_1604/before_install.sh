@@ -8,8 +8,8 @@ sudo apt-get update
 sudo apt-get install -y debootstrap libcap2-bin dpkg docker
 
 # MSSQL: server side
-docker pull microsoft/mssql-server-linux:2017-latest
-sudo docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=DummyPassw0rd'  -p 1433:1433 --name sql1 -d microsoft/mssql-server-linux:2017-latest
+docker pull mcr.microsoft.com/mssql/server:2017-latest
+sudo docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=DummyPassw0rd'  -p 1433:1433 --name sql1 -d mcr.microsoft.com/mssql/server:2017-latest
 sleep 10
 docker exec -it sql1 /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U SA -P DummyPassw0rd -Q "CREATE DATABASE TestDB;"
 
@@ -56,8 +56,8 @@ sudo cp FileGDB_API-64gcc51/lib/* "$chroot/usr/lib"
 sudo chroot "$chroot" ldconfig
 
 # PDFium
-wget https://github.com/rouault/pdfium_build_gdal_3_1/releases/download/v1_pdfium_3922/install-ubuntu1604-rev3922.tar.gz
-tar xzf install-ubuntu1604-rev3922.tar.gz
+wget https://github.com/rouault/pdfium_build_gdal_3_2/releases/download/v1_pdfium_4272/install-ubuntu1604-rev4272.tar.gz
+tar xzf install-ubuntu1604-rev4272.tar.gz
 sudo cp -r install/* "$chroot/usr/"
 rm -rf install
 

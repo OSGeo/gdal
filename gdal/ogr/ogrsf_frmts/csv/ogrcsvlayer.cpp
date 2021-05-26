@@ -517,17 +517,22 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
     char **papszFieldTypes = nullptr;
     if( !bNew )
     {
-        char *dname = CPLStrdup(CPLGetDirname(pszFilename));
-        char *fname = CPLStrdup(CPLGetBasename(pszFilename));
-        VSILFILE *fpCSVT =
-            VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
-        CPLFree(dname);
-        CPLFree(fname);
-        if( fpCSVT != nullptr )
+        // Only try to read .csvt from files that have an extension
+        const char* pszExt = CPLGetExtension(pszFilename);
+        if( pszExt[0] )
         {
-            VSIRewindL(fpCSVT);
-            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', false, false);
-            VSIFCloseL(fpCSVT);
+            char *dname = CPLStrdup(CPLGetDirname(pszFilename));
+            char *fname = CPLStrdup(CPLGetBasename(pszFilename));
+            VSILFILE *fpCSVT =
+                VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
+            CPLFree(dname);
+            CPLFree(fname);
+            if( fpCSVT != nullptr )
+            {
+                VSIRewindL(fpCSVT);
+                papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', false, false);
+                VSIFCloseL(fpCSVT);
+            }
         }
     }
 
@@ -2124,6 +2129,8 @@ OGRErr OGRCSVLayer::WriteHeader()
                 poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), -1,
                 m_eStringQuoting == StringQuoting::ALWAYS ?
                     CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
+            if( pszEscaped == nullptr )
+                return OGRERR_FAILURE;
 
             if( fpCSV )
             {
@@ -2445,8 +2452,11 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                             CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
             }
         }
-
-        const int nLen = static_cast<int>(strlen(pszEscaped));
+        if( pszEscaped == nullptr )
+        {
+            return OGRERR_FAILURE;
+        }
+        const size_t nLen = strlen(pszEscaped);
         bNonEmptyLine |= nLen != 0;
         bool bAddDoubleQuote = false;
         if( chDelimiter == ' ' && pszEscaped[0] != '"' &&

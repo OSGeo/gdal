@@ -40,37 +40,30 @@ from osgeo import osr
 from osgeo import gdal
 import pytest
 
+pytestmark = pytest.mark.require_driver('KML')
+
+
 ###############################################################################
-# Test basic open operation for KML datastore.
-#
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-
-def test_ogr_kml_datastore():
-
-    ogrtest.kml_ds = None
-    ogrtest.have_read_kml = 0
-    ogrtest.kml_drv = None
-    ogrtest.libkml_drv = None
-
-    ogrtest.kml_drv = ogr.GetDriverByName('KML')
-    if ogrtest.kml_drv is None:
-        pytest.skip()
-
-    ogrtest.libkml_drv = ogr.GetDriverByName('LIBKML')
+    libkml_drv = ogr.GetDriverByName('LIBKML')
     # Unregister LIBKML driver if present as it's behaviour is not identical
     # to old KML driver
-    if ogrtest.libkml_drv is not None:
+    if libkml_drv is not None:
         print('Unregister LIBKML driver')
-        ogrtest.libkml_drv.Deregister()
+        libkml_drv.Deregister()
 
-    ogrtest.kml_ds = ogr.Open('data/kml/samples.kml')
-    if ogrtest.kml_ds is not None:
-        ogrtest.have_read_kml = 1
+    ogrtest.have_read_kml = ogr.Open('data/kml/samples.kml') is not None
 
-    if not ogrtest.have_read_kml:
-        pytest.skip()
+    yield
 
-    assert ogrtest.kml_ds.GetLayerCount() == 6, 'wrong number of layers'
+    os.remove('tmp/kml.kml')
+
+    # Re-register LIBKML driver if necessary
+    if libkml_drv is not None:
+        print('Re-register LIBKML driver')
+        libkml_drv.Register()
 
 ###############################################################################
 # Test reading attributes for first layer (point).
@@ -82,9 +75,9 @@ def test_ogr_kml_attributes_1():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'kml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
+    lyr = kml_ds.GetLayerByName('Placemarks')
     feat = lyr.GetNextFeature()
 
     assert feat.GetField('Name') == 'Simple placemark', 'Wrong name field value'
@@ -122,9 +115,9 @@ def test_ogr_kml_attributes_2():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'kml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Highlighted Icon')
+    lyr = kml_ds.GetLayerByName('Highlighted Icon')
     feat = lyr.GetNextFeature()
 
     assert feat.GetField('Name') == 'Roll over this icon', 'Wrong name field value'
@@ -144,9 +137,9 @@ def test_ogr_kml_attributes_3():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'kml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Paths')
+    lyr = kml_ds.GetLayerByName('Paths')
     feat = lyr.GetNextFeature()
 
     assert feat.GetField('Name') == 'Tessellated', 'Wrong name field value'
@@ -175,9 +168,9 @@ def test_ogr_kml_attributes_4():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'kml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
+    lyr = kml_ds.GetLayerByName('Google Campus')
     feat = lyr.GetNextFeature()
 
     i = 40
@@ -203,9 +196,9 @@ def test_ogr_kml_point_read():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'kml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
+    lyr = kml_ds.GetLayerByName('Placemarks')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -237,9 +230,9 @@ def test_ogr_kml_linestring_read():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'kml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Paths')
+    lyr = kml_ds.GetLayerByName('Paths')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -268,9 +261,9 @@ def test_ogr_kml_polygon_read():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'kml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
+    lyr = kml_ds.GetLayerByName('Google Campus')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -300,9 +293,6 @@ def test_ogr_kml_polygon_read():
 
 
 def test_ogr_kml_write_1():
-
-    if ogrtest.kml_drv is None:
-        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS72')
@@ -640,26 +630,6 @@ def test_ogr_kml_two_layers():
     return compare_output(content, expected_content)
 
 ###############################################################################
-#  Cleanup
-
-
-def test_ogr_kml_cleanup():
-
-    os.remove('tmp/kml.kml')
-
-    if not ogrtest.have_read_kml:
-        pytest.skip()
-
-    if ogrtest.kml_ds is not None:
-        ogrtest.kml_ds = None
-
-    # Re-register LIBKML driver if necessary
-    if ogrtest.libkml_drv is not None:
-        print('Re-register LIBKML driver')
-        ogrtest.libkml_drv.Register()
-
-    
-###############################################################################
 # Test reading KML with folder with empty subfolder and placemark
 
 
@@ -759,9 +729,4 @@ def test_ogr_kml_read_placemark_in_root_and_subfolder():
     lyr = ds.GetLayerByName('SubFolder1')
     assert lyr is not None
     assert lyr.GetFeatureCount() == 1
-
-###############################################################################
-# Build tests runner
-
-
 

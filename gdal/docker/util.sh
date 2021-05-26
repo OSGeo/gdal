@@ -10,25 +10,31 @@ if test "x${SCRIPT_DIR}" = "x"; then
     exit 1
 fi
 
-if test "x${BASE_IMAGE_NAME}" = "x"; then
-    echo "BASE_IMAGE_NAME not defined"
+if test "x${TARGET_IMAGE}" = "x"; then
+    echo "TARGET_IMAGE not defined"
     exit 1
 fi
 
 usage()
 {
-    echo "Usage: build.sh [--push] [--tag name] [--gdal tag|sha1|master] [--proj tag|sha1|master] [--release]"
+    echo "Usage: build.sh [--push] [--tag name] [--gdal tag|sha1|master] [--gdal-repository repo] [--proj tag|sha1|master] [--release]"
     # Non-documented: --test-python
     echo ""
     echo "--push: push image to Docker hub"
     echo "--tag name: suffix to append to image name. Defaults to 'latest' for non release builds or the GDAL tag name for release builds"
     echo "--gdal tag|sha1|master: GDAL version to use. Defaults to master"
     echo "--proj tag|sha1|master: PROJ version to use. Defaults to master"
-    echo "--release. Whether this is a release build.In which case --gdal tag must be used."
+    echo "--gdal-repository repo: github repository. Defaults to OSGeo/gdal"
+    echo "--release. Whether this is a release build. In which case --gdal tag must be used."
+    echo "--with-debug-symbols/--without-debug-symbols. Whether to include debug symbols. Only applies to ubuntu-full, default is to include for non-release builds."
     exit 1
 }
 
 RELEASE=no
+ARCH_PLATFORMS="linux/amd64"
+
+GDAL_REPOSITORY=OSGeo/gdal
+
 while (( "$#" ));
 do
     case "$1" in
@@ -44,6 +50,18 @@ do
         --gdal)
             shift
             GDAL_VERSION="$1"
+            shift
+        ;;
+
+        --gdal-repository)
+            shift
+            GDAL_REPOSITORY="$1"
+            shift
+        ;;
+
+        --platform)
+            shift
+            ARCH_PLATFORMS="$1"
             shift
         ;;
 
@@ -64,6 +82,22 @@ do
             shift
         ;;
 
+        --with-debug-symbols)
+            WITH_DEBUG_SYMBOLS=yes
+            shift
+        ;;
+
+        --with-multi-arch)
+            DOCKER_BUILDKIT=1
+            DOCKER_CLI_EXPERIMENTAL=enabled
+            shift
+        ;;
+
+        --without-debug-symbols)
+            WITH_DEBUG_SYMBOLS=no
+            shift
+        ;;
+
         --test-python)
             TEST_PYTHON=yes
             shift
@@ -77,6 +111,11 @@ do
 
     esac
 done
+
+if test "${DOCKER_BUILDKIT}" = "1" && test "${DOCKER_CLI_EXPERIMENTAL}" = "enabled"; then
+  DOCKER_BUILDX="buildx"
+  DOCKER_BUILDX_ARGS=("--platform" "${ARCH_PLATFORMS}")
+fi
 
 if test "${RELEASE}" = "yes"; then
     if test "${GDAL_VERSION}" = ""; then
@@ -94,9 +133,15 @@ if test "${RELEASE}" = "yes"; then
     if test "${TAG_NAME}" = ""; then
         TAG_NAME="${GDAL_VERSION}"
     fi
+    if test "${WITH_DEBUG_SYMBOLS}" = ""; then
+        WITH_DEBUG_SYMBOLS=no
+    fi
 else
     if test "${TAG_NAME}" = ""; then
         TAG_NAME=latest
+    fi
+    if test "${WITH_DEBUG_SYMBOLS}" = ""; then
+        WITH_DEBUG_SYMBOLS=yes
     fi
 fi
 
@@ -115,7 +160,7 @@ cleanup_rsync()
 {
     rm -f "${RSYNC_DAEMON_TEMPFILE}"
     if test "${RSYNC_PID}" != ""; then
-        kill "${RSYNC_PID}" || /bin/true
+        kill "${RSYNC_PID}" || true
     fi
 }
 
@@ -152,7 +197,7 @@ start_rsync_host()
         read only = false
 EOF
         RSYNC_PORT=23985
-        while /bin/true; do
+        while true; do
             rsync --port=${RSYNC_PORT} --address="${RSYNC_SERVER_IP}" --config="${RSYNC_DAEMON_TEMPFILE}" --daemon --no-detach &
             RSYNC_PID=$!
             sleep 1
@@ -162,10 +207,10 @@ EOF
         done
         echo "rsync daemon forked as process ${RSYNC_PID} listening on port ${RSYNC_PORT}"
 
-        RSYNC_REMOTE="rsync://${RSYNC_SERVER_IP}:${RSYNC_PORT}/gdal-docker-cache/${BASE_IMAGE_NAME}"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/proj"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/gdal"
-        mkdir -p "$HOME/gdal-docker-cache/${BASE_IMAGE_NAME}/spatialite"
+        RSYNC_REMOTE="rsync://${RSYNC_SERVER_IP}:${RSYNC_PORT}/gdal-docker-cache/${TARGET_IMAGE}"
+        mkdir -p "$HOME/gdal-docker-cache/${TARGET_IMAGE}/proj"
+        mkdir -p "$HOME/gdal-docker-cache/${TARGET_IMAGE}/gdal"
+        mkdir -p "$HOME/gdal-docker-cache/${TARGET_IMAGE}/spatialite"
     else
         RSYNC_REMOTE=""
     fi
@@ -180,10 +225,19 @@ stop_rsync_host()
     fi
 }
 
-if test "${BASE_IMAGE_NAME}" = "osgeo/gdal:ubuntu-full"; then
-    PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is https://cdn.proj.org/index.html | grep Last-Modified)
+build_cmd()
+{
+    if test "${DOCKER_BUILDX}" = "buildx"; then
+        echo "${DOCKER_BUILDX}" build "${DOCKER_BUILDX_ARGS[@]}"
+    else
+        echo build
+    fi
+}
+
+if test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-full"; then
+    PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is https://cdn.proj.org/index.html | grep -i Last-Modified)
 else
-    PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
+    PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep -i Last-Modified)
 fi
 echo "Using PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}"
 
@@ -193,30 +247,41 @@ fi
 echo "Using PROJ_VERSION=${PROJ_VERSION}"
 
 if test "${GDAL_VERSION}" = "" -o "${GDAL_VERSION}" = "master"; then
-    GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+    GDAL_VERSION=$(curl -Ls "https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD" -H "Accept: application/vnd.github.VERSION.sha")
 fi
 echo "Using GDAL_VERSION=${GDAL_VERSION}"
+echo "Using GDAL_REPOSITORY=${GDAL_REPOSITORY}"
 
-IMAGE_NAME="${BASE_IMAGE_NAME}-${TAG_NAME}"
+IMAGE_NAME="${TARGET_IMAGE}-${TAG_NAME}"
 BUILDER_IMAGE_NAME="${IMAGE_NAME}_builder"
 
 if test "${RELEASE}" = "yes"; then
-
     BUILD_ARGS=(
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
         "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
+        "--build-arg" "GDAL_REPOSITORY=${GDAL_REPOSITORY}" \
         "--build-arg" "GDAL_BUILD_IS_RELEASE=YES" \
+        "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
     )
 
-    docker build "${BUILD_ARGS[@]}" --target builder \
-        -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
-    docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    if test "x${BASE_IMAGE}" != "x"; then
+        BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
+    fi
 
-    check_image "${IMAGE_NAME}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+
+    if test "${DOCKER_BUILDX}" != "buildx"; then
+        check_image "${IMAGE_NAME}"
+    fi
 
     if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
-        docker push "${IMAGE_NAME}"
+        if test "${DOCKER_BUILDX}" = "buildx"; then
+          docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
+        else
+          docker push "${IMAGE_NAME}"
+        fi
     fi
 
 else
@@ -233,15 +298,15 @@ else
     BUILD_NETWORK=docker_build_gdal
     HOST_CACHE_DIR="$HOME/gdal-docker-cache"
 
-    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/proj"
-    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/gdal"
-    mkdir -p "${HOST_CACHE_DIR}/${BASE_IMAGE_NAME}/spatialite"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/spatialite"
 
     # Start a Docker container that has a rsync daemon, mounting HOST_CACHE_DIR
     if ! docker ps | grep "${RSYNC_DAEMON_CONTAINER}"; then
         RSYNC_DAEMON_IMAGE=osgeo/gdal:gdal_rsync_daemon
-        docker rmi "${RSYNC_DAEMON_IMAGE}" 2>/dev/null || /bin/true
-        docker build -t "${RSYNC_DAEMON_IMAGE}" - <<EOF
+        docker rmi "${RSYNC_DAEMON_IMAGE}" 2>/dev/null || true
+        docker $(build_cmd) -t "${RSYNC_DAEMON_IMAGE}" - <<EOF
 FROM alpine
 
 VOLUME /opt/gdal-docker-cache
@@ -255,7 +320,7 @@ RUN apk add --no-cache rsync \
     && echo "read only = false" >> /etc/rsyncd.conf \
     && echo "use chroot = false" >> /etc/rsyncd.conf
 
-CMD rsync --daemon --port 23985 && while sleep 1; do /bin/true; done
+CMD rsync --daemon --port 23985 && while sleep 1; do true; done
 
 EOF
 
@@ -275,31 +340,48 @@ EOF
 
     fi
 
-    RSYNC_REMOTE="rsync://${RSYNC_DAEMON_CONTAINER}:23985/gdal-docker-cache/${BASE_IMAGE_NAME}"
+    RSYNC_REMOTE="rsync://${RSYNC_DAEMON_CONTAINER}:23985/gdal-docker-cache/${TARGET_IMAGE}"
 
     BUILD_ARGS=(
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
         "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
+        "--build-arg" "GDAL_REPOSITORY=${GDAL_REPOSITORY}" \
         "--build-arg" "GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}" \
         "--build-arg" "RSYNC_REMOTE=${RSYNC_REMOTE}" \
+        "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
     )
 
-    docker build  --network "${BUILD_NETWORK}" "${BUILD_ARGS[@]}" --target builder \
+    if test "x${BASE_IMAGE}" != "x"; then
+        BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
+    fi
+
+    docker $(build_cmd) --network "${BUILD_NETWORK}" "${BUILD_ARGS[@]}" --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
 
-    docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
-    check_image "${IMAGE_NAME}"
+    if test "${DOCKER_BUILDX}" != "buildx"; then
+        check_image "${IMAGE_NAME}"
+    fi
 
     if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
         docker image tag "${IMAGE_NAME}" "osgeo/gdal:latest"
     fi
 
     if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
-        docker push "${IMAGE_NAME}"
+        if test "${DOCKER_BUILDX}" = "buildx"; then
+            docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
+        else
+            docker push "${IMAGE_NAME}"
+        fi
+
         if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
-            docker push osgeo/gdal:latest
+            if test "${DOCKER_BUILDX}" = "buildx"; then
+                docker $(build_cmd) "${BUILD_ARGS[@]}" -t "osgeo/gdal:latest" --push "${SCRIPT_DIR}"
+            else
+                docker push osgeo/gdal:latest
+            fi
         fi
     fi
 

@@ -183,6 +183,11 @@ It is important that there be no spaces or other content before the
 |                                   | grayscale data, 3 for RGB, 4 for  |
 |                                   | RGBA. (optional, defaults to 4)   |
 +-----------------------------------+-----------------------------------+
+| <DataType>Byte</DataType>         | Band data type, one of: Byte,     |
+|                                   | Int16, UInt16, Int32, UInt32,     |
+|                                   | Float32, Float64, etc..           |
+|                                   | (optional, defaults to Byte)      |
++-----------------------------------+-----------------------------------+
 | <ExtendBeyondDateLine>false</Exte | Whether to make the extent go     |
 | ndBeyondDateLine>                 | over dateline and warp tile       |
 |                                   | requests. Only appropriate when   |

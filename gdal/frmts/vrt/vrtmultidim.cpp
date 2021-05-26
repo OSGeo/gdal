@@ -454,7 +454,7 @@ std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string& osName,
     if( m_oMapGroups.find(osName) != m_oMapGroups.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A group with same name already exists");
+                 "A group with same name (%s) already exists", osName.c_str());
         return nullptr;
     }
     SetDirty();
@@ -483,7 +483,7 @@ std::shared_ptr<GDALDimension> VRTGroup::CreateDimension(const std::string& osNa
     if( m_oMapDimensions.find(osName) != m_oMapDimensions.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A dimension with same name already exists");
+                 "A dimension with same name (%s) already exists", osName.c_str());
         return nullptr;
     }
     SetDirty();
@@ -535,7 +535,7 @@ std::shared_ptr<GDALMDArray> VRTGroup::CreateMDArray(const std::string& osName,
     if( m_oMapMDArrays.find(osName) != m_oMapMDArrays.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "An array with same name already exists");
+                 "An array with same name (%s) already exists", osName.c_str());
         return nullptr;
     }
     for( auto& poDim: aoDimensions )
@@ -753,7 +753,7 @@ bool VRTAttribute::CreationCommonChecks(const std::string& osName,
     if( oMapAttributes.find(osName) != oMapAttributes.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "An attribute with same name already exists");
+                 "An attribute with same name (%s) already exists", osName.c_str());
         return false;
     }
     if( anDimensions.size() >= 2 )
@@ -981,7 +981,7 @@ std::shared_ptr<VRTMDArray> VRTMDArray::Create(const std::shared_ptr<VRTGroup>& 
     }
 
     auto array(std::make_shared<VRTMDArray>(poThisGroup->GetRef(),
-                                            osParentName, pszName, 
+                                            osParentName, pszName,
                                             dt,
                                             std::move(dims),
                                             std::move(oMapAttributes)));
@@ -1129,17 +1129,19 @@ std::unique_ptr<VRTMDArraySourceInlinedValues> VRTMDArraySourceInlinedValues::Cr
     const bool bIsConstantValue = strcmp(psNode->pszValue, "ConstantValue") == 0;
     const auto& dt(array->GetDataType());
     const size_t nDTSize = dt.GetSize();
+    if( nDTSize == 0 )
+        return nullptr;
     if( strcmp(psNode->pszValue, "InlineValuesWithValueElement") == 0 )
     {
-        if( (dt.GetClass() != GEDTC_NUMERIC &&
-             dt.GetClass() != GEDTC_STRING) || nDTSize == 0 )
+        if( dt.GetClass() != GEDTC_NUMERIC &&
+            dt.GetClass() != GEDTC_STRING )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Only numeric or string data type handled for InlineValuesWithValueElement");
             return nullptr;
         }
     }
-    else if( dt.GetClass() != GEDTC_NUMERIC || nDTSize == 0 )
+    else if( dt.GetClass() != GEDTC_NUMERIC )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Only numeric data type handled for InlineValues");
@@ -2007,7 +2009,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64* arrayStartIdx,
         }
         anReqCount[i] = 1 + static_cast<size_t>(
             (std::min(nRightDstOffsetFromConfig - 1,
-                                  start_i + (count[i] - 1) * step_i) 
+                                  start_i + (count[i] - 1) * step_i)
                                             - anReqDstStart[i]) / step_i);
         if( arrayStep[i] < 0 )
         {
@@ -2138,9 +2140,10 @@ bool VRTMDArray::IRead(const GUInt64* arrayStartIdx,
     {
         const bool bNeedsDynamicMemory = bufferDataType.NeedsFreeDynamicMemory();
         std::vector<size_t> anStackCount(nDims);
-        std::vector<GByte*> abyStackDstPtr(nDims+1);
+        std::vector<GByte*> abyStackDstPtr;
         size_t iDim = 0;
-        abyStackDstPtr[0] = static_cast<GByte*>(pDstBuffer);
+        abyStackDstPtr.push_back(static_cast<GByte*>(pDstBuffer));
+        abyStackDstPtr.resize(nDims+1);
 lbl_next_depth:
         if( iDim == nDims )
         {

@@ -245,7 +245,6 @@ def test_transformer_5():
 
     gdal.Unlink('/vsimem/dem.tif')
 
-
 ###############################################################################
 # Test RPC convergence bug (bug # 5395)
 
@@ -466,6 +465,8 @@ def test_transformer_12():
 
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
     assert tr is not None
+    (success, pnt) = tr.TransformPoint(0, 0, 0)
+    assert success and pnt[0] == pytest.approx(0, abs=1e-7) and pnt[1] == pytest.approx(0, abs=1e-7)
 
     ds = gdal.Open("""
     <VRTDataset rasterXSize="20" rasterYSize="20">
@@ -745,7 +746,7 @@ def test_transformer_tps_precision():
     ds = gdal.Open('data/gcps_2115.vrt')
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
     assert tr, 'tps transformation could not be computed'
-    
+
     success = True
     maxDiffResult = 0.0
     for gcp in ds.GetGCPs():
@@ -756,3 +757,39 @@ def test_transformer_tps_precision():
     assert success, 'at least one point could not be transformed'
     assert maxDiffResult < 1e-3, 'at least one transformation exceeds the error bound'
 
+
+###############################################################################
+def test_transformer_image_no_srs():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
+    tr = gdal.Transformer(ds, None, ['COORDINATE_OPERATION=+proj=unitconvert +xy_in=1 +xy_out=2'])
+    assert tr
+    (success, pnt) = tr.TransformPoint(0, 10, 20, 0)
+    assert success
+    assert pnt[0] == pytest.approx(50), pnt
+    assert pnt[1] == pytest.approx(-100), pnt
+
+###############################################################################
+# Test RPC_DEM_SRS by adding vertical component egm 96 geoid
+
+def test_transformer_dem_overrride_srs():
+    ds = gdal.Open('data/rpc.vrt')
+    ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32652)
+    ds_dem.SetProjection(sr.ExportToWkt())
+    ds_dem.SetGeoTransform([213300, 200, 0, 4418700, 0, -200])
+    ds_dem.GetRasterBand(1).Fill(15)
+    ds_dem = None
+    tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEM_SRS=EPSG:32652+5773'])
+
+    (success, pnt) = tr.TransformPoint(0, 0.5, 0.5, 0)
+    assert success and pnt[0] == pytest.approx(125.64813723085801, abs=0.000001) and pnt[1] == pytest.approx(39.869345977927146, abs=0.000001), \
+        'got wrong forward transform result.'
+
+    (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
+    assert success and pnt[0] == pytest.approx(0.5, abs=0.05) and pnt[1] == pytest.approx(0.5, abs=0.05), \
+        'got wrong reverse transform result.'
+
+    gdal.Unlink('/vsimem/dem.tif')

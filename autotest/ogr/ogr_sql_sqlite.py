@@ -29,11 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from BaseHTTPServer import BaseHTTPRequestHandler
-except ImportError:
-    from http.server import BaseHTTPRequestHandler
-
+from http.server import BaseHTTPRequestHandler
 
 from osgeo import ogr
 from osgeo import osr
@@ -1888,4 +1884,30 @@ def test_ogr_sql_sqlite_st_makevalid():
     ds.ReleaseResultSet(sql_lyr)
 
     if make_valid_available:
-        assert wkt == 'MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))'
+        assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromWkt(wkt), 'MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))') == 0, wkt
+
+
+
+###############################################################################
+# Test field names with same case
+
+
+def test_ogr_sql_sqlite_field_names_same_case():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('id'))
+    lyr.CreateField(ogr.FieldDefn('ID'))
+    lyr.CreateField(ogr.FieldDefn('ID2'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 'foo'
+    f['ID'] = 'bar'
+    f['ID2'] = 'baz'
+    lyr.CreateFeature(f)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test', dialect='SQLite')
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f['id'] == 'foo'
+    assert f['ID3'] == 'bar'
+    assert f['ID2'] == 'baz'

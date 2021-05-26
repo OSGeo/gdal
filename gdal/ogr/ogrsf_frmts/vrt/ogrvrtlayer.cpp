@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -57,6 +58,19 @@ CPL_CVSID("$Id$")
 
 #define UNSUPPORTED_OP_READ_ONLY \
     "%s : unsupported operation on a read-only datasource."
+
+/************************************************************************/
+/*                   GetFieldIndexCaseSensitiveFirst()                  */
+/************************************************************************/
+
+static int GetFieldIndexCaseSensitiveFirst( OGRFeatureDefn* poFDefn,
+                                            const char * pszFieldName )
+{
+    int idx = poFDefn->GetFieldIndexCaseSensitive(pszFieldName);
+    if( idx < 0 )
+        idx = poFDefn->GetFieldIndex(pszFieldName);
+    return idx;
+}
 
 /************************************************************************/
 /*                       OGRVRTGeomFieldProps()                         */
@@ -333,13 +347,13 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
         poProps->bUseSpatialSubquery = CPLTestBool(
             CPLGetXMLValue(psNode, "GeometryField.useSpatialSubquery", "TRUE"));
 
-        poProps->iGeomXField = GetSrcLayerDefn()->GetFieldIndex(
+        poProps->iGeomXField = GetFieldIndexCaseSensitiveFirst(GetSrcLayerDefn(),
             CPLGetXMLValue(psNode, "x", "missing"));
-        poProps->iGeomYField = GetSrcLayerDefn()->GetFieldIndex(
+        poProps->iGeomYField = GetFieldIndexCaseSensitiveFirst(GetSrcLayerDefn(),
             CPLGetXMLValue(psNode, "y", "missing"));
-        poProps->iGeomZField = GetSrcLayerDefn()->GetFieldIndex(
+        poProps->iGeomZField = GetFieldIndexCaseSensitiveFirst(GetSrcLayerDefn(),
             CPLGetXMLValue(psNode, "z", "missing"));
-        poProps->iGeomMField = GetSrcLayerDefn()->GetFieldIndex(
+        poProps->iGeomMField = GetFieldIndexCaseSensitiveFirst(GetSrcLayerDefn(),
             CPLGetXMLValue(psNode, "m", "missing"));
 
         if( poProps->iGeomXField == -1 || poProps->iGeomYField == -1 )
@@ -372,7 +386,8 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
     {
         const char *pszFieldName = CPLGetXMLValue(psNode, "field", "missing");
 
-        poProps->iGeomField = GetSrcLayerDefn()->GetFieldIndex(pszFieldName);
+        poProps->iGeomField = GetFieldIndexCaseSensitiveFirst(
+            GetSrcLayerDefn(), pszFieldName);
 
         if( poProps->iGeomField == -1 )
         {
@@ -825,7 +840,8 @@ try_again:
             const char* pszSrcFIDFieldName = CPLGetXMLValue(psFIDNode, nullptr, "");
             if( !EQUAL(pszSrcFIDFieldName, "") )
             {
-                iFIDField = GetSrcLayerDefn()->GetFieldIndex(pszSrcFIDFieldName);
+                iFIDField = GetFieldIndexCaseSensitiveFirst(
+                    GetSrcLayerDefn(), pszSrcFIDFieldName);
                 if( iFIDField == -1 )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -852,7 +868,8 @@ try_again:
 
     if( pszStyleFieldName != nullptr )
     {
-        iStyleField = GetSrcLayerDefn()->GetFieldIndex(pszStyleFieldName);
+        iStyleField = GetFieldIndexCaseSensitiveFirst(
+            GetSrcLayerDefn(), pszStyleFieldName);
         if( iStyleField == -1 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -983,13 +1000,15 @@ try_again:
             abDirectCopy.push_back(FALSE);
 
             // Source field.
-            int iSrcField = GetSrcLayerDefn()->GetFieldIndex(pszName);
+            int iSrcField = GetFieldIndexCaseSensitiveFirst(
+                GetSrcLayerDefn(), pszName);
 
             pszArg = CPLGetXMLValue(psChild, "src", nullptr);
 
             if( pszArg != nullptr )
             {
-                iSrcField = GetSrcLayerDefn()->GetFieldIndex(pszArg);
+                iSrcField = GetFieldIndexCaseSensitiveFirst(
+                    GetSrcLayerDefn(), pszArg);
                 if( iSrcField == -1 )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1198,7 +1217,7 @@ bool OGRVRTLayer::ResetSourceReading()
 
                 if( !CPLIsInf(sEnvelope.MinX) )
                     osFilter +=
-                        CPLSPrintf("%s > %.15g", pszXField, sEnvelope.MinX);
+                        CPLSPrintf("\"%s\" > %.15g", pszXField, sEnvelope.MinX);
                 else if( sEnvelope.MinX > 0 )
                     osFilter += "0 = 1";
 
@@ -1207,7 +1226,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s < %.15g", pszXField, sEnvelope.MaxX);
+                        CPLSPrintf("\"%s\" < %.15g", pszXField, sEnvelope.MaxX);
                 }
                 else if( sEnvelope.MaxX < 0 )
                 {
@@ -1221,7 +1240,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s > %.15g", pszYField, sEnvelope.MinY);
+                        CPLSPrintf("\"%s\" > %.15g", pszYField, sEnvelope.MinY);
                 }
                 else if( sEnvelope.MinY > 0 )
                 {
@@ -1235,7 +1254,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( !osFilter.empty() )
                         osFilter += " AND ";
                     osFilter +=
-                        CPLSPrintf("%s < %.15g", pszYField, sEnvelope.MaxY);
+                        CPLSPrintf("\"%s\" < %.15g", pszYField, sEnvelope.MaxY);
                 }
                 else if( sEnvelope.MaxY < 0 )
                 {
@@ -1779,23 +1798,30 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
             OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
             if( poGeom != nullptr )
             {
-                const int nSize = poGeom->WkbSize();
-                GByte *pabyData = static_cast<GByte *>(CPLMalloc(nSize));
-                if( poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE )
+                const size_t nSize = poGeom->WkbSize();
+                if( nSize > static_cast<size_t>(std::numeric_limits<int>::max()) )
                 {
-                    if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() ==
-                        OFTBinary )
-                    {
-                        poSrcFeat->SetField(iGeomField, nSize, pabyData);
-                    }
-                    else
-                    {
-                        char *pszHexWKB = CPLBinaryToHex(nSize, pabyData);
-                        poSrcFeat->SetField(iGeomField, pszHexWKB);
-                        CPLFree(pszHexWKB);
-                    }
                 }
-                CPLFree(pabyData);
+                else
+                {
+                    GByte *pabyData = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nSize));
+                    if( pabyData &&
+                        poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE )
+                    {
+                        if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() ==
+                            OFTBinary )
+                        {
+                            poSrcFeat->SetField(iGeomField, static_cast<int>(nSize), pabyData);
+                        }
+                        else
+                        {
+                            char *pszHexWKB = CPLBinaryToHex(static_cast<int>(nSize), pabyData);
+                            poSrcFeat->SetField(iGeomField, pszHexWKB);
+                            CPLFree(pszHexWKB);
+                        }
+                    }
+                    CPLFree(pabyData);
+                }
             }
         }
         else if( eGeometryStyle == VGS_Shape )
@@ -2352,7 +2378,8 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
         }
         else
         {
-            int iVRTField = GetLayerDefn()->GetFieldIndex(pszFieldName);
+            int iVRTField = GetFieldIndexCaseSensitiveFirst(
+                GetLayerDefn(), pszFieldName);
             if( iVRTField >= 0 )
             {
                 int iSrcField = anSrcField[iVRTField];

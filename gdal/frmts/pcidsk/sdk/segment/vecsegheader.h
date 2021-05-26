@@ -1,14 +1,14 @@
 /******************************************************************************
  *
- * Purpose:  Declaration of the VecSegHeader class.  
+ * Purpose:  Declaration of the VecSegHeader class.
  *
- * This class is used to manage reading and writing of the vector segment 
+ * This class is used to manage reading and writing of the vector segment
  * header section, growing them as needed.  It is exclusively a private
  * helper class for the CPCIDSKVectorSegment.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,7 +52,7 @@ namespace PCIDSK
     const int hsec_record = 2;
     const int hsec_shape = 3;
 
-    class VecSegHeader 
+    class VecSegHeader
     {
     public:
         VecSegHeader();
@@ -80,7 +80,7 @@ namespace PCIDSK
 
         void      WriteFieldDefinitions();
         uint32    ShapeIndexPrepare( uint32 byte_size );
-        
+
         CPCIDSKVectorSegment *vs;
 
         uint32          header_blocks;
@@ -93,4 +93,4 @@ namespace PCIDSK
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_SEGMENT_VECTORSEGMENT_H
+#endif // INCLUDE_SEGMENT_VECTORSEGMENT_H

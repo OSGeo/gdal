@@ -287,18 +287,18 @@ static const int NCDF_DEFLATE_LEVEL    = 1;  /* best time/size ratio */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
 /* -------------------------------------------------------------------- */
 static const char* const papszCFLongitudeVarNames[] = { CF_LONGITUDE_VAR_NAME, "longitude", nullptr };
-static const char* const papszCFLongitudeAttribNames[] = { CF_UNITS, CF_STD_NAME, CF_AXIS, nullptr };
-static const char* const papszCFLongitudeAttribValues[] = { CF_DEGREES_EAST, CF_LONGITUDE_STD_NAME, "X", nullptr };
+static const char* const papszCFLongitudeAttribNames[] = { CF_UNITS, CF_STD_NAME, CF_AXIS, CF_LNG_NAME, nullptr };
+static const char* const papszCFLongitudeAttribValues[] = { CF_DEGREES_EAST, CF_LONGITUDE_STD_NAME, "X", CF_LONGITUDE_LNG_NAME, nullptr };
 static const char* const papszCFLatitudeVarNames[] = { CF_LATITUDE_VAR_NAME, "latitude", nullptr };
-static const char* const papszCFLatitudeAttribNames[] = { CF_UNITS, CF_STD_NAME, CF_AXIS, nullptr };
-static const char* const papszCFLatitudeAttribValues[] = { CF_DEGREES_NORTH, CF_LATITUDE_STD_NAME, "Y", nullptr };
+static const char* const papszCFLatitudeAttribNames[] = { CF_UNITS, CF_STD_NAME, CF_AXIS, CF_LNG_NAME, nullptr };
+static const char* const papszCFLatitudeAttribValues[] = { CF_DEGREES_NORTH, CF_LATITUDE_STD_NAME, "Y", CF_LATITUDE_LNG_NAME, nullptr };
 
 static const char* const papszCFProjectionXVarNames[] = { CF_PROJ_X_VAR_NAME, "xc", nullptr };
-static const char* const papszCFProjectionXAttribNames[] = { CF_STD_NAME, nullptr };
-static const char* const papszCFProjectionXAttribValues[] = { CF_PROJ_X_COORD, nullptr };
+static const char* const papszCFProjectionXAttribNames[] = { CF_STD_NAME, CF_AXIS, nullptr };
+static const char* const papszCFProjectionXAttribValues[] = { CF_PROJ_X_COORD, "X", nullptr };
 static const char* const papszCFProjectionYVarNames[] = { CF_PROJ_Y_VAR_NAME, "yc", nullptr };
-static const char* const papszCFProjectionYAttribNames[] = { CF_STD_NAME, nullptr };
-static const char* const papszCFProjectionYAttribValues[] = { CF_PROJ_Y_COORD, nullptr };
+static const char* const papszCFProjectionYAttribNames[] = { CF_STD_NAME, CF_AXIS, nullptr };
+static const char* const papszCFProjectionYAttribValues[] = { CF_PROJ_Y_COORD, "Y", nullptr };
 
 static const char* const papszCFVerticalAttribNames[] = { CF_AXIS, "positive", "positive", nullptr };
 static const char* const papszCFVerticalAttribValues[] = { "Z", "up", "down", nullptr };
@@ -832,6 +832,7 @@ class netCDFDataset final: public GDALPamDataset
 #ifdef ENABLE_UFFD
     cpl_uffd_context *pCtx = nullptr;
 #endif
+    VSILFILE     *fpVSIMEM = nullptr;
     int           nSubDatasets;
     char          **papszSubDatasets;
     char          **papszMetadata;
@@ -926,8 +927,8 @@ class netCDFDataset final: public GDALPamDataset
 
     static double       rint( double );
 
-    double       FetchCopyParm( const char *pszGridMappingValue,
-                                const char *pszParm, double dfDefault,
+    double       FetchCopyParam( const char *pszGridMappingValue,
+                                const char *pszParam, double dfDefault,
                                 bool *pbFound=nullptr );
 
     char **      FetchStandardParallels( const char *pszGridMappingValue );
@@ -978,7 +979,7 @@ class netCDFDataset final: public GDALPamDataset
 
     CPLErr DetectAndFillSGLayers( int ncid );
     CPLErr LoadSGVarIntoLayer( int ncid, int nc_basevarId );
-    
+
 
 #ifdef NETCDF_HAS_NC4
     static GDALDataset *OpenMultiDim( GDALOpenInfo * );
@@ -1194,6 +1195,10 @@ bool NCDFIsUnlimitedDim(bool bIsNC4, int cdfid, int nDimId);
 bool NCDFIsUserDefinedType(int ncid, int type);
 
 CPLString NCDFGetGroupFullName(int nGroupId);
+
+CPLErr NCDFResolveVar( int nStartGroupId, const char *pszVar,
+                       int *pnGroupId, int *pnVarId,
+                       bool bMandatory = false );
 
 // Dimension check functions.
 bool NCDFIsVarLongitude( int nCdfId, int nVarId,

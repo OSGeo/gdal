@@ -35,6 +35,29 @@ import ogrtest
 import pytest
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+    yield
+
+    gdaltest.p_ds = None
+    gdaltest.s_ds = None
+
+    gdaltest.p_lyr = None
+    gdaltest.s_lyr = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('index_p.mif')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('join_t.dbf')
+
+    for filename in ['join_t.idm', 'join_t.ind']:
+        assert not os.path.exists(filename)
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
+        'tmp/ogr_index_10.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
+        'tmp/ogr_index_11.dbf')
+
+
+###############################################################################
 # Create a MIF file to be our primary table.
 
 
@@ -407,32 +430,3 @@ def test_ogr_index_11():
     ogr_index_11_check(lyr, [0, 1, 2, 3, 4])
 
     ds = None
-
-###############################################################################
-
-
-def test_ogr_index_cleanup():
-    try:
-        gdaltest.p_ds.Release()
-    except:
-        pass
-
-    gdaltest.p_ds = None
-    gdaltest.s_ds = None
-
-    gdaltest.p_lyr = None
-    gdaltest.s_lyr = None
-
-    ogr.GetDriverByName('MapInfo File').DeleteDataSource('index_p.mif')
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('join_t.dbf')
-
-    for filename in ['join_t.idm', 'join_t.ind']:
-        assert not os.path.exists(filename)
-
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
-        'tmp/ogr_index_10.shp')
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
-        'tmp/ogr_index_11.dbf')
-
-
-

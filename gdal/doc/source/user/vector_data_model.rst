@@ -57,13 +57,13 @@ Feature / Feature Definition
 
 The :cpp:class:`OGRGeometry` captures the geometry of a vector feature ... the spatial position/region of a feature. The :cpp:class:`OGRFeature` contains this geometry, and adds feature attributes, feature id, and a feature class identifier. Several geometries can be associated to a OGRFeature.
 
-The set of attributes, their types, names and so forth is represented via the :cpp:class:`OGRFeatureDefn` class. One OGRFeatureDefn normally exists for a layer of features. The same definition is shared in a reference counted manner by the feature of that type (or feature class).
+The set of attributes (:cpp:class:`OGRFieldDefn`), their types, names and so forth is represented via the :cpp:class:`OGRFeatureDefn` class. One OGRFeatureDefn normally exists for a layer of features. The same definition is shared in a reference counted manner by the feature of that type (or feature class).
 
 The feature id (FID) of a feature is intended to be a unique identifier for the feature within the layer it is a member of. Freestanding features, or features not yet written to a layer may have a null (OGRNullFID) feature id. The feature ids are modeled in OGR as a 64-bit integer; however, this is not sufficiently expressive to model the natural feature ids in some formats. For instance, the GML feature id is a string.
 
 The feature class also contains an indicator of the types of geometry allowed for that feature class (returned as an OGRwkbGeometryType from :cpp:func:`OGRFeatureDefn::GetGeomType`). If this is wkbUnknown then any type of geometry is allowed. This implies that features in a given layer can potentially be of different geometry types though they will always share a common attribute schema.
 
-Several geometry fields can be associated to a feature class. Each geometry field has its own indicator of geometry type allowed, returned by OGRGeomFieldDefn::GetType(), and its spatial reference system, returned by :cpp:func:`OGRGeomFieldDefn::GetSpatialRef`.
+Several geometry fields (:cpp:class:`OGRGeomFieldDefn`) can be associated to a feature class. Each geometry field has its own indicator of geometry type allowed, returned by OGRGeomFieldDefn::GetType(), and its spatial reference system, returned by :cpp:func:`OGRGeomFieldDefn::GetSpatialRef`.
 
 The OGRFeatureDefn also contains a feature class name (normally used as a layer name).
 

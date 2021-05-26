@@ -22,7 +22,7 @@ Synopsis
         [-if format]* [-of format]
         [-b band]* [-mask band] [-expand {gray|rgb|rgba}]
         [-outsize xsize[%]|0 ysize[%]|0] [-tr xres yres]
-        [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
+        [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,rms,mode}]
         [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
         [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
         [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
@@ -32,7 +32,7 @@ Synopsis
         |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
         |-colorinterp {red|green|blue|alpha|gray|undefined},...]
         [-mo "META-TAG=VALUE"]* [-q] [-sds]
-        [-co "NAME=VALUE"]* [-stats] [-norat]
+        [-co "NAME=VALUE"]* [-stats] [-norat] [-noxmp]
         [-oo NAME=VALUE]*
         src_dataset dst_dataset
 
@@ -95,16 +95,35 @@ resampling, and rescaling pixels in the process.
     Both must be positive values. This is mutually exclusive with
     :option:`-outsize` and :option:`-a_ullr`.
 
-.. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}
+.. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,rms,mode}
 
     Select a resampling algorithm.
+
+    ``nearest`` applies a nearest neighbour (simple sampling) resampler
+
+    ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
+
+    ``rms`` computes the root mean squared / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
+
+    ``bilinear`` applies a bilinear convolution kernel.
+
+    ``cubic`` applies a cubic convolution kernel.
+
+    ``cubicspline`` applies a B-Spline convolution kernel.
+
+    ``lanczos`` applies a Lanczos windowed sinc convolution kernel.
+
+    ``mode`` selects the value which appears most often of all the sampled points.
 
 .. option:: -scale [src_min src_max [dst_min dst_max]]
 
     Rescale the input pixels values from the range **src_min** to **src_max**
-    to the range **dst_min** to **dst_max**.  If omitted the output range is 0
+    to the range **dst_min** to **dst_max**. If omitted the output range is 0
     to 255.  If omitted the input range is automatically computed from the
-    source data. -scale can be repeated several times (if specified only once,
+    source data. Note that these values are only used to compute a scale and
+    offset to apply to the input raster values. In particular, src_min and
+    src_max are not used to clip input values.
+    -scale can be repeated several times (if specified only once,
     it also applies to all bands of the output dataset), so as to specify per
     band parameters. It is also possible to use the "-scale_bn" syntax where bn
     is a band number (e.g. "-scale_2" for the 2nd band of the output dataset)
@@ -169,13 +188,15 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -a_srs <srs_def>
 
-    Override the projection for the output file.  The<srs_def> may be any of
-    the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
-    the WKT. No reprojection is done.
+    Override the projection for the output file.
+
+    .. include:: options/srs_def.rst
+
+    .. note:: No reprojection is done.
 
 .. option:: -a_scale <value>
 
-    Set band scaling value(no modification of pixel values is done)
+    Set band scaling value (no modification of pixel values is done)
 
     .. versionadded:: 2.3
 
@@ -245,6 +266,12 @@ resampling, and rescaling pixels in the process.
 .. option:: -norat
 
     Do not copy source RAT into destination dataset.
+
+.. option:: -noxmp
+
+    Do not copy the XMP metadata in the source dataset to the output dataset when driver is able to copy it.
+
+    .. versionadded:: 3.2
 
 .. option:: -oo NAME=VALUE
 

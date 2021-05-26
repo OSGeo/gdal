@@ -32,13 +32,12 @@
 
 import sys
 import os
+
 import pytest
 
 sys.path.append('../gcore')
 
-from osgeo import gdal
-from osgeo import ogr
-from osgeo import osr
+from osgeo import gdal, ogr, osr
 import gdaltest
 import test_cli_utilities
 
@@ -303,12 +302,7 @@ def test_gdal_rasterize_6():
 
 def test_gdal_rasterize_7():
 
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except (ImportError, AttributeError):
-        pytest.skip()
-
+    pytest.importorskip('numpy')
     if test_cli_utilities.get_gdal_rasterize_path() is None:
         pytest.skip()
 

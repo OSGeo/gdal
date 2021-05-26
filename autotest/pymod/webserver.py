@@ -28,16 +28,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-except ImportError:
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-from threading import Thread
-
 import contextlib
-import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import subprocess
 import sys
-from sys import version_info
+from threading import Thread
+import time
+
 import gdaltest
 
 do_log = False
@@ -95,7 +92,7 @@ class FileHandler(object):
             end = len(filedata)
             if 'Range' in request.headers:
                 import re
-                res = re.search('bytes=(\d+)\-(\d+)', request.headers['Range'])
+                res = re.search(r'bytes=(\d+)\-(\d+)', request.headers['Range'])
                 if res:
                     res = res.groups()
                     start = int(res[0])
@@ -200,6 +197,9 @@ class SequentialHandler(object):
     def do_GET(self, request):
         self.process('GET', request)
 
+    def do_PATCH(self, request):
+        self.process('PATCH', request)
+
     def do_POST(self, request):
         self.process('POST', request)
 
@@ -235,6 +235,14 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
             f.close()
 
         custom_handler.do_DELETE(self)
+
+    def do_PATCH(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('PATCH %s\n' % self.path)
+            f.close()
+
+        custom_handler.do_PATCH(self)
 
     def do_POST(self):
 
@@ -281,6 +289,14 @@ class GDAL_Handler(BaseHTTPRequestHandler):
         if do_log:
             f = open('/tmp/log.txt', 'a')
             f.write('DELETE %s\n' % self.path)
+            f.close()
+
+        self.send_error(404, 'File Not Found: %s' % self.path)
+
+    def do_PATCH(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('PATCH %s\n' % self.path)
             f.close()
 
         self.send_error(404, 'File Not Found: %s' % self.path)
@@ -336,19 +352,12 @@ class GDAL_HttpServer(HTTPServer):
 
     def stop_server(self):
         if self.running:
-            if version_info >= (2, 6, 0):
-                self.shutdown()
-            else:
-                gdaltest.gdalurlopen("http://127.0.0.1:%d/shutdown" % self.port)
+            self.shutdown()
         self.running = False
 
     def serve_until_stop_server(self):
         self.running = True
-        if version_info >= (2, 6, 0):
-            self.serve_forever(0.25)
-        else:
-            while self.running and not self.stop_requested:
-                self.handle_request()
+        self.serve_forever(0.25)
         self.running = False
         self.stop_requested = False
 
@@ -428,13 +437,15 @@ def launch(fork_process=None, handler=None):
     if sys.platform == 'win32':
         python_exe = python_exe.replace('\\', '/')
 
-    (process, process_stdout) = gdaltest.spawn_async(python_exe + ' ../pymod/webserver.py')
+    process = subprocess.Popen(
+        [python_exe, '../pymod/webserver.py'],
+        stdout=subprocess.PIPE)
     if process is None:
         return (None, 0)
 
-    line = process_stdout.readline()
+    line = process.stdout.readline()
     line = line.decode('ascii')
-    process_stdout.close()
+    process.stdout.close()
     if line.find('port=') == -1:
         return (None, 0)
 
@@ -452,7 +463,7 @@ def server_stop(process, port):
         return
 
     gdaltest.gdalurlopen('http://127.0.0.1:%d/shutdown' % port)
-    gdaltest.wait_process(process)
+    process.wait()
 
 
 def main():

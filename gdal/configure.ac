@@ -49,6 +49,9 @@ dnl Enable as much warnings as possible
 AX_CFLAGS_WARN_ALL(C_WFLAGS)
 AX_CXXFLAGS_WARN_ALL(CXX_WFLAGS)
 
+dnl Remove -Wdeclaration-after-statement that is no longer appropriate in C99
+C_WFLAGS=`echo "$C_WFLAGS " | sed "s/-Wdeclaration-after-statement //"`
+
 dnl For ICC: it needs -we10006 instead of -Werror to turn unknown options to errors
 dnl Some gcc/clang versions might succeed on this test, so also include -Werror in ERROR_ON_UNKNOWN_OPTIONS
 AX_CHECK_COMPILE_FLAG([-Werror -we10006],[ERROR_ON_UNKNOWN_OPTIONS="-Werror -we10006"],[ERROR_ON_UNKNOWN_OPTIONS="-Werror"])
@@ -73,10 +76,10 @@ AX_CHECK_COMPILE_FLAG([-Wformat -Werror=format-security -Wno-format-nonliteral],
 AX_CHECK_COMPILE_FLAG([-Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-include-dirs], [C_WFLAGS="$C_WFLAGS -Wmissing-include-dirs" CXX_WFLAGS="$CXX_WFLAGS -Wmissing-include-dirs"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Error out on things that will fail with MSVC
 AX_CHECK_COMPILE_FLAG([-Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"],,[$ERROR_ON_UNKNOWN_OPTIONS])
-AX_CHECK_COMPILE_FLAG([-Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl -Wclobbered is not reliable on most gcc versions
 dnl AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"],,[$ERROR_ON_UNKNOWN_OPTIONS])
@@ -107,20 +110,6 @@ AX_CHECK_COMPILE_FLAG([-Wfloat-conversion], [C_WFLAGS="$C_WFLAGS -Wfloat-convers
 
 dnl clang >= 3.2
 AX_CHECK_COMPILE_FLAG([-Wdocumentation -Wno-documentation-deprecated-sync], [C_WFLAGS="$C_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync" CXX_WFLAGS="$CXX_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync"],,[$ERROR_ON_UNKNOWN_OPTIONS])
-
-dnl gnu89 is a reasonable target to get MSVC compatibility.
-dnl but only apply it with gcc, since clang will throw a lot of warnings
-SAVED_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS $ERROR_ON_UNKNOWN_OPTIONS -std=gnu89"
-AC_MSG_CHECKING([if -std=gnu89 can be enabled])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-  [[#if defined(__clang__) || !defined(__GNUC__)
-    #error "not gcc"
-    #endif]])],
-  [C_WFLAGS="$C_WFLAGS -std=gnu89"]
-  [AC_MSG_RESULT([yes])],
-  [AC_MSG_RESULT([no])])
-CFLAGS=$SAVED_CFLAGS
 
 dnl C++ specific stuff
 
@@ -206,7 +195,6 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 CXXFLAGS=$SAVED_CXXFLAGS
 AC_LANG_POP([C++])
 
-
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
 AC_SUBST(C_WFLAGS,$C_WFLAGS)
 AC_SUBST(NO_UNUSED_PARAMETER_FLAG,$NO_UNUSED_PARAMETER_FLAG)
@@ -218,6 +206,7 @@ AC_SUBST(WARN_EFFCPLUSPLUS,$WARN_EFFCPLUSPLUS)
 
 dnl Checks for programs.
 AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_CXX
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
@@ -301,6 +290,16 @@ dnl Check for userfaultfd support
 AC_CHECK_HEADERS([linux/userfaultfd.h], [ENABLE_UFFD="yes"], [ENABLE_UFFD="no"], [])
 AC_SUBST(ENABLE_UFFD,$ENABLE_UFFD)
 
+dnl cpl_vsil_unix_stdio_64.h requires linux/fs.h on Linux, and this isn't
+dnl installed by default on Alpine
+case "${host_os}" in
+    linux*)
+        AC_CHECK_HEADERS([linux/fs.h], [], [AC_MSG_ERROR([Unable to find linux/fs.h header])])
+        ;;
+    *)
+        ;;
+esac
+
 AC_C_BIGENDIAN
 
 dnl Check for 64 bit file API
@@ -328,6 +327,7 @@ dnl Checks for library functions.
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(snprintf vsnprintf)
 AC_CHECK_FUNCS(atoll)
+AC_CHECK_FUNCS(strtoll)
 AC_CHECK_FUNCS(strtoull)
 AC_CHECK_FUNCS(strtof)
 AC_CHECK_FUNCS(getcwd)
@@ -1165,6 +1165,58 @@ fi
 AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for libdeflate.
+dnl ---------------------------------------------------------------------------
+
+LIBDEFLATE_SETTING=no
+
+AC_ARG_WITH(libdeflate,
+            AS_HELP_STRING([--with-libdeflate],
+                            [enable libdeflate usage (optional for faster Deflate support (still requires zlib) (ARG=yes/no/prefix), enabled by default)]),,)
+
+if test "$with_libdeflate" != "no" ; then
+
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no],-L$with_libdeflate/lib)
+  else
+    AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no])
+  fi
+
+  if test "$libdeflate_lib" = "no" -a "$with_libdeflate" = "yes"; then
+    AC_MSG_ERROR([libdeflate library not found])
+  fi
+
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    if test -r "$with_libdeflate/include/libdeflate.h" ; then
+      libdeflate_h=yes
+    else
+      libdeflate_h=no
+    fi
+  else
+    AC_CHECK_HEADER(libdeflate.h, [libdeflate_h=yes], [libdeflate_h=no])
+  fi
+  if test "$libdeflate_h" = "no" -a "$with_libdeflate" = "yes"; then
+    AC_MSG_ERROR([libdeflate headers not found])
+  fi
+
+  if test "$libdeflate_lib" = "yes" -a "$libdeflate_h" = "yes" ; then
+    LIBDEFLATE_SETTING=yes
+  fi
+
+fi
+
+if test "$LIBDEFLATE_SETTING" = "yes" ; then
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    EXTRA_INCLUDES="-I$with_libdeflate/include $EXTRA_INCLUDES"
+    LIBS="-L$with_libdeflate/lib -ldeflate $LIBS"
+  else
+    LIBS="-ldeflate $LIBS"
+  fi
+fi
+
+AC_SUBST(LIBDEFLATE_SETTING,$LIBDEFLATE_SETTING)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for iconv/libiconv.
 dnl A rationale for this macro is described in "GNU `gettext' utilities"
 dnl manual at
@@ -1211,6 +1263,76 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Select a JPEG Library to use, or disable driver.
+dnl libtiff could depend on it so it must appear before.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support (ARG=internal, no or path)],,)
+
+if test "$with_jpeg" = "no" ; then
+
+  JPEG_SETTING=no
+
+  echo "jpeg support disabled."
+
+elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
+
+  AC_CHECK_LIB(jpeg,jpeg_read_scanlines,JPEG_SETTING=external,JPEG_SETTING=internal,)
+  AC_CHECK_HEADERS(jpeglib.h)
+
+  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
+    JPEG_SETTING=internal
+  fi
+
+  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
+    AC_MSG_CHECKING([for width_in_blocks in jpeglib.h])
+
+    rm -f conftest.c
+    echo '#include <stdio.h>' >> conftest.c
+    echo '#include "jpeglib.h"' >> conftest.c
+    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
+    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
+      AC_MSG_RESULT([yes])
+    else
+      AC_MSG_RESULT([no])
+      JPEG_SETTING=internal
+    fi
+    rm -f conftest*
+  fi
+
+  if test "$JPEG_SETTING" = "external" ; then
+    LIBS="-ljpeg $LIBS"
+    echo "using pre-installed libjpeg."
+  else
+    echo "using internal jpeg code."
+  fi
+
+elif test "$with_jpeg" = "internal" ; then
+
+  JPEG_SETTING=internal
+
+  echo "using internal jpeg code."
+
+else
+
+  JPEG_SETTING=external
+  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
+  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
+
+  echo "using libjpeg from $with_jpeg."
+
+fi
+
+AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
+
+if test "$JPEG_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
+fi
+
+
+
+
+dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.
 dnl Proj depends on it so it must appear before.
 dnl ---------------------------------------------------------------------------
@@ -1223,13 +1345,6 @@ if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
 
   dnl Only automatically pick up the external libtiff if it is >= 4.0.
   AC_CHECK_LIB(tiff,TIFFScanlineSize64,TIFF_SETTING=external HAVE_BIGTIFF=yes,TIFF_SETTING=internal HAVE_BIGTIFF=yes,)
-
-  if test "$TIFF_SETTING" = "external" ; then
-    dnl Cygwin takes a somewhat restrictive view of what should be exported
-    dnl from the dll, so don't use the external library if missing semi-private
-    dnl functions.
-    AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
-  fi
 
   if test "$TIFF_SETTING" = "external" ; then
     LIBS="-ltiff $LIBS"
@@ -1311,117 +1426,15 @@ AC_SUBST(CURL_INC,    $CURL_INC)
 AC_SUBST(CURL_LIB,    $CURL_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for SpatiaLite.
-dnl ---------------------------------------------------------------------------
-
-AC_MSG_CHECKING(for spatialite)
-
-AC_ARG_WITH(spatialite,
-    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)],
-    ,,)
-
-AC_ARG_WITH(spatialite-soname,
-    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen],
-    ,,)
-
-HAVE_SPATIALITE=no
-SPATIALITE_AMALGAMATION=no
-
-if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
-    AC_MSG_RESULT(disabled)
-elif test "$with_spatialite" = "yes"; then
-    AC_CHECK_HEADERS(sqlite3.h)
-    if test "$ac_cv_header_sqlite3_h" = "yes"; then
-        AC_MSG_CHECKING([for spatialite.h in /usr/include or /usr/local/include])
-        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
-            AC_MSG_RESULT(found)
-            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-lsqlite3)
-            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
-                HAVE_SPATIALITE=yes
-                SPATIALITE_LIBS="-lspatialite -lsqlite3"
-                LIBS="$LIBS $SPATIALITE_LIBS"
-                HAVE_SQLITE3=yes
-            fi
-        else
-            AC_MSG_RESULT(not found : spatialite support disabled)
-        fi
-    fi
-elif test "$with_spatialite" = "dlopen"; then
-  HAVE_SPATIALITE=dlopen
-  AC_MSG_RESULT(dlopen)
-
-  if test "$with_spatialite_soname" != ""; then
-      SPATIALITE_SONAME="$with_spatialite_soname"
-  else
-      SPATIALITE_SONAME="spatialite.so"
-  fi
-else
-    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
-    if test -f "$with_spatialite/include/spatialite.h" -a \
-        -f "$with_spatialite/include/spatialite/sqlite3.h" -a \
-        "$SPATIALITE_INIT_FOUND" = "yes"; then
-
-        AC_MSG_RESULT(enabled)
-        HAVE_SPATIALITE=yes
-        SPATIALITE_AMALGAMATION=yes
-
-        # SpatiaLite amalgamation availability implies SQLite availability
-        # Caution : don't include the include/spatialite subdir in the include dir
-        # as there's a spatialite.h file in it, which we don't want to include.
-        # We want to include include/spatialite.h instead !
-        SQLITE3_CFLAGS="-I$with_spatialite/include"
-        SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
-        LIBS="$LIBS $SPATIALITE_LIBS"
-        HAVE_SQLITE3=yes
-
-    elif test -f "$with_spatialite/include/spatialite.h" -a \
-        "$SPATIALITE_INIT_FOUND" = "yes"; then
-
-        SQLITE3_REQ_VERSION="3.0.0"
-        AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
-
-        if test "$HAVE_SQLITE3" = "yes"; then
-            SPATIALITE_INC="-I$with_spatialite/include"
-            HAVE_SPATIALITE=yes
-            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
-            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
-            AC_MSG_RESULT(spatialite enabled)
-        else
-            AC_MSG_RESULT(spatialite disabled)
-        fi
-    else
-        AC_MSG_RESULT(disabled)
-    fi
-fi
-
-if test "$HAVE_SPATIALITE" = "yes"; then
-    ax_save_LIBS="${LIBS}"
-    LIBS="$SPATIALITE_LIBS"
-    AC_CHECK_LIB(spatialite,spatialite_target_cpu,SPATIALITE_412_OR_LATER=yes,SPATIALITE_412_OR_LATER=no)
-    LIBS="${ax_save_LIBS}"
-fi
-
-AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
-AC_SUBST([SPATIALITE_SONAME], $SPATIALITE_SONAME)
-AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
-AC_SUBST([SPATIALITE_AMALGAMATION], $SPATIALITE_AMALGAMATION)
-AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
-
-dnl ---------------------------------------------------------------------------
-dnl Check for SQLite (only if SpatiaLite is not detected).
+dnl Check for SQLite
 dnl Proj depends on it so it must appear before.
 dnl ---------------------------------------------------------------------------
 
-if test "${HAVE_SPATIALITE}" = "no" -o "${HAVE_SPATIALITE}" = "dlopen" ; then
-    SQLITE3_REQ_VERSION="3.0.0"
-    AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
-
-    if test "$HAVE_SQLITE3" = "yes"; then
-        LIBS="$SQLITE3_LDFLAGS $LIBS"
-    fi
-fi
+SQLITE3_REQ_VERSION="3.0.0"
+AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
 
 if test "$HAVE_SQLITE3" = "yes"; then
+    LIBS="$SQLITE3_LDFLAGS $LIBS"
     AC_CHECK_LIB(sqlite3,sqlite3_column_table_name,SQLITE_HAS_COLUMN_METADATA=yes,SQLITE_HAS_COLUMN_METADATA=no,$LIBS)
 fi
 
@@ -1450,7 +1463,7 @@ else
 
   if test "x$with_proj" = "xyes" -o "x$with_proj" = "x"; then
     ORIG_LIBS="$LIBS"
-    LIBS="-lproj $ORIG_LIBS"
+    LIBS="-lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
     AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
     AC_LANG_POP([C++])
@@ -1547,6 +1560,79 @@ fi
 AC_SUBST(PROJ_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for SpatiaLite.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(for spatialite)
+
+AC_ARG_WITH(spatialite,
+    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)],
+    ,,)
+
+AC_ARG_WITH(spatialite-soname,
+    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen],
+    ,,)
+
+HAVE_SPATIALITE=no
+
+if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
+    AC_MSG_RESULT(disabled)
+elif test "$with_spatialite" = "yes"; then
+    AC_CHECK_HEADERS(sqlite3.h)
+    if test "$ac_cv_header_sqlite3_h" = "yes"; then
+        AC_MSG_CHECKING([for spatialite.h in /usr/include or /usr/local/include])
+        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
+            AC_MSG_RESULT(found)
+            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-lsqlite3)
+            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
+                HAVE_SPATIALITE=yes
+                SPATIALITE_LIBS="-lspatialite -lsqlite3"
+                LIBS="$LIBS $SPATIALITE_LIBS"
+                HAVE_SQLITE3=yes
+            fi
+        else
+            AC_MSG_RESULT(not found : spatialite support disabled)
+        fi
+    fi
+elif test "$with_spatialite" = "dlopen"; then
+  HAVE_SPATIALITE=dlopen
+  AC_MSG_RESULT(dlopen)
+
+  if test "$with_spatialite_soname" != ""; then
+      SPATIALITE_SONAME="$with_spatialite_soname"
+  else
+      SPATIALITE_SONAME="spatialite.so"
+  fi
+else
+    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
+
+    if test -f "$with_spatialite/include/spatialite.h" -a \
+        "$SPATIALITE_INIT_FOUND" = "yes"; then
+
+        if test "$HAVE_SQLITE3" = "yes"; then
+            SPATIALITE_INC="-I$with_spatialite/include"
+            HAVE_SPATIALITE=yes
+            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
+            AC_MSG_RESULT(spatialite enabled)
+        else
+            AC_MSG_RESULT(spatialite disabled)
+        fi
+    else
+        AC_MSG_RESULT(disabled)
+    fi
+fi
+
+if test "$HAVE_SPATIALITE" = "yes"; then
+    AC_CHECK_LIB(spatialite,spatialite_target_cpu,SPATIALITE_412_OR_LATER=yes,SPATIALITE_412_OR_LATER=no)
+fi
+
+AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
+AC_SUBST([SPATIALITE_SONAME], $SPATIALITE_SONAME)
+AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
+AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
+
+dnl ---------------------------------------------------------------------------
 dnl Check if liblzma is available.
 dnl ---------------------------------------------------------------------------
 
@@ -1613,10 +1699,10 @@ OGRFORMATS_ENABLED=
 OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
-AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen til tsx usgsdem xpm xyz zmap])
+AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted elas envisat ers esric fit gff gsg gxf hf2 idrisi ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacta terragen tga til tsx usgsdem xpm xyz zmap])
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
-AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm htf jml mapml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
-AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas])dnl
+AC_DEFUN([INTERNAL_DRIVERS],[arcgen avc cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm jml mapml mvt ntf openfilegdb pgdump rec s57 selafin shape svg sxf tiger vdv wasp])dnl
+AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas ogcapi])dnl
 AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic ngw plscenes wfs])dnl
 AC_DEFUN([SQLITE_FORMATS],[rasterlite mbtiles])dnl
 AC_DEFUN([SQLITE_DRIVERS],[gpkg vfk osm])dnl
@@ -2309,72 +2395,6 @@ fi
 AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
 AC_SUBST(GEOTIFF_INCLUDE,$GEOTIFF_INCLUDE)
 
-dnl ---------------------------------------------------------------------------
-dnl Select a JPEG Library to use, or disable driver.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support (ARG=internal, no or path)],,)
-
-if test "$with_jpeg" = "no" ; then
-
-  JPEG_SETTING=no
-
-  echo "jpeg support disabled."
-
-elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
-
-  AC_CHECK_LIB(jpeg,jpeg_read_scanlines,JPEG_SETTING=external,JPEG_SETTING=internal,)
-  AC_CHECK_HEADERS(jpeglib.h)
-
-  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
-    JPEG_SETTING=internal
-  fi
-
-  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
-    AC_MSG_CHECKING([for width_in_blocks in jpeglib.h])
-
-    rm -f conftest.c
-    echo '#include <stdio.h>' >> conftest.c
-    echo '#include "jpeglib.h"' >> conftest.c
-    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
-    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
-      AC_MSG_RESULT([yes])
-    else
-      AC_MSG_RESULT([no])
-      JPEG_SETTING=internal
-    fi
-    rm -f conftest*
-  fi
-
-  if test "$JPEG_SETTING" = "external" ; then
-    LIBS="-ljpeg $LIBS"
-    echo "using pre-installed libjpeg."
-  else
-    echo "using internal jpeg code."
-  fi
-
-elif test "$with_jpeg" = "internal" ; then
-
-  JPEG_SETTING=internal
-
-  echo "using internal jpeg code."
-
-else
-
-  JPEG_SETTING=external
-  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
-  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
-
-  echo "using libjpeg from $with_jpeg."
-
-fi
-
-AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
-
-if test "$JPEG_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
-fi
-
 
 dnl ---------------------------------------------------------------------------
 dnl Check for CharLS
@@ -2387,18 +2407,37 @@ HAVE_CHARLS=no
 CHARLS_INC=
 
 if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
-  dnl CharLS 1.x
-  AC_CHECK_HEADERS([CharLS/interface.h])
-  if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
-    AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+  dnl CharLS 2.1
+  AC_CHECK_HEADERS([charls/version.h])
+  if test "$ac_cv_header_charls_version_h" = "yes"; then
+    AC_LANG_PUSH([C++])
+    AC_CHECK_LIB(charls,JpegLsDecode,HAVE_CHARLS=yes)
+    AC_LANG_POP([C++])
     if test "$HAVE_CHARLS" = "yes"; then
-        LIBS="-lCharLS $LIBS"
-        CHARLS_INC="-DCHARLS_INTERFACE_H"
+        LIBS="-lcharls $LIBS"
+        CHARLS_INC="-DCHARLS_2_1"
+    else
+        AC_LANG_PUSH([C++])
+        AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+        AC_LANG_POP([C++])
+        if test "$HAVE_CHARLS" = "yes"; then
+            LIBS="-lCharLS $LIBS"
+            CHARLS_INC="-DCHARLS_2_1"
+        fi
     fi
   else
-    dnl CharLS 2.0
-    AC_CHECK_HEADERS([CharLS/charls.h])
-    if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
+    dnl CharLS 1.x
+    AC_CHECK_HEADERS([CharLS/interface.h])
+    if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
+      AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+      if test "$HAVE_CHARLS" = "yes"; then
+          LIBS="-lCharLS $LIBS"
+          CHARLS_INC="-DCHARLS_INTERFACE_H"
+      fi
+    else
+      dnl CharLS 2.0
+      AC_CHECK_HEADERS([CharLS/charls.h])
+      if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
         AC_LANG_POP([C++])
@@ -2406,18 +2445,7 @@ if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
             LIBS="-lCharLS $LIBS"
             CHARLS_INC="-DCHARLS_2"
         fi
-    else
-        dnl CharLS 2.1
-        AC_CHECK_HEADERS([charls/charls.h])
-        if test "$ac_cv_header_charls_charls_h" = "yes"; then
-            AC_LANG_PUSH([C++])
-            AC_CHECK_LIB(charls,JpegLsDecode,HAVE_CHARLS=yes)
-            AC_LANG_POP([C++])
-            if test "$HAVE_CHARLS" = "yes"; then
-                LIBS="-lcharls $LIBS"
-                CHARLS_INC="-DCHARLS_2_1"
-            fi
-        fi
+      fi
     fi
   fi
 fi
@@ -4004,7 +4032,7 @@ m4_foreach_w([frmt],XERCES_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -4028,7 +4056,7 @@ m4_foreach_w([frmt],EXPAT_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -4119,7 +4147,7 @@ m4_foreach_w([frmt],ODBC_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 fi
 
@@ -4157,7 +4185,12 @@ elif test "$with_dods_root" = "yes" ; then
     AC_MSG_ERROR([--with-dods-root requires path to dods root as argument])
 else
     DODS_LIB=$with_dods_root/lib
-    DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
+    DODS_INC="-I$with_dods_root/include"
+    if test -d "$with_dods_root/include/libdap"; then
+       DODS_INC="$DODS_INC -I$with_dods_root/include/libdap";
+    elif test -d "$with_dods_root/include/dap"; then
+       DODS_INC="$DODS_INC -I$with_dods_root/include/dap";
+   fi
     DODS_BIN=$with_dods_root/bin
 
     dnl Check libdap version the sane way (if possible through dap-config)
@@ -4386,14 +4419,30 @@ else
         HAVE_TEIGHA=yes
         TEIGHA_PLT=$with_teigha_plt
         LIBS="${LIBS} ${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TG_Db.tx"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TD_DbEntities.tx"; then
+            LIBS="${LIBS} ${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TD_DbEntities.tx"
+            LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_DrawingsExamplesCommon.a"
+        fi
         LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTG_ExamplesCommon.a"
         LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_ExamplesCommon.a"
         LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_Key.a"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_DbCore.*"; then
+            LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_DbCore"
+        fi
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_DbRoot"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Gi"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_SpatialIndex"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Root"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_Zlib.*"; then
+            LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Zlib"
+        fi
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -loless"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/liblibcrypto.*"; then
+            LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -llibcrypto"
+        fi
         if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_Db.so"; then
             TEIGHA_CPPFLAGS="-D_TOOLKIT_IN_DLL_"
         fi
@@ -4429,7 +4478,7 @@ else
     LIBS_CPPIF="-L${with_idb}/lib/c++ -lifc++"
 
     IDB_INC="-I${with_idb}/incl/ -I${with_idb}/incl/dmi -I${with_idb}/incl/c++"
-    IDB_LIB="${LIBS_DIRS} ${LIBS_ESQL} ${LIBS_LIBMI} ${LIBS_CPPIF}"
+    IDB_LIB="${LIBS_CPPIF} ${LIBS_LIBMI} ${LIBS_DIRS} ${LIBS_ESQL}"
 
     ax_save_LIBS="${LIBS}"
     LIBS="${IDB_LIB} -ldl -lcrypt"
@@ -4449,115 +4498,6 @@ fi
 AC_SUBST(HAVE_IDB,${HAVE_IDB})
 AC_SUBST(IDB_INC,${IDB_INC})
 AC_SUBST(IDB_LIB,${IDB_LIB})
-
-dnl ---------------------------------------------------------------------
-dnl Find ESRI SDE ONLY IF REQUESTED.
-dnl ---------------------------------------------------------------------
-
-SDE_ENABLED=no
-
-AC_CHECKING(whether we should include ESRI SDE support)
-AC_ARG_WITH(sde,
-[  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).],,)
-
-AC_ARG_WITH(sde-version,
-[  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
-
-if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
-SDE_VERSION=""
-fi
-if test "$with_sde" = "yes" ; then
-
-  AC_CHECK_LIB(sde$SDE_VERSION,SE_connection_create,SDE_ENABLED=yes,,,)
-
-  if test -n "$SDE_ENABLED" ; then
-      SDE_LIB="-lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
-      AC_CHECK_LIB(pthread, main, SDE_LIB="$SDE_LIB -lpthread",,)
-      AC_CHECK_LIB(socket, main, SDE_LIB="$SDE_LIB -lsocket",,)
-      AC_CHECK_LIB(dl, main, SDE_LIB="$SDE_LIB -ldl",,)
-      AC_MSG_RESULT([        using ESRI SDE from system libs.])
-  else
-      AC_MSG_WARN([        ESRI SDE not found in system libs... use --with-sde=DIR.])
-  fi
-
-elif test -n "$with_sde" -a "$with_sde" != "no" ; then
-
-  SDE_DIR=$with_sde
-
-  test -f $SDE_DIR/arcsde/coverages/include/sdetype.h && SDE_INCDIR="$SDE_DIR/arcsde/coverages/include"
-  test -f $SDE_DIR/include/sdetype.h && SDE_INCDIR="$SDE_DIR/include"
-  test -f $SDE_DIR/sdetype.h && SDE_INCDIR="$SDE_DIR"
-
-  test -f $SDE_DIR/lib/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR/lib"
-  test -f $SDE_DIR/lib64/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR/lib64"
-  test -f $SDE_DIR/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR"
-
-  test -f $SDE_DIR/lib/libsde$SDE_VERSION.so -o -f $SDE_DIR/lib/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR/lib"
-  test -f $SDE_DIR/lib64/libsde$SDE_VERSION.so -o -f $SDE_DIR/lib64/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR/lib64"
-  test -f $SDE_DIR/libsde$SDE_VERSION.so -o -f $SDE_DIR/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR"
-
-  if test -n "$SDE_INCDIR" -a -n "$SDE_LIBDIR" ; then
-      SDE_INC=-I$SDE_INCDIR
-      SDE_LIB="-L$SDE_LIBDIR -lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
-      AC_CHECK_LIB(pthread, main, SDE_LIB="$SDE_LIB -lpthread",,)
-      AC_CHECK_LIB(socket, main, SDE_LIB="$SDE_LIB -lsocket",,)
-      AC_CHECK_LIB(dl, main, SDE_LIB="$SDE_LIB -ldl",,)
-  else
-      AC_MSG_ERROR("Could not find sdetype.h or libsde$SDE_VERSION.a/libsde$SDE_VERSION.so in $SDE_DIR.")
-  fi
-
-  if test "`arch`" = "x86_64" ; then
-    AC_MSG_RESULT([        Adding -DSDE64 for 64bit platform.])
-    SDE_INC="$SDE_INC -DSDE64"
-  fi
-
-  SDE_ENABLED=yes
-  OPT_GDAL_FORMATS="sde $OPT_GDAL_FORMATS"
-  AC_MSG_RESULT([        using ESRI SDE from $SDE_DIR.])
-
-else
-
-  AC_MSG_RESULT([        ESRI SDE support not requested.])
-fi
-
-AC_SUBST(SDE_ENABLED,$SDE_ENABLED)
-AC_SUBST(SDE_INC,    $SDE_INC)
-AC_SUBST(SDE_LIB,    $SDE_LIB)
-
-dnl ---------------------------------------------------------------------------
-dnl Check if epsilon library is available.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(epsilon,[  --with-epsilon[=ARG]    Include EPSILON support (ARG=no, yes or libepsilon install root path)],,)
-
-EPSILON_SETTING=no
-
-if test "$with_epsilon" = "yes" ; then
-
-  AC_CHECK_LIB(epsilon,eps_read_block_header,EPSILON_SETTING=yes,EPSILON_SETTING=no,)
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-lepsilon $LIBS"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-elif test "$with_epsilon" != "no" -a "$with_epsilon" != ""; then
-
-  AC_CHECK_LIB(epsilon,eps_read_block_header,EPSILON_SETTING=yes,EPSILON_SETTING=no,-L$with_epsilon/lib -lepsilon)
-
-  if test "$EPSILON_SETTING" = "yes" ; then
-    LIBS="-L$with_epsilon/lib -lepsilon $LIBS"
-    EXTRA_INCLUDES="-I$with_epsilon/include $EXTRA_INCLUDES"
-  else
-    echo "libepsilon not found - EPSILON support disabled"
-  fi
-
-fi
-
-if test "$EPSILON_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="epsilon $OPT_GDAL_FORMATS"
-fi
 
 dnl ---------------------------------------------------------------------------
 dnl Check if webp library is available.
@@ -4601,14 +4541,11 @@ dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
 GEOS_INIT(3.1.0)
-HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
-
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
   STRIP_SYSTEM_LIBRARY_PATHS("${GEOS_LIBS}")
   GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
-  HAVE_GEOS_RESULT="yes"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -4616,14 +4553,11 @@ dnl Check if SFCGAL library is available.
 dnl ---------------------------------------------------------------------------
 
 SFCGAL_INIT(1.2.2)
-HAVE_SFCGAL_RESULT="no"
 if test "${HAVE_SFCGAL}" = "yes" ; then
-
   AC_MSG_NOTICE([Using C API from SFCGAL $SFCGAL_VERSION])
   STRIP_SYSTEM_LIBRARY_PATHS("${SFCGAL_LIBS}")
   SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
-  HAVE_SFCGAL_RESULT="yes"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -4926,7 +4860,7 @@ if test "$PDF_PLUGIN" != "yes" ; then
     if test "$LIBZ_SETTING" != "no" ; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED pdf"
     fi
-  fi 
+  fi
 fi
 
 
@@ -4949,8 +4883,8 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
             [POPPLER_VERSION=`$PKG_CONFIG --modversion poppler`], [POPPLER_VERSION=])
     if test "$POPPLER_VERSION" != ""; then
         HAVE_POPPLER=yes
-        POPPLER_MAJOR_VERSION=`expr $POPPLER_VERSION : '\([[0-9]]*\)'`
-        POPPLER_MINOR_VERSION=`expr $POPPLER_VERSION : '[[0-9]]*\.\([[0-9]]*\)'`
+        POPPLER_MAJOR_VERSION=`echo $POPPLER_VERSION | cut -d'.' -f1`
+        POPPLER_MINOR_VERSION=`echo $POPPLER_VERSION | cut -d'.' -f2 | sed -e 's/^0//'`
         POPPLER_CFLAGS=`echo $POPPLER_CFLAGS $POPPLER_CFLAGS | sed "s/include\/poppler/include/"`
     fi
 else
@@ -5088,12 +5022,13 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
     rm -f testpdfium.*
     echo '#include "public/fpdfview.h"' > testpdfium.cpp
     echo '#include "core/fpdfapi/page/cpdf_page.h"' >> testpdfium.cpp
+    echo '#include "constants/transparency.h"' >> testpdfium.cpp # specific to pdfium_build_gdal_3_2
     echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
     TEST_CXX_FLAGS=""
     if test ! -z "`uname | grep Darwin`" ; then
         TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
     fi
-    if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
+    if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS -std=c++14 testpdfium.cpp -o testpdfium ${PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
         HAVE_PDFIUM=yes
         CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
         if test "$PDF_PLUGIN" = "no"; then
@@ -5106,7 +5041,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
     rm -f testpdfium
 
     if test "$HAVE_PDFIUM" = "no" -a "$with_pdfium" != ""; then
-        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_1])
+        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_2])
     fi
 else
     AC_MSG_RESULT([disabled])
@@ -5458,7 +5393,7 @@ TILEDB_SETTING=no
 if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
 
   AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,)
-  
+
   if test "$TILEDB_SETTING" = "yes" ; then
     LIBS="-ltiledb $LIBS"
   else
@@ -5900,21 +5835,74 @@ dnl ---------------------------------------------------------------------------
 dnl Whether to include LERC in the build
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH([lerc],
-            AS_HELP_STRING([--without-lerc],
-               [Disable LERC library]),,)
+AC_ARG_WITH(lerc,
+    [  --with-lerc[=ARG]         Include libLerc support(ARG=yes/no/internal/path). Internal liblerc is required for MRF Lerc support. Internal or external libLerc may be used for internal libtiff Lerc support.],,,)
 
+HAVE_LERC=no
 AC_MSG_CHECKING([for LERC])
-if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
-    HAVE_LERC=yes
-    AC_MSG_RESULT([enabled])
-else
+if test "$with_lerc" = "internal"; then
+    if test "$ac_cv_c_bigendian" = "yes"; then
+        AC_MSG_RESULT([disabled on big-endian])
+    else
+        HAVE_LERC=internal
+        AC_MSG_RESULT([enabled, internal])
+    fi
+elif test "$with_lerc" = "no"; then
     HAVE_LERC=no
     AC_MSG_RESULT([disabled by user])
+elif test "$with_lerc" = "yes" -o "x$with_lerc" = "x" ; then
+  lerc_lib_name="LercLib"
+  AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  if test "$lerc_lib" = "no" ; then
+    lerc_lib_name="Lerc"
+    AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  fi
+  if test "$lerc_lib" = "no" -a "$with_lerc" = "yes"; then
+    AC_MSG_ERROR([lerc library not found])
+  fi
+
+  AC_CHECK_HEADER(Lerc_c_api.h, [lerc_c_api_h=yes], [lerc_c_api_h=no])
+  if test "$lerc_c_api_h" = "no" -a "$with_lerc" = "yes"; then
+    AC_MSG_ERROR([Liblerc headers not found])
+  fi
+
+  if test "$lerc_lib" = "yes" -a "$lerc_c_api_h" = "yes"; then
+    HAVE_LERC=external
+    LIBS="$LIBS -l$lerc_lib_name"
+  else
+    if test "$ac_cv_c_bigendian" = "yes"; then
+        AC_MSG_RESULT([disabled on big-endian])
+    else
+        HAVE_LERC=internal
+        AC_MSG_RESULT([enabled, internal])
+    fi
+  fi
+else
+
+  ORIG_LIBS="$LIBS"
+  LIBS="-L$with_lerc/lib $LIBS"
+  lerc_lib_name="LercLib"
+  AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  if test "$lerc_lib" = "no" ; then
+    lerc_lib_name="Lerc"
+    AC_CHECK_LIB("$lerc_lib_name", lerc_decode, [lerc_lib=yes], [lerc_lib=no],)
+  fi
+  if test "$lerc_lib" = "no"; then
+    AC_MSG_ERROR([lerc library not found])
+  fi
+
+  LIBS="-L$with_lerc/lib -l$lerc_lib_name $ORIG_LIBS"
+
+  if ! test -f "$with_lerc/include/Lerc_c_api.h"; then
+    AC_MSG_ERROR([Liblerc headers not found])
+  fi
+
+  HAVE_LERC=external
+  LERC_INCLUDE="-I$with_lerc/include"
 fi
 
 AC_SUBST(HAVE_LERC,$HAVE_LERC)
-
+AC_SUBST(LERC_INCLUDE,$LERC_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
 dnl Whether to include NULL driver in the build
@@ -5968,6 +5956,43 @@ else
 fi
 
 AC_SUBST(EXR_CFLAGS,$EXR_CFLAGS)
+
+dnl ---------------------------------------------------------------------------
+dnl Detect libheif
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(heif,[  --with-heif            Include HEIF support via libheif library],,)
+
+HAVE_HEIF=no
+HEIF_CFLAGS=""
+
+if test "$with_heif" = "no" ; then
+
+  AC_MSG_NOTICE([HEIF support disabled.])
+
+else
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([HEIF], [libheif >= 1.1], [], [HAVE_HEIF=no])
+
+  if test -n "$HEIF_LIBS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$HEIF_LIBS"
+    AC_CHECK_LIB(heif,heif_context_get_list_of_top_level_image_IDs, [HAVE_HEIF=yes], [HAVE_HEIF=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_HEIF" = "yes"; then
+        OPT_GDAL_FORMATS="heif $OPT_GDAL_FORMATS"
+        LIBS="$HEIF_LIBS $LIBS"
+    else
+        HEIF_CFLAGS=""
+    fi
+  fi
+fi
+
+AC_SUBST(HEIF_CFLAGS,$HEIF_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Test if sprintf can be overloaded with _XOPEN_SOURCE being defined or other,
@@ -6033,94 +6058,90 @@ LOC_MSG([  C++14 support:             ${CXX14_SUPPORT}])
 LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
-LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
-LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
-LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
-LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
-LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
-LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
+LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
-LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
-LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
+LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
+LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
+LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  DDS support:               ${DDS_SETTING}])
+LOC_MSG([  DODS support:              ${HAVE_DODS}])
+LOC_MSG([  ECW support:               ${ECW_SETTING}])
+LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
+LOC_MSG([  EXR support:               ${HAVE_EXR}])
+LOC_MSG([  FGDB support:              ${FGDB_ENABLED}])
+LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
+LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
+LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
+LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
+LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  GTA support:               ${GTA_SETTING}])
-LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
-LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
-LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
-LOC_MSG([  12 bit JPEG:               ${JPEG12_ENABLED}])
-LOC_MSG([  12 bit JPEG-in-TIFF:       ${TIFF_JPEG12_ENABLED}])
-LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
-LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
-LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])
+LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
+LOC_MSG([  HEIF support:              ${HAVE_HEIF}])
+LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
+LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
+LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
+LOC_MSG([  JPEG 12 bit:               ${JPEG12_ENABLED}])
+LOC_MSG([  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}])
+if test "x$HAVE_JASPER_UUID" != "x" ; then
+  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
+else
+  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER}])
+fi
+LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
+LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 LOC_MSG([  Kea support:               ${HAVE_KEA}])
-LOC_MSG([  NetCDF support:            ${NETCDF_SETTING}])
+LOC_MSG([  LERC support:              ${HAVE_LERC}])
+LOC_MSG([  libdeflate support:        ${LIBDEFLATE_SETTING}])
+LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
+LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
+LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
+LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
+LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
+LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
+LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
+LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
+LOC_MSG([  MDB support:               ${MDB_ENABLED}])
+LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
+LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
+LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
+LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
+LOC_MSG([  MSG support:               ${HAVE_MSG}])
+LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 if test "$NETCDF_SETTING" = "yes" ; then
   LOC_MSG([  NetCDF has netcdf_mem.h:   ${NETCDF_MEM}])
 fi
-LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
-if test "x$HAVE_JASPER_UUID" != "x" ; then
-  LOC_MSG([  JasPer support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
-else
-  LOC_MSG([  JasPer support:            ${HAVE_JASPER}])
-fi
-LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
-LOC_MSG([  ECW support:               ${ECW_SETTING}])
-LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
-LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
-LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
-LOC_MSG([  MSG support:               ${HAVE_MSG}])
-LOC_MSG([  EPSILON support:           ${EPSILON_SETTING}])
-LOC_MSG([  WebP support:              ${WEBP_SETTING}])
-LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
-LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
-LOC_MSG([  LERC support:              ${HAVE_LERC}])
-LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
-LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
-LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
-LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
-LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
-LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
-LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
-LOC_MSG([  FGDB support:              ${FGDB_ENABLED}])
-LOC_MSG([  MDB support:               ${MDB_ENABLED}])
-LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
+LOC_MSG([  NetCDF support:            ${NETCDF_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
-LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
-LOC_MSG([  SDE support:               ${SDE_ENABLED}])
-LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
-LOC_MSG([  RDB support:               ${RDB_SETTING}])
-LOC_MSG([  DODS support:              ${HAVE_DODS}])
-LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
+LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
+LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
+LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
+LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
+LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
+LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
 LOC_MSG([  PCRE support:              ${HAVE_PCRE}])
+LOC_MSG([  PDFium support:            ${HAVE_PDFIUM}])
+LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
+LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
+LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
+LOC_MSG([  QHull support:             ${QHULL_SETTING}])
+LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
+LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
+LOC_MSG([  RDB support:               ${RDB_SETTING}])
+LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL}])
+LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 if test "x$SPATIALITE_SONAME" != "x"; then
-LOC_MSG([  SpatiaLite shared obj name:${SPATIALITE_SONAME}])
+  LOC_MSG([  SpatiaLite shared obj name:${SPATIALITE_SONAME}])
 fi
-LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
+LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  Teigha (DWG and DGNv8):    ${HAVE_TEIGHA}])
-LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
-LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
-LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL_RESULT}])
-LOC_MSG([  QHull support:             ${QHULL_SETTING}])
-LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
-LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
-LOC_MSG([  PDFium support:            ${HAVE_PDFIUM}])
-LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
-LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
-LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
-LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
-LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
-LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
-LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
-LOC_MSG([  EXR support:               ${HAVE_EXR}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
-LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
-LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])
-LOC_MSG([  misc. ogr formats:        ${OGRFORMATS_ENABLED}])
-LOC_MSG([  disabled ogr formats:     ${OGRFORMATS_DISABLED}])
+LOC_MSG([  WebP support:              ${WEBP_SETTING}])
+LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
+LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
 
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
@@ -6132,6 +6153,12 @@ if test -z "$BINDINGS"; then
 else
     WHAT_BINDINGS="$BINDINGS"
 fi
+LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
+LOC_MSG([  misc. ogr formats:        ${OGRFORMATS_ENABLED}])
+LOC_MSG()
+LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])
+LOC_MSG([  disabled ogr formats:     ${OGRFORMATS_DISABLED}])
+LOC_MSG()
 LOC_MSG([  SWIG Bindings:             ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  PROJ >= 6:                 yes])

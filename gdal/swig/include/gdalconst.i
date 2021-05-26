@@ -81,6 +81,7 @@
 %constant GRIORA_CubicSpline = GRIORA_CubicSpline;
 %constant GRIORA_Lanczos = GRIORA_Lanczos;
 %constant GRIORA_Average = GRIORA_Average;
+%constant GRIORA_RMS = GRIORA_RMS;
 %constant GRIORA_Mode = GRIORA_Mode;
 %constant GRIORA_Gauss = GRIORA_Gauss;
 
@@ -111,12 +112,14 @@
 %constant GRA_CubicSpline      = GRA_CubicSpline;
 %constant GRA_Lanczos          = GRA_Lanczos;
 %constant GRA_Average          = GRA_Average;
+%constant GRA_RMS = GRA_RMS;
 %constant GRA_Mode             = GRA_Mode;
 %constant GRA_Max              = GRA_Max;
 %constant GRA_Min              = GRA_Min;
 %constant GRA_Med              = GRA_Med;
 %constant GRA_Q1               = GRA_Q1;
 %constant GRA_Q3               = GRA_Q3;
+%constant GRA_Sum              = GRA_Sum;
 
 // GDALPaletteInterp
 %constant GPI_Gray  = GPI_Gray;
@@ -233,6 +236,7 @@
 
 %constant CPLES_BackslashQuotable = CPLES_BackslashQuotable;
 %constant CPLES_XML               = CPLES_XML;
+%constant CPLES_XML_BUT_QUOTES    = CPLES_XML_BUT_QUOTES;
 %constant CPLES_URL               = CPLES_URL;
 %constant CPLES_SQL               = CPLES_SQL;
 %constant CPLES_CSV               = CPLES_CSV;

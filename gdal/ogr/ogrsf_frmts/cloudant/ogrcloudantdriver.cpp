@@ -56,6 +56,9 @@ static GDALDataset* OGRCloudantDriverOpen( GDALOpenInfo* poOpenInfo )
     if( OGRCloudantDriverIdentify(poOpenInfo) == 0 )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("CLOUDANT") )
+        return nullptr;
+
     OGRCloudantDataSource   *poDS = new OGRCloudantDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
@@ -78,6 +81,9 @@ static GDALDataset* OGRCloudantDriverCreate( const char * pszName,
                                             GDALDataType /* eDT */,
                                             char ** /* papszOptions */ )
 {
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("CLOUDANT") )
+        return nullptr;
+
     OGRCloudantDataSource   *poDS = new OGRCloudantDataSource();
 
     if( !poDS->Open( pszName, TRUE ) )
@@ -104,7 +110,7 @@ void RegisterOGRCloudant()
     poDriver->SetDescription( "Cloudant" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Cloudant / CouchDB" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cloudant.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/cloudant.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "Cloudant:" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>");
@@ -112,7 +118,7 @@ void RegisterOGRCloudant()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
     "  <Option name='UPDATE_PERMISSIONS' type='string' description='Update permissions for the new layer.'/>"
-    "  <Option name='GEOJSON ' type='boolean' description='Whether to write documents as GeoJSON documents.' default='YES'/>"
+    "  <Option name='GEOJSON' type='boolean' description='Whether to write documents as GeoJSON documents.' default='YES'/>"
     "  <Option name='COORDINATE_PRECISION' type='int' description='Maximum number of figures after decimal separator to write in coordinates.' default='15'/>"
     "</LayerCreationOptionList>");
 

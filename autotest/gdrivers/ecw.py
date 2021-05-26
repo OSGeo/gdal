@@ -33,7 +33,6 @@
 import os
 import os.path
 import sys
-from sys import version_info
 import array
 import shutil
 from osgeo import gdal
@@ -43,6 +42,8 @@ from osgeo import osr
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.require_driver('ECW')
+
 ###############################################################################
 
 
@@ -50,67 +51,150 @@ def has_write_support():
     if hasattr(gdaltest, 'b_ecw_has_write_support'):
         return gdaltest.b_ecw_has_write_support
     gdaltest.b_ecw_has_write_support = False
-    if test_ecw_1() != 'success':
+
+    ecw_drv = gdal.GetDriverByName('ECW')
+    if ecw_drv is None or ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') is None:
         return False
-    if test_ecw_3() == 'success':
-        gdaltest.b_ecw_has_write_support = True
+
+    ds = gdal.Open('data/ecw/jrc.ecw')
+    if ds:
+        out_ds = ecw_drv.CreateCopy('tmp/jrc_out.ecw', ds, options=['TARGET=75'])
+        if out_ds:
+            out_ds = None
+            gdaltest.b_ecw_has_write_support = True
+
+            try:
+                os.remove('tmp/jrc_out.ecw')
+            except OSError:
+                pass
+            try:
+                os.remove('tmp/jrc_out.ecw.aux.xml')
+            except OSError:
+                pass
+        else:
+            if 'ECW_ENCODE_KEY' not in gdal.GetLastErrorMsg():
+                pytest.fail('ECW creation failed for unknown reason')
+
+    return gdaltest.b_ecw_has_write_support
+
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+
+    gdaltest.ecw_drv = gdal.GetDriverByName('ECW')
+    assert gdaltest.ecw_drv is not None
+    gdaltest.jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
+
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
+
+    longname = gdaltest.ecw_drv.GetMetadataItem('DMD_LONGNAME')
+
+    sdk_off = longname.find('SDK ')
+    if sdk_off != -1:
+        gdaltest.ecw_drv.major_version = int(float(longname[sdk_off + 4]))
+        sdk_minor_off = longname.find('.', sdk_off)
+        if sdk_minor_off >= 0:
+            if longname[sdk_minor_off + 1] == 'x':
+                gdaltest.ecw_drv.minor_version = 3
+            else:
+                gdaltest.ecw_drv.minor_version = int(longname[sdk_minor_off + 1])
+        else:
+            gdaltest.ecw_drv.minor_version = 0
+    else:
+        gdaltest.ecw_drv.major_version = 3
+        gdaltest.ecw_drv.minor_version = 3
+
+    # we set ECW to not resolve projection and datum strings to get 3.x behavior.
+    gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
+
+    yield
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
     try:
         os.remove('tmp/jrc_out.ecw')
     except OSError:
         pass
-    return gdaltest.b_ecw_has_write_support
+    try:
+        os.remove('tmp/jrc_out.ecw.aux.xml')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/ecw_5.jp2')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/ecw_5.jp2.aux.xml')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/ecw_7.ntf')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/ecw9.jp2')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/test_11.ntf')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/rgb_gcp.jp2')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/spif83.ecw')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/spif83.ecw.aux.xml')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/UInt16_big_out.ecw')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/UInt16_big_out.jp2')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/UInt16_big_out.jp2.aux.xml')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/UInt16_big_out.ecw.aux.xml')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/jrc312.ecw')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/jrc123.ecw')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/jrcstats.ecw')
+    except OSError:
+        pass
 
-###############################################################################
-#
+    if hasattr(gdaltest, 'ecw_38_fname'):
+        gdal.Unlink(gdaltest.ecw_38_fname)
+        gdal.Unlink(gdaltest.ecw_38_fname + ".aux.xml")
 
+    try:
+        os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    except OSError:
+        pass
 
-def test_ecw_init():
-
-    gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
-
-###############################################################################
-# Verify we have the driver.
-
-
-def test_ecw_1():
-
-    gdaltest.ecw_drv = gdal.GetDriverByName('ECW')
-    gdaltest.jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
-
-    gdaltest.ecw_write = 0
-
-    if gdaltest.ecw_drv is not None:
-        if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') is not None:
-            gdaltest.ecw_write = 1
-
-        longname = gdaltest.ecw_drv.GetMetadataItem('DMD_LONGNAME')
-
-        sdk_off = longname.find('SDK ')
-        if sdk_off != -1:
-            gdaltest.ecw_drv.major_version = int(float(longname[sdk_off + 4]))
-            sdk_minor_off = longname.find('.', sdk_off)
-            if sdk_minor_off >= 0:
-                if longname[sdk_minor_off + 1] == 'x':
-                    gdaltest.ecw_drv.minor_version = 3
-                else:
-                    gdaltest.ecw_drv.minor_version = int(longname[sdk_minor_off + 1])
-            else:
-                gdaltest.ecw_drv.minor_version = 0
-        else:
-            gdaltest.ecw_drv.major_version = 3
-            gdaltest.ecw_drv.minor_version = 3
-
-    # we set ECW to not resolve projection and datum strings to get 3.x behavior.
-    gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
 ###############################################################################
 # Verify various information about our test image.
 
 
 def test_ecw_2():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/ecw/jrc.ecw')
 
@@ -132,37 +216,16 @@ def test_ecw_2():
         'geotransform differs from expected'
 
 ###############################################################################
-# Verify that an write the imagery out to a new file.
-
-
-def test_ecw_3():
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
-        pytest.skip()
-
-    ds = gdal.Open('data/ecw/jrc.ecw')
-    out_ds = gdaltest.ecw_drv.CreateCopy('tmp/jrc_out.ecw', ds, options=['TARGET=75'])
-    if out_ds is not None:
-        version = out_ds.GetMetadataItem('VERSION')
-        assert version == '2', 'bad VERSION'
-
-    ds = None
-
-    if out_ds is None:
-        if gdal.GetLastErrorMsg().find('ECW_ENCODE_KEY') >= 0:
-            gdaltest.ecw_write = 0
-            pytest.skip()
-
-    gdaltest.b_ecw_has_write_support = True
-
-###############################################################################
 # Verify various information about our generated image.
 
 
 def test_ecw_4():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if not has_write_support():
         pytest.skip()
 
+    src_ds = gdal.Open('data/ecw/jrc.ecw')
+    gdaltest.ecw_drv.CreateCopy('tmp/jrc_out.ecw', src_ds, options=['TARGET=75'])
     gdal.Unlink('tmp/jrc_out.ecw.aux.xml')
 
     ds = gdal.Open('tmp/jrc_out.ecw')
@@ -193,7 +256,7 @@ def test_ecw_4():
 
 
 def test_ecw_5():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.Open('data/small.vrt')
@@ -209,7 +272,7 @@ def test_ecw_5():
 
 def test_ecw_6():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.Open('tmp/ecw_5.jp2')
@@ -251,7 +314,7 @@ def test_ecw_6():
 
 
 def test_ecw_7():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.Open('data/small.vrt')
@@ -265,7 +328,7 @@ def test_ecw_7():
 
 def test_ecw_8():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.Open('tmp/ecw_7.ntf')
@@ -291,7 +354,7 @@ def test_ecw_8():
 
 
 def test_ecw_9():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     # This always crashes on Frank's machine - some bug in old sdk.
@@ -304,7 +367,7 @@ def test_ecw_9():
 
     ds.SetProjection('GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]')
 
-    raw_data = array.array('h', list(range(200))).tostring()
+    raw_data = array.array('h', list(range(200))).tobytes()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -316,7 +379,7 @@ def test_ecw_9():
 
 
 def test_ecw_10():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     # This always crashes on Frank's machine - some bug in old sdk.
@@ -340,7 +403,7 @@ def test_ecw_10():
 
 
 def test_ecw_11():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     drv = gdal.GetDriverByName('NITF')
@@ -349,7 +412,7 @@ def test_ecw_11():
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
-    raw_data = array.array('h', my_list).tostring()
+    raw_data = array.array('h', my_list).tobytes()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -367,7 +430,7 @@ def test_ecw_11():
 
 
 def test_ecw_12():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.Open('tmp/test_11.ntf')
@@ -422,7 +485,7 @@ def test_ecw_13():
 
 
 def test_ecw_14():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.Open('data/rgb_gcp.vrt')
@@ -434,7 +497,7 @@ def test_ecw_14():
 
 def test_ecw_15():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.Open('tmp/rgb_gcp.jp2')
@@ -567,9 +630,6 @@ def test_ecw_19():
 
 def test_ecw_20():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/ecw/jrc.ecw')
 
     band = ds.GetRasterBand(1)
@@ -603,9 +663,6 @@ def test_ecw_20():
 
 def test_ecw_21():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/ecw/jrc.ecw')
     mem_ds = gdal.GetDriverByName('MEM').CreateCopy('xxxyyy', ds, options=['INTERLEAVE=PIXEL'])
     ds = None
@@ -630,9 +687,6 @@ def test_ecw_21():
 
 def test_ecw_22():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/ecw/spif83.ecw')
 
     expected_wkt = """PROJCS["L2CAL6M",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",32.7833333078095],PARAMETER["standard_parallel_2",33.8833333208765],PARAMETER["latitude_of_origin",32.166666682432],PARAMETER["central_meridian",-116.249999974595],PARAMETER["false_easting",2000000],PARAMETER["false_northing",500000],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
@@ -647,18 +701,16 @@ def test_ecw_22():
 
 def test_ecw_23():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     shutil.copyfile('data/ecw/spif83.ecw', 'tmp/spif83.ecw')
     shutil.copyfile('data/ecw/spif83_hidden.ecw.aux.xml', 'tmp/spif83.ecw.aux.xml')
 
     ds = gdal.Open('tmp/spif83.ecw')
 
-    expected_wkt = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","27700"]]"""
     wkt = ds.GetProjectionRef()
 
-    assert wkt == expected_wkt, 'did not get expected SRS.'
+    assert '36 / British National Grid' in wkt
+    assert 'TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489]' in wkt
+    assert 'AUTHORITY["EPSG","27700"]' in wkt
 
     gt = ds.GetGeoTransform()
     expected_gt = (6138559.5576418638, 195.5116973254697, 0.0, 2274798.7836679211, 0.0, -198.32414964918371)
@@ -670,15 +722,12 @@ def test_ecw_23():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test that we can alter geotransform on existing ECW
 
 
 def test_ecw_24():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     shutil.copyfile('data/ecw/spif83.ecw', 'tmp/spif83.ecw')
     try:
@@ -699,7 +748,7 @@ def test_ecw_24():
 
     with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_gt = ds.GetGeoTransform()
@@ -713,15 +762,12 @@ def test_ecw_24():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test that we can alter projection info on existing ECW (through SetProjection())
 
 
 def test_ecw_25():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     shutil.copyfile('data/ecw/spif83.ecw', 'tmp/spif83.ecw')
     try:
@@ -748,7 +794,7 @@ def test_ecw_25():
 
     with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_proj = ds.GetMetadataItem("PROJ", "ECW")
@@ -768,15 +814,12 @@ def test_ecw_25():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test that we can alter projection info on existing ECW (through SetMetadataItem())
 
 
 def test_ecw_26():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     shutil.copyfile('data/ecw/spif83.ecw', 'tmp/spif83.ecw')
     try:
@@ -802,7 +845,7 @@ def test_ecw_26():
 
     with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_proj = ds.GetMetadataItem("PROJ", "ECW")
@@ -826,14 +869,14 @@ def test_ecw_26():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
 
 def test_ecw_27():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.Open('data/jpeg2000/byte_without_geotransform.jp2')
@@ -849,9 +892,6 @@ def test_ecw_27():
 
 
 def test_ecw_28():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     x = y = 50
 
@@ -874,9 +914,6 @@ def test_ecw_28():
 
 
 def test_ecw_29():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/ecw/jrc.ecw')
     data_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400)
@@ -946,9 +983,6 @@ def test_ecw_29():
 
 def test_ecw_30():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/ecw/jrc.ecw')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     data_readraster = ds.GetRasterBand(1).ReadRaster(0, 0, blockxsize, blockysize)
@@ -962,9 +996,6 @@ def test_ecw_30():
 
 
 def test_ecw_31():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     if gdaltest.ecw_drv.major_version < 4:
         pytest.skip()
@@ -1007,9 +1038,6 @@ def test_ecw_31():
 
 def test_ecw_32():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/ecw/jrc.ecw')
     data_123 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3])
     data_321 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[3, 2, 1])
@@ -1044,9 +1072,6 @@ def test_ecw_32():
 
 
 def test_ecw_33():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/ecw/jrc.ecw')
     multiband_data = ds.ReadRaster(100, 100, 50, 50)
@@ -1097,9 +1122,6 @@ def test_ecw_33():
 
 def test_ecw_33_bis():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/ecw/jrc.ecw')
     data_ref = ds.ReadRaster(0, 0, 50, 50)
 
@@ -1132,7 +1154,7 @@ def test_ecw_33_bis():
 
 def test_ecw_34():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if not has_write_support():
         pytest.skip()
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
@@ -1157,7 +1179,7 @@ def test_ecw_34():
 
 
 def test_ecw_35():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     ds = gdal.GetDriverByName('MEM').Create('MEM:::', 128, 128, 1, gdal.GDT_UInt16)
@@ -1179,7 +1201,7 @@ def test_ecw_35():
 
 def test_ecw_36():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if not has_write_support():
         pytest.skip()
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
@@ -1236,7 +1258,7 @@ def test_ecw_36():
 
 def test_ecw_37():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if not has_write_support():
         pytest.skip()
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
@@ -1271,15 +1293,8 @@ def test_ecw_37():
 
 def test_ecw_38():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
-    gdaltest.ecw_38_fname = ''
-    if version_info >= (3, 0, 0):
-        exec("""gdaltest.ecw_38_fname = 'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
-    else:
-        exec("""gdaltest.ecw_38_fname = u'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw'""")
-    fname = gdaltest.ecw_38_fname
+    gdaltest.ecw_38_fname = fname = (
+        'tmp/za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw')
 
     if gdaltest.ecw_drv.major_version < 4:
         pytest.skip()
@@ -1304,7 +1319,7 @@ def test_ecw_38():
 
 def test_ecw_39():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
+    if not has_write_support():
         pytest.skip()
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
@@ -1330,9 +1345,6 @@ def test_ecw_39():
 
 
 def test_ecw_40():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/ecw/stefan_full_rgba_ecwv3_meta.ecw')
     if ds is None:
@@ -1370,14 +1382,14 @@ def test_ecw_40():
         got_cs = ds.GetRasterBand(i + 1).Checksum()
         assert got_cs == expected_cs_list[i]
 
-    
+
 ###############################################################################
 # Check generating statistics & histogram for a ECW v3 file
 
 
 def test_ecw_41():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
+    if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
 
     shutil.copy('data/ecw/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1405,7 +1417,7 @@ def test_ecw_41():
     # Check that there's no .aux.xml file
     with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
     assert ds.GetRasterBand(1).GetMinimum() == 0
@@ -1439,16 +1451,16 @@ def test_ecw_41():
     # Check that there's no .aux.xml file
     with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    
 
-    
+
+
 ###############################################################################
 # Test setting/unsetting file metadata of a ECW v3 file
 
 
 def test_ecw_42():
 
-    if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
+    if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
 
     shutil.copy('data/ecw/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1475,7 +1487,7 @@ def test_ecw_42():
     # Check that there's no .aux.xml file
     with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    
+
 
     # Check item values
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1503,7 +1515,7 @@ def test_ecw_42():
     # Check that there's no .aux.xml file
     with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    
+
 
     # Check item values
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1586,7 +1598,7 @@ def test_ecw_44():
     for (key, value) in expected_md:
         assert key in got_md and got_md[key] == value
 
-    
+
 ###############################################################################
 # Test metadata reading & writing
 
@@ -1602,7 +1614,7 @@ def RemoveDriverMetadata(md):
 
 
 def test_ecw_45():
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     # No metadata
@@ -1670,14 +1682,14 @@ def test_ecw_45():
         assert ds.GetMetadata('xml:XMP')[0] == '<fake_xmp_box/>'
         gdal.Unlink('/vsimem/ecw_45.jp2')
 
-    
+
 ###############################################################################
 # Test non nearest upsampling
 
 
 def test_ecw_46():
 
-    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+    if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip()
 
     tmp_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_46.jp2', gdal.Open('data/int16.tif'))
@@ -1705,12 +1717,6 @@ def test_ecw_46():
 
 def test_ecw_47():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
-    if gdaltest.ecw_drv.major_version == 3:
-        pytest.skip()
-
     data = open('data/ecw/jrc.ecw', 'rb').read()
     gdal.FileFromMemBuffer('/vsimem/ecw_47.ecw', data)
 
@@ -1721,8 +1727,10 @@ def test_ecw_47():
 
     if gdaltest.ecw_drv.major_version == 5:
         (exp_mean, exp_stddev) = (141.606, 67.2919)
-    else:
+    elif gdaltest.ecw_drv.major_version == 4:
         (exp_mean, exp_stddev) = (140.332, 67.611)
+    elif gdaltest.ecw_drv.major_version == 3:
+        (exp_mean, exp_stddev) = (141.172, 67.3636)
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
@@ -1736,9 +1744,6 @@ def test_ecw_47():
 
 
 def test_ecw_48():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     ecw_upward = gdal.GetConfigOption('ECW_ALWAYS_UPWARD', 'TRUE')
     assert ecw_upward == 'TRUE' or ecw_upward == 'ON', \
@@ -1756,9 +1761,6 @@ def test_ecw_48():
 
 
 def test_ecw_49():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     ecw_upward_old = gdal.GetConfigOption('ECW_ALWAYS_UPWARD', 'TRUE')
     gdal.SetConfigOption('ECW_ALWAYS_UPWARD', 'FALSE')
@@ -1882,9 +1884,6 @@ def test_ecw_online_4():
 
 def test_ecw_online_5():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ecw/red_flower.ecw', 'red_flower.ecw'):
         pytest.skip()
 
@@ -1912,9 +1911,6 @@ def test_ecw_online_5():
 
 
 def test_ecw_online_6():
-
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
@@ -1950,9 +1946,6 @@ def test_ecw_online_6():
 
 def test_ecw_online_7():
 
-    if gdaltest.ecw_drv is None:
-        pytest.skip()
-
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ecw/sandiego2m_null.ecw', 'sandiego2m_null.ecw'):
         pytest.skip()
 
@@ -1963,92 +1956,4 @@ def test_ecw_online_7():
         expected_band_count = 4
     assert ds.RasterCount == expected_band_count, \
         ('Expected %d bands, got %d' % (expected_band_count, ds.RasterCount))
-
-###############################################################################
-
-
-def test_ecw_cleanup():
-
-    # gdaltest.clean_tmp()
-
-    try:
-        os.remove('tmp/jrc_out.ecw')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/jrc_out.ecw.aux.xml')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/ecw_5.jp2')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/ecw_5.jp2.aux.xml')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/ecw_7.ntf')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/ecw9.jp2')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/test_11.ntf')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/rgb_gcp.jp2')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/spif83.ecw')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/spif83.ecw.aux.xml')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/UInt16_big_out.ecw')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/UInt16_big_out.jp2')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/UInt16_big_out.jp2.aux.xml')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/UInt16_big_out.ecw.aux.xml')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/jrc312.ecw')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/jrc123.ecw')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/jrcstats.ecw')
-    except OSError:
-        pass
-
-    if hasattr(gdaltest, 'ecw_38_fname'):
-        gdal.Unlink(gdaltest.ecw_38_fname)
-        gdal.Unlink(gdaltest.ecw_38_fname + ".aux.xml")
-
-    try:
-        os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw')
-    except OSError:
-        pass
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-
 

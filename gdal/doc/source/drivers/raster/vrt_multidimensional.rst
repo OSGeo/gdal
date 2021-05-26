@@ -6,7 +6,7 @@ Multidimensional VRT
 
 .. versionadded:: 3.1
 
-Multidimensional VRT is a specic variant of the :ref:`raster.vrt` format,
+Multidimensional VRT is a specific variant of the :ref:`raster.vrt` format,
 dedicated to represent Multidimensional arrays, according to the
 :ref:`multidim_raster_data_model`.
 
@@ -133,7 +133,7 @@ is a Multidimensional dataset), or a *SourceBand* (when the source is a classic
 a :cpp:func:`GDALMDArray::Transpose` operation and a *SourceView* to apply
 slicing/trimming operations or extraction of a component of a compound data
 type (see :cpp:func:`GDALMDArray::GetView`). It may have a *SourceSlab* element
-with attributes *offset*, *count* and *step* defining respecively the starting
+with attributes *offset*, *count* and *step* defining respectively the starting
 offset of the source, the number of values along each dimension and the step
 between source elements. It may have a *DestSlab* element with an *offset*
 attribute to define where the source data is placed into the target array.

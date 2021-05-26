@@ -45,11 +45,15 @@ typedef enum
 typedef char retStringAndCPLFree;
 %}
 
+%apply Pointer NONNULL {const char *message};
 %inline %{
   void Debug( const char *msg_class, const char *message ) {
     CPLDebug( msg_class, "%s", message );
   }
+%}
+%clear (const char *message);
 
+%inline %{
   CPLErr SetErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
   {
     if( pfnErrorHandler == NULL )
@@ -88,7 +92,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
     SWIG_PYTHON_THREAD_BEGIN_BLOCK;
 
     psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
-    PyEval_CallObject( (PyObject*)user_data, psArgs);
+    PyObject_CallObject( (PyObject*)user_data, psArgs);
     Py_XDECREF(psArgs);
 
     SWIG_PYTHON_THREAD_END_BLOCK;
@@ -172,6 +176,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (MkdirRecursive) VSIMkdirRecursive;
 %rename (Rmdir) VSIRmdir;
 %rename (RmdirRecursive) VSIRmdirRecursive;
+%rename (AbortPendingUploads) VSIAbortPendingUploads;
 %rename (Rename) VSIRename;
 %rename (GetActualURL) VSIGetActualURL;
 %rename (GetSignedURL) wrapper_VSIGetSignedURL;
@@ -184,15 +189,23 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
 %rename (Unlink) VSIUnlink;
 %rename (HasThreadSupport) wrapper_HasThreadSupport;
+%rename (NetworkStatsReset) VSINetworkStatsReset;
+%rename (NetworkStatsGetAsSerializedJSON) VSINetworkStatsGetAsSerializedJSON;
 
+%apply Pointer NONNULL {const char *pszScope};
 retStringAndCPLFree*
 GOA2GetAuthorizationURL( const char *pszScope );
+%clear (const char *pszScope);
 
+%apply Pointer NONNULL {const char *pszAuthToken};
 retStringAndCPLFree*
 GOA2GetRefreshToken( const char *pszAuthToken, const char *pszScope );
+%clear (const char *pszAuthToken);
 
+%apply Pointer NONNULL {const char *pszRefreshToken};
 retStringAndCPLFree*
 GOA2GetAccessToken( const char *pszRefreshToken, const char *pszScope );
+%clear (const char *pszRefreshToken);
 
 #if !defined(SWIGJAVA) && !defined(SWIGPYTHON)
 void CPLPushErrorHandler( CPLErrorHandler );
@@ -475,12 +488,12 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 
 #if defined(SWIGPYTHON)
 
-%apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const GByte *pabyData )};
+%apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const char *pabyData )};
 %inline {
-void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const GByte *pabyData)
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const char *pabyData)
 {
     const size_t nSize = static_cast<size_t>(nBytes);
-    GByte* pabyDataDup = (GByte*)VSIMalloc(nSize);
+    void* pabyDataDup = VSIMalloc(nSize);
     if (pabyDataDup == NULL)
             return;
     memcpy(pabyDataDup, pabyData, nSize);
@@ -577,6 +590,8 @@ bool wrapper_VSISync(const char* pszSource,
 
 %clear (const char* pszSource);
 %clear (const char* pszTarget);
+
+bool VSIAbortPendingUploads(const char *utf8_path );
 
 #endif
 
@@ -705,14 +720,16 @@ VSILFILE   *wrapper_VSIFOpenL( const char *utf8_path, const char *pszMode )
 %}
 
 %rename (VSIFOpenExL) wrapper_VSIFOpenExL;
+%apply (char **dict) { char ** };
 %inline %{
-VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int bSetError )
+VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int bSetError = FALSE, char** options = NULL )
 {
     if (!pszMode) /* would lead to segfault */
         pszMode = "r";
-    return VSIFOpenExL( utf8_path, pszMode, bSetError );
+    return VSIFOpenEx2L( utf8_path, pszMode, bSetError, options );
 }
 %}
+%clear char **;
 
 int VSIFEofL( VSILFILE* fp );
 int VSIFFlushL( VSILFILE* fp );
@@ -773,6 +790,9 @@ void VSIStdoutUnsetRedirection()
 
 void VSICurlClearCache();
 void VSICurlPartialClearCache( const char* utf8_path );
+
+void VSINetworkStatsReset();
+retStringAndCPLFree* VSINetworkStatsGetAsSerializedJSON( char** options = NULL );
 
 #endif /* !defined(SWIGJAVA) */
 

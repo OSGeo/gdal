@@ -18,7 +18,7 @@ Synopsis
     Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]
                             [-b band]* [-overview overview_level]
                             [-l_srs srs_def] [-geoloc] [-wgs84]
-                            [-oo NAME=VALUE]* srcfile x y
+                            [-oo NAME=VALUE]* srcfile [x y]
 
 Description
 -----------

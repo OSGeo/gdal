@@ -368,7 +368,7 @@ keywords. So various combinations are possible :
              strict --- strict mode
              unscale --- unscale values with scale and offset metadata
              scaleParams --- list of scale parameters, each of the form [src_min,src_max] or [src_min,src_max,dst_min,dst_max]
-             exponents --- list of exponentation parameters
+             exponents --- list of exponentiation parameters
              outputBounds --- assigned output bounds: [ulx, uly, lrx, lry]
              metadataOptions --- list of metadata options
              outputSRS --- assigned output SRS

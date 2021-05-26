@@ -59,7 +59,7 @@ def test_ogr2ogr_py_1():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
@@ -88,7 +88,7 @@ def test_ogr2ogr_py_2():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -sql "select * from poly"')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -sql "select * from poly"')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -111,7 +111,7 @@ def test_ogr2ogr_py_3():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -spat 479609 4764629 479764 4764817')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -spat 479609 4764629 479764 4764817')
 
     ds = ogr.Open('tmp/poly.shp')
     if ogrtest.have_geos():
@@ -137,7 +137,7 @@ def test_ogr2ogr_py_4():
     except (OSError, AttributeError):
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -where "EAS_ID=171"')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -where "EAS_ID=171"')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
@@ -160,8 +160,8 @@ def test_ogr2ogr_py_5():
     except (OSError, AttributeError):
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp')
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-update -append tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-update -append tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 20
@@ -182,7 +182,7 @@ def test_ogr2ogr_py_5():
 
 def test_ogr2ogr_py_6():
 
-    import ogr_pg
+    ogr_pg = pytest.importorskip('ogr_pg')
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -197,8 +197,8 @@ def test_ogr2ogr_py_6():
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" ../ogr/data/poly.shp -nln tpoly')
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-update -overwrite -f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" ../ogr/data/poly.shp -nln tpoly')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" '+test_py_scripts.get_data_path('ogr')+'poly.shp -nln tpoly')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-update -overwrite -f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" '+test_py_scripts.get_data_path('ogr')+'poly.shp -nln tpoly')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     assert ds is not None and ds.GetLayerByName('tpoly').GetFeatureCount() == 10
@@ -212,7 +212,7 @@ def test_ogr2ogr_py_6():
 
 def test_ogr2ogr_py_7():
 
-    import ogr_pg
+    ogr_pg = pytest.importorskip('ogr_pg')
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -227,7 +227,7 @@ def test_ogr2ogr_py_7():
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" ../ogr/data/poly.shp -nln tpoly -gt 1')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-f PostgreSQL PG:"' + gdaltest.pg_connection_string + '" '+test_py_scripts.get_data_path('ogr')+'poly.shp -nln tpoly -gt 1')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     assert ds is not None and ds.GetLayerByName('tpoly').GetFeatureCount() == 10
@@ -250,7 +250,7 @@ def test_ogr2ogr_py_8():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-t_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-t_srs EPSG:4326 tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     assert str(ds.GetLayer(0).GetSpatialRef()).find('1984') != -1
@@ -273,7 +273,7 @@ def test_ogr2ogr_py_9():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-a_srs EPSG:4326 tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-a_srs EPSG:4326 tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     assert str(ds.GetLayer(0).GetSpatialRef()).find('1984') != -1
@@ -297,7 +297,7 @@ def test_ogr2ogr_py_10():
         pass
 
     # Voluntary don't use the exact case of the source field names (#4502)
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-select eas_id,prfedea tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-select eas_id,prfedea tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     lyr = ds.GetLayer(0)
@@ -335,7 +335,7 @@ def test_ogr2ogr_py_11():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-lco SHPT=POLYGONZ tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-lco SHPT=POLYGONZ tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
@@ -359,7 +359,7 @@ def test_ogr2ogr_py_12():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-nlt POLYGON25D tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-nlt POLYGON25D tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
@@ -382,7 +382,7 @@ def test_ogr2ogr_py_13():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp poly')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp poly')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -406,7 +406,7 @@ def test_ogr2ogr_py_14():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-segmentize 100 tmp/poly.shp ../ogr/data/poly.shp poly')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-segmentize 100 tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp poly')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -432,14 +432,14 @@ def test_ogr2ogr_py_15():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds.Destroy()
 
     # Overwrite
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-overwrite tmp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-overwrite tmp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -462,9 +462,9 @@ def test_ogr2ogr_py_16():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-fid 8 tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-fid 8 tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
-    src_ds = ogr.Open('../ogr/data/poly.shp')
+    src_ds = ogr.Open(test_py_scripts.get_data_path('ogr') + 'poly.shp')
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
     src_feat = src_ds.GetLayer(0).GetFeature(8)
@@ -490,7 +490,7 @@ def test_ogr2ogr_py_17():
     except OSError:
         pass
 
-    ret = test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-progress tmp/poly.shp ../ogr/data/poly.shp')
+    ret = test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-progress tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
     assert ret.find('0...10...20...30...40...50...60...70...80...90...100 - done.') != -1
 
     ds = ogr.Open('tmp/poly.shp')
@@ -570,7 +570,7 @@ def test_ogr2ogr_py_19():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -clipsrc spat_extent -spat 479609 4764629 479764 4764817')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -clipsrc spat_extent -spat 479609 4764629 479764 4764817')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
@@ -629,7 +629,7 @@ def test_ogr2ogr_py_20():
                      '14',
                      '15']
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp ../utilities/data/Fields.csv')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp '+test_py_scripts.get_data_path('utilities')+'Fields.csv')
 
     ds = ogr.Open('tmp/Fields.dbf')
 
@@ -671,7 +671,7 @@ def test_ogr2ogr_py_21():
         pass
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr',
-                                  '-f GPSTrackMaker tmp/testogr2ogr21.gtm ../utilities/data/dataforogr2ogr21.csv ' +
+                                  '-f GPSTrackMaker tmp/testogr2ogr21.gtm '+test_py_scripts.get_data_path('utilities')+'dataforogr2ogr21.csv ' +
                                   '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr21.gtm')
 
@@ -699,7 +699,7 @@ def test_ogr2ogr_py_22():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr',
-                                  '-f "MapInfo File" tmp/testogr2ogr22.mif ../utilities/data/dataforogr2ogr21.csv ' +
+                                  '-f "MapInfo File" tmp/testogr2ogr22.mif '+test_py_scripts.get_data_path('utilities')+'dataforogr2ogr21.csv ' +
                                   '-sql "SELECT comment, name FROM dataforogr2ogr21" -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr22.mif')
 
@@ -729,7 +729,7 @@ def test_ogr2ogr_py_23():
         pytest.skip()
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() +
-                         ' -f "MapInfo File" tmp/testogr2ogr23.mif ../utilities/data/dataforogr2ogr21.csv ' +
+                         ' -f "MapInfo File" tmp/testogr2ogr23.mif '+test_py_scripts.get_data_path('utilities')+'dataforogr2ogr21.csv ' +
                          '-sql "SELECT comment, name FROM dataforogr2ogr21" -select comment,name -nlt POINT')
     ds = ogr.Open('tmp/testogr2ogr23.mif')
 
@@ -765,7 +765,7 @@ def test_ogr2ogr_py_24():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -clipsrc "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -clipsrc "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
@@ -800,7 +800,7 @@ def test_ogr2ogr_py_25():
     f.write('foo,"POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"\n')
     f.close()
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -clipsrc tmp/clip.csv -clipsrcwhere foo=\'foo\'')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -clipsrc tmp/clip.csv -clipsrcwhere foo=\'foo\'')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
@@ -831,7 +831,7 @@ def test_ogr2ogr_py_26():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp ../ogr/data/poly.shp -clipdst "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -clipdst "POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
@@ -866,7 +866,7 @@ def test_ogr2ogr_py_27():
     f.write('foo,"POLYGON((479609 4764629,479609 4764817,479764 4764817,479764 4764629,479609 4764629))"\n')
     f.close()
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-nlt MULTIPOLYGON tmp/poly.shp ../ogr/data/poly.shp -clipdst tmp/clip.csv -clipdstsql "SELECT * from clip"')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-nlt MULTIPOLYGON tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -clipdst tmp/clip.csv -clipdstsql "SELECT * from clip"')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 4
@@ -895,7 +895,7 @@ def test_ogr2ogr_py_31():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/poly.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/poly.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -919,14 +919,14 @@ def test_ogr2ogr_py_32():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -append tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_32.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -append tmp/test_ogr2ogr_32.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/test_ogr2ogr_32.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 20, '-append failed'
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/test_ogr2ogr_32.shp ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/test_ogr2ogr_32.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/test_ogr2ogr_32.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
@@ -1016,20 +1016,20 @@ def test_ogr2ogr_py_34():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_34_dir '+test_py_scripts.get_data_path('ogr')+'poly.shp -nln test_ogr2ogr_34_dir')
 
     ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
         'initial shapefile creation failed'
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -append tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -append tmp/test_ogr2ogr_34_dir '+test_py_scripts.get_data_path('ogr')+'poly.shp -nln test_ogr2ogr_34_dir')
 
     ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 20, '-append failed'
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/test_ogr2ogr_34_dir ../ogr/data/poly.shp -nln test_ogr2ogr_34_dir')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/test_ogr2ogr_34_dir '+test_py_scripts.get_data_path('ogr')+'poly.shp -nln test_ogr2ogr_34_dir')
 
     ds = ogr.Open('tmp/test_ogr2ogr_34_dir/test_ogr2ogr_34_dir.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
@@ -1054,20 +1054,20 @@ def test_ogr2ogr_py_35():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp ')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_35_dir '+test_py_scripts.get_data_path('ogr')+'poly.shp ')
 
     ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
         'initial shapefile creation failed'
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -append tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -append tmp/test_ogr2ogr_35_dir '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 20, '-append failed'
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/test_ogr2ogr_35_dir ../ogr/data/poly.shp')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -overwrite tmp/test_ogr2ogr_35_dir '+test_py_scripts.get_data_path('ogr')+'poly.shp')
 
     ds = ogr.Open('tmp/test_ogr2ogr_35_dir/poly.shp')
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10, \
@@ -1092,7 +1092,7 @@ def test_ogr2ogr_py_36():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_36.shp ../ogr/data/poly.shp -zfield EAS_ID')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_36.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -zfield EAS_ID')
 
     ds = ogr.Open('tmp/test_ogr2ogr_36.shp')
     feat = ds.GetLayer(0).GetNextFeature()
@@ -1123,12 +1123,12 @@ def test_ogr2ogr_py_37():
         os.mkdir('tmp/test_ogr2ogr_37_src')
     except OSError:
         pass
-    shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/poly.dbf', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/shp/testpoly.shp', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/shp/testpoly.shx', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/shp/testpoly.dbf', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'poly.shp', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'poly.shx', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'poly.dbf', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'shp/testpoly.shp', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'shp/testpoly.shx', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'shp/testpoly.dbf', 'tmp/test_ogr2ogr_37_src')
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_37_dir.shp tmp/test_ogr2ogr_37_src')
 
@@ -1156,7 +1156,7 @@ def test_ogr2ogr_py_38():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_38.shp ../ogr/data/poly.shp -select AREA -where "EAS_ID = 170"')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_38.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -select AREA -where "EAS_ID = 170"')
 
     ds = ogr.Open('tmp/test_ogr2ogr_38.shp')
     lyr = ds.GetLayer(0)
@@ -1186,12 +1186,12 @@ def test_ogr2ogr_py_39():
         os.mkdir('tmp/test_ogr2ogr_39_src')
     except OSError:
         pass
-    shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/poly.dbf', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/shp/testpoly.shp', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/shp/testpoly.shx', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/shp/testpoly.dbf', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'poly.shp', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'poly.shx', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'poly.dbf', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'shp/testpoly.shp', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'shp/testpoly.shx', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy(test_py_scripts.get_data_path('ogr') + 'shp/testpoly.dbf', 'tmp/test_ogr2ogr_39_src')
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_39.shp tmp/test_ogr2ogr_39_src -sql "select * from poly"')
 
@@ -1218,7 +1218,7 @@ def test_ogr2ogr_py_43():
     except OSError:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_43_3d.shp ../ogr/data/poly.shp -dim 3')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_43_3d.shp '+test_py_scripts.get_data_path('ogr')+'poly.shp -dim 3')
 
     ds = ogr.Open('tmp/test_ogr2ogr_43_3d.shp')
     lyr = ds.GetLayerByIndex(0)
@@ -1270,7 +1270,7 @@ def test_ogr2ogr_py_44():
     lyr.CreateFeature(feat)
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
 
     f = open('tmp/test_ogr2ogr_44.xsd')
     data = f.read()
@@ -1317,7 +1317,7 @@ def test_ogr2ogr_py_45():
     lyr.CreateFeature(feat)
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
 
     f = open('tmp/test_ogr2ogr_44.xsd')
     data = f.read()
@@ -1364,7 +1364,7 @@ def test_ogr2ogr_py_46():
     lyr.CreateFeature(feat)
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML tmp/test_ogr2ogr_45.gml tmp/test_ogr2ogr_45_src.shp -nlt PROMOTE_TO_MULTI')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_45.gml tmp/test_ogr2ogr_45_src.shp -nlt PROMOTE_TO_MULTI')
 
     f = open('tmp/test_ogr2ogr_45.xsd')
     data = f.read()

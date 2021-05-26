@@ -121,7 +121,7 @@ class GDALWrite {
             };
             ds.SetGCPs(GCPs, "");
 
-            Band ba = ds.GetRasterBand(1);
+            Band band = ds.GetRasterBand(1);
 
             byte [] buffer = new byte [w * h];
 
@@ -133,9 +133,9 @@ class GDALWrite {
                 }
             }
 
-            ba.WriteRaster(0, 0, w, h, buffer, w, h, 0, 0);
+            band.WriteRaster(0, 0, w, h, buffer, w, h, 0, 0);
 
-            ba.FlushCache();
+            band.FlushCache();
             ds.FlushCache();
 
         }

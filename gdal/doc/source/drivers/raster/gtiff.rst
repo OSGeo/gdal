@@ -43,7 +43,8 @@ Most GeoTIFF projections should be supported, with the caveat that in
 order to translate uncommon Projected, and Geographic coordinate systems
 into OGC WKT it is necessary to have the PROJ proj.db database
 available. It must be found at the location pointed to by the PROJ_LIB
-environment variable.
+environment variable, or at one of the locations set programmatically
+via OSRSetPROJSearchPaths().
 
 Georeferencing from GeoTIFF is supported in the form of one tiepoint and
 pixel size, a transformation matrix, or a list of GCPs.
@@ -253,7 +254,7 @@ option to YES. Then, blocks that are never written through the
 IWriteBlock()/IRasterIO() interfaces will have their offset and byte
 count set to 0. This is particularly useful to save disk space and time
 when the file must be initialized empty before being passed to a further
-processing stage that will fill it. To avoid ambiguities with anoter
+processing stage that will fill it. To avoid ambiguities with another
 sparse mechanism discussed in the next paragraphs, we will call such
 files with implicit tiles/strips "TIFF sparse files". They will be
 likely **not** interoperable with TIFF readers that are not GDAL based
@@ -374,19 +375,29 @@ Creation Options
    Float32 type to generate half-precision floating point values.
 
 -  **COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/WEBP/NONE]**:
-   Set the compression to use. JPEG should generally only be used with
-   Byte data (8 bit per channel). But when GDAL is built with internal libtiff and libjpeg, it is
-   possible to read and write TIFF files with 12bit JPEG compressed TIFF
-   files (seen as UInt16 bands with NBITS=12). See the `"8 and 12 bit
-   JPEG in TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki
-   page for more details. The CCITT compression should only be used with
-   1bit (NBITS=1) data. LZW, DEFLATE and ZSTD compressions can be used
-   with the PREDICTOR creation option. ZSTD is available since GDAL 2.3
-   when using internal libtiff and if GDAL built against libzstd >=1.0,
-   or if built against external libtiff with zstd support.
-   LERC/LERC_DEFLATE/LERC_ZSTD are available since GDAL 2.4 when using
-   internal libtiff (and for LERC_ZSTD, see above mentioned conditions).
-   None is the default.
+   Set the compression to use.
+
+   * ``JPEG`` should generally only be used with
+     Byte data (8 bit per channel). But if GDAL is built with internal libtiff and
+     libjpeg, it is    possible to read and write TIFF files with 12bit JPEG compressed TIFF
+     files (seen as UInt16 bands with NBITS=12). See the `"8 and 12 bit
+     JPEG in TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki
+     page for more details.
+     Better compression for RGB images can be obtained by using the PHOTOMETRIC=YCBCR
+     colorspace with a 4:2:2 subsampling of the Y,Cb,Cr components.
+
+   * ``CCITTFAX3``, ``CCITTFAX4`` or ``CCITRLE`` compression should only be used with 1bit (NBITS=1) data
+
+   * ``LZW``, ``DEFLATE`` and ``ZSTD`` compressions can be used with the PREDICTOR creation option.
+
+   * ``ZSTD`` is available since GDAL 2.3 when using internal libtiff and if GDAL
+     built against libzstd >=1.0, or if built against external libtiff with zstd support.
+
+   * ``LERC`` and ``LERC_DEFLATE`` are available only when using internal libtiff.
+
+   * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
+
+   * ``NONE`` is the default.
 
 -  **NUM_THREADS=number_of_threads/ALL_CPUS**: (From GDAL 2.1) Enable
    multi-threaded compression by specifying the number of worker
@@ -436,9 +447,9 @@ Creation Options
       efficient than 1, but this should only occur in rare
       circumstances.
 
--  **ZLEVEL=[1-9]**: Set the level of compression when using DEFLATE
-   compression (or LERC_DEFLATE). A value of 9 is best, and 1 is least
-   compression. The default is 6.
+-  **ZLEVEL=[1-9] or [1-12]**: Set the level of compression when using DEFLATE
+   compression (or LERC_DEFLATE). A value of 9 (resp. 12) is best/slowest when
+   using zlib (resp. libdeflate), and 1 is least/fastest compression. The default is 6.
 
 -  **ZSTD_LEVEL=[1-22]**: Set the level of compression when using ZSTD
    compression (or LERC_ZSTD). A value of 22 is best (very slow), and 1
@@ -559,6 +570,10 @@ APPEND_SUBDATASET=YES creation option. The filename passed to Create() /
 CreateCopy() should be the regular filename (not with GTIFF_DIR: syntax.
 Creating overviews on a multi-page TIFF is not supported.
 
+Starting with GDAL 3.2, read-only access to subdataset overviews and masks
+is possible provided that they are referenced by their parent IFD through
+the `TIFFTAG_SUBIFD <https://www.awaresystems.be/imaging/tiff/tifftags/subifds.html>`__ tag.
+
 About JPEG compression of RGB images
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -651,8 +666,16 @@ the default behavior of the GTiff driver.
    partially corrupted TIFF files
 -  :decl_configoption:`ESRI_XML_PAM` : Can be set to TRUE to force metadata in the xml:ESRI
    domain to be written to PAM.
+-  :decl_configoption:`COMPRESS_OVERVIEW` :  See `Creation Options COMPRESS <#creation-options>`__ section.
+   Set the compression type to use for overviews
+-  :decl_configoption:`PHOTOMETRIC_OVERVIEW` :  YCBCR
+   Set the photometric color space for overview creation
+-  :decl_configoption:`PREDICTOR_OVERVIEW` : Integer 1,2 or 3.
+   Set the predictor to use for overviews with LZW, DEFLATE and ZSTD compression
 -  :decl_configoption:`JPEG_QUALITY_OVERVIEW` : Integer between 0 and 100. Default value : 75.
    Quality of JPEG compressed overviews, either internal or external.
+-  :decl_configoption:`WEBP_LEVEL_OVERVIEW` : Integer between 1 and 100. Default value : 75.
+   WEBP quality level of overviews, either internal or external.
 -  :decl_configoption:`GDAL_TIFF_INTERNAL_MASK` : See `Internal nodata
    masks <#internal_mask>`__ section. Default value : FALSE.
 -  :decl_configoption:`GDAL_TIFF_INTERNAL_MASK_TO_8BIT` : See `Internal nodata
@@ -662,7 +685,7 @@ the default behavior of the GTiff driver.
 -  :decl_configoption:`TIFF_USE_OVR` : Can be set to TRUE to force external overviews in the
    GeoTIFF (.ovr) format. Default value : FALSE
 -  :decl_configoption:`GTIFF_POINT_GEO_IGNORE` : Can be set to TRUE to revert back to the
-   behaviour of ancient GDAL versions regarding how PixelIsPoint is interpreted
+   behavior of ancient GDAL versions regarding how PixelIsPoint is interpreted
    w.r.t geotransform. See :ref:`rfc-33` for more details. Default value : FALSE
 -  :decl_configoption:`GTIFF_REPORT_COMPD_CS` : Can be set to TRUE to avoid
    stripping the vertical CRS of compound CRS when reading the SRS of a

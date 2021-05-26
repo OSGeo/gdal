@@ -18,7 +18,7 @@
 * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright 2014-2015 Esri
+* Copyright 2014-2021 Esri
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@
 */
 
 /******************************************************************************
- * $Id$
  *
  * Project:  Meta Raster Format
  * Purpose:  MRF structures
@@ -104,8 +103,8 @@ extern char const * const * ILComp_Name;
 extern char const * const * ILComp_Ext;
 extern char const * const * ILOrder_Name;
 
-class GDALMRFDataset;
-class GDALMRFRasterBand;
+class MRFDataset;
+class MRFRasterBand;
 
 typedef struct {
     char   *buffer;
@@ -123,13 +122,11 @@ struct ILSize {
     GInt32 x, y, z, c;
     GIntBig l; // Dual use, sometimes it holds the number of pages
     ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
-        const int c_ = -1, const int l_ = -1)
-    {
-        x = x_; y = y_; z = z_; c = c_; l = l_;
-    }
+        const int c_ = -1, const int l_ = -1):
+        x(x_), y(y_), z(z_), c(c_), l(l_)
+    {}
 
-    bool operator==(const ILSize& other) const
-    {
+    bool operator==(const ILSize& other) const {
         return ((x == other.x) && (y == other.y) && (z == other.z) &&
             (c == other.c) && (l == other.l));
     }
@@ -182,19 +179,16 @@ typedef struct ILImage {
  *  Call netXX() to guarantee big endian
  *
  */
-static inline unsigned short int swab16(const unsigned short int val)
-{
+static inline unsigned short int swab16(const unsigned short int val) {
     return (val << 8) | (val >> 8);
 }
 
-static inline unsigned int swab32(unsigned int val)
-{
+static inline unsigned int swab32(unsigned int val) {
     return (unsigned int)(swab16((unsigned short int) val)) << 16
         | swab16((unsigned short int) (val >> 16));
 }
 
-static inline unsigned long long int swab64(const unsigned long long int val)
-{
+static inline unsigned long long int swab64(const unsigned long long int val) {
     return (unsigned long long int) (swab32((unsigned int)val)) << 32
         | swab32((unsigned int)(val >> 32));
 }
@@ -205,18 +199,17 @@ static inline unsigned long long int swab64(const unsigned long long int val)
 #ifdef CPL_MSB
 #define NET_ORDER true
 // These could be macros, but for the side effects related to type
-static inline unsigned short net16(const unsigned short x)
-{
+static inline unsigned short net16(const unsigned short x) {
     return (x);
 }
-static inline unsigned int net32(const unsigned int x)
-{
+static inline unsigned int net32(const unsigned int x) {
     return (x);
 }
-static inline unsigned long long net64(const unsigned long long x)
-{
+
+static inline unsigned long long net64(const unsigned long long x) {
     return (x);
 }
+
 #else
 #define NET_ORDER false
 #define net16(x) swab16(x)
@@ -245,6 +238,7 @@ double logbase(double val, double base);
 int IsPower(double value, double base);
 CPLXMLNode *SearchXMLSiblings(CPLXMLNode *psRoot, const char *pszElement);
 CPLString PrintDouble(double d, const char *frmt = "%12.8f");
+void XMLSetAttributeVal(CPLXMLNode* parent, const char* pszName, const char* pszValue);
 void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
     const double val, const char *frmt = "%12.8f");
 CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
@@ -283,16 +277,13 @@ static inline const ILSize pcount(const ILSize &size, const ILSize &psz) {
     pcnt.c = pcount(size.c, psz.c);
     auto xy = static_cast<GIntBig>(pcnt.x) * pcnt.y;
     auto zc = static_cast<GIntBig>(pcnt.z) * pcnt.c;
-    if( zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc )
-    {
+    if( zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc ) {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Integer overflow in page count computation");
         pcnt.l = -1;
+        return pcnt;
     }
-    else
-    {
-        pcnt.l = xy * zc;
-    }
+    pcnt.l = xy * zc;
     return pcnt;
 }
 
@@ -307,19 +298,18 @@ GIntBig IdxOffset(const ILSize &pos, const ILImage &img);
 
 enum { SAMPLING_ERR, SAMPLING_Avg, SAMPLING_Near };
 
-GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level = 0);
+MRFRasterBand *newMRFRasterBand(MRFDataset *, const ILImage &, int, int level = 0);
 
-class GDALMRFDataset final: public GDALPamDataset {
-    friend class GDALMRFRasterBand;
-    friend GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level);
+class MRFDataset final: public GDALPamDataset {
+    friend class MRFRasterBand;
+    friend MRFRasterBand *newMRFRasterBand(MRFDataset *, const ILImage &, int, int level);
 
 public:
-    GDALMRFDataset();
-    virtual ~GDALMRFDataset();
+    MRFDataset();
+    virtual ~MRFDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
-    void Crystalize();
 
     static GDALDataset *CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         int bStrict, char **papszOptions, GDALProgressFunc pfnProgress,
@@ -330,9 +320,7 @@ public:
         GDALDataType eType, char ** papszOptions);
 
     // Stub for delete, GDAL should only overwrite the XML
-    static CPLErr Delete(const char *) {
-        return CE_None;
-    }
+    static CPLErr Delete(const char *) { return CE_None; }
 
     virtual const char *_GetProjectionRef() override { return projection; }
     virtual CPLErr _SetProjection(const char *proj) override {
@@ -372,14 +360,13 @@ public:
     // Creates an XML tree from the current MRF.  If written to a file it becomes an MRF
     CPLXMLNode *BuildConfig();
 
-    void SetPBufferSize(unsigned int sz) {
-        pbsize = sz;
-    }
-    unsigned int GetPBufferSize() {
-        return pbsize;
-    }
+    void SetPBufferSize(unsigned int sz) { pbsize = sz; }
+    unsigned int GetPBufferSize() { return pbsize; }
 
 protected:
+    // False if it failed
+    int Crystalize();
+
     CPLErr LevelInit(const int l);
 
     // Reads the XML metadata and returns the XML
@@ -414,15 +401,9 @@ protected:
         return pbuffer;
     }
 
-#if GDAL_VERSION_MAJOR >= 2
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
         void *, int, int, GDALDataType,
         int, int *, GSpacing, GSpacing, GSpacing, GDALRasterIOExtraArg*) override;
-#else
-    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int,
-        void *, int, int, GDALDataType,
-        int, int *, int, int, int);
-#endif
 
     virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
         GDALProgressFunc, void*) override;
@@ -496,7 +477,7 @@ protected:
     int level;
 
     // Child dataset, if picking a specific level
-    GDALMRFDataset *cds;
+    MRFDataset *cds;
     // A small int actually due to GDAL limitations
     double scale;
 
@@ -526,11 +507,11 @@ protected:
     std::vector<double> vNoData, vMin, vMax;
 };
 
-class GDALMRFRasterBand CPL_NON_FINAL: public GDALPamRasterBand {
-    friend class GDALMRFDataset;
+class MRFRasterBand CPL_NON_FINAL: public GDALPamRasterBand {
+    friend class MRFDataset;
 public:
-    GDALMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int);
-    virtual ~GDALMRFRasterBand();
+    MRFRasterBand(MRFDataset *, const ILImage &, int, int);
+    virtual ~MRFRasterBand();
     virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
     virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override;
 
@@ -566,19 +547,19 @@ public:
 
     const char *GetOptionValue(const char *opt, const char *def) const;
     void SetAccess(GDALAccess eA) { eAccess = eA; }
-    void SetDeflate(int v) { deflatep = (v != 0); }
+    void SetDeflate(int v) { dodeflate = (v != 0); }
 
 protected:
     // Pointer to the GDALMRFDataset
-    GDALMRFDataset *poDS;
+    MRFDataset *poDS;
     // Deflate page requested, named to avoid conflict with libz deflate()
-    int deflatep;
+    int dodeflate;
     int deflate_flags;
     // Level count of this band
     GInt32 m_l;
     // The info about the current image, to enable R-sets
     ILImage img;
-    std::vector<GDALMRFRasterBand *> overviews;
+    std::vector<MRFRasterBand *> overviews;
 
     VSILFILE *IdxFP() { return poDS->IdxFP(); }
     GDALRWFlag IdxMode() { return poDS->IdxMode(); }
@@ -609,7 +590,7 @@ protected:
     // These are called only in the base level RasterBand
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int n) override;
-    void AddOverview(GDALMRFRasterBand *b) { overviews.push_back(b); }
+    void AddOverview(MRFRasterBand *b) { overviews.push_back(b); }
 };
 
 /**
@@ -640,13 +621,14 @@ public:
     int PalSize, TransSize, deflate_flags;
 
 private:
-    PNG_Codec& operator= (const PNG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+    // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+    PNG_Codec& operator= (const PNG_Codec& src);
 };
 
-class PNG_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class PNG_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    PNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    PNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
 
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -683,10 +665,10 @@ private:
     JPEG_Codec& operator= (const JPEG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
 };
 
-class JPEG_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class JPEG_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    JPEG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
     virtual ~JPEG_Band() {}
 
 protected:
@@ -697,10 +679,10 @@ protected:
 };
 
 // A 2 or 4 band, with JPEG and/or PNG page encoding, optimized for size
-class JPNG_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class JPNG_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    JPNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    JPNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
     virtual ~JPNG_Band();
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -711,21 +693,29 @@ protected:
     bool rgb, sameres, optimize;
 };
 
-class Raw_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class Raw_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    Raw_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-        GDALMRFRasterBand(pDS, image, b, int(level)) {}
+    Raw_Band(MRFDataset *pDS, const ILImage &image, int b, int level) :
+        MRFRasterBand(pDS, image, b, int(level)) {}
     virtual ~Raw_Band() {}
 protected:
-    virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
-    virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
+    virtual CPLErr Decompress(buf_mgr& dst, buf_mgr& src) override {
+        if (src.size > dst.size)
+            return CE_Failure;
+        memcpy(dst.buffer, src.buffer, src.size);
+        dst.size = src.size;
+        return CE_None;
+    }
+    virtual CPLErr Compress(buf_mgr& dst, buf_mgr& src) override {
+        return Decompress(dst, src);
+    }
 };
 
-class TIF_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class TIF_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    TIF_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    TIF_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
     virtual ~TIF_Band();
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -736,10 +726,10 @@ protected:
 };
 
 #if defined(LERC)
-class LERC_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class LERC_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    LERC_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    LERC_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
     virtual ~LERC_Band();
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -760,9 +750,9 @@ protected:
  * Stand alone definition of a derived band, used in access to a specific level in an MRF
  *
  */
-class GDALMRFLRasterBand final: public GDALPamRasterBand {
+class MRFLRasterBand final: public GDALPamRasterBand {
 public:
-    explicit GDALMRFLRasterBand(GDALMRFRasterBand *b) {
+    explicit MRFLRasterBand(MRFRasterBand *b) {
         pBand = b;
         eDataType = b->GetRasterDataType();
         b->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -796,7 +786,7 @@ protected:
     virtual int GetOverviewCount() override { return 0; }
     virtual GDALRasterBand *GetOverview(int ) override { return nullptr; }
 
-    GDALMRFRasterBand *pBand;
+    MRFRasterBand *pBand;
 };
 
 NAMESPACE_MRF_END

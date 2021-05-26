@@ -191,7 +191,7 @@ void AOLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
     // Crap! we failed and there is no return error mechanism.
     // Report Error and dismiss ogr geometry to go back to at least a working
     // state
-    CPLError( CE_Failure, CPLE_AppDefined, "Could not convert OGR spatial filter geometry to ArcObjecs one. Dismissing spatial filter!");
+    CPLError( CE_Failure, CPLE_AppDefined, "Could not convert OGR spatial filter geometry to ArcObjects one. Dismissing spatial filter!");
 
     SwitchToAttributeOnlyFilter();
     return;

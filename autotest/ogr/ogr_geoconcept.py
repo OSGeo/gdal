@@ -32,11 +32,21 @@
 import os
 
 
-import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import osr
 import pytest
+
+
+###############################################################################
+
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+    yield
+    try:
+        os.remove('tmp/tmp.gxt')
+    except OSError:
+        pass
 
 ###############################################################################
 # Simple read test of known file.
@@ -44,13 +54,13 @@ import pytest
 
 def test_ogr_gxt_1():
 
-    gdaltest.gxt_ds = ogr.Open('data/geoconcept/expected_000_GRD.gxt')
+    ds = ogr.Open('data/geoconcept/expected_000_GRD.gxt')
 
-    assert gdaltest.gxt_ds is not None
+    assert ds is not None
 
-    assert gdaltest.gxt_ds.GetLayerCount() == 1, 'Got wrong layer count.'
+    assert ds.GetLayerCount() == 1, 'Got wrong layer count.'
 
-    lyr = gdaltest.gxt_ds.GetLayer(0)
+    lyr = ds.GetLayer(0)
     assert lyr.GetName() == '000_GRD.000_GRD', 'got unexpected layer name.'
 
     assert lyr.GetFeatureCount() == 10, 'got wrong feature count.'
@@ -88,13 +98,13 @@ def test_ogr_gxt_1():
 
 def test_ogr_gxt_2():
 
-    gdaltest.gxt_ds = ogr.Open('data/geoconcept/expected_000_GRD_TAB.txt')
+    ds = ogr.Open('data/geoconcept/expected_000_GRD_TAB.txt')
 
-    assert gdaltest.gxt_ds is not None
+    assert ds is not None
 
-    assert gdaltest.gxt_ds.GetLayerCount() == 1, 'Got wrong layer count.'
+    assert ds.GetLayerCount() == 1, 'Got wrong layer count.'
 
-    lyr = gdaltest.gxt_ds.GetLayer(0)
+    lyr = ds.GetLayer(0)
     assert lyr.GetName() == '000_GRD.000_GRD', 'got unexpected layer name.'
 
     assert lyr.GetFeatureCount() == 5, 'got wrong feature count.'
@@ -122,7 +132,7 @@ def test_ogr_gxt_2():
 
 def test_ogr_gxt_3():
 
-    gdaltest.gxt_ds = None
+    ds = None
 
     src_ds = ogr.Open('data/geoconcept/points.gxt')
 
@@ -134,12 +144,12 @@ def test_ogr_gxt_3():
     # Duplicate all the points from the source GXT
     src_lyr = src_ds.GetLayerByName('points.points')
 
-    gdaltest.gxt_ds = ogr.GetDriverByName('Geoconcept').CreateDataSource('tmp/tmp.gxt')
+    ds = ogr.GetDriverByName('Geoconcept').CreateDataSource('tmp/tmp.gxt')
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('WGS84')
 
-    gxt_lyr = gdaltest.gxt_ds.CreateLayer('points', srs, geom_type=ogr.wkbPoint)
+    gxt_lyr = ds.CreateLayer('points', srs, geom_type=ogr.wkbPoint)
 
     src_lyr.ResetReading()
 
@@ -156,11 +166,11 @@ def test_ogr_gxt_3():
 
         feat = src_lyr.GetNextFeature()
 
-    gdaltest.gxt_ds = None
+    ds = None
 
     # Read the newly written GXT file and check its features and geometries
-    gdaltest.gxt_ds = ogr.Open('tmp/tmp.gxt')
-    gxt_lyr = gdaltest.gxt_ds.GetLayerByName('points.points')
+    ds = ogr.Open('tmp/tmp.gxt')
+    gxt_lyr = ds.GetLayerByName('points.points')
 
     assert gxt_lyr.GetSpatialRef().IsSame(srs, options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), 'Output SRS is not the one expected.'
 
@@ -266,19 +276,3 @@ def test_ogr_gxt_line():
                                       max_error=0.000000001) != 0:
         feat.DumpReadable()
         pytest.fail()
-
-    
-###############################################################################
-#
-
-
-def test_ogr_gxt_cleanup():
-
-    gdaltest.gxt_ds = None
-    try:
-        os.remove('tmp/tmp.gxt')
-    except OSError:
-        pass
-    
-
-

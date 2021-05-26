@@ -23,7 +23,7 @@ ifeq ($(GNM_ENABLED),yes)
    GDAL_OBJ += gnm/*.o gnm/gnm_frmts/o/*.o
 endif
 
-ifeq ($(HAVE_LERC),yes)
+ifeq ($(HAVE_LERC),internal)
    GDAL_OBJ += third_party/o/*.o
 endif
 
@@ -116,9 +116,6 @@ frmts-target: generate_gdal_version_h
 third-party-target: generate_gdal_version_h
 	(cd third_party; $(MAKE))
 
-ogr-all: generate_gdal_version_h
-	(cd ogr; $(MAKE) all)
-
 apps-target:	lib-target
 	(cd apps; $(MAKE))
 
@@ -182,7 +179,7 @@ man:
 	mkdir -p man/man1
 	cp doc/build/man/*.1 man/man1
 
-all:	default ogr-all
+all:	default
 
 install-docs:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)

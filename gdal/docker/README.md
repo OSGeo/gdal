@@ -7,14 +7,14 @@ Each directory contains a `./build.sh` for convenient building of the image.
 Note: the mention of the overall licensing terms of the GDAL build is to the
 best of our knowledge and not guaranteed. Users should check by themselves.
 
-# Alpine based (3.12)
+# Alpine based (3.13)
 
 ## Ultra small: `osgeo/gdal:alpine-ultrasmall-latest`
 
-* Image size: < 40 MB
+* Image size: ~ 50 MB
 * Raster drivers: VRT, GTiff, HFA, PNG, JPEG, MEM, JP2OpenJPEG, WEB, GPKG
 * Vector drivers: Shapefile, MapInfo, VRT, Memory, GeoJSON, GPKG, SQLite
-* External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp, libzstd
+* External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp, libzstd, libtiff (no LERC support at time of writing)
 * No GDAL Python
 * Base PROJ grid package
 * Overall licensing terms of the GDAL build: permissive (X/MIT, BSD style, Apache, etc..)
@@ -23,9 +23,10 @@ See [alpine-ultrasmall/Dockerfile](alpine-ultrasmall/Dockerfile)
 
 ## Small: `osgeo/gdal:alpine-small-latest`
 
-* Image size: ~ 52 MB
+* Image size: ~ 59 MB
 * Raster drivers: ultrasmall + built-in + SQLite-based ones + network-based ones
 * Vector drivers: ultrasmall + built-in + most XML-based ones + network-based ones + PostgreSQL
+* Using internal libtiff and libgeotiff
 * External libraries enabled: ultrasmall + libexpat, libpq, libssl
 * No GDAL Python
 * Base PROJ grid package
@@ -35,12 +36,13 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 
 ## Normal: `osgeo/gdal:alpine-normal-latest`
 
-* Image size: ~ 175 MB
+* Image size: ~ 242 MB
 * Raster drivers: small + netCDF, HDF5, BAG
 * Vector drivers: small + Spatialite, XLS
+* Using internal libtiff and libgeotiff
 * External libraries enabled: small + libgeos, libhdf5, libhdf5, libkea, libnetcdf, libfreexl,
-  libspatialite, libxml2, libpoppler
-* GDAL Python (Python 3.7)
+  libspatialite, libxml2, libpoppler, openexr, libheif, libdeflate
+* GDAL Python (Python 3.8)
 * Base PROJ grid package
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
@@ -50,9 +52,10 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 
 ## Small: `osgeo/gdal:ubuntu-small-latest`
 
-* Image size: ~ 270 MB
+* Image size: ~ 280 MB
 * Raster drivers: all built-in + JPEG + PNG + JP2OpenJPEG + WEBP +SQLite-based ones + network-based ones
 * Vector drivers: all built-in + XML based ones + SQLite-based ones + network-based ones + PostgreSQL
+* Using internal libtiff and libgeotiff
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
   libzstd, libexpat, libxerces-c, libpq, libssl, libgeos
 * GDAL Python (Python 3.8)
@@ -63,12 +66,13 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
 ## Full: `osgeo/gdal:ubuntu-full-latest` (aliased to `osgeo/gdal`)
 
-* Image size: ~ 1.2 GB
+* Image size: ~ 1.48 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
 * Vector drivers: all based on almost all possible free and open-source dependencies
+* Using internal libtiff and libgeotiff
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
-  libkml, libpoppler
+  libkml, libpoppler, pdfium, openexr, libheif, libdeflate
 * GDAL Python (Python 3.8)
 * *All* PROJ grid packages
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
@@ -89,9 +93,55 @@ docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.t
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.1.0 and PROJ 7.0.1:
-* osgeo/alpine-ultrasmall-3.1.0
-* osgeo/alpine-small-3.1.0
-* osgeo/alpine-normal-3.1.0
-* osgeo/ubuntu-small-3.1.0
-* osgeo/ubuntu-full-3.1.0
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.2.2 and PROJ 8.0.0:
+* osgeo/alpine-ultrasmall-3.2.2
+* osgeo/alpine-small-3.2.2
+* osgeo/alpine-normal-3.2.2
+* osgeo/ubuntu-small-3.2.2
+* osgeo/ubuntu-full-3.2.2
+
+## Multi-arch Images
+
+Each directory contains a `build.sh` shell script that supports building images
+for multiple platforms using an experimental feature called [Docker BuildKit](https://docs.docker.com/buildx/working-with-buildx/).
+
+BuildKit CLI looks like `docker buildx build` vs. `docker build`
+and allows images to build not only for the architecture and operating system
+that the user invoking the build happens to run, but for others as well.
+
+There is a small setup process depending on your operating system. Refer to [Preparation toward running Docker on ARM Mac: Building multi-arch images with Docker BuildX](https://medium.com/nttlabs/buildx-multiarch-2c6c2df00ca2).
+
+#### Example Scenario
+
+If you're running Docker for MacOS with an Intel CPU
+and you wanted to build the `alpine-small` image with support for Raspberry Pi 4,
+adding a couple flags when running `alpine-small/build.sh` can greatly simplify this process
+
+#### Enabling
+
+Use the two script flags in order to leverage BuildKit:
+
+| Flag  | Description | Arguments |
+| ------------- | ------------- | ------------- |
+| --with-multi-arch  | Will build using the `buildx` plugin  | N/A |
+| --platform  | Which architectures to build  | linux/amd64,linux/arm64 |
+
+**Example**
+
+`alpine-small/build.sh --with-multi-arch --release --gdal v3.2.0 --proj master --platform linux/arm64,linux/amd64`
+
+## Custom Base Image
+
+Override the base image, used to build and run gdal, by setting the environment variable: `BASE_IMAGE`
+
+**Example**
+
+`BASE_IMAGE="debian:stable" ubuntu-small/build.sh --release --gdal v3.2.0 --proj master`
+
+## Custom Image Names
+
+Override the image and repository of the final image by setting the environment variable: `TARGET_IMAGE`
+
+**Example**
+
+`TARGET_IMAGE="YOU_DOCKER_USERNAME/gdal" alpine-small/build.sh --release --gdal v3.2.0 --proj master`

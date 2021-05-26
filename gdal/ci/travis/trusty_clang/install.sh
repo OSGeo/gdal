@@ -37,7 +37,7 @@ else
         grep flags /proc/cpuinfo | head -n 1
 fi
 
-CFLAGS=$ARCH_FLAGS CXXFLAGS=$ARCH_FLAGS  LDFLAGS="-lstdc++" ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-null -with-libtiff=internal --with-proj=/usr/local
+CFLAGS=$ARCH_FLAGS CXXFLAGS=$ARCH_FLAGS  LDFLAGS="-lstdc++" ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python=/usr/bin/python3.5 --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-null -with-libtiff=internal --with-proj=/usr/local
 # --with-gta
 
 make doxygen >docs_log.txt 2>&1
@@ -63,10 +63,6 @@ make USER_DEFS="-Wextra -Werror" -j3
 cd swig/perl
 make generate
 make
-cd ../..
-cd swig/csharp
-make generate
-make 2>/tmp/log.txt || cat /tmp/log.txt
 cd ../..
 sudo rm -f /usr/lib/libgdal.so*
 sudo rm -f /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h 

@@ -135,7 +135,7 @@ best illustrated by the following schemas :
    access mode. The pixel spacing and line spacing are returned by the
    function. This is implemented as a virtual method at the
    GDALRasterBand level, so that drivers have a chance of overriding the
-   base implementation. The base implementation justs uses
+   base implementation. The base implementation just uses
    GDALRasterBandGetVirtualMem(). Overridden implementation may use the
    memory file mapping mechanism instead. Such implementations will be
    done in the RawRasterBand object and in the GeoTIFF driver.
@@ -391,10 +391,10 @@ Implemented by cpl_virtualmem.cpp
     */
    size_t CPL_DLL CPLVirtualMemGetSize(CPLVirtualMem* ctxt);
 
-   /** Return if the virtal memory mapping is a direct file mapping.
+   /** Return if the virtual memory mapping is a direct file mapping.
     *
     * @param ctxt context returned by CPLVirtualMemNew().
-    * @return TRUE if the virtal memory mapping is a direct file mapping.
+    * @return TRUE if the virtual memory mapping is a direct file mapping.
     *
     * @since GDAL 1.11
     */

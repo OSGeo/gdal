@@ -174,51 +174,47 @@ int OGRDXFOCSTransformer::InverseTransform( int nCount,
 
 void OGRDXFOCSTransformer::ComposeOnto( OGRDXFAffineTransform& oCT ) const
 {
-    double adfNewMatrix[3][3];
+    double adfNew[12];
 
-    adfNewMatrix[0][0] = oCT.adfMatrix[0][0] * adfAX[0] +
-        oCT.adfMatrix[1][0] * adfAY[0] +
-        oCT.adfMatrix[2][0] * adfN[0];
-    adfNewMatrix[0][1] = oCT.adfMatrix[0][1] * adfAX[0] +
-        oCT.adfMatrix[1][1] * adfAY[0] +
-        oCT.adfMatrix[2][1] * adfN[0];
-    adfNewMatrix[0][2] = oCT.adfMatrix[0][2] * adfAX[0] +
-        oCT.adfMatrix[1][2] * adfAY[0] +
-        oCT.adfMatrix[2][2] * adfN[0];
+    adfNew[0] = adfAX[0] * oCT.adfData[0] +
+        adfAY[0] * oCT.adfData[1] +
+        adfN[0] * oCT.adfData[2];
+    adfNew[1] = adfAX[1] * oCT.adfData[0] +
+        adfAY[1] * oCT.adfData[1] +
+        adfN[1] * oCT.adfData[2];
+    adfNew[2] = adfAX[2] * oCT.adfData[0] +
+        adfAY[2] * oCT.adfData[1] +
+        adfN[2] * oCT.adfData[2];
 
-    adfNewMatrix[1][0] = oCT.adfMatrix[0][0] * adfAX[1] +
-        oCT.adfMatrix[1][0] * adfAY[1] +
-        oCT.adfMatrix[2][0] * adfN[1];
-    adfNewMatrix[1][1] = oCT.adfMatrix[0][1] * adfAX[1] +
-        oCT.adfMatrix[1][1] * adfAY[1] +
-        oCT.adfMatrix[2][1] * adfN[1];
-    adfNewMatrix[1][2] = oCT.adfMatrix[0][2] * adfAX[1] +
-        oCT.adfMatrix[1][2] * adfAY[1] +
-        oCT.adfMatrix[2][2] * adfN[1];
+    adfNew[3] = adfAX[0] * oCT.adfData[3] +
+        adfAY[0] * oCT.adfData[4] +
+        adfN[0] * oCT.adfData[5];
+    adfNew[4] = adfAX[1] * oCT.adfData[3] +
+        adfAY[1] * oCT.adfData[4] +
+        adfN[1] * oCT.adfData[5];
+    adfNew[5] = adfAX[2] * oCT.adfData[3] +
+        adfAY[2] * oCT.adfData[4] +
+        adfN[2] * oCT.adfData[5];
 
-    adfNewMatrix[2][0] = oCT.adfMatrix[0][0] * adfAX[2] +
-        oCT.adfMatrix[1][0] * adfAY[2] +
-        oCT.adfMatrix[2][0] * adfN[2];
-    adfNewMatrix[2][1] = oCT.adfMatrix[0][1] * adfAX[2] +
-        oCT.adfMatrix[1][1] * adfAY[2] +
-        oCT.adfMatrix[2][1] * adfN[2];
-    adfNewMatrix[2][2] = oCT.adfMatrix[0][2] * adfAX[2] +
-        oCT.adfMatrix[1][2] * adfAY[2] +
-        oCT.adfMatrix[2][2] * adfN[2];
-    
-    memcpy( oCT.adfMatrix, adfNewMatrix, sizeof(adfNewMatrix) );
+    adfNew[6] = adfAX[0] * oCT.adfData[6] +
+        adfAY[0] * oCT.adfData[7] +
+        adfN[0] * oCT.adfData[8];
+    adfNew[7] = adfAX[1] * oCT.adfData[6] +
+        adfAY[1] * oCT.adfData[7] +
+        adfN[1] * oCT.adfData[8];
+    adfNew[8] = adfAX[2] * oCT.adfData[6] +
+        adfAY[2] * oCT.adfData[7] +
+        adfN[2] * oCT.adfData[8];
 
-    double adfNewVector[3];
+    adfNew[9] = adfAX[0] * oCT.adfData[9] +
+        adfAY[0] * oCT.adfData[10] +
+        adfN[0] * oCT.adfData[11];
+    adfNew[10] = adfAX[1] * oCT.adfData[9] +
+        adfAY[1] * oCT.adfData[10] +
+        adfN[1] * oCT.adfData[11];
+    adfNew[11] = adfAX[2] * oCT.adfData[9] +
+        adfAY[2] * oCT.adfData[10] +
+        adfN[2] * oCT.adfData[11];
 
-    adfNewVector[0] = oCT.adfVector[0] * adfAX[0] +
-        oCT.adfVector[1] * adfAY[0] +
-        oCT.adfVector[2] * adfN[0];
-    adfNewVector[1] = oCT.adfVector[0] * adfAX[1] +
-        oCT.adfVector[1] * adfAY[1] +
-        oCT.adfVector[2] * adfN[1];
-    adfNewVector[2] = oCT.adfVector[0] * adfAX[2] +
-        oCT.adfVector[1] * adfAY[2] +
-        oCT.adfVector[2] * adfN[2];
-
-    memcpy( oCT.adfVector, adfNewVector, sizeof(adfNewVector) );
+    memcpy( oCT.adfData, adfNew, sizeof(adfNew) );
 }

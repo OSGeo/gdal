@@ -66,6 +66,8 @@ char CPL_DLL** CPLGetConfigOptions(void);
 void CPL_DLL   CPLSetConfigOptions(const char* const * papszConfigOptions);
 char CPL_DLL** CPLGetThreadLocalConfigOptions(void);
 void CPL_DLL   CPLSetThreadLocalConfigOptions(const char* const * papszConfigOptions);
+void CPL_DLL   CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars);
+void CPL_DLL   CPLLoadConfigOptionsFromPredefinedFiles(void);
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
@@ -178,7 +180,7 @@ const char CPL_DLL *CPLLaunderForFilename(const char* pszName,
 /* -------------------------------------------------------------------- */
 
 /** Callback for CPLPushFileFinder */
-typedef const char *(*CPLFileFinder)(const char *, const char *);
+typedef char const *(*CPLFileFinder)(const char *, const char *);
 
 const char    CPL_DLL *CPLFindFile(const char *pszClass,
                                    const char *pszBasename);

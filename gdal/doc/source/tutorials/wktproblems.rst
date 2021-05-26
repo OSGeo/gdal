@@ -4,7 +4,7 @@
 OGC WKT Coordinate System Issues
 ================================================================================
 
-This document is intended to discuss some issues that arrise in
+This document is intended to discuss some issues that arise in
 attempting to use OpenGIS Well Known Text descriptions of coordinate
 systems. It discusses various vendor implementations and issues between
 the original `"Simple Features" specification (ie. SF-SQL
@@ -135,7 +135,7 @@ instance the BNF for the PROJCS item in the CT spec is
 
 This clearly states that the PROJECTION keyword follows the GEOGCS,
 followed by the UNIT, AXIS and AUTHORITY items. Providing them out of
-order is technially a violation of the spec. On the other hand, WKT
+order is technically a violation of the spec. On the other hand, WKT
 consumers are encouraged to be flexible on ordering.
 
 Units of PARAMETERs
@@ -266,7 +266,7 @@ EPSG 9607. Furthermore, I would like to see any future rev of the spec
 clarify this, referencing the EPSG method definitions.
 
 Martin wrote back that he was uncertain on the correct signage and that
-the Adam had programmed the Cadcorp implementation imperically,
+the Adam had programmed the Cadcorp implementation empirically,
 according to what seemed to work for the test data available.
 
 I am prepared to adhere to the Cadorp sign usage (as per EPSG 9607) if
@@ -335,7 +335,7 @@ The specification does not address the precision to which values in WKT
 should be stored. Some implementations, such as Oracles apparently, use
 rather limited precision for parameters such as Scale Factor making it
 difficult to compare coordinate system descriptions or even to get
-comparible numerical results.
+comparable numerical results.
 
 The best practice is to preserve the original precision as specified in
 the source database, such as EPSG where possible. Given that many

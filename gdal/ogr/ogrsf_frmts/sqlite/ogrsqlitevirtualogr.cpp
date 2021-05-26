@@ -33,7 +33,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -608,6 +610,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
     bool bHasOGR_STYLEField = false;
+    std::set<std::string> oSetNamesUC;
     for( int i = 0; i < poFDefn->GetFieldCount(); i++ )
     {
         if( bAddComma )
@@ -618,8 +621,21 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         if( EQUAL(poFieldDefn->GetNameRef(), "OGR_STYLE") )
             bHasOGR_STYLEField = true;
 
+        CPLString osFieldName(poFieldDefn->GetNameRef());
+        int nCounter = 2;
+        while( oSetNamesUC.find(CPLString(osFieldName).toupper()) != oSetNamesUC.end() )
+        {
+            do
+            {
+                osFieldName.Printf("%s%d", poFieldDefn->GetNameRef(), nCounter);
+                nCounter++;
+            }
+            while( poFDefn->GetFieldIndex(osFieldName) >= 0 );
+        }
+        oSetNamesUC.insert(CPLString(osFieldName).toupper());
+
         osSQL += "\"";
-        osSQL += SQLEscapeName(poFieldDefn->GetNameRef());
+        osSQL += SQLEscapeName(osFieldName);
         osSQL += "\"";
         osSQL += " ";
         osSQL += OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn,
@@ -628,7 +644,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
     if( bAddComma )
         osSQL += ",";
-    bAddComma = true;
+
     if( bHasOGR_STYLEField )
     {
         osSQL += "'dummy' VARCHAR HIDDEN";
@@ -642,9 +658,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
     for( int i = 0; i < poFDefn->GetGeomFieldCount(); i++ )
     {
-        if( bAddComma )
-            osSQL += ",";
-        bAddComma = true;
+        osSQL += ",";
 
         OGRGeomFieldDefn* poFieldDefn = poFDefn->GetGeomFieldDefn(i);
 
@@ -1250,14 +1264,21 @@ static void OGR2SQLITE_ExportGeometry(OGRGeometry* poGeom, int nSRSId,
     /* the spatialite blob */
     else if( poGeom->hasCurveGeometry() )
     {
-        int nWkbSize = poGeom->WkbSize();
+        const size_t nWkbSize = poGeom->WkbSize();
+        if( nWkbSize + 1 >
+                static_cast<size_t>(std::numeric_limits<int>::max()) - nGeomBLOBLen )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Too large geometry");
+            nGeomBLOBLen = 0;
+            return;
+        }
 
         pabyGeomBLOB = (GByte*) CPLRealloc(pabyGeomBLOB,
                                 nGeomBLOBLen + nWkbSize + 1);
         poGeom->exportToWkb(wkbNDR, pabyGeomBLOB + nGeomBLOBLen, wkbVariantIso);
         /* Cheat a bit and add a end-of-blob spatialite marker */
         pabyGeomBLOB[nGeomBLOBLen + nWkbSize] = 0xFE;
-        nGeomBLOBLen += nWkbSize + 1;
+        nGeomBLOBLen += static_cast<int>(nWkbSize) + 1;
     }
 }
 

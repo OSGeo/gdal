@@ -18,7 +18,7 @@ Parameters:
 hDefn:  handle to the feature class (layer) definition to which the
 feature will adhere.
 
-an handle to the new feature object with null fields and no geometry,
+a handle to the new feature object with null fields and no geometry,
 or, starting with GDAL 2.1, NULL in case out of memory situation. ";
 
 %feature("docstring")  Destroy "void OGR_F_Destroy(OGRFeatureH hFeat)
@@ -51,7 +51,7 @@ Parameters:
 
 hFeat:  handle to the feature to get the feature definition from.
 
-an handle to the feature definition object on which feature depends.
+a handle to the feature definition object on which feature depends.
 ";
 
 %feature("docstring")  SetGeometryDirectly "OGRErr
@@ -128,7 +128,7 @@ the pointer to the geometry. ";
 %feature("docstring")  GetGeometryRef "OGRGeometryH
 OGR_F_GetGeometryRef(OGRFeatureH hFeat)
 
-Fetch an handle to feature geometry.
+Fetch a handle to feature geometry.
 
 This function is essentially the same as the C++ method
 OGRFeature::GetGeometryRef() (the only difference is that this C
@@ -139,13 +139,13 @@ Parameters:
 
 hFeat:  handle to the feature to get geometry from.
 
-an handle to internal feature geometry. This object should not be
+a handle to internal feature geometry. This object should not be
 modified. ";
 
 %feature("docstring")  GetGeomFieldRef "OGRGeometryH
 OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
 
-Fetch an handle to feature geometry.
+Fetch a handle to feature geometry.
 
 This function is the same as the C++ method
 OGRFeature::GetGeomFieldRef().
@@ -157,7 +157,7 @@ hFeat:  handle to the feature to get geometry from.
 
 iField:  geometry field to get.
 
-an handle to internal feature geometry. This object should not be
+a handle to internal feature geometry. This object should not be
 modified.
 
 GDAL 1.11 ";
@@ -229,7 +229,7 @@ Parameters:
 
 hFeat:  handle to the feature to clone.
 
-an handle to the new feature, exactly matching this feature. ";
+a handle to the new feature, exactly matching this feature. ";
 
 %feature("docstring")  GetFieldCount "int
 OGR_F_GetFieldCount(OGRFeatureH hFeat)
@@ -262,7 +262,7 @@ hFeat:  handle to the feature on which the field is found.
 
 i:  the field to fetch, from 0 to GetFieldCount()-1.
 
-an handle to the field definition (from the OGRFeatureDefn). This is
+a handle to the field definition (from the OGRFeatureDefn). This is
 an internal reference, and should not be deleted or modified. ";
 
 %feature("docstring")  GetFieldIndex "int
@@ -317,7 +317,7 @@ hFeat:  handle to the feature on which the field is found.
 
 i:  the field to fetch, from 0 to GetGeomFieldCount()-1.
 
-an handle to the field definition (from the OGRFeatureDefn). This is
+a handle to the field definition (from the OGRFeatureDefn). This is
 an internal reference, and should not be deleted or modified.
 
 GDAL 1.11 ";
@@ -431,7 +431,7 @@ GDAL 2.2 ";
 %feature("docstring")  GetRawFieldRef "OGRField*
 OGR_F_GetRawFieldRef(OGRFeatureH hFeat, int iField)
 
-Fetch an handle to the internal field value given the index.
+Fetch a handle to the internal field value given the index.
 
 This function is the same as the C++ method
 OGRFeature::GetRawFieldRef().
@@ -513,7 +513,7 @@ iField:  the field to fetch, from 0 to GetFieldCount()-1.
 the field value. ";
 
 %feature("docstring")  OGRFeatureFormatDateTimeBuffer "static void
-OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
+OGRFeatureFormatDateTimeBuffer(char *szTempBuffer, size_t nMaxSize,
 int nYear, int nMonth, int nDay, int nHour, int nMinute, float
 fSecond, int nTZFlag) ";
 

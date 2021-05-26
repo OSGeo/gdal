@@ -23,10 +23,6 @@ ifeq ($(HAVE_OCI),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DOCI_ENABLED
 endif
 
-ifeq ($(HAVE_SDE),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DSDE_ENABLED
-endif
-
 ifeq ($(HAVE_FGDB),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DFGDB_ENABLED
 endif

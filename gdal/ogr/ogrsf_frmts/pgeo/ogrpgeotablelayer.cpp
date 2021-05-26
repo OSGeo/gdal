@@ -90,7 +90,8 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
     sExtent.MinY = dfExtentBottom;
     sExtent.MaxY = dfExtentTop;
 
-    LookupSRID( nSRID );
+    if ( pszGeomCol )
+        LookupSRID( nSRID );
 
 /* -------------------------------------------------------------------- */
 /*      Setup geometry type.                                            */

@@ -50,6 +50,8 @@
 #include "ogr_api.h"
 #endif
 
+#include <stdbool.h>
+
 /* -------------------------------------------------------------------- */
 /*      Significant constants.                                          */
 /* -------------------------------------------------------------------- */
@@ -136,15 +138,23 @@ typedef enum
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                                         GRIORA_Mode = 6,
     /*! Gauss blurring */                               GRIORA_Gauss = 7,
-    /* NOTE: values 8 to 12 are reserved for max,min,med,Q1,Q3 */
+    /* NOTE: values 8 to 13 are reserved for max,min,med,Q1,Q3,sum */
 /*! @cond Doxygen_Suppress */
-                                                        GRIORA_LAST = GRIORA_Gauss
+                                                        GRIORA_RESERVED_START = 8,
+                                                        GRIORA_RESERVED_END = 13,
+/*! @endcond */
+    /** RMS: Root Mean Square / Quadratic Mean.
+     * For complex numbers, applies on the real and imaginary part independently.
+     */
+                                                        GRIORA_RMS = 14,
+/*! @cond Doxygen_Suppress */
+                                                        GRIORA_LAST = GRIORA_RMS
 /*! @endcond */
 } GDALRIOResampleAlg;
 
 /* NOTE to developers: only add members, and if so edit INIT_RASTERIO_EXTRA_ARG */
-/* and INIT_RASTERIO_EXTRA_ARG */
-/** Structure to pass extra arguments to RasterIO() method
+/** Structure to pass extra arguments to RasterIO() method,
+ * must be initialized with INIT_RASTERIO_EXTRA_ARG
   * @since GDAL 2.0
   */
 typedef struct
@@ -833,6 +843,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
 int    CPL_DLL GDALDatasetTestCapability( GDALDatasetH, const char * );
 OGRLayerH CPL_DLL GDALDatasetExecuteSQL( GDALDatasetH, const char *,
                                      OGRGeometryH, const char * );
+OGRErr CPL_DLL GDALDatasetAbortSQL( GDALDatasetH );
 void   CPL_DLL GDALDatasetReleaseResultSet( GDALDatasetH, OGRLayerH );
 OGRStyleTableH CPL_DLL GDALDatasetGetStyleTable( GDALDatasetH );
 void   CPL_DLL GDALDatasetSetStyleTableDirectly( GDALDatasetH, OGRStyleTableH );
@@ -840,6 +851,13 @@ void   CPL_DLL GDALDatasetSetStyleTable( GDALDatasetH, OGRStyleTableH );
 OGRErr CPL_DLL GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce);
 OGRErr CPL_DLL GDALDatasetCommitTransaction(GDALDatasetH hDS);
 OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
+void CPL_DLL GDALDatasetClearStatistics(GDALDatasetH hDS);
+
+OGRFieldDomainH CPL_DLL GDALDatasetGetFieldDomain(GDALDatasetH hDS,
+                                                  const char* pszName);
+bool CPL_DLL GDALDatasetAddFieldDomain(GDALDatasetH hDS,
+                                       OGRFieldDomainH hFieldDomain,
+                                       char** ppszFailureReason);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -956,7 +974,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        int nBuckets, int *panHistogram,
                                        int bIncludeOutOfRange, int bApproxOK,
                                        GDALProgressFunc pfnProgress,
-                                       void * pProgressData ) CPL_WARN_DEPRECATED("Use GDALGetRasterHistogramEx() instead");
+                                       void * pProgressData )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALGetRasterHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogramEx( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
                                        int nBuckets, GUIntBig *panHistogram,
@@ -968,7 +990,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
                                        int *pnBuckets, int **ppanHistogram,
                                        int bForce,
                                        GDALProgressFunc pfnProgress,
-                                       void * pProgressData ) CPL_WARN_DEPRECATED("Use GDALGetDefaultHistogramEx() instead");
+                                       void * pProgressData )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALGetDefaultHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogramEx( GDALRasterBandH hBand,
                                        double *pdfMin, double *pdfMax,
                                        int *pnBuckets, GUIntBig **ppanHistogram,
@@ -977,7 +1003,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogramEx( GDALRasterBandH hBand,
                                        void * pProgressData );
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
-                                       int nBuckets, int *panHistogram ) CPL_WARN_DEPRECATED("Use GDALSetDefaultHistogramEx() instead");
+                                       int nBuckets, int *panHistogram )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALSetDefaultHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogramEx( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
                                        int nBuckets, GUIntBig *panHistogram );
@@ -1129,6 +1159,41 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 #endif
 
+/*! @cond Doxygen_Suppress */
+#ifdef GDAL_COMPILATION
+#define GDALExtractRPCInfoV1 GDALExtractRPCInfo
+#else
+#define GDALRPCInfo        GDALRPCInfoV2
+#define GDALExtractRPCInfo GDALExtractRPCInfoV2
+#endif
+
+/* Deprecated: use GDALRPCInfoV2 */
+typedef struct
+{
+    double dfLINE_OFF;   /*!< Line offset */
+    double dfSAMP_OFF;   /*!< Sample/Pixel offset */
+    double dfLAT_OFF;    /*!< Latitude offset */
+    double dfLONG_OFF;   /*!< Longitude offset */
+    double dfHEIGHT_OFF; /*!< Height offset */
+
+    double dfLINE_SCALE;   /*!< Line scale */
+    double dfSAMP_SCALE;   /*!< Sample/Pixel scale */
+    double dfLAT_SCALE;    /*!< Latitude scale */
+    double dfLONG_SCALE;   /*!< Longitude scale */
+    double dfHEIGHT_SCALE; /*!< Height scale */
+
+    double adfLINE_NUM_COEFF[20]; /*!< Line Numerator Coefficients */
+    double adfLINE_DEN_COEFF[20]; /*!< Line Denominator Coefficients */
+    double adfSAMP_NUM_COEFF[20]; /*!< Sample/Pixel Numerator Coefficients */
+    double adfSAMP_DEN_COEFF[20]; /*!< Sample/Pixel Denominator Coefficients */
+
+    double dfMIN_LONG; /*!< Minimum longitude */
+    double dfMIN_LAT;  /*!< Minimum latitude */
+    double dfMAX_LONG; /*!< Maximum longitude */
+    double dfMAX_LAT;  /*!< Maximum latitude */
+} GDALRPCInfoV1;
+/*! @endcond */
+
 /** Structure to store Rational Polynomial Coefficients / Rigorous Projection
  * Model. See http://geotiff.maptools.org/rpc_prop.html */
 typedef struct
@@ -1154,9 +1219,16 @@ typedef struct
     double dfMIN_LAT;  /*!< Minimum latitude */
     double dfMAX_LONG; /*!< Maximum longitude */
     double dfMAX_LAT;  /*!< Maximum latitude */
-} GDALRPCInfo;
 
-int CPL_DLL CPL_STDCALL GDALExtractRPCInfo( CSLConstList, GDALRPCInfo * );
+    /* Those fields should be at the end. And all above fields should be the same as in GDALRPCInfoV1 */
+    double dfERR_BIAS;   /*!< Bias error */
+    double dfERR_RAND;   /*!< Random error */
+} GDALRPCInfoV2;
+
+/*! @cond Doxygen_Suppress */
+int CPL_DLL CPL_STDCALL GDALExtractRPCInfoV1( CSLConstList, GDALRPCInfoV1 * );
+/*! @endcond */
+int CPL_DLL CPL_STDCALL GDALExtractRPCInfoV2( CSLConstList, GDALRPCInfoV2 * );
 
 /* ==================================================================== */
 /*      Color tables.                                                   */
@@ -1284,7 +1356,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALRATSetLinearBinning( GDALRasterAttributeTableH,
                                                     double, double );
 int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH,
                                                  double *, double * );
-CPLErr CPL_DLL CPL_STDCALL GDALRATSetTableType( GDALRasterAttributeTableH hRAT, 
+CPLErr CPL_DLL CPL_STDCALL GDALRATSetTableType( GDALRasterAttributeTableH hRAT,
                          const GDALRATTableType eInTableType );
 GDALRATTableType CPL_DLL CPL_STDCALL GDALRATGetTableType( GDALRasterAttributeTableH hRAT);
 CPLErr CPL_DLL CPL_STDCALL GDALRATInitializeFromColorTable(
@@ -1293,7 +1365,7 @@ GDALColorTableH CPL_DLL CPL_STDCALL GDALRATTranslateToColorTable(
     GDALRasterAttributeTableH, int nEntryCount );
 void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH,
                                               FILE * );
-GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL
     GDALRATClone( const GDALRasterAttributeTableH );
 
 void CPL_DLL* CPL_STDCALL
@@ -1441,8 +1513,16 @@ const char CPL_DLL *GDALGroupGetName(GDALGroupH hGroup);
 const char CPL_DLL *GDALGroupGetFullName(GDALGroupH hGroup);
 char CPL_DLL **GDALGroupGetMDArrayNames(GDALGroupH hGroup, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALMDArrayH CPL_DLL GDALGroupOpenMDArray(GDALGroupH hGroup, const char* pszMDArrayName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+GDALMDArrayH CPL_DLL GDALGroupOpenMDArrayFromFullname(GDALGroupH hGroup, const char* pszMDArrayName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+GDALMDArrayH CPL_DLL  GDALGroupResolveMDArray(GDALGroupH hGroup,
+                                     const char* pszName,
+                                     const char* pszStartingPoint,
+                                     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **GDALGroupGetGroupNames(GDALGroupH hGroup, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALGroupH CPL_DLL GDALGroupOpenGroup(GDALGroupH hGroup, const char* pszSubGroupName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+GDALGroupH CPL_DLL GDALGroupOpenGroupFromFullname(GDALGroupH hGroup, const char* pszMDArrayName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL **GDALGroupGetVectorLayerNames(GDALGroupH hGroup, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+OGRLayerH CPL_DLL GDALGroupOpenVectorLayer(GDALGroupH hGroup, const char* pszVectorLayerName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALDimensionH CPL_DLL *GDALGroupGetDimensions(GDALGroupH hGroup, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL GDALGroupGetAttribute(GDALGroupH hGroup, const char* pszName) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL *GDALGroupGetAttributes(GDALGroupH hGroup, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
@@ -1494,6 +1574,9 @@ int CPL_DLL GDALMDArrayWrite(GDALMDArrayH hArray,
                             const void* pSrcBuffer,
                             const void* psrcBufferAllocStart,
                             size_t nSrcBufferllocSize);
+int CPL_DLL GDALMDArrayAdviseRead(GDALMDArrayH hArray,
+                                  const GUInt64* arrayStartIdx,
+                                  const size_t* count);
 GDALAttributeH CPL_DLL GDALMDArrayGetAttribute(GDALMDArrayH hArray, const char* pszName) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL *GDALMDArrayGetAttributes(GDALMDArrayH hArray, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL GDALMDArrayCreateAttribute(GDALMDArrayH hArray,
@@ -1509,9 +1592,13 @@ int CPL_DLL GDALMDArraySetRawNoDataValue(GDALMDArrayH hArray, const void*);
 int CPL_DLL GDALMDArraySetNoDataValueAsDouble(GDALMDArrayH hArray,
                                               double dfNoDataValue);
 int CPL_DLL GDALMDArraySetScale(GDALMDArrayH hArray, double dfScale);
+int CPL_DLL GDALMDArraySetScaleEx(GDALMDArrayH hArray, double dfScale, GDALDataType eStorageType);
 double CPL_DLL GDALMDArrayGetScale(GDALMDArrayH hArray, int *pbHasValue);
+double CPL_DLL GDALMDArrayGetScaleEx(GDALMDArrayH hArray, int *pbHasValue, GDALDataType* peStorageType);
 int CPL_DLL GDALMDArraySetOffset(GDALMDArrayH hArray, double dfOffset);
+int CPL_DLL GDALMDArraySetOffsetEx(GDALMDArrayH hArray, double dfOffset, GDALDataType eStorageType);
 double CPL_DLL GDALMDArrayGetOffset(GDALMDArrayH hArray, int *pbHasValue);
+double CPL_DLL GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int *pbHasValue, GDALDataType* peStorageType);
 GUInt64 CPL_DLL *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount);
 int CPL_DLL GDALMDArraySetUnit(GDALMDArrayH hArray, const char*);
 const char CPL_DLL *GDALMDArrayGetUnit(GDALMDArrayH hArray);
@@ -1528,6 +1615,27 @@ GDALMDArrayH CPL_DLL GDALMDArrayGetUnscaled(GDALMDArrayH hArray);
 GDALMDArrayH CPL_DLL GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions);
 GDALDatasetH CPL_DLL GDALMDArrayAsClassicDataset(GDALMDArrayH hArray,
                                                  size_t iXDim, size_t iYDim);
+CPLErr CPL_DLL GDALMDArrayGetStatistics(
+    GDALMDArrayH hArray, GDALDatasetH, int bApproxOK, int bForce,
+    double *pdfMin, double *pdfMax,
+    double *pdfMean, double *pdfStdDev,
+    GUInt64* pnValidCount,
+    GDALProgressFunc pfnProgress, void *pProgressData );
+int CPL_DLL GDALMDArrayComputeStatistics( GDALMDArrayH hArray, GDALDatasetH,
+                                    int bApproxOK,
+                                    double *pdfMin, double *pdfMax,
+                                    double *pdfMean, double *pdfStdDev,
+                                    GUInt64* pnValidCount,
+                                    GDALProgressFunc, void *pProgressData );
+GDALMDArrayH CPL_DLL GDALMDArrayGetResampled(GDALMDArrayH hArray,
+                                     size_t nNewDimCount,
+                                     const GDALDimensionH* pahNewDims,
+                                     GDALRIOResampleAlg resampleAlg,
+                                     OGRSpatialReferenceH hTargetSRS,
+                                     CSLConstList papszOptions);
+GDALMDArrayH CPL_DLL* GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray, size_t *pnCount) CPL_WARN_UNUSED_RESULT;
+void CPL_DLL GDALReleaseArrays(GDALMDArrayH* arrays, size_t nCount);
+int CPL_DLL GDALMDArrayCache( GDALMDArrayH hArray, CSLConstList papszOptions );
 
 void CPL_DLL GDALAttributeRelease(GDALAttributeH hAttr);
 void CPL_DLL GDALReleaseAttributes(GDALAttributeH* attributes, size_t nCount);

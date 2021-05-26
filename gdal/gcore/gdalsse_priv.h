@@ -378,9 +378,7 @@ class XMMReg2Double
     inline void Store2Val(unsigned char* ptr) const
     {
         __m128i tmp = _mm_cvttpd_epi32(_mm_add_pd(xmm, _mm_set1_pd(0.5))); /* Convert the 2 double values to 2 integers */
-        // X X X X 0 B 0 A --> 0 X X X X 0 B 0  (srli)
-        //                  or X X X X 0 B 0 A
-        tmp = _mm_or_si128(tmp, _mm_srli_si128(tmp, 2));
+        tmp = _mm_packs_epi32(tmp, tmp);
         tmp = _mm_packus_epi16(tmp, tmp);
         GDALCopyXMMToInt16(tmp, reinterpret_cast<GInt16*>(ptr));
     }
@@ -388,13 +386,9 @@ class XMMReg2Double
     inline void Store2Val(unsigned short* ptr) const
     {
         __m128i tmp = _mm_cvttpd_epi32(_mm_add_pd(xmm, _mm_set1_pd(0.5))); /* Convert the 2 double values to 2 integers */
-        // X X X X 0 B 0 A --> 0 X X X X 0 B 0  (srli)
-        //                  or X X X X 0 B 0 A
-        tmp = _mm_or_si128(tmp, _mm_srli_si128(tmp, 2));
+        // X X X X 0 B 0 A --> X X X X A A B A
+        tmp = _mm_shufflelo_epi16(tmp, 0 | (2 << 2));
         GDALCopyXMMToInt32(tmp, reinterpret_cast<GInt32*>(ptr));
-
-        //ptr[0] = (GUInt16)_mm_extract_epi16(tmp, 0);
-        //ptr[1] = (GUInt16)_mm_extract_epi16(tmp, 2);
     }
 
     inline void StoreMask(unsigned char* ptr) const
@@ -410,7 +404,9 @@ class XMMReg2Double
 
 #else
 
+#ifndef NO_WARN_USE_SSE2_EMULATION
 #warning "Software emulation of SSE2 !"
+#endif
 
 class XMMReg2Double
 {
@@ -1195,8 +1191,17 @@ class XMMReg4Double
 
     inline void Store4Val(unsigned char* ptr) const
     {
+#ifdef USE_SSE2_EMULATION
         low.Store2Val(ptr);
         high.Store2Val(ptr+2);
+#else
+        __m128i tmpLow = _mm_cvttpd_epi32(_mm_add_pd(low.xmm, _mm_set1_pd(0.5))); /* Convert the 2 double values to 2 integers */
+        __m128i tmpHigh = _mm_cvttpd_epi32(_mm_add_pd(high.xmm, _mm_set1_pd(0.5))); /* Convert the 2 double values to 2 integers */
+        auto tmp = _mm_castps_si128(_mm_shuffle_ps(_mm_castsi128_ps(tmpLow), _mm_castsi128_ps(tmpHigh), _MM_SHUFFLE(1, 0, 1, 0)));
+        tmp = _mm_packs_epi32(tmp, tmp);
+        tmp = _mm_packus_epi16(tmp, tmp);
+        GDALCopyXMMToInt32(tmp, reinterpret_cast<GInt32*>(ptr));
+#endif
     }
 
     inline void Store4Val(unsigned short* ptr) const

@@ -37,4 +37,11 @@
 
 #include "tiledb/tiledb"
 
+
+typedef enum {
+    BAND=0,
+    PIXEL=1,
+    ATTRIBUTES=2
+} TILEDB_INTERLEAVE_MODE;
+
 #endif // TILEDB_HEADERS_H

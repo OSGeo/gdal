@@ -108,7 +108,7 @@ void RegisterOGROCI()
 
     poDriver->SetDescription( "OCI" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Oracle Spatial" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_oci.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/oci.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "OCI:" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
@@ -119,7 +119,7 @@ void RegisterOGROCI()
 "  <Option name='TABLES' type='string' description='Restricted set of tables to list (comma separated)'/>"
 "  <Option name='WORKSPACE' type='string' description='Workspace'/>"
 "  <Option name='MULTI_LOAD' type='boolean' description='If enabled new features will be created in groups of 100 per SQL INSERT command' default='YES'/>"
-"  <Option name='MULTI_LOAD_COUNT' type='int' description='Number of itens for a group INSERT' default='100'/>"
+"  <Option name='MULTI_LOAD_COUNT' type='int' description='Number of items for a group INSERT' default='100'/>"
 "  <Option name='FIRST_ID' type='int' description='First id value to be used on append'/>"
 "</OpenOptionList>");
 
@@ -133,7 +133,7 @@ void RegisterOGROCI()
         "  <Option name='INDEX_PARAMETERS' type='string' description='Creation parameters when the spatial index is created'/>"
         "  <Option name='ADD_LAYER_GTYPE' type='boolean' description='May be set to NO to disable the constraints on the geometry type in the spatial index' default='YES'/>"
         "  <Option name='MULTI_LOAD' type='boolean' description='If enabled new features will be created in groups of 100 per SQL INSERT command' default='YES'/>"
-        "  <Option name='MULTI_LOAD_COUNT' type='int' description='Number of itens for a group INSERT' default='100'/>"
+        "  <Option name='MULTI_LOAD_COUNT' type='int' description='Number of items for a group INSERT' default='100'/>"
         "  <Option name='DEFAULT_STRING_SIZE' type='int' description='Default string column size' default='4000'/>"
         "  <Option name='LOADER_FILE' type='string' description='If this option is set, all feature information will be written to a file suitable for use with SQL*Loader'/>"
         "  <Option name='DIM' type='integer' description='Set to 2 to force the geometries to be 2D, or 3 to be 2.5D' default='3'/>"

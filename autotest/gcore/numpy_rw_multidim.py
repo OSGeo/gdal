@@ -42,11 +42,8 @@ import struct
 def test_numpy_rw_multidim_init():
 
     gdaltest.numpy_drv = None
-    try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except (ImportError, AttributeError):
-        pytest.skip()
+    # importing gdal_array will allow numpy driver registration
+    pytest.importorskip('osgeo.gdal_array')
 
     gdal.AllRegister()
 
@@ -87,12 +84,12 @@ def test_numpy_rw_multidim_numpy_array_as_dataset():
 
     if gdaltest.numpy_drv is None:
         pytest.skip()
-    from osgeo import gdalnumeric
+    from osgeo import gdal_array
     import numpy as np
 
     for typ in (np.int8, np.uint8, np.uint16, np.int16, np.uint32, np.int32, np.float32, np.float64, np.cfloat, np.cdouble):
         ar = np.array([[1,2,3], [4,5,6]], dtype=typ)
-        ds = gdalnumeric.OpenMultiDimensionalNumPyArray(ar)
+        ds = gdal_array.OpenMultiDimensionalNumPyArray(ar)
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -135,13 +132,13 @@ def test_numpy_rw_multidim_numpy_array_as_dataset_negative_strides():
 
     if gdaltest.numpy_drv is None:
         pytest.skip()
-    from osgeo import gdalnumeric
+    from osgeo import gdal_array
     import numpy as np
 
     for typ in (np.int8, np.uint8, np.uint16, np.int16, np.uint32, np.int32, np.float32, np.float64, np.cfloat, np.cdouble):
         ar = np.array([[1,2,3], [4,5,6]], dtype=typ)
         ar = ar[::-1,::-1] # Test negative strides
-        ds = gdalnumeric.OpenMultiDimensionalNumPyArray(ar)
+        ds = gdal_array.OpenMultiDimensionalNumPyArray(ar)
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -156,7 +153,7 @@ def test_numpy_rw_multidim_compound_datatype():
 
     if gdaltest.numpy_drv is None:
         pytest.skip()
-    from osgeo import gdalnumeric
+    from osgeo import gdal_array
     import numpy as np
 
     drv = gdal.GetDriverByName('MEM')
@@ -169,7 +166,7 @@ def test_numpy_rw_multidim_compound_datatype():
     myarray = rg.CreateMDArray("myarray", [ dim ], dt)
     assert myarray
 
-    numpydt = gdalnumeric.ExtendedDataTypeToNumPyDataType(dt)
+    numpydt = gdal_array.ExtendedDataTypeToNumPyDataType(dt)
     assert numpydt.itemsize == 8
     assert numpydt.names == ('x', 'y')
     assert numpydt.fields['x'] == (np.int16, 0)
@@ -184,3 +181,35 @@ def test_numpy_rw_multidim_compound_datatype():
     assert myarray.WriteArray(ar) == gdal.CE_None
     res = myarray.ReadAsArray()
     assert np.array_equal(res, ar)
+
+###############################################################################
+
+
+@pytest.mark.parametrize("datatype", [gdal.GDT_Byte,
+                                      gdal.GDT_Int16,
+                                      gdal.GDT_UInt16,
+                                      gdal.GDT_Int32,
+                                      gdal.GDT_UInt32,
+                                      gdal.GDT_Float32,
+                                      gdal.GDT_Float64,
+                                      gdal.GDT_CInt16,
+                                      gdal.GDT_CInt32,
+                                      gdal.GDT_CFloat32,
+                                      gdal.GDT_CFloat64, ], ids=gdal.GetDataTypeName)
+def test_numpy_rw_multidim_datatype(datatype):
+
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+    import numpy as np
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim = rg.CreateDimension("dim0", None, None, 2)
+    myarray = rg.CreateMDArray("myarray", [ dim ], gdal.ExtendedDataType.Create(datatype))
+    assert myarray
+    numpy_ar = np.reshape(np.arange(0, 2, dtype=np.uint16), (2,))
+    assert myarray.WriteArray(numpy_ar) == gdal.CE_None
+    got = myarray.ReadAsArray()
+    assert np.array_equal(got, numpy_ar)
+    assert np.array_equal(myarray.ReadAsArray(buf_obj = np.zeros(got.shape, got.dtype)), numpy_ar)

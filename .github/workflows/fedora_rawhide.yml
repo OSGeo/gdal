@@ -1,0 +1,31 @@
+name: Fedora Rawhide
+
+on:
+    push:
+        paths-ignore:
+            - 'gdal/doc/**'
+    pull_request:
+        paths-ignore:
+            - 'gdal/doc/**'
+
+
+jobs:
+
+  fedora_rawhide:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+                ${{ github.workspace }}/ccache.tar.gz
+          key: ${{ runner.os }}-cache-fedora-rawhide-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-fedora-rawhide-
+
+      - name: Build
+        run: docker run --privileged=true -e CI -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock fedora:rawhide $PWD/.github/workflows/fedora_rawhide/start.sh

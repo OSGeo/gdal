@@ -8,7 +8,7 @@ AutoCAD DWG
 .. build_dependencies:: Open Design Alliance Teigha library
 
 OGR supports reading most versions of AutoCAD DWG when built with the
-Open Design Alliance Teiga library. DWG is an binary working format used
+Open Design Alliance Teigha library. DWG is an binary working format used
 for AutoCAD drawings. A reasonable effort has been made to make the OGR
 DWG driver work similarly to the OGR DXF driver which shares a common
 data model. The entire contents of the .dwg file is represented as a
@@ -63,6 +63,4 @@ will be available via the blocks layer.
 Building
 --------
 
-Currently DWG building is somewhat adhoc. On linux the normal practice
-is to hand edit gdal/ogr/ogrsf_frmts/dwg/GNUmakefile, update paths, and
-then build the driver as a plugin using the "make plugin" target.
+See :ref:`ODA platform support <vector.oda>` for building GDAL with ODA support.

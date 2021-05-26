@@ -314,32 +314,10 @@ namespace tut
         err_ = OSRSetFromUserInput(srs_, "urn:ogc:def:crs:OGC::AUTO42001:-117:33");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
 
-        char* wkt1 = nullptr;
-        err_ = OSRExportToWkt(srs_, &wkt1);
-        ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
+        OGRSpatialReference oSRS;
+        oSRS.importFromEPSG(32611);
 
-        std::string expect("PROJCS[\"unnamed\",GEOGCS[\"WGS 84\","
-                           "DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\","
-                           "6378137,298.257223563,"
-                           "AUTHORITY[\"EPSG\",\"7030\"]],"
-                           "AUTHORITY[\"EPSG\",\"6326\"]],"
-                           "PRIMEM[\"Greenwich\",0,"
-                           "AUTHORITY[\"EPSG\",\"8901\"]],"
-                           "UNIT[\"degree\",0.0174532925199433,"
-                           "AUTHORITY[\"EPSG\",\"9122\"]],"
-                           "AUTHORITY[\"EPSG\",\"4326\"]],"
-                           "PROJECTION[\"Transverse_Mercator\"],"
-                           "PARAMETER[\"latitude_of_origin\",0],"
-                           "PARAMETER[\"central_meridian\",-117],"
-                           "PARAMETER[\"scale_factor\",0.9996],"
-                           "PARAMETER[\"false_easting\",500000],"
-                           "PARAMETER[\"false_northing\",0],"
-                           "UNIT[\"Meter\",1,AUTHORITY[\"EPSG\",\"9001\"]],"
-                           "AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]");
-
-        ensure_equals("AUTO42001 urn lookup not as expected", std::string(wkt1), expect);
-        CPLFree(wkt1);
+        ensure(oSRS.IsSame(OGRSpatialReference::FromHandle(srs_)));
     }
 
     // Test StripTOWGS84IfKnownDatum
@@ -413,6 +391,48 @@ namespace tut
             double vals[7] = { 0 };
             ensure(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
         }
+    }
+
+    // Test GetEPSGGeogCS
+    template<>
+    template<>
+    void object::test<9 >()
+    {
+        // When export to WKT1 is not possible
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput(
+            "PROJCRS[\"World_Vertical_Perspective\",\n"
+            "    BASEGEOGCRS[\"WGS 84\",\n"
+            "        DATUM[\"World Geodetic System 1984\",\n"
+            "            ELLIPSOID[\"WGS 84\",6378137,298.257223563,\n"
+            "                LENGTHUNIT[\"metre\",1]]],\n"
+            "        PRIMEM[\"Greenwich\",0,\n"
+            "            ANGLEUNIT[\"Degree\",0.0174532925199433]]],\n"
+            "    CONVERSION[\"World_Vertical_Perspective\",\n"
+            "        METHOD[\"Vertical Perspective\",\n"
+            "            ID[\"EPSG\",9838]],\n"
+            "        PARAMETER[\"Latitude of topocentric origin\",0,\n"
+            "            ANGLEUNIT[\"Degree\",0.0174532925199433],\n"
+            "            ID[\"EPSG\",8834]],\n"
+            "        PARAMETER[\"Longitude of topocentric origin\",0,\n"
+            "            ANGLEUNIT[\"Degree\",0.0174532925199433],\n"
+            "            ID[\"EPSG\",8835]],\n"
+            "        PARAMETER[\"Viewpoint height\",35800000,\n"
+            "            LENGTHUNIT[\"metre\",1],\n"
+            "            ID[\"EPSG\",8840]]],\n"
+            "    CS[Cartesian,2],\n"
+            "        AXIS[\"(E)\",east,\n"
+            "            ORDER[1],\n"
+            "            LENGTHUNIT[\"metre\",1]],\n"
+            "        AXIS[\"(N)\",north,\n"
+            "            ORDER[2],\n"
+            "            LENGTHUNIT[\"metre\",1]],\n"
+            "    USAGE[\n"
+            "        SCOPE[\"Not known.\"],\n"
+            "        AREA[\"World.\"],\n"
+            "        BBOX[-90,-180,90,180]],\n"
+            "    ID[\"ESRI\",54049]]");
+        ensure_equals(oSRS.GetEPSGGeogCS(), 4326);
     }
 
 } // namespace tut

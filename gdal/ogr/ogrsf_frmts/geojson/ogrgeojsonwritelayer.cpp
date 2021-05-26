@@ -91,14 +91,25 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
         CPLString osBBOX = "[ ";
         if( bRFC7946_ )
         {
-            osBBOX += CPLSPrintf("%.*f, ", nCoordPrecision_, sEnvelopeLayer.MinX);
-            osBBOX += CPLSPrintf("%.*f, ", nCoordPrecision_, sEnvelopeLayer.MinY);
+            char szFormat[32];
+            snprintf(szFormat, sizeof(szFormat), "%%.%df", nCoordPrecision_);
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinX);
+            osBBOX += ", ";
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinY);
+            osBBOX += ", ";
             if( bBBOX3D )
-                osBBOX += CPLSPrintf("%.*f, ", nCoordPrecision_, sEnvelopeLayer.MinZ);
-            osBBOX += CPLSPrintf("%.*f, ", nCoordPrecision_, sEnvelopeLayer.MaxX);
-            osBBOX += CPLSPrintf("%.*f", nCoordPrecision_, sEnvelopeLayer.MaxY);
+            {
+                osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinZ);
+                osBBOX += ", ";
+            }
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxX);
+            osBBOX += ", ";
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxY);
             if( bBBOX3D )
-                osBBOX += CPLSPrintf(", %.*f", nCoordPrecision_, sEnvelopeLayer.MaxZ);
+            {
+                osBBOX += ", ";
+                osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxZ);
+            }
         }
         else
         {
@@ -195,7 +206,12 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         /* Separate "Feature" entries in "FeatureCollection" object. */
         VSIFPrintfL( fp, ",\n" );
     }
-    VSIFPrintfL( fp, "%s", json_object_to_json_string( poObj ) );
+    VSIFPrintfL( fp, "%s", json_object_to_json_string_ext( poObj,
+        JSON_C_TO_STRING_SPACED
+#ifdef JSON_C_TO_STRING_NOSLASHESCAPE
+        | JSON_C_TO_STRING_NOSLASHESCAPE
+#endif
+    ) );
 
     json_object_put( poObj );
 

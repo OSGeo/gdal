@@ -1445,6 +1445,13 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     if( psImage && bHasRPC00 && !bHasLoadedRPCTXT )
     {
         char szValue[1280];
+
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_BIAS );
+        poDS->SetMetadataItem( "ERR_BIAS", szValue, "RPC" );
+
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.ERR_RAND );
+        poDS->SetMetadataItem( "ERR_RAND", szValue, "RPC" );
+
         CPLsnprintf( szValue, sizeof(szValue), "%.16g", sRPCInfo.LINE_OFF );
         poDS->SetMetadataItem( "LINE_OFF", szValue, "RPC" );
 
@@ -1833,109 +1840,109 @@ void NITFDataset::CheckGeoSDEInfo()
 /*      Collect projection parameters.                                  */
 /* -------------------------------------------------------------------- */
 
-    char szParm[16];
+    char szParam[16];
     if (nPRJPSBSize < 82 + 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read PRJPSB TRE. Not enough bytes");
         return;
     }
-    const int nParmCount = atoi(NITFGetField(szParm,pszPRJPSB,82,1));
-    if (nPRJPSBSize < 83+15*nParmCount+15+15)
+    const int nParamCount = atoi(NITFGetField(szParam,pszPRJPSB,82,1));
+    if (nPRJPSBSize < 83+15*nParamCount+15+15)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read PRJPSB TRE. Not enough bytes");
         return;
     }
 
-    double adfParm[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    for( int i = 0; i < nParmCount; i++ )
-        adfParm[i] = CPLAtof(NITFGetField(szParm,pszPRJPSB,83+15*i,15));
+    double adfParam[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for( int i = 0; i < nParamCount; i++ )
+        adfParam[i] = CPLAtof(NITFGetField(szParam,pszPRJPSB,83+15*i,15));
 
-    const double dfFE = CPLAtof(NITFGetField(szParm,pszPRJPSB,83+15*nParmCount,15));
-    const double dfFN = CPLAtof(NITFGetField(szParm,pszPRJPSB,83+15*nParmCount+15,15));
+    const double dfFE = CPLAtof(NITFGetField(szParam,pszPRJPSB,83+15*nParamCount,15));
+    const double dfFN = CPLAtof(NITFGetField(szParam,pszPRJPSB,83+15*nParamCount+15,15));
 
 /* -------------------------------------------------------------------- */
 /*      Try to handle the projection.                                   */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
     if( STARTS_WITH_CI(pszPRJPSB+80, "AC") )
-        oSRS.SetACEA( adfParm[1], adfParm[2], adfParm[3], adfParm[0],
+        oSRS.SetACEA( adfParam[1], adfParam[2], adfParam[3], adfParam[0],
                       dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "AK") )
-        oSRS.SetLAEA( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetLAEA( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "AL") )
-        oSRS.SetAE( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetAE( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "BF") )
-        oSRS.SetBonne( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetBonne( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "CP") )
-        oSRS.SetEquirectangular( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetEquirectangular( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "CS") )
-        oSRS.SetCS( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetCS( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "EF") )
-        oSRS.SetEckertIV( adfParm[0], dfFE, dfFN );
+        oSRS.SetEckertIV( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "ED") )
-        oSRS.SetEckertVI( adfParm[0], dfFE, dfFN );
+        oSRS.SetEckertVI( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "GN") )
-        oSRS.SetGnomonic( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetGnomonic( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "HX") )
-        oSRS.SetHOM2PNO( adfParm[1],
-                         adfParm[3], adfParm[2],
-                         adfParm[5], adfParm[4],
-                         adfParm[0], dfFE, dfFN );
+        oSRS.SetHOM2PNO( adfParam[1],
+                         adfParam[3], adfParam[2],
+                         adfParam[5], adfParam[4],
+                         adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "KA") )
-        oSRS.SetEC( adfParm[1], adfParm[2], adfParm[3], adfParm[0],
+        oSRS.SetEC( adfParam[1], adfParam[2], adfParam[3], adfParam[0],
                     dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "LE") )
-        oSRS.SetLCC( adfParm[1], adfParm[2], adfParm[3], adfParm[0],
+        oSRS.SetLCC( adfParam[1], adfParam[2], adfParam[3], adfParam[0],
                      dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "LI") )
-        oSRS.SetCEA( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetCEA( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "MC") )
-        oSRS.SetMercator( adfParm[2], adfParm[1], 1.0, dfFE, dfFN );
+        oSRS.SetMercator( adfParam[2], adfParam[1], 1.0, dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "MH") )
-        oSRS.SetMC( 0.0, adfParm[1], dfFE, dfFN );
+        oSRS.SetMC( 0.0, adfParam[1], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "MP") )
-        oSRS.SetMollweide( adfParm[0], dfFE, dfFN );
+        oSRS.SetMollweide( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "NT") )
-        oSRS.SetNZMG( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetNZMG( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "OD") )
-        oSRS.SetOrthographic( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetOrthographic( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "PC") )
-        oSRS.SetPolyconic( adfParm[1], adfParm[0], dfFE, dfFN );
+        oSRS.SetPolyconic( adfParam[1], adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "PG") )
-        oSRS.SetPS( adfParm[1], adfParm[0], 1.0, dfFE, dfFN );
+        oSRS.SetPS( adfParam[1], adfParam[0], 1.0, dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "RX") )
-        oSRS.SetRobinson( adfParm[0], dfFE, dfFN );
+        oSRS.SetRobinson( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "SA") )
-        oSRS.SetSinusoidal( adfParm[0], dfFE, dfFN );
+        oSRS.SetSinusoidal( adfParam[0], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "TC") )
-        oSRS.SetTM( adfParm[2], adfParm[0], adfParm[1], dfFE, dfFN );
+        oSRS.SetTM( adfParam[2], adfParam[0], adfParam[1], dfFE, dfFN );
 
     else if( STARTS_WITH_CI(pszPRJPSB+80, "VA") )
-        oSRS.SetVDG( adfParm[0], dfFE, dfFN );
+        oSRS.SetVDG( adfParam[0], dfFE, dfFN );
 
     else
     {
@@ -1952,7 +1959,7 @@ void NITFDataset::CheckGeoSDEInfo()
                  "Cannot read GEOPSB TRE. Not enough bytes");
         return;
     }
-    LoadDODDatum( &oSRS, NITFGetField(szParm,pszGEOPSB,86,4) );
+    LoadDODDatum( &oSRS, NITFGetField(szParam,pszGEOPSB,86,4) );
 
 /* -------------------------------------------------------------------- */
 /*      Get the geotransform                                            */
@@ -1985,12 +1992,12 @@ void NITFDataset::CheckGeoSDEInfo()
     }
 
     double adfGT[6];
-    adfGT[0] = CPLAtof(NITFGetField(szParm,pszMAPLOB,13,15));
-    adfGT[1] = CPLAtof(NITFGetField(szParm,pszMAPLOB,3,5)) * dfMeterPerUnit;
+    adfGT[0] = CPLAtof(NITFGetField(szParam,pszMAPLOB,13,15));
+    adfGT[1] = CPLAtof(NITFGetField(szParam,pszMAPLOB,3,5)) * dfMeterPerUnit;
     adfGT[2] = 0.0;
-    adfGT[3] = CPLAtof(NITFGetField(szParm,pszMAPLOB,28,15));
+    adfGT[3] = CPLAtof(NITFGetField(szParam,pszMAPLOB,28,15));
     adfGT[4] = 0.0;
-    adfGT[5] = -CPLAtof(NITFGetField(szParm,pszMAPLOB,8,5)) * dfMeterPerUnit;
+    adfGT[5] = -CPLAtof(NITFGetField(szParam,pszMAPLOB,8,5)) * dfMeterPerUnit;
 
 /* -------------------------------------------------------------------- */
 /*      Apply back to dataset.                                          */
@@ -2289,7 +2296,7 @@ CPLErr NITFDataset::_SetProjection(const char* _pszProjection)
 void NITFDataset::InitializeNITFDESMetadata()
 {
     static const char   * const pszDESMetadataDomain       = "NITF_DES_METADATA";
-    static const char   * const pszDESsDomain              = "NITF_DES";
+    static const char   * const pszDESsDomain              = "xml:DES";
     static const char   * const pszMDXmlDataContentDESDATA = "NITF_DES_XML_DATA_CONTENT_DESDATA";
     static const char   * const pszXmlDataContent          = "XML_DATA_CONTENT";
     constexpr int     idxXmlDataContentDESDATA   = 973;
@@ -2349,93 +2356,6 @@ void NITFDataset::InitializeNITFDESMetadata()
         pachNITFDES   = NULL;
         ppszDESsList += 1;
     }
-}
-
-/************************************************************************/
-/*                       InitializeNITFDESs()                           */
-/************************************************************************/
-
-void NITFDataset::InitializeNITFDESs()
-{
-    static const char * const pszDESsDomain = "NITF_DES";
-
-    char **ppszDESsList = oSpecialMD.GetMetadata( pszDESsDomain );
-
-    if( ppszDESsList != NULL ) return;
-
-/* -------------------------------------------------------------------- */
-/*  Go through all the segments and process all DES segments.           */
-/* -------------------------------------------------------------------- */
-
-    char               *pachDESData  = NULL;
-    int                 nDESDataSize = 0;
-    std::string         encodedDESData("");
-    CPLStringList       aosList;
-
-    for( int iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
-    {
-        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
-
-        if( EQUAL(psSegInfo->szSegmentType,"DE") )
-        {
-            nDESDataSize = psSegInfo->nSegmentHeaderSize + psSegInfo->nSegmentSize;
-            pachDESData  = reinterpret_cast<char *>(
-                VSI_MALLOC_VERBOSE( nDESDataSize + 1 ) );
-
-            if (pachDESData == NULL)
-            {
-                return;
-            }
-
-            if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart,
-                          SEEK_SET ) != 0
-                || static_cast<int>( VSIFReadL( pachDESData, 1, nDESDataSize,
-                                                psFile->fp ) ) != nDESDataSize )
-            {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Failed to read %d byte DES subheader from " CPL_FRMT_GUIB ".",
-                          nDESDataSize,
-                          psSegInfo->nSegmentHeaderStart );
-                CPLFree( pachDESData );
-                return;
-            }
-
-            pachDESData[nDESDataSize] = '\0';
-
-/* -------------------------------------------------------------------- */
-/*          Accumulate all the DES segments.                            */
-/* -------------------------------------------------------------------- */
-
-            char* pszBase64 = CPLBase64Encode( nDESDataSize, (const GByte *)pachDESData );
-            encodedDESData = pszBase64;
-            CPLFree(pszBase64);
-
-            CPLFree( pachDESData );
-            pachDESData = NULL;
-
-            if( encodedDESData.empty() )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Failed to encode DES subheader data!");
-                return;
-            }
-
-            // The length of the DES subheader data plus a space is append to the beginning of the encoded
-            // string so that we can recover the actual length of the image subheader when we decode it.
-
-            char buffer[20];
-
-            snprintf(buffer, sizeof(buffer), "%d", nDESDataSize);
-
-            std::string desSubheaderStr(buffer);
-            desSubheaderStr.append(" ");
-            desSubheaderStr.append(encodedDESData);
-
-            aosList.AddString(desSubheaderStr.c_str() );
-        }
-    }
-
-    if (!aosList.empty())
-        oSpecialMD.SetMetadata( aosList.List(), pszDESsDomain );
 }
 
 /************************************************************************/
@@ -2549,6 +2469,46 @@ void NITFDataset::InitializeNITFTREs()
     }
 }
 #endif
+
+/************************************************************************/
+/*                       InitializeNITFDESs()                           */
+/************************************************************************/
+
+void NITFDataset::InitializeNITFDESs()
+{
+    char** papszDESsList = oSpecialMD.GetMetadata( "xml:DES" );
+
+    if( papszDESsList != nullptr )
+    {
+        return;
+    }
+
+    CPLXMLNode* psDesListNode = CPLCreateXMLNode(nullptr, CXT_Element, "des_list");
+
+    for( int iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+    {
+        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+
+        if (EQUAL(psSegInfo->szSegmentType, "DE"))
+        {
+            CPLXMLNode* psDesNode = NITFDESGetXml(psFile, iSegment);
+
+            if (psDesNode != nullptr)
+            {
+                CPLAddXMLChild(psDesListNode, psDesNode);
+            }
+        }
+    }
+
+    if (psDesListNode->psChild != nullptr)
+    {
+        char* pszXML = CPLSerializeXMLTree(psDesListNode);
+        char* apszMD[2] = { pszXML, nullptr };
+        oSpecialMD.SetMetadata( apszMD, "xml:DES" );
+        CPLFree(pszXML);
+    }
+    CPLDestroyXMLNode(psDesListNode);
+}
 
 /************************************************************************/
 /*                       InitializeNITFMetadata()                        */
@@ -3045,7 +3005,7 @@ char **NITFDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "NITF_METADATA", "NITF_DES", "NITF_DES_METADATA",
+                                   "NITF_METADATA", "xml:DES", "NITF_DES_METADATA",
                                    "NITF_FILE_HEADER_TRES", "NITF_IMAGE_SEGMENT_TRES",
                                    "CGM", "TEXT", "TRE", "xml:TRE", "OVERVIEWS", nullptr);
 }
@@ -3065,8 +3025,7 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
         return oSpecialMD.GetMetadata( pszDomain );
     }
 
-#ifdef ESRI_BUILD
-    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES") )
+    if( pszDomain != nullptr && EQUAL(pszDomain,"xml:DES") )
     {
         // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
 
@@ -3074,6 +3033,7 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
         return oSpecialMD.GetMetadata( pszDomain );
     }
 
+#ifdef ESRI_BUILD
     if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES_METADATA") )
     {
         // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
@@ -4290,7 +4250,7 @@ NITFDataset::NITFCreateCopy(
         else if( STARTS_WITH_CI(papszSrcMD[iMD], "NITF_FHDR") )
         {
             bPreserveSrcMDAsCreationOption =
-                CSLFetchNameValue(papszOptions, "FHDR") == nullptr; 
+                CSLFetchNameValue(papszOptions, "FHDR") == nullptr;
         }
         if( bPreserveSrcMDAsCreationOption )
         {
@@ -4336,7 +4296,7 @@ NITFDataset::NITFCreateCopy(
 
         char *pszName = nullptr;
         CPLParseNameValue( papszSrcMD[iMD], &pszName );
-        if( pszName != nullptr && 
+        if( pszName != nullptr &&
             CSLPartialFindString(papszOptions, CPLSPrintf("TRE=%s", pszName)) < 0 )
         {
             papszFullOptions = CSLAddString( papszFullOptions, osTRE );
@@ -5061,12 +5021,12 @@ static bool NITFPatchImageLength( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Update total file length.                                       */
 /* -------------------------------------------------------------------- */
-    if (nFileLen >= (GUIntBig)(1e12 - 1))
+    if (nFileLen >= NITF_MAX_FILE_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999998",
-                 nFileLen);
-        nFileLen = (GUIntBig)(1e12 - 2);
+                 "Too big file : " CPL_FRMT_GUIB ". Truncating to " CPL_FRMT_GUIB,
+                 nFileLen, NITF_MAX_FILE_SIZE - 1);
+        nFileLen = NITF_MAX_FILE_SIZE - 1;
     }
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
     if( VSIFSeekL( fpVSIL, 342, SEEK_SET ) != 0 ||
@@ -5082,12 +5042,12 @@ static bool NITFPatchImageLength( const char *pszFilename,
 /*      Update the image data length.                                   */
 /* -------------------------------------------------------------------- */
     GUIntBig nImageSize = nFileLen-nImageOffset;
-    if (GUINTBIG_TO_DOUBLE(nImageSize) >= 1e10 - 1)
+    if (nImageSize >= 9999999999ULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big image size : " CPL_FRMT_GUIB". Truncating to 9999999998",
                  nImageSize);
-        nImageSize = (GUIntBig)(1e10 - 2);
+        nImageSize = 9999999998ULL;
     }
     osLen = CPLString().Printf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",nImageSize);
     if( VSIFSeekL( fpVSIL, 369, SEEK_SET ) != 0 ||
@@ -5383,12 +5343,12 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     GUIntBig nFileLen = VSIFTellL(fpVSIL);
     // Offset to file length entry
     bOK &= VSIFSeekL(fpVSIL, 342, SEEK_SET ) == 0;
-    if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12 - 1)
+    if (nFileLen >= NITF_MAX_FILE_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                        "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999998",
-                        nFileLen);
-        nFileLen = (GUIntBig) (1e12 - 2);
+                 "Too big file : " CPL_FRMT_GUIB ". Truncating to " CPL_FRMT_GUIB,
+                 nFileLen, NITF_MAX_FILE_SIZE - 1);
+        nFileLen = NITF_MAX_FILE_SIZE - 1;
     }
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",
                     nFileLen);
@@ -5666,12 +5626,12 @@ static bool NITFWriteTextSegments( const char *pszFilename,
     GUIntBig nFileLen = VSIFTellL( fpVSIL );
 
     bOK &= VSIFSeekL( fpVSIL, 342, SEEK_SET ) == 0;
-    if (GUINTBIG_TO_DOUBLE(nFileLen) >= 1e12 - 1)
+    if (nFileLen >= NITF_MAX_FILE_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too big file : " CPL_FRMT_GUIB ". Truncating to 999999999998",
-                 nFileLen);
-        nFileLen = (GUIntBig)(1e12 - 2);
+                 "Too big file : " CPL_FRMT_GUIB ". Truncating to " CPL_FRMT_GUIB,
+                 nFileLen, NITF_MAX_FILE_SIZE - 1);
+        nFileLen = NITF_MAX_FILE_SIZE - 1;
     }
     CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
     bOK &= VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
@@ -6139,7 +6099,8 @@ void GDALRegister_NITF()
     osCreationOptions +=
 "   <Option name='TRE' type='string' description='Under the format TRE=tre-name,tre-contents'/>"
 "   <Option name='FILE_TRE' type='string' description='Under the format FILE_TRE=tre-name,tre-contents'/>"
-"   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>";
+"   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>"
+"   <Option name='DES' type='string' description='Under the format DES=des-name=des-contents'/>";
 
     for( unsigned int i=0; apszFieldsBLOCKA[i] != nullptr; i+=3 )
     {

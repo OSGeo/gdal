@@ -1218,6 +1218,12 @@ void basis( int c, double t, int npts, double x[], double N[] );
 void rbspline2( int npts,int k,int p1,double b[],double h[],
     bool bCalculateKnots, double x[], double p[] );
 
+
+#if defined(__GNUC__) && __GNUC__ >= 6
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
 namespace {
     inline void setRow(GDALMatrix & m, int row, DXFTriple const & t)
     {
@@ -1344,6 +1350,11 @@ static std::vector<DXFTriple> GetBSplineControlPoints(
 
     return aoControlPoints;
 }
+
+#if defined(__GNUC__) && __GNUC__ >= 6
+#pragma GCC diagnostic pop
+#endif
+
 
 /************************************************************************/
 /*                         InterpolateSpline()                          */

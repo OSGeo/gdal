@@ -32,23 +32,24 @@
 #ifdef HAVE_CURL
 
 #include "cpl_aws.h"
+#include "cpl_azure.h"
 #include "cpl_port.h"
+#include "cpl_json.h"
 #include "cpl_string.h"
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_mem_cache.h"
 
-#include <curl/curl.h>
+#include "cpl_curl_priv.h"
 
 #include <set>
 #include <map>
 #include <memory>
+#include <mutex>
 
 //! @cond Doxygen_Suppress
 
-// 7.18.1
-#if LIBCURL_VERSION_NUM >= 0x071201
+// Leave it for backward compatibility, but deprecate.
 #define HAVE_CURLINFO_REDIRECT_URL
-#endif
 
 void VSICurlStreamingClearCache( void ); // from cpl_vsil_curl_streaming.cpp
 
@@ -56,6 +57,13 @@ struct curl_slist* VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL,
                        const char * const* papszOptions);
 struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
                                         struct curl_slist* poSrcToDestroy );
+
+struct curl_slist* VSICurlSetContentTypeFromExt(struct curl_slist* polist,
+                                                const char *pszPath);
+
+struct curl_slist* VSICurlSetCreationHeadersFromOptions(struct curl_slist* headers,
+                                                        CSLConstList papszOptions,
+                                                        const char *pszPath);
 
 namespace cpl {
 
@@ -77,6 +85,7 @@ class FileProp
     CPLString       osRedirectURL{};
     bool            bHasComputedFileSize = false;
     bool            bIsDirectory = false;
+    int             nMode = 0; // st_mode member of struct stat
     bool            bS3LikeRedirect = false;
     CPLString       ETag{};
 };
@@ -110,12 +119,31 @@ struct WriteFuncStruct
     void               *pReadCbkUserData = nullptr;
     bool                bInterrupted = false;
 
-#if LIBCURL_VERSION_NUM < 0x073600
+#if !CURL_AT_LEAST_VERSION(7,54,0)
     // Workaround to ignore extra HTTP response headers from
     // proxies in older versions of curl.
     // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
     bool            bIsProxyConnectHeader = false;
-#endif
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
+};
+
+struct PutData
+{
+    const GByte* pabyData = nullptr;
+    size_t       nOff = 0;
+    size_t       nTotalSize = 0;
+
+    static size_t ReadCallBackBuffer( char *buffer, size_t size,
+                                        size_t nitems, void *instream )
+    {
+        PutData* poThis = static_cast<PutData *>(instream);
+        const size_t nSizeMax = size * nitems;
+        const size_t nSizeToWrite =
+            std::min(nSizeMax, poThis->nTotalSize - poThis->nOff);
+        memcpy(buffer, poThis->pabyData + poThis->nOff, nSizeToWrite);
+        poThis->nOff += nSizeToWrite;
+        return nSizeToWrite;
+    }
 };
 
 /************************************************************************/
@@ -210,7 +238,8 @@ public:
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
-                            bool bSetError ) override;
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
 
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
@@ -221,6 +250,7 @@ public:
     char **ReadDir( const char *pszDirname ) override
         { return ReadDirEx(pszDirname, 0); }
     char **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    char **SiblingFiles( const char *pszFilename ) override;
 
     int HasOptimizedReadMultiRange( const char* /* pszPath */ )
         override { return true; }
@@ -236,7 +266,9 @@ public:
                             bool* pbGotFileList );
     void InvalidateDirContent( const char *pszDirname );
 
-    virtual CPLString GetFSPrefix() { return "/vsicurl/"; }
+    virtual const char* GetDebugKey() const { return "VSICURL"; }
+
+    virtual CPLString GetFSPrefix() const { return "/vsicurl/"; }
     virtual bool      AllowCachedDataFor(const char* pszFilename);
 
     std::shared_ptr<std::string> GetRegion( const char* pszURL,
@@ -285,6 +317,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     CPLString       m_osFilename{}; // e.g "/vsicurl/http://example.com/foo"
     char*           m_pszURL = nullptr;     // e.g "http://example.com/foo"
+    std::string     m_osQueryString{};      // e.g. an Azure SAS
 
     char          **m_papszHTTPOptions = nullptr;
 
@@ -356,6 +389,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual vsi_l_offset GetFileSize( bool bSetError ) { return GetFileSizeOrHeaders(bSetError, false); }
     bool                 Exists( bool bSetError );
     bool                 IsDirectory() const { return oFileProp.bIsDirectory; }
+    int                  GetMode() const { return oFileProp.nMode; }
     time_t               GetMTime() const { return oFileProp.mTime; }
     const CPLStringList& GetHeaders() { return m_aosHeaders; }
 
@@ -381,7 +415,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                      const char* pszTarget,
                      GDALProgressFunc pProgressFunc,
                      void *pProgressData);
-    int MkdirInternal( const char *pszDirname, bool bDoStatCheck );
+    virtual int MkdirInternal( const char *pszDirname, long nMode, bool bDoStatCheck );
 
   protected:
     char** GetFileList( const char *pszFilename,
@@ -393,6 +427,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     virtual int      CopyObject( const char *oldpath, const char *newpath,
                                  CSLConstList papszMetadata );
+
+    int RmdirRecursiveInternal( const char* pszDirname, int nBatchSize);
 
     IVSIS3LikeFSHandler() = default;
 
@@ -406,10 +442,10 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     virtual int      DeleteObject( const char *pszFilename );
 
-    virtual const char* GetDebugKey() const = 0;
-
     virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper*) {}
     virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * ) {}
+
+    virtual CPLString GetStreamingPath( const char* pszFilename ) const;
 
     bool Sync( const char* pszSource, const char* pszTarget,
                 const char* const * papszOptions,
@@ -421,30 +457,37 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                              const char* const *papszOptions) override;
 
     // Multipart upload
-    CPLString InitiateMultipartUpload(
+    virtual bool SupportsParallelMultipartUpload() const { return false; }
+
+    virtual CPLString InitiateMultipartUpload(
                                 const std::string& osFilename,
                                 IVSIS3LikeHandleHelper *poS3HandleHelper,
                                 int nMaxRetry,
-                                double dfRetryDelay);
-    CPLString UploadPart(const CPLString& osFilename,
+                                double dfRetryDelay,
+                                CSLConstList papszOptions);
+    virtual CPLString UploadPart(const CPLString& osFilename,
                          int nPartNumber,
                          const std::string& osUploadID,
+                         vsi_l_offset nPosition,
                          const void* pabyBuffer,
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
                          double dfRetryDelay);
-    bool CompleteMultipart(const CPLString& osFilename,
+    virtual bool CompleteMultipart(const CPLString& osFilename,
                            const CPLString& osUploadID,
                            const std::vector<CPLString>& aosEtags,
+                           vsi_l_offset nTotalSize,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry,
                            double dfRetryDelay);
-    bool AbortMultipart(const CPLString& osFilename,
+    virtual bool AbortMultipart(const CPLString& osFilename,
                         const CPLString& osUploadID,
                         IVSIS3LikeHandleHelper *poS3HandleHelper,
                         int nMaxRetry,
                         double dfRetryDelay);
+
+    bool    AbortPendingUploads(const char* pszFilename) override;
 };
 
 /************************************************************************/
@@ -472,7 +515,7 @@ class IVSIS3LikeHandle:  public VSICurlHandle
   public:
     IVSIS3LikeHandle( VSICurlFilesystemHandler* poFSIn,
                       const char* pszFilename,
-                      const char* pszURLIn = nullptr ) :
+                      const char* pszURLIn ) :
         VSICurlHandle(poFSIn, pszFilename, pszURLIn) {}
     ~IVSIS3LikeHandle() override {}
 };
@@ -489,6 +532,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     CPLString           m_osFilename{};
     IVSIS3LikeHandleHelper  *m_poS3HandleHelper = nullptr;
     bool                m_bUseChunked = false;
+    CPLStringList       m_aosOptions{};
 
     vsi_l_offset        m_nCurOffset = 0;
     int                 m_nBufferOff = 0;
@@ -506,6 +550,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     CPLString           m_osCurlErrBuf{};
     size_t              m_nChunkedBufferOff = 0;
     size_t              m_nChunkedBufferSize = 0;
+    size_t              m_nWrittenInPUT = 0;
 
     int                 m_nMaxRetry = 0;
     double              m_dfRetryDelay = 0.0;
@@ -526,7 +571,8 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
       VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
                         const char* pszFilename,
                         IVSIS3LikeHandleHelper* poS3HandleHelper,
-                        bool bUseChunked );
+                        bool bUseChunked,
+                        CSLConstList papszOptions );
       ~VSIS3WriteHandle() override;
 
       int Seek( vsi_l_offset nOffset, int nWhence ) override;
@@ -600,6 +646,148 @@ struct CurlRequestHelper
                  IVSIS3LikeHandleHelper *poS3HandleHelper);
 };
 
+/************************************************************************/
+/*                       NetworkStatisticsLogger                        */
+/************************************************************************/
+
+class NetworkStatisticsLogger
+{
+    static int gnEnabled;
+    static NetworkStatisticsLogger gInstance;
+
+    NetworkStatisticsLogger() = default;
+
+    std::mutex m_mutex{};
+
+    struct Counters
+    {
+        GIntBig nHEAD = 0;
+        GIntBig nGET = 0;
+        GIntBig nPUT = 0;
+        GIntBig nPOST = 0;
+        GIntBig nDELETE = 0;
+        GIntBig nGETDownloadedBytes = 0;
+        GIntBig nPUTUploadedBytes = 0;
+        GIntBig nPOSTDownloadedBytes = 0;
+        GIntBig nPOSTUploadedBytes = 0;
+    };
+
+    enum class ContextPathType
+    {
+        FILESYSTEM,
+        FILE,
+        ACTION,
+    };
+
+    struct ContextPathItem
+    {
+        ContextPathType eType;
+        CPLString       osName;
+
+        ContextPathItem(ContextPathType eTypeIn, const CPLString& osNameIn):
+            eType(eTypeIn), osName(osNameIn) {}
+
+        bool operator< (const ContextPathItem& other ) const
+        {
+            if( static_cast<int>(eType) < static_cast<int>(other.eType) )
+                return true;
+            if( static_cast<int>(eType) > static_cast<int>(other.eType) )
+                return false;
+            return osName < other.osName;
+        }
+    };
+
+    struct Stats
+    {
+        Counters counters{};
+        std::map<ContextPathItem, Stats> children{};
+
+        void AsJSON(CPLJSONObject& oJSON) const;
+    };
+
+    Stats m_stats{};
+    std::map<GIntBig, std::vector<ContextPathItem>> m_mapThreadIdToContextPath{};
+
+    static void ReadEnabled();
+
+    std::vector<Counters*> GetCountersForContext();
+
+public:
+
+    static inline bool IsEnabled()
+    {
+        if( gnEnabled < 0)
+        {
+            ReadEnabled();
+        }
+        return gnEnabled == TRUE;
+    }
+
+    static void EnterFileSystem(const char* pszName);
+
+    static void LeaveFileSystem();
+
+    static void EnterFile(const char* pszName);
+
+    static void LeaveFile();
+
+    static void EnterAction(const char* pszName);
+
+    static void LeaveAction();
+
+    static void LogHEAD();
+
+    static void LogGET(size_t nDownloadedBytes);
+
+    static void LogPUT(size_t nUploadedBytes);
+
+    static void LogPOST(size_t nUploadedBytes,
+                        size_t nDownloadedBytes);
+
+    static void LogDELETE();
+
+    static void Reset();
+
+    static CPLString GetReportAsSerializedJSON();
+};
+
+struct NetworkStatisticsFileSystem
+{
+    inline explicit NetworkStatisticsFileSystem(const char* pszName) {
+        NetworkStatisticsLogger::EnterFileSystem(pszName);
+    }
+
+    inline ~NetworkStatisticsFileSystem()
+    {
+        NetworkStatisticsLogger::LeaveFileSystem();
+    }
+};
+
+struct NetworkStatisticsFile
+{
+    inline explicit NetworkStatisticsFile(const char* pszName) {
+        NetworkStatisticsLogger::EnterFile(pszName);
+    }
+
+    inline ~NetworkStatisticsFile()
+    {
+        NetworkStatisticsLogger::LeaveFile();
+    }
+};
+
+struct NetworkStatisticsAction
+{
+    inline explicit NetworkStatisticsAction(const char* pszName) {
+        NetworkStatisticsLogger::EnterAction(pszName);
+    }
+
+    inline ~NetworkStatisticsAction()
+    {
+        NetworkStatisticsLogger::LeaveAction();
+    }
+};
+
+
 int VSICURLGetDownloadChunkSize();
 
 void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
@@ -611,6 +799,8 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
 void MultiPerform(CURLM* hCurlMultiHandle,
                          CURL* hEasyHandle = nullptr);
 void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle);
+
+int VSICurlParseUnixPermissions(const char* pszPermissions);
 
 } // namespace cpl
 

@@ -34,22 +34,27 @@
 #include <algorithm>
 
 /************************************************************************/
-/*                          OGRLVBAGDataSource()                          */
+/*                          OGRLVBAGDataSource()                        */
 /************************************************************************/
 
 OGRLVBAGDataSource::OGRLVBAGDataSource() :
     poPool{ new OGRLayerPool{ } },
     papoLayers{ OGRLVBAG::LayerVector{ } }
-{}
+{
+    const int nMaxSimultaneouslyOpened =
+        std::max(atoi(CPLGetConfigOption("OGR_LVBAG_MAX_OPENED", "100")), 1);
+    if( poPool->GetMaxSimultaneouslyOpened() != nMaxSimultaneouslyOpened )
+        poPool.reset(new OGRLayerPool(nMaxSimultaneouslyOpened));
+}
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRLVBAGDataSource::Open( const char* pszFilename )
+int OGRLVBAGDataSource::Open( const char* pszFilename, char **papszOpenOptionsIn )
 {
     auto poLayer = std::unique_ptr<OGRLVBAGLayer>{
-        new OGRLVBAGLayer{ pszFilename, poPool.get() } };
+        new OGRLVBAGLayer{ pszFilename, poPool.get(), papszOpenOptionsIn } };
     if( poLayer && !poLayer->TouchLayer() )
         return FALSE;
 
@@ -116,6 +121,8 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         OGRLayer **papoSrcLayers = static_cast<OGRLayer **>(
             CPLRealloc(nullptr, sizeof(OGRLayer *) * nSrcLayers ));
 
+        CPLAssert(papoLayers[baseLayerIdx].second);
+
         int idx = 0;
         papoSrcLayers[idx++] = papoLayers[baseLayerIdx].second.release();
         for( const auto &poLayerIdx : papoLayersIdx )
@@ -151,18 +158,18 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         CPLFree(papoGeomFields);
         CPLFree(papoFields);
 
-        // Erase all released pointers
-        auto it = papoLayers.begin();
-        while( it != papoLayers.end() )
-        {
-            if( !it->second )
-                it = papoLayers.erase(it);
-            else
-                ++it;
-        }
-
         papoLayers.push_back({ OGRLVBAG::LayerType::LYR_RAW,
-            OGRLVBAG::LayerUniquePtr{ poLayer.release() } });
+            OGRLayerUniquePtr{ poLayer.release() } });
+    }
+
+    // Erase all released pointers
+    auto it = papoLayers.begin();
+    while( it != papoLayers.end() )
+    {
+        if( !it->second )
+            it = papoLayers.erase(it);
+        else
+            ++it;
     }
 }
 

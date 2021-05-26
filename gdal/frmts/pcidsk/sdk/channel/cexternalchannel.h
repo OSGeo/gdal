@@ -5,10 +5,10 @@
  * This class is used to implement band interleaved channels that are
  * references to an external image database that is not just a raw file.
  * It uses the application supplied EDB interface to access non-PCIDSK files.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,15 +49,16 @@ namespace PCIDSK
     class CExternalChannel : public CPCIDSKChannel
     {
     public:
-        CExternalChannel( PCIDSKBuffer &image_header, 
+        CExternalChannel( PCIDSKBuffer &image_header,
             uint64 ih_offset,
             PCIDSKBuffer &file_header,
-            std::string filename,              
+            std::string filename,
             int channelnum,
             CPCIDSKFile *file,
             eChanType pixel_type );
         virtual ~CExternalChannel();
 
+        virtual eChanType GetType() const override;
         virtual int GetBlockWidth() const override;
         virtual int GetBlockHeight() const override;
         virtual int ReadBlock( int block_index, void *buffer,
@@ -66,17 +67,21 @@ namespace PCIDSK
         virtual int WriteBlock( int block_index, void *buffer ) override;
 
         virtual void GetEChanInfo( std::string &filename, int &echannel,
-                                   int &exoff, int &eyoff, 
+                                   int &exoff, int &eyoff,
                                    int &exsize, int &eysize ) const override;
         virtual void SetEChanInfo( std::string filename, int echannel,
-                                   int exoff, int eyoff, 
+                                   int exoff, int eyoff,
                                    int exsize, int eysize ) override;
+
+        std::string GetExternalFilename(){return filename;}
+        int         GetExternalChanNum(){return echannel;}
+
     private:
         int      exoff;
         int      eyoff;
         int      exsize;
         int      eysize;
-        
+
         int      echannel;
 
         mutable int blocks_per_row;

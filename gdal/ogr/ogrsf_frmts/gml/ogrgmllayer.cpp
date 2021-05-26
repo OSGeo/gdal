@@ -1044,6 +1044,23 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                               (poFeature->GetFieldAsInteger(iField)) ? "true"
                                                                      : "false");
             }
+            else if ( eType == OFTDate )
+            {
+                const OGRField* poField = poFeature->GetRawFieldRef(iField);
+                const char* pszXML = CPLSPrintf("%04d-%02d-%02d",
+                                                poField->Date.Year,
+                                                poField->Date.Month,
+                                                poField->Date.Day);
+                GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
+                              bRemoveAppPrefix, poFieldDefn, pszXML);
+            }
+            else if ( eType == OFTDateTime )
+            {
+                char* pszXML = OGRGetXMLDateTime(poFeature->GetRawFieldRef(iField));
+                GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
+                              bRemoveAppPrefix, poFieldDefn, pszXML);
+                CPLFree(pszXML);
+            }
             else
             {
                 const char *pszRaw = poFeature->GetFieldAsString(iField);

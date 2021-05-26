@@ -457,10 +457,8 @@ def test_sentinel2_l1c_5():
 # Windows specific test to test support for long filenames
 
 
+@pytest.mark.skipif(sys.platform != 'win32', reason='Incorrect platform')
 def test_sentinel2_l1c_6():
-
-    if sys.platform != 'win32':
-        pytest.skip()
 
     filename_xml = 'data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml'
     filename_xml = filename_xml.replace('/', '\\')

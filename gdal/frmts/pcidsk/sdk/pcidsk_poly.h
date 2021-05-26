@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Interface representing access to a PCIDSK Polynomial Segment
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@
 
 namespace PCIDSK {
 //! Interface to PCIDSK Polynomial segment.
-    class PCIDSKPolySegment 
+    class PCIDSKPolySegment
     {
     public:
         //Get the coefficients
@@ -60,9 +60,9 @@ namespace PCIDSK {
         virtual void SetGeosysString(const std::string& oGeosys) =0;
 
         //Get the projection information
-        virtual std::vector<double> GetProjParmInfo() const=0;
+        virtual std::vector<double> GetProjParamInfo() const=0;
         //Set the projection information
-        virtual void SetProjParmInfo(const std::vector<double>& oInfo) =0;
+        virtual void SetProjParamInfo(const std::vector<double>& oInfo) =0;
 
         // Virtual destructor
         virtual ~PCIDSKPolySegment() {}

@@ -40,7 +40,9 @@
 int main()
 {
     {
+        // cppcheck-suppress unusedVariable
         MVTTile oEmptyTile;
+        // cppcheck-suppress unassignedVariable
         CPLAssert( oEmptyTile.getSize() == 0 );
     }
 

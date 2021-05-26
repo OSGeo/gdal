@@ -5,7 +5,7 @@ GML - Geography Markup Language
 
 .. shortname:: GML
 
-.. build_dependencies:: (read support needs Xerces or libexpat) 
+.. build_dependencies:: (read support needs Xerces or libexpat)
 
 OGR has limited support for GML reading and writing. Update of existing
 files is not supported.
@@ -128,6 +128,16 @@ elements are also taken into account to create OGR fields.
 
 Configuration options can be set via the CPLSetConfigOption() function
 or as environment variables.
+
+You can use **GML_GFS_TEMPLATE** configuration option (or **GFS_TEMPLATE**
+open option) set to a **path_to_template.gfs** in order
+to unconditionally use a predefined GFS file. This option is
+really useful when you are planning to import many distinct GML
+files in subsequent steps [**-append**] and you absolutely want to
+preserve a fully consistent data layout for the whole GML set.
+Please, pay attention not to use the **-lco LAUNDER=yes** setting
+when using **GML_GFS_TEMPLATE**; this should break the correct
+recognition of attribute names between subsequent GML import runs.
 
 Particular GML application schemas
 ----------------------------------
@@ -255,15 +265,6 @@ resolve gml:xlink and gml:id relations are the following:
    or so on).
 -  The **GML_SKIP_RESOLVE_ELEMS HUGE** method supports the following
    further configuration option:
-
-   -  you can use **GML_GFS_TEMPLATE** **path_to_template.gfs** in order
-      to unconditionally use a predefined GFS file. This option is
-      really useful when you are planning to import many distinct GML
-      files in subsequent steps [**-append**] and you absolutely want to
-      preserve a fully consistent data layout for the whole GML set.
-      Please, pay attention not to use the **-lco LAUNDER=yes** setting
-      when using **GML_GFS_TEMPLATE**; this should break the correct
-      recognition of attribute names between subsequent GML import runs.
 
 TopoSurface interpretation rules [polygons and internal holes]
 --------------------------------------------------------------
@@ -413,6 +414,18 @@ Open options
 
 -  **XSD=filename**: to specify an explicit filename for
    the XSD application schema to use.
+-  **WRITE_GFS=AUTO/YES/NO**: (GDAL >= 3.2) whether to write a .gfs file.
+   In AUTO mode, the .gfs file is only written if there is no recognized .xsd
+   file, no existing .gfs file and for non-network file systems. This option
+   can be set to YES for force .gfs file writing in situations where AUTO would
+   not attempt to do it. Or it can be set to NO to disable .gfs file writing.
+-  **GFS_TEMPLATE=filename**: to unconditionally use a predefined GFS file.
+   This option is really useful when you are planning to import many distinct GML
+   files in subsequent steps [**-append**] and you absolutely want to
+   preserve a fully consistent data layout for the whole GML set.
+   Please, pay attention not to use the **-lco LAUNDER=yes** setting
+   when this option; this should break the correct
+   recognition of attribute names between subsequent GML import runs.
 -  **FORCE_SRS_DETECTION=YES/NO**: Force a full scan to
    detect the SRS of layers. This option may be needed in the case where
    the .gml file is accompanied with a .xsd. Normally in that situation,
@@ -485,6 +498,7 @@ The GML writer supports the following dataset creation options:
    'http://ogr.maptools.org/'. This is the application target namespace.
 -  **FORMAT**: This can be set to :
 
+   -  *GML2* in order to write GML files that follow GML 2.1.2 (Default before GDAL 3.4)
    -  *GML3* in order to write GML files that follow GML 3.1.1 SF-0
       profile.
    -  *GML3Deegree* in order to produce a GML 3.1.1 .XSD
@@ -492,9 +506,8 @@ The GML writer supports the following dataset creation options:
       by GML3 SF-0 profile, but that will be better accepted by some
       software (such as Deegree 3).
    -  *GML3.2*\ in order to write GML files that follow
-      GML 3.2.1 SF-0 profile.
+      GML 3.2.1 SF-0 profile. (Default since GDAL 3.4)
 
-   If not specified, GML2 will be used.
    Non-linear geometries can be written. This is
    only compatible with selecting on of that above GML3 format variant.
    Otherwise, such geometries will be approximating into their closest
@@ -952,7 +965,7 @@ Building junction tables
 ------------------------
 
 The
-`ogr_build_junction_table.py <https://github.com/OSGeo/gdal/blob/master/gdal/swig/python/samples/ogr_build_junction_table.py>`__
+`ogr_build_junction_table.py <https://github.com/OSGeo/gdal/blob/master/gdal/swig/python/gdal-utils/osgeo_utils/samples/ogr_build_junction_table.py>`__
 script can be used to build a `junction
 table <http://en.wikipedia.org/wiki/Junction_table>`__ from OGR layers
 that contain "XXXX_href" fields. Let's considering the following output

@@ -814,7 +814,7 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "ESRI FileGDB" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_filegdb.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/filegdb.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>" );
@@ -833,7 +833,7 @@ void RegisterOGRFileGDB()
 "  <Option name='ZORIGIN' type='float' description='Z origin of the coordinate precision grid'/>"
 "  <Option name='XYSCALE' type='float' description='X,Y scale of the coordinate precision grid'/>"
 "  <Option name='ZSCALE' type='float' description='Z scale of the coordinate precision grid'/>"
-"  <Option name='XML_DEFINITION' type='string' description='XML definition to create the new table. The root node of such a XML definition must be a <esri:DataElement> element conformant to FileGDBAPI.xsd'/>"
+"  <Option name='XML_DEFINITION' type='string' description='XML definition to create the new table. The root node of such a XML definition must be a &lt;esri:DataElement&gt; element conformant to FileGDBAPI.xsd'/>"
 "  <Option name='CREATE_MULTIPATCH' type='boolean' description='Whether to write geometries of layers of type MultiPolygon as MultiPatch' default='NO'/>"
 "  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=fgdb_filed_type (separated by comma) to force the FileGDB column type of fields to be created'/>"
 "  <Option name='CONFIGURATION_KEYWORD' type='string-select' description='Customize how data is stored. By default text in UTF-8 and data up to 1TB'>"

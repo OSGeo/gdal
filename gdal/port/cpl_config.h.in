@@ -25,6 +25,9 @@
 /* Define to 1 if you have the `atoll' function. */
 #undef HAVE_ATOLL
 
+/* Define to 1 if you have the `strtoll' function. */
+#undef HAVE_STRTOLL
+
 /* Define to 1 if you have the `strtoull' function. */
 #undef HAVE_STRTOULL
 

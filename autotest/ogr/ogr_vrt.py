@@ -2247,7 +2247,7 @@ def test_ogr_vrt_33():
             elif i == 5:
                 assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
                 feat = lyr.GetNextFeature()
-                if feat.GetGeomFieldRef(0).ExportToWkt() != 'POLYGON ((0.5 1.0,1 1,1.0 0.5,0.5 0.5,0.5 1.0))':
+                if feat.GetGeomFieldRef(0).ExportToWkt() not in ('POLYGON ((0.5 1.0,1 1,1.0 0.5,0.5 0.5,0.5 1.0))','POLYGON ((1 1,1.0 0.5,0.5 0.5,0.5 1.0,1 1))'):
                     feat.DumpReadable()
                     pytest.fail()
 
@@ -3041,6 +3041,27 @@ def test_ogr_vrt_nullable_unique():
     assert not feat_defn.GetFieldDefn(0).IsUnique()
     assert not feat_defn.GetFieldDefn(1).IsNullable()
     assert feat_defn.GetFieldDefn(1).IsUnique()
+
+
+###############################################################################
+# Test field names with same case
+
+
+def test_ogr_vrt_field_names_same_case():
+
+    ds = ogr.Open("""<OGRVRTDataSource>
+  <OGRVRTLayer name="test">
+    <SrcDataSource>{"type":"Feature","id":"foo","geometry":null,"properties":{"ID":"bar"}}</SrcDataSource>
+    <SrcLayer>OGRGeoJSON</SrcLayer>
+    <Field name="id" type="String" src="id"/>
+    <Field name="id_from_uc" type="String" src="ID"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+""")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['id'] == 'foo'
+    assert f['id_from_uc'] == 'bar'
 
 ###############################################################################
 #

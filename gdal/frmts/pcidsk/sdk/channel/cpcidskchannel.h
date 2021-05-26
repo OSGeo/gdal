@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSKChannel Abstract class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@ namespace PCIDSK
 /* inheritance to attempt to avoid the fragile base class problem and   */
 /* then implement the Imagery I/O functions.                            */
 /************************************************************************/
-    class CPCIDSKChannel : public PCIDSKChannel
+    class PCIDSK_DLL CPCIDSKChannel : public PCIDSKChannel
     {
         friend class PCIDSKFile;
 
@@ -75,9 +75,13 @@ namespace PCIDSK
 
         int         GetChannelNumber() { return channel_number; }
 
-        std::string GetMetadataValue( const std::string &key ) const override 
+        bool        IsLocked() const { return is_locked; }
+
+        std::string GetFilename() const;
+
+        std::string GetMetadataValue( const std::string &key ) const override
             { return metadata.GetMetadataValue(key); }
-        void        SetMetadataValue( const std::string &key, const std::string &value ) override 
+        void        SetMetadataValue( const std::string &key, const std::string &value ) override
             { metadata.SetMetadataValue(key,value); }
         std::vector<std::string> GetMetadataKeys() const override
             { return metadata.GetMetadataKeys(); }
@@ -92,21 +96,23 @@ namespace PCIDSK
         virtual void PushHistory(const std::string &app,
                                  const std::string &message) override;
 
-        virtual void GetChanInfo( std::string &filename, uint64 &image_offset, 
-                                  uint64 &pixel_offset, uint64 &line_offset, 
+        virtual void GetChanInfo( std::string &filename, uint64 &image_offset,
+                                  uint64 &pixel_offset, uint64 &line_offset,
                                   bool &little_endian ) const override;
-        virtual void SetChanInfo( std::string filename, uint64 image_offset, 
-                                  uint64 pixel_offset, uint64 line_offset, 
+        virtual void SetChanInfo( std::string filename, uint64 image_offset,
+                                  uint64 pixel_offset, uint64 line_offset,
                                   bool little_endian ) override;
         virtual void GetEChanInfo( std::string &filename, int &echannel,
-                                   int &exoff, int &eyoff, 
+                                   int &exoff, int &eyoff,
                                    int &exsize, int &eysize ) const override;
         virtual void SetEChanInfo( std::string filename, int echannel,
-                                   int exoff, int eyoff, 
+                                   int exoff, int eyoff,
                                    int exsize, int eysize ) override;
 
     // Just for CPCIDSKFile.
         void      InvalidateOverviewInfo();
+        void      UpdateOverviewInfo(const char *pszOverviewMDKey,
+                                     int nFactor);
 
     protected:
         CPCIDSKFile *file;
@@ -118,6 +124,7 @@ namespace PCIDSK
         int       channel_number;
         uint64    ih_offset;
         mutable eChanType pixel_type;
+        bool      is_locked;
         char      byte_order; // 'S': littleendian, 'N': bigendian
         mutable int       needs_swap;
 

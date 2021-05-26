@@ -117,8 +117,9 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    else if( EQUAL(pszBase, "long") )
+    else if( EQUAL(pszBase, "unsignedLong") )
     {
+        // Optimistically map to signed integer...
         *pGMLType = GMLPT_Integer64;
         const char *pszWidth =
             CPLGetXMLValue(psTypeNode, "restriction.totalDigits.value", "0");
@@ -460,6 +461,11 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 gmlType = GMLPT_Integer;
             else if (EQUAL(pszStrippedNSType, "long"))
                 gmlType = GMLPT_Integer64;
+            else if (EQUAL(pszStrippedNSType, "unsignedLong"))
+            {
+                // Optimistically map to signed integer
+                gmlType = GMLPT_Integer64;
+            }
             else if (EQUAL(pszStrippedNSType, "short") )
                 gmlType = GMLPT_Short;
             else if (EQUAL(pszStrippedNSType, "boolean") )
@@ -480,29 +486,49 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                 strlen(psIter->pszName)) == 0)
                     {
                         OGRwkbGeometryType eType = psIter->eType;
+                        std::string osSRSName;
 
                         // Look if there's a comment restricting to subclasses.
-                        if( psAttrDef->psNext != nullptr &&
-                            psAttrDef->psNext->eType == CXT_Comment )
+                        const CPLXMLNode* psIter2 = psAttrDef->psNext;
+                        while( psIter2 != nullptr )
                         {
-                            if( strstr(psAttrDef->psNext->pszValue,
-                                       "restricted to Polygon") )
-                                eType = wkbPolygon;
-                            else if( strstr(psAttrDef->psNext->pszValue,
-                                            "restricted to LineString") )
-                                eType = wkbLineString;
-                            else if( strstr(psAttrDef->psNext->pszValue,
-                                            "restricted to MultiPolygon") )
-                                eType = wkbMultiPolygon;
-                            else if( strstr(psAttrDef->psNext->pszValue,
-                                            "restricted to MultiLineString") )
-                                eType = wkbMultiLineString;
+                            if( psIter2->eType == CXT_Comment )
+                            {
+                                if( strstr(psIter2->pszValue,
+                                           "restricted to Polygon") )
+                                    eType = wkbPolygon;
+                                else if( strstr(psIter2->pszValue,
+                                                "restricted to LineString") )
+                                    eType = wkbLineString;
+                                else if( strstr(psIter2->pszValue,
+                                                "restricted to MultiPolygon") )
+                                    eType = wkbMultiPolygon;
+                                else if( strstr(psIter2->pszValue,
+                                                "restricted to MultiLineString") )
+                                    eType = wkbMultiLineString;
+                                else
+                                {
+                                    const char* pszSRSName = strstr(psIter2->pszValue, "srsName=\"");
+                                    if( pszSRSName )
+                                    {
+                                        osSRSName = pszSRSName + strlen("srsName=\"");
+                                        const auto nPos = osSRSName.find('"');
+                                        if( nPos != std::string::npos )
+                                            osSRSName.resize(nPos);
+                                        else
+                                            osSRSName.clear();
+                                    }
+                                }
+                            }
+
+                            psIter2 = psIter2->psNext;
                         }
 
                         GMLGeometryPropertyDefn* poDefn =
                             new GMLGeometryPropertyDefn(
                                 pszElementName, pszElementName, eType,
                                 nAttributeIndex, bNullable);
+                        poDefn->SetSRSName(osSRSName);
 
                         if( poClass->AddGeometryProperty(poDefn) < 0 )
                             delete poDefn;

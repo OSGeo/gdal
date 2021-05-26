@@ -577,7 +577,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
 
                     /* Read the SRS */
                     OGRSpatialReference *poSRS =
-                                        m_poDS->GetSpatialRef(nSRID);
+                                        m_poDS->GetSpatialRef(nSRID, true);
                     if ( poSRS )
                     {
                         oGeomField.SetSpatialRef(poSRS);

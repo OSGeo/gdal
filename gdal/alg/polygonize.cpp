@@ -585,7 +585,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /*      vectors into georeferenced coordinates.                         */
 /* -------------------------------------------------------------------- */
     double adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
-
+    bool bGotGeoTransform = false;
     const char* pszDatasetForGeoRef = CSLFetchNameValue(papszOptions,
                                                         "DATASET_FOR_GEOREF");
     if( pszDatasetForGeoRef )
@@ -593,7 +593,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
         GDALDatasetH hSrcDS = GDALOpen(pszDatasetForGeoRef, GA_ReadOnly);
         if( hSrcDS )
         {
-            GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+            bGotGeoTransform = GDALGetGeoTransform( hSrcDS, adfGeoTransform ) == CE_None;
             GDALClose(hSrcDS);
         }
     }
@@ -601,7 +601,16 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
     {
         GDALDatasetH hSrcDS = GDALGetBandDataset( hSrcBand );
         if( hSrcDS )
-            GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+            bGotGeoTransform = GDALGetGeoTransform( hSrcDS, adfGeoTransform ) == CE_None;
+    }
+    if( !bGotGeoTransform )
+    {
+        adfGeoTransform[0] = 0;
+        adfGeoTransform[1] = 1;
+        adfGeoTransform[2] = 0;
+        adfGeoTransform[3] = 0;
+        adfGeoTransform[4] = 0;
+        adfGeoTransform[5] = 1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -896,12 +905,13 @@ GBool GDALFloatEquals( float A, float B )
  * @param hOutLayer the vector feature layer to which the polygons should
  * be written.
  * @param iPixValField the attribute field index indicating the feature
- * attribute into which the pixel value of the polygon should be written.
+ * attribute into which the pixel value of the polygon should be written. Or
+ * -1 to indicate that the pixel value must not be written.
  * @param papszOptions a name/value list of additional options
- * <dl>
- * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
- * Otherwise 4 connectedness will be applied to the algorithm
- * </dl>
+ * <ul>
+ * <li>8CONNECTED=8: May be set to "8" to use 8 connectedness.
+ * Otherwise 4 connectedness will be applied to the algorithm</li>
+ * </ul>
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
  * @param pProgressArg callback argument passed to pfnProgress.
@@ -972,12 +982,13 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
  * @param hOutLayer the vector feature layer to which the polygons should
  * be written.
  * @param iPixValField the attribute field index indicating the feature
- * attribute into which the pixel value of the polygon should be written.
+ * attribute into which the pixel value of the polygon should be written. Or
+ * -1 to indicate that the pixel value must not be written.
  * @param papszOptions a name/value list of additional options
- * <dl>
- * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
- * Otherwise 4 connectedness will be applied to the algorithm
- * </dl>
+ * <ul>
+ * <li>8CONNECTED=8: May be set to "8" to use 8 connectedness.
+ * Otherwise 4 connectedness will be applied to the algorithm</li>
+ * </ul>
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
  * @param pProgressArg callback argument passed to pfnProgress.

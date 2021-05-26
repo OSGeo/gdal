@@ -389,7 +389,7 @@ INPUT                  = port \
                          ogr/ogrsf_frmts/generic \
                          ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
                          ogr/ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
-                         swig/python/scripts \
+                         swig/python/gdal-utils/scripts \
                          gnm
 
 # If the value of the INPUT tag contains directories, you can use the
@@ -455,7 +455,7 @@ EXAMPLE_RECURSIVE      = NO
 # directories that contain image that are included in the documentation (see
 # the \image command).
 
-IMAGE_PATH             = 
+IMAGE_PATH             =
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
@@ -531,12 +531,6 @@ VERBATIM_HEADERS       = YES
 # contains a lot of classes, structs, unions or interfaces.
 
 ALPHABETICAL_INDEX     = NO
-
-# If the alphabetical index is enabled (see ALPHABETICAL_INDEX) then
-# the COLS_IN_ALPHA_INDEX tag can be used to specify the number of columns
-# in which this list will be split (can be a number in the range [1..20])
-
-COLS_IN_ALPHA_INDEX    = 5
 
 # In case all classes in a project start with a common prefix, all
 # classes will be put under the same header in the alphabetical index.
@@ -692,12 +686,6 @@ MAKEINDEX_CMD_NAME     = makeindex
 
 COMPACT_LATEX          = NO
 
-# The PAPER_TYPE tag can be used to set the paper type that is used
-# by the printer. Possible values are: a4, a4wide, letter, legal and
-# executive. If left blank a4wide will be used.
-
-PAPER_TYPE             = a4wide
-
 # The EXTRA_PACKAGES tag can be to specify one or more names of LaTeX
 # packages that should be included in the LaTeX output.
 
@@ -822,18 +810,6 @@ GENERATE_XML           = NO
 
 XML_OUTPUT             = xml
 
-# The XML_SCHEMA tag can be used to specify an XML schema,
-# which can be used by a validating XML parser to check the
-# syntax of the XML files.
-
-XML_SCHEMA             =
-
-# The XML_DTD tag can be used to specify an XML DTD,
-# which can be used by a validating XML parser to check the
-# syntax of the XML files.
-
-XML_DTD                =
-
 # If the XML_PROGRAMLISTING tag is set to YES Doxygen will
 # dump the program listings (including syntax highlighting
 # and cross-referencing information) to the XML output. Note that
@@ -954,7 +930,13 @@ PREDEFINED             = HAVE_DLFCN_H \
                          HAVE_LONG_LONG=1 \
                          HAVE_SC_PHYS_PAGES=1 \
                          final= \
-                         CPL_RESTRICT=
+                         CPL_RESTRICT= \
+                         CPL_WARN_UNUSED_RESULT= \
+                         CPL_RETURNS_NONNULL= \
+                         CPLSTRING_METHOD_DLL= \
+                         CPL_NO_RETURN= \
+                         EXPERIMENTAL_CPL_WARN_UNUSED_RESULT= \
+                         CPL_MULTIPROC_PTHREAD
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.
@@ -1008,11 +990,6 @@ ALLEXTERNALS           = NO
 # be listed.
 
 EXTERNAL_GROUPS        = YES
-
-# The PERL_PATH should be the absolute path and name of the perl script
-# interpreter (i.e. the result of `which perl').
-
-PERL_PATH              = /usr/local/bin/perl
 
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool

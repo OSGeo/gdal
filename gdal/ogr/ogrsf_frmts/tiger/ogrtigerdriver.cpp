@@ -115,7 +115,7 @@ void RegisterOGRTiger()
     poDriver->SetDescription( "TIGER" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "U.S. Census TIGER/Line" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_tiger.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/tiger.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRTigerDriverOpen;

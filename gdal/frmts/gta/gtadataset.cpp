@@ -223,16 +223,17 @@ class GTADataset final: public GDALPamDataset
     GTAIO       oGTAIO;
     // GTA information
     gta::header oHeader;
-    vsi_l_offset DataOffset;
+    vsi_l_offset DataOffset = 0;
     // Metadata
-    bool        bHaveGeoTransform;
+    bool        bHaveGeoTransform = false;
     double      adfGeoTransform[6];
-    int         nGCPs;
-    char        *pszGCPProjection;
-    GDAL_GCP    *pasGCPs;
+    int         nGCPs = 0;
+    char        *pszGCPProjection = nullptr;
+    GDAL_GCP    *pasGCPs = nullptr;
     // Cached data block for block-based input/output
-    int         nLastBlockXOff, nLastBlockYOff;
-    void        *pBlock;
+    int         nLastBlockXOff = -1;
+    int         nLastBlockYOff = -1;
+    void        *pBlock = nullptr;
 
     // Block-based input/output of all bands at once. This is used
     // by the GTARasterBand input/output functions.
@@ -779,16 +780,6 @@ CPLErr GTARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 GTADataset::GTADataset()
 
 {
-    // Initialize Metadata
-    bHaveGeoTransform = false;
-    nGCPs = 0;
-    pszGCPProjection = nullptr;
-    pasGCPs = nullptr;
-    // Initialize block-based input/output
-    nLastBlockXOff = -1;
-    nLastBlockYOff = -1;
-    pBlock = nullptr;
-    DataOffset = 0;
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 

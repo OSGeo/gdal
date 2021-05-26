@@ -2770,6 +2770,9 @@ static GDALDataset* OGRMongoDBDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRMongoDBDriverIdentify(poOpenInfo) )
         return nullptr;
 
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("MONGODB", "You should consider using the MongoDBV3 driver instead.") )
+        return nullptr;
+
     OGRMongoDBDataSource *m_poDS = new OGRMongoDBDataSource();
 
     if( !m_poDS->Open( poOpenInfo->pszFilename,
@@ -2818,7 +2821,7 @@ void RegisterOGRMongoDB()
     poDriver->SetDescription( "MongoDB" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MongoDB" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mongodb.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mongodb.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MongoDB:" );
 

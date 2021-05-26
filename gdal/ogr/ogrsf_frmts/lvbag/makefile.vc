@@ -6,9 +6,9 @@ GDAL_ROOT	=	..\..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 !IFDEF EXPAT_DIR
-EXTRAFLAGS =	-I.. -I..\.. -I..\generic $(EXPAT_INCLUDE) -DHAVE_EXPAT=1 
+EXTRAFLAGS =	-I.. -I..\.. -I..\generic $(EXPAT_INCLUDE) $(GEOS_CFLAGS) -DHAVE_EXPAT=1 
 !ELSE
-EXTRAFLAGS =	-I.. -I..\.. -I..\generic
+EXTRAFLAGS =	-I.. -I..\.. -I..\generic $(GEOS_CFLAGS)
 !ENDIF
 
 default:	$(OBJ)

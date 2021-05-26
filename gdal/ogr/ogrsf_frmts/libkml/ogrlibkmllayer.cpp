@@ -854,7 +854,7 @@ int OGRLIBKMLLayer::TestCapability( const char *pszCap )
     else if( EQUAL( pszCap, OLCSequentialWrite ) )
         result = bUpdate;
     else if( EQUAL( pszCap, OLCRandomWrite ) )
-        result = bUpdate;
+        result = bUpdate && m_poKmlUpdate;
     else if( EQUAL( pszCap, OLCFastFeatureCount ) )
         result = FALSE;
     else if( EQUAL( pszCap, OLCFastSetNextByIndex ) )

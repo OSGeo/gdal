@@ -626,6 +626,7 @@ CPLErr PCIDSK2Band::SetMetadata( char **papszMD,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = nullptr;
+    m_oCacheMetadataItem.clear();
 
     if( GetAccess() == GA_ReadOnly )
     {
@@ -679,6 +680,7 @@ CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = nullptr;
+    m_oCacheMetadataItem.clear();
 
     if( GetAccess() == GA_ReadOnly )
     {
@@ -729,23 +731,29 @@ const char *PCIDSK2Band::GetMetadataItem( const char *pszName,
         return GDALPamRasterBand::GetMetadataItem( pszName, pszDomain );
 
 /* -------------------------------------------------------------------- */
-/*      Try and fetch.                                                  */
+/*      Try and fetch (use cached value if available)                   */
 /* -------------------------------------------------------------------- */
+    auto oIter = m_oCacheMetadataItem.find(pszName);
+    if( oIter != m_oCacheMetadataItem.end() )
+    {
+        return oIter->second.empty() ? nullptr : oIter->second.c_str();
+    }
+
+    CPLString osValue;
     try
     {
-        osLastMDValue = poChannel->GetMetadataValue( pszName );
+        osValue = poChannel->GetMetadataValue( pszName );
     }
     catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", ex.what() );
+                "%s", ex.what() );
         return nullptr;
     }
 
-    if( osLastMDValue == "" )
-        return nullptr;
-
-    return osLastMDValue.c_str();
+    oIter = m_oCacheMetadataItem.insert(
+        std::pair<std::string, std::string>(pszName, osValue)).first;
+    return oIter->second.empty() ? nullptr : oIter->second.c_str();
 }
 
 /************************************************************************/
@@ -1066,6 +1074,7 @@ CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = nullptr;
+    m_oCacheMetadataItem.clear();
 
     if( GetAccess() == GA_ReadOnly )
     {
@@ -1118,6 +1127,7 @@ CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = nullptr;
+    m_oCacheMetadataItem.clear();
 
     if( GetAccess() == GA_ReadOnly )
     {
@@ -1166,23 +1176,29 @@ const char *PCIDSK2Dataset::GetMetadataItem( const char *pszName,
         return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
 
 /* -------------------------------------------------------------------- */
-/*      Try and fetch.                                                  */
+/*      Try and fetch (use cached value if available)                   */
 /* -------------------------------------------------------------------- */
+    auto oIter = m_oCacheMetadataItem.find(pszName);
+    if( oIter != m_oCacheMetadataItem.end() )
+    {
+        return oIter->second.empty() ? nullptr : oIter->second.c_str();
+    }
+
+    CPLString osValue;
     try
     {
-        osLastMDValue = poFile->GetMetadataValue( pszName );
+        osValue = poFile->GetMetadataValue( pszName );
     }
     catch( const PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", ex.what() );
+                "%s", ex.what() );
         return nullptr;
     }
 
-    if( osLastMDValue == "" )
-        return nullptr;
-
-    return osLastMDValue.c_str();
+    oIter = m_oCacheMetadataItem.insert(
+        std::pair<std::string, std::string>(pszName, osValue)).first;
+    return oIter->second.empty() ? nullptr : oIter->second.c_str();
 }
 
 /************************************************************************/
@@ -1980,7 +1996,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
                                      int nXSize, int nYSize, int nBands,
                                      GDALDataType eType,
-                                     char **papszParmList )
+                                     char **papszParamList )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2006,7 +2022,7 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /*      quality.                                                        */
 /* -------------------------------------------------------------------- */
     CPLString osOptions;
-    const char *pszValue = CSLFetchNameValue( papszParmList, "INTERLEAVING" );
+    const char *pszValue = CSLFetchNameValue( papszParamList, "INTERLEAVING" );
     if( pszValue == nullptr )
         pszValue = "BAND";
 
@@ -2014,14 +2030,21 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 
     if( osOptions == "TILED" )
     {
-        pszValue = CSLFetchNameValue( papszParmList, "TILESIZE" );
+        pszValue = CSLFetchNameValue( papszParamList, "TILESIZE" );
         if( pszValue != nullptr )
             osOptions += pszValue;
 
-        pszValue = CSLFetchNameValue( papszParmList, "COMPRESSION" );
+        pszValue = CSLFetchNameValue( papszParamList, "COMPRESSION" );
         if( pszValue != nullptr )
         {
             osOptions += " ";
+            osOptions += pszValue;
+        }
+
+        pszValue = CSLFetchNameValue( papszParamList, "TILEVERSION" );
+        if( pszValue != nullptr )
+        {
+            osOptions += " TILEV";
             osOptions += pszValue;
         }
     }
@@ -2044,13 +2067,13 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 /*      Apply band descriptions, if provided as creation options.       */
 /* -------------------------------------------------------------------- */
         for( size_t i = 0;
-             papszParmList != nullptr && papszParmList[i] != nullptr;
+             papszParamList != nullptr && papszParamList[i] != nullptr;
              i++ )
         {
-            if( STARTS_WITH_CI(papszParmList[i], "BANDDESC") )
+            if( STARTS_WITH_CI(papszParamList[i], "BANDDESC") )
             {
-                int nBand = atoi(papszParmList[i] + 8 );
-                const char *pszDescription = strstr(papszParmList[i],"=");
+                int nBand = atoi(papszParamList[i] + 8 );
+                const char *pszDescription = strstr(papszParamList[i],"=");
                 if( pszDescription && nBand > 0 && nBand <= nBands )
                 {
                     poFile->GetChannel(nBand)->SetDescription( pszDescription+1 );
@@ -2270,6 +2293,7 @@ void GDALRegister_PCIDSK()
 "       <Value>JPEG</Value>"
 "   </Option>"
 "   <Option name='TILESIZE' type='int' default='127' description='Tile Size (INTERLEAVING=TILED only)'/>"
+"   <Option name='TILEVERSION' type='int' default='2' description='Tile Version (INTERLEAVING=TILED only)'/>"
 "</CreationOptionList>" );
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
                                "<LayerCreationOptionList/>" );

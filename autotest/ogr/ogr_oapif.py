@@ -52,7 +52,7 @@ def test_ogr_opaif_init():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    
+
 ###############################################################################
 
 
@@ -407,7 +407,7 @@ def NO_LONGER_USED_test_ogr_opaif_fc_links_next_headers():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 
 
@@ -1004,6 +1004,68 @@ def test_ogr_opaif_schema_from_json_schema():
 ###############################################################################
 
 
+def test_ogr_opaif_stac_catalog():
+    if gdaltest.opaif_drv is None:
+        pytest.skip()
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections/foo', 200, {'Content-Type': 'application/json'},
+                """{
+                    "name": "foo",
+                    "item_assets": {
+                      "my_asset": {},
+                      "my_asset2": {}
+                    }
+                   }""")
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('OAPIF:http://localhost:%d/oapif/collections/foo' % gdaltest.webserver_port)
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                {
+                    "type": "Feature",
+                    "properties": { "foo": "bar" },
+                    "assets": { "my_asset": { "href": "my_url" } }
+                },
+                {
+                    "type": "Feature",
+                    "properties": { "foo": "bar2" },
+                    "assets": { "my_asset": { "href": "my_url2" } }
+                }
+                ] }""")
+    handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
+                {'Content-Type': 'application/geo+json'},
+                """{ "type": "FeatureCollection", "features": [
+                {
+                    "type": "Feature",
+                    "properties": { "foo": "bar" },
+                    "assets": { "my_asset": { "href": "my_url" } }
+                },
+                {
+                    "type": "Feature",
+                    "properties": { "foo": "bar2" },
+                    "assets": { "my_asset2": { "href": "my_url2" } }
+                }
+                ] }""")
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f['foo'] == 'bar'
+        assert f['asset_my_asset_href'] == 'my_url'
+
+        f = lyr.GetNextFeature()
+        assert f['foo'] == 'bar2'
+        assert f['asset_my_asset2_href'] == 'my_url2'
+
+
+###############################################################################
+
+
 def test_ogr_opaif_cleanup():
 
     if gdaltest.opaif_drv is None:
@@ -1012,6 +1074,6 @@ def test_ogr_opaif_cleanup():
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
-    
+
 
 

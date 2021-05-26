@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of IO interface using Win32 API.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,17 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#ifdef TRACK_DISKIO
+// Keep these includes on top or else nccltype.h will conflict
+// with type definitions from pcidsk_config.h.
+#include "syslow/hdiskio.hh"
+#include "syslow/htimer.hh"
+#endif
+
+#ifdef PCIMAJORVERSION
+#include "syslow/winunicode.hh"
+#endif
 
 #include "pcidsk_io.h"
 #include "pcidsk_exception.h"
@@ -74,6 +85,10 @@ void *
 Win32IOInterface::Open( std::string filename, std::string access ) const
 
 {
+#ifdef TRACK_DISKIO
+    HTimer oTimer;
+#endif
+
     DWORD dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes;
     HANDLE hFile;
 
@@ -87,22 +102,34 @@ Win32IOInterface::Open( std::string filename, std::string access ) const
     else
         dwCreationDisposition = OPEN_EXISTING;
 
-    dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ? 
-                FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL, 
-    
-    hFile = CreateFileA(filename.c_str(), dwDesiredAccess, 
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, 
+    dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ?
+                FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL;
+
+#ifdef PCIMAJORVERSION
+    std::string oLongFilename = WINExtendedLengthPath(filename);
+
+    hFile = CreateFile((UTFTranscode) oLongFilename, dwDesiredAccess,
+                       FILE_SHARE_READ | FILE_SHARE_WRITE,
+                       NULL, dwCreationDisposition,  dwFlagsAndAttributes, NULL);
+#else
+    hFile = CreateFileA(filename.c_str(), dwDesiredAccess,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE,
                         NULL, dwCreationDisposition,  dwFlagsAndAttributes, NULL);
+#endif
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
-        ThrowPCIDSKException( "Open(%s,%s) failed:\n%s", 
+        ThrowPCIDSKException( "Open(%s,%s) failed:\n%s",
                               filename.c_str(), access.c_str(), LastError() );
     }
-    
+
     FileInfo *fi = new FileInfo();
     fi->hFile = hFile;
     fi->offset = 0;
+
+#ifdef TRACK_DISKIO
+    HDiskIO::Open(filename, fi, oTimer.GetTimeInSeconds());
+#endif
 
     return fi;
 }
@@ -111,10 +138,14 @@ Win32IOInterface::Open( std::string filename, std::string access ) const
 /*                                Seek()                                */
 /************************************************************************/
 
-uint64 
+uint64
 Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 
 {
+#ifdef TRACK_DISKIO
+    HTimer oTimer;
+#endif
+
     FileInfo *fi = (FileInfo *) io_handle;
     uint32       dwMoveMethod, dwMoveHigh;
     uint32       nMoveLow;
@@ -149,24 +180,10 @@ Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 
     if( GetLastError() != NO_ERROR )
     {
-#ifdef notdef
-        LPVOID      lpMsgBuf = NULL;
-        
-        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER 
-                       | FORMAT_MESSAGE_FROM_SYSTEM
-                       | FORMAT_MESSAGE_IGNORE_INSERTS,
-                       NULL, GetLastError(), 
-                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
-                       (LPTSTR) &lpMsgBuf, 0, NULL );
- 
-        printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );/*ok*/
-        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n", /*ok*/
-                (GUInt32) nOffset, nMoveLow, dwMoveHigh );
-#endif
-        ThrowPCIDSKException( "Seek(%d,%d): %s (%d)", 
-                              (int) offset, whence, 
+        ThrowPCIDSKException( "Seek(" PCIDSK_FRMT_UINT64 ",%d): %s (%d)",
+                              offset, whence,
                               LastError(), GetLastError() );
-        return -1;
+        return (uint64)-1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -179,12 +196,16 @@ Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
         LARGE_INTEGER   li;
 
         li.HighPart = 0;
-        li.LowPart = SetFilePointer( fi->hFile, 0, (PLONG) &(li.HighPart), 
+        li.LowPart = SetFilePointer( fi->hFile, 0, (PLONG) &(li.HighPart),
                                      FILE_CURRENT );
         fi->offset = li.QuadPart;
     }
     else if( whence == SEEK_CUR )
         fi->offset += offset;
+
+#ifdef TRACK_DISKIO
+    HDiskIO::Seek(io_handle, oTimer.GetTimeInSeconds());
+#endif
 
     return 0;
 }
@@ -205,10 +226,14 @@ uint64 Win32IOInterface::Tell( void *io_handle ) const
 /*                                Read()                                */
 /************************************************************************/
 
-uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb, 
+uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
                                void *io_handle ) const
 
 {
+#ifdef TRACK_DISKIO
+    HTimer oTimer;
+#endif
+
     FileInfo *fi = (FileInfo *) io_handle;
 
     errno = 0;
@@ -226,11 +251,15 @@ uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
         result = (size_t) (dwSizeRead / size);
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Read(%d): %s", 
-                              (int) size * nmemb,
+        ThrowPCIDSKException( "Read(" PCIDSK_FRMT_UINT64 "): %s",
+                              size * nmemb,
                               LastError() );
 
     fi->offset += size*result;
+
+#ifdef TRACK_DISKIO
+    HDiskIO::Read(io_handle, (uint64) size * nmemb, oTimer.GetTimeInSeconds());
+#endif
 
     return result;
 }
@@ -239,10 +268,14 @@ uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
 /*                               Write()                                */
 /************************************************************************/
 
-uint64 Win32IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb, 
+uint64 Win32IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
                                 void *io_handle ) const
 
 {
+#ifdef TRACK_DISKIO
+    HTimer oTimer;
+#endif
+
     FileInfo *fi = (FileInfo *) io_handle;
 
     errno = 0;
@@ -260,11 +293,15 @@ uint64 Win32IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
         result = (size_t) (dwSizeRead / size);
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Write(%d): %s", 
-                                   (int) size * nmemb,
+        ThrowPCIDSKException( "Write(" PCIDSK_FRMT_UINT64 "): %s",
+                                   size * nmemb,
                                    LastError() );
 
     fi->offset += size*result;
+
+#ifdef TRACK_DISKIO
+    HDiskIO::Write(io_handle, (uint64) size * nmemb, oTimer.GetTimeInSeconds());
+#endif
 
     return result;
 }
@@ -307,10 +344,18 @@ int Win32IOInterface::Flush( void *io_handle ) const
 int Win32IOInterface::Close( void *io_handle ) const
 
 {
+#ifdef TRACK_DISKIO
+    HTimer oTimer;
+#endif
+
     FileInfo *fi = (FileInfo *) io_handle;
 
     int result = CloseHandle( fi->hFile ) ? 0 : -1;
     delete fi;
+
+#ifdef TRACK_DISKIO
+    HDiskIO::Close(io_handle, oTimer.GetTimeInSeconds());
+#endif
 
     return result;
 }

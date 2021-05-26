@@ -8,7 +8,7 @@ Author: Even Rouault
 
 Contact: even.rouault@spatialys.com
 
-Status: Development
+Status: Adopted, implemented
 
 Summary
 -------

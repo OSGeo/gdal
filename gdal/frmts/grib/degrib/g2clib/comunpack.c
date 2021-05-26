@@ -265,7 +265,11 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
       }
 #endif
 
-      for (j=0;j<ngroups;j++)
+      // Note: iterate only to ngroups - 1 since we override just after the
+      // loop. Otherwise the security checks in the loop might trigger, like
+      // on band 23 of
+      // https://nomads.ncep.noaa.gov/pub/data/nccf/com/blend/prod/blend.20200605/16/grib2/blend.t16z.master.f001.co.grib2
+      for (j=0;j<ngroups - 1;j++)
       {
            if( glen[j] < 0 ||
                (idrstmpl[13] != 0 && glen[j] > INT_MAX / idrstmpl[13]) ||

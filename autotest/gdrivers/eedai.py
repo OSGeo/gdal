@@ -432,18 +432,20 @@ gwE6fxOLyJDxuWRf\n
     if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
         pytest.skip()
 
+    if ds is None and sys.platform == 'darwin':
+        print(gdal.GetLastErrorMsg())
+        pytest.xfail('Failure. See https://github.com/rouault/gdal/runs/1329425333?check_suite_focus=true')
+
     assert ds is not None
 
 ###############################################################################
 # Read credentials from simulated GCE instance
 
 
+@pytest.mark.skipif(sys.platform not in ('linux', 'win32'), reason='Incorrect platform')
 def test_eedai_gce_credentials():
 
     if gdaltest.eedai_drv is None:
-        pytest.skip()
-
-    if sys.platform not in ('linux', 'linux2', 'win32'):
         pytest.skip()
 
     gdaltest.webserver_process = None

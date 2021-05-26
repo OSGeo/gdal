@@ -797,6 +797,9 @@ GDALDefaultOverviews::BuildOverviews(
                                      pszResampling,
                                      GDALScaledProgress, pScaledProgress );
         }
+
+        // HFAAuxBuildOverviews doesn't actually generate overviews
+        dfAreaNewOverviews = 0.0;
         for( int j = 0; j < nOverviews; j++ )
         {
             if( abValidLevel[j] )

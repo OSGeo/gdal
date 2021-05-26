@@ -2,10 +2,10 @@
  *
  * Purpose:  PCIDSK External Database Interface declaration.  This provides
  *           mechanisms for access to external linked image file formats.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,8 +59,8 @@ namespace PCIDSK
         virtual int WriteBlock( int channel, int block_index, void *buffer) = 0;
     };
 
-    EDBFile PCIDSK_DLL *DefaultOpenEDB(const std::string& filename, 
-                                       const std::string& access);    
+    EDBFile PCIDSK_DLL *DefaultOpenEDB(const std::string& filename,
+                                       const std::string& access);
 } // end namespace PCIDSK
 
 #endif // INCLUDE_PCIDSK_EDB_H

@@ -173,11 +173,15 @@ documentation to better understand their meaning.
 -  **Cprecincts**: Defaults to
    "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}".
 -  **ORGgen_plt**: Defaults to "yes".
+-  **ORGgen_tlm**: Kakadu library default used.
+-  **ORGtparts**: Kakadu library default used.
 -  **Cmodes**: Kakadu library default used.
 -  **Clevels**: Kakadu library default used.
 -  **Rshift**: Kakadu library default used.
 -  **Rlevels**: Kakadu library default used.
 -  **Rweight**: Kakadu library default used.
+-  **Qguard**: Kakadu library default used.
+-  **Sprofile**: Kakadu library default used.
 
 Known Kakadu Issues
 -------------------

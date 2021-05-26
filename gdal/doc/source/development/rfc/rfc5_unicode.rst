@@ -175,7 +175,7 @@ Backward Compatibility
 
 The GDAL/OGR backward compatibility will be broken by this new
 functionality in the way how 8-bit characters handled. Before users may
-rely on that all 8-bit character strings will be passed throgh the
+rely on that all 8-bit character strings will be passed through the
 GDAL/OGR without change and will contain exact the same data all the
 way. Now it is only true for 7-bit ASCII and 8-bit UTF-8 encoded
 strings. Note, that if you used only ASCII subset with GDAL, you are not

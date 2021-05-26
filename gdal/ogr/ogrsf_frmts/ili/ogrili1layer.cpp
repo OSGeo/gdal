@@ -209,7 +209,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
     VSIFPrintfL( poDS->GetTransferFile(), "ELIN\n" );
 }
 
-static void AppendCoumpoundCurve( OGRCompoundCurve *poCC,
+static void AppendCompoundCurve( OGRCompoundCurve *poCC,
                                   OGRILI1DataSource *poDS )
 {
     for( int iMember = 0; iMember < poCC->getNumCurves(); iMember++)
@@ -318,7 +318,7 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( poGeometry->getGeometryType() == wkbCompoundCurve
              || poGeometry->getGeometryType() == wkbCompoundCurveZ )
     {
-        AppendCoumpoundCurve( poGeometry->toCompoundCurve(),
+        AppendCompoundCurve( poGeometry->toCompoundCurve(),
                               poDS );
     } else {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -600,7 +600,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                         if( eCurveType == wkbLineString ||
                             eCurveType == wkbCircularString )
                         {
-                            OGRSimpleCurve* poSC = curve->clone()->toSimpleCurve();
+                            OGRSimpleCurve* poSC = curve->toSimpleCurve()->clone();
                             poSC->reversePoints();
                             poCC->addCurveDirectly( poSC );
                         }
@@ -612,7 +612,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                             for( int i=poCCSub->getNumCurves()-1; i >= 0; --i )
                             {
                                 OGRSimpleCurve* poSC = poCCSub->getCurve(i)->
-                                    clone()->toSimpleCurve();
+                                    toSimpleCurve()->clone();
                                 poSC->reversePoints();
                                 poCC->addCurveDirectly(poSC);
                             }

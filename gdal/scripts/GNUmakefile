@@ -10,7 +10,7 @@ PROGRAMS := gdal2tiles.py gdal2xyz.py gdaladdo gdalbuildvrt gdal_calc.py \
             ogr2ogr ogrinfo ogrlineref ogrmerge.py ogrtindex
 
 completion:
-	PATH=$(GDAL_ROOT)/swig/python/scripts:$(GDAL_ROOT)/apps:$(PATH) python completionFinder.py gdal-bash-completion.sh
+	PATH=$(GDAL_ROOT)/swig/python/gdal-utils/scripts:$(GDAL_ROOT)/apps:$(PATH) python completionFinder.py gdal-bash-completion.sh
 
 install:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_BASH_COMPLETION) ; \

@@ -196,10 +196,7 @@ def test_kmlsuperoverlay_4():
 
 def test_kmlsuperoverlay_5():
 
-    try:
-        from xml.etree import ElementTree
-    except ImportError:
-        pytest.skip()
+    from xml.etree import ElementTree
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="512" rasterYSize="512">
   <SRS>PROJCS["WGS 84 / Mercator 41",

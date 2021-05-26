@@ -725,6 +725,9 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, const unsigned char *inbuf, i
 	BLXdebug0("==============================\n");
     }
 
+    /* Clear level info structure */
+    memset(linfo, 0, sizeof(linfo));
+
     base = BLXmalloc(2 * baseside[0] * baseside[0] * sizeof(blxdata));
     diff = BLXmalloc(2 * baseside[0] * baseside[0] * sizeof(blxdata));
     if (base == NULL || diff == NULL)
@@ -733,10 +736,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, const unsigned char *inbuf, i
         outbuf = NULL;
         goto error;
     }
-
-    /* Clear level info structure */
-    memset(linfo, 0, sizeof(linfo));
-
+ 
     for(level=0; level < 5; level++) {
 	for(c=1; c < 4; c++) {
             if (len < 1)

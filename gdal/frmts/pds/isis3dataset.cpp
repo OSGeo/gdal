@@ -3378,6 +3378,12 @@ void ISIS3Dataset::WriteLabel()
     // Serialize label
     CPLString osLabel( SerializeAsPDL(m_oJSonLabel) );
     osLabel += "End\n";
+    if( m_osExternalFilename.empty() && osLabel.size() < 65536 )
+    {
+        // In-line labels have conventionally a minimize size of 65536 bytes
+        // See #2741
+        osLabel.resize(65536);
+    }
     char *pszLabel = &osLabel[0];
     const int nLabelSize = static_cast<int>(osLabel.size());
 
@@ -4355,7 +4361,7 @@ void GDALRegister_ISIS3()
 "     <Value>EXTERNAL</Value>"
 "     <Value>GEOTIFF</Value>"
 "  </Option>"
-"  <Option name='GEOTIFF_AS_REGULAR_EXTERNAL' type='boolean'"
+"  <Option name='GEOTIFF_AS_REGULAR_EXTERNAL' type='boolean' "
     "description='Whether the GeoTIFF file, if uncompressed, should be "
     "registered as a regular raw file' default='YES'/>"
 "  <Option name='GEOTIFF_OPTIONS' type='string' "
@@ -4387,29 +4393,29 @@ void GDALRegister_ISIS3()
     "Mapping.TargetName'/>"
 "  <Option name='FORCE_360' type='boolean' "
     "description='Whether to force longitudes in [0,360] range' default='NO'/>"
-"  <Option name='WRITE_BOUNDING_DEGREES' type='boolean'"
+"  <Option name='WRITE_BOUNDING_DEGREES' type='boolean' "
     "description='Whether to write Min/MaximumLong/Latitude values' "
     "default='YES'/>"
-"  <Option name='BOUNDING_DEGREES' type='string'"
+"  <Option name='BOUNDING_DEGREES' type='string' "
     "description='Manually set bounding box with the syntax "
     "min_long,min_lat,max_long,max_lat'/>"
-"  <Option name='USE_SRC_LABEL' type='boolean'"
+"  <Option name='USE_SRC_LABEL' type='boolean' "
     "description='Whether to use source label in ISIS3 to ISIS3 conversions' "
     "default='YES'/>"
-"  <Option name='USE_SRC_MAPPING' type='boolean'"
+"  <Option name='USE_SRC_MAPPING' type='boolean' "
     "description='Whether to use Mapping group from source label in "
                  "ISIS3 to ISIS3 conversions' "
     "default='NO'/>"
-"  <Option name='USE_SRC_HISTORY' type='boolean'"
+"  <Option name='USE_SRC_HISTORY' type='boolean' "
     "description='Whether to use content pointed by the History object in "
                  "ISIS3 to ISIS3 conversions' "
     "default='YES'/>"
-"  <Option name='ADD_GDAL_HISTORY' type='boolean'"
+"  <Option name='ADD_GDAL_HISTORY' type='boolean' "
     "description='Whether to add GDAL specific history in the content pointed "
                  "by the History object in "
                  "ISIS3 to ISIS3 conversions' "
     "default='YES'/>"
-"  <Option name='GDAL_HISTORY' type='string'"
+"  <Option name='GDAL_HISTORY' type='string' "
     "description='Manually defined GDAL history. Must be formatted as ISIS3 "
     "PDL. If not specified, it is automatically composed.'/>"
 "</CreationOptionList>"

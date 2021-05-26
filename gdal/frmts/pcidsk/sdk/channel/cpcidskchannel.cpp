@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSKChannel Abstract class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,9 +38,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include <algorithm>
-
-#include "cpl_port.h"
 
 using namespace PCIDSK;
 
@@ -48,9 +45,9 @@ using namespace PCIDSK;
 /*                           CPCIDSKChannel()                           */
 /************************************************************************/
 
-CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header, 
+CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
                                 uint64 ih_offsetIn,
-                                CPCIDSKFile *fileIn, 
+                                CPCIDSKFile *fileIn,
                                 eChanType pixel_typeIn,
                                 int channel_numberIn )
 
@@ -59,8 +56,9 @@ CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
     this->file = fileIn;
     this->channel_number = channel_numberIn;
     this->ih_offset = ih_offsetIn;
-    byte_order = 'S';
-    needs_swap = FALSE;
+    is_locked = false;
+    byte_order = 'N';
+    needs_swap = !BigEndianSystem();
 
     width = file->GetWidth();
     height = file->GetHeight();
@@ -75,12 +73,13 @@ CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
     {
         unsigned short test_value = 1;
 
+        is_locked = image_header.buffer[200] == 'W';
         byte_order = image_header.buffer[201];
         if( ((uint8 *) &test_value)[0] == 1 )
             needs_swap = (byte_order != 'S');
         else
             needs_swap = (byte_order == 'S');
-        
+
         if( pixel_type == CHN_8U )
             needs_swap = 0;
 
@@ -183,6 +182,24 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
 }
 
 /************************************************************************/
+/*                       UpdateOverviewInfo()                           */
+/************************************************************************/
+/** Update the in-memory information for an overview.
+  * This method will add overview information to the in-memory arrays
+  *
+  * @param  pszOverviewMDValue  Overview value
+  *
+  * @param  nFactor             Overview factor i.e. 2, 4, etc
+  */
+void CPCIDSKChannel::UpdateOverviewInfo(const char *pszOverviewMDValue,
+                                        int nFactor)
+{
+    overview_infos.push_back( pszOverviewMDValue );
+    overview_bands.push_back( nullptr );
+    overview_decimations.push_back( nFactor );
+}
+
+/************************************************************************/
 /*                           GetBlockCount()                            */
 /************************************************************************/
 
@@ -221,7 +238,7 @@ PCIDSKChannel *CPCIDSKChannel::GetOverview( int overview_index )
     EstablishOverviewInfo();
 
     if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
-        return (PCIDSKChannel*)ThrowPCIDSKExceptionPtr( "Non existent overview (%d) requested.", 
+        return (PCIDSKChannel*)ThrowPCIDSKExceptionPtr( "Non existent overview (%d) requested.",
                               overview_index );
 
     if( overview_bands[overview_index] == nullptr )
@@ -229,13 +246,13 @@ PCIDSKChannel *CPCIDSKChannel::GetOverview( int overview_index )
         PCIDSKBuffer image_header(1024), file_header(1024);
         char  pseudo_filename[65];
 
-        snprintf( pseudo_filename, sizeof(pseudo_filename), "/SIS=%d", 
+        snprintf( pseudo_filename, sizeof(pseudo_filename), "/SIS=%d",
                  atoi(overview_infos[overview_index].c_str()) );
 
         image_header.Put( pseudo_filename, 64, 64 );
-        
-        overview_bands[overview_index] = 
-            new CTiledChannel( image_header, 0, file_header, -1, file, 
+
+        overview_bands[overview_index] =
+            new CTiledChannel( image_header, 0, file_header, -1, file,
                                CHN_UNKNOWN );
     }
 
@@ -252,14 +269,14 @@ bool CPCIDSKChannel::IsOverviewValid( int overview_index )
     EstablishOverviewInfo();
 
     if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
-        return ThrowPCIDSKException(0, "Non existent overview (%d) requested.", 
+        return ThrowPCIDSKException(0, "Non existent overview (%d) requested.",
                               overview_index ) != 0;
 
     int sis_id, validity=0;
 
-    sscanf( overview_infos[overview_index].c_str(), "%d %d", 
+    sscanf( overview_infos[overview_index].c_str(), "%d %d",
             &sis_id, &validity );
-    
+
     return validity != 0;
 }
 
@@ -274,7 +291,7 @@ std::string CPCIDSKChannel::GetOverviewResampling( int overview_index )
 
     if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
     {
-        ThrowPCIDSKException( "Non existent overview (%d) requested.", 
+        ThrowPCIDSKException( "Non existent overview (%d) requested.",
                               overview_index );
         return "";
     }
@@ -282,9 +299,9 @@ std::string CPCIDSKChannel::GetOverviewResampling( int overview_index )
     int sis_id, validity=0;
     char resampling[17];
 
-    sscanf( overview_infos[overview_index].c_str(), "%d %d %16s", 
+    sscanf( overview_infos[overview_index].c_str(), "%d %d %16s",
             &sis_id, &validity, &(resampling[0]) );
-    
+
     return resampling;
 }
 
@@ -292,29 +309,29 @@ std::string CPCIDSKChannel::GetOverviewResampling( int overview_index )
 /*                        SetOverviewValidity()                         */
 /************************************************************************/
 
-void CPCIDSKChannel::SetOverviewValidity( int overview_index, 
+void CPCIDSKChannel::SetOverviewValidity( int overview_index,
                                           bool new_validity )
 
 {
     EstablishOverviewInfo();
 
     if( overview_index < 0 || overview_index >= (int) overview_infos.size() )
-        return ThrowPCIDSKException( "Non existent overview (%d) requested.", 
+        return ThrowPCIDSKException( "Non existent overview (%d) requested.",
                               overview_index );
 
     int sis_id, validity=0;
     char resampling[17];
-    
-    sscanf( overview_infos[overview_index].c_str(), "%d %d %16s", 
+
+    sscanf( overview_infos[overview_index].c_str(), "%d %d %16s",
             &sis_id, &validity, &(resampling[0]) );
-    
+
     // are we already set to this value?
     if( new_validity == (validity != 0) )
         return;
 
     char new_info[48];
 
-    snprintf( new_info, sizeof(new_info), "%d %d %s", 
+    snprintf( new_info, sizeof(new_info), "%d %d %s",
              sis_id, (new_validity ? 1 : 0 ), resampling );
 
     overview_infos[overview_index] = new_info;
@@ -349,15 +366,23 @@ void CPCIDSKChannel::InvalidateOverviews()
 std::vector<int> CPCIDSKChannel::GetOverviewLevelMapping() const
 {
     EstablishOverviewInfo();
-    
+
     return overview_decimations;
+}
+
+/************************************************************************/
+/*                              GetFilename()                           */
+/************************************************************************/
+std::string CPCIDSKChannel::GetFilename() const
+{
+    return file->GetFilename();
 }
 
 /************************************************************************/
 /*                           GetDescription()                           */
 /************************************************************************/
 
-std::string CPCIDSKChannel::GetDescription() 
+std::string CPCIDSKChannel::GetDescription()
 
 {
     if( ih_offset == 0 )
@@ -381,7 +406,7 @@ void CPCIDSKChannel::SetDescription( const std::string &description )
 {
     if( ih_offset == 0 )
         return ThrowPCIDSKException( "Description cannot be set on overviews." );
-        
+
     PCIDSKBuffer ih_1(64);
     ih_1.Put( description.c_str(), 0, 64 );
     file->WriteToFile( ih_1.buffer, ih_offset, 64 );
@@ -407,12 +432,12 @@ void CPCIDSKChannel::LoadHistory( const PCIDSKBuffer &image_header )
         // so do some extra processing to cleanup.  FUN records on segment
         // 3 of eltoro.pix are an example of this.
         size_t size = hist_msg.size();
-        while( size > 0 
+        while( size > 0
                && (hist_msg[size-1] == ' ' || hist_msg[size-1] == '\0') )
             size--;
 
         hist_msg.resize(size);
-        
+
         history_.push_back(hist_msg);
     }
 }
@@ -439,7 +464,7 @@ void CPCIDSKChannel::SetHistoryEntries(const std::vector<std::string> &entries)
     PCIDSKBuffer image_header(1024);
 
     file->ReadFromFile( image_header.buffer, ih_offset, 1024 );
-    
+
     for( unsigned int i = 0; i < 8; i++ )
     {
         const char *msg = "";
@@ -475,7 +500,7 @@ void CPCIDSKChannel::PushHistory( const std::string &app,
 
     memcpy( history + 0, app.c_str(), MY_MIN(app.size(),7) );
     history[7] = ':';
-    
+
     memcpy( history + 8, message.c_str(), MY_MIN(message.size(),56) );
     memcpy( history + 64, current_time, 16 );
 
@@ -490,8 +515,8 @@ void CPCIDSKChannel::PushHistory( const std::string &app,
 /************************************************************************/
 /*                            GetChanInfo()                             */
 /************************************************************************/
-void CPCIDSKChannel::GetChanInfo( std::string &filename, uint64 &image_offset, 
-                                  uint64 &pixel_offset, uint64 &line_offset, 
+void CPCIDSKChannel::GetChanInfo( std::string &filename, uint64 &image_offset,
+                                  uint64 &pixel_offset, uint64 &line_offset,
                                   bool &little_endian ) const
 
 {
@@ -519,7 +544,7 @@ void CPCIDSKChannel::SetChanInfo( CPL_UNUSED std::string filename,
 /*                            GetEChanInfo()                            */
 /************************************************************************/
 void CPCIDSKChannel::GetEChanInfo( std::string &filename, int &echannel,
-                                   int &exoff, int &eyoff, 
+                                   int &exoff, int &eyoff,
                                    int &exsize, int &eysize ) const
 
 {

@@ -133,7 +133,7 @@ void RegisterOGRCAD()
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "AutoCAD Driver" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dwg" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cad.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/cad.html" );
 
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='MODE' type='string' description='Open mode. READ_ALL - read all data (slow), READ_FAST - read main data (fast), READ_FASTEST - read less data' default='READ_FAST'/>"

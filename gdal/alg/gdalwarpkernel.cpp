@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <mutex>
 #include <new>
 #include <vector>
 
@@ -95,6 +96,7 @@ static const int anGWKFilterRadius[] =
     0,  // Q1
     0,  // Q3
     0,  // Sum
+    0,  // RMS
 };
 
 static double GWKBilinear(double dfX);
@@ -118,6 +120,7 @@ static const FilterFuncType apfGWKFilter[] =
     nullptr,  // Q1
     nullptr,  // Q3
     nullptr,  // Sum
+    nullptr,  // RMS
 };
 
 // TODO(schwehr): Can we make these functions have a const * const arg?
@@ -142,20 +145,24 @@ static const FilterFunc4ValuesType apfGWKFilter4Values[] =
     nullptr,  // Q1
     nullptr,  // Q3
     nullptr,  // Sum
+    nullptr,  // RMS
 };
 
 int GWKGetFilterRadius(GDALResampleAlg eResampleAlg)
 {
+    static_assert( CPL_ARRAYSIZE(anGWKFilterRadius) == GRA_LAST_VALUE + 1, "Bad size of anGWKFilterRadius" );
     return anGWKFilterRadius[eResampleAlg];
 }
 
 FilterFuncType GWKGetFilterFunc(GDALResampleAlg eResampleAlg)
 {
+    static_assert( CPL_ARRAYSIZE(apfGWKFilter) == GRA_LAST_VALUE + 1, "Bad size of apfGWKFilter" );
     return apfGWKFilter[eResampleAlg];
 }
 
 FilterFunc4ValuesType GWKGetFilterFunc4Values(GDALResampleAlg eResampleAlg)
 {
+    static_assert( CPL_ARRAYSIZE(apfGWKFilter4Values) == GRA_LAST_VALUE + 1, "Bad size of apfGWKFilter4Values" );
     return apfGWKFilter4Values[eResampleAlg];
 }
 
@@ -194,33 +201,39 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyUShort( GDALWarpKernel * );
 /*                           GWKJobStruct                               */
 /************************************************************************/
 
-typedef struct _GWKJobStruct GWKJobStruct;
-
-struct _GWKJobStruct
+struct GWKJobStruct
 {
+    std::mutex& mutex;
+    std::condition_variable& cv;
+    int& counter;
+    bool& stopFlag;
     GDALWarpKernel *poWK;
-    int             iYMin;
-    int             iYMax;
-    volatile int   *pnCounter;
-    volatile int   *pbStop;
-    CPLCond        *hCond;
-    CPLMutex       *hCondMutex;
-    int           (*pfnProgress)(GWKJobStruct* psJob);
-    void           *pTransformerArg;
+    int iYMin;
+    int iYMax;
+    int (*pfnProgress)(GWKJobStruct* psJob);
+    void *pTransformerArg;
+    void (*pfnFunc)(void*); // used by GWKRun() to assign the proper pTransformerArg
 
-    void           (*pfnFunc)(void*); // used by GWKRun() to assign the proper pTransformerArg
+    GWKJobStruct(std::mutex& mutex_, std::condition_variable& cv_,
+            int& counter_, bool& stopFlag_) :
+        mutex(mutex_), cv(cv_), counter(counter_), stopFlag(stopFlag_),
+        poWK(nullptr), iYMin(0), iYMax(0), pfnProgress(nullptr), pTransformerArg(nullptr),
+        pfnFunc(nullptr)
+    {}
 } ;
 
 struct GWKThreadData
 {
-    std::unique_ptr<CPLJobQueue> poJobQueue{};
-    GWKJobStruct* pasThreadJob = nullptr;
-    int nThreads = 0;
-    CPLCond* hCond = nullptr;
-    CPLMutex* hCondMutex = nullptr;
-    bool bTransformerArgInputAssignedToThread = false;
-    void* pTransformerArgInput = nullptr; // owned by calling layer. Not to be destroyed
-    std::map<GIntBig, void*> mapThreadToTransformerArg{};
+    std::unique_ptr<CPLJobQueue> poJobQueue {};
+    std::unique_ptr<std::vector<GWKJobStruct>> threadJobs {};
+    int nThreads {0};
+    int counter {0};
+    bool stopFlag {false};
+    std::mutex mutex {};
+    std::condition_variable cv {};
+    bool bTransformerArgInputAssignedToThread {false};
+    void * pTransformerArgInput {nullptr}; // owned by calling layer. Not to be destroyed
+    std::map<GIntBig, void*> mapThreadToTransformerArg {};
 };
 
 /************************************************************************/
@@ -230,13 +243,15 @@ struct GWKThreadData
 // Return TRUE if the computation must be interrupted.
 static int GWKProgressThread( GWKJobStruct* psJob )
 {
-    CPLAcquireMutex(psJob->hCondMutex, 1.0);
-    (*(psJob->pnCounter))++;
-    CPLCondSignal(psJob->hCond);
-    int bStop = *(psJob->pbStop);
-    CPLReleaseMutex(psJob->hCondMutex);
+    bool stop = false;
+    {
+        std::lock_guard<std::mutex> lock(psJob->mutex);
+        psJob->counter++;
+        stop = psJob->stopFlag;
+    }
+    psJob->cv.notify_one();
 
-    return bStop;
+    return stop;
 }
 
 /************************************************************************/
@@ -247,13 +262,12 @@ static int GWKProgressThread( GWKJobStruct* psJob )
 static int GWKProgressMonoThread( GWKJobStruct* psJob )
 {
     GDALWarpKernel *poWK = psJob->poWK;
-    int nCounter = ++(*(psJob->pnCounter));
     if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                            (nCounter / static_cast<double>(psJob->iYMax)),
-                            "", poWK->pProgress ) )
+        (++psJob->counter / static_cast<double>(psJob->iYMax)),
+        "", poWK->pProgress ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        *(psJob->pbStop) = TRUE;
+        psJob->stopFlag = true;
         return TRUE;
     }
     return FALSE;
@@ -264,25 +278,20 @@ static int GWKProgressMonoThread( GWKJobStruct* psJob )
 /************************************************************************/
 
 static CPLErr GWKGenericMonoThread( GDALWarpKernel *poWK,
-                                    void (*pfnFunc) (void *pUserData) )
+    void (*pfnFunc) (void *pUserData) )
 {
-    volatile int bStop = FALSE;
-    volatile int nCounter = 0;
+    GWKThreadData td;
 
-    GWKJobStruct sThreadJob;
-    sThreadJob.poWK = poWK;
-    sThreadJob.pnCounter = &nCounter;
-    sThreadJob.iYMin = 0;
-    sThreadJob.iYMax = poWK->nDstYSize;
-    sThreadJob.pbStop = &bStop;
-    sThreadJob.hCond = nullptr;
-    sThreadJob.hCondMutex = nullptr;
-    sThreadJob.pfnProgress = GWKProgressMonoThread;
-    sThreadJob.pTransformerArg = poWK->pTransformerArg;
+    // NOTE: the mutex is not used.
+    GWKJobStruct job(td.mutex, td.cv, td.counter, td.stopFlag);
+    job.poWK = poWK;
+    job.iYMin = 0;
+    job.iYMax = poWK->nDstYSize;
+    job.pfnProgress = GWKProgressMonoThread;
+    job.pTransformerArg = poWK->pTransformerArg;
+    pfnFunc(&job);
 
-    pfnFunc(&sThreadJob);
-
-    return !bStop ? CE_None : CE_Failure;
+    return td.stopFlag ? CE_Failure : CE_None;
 }
 
 /************************************************************************/
@@ -309,35 +318,14 @@ void* GWKThreadsCreate( char** papszWarpOptions,
         nThreads = 128;
 
     GWKThreadData* psThreadData = new GWKThreadData();
-    CPLCond* hCond = nullptr;
-    if( nThreads )
-        hCond = CPLCreateCond();
-    auto poThreadPool = nThreads > 0 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
-    if( nThreads && hCond && poThreadPool )
+    auto poThreadPool =
+        nThreads > 0 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+    if( nThreads && poThreadPool )
     {
         psThreadData->nThreads = nThreads;
-        psThreadData->hCond = hCond;
-        psThreadData->pasThreadJob = static_cast<GWKJobStruct *>(
-            VSI_CALLOC_VERBOSE(sizeof(GWKJobStruct), nThreads));
-        if( psThreadData->pasThreadJob == nullptr )
-        {
-            GWKThreadsEnd(psThreadData);
-            return nullptr;
-        }
-
-        psThreadData->hCondMutex = CPLCreateMutex();
-        if( psThreadData->hCondMutex == nullptr )
-        {
-            GWKThreadsEnd(psThreadData);
-            return nullptr;
-        }
-        CPLReleaseMutex(psThreadData->hCondMutex);
-
-        for( int i = 0; i < nThreads; i++ )
-        {
-            psThreadData->pasThreadJob[i].hCond = psThreadData->hCond;
-            psThreadData->pasThreadJob[i].hCondMutex = psThreadData->hCondMutex;
-        }
+        psThreadData->threadJobs.reset(new std::vector<GWKJobStruct>(nThreads,
+            GWKJobStruct(psThreadData->mutex, psThreadData->cv,
+                psThreadData->counter, psThreadData->stopFlag)));
 
         psThreadData->poJobQueue = poThreadPool->CreateJobQueue();
         psThreadData->pTransformerArgInput = pTransformerArg;
@@ -365,11 +353,6 @@ void GWKThreadsEnd( void* psThreadDataIn )
         }
         psThreadData->poJobQueue.reset();
     }
-    CPLFree(psThreadData->pasThreadJob);
-    if( psThreadData->hCond )
-        CPLDestroyCond(psThreadData->hCond);
-    if( psThreadData->hCondMutex )
-        CPLDestroyMutex(psThreadData->hCondMutex);
     delete psThreadData;
 }
 
@@ -386,38 +369,40 @@ static void ThreadFuncAdapter(void* pData)
     // Look if we have already a per-thread transformer
     void* pTransformerArg = nullptr;
     const GIntBig nThreadId = CPLGetPID();
-    CPLAcquireMutex(psThreadData->hCondMutex, 1.0);
-    auto oIter = psThreadData->mapThreadToTransformerArg.find(nThreadId);
-    if (oIter != psThreadData->mapThreadToTransformerArg.end())
-    {
-        pTransformerArg = oIter->second;
-    }
-    else if( !psThreadData->bTransformerArgInputAssignedToThread )
-    {
-        // Borrow the original transformer, as it has not already been done
-        psThreadData->bTransformerArgInputAssignedToThread = true;
-        pTransformerArg = psThreadData->pTransformerArgInput;
-        psThreadData->mapThreadToTransformerArg[nThreadId] = pTransformerArg;
-    }
-    CPLReleaseMutex(psThreadData->hCondMutex);
 
-    // If no transformer assigned to current thread, instanciate one
+
+    {
+        std::lock_guard<std::mutex> lock(psThreadData->mutex);
+        auto oIter = psThreadData->mapThreadToTransformerArg.find(nThreadId);
+        if (oIter != psThreadData->mapThreadToTransformerArg.end())
+        {
+            pTransformerArg = oIter->second;
+        }
+        else if( !psThreadData->bTransformerArgInputAssignedToThread )
+        {
+            // Borrow the original transformer, as it has not already been done
+            psThreadData->bTransformerArgInputAssignedToThread = true;
+            pTransformerArg = psThreadData->pTransformerArgInput;
+            psThreadData->mapThreadToTransformerArg[nThreadId] = pTransformerArg;
+        }
+    }
+
+    // If no transformer assigned to current thread, instantiate one
     if( pTransformerArg == nullptr )
     {
         // This somehow assumes that GDALCloneTransformer() is thread-safe
         // which should normally be the case.
         pTransformerArg =
             GDALCloneTransformer(psThreadData->pTransformerArgInput);
+
+        // Lock for the stop flag and the transformer map.
+        std::lock_guard<std::mutex> lock(psThreadData->mutex);
         if( !pTransformerArg )
         {
-            *(psJob->pbStop) = TRUE;
+            psJob->stopFlag = true;
             return;
         }
-
-        // register in map
-        CPLAcquireMutex(psThreadData->hCondMutex, 1.0);
         psThreadData->mapThreadToTransformerArg[nThreadId] = pTransformerArg;
-        CPLReleaseMutex(psThreadData->hCondMutex);
     }
 
     psJob->pTransformerArg = pTransformerArg;
@@ -474,64 +459,57 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 
     CPLDebug("WARP", "Using %d threads", nThreads);
 
-    volatile int bStop = FALSE;
-    volatile int nCounter = 0;
-
-    CPLAcquireMutex(psThreadData->hCondMutex, 1000);
-
-/* -------------------------------------------------------------------- */
-/*      Submit jobs                                                     */
-/* -------------------------------------------------------------------- */
-    for( int i = 0; i < nThreads; i++ )
+    auto& jobs = *psThreadData->threadJobs;
+    // Fill-in job structures.
+    GIntBig i = 0;
+    for (auto& job : jobs)
     {
-        psThreadData->pasThreadJob[i].poWK = poWK;
-        psThreadData->pasThreadJob[i].pnCounter = &nCounter;
-        psThreadData->pasThreadJob[i].iYMin =
-            static_cast<int>((static_cast<GIntBig>(i)) * nDstYSize / nThreads);
-        psThreadData->pasThreadJob[i].iYMax =
-            static_cast<int>((static_cast<GIntBig>(i + 1)) *
-                             nDstYSize / nThreads);
-        psThreadData->pasThreadJob[i].pbStop = &bStop;
+        job.poWK = poWK;
+        job.iYMin = static_cast<int>(i * nDstYSize / nThreads);
+        job.iYMax = static_cast<int>((i + 1) * nDstYSize / nThreads);
         if( poWK->pfnProgress != GDALDummyProgress )
-            psThreadData->pasThreadJob[i].pfnProgress = GWKProgressThread;
-        else
-            psThreadData->pasThreadJob[i].pfnProgress = nullptr;
-        psThreadData->pasThreadJob[i].pfnFunc = pfnFunc;
-        psThreadData->poJobQueue->SubmitJob( ThreadFuncAdapter,
-                            static_cast<void*>(&psThreadData->pasThreadJob[i]) );
+            job.pfnProgress = GWKProgressThread;
+        job.pfnFunc = pfnFunc;
+        i++;
     }
+
+    {
+        std::unique_lock<std::mutex> lock(psThreadData->mutex);
+
+        // Start jobs.
+        for (auto& job : jobs)
+            psThreadData->poJobQueue->SubmitJob( ThreadFuncAdapter,
+                static_cast<void*>(&job) );
 
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
-    if( poWK->pfnProgress != GDALDummyProgress )
-    {
-        while( nCounter < nDstYSize )
+        if( poWK->pfnProgress != GDALDummyProgress )
         {
-            CPLCondWait(psThreadData->hCond, psThreadData->hCondMutex);
-
-            if( !poWK->pfnProgress(
-                    poWK->dfProgressBase + poWK->dfProgressScale *
-                    (nCounter / static_cast<double>(nDstYSize)),
-                    "", poWK->pProgress ) )
+            int& counter = psThreadData->counter;
+            while (counter < nDstYSize)
             {
-                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                bStop = TRUE;
-                break;
+                psThreadData->cv.wait(lock);
+                if( !poWK->pfnProgress(
+                    poWK->dfProgressBase + poWK->dfProgressScale *
+                        (counter / static_cast<double>(nDstYSize)),
+                    "", poWK->pProgress ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt,
+                        "User terminated" );
+                    psThreadData->stopFlag = true;
+                    break;
+                }
             }
         }
     }
-
-    /* Release mutex before joining threads, otherwise they will dead-lock */
-    /* forever in GWKProgressThread() */
-    CPLReleaseMutex(psThreadData->hCondMutex);
 
 /* -------------------------------------------------------------------- */
 /*      Wait for all jobs to complete.                                  */
 /* -------------------------------------------------------------------- */
     psThreadData->poJobQueue->WaitCompletion();
 
-    return !bStop ? CE_None : CE_Failure;
+    return psThreadData->stopFlag ? CE_Failure : CE_None;
 }
 
 /************************************************************************/
@@ -600,7 +578,8 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * Resampling algorithm.
  *
  * The resampling algorithm to use.  One of GRA_NearestNeighbour, GRA_Bilinear,
- * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_Mode or GRA_Sum.
+ * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_RMS,
+ * GRA_Mode or GRA_Sum.
  *
  * This field is required. GDT_NearestNeighbour may be used as a default
  * value.
@@ -681,14 +660,14 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   float dfPixelValue;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
  *   assert( nPixel >= 0 && nPixel < poKern->nSrcXSize );
  *   assert( nLine >= 0 && nLine < poKern->nSrcYSize );
  *   assert( nBand >= 0 && nBand < poKern->nBands );
- *   dfPixelValue = ((float *) poKern->papabySrcImage[nBand-1])
+ *   dfPixelValue = ((float *) poKern->papabySrcImage[nBand])
  *                                  [nPixel + nLine * poKern->nSrcXSize];
  * \endcode
  *
@@ -710,7 +689,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   int   bIsValid = TRUE;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
@@ -804,14 +783,14 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   float dfPixelValue;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
  *   assert( nPixel >= 0 && nPixel < poKern->nDstXSize );
  *   assert( nLine >= 0 && nLine < poKern->nDstYSize );
  *   assert( nBand >= 0 && nBand < poKern->nBands );
- *   dfPixelValue = ((float *) poKern->papabyDstImage[nBand-1])
+ *   dfPixelValue = ((float *) poKern->papabyDstImage[nBand])
  *                                  [nPixel + nLine * poKern->nSrcYSize];
  * \endcode
  *
@@ -1063,11 +1042,94 @@ CPLErr GDALWarpKernel::PerformWarp()
     // XSCALE and YSCALE undocumented for now. Can help in some cases.
     // Best would probably be a per-pixel scale computation.
     const char* pszXScale = CSLFetchNameValue(papszWarpOptions, "XSCALE");
-    if( pszXScale != nullptr )
+    if( pszXScale != nullptr && !EQUAL(pszXScale, "FROM_GRID_SAMPLING") )
         dfXScale = CPLAtof(pszXScale);
     const char* pszYScale = CSLFetchNameValue(papszWarpOptions, "YSCALE");
     if( pszYScale != nullptr )
         dfYScale = CPLAtof(pszYScale);
+
+    // If the xscale is significantly lower than the yscale, this is highly
+    // suspicious of a situation of wrapping a very large virtual file in
+    // geographic coordinates with left and right parts being close to the
+    // antimeridian. In that situation, the xscale computed by the above method
+    // is completely wrong. Prefer doing an average of a few sample points
+    // instead
+    if( (dfYScale / dfXScale > 100 ||
+         (pszXScale != nullptr && EQUAL(pszXScale, "FROM_GRID_SAMPLING"))) )
+    {
+        // Sample points along a grid
+        const int nPointsX = std::min(10, nDstXSize);
+        const int nPointsY = std::min(10, nDstYSize);
+        const int nPoints = 3 * nPointsX * nPointsY;
+        std::vector<double> padfX;
+        std::vector<double> padfY;
+        std::vector<double> padfZ(nPoints);
+        std::vector<int> pabSuccess(nPoints);
+        for(int iY = 0; iY < nPointsY; iY++)
+        {
+            for(int iX = 0; iX < nPointsX; iX++)
+            {
+                const double dfX = nPointsX == 1 ? 0.0 :
+                    static_cast<double>(iX) * nDstXSize / (nPointsX - 1);
+                const double dfY = nPointsY == 1 ? 0.0 :
+                static_cast<double>(iY) * nDstYSize / (nPointsY - 1);
+
+                // Reproject each destination sample point and its neighbours
+                // at (x+1,y) and (x,y+1), so as to get the local scale.
+                padfX.push_back( dfX );
+                padfY.push_back( dfY );
+
+                padfX.push_back( (iX == nPointsX - 1) ? dfX - 1 : dfX + 1 );
+                padfY.push_back( dfY);
+
+                padfX.push_back( dfX );
+                padfY.push_back( (iY == nPointsY - 1) ? dfY - 1 : dfY + 1 );
+            }
+        }
+        pfnTransformer(pTransformerArg, TRUE, nPoints,
+                       &padfX[0], &padfY[0], &padfZ[0], &pabSuccess[0]);
+
+        // Compute the xscale at each sampling point
+        std::vector<double> adfXScales;
+        for( int i = 0; i < nPoints; i+=3 )
+        {
+            if( pabSuccess[i] && pabSuccess[i+1] && pabSuccess[i+2] )
+            {
+                const double dfPointXScale = 1.0 / std::max(
+                    std::abs(padfX[i+1] - padfX[i]), std::abs(padfX[i+2] - padfX[i]) );
+                adfXScales.push_back(dfPointXScale);
+            }
+        }
+
+        // Sort by increasing xcale
+        std::sort(adfXScales.begin(), adfXScales.end());
+
+        if( !adfXScales.empty() )
+        {
+            // Compute the average of scales, but eliminate outliers small
+            // scales, if some samples are just along the discontinuity.
+            const double dfMaxPointXScale = adfXScales.back();
+            double dfSumPointXScale = 0;
+            int nCountPointScale = 0;
+            for( double dfPointXScale : adfXScales )
+            {
+                if( dfPointXScale > dfMaxPointXScale / 10 )
+                {
+                    dfSumPointXScale += dfPointXScale;
+                    nCountPointScale ++;
+                }
+            }
+            if( nCountPointScale > 0 ) // should always be true
+            {
+                const double dfXScaleFromSampling = dfSumPointXScale / nCountPointScale;
+#if DEBUG_VERBOSE
+                CPLDebug("WARP", "Correcting dfXScale from %f to %f",
+                        dfXScale, dfXScaleFromSampling);
+#endif
+                dfXScale = dfXScaleFromSampling;
+            }
+        }
+    }
 
 #if DEBUG_VERBOSE
     CPLDebug("WARP", "dfXScale = %f, dfYScale = %f", dfXScale, dfYScale);
@@ -1237,6 +1299,9 @@ CPLErr GDALWarpKernel::PerformWarp()
 #endif
 
     if( eResample == GRA_Average )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_RMS )
         return GWKAverageOrMode( this );
 
     if( eResample == GRA_Mode )
@@ -4688,10 +4753,14 @@ static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(
         return false;
     }
 
-    const int iSrcX =
+    int iSrcX =
         static_cast<int>(_padfX[_iDstX] + 1.0e-10) - _poWK->nSrcXOff;
-    const int iSrcY =
+    int iSrcY =
         static_cast<int>(_padfY[_iDstX] + 1.0e-10) - _poWK->nSrcYOff;
+    if( iSrcX == _nSrcXSize )
+        iSrcX --;
+    if( iSrcY == _nSrcYSize )
+        iSrcY --;
 
     // Those checks should normally be OK given the previous ones.
     CPLAssert( iSrcX >= 0 );
@@ -4713,7 +4782,6 @@ static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(
 /************************************************************************/
 
 static void GWKGeneralCaseThread( void* pData)
-
 {
     GWKJobStruct* psJob = reinterpret_cast<GWKJobStruct *>(pData);
     GDALWarpKernel *poWK = psJob->poWK;
@@ -5716,6 +5784,10 @@ static void GWKAverageOrModeThread( void* pData)
     {
         nAlgo = GWKAOM_Average;
     }
+    else if( poWK->eResample == GRA_RMS )
+    {
+        nAlgo = GWKAOM_RMS;
+    }
     else if( poWK->eResample == GRA_Mode )
     {
         // TODO check color table count > 256.
@@ -5915,22 +5987,22 @@ static void GWKAverageOrModeThread( void* pData)
             // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
             // coordinates, and take the bounding box of the got source
             // coordinates.
-            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]);
+            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]) -
+                                    poWK->nSrcXOff;
             int iSrcXMin =
-                std::max(static_cast<int>(floor(dfXMin + 1e-10)) -
-                            poWK->nSrcXOff, 0);
-            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX]);
+                std::max(static_cast<int>(floor(dfXMin + 1e-10)), 0);
+            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX])  -
+                                    poWK->nSrcXOff;
             int iSrcXMax =
-                std::min(static_cast<int>(ceil(dfXMax - 1e-10)) -
-                            poWK->nSrcXOff, nSrcXSize);
-            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]);
+                std::min(static_cast<int>(ceil(dfXMax - 1e-10)), nSrcXSize);
+            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]) -
+                                    poWK->nSrcYOff;
             int iSrcYMin =
-                std::max(static_cast<int>(floor(dfYMin + 1e-10)) -
-                            poWK->nSrcYOff, 0);
-            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]);
+                std::max(static_cast<int>(floor(dfYMin + 1e-10)), 0);
+            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]) -
+                                    poWK->nSrcYOff;
             int iSrcYMax =
-                std::min(static_cast<int>(ceil(dfYMax - 1e-10)) -
-                            poWK->nSrcYOff, nSrcYSize);
+                std::min(static_cast<int>(ceil(dfYMax - 1e-10)), nSrcYSize);
 
             if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
                 iSrcXMax++;
@@ -6017,6 +6089,52 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                     }
                 }  // GRA_Average.
+                // poWK->eResample == GRA_RMS.
+                if( nAlgo == GWKAOM_RMS )
+                {
+                    double dfTotalReal = 0.0;
+                    double dfTotalImag = 0.0;
+                    double dfTotalWeight = 0.0;
+                    // This code adapted from GDALDownsampleChunk32R_AverageT()
+                    // in gcore/overview.cpp.
+                    for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                    {
+                        const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
+                        {
+                            if( poWK->panUnifiedSrcValid != nullptr
+                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                            {
+                                continue;
+                            }
+
+                            if( GWKGetPixelValue(
+                                    poWK, iBand, iSrcOffset,
+                                    &dfBandDensity, &dfValueRealTmp,
+                                    &dfValueImagTmp ) &&
+                                dfBandDensity > BAND_DENSITY_THRESHOLD )
+                            {
+                                const double dfWeight = COMPUTE_WEIGHT(iSrcX, dfWeightY);
+                                dfTotalWeight += dfWeight;
+                                dfTotalReal += dfValueRealTmp * dfValueRealTmp * dfWeight;
+                                if (bIsComplex)
+                                    dfTotalImag += dfValueImagTmp * dfValueImagTmp * dfWeight;
+                            }
+                        }
+                    }
+
+                    if( dfTotalWeight > 0 )
+                    {
+                        dfValueReal = sqrt( dfTotalReal / dfTotalWeight );
+                        if (bIsComplex)
+                            dfValueImag = sqrt( dfTotalImag / dfTotalWeight );
+
+                        dfBandDensity = 1;
+                        bHasFoundDensity = true;
+                    }
+                }  // GRA_RMS.
                 else if( nAlgo == GWKAOM_Sum )
                 // poWK->eResample == GRA_Sum
                 {

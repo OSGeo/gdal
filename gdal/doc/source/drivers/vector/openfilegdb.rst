@@ -30,10 +30,12 @@ Driver capabilities
 Spatial filtering
 -----------------
 
-The driver cannot use the .spx files (when they are present) for spatial
-filtering. However, it will use the minimum bounding rectangle included
+Since GDAL 3.2, the driver can use the native .spx spatial indices for
+spatial filtering.
+
+In earlier versions, it uses the minimum bounding rectangle included
 at the beginning of the geometry blobs to speed up spatial filtering. By
-default, it will also build on the fly a in-memory spatial index during
+default, it also builds on the fly a in-memory spatial index during
 the first sequential read of a layer. Following spatial filtering
 operations on that layer will then benefit from that spatial index. The
 building of this in-memory spatial index can be disabled by setting the
@@ -54,6 +56,24 @@ can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content (only available in
 Geodatabases created with ArcGIS 10 or above)
 
+Field domains
+-------------
+
+.. versionadded:: 3.3
+
+Coded and range field domains are supported.
+
+Hiearchical organization
+------------------------
+
+.. versionadded:: 3.4
+
+The hiearchical organization of tables and feature classes as top-level
+element or within a feature dataset can be explored using the methods
+:cpp:func:`GDALDataset::GetRootGroup`,
+:cpp:func:`GDALGroup::GetGroupNames`, :cpp:func:`GDALGroup::OpenGroup`,
+:cpp:func:`GDALGroup::GetVectorLayerNames` and :cpp:func:`GDALGroup::OpenVectorLayer`
+
 Comparison with the FileGDB driver
 ----------------------------------
 
@@ -73,7 +93,6 @@ Advantages of the OpenFileGDB driver:
 Drawbacks of the OpenFileGDB driver:
 
 -  Read-only.
--  Cannot use spatial indexes.
 -  Cannot read data from compressed data in CDF format (Compressed Data
    Format).
 

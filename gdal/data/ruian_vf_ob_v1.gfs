@@ -1036,7 +1036,7 @@
     </PropertyDefn>
     <!-- Bonitované díly parcely - ID řízení v ISKN -->
     <PropertyDefn>
-      <Name>BonitovaneDilRizeniId</Name>
+      <Name>BonitovanyDilRizeniId</Name>
       <ElementPath>BonitovaneDily|BonitovanyDil|RizeniId</ElementPath>
       <Type>IntegerList</Type>
       <SubType>Integer64</SubType>

@@ -90,13 +90,17 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         // system-wide default location, so try to install to HOME.
 
         static char* pszEnvIni = nullptr;
+
+        // Read HOME location.
+        const char* pszEnvHome = getenv("HOME");
+        CPLAssert( nullptr != pszEnvHome );
+        CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
+
+        const char* pszEnvOdbcSysIni = nullptr;
         if( pszEnvIni == nullptr )
         {
-            // Read HOME location.
-            char* pszEnvHome = getenv("HOME");
-
-            CPLAssert( nullptr != pszEnvHome );
-            CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
+            // record previous value, so we can rollback on failure
+            pszEnvOdbcSysIni = getenv("ODBCSYSINI");
 
             // Set ODBCSYSINI variable pointing to HOME location.
             const size_t nLen = strlen(pszEnvHome) + 12;
@@ -112,10 +116,38 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         }
 
         // Try to install ODBC driver in new location.
-        if( FALSE == SQLInstallDriverEx(pszDriver, nullptr, m_szPathOut,
+        if( FALSE == SQLInstallDriverEx(pszDriver, pszEnvHome, m_szPathOut,
                                         ODBC_FILENAME_MAX, nullptr, fRequest,
                                         &m_nUsageCount) )
         {
+            // if installing the driver fails, we need to roll back the changes to ODBCSYSINI environment
+            // variable or all subsequent use of ODBC calls will fail
+            char * pszEnvRollback = nullptr;
+            if ( pszEnvOdbcSysIni )
+            {
+                const size_t nLen = strlen( pszEnvOdbcSysIni ) + 12;
+                pszEnvRollback = static_cast<char *>(CPLMalloc(nLen));
+                snprintf( pszEnvRollback, nLen, "ODBCSYSINI=%s", pszEnvOdbcSysIni );
+            }
+            else
+            {
+                // ODBCSYSINI not previously set, so remove
+#ifdef _MSC_VER
+                // for MSVC an environment variable is removed by setting to empty string
+                // https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/putenv-wputenv?view=vs-2019
+                pszEnvRollback = CPLStrdup("ODBCSYSINI=");
+#else
+                // for gnuc an environment variable is removed by not including the equal sign
+                // https://man7.org/linux/man-pages/man3/putenv.3.html
+                pszEnvRollback = CPLStrdup("ODBCSYSINI");
+#endif
+            }
+
+            // A 'man putenv' shows that we cannot free pszEnvRollback
+            // because the pointer is used directly by putenv in old glibc.
+            // coverity[tainted_string]
+            putenv( pszEnvRollback );
+
             CPL_UNUSED RETCODE cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
                             m_szError, SQL_MAX_MESSAGE_LENGTH, nullptr );
             (void)cRet;
@@ -331,7 +363,7 @@ int CPLODBCSession::RollbackTransaction()
  * ODBC error messages are reported in the following format:
  * [SQLState]ErrorMessage(NativeErrorCode)
  *
- * Multiple error messages are delimeted by ",".
+ * Multiple error messages are delimited by ",".
  */
 int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 
@@ -365,7 +397,7 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
                     achSQLState, &nNativeError,
                     reinterpret_cast<SQLCHAR *>(pachCurErrMsg),
                     nTextLength, &nTextLength2);
-            }               
+            }
             pachCurErrMsg[nTextLength] = '\0';
             m_osLastError += CPLString().Printf("%s[%5s]%s(" CPL_FRMT_GIB ")",
                     (m_osLastError.empty() ? "" : ", "), achSQLState,
@@ -378,6 +410,78 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
         RollbackTransaction();
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                          ConnectToMsAccess()                          */
+/************************************************************************/
+
+/**
+ * Connects to a Microsoft Access database.
+ *
+ * @param pszName The file name of the Access database to connect to.  This is not
+ * optional.
+ *
+ * @param pszDSNStringTemplate optional DSN string template for Microsoft Access
+ * ODBC Driver. If not specified, then a set of known driver templates will
+ * be used automatically as a fallback. If specified, it is the caller's responsibility
+ * to ensure that the template is correctly formatted.
+ *
+ * @return TRUE on success or FALSE on failure. Errors will automatically be reported
+ * via CPLError.
+ *
+ * @since GDAL 3.2
+ */
+bool CPLODBCSession::ConnectToMsAccess(const char *pszName, const char *pszDSNStringTemplate)
+{
+    char *pszDSN = nullptr;
+
+    const bool usingAutomaticDSNStringTemplate = pszDSNStringTemplate == nullptr;
+
+    if( usingAutomaticDSNStringTemplate )
+    {
+#ifdef WIN32
+        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
+#else
+        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
+#endif
+    }
+    pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100) );
+    /* coverity[tainted_string] */
+    snprintf( pszDSN,
+        strlen(pszName)+strlen(pszDSNStringTemplate)+100,
+        pszDSNStringTemplate,  pszName );
+
+    CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
+    int bError = !EstablishSession( pszDSN, nullptr, nullptr );
+    if( bError && usingAutomaticDSNStringTemplate )
+    {
+        // Trying with another template (#5594)
+#ifdef WIN32
+        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
+#else
+        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
+#endif
+        CPLFree( pszDSN );
+        pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100) );
+        snprintf( pszDSN,
+            strlen(pszName)+strlen(pszDSNStringTemplate)+100,
+            pszDSNStringTemplate,  pszName );
+        CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
+        bError = !EstablishSession( pszDSN, nullptr, nullptr );
+    }
+
+    if ( bError )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to initialize ODBC connection to DSN for %s,\n"
+                  "%s", pszDSN, GetLastError() );
+        CPLFree( pszDSN );
+        return false;
+    }
+
+    CPLFree( pszDSN );
+    return true;
 }
 
 /************************************************************************/
@@ -933,17 +1037,20 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         // size reaches 2GB. (#3385)
         cbDataLen = static_cast<int>(cbDataLen);
 
-        if( Failed( nRetCode ) )
+        // a return code of SQL_NO_DATA is not indicative of an error - see
+        // https://docs.microsoft.com/en-us/sql/odbc/reference/develop-app/getting-long-data?view=sql-server-ver15
+        // "When there is no more data to return, SQLGetData returns SQL_NO_DATA"
+        // and the example from that page which uses:
+        // while ((rc = SQLGetData(hstmt, 2, SQL_C_BINARY, BinaryPtr, sizeof(BinaryPtr), &BinaryLenOrInd)) != SQL_NO_DATA) { ... }
+        if( nRetCode != SQL_NO_DATA && Failed( nRetCode ) )
         {
-            if( nRetCode != SQL_NO_DATA )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, "%s",
-                          m_poSession->GetLastError() );
-            }
+            CPLError( CE_Failure, CPLE_AppDefined, "%s",
+                      m_poSession->GetLastError() );
             return FALSE;
         }
 
-        if( cbDataLen == SQL_NULL_DATA )
+        // if first call to SQLGetData resulted in SQL_NO_DATA return code, then the data is empty (NULL)
+        if( cbDataLen == SQL_NULL_DATA || nRetCode == SQL_NO_DATA )
         {
             m_papszColValues[iCol] = nullptr;
             m_panColValueLengths[iCol] = 0;
@@ -1027,16 +1134,6 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
             m_papszColValues[iCol][cbDataLen] = '\0';
             m_papszColValues[iCol][cbDataLen+1] = '\0';
-        }
-
-        // Trim white space off end, if there is any.
-        if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != nullptr )
-        {
-            char *pszTarget = m_papszColValues[iCol];
-            size_t iEnd = strlen(pszTarget);
-
-            while( iEnd > 0 && pszTarget[iEnd - 1] == ' ' )
-                pszTarget[--iEnd] = '\0';
         }
 
         // Convert WCHAR to UTF-8, assuming the WCHAR is UCS-2.
@@ -1879,7 +1976,7 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_INTERVAL_HOUR_TO_SECOND:
         case SQL_INTERVAL_MINUTE_TO_SECOND:
         case SQL_GUID:
-            return SQL_C_CHAR;
+            return SQL_C_GUID;
 
         case SQL_DATE:
         case SQL_TYPE_DATE:

@@ -7,7 +7,8 @@ OBJ =	gdalwmscache.o gdalwmsdataset.o gdalwmsrasterband.o \
 	minidriver_tileservice.o minidriver_worldwind.o \
 	minidriver_tms.o minidriver_tiled_wms.o wmsmetadataset.o \
 	minidriver_virtualearth.o minidriver_arcgis_server.o \
-	minidriver_iip.o minidriver_mrf.o
+	minidriver_iip.o minidriver_mrf.o minidriver_ogcapimaps.o \
+	minidriver_ogcapicoverage.o
 
 CPPFLAGS	:=	 $(CPPFLAGS) -DHAVE_CURL $(CURL_INC)
 

@@ -32,7 +32,7 @@ other content before the ``<GDAL_WMS>`` element.
 <GDAL_WMS>
 <Service name="WMS">                                                       Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)
 <Version>1.1.1</Version>                                                   WMS version. (optional, defaults to 1.1.1)
-<ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>                WMS server URL. (required)
+<ServerUrl>http://host.domain.com/wms.cgi?</ServerUrl>                     WMS server URL. (required)
 <SRS>EPSG:4326</SRS>                                                       Image projection (optional, defaults to EPSG:4326 in WMS and 102100 in AGS, WMS version 1.1.1 or below only and ArcGIS Server). For ArcGIS Server the spatial reference can be specified as either a well-known ID or as a `spatial reference json object <http://resources.arcgis.com/en/help/rest/apiref/geometry.html#sr>`__
 <CRS>CRS:83</CRS>                                                          Image projection (optional, defaults to EPSG:4326, WMS version 1.3.0 or above only)
 <ImageFormat>image/jpeg</ImageFormat>                                      Format in which to request data. Paletted formats like image/gif will be converted to RGB. (optional, defaults to image/jpeg)
@@ -60,7 +60,7 @@ other content before the ``<GDAL_WMS>`` element.
 <Projection>EPSG:4326</Projection>                                         Image projection (optional, defaults to value reported by mini-driver or EPSG:4326)
 <IdentificationTolerance>2</IdentificationTolerance>                       Identification tolerance (optional, defaults to 2)
 <BandsCount>3</BandsCount>                                                 Number of bands/channels, 1 for grayscale data, 3 for RGB, 4 for RGBA. (optional, defaults to 3)
-<DataType>Byte</DataType>                                                  Band data type, amont Byte, Int16, UInt16, Int32, UInt32, Float32, Float64, etc.. (optional, defaults to Byte)
+<DataType>Byte</DataType>                                                  Band data type, one of: Byte, Int16, UInt16, Int32, UInt32, Float32, Float64, etc.. (optional, defaults to Byte)
 <DataValues NoData="0 0 0" min="1 1 1" max="255 255 255" />                Define NoData and/or minimum and/or maximum value for bands. nodata_values, min_values, max_values can be one single value, or a value per band, with a space separator between value
 <BlockSizeX>1024</BlockSizeX>                                              Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)
 <BlockSizeY>1024</BlockSizeY>                                              Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)
@@ -72,15 +72,17 @@ other content before the ``<GDAL_WMS>`` element.
 <Type>file</Type>                                                          Cache type. Now supported only 'file' type. In 'file' cache type files are stored in file system folders.
 <Expires>604800</Expires>                                                  Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web. Default value is 7 days (604800s).
 <MaxSize>67108864</MaxSize>                                                The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted. Default value is 64 Mb (67108864 bytes).
+<CleanTimeout>120</CleanTimeout>                                           Clean Thread Run Timeout in seconds. How often to run the clean thread, which finds and deletes expired cached files. Default value is 120s. Use value of 0 to disable the Clean Thread (effectively unlimited cache size). If you intend to use very large cache size you might want to disable the cache clean or to use a much longer timeout as the time that takes to scan the cache files for expired cache files might be long. ("disabled" was the only option for GDAL <= 2.2; "120s" was the only option for 2.3 <= GDAL <= 3.1). 
 <Unique>True</Unique>                                                      If set to true the path will appended with md5 hash of ServerURL. Default value is true.
 </Cache>
-<MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2)
+<MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2). Can also be set with the :decl_configoption:`GDAL_MAX_CONNECTIONS` configuration option (GDAL >= 3.2)
 <Timeout>300</Timeout>                                                     Connection timeout in seconds. (optional, defaults to 300)
 <OfflineMode>true</OfflineMode>                                            Do not download any new images, use only what is in cache. Useful only with cache enabled. (optional, defaults to false)
 <AdviseRead>true</AdviseRead>                                              Enable AdviseRead API call - download images into cache. (optional, defaults to false)
 <VerifyAdviseRead>true</VerifyAdviseRead>                                  Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)
 <ClampRequests>false</ClampRequests>                                       Should requests, that otherwise would be partially outside of defined data window, be clipped resulting in smaller than block size request. (optional, defaults to true)
 <UserAgent>GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</UserAgent> HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)"). When used with some servers, like OpenStreetMap ones, it is highly recommended to put a custom user agent to avoid being blocked if the default user agent had to be blocked.
+<Accept>mimetype>/Accept>                                                  HTTP Accept header to specify the MIME type of the expected output of the server. Empty by default
 <UserPwd>user:password</UserPwd>                                           User and Password for HTTP authentication (optional).
 <UnsafeSSL>true</UnsafeSSL>                                                Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false).
 <Referer>http://example.foo/</Referer>                                     HTTP Referer string. Some servers might require it (optional).
@@ -223,7 +225,10 @@ OnEarth Tiled WMS
 
 The OnEarth Tiled WMS minidriver supports the Tiled WMS specification
 implemented for the JPL OnEarth driver per the specification at
-http://onearth.jpl.nasa.gov/tiled.html.
+http://web.archive.org/web/20130511182803/http://onearth.jpl.nasa.gov/tiled.html.
+
+Only the ServerUrl and the TiledGroupName are required, most of the required information 
+is automatically fetched from the remote server using the GetTileService method at open time.
 
 A typical OnEarth Tiled WMS configuration file might look like:
 
@@ -231,13 +236,24 @@ A typical OnEarth Tiled WMS configuration file might look like:
 
    <GDAL_WMS>
        <Service name="TiledWMS">
-       <ServerUrl>http://onmoon.jpl.nasa.gov/wms.cgi?</ServerUrl>
-       <TiledGroupName>Clementine</TiledGroupName>
+       <ServerUrl>https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?</ServerUrl>
+       <TiledGroupName>MODIS Terra CorrectedReflectance TrueColor tileset</TiledGroupName>
+       <Change key="${time}">2020-02-02</Change>
        </Service>
    </GDAL_WMS>
 
-Most of the other information is automatically fetched from the remote
-server using the GetTileService method at open time.
+The TiledWMS minidriver can use the following open options :
+
+-  TiledGroupName -- The value is a string that identifies one of the tiled services 
+   available on the server
+-  Change -- A <Key>:<Value> pair, which will be passed to the server. The key has to 
+   match a change key that the server declares for the respective tiled group.
+   This option can be used multiple times, for different keys.
+   Example:
+   -  Change=time:2020-02-02
+
+These open options are only accepted if the corresponding XML element is not present in the 
+configuration file.
 
 VirtualEarth
 ~~~~~~~~~~~~
@@ -253,9 +269,9 @@ The DataWindow element might be omitted. The default values are :
 -  UpperLeftY = 20037508.34
 -  LowerRightX = 20037508.34
 -  LowerRightY = -20037508.34
--  TileLevel = 19
--  OverviewCount = 18
--  SRS = EPSG:900913
+-  TileLevel = 21
+-  OverviewCount = 20
+-  SRS = EPSG:3857
 -  BlockSizeX = 256
 -  BlockSizeY = 256
 
@@ -297,7 +313,7 @@ IIP:http://foo.com/FIF=image_name out.xml -of WMS"
 Examples
 --------
 
--  | `onearth_global_mosaic.xml <frmt_wms_onearth_global_mosaic.xml>`__
+-  | `onearth_global_mosaic.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_onearth_global_mosaic.xml>`__
      - Landsat mosaic from a `OnEarth <http://onearth.jpl.nasa.gov/>`__
      WMS server
 
@@ -398,7 +414,7 @@ The WMS driver can open :
 
    ::
 
-      gdalinfo "<GDAL_WMS><Service name=\"TiledWMS\"><ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl><TiledGroupName>Global SRTM Elevation</TiledGroupName></Service></GDAL_WMS>"
+      gdalinfo "<GDAL_WMS><Service name=\"TiledWMS\"><ServerUrl>https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?</ServerUrl><TiledGroupName>MODIS Terra CorrectedReflectance Bands367 tileset</TiledGroupName></Service></GDAL_WMS>"
 
 -  the base URL of a WMS service, prefixed with *WMS:* :
 
@@ -421,7 +437,7 @@ The WMS driver can open :
 
    ::
 
-      gdalinfo "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"
+      gdalinfo "WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?request=GetTileService"
 
    A list of subdatasets will be returned, resulting from the parsing of
    the GetTileService request on that server.
@@ -465,7 +481,7 @@ See Also
 -  `TMS
    Specification <http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification>`__
 -  `OnEarth Tiled WMS
-   specification <http://onearth.jpl.nasa.gov/tiled.html>`__
+   specification <http://web.archive.org/web/20130511182803/http://onearth.jpl.nasa.gov/tiled.html>`__
 -  `ArcGIS Server REST
    API <http://resources.arcgis.com/en/help/rest/apiref/>`__
 -  :ref:`raster.wmts` driver page.

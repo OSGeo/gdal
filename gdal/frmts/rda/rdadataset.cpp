@@ -1155,7 +1155,7 @@ bool GDALRDADataset::ReadImageMetadata()
     m_nTileYSize = static_cast<int>(std::max<GIntBig>(0,
         std::min<GIntBig>(
             GetJsonInt64(poObj, "tileYSize", true, bError), INT_MAX)));
-    nBands = static_cast<int>(std::max<GIntBig>(0, 
+    nBands = static_cast<int>(std::max<GIntBig>(0,
         std::min<GIntBig>(
             GetJsonInt64(poObj, "numBands", true, bError), INT_MAX)));
     if( !bError && !GDALCheckBandCount(nBands, false) )
@@ -1357,7 +1357,7 @@ static CPLString Get20Coeffs(json_object* poObj, const char* pszPath,
         json_object_get_type(poCoeffs) != json_type_array ||
         json_object_array_length(poCoeffs) != 20 )
     {
-        if( bVerboseError ) 
+        if( bVerboseError )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find %s of type array of 20 double", pszPath);
@@ -1447,6 +1447,23 @@ bool GDALRDADataset::ReadRPCs()
         papszMD = CSLSetNameValue(papszMD, RPC_MAX_LAT,
                                   CPLSPrintf("%.18g", dfMaxY));
     }
+
+
+    double errBias = GetJsonDouble(poObj, "errBias", true, bError);
+    if (bError) {
+        errBias = 0.0;
+        bError = false;
+    }
+    papszMD = CSLSetNameValue(papszMD, RPC_ERR_BIAS,
+        CPLSPrintf("%.18g", errBias));
+
+    double errRand = GetJsonDouble(poObj, "errRand", true, bError);
+    if (bError) {
+        errRand = 0.0;
+        bError = false;
+    }
+    papszMD = CSLSetNameValue(papszMD, RPC_ERR_RAND,
+        CPLSPrintf("%.18g", errRand));
 
     papszMD = CSLSetNameValue(papszMD, RPC_LINE_OFF,
         CPLSPrintf("%.18g", GetJsonDouble(poObj, "lineOffset", true, bError)));
@@ -1629,7 +1646,7 @@ GDALColorInterp GDALRDARasterBand::GetColorInterpretation()
         const char* pszName;
         GDALColorInterp aeInter[5];
     }
-    asColorInterpretations[] = 
+    asColorInterpretations[] =
     {
         { "PAN", { GCI_GrayIndex, GCI_Undefined, GCI_Undefined,
                    GCI_Undefined, GCI_Undefined } },
@@ -1668,7 +1685,7 @@ GDALColorInterp GDALRDARasterBand::GetColorInterpretation()
                 }
             }
         }
-        
+
     }
 
     return GCI_Undefined;
@@ -2055,10 +2072,10 @@ CPLErr GDALRDADataset::IRasterIO(GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr GDALRDADataset::AdviseRead (int nXOff, int nYOff,
-                                   int nXSize, int nYSize, 
+                                   int nXSize, int nYSize,
                                    int /* nBufXSize */,
                                    int /* nBufYSize */,
-                                   GDALDataType /* eBufType */, 
+                                   GDALDataType /* eBufType */,
                                    int /*nBands*/, int* /*panBands*/,
                                    char ** /* papszOptions */)
 {
@@ -2097,10 +2114,10 @@ CPLErr GDALRDARasterBand::IRasterIO(GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr GDALRDARasterBand::AdviseRead (int nXOff, int nYOff,
-                                        int nXSize, int nYSize, 
+                                        int nXSize, int nYSize,
                                         int /* nBufXSize */,
                                         int /* nBufYSize */,
-                                        GDALDataType /* eBufType */, 
+                                        GDALDataType /* eBufType */,
                                         char ** /* papszOptions */)
 {
     GDALRDADataset* poGDS = reinterpret_cast<GDALRDADataset*>(poDS);

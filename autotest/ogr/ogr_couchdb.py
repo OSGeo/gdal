@@ -39,17 +39,14 @@ from osgeo import gdal
 from osgeo import ogr
 import pytest
 
+
+pytestmark = pytest.mark.require_driver('CouchDB')
+
+
 ###############################################################################
-# Test if driver is available
 
-
-def test_ogr_couchdb_init():
-
-    ogrtest.couchdb_drv = None
-
-    ogrtest.couchdb_drv = ogr.GetDriverByName('CouchDB')
-    if ogrtest.couchdb_drv is None:
-        pytest.skip()
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     if 'COUCHDB_TEST_SERVER' in os.environ:
         ogrtest.couchdb_test_server = os.environ['COUCHDB_TEST_SERVER']
@@ -58,17 +55,19 @@ def test_ogr_couchdb_init():
     ogrtest.couchdb_temp_layer_name = 'layer_' + str(uuid.uuid1()).replace('-', '_')
 
     if gdaltest.gdalurlopen(ogrtest.couchdb_test_server) is None:
-        ogrtest.couchdb_drv = None
         pytest.skip('cannot open %s' % ogrtest.couchdb_test_server)
 
-    
+    yield
+
+    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
+    assert ds is not None
+    ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
+
 ###############################################################################
 # Basic test
 
 
 def test_ogr_couchdb_1():
-    if ogrtest.couchdb_drv is None:
-        pytest.skip()
 
     gdal.VectorTranslate('CouchDB:' + ogrtest.couchdb_test_server, 'data/poly.shp',
                          format='CouchDB',
@@ -88,8 +87,6 @@ def test_ogr_couchdb_1():
 
 
 def test_ogr_couchdb_2():
-    if ogrtest.couchdb_drv is None:
-        pytest.skip()
 
     ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
     assert ds is not None
@@ -121,19 +118,5 @@ def test_ogr_couchdb_2():
     if f.IsFieldSet('str_field'):
         f.DumpReadable()
         pytest.fail()
-
-    
-
-###############################################################################
-# Cleanup
-
-def test_ogr_couchdb_cleanup():
-    if ogrtest.couchdb_drv is None:
-        pytest.skip()
-
-    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update=1)
-    assert ds is not None
-    ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
-
 
 

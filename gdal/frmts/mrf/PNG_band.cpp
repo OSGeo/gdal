@@ -18,7 +18,7 @@
 * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright 2014-2015 Esri
+* Copyright (c) 2014-2021 Esri
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
 * limitations under the License.
+*
+* Author: Lucian Plesea
+* 
 */
 
 /*
@@ -44,14 +47,8 @@
 #include <cassert>
 
 CPL_C_START
-#ifdef INTERNAL_PNG
-#include "../png/libpng/png.h"
-#else
 #include <png.h>
-#endif
 CPL_C_END
-
-CPL_CVSID("$Id$")
 
 NAMESPACE_MRF_START
 
@@ -344,9 +341,9 @@ CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
  * The presence of the PNGColors and PNGAlpha is used as a flag for PPNG only
  */
 
-PNG_Band::PNG_Band( GDALMRFDataset *pDS, const ILImage &image,
+PNG_Band::PNG_Band( MRFDataset *pDS, const ILImage &image,
                     int b, int level ) :
-    GDALMRFRasterBand(pDS, image, b, level),
+    MRFRasterBand(pDS, image, b, level),
     codec(image)
 {   // Check error conditions
     if (image.dt != GDT_Byte && image.dt != GDT_Int16 && image.dt != GDT_UInt16)

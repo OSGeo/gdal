@@ -101,7 +101,7 @@ void RegisterOGRILI1() {
     poDriver->SetDescription( "Interlis 1" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Interlis 1" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ili.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ili.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "itf ili" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

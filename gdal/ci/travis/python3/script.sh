@@ -19,7 +19,7 @@ cd ../..
 # CPP unit tests
 cd ../autotest
 cd cpp
-GDAL_SKIP=JP2ECW make quick_test
+make quick_test
 # Compile and test vsipreload
 make vsipreload.so
 LD_PRELOAD=./vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw
@@ -36,7 +36,7 @@ cd ../../..
 curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | sudo python3
 sudo -H pip3 install -U -r ./requirements.txt
 
-PYTEST="python3 $(which pytest) -vv -p no:sugar --color=no"
+PYTEST="python3 $(command -v pytest) -vv -p no:sugar --color=no"
 
 # Run ogr_fgdb.py in isolation from the rest
 $PYTEST ogr/ogr_fgdb.py
@@ -47,7 +47,7 @@ PYTESTARGS="--ignore ogr/ogr_fgdb.py"
 #python ogr_pgeo.py
 PYTESTARGS="$PYTESTARGS --ignore ogr/ogr_pgeo.py"
 
-# Fails on test_validate_jp2_2 (erros not in expected order)
+# Fails on test_validate_jp2_2 (errors not in expected order)
 PYTESTARGS="$PYTESTARGS --ignore gdrivers/test_validate_jp2.py"
 
 # Run all the Python autotests

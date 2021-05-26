@@ -11,4 +11,9 @@ clean:
 	-del *.obj
 	-del *.cs
 	-del *.c
+    -del *.csproj
+    -del *.json
+    -del *.dll
+    -del *.pdb
+    -rd /q /s obj
 

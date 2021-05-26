@@ -1,5 +1,5 @@
 OBJ     =       FGdbDriver.obj FGdbDatasource.obj FGdbLayer.obj FGdbUtils.obj FGdbResultLayer.obj
-EXTRAFLAGS =	-I.. -I..\generic -I..\.. -I$(FGDB_INC)
+EXTRAFLAGS =	-I.. -I..\generic -I..\.. -I..\openfilegdb -I$(FGDB_INC)
 
 !IFDEF FGDB_VERSION
 EXTRAFLAGS = $(EXTRAFLAGS) -DFGDB_VERSION=$(FGDB_VERSION)

@@ -56,15 +56,24 @@ def drv(request):
 # Basic testing
 
 
-def switch_driver(tested_driver='PGeo', other_driver='MDB'):
-
+def switch_driver(tested_driver_name='PGeo', other_driver_name='MDB'):
     ogrtest.pgeo_ds = None
 
-    ogrtest.other_driver = ogr.GetDriverByName(other_driver)
+    if not hasattr(ogrtest, 'drivers'):
+        # store both drivers on first run
+        ogrtest.drivers = {'PGeo': ogr.GetDriverByName('PGeo'),
+                           'MDB': ogr.GetDriverByName('MDB')}
+
+    ogrtest.active_driver = ogrtest.drivers[tested_driver_name]
+    ogrtest.other_driver = ogrtest.drivers[other_driver_name]
+
+    if ogrtest.active_driver:
+        ogrtest.active_driver.Register()
+
     if ogrtest.other_driver is not None:
         print('Unregistering %s driver' % ogrtest.other_driver.GetName())
         ogrtest.other_driver.Deregister()
-        if other_driver == 'PGeo':
+        if other_driver_name == 'PGeo':
             # Re-register Geomedia and WALK at the end, *after* MDB
             geomedia_driver = ogr.GetDriverByName('Geomedia')
             if geomedia_driver is not None:
@@ -75,10 +84,8 @@ def switch_driver(tested_driver='PGeo', other_driver='MDB'):
                 walk_driver.Deregister()
                 walk_driver.Register()
 
-    drv = ogr.GetDriverByName(tested_driver)
-
-    if drv is None:
-        pytest.skip("Driver not available: %s" % tested_driver)
+    if ogrtest.active_driver is None:
+        pytest.skip("Driver not available: %s" % tested_driver_name)
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip', 'PGeoTest.zip'):
         pytest.skip()
@@ -99,7 +106,8 @@ def switch_driver(tested_driver='PGeo', other_driver='MDB'):
     if ogrtest.pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
 
-    assert ogrtest.pgeo_ds.GetLayerCount() == 3, 'did not get expected layer count'
+    # PGEO driver reports non spatial tables, MDB driver doesn't
+    assert ogrtest.pgeo_ds.GetLayerCount() == 3 if tested_driver_name =='MDB' else 34, 'did not get expected layer count'
 
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -244,7 +252,44 @@ def test_ogr_pgeo_7():
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
+# Open mdb with non-spatial tables
 
+
+def test_ogr_pgeo_8():
+    if ogrtest.pgeo_ds is None:
+        pytest.skip()
+
+    if ogrtest.active_driver.GetName() != 'PGeo':
+        # MDB driver doesn't report non-spatial tables
+        pytest.skip()
+
+    ogrtest.pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
+    if ogrtest.pgeo_ds is None:
+        pytest.skip('could not open DB. Driver probably misconfigured')
+
+    assert ogrtest.pgeo_ds.GetLayerCount() == 4, 'did not get expected layer count'
+
+    layer_names = [ogrtest.pgeo_ds.GetLayer(n).GetName() for n in range(4)]
+    assert set(layer_names) == {'lines', 'polys', 'points', 'non_spatial'}, 'did not get expected layer names'
+
+    non_spatial_layer = ogrtest.pgeo_ds.GetLayerByName('non_spatial')
+    feat = non_spatial_layer.GetNextFeature()
+    if feat.GetField('text_field') != 'Record 1' or \
+       feat.GetField('int_field') != 13 or \
+       feat.GetField('long_int_field') != 10001 or \
+       feat.GetField('float_field') != 13.5 or \
+       feat.GetField('double_field') != 14.5 or \
+       feat.GetField('date_field') != '2020/01/30 00:00:00':
+        feat.DumpReadable()
+        pytest.fail('did not get expected attributes')
+
+    feat_count = non_spatial_layer.GetFeatureCount()
+    assert feat_count == 2, 'did not get expected feature count'
+
+
+
+
+###############################################################################
 
 def test_ogr_pgeo_cleanup():
 

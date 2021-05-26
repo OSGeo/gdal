@@ -434,7 +434,7 @@ The following methods may be optionally implemented:
     :noindex:
 
     This method is called whenever self.attribute_filter has been changed.
-    It is the opportunity for the driver to potentially chane the value of
+    It is the opportunity for the driver to potentially change the value of
     self.iterator_honour_attribute_filter or feature_count_honour_attribute_filter
     attributes.
 
@@ -443,7 +443,7 @@ The following methods may be optionally implemented:
 
     This method is called whenever self.spatial_filter has been changed (its value
     is a geometry encoded in WKT)
-    It is the opportunity for the driver to potentially chane the value of
+    It is the opportunity for the driver to potentially change the value of
     self.iterator_honour_spatial_filter or feature_count_honour_spatial_filter
     attributes.
 

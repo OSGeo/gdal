@@ -91,8 +91,6 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
     if (fpVCT == nullptr)
         return FALSE;
 
-    char* pszWTKString = nullptr;
-
 // --------------------------------------------------------------------
 //      Look for .vdc file
 // --------------------------------------------------------------------
@@ -118,6 +116,7 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
 
     OGRwkbGeometryType eType = wkbUnknown;
 
+    char* pszWTKString = nullptr;
     if (papszVDC != nullptr)
     {
         CSLSetNameValueSeparator( papszVDC, ":" );
@@ -145,6 +144,7 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
     {
         VSIFCloseL(fpVCT);
         CSLDestroy( papszVDC );
+        CPLFree(pszWTKString);
         return FALSE;
     }
 
@@ -160,6 +160,7 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
                   static_cast<int>(chType) );
         VSIFCloseL(fpVCT);
         CSLDestroy( papszVDC );
+        CPLFree(pszWTKString);
         return FALSE;
     }
 

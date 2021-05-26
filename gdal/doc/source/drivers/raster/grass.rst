@@ -8,7 +8,7 @@ GRASS Raster Format
 
 .. build_dependencies:: libgrass
 
-GDAL optionally supports reading of existing GRASS raster maps or
+GDAL optionally supports reading of existing GRASS GIS raster maps or
 imagery groups, but not writing or export. The support for GRASS raster
 format is determined when the library is configured, and requires
 libgrass to be pre-installed (see Notes below).
@@ -18,15 +18,15 @@ GRASS raster maps/imagery groups can be selected in several ways.
 #. The full path to the ``cellhd`` file can be specified. This is not a
    relative path, or at least it must contain all the path components
    within the GRASS database including the database root itself. The
-   following example opens the raster map "proj_tm" within the GRASS
-   mapset "PERMANENT" of the GRASS location "proj_tm" in the GRASS
-   database located at ``/u/data/grassdb``.
+   following example opens the raster map "elevation" within the GRASS
+   mapset "PERMANENT" of the GRASS location "myloc" in the GRASS
+   database located at ``/data/grassdb``.
 
    For example:
 
    ::
 
-      gdalinfo /u/data/grassdb/proj_tm/PERMANENT/cellhd/proj_tm
+      gdalinfo /data/grassdb/myloc/PERMANENT/cellhd/elevation
 
 #. The full path to the directory containing information about an
    imagery group (or the REF file within it) can be specified to refer
@@ -37,13 +37,13 @@ GRASS raster maps/imagery groups can be selected in several ways.
 
    ::
 
-      gdalinfo /usr2/data/grassdb/imagery/raw/group/testmff/REF
-      gdalinfo /usr2/data/grassdb/imagery/raw/group/testmff
+      gdalinfo /data/grassdb/imagery/raw/group/testmff/REF
+      gdalinfo /data/grassdb/imagery/raw/group/testmff
 
-#. If there is a correct ``.grassrc5`` (GRASS 5), ``.grassrc6`` (GRASS
-   6) ``.grass7/rc`` (GRASS 7) setup file in the users home directory
-   then raster maps or imagery groups may be opened just by the cell
-   name. This only works for raster maps or imagery groups in the
+#. If there is a correct ``.grassrc7/rc`` (GRASS 7) setup file in the
+   user's home directory then raster maps or imagery groups may be opened
+   just by the cell or group name.
+   This only works for raster maps or imagery groups in the
    current GRASS location and mapset as defined in the GRASS setup file.
 
 The following features are supported by the GDAL/GRASS link.
@@ -68,16 +68,16 @@ Driver capabilities
 Notes on driver variations
 --------------------------
 
-For GRASS 5.7 Radim Blazek has moved the driver to using the GRASS
-shared libraries directly instead of using libgrass. Currently (GDAL
-1.2.2 and later) both version of the driver are available and can be
-configured using "--with-libgrass" for the libgrass variant or
-"--with-grass=<dir>" for the new GRASS 5.7+ library based version. The
-GRASS 5.7+ driver version is currently not supporting coordinate system
+The driver is able to use the GRASS GIS shared libraries directly
+instead of using libgrass (not recommended due to potentially circular
+dependencies). Currently both versions of the driver are available and
+can be configured using ``--with-libgrass`` for the libgrass variant or
+``--with-grass=<dir>`` for the GRASS GIS library based version. The
+GRASS driver version currently does not support coordinate system
 access, though it is hoped that will be corrected at some point.
 
 See Also
 --------
 
--  `GRASS GIS home page <http://grass.osgeo.org>`__
+-  `GRASS GIS home page <https://grass.osgeo.org>`__
 -  `libgrass page <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/grass/>`__

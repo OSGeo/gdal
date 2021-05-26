@@ -30,7 +30,7 @@ Main concepts
 
 The most reasonable way to support this feature is to extend the
 currently existing 'special field' approach to allow specifying more
-than one fields. Along with the already definied 'FID' field we will add
+than one fields. Along with the already defined 'FID' field we will add
 the following ones:
 
 -  'OGR_GEOMETRY' containing the geometry type like 'POINT' or

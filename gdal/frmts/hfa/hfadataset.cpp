@@ -62,6 +62,8 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include "ogr_proj_p.h"
+#include "proj.h"
 
 CPL_CVSID("$Id$")
 
@@ -5026,35 +5028,73 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     // Try and set the GeogCS information.
     if( !oSRS.IsLocal() )
     {
-        bool bWellKnwonDatum = false;
+        bool bWellKnownDatum = false;
         if( pszDatumName == nullptr)
             oSRS.SetGeogCS(pszDatumName, pszDatumName, pszEllipsoidName,
                            psPro->proSpheroid.a, dfInvFlattening);
         else if( EQUAL(pszDatumName, "WGS 84")
             || EQUAL(pszDatumName,"WGS_1984") )
         {
-            bWellKnwonDatum = true;
+            bWellKnownDatum = true;
             oSRS.SetWellKnownGeogCS("WGS84" );
         }
         else if( strstr(pszDatumName, "NAD27") != nullptr
                  || EQUAL(pszDatumName,"North_American_Datum_1927") )
         {
-            bWellKnwonDatum = true;
+            bWellKnownDatum = true;
             oSRS.SetWellKnownGeogCS("NAD27");
         }
-        else if( strstr(pszDatumName, "NAD83") != nullptr
+        else if( EQUAL(pszDatumName, "NAD83")
                  || EQUAL(pszDatumName, "North_American_Datum_1983"))
         {
-            bWellKnwonDatum = true;
+            bWellKnownDatum = true;
             oSRS.SetWellKnownGeogCS("NAD83");
         }
         else
-            oSRS.SetGeogCS(pszDatumName, pszDatumName, pszEllipsoidName,
+        {
+            CPLString osGeogCRSName(pszDatumName);
+
+            if( oSRS.IsProjected() )
+            {
+                PJ_CONTEXT* ctxt = OSRGetProjTLSContext();
+                const PJ_TYPE type = PJ_TYPE_PROJECTED_CRS;
+                PJ_OBJ_LIST* list = proj_create_from_name(ctxt, nullptr,
+                                                          oSRS.GetName(),
+                                                          &type, 1,
+                                                          false,
+                                                          1,
+                                                          nullptr);
+                if( list )
+                {
+                    const auto listSize = proj_list_get_count(list);
+                    if( listSize == 1 )
+                    {
+                        auto crs = proj_list_get(ctxt, list, 0);
+                        if( crs )
+                        {
+                            auto geogCRS = proj_crs_get_geodetic_crs(ctxt, crs);
+                            if( geogCRS )
+                            {
+                                const char* pszName = proj_get_name(geogCRS);
+                                if( pszName )
+                                    osGeogCRSName = pszName;
+                                proj_destroy(geogCRS);
+                            }
+                            proj_destroy(crs);
+                        }
+                    }
+                    proj_list_destroy(list);
+                }
+
+            }
+
+            oSRS.SetGeogCS(osGeogCRSName, pszDatumName, pszEllipsoidName,
                            psPro->proSpheroid.a, dfInvFlattening);
+        }
 
         if( psDatum != nullptr && psDatum->type == EPRJ_DATUM_PARAMETRIC )
         {
-            if( bWellKnwonDatum &&
+            if( bWellKnownDatum &&
                 CPLTestBool(CPLGetConfigOption("OSR_STRIP_TOWGS84", "YES")) )
             {
                 CPLDebug("OSR", "TOWGS84 information has been removed. "
@@ -5697,16 +5737,16 @@ char **HFADataset::GetFileList()
 GDALDataset *HFADataset::Create( const char * pszFilenameIn,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType,
-                                 char ** papszParmList )
+                                 char ** papszParamList )
 
 {
     const int nBits =
-        CSLFetchNameValue(papszParmList, "NBITS") != nullptr
-        ? atoi(CSLFetchNameValue(papszParmList, "NBITS"))
+        CSLFetchNameValue(papszParamList, "NBITS") != nullptr
+        ? atoi(CSLFetchNameValue(papszParamList, "NBITS"))
         : 0;
 
     const char *pszPixelType =
-        CSLFetchNameValue(papszParmList, "PIXELTYPE");
+        CSLFetchNameValue(papszParamList, "PIXELTYPE");
     if( pszPixelType == nullptr )
         pszPixelType = "";
 
@@ -5768,7 +5808,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 
     // Create the new file.
     HFAHandle hHFA = HFACreate(pszFilenameIn, nXSize, nYSize, nBands,
-                                eHfaDataType, papszParmList);
+                                eHfaDataType, papszParamList);
     if( hHFA == nullptr )
         return nullptr;
 
@@ -5786,7 +5826,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
     // hack for sam.gillingham@nrm.qld.gov.au.
     if( poDS != nullptr )
     {
-        poDS->bIgnoreUTM = CPLFetchBool(papszParmList, "IGNOREUTM", false);
+        poDS->bIgnoreUTM = CPLFetchBool(papszParamList, "IGNOREUTM", false);
     }
 
     // Sometimes we can improve ArcGIS compatibility by forcing
@@ -5795,7 +5835,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
     if( poDS != nullptr )
     {
         poDS->bForceToPEString =
-            CPLFetchBool(papszParmList, "FORCETOPESTRING", false);
+            CPLFetchBool(papszParamList, "FORCETOPESTRING", false);
     }
 
     return poDS;

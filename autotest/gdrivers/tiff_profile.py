@@ -30,9 +30,8 @@
 # Part of a free package of ICC profile found at:
 # http://sourceforge.net/projects/openicc/files/OpenICC-Profiles/
 
-import os
-import sys
 import base64
+import os
 
 
 from osgeo import gdal
@@ -331,10 +330,8 @@ def test_tiff_copy_colorimetric_data():
 
 def test_tiff_update_icc():
 
-    f = open('data/sRGB.icc', 'rb')
-    data = f.read()
-    icc = base64.b64encode(data)
-    f.close()
+    with open('data/sRGB.icc', 'rb') as f:
+        icc = base64.b64encode(f.read()).decode('ascii')
 
     # Create dummy file
     driver = gdal.GetDriverByName('GTiff')
@@ -343,8 +340,6 @@ def test_tiff_update_icc():
 
     ds = gdal.Open('tmp/icc_test.tiff', gdal.GA_Update)
 
-    if sys.version_info >= (3, 0, 0):
-        icc = icc.decode('ascii')
     ds.SetMetadataItem('SOURCE_ICC_PROFILE', icc, 'COLOR_PROFILE')
     md = ds.GetMetadata("COLOR_PROFILE")
     ds = None

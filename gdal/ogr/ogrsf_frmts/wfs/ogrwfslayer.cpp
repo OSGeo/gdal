@@ -673,12 +673,16 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     CPLString osOutputFormat = CPLURLGetValue(osURL, "OUTPUTFORMAT");
 
     if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES"))) {
-        const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
-                                                        osURL.c_str());
+        CPLString osStreamingName;
         if( STARTS_WITH(osURL, "/vsimem/") &&
                 CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
         {
-            pszStreamingName = osURL.c_str();
+            osStreamingName = osURL;
+        }
+        else
+        {
+            osStreamingName += "/vsicurl_streaming/";
+            osStreamingName += osURL;
         }
 
         GDALDataset* poOutputDS = nullptr;
@@ -716,7 +720,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             }
 
             poOutputDS = (GDALDataset*)
-                    GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+                    GDALOpenEx(osStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
                             apszOpenOptions, nullptr);
 
         }
@@ -728,7 +732,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             const char* const apszAllowedDrivers[] = { "FlatGeobuf", nullptr };
 
             GDALDataset* poFlatGeobuf_DS = (GDALDataset*)
-                    GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+                    GDALOpenEx(osStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
                             nullptr, nullptr);
             if( poFlatGeobuf_DS )
             {
@@ -751,7 +755,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             /* it, if it is XML error content */
             char szBuffer[2048];
             int nRead = 0;
-            VSILFILE* fp = VSIFOpenL(pszStreamingName, "rb");
+            VSILFILE* fp = VSIFOpenL(osStreamingName, "rb");
             if (fp)
             {
                 nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
@@ -1832,7 +1836,7 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
                 if (poGeom->getSpatialReference() == nullptr)
                     poGeom->assignSpatialReference(poSRS);
                 char* pszGML = nullptr;
-                if (strcmp(poDS->GetVersion(), "1.1.0") == 0)
+                if (strcmp(poDS->GetVersion(), "1.1.0") == 0 || atoi(poDS->GetVersion()) >= 2)
                 {
                     char** papszOptions = CSLAddString(nullptr, "FORMAT=GML3");
                     pszGML = OGR_G_ExportToGMLEx((OGRGeometryH)poGeom, papszOptions);
@@ -1981,22 +1985,25 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
     }
     else
     {
+        const char *pszFeatureIdElt = atoi(poDS->GetVersion()) >= 2 ?
+            "InsertResults.Feature.ResourceId" : "InsertResults.Feature.FeatureId";
         psFeatureID =
-            CPLGetXMLNode( psRoot, "InsertResults.Feature.FeatureId");
+            CPLGetXMLNode( psRoot, pszFeatureIdElt);
         if (psFeatureID == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot find InsertResults.Feature.FeatureId");
+                    "Cannot find %s", pszFeatureIdElt);
             CPLDestroyXMLNode( psXML );
             CPLHTTPDestroyResult(psResult);
             return OGRERR_FAILURE;
         }
     }
 
-    const char* pszFID = CPLGetXMLValue(psFeatureID, "fid", nullptr);
+    const char *pszFIDAttr = atoi(poDS->GetVersion()) >= 2 ? "rid" : "fid";
+    const char* pszFID = CPLGetXMLValue(psFeatureID, pszFIDAttr, nullptr);
     if (pszFID == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find fid");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", pszFIDAttr);
         CPLDestroyXMLNode( psXML );
         CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
@@ -2081,7 +2088,7 @@ OGRErr OGRWFSLayer::ISetFeature( OGRFeature *poFeature )
             if (poGeom->getSpatialReference() == nullptr)
                 poGeom->assignSpatialReference(poSRS);
             char* pszGML = nullptr;
-            if (strcmp(poDS->GetVersion(), "1.1.0") == 0)
+            if (strcmp(poDS->GetVersion(), "1.1.0") == 0 || atoi(poDS->GetVersion()) >= 2)
             {
                 char** papszOptions = CSLAddString(nullptr, "FORMAT=GML3");
                 pszGML = OGR_G_ExportToGMLEx((OGRGeometryH)poGeom, papszOptions);

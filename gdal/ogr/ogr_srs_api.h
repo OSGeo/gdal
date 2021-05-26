@@ -465,6 +465,8 @@ typedef void *OGRCoordinateTransformationH;
 
 void CPL_DLL OSRSetPROJSearchPaths( const char* const * papszPaths );
 char CPL_DLL **OSRGetPROJSearchPaths( void );
+void CPL_DLL OSRSetPROJAuxDbPaths( const char* const * papszPaths );
+char CPL_DLL **OSRGetPROJAuxDbPaths( void );
 void CPL_DLL OSRGetPROJVersion( int* pnMajor, int* pnMinor, int* pnPatch );
 
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL
@@ -577,6 +579,7 @@ OGRErr CPL_DLL OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
                                  OGRSpatialReferenceH hHorizSRS,
                                  OGRSpatialReferenceH hVertSRS );
 OGRErr CPL_DLL OSRPromoteTo3D( OGRSpatialReferenceH hSRS, const char* pszName );
+OGRErr CPL_DLL OSRDemoteTo2D( OGRSpatialReferenceH hSRS, const char* pszName );
 
 OGRErr CPL_DLL OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
@@ -616,12 +619,12 @@ int CPL_DLL OSRGetAreaOfUse(  OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetProjection( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double CPL_DLL OSRGetProjParm( OGRSpatialReferenceH hSRS,
-                        const char * pszParmName,
+                        const char * pszParamName,
                         double dfDefault /* = 0.0 */,
                         OGRErr * /* = NULL */ );
 OGRErr CPL_DLL OSRSetNormProjParm( OGRSpatialReferenceH, const char *, double);
 double CPL_DLL OSRGetNormProjParm( OGRSpatialReferenceH hSRS,
-                                   const char * pszParmName,
+                                   const char * pszParamName,
                                    double dfDefault /* = 0.0 */,
                                    OGRErr * /* = NULL */ );
 
@@ -1053,12 +1056,23 @@ int CPL_DLL OCTCoordinateTransformationOptionsSetAreaOfInterest(
     double dfEastLongitudeDeg,
     double dfNorthLatitudeDeg);
 
+int CPL_DLL OCTCoordinateTransformationOptionsSetDesiredAccuracy(
+    OGRCoordinateTransformationOptionsH hOptions, double dfAccuracy);
+
+int CPL_DLL OCTCoordinateTransformationOptionsSetBallparkAllowed(
+    OGRCoordinateTransformationOptionsH hOptions, int bAllowBallpark);
+
 void CPL_DLL OCTDestroyCoordinateTransformationOptions(OGRCoordinateTransformationOptionsH);
 
 OGRCoordinateTransformationH CPL_DLL
 OCTNewCoordinateTransformationEx( OGRSpatialReferenceH hSourceSRS,
                                   OGRSpatialReferenceH hTargetSRS,
                                   OGRCoordinateTransformationOptionsH hOptions );
+
+OGRCoordinateTransformationH CPL_DLL OCTClone(OGRCoordinateTransformationH hTransform);
+OGRSpatialReferenceH CPL_DLL OCTGetSourceCS(OGRCoordinateTransformationH hTransform);
+OGRSpatialReferenceH CPL_DLL OCTGetTargetCS(OGRCoordinateTransformationH hTransform);
+OGRCoordinateTransformationH CPL_DLL OCTGetInverse(OGRCoordinateTransformationH hTransform);
 
 void CPL_DLL CPL_STDCALL
       OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );
@@ -1076,6 +1090,12 @@ int CPL_DLL
 OCTTransform4D( OGRCoordinateTransformationH hCT,
                 int nCount, double *x, double *y, double *z, double *t,
                 int *pabSuccess );
+
+int CPL_DLL
+OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hCT,
+                  int nCount, double *x, double *y, double *z, double *t,
+                  int *panErrorCodes );
+
 
 CPL_C_END
 

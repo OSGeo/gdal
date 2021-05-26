@@ -29,9 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import array
-from osgeo import gdal
+import ctypes
+import struct
 
+from osgeo import gdal
 
 import gdaltest
 import pytest
@@ -52,7 +53,7 @@ def test_mem_1():
 
     assert ds.GetGeoTransform(can_return_null=True) is None, 'geotransform wrong'
 
-    raw_data = array.array('f', list(range(150))).tostring()
+    raw_data = b''.join(struct.pack('f', v) for v in range(150))
     ds.WriteRaster(0, 0, 50, 3, raw_data,
                    buf_type=gdal.GDT_Float32,
                    band_list=[1])
@@ -107,11 +108,6 @@ def test_mem_2():
     ds = gdal.Open('MEM:::')
     gdal.PopErrorHandler()
     assert ds is None, 'opening MEM dataset should have failed.'
-
-    try:
-        import ctypes
-    except ImportError:
-        pytest.skip()
 
     for libname in ['msvcrt', 'libc.so.6']:
         try:
@@ -607,6 +603,24 @@ def test_mem_colortable():
     ds.GetRasterBand(1).SetColorTable(None)
     assert ds.GetRasterBand(1).GetColorTable() is None
 
+
+###############################################################################
+# Test dataset RasterIO with non nearest resampling
+
+def test_mem_dataset_rasterio_non_nearest_resampling_source_with_ovr():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 3)
+    ds.GetRasterBand(1).Fill(255)
+    ds.BuildOverviews('NONE', [2])
+    ds.GetRasterBand(1).GetOverview(0).Fill(10)
+
+    got_data = ds.ReadRaster(0,0,10,10,5,5)
+    got_data = struct.unpack('B' * 5 * 5 * 3, got_data)
+    assert got_data[0] == 10
+
+    got_data = ds.ReadRaster(0,0,10,10,5,5,resample_alg=gdal.GRIORA_Cubic)
+    got_data = struct.unpack('B' * 5 * 5 * 3, got_data)
+    assert got_data[0] == 10
 
 ###############################################################################
 # cleanup

@@ -101,6 +101,7 @@ public:
     void Add(const std::string &osName, GInt64 nValue);
     void Add(const std::string &osName, const CPLJSONArray &oValue);
     void Add(const std::string &osName, const CPLJSONObject &oValue);
+    void AddNoSplitName(const std::string &osName, const CPLJSONObject &oValue);
     void Add(const std::string &osName, bool bValue);
     void AddNull(const std::string &osName);
 

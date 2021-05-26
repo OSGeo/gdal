@@ -39,12 +39,13 @@ Synopsis
             [-wrapdateline] [-datelineoffset val]
             [[-simplify tolerance] | [-segmentize max_dist]]
             [-makevalid]
-            [-addfields] [-unsetFid]
+            [-addfields] [-unsetFid] [-emptyStrAsNull]
             [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
             [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
             [-mapFieldType type1|All=type2[,type3=type4]*]
             [-fieldmap identity | index1[,index2]*]
             [-splitlistfields] [-maxsubfields val]
+            [-resolveDomains]
             [-explodecollections] [-zfield field_name]
             [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]
             [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
@@ -102,9 +103,10 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -dialect <dialect>
 
-    SQL dialect. In some cases can be used to use (unoptimized) OGR SQL instead
-    of the native SQL of an RDBMS by passing OGRSQL. The "SQLITE" dialect can
-    also be used with any datasource.
+    SQL dialect. In some cases can be used to use (unoptimized) :ref:`ogr_sql_dialect` instead
+    of the native SQL of an RDBMS by passing the ``OGRSQL`` dialect value.
+    The :ref:`sql_sqlite_dialect` dialect can be select with the ``SQLITE``
+    and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
 
 .. option:: -where restricted_where
 
@@ -180,17 +182,28 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -a_srs <srs_def>
 
-    Assign an output SRS. Srs_def can be a full WKT definition (hard to escape
-    properly), or a well known definition (i.e. EPSG:4326) or a file with a WKT
-    definition.
+    Assign an output SRS, but without reprojecting (use :option:`-t_srs`
+    to reproject)
+
+    .. include:: options/srs_def.rst
 
 .. option:: -t_srs <srs_def>
 
-    Reproject/transform to this SRS on output.
+    Reproject/transform to this SRS on output, and assign it as output SRS.
+
+    A source SRS must be available for reprojection to occur. The source SRS
+    will be by default the one found in the source layer when it is available,
+    or as overridden by the user with :option:`-s_srs`
+
+    .. include:: options/srs_def.rst
 
 .. option:: -s_srs <srs_def>
 
-    Override source SRS.
+    Override source SRS. If not specified the SRS found in the input layer will
+    be used. This option has only an effect if used together with :option:`-t_srs`
+    to reproject.
+
+    .. include:: options/srs_def.rst
 
 .. option:: -ct <string>
 
@@ -205,9 +218,9 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -preserve_fid
 
     Use the FID of the source features instead of letting the output driver
-    automatically assign a new one (for formats that require an FID).  If not
+    automatically assign a new one (for formats that require a FID). If not
     in append mode, this behavior is the default if the output driver has
-    a FID layer creation option, un which case the name of the source FID
+    a FID layer creation option, in which case the name of the source FID
     column will be used and source feature IDs will be attempted to be
     preserved. This behavior can be disabled by setting ``-unsetFid``.
 
@@ -233,7 +246,7 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -gt n
 
-    Group n features per transaction (default 20000). Increase the value for
+    Group n features per transaction (default 100 000). Increase the value for
     better performance when writing into DBMS drivers that have transaction
     support. ``n`` can be set to unlimited to load the data into a single
     transaction.
@@ -305,7 +318,7 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -makevalid
 
     Run the :cpp:func:`OGRGeometry::MakeValid` operation, followed by
-    :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries 
+    :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries
     to ensure they are valid regarding the rules of the Simple Features specification.
 
     .. versionadded: 3.1 (requires GEOS 3.8 or later)
@@ -407,9 +420,23 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -unsetFid
 
-    Can be specify to prevent the name of the source FID column and source
+    Can be specified to prevent the name of the source FID column and source
     feature IDs from being re-used for the target layer. This option can for
     example be useful if selecting source features with a ORDER BY clause.
+
+.. option:: -emptyStrAsNull
+
+    .. versionadded:: 3.3
+
+    Treat empty string values as null.
+
+.. option:: -resolveDomains
+
+    .. versionadded:: 3.3
+
+    When this is specified, any selected field that is linked to a coded field
+    domain will be accompanied by an additional field (``{dstfield}_resolved``),
+    that will contain the description of the coded value.
 
 .. option:: -nomd
 

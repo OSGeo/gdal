@@ -39,7 +39,7 @@ clean:
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 ../../o/%.$(OBJ_EXT):	%.c
-	$(CC) -c -I../../port $(ALL_C_FLAGS) $< -o $@
+	$(CC) -c $(ALL_C_FLAGS) $< -o $@
 
 #
 # Updating to the latest libgeotiff involves copying all matching source

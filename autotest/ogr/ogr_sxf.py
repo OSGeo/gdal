@@ -27,6 +27,7 @@
 ###############################################################################
 
 import shutil
+import sys
 
 import gdaltest
 from osgeo import gdal
@@ -103,14 +104,15 @@ def test_ogr_sxf_4(capsys):
     assert sxf_ds is not None
     assert sxf_ds.GetLayerCount() == len(lyr_names)
 
-    with capsys.disabled():
-        print('Expected:')
-        for n in lyr_names:
-            print(n)
-        print('In fact:')
-        for layer_n in range(sxf_ds.GetLayerCount()):
-            lyr = sxf_ds.GetLayer(layer_n)
-            print(lyr.GetName())
+    if sys.platform != 'win32':
+        with capsys.disabled():
+            print('Expected:')
+            for n in lyr_names:
+                print(n)
+            print('In fact:')
+            for layer_n in range(sxf_ds.GetLayerCount()):
+                lyr = sxf_ds.GetLayer(layer_n)
+                print(lyr.GetName())
 
     for layer_n in range(sxf_ds.GetLayerCount()):
         lyr = sxf_ds.GetLayer(layer_n)

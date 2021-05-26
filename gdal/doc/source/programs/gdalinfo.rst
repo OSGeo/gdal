@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdalinfo [--help-general] [-json] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
+    gdalinfo [--help-general] [-json] [-mm] [-stats | -approx_stats] [-hist] [-nogcp] [-nomd]
              [-norat] [-noct] [-nofl] [-checksum] [-proj4]
              [-listmdd] [-mdd domain|`all`]* [-wkt_format WKT1|WKT2|...]
              [-sd subdataset] [-oo NAME=VALUE]* [-if format]* datasetname

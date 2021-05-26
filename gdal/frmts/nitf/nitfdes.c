@@ -590,3 +590,99 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                              NITFDESGetXml()                         */
+/************************************************************************/
+
+CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment)
+{
+    CPLXMLNode* psDesNode;
+    char** papszTmp;
+    NITFDES* psDes = NITFDESAccess(psFile, iSegment);
+
+    if (psDes == NULL)
+    {
+        return NULL;
+    }
+
+    if (psDes->papszMetadata == NULL)
+    {
+        NITFDESDeaccess(psDes);
+        return NULL;
+    }
+
+    psDesNode = CPLCreateXMLNode(NULL, CXT_Element, "des");
+    papszTmp = psDes->papszMetadata;
+
+    while (papszTmp != NULL && *papszTmp != NULL)
+    {
+        CPLXMLNode* psFieldNode;
+        CPLXMLNode* psNameNode;
+        CPLXMLNode* psValueNode;
+
+        const char* pszMDval;
+        const char* pszMDsep;
+
+        if ((pszMDsep = strchr(*papszTmp, '=')) == NULL)
+        {
+            NITFDESDeaccess(psDes);
+            CPLDestroyXMLNode(psDesNode);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "NITF DES metadata item missing separator");
+            return NULL;
+        }
+
+        pszMDval = pszMDsep + 1;
+
+        if (papszTmp == psDes->papszMetadata)
+        {
+            CPLCreateXMLNode(CPLCreateXMLNode(psDesNode, CXT_Attribute, "name"),
+                CXT_Text, pszMDval);
+        }
+        else
+        {
+            char* pszMDname = (char*)CPLMalloc(pszMDsep - *papszTmp + 1);
+            CPLStrlcpy(pszMDname, *papszTmp, pszMDsep - *papszTmp + 1);
+
+            psFieldNode = CPLCreateXMLNode(psDesNode, CXT_Element, "field");
+            psNameNode = CPLCreateXMLNode(psFieldNode, CXT_Attribute, "name");
+            CPLCreateXMLNode(psNameNode, CXT_Text, pszMDname);
+            psValueNode = CPLCreateXMLNode(psFieldNode, CXT_Attribute, "value");
+
+            if (strcmp(pszMDname, "NITF_DESDATA") == 0)
+            {
+                int nLen;
+                char* pszUnescaped = CPLUnescapeString(pszMDval, &nLen, CPLES_BackslashQuotable);
+                char* pszBase64 = CPLBase64Encode(nLen, (const GByte*)pszUnescaped);
+                CPLFree(pszUnescaped);
+
+                if (pszBase64 == NULL)
+                {
+                    NITFDESDeaccess(psDes);
+                    CPLDestroyXMLNode(psDesNode);
+                    CPLFree(pszMDname);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                        "NITF DES data could not be encoded");
+                    return NULL;
+                }
+
+                CPLCreateXMLNode(psValueNode, CXT_Text, pszBase64);
+
+                CPLFree(pszBase64);
+            }
+            else
+            {
+                CPLCreateXMLNode(psValueNode, CXT_Text, pszMDval);
+            }
+
+            CPLFree(pszMDname);
+        }
+
+        ++papszTmp;
+    }
+
+    NITFDESDeaccess(psDes);
+
+    return psDesNode;
+}

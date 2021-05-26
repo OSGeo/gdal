@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSKSegment class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ namespace PCIDSK
 {
     class PCIDSKFile;
     class MetadataSet;
-    
+
 /************************************************************************/
 /*                            CPCIDSKSegment                            */
 /*                                                                      */
@@ -56,16 +56,14 @@ namespace PCIDSK
             const char *segment_pointer );
         virtual ~CPCIDSKSegment();
 
-        void        LoadSegmentPointer( const char *segment_pointer );
+        void        LoadSegmentPointer( const char *segment_pointer ) override final;
         void        LoadSegmentHeader();
 
         PCIDSKBuffer &GetHeader() { return header; }
         void        FlushHeader();
 
-        bool      GetUpdatable() const override;
         void      WriteToFile( const void *buffer, uint64 offset, uint64 size ) override;
         void      ReadFromFile( void *buffer, uint64 offset, uint64 size ) override;
-        void      CheckFileBigEnough( uint64 bytes_to_read );
 
         eSegType    GetSegmentType() override { return segment_type; }
         std::string GetName() override { return segment_name; }
@@ -73,16 +71,18 @@ namespace PCIDSK
         int         GetSegmentNumber() override { return segment; }
         bool        IsContentSizeValid() const override { return data_size >= 1024; }
         uint64      GetContentSize() override { return data_size - 1024; }
+        uint64      GetContentOffset() override { return data_offset; }
         bool        IsAtEOF() override;
+        bool        CanExtend(uint64 size) const override;
 
         void        SetDescription( const std::string &description) override;
-        
+
         std::string GetMetadataValue( const std::string &key ) const override;
         void        SetMetadataValue( const std::string &key, const std::string &value ) override;
         std::vector<std::string> GetMetadataKeys() const override;
-            
+
         virtual void Synchronize() override {}
-        
+
         std::vector<std::string> GetHistoryEntries() const override;
         void SetHistoryEntries( const std::vector<std::string> &entries ) override;
         void PushHistory(const std::string &app,
@@ -101,16 +101,17 @@ namespace PCIDSK
 
         uint64      data_offset;     // includes 1024 byte segment header.
         uint64      data_size;
+        uint64      data_size_limit;
 
         PCIDSKBuffer header;
 
         mutable MetadataSet  *metadata;
-        
+
         std::vector<std::string> history_;
 
-        void        MoveData( uint64 src_offset, uint64 dst_offset, 
+        void        MoveData( uint64 src_offset, uint64 dst_offset,
                               uint64 size_in_bytes );
     };
-    
+
 } // end namespace PCIDSK
 #endif // INCLUDE_SEGMENT_PCIDSKSEGMENT_H

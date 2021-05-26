@@ -236,8 +236,8 @@ bool GRIB2Section3Writer::WriteEllipsoidAndRasterSize()
     }
     else if( dfInvFlattening == 0 )
     {
-        // Earth assumed spherical with radius specified (in m) 
-        // by data producer 
+        // Earth assumed spherical with radius specified (in m)
+        // by data producer
         WriteByte(fp, 1);
         WriteByte(fp, 2); // scale = * 100
         WriteUInt32(fp, static_cast<GUInt32>(dfSemiMajor * 100 + 0.5));
@@ -513,7 +513,7 @@ bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference* poSRS)
     const double dfAngUnit = 1e-6;
     WriteScaled(dfLLY, dfAngUnit);
     WriteScaled(dfLLX, dfAngUnit);
-    // Resolution and component flags. "not applicatable" ==> 0 ?
+    // Resolution and component flags. "not applicable" ==> 0 ?
     WriteByte( fp, 0);
     WriteScaled(
         poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0), dfAngUnit);
@@ -528,9 +528,9 @@ bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference* poSRS)
         poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0), dfAngUnit);
     WriteScaled(
         poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0), dfAngUnit);
-    // Latitude of the southern pole of projection 
+    // Latitude of the southern pole of projection
     WriteUInt32( fp, GRIB2MISSING_u4 );
-    // Longitude of the southern pole of projection 
+    // Longitude of the southern pole of projection
     WriteUInt32( fp, GRIB2MISSING_u4 );
     return true;
 }
@@ -577,7 +577,7 @@ bool GRIB2Section3Writer::Write()
     WriteByte(fp, 3); // section number
 
     // Source of grid definition = Specified in Code Table 3.1
-    WriteByte(fp, 0); 
+    WriteByte(fp, 0);
 
     const GUInt32 nDataPoints =
         static_cast<GUInt32>(poSrcDS->GetRasterXSize()) *
@@ -587,7 +587,7 @@ bool GRIB2Section3Writer::Write()
     // Number of octets for optional list of numbers defining number of points
     WriteByte(fp, 0);
 
-    // Interpetation of list of numbers defining number of points =
+    // Interpretation of list of numbers defining number of points =
     // No appended list
     WriteByte(fp, 0);
 
@@ -767,10 +767,13 @@ float* GRIB2Section567Writer::GetFloatData()
 
     m_fMin = std::numeric_limits<float>::max();
     m_fMax = -std::numeric_limits<float>::max();
+    bool bHasNoDataValuePoint = false;
+    bool bHasDataValuePoint = false;
     for( GUInt32 i = 0; i < m_nDataPoints; i++ )
     {
         if( m_bHasNoData && pafData[i] == static_cast<float>(m_dfNoData) )
         {
+            if (!bHasNoDataValuePoint) bHasNoDataValuePoint = true;
             continue;
         }
         if( !CPLIsFinite( pafData[i] ) )
@@ -781,6 +784,7 @@ float* GRIB2Section567Writer::GetFloatData()
             VSIFree(pafData);
             return nullptr;
         }
+        if (!bHasDataValuePoint) bHasDataValuePoint = true;
         pafData[i] += m_fValOffset;
         if( pafData[i] < m_fMin ) m_fMin = pafData[i];
         if( pafData[i] > m_fMax ) m_fMax = pafData[i];
@@ -792,7 +796,7 @@ float* GRIB2Section567Writer::GetFloatData()
 
     // We check that the actual range of values got from the above RasterIO
     // request does not go over the expected range of the datatype, as we
-    // later assume that for computing nMaxBitsPerElt. 
+    // later assume that for computing nMaxBitsPerElt.
     // This shouldn't happen for well-behaved drivers, but this can still
     // happen in practice, if some drivers don't completely fill buffers etc.
     if( m_fMax > m_fMin &&
@@ -824,8 +828,8 @@ float* GRIB2Section567Writer::GetFloatData()
         m_nBits = 8;
     }
 
-    m_bUseZeroBits =( m_fMin == m_fMax ||
-        (!GDALDataTypeIsFloating(m_eDT) && dfScaledMaxDiff < 1.0) );
+    m_bUseZeroBits = ( m_fMin == m_fMax &&  !(bHasDataValuePoint && bHasNoDataValuePoint) )  ||
+        (!GDALDataTypeIsFloating(m_eDT) && dfScaledMaxDiff < 1.0);
 
     return pafData;
 }
@@ -906,12 +910,37 @@ bool GRIB2Section567Writer::WriteSimplePacking()
     WriteInt16(m_fp, idrstmpl[TMPL5_D_IDX]);
     WriteByte(m_fp, idrstmpl[TMPL5_NBITS_IDX]);
     // Type of original data: 0=Floating, 1=Integer
-    WriteByte(m_fp, GDALDataTypeIsFloating(m_eDT) ? 0 : 1); 
+    WriteByte(m_fp, GDALDataTypeIsFloating(m_eDT) ? 0 : 1);
 
     // Section 6: Bitmap section
-    WriteUInt32(m_fp, 6); // section size
-    WriteByte(m_fp, 6); // section number
-    WriteByte(m_fp, GRIB2MISSING_u1); // no bitmap
+#ifdef DEBUG
+    if( CPLTestBool(CPLGetConfigOption("GRIB_WRITE_BITMAP_TEST", "NO")) )
+    {
+        // Just for the purpose of generating a test product !
+        static int counter = 0;
+        counter++;
+        if( counter == 1 )
+        {
+            WriteUInt32(m_fp, 6 + ((m_nDataPoints + 7) / 8)); // section size
+            WriteByte(m_fp, 6); // section number
+            WriteByte(m_fp, 0); // bitmap
+            for( GUInt32 i = 0; i < (m_nDataPoints + 7) / 8; i++)
+                WriteByte(m_fp, 255);
+        }
+        else
+        {
+            WriteUInt32(m_fp, 6); // section size
+            WriteByte(m_fp, 6); // section number
+            WriteByte(m_fp, 254); // reuse previous bitmap
+        }
+    }
+    else
+#endif
+    {
+        WriteUInt32(m_fp, 6); // section size
+        WriteByte(m_fp, 6); // section number
+        WriteByte(m_fp, GRIB2MISSING_u1); // no bitmap
+    }
 
     // Section 7: Data Section
     WriteUInt32(m_fp, 5 + nLengthPacked); // section size
@@ -980,7 +1009,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
     const float fNoData = static_cast<float>(m_dfNoData);
     if( m_bUseZeroBits )
     {
-        // Case where all values are at nodata
+        // Case where all values are at nodata or a single value
         VSIFree(pafData);
 
         // Section 5: Data Representation Section
@@ -988,7 +1017,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
         WriteByte(m_fp, 5); // section number
         WriteUInt32(m_fp, m_nDataPoints);
         WriteUInt16(m_fp, GS5_CMPLX);
-        WriteFloat32(m_fp, m_fMin); // ref value
+        WriteFloat32(m_fp, m_fMin); // ref value = nodata or single data
         WriteInt16(m_fp, 0); // binary scale factor
         WriteInt16(m_fp, 0); // decimal scale factor
         WriteByte(m_fp, 0); // number of bits
@@ -1042,7 +1071,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
         return false;
     }
 
-    const double dfScaledMaxDiff = (m_fMax-m_fMin)* m_dfDecimalScale;
+    const double dfScaledMaxDiff = (m_fMax == m_fMin) ? 1 : (m_fMax-m_fMin)* m_dfDecimalScale;
     if( m_nBits == 0 )
     {
         double dfTemp = log(ceil(dfScaledMaxDiff))/log(2.0);
@@ -1660,7 +1689,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(char** papszOptions)
     WriteUInt16(m_fp, GS5_JPEG2000);
     WriteFloat32(m_fp, static_cast<float>(m_dfMinScaled));
     WriteInt16(m_fp, nBinaryScaleFactor); // Binary scale factor (E)
-    WriteInt16(m_fp, m_nDecimalScaleFactor); // Decimal scale factor (D) 
+    WriteInt16(m_fp, m_nDecimalScaleFactor); // Decimal scale factor (D)
     WriteByte(m_fp, m_nBits); // Number of bits
     // Type of original data: 0=Floating, 1=Integer
     WriteByte(m_fp, GDALDataTypeIsFloating(m_eDT) ? 0 : 1);
@@ -2155,7 +2184,7 @@ static bool WriteSection4( VSILFILE* fp,
     // 0 = Analysis or forecast at a horizontal level or in a horizontal
     // layer at a point in time
     int nPDTN = atoi(GetBandOption(
-            papszOptions, poSrcDS, nBand, "PDS_PDTN", "0")); 
+            papszOptions, poSrcDS, nBand, "PDS_PDTN", "0"));
     const char* pszPDSTemplateNumbers = GetBandOption(
             papszOptions, nullptr, nBand, "PDS_TEMPLATE_NUMBERS", nullptr);
     const char* pszPDSTemplateAssembledValues = GetBandOption(
@@ -2187,7 +2216,7 @@ static bool WriteSection4( VSILFILE* fp,
         WriteByte(fp, GRIB2MISSING_u1);// Parameter number = Missing
         WriteByte(fp, GRIB2MISSING_u1); // Type of generating process = Missing
         WriteByte(fp, 0); // Background generating process identifier
-        // Analysis or forecast generating process identified 
+        // Analysis or forecast generating process identified
         WriteByte(fp, GRIB2MISSING_u1);
         WriteUInt16(fp, 0); // Hours
         WriteByte(fp, 0); // Minutes
@@ -2199,7 +2228,7 @@ static bool WriteSection4( VSILFILE* fp,
         WriteByte(fp, GRIB2MISSING_u1); // Type of second fixed surface
         WriteByte(fp, GRIB2MISSING_u1); // Scale factor of second fixed surface
         // Scaled value of second fixed surface
-        WriteUInt32(fp, GRIB2MISSING_u4); 
+        WriteUInt32(fp, GRIB2MISSING_u4);
     }
     else if( pszPDSTemplateNumbers == nullptr &&
              pszPDSTemplateAssembledValues == nullptr )
@@ -2302,6 +2331,8 @@ static bool WriteSection4( VSILFILE* fp,
         }
         else
         {
+            free(pdstempl);
+            free(coordlist);
             CPLError(CE_Warning, CPLE_AppDefined,
                      "PDS_PDTN = %d is unknown. Product will not be "
                      "correctly read by this driver (but potentially valid "
@@ -2389,75 +2420,6 @@ static bool WriteSection4( VSILFILE* fp,
 }
 
 /************************************************************************/
-/*                            WriteBand()                               */
-/************************************************************************/
-
-static bool WriteBand( VSILFILE* fp, GDALDataset *poSrcDS, int nBand,
-                       char** papszOptions,
-                       GDALProgressFunc pfnProgress, void * pProgressData )
-{
-    // Section 0: Indicator section
-    vsi_l_offset nStartOffset = VSIFTellL(fp);
-    VSIFWriteL( "GRIB", 4, 1, fp );
-    WriteByte(fp, 0); // reserved
-    WriteByte(fp, 0); // reserved
-    int nDiscipline = atoi(GetBandOption(
-            papszOptions, poSrcDS, nBand, "DISCIPLINE", "0")); // 0 = Meteorological
-    WriteByte(fp, nDiscipline); // discipline
-    WriteByte(fp, 2); // GRIB edition number
-    vsi_l_offset nTotalSizeOffset = VSIFTellL(fp);
-    WriteUInt32(fp, GRIB2MISSING_u4); // dummy file size (high 32 bits)
-    WriteUInt32(fp, GRIB2MISSING_u4); // dummy file size (low 32 bits)
-
-    // Section 1: Identification Section
-    WriteSection1( fp, poSrcDS, nBand, papszOptions );
-
-    // Section 2: Local use section
-    WriteUInt32(fp, 5); // section size
-    WriteByte(fp, 2); // section number
-
-    // Section 3: Grid Definition Section
-    if( !GRIB2Section3Writer(fp, poSrcDS).Write() )
-    {
-        return false;
-    }
-
-    // Section 4: Product Definition Section
-    float fValOffset = 0.0f;
-    if( !WriteSection4( fp, poSrcDS, nBand, papszOptions, fValOffset ) )
-    {
-        return false;
-    }
-
-    // Section 5, 6 and 7
-    if( !GRIB2Section567Writer(fp, poSrcDS, nBand).
-            Write(fValOffset, papszOptions, pfnProgress, pProgressData) )
-    {
-        return false;
-    }
-
-    // Section 8: End section
-    VSIFWriteL( "7777", 4, 1, fp );
-
-    // Patch total message size at end of section 0
-    vsi_l_offset nCurOffset = VSIFTellL(fp);
-    if( nCurOffset - nStartOffset > INT_MAX )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "GRIB message larger than 2 GB");
-        return false;
-    }
-    GUInt32 nTotalSize = static_cast<GUInt32>(nCurOffset - nStartOffset);
-    VSIFSeekL(fp, nTotalSizeOffset, SEEK_SET );
-    WriteUInt32(fp, 0); // file size (high 32 bits)
-    WriteUInt32(fp, nTotalSize); // file size (low 32 bits)
-
-    VSIFSeekL(fp, nCurOffset, SEEK_SET );
-
-    return true;
-}
-
-/************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
 
@@ -2529,17 +2491,85 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     VSIFSeekL(fp, 0, SEEK_END);
 
-    for( int i = 0; i < poSrcDS->GetRasterCount(); i++ )
+    vsi_l_offset nStartOffset = 0;
+    vsi_l_offset nTotalSizeOffset = 0;
+    // Note: WRITE_SUBGRIDS=YES should not be used blindly currently, as it
+    // does not check that the content of the DISCIPLINE and IDS are the same.
+    // A smarter behavior would be to break into separate messages if needed
+    const bool bWriteSubGrids = CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "WRITE_SUBGRIDS", "NO"));
+    for( int nBand = 1; nBand <= poSrcDS->GetRasterCount(); nBand++ )
     {
-        if( !WriteBand( fp, poSrcDS, i + 1, papszOptions,
-                         pfnProgress, pProgressData ) )
+        if( nBand == 1 || !bWriteSubGrids )
+        {
+            // Section 0: Indicator section
+            nStartOffset = VSIFTellL(fp);
+            VSIFWriteL( "GRIB", 4, 1, fp );
+            WriteByte(fp, 0); // reserved
+            WriteByte(fp, 0); // reserved
+            int nDiscipline = atoi(GetBandOption(
+                    papszOptions, poSrcDS, nBand, "DISCIPLINE", "0")); // 0 = Meteorological
+            WriteByte(fp, nDiscipline); // discipline
+            WriteByte(fp, 2); // GRIB edition number
+            nTotalSizeOffset = VSIFTellL(fp);
+            WriteUInt32(fp, GRIB2MISSING_u4); // dummy file size (high 32 bits)
+            WriteUInt32(fp, GRIB2MISSING_u4); // dummy file size (low 32 bits)
+
+            // Section 1: Identification Section
+            WriteSection1( fp, poSrcDS, nBand, papszOptions );
+
+            // Section 2: Local use section
+            WriteUInt32(fp, 5); // section size
+            WriteByte(fp, 2); // section number
+
+            // Section 3: Grid Definition Section
+            if( !GRIB2Section3Writer(fp, poSrcDS).Write() )
+            {
+                VSIFCloseL(fp);
+                return nullptr;
+            }
+        }
+
+        // Section 4: Product Definition Section
+        float fValOffset = 0.0f;
+        if( !WriteSection4( fp, poSrcDS, nBand, papszOptions, fValOffset ) )
         {
             VSIFCloseL(fp);
             return nullptr;
         }
 
+        // Section 5, 6 and 7
+        if( !GRIB2Section567Writer(fp, poSrcDS, nBand).
+                Write(fValOffset, papszOptions, pfnProgress, pProgressData) )
+        {
+            VSIFCloseL(fp);
+            return nullptr;
+        }
+
+        if( nBand == poSrcDS->GetRasterCount() || !bWriteSubGrids )
+        {
+            // Section 8: End section
+            VSIFWriteL( "7777", 4, 1, fp );
+
+            // Patch total message size at end of section 0
+            vsi_l_offset nCurOffset = VSIFTellL(fp);
+            if( nCurOffset - nStartOffset > INT_MAX )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "GRIB message larger than 2 GB");
+                VSIFCloseL(fp);
+                return nullptr;
+            }
+            GUInt32 nTotalSize = static_cast<GUInt32>(nCurOffset - nStartOffset);
+            VSIFSeekL(fp, nTotalSizeOffset, SEEK_SET );
+            WriteUInt32(fp, 0); // file size (high 32 bits)
+            WriteUInt32(fp, nTotalSize); // file size (low 32 bits)
+
+            VSIFSeekL(fp, nCurOffset, SEEK_SET );
+        }
+
         if( pfnProgress &&
-            !pfnProgress(static_cast<double>(i+1) / poSrcDS->GetRasterCount(),
+            !pfnProgress(static_cast<double>(nBand) / poSrcDS->GetRasterCount(),
                     nullptr, pProgressData ) )
         {
             VSIFCloseL(fp);

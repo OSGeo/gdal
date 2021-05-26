@@ -22,8 +22,10 @@ Raster programs
    gdaldem
    rgb2pct
    pct2rgb
+   gdalattachpct
    gdal_merge
    gdal2tiles
+   gdal2xyz
    gdal_rasterize
    gdaltransform
    nearblack
@@ -43,6 +45,7 @@ Raster programs
    gdalmanage
    gdalcompare
    gdal_viewshed
+   gdal_create
 
 .. only:: html
 
@@ -57,8 +60,10 @@ Raster programs
     - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
     - :ref:`rgb2pct`: Convert a 24bit RGB image to 8bit paletted.
     - :ref:`pct2rgb`: Convert an 8bit paletted image to 24bit RGB.
+    - :ref:`gdalattachpct`: Attach a color table to a raster file from an input file.
     - :ref:`gdal_merge`: Mosaics a set of images.
     - :ref:`gdal2tiles`: Generates directory with TMS tiles, KMLs and simple web viewers.
+    - :ref:`gdal2xyz`: Translates a raster file into xyz format.
     - :ref:`gdal_rasterize`: Burns vector geometries into a raster.
     - :ref:`gdaltransform`: Transforms coordinates.
     - :ref:`nearblack`: Convert nearly black/white borders to black.
@@ -78,6 +83,7 @@ Raster programs
     - :ref:`gdalmanage`: Identify, delete, rename and copy raster data files.
     - :ref:`gdalcompare`: Compare two images.
     - :ref:`gdal_viewshed`: Compute a visibility mask for a raster.
+    - :ref:`gdal_create`: Create a raster file (without source dataset).
 
 Multidimensional Raster programs
 --------------------------------
