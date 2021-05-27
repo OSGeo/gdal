@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 
 #include "cpl_conv.h"
 #include "cpl_cpu_features.h"
@@ -2279,6 +2280,8 @@ template<class Tout> void GDALCopyWordsByteTo16Bit(
                                 int nDstPixelStride,
                                 GPtrDiff_t nWordCount )
 {
+    static_assert( std::is_integral<Tout>::value &&
+                   sizeof(Tout) == sizeof(uint16_t), "Bad Tout" );
     if( nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)) )
     {
@@ -2336,6 +2339,8 @@ template<class Tout> void GDALCopyWordsByteTo32Bit(
                                 int nDstPixelStride,
                                 GPtrDiff_t nWordCount )
 {
+    static_assert( std::is_integral<Tout>::value &&
+                   sizeof(Tout) == sizeof(uint32_t), "Bad Tout" );
     if( nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)) )
     {
