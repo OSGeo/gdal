@@ -382,7 +382,8 @@ def get_bands(filename_or_ds: PathOrDS, band_nums: Optional[MaybeSequence[int]] 
             raise Exception(f'Could not get band {band_num} from file {filename_or_ds}')
         if ovr_idx:
             ovr_idx = get_ovr_idx(ds, ovr_idx)
-            band = band.GetOverview(ovr_idx-1)
+            if ovr_idx != 0:
+                band = band.GetOverview(ovr_idx-1)
             if band is None:
                 raise Exception(f'Could not get overview {ovr_idx} from band {band_num} of file {filename_or_ds}')
         bands.append(band)
