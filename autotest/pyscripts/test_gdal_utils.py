@@ -90,7 +90,8 @@ def test_utils_py_1():
     """ test get_ovr_idx, create_flat_raster """
     filename = 'tmp/raster.tif'
     temp_files.append(filename)
-    raster_creation.create_flat_raster(filename, overview_list=[2, 4])
+    overview_list = [2, 4]
+    raster_creation.create_flat_raster(filename, overview_list=overview_list)
     ds = util.open_ds(filename)
     compression = util.get_image_structure_metadata(filename, 'COMPRESSION')
     assert compression == 'DEFLATE'
@@ -102,9 +103,16 @@ def test_utils_py_1():
     for i in range(-ovr_count, ovr_count):
         assert util.get_ovr_idx(filename, ovr_idx=i) == (i if i >= 0 else ovr_count + i)
 
-    for res, ovr in [(5, 0), (10, 0), (11, 0), (19.99, 0), (20, 1), (20.1, 1), (39, 1), (40, 2), (41, 2), (400, 2)]:
-        assert util.get_ovr_idx(filename, ovr_res=res) == ovr
-        assert util.get_ovr_idx(filename, float(res)) == ovr  # noqa secret functionality
+    ovr_factor = [1] + overview_list
+    ras_size = ds.RasterXSize, ds.RasterYSize
+    for res, ovr_idx in [(5, 0), (10, 0), (11, 0), (19.99, 0), (20, 1), (20.1, 1), (39, 1), (40, 2), (41, 2), (400, 2)]:
+        assert util.get_ovr_idx(ds, ovr_res=res) == ovr_idx
+        assert util.get_ovr_idx(ds, float(res)) == ovr_idx  # noqa secret functionality
+
+        bands = util.get_bands(ds, ovr_idx=ovr_idx)
+        assert len(bands) == 1
+        f = ovr_factor[ovr_idx]
+        assert (bands[0].XSize, bands[0].XSize) == (ras_size[0] // f, ras_size[1] // f)
 
     # test open_ds with multiple different inputs
     filename2 = 'tmp/raster2.tif'
