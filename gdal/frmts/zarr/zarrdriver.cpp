@@ -1356,6 +1356,38 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
 
 
 /************************************************************************/
+/*                           ZarrDriver()                               */
+/************************************************************************/
+
+class ZarrDriver final: public GDALDriver
+{
+public:
+    const char* GetMetadataItem(const char* pszName, const char* pszDomain) override;
+};
+
+const char* ZarrDriver::GetMetadataItem(const char* pszName, const char* pszDomain)
+{
+    if( (pszDomain == nullptr || pszDomain[0] == '\0') &&
+        EQUAL(pszName, "COMPRESSORS") )
+    {
+        // A bit of a hack. Normally GetMetadata() should also return it,
+        // but as this is only used for tests, just make GetMetadataItem()
+        // handle it
+        std::string osCompressors;
+        char** decompressors = CPLGetDecompressors();
+        for( auto iter = decompressors; iter && *iter; ++iter )
+        {
+            if( !osCompressors.empty() )
+                osCompressors += ',';
+            osCompressors += *iter;
+        }
+        CSLDestroy(decompressors);
+        return CPLSPrintf("%s", osCompressors.c_str());
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
 /*                          GDALRegister_Zarr()                         */
 /************************************************************************/
 
@@ -1365,7 +1397,7 @@ void GDALRegister_Zarr()
     if( GDALGetDriverByName( "Zarr" ) != nullptr )
         return;
 
-    GDALDriver *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new ZarrDriver();
 
     poDriver->SetDescription( "Zarr" );
     // poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

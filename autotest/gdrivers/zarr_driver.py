@@ -338,3 +338,31 @@ def test_zarr_invalid_json_wrong_values(dict_update):
         assert ds is None
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+# Check reading different compression methods
+@pytest.mark.parametrize("datasetname,compressor", [('blosc.zarr', 'blosc'),
+                                                    ('gzip.zarr', 'gzip'),
+                                                    ('lz4.zarr', 'lz4'),
+                                                    ('lzma.zarr', 'lzma'),
+                                                    ('lzma_with_filters.zarr',
+                                                     'lzma'),
+                                                    ('zlib.zarr', 'zlib'),
+                                                    ('zstd.zarr', 'zstd'),
+                                                    ])
+def test_zarr_read_compression_methods(datasetname,compressor):
+
+    compressors = gdal.GetDriverByName('Zarr').GetMetadataItem('COMPRESSORS')
+    filename = 'data/zarr/' + datasetname
+
+    if compressor not in compressors:
+        with gdaltest.error_handler():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds is None
+    else:
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        assert ar.Read() == array.array('b', [1, 2])
