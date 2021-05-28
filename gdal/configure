@@ -1068,6 +1068,7 @@ enable_driver_tsx
 enable_driver_usgsdem
 enable_driver_xpm
 enable_driver_xyz
+enable_driver_zarr
 enable_driver_zmap
 enable_driver_grib
 enable_driver_ozi
@@ -1974,6 +1975,7 @@ Optional Features:
                           disable usgsdem driver support (enabled by default)
   --disable-driver-xpm    disable xpm driver support (enabled by default)
   --disable-driver-xyz    disable xyz driver support (enabled by default)
+  --disable-driver-zarr   disable zarr driver support (enabled by default)
   --disable-driver-zmap   disable zmap driver support (enabled by default)
   --disable-driver-grib   disable grib format support (enabled by default,
                           requires dependency)
@@ -27902,6 +27904,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED xyz"
   INTERNAL_FORMAT_xyz_ENABLED=no
+fi
+
+# Check whether --enable-driver-zarr was given.
+if test "${enable_driver_zarr+set}" = set; then :
+  enableval=$enable_driver_zarr;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_zarr
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED zarr"
+  INTERNAL_FORMAT_zarr_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED zarr"
+  INTERNAL_FORMAT_zarr_ENABLED=no
 fi
 
 # Check whether --enable-driver-zmap was given.
