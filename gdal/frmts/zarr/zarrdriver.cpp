@@ -395,10 +395,10 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
         bufferStride = bufferStrideMod.data();
     }
 
-    std::vector<size_t> indicesOuterLoop(nDims);
+    std::vector<uint64_t> indicesOuterLoop(nDims);
     std::vector<GByte*> dstPtrStackOuterLoop(nDims + 1);
 
-    std::vector<size_t> indicesInnerLoop(nDims);
+    std::vector<uint64_t> indicesInnerLoop(nDims);
     std::vector<GByte*> dstPtrStackInnerLoop(nDims + 1);
 
     // Reserve a buffer for tile content
@@ -518,8 +518,7 @@ lbl_return_to_caller_inner_loop:
                     break;
                 }
                 const auto oldBlock = indicesOuterLoop[dimIdxSubLoop] / m_anBlockSize[dimIdxSubLoop];
-                indicesInnerLoop[dimIdxSubLoop] = static_cast<size_t>(
-                    indicesInnerLoop[dimIdxSubLoop] + arrayStep[dimIdxSubLoop]);
+                indicesInnerLoop[dimIdxSubLoop] += arrayStep[dimIdxSubLoop];
                 if( (indicesInnerLoop[dimIdxSubLoop] /
                         m_anBlockSize[dimIdxSubLoop]) != oldBlock ||
                     indicesInnerLoop[dimIdxSubLoop] >
@@ -537,7 +536,7 @@ lbl_return_to_caller_inner_loop:
     else
     {
         // This level of loop loops over blocks
-        indicesOuterLoop[dimIdx] = static_cast<size_t>(arrayStartIdx[dimIdx]);
+        indicesOuterLoop[dimIdx] = arrayStartIdx[dimIdx];
         tileIndices[dimIdx] = indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
         while(true)
         {
@@ -563,8 +562,7 @@ lbl_return_to_caller:
             {
                 nIncr = 1;
             }
-            indicesOuterLoop[dimIdx] = static_cast<size_t>(
-                indicesOuterLoop[dimIdx] + nIncr * arrayStep[dimIdx]);
+            indicesOuterLoop[dimIdx] += nIncr * arrayStep[dimIdx];
             if( indicesOuterLoop[dimIdx] > arrayStartIdx[dimIdx] + (count[dimIdx]-1) * arrayStep[dimIdx] )
                 break;
             dstPtrStackOuterLoop[dimIdx] += bufferStride[dimIdx] * static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
