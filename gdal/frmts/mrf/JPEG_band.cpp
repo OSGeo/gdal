@@ -679,7 +679,7 @@ JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
     }
 
     if( GDT_Byte == image.dt )
-        codec.optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
+        codec.optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE);
     else
         codec.optimize = true; // Required for 12bit
 }

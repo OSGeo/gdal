@@ -186,7 +186,7 @@ JPNG_Band::JPNG_Band( MRFDataset *pDS, const ILImage &image,
             sameres = TRUE;
     }
 
-    optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
+    optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE);
 
     // PNGs and JPGs can be larger than the source, especially for
     // small page size.
