@@ -29,6 +29,7 @@
 #include "cpl_json.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <limits>
 
 /************************************************************************/
@@ -108,6 +109,8 @@ class ZarrArray final: public GDALMDArray
     GByte                                            *m_pabyNoData = nullptr;
     std::string                                       m_osDimSeparator { "." };
     std::string                                       m_osFilename{};
+    mutable std::vector<GByte>                        m_abyTileData{};
+    bool                                              m_bUseOptimizedCodePaths = true;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -253,6 +256,26 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
         new ZarrArray(osParentName, osName, aoDims, oType, aoDtypeElts,
                       anBlockSize));
     arr->SetSelf(arr);
+
+    // Reserve a buffer for tile content
+    const auto nDTSize = arr->m_oType.GetSize();
+    size_t nTileSize = arr->m_oType.GetClass() == GEDTC_STRING ? arr->m_oType.GetMaxStringLength() : nDTSize;
+    for( const auto& nBlockSize: arr->m_anBlockSize )
+    {
+        nTileSize *= static_cast<size_t>(nBlockSize);
+    }
+    try
+    {
+        arr->m_abyTileData.resize( nTileSize );
+    }
+    catch( const std::bad_alloc& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        return nullptr;
+    }
+    arr->m_bUseOptimizedCodePaths = CPLTestBool(
+        CPLGetConfigOption("GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", "YES"));
+
     return arr;
 }
 
@@ -401,27 +424,32 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
     std::vector<uint64_t> indicesInnerLoop(nDims);
     std::vector<GByte*> dstPtrStackInnerLoop(nDims + 1);
 
-    // Reserve a buffer for tile content
-    //const GDALDataType eDT = m_oType.GetNumericDataType();
+    std::vector<GPtrDiff_t> dstBufferStrideBytes;
+    for( size_t i = 0; i < nDims; ++i )
+    {
+        dstBufferStrideBytes.push_back(
+            bufferStride[i] * static_cast<GPtrDiff_t>(nBufferDTSize));
+    }
+
     const auto nDTSize = m_oType.GetSize();
-    std::vector<GByte> abyTileData;
-    size_t nTileSize = m_oType.GetClass() == GEDTC_STRING ? m_oType.GetMaxStringLength() : nDTSize;
-    for( const auto& nBlockSize: m_anBlockSize )
-    {
-        nTileSize *= static_cast<size_t>(nBlockSize);
-    }
-    try
-    {
-        abyTileData.resize( nTileSize );
-    }
-    catch( const std::bad_alloc& e )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return false;
-    }
 
     std::vector<uint64_t> tileIndices(nDims);
     const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
+
+    std::vector<size_t> countInnerLoopInit(nDims);
+    std::vector<size_t> countInnerLoop(nDims);
+
+    const bool bBothAreNumericDT =
+        m_oType.GetClass() == GEDTC_NUMERIC &&
+        bufferDataType.GetClass() == GEDTC_NUMERIC;
+    const bool bSameNumericDT =
+        bBothAreNumericDT &&
+        m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType();
+    const bool bSrcIsComplex = CPL_TO_BOOL(
+        GDALDataTypeIsComplex(m_oType.GetNumericDataType()));
+    const auto nSameDTSize = bSameNumericDT ? m_oType.GetSize() : 0;
+    std::vector<GByte> abyTargetNoData;
+    bool bNoDataIsZero = false;
 
     size_t dimIdx = 0;
     dstPtrStackOuterLoop[0] = static_cast<GByte*>(pDstBuffer);
@@ -431,35 +459,263 @@ lbl_next_depth:
         size_t dimIdxSubLoop = 0;
         dstPtrStackInnerLoop[0] = dstPtrStackOuterLoop[nDims];
         bool bEmptyTile = false;
-        if( !LoadTileData(tileIndices, abyTileData, bEmptyTile) )
+        if( !LoadTileData(tileIndices, m_abyTileData, bEmptyTile) )
             return false;
 
-lbl_next_depth_inner_loop:
-        if( dimIdxSubLoop == nDims )
+        for( size_t i = 0; i < nDims; ++i )
         {
-            void* dst_ptr = dstPtrStackInnerLoop[dimIdxSubLoop];
-            if( bEmptyTile )
+            countInnerLoopInit[i] = 1;
+            if( arrayStep[i] != 0 )
             {
-                if( m_pabyNoData )
+                const auto nextBlockIdx = std::min(
+                    (1 + indicesOuterLoop[i] / m_anBlockSize[i]) * m_anBlockSize[i],
+                    arrayStartIdx[i] + count[i] * arrayStep[i]);
+                countInnerLoopInit[i] = static_cast<size_t>(
+                        (nextBlockIdx - indicesOuterLoop[i] + arrayStep[i] - 1) / arrayStep[i]);
+            }
+        }
+
+        if( bEmptyTile && bBothAreNumericDT && abyTargetNoData.empty() )
+        {
+            abyTargetNoData.resize(nBufferDTSize);
+            if( m_pabyNoData )
+            {
+                GDALExtendedDataType::CopyValue(m_pabyNoData, m_oType,
+                                                &abyTargetNoData[0], bufferDataType);
+                bNoDataIsZero = true;
+                for( size_t i = 0; i < abyTargetNoData.size(); ++i )
                 {
-                    GDALExtendedDataType::CopyValue(m_pabyNoData, m_oType,
-                                                    dst_ptr, bufferDataType);
-                }
-                else
-                {
-                    memset(dst_ptr, 0, nBufferDTSize);
+                    if( abyTargetNoData[i] != 0 )
+                        bNoDataIsZero = false;
                 }
             }
             else
             {
-                size_t nOffset = 0;
-                for( size_t i = 0; i < nDims; i++ )
+                bNoDataIsZero = true;
+                GByte zero = 0;
+                GDALCopyWords(&zero, GDT_Byte, 0,
+                              &abyTargetNoData[0],
+                              bufferDataType.GetNumericDataType(), 0,
+                              1);
+            }
+        }
+
+lbl_next_depth_inner_loop:
+        if( dimIdxSubLoop == nDims - 1 )
+        {
+            indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
+            void* dst_ptr = dstPtrStackInnerLoop[dimIdxSubLoop];
+
+            if( m_bUseOptimizedCodePaths &&
+                bEmptyTile && bBothAreNumericDT && bNoDataIsZero &&
+                nBufferDTSize == dstBufferStrideBytes[dimIdxSubLoop] )
+            {
+                memset(dst_ptr, 0, nBufferDTSize * countInnerLoopInit[dimIdxSubLoop]);
+                goto end_inner_loop;
+            }
+            else if( m_bUseOptimizedCodePaths &&
+                bEmptyTile && !abyTargetNoData.empty() && bBothAreNumericDT &&
+                     dstBufferStrideBytes[dimIdxSubLoop] < std::numeric_limits<int>::max() )
+            {
+                GDALCopyWords64( abyTargetNoData.data(),
+                                 bufferDataType.GetNumericDataType(),
+                                 0,
+                                 dst_ptr,
+                                 bufferDataType.GetNumericDataType(),
+                                 static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
+                                 static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]) );
+                goto end_inner_loop;
+            }
+            else if( bEmptyTile )
+            {
+                for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                        ++i,
+                        dst_ptr = static_cast<uint8_t*>(dst_ptr) + dstBufferStrideBytes[dimIdxSubLoop] )
                 {
-                    nOffset = static_cast<size_t>(nOffset * m_anBlockSize[i] +
-                        (indicesInnerLoop[i] - tileIndices[i] * m_anBlockSize[i]));
+                    if( bNoDataIsZero )
+                    {
+                        if( nBufferDTSize == 1 )
+                        {
+                            *static_cast<uint8_t*>(dst_ptr) = 0;
+                        }
+                        else if( nBufferDTSize == 2 )
+                        {
+                            *static_cast<uint16_t*>(dst_ptr) = 0;
+                        }
+                        else if( nBufferDTSize == 4 )
+                        {
+                            *static_cast<uint32_t*>(dst_ptr) = 0;
+                        }
+                        else if( nBufferDTSize == 8 )
+                        {
+                            *static_cast<uint64_t*>(dst_ptr) = 0;
+                        }
+                        else if( nBufferDTSize == 16 )
+                        {
+                            static_cast<uint64_t*>(dst_ptr)[0] = 0;
+                            static_cast<uint64_t*>(dst_ptr)[1] = 0;
+                        }
+                        else
+                        {
+                            CPLAssert(false);
+                        }
+                    }
+                    else if( m_pabyNoData )
+                    {
+                        if( bBothAreNumericDT )
+                        {
+                            const void* src_ptr_v = abyTargetNoData.data();
+                            if( nBufferDTSize == 1 )
+                                *static_cast<uint8_t*>(dst_ptr) = *static_cast<const uint8_t*>(src_ptr_v);
+                            else if( nBufferDTSize == 2 )
+                                *static_cast<uint16_t*>(dst_ptr) = *static_cast<const uint16_t*>(src_ptr_v);
+                            else if( nBufferDTSize == 4 )
+                                *static_cast<uint32_t*>(dst_ptr) = *static_cast<const uint32_t*>(src_ptr_v);
+                            else if( nBufferDTSize == 8 )
+                                *static_cast<uint64_t*>(dst_ptr) = *static_cast<const uint64_t*>(src_ptr_v);
+                            else if( nBufferDTSize == 16 )
+                            {
+                                static_cast<uint64_t*>(dst_ptr)[0] = static_cast<const uint64_t*>(src_ptr_v)[0];
+                                static_cast<uint64_t*>(dst_ptr)[1] = static_cast<const uint64_t*>(src_ptr_v)[1];
+                            }
+                            else
+                            {
+                                CPLAssert(false);
+                            }
+                        }
+                        else
+                        {
+                            GDALExtendedDataType::CopyValue(m_pabyNoData, m_oType,
+                                                            dst_ptr, bufferDataType);
+                        }
+                    }
+                    else
+                    {
+                        memset(dst_ptr, 0, nBufferDTSize);
+                    }
                 }
-                GByte* src_ptr = &abyTileData[0] + nOffset * nSourceSize;
-                if( m_oType.GetClass() == GEDTC_STRING )
+
+                goto end_inner_loop;
+            }
+
+            size_t nOffset = 0;
+            for( size_t i = 0; i < nDims; i++ )
+            {
+                nOffset = static_cast<size_t>(nOffset * m_anBlockSize[i] +
+                    (indicesInnerLoop[i] - tileIndices[i] * m_anBlockSize[i]));
+            }
+            GByte* src_ptr = &m_abyTileData[0] + nOffset * nSourceSize;
+
+            if( m_bUseOptimizedCodePaths && bBothAreNumericDT &&
+                arrayStep[dimIdxSubLoop] <= static_cast<GIntBig>(std::numeric_limits<int>::max() / nDTSize) &&
+                dstBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() )
+            {
+                if( m_aoDtypeElts[0].needByteSwapping )
+                {
+                    GByte* src_ptr_rev = src_ptr;
+                    for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                            ++i,
+                            src_ptr_rev += arrayStep[dimIdxSubLoop] * nSourceSize )
+                    {
+                        if( nDTSize == 2 )
+                            CPL_SWAP16PTR(src_ptr_rev);
+                        else if( nDTSize == 4 )
+                            CPL_SWAP32PTR(src_ptr_rev);
+                        else if( nDTSize == 8 )
+                        {
+                            if( bSrcIsComplex )
+                            {
+                                CPL_SWAP32PTR(src_ptr_rev);
+                                CPL_SWAP32PTR(src_ptr_rev + 4);
+                            }
+                            else
+                            {
+                                CPL_SWAP64PTR(src_ptr_rev);
+                            }
+                        }
+                        else if( nDTSize == 16 )
+                        {
+                            CPL_SWAP64PTR(src_ptr_rev);
+                            CPL_SWAP64PTR(src_ptr_rev + 8);
+                        }
+                        else
+                        {
+                            CPLAssert(false);
+                        }
+                    }
+                }
+
+                GDALCopyWords64( src_ptr,
+                                 m_oType.GetNumericDataType(),
+                                 static_cast<int>(arrayStep[dimIdxSubLoop] * nDTSize),
+                                 dst_ptr,
+                                 bufferDataType.GetNumericDataType(),
+                                 static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
+                                 static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]) );
+
+                goto end_inner_loop;
+            }
+
+            for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                    ++i,
+                    src_ptr += arrayStep[dimIdxSubLoop] * nSourceSize,
+                    dst_ptr = static_cast<uint8_t*>(dst_ptr) + dstBufferStrideBytes[dimIdxSubLoop] )
+            {
+                if( bSameNumericDT )
+                {
+                    const void* src_ptr_v = src_ptr;
+                    if( nSameDTSize == 1 )
+                        *static_cast<uint8_t*>(dst_ptr) = *static_cast<const uint8_t*>(src_ptr_v);
+                    else if( nSameDTSize == 2 )
+                    {
+                        if( !m_aoDtypeElts[0].needByteSwapping )
+                            *static_cast<uint16_t*>(dst_ptr) = *static_cast<const uint16_t*>(src_ptr_v);
+                        else
+                            *static_cast<uint16_t*>(dst_ptr) = CPL_SWAP16(*static_cast<const uint16_t*>(src_ptr_v));
+                    }
+                    else if( nSameDTSize == 4 )
+                    {
+                        if( !m_aoDtypeElts[0].needByteSwapping )
+                            *static_cast<uint32_t*>(dst_ptr) = *static_cast<const uint32_t*>(src_ptr_v);
+                        else
+                            *static_cast<uint32_t*>(dst_ptr) = CPL_SWAP32(*static_cast<const uint32_t*>(src_ptr_v));
+                    }
+                    else if( nSameDTSize == 8 )
+                    {
+                        if( !m_aoDtypeElts[0].needByteSwapping )
+                            *static_cast<uint64_t*>(dst_ptr) = *static_cast<const uint64_t*>(src_ptr_v);
+                        else
+                        {
+                            if( bSrcIsComplex )
+                            {
+                                static_cast<uint32_t*>(dst_ptr)[0] = CPL_SWAP32(static_cast<const uint32_t*>(src_ptr_v)[0]);
+                                static_cast<uint32_t*>(dst_ptr)[1] = CPL_SWAP32(static_cast<const uint32_t*>(src_ptr_v)[1]);
+                            }
+                            else
+                            {
+                                *static_cast<uint64_t*>(dst_ptr) = CPL_SWAP64(*static_cast<const uint64_t*>(src_ptr_v));
+                            }
+                        }
+                    }
+                    else if( nSameDTSize == 16 )
+                    {
+                        if( !m_aoDtypeElts[0].needByteSwapping )
+                        {
+                            static_cast<uint64_t*>(dst_ptr)[0] = static_cast<const uint64_t*>(src_ptr_v)[0];
+                            static_cast<uint64_t*>(dst_ptr)[1] = static_cast<const uint64_t*>(src_ptr_v)[1];
+                        }
+                        else
+                        {
+                            static_cast<uint64_t*>(dst_ptr)[0] = CPL_SWAP64(static_cast<const uint64_t*>(src_ptr_v)[0]);
+                            static_cast<uint64_t*>(dst_ptr)[1] = CPL_SWAP64(static_cast<const uint64_t*>(src_ptr_v)[1]);
+                        }
+                    }
+                    else
+                    {
+                        CPLAssert(false);
+                    }
+                }
+                else if( m_oType.GetClass() == GEDTC_STRING )
                 {
                     char* pDstStr = static_cast<char*>(CPLMalloc(nSourceSize + 1));
                     memcpy(pDstStr, src_ptr, nSourceSize);
@@ -506,6 +762,7 @@ lbl_next_depth_inner_loop:
             // This level of loop loops over individual samples, within a
             // block
             indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
+            countInnerLoop[dimIdxSubLoop] = countInnerLoopInit[dimIdxSubLoop];
             while(true)
             {
                 dimIdxSubLoop ++;
@@ -513,23 +770,16 @@ lbl_next_depth_inner_loop:
                 goto lbl_next_depth_inner_loop;
 lbl_return_to_caller_inner_loop:
                 dimIdxSubLoop --;
-                if( arrayStep[dimIdxSubLoop] == 0 )
+                -- countInnerLoop[dimIdxSubLoop];
+                if( countInnerLoop[dimIdxSubLoop] == 0 )
                 {
                     break;
                 }
-                const auto oldBlock = indicesOuterLoop[dimIdxSubLoop] / m_anBlockSize[dimIdxSubLoop];
                 indicesInnerLoop[dimIdxSubLoop] += arrayStep[dimIdxSubLoop];
-                if( (indicesInnerLoop[dimIdxSubLoop] /
-                        m_anBlockSize[dimIdxSubLoop]) != oldBlock ||
-                    indicesInnerLoop[dimIdxSubLoop] >
-                        arrayStartIdx[dimIdxSubLoop] + (count[dimIdxSubLoop]-1) * arrayStep[dimIdxSubLoop] )
-                {
-                    break;
-                }
-                dstPtrStackInnerLoop[dimIdxSubLoop] +=
-                    bufferStride[dimIdxSubLoop] * static_cast<GPtrDiff_t>(nBufferDTSize);
+                dstPtrStackInnerLoop[dimIdxSubLoop] += dstBufferStrideBytes[dimIdxSubLoop];
             }
         }
+end_inner_loop:
         if( dimIdxSubLoop > 0 )
             goto lbl_return_to_caller_inner_loop;
     }

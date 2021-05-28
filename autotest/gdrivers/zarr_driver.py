@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import array
 import base64
 import json
 import math
@@ -71,7 +72,8 @@ import pytest
                           [">c8", 'f', gdal.GDT_CFloat32, None, None],
                           ["<c16", 'd', gdal.GDT_CFloat64, None, None],
                           [">c16", 'd', gdal.GDT_CFloat64, None, None]])
-def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value):
+@pytest.mark.parametrize("use_optimized_code_paths", [True, False])
+def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths):
 
     j = {
         "chunks": [
@@ -105,11 +107,13 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value):
                 dtype[0] + (structtype * 12), 4, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0)
         gdal.FileFromMemBuffer('/vsimem/test.zarr/0.0', tile_0_0_data)
         gdal.FileFromMemBuffer('/vsimem/test.zarr/0.1', tile_0_1_data)
-        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
-        assert ds
-        rg = ds.GetRootGroup()
-        assert rg
-        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        with gdaltest.config_option('GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS',
+                                    'YES' if use_optimized_code_paths else 'NO'):
+            ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         assert ar
         assert ar.GetDimensionCount() == 2
         assert [ar.GetDimensions()[i].GetSize() for i in range(2)] == [5, 4]
@@ -127,9 +131,13 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value):
         if gdaltype not in (gdal.GDT_CFloat32, gdal.GDT_CFloat64):
             assert ar[0:2, 0:3].Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
                 struct.pack('d' * 6, 1, 2, 3, 5, 6, 7)
+            assert struct.unpack(
+                structtype * 6, ar[0:2, 0:3].Read()) == (1, 2, 3, 5, 6, 7)
         else:
             assert ar[0:2, 0:3].Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_CFloat64)) == \
                 struct.pack('d' * 12, 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0)
+            assert struct.unpack(
+                structtype * 12, ar[0:2, 0:3].Read()) == (1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0)
 
         # Read block 0,1
         assert ar[0:2, 3:4].Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
@@ -149,12 +157,49 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value):
                         nv, nv, nv, nv,
                         nv, nv, nv, nv)
 
+        if gdaltype not in (gdal.GDT_CFloat32, gdal.GDT_CFloat64):
+            assert ar.Read() == array.array(structtype, [1, 2, 3, 4,
+                                                         5, 6, 7, 8,
+                                                         nv, nv, nv, nv,
+                                                         nv, nv, nv, nv,
+                                                         nv, nv, nv, nv])
+        else:
+            assert ar.Read() == array.array(structtype, [1, 11, 2, 0, 3, 0, 4, 0,
+                                                         5, 0, 6, 0, 7, 0, 8, 0,
+                                                         nv, 0, nv, 0, nv, 0, nv, 0,
+                                                         nv, 0, nv, 0, nv, 0, nv, 0,
+                                                         nv, 0, nv, 0, nv, 0, nv, 0])
         # Read with negative steps
-        assert ar.Read(array_start_idx = [2, 1],
-                       count = [2, 2],
-                       array_step = [-1, -1],
+        assert ar.Read(array_start_idx=[2, 1],
+                       count=[2, 2],
+                       array_step=[-1, -1],
                        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
             struct.pack('d' * 4, nv, nv, 6, 5)
+
+        # array_step > 2
+        assert ar.Read(array_start_idx=[0, 0],
+                       count=[1, 2],
+                       array_step=[0, 2],
+                       buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
+            struct.pack('d' * 2, 1, 3)
+
+        assert ar.Read(array_start_idx=[0, 0],
+                       count=[3, 1],
+                       array_step=[2, 0],
+                       buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
+            struct.pack('d' * 3, 1, nv, nv)
+
+        assert ar.Read(array_start_idx=[0, 1],
+                       count=[1, 2],
+                       array_step=[0, 2],
+                       buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
+            struct.pack('d' * 2, 2, 4)
+
+        assert ar.Read(array_start_idx=[0, 0],
+                       count=[1, 2],
+                       array_step=[0, 3],
+                       buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
+            struct.pack('d' * 2, 1, 4)
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
