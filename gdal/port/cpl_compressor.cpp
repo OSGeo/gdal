@@ -29,9 +29,14 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_conv.h" // CPLZLibInflate()
 
 #ifdef HAVE_BLOSC
 #include <blosc.h>
+#endif
+
+#ifdef HAVE_LIBDEFLATE
+#include "libdeflate.h"
 #endif
 
 #include <mutex>
@@ -184,6 +189,89 @@ static bool CPLBloscDecompressor(const void* input_data,
 
 #endif
 
+
+static bool CPLZlibCompressor(const void* input_data,
+                                 size_t input_size,
+                                 void** output_data,
+                                 size_t* output_size,
+                                 CSLConstList options,
+                                 void* /* compressor_user_data */)
+{
+    const int clevel = atoi(CSLFetchNameValueDef(options, "LEVEL",
+#if HAVE_LIBDEFLATE
+                                                 "7"
+#else
+                                                 "6"
+#endif
+                                                ));
+
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        size_t nOutBytes = 0;
+        if( nullptr == CPLZLibDeflate( input_data, input_size,
+                                       clevel,
+                                       *output_data, *output_size,
+                                       &nOutBytes ) )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        *output_size = nOutBytes;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+#if HAVE_LIBDEFLATE
+        struct libdeflate_compressor* enc = libdeflate_alloc_compressor(clevel);
+        if( enc == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+        *output_size = libdeflate_zlib_compress_bound(enc, input_size);
+        libdeflate_free_compressor(enc);
+#else
+        // Really inefficient !
+        size_t nOutSize = 0;
+        void* outbuffer = CPLZLibDeflate( input_data, input_size,
+                                         clevel,
+                                         nullptr, 0,
+                                         &nOutSize );
+        if( outbuffer == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+        VSIFree(outbuffer);
+        *output_size = nOutSize;
+#endif
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        size_t nOutSize = 0;
+        *output_data = CPLZLibDeflate( input_data, input_size,
+                                       clevel,
+                                       nullptr, 0,
+                                       &nOutSize );
+        if( *output_data == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+        *output_size = nOutSize;
+        return true;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
 static void CPLAddCompressor(const CPLCompressor* compressor)
 {
     CPLCompressor* copy = new CPLCompressor();
@@ -253,6 +341,95 @@ static void CPLAddBuiltinCompressors()
         CPLAddCompressor(&sComp);
     } while(0);
 #endif
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "zlib";
+        const char* const apszMetadata[] = {
+            "OPTIONS=<Options>"
+            "  <Option name='LEVEL' type='int' description='Compression level' min='1' max='9' default='6' />"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLZlibCompressor;
+        sComp.user_data = nullptr;
+        CPLAddCompressor(&sComp);
+    }
+}
+
+
+static bool CPLZlibDecompressor(const void* input_data,
+                                 size_t input_size,
+                                 void** output_data,
+                                 size_t* output_size,
+                                 CSLConstList /* options */,
+                                 void* /* compressor_user_data */)
+{
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        size_t nOutBytes = 0;
+        if( nullptr == CPLZLibInflate( input_data, input_size,
+                                       *output_data, *output_size,
+                                       &nOutBytes) )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        *output_size = nOutBytes;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        size_t nOutSize = input_size < std::numeric_limits<size_t>::max() / 4 ? input_size * 4 : input_size;
+        void* tmpOutBuffer = VSIMalloc(nOutSize);
+        if( tmpOutBuffer == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+        if( nullptr == CPLZLibInflate( input_data, input_size,
+                                       tmpOutBuffer, nOutSize,
+                                       &nOutSize) )
+        {
+            VSIFree(tmpOutBuffer);
+            *output_size = 0;
+            return false;
+        }
+        VSIFree(tmpOutBuffer);
+        *output_size = nOutSize;
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        size_t nOutSize = input_size < std::numeric_limits<size_t>::max() / 4 ? input_size * 4 : input_size;
+        void* tmpOutBuffer = VSIMalloc(nOutSize);
+        if( tmpOutBuffer == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+        size_t nOutSizeOut = 0;
+        if( nullptr == CPLZLibInflate( input_data, input_size,
+                                       tmpOutBuffer, nOutSize,
+                                       &nOutSizeOut) )
+        {
+            VSIFree(tmpOutBuffer);
+            *output_size = 0;
+            return false;
+        }
+        *output_data = VSIRealloc(tmpOutBuffer, nOutSizeOut); // cannot fail
+        *output_size = nOutSizeOut;
+        return true;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
 }
 
 
@@ -288,6 +465,15 @@ static void CPLAddBuiltinDecompressors()
         CPLAddDecompressor(&sComp);
     }
 #endif
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "zlib";
+        sComp.papszMetadata = nullptr;
+        sComp.pfnFunc = CPLZlibDecompressor;
+        sComp.user_data = nullptr;
+        CPLAddDecompressor(&sComp);
+    }
 }
 
 

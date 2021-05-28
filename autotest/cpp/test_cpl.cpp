@@ -3222,12 +3222,16 @@ namespace tut
     template<>
     void object::test<47>()
     {
-        for( const char* id : { "blosc" } )
+        for( const char* id : { "blosc", "zlib" } )
         {
             const auto pCompressor = CPLGetCompressor(id);
             if( pCompressor == nullptr )
             {
                 CPLDebug("TEST", "%s not available", id);
+                if( strcmp(id, "zlib") == 0 )
+                {
+                    ensure( false );
+                }
                 continue;
             }
             CPLDebug("TEST", "Testing %s", id);
@@ -3252,12 +3256,12 @@ namespace tut
                                           options, pCompressor->user_data ) );
             ensure( out_buffer2 != nullptr );
             ensure( out_size2 != 0 );
-            ensure_equals( out_size2, out_size );
+            ensure( out_size2 <= out_size );
 
-            std::vector<GByte> out_buffer3(out_size2);
+            std::vector<GByte> out_buffer3(out_size);
 
             // Provide not large enough buffer size
-            size_t out_size3 = out_buffer3.size() - 1;
+            size_t out_size3 = 1;
             void* out_buffer3_ptr = &out_buffer3[0];
             ensure( !(pCompressor->pfnFunc( my_str, strlen(my_str),
                                           &out_buffer3_ptr, &out_size3,
@@ -3272,7 +3276,10 @@ namespace tut
             ensure( out_buffer3_ptr != nullptr );
             ensure( out_buffer3_ptr == &out_buffer3[0] );
             ensure( out_size3 != 0 );
-            ensure_equals( out_size3, out_size );
+            ensure_equals( out_size3, out_size2 );
+
+            out_buffer3.resize( out_size3 );
+            out_buffer3_ptr = &out_buffer3[0];
 
             ensure( memcmp(out_buffer3_ptr, out_buffer2, out_size2) == 0 );
 
