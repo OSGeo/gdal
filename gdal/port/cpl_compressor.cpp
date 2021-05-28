@@ -43,6 +43,10 @@
 #include <lzma.h>
 #endif
 
+#ifdef HAVE_ZSTD
+#include <zstd.h>
+#endif
+
 #include <mutex>
 #include <vector>
 
@@ -371,6 +375,126 @@ static bool CPLLZMADecompressor (const void* input_data,
 
 #endif // HAVE_LZMA
 
+#ifdef HAVE_ZSTD
+static bool CPLZSTDCompressor (const void* input_data,
+                               size_t input_size,
+                               void** output_data,
+                               size_t* output_size,
+                               CSLConstList options,
+                               void* /* compressor_user_data */)
+{
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        const int level = atoi(CSLFetchNameValueDef(options, "LEVEL", "13"));
+        ZSTD_CCtx* ctx = ZSTD_createCCtx();
+        if( ctx == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        size_t ret = ZSTD_compressCCtx(ctx, *output_data, *output_size,
+                                       input_data, input_size,
+                                       level);
+        if( ZSTD_isError(ret) )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        *output_size = ret;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        *output_size = ZSTD_compressBound(input_size);
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        size_t nSafeSize = ZSTD_compressBound(input_size);
+        *output_data = VSI_MALLOC_VERBOSE(nSafeSize);
+        *output_size = nSafeSize;
+        if( *output_data == nullptr )
+            return false;
+        bool ret = CPLZSTDCompressor(input_data, input_size,
+                                     output_data, output_size,
+                                     options, nullptr);
+        if( !ret )
+        {
+            VSIFree(*output_data);
+            *output_data = nullptr;
+        }
+        return ret;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+static bool CPLZSTDDecompressor (const void* input_data,
+                                 size_t input_size,
+                                 void** output_data,
+                                 size_t* output_size,
+                                 CSLConstList /* options */,
+                                 void* /* compressor_user_data */)
+{
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        size_t ret = ZSTD_decompress(*output_data, *output_size,
+                                     input_data, input_size);
+        if( ZSTD_isError(ret) )
+        {
+            *output_size = static_cast<size_t>(ZSTD_getDecompressedSize(input_data, input_size));
+            return false;
+        }
+
+        *output_size = ret;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        *output_size = static_cast<size_t>(ZSTD_getDecompressedSize(input_data, input_size));
+        return *output_size != 0;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        size_t nOutSize = static_cast<size_t>(ZSTD_getDecompressedSize(input_data, input_size));
+        *output_data = VSI_MALLOC_VERBOSE(nOutSize);
+        if( *output_data == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        size_t ret = ZSTD_decompress(*output_data, nOutSize,
+                                     input_data, input_size);
+        if( ZSTD_isError(ret) )
+        {
+            *output_size = 0;
+            VSIFree(*output_data);
+            *output_data = nullptr;
+            return false;
+        }
+
+        *output_size = ret;
+        return true;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+#endif // HAVE_ZSTD
+
 static bool CPLZlibCompressor(const void* input_data,
                                  size_t input_size,
                                  void** output_data,
@@ -555,6 +679,23 @@ static void CPLAddBuiltinCompressors()
         CPLAddCompressor(&sComp);
     }
 #endif
+#ifdef HAVE_ZSTD
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "zstd";
+        const char* const apszMetadata[] = {
+            "OPTIONS=<Options>"
+            "  <Option name='LEVEL' type='int' description='Compression level' min='1' max='22' default='13' />"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLZSTDCompressor;
+        sComp.user_data = nullptr;
+        CPLAddCompressor(&sComp);
+    }
+#endif
 }
 
 
@@ -680,6 +821,17 @@ static void CPLAddBuiltinDecompressors()
         sComp.pszId = "lzma";
         sComp.papszMetadata = nullptr;
         sComp.pfnFunc = CPLLZMADecompressor;
+        sComp.user_data = nullptr;
+        CPLAddDecompressor(&sComp);
+    }
+#endif
+#ifdef HAVE_ZSTD
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "zstd";
+        sComp.papszMetadata = nullptr;
+        sComp.pfnFunc = CPLZSTDDecompressor;
         sComp.user_data = nullptr;
         CPLAddDecompressor(&sComp);
     }
