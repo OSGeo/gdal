@@ -39,6 +39,10 @@
 #include "libdeflate.h"
 #endif
 
+#ifdef HAVE_LZMA
+#include <lzma.h>
+#endif
+
 #include <mutex>
 #include <vector>
 
@@ -189,6 +193,183 @@ static bool CPLBloscDecompressor(const void* input_data,
 
 #endif
 
+#ifdef HAVE_LZMA
+static bool CPLLZMACompressor (const void* input_data,
+                               size_t input_size,
+                               void** output_data,
+                               size_t* output_size,
+                               CSLConstList options,
+                               void* /* compressor_user_data */)
+{
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        const int preset = atoi(CSLFetchNameValueDef(options, "PRESET", "6"));
+        const int delta = atoi(CSLFetchNameValueDef(options, "DELTA", "1"));
+
+        lzma_filter filters[3];
+        lzma_options_delta opt_delta;
+        lzma_options_lzma opt_lzma;
+
+        opt_delta.type = LZMA_DELTA_TYPE_BYTE;
+        opt_delta.dist = delta;
+        filters[0].id = LZMA_FILTER_DELTA;
+        filters[0].options = &opt_delta;
+
+        lzma_lzma_preset(&opt_lzma, preset);
+        filters[1].id = LZMA_FILTER_LZMA2;
+        filters[1].options = &opt_lzma;
+
+        filters[2].id = LZMA_VLI_UNKNOWN;
+        filters[2].options = nullptr;
+
+        size_t out_pos = 0;
+        lzma_ret ret = lzma_stream_buffer_encode(filters,
+                                                 LZMA_CHECK_NONE,
+                                                 nullptr, // allocator,
+                                                 static_cast<const uint8_t*>(input_data),
+                                                 input_size,
+                                                 static_cast<uint8_t*>(*output_data),
+                                                 &out_pos,
+                                                 *output_size);
+        if( ret != LZMA_OK )
+        {
+            *output_size = 0;
+            return false;
+        }
+        *output_size = out_pos;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        *output_size = lzma_stream_buffer_bound(input_size);
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        size_t nSafeSize = lzma_stream_buffer_bound(input_size);
+        *output_data = VSI_MALLOC_VERBOSE(nSafeSize);
+        *output_size = nSafeSize;
+        if( *output_data == nullptr )
+            return false;
+        bool ret = CPLLZMACompressor(input_data, input_size,
+                                     output_data, output_size,
+                                     options, nullptr);
+        if( !ret )
+        {
+            VSIFree(*output_data);
+            *output_data = nullptr;
+        }
+        return ret;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+static bool CPLLZMADecompressor (const void* input_data,
+                                 size_t input_size,
+                                 void** output_data,
+                                 size_t* output_size,
+                                 CSLConstList options,
+                                 void* /* compressor_user_data */)
+{
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        size_t in_pos = 0;
+        size_t out_pos = 0;
+        uint64_t memlimit = 100 * 1024 * 1024;
+        lzma_ret ret = lzma_stream_buffer_decode(&memlimit,
+                                                 0, // flags
+                                                 nullptr, // allocator,
+                                                 static_cast<const uint8_t*>(input_data),
+                                                 &in_pos,
+                                                 input_size,
+                                                 static_cast<uint8_t*>(*output_data),
+                                                 &out_pos,
+                                                 *output_size);
+        if( ret != LZMA_OK )
+        {
+            *output_size = 0;
+            return false;
+        }
+        *output_size = out_pos;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        // inefficient !
+        void* tmpBuffer = nullptr;
+        bool ret = CPLLZMADecompressor(input_data, input_size, &tmpBuffer, output_size,
+                                       options, nullptr);
+        VSIFree(tmpBuffer);
+        return ret;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        size_t nOutSize = input_size < std::numeric_limits<size_t>::max() / 2 ? input_size * 2 : input_size;
+        *output_data = VSI_MALLOC_VERBOSE(nOutSize);
+        if( *output_data == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        while( true )
+        {
+            size_t in_pos = 0;
+            size_t out_pos = 0;
+            uint64_t memlimit = 100 * 1024 * 1024;
+            lzma_ret ret = lzma_stream_buffer_decode(&memlimit,
+                                                     0, // flags
+                                                     nullptr, // allocator,
+                                                     static_cast<const uint8_t*>(input_data),
+                                                     &in_pos,
+                                                     input_size,
+                                                     static_cast<uint8_t*>(*output_data),
+                                                     &out_pos,
+                                                     nOutSize);
+            if( ret == LZMA_OK )
+            {
+                *output_size = out_pos;
+                return true;
+            }
+            else if( ret == LZMA_BUF_ERROR &&
+                     nOutSize < std::numeric_limits<size_t>::max() / 2 )
+            {
+                nOutSize *= 2;
+                void* tmpBuffer = VSI_REALLOC_VERBOSE(*output_data, nOutSize);
+                if( tmpBuffer == nullptr )
+                {
+                    VSIFree(*output_data);
+                    *output_data = nullptr;
+                    *output_size = 0;
+                    return false;
+                }
+                *output_data = tmpBuffer;
+            }
+            else
+            {
+                VSIFree(*output_data);
+                *output_data = nullptr;
+                *output_size = 0;
+                return false;
+            }
+        }
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+#endif // HAVE_LZMA
 
 static bool CPLZlibCompressor(const void* input_data,
                                  size_t input_size,
@@ -356,6 +537,24 @@ static void CPLAddBuiltinCompressors()
         sComp.user_data = nullptr;
         CPLAddCompressor(&sComp);
     }
+#ifdef HAVE_LZMA
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "lzma";
+        const char* const apszMetadata[] = {
+            "OPTIONS=<Options>"
+            "  <Option name='PRESET' type='int' description='Compression level' min='0' max='9' default='6' />"
+            "  <Option name='DELTA' type='int' description='Delta distance in byte' default='1' />"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLLZMACompressor;
+        sComp.user_data = nullptr;
+        CPLAddCompressor(&sComp);
+    }
+#endif
 }
 
 
@@ -474,6 +673,17 @@ static void CPLAddBuiltinDecompressors()
         sComp.user_data = nullptr;
         CPLAddDecompressor(&sComp);
     }
+#ifdef HAVE_LZMA
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "lzma";
+        sComp.papszMetadata = nullptr;
+        sComp.pfnFunc = CPLLZMADecompressor;
+        sComp.user_data = nullptr;
+        CPLAddDecompressor(&sComp);
+    }
+#endif
 }
 
 

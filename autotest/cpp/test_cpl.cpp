@@ -3222,7 +3222,7 @@ namespace tut
     template<>
     void object::test<47>()
     {
-        for( const char* id : { "blosc", "zlib" } )
+        for( const char* id : { "blosc", "zlib", "lzma" } )
         {
             const auto pCompressor = CPLGetCompressor(id);
             if( pCompressor == nullptr )
