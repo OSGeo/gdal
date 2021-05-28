@@ -244,6 +244,25 @@ If you want to reference a non-specific path or file name::
 
 This will output: :file:`{your/own/path/to}/myfile.txt`
 
+Reference code
+--------------
+
+To reference a class::
+
+  :cpp:class:`MyClass`
+
+To reference a method or function::
+
+  :cpp:func:`MyClass::MyMethod`
+  :cpp:func:`MyFunction`
+
+Reference configuration options
+-------------------------------
+
+To reference a configuration option, such as **GDAL_CACHEMAX**, use::
+
+  :decl_configoption:`OPTION_NAME`
+
 Reference commands
 ------------------
 
