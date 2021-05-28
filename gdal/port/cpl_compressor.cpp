@@ -37,6 +37,8 @@
 
 #ifdef HAVE_LIBDEFLATE
 #include "libdeflate.h"
+#else
+#include "zlib.h"
 #endif
 
 #ifdef HAVE_LZMA
@@ -748,13 +750,109 @@ static bool CPLLZ4Decompressor  (const void* input_data,
 
 #endif // HAVE_LZ4
 
+static
+void* CPLGZipCompress( const void* ptr,
+                      size_t nBytes,
+                      int nLevel,
+                      void* outptr,
+                      size_t nOutAvailableBytes,
+                      size_t* pnOutBytes )
+{
+    if( pnOutBytes != nullptr )
+        *pnOutBytes = 0;
+
+    size_t nTmpSize = 0;
+    void* pTmp;
+#ifdef HAVE_LIBDEFLATE
+    struct libdeflate_compressor* enc = libdeflate_alloc_compressor(nLevel < 0 ? 7 : nLevel);
+    if( enc == nullptr )
+    {
+        return nullptr;
+    }
+#endif
+    if( outptr == nullptr )
+    {
+#ifdef HAVE_LIBDEFLATE
+        nTmpSize = libdeflate_gzip_compress_bound(enc, nBytes);
+#else
+        nTmpSize = 32 + nBytes * 2;
+#endif
+        pTmp = VSIMalloc(nTmpSize);
+        if( pTmp == nullptr )
+        {
+#ifdef HAVE_LIBDEFLATE
+            libdeflate_free_compressor(enc);
+#endif
+            return nullptr;
+        }
+    }
+    else
+    {
+        pTmp = outptr;
+        nTmpSize = nOutAvailableBytes;
+    }
+
+#ifdef HAVE_LIBDEFLATE
+    size_t nCompressedBytes = libdeflate_gzip_compress(
+                    enc, ptr, nBytes, pTmp, nTmpSize);
+    libdeflate_free_compressor(enc);
+    if( nCompressedBytes == 0 )
+    {
+        if( pTmp != outptr )
+            VSIFree(pTmp);
+        return nullptr;
+    }
+    if( pnOutBytes != nullptr )
+        *pnOutBytes = nCompressedBytes;
+#else
+    z_stream strm;
+    strm.zalloc = nullptr;
+    strm.zfree = nullptr;
+    strm.opaque = nullptr;
+    constexpr int windowsBits = 15;
+    constexpr int gzipEncoding = 16;
+    int ret = deflateInit2(&strm,
+                           nLevel < 0 ? Z_DEFAULT_COMPRESSION : nLevel,
+                           Z_DEFLATED,
+                           windowsBits + gzipEncoding,
+                           8,
+                           Z_DEFAULT_STRATEGY);
+    if( ret != Z_OK )
+    {
+        if( pTmp != outptr )
+            VSIFree(pTmp);
+        return nullptr;
+    }
+
+    strm.avail_in = static_cast<uInt>(nBytes);
+    strm.next_in = reinterpret_cast<Bytef*>(const_cast<void*>(ptr));
+    strm.avail_out = static_cast<uInt>(nTmpSize);
+    strm.next_out = reinterpret_cast<Bytef*>(pTmp);
+    ret = deflate(&strm, Z_FINISH);
+    if( ret != Z_STREAM_END )
+    {
+        if( pTmp != outptr )
+            VSIFree(pTmp);
+        return nullptr;
+    }
+    if( pnOutBytes != nullptr )
+        *pnOutBytes = nTmpSize - strm.avail_out;
+    deflateEnd(&strm);
+#endif
+
+    return pTmp;
+}
+
 static bool CPLZlibCompressor(const void* input_data,
                                  size_t input_size,
                                  void** output_data,
                                  size_t* output_size,
                                  CSLConstList options,
-                                 void* /* compressor_user_data */)
+                                 void* compressor_user_data)
 {
+    const char* alg = static_cast<const char*>(compressor_user_data);
+    const auto pfnCompress =
+        strcmp(alg, "zlib") == 0 ? CPLZLibDeflate : CPLGZipCompress;
     const int clevel = atoi(CSLFetchNameValueDef(options, "LEVEL",
 #if HAVE_LIBDEFLATE
                                                  "7"
@@ -767,7 +865,7 @@ static bool CPLZlibCompressor(const void* input_data,
         output_size != nullptr && *output_size != 0 )
     {
         size_t nOutBytes = 0;
-        if( nullptr == CPLZLibDeflate( input_data, input_size,
+        if( nullptr == pfnCompress( input_data, input_size,
                                        clevel,
                                        *output_data, *output_size,
                                        &nOutBytes ) )
@@ -789,12 +887,15 @@ static bool CPLZlibCompressor(const void* input_data,
             *output_size = 0;
             return false;
         }
-        *output_size = libdeflate_zlib_compress_bound(enc, input_size);
+        if( strcmp(alg, "zlib") == 0 )
+            *output_size = libdeflate_zlib_compress_bound(enc, input_size);
+        else
+            *output_size = libdeflate_gzip_compress_bound(enc, input_size);
         libdeflate_free_compressor(enc);
 #else
         // Really inefficient !
         size_t nOutSize = 0;
-        void* outbuffer = CPLZLibDeflate( input_data, input_size,
+        void* outbuffer = pfnCompress( input_data, input_size,
                                          clevel,
                                          nullptr, 0,
                                          &nOutSize );
@@ -813,7 +914,7 @@ static bool CPLZlibCompressor(const void* input_data,
         output_size != nullptr )
     {
         size_t nOutSize = 0;
-        *output_data = CPLZLibDeflate( input_data, input_size,
+        *output_data = pfnCompress( input_data, input_size,
                                        clevel,
                                        nullptr, 0,
                                        &nOutSize );
@@ -911,7 +1012,22 @@ static void CPLAddBuiltinCompressors()
         };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLZlibCompressor;
-        sComp.user_data = nullptr;
+        sComp.user_data = const_cast<char*>("zlib");
+        CPLAddCompressor(&sComp);
+    }
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "gzip";
+        const char* const apszMetadata[] = {
+            "OPTIONS=<Options>"
+            "  <Option name='LEVEL' type='int' description='Compression level' min='1' max='9' default='6' />"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLZlibCompressor;
+        sComp.user_data = const_cast<char*>("gzip");
         CPLAddCompressor(&sComp);
     }
 #ifdef HAVE_LZMA
@@ -1080,6 +1196,15 @@ static void CPLAddBuiltinDecompressors()
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
         sComp.pszId = "zlib";
+        sComp.papszMetadata = nullptr;
+        sComp.pfnFunc = CPLZlibDecompressor;
+        sComp.user_data = nullptr;
+        CPLAddDecompressor(&sComp);
+    }
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "gzip";
         sComp.papszMetadata = nullptr;
         sComp.pfnFunc = CPLZlibDecompressor;
         sComp.user_data = nullptr;

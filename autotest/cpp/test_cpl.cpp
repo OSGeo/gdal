@@ -3222,13 +3222,13 @@ namespace tut
     template<>
     void object::test<47>()
     {
-        for( const char* id : { "blosc", "zlib", "lzma", "zstd", "lz4" } )
+        for( const char* id : { "blosc", "zlib", "gzip", "lzma", "zstd", "lz4" } )
         {
             const auto pCompressor = CPLGetCompressor(id);
             if( pCompressor == nullptr )
             {
                 CPLDebug("TEST", "%s not available", id);
-                if( strcmp(id, "zlib") == 0 )
+                if( strcmp(id, "zlib") == 0 || strcmp(id, "gzip") == 0 )
                 {
                     ensure( false );
                 }
