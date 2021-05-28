@@ -148,6 +148,14 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value):
                         nv, nv, nv, nv,
                         nv, nv, nv, nv,
                         nv, nv, nv, nv)
+
+        # Read with negative steps
+        assert ar.Read(array_start_idx = [2, 1],
+                       count = [2, 2],
+                       array_step = [-1, -1],
+                       buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
+            struct.pack('d' * 4, nv, nv, 6, 5)
+
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
 
