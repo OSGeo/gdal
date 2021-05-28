@@ -30,6 +30,7 @@
 
 #include "gdal_unit_test.h"
 
+#include "cpl_compressor.h"
 #include "cpl_error.h"
 #include "cpl_hash_set.h"
 #include "cpl_list.h"
@@ -3088,6 +3089,100 @@ namespace tut
             CPLSetConfigOption(pszHOMEEnvVarName, nullptr);
 
         VSIUnlink("/vsimem/.gdal/gdalrc");
+    }
+
+    // Test decompressor side of cpl_compressor.h
+    template<>
+    template<>
+    void object::test<45>()
+    {
+        const auto compressionLambda = [](const void* /* input_data */,
+                                          size_t /* input_size */,
+                                          void** /* output_data */,
+                                          size_t* /* output_size */,
+                                          CSLConstList /* options */,
+                                          void* /* compressor_user_data */)
+        {
+            return false;
+        };
+        int dummy = 0;
+
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "my_comp";
+        const char* const apszMetadata[] = { "FOO=BAR", nullptr };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = compressionLambda;
+        sComp.user_data = &dummy;
+
+        ensure( CPLRegisterDecompressor(&sComp) );
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLRegisterDecompressor(&sComp) );
+        CPLPopErrorHandler();
+
+        char** decompressors = CPLGetDecompressors();
+        ensure( decompressors != nullptr );
+        ensure( CSLFindString(decompressors, sComp.pszId) >= 0 );
+        CSLDestroy( decompressors );
+
+        ensure( CPLGetDecompressor("invalid") == nullptr );
+        const auto pCompressor = CPLGetDecompressor(sComp.pszId);
+        ensure( pCompressor );
+        ensure_equals( std::string(pCompressor->pszId), std::string(sComp.pszId) );
+        ensure_equals( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
+        ensure( pCompressor->pfnFunc != nullptr );
+        ensure_equals( pCompressor->user_data, sComp.user_data );
+
+        CPLDestroyCompressorRegistry();
+        ensure( CPLGetDecompressors() == nullptr );
+    }
+
+    // Test compressor side of cpl_compressor.h
+    template<>
+    template<>
+    void object::test<46>()
+    {
+        const auto compressionLambda = [](const void* /* input_data */,
+                                          size_t /* input_size */,
+                                          void** /* output_data */,
+                                          size_t* /* output_size */,
+                                          CSLConstList /* options */,
+                                          void* /* compressor_user_data */)
+        {
+            return false;
+        };
+        int dummy = 0;
+
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "my_comp";
+        const char* const apszMetadata[] = { "FOO=BAR", nullptr };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = compressionLambda;
+        sComp.user_data = &dummy;
+
+        ensure( CPLRegisterCompressor(&sComp) );
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLRegisterCompressor(&sComp) );
+        CPLPopErrorHandler();
+
+        char** compressors = CPLGetCompressors();
+        ensure( compressors != nullptr );
+        ensure( CSLFindString(compressors, sComp.pszId) >= 0 );
+        CSLDestroy( compressors );
+
+        ensure( CPLGetCompressor("invalid") == nullptr );
+        const auto pCompressor = CPLGetCompressor(sComp.pszId);
+        ensure( pCompressor );
+        ensure_equals( std::string(pCompressor->pszId), std::string(sComp.pszId) );
+        ensure_equals( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
+        ensure( pCompressor->pfnFunc != nullptr );
+        ensure_equals( pCompressor->user_data, sComp.user_data );
+
+        CPLDestroyCompressorRegistry();
+        ensure( CPLGetCompressors() == nullptr );
     }
 
 } // namespace tut
