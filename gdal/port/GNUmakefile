@@ -7,10 +7,14 @@ else
 include GDALmake.opt
 endif
 
+XTRA_OPT=
+
 ifeq ($(LIBZ_SETTING),internal)
-XTRA_OPT =      -I../frmts/zlib
-else
-XTRA_OPT =
+XTRA_OPT := $(XTRA_OPT) -I../frmts/zlib
+endif
+
+ifeq ($(HAVE_BLOSC),yes)
+XTRA_OPT := $(XTRA_OPT) -DHAVE_BLOSC
 endif
 
 CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) $(JSON_INCLUDE) $(XTRA_OPT) -DINST_DATA=\"$(INST_DATA)\" -DSYSCONFDIR=\"$(sysconfdir)\"

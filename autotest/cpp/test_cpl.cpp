@@ -3124,6 +3124,22 @@ namespace tut
         char** decompressors = CPLGetDecompressors();
         ensure( decompressors != nullptr );
         ensure( CSLFindString(decompressors, sComp.pszId) >= 0 );
+        for( auto iter = decompressors; *iter; ++iter )
+        {
+            const auto pCompressor = CPLGetDecompressor(*iter);
+            ensure( pCompressor );
+            const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
+            if( pszOptions )
+            {
+                auto psNode = CPLParseXMLString(pszOptions);
+                ensure(psNode);
+                CPLDestroyXMLNode(psNode);
+            }
+            else
+            {
+                CPLDebug("TEST", "Decompressor %s has no OPTIONS", *iter);
+            }
+        }
         CSLDestroy( decompressors );
 
         ensure( CPLGetDecompressor("invalid") == nullptr );
@@ -3135,7 +3151,7 @@ namespace tut
         ensure_equals( pCompressor->user_data, sComp.user_data );
 
         CPLDestroyCompressorRegistry();
-        ensure( CPLGetDecompressors() == nullptr );
+        ensure( CPLGetDecompressor(sComp.pszId) == nullptr );
     }
 
     // Test compressor side of cpl_compressor.h
@@ -3171,6 +3187,22 @@ namespace tut
         char** compressors = CPLGetCompressors();
         ensure( compressors != nullptr );
         ensure( CSLFindString(compressors, sComp.pszId) >= 0 );
+        for( auto iter = compressors; *iter; ++iter )
+        {
+            const auto pCompressor = CPLGetCompressor(*iter);
+            ensure( pCompressor );
+            const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
+            if( pszOptions )
+            {
+                auto psNode = CPLParseXMLString(pszOptions);
+                ensure(psNode);
+                CPLDestroyXMLNode(psNode);
+            }
+            else
+            {
+                CPLDebug("TEST", "Compressor %s has no OPTIONS", *iter);
+            }
+        }
         CSLDestroy( compressors );
 
         ensure( CPLGetCompressor("invalid") == nullptr );
@@ -3182,7 +3214,106 @@ namespace tut
         ensure_equals( pCompressor->user_data, sComp.user_data );
 
         CPLDestroyCompressorRegistry();
-        ensure( CPLGetCompressors() == nullptr );
+        ensure( CPLGetDecompressor(sComp.pszId) == nullptr );
+    }
+
+    // Test builtin compressors/decompressor
+    template<>
+    template<>
+    void object::test<47>()
+    {
+        for( const char* id : { "blosc" } )
+        {
+            const auto pCompressor = CPLGetCompressor(id);
+            if( pCompressor == nullptr )
+            {
+                CPLDebug("TEST", "%s not available", id);
+                continue;
+            }
+            CPLDebug("TEST", "Testing %s", id);
+
+            const char my_str[] = "my string to compress";
+            const char* const options[] = { "TYPESIZE=1", nullptr };
+
+            // Compressor side
+
+            // Just get output size
+            size_t out_size = 0;
+            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+                                          nullptr, &out_size,
+                                          options, pCompressor->user_data ) );
+            ensure( out_size != 0 );
+
+            // Let it alloc the output buffer
+            void* out_buffer2 = nullptr;
+            size_t out_size2 = 0;
+            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+                                          &out_buffer2, &out_size2,
+                                          options, pCompressor->user_data ) );
+            ensure( out_buffer2 != nullptr );
+            ensure( out_size2 != 0 );
+            ensure_equals( out_size2, out_size );
+
+            std::vector<GByte> out_buffer3(out_size2);
+
+            // Provide not large enough buffer size
+            size_t out_size3 = out_buffer3.size() - 1;
+            void* out_buffer3_ptr = &out_buffer3[0];
+            ensure( !(pCompressor->pfnFunc( my_str, strlen(my_str),
+                                          &out_buffer3_ptr, &out_size3,
+                                          options, pCompressor->user_data )) );
+
+            // Provide the output buffer
+            out_size3 = out_buffer3.size();
+            out_buffer3_ptr = &out_buffer3[0];
+            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+                                          &out_buffer3_ptr, &out_size3,
+                                          options, pCompressor->user_data ) );
+            ensure( out_buffer3_ptr != nullptr );
+            ensure( out_buffer3_ptr == &out_buffer3[0] );
+            ensure( out_size3 != 0 );
+            ensure_equals( out_size3, out_size );
+
+            ensure( memcmp(out_buffer3_ptr, out_buffer2, out_size2) == 0 );
+
+            CPLFree(out_buffer2);
+
+            const std::vector<GByte> compressedData(out_buffer3);
+
+            // Decompressor side
+            const auto pDecompressor = CPLGetDecompressor(id);
+            ensure( pDecompressor != nullptr );
+
+            out_size = 0;
+            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+                                            nullptr, &out_size,
+                                            nullptr, pDecompressor->user_data ) );
+            ensure( out_size != 0 );
+            ensure( out_size >= strlen(my_str) );
+
+            out_buffer2 = nullptr;
+            out_size2 = 0;
+            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+                                            &out_buffer2, &out_size2,
+                                            options, pDecompressor->user_data ) );
+            ensure( out_buffer2 != nullptr );
+            ensure( out_size2 != 0 );
+            ensure_equals( out_size2, strlen(my_str) );
+            ensure( memcmp(out_buffer2, my_str, strlen(my_str)) == 0 );
+            CPLFree(out_buffer2);
+
+            out_buffer3.clear();
+            out_buffer3.resize(out_size);
+            out_size3 = out_buffer3.size();
+            out_buffer3_ptr = &out_buffer3[0];
+            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+                                            &out_buffer3_ptr, &out_size3,
+                                            options, pDecompressor->user_data ) );
+            ensure( out_buffer3_ptr != nullptr );
+            ensure( out_buffer3_ptr == &out_buffer3[0] );
+            ensure_equals( out_size3, strlen(my_str) );
+            ensure( memcmp(out_buffer3.data(), my_str, strlen(my_str)) == 0 );
+        }
     }
 
 } // namespace tut

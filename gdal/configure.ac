@@ -1689,6 +1689,42 @@ fi
 
 AC_SUBST(ZSTD_SETTING,$ZSTD_SETTING)
 
+
+dnl ---------------------------------------------------------------------------
+dnl Check if blosc is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(blosc,[  --with-blosc[=ARG]       Include blosc support (ARG=yes/no/installation_prefix)],,)
+
+if test "$with_blosc" = "" -o "$with_blosc" = "yes" ; then
+  AC_CHECK_LIB(blosc,blosc_cbuffer_validate,HAVE_BLOSC=yes,HAVE_BLOSC=no,)
+
+  if test "$HAVE_BLOSC" = "yes" ; then
+    LIBS="-lblosc $LIBS"
+  else
+    if test "$with_blosc" = "yes" ; then
+      AC_MSG_ERROR([libblosc not found])
+    else
+      echo "libblosc not found - BLOSC support disabled"
+    fi
+  fi
+elif test "$with_blosc" != "" -a "$with_blosc" != "no"; then
+
+  AC_CHECK_LIB(blosc,blosc_cbuffer_validate,HAVE_BLOSC=yes,HAVE_BLOSC=no,-L$with_blosc/lib)
+
+  if test "$HAVE_BLOSC" = "yes" -a -f "$with_blosc/include/blosc.h" ; then
+    LIBS="-L$with_blosc/lib -lblosc $LIBS"
+    EXTRA_INCLUDES="-I$with_blosc/include $EXTRA_INCLUDES"
+  else
+    AC_MSG_ERROR([libblosc not found])
+  fi
+
+else
+    HAVE_BLOSC=no
+fi
+
+AC_SUBST(HAVE_BLOSC,$HAVE_BLOSC)
+
 dnl ---------------------------------------------------------------------------
 dnl Set up drivers and formats
 dnl ---------------------------------------------------------------------------
@@ -6075,6 +6111,7 @@ LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
 LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
+LOC_MSG([  Blosc support:             ${HAVE_BLOSC}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
 LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])

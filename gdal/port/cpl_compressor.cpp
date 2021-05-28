@@ -27,7 +27,12 @@
 
 #include "cpl_compressor.h"
 #include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
+
+#ifdef HAVE_BLOSC
+#include <blosc.h>
+#endif
 
 #include <mutex>
 #include <vector>
@@ -35,6 +40,256 @@
 static std::mutex gMutex;
 static std::vector<CPLCompressor*>* gpCompressors = nullptr;
 static std::vector<CPLCompressor*>* gpDecompressors = nullptr;
+
+#ifdef HAVE_BLOSC
+static bool CPLBloscCompressor(const void* input_data,
+                               size_t input_size,
+                               void** output_data,
+                               size_t* output_size,
+                               CSLConstList options,
+                               void* /* compressor_user_data */)
+{
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        const int clevel = atoi(CSLFetchNameValueDef(options, "CLEVEL", "5"));
+        const char* pszShuffle = CSLFetchNameValueDef(options, "SHUFFLE", "BYTE");
+        const int shuffle = (EQUAL(pszShuffle, "BYTE") ||
+                            EQUAL(pszShuffle, "1")) ? BLOSC_SHUFFLE :
+                            (EQUAL(pszShuffle, "BIT") ||
+                            EQUAL(pszShuffle, "2")) ?  BLOSC_BITSHUFFLE :
+                                                        BLOSC_NOSHUFFLE;
+        const int typesize = atoi(CSLFetchNameValueDef(options, "TYPESIZE", "1"));
+        const char* compressor = CSLFetchNameValueDef(
+                                options, "CNAME", BLOSC_LZ4_COMPNAME);
+        const int blocksize = atoi(CSLFetchNameValueDef(options, "BLOCKSIZE", "0"));
+        if( blocksize < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid BLOCKSIZE");
+            return false;
+        }
+        const char* pszNumThreads = CSLFetchNameValueDef(options, "NUM_THREADS", "1");
+        const int numthreads = EQUAL(pszNumThreads, "ALL_CPUS") ?
+                                        CPLGetNumCPUs(): atoi(pszNumThreads);
+        int ret = blosc_compress_ctx(clevel, shuffle, typesize, input_size,
+                                     input_data, *output_data, *output_size,
+                                     compressor, blocksize, numthreads);
+        if( ret < 0 )
+        {
+            *output_size = 0;
+            return false;
+        }
+        if( ret == 0 )
+        {
+            *output_size = input_size + BLOSC_MAX_OVERHEAD;
+            return false;
+        }
+        *output_size = ret;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        *output_size = input_size + BLOSC_MAX_OVERHEAD;
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        size_t nSafeSize = input_size + BLOSC_MAX_OVERHEAD;
+        *output_data = VSI_MALLOC_VERBOSE(nSafeSize);
+        *output_size = nSafeSize;
+        if( *output_data == nullptr )
+            return false;
+        bool ret = CPLBloscCompressor(input_data, input_size,
+                                      output_data, output_size,
+                                      options, nullptr);
+        if( !ret )
+        {
+            VSIFree(*output_data);
+            *output_data = nullptr;
+        }
+        return ret;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+static bool CPLBloscDecompressor(const void* input_data,
+                                 size_t input_size,
+                                 void** output_data,
+                                 size_t* output_size,
+                                 CSLConstList options,
+                                 void* /* compressor_user_data */)
+{
+    size_t nSafeSize = 0;
+    if( blosc_cbuffer_validate(input_data, input_size, &nSafeSize) < 0 )
+    {
+        *output_size = 0;
+        return false;
+    }
+
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        if( nSafeSize < *output_size )
+        {
+            *output_size = nSafeSize;
+            return false;
+        }
+
+        const char* pszNumThreads = CSLFetchNameValueDef(options, "NUM_THREADS", "1");
+        const int numthreads = EQUAL(pszNumThreads, "ALL_CPUS") ?
+                                        CPLGetNumCPUs(): atoi(pszNumThreads);
+        if( blosc_decompress_ctx(input_data, *output_data, *output_size,
+                                 numthreads) <= 0 )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        *output_size = nSafeSize;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        *output_size = nSafeSize;
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        *output_data = VSI_MALLOC_VERBOSE(nSafeSize);
+        *output_size = nSafeSize;
+        if( *output_data == nullptr )
+            return false;
+        bool ret = CPLBloscDecompressor(input_data, input_size,
+                                        output_data, output_size,
+                                        options, nullptr);
+        if( !ret )
+        {
+            VSIFree(*output_data);
+            *output_data = nullptr;
+        }
+        return ret;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+#endif
+
+static void CPLAddCompressor(const CPLCompressor* compressor)
+{
+    CPLCompressor* copy = new CPLCompressor();
+    copy->nStructVersion = 1;
+    copy->pszId = CPLStrdup(compressor->pszId);
+    copy->papszMetadata = CSLDuplicate(compressor->papszMetadata);
+    copy->pfnFunc = compressor->pfnFunc;
+    copy->user_data = compressor->user_data;
+    gpCompressors->emplace_back(copy);
+}
+
+static void CPLAddBuiltinCompressors()
+{
+#ifdef HAVE_BLOSC
+    do {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "blosc";
+
+        const CPLStringList aosCompressors(CSLTokenizeString2(blosc_list_compressors(), ",", 0));
+        if( aosCompressors.size() == 0 )
+            break;
+        std::string options("OPTIONS=<Options>"
+            "  <Option name='CNAME' type='string-select' description='Compressor name' default='");
+        std::string values;
+        std::string defaultCompressor;
+        bool bFoundLZ4 = false;
+        bool bFoundSnappy = false;
+        bool bFoundZlib = false;
+        for( int i = 0; i < aosCompressors.size(); i++ )
+        {
+            values += "<Value>";
+            values += aosCompressors[i];
+            values += "</Value>";
+            if( strcmp(aosCompressors[i], "lz4") == 0 )
+                bFoundLZ4 = true;
+            else if( strcmp(aosCompressors[i], "snappy") == 0 )
+                bFoundSnappy = true;
+            else if( strcmp(aosCompressors[i], "zlib") == 0 )
+                bFoundZlib = true;
+        }
+        options += bFoundLZ4 ? "lz4" : bFoundSnappy ? "snappy" : bFoundZlib ? "zlib" : aosCompressors[0];
+        options += "'>";
+        options += values;
+        options +=
+            "  </Option>"
+            "  <Option name='CLEVEL' type='int' description='Compression level' min='1' max='9' default='5' />"
+            "  <Option name='SHUFFLE' type='string-select' description='Type of shuffle algorithm' default='BYTE'>"
+            "    <Value alias='0'>NONE</Value>"
+            "    <Value alias='1'>BYTE</Value>"
+            "    <Value alias='2'>BIT</Value>"
+            "  </Option>"
+            "  <Option name='BLOCKSIZE' type='int' description='Block size' default='0' />"
+            "  <Option name='TYPESIZE' type='int' description='Number of bytes for the atomic type' default='1' />"
+            "  <Option name='NUM_THREADS' type='string' "
+            "description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1' />"
+            "</Options>";
+
+        const char* const apszMetadata[] = {
+            "BLOSC_VERSION=" BLOSC_VERSION_STRING,
+            options.c_str(),
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLBloscCompressor;
+        sComp.user_data = nullptr;
+        CPLAddCompressor(&sComp);
+    } while(0);
+#endif
+}
+
+
+static void CPLAddDecompressor(const CPLCompressor* decompressor)
+{
+    CPLCompressor* copy = new CPLCompressor();
+    copy->nStructVersion = 1;
+    copy->pszId = CPLStrdup(decompressor->pszId);
+    copy->papszMetadata = CSLDuplicate(decompressor->papszMetadata);
+    copy->pfnFunc = decompressor->pfnFunc;
+    copy->user_data = decompressor->user_data;
+    gpDecompressors->emplace_back(copy);
+}
+
+static void CPLAddBuiltinDecompressors()
+{
+#ifdef HAVE_BLOSC
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "blosc";
+        const char* const apszMetadata[] = {
+            "BLOSC_VERSION=" BLOSC_VERSION_STRING,
+            "OPTIONS=<Options>"
+            "  <Option name='NUM_THREADS' type='string' "
+            "description='Number of worker threads for decompression. Can be set to ALL_CPUS' default='1' />"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLBloscDecompressor;
+        sComp.user_data = nullptr;
+        CPLAddDecompressor(&sComp);
+    }
+#endif
+}
+
 
 /** Register a new compressor.
  *
@@ -51,7 +306,10 @@ bool CPLRegisterCompressor(const CPLCompressor* compressor)
         return false;
     std::lock_guard<std::mutex> lock(gMutex);
     if( gpCompressors == nullptr )
+    {
         gpCompressors = new std::vector<CPLCompressor*>();
+        CPLAddBuiltinCompressors();
+    }
     for( size_t i = 0; i < gpCompressors->size(); ++i )
     {
         if( strcmp(compressor->pszId, (*gpCompressors)[i]->pszId) == 0 )
@@ -61,13 +319,7 @@ bool CPLRegisterCompressor(const CPLCompressor* compressor)
             return false;
         }
     }
-    CPLCompressor* copy = new CPLCompressor();
-    copy->nStructVersion = 1;
-    copy->pszId = CPLStrdup(compressor->pszId);
-    copy->papszMetadata = CSLDuplicate(compressor->papszMetadata);
-    copy->pfnFunc = compressor->pfnFunc;
-    copy->user_data = compressor->user_data;
-    gpCompressors->emplace_back(copy);
+    CPLAddCompressor(compressor);
     return true;
 }
 
@@ -86,7 +338,10 @@ bool CPLRegisterDecompressor(const CPLCompressor* decompressor)
         return false;
     std::lock_guard<std::mutex> lock(gMutex);
     if( gpDecompressors == nullptr )
+    {
         gpDecompressors = new std::vector<CPLCompressor*>();
+        CPLAddBuiltinDecompressors();
+    }
     for( size_t i = 0; i < gpDecompressors->size(); ++i )
     {
         if( strcmp(decompressor->pszId, (*gpDecompressors)[i]->pszId) == 0 )
@@ -96,13 +351,7 @@ bool CPLRegisterDecompressor(const CPLCompressor* decompressor)
             return false;
         }
     }
-    CPLCompressor* copy = new CPLCompressor();
-    copy->nStructVersion = 1;
-    copy->pszId = CPLStrdup(decompressor->pszId);
-    copy->papszMetadata = CSLDuplicate(decompressor->papszMetadata);
-    copy->pfnFunc = decompressor->pfnFunc;
-    copy->user_data = decompressor->user_data;
-    gpDecompressors->emplace_back(copy);
+    CPLAddDecompressor(decompressor);
     return true;
 }
 
@@ -115,8 +364,13 @@ bool CPLRegisterDecompressor(const CPLCompressor* decompressor)
 char ** CPLGetCompressors(void)
 {
     std::lock_guard<std::mutex> lock(gMutex);
+    if( gpCompressors == nullptr )
+    {
+        gpCompressors = new std::vector<CPLCompressor*>();
+        CPLAddBuiltinCompressors();
+    }
     char** papszRet = nullptr;
-    for( size_t i = 0; gpCompressors != nullptr && i < gpCompressors->size(); ++i )
+    for( size_t i = 0; i < gpCompressors->size(); ++i )
     {
         papszRet = CSLAddString(papszRet, (*gpCompressors)[i]->pszId);
     }
@@ -132,6 +386,11 @@ char ** CPLGetCompressors(void)
 char ** CPLGetDecompressors(void)
 {
     std::lock_guard<std::mutex> lock(gMutex);
+    if( gpDecompressors == nullptr )
+    {
+        gpDecompressors = new std::vector<CPLCompressor*>();
+        CPLAddBuiltinDecompressors();
+    }
     char** papszRet = nullptr;
     for( size_t i = 0; gpDecompressors != nullptr && i < gpDecompressors->size(); ++i )
     {
@@ -150,7 +409,12 @@ char ** CPLGetDecompressors(void)
 const CPLCompressor *CPLGetCompressor(const char* pszId)
 {
     std::lock_guard<std::mutex> lock(gMutex);
-    for( size_t i = 0; gpCompressors != nullptr && i < gpCompressors->size(); ++i )
+    if( gpCompressors == nullptr )
+    {
+        gpCompressors = new std::vector<CPLCompressor*>();
+        CPLAddBuiltinCompressors();
+    }
+    for( size_t i = 0; i < gpCompressors->size(); ++i )
     {
         if( EQUAL(pszId, (*gpCompressors)[i]->pszId) )
         {
@@ -171,7 +435,12 @@ const CPLCompressor *CPLGetCompressor(const char* pszId)
 const CPLCompressor *CPLGetDecompressor(const char* pszId)
 {
     std::lock_guard<std::mutex> lock(gMutex);
-    for( size_t i = 0; gpDecompressors != nullptr && i < gpDecompressors->size(); ++i )
+    if( gpDecompressors == nullptr )
+    {
+        gpDecompressors = new std::vector<CPLCompressor*>();
+        CPLAddBuiltinDecompressors();
+    }
+    for( size_t i = 0; i < gpDecompressors->size(); ++i )
     {
         if( EQUAL(pszId, (*gpDecompressors)[i]->pszId) )
         {
