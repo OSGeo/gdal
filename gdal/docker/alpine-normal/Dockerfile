@@ -26,7 +26,7 @@ ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
     curl-dev tiff-dev \
-    zlib-dev zstd-dev xz-dev \
+    zlib-dev zstd-dev xz-dev snappy-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
     py3-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
@@ -35,6 +35,34 @@ RUN apk add --no-cache \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
+
+# Build blosc
+ARG BLOSC_VERSION=1.21.0
+RUN if test "${BLOSC_VERSION}" != ""; then ( \
+    apk add --no-cache cmake \
+    && wget -q https://github.com/Blosc/c-blosc/archive/refs/tags/v${BLOSC_VERSION}.tar.gz \
+    && tar xzf v${BLOSC_VERSION}.tar.gz \
+    && rm -f v${BLOSC_VERSION}.tar.gz \
+    && cd c-blosc-${BLOSC_VERSION} \
+    && cmake . \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DBUILD_SHARED=ON \
+        -DBUILD_STATIC=OFF \
+        -DBUILD_BENCHMARKS=OFF \
+        -DBUILD_FUZZERS=OFF \
+        -DBUILD_TESTS=OFF \
+        -DPREFER_EXTERNAL_LZ4=ON \
+        -DPREFER_EXTERNAL_ZLIB=ON \
+        -DPREFER_EXTERNAL_ZSTD=ON \
+        -DDEACTIVATE_SNAPPY=OFF \
+    && make -j$(nproc) \
+    && make install \
+    && cp -P /usr/lib/libblosc*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf c-blosc-${BLOSC_VERSION} \
+    ); fi
 
 # Build szip
 ARG SZIP_VERSION=2.1.1
@@ -302,7 +330,7 @@ RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
         libcurl tiff \
-        zlib zstd-libs xz-libs \
+        zlib zstd-libs xz-libs snappy \
         libjpeg-turbo libpng libwebp expat \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
