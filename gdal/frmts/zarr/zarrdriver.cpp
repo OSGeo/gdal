@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_compressor.h"
 #include "cpl_json.h"
 #include "gdal_priv.h"
 
@@ -111,6 +112,7 @@ class ZarrArray final: public GDALMDArray
     std::string                                       m_osFilename{};
     mutable std::vector<GByte>                        m_abyTileData{};
     bool                                              m_bUseOptimizedCodePaths = true;
+    const CPLCompressor                              *m_psDecompressor = nullptr;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -160,6 +162,8 @@ public:
     void SetFilename(const std::string& osFilename ) { m_osFilename = osFilename; }
 
     void SetDimSeparator(const std::string& osDimSeparator) { m_osDimSeparator = osDimSeparator; }
+
+    void SetDecompressor(const CPLCompressor* psComp) { m_psDecompressor = psComp; }
 };
 
 
@@ -349,11 +353,69 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
 
     bMissingTileOut = false;
     bool bRet = true;
-    if( VSIFReadL(&abyTileData[0], 1, abyTileData.size(), fp) != abyTileData.size() )
+    if( m_psDecompressor == nullptr )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not read tile %s correctly",
-                 osFilename.c_str());
-        bRet = false;
+        if( VSIFReadL(&abyTileData[0], 1, abyTileData.size(), fp) != abyTileData.size() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not read tile %s correctly",
+                     osFilename.c_str());
+            bRet = false;
+        }
+    }
+    else
+    {
+        VSIFSeekL(fp, 0, SEEK_END);
+        const auto nSize = VSIFTellL(fp);
+        VSIFSeekL(fp, 0, SEEK_SET);
+        if( nSize > static_cast<vsi_l_offset>(std::numeric_limits<int>::max()) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large tile %s",
+                     osFilename.c_str());
+            bRet = false;
+        }
+        else
+        {
+            std::vector<GByte> abyCompressedData;
+            try
+            {
+                abyCompressedData.resize(static_cast<size_t>(nSize));
+
+            }
+            catch( const std::exception& )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate memory for tile %s",
+                         osFilename.c_str());
+                bRet = false;
+            }
+
+            if( bRet &&
+                VSIFReadL(&abyCompressedData[0], 1, abyCompressedData.size(),
+                          fp) != abyCompressedData.size() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Could not read tile %s correctly",
+                         osFilename.c_str());
+                bRet = false;
+            }
+            else
+            {
+                void* out_buffer = &abyTileData[0];
+                size_t out_size = abyTileData.size();
+                if( !m_psDecompressor->pfnFunc(abyCompressedData.data(),
+                                               abyCompressedData.size(),
+                                               &out_buffer, &out_size,
+                                               nullptr,
+                                               m_psDecompressor->user_data ) ||
+                    out_size != abyTileData.size() )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Decompression of tile %s failed",
+                             osFilename.c_str());
+                    bRet = false;
+                }
+            }
+        }
     }
     VSIFCloseL(fp);
     return bRet;
@@ -1215,13 +1277,31 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined, "compressor missing");
         return nullptr;
     }
+    const CPLCompressor* psDecompressor = nullptr;
     if( oCompressor.GetType() == CPLJSONObject::Type::Null )
     {
+        // nothing to do
+    }
+    else if( oCompressor.GetType() == CPLJSONObject::Type::Object )
+    {
+        const auto osCompressorId = oCompressor["id"].ToString();
+        if( osCompressorId.empty() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Missing compressor id");
+            return nullptr;
+        }
+        psDecompressor = CPLGetDecompressor( osCompressorId.c_str() );
+        if( psDecompressor == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Decompressor %s not handled",
+                     osCompressorId.c_str());
+            return nullptr;
+        }
     }
     else
     {
-        // TODO
-        CPLError(CE_Failure, CPLE_AppDefined, "Unsupported compressor");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid compressor");
         return nullptr;
     }
 
@@ -1257,6 +1337,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
                                      aoDims, oType, aoDtypeElts, anBlockSize);
     poArray->SetFilename(osZarrayFilename);
     poArray->SetDimSeparator(osDimSeparator);
+    poArray->SetDecompressor(psDecompressor);
     if( bHasNoData )
     {
         if( oType.GetClass() == GEDTC_STRING )

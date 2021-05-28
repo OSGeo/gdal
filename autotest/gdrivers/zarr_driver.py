@@ -303,6 +303,9 @@ def test_zarr_invalid_json_remove_member(member):
                                          {"dtype": "!S1", "fill_value": 0},
                                          {"order": None},
                                          {"order": "invalid"},
+                                         {"compressor": "invalid"},
+                                         {"compressor": {}},
+                                         {"compressor": {"id": "invalid"}},
                                          {"zarr_format": None},
                                          {"zarr_format": 1},
                                          ])
