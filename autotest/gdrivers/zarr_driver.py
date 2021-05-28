@@ -224,3 +224,61 @@ def test_zarr_invalid_json_remove_member(member):
             assert ds is None
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+# Check bad values of members in .zarray
+@pytest.mark.parametrize("dict_update", [{"chunks": None},
+                                         {"chunks": "invalid"},
+                                         {"chunks": [2]},
+                                         {"chunks": [2, 0]},
+                                         {"shape": None},
+                                         {"shape": "invalid"},
+                                         {"shape": [5]},
+                                         {"shape": [5, 0]},
+                                         {"chunks": [], "shape": []},
+                                         {"chunks": [1 << 40, 1 << 40],
+                                          "shape": [1 << 40, 1 << 40]},
+                                         {"dtype": None},
+                                         {"dtype": 1},
+                                         {"dtype": ""},
+                                         {"dtype": "!"},
+                                         {"dtype": "!b"},
+                                         {"dtype": "<u16"},
+                                         {"fill_value": []},
+                                         {"fill_value": "x"},
+                                         {"fill_value": "NaN"},
+                                         {"dtype": "!S1", "fill_value": 0},
+                                         {"order": None},
+                                         {"order": "invalid"},
+                                         {"zarr_format": None},
+                                         {"zarr_format": 1},
+                                         ])
+def test_zarr_invalid_json_wrong_values(dict_update):
+
+    j = {
+        "chunks": [
+            2,
+            3
+        ],
+        "compressor": None,
+        "dtype": '!b1',
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [
+            5,
+            4
+        ],
+        "zarr_format": 2
+    }
+
+    j.update(dict_update)
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
+        with gdaltest.error_handler():
+            ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        assert ds is None
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
