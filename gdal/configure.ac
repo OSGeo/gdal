@@ -1726,6 +1726,41 @@ fi
 AC_SUBST(HAVE_BLOSC,$HAVE_BLOSC)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if lz4 is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(lz4,[  --with-lz4[=ARG]       Include lz4 support (ARG=yes/no/installation_prefix)],,)
+
+if test "$with_lz4" = "" -o "$with_lz4" = "yes" ; then
+  AC_CHECK_LIB(lz4,LZ4_decompress_safe,HAVE_LZ4=yes,HAVE_LZ4=no,)
+
+  if test "$HAVE_LZ4" = "yes" ; then
+    LIBS="-llz4 $LIBS"
+  else
+    if test "$with_lz4" = "yes" ; then
+      AC_MSG_ERROR([liblz4 not found])
+    else
+      echo "liblz4 not found - LZ4 support disabled"
+    fi
+  fi
+elif test "$with_lz4" != "" -a "$with_lz4" != "no"; then
+
+  AC_CHECK_LIB(lz4,LZ4_decompress_safe,HAVE_LZ4=yes,HAVE_LZ4=no,-L$with_lz4/lib)
+
+  if test "$HAVE_LZ4" = "yes" -a -f "$with_lz4/include/lz4.h" ; then
+    LIBS="-L$with_lz4/lib -llz4 $LIBS"
+    EXTRA_INCLUDES="-I$with_lz4/include $EXTRA_INCLUDES"
+  else
+    AC_MSG_ERROR([liblz4 not found])
+  fi
+
+else
+    HAVE_LZ4=no
+fi
+
+AC_SUBST(HAVE_LZ4,$HAVE_LZ4)
+
+dnl ---------------------------------------------------------------------------
 dnl Set up drivers and formats
 dnl ---------------------------------------------------------------------------
 
@@ -6156,6 +6191,7 @@ LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
 LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
 LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
+LOC_MSG([  LZ4 support:               ${HAVE_LZ4}])
 LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])

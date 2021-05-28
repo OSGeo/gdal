@@ -32,6 +32,7 @@ RUN apk add --no-cache \
     ${POPPLER_DEV} postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev hdf5-dev freexl-dev \
+    lz4-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
@@ -336,6 +337,7 @@ RUN apk add --no-cache \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
         netcdf hdf5 freexl \
         openexr libheif xerces-c geos cfitsio minizip \
+        lz4-libs \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

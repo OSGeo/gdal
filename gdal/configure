@@ -826,6 +826,7 @@ PQ_CFLAGS
 GDALFORMATS_ENABLED
 OGRFORMATS_ENABLED_CFLAGS
 OGRFORMATS_ENABLED
+HAVE_LZ4
 HAVE_BLOSC
 ZSTD_SETTING
 LIBLZMA_SETTING
@@ -1007,6 +1008,7 @@ with_spatialite_soname
 with_liblzma
 with_zstd
 with_blosc
+with_lz4
 enable_all_optional_drivers
 enable_driver_aaigrid
 enable_driver_adrg
@@ -2146,6 +2148,7 @@ Optional Packages:
   --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
   --with-zstd=ARG       Include zstd support (ARG=yes/no/installation_prefix)
   --with-blosc=ARG       Include blosc support (ARG=yes/no/installation_prefix)
+  --with-lz4=ARG       Include lz4 support (ARG=yes/no/installation_prefix)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=yes,no)
   --with-grass=ARG      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)
   --with-libgrass=ARG   Include GRASS support based on libgrass (GRASS 5.0+)
@@ -26269,6 +26272,126 @@ HAVE_BLOSC=$HAVE_BLOSC
 
 
 
+
+# Check whether --with-lz4 was given.
+if test "${with_lz4+set}" = set; then :
+  withval=$with_lz4;
+fi
+
+
+if test "$with_lz4" = "" -o "$with_lz4" = "yes" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4_decompress_safe in -llz4" >&5
+$as_echo_n "checking for LZ4_decompress_safe in -llz4... " >&6; }
+if ${ac_cv_lib_lz4_LZ4_decompress_safe+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llz4  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char LZ4_decompress_safe ();
+int
+main ()
+{
+return LZ4_decompress_safe ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_lz4_LZ4_decompress_safe=yes
+else
+  ac_cv_lib_lz4_LZ4_decompress_safe=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lz4_LZ4_decompress_safe" >&5
+$as_echo "$ac_cv_lib_lz4_LZ4_decompress_safe" >&6; }
+if test "x$ac_cv_lib_lz4_LZ4_decompress_safe" = xyes; then :
+  HAVE_LZ4=yes
+else
+  HAVE_LZ4=no
+fi
+
+
+  if test "$HAVE_LZ4" = "yes" ; then
+    LIBS="-llz4 $LIBS"
+  else
+    if test "$with_lz4" = "yes" ; then
+      as_fn_error $? "liblz4 not found" "$LINENO" 5
+    else
+      echo "liblz4 not found - LZ4 support disabled"
+    fi
+  fi
+elif test "$with_lz4" != "" -a "$with_lz4" != "no"; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4_decompress_safe in -llz4" >&5
+$as_echo_n "checking for LZ4_decompress_safe in -llz4... " >&6; }
+if ${ac_cv_lib_lz4_LZ4_decompress_safe+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llz4 -L$with_lz4/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char LZ4_decompress_safe ();
+int
+main ()
+{
+return LZ4_decompress_safe ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_lz4_LZ4_decompress_safe=yes
+else
+  ac_cv_lib_lz4_LZ4_decompress_safe=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lz4_LZ4_decompress_safe" >&5
+$as_echo "$ac_cv_lib_lz4_LZ4_decompress_safe" >&6; }
+if test "x$ac_cv_lib_lz4_LZ4_decompress_safe" = xyes; then :
+  HAVE_LZ4=yes
+else
+  HAVE_LZ4=no
+fi
+
+
+  if test "$HAVE_LZ4" = "yes" -a -f "$with_lz4/include/lz4.h" ; then
+    LIBS="-L$with_lz4/lib -llz4 $LIBS"
+    EXTRA_INCLUDES="-I$with_lz4/include $EXTRA_INCLUDES"
+  else
+    as_fn_error $? "liblz4 not found" "$LINENO" 5
+  fi
+
+else
+    HAVE_LZ4=no
+fi
+
+HAVE_LZ4=$HAVE_LZ4
+
+
+
 GDALFORMATS_ENABLED=
 GDALFORMATS_DISABLED=
 OGRFORMATS_ENABLED=
@@ -45262,6 +45385,9 @@ echo "  libxml2 support:           ${HAVE_LIBXML2}"
 
 
 echo "  LIBZ support:              ${LIBZ_SETTING}"
+
+
+echo "  LZ4 support:               ${HAVE_LZ4}"
 
 
 echo "  MDB support:               ${MDB_ENABLED}"

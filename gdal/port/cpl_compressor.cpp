@@ -47,6 +47,10 @@
 #include <zstd.h>
 #endif
 
+#ifdef HAVE_LZ4
+#include <lz4.h>
+#endif
+
 #include <mutex>
 #include <vector>
 
@@ -495,6 +499,255 @@ static bool CPLZSTDDecompressor (const void* input_data,
 
 #endif // HAVE_ZSTD
 
+#ifdef HAVE_LZ4
+static bool CPLLZ4Compressor  (const void* input_data,
+                               size_t input_size,
+                               void** output_data,
+                               size_t* output_size,
+                               CSLConstList options,
+                               void* /* compressor_user_data */)
+{
+    if( input_size > static_cast<size_t>(std::numeric_limits<int>::max()) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too large input buffer. "
+                 "Max supported is INT_MAX");
+        *output_size = 0;
+        return false;
+    }
+
+    const bool bHeader = CPLTestBool(CSLFetchNameValueDef(options, "HEADER", "YES"));
+    const int header_size = bHeader ? static_cast<int>(sizeof(int32_t)) : 0;
+
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        const int acceleration = atoi(CSLFetchNameValueDef(options, "ACCELERATION", "1"));
+        if( *output_size > static_cast<size_t>(std::numeric_limits<int>::max() - 4) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too large output buffer. "
+                     "Max supported is INT_MAX");
+            *output_size = 0;
+            return false;
+        }
+
+        if( bHeader && static_cast<int>(*output_size) < header_size )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        int ret = LZ4_compress_fast(static_cast<const char*>(input_data),
+                                    static_cast<char*>(*output_data) + header_size,
+                                    static_cast<int>(input_size),
+                                    static_cast<int>(*output_size) - header_size,
+                                    acceleration);
+        if( ret <= 0 || ret > std::numeric_limits<int>::max() - header_size )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        int32_t sizeLSB = CPL_LSBWORD32(static_cast<int>(input_size));
+        memcpy(*output_data, &sizeLSB, sizeof(sizeLSB));
+
+        *output_size = static_cast<size_t>(header_size + ret);
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        *output_size = static_cast<size_t>(header_size) +
+                        LZ4_compressBound(static_cast<int>(input_size));
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        size_t nSafeSize = static_cast<size_t>(header_size) +
+                        LZ4_compressBound(static_cast<int>(input_size));
+        *output_data = VSI_MALLOC_VERBOSE(nSafeSize);
+        *output_size = nSafeSize;
+        if( *output_data == nullptr )
+            return false;
+        bool ret = CPLLZ4Compressor(input_data, input_size,
+                                    output_data, output_size,
+                                    options, nullptr);
+        if( !ret )
+        {
+            VSIFree(*output_data);
+            *output_data = nullptr;
+        }
+        return ret;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+static bool CPLLZ4Decompressor  (const void* input_data,
+                                 size_t input_size,
+                                 void** output_data,
+                                 size_t* output_size,
+                                 CSLConstList options,
+                                 void* /* compressor_user_data */)
+{
+    if( input_size > static_cast<size_t>(std::numeric_limits<int>::max()) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too large input buffer. "
+                 "Max supported is INT_MAX");
+        *output_size = 0;
+        return false;
+    }
+
+    const bool bHeader = CPLTestBool(CSLFetchNameValueDef(options, "HEADER", "YES"));
+    const int header_size = bHeader ? static_cast<int>(sizeof(int32_t)) : 0;
+    if( bHeader && static_cast<int>(input_size) < header_size )
+    {
+        *output_size = 0;
+        return false;
+    }
+
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        if( *output_size > static_cast<size_t>(std::numeric_limits<int>::max()) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too large output buffer. "
+                     "Max supported is INT_MAX");
+            *output_size = 0;
+            return false;
+        }
+
+        int ret = LZ4_decompress_safe(static_cast<const char*>(input_data) + header_size,
+                                      static_cast<char*>(*output_data),
+                                      static_cast<int>(input_size) - header_size,
+                                      static_cast<int>(*output_size));
+        if( ret <= 0 )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        *output_size = ret;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        if( bHeader )
+        {
+            int nSize = CPL_LSBSINT32PTR(input_data);
+            if( nSize < 0 )
+            {
+                *output_size = 0;
+                return false;
+            }
+            *output_size = nSize;
+            return true;
+        }
+
+        // inefficient !
+        void* tmpBuffer = nullptr;
+        bool ret = CPLLZ4Decompressor(input_data, input_size,
+                                      &tmpBuffer, output_size,
+                                      options, nullptr);
+        VSIFree(tmpBuffer);
+        return ret;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        if( bHeader )
+        {
+            int nSize = CPL_LSBSINT32PTR(input_data);
+            if( nSize < 0 )
+            {
+                *output_size = 0;
+                return false;
+            }
+            *output_data = VSI_MALLOC_VERBOSE(nSize);
+            *output_size = nSize;
+            if( *output_data == nullptr )
+            {
+                return false;
+            }
+            if( !CPLLZ4Decompressor(input_data, input_size,
+                                    output_data, output_size,
+                                    options, nullptr) )
+            {
+                VSIFree(*output_data);
+                *output_data = nullptr;
+                *output_size = 0;
+                return false;
+            }
+            return true;
+        }
+
+        size_t nOutSize = static_cast<int>(input_size) < std::numeric_limits<int>::max() / 2 ?
+            input_size * 2 :
+            static_cast<size_t>(std::numeric_limits<int>::max());
+        *output_data = VSI_MALLOC_VERBOSE(nOutSize);
+        if( *output_data == nullptr )
+        {
+            *output_size = 0;
+            return false;
+        }
+
+        while( true )
+        {
+            int ret = LZ4_decompress_safe_partial (
+                static_cast<const char*>(input_data),
+                static_cast<char*>(*output_data),
+                static_cast<int>(input_size),
+                static_cast<int>(nOutSize),
+                static_cast<int>(nOutSize));
+            if( ret <= 0 )
+            {
+                VSIFree(*output_data);
+                *output_data = nullptr;
+                *output_size = 0;
+                return false;
+            }
+            else if( ret < static_cast<int>(nOutSize) )
+            {
+                *output_size = ret;
+                return true;
+            }
+            else if( static_cast<int>(nOutSize) < std::numeric_limits<int>::max() / 2)
+            {
+                nOutSize *= 2;
+                void* tmpBuffer = VSI_REALLOC_VERBOSE(*output_data, nOutSize);
+                if( tmpBuffer == nullptr )
+                {
+                    VSIFree(*output_data);
+                    *output_data = nullptr;
+                    *output_size = 0;
+                    return false;
+                }
+                *output_data = tmpBuffer;
+            }
+            else
+            {
+                VSIFree(*output_data);
+                *output_data = nullptr;
+                *output_size = 0;
+                return false;
+            }
+        }
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+#endif // HAVE_LZ4
+
 static bool CPLZlibCompressor(const void* input_data,
                                  size_t input_size,
                                  void** output_data,
@@ -696,6 +949,24 @@ static void CPLAddBuiltinCompressors()
         CPLAddCompressor(&sComp);
     }
 #endif
+#ifdef HAVE_LZ4
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "lz4";
+        const char* const apszMetadata[] = {
+            "OPTIONS=<Options>"
+            "  <Option name='ACCELERATION' type='int' description='Acceleration factor. The higher, the less compressed' min='1' default='1' />"
+            "  <Option name='HEADER' type='boolean' description='Whether a header with the uncompressed size should be included (as used by Zarr)' default='YES' />"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLLZ4Compressor;
+        sComp.user_data = nullptr;
+        CPLAddCompressor(&sComp);
+    }
+#endif
 }
 
 
@@ -832,6 +1103,23 @@ static void CPLAddBuiltinDecompressors()
         sComp.pszId = "zstd";
         sComp.papszMetadata = nullptr;
         sComp.pfnFunc = CPLZSTDDecompressor;
+        sComp.user_data = nullptr;
+        CPLAddDecompressor(&sComp);
+    }
+#endif
+#ifdef HAVE_LZ4
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.pszId = "lz4";
+        const char* const apszMetadata[] = {
+            "OPTIONS=<Options>"
+            "  <Option name='HEADER' type='boolean' description='Whether a header with the uncompressed size should be included (as used by Zarr)' default='YES' />"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLLZ4Decompressor;
         sComp.user_data = nullptr;
         CPLAddDecompressor(&sComp);
     }
