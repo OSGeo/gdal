@@ -170,6 +170,10 @@ The following open options are available:
 Note: open options are typically specified with "-oo name=value" syntax
 in most OGR utilities, or with the GDALOpenEx() API call.
 
+Note: configuration option :decl_configoption:`OGR_SQLITE_JOURNAL` can 
+be used to set the journal mode of the GeoPackage (and thus SQLite)
+file, see also https://www.sqlite.org/pragma.html#pragma_journal_mode.
+
 Creation Issues
 ---------------
 
