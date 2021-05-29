@@ -42,6 +42,7 @@
 #include <limits>
 #include <memory>
 #include <new>
+#include <type_traits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -3940,7 +3941,7 @@ class GDALUInt128
 
 // The rationale for below optimizations is detailed in statistics.txt
 
-// Use with T = GDT_Byte or GDT_UInt16 only !
+// Use with T = GByte or GUInt16 only !
 template<class T>
 static void ComputeStatisticsInternalGeneric( int nXCheck,
                                        int nBlockXSize,
@@ -3955,6 +3956,8 @@ static void ComputeStatisticsInternalGeneric( int nXCheck,
                                        GUIntBig& nSampleCount,
                                        GUIntBig& nValidCount )
 {
+    static_assert( std::is_same<T, GByte>::value ||
+                   std::is_same<T, GUInt16>::value, "bad type for T" );
     if( bHasNoData )
     {
         // General case
