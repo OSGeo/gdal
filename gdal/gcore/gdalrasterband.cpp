@@ -4947,15 +4947,14 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 /* -------------------------------------------------------------------- */
 /*      Read actual data and compute statistics.                        */
 /* -------------------------------------------------------------------- */
-    bool bFirstValue = true;
     // Using Welford algorithm:
     // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
     // to compute standard deviation in a more numerically robust way than
     // the difference of the sum of square values with the square of the sum.
     // dfMean and dfM2 are updated at each sample.
     // dfM2 is the sum of square of differences to the current mean.
-    double dfMin = 0.0;
-    double dfMax = 0.0;
+    double dfMin = std::numeric_limits<double>::max();
+    double dfMax = -std::numeric_limits<double>::max();
     double dfMean = 0.0;
     double dfM2 = 0.0;
 
@@ -5031,21 +5030,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                                 bGotFloatNoDataValue,
                                                 fNoDataValue,
                                                 bValid );
-                nSampleCount++;
                 if( !bValid )
                     continue;
 
-                if( bFirstValue )
-                {
-                    dfMin = dfValue;
-                    dfMax = dfValue;
-                    bFirstValue = false;
-                }
-                else
-                {
-                    dfMin = std::min(dfMin, dfValue);
-                    dfMax = std::max(dfMax, dfValue);
-                }
+                dfMin = std::min(dfMin, dfValue);
+                dfMax = std::max(dfMax, dfValue);
 
                 nValidCount++;
                 const double dfDelta = dfValue - dfMean;
@@ -5053,6 +5042,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 dfM2 += dfDelta * (dfValue - dfMean);
             }
         }
+
+        nSampleCount = static_cast<GUIntBig>(nXReduced) * nYReduced;
 
         CPLFree( pData );
     }
@@ -5204,7 +5195,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 SetStatistics( nMin, nMax, dfMean, dfStdDev );
             }
 
-        SetValidPercent( nSampleCount, nValidCount );
+            SetValidPercent( nSampleCount, nValidCount );
 
 /* -------------------------------------------------------------------- */
 /*      Record results.                                                 */
@@ -5263,21 +5254,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                                                     fNoDataValue,
                                                     bValid );
 
-                    nSampleCount++;
                     if( !bValid )
                         continue;
 
-                    if( bFirstValue )
-                    {
-                        dfMin = dfValue;
-                        dfMax = dfValue;
-                        bFirstValue = false;
-                    }
-                    else
-                    {
-                        dfMin = std::min(dfMin, dfValue);
-                        dfMax = std::max(dfMax, dfValue);
-                    }
+                    dfMin = std::min(dfMin, dfValue);
+                    dfMax = std::max(dfMax, dfValue);
 
                     nValidCount++;
                     const double dfDelta = dfValue - dfMean;
@@ -5285,6 +5266,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     dfM2 += dfDelta * (dfValue - dfMean);
                 }
             }
+
+            nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
 
             poBlock->DropLock();
 
@@ -5322,6 +5305,11 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
             SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
         }
         SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+    }
+    else
+    {
+        dfMin = 0.0;
+        dfMax = 0.0;
     }
 
     SetValidPercent( nSampleCount, nValidCount );
