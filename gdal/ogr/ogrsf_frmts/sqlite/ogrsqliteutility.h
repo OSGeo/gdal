@@ -36,20 +36,24 @@
 
 #include <set>
 #include <string>
+#include <memory>
 
 class SQLResult
 {
     public:
-        char** papszResult;
-        int nRowCount;
-        int nColCount;
-        char *pszErrMsg;
-        int rc;
+        SQLResult(char** papszResult, int nRow, int nCol);
+        ~SQLResult ();
 
-        SQLResult ();
-        virtual ~SQLResult ();
+        int         RowCount() const;
+        int         ColCount() const;
+        void        LimitRowCount(int nLimit);
 
-        void Reset ();
+        const char* GetValue(int iColumnNum, int iRowNum) const;
+        int         GetValueAsInteger(int iColNum, int iRowNum) const;
+    private:
+        char** papszResult = nullptr;
+        int nRowCount = 0;
+        int nColCount = 0;
 };
 
 
@@ -57,9 +61,7 @@ OGRErr              SQLCommand(sqlite3 *poDb, const char * pszSQL);
 int                 SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
 GIntBig             SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
 
-OGRErr              SQLQuery(sqlite3 *poDb, const char * pszSQL, SQLResult * poResult);
-const char*         SQLResultGetValue(const SQLResult * poResult, int iColumnNum, int iRowNum);
-int                 SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRowNum);
+std::unique_ptr<SQLResult> SQLQuery(sqlite3 *poDb, const char * pszSQL);
 
 int                 SQLiteFieldFromOGR(OGRFieldType eType);
 
