@@ -72,7 +72,7 @@ def batch_creator_by_modules(script_names: Sequence[str] = None, root: Optional[
         root = Path(sys.executable).parents[0] / 'Scripts'
     if script_names is None:
         script_names = get_sub_modules(osgeo_utils)
-    scripts = [root / Path(s).name for s in script_names]
+    scripts = [Path(root) / Path(s).name for s in script_names]
     return batch_creator(scripts)
 
 
