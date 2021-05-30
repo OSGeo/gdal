@@ -4244,27 +4244,6 @@ static void ComputeStatisticsInternal( int nXCheck,
 
 #if (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(_MSC_VER))
 
-#include <emmintrin.h>
-
-#ifdef __SSE4_1__
-#include <smmintrin.h>
-#endif
-
-#if defined(__GNUC__)
-#define ALIGNED_16(x) x __attribute__ ((aligned (16)))
-#else
-#define ALIGNED_16(x) __declspec(align(16)) x
-#endif
-
-// Some convenience macros
-#define ZERO128                      _mm_setzero_si128()
-#ifdef __SSE4_1__
-#define EXTEND_UINT16_TO_UINT32(reg) _mm_cvtepu16_epi32(reg)
-#else
-#define EXTEND_UINT16_TO_UINT32(reg) _mm_unpacklo_epi16(reg, ZERO128)
-#endif
-#define GET_HIGH_64BIT(reg)          _mm_shuffle_epi32(reg, 2 | (3 << 2))
-
 #include "gdal_avx2_emulation.hpp"
 
 #define ZERO256                      GDALmm256_setzero_si256()
