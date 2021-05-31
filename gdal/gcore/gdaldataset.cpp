@@ -3201,9 +3201,15 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * @param nOpenFlags a combination of GDAL_OF_ flags that may be combined
  * through logical or operator.
  * <ul>
- * <li>Driver kind: GDAL_OF_RASTER for raster drivers, GDAL_OF_VECTOR for vector
- *     drivers, GDAL_OF_GNM for Geographic Network Model drivers.
- *     If none of the value is specified, all kinds are implied.</li>
+ * <li>Driver kind:
+ *   <ul>
+ *     <li>GDAL_OF_RASTER for raster drivers,</li>
+ *     <li>GDAL_OF_MULTIDIM_RASTER for multidimensional raster drivers,</li>
+ *     <li>GDAL_OF_VECTOR for vector drivers,</li>
+ *     <li>GDAL_OF_GNM for Geographic Network Model drivers.</li>
+ *    </ul>
+ *    GDAL_OF_RASTER and GDAL_OF_MULTIDIM_RASTER are generally mutually exclusive.
+ *    If none of the value is specified, GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_GNM is implied.</li>
  * <li>Access mode: GDAL_OF_READONLY (exclusive)or GDAL_OF_UPDATE.</li>
  * <li>Shared mode: GDAL_OF_SHARED. If set, it allows the sharing of GDALDataset
  * handles for a dataset with other callers that have set GDAL_OF_SHARED.
