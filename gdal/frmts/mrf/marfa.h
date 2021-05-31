@@ -648,6 +648,9 @@ public:
     CPLErr CompressJPEG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPEG(buf_mgr &dst, buf_mgr &src);
 
+    // Returns true for both JPEG and JPEG-XL (brunsli)
+    static bool IsJPEG(const buf_mgr& src);
+
 #if defined(JPEG12_SUPPORTED) // Internal only
 #define LIBJPEG_12_H "../jpeg/libjpeg12/jpeglib.h"
     CPLErr CompressJPEG12(buf_mgr &dst, buf_mgr &src);
@@ -657,9 +660,10 @@ public:
     const ILImage img;
 
     // JPEG specific flags
-    bool sameres;
-    bool rgb;
-    bool optimize;
+    bool sameres;  // No color space subsample
+    bool rgb;      // No conversion to YCbCr
+    bool optimize; // Optimize Huffman tables
+    bool noJXL;    // JFIF only
 
 private:
     JPEG_Codec& operator= (const JPEG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'

@@ -86,16 +86,15 @@ static CPLErr initBuffer(buf_mgr &b) {
 }
 
 CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
-    const static GUInt32 JPEG_SIG = 0xe0ffd8ff; // JPEG 4CC code
     const static GUInt32 PNG_SIG  = 0x474e5089;  // PNG 4CC code
 
     CPLErr retval = CE_None;
     ILImage image(img);
     GUInt32 signature;
-    memcpy(&signature, src.buffer, sizeof(GUInt32));
+    memcpy(&signature, src.buffer, sizeof(signature));
 
     // test against an LSB signature
-    if (JPEG_SIG == CPL_LSBWORD32(signature)) {
+    if (JPEG_Codec::IsJPEG(src)) {
         image.pagesize.c -= 1;
         JPEG_Codec codec(image);
 
