@@ -542,20 +542,18 @@ void OGRSQLiteDataSource::SaveStatistics()
 
     if( hDB && nSavedAllLayersCacheData == TRUE )
     {
-        SQLResult oResult;
         int nReplaceEventId = -1;
 
-        CPL_IGNORE_RET_VAL( SQLQuery( hDB,
+        auto oResult = SQLQuery( hDB,
                   "SELECT event_id, table_name, geometry_column, event "
-                  "FROM spatialite_history ORDER BY event_id DESC LIMIT 1",
-                  &oResult ) );
+                  "FROM spatialite_history ORDER BY event_id DESC LIMIT 1" );
 
-        if( oResult.nRowCount == 1 )
+        if( oResult->RowCount() == 1 )
         {
-            const char* pszEventId = SQLResultGetValue(&oResult, 0, 0);
-            const char* pszTableName = SQLResultGetValue(&oResult, 1, 0);
-            const char* pszGeomCol = SQLResultGetValue(&oResult, 2, 0);
-            const char* pszEvent = SQLResultGetValue(&oResult, 3, 0);
+            const char* pszEventId = oResult->GetValue(0, 0);
+            const char* pszTableName = oResult->GetValue(1, 0);
+            const char* pszGeomCol = oResult->GetValue(2, 0);
+            const char* pszEvent = oResult->GetValue(3, 0);
 
             if( pszEventId != nullptr && pszTableName != nullptr &&
                 pszGeomCol != nullptr && pszEvent != nullptr &&
@@ -566,7 +564,6 @@ void OGRSQLiteDataSource::SaveStatistics()
                 nReplaceEventId = atoi(pszEventId);
             }
         }
-        SQLResultFree(&oResult);
 
         const char* pszNow = HasSpatialite4Layout() ?
             "strftime('%Y-%m-%dT%H:%M:%fZ','now')" : "DateTime('now')";

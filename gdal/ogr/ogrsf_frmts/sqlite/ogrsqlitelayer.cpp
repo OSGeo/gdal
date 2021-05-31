@@ -246,21 +246,19 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
     if( !bIsSelect )
     {
         // oField.GetNameRef() can be better than sqlite3_column_name() on views
-        SQLResult oResultTable;
         char* pszSQL = sqlite3_mprintf("PRAGMA table_info('%q')", pszLayerName);
-        CPL_IGNORE_RET_VAL(SQLQuery(poDS->GetDB(), pszSQL, &oResultTable));
+        auto oResultTable = SQLQuery(poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
-        if( oResultTable.nColCount == 6 )
+        if( oResultTable->ColCount() == 6 )
         {
-            for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
+            for ( int iRecord = 0; iRecord < oResultTable->RowCount(); iRecord++ )
             {
-                const char *pszName = SQLResultGetValue(&oResultTable, 1, iRecord);
-                const char *pszType = SQLResultGetValue(&oResultTable, 2, iRecord);
+                const char *pszName = oResultTable->GetValue(1, iRecord);
+                const char *pszType = oResultTable->GetValue(2, iRecord);
                 if( pszName && pszType )
                     oMapTableInfo[pszName] = pszType;
             }
         }
-        SQLResultFree(&oResultTable);
     }
 
     const int nRawColumns = sqlite3_column_count( hStmtIn );
