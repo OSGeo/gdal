@@ -110,6 +110,7 @@ typedef __m256i GDALm256i;
 
 #define GDALmm256_set1_epi8             _mm256_set1_epi8
 #define GDALmm256_set1_epi16            _mm256_set1_epi16
+#define GDALmm256_set1_epi32            _mm256_set1_epi32
 #define GDALmm256_setzero_si256         _mm256_setzero_si256
 #define GDALmm256_load_si256            _mm256_load_si256
 #define GDALmm256_store_si256           _mm256_store_si256
@@ -136,6 +137,10 @@ typedef __m256i GDALm256i;
 #define GDALmm256_sub_epi16             _mm256_sub_epi16
 #define GDALmm256_min_epi16             _mm256_min_epi16
 #define GDALmm256_max_epi16             _mm256_max_epi16
+#define GDALmm256_srli_epi16            _mm256_srli_epi16
+#define GDALmm256_srli_epi32            _mm256_srli_epi32
+#define GDALmm256_srli_epi64            _mm256_srli_epi64
+#define GDALmm256_set1_epi64x           _mm256_set1_epi64x
 
 #else
 
@@ -158,6 +163,22 @@ static inline GDALm256i GDALmm256_set1_epi16(short s)
     GDALm256i reg;
     reg.low = _mm_set1_epi16(s);
     reg.high = _mm_set1_epi16(s);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_set1_epi32(int i)
+{
+    GDALm256i reg;
+    reg.low = _mm_set1_epi32(i);
+    reg.high = _mm_set1_epi32(i);
+    return reg;
+}
+
+static inline GDALm256i GDALmm256_set1_epi64x(long long i)
+{
+    GDALm256i reg;
+    reg.low = _mm_set1_epi64x(i);
+    reg.high = _mm_set1_epi64x(i);
     return reg;
 }
 
@@ -234,6 +255,30 @@ DEFINE_CVTE_MM256(GDALmm256_cvtepu8_epi16, GDALmm_cvtepu8_epi16)
 DEFINE_CVTE_MM256(GDALmm256_cvtepu16_epi32, GDALmm_cvtepu16_epi32)
 DEFINE_CVTE_MM256(GDALmm256_cvtepu16_epi64, GDALmm_cvtepu16_epi64)
 DEFINE_CVTE_MM256(GDALmm256_cvtepu32_epi64, GDALmm_cvtepu32_epi64)
+
+static inline GDALm256i GDALmm256_srli_epi16(GDALm256i reg, int imm)
+{
+    GDALm256i ret;
+    ret.low = _mm_srli_epi16(reg.low, imm);
+    ret.high = _mm_srli_epi16(reg.high, imm);
+    return ret;
+}
+
+static inline GDALm256i GDALmm256_srli_epi32(GDALm256i reg, int imm)
+{
+    GDALm256i ret;
+    ret.low = _mm_srli_epi32(reg.low, imm);
+    ret.high = _mm_srli_epi32(reg.high, imm);
+    return ret;
+}
+
+static inline GDALm256i GDALmm256_srli_epi64(GDALm256i reg, int imm)
+{
+    GDALm256i ret;
+    ret.low = _mm_srli_epi64(reg.low, imm);
+    ret.high = _mm_srli_epi64(reg.high, imm);
+    return ret;
+}
 
 #endif
 
