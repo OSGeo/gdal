@@ -4446,7 +4446,7 @@ OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreat
 /* -------------------------------------------------------------------- */
 /*      Recreate existing related tables, triggers and index            */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < oTriggers->RowCount() && eErr == OGRERR_NONE; i++)
+    for( int i = 0; oTriggers && i < oTriggers->RowCount() && eErr == OGRERR_NONE; i++)
     {
         const char* pszSQLTriggerIdx = oTriggers->GetValue( 0, i );
         if (pszSQLTriggerIdx != nullptr && *pszSQLTriggerIdx != '\0')
