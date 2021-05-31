@@ -5477,9 +5477,6 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
 CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                                             double* adfMinMax )
 {
-    double dfMin = 0.0;
-    double dfMax = 0.0;
-
 /* -------------------------------------------------------------------- */
 /*      Does the driver already know the min/max?                       */
 /* -------------------------------------------------------------------- */
@@ -5488,8 +5485,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         int bSuccessMin = FALSE;
         int bSuccessMax = FALSE;
 
-        dfMin = GetMinimum( &bSuccessMin );
-        dfMax = GetMaximum( &bSuccessMax );
+        double dfMin = GetMinimum( &bSuccessMin );
+        double dfMax = GetMaximum( &bSuccessMax );
 
         if( bSuccessMin && bSuccessMax )
         {
@@ -5530,7 +5527,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    bool bFirstValue = true;
+    double dfMin = std::numeric_limits<double>::max();
+    double dfMax = -std::numeric_limits<double>::max();
     if ( bApproxOK && HasArbitraryOverviews() )
     {
 /* -------------------------------------------------------------------- */
@@ -5587,17 +5585,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                 if( !bValid )
                     continue;
 
-                if( bFirstValue )
-                {
-                    dfMin = dfValue;
-                    dfMax = dfValue;
-                    bFirstValue = false;
-                }
-                else
-                {
-                    dfMin = std::min(dfMin, dfValue);
-                    dfMax = std::max(dfMax, dfValue);
-                }
+                dfMin = std::min(dfMin, dfValue);
+                dfMax = std::max(dfMax, dfValue);
             }
         }
 
@@ -5663,17 +5652,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     if( !bValid )
                         continue;
 
-                    if( bFirstValue )
-                    {
-                        dfMin = dfValue;
-                        dfMax = dfValue;
-                        bFirstValue = false;
-                    }
-                    else
-                    {
-                        dfMin = std::min(dfMin, dfValue);
-                        dfMax = std::max(dfMax, dfValue);
-                    }
+                    dfMin = std::min(dfMin, dfValue);
+                    dfMax = std::max(dfMax, dfValue);
                 }
             }
 
@@ -5681,16 +5661,18 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         }
     }
 
-    adfMinMax[0] = dfMin;
-    adfMinMax[1] = dfMax;
-
-    if (bFirstValue)
+    if( dfMin > dfMax )
     {
+        adfMinMax[0] = 0;
+        adfMinMax[1] = 0;
         ReportError(
             CE_Failure, CPLE_AppDefined,
             "Failed to compute min/max, no valid pixels found in sampling." );
         return CE_Failure;
     }
+
+    adfMinMax[0] = dfMin;
+    adfMinMax[1] = dfMax;
 
     return CE_None;
 }
