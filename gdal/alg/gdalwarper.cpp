@@ -1858,7 +1858,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognise ResampleAlg value '%s'.",
+                  "Unrecognised ResampleAlg value '%s'.",
                   pszValue );
     }
 
