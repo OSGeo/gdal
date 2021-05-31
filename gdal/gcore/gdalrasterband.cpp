@@ -4248,6 +4248,133 @@ static void ComputeStatisticsInternal( int nXCheck,
 
 #define ZERO256                      GDALmm256_setzero_si256()
 
+template<bool COMPUTE_MIN, bool COMPUTE_MAX>
+static void ComputeStatisticsByteNoNodata( GPtrDiff_t nBlockPixels,
+                                           // assumed to be aligned on 256 bits
+                                           const GByte* pData,
+                                           GUInt32& nMin,
+                                           GUInt32& nMax,
+                                           GUIntBig& nSum,
+                                           GUIntBig& nSumSquare,
+                                           GUIntBig& nSampleCount,
+                                           GUIntBig& nValidCount )
+{
+    // 32-byte alignment may not be enforced by linker, so do it at hand
+    GByte aby32ByteUnaligned[32+32+32+32+32];
+    GByte* paby32ByteAligned = aby32ByteUnaligned +
+                                (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
+    GByte* pabyMin = paby32ByteAligned;
+    GByte* pabyMax = paby32ByteAligned + 32;
+    GUInt32* panSum = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2);
+    GUInt32* panSumSquare = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3);
+
+    GPtrDiff_t i = 0;
+    // Make sure that sumSquare can fit on uint32
+    // * 8 since we can hold 8 sums per vector register
+    const int nMaxIterationsPerInnerLoop = 8 *
+            ((std::numeric_limits<GUInt32>::max() / (255 * 255)) & ~31);
+    GPtrDiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
+    if( (nBlockPixels % nMaxIterationsPerInnerLoop) != 0 )
+        nOuterLoops ++;
+
+    GDALm256i ymm_min = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
+    GDALm256i ymm_max = ymm_min;
+    const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
+
+    for( GPtrDiff_t k=0; k< nOuterLoops; k++ )
+    {
+        const auto iMax = std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
+
+        // holds 4 uint32 sums in [0], [2], [4] and [6]
+        GDALm256i ymm_sum = ZERO256;
+        GDALm256i ymm_sumsquare = ZERO256; // holds 8 uint32 sums
+        for( ;i+31<iMax; i+=32 )
+        {
+            const GDALm256i ymm = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
+            if( COMPUTE_MIN )
+            {
+                ymm_min = GDALmm256_min_epu8 (ymm_min, ymm);
+            }
+            if( COMPUTE_MAX )
+            {
+                ymm_max = GDALmm256_max_epu8 (ymm_max, ymm);
+            }
+
+            // Extract even-8bit values
+            const GDALm256i ymm_even = GDALmm256_and_si256(ymm, ymm_mask_8bits);
+            // Compute square of those 16 values as 32 bit result
+            // and add adjacent pairs
+            const GDALm256i ymm_even_square =
+                                        GDALmm256_madd_epi16(ymm_even, ymm_even);
+            // Add to the sumsquare accumulator
+            ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_even_square);
+
+            // Extract odd-8bit values
+            const GDALm256i ymm_odd = GDALmm256_srli_epi16(ymm, 8);
+            const GDALm256i ymm_odd_square =
+                                    GDALmm256_madd_epi16(ymm_odd, ymm_odd);
+            ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_odd_square);
+
+            // Now compute the sums
+            ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                       GDALmm256_sad_epu8(ymm, ZERO256));
+        }
+
+        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
+        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
+
+        nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
+        nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
+                      panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
+                      panSumSquare[4] + panSumSquare[5] + panSumSquare[6] +
+                      panSumSquare[7];
+    }
+
+    if( COMPUTE_MIN )
+    {
+        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMin), ymm_min);
+    }
+    if( COMPUTE_MAX )
+    {
+        GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMax), ymm_max);
+    }
+    if( COMPUTE_MIN || COMPUTE_MAX )
+    {
+        for(int j=0;j<32;j++)
+        {
+            if( COMPUTE_MIN )
+            {
+                if( pabyMin[j] < nMin ) nMin = pabyMin[j];
+            }
+            if( COMPUTE_MAX )
+            {
+                if( pabyMax[j] > nMax ) nMax = pabyMax[j];
+            }
+        }
+    }
+
+    for( ; i<nBlockPixels; i++)
+    {
+        const GUInt32 nValue = pData[i];
+        if( COMPUTE_MIN )
+        {
+            if( nValue < nMin )
+                nMin = nValue;
+        }
+        if( COMPUTE_MAX )
+        {
+            if( nValue > nMax )
+                nMax = nValue;
+        }
+        nSum += nValue;
+        nSumSquare += nValue * nValue;
+    }
+
+    nSampleCount += static_cast<GUIntBig>(nBlockPixels);
+    nValidCount += static_cast<GUIntBig>(nBlockPixels);
+}
+
+
 // SSE2/AVX2 optimization for GByte case
 // In pure SSE2, this relies on gdal_avx2_emulation.hpp. There is no
 // penaly in using the emulation, because, given the mm256 intrinsics used here,
@@ -4296,6 +4423,7 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                         static_cast<GByte>(nMin) );
         GDALm256i ymm_min = ymm_neutral;
         GDALm256i ymm_max = ymm_neutral;
+        const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
 
         const bool bComputeMinMax = nMin > 0 || nMax < 255;
 
@@ -4342,22 +4470,22 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
                                                   ymm_nodata_by_neutral);
                 }
 
-                // Extend lower 128 bits of ymm from uint8 to uint16
-                const GDALm256i ymm_low = GDALmm256_cvtepu8_epi16(
-                            GDALmm256_extracti128_si256(ymm_nodata_by_zero, 0));
+                // Extract even-8bit values
+                const GDALm256i ymm_even =
+                    GDALmm256_and_si256(ymm_nodata_by_zero, ymm_mask_8bits);
                 // Compute square of those 16 values as 32 bit result
                 // and add adjacent pairs
-                const GDALm256i ymm_low_square =
-                                            GDALmm256_madd_epi16(ymm_low, ymm_low);
+                const GDALm256i ymm_even_square =
+                                            GDALmm256_madd_epi16(ymm_even, ymm_even);
                 // Add to the sumsquare accumulator
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_low_square);
+                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_even_square);
 
-                // Same as before with high 128bits of ymm
-                const GDALm256i ymm_high = GDALmm256_cvtepu8_epi16(
-                            GDALmm256_extracti128_si256(ymm_nodata_by_zero, 1));
-                const GDALm256i ymm_high_square =
-                                        GDALmm256_madd_epi16(ymm_high, ymm_high);
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_high_square);
+                // Extract odd-8bit values
+                const GDALm256i ymm_odd =
+                    GDALmm256_srli_epi16(ymm_nodata_by_zero, 8);
+                const GDALm256i ymm_odd_square =
+                                        GDALmm256_madd_epi16(ymm_odd, ymm_odd);
+                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_odd_square);
 
                 // Now compute the sums
                 ymm_sum = GDALmm256_add_epi32(ymm_sum,
@@ -4411,101 +4539,40 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
     }
     else if( !bHasNoData && nXCheck == nBlockXSize && nBlockPixels >= 32 )
     {
-        // 32-byte alignment may not be enforced by linker, so do it at hand
-        GByte aby32ByteUnaligned[32+32+32+32+32];
-        GByte* paby32ByteAligned = aby32ByteUnaligned +
-                                    (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
-        GByte* pabyMin = paby32ByteAligned;
-        GByte* pabyMax = paby32ByteAligned + 32;
-        GUInt32* panSum = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*2);
-        GUInt32* panSumSquare = reinterpret_cast<GUInt32*>(paby32ByteAligned + 32*3);
-
-        GPtrDiff_t i = 0;
-        // Make sure that sumSquare can fit on uint32
-        // * 8 since we can hold 8 sums per vector register
-        const int nMaxIterationsPerInnerLoop = 8 *
-                ((std::numeric_limits<GUInt32>::max() / (255 * 255)) & ~31);
-        GPtrDiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
-        if( (nBlockPixels % nMaxIterationsPerInnerLoop) != 0 )
-            nOuterLoops ++;
-
-        GDALm256i ymm_min = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
-        GDALm256i ymm_max = ymm_min;
-
-        const bool bComputeMinMax = nMin > 0 || nMax < 255;
-
-        for( GPtrDiff_t k=0; k< nOuterLoops; k++ )
+        if( nMin > 0 )
         {
-            const auto iMax = std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
-
-            // holds 4 uint32 sums in [0], [2], [4] and [6]
-            GDALm256i ymm_sum = ZERO256;
-            GDALm256i ymm_sumsquare = ZERO256; // holds 8 uint32 sums
-            for( ;i+31<iMax; i+=32 )
+            if( nMax < 255 )
             {
-                const GDALm256i ymm = GDALmm256_load_si256(reinterpret_cast<const GDALm256i*>(pData + i));
-                if( bComputeMinMax )
-                {
-                    ymm_min = GDALmm256_min_epu8 (ymm_min, ymm);
-                    ymm_max = GDALmm256_max_epu8 (ymm_max, ymm);
-                }
-
-                // Extend lower 128 bits of ymm from uint8 to uint16
-                const GDALm256i ymm_low = GDALmm256_cvtepu8_epi16(
-                                            GDALmm256_extracti128_si256(ymm, 0));
-                // Compute square of those 16 values as 32 bit result
-                // and add adjacent pairs
-                const GDALm256i ymm_low_square =
-                                            GDALmm256_madd_epi16(ymm_low, ymm_low);
-                // Add to the sumsquare accumulator
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_low_square);
-
-                // Same as before with high 128bits of ymm
-                const GDALm256i ymm_high = GDALmm256_cvtepu8_epi16(
-                                            GDALmm256_extracti128_si256(ymm, 1));
-                const GDALm256i ymm_high_square =
-                                        GDALmm256_madd_epi16(ymm_high, ymm_high);
-                ymm_sumsquare = GDALmm256_add_epi32(ymm_sumsquare, ymm_high_square);
-
-                // Now compute the sums
-                ymm_sum = GDALmm256_add_epi32(ymm_sum,
-                                           GDALmm256_sad_epu8(ymm, ZERO256));
+                ComputeStatisticsByteNoNodata<true, true>(
+                    nBlockPixels, pData,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
             }
-
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSum), ymm_sum);
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(panSumSquare), ymm_sumsquare);
-
-            nSum += panSum[0] + panSum[2] + panSum[4] + panSum[6];
-            nSumSquare += static_cast<GUIntBig>(panSumSquare[0]) +
-                          panSumSquare[1] + panSumSquare[2] + panSumSquare[3] +
-                          panSumSquare[4] + panSumSquare[5] + panSumSquare[6] +
-                          panSumSquare[7];
-        }
-
-        if( bComputeMinMax )
-        {
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMin), ymm_min);
-            GDALmm256_store_si256(reinterpret_cast<GDALm256i*>(pabyMax), ymm_max);
-            for(int j=0;j<32;j++)
+            else
             {
-                if( pabyMin[j] < nMin ) nMin = pabyMin[j];
-                if( pabyMax[j] > nMax ) nMax = pabyMax[j];
+                ComputeStatisticsByteNoNodata<true, false>(
+                    nBlockPixels, pData,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
             }
         }
-
-        for( ; i<nBlockPixels; i++)
+        else
         {
-            const GUInt32 nValue = pData[i];
-            if( nValue < nMin )
-                nMin = nValue;
-            if( nValue > nMax )
-                nMax = nValue;
-            nSum += nValue;
-            nSumSquare += nValue * nValue;
+            if( nMax < 255 )
+            {
+                ComputeStatisticsByteNoNodata<false, true>(
+                    nBlockPixels, pData,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
+            }
+            else
+            {
+                ComputeStatisticsByteNoNodata<false, false>(
+                    nBlockPixels, pData,
+                    nMin, nMax,
+                    nSum, nSumSquare, nSampleCount, nValidCount );
+            }
         }
-
-        nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
-        nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
     }
     else
     {
@@ -4563,6 +4630,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             nOuterLoops ++;
 
         const bool bComputeMinMax = nMin > 0 || nMax < 65535;
+        const auto ymm_mask_16bits = GDALmm256_set1_epi32(0xFFFF);
+        const auto ymm_mask_32bits = GDALmm256_set1_epi64x(0xFFFFFFFF);
 
         GUIntBig nSumThis = 0;
         for( int k=0; k< nOuterLoops; k++ )
@@ -4580,52 +4649,21 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                     ymm_max = GDALmm256_max_epi16 (ymm_max, ymm_shifted);
                 }
 
-                // Extend the 8 lower uint16 to uint32
-                const GDALm256i ymm_low = GDALmm256_cvtepu16_epi32(
-                                            GDALmm256_extracti128_si256(ymm, 0));
-                const GDALm256i ymm_high = GDALmm256_cvtepu16_epi32(
-                                            GDALmm256_extracti128_si256(ymm, 1));
-
-#ifndef naive_version
                 // Note: the int32 range can overflow for (0-32768)^2 +
                 // (0-32768)^2 = 0x80000000, but as we know the result is
                 // positive, this is OK as we interpret is a uint32.
                 const GDALm256i ymm_square = GDALmm256_madd_epi16(ymm_shifted,
                                                                   ymm_shifted);
-                const GDALm256i ymm_square_low = GDALmm256_cvtepu32_epi64(
-                                    GDALmm256_extracti128_si256(ymm_square, 0));
                 ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare,
-                                                    ymm_square_low);
-                const GDALm256i ymm_square_high = GDALmm256_cvtepu32_epi64(
-                                    GDALmm256_extracti128_si256(ymm_square, 1));
+                                    GDALmm256_and_si256(ymm_square, ymm_mask_32bits));
                 ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare,
-                                                    ymm_square_high);
-#else
-                // Compute square of those 8 values
-                const GDALm256i ymm_low2 = GDALmm256_mullo_epi32(ymm_low, ymm_low);
-                // Extract 4 low uint32 and extend them to uint64
-                const GDALm256i ymm_low2_low = GDALmm256_cvtepu32_epi64(
-                                            GDALmm256_extracti128_si256(ymm_low2, 0));
-                // Extract 4 high uint32 and extend them to uint64
-                const GDALm256i ymm_low2_high = GDALmm256_cvtepu32_epi64(
-                                            GDALmm256_extracti128_si256(ymm_low2, 1));
-                // Add to the sumsquare accumulator
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_low2_low);
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_low2_high);
-
-                // Same with the 8 upper uint16
-                const GDALm256i ymm_high2 = GDALmm256_mullo_epi32(ymm_high, ymm_high);
-                const GDALm256i ymm_high2_low = GDALmm256_cvtepu32_epi64(
-                                            GDALmm256_extracti128_si256(ymm_high2, 0));
-                const GDALm256i ymm_high2_high = GDALmm256_cvtepu32_epi64(
-                                            GDALmm256_extracti128_si256(ymm_high2, 1));
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_high2_low);
-                ymm_sumsquare = GDALmm256_add_epi64(ymm_sumsquare, ymm_high2_high);
-#endif
+                                    GDALmm256_srli_epi64(ymm_square, 32));
 
                 // Now compute the sums
-                ymm_sum = GDALmm256_add_epi32(ymm_sum, ymm_low);
-                ymm_sum = GDALmm256_add_epi32(ymm_sum, ymm_high);
+                ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                  GDALmm256_and_si256(ymm, ymm_mask_16bits));
+                ymm_sum = GDALmm256_add_epi32(ymm_sum,
+                                  GDALmm256_srli_epi32(ymm, 16));
             }
 
             GUInt32 anSum[8];
@@ -4656,10 +4694,10 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
         GDALmm256_storeu_si256(reinterpret_cast<GDALm256i*>(anSumSquare), ymm_sumsquare);
         nSumSquare += anSumSquare[0] +
                         anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
-#ifndef naive_version
+
         // Unshift the sum of squares
         UnshiftSumSquare(nSumSquare, nSumThis, static_cast<GUIntBig>(i));
-#endif
+
         nSum += nSumThis;
 
         for( ; i<nBlockPixels; i++)
