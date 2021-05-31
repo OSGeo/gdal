@@ -41,11 +41,11 @@
 class SQLResult
 {
     public:
-        SQLResult(char** papszResult, int nRow, int nCol);
+        SQLResult(char** result, int nRow, int nCol);
         ~SQLResult ();
 
-        int         RowCount() const;
-        int         ColCount() const;
+        int         RowCount() const { return nRowCount; }
+        int         ColCount() const { return nColCount; }
         void        LimitRowCount(int nLimit);
 
         const char* GetValue(int iColumnNum, int iRowNum) const;

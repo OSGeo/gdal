@@ -51,15 +51,6 @@ SQLResult::~SQLResult () {
     }
 }
 
-
-int SQLResult::RowCount() const {
-    return nRowCount;
-}
-
-int SQLResult::ColCount() const {
-    return nColCount;
-}
-
 void SQLResult::LimitRowCount(int nLimit) {
     nRowCount = nLimit;
 }
