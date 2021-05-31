@@ -4407,6 +4407,8 @@ OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreat
                                 m_pszTableName, osColumnsForCreate.c_str());
         eErr = SQLCommand( hDB, pszSQL );
         sqlite3_free(pszSQL);
+    } else {
+        eErr = OGRERR_FAILURE;
     }
 
     if( eErr == OGRERR_NONE )
@@ -4804,6 +4806,10 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
             SQLEscapeName(osOldColName).c_str() );
         oTriggers = SQLQuery(hDB, pszSQL);
         sqlite3_free(pszSQL);
+
+        if (!oTriggers) {
+            eErr = OGRERR_FAILURE;
+        }
 
         for( int i = 0; oTriggers && i < oTriggers->RowCount(); i++)
         {
