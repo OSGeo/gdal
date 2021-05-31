@@ -523,7 +523,9 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         if( nBand > 1 && pLineStart != nullptr )
         {
             // BIP interleaved
-            return cpl::down_cast<RawRasterBand*>(poDS->GetRasterBand(1))->AccessLine(iLine);
+            auto poFirstBand = cpl::down_cast<RawRasterBand*>(poDS->GetRasterBand(1));
+            CPLAssert(poFirstBand);
+            return poFirstBand->AccessLine(iLine);
         }
         return CE_Failure;
     }
