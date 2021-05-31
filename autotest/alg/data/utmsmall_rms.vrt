@@ -11,7 +11,7 @@
   <BlockYSize>50</BlockYSize>
   <GDALWarpOptions>
     <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
-    <ResampleAlg>RMS</ResampleAlg>
+    <ResampleAlg>RootMeanSquare</ResampleAlg>
     <WorkingDataType>Byte</WorkingDataType>
     <Option name="INIT_DEST">0</Option>
     <Option name="EXTRA_ELTS">1</Option>
