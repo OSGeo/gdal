@@ -2410,7 +2410,10 @@ public:
      *
      * This is used in particular for caching.
      *
-     * Might be empty if the array is not linked to a file. */
+     * Might be empty if the array is not linked to a file.
+     * 
+     * @since GDAL 3.4
+     */
     virtual const std::string& GetFilename() const = 0;
 
     virtual CSLConstList GetStructuralInfo() const;
