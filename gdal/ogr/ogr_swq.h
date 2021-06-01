@@ -415,11 +415,12 @@ const char CPL_UNSTABLE_API *swq_select_summarize( swq_select *select_info,
 
 int CPL_UNSTABLE_API swq_is_reserved_keyword(const char* pszStr);
 
-char CPL_UNSTABLE_API *OGRHStoreGetValue(const char* pszHStore, 
+char CPL_UNSTABLE_API *OGRHStoreGetValue(const char* pszHStore,
                                          const char* pszSearchedKey);
 
 #ifdef GDAL_COMPILATION
 void swq_fixup(swq_parse_context* psParseContext);
+swq_expr_node* swq_create_and_or_or(swq_op op, swq_expr_node* left, swq_expr_node* right);
 #endif
 
 #endif /* #ifndef DOXYGEN_SKIP */

@@ -641,7 +641,7 @@ def test_ogr_rfc28_28():
         if ret == 'fail':
             return ret
 
-    
+
 ###############################################################################
 # Test behaviour of binary operations when one operand is a NULL value
 
@@ -1379,6 +1379,59 @@ def test_ogr_rfc28_many_and():
     assert lyr.SetAttributeFilter(sql) == 0
     f = lyr.GetNextFeature()
     assert f is not None
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/3919
+
+def test_ogr_rfc28_nested_or():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
+    field = ogr.FieldDefn('fclass', ogr.OFTString)
+    lyr.CreateField(field)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('fclass', 'x')
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    tests_ok = [
+        """(fclass = 'a' OR fclass = 'b') OR (fclass = 'c' OR fclass = 'd' OR fclass = 'x')""",
+        """(fclass = 'c' OR fclass = 'd' OR fclass = 'x') OR (fclass = 'a' OR fclass = 'b')""",
+        """fclass = 'c' OR fclass = 'd' OR fclass = 'x'""",
+        """fclass = 'c' OR (fclass = 'd' OR fclass = 'x')""",
+        """(fclass = 'c' OR fclass = 'd') OR fclass = 'x'""",
+        """fclass = 'x' OR fclass = 'c' OR fclass = 'd'""",
+        """fclass = 'x' OR (fclass = 'c' OR fclass = 'd')""",
+        """(fclass = 'x' OR fclass = 'd') OR fclass = 'd'""",
+        """(fclass = 'a' OR fclass = 'b' OR fclass = 'b2') OR (fclass = 'c' OR fclass = 'd' OR fclass = 'x')""",
+        """(1 = 0) OR (fclass = 'c' OR fclass = 'd' OR fclass = 'x')""",
+        """(fclass = 'c' OR fclass = 'd' OR fclass = 'x') OR (1 = 0)""",
+        """(1 = 0 OR 1 = 0 OR 1 = 1) AND (fclass = 'c' OR fclass = 'd' OR fclass = 'x')""",
+    ]
+
+    for sql in tests_ok:
+        lyr.SetAttributeFilter(sql)
+        assert lyr.GetFeatureCount() == 1, sql
+
+    tests_ko = [
+        """(fclass = 'a' OR fclass = 'b') OR (fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+        """(fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET') OR (fclass = 'a' OR fclass = 'b')""",
+        """fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET'""",
+        """fclass = 'c' OR (fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+        """(fclass = 'c' OR fclass = 'd') OR fclass = 'COND_NOT_MET'""",
+        """fclass = 'COND_NOT_MET' OR fclass = 'c' OR fclass = 'd'""",
+        """fclass = 'COND_NOT_MET' OR (fclass = 'c' OR fclass = 'd')""",
+        """(fclass = 'COND_NOT_MET' OR fclass = 'd') OR fclass = 'd'""",
+        """(fclass = 'a' OR fclass = 'b' OR fclass = 'b2') OR (fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+        """(1 = 0) OR (fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+        """(fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET') OR (1 = 0)""",
+        """(1 = 0 OR 1 = 0 OR 1 = 1) AND (fclass = 'c' OR fclass = 'd' OR fclass = 'COND_NOT_MET')""",
+    ]
+
+    for sql in tests_ko:
+        lyr.SetAttributeFilter(sql)
+        assert lyr.GetFeatureCount() == 0, sql
+
 
 ###############################################################################
 # Test fix for https://github.com/OSGeo/gdal/issues/3249
