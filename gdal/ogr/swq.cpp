@@ -779,7 +779,10 @@ static void swq_fixup_expression(swq_expr_node* node)
             {
                 std::vector<swq_expr_node*> exprs;
                 for( int i = 0; i < node->nSubExprCount; i++ )
+                {
+                    swq_fixup_expression(node->papoSubExpr[i]);
                     exprs.push_back(node->papoSubExpr[i]);
+                }
                 node->nSubExprCount = 0;
                 CPLFree( node->papoSubExpr );
                 node->papoSubExpr = nullptr;
