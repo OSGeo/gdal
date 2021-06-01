@@ -141,50 +141,12 @@ value_expr:
 
     | value_expr SWQT_AND value_expr
         {
-            $$ = new swq_expr_node( SWQ_AND );
-            $$->field_type = SWQ_BOOLEAN;
-
-            if( $1->eNodeType == SNT_OPERATION &&
-                $1->nOperation == SWQ_AND  )
-            {
-                // Temporary non-binary formulation
-                $$->nSubExprCount = $1->nSubExprCount;
-                $$->papoSubExpr = $1->papoSubExpr;
-                $$->PushSubExpression( $3 );
-
-                $1->nSubExprCount = 0;
-                $1->papoSubExpr= nullptr;
-                delete $1;
-            }
-            else
-            {
-                $$->PushSubExpression( $1 );
-                $$->PushSubExpression( $3 );
-            }
+            $$ = swq_create_and_or_or( SWQ_AND, $1, $3 );
         }
 
     | value_expr SWQT_OR value_expr
         {
-            $$ = new swq_expr_node( SWQ_OR );
-            $$->field_type = SWQ_BOOLEAN;
-
-            if( $1->eNodeType == SNT_OPERATION &&
-                $1->nOperation == SWQ_OR  )
-            {
-                // Temporary non-binary formulation
-                $$->nSubExprCount = $1->nSubExprCount;
-                $$->papoSubExpr = $1->papoSubExpr;
-                $$->PushSubExpression( $3 );
-
-                $1->nSubExprCount = 0;
-                $1->papoSubExpr= nullptr;
-                delete $1;
-            }
-            else
-            {
-                $$->PushSubExpression( $1 );
-                $$->PushSubExpression( $3 );
-            }
+            $$ = swq_create_and_or_or( SWQ_OR, $1, $3 );
         }
 
     | SWQT_NOT value_expr

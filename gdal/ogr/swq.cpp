@@ -845,6 +845,65 @@ void swq_fixup(swq_parse_context* psParseContext)
 }
 
 /************************************************************************/
+/*                       swq_create_and_or_or()                         */
+/************************************************************************/
+
+swq_expr_node* swq_create_and_or_or(swq_op op, swq_expr_node* left, swq_expr_node* right)
+{
+    auto poNode = new swq_expr_node( op );
+    poNode->field_type = SWQ_BOOLEAN;
+
+    if( left->eNodeType == SNT_OPERATION &&
+        left->nOperation == op  )
+    {
+        // Temporary non-binary formulation
+        if( right->eNodeType == SNT_OPERATION &&
+            right->nOperation == op  )
+        {
+            poNode->nSubExprCount = left->nSubExprCount + right->nSubExprCount;
+            poNode->papoSubExpr = static_cast<swq_expr_node **>(
+                CPLRealloc( left->papoSubExpr, sizeof(swq_expr_node*) * poNode->nSubExprCount ));
+            memcpy(poNode->papoSubExpr + left->nSubExprCount,
+                   right->papoSubExpr,
+                   right->nSubExprCount * sizeof(swq_expr_node*));
+
+            right->nSubExprCount = 0;
+            right->papoSubExpr = nullptr;
+            delete right;
+        }
+        else
+        {
+            poNode->nSubExprCount = left->nSubExprCount;
+            poNode->papoSubExpr = left->papoSubExpr;
+            poNode->PushSubExpression( right );
+        }
+
+        left->nSubExprCount = 0;
+        left->papoSubExpr = nullptr;
+        delete left;
+    }
+    else if( right->eNodeType == SNT_OPERATION &&
+             right->nOperation == op  )
+    {
+        // Temporary non-binary formulation
+        poNode->nSubExprCount = right->nSubExprCount;
+        poNode->papoSubExpr = right->papoSubExpr;
+        poNode->PushSubExpression( left );
+
+        right->nSubExprCount = 0;
+        right->papoSubExpr = nullptr;
+        delete right;
+    }
+    else
+    {
+        poNode->PushSubExpression( left );
+        poNode->PushSubExpression( right );
+    }
+
+    return poNode;
+}
+
+/************************************************************************/
 /*                         swq_expr_compile2()                          */
 /************************************************************************/
 
