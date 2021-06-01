@@ -11764,13 +11764,13 @@ int OGRSpatialReference::GetEPSGGeogCS() const
 /*      If we know the datum, associate the most likely GCS with        */
 /*      it.                                                             */
 /* -------------------------------------------------------------------- */
-    pszAuthName = oSRSTmp.IsEmpty() ? GetAuthorityName( "GEOGCS|DATUM" ) :
-                                      oSRSTmp.GetAuthorityName( "GEOGCS|DATUM" );
+    const OGRSpatialReference& oActiveObj = oSRSTmp.IsEmpty() ? *this : oSRSTmp;
+    pszAuthName = oActiveObj.GetAuthorityName( "GEOGCS|DATUM" );
     if( pszAuthName != nullptr
         && EQUAL(pszAuthName, "epsg")
         && GetPrimeMeridian() == 0.0 )
     {
-        const int nDatum = atoi(GetAuthorityCode("GEOGCS|DATUM"));
+        const int nDatum = atoi(oActiveObj.GetAuthorityCode("GEOGCS|DATUM"));
 
         if( nDatum >= 6000 && nDatum <= 6999 )
             return nDatum - 2000;
