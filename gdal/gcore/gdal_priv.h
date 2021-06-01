@@ -2412,7 +2412,7 @@ public:
      *
      * Might be empty if the array is not linked to a file.
      * 
-     * Since GDAL 3.4
+     * @since GDAL 3.4
      */
     virtual const std::string& GetFilename() const = 0;
 
