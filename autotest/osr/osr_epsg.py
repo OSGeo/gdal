@@ -433,3 +433,15 @@ def test_osr_epsg_auto_identify_epsg_nad83_cors96():
     srs.AutoIdentifyEPSG()
     assert srs.GetAuthorityCode(None) == '6783'
 
+
+###############################################################################
+#   Test AutoIdentifyEPSG() on a somewhat odd WKT
+
+
+def test_osr_epsg_auto_identify_epsg_odd_wkt():
+
+    # https://github.com/OSGeo/gdal/issues/3915
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""PROJCS["GDA94 / MGA zone 56 / AUSGeoid09_GDA94_V1",GEOGCS["GDA94 / MGA zone 56 / AUSGeoid09_GDA94_V1",DATUM["GDA94",SPHEROID["GRS 1980",6378137.000,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6283"]],PRIMEM["Greenwich",0.0000000000000000,AUTHORITY["EPSG","8901"]],UNIT["Degree",0.01745329251994329547,AUTHORITY["EPSG","9102"]],AUTHORITY["EPSG","28356"]],UNIT["Meter",1.00000000000000000000,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0.0000000000000000],PARAMETER["central_meridian",153.0000000000000000],PARAMETER["scale_factor",0.9996000000000000],PARAMETER["false_easting",500000.000],PARAMETER["false_northing",10000000.000],AXIS["Easting",EAST],AXIS["Northing",NORTH],AXIS["Height",UP],AUTHORITY["EPSG","28356"]]""")
+    srs.AutoIdentifyEPSG()
