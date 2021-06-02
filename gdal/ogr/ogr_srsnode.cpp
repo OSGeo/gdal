@@ -443,6 +443,10 @@ int OGR_SRSNode::NeedsQuoting() const
         && this != poParent->GetChild(0) )
         return FALSE;
 
+    if( poParent != nullptr && EQUAL(poParent->GetValue(), "CS")
+        && this == poParent->GetChild(0) )
+        return FALSE;
+
     // Strings starting with e or E are not valid numeric values, so they
     // need quoting, like in AXIS["E",EAST]
     if( (pszValue[0] == 'e' || pszValue[0] == 'E') )
