@@ -12,3 +12,4 @@ inkscape --export-png=images/sponsors/logo-google.png --export-width=$GOLD_WIDTH
 inkscape --export-png=images/sponsors/logo-safe.png --export-width=$GOLD_WIDTH images/sponsors/logo-safe.svg
 
 inkscape --export-png=images/sponsors/logo-koordinates.png --export-width=$SILVER_WIDTH images/sponsors/logo-koordinates.svg
+inkscape --export-png=images/sponsors/logo-frontiersi.png --export-width=$SILVER_WIDTH images/sponsors/logo-FrontierSI.svg

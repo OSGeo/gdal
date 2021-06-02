@@ -77,6 +77,14 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-frontiersi.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://frontiersi.com.au
+
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-koordinates.png
            :class: img-logos
            :width: 150 px
@@ -110,7 +118,7 @@ the health of the project:
 
     .. container:: horizontal-logo
 
-        `Space Intelligence <https://www.space-intelligence.com//>`__
+        `Space Intelligence <https://www.space-intelligence.com>`__
 
     .. container:: horizontal-logo
 
