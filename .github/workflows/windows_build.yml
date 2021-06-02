@@ -249,7 +249,11 @@ jobs:
             }
             $env:SDK_PREFIX="$env:GITHUB_WORKSPACE\sdk\$env:SDK"
             $env:SDK_BIN="$env:SDK_PREFIX\bin"
-            $env:PATH="$env:GITHUB_WORKSPACE\gdal;$env:GITHUB_WORKSPACE\gdal\apps;$env:SDK_PREFIX\dll;$env:SDK_PREFIX;$env:SDK_BIN;$env:PATH"
+            # Set USE_PATH_FOR_GDAL_PYTHON=YES and include a fake path in the PATH
+            # to test robustness to nonexistent paths (only relevant for python>=3.8)
+            # See https://github.com/OSGeo/gdal/issues/3898
+            $env:USE_PATH_FOR_GDAL_PYTHON="YES"
+            $env:PATH="$env:GITHUB_WORKSPACE\gdal;$env:GITHUB_WORKSPACE\gdal\apps;$env:SDK_PREFIX\dll;$env:SDK_PREFIX;$env:SDK_BIN;$env:GITHUB_WORKSPACE\not_a_real_path;$env:PATH"
             $env:GDAL_DATA="$env:GITHUB_WORKSPACE\gdal\data"
             $env:DO_NOT_FAIL_ON_RECODE_ERRORS="YES"
             # The ca-bundle.crt file which we could point to is invalid in the current SDK
