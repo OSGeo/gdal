@@ -3996,7 +3996,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     // In case the mask made be computed from another band of the dataset,
     // we can't use cascaded generation, as the computation of the overviews
     // of the band used for the mask band may not have yet occurred (#3033).
-    if( (STARTS_WITH_CI(pszResampling, "AVER") |
+    if( (STARTS_WITH_CI(pszResampling, "AVER") ||
          STARTS_WITH_CI(pszResampling, "GAUSS") ||
          EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
@@ -4776,7 +4776,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         struct OvrJob
         {
             // Buffers to free when job is finished
-            std::shared_ptr<PointerHolder> oSrcMaskBufferHolder{};
+            std::unique_ptr<PointerHolder> oSrcMaskBufferHolder{};
             std::unique_ptr<PointerHolder> oSrcBufferHolder{};
             std::unique_ptr<PointerHolder> oDstBufferHolder{};
 
@@ -4894,7 +4894,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         std::list<std::unique_ptr<OvrJob>> jobList;
 
         std::vector<void*> apaChunk(nBands);
-        GByte* pabyChunkNoDataMask = nullptr;
+        std::vector<GByte*> apabyChunkNoDataMask(nBands);
 
         int nDstYOff = 0;
         // Iterate on destination overview, block by block.
@@ -5022,15 +5022,15 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                             eErr = CE_Failure;
                         }
                     }
-                }
-                if( bUseNoDataMask && pabyChunkNoDataMask == nullptr  )
-                {
-                    pabyChunkNoDataMask = static_cast<GByte *>(
-                        VSI_MALLOC2_VERBOSE( nFullResXChunkQueried,
-                                            nFullResYChunkQueried ) );
-                    if( pabyChunkNoDataMask == nullptr )
+                    if( bUseNoDataMask && apabyChunkNoDataMask[iBand] == nullptr  )
                     {
-                        eErr = CE_Failure;
+                        apabyChunkNoDataMask[iBand] = static_cast<GByte *>(
+                            VSI_MALLOC2_VERBOSE( nFullResXChunkQueried,
+                                                nFullResYChunkQueried ) );
+                        if( apabyChunkNoDataMask[iBand] == nullptr )
+                        {
+                            eErr = CE_Failure;
+                        }
                     }
                 }
 
@@ -5049,27 +5049,20 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                         apaChunk[iBand],
                         nChunkXSizeQueried, nChunkYSizeQueried,
                         eWrkDataType, 0, 0, nullptr );
-                }
 
-                if( bUseNoDataMask && eErr == CE_None )
-                {
-                    GDALRasterBand* poSrcBand = nullptr;
-                    if( iSrcOverview == -1 )
-                        poSrcBand = papoSrcBands[0];
-                    else
-                        poSrcBand = papapoOverviewBands[0][iSrcOverview];
-                    auto poMaskBand = bIsMask ? poSrcBand : poSrcBand->GetMaskBand();
-                    eErr = poMaskBand->RasterIO(
-                        GF_Read,
-                        nChunkXOffQueried, nChunkYOffQueried,
-                        nChunkXSizeQueried, nChunkYSizeQueried,
-                        pabyChunkNoDataMask,
-                        nChunkXSizeQueried, nChunkYSizeQueried,
-                        GDT_Byte, 0, 0, nullptr );
+                    if( bUseNoDataMask && eErr == CE_None )
+                    {
+                        const bool bUseSrcAsMaskBand = bIsMask || papoSrcBands[iBand]->GetColorInterpretation() == GCI_AlphaBand;
+                        auto poMaskBand = bUseSrcAsMaskBand ? poSrcBand : poSrcBand->GetMaskBand();
+                        eErr = poMaskBand->RasterIO(
+                            GF_Read,
+                            nChunkXOffQueried, nChunkYOffQueried,
+                            nChunkXSizeQueried, nChunkYSizeQueried,
+                            apabyChunkNoDataMask[iBand],
+                            nChunkXSizeQueried, nChunkYSizeQueried,
+                            GDT_Byte, 0, 0, nullptr );
+                    }
                 }
-
-                std::shared_ptr<PointerHolder> oSrcMaskBufferHolder(
-                    new PointerHolder(poJobQueue ? pabyChunkNoDataMask : nullptr));
 
                 // Compute the resulting overview block.
                 for( int iBand = 0; iBand < nBands && eErr == CE_None; ++iBand )
@@ -5080,7 +5073,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                     poJob->dfYRatioDstToSrc = dfYRatioDstToSrc;
                     poJob->eWrkDataType = eWrkDataType;
                     poJob->pChunk = apaChunk[iBand];
-                    poJob->pabyChunkNodataMask = pabyChunkNoDataMask;
+                    poJob->pabyChunkNodataMask = apabyChunkNoDataMask[iBand];
                     poJob->nChunkXOff = nChunkXOffQueried;
                     poJob->nChunkXSize = nChunkXSizeQueried;
                     poJob->nChunkYOff = nChunkYOffQueried;
@@ -5098,7 +5091,10 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
 
                     if( poJobQueue )
                     {
-                        poJob->oSrcMaskBufferHolder = oSrcMaskBufferHolder;
+                        poJob->oSrcMaskBufferHolder.reset(
+                            new PointerHolder(apabyChunkNoDataMask[iBand]));
+                        apabyChunkNoDataMask[iBand] = nullptr;
+
                         poJob->oSrcBufferHolder.reset(
                             new PointerHolder(apaChunk[iBand]));
                         apaChunk[iBand] = nullptr;
@@ -5116,9 +5112,6 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                         }
                     }
                 }
-
-                if( poJobQueue )
-                    pabyChunkNoDataMask = nullptr;
             }
 
             dfCurPixelCount += static_cast<double>(nYCount) * nSrcWidth;
@@ -5135,8 +5128,9 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         {
             CPLFree(apaChunk[iBand]);
             papapoOverviewBands[iBand][iOverview]->FlushCache();
+
+            CPLFree(apabyChunkNoDataMask[iBand]);
         }
-        CPLFree(pabyChunkNoDataMask);
     }
 
     CPLFree(pabHasNoData);
