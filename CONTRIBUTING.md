@@ -7,7 +7,7 @@ Build:
 
 ```
 cd gdal
-./configure [options]
+./configure --with-python [other options]
 make -j8 -s
 cd apps; make -s test_ogrsf; cd ..
 ```
