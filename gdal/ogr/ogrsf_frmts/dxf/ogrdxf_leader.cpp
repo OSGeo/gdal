@@ -318,7 +318,9 @@ struct DXFMLEADERLeader {
 OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 
 {
-    char szLineBuf[257];
+    // The MLEADER line buffer has to be very large, as the text contents
+    // (group code 304) do not wrap and may be arbitrarily long
+    char szLineBuf[4096];
     int nCode = 0;
 
     // This is a dummy feature object used to store style properties

@@ -2987,9 +2987,8 @@ def test_ogr_dxf_44():
         f.DumpReadable()
         pytest.fail()
 
-    # Note, the text actually is nine question marks, this is not an encoding error
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'LABEL(f:"Calibri",it:1,t:"?????????",p:7,s:4g,w:40,c:#0000ff)' \
+    if f.GetStyleString() != 'LABEL(f:"Calibri",it:1,t:"wwmhyhuasmjekhosovikpigsvtippomllixhzkrpithawzztyqybthjqiobkrpcxngjfkepricimyjplksbzteotqgnkbprugrextpsnhhiorevsxjxzomzcnyrtphzgeibfljbsaikosjfrhrrhidjswmxeqjrvbllbjggjblzydcqpbuzjhgcaoflgskaabkuikiwqcmytgbaxbiukpqvqjtfinygjcakzfdyyejvvpdbwsftxzimjettbzkjmdqfigwyoghbsolhvlfunknprjmmrfxntjwmvonkxvmgsntczwcmbujxkwzykpaexmquoatsvjkbchlzptgedbjnbutvimbufrbhxpwotemzvrxtidzdtbbqywmurmdzsgqqyiyahgmnacmhrlpekufpgfruh",p:7,s:4g,w:40,c:#0000ff)' \
             or ogrtest.check_feature_geometry(f, 'POINT (40.0 -17.9846153846154)') != 0:
         f.DumpReadable()
         pytest.fail()

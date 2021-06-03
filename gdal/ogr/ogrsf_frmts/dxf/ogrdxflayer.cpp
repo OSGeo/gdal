@@ -457,7 +457,7 @@ CPLString OGRDXFLayer::TextUnescape( const char *pszInput, bool bIsMText )
 OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
 
 {
-    char szLineBuf[257];
+    char szLineBuf[512];
     int nCode = 0;
     OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX = 0.0;
