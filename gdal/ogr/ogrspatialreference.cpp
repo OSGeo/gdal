@@ -3417,7 +3417,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         // WKT2"
         "GEODCRS", "GEOGCRS", "GEODETICCRS", "GEOGRAPHICCRS", "PROJCRS",
         "PROJECTEDCRS", "VERTCRS", "VERTICALCRS", "COMPOUNDCRS",
-        "ENGCRS", "ENGINEERINGCRS", "BOUNDCRS"
+        "ENGCRS", "ENGINEERINGCRS", "BOUNDCRS", "DERIVEDPROJCRS"
     };
     for( const char* keyword: wktKeywords )
     {
