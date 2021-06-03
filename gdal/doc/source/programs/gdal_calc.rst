@@ -37,7 +37,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --calc=expression
 
-    Calculation in numpy syntax using ``+``, ``-``, ``/``, ``*``, or any numpy array functions (i.e. ``log10()`).
+    Calculation in numpy syntax using ``+``, ``-``, ``/``, ``*``, or any numpy array functions (i.e. ``log10()``).
     Multiple ``--calc`` options can be listed to produce a multiband file (GDAL >= 3.2).
 
 .. option:: -A <filename>
