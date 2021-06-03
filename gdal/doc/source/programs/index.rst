@@ -54,7 +54,7 @@ Raster programs
     - :ref:`gdal_translate`: Converts raster data between different formats.
     - :ref:`gdaladdo`: Builds or rebuilds overview images.
     - :ref:`gdalwarp`: Image reprojection and warping utility.
-    - :ref:`gdaltindex`: Builds a shapefile as a raster tileindex.
+    - :ref:`gdaltindex`: Builds an OGR-supported dataset as a raster tileindex.
     - :ref:`gdalbuildvrt`: Builds a VRT from a list of datasets.
     - :ref:`gdal_contour`: Builds vector contour lines from a raster elevation model.
     - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
