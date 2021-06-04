@@ -42,17 +42,23 @@ import pytest
 
 @pytest.mark.parametrize("dtype,structtype,gdaltype,fill_value,nodata_value",
                          [["!b1", 'B', gdal.GDT_Byte, None, None],
+                          ["!i1", 'b', gdal.GDT_Int16, None, None],
+                          ["!i1", 'b', gdal.GDT_Int16, -1, -1],
                           ["!u1", 'B', gdal.GDT_Byte, None, None],
                           ["!u1", 'B', gdal.GDT_Byte, 1, 1],
                           ["<i2", 'h', gdal.GDT_Int16, None, None],
                           [">i2", 'h', gdal.GDT_Int16, None, None],
                           ["<i4", 'i', gdal.GDT_Int32, None, None],
                           [">i4", 'i', gdal.GDT_Int32, None, None],
+                          ["<i8", 'q', gdal.GDT_Float64, None, None],
+                          [">i8", 'q', gdal.GDT_Float64, None, None],
                           ["<u2", 'H', gdal.GDT_UInt16, None, None],
                           [">u2", 'H', gdal.GDT_UInt16, None, None],
                           ["<u4", 'I', gdal.GDT_UInt32, None, None],
                           [">u4", 'I', gdal.GDT_UInt32, None, None],
                           ["<u4", 'I', gdal.GDT_UInt32, 4000000000, 4000000000],
+                          ["<u8", 'Q', gdal.GDT_Float64, 4000000000, 4000000000],
+                          [">u8", 'Q', gdal.GDT_Float64, None, None],
                           ["<f4", 'f', gdal.GDT_Float32, None, None],
                           [">f4", 'f', gdal.GDT_Float32, None, None],
                           ["<f4", 'f', gdal.GDT_Float32, 1.5, 1.5],
@@ -127,12 +133,19 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_o
         assert ar[1, 2].Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
             struct.pack('d' * 1, 7)
 
+        if structtype == 'b':
+            structtype_read = 'h'
+        elif structtype in ('q', 'Q'):
+            structtype_read = 'd'
+        else:
+            structtype_read = structtype
+
         # Read block 0,0
         if gdaltype not in (gdal.GDT_CFloat32, gdal.GDT_CFloat64):
             assert ar[0:2, 0:3].Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
                 struct.pack('d' * 6, 1, 2, 3, 5, 6, 7)
             assert struct.unpack(
-                structtype * 6, ar[0:2, 0:3].Read()) == (1, 2, 3, 5, 6, 7)
+                structtype_read * 6, ar[0:2, 0:3].Read()) == (1, 2, 3, 5, 6, 7)
         else:
             assert ar[0:2, 0:3].Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_CFloat64)) == \
                 struct.pack('d' * 12, 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0)
@@ -158,11 +171,11 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_o
                         nv, nv, nv, nv)
 
         if gdaltype not in (gdal.GDT_CFloat32, gdal.GDT_CFloat64):
-            assert ar.Read() == array.array(structtype, [1, 2, 3, 4,
-                                                         5, 6, 7, 8,
-                                                         nv, nv, nv, nv,
-                                                         nv, nv, nv, nv,
-                                                         nv, nv, nv, nv])
+            assert ar.Read() == array.array(structtype_read, [1, 2, 3, 4,
+                                                              5, 6, 7, 8,
+                                                              nv, nv, nv, nv,
+                                                              nv, nv, nv, nv,
+                                                              nv, nv, nv, nv])
         else:
             assert ar.Read() == array.array(structtype, [1, 11, 2, 0, 3, 0, 4, 0,
                                                          5, 0, 6, 0, 7, 0, 8, 0,
@@ -297,6 +310,9 @@ def test_zarr_invalid_json_remove_member(member):
                                          {"dtype": "!"},
                                          {"dtype": "!b"},
                                          {"dtype": "<u16"},
+                                         # we don't support compound with !i1 type
+                                         {"dtype": [
+                                             ['a', '!i1'], ['b', '<i2']]},
                                          {"fill_value": []},
                                          {"fill_value": "x"},
                                          {"fill_value": "NaN"},
@@ -350,7 +366,7 @@ def test_zarr_invalid_json_wrong_values(dict_update):
                                                     ('zlib.zarr', 'zlib'),
                                                     ('zstd.zarr', 'zstd'),
                                                     ])
-def test_zarr_read_compression_methods(datasetname,compressor):
+def test_zarr_read_compression_methods(datasetname, compressor):
 
     compressors = gdal.GetDriverByName('Zarr').GetMetadataItem('COMPRESSORS')
     filename = 'data/zarr/' + datasetname

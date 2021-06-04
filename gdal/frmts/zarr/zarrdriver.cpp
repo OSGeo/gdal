@@ -92,6 +92,7 @@ struct DtypeElt
     size_t               nativeOffset = 0;
     size_t               nativeSize = 0;
     bool                 needByteSwapping = false;
+    bool                 gdalTypeIsApproxOfNative = false;
     GDALExtendedDataType gdalType = GDALExtendedDataType::Create(GDT_Unknown);
     size_t               gdalOffset = 0;
     size_t               gdalSize = 0;
@@ -262,8 +263,8 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
     arr->SetSelf(arr);
 
     // Reserve a buffer for tile content
-    const auto nDTSize = arr->m_oType.GetSize();
-    size_t nTileSize = arr->m_oType.GetClass() == GEDTC_STRING ? arr->m_oType.GetMaxStringLength() : nDTSize;
+    const size_t nSourceSize = aoDtypeElts.back().nativeOffset + aoDtypeElts.back().nativeSize;
+    size_t nTileSize = arr->m_oType.GetClass() == GEDTC_STRING ? arr->m_oType.GetMaxStringLength() : nSourceSize;
     for( const auto& nBlockSize: arr->m_anBlockSize )
     {
         nTileSize *= static_cast<size_t>(nBlockSize);
@@ -506,7 +507,8 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
         bufferDataType.GetClass() == GEDTC_NUMERIC;
     const bool bSameNumericDT =
         bBothAreNumericDT &&
-        m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType();
+        m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType() &&
+        !m_aoDtypeElts[0].gdalTypeIsApproxOfNative;
     const bool bSrcIsComplex = CPL_TO_BOOL(
         GDALDataTypeIsComplex(m_oType.GetNumericDataType()));
     const auto nSameDTSize = bSameNumericDT ? m_oType.GetSize() : 0;
@@ -670,7 +672,10 @@ lbl_next_depth_inner_loop:
 
             if( m_bUseOptimizedCodePaths && bBothAreNumericDT &&
                 arrayStep[dimIdxSubLoop] <= static_cast<GIntBig>(std::numeric_limits<int>::max() / nDTSize) &&
-                dstBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() )
+                dstBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() &&
+                !(m_aoDtypeElts[0].gdalTypeIsApproxOfNative &&
+                  m_aoDtypeElts[0].nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                  m_aoDtypeElts[0].nativeSize == 1) )
             {
                 if( m_aoDtypeElts[0].needByteSwapping )
                 {
@@ -704,6 +709,44 @@ lbl_next_depth_inner_loop:
                         {
                             CPLAssert(false);
                         }
+                    }
+                }
+
+                if( m_aoDtypeElts[0].gdalTypeIsApproxOfNative )
+                {
+                    if( m_aoDtypeElts[0].nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                        m_aoDtypeElts[0].nativeSize == 8 )
+                    {
+                        CPLAssert( m_aoDtypeElts[0].gdalType.GetNumericDataType() == GDT_Float64 );
+                        GByte* src_ptr_rev = src_ptr;
+                        for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                                ++i,
+                                src_ptr_rev += arrayStep[dimIdxSubLoop] * nSourceSize )
+                        {
+                            int64_t intVal;
+                            memcpy(&intVal, src_ptr_rev, sizeof(intVal));
+                            double dblVal = static_cast<double>(intVal);
+                            memcpy(src_ptr_rev, &dblVal, sizeof(dblVal));
+                        }
+                    }
+                    else if( m_aoDtypeElts[0].nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
+                             m_aoDtypeElts[0].nativeSize == 8 )
+                    {
+                        CPLAssert( m_aoDtypeElts[0].gdalType.GetNumericDataType() == GDT_Float64 );
+                        GByte* src_ptr_rev = src_ptr;
+                        for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                                ++i,
+                                src_ptr_rev += arrayStep[dimIdxSubLoop] * nSourceSize )
+                        {
+                            uint64_t intVal;
+                            memcpy(&intVal, src_ptr_rev, sizeof(intVal));
+                            double dblVal = static_cast<double>(intVal);
+                            memcpy(src_ptr_rev, &dblVal, sizeof(dblVal));
+                        }
+                    }
+                    else
+                    {
+                        CPLAssert(false);
                     }
                 }
 
@@ -785,6 +828,17 @@ lbl_next_depth_inner_loop:
                     char** pDstPtr = static_cast<char**>(dst_ptr);
                     memcpy(pDstPtr, &pDstStr, sizeof(char*));
                 }
+                else if( m_aoDtypeElts.size() == 1 &&
+                         m_aoDtypeElts[0].nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                         m_aoDtypeElts[0].nativeSize == 1 )
+                {
+                    CPLAssert( m_oType.GetClass() == GEDTC_NUMERIC );
+                    CPLAssert( m_oType.GetNumericDataType() == GDT_Int16 );
+                    CPLAssert( bufferDataType.GetClass() == GEDTC_NUMERIC );
+                    int16_t intVal = *reinterpret_cast<const int8_t*>(src_ptr);
+                    GDALExtendedDataType::CopyValue(&intVal, m_oType,
+                                                    dst_ptr, bufferDataType);
+                }
                 else
                 {
                     for( auto& elt: m_aoDtypeElts )
@@ -811,6 +865,32 @@ lbl_next_depth_inner_loop:
                             {
                                 CPL_SWAP64PTR(src_ptr + elt.nativeOffset);
                                 CPL_SWAP64PTR(src_ptr + elt.nativeOffset + 8);
+                            }
+                        }
+
+                        if( elt.gdalTypeIsApproxOfNative )
+                        {
+                            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                                elt.nativeSize == 8 )
+                            {
+                                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                                int64_t intVal;
+                                memcpy(&intVal, src_ptr + elt.nativeOffset, sizeof(intVal));
+                                double dblVal = static_cast<double>(intVal);
+                                memcpy(src_ptr + elt.nativeOffset, &dblVal, sizeof(dblVal));
+                            }
+                            else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
+                                     elt.nativeSize == 8 )
+                            {
+                                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                                uint64_t intVal;
+                                memcpy(&intVal, src_ptr + elt.nativeOffset, sizeof(intVal));
+                                double dblVal = static_cast<double>(intVal);
+                                memcpy(src_ptr + elt.nativeOffset, &dblVal, sizeof(dblVal));
+                            }
+                            else
+                            {
+                                CPLAssert(false);
                             }
                         }
                     }
@@ -956,6 +1036,12 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_Byte;
             }
+            else if( chType == 'i' && nBytes == 1 )
+            {
+                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                elt.gdalTypeIsApproxOfNative = true;
+                eDT = GDT_Int16;
+            }
             else if( chType == 'i' && nBytes == 2 )
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
@@ -966,6 +1052,12 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
                 eDT = GDT_Int32;
             }
+            else if( chType == 'i' && nBytes == 8 )
+            {
+                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                elt.gdalTypeIsApproxOfNative = true;
+                eDT = GDT_Float64;
+            }
             else if( chType == 'u' && nBytes == 2 )
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
@@ -975,6 +1067,12 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_UInt32;
+            }
+            else if( chType == 'u' && nBytes == 8 )
+            {
+                elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
+                elt.gdalTypeIsApproxOfNative = true;
+                eDT = GDT_Float64;
             }
             else if( chType == 'f' && nBytes == 4 )
             {
@@ -1153,6 +1251,28 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     const auto oType = ParseDtype(oDtype, aoDtypeElts);
     if( oType.GetClass() == GEDTC_NUMERIC && oType.GetNumericDataType() == GDT_Unknown )
         return nullptr;
+
+    if( oType.GetClass() == GEDTC_COMPOUND )
+    {
+        bool bFoundSignedInt1Byte = false;
+        for( const auto& elt: aoDtypeElts )
+        {
+            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                elt.nativeSize == 1 )
+            {
+                bFoundSignedInt1Byte = true;
+                break;
+            }
+        }
+        if( bFoundSignedInt1Byte )
+        {
+            // Would complicate IRead() implementation
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Compound data type with signed integer of "
+                     "1 byte not supported");
+            return nullptr;
+        }
+    }
 
     std::vector<GUInt64> anBlockSize;
     size_t nBlockSize = oType.GetSize();
