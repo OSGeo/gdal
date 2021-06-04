@@ -143,6 +143,7 @@ class ZarrArray final: public GDALMDArray
     mutable std::vector<GByte>                        m_abyTmpRawTileData{}; // used for Fortran order
     mutable ZarrAttributeGroup                        m_oAttrGroup;
     mutable bool                                      m_bAttributesLoaded = false;
+    mutable std::shared_ptr<OGRSpatialReference>      m_poSRS{};
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -205,6 +206,8 @@ public:
 
     std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const override
         { LoadAttributes(); return m_oAttrGroup.GetAttributes(papszOptions); }
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
 };
 
 
@@ -610,7 +613,39 @@ void ZarrArray::LoadAttributes() const
     CPLErrorStateBackuper errorStateBackuper;
     if( !oDoc.Load(osZattrsFilename) )
         return;
-    m_oAttrGroup.Init(oDoc.GetRoot());
+    auto oRoot = oDoc.GetRoot();
+
+    const auto crs = oRoot["crs"];
+    if( crs.GetType() == CPLJSONObject::Type::Object )
+    {
+        for( const char* key: { "url", "wkt", "projjson" } )
+        {
+            const auto item = crs[key];
+            if( item.IsValid() )
+            {
+                m_poSRS = std::make_shared<OGRSpatialReference>();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if( m_poSRS->SetFromUserInput(item.ToString().c_str()) == OGRERR_NONE )
+                {
+                    oRoot.Delete("crs");
+                    break;
+                }
+                m_poSRS.reset();
+            }
+        }
+    }
+
+    m_oAttrGroup.Init(oRoot);
+}
+
+/************************************************************************/
+/*                    ZarrArray::GetSpatialRef()                        */
+/************************************************************************/
+
+std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
+{
+    LoadAttributes();
+    return m_poSRS;
 }
 
 /************************************************************************/

@@ -36,6 +36,7 @@ import struct
 import sys
 
 from osgeo import gdal
+from osgeo import osr
 
 import gdaltest
 import pytest
@@ -553,3 +554,142 @@ def test_zarr_read_array_attributes():
         "str": "foo",
         "strarray": ["foo", "bar"]
     }
+
+
+@pytest.mark.parametrize("crs_member", ["projjson", "wkt", "url"])
+def test_zarr_read_crs(crs_member):
+
+    zarray = {
+        "chunks": [
+            2,
+            3
+        ],
+        "compressor": None,
+        "dtype": '!b1',
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [
+            5,
+            4
+        ],
+        "zarr_format": 2
+    }
+
+    zattrs_all = {
+        "crs": {
+            "projjson": {
+                "$schema": "https://proj.org/schemas/v0.2/projjson.schema.json",
+                "type": "GeographicCRS",
+                "name": "WGS 84",
+                "datum_ensemble": {
+                    "name": "World Geodetic System 1984 ensemble",
+                    "members": [
+                        {
+                            "name": "World Geodetic System 1984 (Transit)",
+                            "id": {
+                                "authority": "EPSG",
+                                "code": 1166
+                            }
+                        },
+                        {
+                            "name": "World Geodetic System 1984 (G730)",
+                            "id": {
+                                "authority": "EPSG",
+                                "code": 1152
+                            }
+                        },
+                        {
+                            "name": "World Geodetic System 1984 (G873)",
+                            "id": {
+                                "authority": "EPSG",
+                                "code": 1153
+                            }
+                        },
+                        {
+                            "name": "World Geodetic System 1984 (G1150)",
+                            "id": {
+                                "authority": "EPSG",
+                                "code": 1154
+                            }
+                        },
+                        {
+                            "name": "World Geodetic System 1984 (G1674)",
+                            "id": {
+                                "authority": "EPSG",
+                                "code": 1155
+                            }
+                        },
+                        {
+                            "name": "World Geodetic System 1984 (G1762)",
+                            "id": {
+                                "authority": "EPSG",
+                                "code": 1156
+                            }
+                        }
+                    ],
+                    "ellipsoid": {
+                        "name": "WGS 84",
+                        "semi_major_axis": 6378137,
+                        "inverse_flattening": 298.257223563
+                    },
+                    "accuracy": "2.0",
+                    "id": {
+                        "authority": "EPSG",
+                        "code": 6326
+                    }
+                },
+                "coordinate_system": {
+                    "subtype": "ellipsoidal",
+                    "axis": [
+                        {
+                            "name": "Geodetic latitude",
+                            "abbreviation": "Lat",
+                            "direction": "north",
+                            "unit": "degree"
+                        },
+                        {
+                            "name": "Geodetic longitude",
+                            "abbreviation": "Lon",
+                            "direction": "east",
+                            "unit": "degree"
+                        }
+                    ]
+                },
+                "scope": "Horizontal component of 3D system.",
+                "area": "World.",
+                "bbox": {
+                    "south_latitude": -90,
+                    "west_longitude": -180,
+                    "north_latitude": 90,
+                    "east_longitude": 180
+                },
+                "id": {
+                    "authority": "EPSG",
+                    "code": 4326
+                }
+            },
+            "wkt": 'GEOGCRS["WGS 84",ENSEMBLE["World Geodetic System 1984 ensemble",MEMBER["World Geodetic System 1984 (Transit)"],MEMBER["World Geodetic System 1984 (G730)"],MEMBER["World Geodetic System 1984 (G873)"],MEMBER["World Geodetic System 1984 (G1150)"],MEMBER["World Geodetic System 1984 (G1674)"],MEMBER["World Geodetic System 1984 (G1762)"],ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]],ENSEMBLEACCURACY[2.0]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],CS[ellipsoidal,2],AXIS["geodetic latitude (Lat)",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["geodetic longitude (Lon)",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],USAGE[SCOPE["Horizontal component of 3D system."],AREA["World."],BBOX[-90,-180,90,180]],ID["EPSG",4326]]',
+            "url": "http://www.opengis.net/def/crs/EPSG/0/4326"
+        }
+    }
+
+    zattrs = {"crs": {crs_member: zattrs_all["crs"][crs_member]}}
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(zarray))
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zattrs', json.dumps(zattrs))
+        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        srs = ar.GetSpatialRef()
+        if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2) and crs_member == 'projjson':
+            assert srs is None
+        else:
+            assert srs is not None
+            assert srs.GetAuthorityCode(None) == '4326'
+            assert len(ar.GetAttributes()) == 0
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
