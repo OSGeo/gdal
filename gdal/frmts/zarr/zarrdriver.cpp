@@ -111,7 +111,11 @@ class ZarrArray final: public GDALMDArray
     GByte                                            *m_pabyNoData = nullptr;
     std::string                                       m_osDimSeparator { "." };
     std::string                                       m_osFilename{};
-    mutable std::vector<GByte>                        m_abyTileData{};
+    mutable std::vector<GByte>                        m_abyRawTileData{};
+    mutable std::vector<GByte>                        m_abyDecodedTileData{};
+    mutable std::vector<uint64_t>                     m_anCachedTiledIndices{};
+    mutable bool                                      m_bCachedTiledValid = false;
+    mutable bool                                      m_bCachedTiledEmpty = false;
     bool                                              m_bUseOptimizedCodePaths = true;
     const CPLCompressor                              *m_psDecompressor = nullptr;
 
@@ -123,7 +127,6 @@ class ZarrArray final: public GDALMDArray
               const std::vector<GUInt64>& anBlockSize);
 
     bool LoadTileData(const std::vector<uint64_t>& tileIndices,
-                      std::vector<GByte>& abyTileData,
                       bool& bMissingTileOut) const;
 
 protected:
@@ -271,13 +274,41 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
     }
     try
     {
-        arr->m_abyTileData.resize( nTileSize );
+        arr->m_abyRawTileData.resize( nTileSize );
     }
     catch( const std::bad_alloc& e )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
         return nullptr;
     }
+
+    bool bNeedDecodedBuffer = false;
+    for( const auto& elt: arr->m_aoDtypeElts )
+    {
+        if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative )
+        {
+            bNeedDecodedBuffer = true;
+            break;
+        }
+    }
+    if( bNeedDecodedBuffer )
+    {
+        size_t nDecodedBufferSize = arr->m_oType.GetSize();
+        for( const auto& nBlockSize: arr->m_anBlockSize )
+        {
+            nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
+        }
+        try
+        {
+            arr->m_abyDecodedTileData.resize( nDecodedBufferSize );
+        }
+        catch( const std::bad_alloc& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return nullptr;
+        }
+    }
+
     arr->m_bUseOptimizedCodePaths = CPLTestBool(
         CPLGetConfigOption("GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", "YES"));
 
@@ -294,6 +325,25 @@ ZarrArray::~ZarrArray()
     {
         m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
         CPLFree(m_pabyNoData);
+    }
+    if( !m_abyDecodedTileData.empty() )
+    {
+        const size_t nDTSize = m_oType.GetSize();
+        GByte* pDst = &m_abyDecodedTileData[0];
+        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
+        for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
+        {
+            for( auto& elt: m_aoDtypeElts )
+            {
+                if( elt.nativeType == DtypeElt::NativeType::STRING )
+                {
+                    char* ptr;
+                    char** pptr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+                    memcpy(&ptr, pptr, sizeof(ptr));
+                    VSIFree(ptr);
+                }
+            }
+        }
     }
 }
 
@@ -330,7 +380,6 @@ void ZarrArray::RegisterNoDataValue(const void* pNoData)
 /************************************************************************/
 
 bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
-                             std::vector<GByte>& abyTileData,
                              bool& bMissingTileOut) const
 {
     std::string osFilename;
@@ -356,7 +405,7 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
     bool bRet = true;
     if( m_psDecompressor == nullptr )
     {
-        if( VSIFReadL(&abyTileData[0], 1, abyTileData.size(), fp) != abyTileData.size() )
+        if( VSIFReadL(&m_abyRawTileData[0], 1, m_abyRawTileData.size(), fp) != m_abyRawTileData.size() )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Could not read tile %s correctly",
                      osFilename.c_str());
@@ -401,14 +450,14 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
             }
             else
             {
-                void* out_buffer = &abyTileData[0];
-                size_t out_size = abyTileData.size();
+                void* out_buffer = &m_abyRawTileData[0];
+                size_t out_size = m_abyRawTileData.size();
                 if( !m_psDecompressor->pfnFunc(abyCompressedData.data(),
                                                abyCompressedData.size(),
                                                &out_buffer, &out_size,
                                                nullptr,
                                                m_psDecompressor->user_data ) ||
-                    out_size != abyTileData.size() )
+                    out_size != m_abyRawTileData.size() )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Decompression of tile %s failed",
@@ -419,6 +468,125 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
         }
     }
     VSIFCloseL(fp);
+
+    if( bRet && !bMissingTileOut && !m_abyDecodedTileData.empty() )
+    {
+        const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                                   m_aoDtypeElts.back().nativeSize;
+        const auto nDTSize = m_oType.GetSize();
+        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
+        const GByte* pSrc = m_abyRawTileData.data();
+        GByte* pDst = &m_abyDecodedTileData[0];
+        for( size_t i = 0; i < nValues; i++, pSrc += nSourceSize, pDst += nDTSize )
+        {
+            for( auto& elt: m_aoDtypeElts )
+            {
+                if( elt.needByteSwapping )
+                {
+                    if( elt.nativeSize == 2 )
+                    {
+                        *reinterpret_cast<uint16_t*>(pDst + elt.gdalOffset) =
+                            CPL_SWAP16(*reinterpret_cast<const uint16_t*>(pSrc + elt.nativeOffset));
+                    }
+                    else if( elt.nativeSize == 4 )
+                    {
+                        *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset) =
+                            CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.nativeOffset));
+                    }
+                    else if( elt.nativeSize == 8 )
+                    {
+                        if( elt.nativeType == DtypeElt::NativeType::COMPLEX_IEEEFP )
+                        {
+                            *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset) =
+                                CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.nativeOffset));
+                            *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset + 4) =
+                                CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.nativeOffset + 4));
+                        }
+                        else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT )
+                        {
+                            CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                            *reinterpret_cast<double*>(pDst + elt.gdalOffset) = static_cast<double>(
+                                CPL_SWAP64(*reinterpret_cast<const int64_t*>(pSrc + elt.nativeOffset)));
+                        }
+                        else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT )
+                        {
+                            CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                            *reinterpret_cast<double*>(pDst + elt.gdalOffset) = static_cast<double>(
+                                CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.nativeOffset)));
+                        }
+                        else
+                        {
+                            *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset) =
+                                CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.nativeOffset));
+                        }
+                    }
+                    else if( elt.nativeSize == 16 )
+                    {
+                        *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset) =
+                            CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.nativeOffset));
+                        *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset + 8) =
+                            CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.nativeOffset + 8));
+                    }
+                    else
+                    {
+                        CPLAssert(false);
+                    }
+                }
+                else if( elt.gdalTypeIsApproxOfNative )
+                {
+                    if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                        elt.nativeSize == 1 )
+                    {
+                        CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Int16 );
+                        int16_t intVal = *reinterpret_cast<const int8_t*>(pSrc + elt.nativeOffset);
+                        memcpy(pDst + elt.gdalOffset, &intVal, sizeof(intVal));
+                    }
+                    else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                             elt.nativeSize == 8 )
+                    {
+                        CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                        int64_t intVal;
+                        memcpy(&intVal, pSrc + elt.nativeOffset, sizeof(intVal));
+                        double dblVal = static_cast<double>(intVal);
+                        memcpy(pDst + elt.gdalOffset, &dblVal, sizeof(dblVal));
+                    }
+                    else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
+                             elt.nativeSize == 8 )
+                    {
+                        CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                        uint64_t intVal;
+                        memcpy(&intVal, pSrc + elt.nativeOffset, sizeof(intVal));
+                        double dblVal = static_cast<double>(intVal);
+                        memcpy(pDst + elt.gdalOffset, &dblVal, sizeof(dblVal));
+                    }
+                    else
+                    {
+                        CPLAssert(false);
+                    }
+                }
+                else if( elt.nativeType == DtypeElt::NativeType::STRING )
+                {
+                    char* ptr;
+                    char** pDstPtr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+                    memcpy(&ptr, pDstPtr, sizeof(ptr));
+                    VSIFree(ptr);
+
+                    char* pDstStr = static_cast<char*>(CPLMalloc(elt.nativeSize + 1));
+                    memcpy(pDstStr, pSrc + elt.nativeOffset, elt.nativeSize);
+                    pDstStr[elt.nativeSize] = 0;
+                    memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+                }
+                else
+                {
+                    CPLAssert( elt.nativeSize == elt.gdalSize );
+                    memcpy(pDst + elt.gdalOffset,
+                           pSrc + elt.nativeOffset,
+                           elt.nativeSize);
+                }
+            }
+        }
+    }
+
     return bRet;
 }
 
@@ -507,10 +675,7 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
         bufferDataType.GetClass() == GEDTC_NUMERIC;
     const bool bSameNumericDT =
         bBothAreNumericDT &&
-        m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType() &&
-        !m_aoDtypeElts[0].gdalTypeIsApproxOfNative;
-    const bool bSrcIsComplex = CPL_TO_BOOL(
-        GDALDataTypeIsComplex(m_oType.GetNumericDataType()));
+        m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType();
     const auto nSameDTSize = bSameNumericDT ? m_oType.GetSize() : 0;
     std::vector<GByte> abyTargetNoData;
     bool bNoDataIsZero = false;
@@ -523,8 +688,26 @@ lbl_next_depth:
         size_t dimIdxSubLoop = 0;
         dstPtrStackInnerLoop[0] = dstPtrStackOuterLoop[nDims];
         bool bEmptyTile = false;
-        if( !LoadTileData(tileIndices, m_abyTileData, bEmptyTile) )
-            return false;
+        if( tileIndices == m_anCachedTiledIndices )
+        {
+            if( !m_bCachedTiledValid )
+                return false;
+            bEmptyTile = m_bCachedTiledEmpty;
+        }
+        else
+        {
+            m_anCachedTiledIndices = tileIndices;
+            m_bCachedTiledValid = LoadTileData(tileIndices, bEmptyTile);
+            if( !m_bCachedTiledValid )
+            {
+                return false;
+            }
+            m_bCachedTiledEmpty = bEmptyTile;
+        }
+
+        const GByte* pabySrcTile = m_abyDecodedTileData.empty() ?
+                        m_abyRawTileData.data(): m_abyDecodedTileData.data();
+        const size_t nSrcDTSize = m_abyDecodedTileData.empty() ? nSourceSize : nDTSize;
 
         for( size_t i = 0; i < nDims; ++i )
         {
@@ -668,88 +851,12 @@ lbl_next_depth_inner_loop:
                 nOffset = static_cast<size_t>(nOffset * m_anBlockSize[i] +
                     (indicesInnerLoop[i] - tileIndices[i] * m_anBlockSize[i]));
             }
-            GByte* src_ptr = &m_abyTileData[0] + nOffset * nSourceSize;
+            const GByte* src_ptr = pabySrcTile + nOffset * nSrcDTSize;
 
             if( m_bUseOptimizedCodePaths && bBothAreNumericDT &&
                 arrayStep[dimIdxSubLoop] <= static_cast<GIntBig>(std::numeric_limits<int>::max() / nDTSize) &&
-                dstBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() &&
-                !(m_aoDtypeElts[0].gdalTypeIsApproxOfNative &&
-                  m_aoDtypeElts[0].nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                  m_aoDtypeElts[0].nativeSize == 1) )
+                dstBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() )
             {
-                if( m_aoDtypeElts[0].needByteSwapping )
-                {
-                    GByte* src_ptr_rev = src_ptr;
-                    for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
-                            ++i,
-                            src_ptr_rev += arrayStep[dimIdxSubLoop] * nSourceSize )
-                    {
-                        if( nDTSize == 2 )
-                            CPL_SWAP16PTR(src_ptr_rev);
-                        else if( nDTSize == 4 )
-                            CPL_SWAP32PTR(src_ptr_rev);
-                        else if( nDTSize == 8 )
-                        {
-                            if( bSrcIsComplex )
-                            {
-                                CPL_SWAP32PTR(src_ptr_rev);
-                                CPL_SWAP32PTR(src_ptr_rev + 4);
-                            }
-                            else
-                            {
-                                CPL_SWAP64PTR(src_ptr_rev);
-                            }
-                        }
-                        else if( nDTSize == 16 )
-                        {
-                            CPL_SWAP64PTR(src_ptr_rev);
-                            CPL_SWAP64PTR(src_ptr_rev + 8);
-                        }
-                        else
-                        {
-                            CPLAssert(false);
-                        }
-                    }
-                }
-
-                if( m_aoDtypeElts[0].gdalTypeIsApproxOfNative )
-                {
-                    if( m_aoDtypeElts[0].nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                        m_aoDtypeElts[0].nativeSize == 8 )
-                    {
-                        CPLAssert( m_aoDtypeElts[0].gdalType.GetNumericDataType() == GDT_Float64 );
-                        GByte* src_ptr_rev = src_ptr;
-                        for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
-                                ++i,
-                                src_ptr_rev += arrayStep[dimIdxSubLoop] * nSourceSize )
-                        {
-                            int64_t intVal;
-                            memcpy(&intVal, src_ptr_rev, sizeof(intVal));
-                            double dblVal = static_cast<double>(intVal);
-                            memcpy(src_ptr_rev, &dblVal, sizeof(dblVal));
-                        }
-                    }
-                    else if( m_aoDtypeElts[0].nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
-                             m_aoDtypeElts[0].nativeSize == 8 )
-                    {
-                        CPLAssert( m_aoDtypeElts[0].gdalType.GetNumericDataType() == GDT_Float64 );
-                        GByte* src_ptr_rev = src_ptr;
-                        for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
-                                ++i,
-                                src_ptr_rev += arrayStep[dimIdxSubLoop] * nSourceSize )
-                        {
-                            uint64_t intVal;
-                            memcpy(&intVal, src_ptr_rev, sizeof(intVal));
-                            double dblVal = static_cast<double>(intVal);
-                            memcpy(src_ptr_rev, &dblVal, sizeof(dblVal));
-                        }
-                    }
-                    else
-                    {
-                        CPLAssert(false);
-                    }
-                }
-
                 GDALCopyWords64( src_ptr,
                                  m_oType.GetNumericDataType(),
                                  static_cast<int>(arrayStep[dimIdxSubLoop] * nDTSize),
@@ -763,7 +870,7 @@ lbl_next_depth_inner_loop:
 
             for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
                     ++i,
-                    src_ptr += arrayStep[dimIdxSubLoop] * nSourceSize,
+                    src_ptr += arrayStep[dimIdxSubLoop] * nSrcDTSize,
                     dst_ptr = static_cast<uint8_t*>(dst_ptr) + dstBufferStrideBytes[dimIdxSubLoop] )
             {
                 if( bSameNumericDT )
@@ -773,47 +880,20 @@ lbl_next_depth_inner_loop:
                         *static_cast<uint8_t*>(dst_ptr) = *static_cast<const uint8_t*>(src_ptr_v);
                     else if( nSameDTSize == 2 )
                     {
-                        if( !m_aoDtypeElts[0].needByteSwapping )
-                            *static_cast<uint16_t*>(dst_ptr) = *static_cast<const uint16_t*>(src_ptr_v);
-                        else
-                            *static_cast<uint16_t*>(dst_ptr) = CPL_SWAP16(*static_cast<const uint16_t*>(src_ptr_v));
+                        *static_cast<uint16_t*>(dst_ptr) = *static_cast<const uint16_t*>(src_ptr_v);
                     }
                     else if( nSameDTSize == 4 )
                     {
-                        if( !m_aoDtypeElts[0].needByteSwapping )
-                            *static_cast<uint32_t*>(dst_ptr) = *static_cast<const uint32_t*>(src_ptr_v);
-                        else
-                            *static_cast<uint32_t*>(dst_ptr) = CPL_SWAP32(*static_cast<const uint32_t*>(src_ptr_v));
+                        *static_cast<uint32_t*>(dst_ptr) = *static_cast<const uint32_t*>(src_ptr_v);
                     }
                     else if( nSameDTSize == 8 )
                     {
-                        if( !m_aoDtypeElts[0].needByteSwapping )
-                            *static_cast<uint64_t*>(dst_ptr) = *static_cast<const uint64_t*>(src_ptr_v);
-                        else
-                        {
-                            if( bSrcIsComplex )
-                            {
-                                static_cast<uint32_t*>(dst_ptr)[0] = CPL_SWAP32(static_cast<const uint32_t*>(src_ptr_v)[0]);
-                                static_cast<uint32_t*>(dst_ptr)[1] = CPL_SWAP32(static_cast<const uint32_t*>(src_ptr_v)[1]);
-                            }
-                            else
-                            {
-                                *static_cast<uint64_t*>(dst_ptr) = CPL_SWAP64(*static_cast<const uint64_t*>(src_ptr_v));
-                            }
-                        }
+                        *static_cast<uint64_t*>(dst_ptr) = *static_cast<const uint64_t*>(src_ptr_v);
                     }
                     else if( nSameDTSize == 16 )
                     {
-                        if( !m_aoDtypeElts[0].needByteSwapping )
-                        {
-                            static_cast<uint64_t*>(dst_ptr)[0] = static_cast<const uint64_t*>(src_ptr_v)[0];
-                            static_cast<uint64_t*>(dst_ptr)[1] = static_cast<const uint64_t*>(src_ptr_v)[1];
-                        }
-                        else
-                        {
-                            static_cast<uint64_t*>(dst_ptr)[0] = CPL_SWAP64(static_cast<const uint64_t*>(src_ptr_v)[0]);
-                            static_cast<uint64_t*>(dst_ptr)[1] = CPL_SWAP64(static_cast<const uint64_t*>(src_ptr_v)[1]);
-                        }
+                        static_cast<uint64_t*>(dst_ptr)[0] = static_cast<const uint64_t*>(src_ptr_v)[0];
+                        static_cast<uint64_t*>(dst_ptr)[1] = static_cast<const uint64_t*>(src_ptr_v)[1];
                     }
                     else
                     {
@@ -828,72 +908,8 @@ lbl_next_depth_inner_loop:
                     char** pDstPtr = static_cast<char**>(dst_ptr);
                     memcpy(pDstPtr, &pDstStr, sizeof(char*));
                 }
-                else if( m_aoDtypeElts.size() == 1 &&
-                         m_aoDtypeElts[0].nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                         m_aoDtypeElts[0].nativeSize == 1 )
-                {
-                    CPLAssert( m_oType.GetClass() == GEDTC_NUMERIC );
-                    CPLAssert( m_oType.GetNumericDataType() == GDT_Int16 );
-                    CPLAssert( bufferDataType.GetClass() == GEDTC_NUMERIC );
-                    int16_t intVal = *reinterpret_cast<const int8_t*>(src_ptr);
-                    GDALExtendedDataType::CopyValue(&intVal, m_oType,
-                                                    dst_ptr, bufferDataType);
-                }
                 else
                 {
-                    for( auto& elt: m_aoDtypeElts )
-                    {
-                        if( elt.needByteSwapping )
-                        {
-                            if( elt.nativeSize == 2 )
-                                CPL_SWAP16PTR(src_ptr + elt.nativeOffset);
-                            else if( elt.nativeSize == 4 )
-                                CPL_SWAP32PTR(src_ptr + elt.nativeOffset);
-                            else if( elt.nativeSize == 8 )
-                            {
-                                if( elt.nativeType == DtypeElt::NativeType::COMPLEX_IEEEFP )
-                                {
-                                    CPL_SWAP32PTR(src_ptr + elt.nativeOffset);
-                                    CPL_SWAP32PTR(src_ptr + elt.nativeOffset + 4);
-                                }
-                                else
-                                {
-                                    CPL_SWAP64PTR(src_ptr + elt.nativeOffset);
-                                }
-                            }
-                            else if( elt.nativeSize == 16 )
-                            {
-                                CPL_SWAP64PTR(src_ptr + elt.nativeOffset);
-                                CPL_SWAP64PTR(src_ptr + elt.nativeOffset + 8);
-                            }
-                        }
-
-                        if( elt.gdalTypeIsApproxOfNative )
-                        {
-                            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                                elt.nativeSize == 8 )
-                            {
-                                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                                int64_t intVal;
-                                memcpy(&intVal, src_ptr + elt.nativeOffset, sizeof(intVal));
-                                double dblVal = static_cast<double>(intVal);
-                                memcpy(src_ptr + elt.nativeOffset, &dblVal, sizeof(dblVal));
-                            }
-                            else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
-                                     elt.nativeSize == 8 )
-                            {
-                                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                                uint64_t intVal;
-                                memcpy(&intVal, src_ptr + elt.nativeOffset, sizeof(intVal));
-                                double dblVal = static_cast<double>(intVal);
-                                memcpy(src_ptr + elt.nativeOffset, &dblVal, sizeof(dblVal));
-                            }
-                            else
-                            {
-                                CPLAssert(false);
-                            }
-                        }
-                    }
                     GDALExtendedDataType::CopyValue(src_ptr, m_oType,
                                                     dst_ptr, bufferDataType);
                 }
