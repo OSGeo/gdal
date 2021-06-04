@@ -1930,6 +1930,35 @@ def test_tiff_ovr_color_table_bug_3336_bis():
     del ds
     gdal.GetDriverByName('GTiff').Delete(temp_path)
 
+###############################################################################
+
+
+def test_tiff_ovr_nodata_multiband():
+
+    numpy = pytest.importorskip('numpy')
+    
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(temp_path, 4, 4, 2, gdal.GDT_Float32)
+    ds.GetRasterBand(1).SetNoDataValue(-10000)
+    ds.GetRasterBand(1).WriteArray(numpy.array([[0.5, 1.0], [4.5, -10000]]))
+    ds.GetRasterBand(2).SetNoDataValue(-10000)
+    ds.GetRasterBand(2).WriteArray(numpy.array([[-10000, 4.0], [4.5, 0.5]]))
+
+    ds.FlushCache()
+    ds.BuildOverviews('AVERAGE', overviewlist=[2])
+    ds.FlushCache()
+
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
+        'Overview could not be generated'
+
+    pix = ds.GetRasterBand(1).GetOverview(0).ReadAsArray(win_xsize=1, win_ysize=1) 
+    assert pix[0,0] == 2.0
+
+    pix = ds.GetRasterBand(2).GetOverview(0).ReadAsArray(win_xsize=1, win_ysize=1) 
+    assert pix[0,0] == 3.0
+
+    ds = None
+
 
 ###############################################################################
 # Cleanup
