@@ -29,6 +29,7 @@
 #include "cpl_compressor.h"
 #include "cpl_json.h"
 #include "gdal_priv.h"
+#include "memmultidim.h"
 
 #include <algorithm>
 #include <cassert>
@@ -47,6 +48,25 @@ public:
     static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
+};
+
+/************************************************************************/
+/*                        ZarrAttributeGroup()                          */
+/************************************************************************/
+
+class ZarrAttributeGroup
+{
+    // Use a MEMGroup as a convenient container for attributes.
+    MEMGroup m_oGroup;
+
+public:
+    explicit ZarrAttributeGroup(const std::string& osParentName);
+
+    void Init(const CPLJSONObject& obj);
+
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const { return m_oGroup.GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const { return m_oGroup.GetAttributes(papszOptions); }
 };
 
 /************************************************************************/
@@ -121,6 +141,8 @@ class ZarrArray final: public GDALMDArray
     bool                                              m_bFortranOrder = false;
     const CPLCompressor                              *m_psDecompressor = nullptr;
     mutable std::vector<GByte>                        m_abyTmpRawTileData{}; // used for Fortran order
+    mutable ZarrAttributeGroup                        m_oAttrGroup;
+    mutable bool                                      m_bAttributesLoaded = false;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -134,6 +156,8 @@ class ZarrArray final: public GDALMDArray
                       bool& bMissingTileOut) const;
     void BlockTranspose(const std::vector<GByte>& abySrc,
                         std::vector<GByte>& abyDst) const;
+
+    void LoadAttributes() const;
 
 protected:
     bool IRead(const GUInt64* arrayStartIdx,
@@ -175,6 +199,12 @@ public:
     void SetDimSeparator(const std::string& osDimSeparator) { m_osDimSeparator = osDimSeparator; }
 
     void SetDecompressor(const CPLCompressor* psComp) { m_psDecompressor = psComp; }
+
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
+        { LoadAttributes(); return m_oAttrGroup.GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const override
+        { LoadAttributes(); return m_oAttrGroup.GetAttributes(papszOptions); }
 };
 
 
@@ -238,6 +268,201 @@ std::shared_ptr<GDALGroup> ZarrGroup::OpenGroup(const std::string& osName,
 }
 
 /************************************************************************/
+/*             ZarrAttributeGroup::ZarrAttributeGroup()                 */
+/************************************************************************/
+
+ZarrAttributeGroup::ZarrAttributeGroup(const std::string& osParentName):
+                                            m_oGroup(osParentName, nullptr)
+{
+}
+
+/************************************************************************/
+/*                   ZarrAttributeGroup::Init()                         */
+/************************************************************************/
+
+void ZarrAttributeGroup::Init(const CPLJSONObject& obj)
+{
+    if( obj.GetType() != CPLJSONObject::Type::Object )
+        return;
+    const auto children = obj.GetChildren();
+    for( const auto& item: children )
+    {
+        const auto itemType = item.GetType();
+        bool bDone = false;
+        if( itemType == CPLJSONObject::Type::String )
+        {
+            bDone = true;
+            auto poAttr = m_oGroup.CreateAttribute(
+                item.GetName(), {},
+                GDALExtendedDataType::CreateString(), nullptr);
+            if( poAttr )
+            {
+                const GUInt64 arrayStartIdx = 0;
+                const size_t count = 1;
+                const GInt64 arrayStep = 0;
+                const GPtrDiff_t bufferStride = 0;
+                const std::string str = item.ToString();
+                const char* c_str = str.c_str();
+                poAttr->Write(&arrayStartIdx,
+                              &count,
+                              &arrayStep,
+                              &bufferStride,
+                              poAttr->GetDataType(),
+                              &c_str);
+            }
+        }
+        else if( itemType == CPLJSONObject::Type::Integer ||
+                 itemType == CPLJSONObject::Type::Long ||
+                 itemType == CPLJSONObject::Type::Double )
+        {
+            bDone = true;
+            auto poAttr = m_oGroup.CreateAttribute(
+                item.GetName(), {},
+                GDALExtendedDataType::Create(
+                    itemType == CPLJSONObject::Type::Integer ?
+                        GDT_Int32 : GDT_Float64),
+                nullptr);
+            if( poAttr )
+            {
+                const GUInt64 arrayStartIdx = 0;
+                const size_t count = 1;
+                const GInt64 arrayStep = 0;
+                const GPtrDiff_t bufferStride = 0;
+                const double val = item.ToDouble();
+                poAttr->Write(&arrayStartIdx,
+                              &count,
+                              &arrayStep,
+                              &bufferStride,
+                              GDALExtendedDataType::Create(GDT_Float64),
+                              &val);
+            }
+        }
+        else if( itemType == CPLJSONObject::Type::Array )
+        {
+            const auto array = item.ToArray();
+            bool isFirst = true;
+            bool isString = false;
+            bool isNumeric = false;
+            bool foundInt64 = false;
+            bool foundDouble = false;
+            bool mixedType = false;
+            size_t countItems = 0;
+            for( const auto& subItem: array )
+            {
+                const auto subItemType = subItem.GetType();
+                if( subItemType == CPLJSONObject::Type::String )
+                {
+                    if( isFirst )
+                    {
+                        isString = true;
+                    }
+                    else if( !isString )
+                    {
+                        mixedType = true;
+                        break;
+                    }
+                    countItems ++;
+                }
+                else if( subItemType == CPLJSONObject::Type::Integer ||
+                         subItemType == CPLJSONObject::Type::Long ||
+                         subItemType == CPLJSONObject::Type::Double )
+                {
+                    if( isFirst )
+                    {
+                        isNumeric = true;
+                    }
+                    else if( !isNumeric )
+                    {
+                        mixedType = true;
+                        break;
+                    }
+                    if( subItemType == CPLJSONObject::Type::Double )
+                        foundDouble = true;
+                    else if( subItemType == CPLJSONObject::Type::Long )
+                        foundInt64 = true;
+                    countItems ++;
+                }
+                else
+                {
+                    mixedType = true;
+                    break;
+                }
+                isFirst = false;
+            }
+
+            if( !mixedType && !isFirst )
+            {
+                bDone = true;
+                auto poAttr = m_oGroup.CreateAttribute(
+                    item.GetName(), { countItems },
+                    isString ?
+                        GDALExtendedDataType::CreateString():
+                        GDALExtendedDataType::Create(
+                            (foundDouble || foundInt64) ? GDT_Float64 : GDT_Int32),
+                    nullptr);
+                if( poAttr )
+                {
+                    size_t idx = 0;
+                    for( const auto& subItem: array )
+                    {
+                        const GUInt64 arrayStartIdx = idx;
+                        const size_t count = 1;
+                        const GInt64 arrayStep = 0;
+                        const GPtrDiff_t bufferStride = 0;
+                        const auto subItemType = subItem.GetType();
+                        if( subItemType == CPLJSONObject::Type::String )
+                        {
+                            const std::string str = subItem.ToString();
+                            const char* c_str = str.c_str();
+                            poAttr->Write(&arrayStartIdx,
+                                          &count,
+                                          &arrayStep,
+                                          &bufferStride,
+                                          poAttr->GetDataType(),
+                                          &c_str);
+                        }
+                        else if( subItemType == CPLJSONObject::Type::Integer ||
+                                 subItemType == CPLJSONObject::Type::Long ||
+                                 subItemType == CPLJSONObject::Type::Double )
+                        {
+                            const double val = subItem.ToDouble();
+                            poAttr->Write(&arrayStartIdx,
+                                          &count,
+                                          &arrayStep,
+                                          &bufferStride,
+                                          GDALExtendedDataType::Create(GDT_Float64),
+                                          &val);
+                        }
+                        ++idx;
+                    }
+                }
+            }
+        }
+
+        if( !bDone )
+        {
+            auto poAttr = m_oGroup.CreateAttribute(
+                item.GetName(), {}, GDALExtendedDataType::CreateString(), nullptr);
+            if( poAttr )
+            {
+                const GUInt64 arrayStartIdx = 0;
+                const size_t count = 1;
+                const GInt64 arrayStep = 0;
+                const GPtrDiff_t bufferStride = 0;
+                const std::string str = item.ToString();
+                const char* c_str = str.c_str();
+                poAttr->Write(&arrayStartIdx,
+                              &count,
+                              &arrayStep,
+                              &bufferStride,
+                              poAttr->GetDataType(),
+                              &c_str);
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                         ZarrArray::ZarrArray()                       */
 /************************************************************************/
 
@@ -254,7 +479,8 @@ ZarrArray::ZarrArray(const std::string& osParentName,
     m_oType(oType),
     m_aoDtypeElts(aoDtypeElts),
     m_anBlockSize(anBlockSize),
-    m_bFortranOrder(bFortranOrder)
+    m_bFortranOrder(bFortranOrder),
+    m_oAttrGroup(osParentName)
 {
 }
 
@@ -365,6 +591,26 @@ ZarrArray::~ZarrArray()
             }
         }
     }
+}
+
+/************************************************************************/
+/*                   ZarrArray::LoadAttributes()                        */
+/************************************************************************/
+
+void ZarrArray::LoadAttributes() const
+{
+    if( m_bAttributesLoaded )
+        return;
+    m_bAttributesLoaded = true;
+
+    CPLJSONDocument oDoc;
+    const std::string osZattrsFilename(
+        CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
+    CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
+    CPLErrorStateBackuper errorStateBackuper;
+    if( !oDoc.Load(osZattrsFilename) )
+        return;
+    m_oAttrGroup.Init(oDoc.GetRoot());
 }
 
 /************************************************************************/

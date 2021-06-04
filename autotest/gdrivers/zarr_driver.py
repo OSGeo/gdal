@@ -529,3 +529,27 @@ def test_zarr_read_compound_complex():
     assert j['arrays']['compound_complex']['values'] == [
         {"a": 1, "b": {"b1": 2, "b2": 3, "b3": 1000, "b5": 4}, "c": "AAA", "d": -1},
         {"a": 2, "b": {"b1": 255, "b2": 254, "b3": 65534, "b5": 253}, "c": "ZZ", "d": -2}]
+
+
+def test_zarr_read_array_attributes():
+
+    filename = 'data/zarr/array_attrs.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+
+    j = gdal.MultiDimInfo(ds)
+    assert j['arrays']['array_attrs']['attributes'] == {
+        "bool": "true",
+        "double": 1.5,
+        "doublearray": [1.5, 2.5],
+        "int": 1,
+        "int64": 1234567890123,
+        "int64array": [1234567890123, -1234567890123],
+        "intarray": [1, 2],
+        "intdoublearray": [1, 2.5],
+        "mixedstrintarray": "[ \"foo\", 1 ]",
+        "null": "",
+        "obj": "{ }",
+        "str": "foo",
+        "strarray": ["foo", "bar"]
+    }

@@ -3,7 +3,7 @@ OBJ	=	zarrdriver.o
 
 include ../../GDALmake.opt
 
-
+CPPFLAGS :=  -I../mem $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
