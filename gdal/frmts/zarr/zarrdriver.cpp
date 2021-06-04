@@ -75,12 +75,22 @@ public:
 
 class ZarrGroup final: public GDALGroup
 {
-    std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
-    std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
+    std::string m_osDirectoryName{};
+    mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
+    mutable std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
+    mutable bool m_bDirectoryExplored = false;
+    mutable std::vector<std::string> m_aosGroups{};
+    mutable std::vector<std::string> m_aosArrays{};
+    mutable ZarrAttributeGroup                        m_oAttrGroup;
+    mutable bool                                      m_bAttributesLoaded = false;
+
+    void ExploreDirectory() const;
+    void LoadAttributes() const;
 
 public:
     ZarrGroup(const std::string& osParentName, const std::string& osName):
-        GDALGroup(osParentName, osName) {}
+        GDALGroup(osParentName, osName),
+        m_oAttrGroup(osParentName) {}
 
     std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions) const override;
     std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
@@ -90,7 +100,17 @@ public:
     std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
                                          CSLConstList papszOptions) const override;
 
-    void RegisterArray(const std::shared_ptr<GDALMDArray>& array);
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
+        { LoadAttributes(); return m_oAttrGroup.GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const override
+        { LoadAttributes(); return m_oAttrGroup.GetAttributes(papszOptions); }
+
+    std::shared_ptr<GDALMDArray> LoadArray(const std::string& osArrayName,
+                                           const std::string& osZarrayFilename,
+                                           const CPLJSONObject& oRoot) const;
+    void RegisterArray(const std::shared_ptr<GDALMDArray>& array) const;
+    void SetDirectoryName(const std::string& osDirectoryName) { m_osDirectoryName = osDirectoryName; }
 };
 
 /************************************************************************/
@@ -210,6 +230,42 @@ public:
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
 };
 
+/************************************************************************/
+/*                        ExploreDirectory()                            */
+/************************************************************************/
+
+void ZarrGroup::ExploreDirectory() const
+{
+    if( m_bDirectoryExplored || m_osDirectoryName.empty() )
+        return;
+    m_bDirectoryExplored = true;
+
+    const CPLStringList aosFiles(VSIReadDir(m_osDirectoryName.c_str()));
+    for( int i = 0; i < aosFiles.size(); ++i )
+    {
+        if( strcmp(aosFiles[i], ".") != 0 &&
+            strcmp(aosFiles[i], "..") != 0 &&
+            strcmp(aosFiles[i], ".zarray") != 0 &&
+            strcmp(aosFiles[i], ".zgroup") != 0 &&
+            strcmp(aosFiles[i], ".zattrs") != 0 )
+        {
+            const std::string osSubDir =
+                CPLFormFilename(m_osDirectoryName.c_str(), aosFiles[i], nullptr);
+            VSIStatBufL sStat;
+            std::string osFilename =
+                CPLFormFilename(osSubDir.c_str(), ".zarray", nullptr);
+            if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
+                m_aosArrays.emplace_back(aosFiles[i]);
+            else
+            {
+                osFilename =
+                    CPLFormFilename(osSubDir.c_str(), ".zgroup", nullptr);
+                if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
+                    m_aosGroups.emplace_back(aosFiles[i]);
+            }
+        }
+    }
+}
 
 /************************************************************************/
 /*                           GetMDArrayNames()                          */
@@ -217,10 +273,10 @@ public:
 
 std::vector<std::string> ZarrGroup::GetMDArrayNames(CSLConstList) const
 {
-    std::vector<std::string> names;
-    for( const auto& iter: m_oMapMDArrays )
-        names.push_back(iter.first);
-    return names;
+    if( !m_bDirectoryExplored )
+        ExploreDirectory();
+
+    return m_aosArrays;
 }
 
 /************************************************************************/
@@ -233,6 +289,24 @@ std::shared_ptr<GDALMDArray> ZarrGroup::OpenMDArray(const std::string& osName,
     auto oIter = m_oMapMDArrays.find(osName);
     if( oIter != m_oMapMDArrays.end() )
         return oIter->second;
+
+    if( !m_osDirectoryName.empty() )
+    {
+        const std::string osSubDir =
+            CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        VSIStatBufL sStat;
+        const std::string osZarrayFilename = CPLFormFilename(
+            osSubDir.c_str(), ".zarray", nullptr);
+        if( VSIStatL(osZarrayFilename.c_str(), &sStat) == 0 )
+        {
+            CPLJSONDocument oDoc;
+            if( !oDoc.Load(osZarrayFilename) )
+                return nullptr;
+            const auto oRoot = oDoc.GetRoot();
+            return LoadArray(osName, osZarrayFilename, oRoot);
+        }
+    }
+
     return nullptr;
 }
 
@@ -240,9 +314,10 @@ std::shared_ptr<GDALMDArray> ZarrGroup::OpenMDArray(const std::string& osName,
 /*                            RegisterArray()                           */
 /************************************************************************/
 
-void ZarrGroup::RegisterArray(const std::shared_ptr<GDALMDArray>& array)
+void ZarrGroup::RegisterArray(const std::shared_ptr<GDALMDArray>& array) const
 {
     m_oMapMDArrays[array->GetName()] = array;
+    m_aosArrays.emplace_back(array->GetName());
 }
 
 /************************************************************************/
@@ -251,10 +326,10 @@ void ZarrGroup::RegisterArray(const std::shared_ptr<GDALMDArray>& array)
 
 std::vector<std::string> ZarrGroup::GetGroupNames(CSLConstList) const
 {
-    std::vector<std::string> names;
-    for( const auto& iter: m_oMapGroups )
-        names.push_back(iter.first);
-    return names;
+    if( !m_bDirectoryExplored )
+        ExploreDirectory();
+
+    return m_aosGroups;
 }
 
 /************************************************************************/
@@ -267,7 +342,49 @@ std::shared_ptr<GDALGroup> ZarrGroup::OpenGroup(const std::string& osName,
     auto oIter = m_oMapGroups.find(osName);
     if( oIter != m_oMapGroups.end() )
         return oIter->second;
+
+    if( !m_osDirectoryName.empty() )
+    {
+        const std::string osSubDir =
+            CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+        VSIStatBufL sStat;
+        const std::string osZgroupFilename = CPLFormFilename(
+            osSubDir.c_str(), ".zgroup", nullptr);
+        if( VSIStatL(osZgroupFilename.c_str(), &sStat) == 0 )
+        {
+            CPLJSONDocument oDoc;
+            if( !oDoc.Load(osZgroupFilename) )
+                return nullptr;
+
+            auto poSubGroup = std::make_shared<ZarrGroup>(GetFullName(), osName);
+            poSubGroup->SetDirectoryName(osSubDir);
+            m_oMapGroups[osName] = poSubGroup;
+            return poSubGroup;
+        }
+    }
+
     return nullptr;
+}
+
+/************************************************************************/
+/*                   ZarrGroup::LoadAttributes()                        */
+/************************************************************************/
+
+void ZarrGroup::LoadAttributes() const
+{
+    if( m_bAttributesLoaded || m_osDirectoryName.empty() )
+        return;
+    m_bAttributesLoaded = true;
+
+    CPLJSONDocument oDoc;
+    const std::string osZattrsFilename(
+        CPLFormFilename(m_osDirectoryName.c_str(), ".zattrs", nullptr));
+    CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
+    CPLErrorStateBackuper errorStateBackuper;
+    if( !oDoc.Load(osZattrsFilename) )
+        return;
+    auto oRoot = oDoc.GetRoot();
+    m_oAttrGroup.Init(oRoot);
 }
 
 /************************************************************************/
@@ -1417,11 +1534,16 @@ int ZarrDataset::Identify( GDALOpenInfo *poOpenInfo )
         return FALSE;
     }
 
-    // TODO: groups, consolitated metadata
+    // TODO: consolitated metadata
     CPLString osMDFilename = CPLFormFilename( poOpenInfo->pszFilename,
                                               ".zarray", nullptr );
 
     VSIStatBufL sStat;
+    if( VSIStatL( osMDFilename, &sStat ) == 0 )
+        return TRUE;
+
+    osMDFilename = CPLFormFilename( poOpenInfo->pszFilename,
+                                    ".zgroup", nullptr );
     if( VSIStatL( osMDFilename, &sStat ) == 0 )
         return TRUE;
 
@@ -1654,24 +1776,13 @@ static void SetGDALOffset(const GDALExtendedDataType& dt,
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                         ZarrGroup::LoadArray()                       */
 /************************************************************************/
 
-GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
+std::shared_ptr<GDALMDArray> ZarrGroup::LoadArray(const std::string& osArrayName,
+                                                  const std::string& osZarrayFilename,
+                                                  const CPLJSONObject& oRoot) const
 {
-    if( !Identify(poOpenInfo) ||
-        (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) == 0 )
-    {
-        return nullptr;
-    }
-
-    CPLJSONDocument oDoc;
-    const std::string osZarrayFilename(
-                CPLFormFilename(poOpenInfo->pszFilename, ".zarray", nullptr));
-    if( !oDoc.Load(osZarrayFilename) )
-        return nullptr;
-    const auto oRoot = oDoc.GetRoot();
-
     const auto osFormat = oRoot["zarr_format"].ToString();
     if( osFormat != "2" )
     {
@@ -1946,15 +2057,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined, "Unsupported filters");
         return nullptr;
     }
-
-    auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
-    auto poRG = std::make_shared<ZarrGroup>(std::string(), "/");
-    poDS->m_poRootGroup = poRG;
-    CPLString osFilename(poOpenInfo->pszFilename);
-    if( osFilename.back() == '/' )
-        osFilename.resize(osFilename.size() - 1);
-    const std::string osArrayName(CPLGetBasename(osFilename.c_str()));
-    auto poArray = ZarrArray::Create(poRG->GetFullName(),
+    auto poArray = ZarrArray::Create(GetFullName(),
                                      osArrayName,
                                      aoDims, oType, aoDtypeElts, anBlockSize,
                                      bFortranOrder);
@@ -1965,8 +2068,56 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
-    poRG->RegisterArray(poArray);
-    return poDS.release();
+    RegisterArray(poArray);
+    return poArray;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
+{
+    if( !Identify(poOpenInfo) ||
+        (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) == 0 )
+    {
+        return nullptr;
+    }
+
+    CPLString osFilename(poOpenInfo->pszFilename);
+    if( osFilename.back() == '/' )
+        osFilename.resize(osFilename.size() - 1);
+
+    auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
+    auto poRG = std::make_shared<ZarrGroup>(std::string(), "/");
+    poDS->m_poRootGroup = poRG;
+
+    const std::string osZarrayFilename(
+                CPLFormFilename(poOpenInfo->pszFilename, ".zarray", nullptr));
+    VSIStatBufL sStat;
+    if( VSIStatL( osZarrayFilename.c_str(), &sStat ) == 0 )
+    {
+        CPLJSONDocument oDoc;
+        if( !oDoc.Load(osZarrayFilename) )
+            return nullptr;
+        const auto oRoot = oDoc.GetRoot();
+        const std::string osArrayName(CPLGetBasename(osFilename.c_str()));
+        if( !poRG->LoadArray(osArrayName, osZarrayFilename, oRoot) )
+            return nullptr;
+
+        return poDS.release();
+    }
+    else
+    {
+        const std::string osGroupFilename(
+                CPLFormFilename(poOpenInfo->pszFilename, ".zgroup", nullptr));
+        CPLJSONDocument oDoc;
+        if( !oDoc.Load(osGroupFilename) )
+            return nullptr;
+
+        poRG->SetDirectoryName(osFilename);
+        return poDS.release();
+    }
 }
 
 

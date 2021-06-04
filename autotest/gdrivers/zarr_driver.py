@@ -693,3 +693,36 @@ def test_zarr_read_crs(crs_member):
             assert len(ar.GetAttributes()) == 0
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("use_get_names", [True, False])
+def test_zarr_read_group(use_get_names):
+
+    filename = 'data/zarr/group.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg.GetName() == '/'
+    assert rg.GetFullName() == '/'
+    if use_get_names:
+        assert rg.GetGroupNames() == ['foo']
+    assert len(rg.GetAttributes()) == 1
+    assert rg.GetAttribute('key') is not None
+    subgroup = rg.OpenGroup('foo')
+    assert subgroup is not None
+    assert rg.OpenGroup('not_existing') is None
+    assert subgroup.GetName() == 'foo'
+    assert subgroup.GetFullName() == '/foo'
+    assert rg.GetMDArrayNames() is None
+    if use_get_names:
+        assert subgroup.GetGroupNames() == ['bar']
+    assert subgroup.GetAttributes() == []
+    subsubgroup = subgroup.OpenGroup('bar')
+    assert subsubgroup.GetName() == 'bar'
+    assert subsubgroup.GetFullName() == '/foo/bar'
+    if use_get_names:
+        assert subsubgroup.GetMDArrayNames() == ['baz']
+    ar = subsubgroup.OpenMDArray('baz')
+    assert ar is not None
+    assert ar.Read() == array.array('i', [1])
+    assert subsubgroup.OpenMDArray('not_existing') is None
