@@ -33,6 +33,7 @@ import base64
 import json
 import math
 import struct
+import sys
 
 from osgeo import gdal
 
@@ -310,9 +311,6 @@ def test_zarr_invalid_json_remove_member(member):
                                          {"dtype": "!"},
                                          {"dtype": "!b"},
                                          {"dtype": "<u16"},
-                                         # we don't support compound with !i1 type
-                                         {"dtype": [
-                                             ['a', '!i1'], ['b', '<i2']]},
                                          {"fill_value": []},
                                          {"fill_value": "x"},
                                          {"fill_value": "NaN"},
@@ -421,3 +419,113 @@ def test_zarr_read_fortran_order_3d():
     assert ar
     assert ar.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)) == \
         array.array('b', [i for i in range(2 * 3 * 4)])
+
+
+def test_zarr_read_compound_well_aligned():
+
+    filename = 'data/zarr/compound_well_aligned.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+
+    dt = ar.GetDataType()
+    assert dt.GetSize() == 4
+    comps = dt.GetComponents()
+    assert len(comps) == 2
+    assert comps[0].GetName() == 'a'
+    assert comps[0].GetOffset() == 0
+    assert comps[0].GetType().GetNumericDataType() == gdal.GDT_UInt16
+    assert comps[1].GetName() == 'b'
+    assert comps[1].GetOffset() == 2
+    assert comps[1].GetType().GetNumericDataType() == gdal.GDT_UInt16
+
+    assert ar['a'].Read() == array.array('H', [1000, 4000, 0])
+    assert ar['b'].Read() == array.array('H', [3000, 5000, 0])
+
+    j = gdal.MultiDimInfo(ds, detailed=True)
+    assert j['arrays']['compound_well_aligned']['values'] == [
+        {"a": 1000, "b": 3000},
+        {"a": 4000, "b": 5000},
+        {"a": 0, "b": 0}]
+
+
+def test_zarr_read_compound_not_aligned():
+
+    filename = 'data/zarr/compound_not_aligned.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+
+    dt = ar.GetDataType()
+    assert dt.GetSize() == 6
+    comps = dt.GetComponents()
+    assert len(comps) == 3
+    assert comps[0].GetName() == 'a'
+    assert comps[0].GetOffset() == 0
+    assert comps[0].GetType().GetNumericDataType() == gdal.GDT_UInt16
+    assert comps[1].GetName() == 'b'
+    assert comps[1].GetOffset() == 2
+    assert comps[1].GetType().GetNumericDataType() == gdal.GDT_Byte
+    assert comps[2].GetName() == 'c'
+    assert comps[2].GetOffset() == 4
+    assert comps[2].GetType().GetNumericDataType() == gdal.GDT_UInt16
+
+    assert ar['a'].Read() == array.array('H', [1000, 4000, 0])
+    assert ar['b'].Read() == array.array('B', [2, 4, 0])
+    assert ar['c'].Read() == array.array('H', [3000, 5000, 0])
+
+    j = gdal.MultiDimInfo(ds, detailed=True)
+    assert j['arrays']['compound_not_aligned']['values'] == [
+        {"a": 1000, "b": 2, "c": 3000},
+        {"a": 4000, "b": 4, "c": 5000},
+        {"a": 0, "b": 0, "c": 0}]
+
+
+def test_zarr_read_compound_complex():
+
+    filename = 'data/zarr/compound_complex.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+
+    is_64bit = sys.maxsize > 2**32
+
+    dt = ar.GetDataType()
+    assert dt.GetSize() == 24 if is_64bit else 16
+    comps = dt.GetComponents()
+    assert len(comps) == 4
+    assert comps[0].GetName() == 'a'
+    assert comps[0].GetOffset() == 0
+    assert comps[0].GetType().GetNumericDataType() == gdal.GDT_Byte
+    assert comps[1].GetName() == 'b'
+    assert comps[1].GetOffset() == 2
+    assert comps[1].GetType().GetClass() == gdal.GEDTC_COMPOUND
+    assert comps[1].GetType().GetSize() == 1 + 1 + 2 + \
+        1 + 1  # last one is padding
+
+    subcomps = comps[1].GetType().GetComponents()
+    assert len(subcomps) == 4
+
+    assert comps[2].GetName() == 'c'
+    assert comps[2].GetOffset() == 8
+    assert comps[2].GetType().GetClass() == gdal.GEDTC_STRING
+    assert comps[3].GetName() == 'd'
+    assert comps[3].GetOffset() == 16 if is_64bit else 12
+    assert comps[3].GetType().GetNumericDataType() == gdal.GDT_Int16
+
+    j = gdal.MultiDimInfo(ds, detailed=True)
+    assert j['arrays']['compound_complex']['values'] == [
+        {"a": 1, "b": {"b1": 2, "b2": 3, "b3": 1000, "b5": 4}, "c": "AAA", "d": -1},
+        {"a": 2, "b": {"b1": 255, "b2": 254, "b3": 65534, "b5": 253}, "c": "ZZ", "d": -2}]

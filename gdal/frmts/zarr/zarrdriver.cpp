@@ -295,12 +295,20 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
     }
 
     bool bNeedDecodedBuffer = false;
-    for( const auto& elt: arr->m_aoDtypeElts )
+    if( oType.GetClass() == GEDTC_COMPOUND && nSourceSize != oType.GetSize() )
     {
-        if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative )
+        bNeedDecodedBuffer = true;
+    }
+    else if( oType.GetClass() != GEDTC_STRING )
+    {
+        for( const auto& elt: arr->m_aoDtypeElts )
         {
-            bNeedDecodedBuffer = true;
-            break;
+            if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
+                elt.nativeType == DtypeElt::NativeType::STRING )
+            {
+                bNeedDecodedBuffer = true;
+                break;
+            }
         }
     }
     if( bNeedDecodedBuffer )
@@ -468,6 +476,137 @@ lbl_return_to_caller:
 }
 
 /************************************************************************/
+/*                        DecodeSourceElt()                             */
+/************************************************************************/
+
+static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
+                            const GByte* pSrc,
+                            GByte* pDst)
+{
+    for( auto& elt: elts )
+    {
+        if( elt.needByteSwapping )
+        {
+            if( elt.nativeSize == 2 )
+            {
+                uint16_t val;
+                memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
+                *reinterpret_cast<uint16_t*>(pDst + elt.gdalOffset) =
+                    CPL_SWAP16(val);
+            }
+            else if( elt.nativeSize == 4 )
+            {
+                uint32_t val;
+                memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
+                *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset) =
+                    CPL_SWAP32(val);
+            }
+            else if( elt.nativeSize == 8 )
+            {
+                if( elt.nativeType == DtypeElt::NativeType::COMPLEX_IEEEFP )
+                {
+                    uint32_t val;
+                    memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
+                    *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset) =
+                        CPL_SWAP32(val);
+                    memcpy(&val, pSrc + elt.nativeOffset + 4, sizeof(val));
+                    *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset + 4) =
+                        CPL_SWAP32(val);
+                }
+                else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT )
+                {
+                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                    int64_t val;
+                    memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
+                    *reinterpret_cast<double*>(pDst + elt.gdalOffset) = static_cast<double>(
+                        CPL_SWAP64(val));
+                }
+                else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT )
+                {
+                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                    uint64_t val;
+                    memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
+                    *reinterpret_cast<double*>(pDst + elt.gdalOffset) = static_cast<double>(
+                        CPL_SWAP64(val));
+                }
+                else
+                {
+                    uint64_t val;
+                    memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
+                    *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset) =
+                        CPL_SWAP64(val);
+                }
+            }
+            else if( elt.nativeSize == 16 )
+            {
+                uint64_t val;
+                memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
+                *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset) =
+                    CPL_SWAP64(val);
+                memcpy(&val, pSrc + elt.nativeOffset + 8, sizeof(val));
+                *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset + 8) =
+                    CPL_SWAP64(val);
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+        }
+        else if( elt.gdalTypeIsApproxOfNative )
+        {
+            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                elt.nativeSize == 1 )
+            {
+                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Int16 );
+                int16_t intVal = *reinterpret_cast<const int8_t*>(pSrc + elt.nativeOffset);
+                memcpy(pDst + elt.gdalOffset, &intVal, sizeof(intVal));
+            }
+            else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
+                     elt.nativeSize == 8 )
+            {
+                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                int64_t intVal;
+                memcpy(&intVal, pSrc + elt.nativeOffset, sizeof(intVal));
+                double dblVal = static_cast<double>(intVal);
+                memcpy(pDst + elt.gdalOffset, &dblVal, sizeof(dblVal));
+            }
+            else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
+                     elt.nativeSize == 8 )
+            {
+                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
+                uint64_t intVal;
+                memcpy(&intVal, pSrc + elt.nativeOffset, sizeof(intVal));
+                double dblVal = static_cast<double>(intVal);
+                memcpy(pDst + elt.gdalOffset, &dblVal, sizeof(dblVal));
+            }
+            else
+            {
+                CPLAssert(false);
+            }
+        }
+        else if( elt.nativeType == DtypeElt::NativeType::STRING )
+        {
+            char* ptr;
+            char** pDstPtr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+            memcpy(&ptr, pDstPtr, sizeof(ptr));
+            VSIFree(ptr);
+
+            char* pDstStr = static_cast<char*>(CPLMalloc(elt.nativeSize + 1));
+            memcpy(pDstStr, pSrc + elt.nativeOffset, elt.nativeSize);
+            pDstStr[elt.nativeSize] = 0;
+            memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+        }
+        else
+        {
+            CPLAssert( elt.nativeSize == elt.gdalSize );
+            memcpy(pDst + elt.gdalOffset,
+                   pSrc + elt.nativeOffset,
+                   elt.nativeSize);
+        }
+    }
+}
+
+/************************************************************************/
 /*                        ZarrArray::LoadTileData()                     */
 /************************************************************************/
 
@@ -577,111 +716,7 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
         GByte* pDst = &m_abyDecodedTileData[0];
         for( size_t i = 0; i < nValues; i++, pSrc += nSourceSize, pDst += nDTSize )
         {
-            for( auto& elt: m_aoDtypeElts )
-            {
-                if( elt.needByteSwapping )
-                {
-                    if( elt.nativeSize == 2 )
-                    {
-                        *reinterpret_cast<uint16_t*>(pDst + elt.gdalOffset) =
-                            CPL_SWAP16(*reinterpret_cast<const uint16_t*>(pSrc + elt.nativeOffset));
-                    }
-                    else if( elt.nativeSize == 4 )
-                    {
-                        *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset) =
-                            CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.nativeOffset));
-                    }
-                    else if( elt.nativeSize == 8 )
-                    {
-                        if( elt.nativeType == DtypeElt::NativeType::COMPLEX_IEEEFP )
-                        {
-                            *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset) =
-                                CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.nativeOffset));
-                            *reinterpret_cast<uint32_t*>(pDst + elt.gdalOffset + 4) =
-                                CPL_SWAP32(*reinterpret_cast<const uint32_t*>(pSrc + elt.nativeOffset + 4));
-                        }
-                        else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT )
-                        {
-                            CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                            *reinterpret_cast<double*>(pDst + elt.gdalOffset) = static_cast<double>(
-                                CPL_SWAP64(*reinterpret_cast<const int64_t*>(pSrc + elt.nativeOffset)));
-                        }
-                        else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT )
-                        {
-                            CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                            *reinterpret_cast<double*>(pDst + elt.gdalOffset) = static_cast<double>(
-                                CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.nativeOffset)));
-                        }
-                        else
-                        {
-                            *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset) =
-                                CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.nativeOffset));
-                        }
-                    }
-                    else if( elt.nativeSize == 16 )
-                    {
-                        *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset) =
-                            CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.nativeOffset));
-                        *reinterpret_cast<uint64_t*>(pDst + elt.gdalOffset + 8) =
-                            CPL_SWAP64(*reinterpret_cast<const uint64_t*>(pSrc + elt.nativeOffset + 8));
-                    }
-                    else
-                    {
-                        CPLAssert(false);
-                    }
-                }
-                else if( elt.gdalTypeIsApproxOfNative )
-                {
-                    if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                        elt.nativeSize == 1 )
-                    {
-                        CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Int16 );
-                        int16_t intVal = *reinterpret_cast<const int8_t*>(pSrc + elt.nativeOffset);
-                        memcpy(pDst + elt.gdalOffset, &intVal, sizeof(intVal));
-                    }
-                    else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                             elt.nativeSize == 8 )
-                    {
-                        CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                        int64_t intVal;
-                        memcpy(&intVal, pSrc + elt.nativeOffset, sizeof(intVal));
-                        double dblVal = static_cast<double>(intVal);
-                        memcpy(pDst + elt.gdalOffset, &dblVal, sizeof(dblVal));
-                    }
-                    else if( elt.nativeType == DtypeElt::NativeType::UNSIGNED_INT &&
-                             elt.nativeSize == 8 )
-                    {
-                        CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float64 );
-                        uint64_t intVal;
-                        memcpy(&intVal, pSrc + elt.nativeOffset, sizeof(intVal));
-                        double dblVal = static_cast<double>(intVal);
-                        memcpy(pDst + elt.gdalOffset, &dblVal, sizeof(dblVal));
-                    }
-                    else
-                    {
-                        CPLAssert(false);
-                    }
-                }
-                else if( elt.nativeType == DtypeElt::NativeType::STRING )
-                {
-                    char* ptr;
-                    char** pDstPtr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
-                    memcpy(&ptr, pDstPtr, sizeof(ptr));
-                    VSIFree(ptr);
-
-                    char* pDstStr = static_cast<char*>(CPLMalloc(elt.nativeSize + 1));
-                    memcpy(pDstStr, pSrc + elt.nativeOffset, elt.nativeSize);
-                    pDstStr[elt.nativeSize] = 0;
-                    memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
-                }
-                else
-                {
-                    CPLAssert( elt.nativeSize == elt.gdalSize );
-                    memcpy(pDst + elt.gdalOffset,
-                           pSrc + elt.nativeOffset,
-                           elt.nativeSize);
-                }
-            }
+            DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
         }
     }
 
@@ -775,6 +810,10 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
         bBothAreNumericDT &&
         m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType();
     const auto nSameDTSize = bSameNumericDT ? m_oType.GetSize() : 0;
+    const bool bSameCompoundAndNoDynamicMem =
+        m_oType.GetClass() == GEDTC_COMPOUND &&
+        m_oType == bufferDataType &&
+        !m_oType.NeedsFreeDynamicMemory();
     std::vector<GByte> abyTargetNoData;
     bool bNoDataIsZero = false;
 
@@ -998,6 +1037,10 @@ lbl_next_depth_inner_loop:
                         CPLAssert(false);
                     }
                 }
+                else if( bSameCompoundAndNoDynamicMem )
+                {
+                    memcpy(dst_ptr, src_ptr, nDTSize);
+                }
                 else if( m_oType.GetClass() == GEDTC_STRING )
                 {
                     char* pDstStr = static_cast<char*>(CPLMalloc(nSourceSize + 1));
@@ -1108,6 +1151,44 @@ int ZarrDataset::Identify( GDALOpenInfo *poOpenInfo )
 /*                             ParseDtype()                             */
 /************************************************************************/
 
+static size_t GetAlignment(const CPLJSONObject& obj)
+{
+    if( obj.GetType() == CPLJSONObject::Type::String )
+    {
+        const auto str = obj.ToString();
+        if( str.size() < 3 )
+            return 1;
+        const char chType = str[1];
+        const int nBytes = atoi(str.c_str() + 2);
+        if( chType == 'S' )
+            return sizeof(char*);
+        if( chType == 'c' && nBytes == 8 )
+            return sizeof(float);
+        if( chType == 'c' && nBytes == 16 )
+            return sizeof(double);
+       return nBytes;
+    }
+    else if( obj.GetType() == CPLJSONObject::Type::Array )
+    {
+        const auto oArray = obj.ToArray();
+        size_t nAlignment = 1;
+        for( const auto& oElt: oArray )
+        {
+            const auto oEltArray = oElt.ToArray();
+            if( !oEltArray.IsValid() || oEltArray.Size() != 2 ||
+                oEltArray[0].GetType() != CPLJSONObject::Type::String )
+            {
+                return 1;
+            }
+            nAlignment = std::max(nAlignment, GetAlignment(oEltArray[1]));
+            if( nAlignment == sizeof(void*) )
+                break;
+        }
+        return nAlignment;
+    }
+    return 1;
+}
+
 static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
                                        std::vector<DtypeElt>& elts)
 {
@@ -1137,7 +1218,6 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
             if( !elts.empty() )
             {
                 elt.nativeOffset = elts.back().nativeOffset + elts.back().nativeSize;
-                elt.gdalOffset = elts.back().gdalOffset + elts.back().gdalSize;
             }
             elt.nativeSize = nBytes;
             if( chType == 'b' && nBytes == 1 ) // boolean
@@ -1220,7 +1300,6 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
                 break;
             elt.gdalType = GDALExtendedDataType::Create(eDT);
             elt.gdalSize = elt.gdalType.GetSize();
-            elt.gdalOffset = AlignOffsetOn(elt.gdalOffset, elt.gdalSize);
             elts.emplace_back(elt);
             return GDALExtendedDataType::Create(eDT);
         }
@@ -1230,6 +1309,7 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
             const auto oArray = obj.ToArray();
             std::vector<std::unique_ptr<GDALEDTComponent>> comps;
             size_t offset = 0;
+            size_t alignmentMax = 1;
             for( const auto& oElt: oArray )
             {
                 const auto oEltArray = oElt.ToArray();
@@ -1246,29 +1326,20 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
                     error = true;
                     break;
                 }
-                if( subDT.GetClass() == GEDTC_STRING )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "String in compound type not supported");
-                    return GDALExtendedDataType::Create(GDT_Unknown);
-                }
+
                 const std::string osName = oEltArray[0].ToString();
+                // Add padding for alignment
+                const size_t alignmentSub = GetAlignment(oEltArray[1]);
+                alignmentMax = std::max(alignmentMax, alignmentSub);
+                offset = AlignOffsetOn(offset, alignmentSub);
                 comps.emplace_back(std::unique_ptr<GDALEDTComponent>(
                     new GDALEDTComponent(osName, offset, subDT)));
                 offset += subDT.GetSize();
-                if( subDT.GetClass() != GEDTC_STRING )
-                {
-                    // Add padding for alignment
-                    offset = AlignOffsetOn(offset, subDT.GetSize());
-                }
             }
             if( error )
                 break;
             size_t nTotalSize = offset;
-            if( !elts.empty() && elts[0].gdalType.GetClass() != GEDTC_STRING )
-            {
-                nTotalSize = AlignOffsetOn(nTotalSize, elts[0].gdalSize);
-            }
+            nTotalSize = AlignOffsetOn(nTotalSize, alignmentMax);
             return GDALExtendedDataType::Create(obj.ToString(),
                                                 nTotalSize,
                                                 std::move(comps));
@@ -1278,6 +1349,27 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject& obj,
     CPLError(CE_Failure, CPLE_AppDefined,
              "Invalid or unsupported format for dtype");
     return GDALExtendedDataType::Create(GDT_Unknown);
+}
+
+static void SetGDALOffset(const GDALExtendedDataType& dt,
+                          const size_t nBaseOffset,
+                          std::vector<DtypeElt>& elts,
+                          size_t& iCurElt)
+{
+    if( dt.GetClass() == GEDTC_COMPOUND )
+    {
+        const auto& comps = dt.GetComponents();
+        for( const auto& comp: comps )
+        {
+            const size_t nBaseOffsetSub = nBaseOffset + comp->GetOffset();
+            SetGDALOffset(comp->GetType(), nBaseOffsetSub, elts, iCurElt);
+        }
+    }
+    else
+    {
+        elts[iCurElt].gdalOffset = nBaseOffset;
+        iCurElt++;
+    }
 }
 
 /************************************************************************/
@@ -1373,28 +1465,8 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     const auto oType = ParseDtype(oDtype, aoDtypeElts);
     if( oType.GetClass() == GEDTC_NUMERIC && oType.GetNumericDataType() == GDT_Unknown )
         return nullptr;
-
-    if( oType.GetClass() == GEDTC_COMPOUND )
-    {
-        bool bFoundSignedInt1Byte = false;
-        for( const auto& elt: aoDtypeElts )
-        {
-            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                elt.nativeSize == 1 )
-            {
-                bFoundSignedInt1Byte = true;
-                break;
-            }
-        }
-        if( bFoundSignedInt1Byte )
-        {
-            // Would complicate IRead() implementation
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Compound data type with signed integer of "
-                     "1 byte not supported");
-            return nullptr;
-        }
-    }
+    size_t iCurElt = 0;
+    SetGDALOffset(oType, 0, aoDtypeElts, iCurElt);
 
     std::vector<GUInt64> anBlockSize;
     size_t nBlockSize = oType.GetSize();
@@ -1426,9 +1498,25 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
         return nullptr;
     }
     const auto eFillValueType = oFillValue.GetType();
-    bool bHasNoData = false;
     std::vector<GByte> abyNoData;
-    std::string osNoData;
+
+    struct NoDataFreer
+    {
+        std::vector<GByte>& m_abyNodata;
+        const GDALExtendedDataType& m_oType;
+
+        NoDataFreer(std::vector<GByte>& abyNoDataIn,
+                    const GDALExtendedDataType& oTypeIn) :
+                            m_abyNodata(abyNoDataIn), m_oType(oTypeIn) {}
+
+        ~NoDataFreer()
+        {
+            if( !m_abyNodata.empty() )
+                m_oType.FreeDynamicMemory(&m_abyNodata[0]);
+        }
+    };
+    NoDataFreer NoDataFreer(abyNoData, oType);
+
     if( eFillValueType == CPLJSONObject::Type::Null )
     {
         // Nothing to do
@@ -1458,14 +1546,12 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
             }
             if( oType.GetNumericDataType() == GDT_Float32 )
             {
-                bHasNoData = true;
                 const float fNoDataValue = static_cast<float>(dfNoDataValue);
                 abyNoData.resize(sizeof(fNoDataValue));
                 memcpy( &abyNoData[0], &fNoDataValue, sizeof(fNoDataValue) );
             }
             else if( oType.GetNumericDataType() == GDT_Float64 )
             {
-                bHasNoData = true;
                 abyNoData.resize(sizeof(dfNoDataValue));
                 memcpy( &abyNoData[0], &dfNoDataValue, sizeof(dfNoDataValue) );
             }
@@ -1477,14 +1563,32 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
         }
         else if( oType.GetClass() == GEDTC_STRING )
         {
-            bHasNoData = true;
-            osNoData = osFillValue;
-            int nBytes = CPLBase64DecodeInPlace(reinterpret_cast<GByte*>(&osNoData[0]));
-            osNoData.resize(nBytes);
+            std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
+            memcpy(&abyNativeFillValue[0], osFillValue.data(), osFillValue.size());
+            int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
+            abyNativeFillValue.resize(nBytes + 1);
+            abyNativeFillValue[nBytes] = 0;
+            abyNoData.resize( oType.GetSize() );
+            char* pDstStr = CPLStrdup( reinterpret_cast<const char*>(&abyNativeFillValue[0]) );
+            char** pDstPtr = reinterpret_cast<char**>(&abyNoData[0]);
+            memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
         }
         else
         {
-            // TODO compound types. Base64 encoding
+            std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
+            memcpy(&abyNativeFillValue[0], osFillValue.data(), osFillValue.size());
+            int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
+            abyNativeFillValue.resize(nBytes);
+            if( abyNativeFillValue.size() != aoDtypeElts.back().nativeOffset +
+                                             aoDtypeElts.back().nativeSize )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+                return nullptr;
+            }
+            abyNoData.resize( oType.GetSize() );
+            DecodeSourceElt( aoDtypeElts,
+                             abyNativeFillValue.data(),
+                             &abyNoData[0] );
         }
     }
     else if( eFillValueType == CPLJSONObject::Type::Boolean ||
@@ -1494,7 +1598,6 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     {
         if( oType.GetClass() == GEDTC_NUMERIC )
         {
-            bHasNoData = true;
             const double dfNoDataValue = oFillValue.ToDouble();
             abyNoData.resize(oType.GetSize());
             GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
@@ -1563,35 +1666,23 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
         return nullptr;
     }
 
-    // TODO
-    if( oType.GetClass() == GEDTC_COMPOUND )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Compound data type not yet supported");
-        return nullptr;
-    }
-
     auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
     auto poRG = std::make_shared<ZarrGroup>(std::string(), "/");
     poDS->m_poRootGroup = poRG;
+    CPLString osFilename(poOpenInfo->pszFilename);
+    if( osFilename.back() == '/' )
+        osFilename.resize(osFilename.size() - 1);
+    const std::string osArrayName(CPLGetBasename(osFilename.c_str()));
     auto poArray = ZarrArray::Create(poRG->GetFullName(),
-                                     CPLGetBasename(poOpenInfo->pszFilename),
+                                     osArrayName,
                                      aoDims, oType, aoDtypeElts, anBlockSize,
                                      bFortranOrder);
     poArray->SetFilename(osZarrayFilename);
     poArray->SetDimSeparator(osDimSeparator);
     poArray->SetDecompressor(psDecompressor);
-    if( bHasNoData )
+    if( !abyNoData.empty() )
     {
-        if( oType.GetClass() == GEDTC_STRING )
-        {
-            const char* pszNoData = osNoData.data();
-            poArray->RegisterNoDataValue(&pszNoData);
-        }
-        else
-        {
-            poArray->RegisterNoDataValue(abyNoData.data());
-        }
+        poArray->RegisterNoDataValue(abyNoData.data());
     }
     poRG->RegisterArray(poArray);
     return poDS.release();

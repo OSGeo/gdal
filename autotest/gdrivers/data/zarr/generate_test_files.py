@@ -96,3 +96,20 @@ z[:] = [['000', '111', '222', '333'],
 z = zarr.open('order_f_u1_3d.zarr', order='F', mode='w', dtype='u1',
               shape=(2, 3, 4), chunks=(2, 3, 4), compressor=None)
 z[:] = np.reshape(np.arange(0, 2 * 3 * 4, dtype=np.uint8), (2, 3, 4))
+
+
+z = zarr.open('compound_well_aligned.zarr', mode='w', dtype=[('a', 'u2'), ('b', 'u2')],
+              shape=(3,), chunks=(2,), compressor=None)
+z[0] = (1000, 3000)
+z[1] = (4000, 5000)
+
+
+z = zarr.open('compound_not_aligned.zarr', mode='w', dtype=[('a', 'u2'), ('b', 'u1'), ('c', 'u2')],
+              shape=(3,), chunks=(2,), compressor=None)
+z[0] = (1000, 2, 3000)
+z[1] = (4000, 4, 5000)
+
+
+z = zarr.open('compound_complex.zarr', mode='w', dtype=[('a', 'u1'), ('b', [('b1', 'u1'), ('b2', 'u1'), ('b3', 'u2'), ('b5', 'u1')]), ('c', 'S3'), ('d', 'i1')],
+              shape=(2,), chunks=(1,), fill_value=(2, (255, 254, 65534, 253), 'ZZ', -2), compressor=None)
+z[0] = (1, (2, 3, 1000, 4), 'AAA', -1)

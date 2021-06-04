@@ -1,0 +1,48 @@
+{
+    "chunks": [
+        1
+    ],
+    "compressor": null,
+    "dtype": [
+        [
+            "a",
+            "|u1"
+        ],
+        [
+            "b",
+            [
+                [
+                    "b1",
+                    "|u1"
+                ],
+                [
+                    "b2",
+                    "|u1"
+                ],
+                [
+                    "b3",
+                    "<u2"
+                ],
+                [
+                    "b5",
+                    "|u1"
+                ]
+            ]
+        ],
+        [
+            "c",
+            "|S3"
+        ],
+        [
+            "d",
+            "|i1"
+        ]
+    ],
+    "fill_value": "Av/+/v/9WloA/g==",
+    "filters": null,
+    "order": "C",
+    "shape": [
+        2
+    ],
+    "zarr_format": 2
+}
