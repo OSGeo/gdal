@@ -31,6 +31,7 @@
 import lzma
 import os
 import zarr
+import numpy as np
 from numcodecs import Blosc, GZip, Zlib, LZMA, Zstd, LZ4
 
 os.chdir(os.path.dirname(__file__))
@@ -67,3 +68,31 @@ z[:] = [1, 2]
 z = zarr.open('zstd.zarr', mode='w', dtype='u1',
               shape=(2,), chunks=(2,), compressor=Zstd())
 z[:] = [1, 2]
+
+
+z = zarr.open('order_f_u1.zarr', order='F', mode='w', dtype='u1',
+              shape=(4, 4), chunks=(2, 3), compressor=None)
+z[:] = np.reshape(np.arange(0, 16, dtype=np.uint8), (4, 4))
+
+z = zarr.open('order_f_u2.zarr', order='F', mode='w', dtype='u2',
+              shape=(4, 4), chunks=(2, 3), compressor=None)
+z[:] = np.reshape(np.arange(0, 16, dtype=np.uint16), (4, 4))
+
+z = zarr.open('order_f_u4.zarr', order='F', mode='w', dtype='u4',
+              shape=(4, 4), chunks=(2, 3), compressor=None)
+z[:] = np.reshape(np.arange(0, 16, dtype=np.uint32), (4, 4))
+
+z = zarr.open('order_f_u8.zarr', order='F', mode='w', dtype='u8',
+              shape=(4, 4), chunks=(2, 3), compressor=None)
+z[:] = np.reshape(np.arange(0, 16, dtype=np.uint64), (4, 4))
+
+z = zarr.open('order_f_s3.zarr', order='F', mode='w', dtype='S3',
+              shape=(4, 4), chunks=(2, 3), compressor=None)
+z[:] = [['000', '111', '222', '333'],
+        ['444', '555', '666', '777'],
+        ['888', '999', 'AAA', 'BBB'],
+        ['CCC', 'DDD', 'EEE', 'FFF']]
+
+z = zarr.open('order_f_u1_3d.zarr', order='F', mode='w', dtype='u1',
+              shape=(2, 3, 4), chunks=(2, 3, 4), compressor=None)
+z[:] = np.reshape(np.arange(0, 2 * 3 * 4, dtype=np.uint8), (2, 3, 4))

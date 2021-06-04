@@ -382,3 +382,42 @@ def test_zarr_read_compression_methods(datasetname, compressor):
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         assert ar
         assert ar.Read() == array.array('b', [1, 2])
+
+
+@pytest.mark.parametrize("name", ["u1", "u2", "u4", "u8"])
+def test_zarr_read_fortran_order(name):
+
+    filename = 'data/zarr/order_f_' + name + '.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)) == \
+        array.array('b', [i for i in range(16)])
+
+
+def test_zarr_read_fortran_order_string():
+
+    filename = 'data/zarr/order_f_s3.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == ['000', '111', '222', '333',
+                         '444', '555', '666', '777',
+                         '888', '999', 'AAA', 'BBB',
+                         'CCC', 'DDD', 'EEE', 'FFF']
+
+
+def test_zarr_read_fortran_order_3d():
+
+    filename = 'data/zarr/order_f_u1_3d.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)) == \
+        array.array('b', [i for i in range(2 * 3 * 4)])

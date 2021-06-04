@@ -31,6 +31,7 @@
 #include "gdal_priv.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 
 /************************************************************************/
@@ -117,17 +118,22 @@ class ZarrArray final: public GDALMDArray
     mutable bool                                      m_bCachedTiledValid = false;
     mutable bool                                      m_bCachedTiledEmpty = false;
     bool                                              m_bUseOptimizedCodePaths = true;
+    bool                                              m_bFortranOrder = false;
     const CPLCompressor                              *m_psDecompressor = nullptr;
+    mutable std::vector<GByte>                        m_abyTmpRawTileData{}; // used for Fortran order
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
               const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
               const GDALExtendedDataType& oType,
               const std::vector<DtypeElt>& aoDtypeElts,
-              const std::vector<GUInt64>& anBlockSize);
+              const std::vector<GUInt64>& anBlockSize,
+              bool bFortranOrder);
 
     bool LoadTileData(const std::vector<uint64_t>& tileIndices,
                       bool& bMissingTileOut) const;
+    void BlockTranspose(const std::vector<GByte>& abySrc,
+                        std::vector<GByte>& abyDst) const;
 
 protected:
     bool IRead(const GUInt64* arrayStartIdx,
@@ -147,7 +153,8 @@ public:
                                              const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
                                              const GDALExtendedDataType& oType,
                                              const std::vector<DtypeElt>& aoDtypeElts,
-                                             const std::vector<GUInt64>& anBlockSize);
+                                             const std::vector<GUInt64>& anBlockSize,
+                                             bool bFortranOrder);
 
     bool IsWritable() const override { return false; }
 
@@ -239,13 +246,15 @@ ZarrArray::ZarrArray(const std::string& osParentName,
                      const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
                      const GDALExtendedDataType& oType,
                      const std::vector<DtypeElt>& aoDtypeElts,
-                     const std::vector<GUInt64>& anBlockSize):
+                     const std::vector<GUInt64>& anBlockSize,
+                     bool bFortranOrder):
     GDALAbstractMDArray(osParentName, osName),
     GDALMDArray(osParentName, osName),
     m_aoDims(aoDims),
     m_oType(oType),
     m_aoDtypeElts(aoDtypeElts),
-    m_anBlockSize(anBlockSize)
+    m_anBlockSize(anBlockSize),
+    m_bFortranOrder(bFortranOrder)
 {
 }
 
@@ -258,11 +267,12 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
                                              const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
                                              const GDALExtendedDataType& oType,
                                              const std::vector<DtypeElt>& aoDtypeElts,
-                                             const std::vector<GUInt64>& anBlockSize)
+                                             const std::vector<GUInt64>& anBlockSize,
+                                             bool bFortranOrder)
 {
     auto arr = std::shared_ptr<ZarrArray>(
         new ZarrArray(osParentName, osName, aoDims, oType, aoDtypeElts,
-                      anBlockSize));
+                      anBlockSize, bFortranOrder));
     arr->SetSelf(arr);
 
     // Reserve a buffer for tile content
@@ -275,6 +285,8 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
     try
     {
         arr->m_abyRawTileData.resize( nTileSize );
+        if( bFortranOrder )
+            arr->m_abyTmpRawTileData.resize( nTileSize );
     }
     catch( const std::bad_alloc& e )
     {
@@ -376,6 +388,86 @@ void ZarrArray::RegisterNoDataValue(const void* pNoData)
 }
 
 /************************************************************************/
+/*                      ZarrArray::BlockTranspose()                     */
+/************************************************************************/
+
+void ZarrArray::BlockTranspose(const std::vector<GByte>& abySrc,
+                               std::vector<GByte>& abyDst) const
+{
+    // Perform transposition
+    const size_t nDims = m_anBlockSize.size();
+    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                               m_aoDtypeElts.back().nativeSize;
+
+    struct Stack
+    {
+        size_t       nIters = 0;
+        const GByte* src_ptr = nullptr;
+        GByte*       dst_ptr = nullptr;
+        size_t       src_inc_offset = 0;
+        size_t       dst_inc_offset = 0;
+    };
+
+    std::vector<Stack> stack(nDims + 1);
+    assert(!stack.empty()); // to make gcc 9.3 -O2 -Wnull-dereference happy
+
+    stack[0].src_inc_offset = nSourceSize;
+    for( size_t i = 1; i < nDims; ++i )
+    {
+        stack[i].src_inc_offset = stack[i-1].src_inc_offset *
+                                static_cast<size_t>(m_anBlockSize[i-1]);
+    }
+
+    stack[nDims-1].dst_inc_offset = nSourceSize;
+    for( size_t i = nDims - 1; i > 0; )
+    {
+        --i;
+        stack[i].dst_inc_offset = stack[i+1].dst_inc_offset *
+                                static_cast<size_t>(m_anBlockSize[i+1]);
+    }
+
+    stack[0].src_ptr = abySrc.data();
+    stack[0].dst_ptr = &abyDst[0];
+
+    size_t dimIdx = 0;
+lbl_next_depth:
+    if( dimIdx == nDims )
+    {
+        void* dst_ptr = stack[nDims].dst_ptr;
+        const void* src_ptr = stack[nDims].src_ptr;
+        if( nSourceSize == 1 )
+            *stack[nDims].dst_ptr = *stack[nDims].src_ptr;
+        else if( nSourceSize == 2 )
+            *static_cast<uint16_t*>(dst_ptr) = *static_cast<const uint16_t*>(src_ptr);
+        else if( nSourceSize == 4 )
+            *static_cast<uint32_t*>(dst_ptr) = *static_cast<const uint32_t*>(src_ptr);
+        else if( nSourceSize == 8 )
+            *static_cast<uint64_t*>(dst_ptr) = *static_cast<const uint64_t*>(src_ptr);
+        else
+            memcpy(dst_ptr, src_ptr, nSourceSize);
+    }
+    else
+    {
+        stack[dimIdx].nIters = static_cast<size_t>(m_anBlockSize[dimIdx]);
+        while(true)
+        {
+            dimIdx ++;
+            stack[dimIdx].src_ptr = stack[dimIdx-1].src_ptr;
+            stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+            goto lbl_next_depth;
+lbl_return_to_caller:
+            dimIdx --;
+            if( (--stack[dimIdx].nIters) == 0 )
+                break;
+            stack[dimIdx].src_ptr += stack[dimIdx].src_inc_offset;
+            stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+        }
+    }
+    if( dimIdx > 0 )
+        goto lbl_return_to_caller;
+}
+
+/************************************************************************/
 /*                        ZarrArray::LoadTileData()                     */
 /************************************************************************/
 
@@ -468,6 +560,12 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
         }
     }
     VSIFCloseL(fp);
+
+    if( bRet && !bMissingTileOut && m_bFortranOrder )
+    {
+        BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData);
+        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
+    }
 
     if( bRet && !bMissingTileOut && !m_abyDecodedTileData.empty() )
     {
@@ -1208,11 +1306,19 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
         return nullptr;
     }
 
-    // TODO: handle F
+    bool bFortranOrder = false;
     const auto osOrder = oRoot["order"].ToString();
-    if( osOrder != "C" )
+    if( osOrder == "C" )
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Only order=C supported");
+        // ok
+    }
+    else if( osOrder == "F" )
+    {
+        bFortranOrder = true;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid value for order");
         return nullptr;
     }
 
@@ -1470,7 +1576,8 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->m_poRootGroup = poRG;
     auto poArray = ZarrArray::Create(poRG->GetFullName(),
                                      CPLGetBasename(poOpenInfo->pszFilename),
-                                     aoDims, oType, aoDtypeElts, anBlockSize);
+                                     aoDims, oType, aoDtypeElts, anBlockSize,
+                                     bFortranOrder);
     poArray->SetFilename(osZarrayFilename);
     poArray->SetDimSeparator(osDimSeparator);
     poArray->SetDecompressor(psDecompressor);
