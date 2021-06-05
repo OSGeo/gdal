@@ -205,9 +205,9 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
                && achSrcBuffer[iEOL] != '\0' )
             iEOL++;
 
-        // If nothing was read, we have reached the end of the file
+        // If nothing was read, we have prematurely reached the end of the file
         if( iEOL == iSrcBufferOffset )
-            break;
+            return -1;
     }
 
     size_t nValueBufLen = 0;
