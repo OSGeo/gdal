@@ -220,6 +220,14 @@ What has been discussed in this section for the particular case of Geographic
 CRS also applies to Projected CRS. While most of them use Easting first, Northing
 second convention, some defined in the EPSG registry use the reverse convention.
 
+Another way to keep using the Traditional GIS order for some specific well known CRS is to
+calling to :cpp:func:`OGRSpatialReference::SetWellKnownGeogCS` with
+"CRS27", "CRS83" or "CRS84" instead of "NAD27", "NAD83" and "WGS84" respectively.
+
+.. code-block::
+
+    oSRS.SetWellKnownGeogCS( "CRS84" );
+
 Defining a Projected CRS
 ------------------------
 
