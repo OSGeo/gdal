@@ -3111,13 +3111,17 @@ OGRErr OSRSetGeogCS( OGRSpatialReferenceH hSRS,
  * set the underlying geographic coordinate system of a projected coordinate
  * system.
  *
- * The following well known text values are currently supported:
+ * The following well known text values are currently supported,
+ * Except for "EPSG:n", the others are without dependency on EPSG data files:
  * <ul>
- * <li> "WGS84": same as "EPSG:4326" but has no dependence on EPSG data files.
- * <li> "WGS72": same as "EPSG:4322" but has no dependence on EPSG data files.
- * <li> "NAD27": same as "EPSG:4267" but has no dependence on EPSG data files.
- * <li> "NAD83": same as "EPSG:4269" but has no dependence on EPSG data files.
  * <li> "EPSG:n": where n is the code a Geographic coordinate reference system.
+ * <li> "WGS84": same as "EPSG:4326" (axis order lat/long).
+ * <li> "WGS72": same as "EPSG:4322" (axis order lat/long).
+ * <li> "NAD83": same as "EPSG:4269" (axis order lat/long).
+ * <li> "NAD27": same as "EPSG:4267" (axis order lat/long).
+ * <li> "CRS84", "CRS:84": same as "WGS84" but with axis order long/lat.
+ * <li> "CRS72", "CRS:72": same as "WGS72" but with axis order long/lat.
+ * <li> "CRS27", "CRS:27": same as "NAD27" but with axis order long/lat.
  * </ul>
  *
  * @param pszName name of well known geographic coordinate system.
@@ -3157,7 +3161,13 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
     else if( EQUAL(pszName, "CRS84") ||
              EQUAL(pszName, "CRS:84") )
     {
-        pszWKT = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Longitude\",EAST],AXIS[\"Latitude\",NORTH]]";
+        pszWKT =
+            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
+            "SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],"
+            "AUTHORITY[\"EPSG\",\"6326\"]],"
+            "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
+            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+            "AXIS[\"Longitude\",EAST],AXIS[\"Latitude\",NORTH]]";
     }
     else if( EQUAL(pszName, "WGS72") )
         pszWKT =
@@ -3165,7 +3175,8 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
             "SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",\"7043\"]],"
             "AUTHORITY[\"EPSG\",\"6322\"]],"
             "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
-            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],"
+            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+            "AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],"
             "AUTHORITY[\"EPSG\",\"4322\"]]";
 
     else if( EQUAL(pszName, "NAD27") )
@@ -3174,7 +3185,8 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
             "SPHEROID[\"Clarke 1866\",6378206.4,294.9786982138982,"
             "AUTHORITY[\"EPSG\",\"7008\"]],AUTHORITY[\"EPSG\",\"6267\"]],"
             "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
-            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],"
+            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+            "AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],"
             "AUTHORITY[\"EPSG\",\"4267\"]]";
 
     else if( EQUAL(pszName, "CRS27") || EQUAL(pszName, "CRS:27") )
@@ -3183,25 +3195,28 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
             "SPHEROID[\"Clarke 1866\",6378206.4,294.9786982138982,"
             "AUTHORITY[\"EPSG\",\"7008\"]],AUTHORITY[\"EPSG\",\"6267\"]],"
             "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
-            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Longitude\",EAST],AXIS[\"Latitude\",NORTH]]";
+            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+            "AXIS[\"Longitude\",EAST],AXIS[\"Latitude\",NORTH]]";
 
     else if( EQUAL(pszName, "NAD83") )
         pszWKT =
             "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\","
             "SPHEROID[\"GRS 1980\",6378137,298.257222101,"
             "AUTHORITY[\"EPSG\",\"7019\"]],"
-            "AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0,"
-            "AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,"
-            "AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4269\"]]";
+            "AUTHORITY[\"EPSG\",\"6269\"]],"
+            "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
+            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+            "AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4269\"]]";
 
     else if(  EQUAL(pszName, "CRS83") ||  EQUAL(pszName, "CRS:83") )
         pszWKT =
             "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\","
             "SPHEROID[\"GRS 1980\",6378137,298.257222101,"
             "AUTHORITY[\"EPSG\",\"7019\"]],"
-            "AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0,"
-            "AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,"
-            "AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Longitude\",EAST],AXIS[\"Latitude\",NORTH]]";
+            "AUTHORITY[\"EPSG\",\"6269\"]],"
+            "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
+            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+            "AXIS[\"Longitude\",EAST],AXIS[\"Latitude\",NORTH]]";
 
     else
         return OGRERR_FAILURE;
