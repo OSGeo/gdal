@@ -416,3 +416,6 @@ See Also
 - :ref:`raster.gtiff` driver
 -  `How to generate and read cloud optimized GeoTIFF
    files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__ (before GDAL 3.1)
+- If your source dataset is an internally tiled geotiff with the desired georeferencing and compression,
+  using `cogger <https://github.com/airbusgeo/cogger>`__ (possibly along with gdaladdo to create overviews) will
+  be much faster than the COG driver.

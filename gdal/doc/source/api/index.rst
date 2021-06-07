@@ -133,6 +133,13 @@ API
        Fiona <https://github.com/Toblerity/Fiona>
        Rasterio <https://github.com/mapbox/rasterio>
 
+    There is a more idiomatic Golang way of using the raster functions with
+
+      .. toctree::
+       :maxdepth: 1
+
+       Godal <https://github.com/airbusgeo/godal>
+
 .. only:: latex
 
     API is omitted in this PDF document. You can consult it on
