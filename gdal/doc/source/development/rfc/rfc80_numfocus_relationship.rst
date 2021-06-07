@@ -8,6 +8,7 @@ RFC 80: NumFOCUS relationship and sponsorship program
 Author:        Even Rouault (with content from Chris Holmes)
 Contact:       even.rouault @ spatialys.com
 Started:       2021-Apr-15
+Last modified: 2021-Jun-07
 Status:        Adopted
 ============== =============================================
 
@@ -105,12 +106,12 @@ support through the sponsorship program. For such purposes, they may use
 community support or refer to service providers, as for other GDAL users.
 However, we will offer a way to sponsors to give feedback, as detailed afterwards.
 
-GDAL Advisory Board
--------------------
+GDAL Advisory Council
+---------------------
 
-The GDAL Advisory Board is a newly forming group that is tasked with ensuring the project is evolving to meet the needs of its largest supporters. There will be periodic meetings with the advisory board, GDAL PSC members wishing to participate, and persons benefiting from funding, providing a forum to give feedback on the latest GDAL work. Board members will also be expected to share how they are using GDAL in their organization (in as much detail as is possible, understanding that some can only talk in general terms). Though the GDAL PSC owns the decision making around how the sponsorship money is allocated, the advisory board will provide key input on the maintenance priorities of the sponsors.
+The GDAL Advisory Council is a newly forming group that is tasked with ensuring the project is evolving to meet the needs of its largest supporters. There will be periodic meetings with the advisory board, GDAL PSC members wishing to participate, and persons benefiting from funding, providing a forum to give feedback on the latest GDAL work. Board members will also be expected to share how they are using GDAL in their organization (in as much detail as is possible, understanding that some can only talk in general terms). Though the GDAL PSC owns the decision making around how the sponsorship money is allocated, the advisory board will provide key input on the maintenance priorities of the sponsors.
 
-Our hope is that these sessions can also lead to new feature development in GDAL through joint funding initiatives between top sponsors, providing more structure to the way GDAL features are funded today. This ideally leads to more cost-sharing as organizations will be able to be more strategic when they know what everyone else is interested in. These efforts will be above and beyond the core maintenance sponsorship, but the Advisory Board will be a key forum to enable it.
+Our hope is that these sessions can also lead to new feature development in GDAL through joint funding initiatives between top sponsors, providing more structure to the way GDAL features are funded today. This ideally leads to more cost-sharing as organizations will be able to be more strategic when they know what everyone else is interested in. These efforts will be above and beyond the core maintenance sponsorship, but the Advisory Council will be a key forum to enable it.
 
 The Advisory board will have an email list, with members of the GDAL PSC on it, and will meet on a periodic schedule, to be determined as the group forms. It will consist of one representative from each of the Platinum sponsors, one representative for every three Gold sponsors, and one representative from Silver sponsors.
 
