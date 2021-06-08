@@ -352,7 +352,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
 
     size_t fullsize = dst.size;
     // Figure out the size of the JFIF
-    dst.size -= jmgr.free_in_buffer;
+    dst.size = fullsize - jmgr.free_in_buffer;
 
 #if defined(BRUNSLI)
     if (!noJXL) {
