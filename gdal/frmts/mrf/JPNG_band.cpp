@@ -141,6 +141,7 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
         codec.rgb = rgb;
         codec.optimize = optimize;
         codec.sameres = sameres;
+        codec.noJXL = noJXL;
         retval = codec.CompressJPEG(dst, temp);
     }
     else if (!AllAlpha<0>(src, image)) {
@@ -164,7 +165,8 @@ JPNG_Band::JPNG_Band( MRFDataset *pDS, const ILImage &image,
     MRFRasterBand(pDS, image, b, level),
     rgb(FALSE),
     sameres(FALSE),
-    optimize(false)
+    optimize(false),
+    noJXL(false)
 {   // Check error conditions
     if (image.dt != GDT_Byte) {
         CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPNG");
@@ -186,6 +188,7 @@ JPNG_Band::JPNG_Band( MRFDataset *pDS, const ILImage &image,
     }
 
     optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
+    noJXL = GetOptlist().FetchBoolean("NOJXL", FALSE) != FALSE;
 
     // PNGs and JPGs can be larger than the source, especially for
     // small page size.

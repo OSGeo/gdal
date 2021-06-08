@@ -72,6 +72,7 @@ CPL_C_END
 #include <brunsli/brunsli_decode.h>
 #include <brunsli/jpeg_data_writer.h>
 #include <brunsli/brunsli_encode.h>
+#include <brunsli/jpeg_data_reader.h>
 #endif
 
 NAMESPACE_MRF_START
@@ -349,8 +350,28 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     CPLFree(rowp);
     CPLFree(buffer);     // Safe to call on null
 
-    // Figure out the size
+    size_t fullsize = dst.size;
+    // Figure out the size of the JFIF
     dst.size -= jmgr.free_in_buffer;
+
+#if defined(BRUNSLI)
+    if (!noJXL) {
+        brunsli::JPEGData bjpg;
+        if (!brunsli::ReadJpeg(reinterpret_cast<GByte *>(dst.buffer), dst.size, brunsli::JPEG_READ_ALL, &bjpg)) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error parsing JPEG before conversion to JPEG-XL");
+            return CE_Failure;
+        }
+        std::vector<GByte> out;
+        out.resize(fullsize);
+        if (!brunsli::BrunsliEncodeJpeg(bjpg, out.data(), &fullsize)) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL encoding error");
+            return CE_Failure;
+        }
+        // fullsize holds the JPEG XL output size
+        memcpy(dst.buffer, out.data(), fullsize);
+        dst.size = fullsize;
+    }
+#endif
 
     return CE_None;
 }
@@ -673,7 +694,7 @@ bool JPEG_Codec::IsJPEG(const buf_mgr& src)
 CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
     if (isbrunsli(src)) { // Need conversion to JPEG first
 #if !defined(BRUNSLI)
-        CPLError(CE_Failure, CPLE_NotSupported, "MRF: JPEG-XL tile found, yet this GDAL was not compiled with BRUNSLI support");
+        CPLError(CE_Failure, CPLE_NotSupported, "MRF: JPEG-XL content, yet this GDAL was not compiled with BRUNSLI support");
         return CE_Failure;
 #else
         std::vector<GByte> out;
@@ -742,10 +763,13 @@ JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
             codec.sameres = TRUE;
     }
 
-    if( GDT_Byte == image.dt )
+    if( GDT_Byte == image.dt ) {
         codec.optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
-    else
+        codec.noJXL = GetOptlist().FetchBoolean("NOJXL", FALSE) != FALSE;
+    }
+    else {
         codec.optimize = true; // Required for 12bit
+    }
 }
 #endif
 
