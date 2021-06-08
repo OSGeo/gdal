@@ -1313,7 +1313,7 @@ def test_nitf_48():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test TEXT and CGM creation options with CreateCopy() (#3376)
 
@@ -1448,7 +1448,7 @@ def test_nitf_51():
                     print('xsize = %d, nbpp = %d' % (xsize, nbpp))
                     pytest.fail('did not get expected data')
 
-    
+
 ###############################################################################
 # Test reading GeoSDE TREs
 
@@ -1579,7 +1579,7 @@ def test_nitf_57():
         print(gt)
         return
 
-    
+
 ###############################################################################
 # Test reading STDIDC
 
@@ -1693,7 +1693,7 @@ def test_nitf_60():
     for i in range(6):
         assert gt[i] == pytest.approx(ref_gt[i], abs=1e-6), 'did not get expected geotransform'
 
-    
+
 ###############################################################################
 # Test reading TRE from DE segment
 
@@ -1732,7 +1732,7 @@ def test_nitf_62():
         print("'%s'" % got_comments)
         pytest.fail('did not get expected comments')
 
-    
+
 ###############################################################################
 # Test NITFReadImageLine() and NITFWriteImageLine() when nCols < nBlockWidth (#3551)
 
@@ -2061,7 +2061,7 @@ def compare_rpc(src_md, md):
         elif float(src_md[key]) != float(md[key]):
             print(md)
             pytest.fail('fail: %s value is not the one expected' % key)
-    
+
 
 def test_nitf_72():
 
@@ -2324,7 +2324,7 @@ def test_nitf_73():
     with gdaltest.error_handler():
         gdal.Open('data/nitf/oss_fuzz_1525.ntf')
 
-    
+
 ###############################################################################
 # Test cases for CCLSTA
 #  - Simple case
@@ -2365,10 +2365,10 @@ def test_nitf_74():
 def test_nitf_75():
 
     listing_AG1 = """<?xml version="1.0" encoding="UTF-8"?>
-<genc:GeopoliticalEntityEntry 
-    xmlns:genc="http://api.nsgreg.nga.mil/schema/genc/3.0" 
-    xmlns:genc-cmn="http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<genc:GeopoliticalEntityEntry
+    xmlns:genc="http://api.nsgreg.nga.mil/schema/genc/3.0"
+    xmlns:genc-cmn="http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd">
     <genc:encoding>
         <genc-cmn:char3Code>MMR</genc-cmn:char3Code>
@@ -2423,9 +2423,13 @@ def test_nitf_75():
         <genc:iso6393Char3Code>mya</genc:iso6393Char3Code>
     </genc:localShortName>
 </genc:GeopoliticalEntityEntry>"""
+    len_listing_AG1 = len(listing_AG1)
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' +
-                                                                                   listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1,
+        options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR' +
+                 ('%05d' % len_listing_AG1) + ' ' +
+                 listing_AG1 +
+                 '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_75.ntf')
@@ -2460,67 +2464,9 @@ def test_nitf_75():
         <field name="EQTYPE" value="" />
         <field name="ESURN_LEN" value="17" />
         <field name="ESURN" value="ge:GENC:3:3-5:MMR" />
-        <field name="DETAIL_LEN" value="04108" />
+        <field name="DETAIL_LEN" value="%05d" />
         <field name="DETAIL_CMPR" value="" />
-        <field name="DETAIL" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;genc:GeopoliticalEntityEntry 
-    xmlns:genc=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0&quot; 
-    xmlns:genc-cmn=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn&quot; 
-    xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; 
-    xsi:schemaLocation=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd&quot;&gt;
-    &lt;genc:encoding&gt;
-        &lt;genc-cmn:char3Code&gt;MMR&lt;/genc-cmn:char3Code&gt;
-        &lt;genc-cmn:char3CodeURISet&gt;
-            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/3/3-5&lt;/genc-cmn:codespaceURL&gt;
-            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:3:3-5&lt;/genc-cmn:codespaceURN&gt;
-            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:3:3-5&lt;/genc-cmn:codespaceURNBased&gt;
-            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:3:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
-        &lt;/genc-cmn:char3CodeURISet&gt;
-        &lt;genc-cmn:char2Code&gt;MM&lt;/genc-cmn:char2Code&gt;
-        &lt;genc-cmn:char2CodeURISet&gt;
-            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/2/3-5&lt;/genc-cmn:codespaceURL&gt;
-            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:2:3-5&lt;/genc-cmn:codespaceURN&gt;
-            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:2:3-5&lt;/genc-cmn:codespaceURNBased&gt;
-            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:2:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
-        &lt;/genc-cmn:char2CodeURISet&gt;
-        &lt;genc-cmn:numericCode&gt;104&lt;/genc-cmn:numericCode&gt;
-        &lt;genc-cmn:numericCodeURISet&gt;
-            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/n/3-5&lt;/genc-cmn:codespaceURL&gt;
-            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:n:3-5&lt;/genc-cmn:codespaceURN&gt;
-            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:n:3-5&lt;/genc-cmn:codespaceURNBased&gt;
-            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:n:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
-        &lt;/genc-cmn:numericCodeURISet&gt;
-    &lt;/genc:encoding&gt;
-    &lt;genc:name&gt;&lt;![CDATA[BURMA]]&gt;&lt;/genc:name&gt;
-    &lt;genc:shortName&gt;&lt;![CDATA[Burma]]&gt;&lt;/genc:shortName&gt;
-    &lt;genc:fullName&gt;&lt;![CDATA[Union of Burma]]&gt;&lt;/genc:fullName&gt;
-    &lt;genc:gencStatus&gt;exception&lt;/genc:gencStatus&gt;
-    &lt;genc:entryDate&gt;2016-09-30&lt;/genc:entryDate&gt;
-    &lt;genc:entryType&gt;unchanged&lt;/genc:entryType&gt;
-    &lt;genc:usRecognition&gt;independent&lt;/genc:usRecognition&gt;
-    &lt;genc:entryNotesOnNaming&gt;&lt;![CDATA[
-        The GENC Standard specifies the name &quot;BURMA&quot; where instead ISO 3166-1 specifies &quot;MYANMAR&quot;; GENC specifies the short name &quot;Burma&quot; where instead ISO 3166-1 specifies &quot;Myanmar&quot;; and GENC specifies the full name &quot;Union of Burma&quot; where instead ISO 3166-1 specifies &quot;the Republic of the Union of Myanmar&quot;. The GENC Standard specifies the local short name for 'my'/'mya' as &quot;Myanma Naingngandaw&quot; where instead ISO 3166-1 specifies &quot;Myanma&quot;.
-        ]]&gt;&lt;/genc:entryNotesOnNaming&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-01&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-02&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-03&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-04&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-05&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-06&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-07&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-11&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-12&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-13&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-14&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-15&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-16&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-17&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-18&lt;/genc:division&gt;
-    &lt;genc:localShortName&gt;
-        &lt;genc:name&gt;&lt;![CDATA[Myanma Naingngandaw]]&gt;&lt;/genc:name&gt;
-        &lt;genc:iso6393Char3Code&gt;mya&lt;/genc:iso6393Char3Code&gt;
-    &lt;/genc:localShortName&gt;
-&lt;/genc:GeopoliticalEntityEntry&gt;" />
+        <field name="DETAIL" value="%s" />
       </group>
       <group index="3">
         <field name="CODE_LEN" value="3" />
@@ -2549,7 +2495,7 @@ def test_nitf_75():
     </repeated>
   </tre>
 </tres>
-"""
+""" % (len_listing_AG1, gdal.EscapeString(listing_AG1, gdal.CPLES_XML))
 
     assert data == expected_data
 
@@ -3111,7 +3057,7 @@ def test_nitf_87():
         hex_string("GEOD") + \
         bit_mask + hex_string("00120050407072410+33.234974+044.333405+27.8100000E+0132.8+54.9167.5+52.5") + \
         hex_string("-163.4004099.2+84.0")
-               
+
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_87.ntf', 1, 1, options=[tre_data])
     ds = None
 
@@ -3176,7 +3122,7 @@ def test_nitf_87():
 def test_nitf_88():
     tre_data = "TRE=CSWRPB=1F199.9999999900000010000002000000300000040000005000000600000070000008" \
                "1111-9.99999999999999E-99+9.99999999999999E+9900000"
-               
+
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_88.ntf', 1, 1, options=[tre_data])
     ds = None
 
@@ -3237,7 +3183,7 @@ def test_nitf_88():
 
 def test_nitf_89():
     tre_data = "TRE=CSRLSB=0101+11111111.11-22222222.22+33333333.33-44444444.44"
-               
+
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_89.ntf', 1, 1, options=[tre_data])
     ds = None
 
@@ -3979,7 +3925,7 @@ def test_nitf_online_7():
                                      % filename)
         ds = None
 
-    
+
 ###############################################################################
 # Test JPEG-compressed multi-block mono-band image with a data mask subheader (IC=M3, IMODE=B)
 
@@ -4056,7 +4002,7 @@ def test_nitf_online_10():
     for item in tab:
         assert mdCGM[item[0]] == item[1], ('wrong value for %s.' % item[0])
 
-    
+
 ###############################################################################
 # 5 text files
 
@@ -4173,7 +4119,7 @@ def test_nitf_online_14(not_jpeg_9b):
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test opening a IC=C8 NITF file with the various JPEG2000 drivers
 
@@ -4502,7 +4448,7 @@ def test_nitf_online_22():
         assert md[item[0]] == item[1], ('(4) wrong value for %s, got %s instead of %s.'
                                  % (item[0], md[item[0]], item[1]))
 
-    
+
 ###############################################################################
 # Test reading a M4 compressed file (fixed for #3848)
 
