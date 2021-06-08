@@ -600,7 +600,7 @@ def test_nitf_28_jp2openjpeg():
     return ret
 
 ###############################################################################
-# Test Create() with IC=C8 compression with the JP2OpenJPEG driver
+# Test CreateCopy() with IC=C8 compression with the JP2OpenJPEG driver
 
 
 def test_nitf_28_jp2openjpeg_bis():
@@ -631,6 +631,163 @@ def test_nitf_28_jp2openjpeg_bis():
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return ret
+
+
+###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_jp2openjpeg_npje_numerically_lossless():
+    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if jp2openjpeg_drv is None:
+        pytest.skip()
+
+    src_ds = gdal.Open('../gcore/data/uint16.tif')
+    # May throw a warning with openjpeg < 2.5
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/tmp.ntf',
+                                                src_ds,
+                                                strict=False,
+                                                options=['IC=C8',
+                                                         'ABPP=12',
+                                                         'JPEG2000_DRIVER=JP2OpenJPEG',
+                                                         'PROFILE=NPJE_NUMERICALLY_LOSSLESS'])
+
+    ds = gdal.Open('/vsimem/tmp.ntf')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetMetadataItem('J2KLRA', 'TRE') == '0050000102000000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.90000001912.000000'
+    assert ds.GetMetadataItem('COMRAT', 'DEBUG') in ('N141', 'N142', 'N143', 'N169')
+
+    # Get the JPEG2000 code stream subfile
+    jpeg2000_ds_name = ds.GetMetadataItem('JPEG2000_DATASET_NAME', 'DEBUG')
+    assert jpeg2000_ds_name
+    structure = gdal.GetJPEG2000StructureAsString(jpeg2000_ds_name, ['ALL=YES'])
+    assert structure is not None
+
+    # Check that the structure of the JPEG2000 codestream is the one expected
+    # from the NPJE profile
+    # print(structure)
+    assert '<Field name="Rsiz" type="uint16" description="Profile 1">2</Field>' in structure
+    assert '<Field name="Ssiz0" type="uint8" description="Unsigned 16 bits">15</Field>' in structure
+    assert '<Field name="XTsiz" type="uint32">1024</Field>' in structure
+    assert '<Field name="YTsiz" type="uint32">1024</Field>' in structure
+    assert '<Field name="Scod" type="uint8" description="Standard precincts, No SOP marker segments, No EPH marker segments">0</Field>' in structure
+    assert '<Field name="SGcod_NumLayers" type="uint16">20</Field>' in structure
+    assert '<Field name="SGcod_MCT" type="uint8">0</Field>' in structure
+    assert '<Field name="SPcod_NumDecompositions" type="uint8">5</Field>' in structure
+    assert '<Field name="SPcod_xcb_minus_2" type="uint8" description="64">4</Field>' in structure
+    assert '<Field name="SPcod_ycb_minus_2" type="uint8" description="64">4</Field>' in structure
+    assert '<Field name="SPcod_cbstyle" type="uint8" description="No selective arithmetic coding bypass, No reset of context probabilities on coding pass boundaries, No termination on each coding pass, No vertically causal context, No predictable termination, No segmentation symbols are used">0</Field>' in structure
+    assert '<Field name="SPcod_transformation" type="uint8" description="5-3 reversible">1</Field>' in structure
+
+    if 'TLM' in jp2openjpeg_drv.GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        assert '<Marker name="TLM"' in structure
+        assert '<Marker name="PLT"' in structure
+
+    gdal.Unlink('/vsimem/tmp.ntf')
+
+
+###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_jp2openjpeg_npje_visually_lossless():
+    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if jp2openjpeg_drv is None:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/byte.tif')
+    # May throw a warning with openjpeg < 2.5
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/tmp.ntf',
+                                                src_ds,
+                                                strict=False,
+                                                options=['IC=C8',
+                                                         'JPEG2000_DRIVER=JP2OpenJPEG',
+                                                         'PROFILE=NPJE_VISUALLY_LOSSLESS'])
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    try:
+        ds = gdal.Open('/vsimem/tmp.ntf')
+        assert ds.GetRasterBand(1).Checksum() in (4595, 4606, 4633)
+        assert ds.GetMetadataItem('J2KLRA', 'TRE') == '0050000101900000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.900000'
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
+    assert ds.GetMetadataItem('COMRAT', 'DEBUG').startswith('V')
+
+    # Get the JPEG2000 code stream subfile
+    jpeg2000_ds_name = ds.GetMetadataItem('JPEG2000_DATASET_NAME', 'DEBUG')
+    assert jpeg2000_ds_name
+    structure = gdal.GetJPEG2000StructureAsString(jpeg2000_ds_name, ['ALL=YES'])
+    assert structure is not None
+
+    # Check that the structure of the JPEG2000 codestream is the one expected
+    # from the NPJE profile
+    # print(structure)
+    assert '<Field name="Rsiz" type="uint16" description="Profile 1">2</Field>' in structure
+    assert '<Field name="Ssiz0" type="uint8" description="Unsigned 8 bits">7</Field>' in structure
+    assert '<Field name="XTsiz" type="uint32">1024</Field>' in structure
+    assert '<Field name="YTsiz" type="uint32">1024</Field>' in structure
+    assert '<Field name="Scod" type="uint8" description="Standard precincts, No SOP marker segments, No EPH marker segments">0</Field>' in structure
+    assert '<Field name="SGcod_NumLayers" type="uint16">19</Field>' in structure
+    assert '<Field name="SGcod_MCT" type="uint8">0</Field>' in structure
+    assert '<Field name="SPcod_NumDecompositions" type="uint8">5</Field>' in structure
+    assert '<Field name="SPcod_xcb_minus_2" type="uint8" description="64">4</Field>' in structure
+    assert '<Field name="SPcod_ycb_minus_2" type="uint8" description="64">4</Field>' in structure
+    assert '<Field name="SPcod_cbstyle" type="uint8" description="No selective arithmetic coding bypass, No reset of context probabilities on coding pass boundaries, No termination on each coding pass, No vertically causal context, No predictable termination, No segmentation symbols are used">0</Field>' in structure
+    assert '<Field name="SPcod_transformation" type="uint8" description="9-7 irreversible">0</Field>' in structure
+
+    if 'TLM' in jp2openjpeg_drv.GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        assert '<Marker name="TLM"' in structure
+        assert '<Marker name="PLT"' in structure
+
+    gdal.Unlink('/vsimem/tmp.ntf')
+
+
+###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_jp2openjpeg_npje_visually_lossless_with_quality():
+    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if jp2openjpeg_drv is None:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/byte.tif')
+    # May throw a warning with openjpeg < 2.5
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/tmp.ntf',
+                                                src_ds,
+                                                strict=False,
+                                                options=['IC=C8',
+                                                         'JPEG2000_DRIVER=JP2OpenJPEG',
+                                                         'PROFILE=NPJE_VISUALLY_LOSSLESS',
+                                                         'QUALITY=30'])
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    try:
+        ds = gdal.Open('/vsimem/tmp.ntf')
+        assert ds.GetRasterBand(1).Checksum() in (4580, 4582, 4600)
+        assert ds.GetMetadataItem('J2KLRA', 'TRE') == '0050000101800000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001702.400000'
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
+
+    # Get the JPEG2000 code stream subfile
+    jpeg2000_ds_name = ds.GetMetadataItem('JPEG2000_DATASET_NAME', 'DEBUG')
+    assert jpeg2000_ds_name
+    structure = gdal.GetJPEG2000StructureAsString(jpeg2000_ds_name, ['ALL=YES'])
+    assert structure is not None
+
+    # Check that the structure of the JPEG2000 codestream is the one expected
+    # from the NPJE profile
+    # print(structure)
+    assert '<Field name="SGcod_NumLayers" type="uint16">18</Field>' in structure
+
+    gdal.Unlink('/vsimem/tmp.ntf')
 
 ###############################################################################
 # Test Create() with a LUT

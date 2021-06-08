@@ -65,7 +65,9 @@ CPL_CVSID("$Id$")
 
 static bool NITFPatchImageLength( const char *pszFilename,
                                   GUIntBig nImageOffset,
-                                  GIntBig nPixelCount, const char *pszIC );
+                                  GIntBig nPixelCount,
+                                  const char *pszIC,
+                                  CSLConstList papszCreationOptions );
 static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList );
 static bool NITFWriteTextSegments( const char *pszFilename, char **papszList );
 
@@ -202,7 +204,7 @@ int NITFDataset::CloseDependentDatasets()
 
         CPL_IGNORE_RET_VAL(
             NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount,
-                              "C8" ));
+                                  "C8", nullptr ));
     }
 
     bJP2Writing = FALSE;
@@ -3158,6 +3160,18 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
         && !osRSetVRT.empty() )
         return osRSetVRT;
 
+    // For unit test purposes
+    if( pszDomain != nullptr && EQUAL(pszDomain,"DEBUG")
+        && EQUAL(pszName, "JPEG2000_DATASET_NAME") &&
+        poJ2KDataset )
+        return poJ2KDataset->GetDescription();
+
+    // For unit test purposes
+    if( pszDomain != nullptr && EQUAL(pszDomain,"DEBUG")
+        && EQUAL(pszName, "COMRAT") &&
+        psImage )
+        return psImage->szCOMRAT;
+
     return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
 }
 
@@ -3854,19 +3868,111 @@ static char **NITFJP2KAKOptions( char **papszOptions )
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2OPENJPEGOptions( char **papszOptions )
+static char **NITFJP2OPENJPEGOptions( GDALDriver* poJ2KDriver,
+                                      CSLConstList papszOptions )
 
 {
     char** papszJP2Options = CSLAddString(nullptr, "CODEC=J2K");
 
+    double dfQuality =
+            CPLAtof(CSLFetchNameValueDef(papszOptions, "QUALITY", "0"));
+    double dfTarget =
+            CPLAtof(CSLFetchNameValueDef(papszOptions, "TARGET", "0"));
+
+    if( dfTarget > 0 && dfTarget < 100 )
+        dfQuality = 100. - dfTarget;
+
     for( int i = 0; papszOptions != nullptr && papszOptions[i] != nullptr; i++ )
     {
-        if( STARTS_WITH_CI(papszOptions[i], "QUALITY=") ||
-            STARTS_WITH_CI(papszOptions[i], "BLOCKXSIZE=") ||
+        if( STARTS_WITH_CI(papszOptions[i], "BLOCKXSIZE=") ||
             STARTS_WITH_CI(papszOptions[i], "BLOCKYSIZE=") )
         {
             papszJP2Options = CSLAddString(papszJP2Options, papszOptions[i]);
         }
+    }
+
+    // Set it now before the NPJE profiles have a chance to override it
+    if( dfQuality > 0 )
+    {
+         papszJP2Options = CSLSetNameValue(papszJP2Options, "QUALITY",
+                                           CPLSPrintf("%f", dfQuality));
+    }
+
+    const char* pszProfile = CSLFetchNameValueDef(papszOptions, "PROFILE", "");
+    if( STARTS_WITH_CI(pszProfile, "NPJE") )
+    {
+        // Follow STDI-0006 NCDRD "2.3 Data Compression - JPEG 2000" and
+        // ISO/IEC BIIF Profile BPJ2K01.10 (https://nsgreg.nga.mil/doc/view?i=2031&month=3&day=22&year=2021),
+        // for NPJE (Appendix D ) profile
+
+        papszJP2Options = CSLAddString(papszJP2Options, "@BLOCKSIZE_STRICT=YES");
+
+        // Empty PRECINCTS option to ask for no custom precincts
+        papszJP2Options = CSLAddString(papszJP2Options, "PRECINCTS=");
+
+        // See Table 2.3-3 - Target Bit Rates for Each Tile in Panchromatic Image Segments
+        // of STDI-0006
+        std::vector<double> adfBPP = { 0.03125, 0.0625, 0.125, 0.25, 0.5,
+                                       0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
+                                       1.3, 1.5, 1.7, 2.0, 2.3, 3.5, 3.9  };
+        if( STARTS_WITH_CI(pszProfile, "NPJE_NUMERICALLY_LOSSLESS") )
+        {
+            // given that we consider a compression ratio afterwards, we
+            // arbitrarily consider a Byte datatype, and thus lossless quality
+            // is achieved at worse with 8 bpp
+            adfBPP.push_back(8.0);
+
+            // Lossless 5x3 wavelet
+            papszJP2Options = CSLAddString(papszJP2Options, "REVERSIBLE=YES");
+        }
+
+        std::string osQuality;
+        for( double dfBPP: adfBPP )
+        {
+            if( !osQuality.empty() )
+                osQuality += ',';
+            // the JP2OPENJPEG QUALITY setting is 100. / compression_ratio
+            // and compression_ratio = 8 / bpp
+            double dfLayerQuality = 100.0 / (8.0 / dfBPP);
+            if( dfLayerQuality > dfQuality && dfQuality != 0.0 )
+            {
+                osQuality += CPLSPrintf("%f", dfQuality);
+                break;
+            }
+            osQuality += CPLSPrintf("%f", dfLayerQuality);
+        }
+        papszJP2Options = CSLSetNameValue(papszJP2Options, "QUALITY",
+                                          osQuality.c_str());
+
+
+        papszJP2Options = CSLAddString(papszJP2Options, "PROGRESSION=LRCP");
+
+        // Disable MCT
+        papszJP2Options = CSLAddString(papszJP2Options, "YCC=NO");
+
+        // TLM option added in OpenJPEG 2.5
+        if( strstr(poJ2KDriver->GetMetadataItem(
+                            GDAL_DMD_CREATIONOPTIONLIST), "TLM") != nullptr )
+        {
+            papszJP2Options = CSLAddString(papszJP2Options, "PLT=YES");
+            papszJP2Options = CSLAddString(papszJP2Options, "TLM=YES");
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "TLM option not available in JP2OPENJPEG driver. "
+                     "Use OpenJPEG 2.5 or later");
+        }
+
+        papszJP2Options = CSLAddString(papszJP2Options, "RESOLUTIONS=6");
+    }
+    else if( EQUAL(pszProfile, "PROFILE_1") )
+    {
+        papszJP2Options = CSLAddString(papszJP2Options, "PROFILE=PROFILE_1");
+    }
+    else if( EQUAL(pszProfile, "PROFILE_2") )
+    {
+        papszJP2Options = CSLAddString(papszJP2Options, "PROFILE=UNRESTRICTED");
     }
 
     return papszJP2Options;
@@ -3985,6 +4091,13 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
                       "Unable to create JPEG2000 encoded NITF files.  The\n"
                       "JP2ECW driver is unavailable, or missing Create support." );
            return nullptr;
+        }
+
+        if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "J2KLRA", "NO")) )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "J2KLRA TRE can only be written in CreateCopy() mode, and "
+                     "when using the JP2OPENJPEG driver in NPJE profiles");
         }
     }
 
@@ -4135,6 +4248,9 @@ NITFDataset::NITFCreateCopy(
     bool bJPEG2000 = false;
     bool bJPEG = false;
     GDALDriver *poJ2KDriver = nullptr;
+    const char* pszJPEG2000_DRIVER = CSLFetchNameValue(papszOptions, "JPEG2000_DRIVER");
+    if( pszJPEG2000_DRIVER != nullptr )
+        poJ2KDriver = GetGDALDriverManager()->GetDriverByName( pszJPEG2000_DRIVER );
 
     const char* pszIC = CSLFetchNameValue( papszOptions, "IC" );
     if( pszIC != nullptr )
@@ -4143,26 +4259,29 @@ NITFDataset::NITFCreateCopy(
             /* ok */;
         else if( EQUAL(pszIC,"C8") )
         {
-            poJ2KDriver =
-                GetGDALDriverManager()->GetDriverByName( "JP2ECW" );
-            if( poJ2KDriver == nullptr ||
-                poJ2KDriver->GetMetadataItem( GDAL_DCAP_CREATECOPY, nullptr ) == nullptr )
+            if( pszJPEG2000_DRIVER == nullptr )
             {
-                /* Try with  JP2KAK as an alternate driver */
                 poJ2KDriver =
-                    GetGDALDriverManager()->GetDriverByName(  "JP2KAK" );
-            }
-            if( poJ2KDriver == nullptr )
-            {
-                /* Try with JP2OPENJPEG as an alternate driver */
-                poJ2KDriver =
-                    GetGDALDriverManager()->GetDriverByName( "JP2OPENJPEG" );
-            }
-            if( poJ2KDriver == nullptr )
-            {
-                /* Try with Jasper as an alternate driver */
-                poJ2KDriver =
-                    GetGDALDriverManager()->GetDriverByName( "JPEG2000" );
+                    GetGDALDriverManager()->GetDriverByName( "JP2ECW" );
+                if( poJ2KDriver == nullptr ||
+                    poJ2KDriver->GetMetadataItem( GDAL_DCAP_CREATECOPY, nullptr ) == nullptr )
+                {
+                    /* Try with  JP2KAK as an alternate driver */
+                    poJ2KDriver =
+                        GetGDALDriverManager()->GetDriverByName(  "JP2KAK" );
+                }
+                if( poJ2KDriver == nullptr )
+                {
+                    /* Try with JP2OPENJPEG as an alternate driver */
+                    poJ2KDriver =
+                        GetGDALDriverManager()->GetDriverByName( "JP2OPENJPEG" );
+                }
+                if( poJ2KDriver == nullptr )
+                {
+                    /* Try with Jasper as an alternate driver */
+                    poJ2KDriver =
+                        GetGDALDriverManager()->GetDriverByName( "JPEG2000" );
+                }
             }
             if( poJ2KDriver == nullptr )
             {
@@ -4172,6 +4291,22 @@ NITFDataset::NITFCreateCopy(
                     "No 'subfile' JPEG2000 write supporting drivers are\n"
                     "configured." );
                 return nullptr;
+            }
+
+            if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "J2KLRA", "NO")) )
+            {
+                if( !EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG") )
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "J2KLRA TRE can only be written "
+                             "when using the JP2OPENJPEG driver in NPJE profiles");
+                }
+                else if( !STARTS_WITH_CI(CSLFetchNameValueDef(
+                            papszOptions, "PROFILE", ""), "NPJE") )
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "J2KLRA TRE can only be written in NPJE profiles");
+                }
             }
             bJPEG2000 = TRUE;
         }
@@ -4616,7 +4751,7 @@ NITFDataset::NITFCreateCopy(
 
     if ( poJ2KDriver != nullptr && EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
     {
-        if( EQUAL(CSLFetchNameValueDef(papszFullOptions, "PROFILE", "NPJE"),
+        if( STARTS_WITH_CI(CSLFetchNameValueDef(papszFullOptions, "PROFILE", "NPJE"),
                   "NPJE") && (nXSize >= 1024 || nYSize >= 1024) )
         {
             int nBlockXSize = atoi(
@@ -4646,24 +4781,99 @@ NITFDataset::NITFCreateCopy(
         }
     }
     else if( poJ2KDriver != nullptr &&
-             EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG") &&
-             (nXSize >= 1024 || nYSize >= 1024) )
+             EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG") )
     {
-        // The JP2OPENJPEG driver uses 1024 block size by default. Set it
-        // explicitly for NITFCreate() purposes.
+        const char* pszProfile = CSLFetchNameValue(papszFullOptions, "PROFILE");
+        if( pszProfile && EQUAL(pszProfile, "EPJE") )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "PROFILE=EPJE not handled by JP2OPENJPEG driver");
+        }
+
         int nBlockXSize = atoi(
             CSLFetchNameValueDef(papszFullOptions, "BLOCKXSIZE", "0"));
         int nBlockYSize = atoi(
             CSLFetchNameValueDef(papszFullOptions, "BLOCKYSIZE", "0"));
-        if( nBlockXSize == 0 )
+        if( pszProfile && STARTS_WITH_CI(pszProfile, "NPJE") &&
+            ((nBlockXSize != 0 && nBlockXSize != 1024) ||
+             (nBlockYSize != 0 && nBlockYSize != 1024)) )
         {
-            papszFullOptions = CSLSetNameValue(papszFullOptions,
-                                                "BLOCKXSIZE", "1024");
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "PROFILE=NPJE implies 1024x1024 tiles");
         }
-        if( nBlockYSize == 0 )
+
+        if( nXSize >= 1024 || nYSize >= 1024 ||
+            (pszProfile && STARTS_WITH_CI(pszProfile, "NPJE")) )
         {
-            papszFullOptions = CSLSetNameValue(papszFullOptions,
-                                                "BLOCKYSIZE", "1024");
+            // The JP2OPENJPEG driver uses 1024 block size by default. Set it
+            // explicitly for NITFCreate() purposes.
+            if( nBlockXSize == 0 )
+            {
+                papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                                    "BLOCKXSIZE", "1024");
+            }
+            if( nBlockYSize == 0 )
+            {
+                papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                                    "BLOCKYSIZE", "1024");
+            }
+        }
+
+        // Compose J2KLRA TRE for NPJE profiles
+        if( pszProfile && STARTS_WITH_CI(pszProfile, "NPJE") &&
+            CPLTestBool(CSLFetchNameValueDef(papszFullOptions, "J2KLRA", "YES")) )
+        {
+            // See Table 2.3-3 - Target Bit Rates for Each Tile in Panchromatic Image Segments
+            // of STDI-0006
+            std::vector<double> adfBPP = { 0.03125, 0.0625, 0.125, 0.25, 0.5,
+                                           0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2,
+                                           1.3, 1.5, 1.7, 2.0, 2.3, 3.5, 3.9 };
+
+            const int nABPP = atoi(CSLFetchNameValueDef(papszFullOptions, "ABPP",
+                                      CPLSPrintf("%d", GDALGetDataTypeSize(eType))));
+
+            if( EQUAL(pszProfile, "NPJE") ||
+                EQUAL(pszProfile, "NPJE_NUMERICALLY_LOSSLESS") )
+            {
+                adfBPP.push_back(nABPP);
+            }
+
+            double dfQuality =
+                    CPLAtof(CSLFetchNameValueDef(papszFullOptions, "QUALITY", "0"));
+            double dfTarget =
+                    CPLAtof(CSLFetchNameValueDef(papszFullOptions, "TARGET", "0"));
+            if( dfTarget > 0 && dfTarget < 100 )
+                dfQuality = 100. - dfTarget;
+
+            if( dfQuality != 0.0 )
+            {
+                for( size_t i = 0; i < adfBPP.size(); ++i )
+                {
+                    // the JP2OPENJPEG QUALITY setting is 100. / compression_ratio
+                    // and compression_ratio = 8 / bpp
+                    double dfLayerQuality = 100.0 / (8.0 / adfBPP[i]);
+                    if( dfLayerQuality > dfQuality )
+                    {
+                        adfBPP[i] = dfQuality / 100.0 * nABPP;
+                        adfBPP.resize(i+1);
+                        break;
+                    }
+                }
+            }
+
+            CPLString osJ2KLRA("TRE=J2KLRA=");
+            osJ2KLRA += '0'; // ORIG: 0=Original NPJE
+            osJ2KLRA += "05"; // Number of wavelets decompositions.
+                              // This corresponds to the value of the
+                              // RESOLUTIONS JP2OPENJPEG creation option - 1
+            osJ2KLRA += CPLSPrintf("%05d", poSrcDS->GetRasterCount());
+            osJ2KLRA += CPLSPrintf("%03d", static_cast<int>(adfBPP.size()));
+            for( size_t i = 0; i < adfBPP.size(); ++i )
+            {
+                osJ2KLRA += CPLSPrintf("%03d", static_cast<int>(i));
+                osJ2KLRA += CPLSPrintf("%09.6f", adfBPP[i]);
+            }
+            papszFullOptions = CSLAddString( papszFullOptions, osJ2KLRA ) ;
         }
     }
 
@@ -4724,7 +4934,8 @@ NITFDataset::NITFCreateCopy(
         }
         else if (EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG"))
         {
-           char** papszJP2Options = NITFJP2OPENJPEGOptions(papszFullOptions);
+           char** papszJP2Options = NITFJP2OPENJPEGOptions(poJ2KDriver,
+                                                           papszFullOptions);
             poJ2KDataset =
                 poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
                                          papszJP2Options,
@@ -4755,7 +4966,8 @@ NITFDataset::NITFCreateCopy(
         GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) *
             poSrcDS->GetRasterCount();
 
-        bool bOK = NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount, "C8" );
+        bool bOK = NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount,
+                                         "C8", papszFullOptions );
         bOK &= NITFWriteCGMSegments( pszFilename, papszCgmMD );
         bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
         if( !bOK )
@@ -4816,7 +5028,7 @@ NITFDataset::NITFCreateCopy(
         NITFClose( psFile );
 
         bool bOK = NITFPatchImageLength( pszFilename, nImageOffset,
-                              nPixelCount, pszIC );
+                              nPixelCount, pszIC, papszFullOptions );
 
         bOK &= NITFWriteCGMSegments( pszFilename, papszCgmMD );
         bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
@@ -5008,7 +5220,8 @@ NITFDataset::NITFCreateCopy(
 static bool NITFPatchImageLength( const char *pszFilename,
                                   GUIntBig nImageOffset,
                                   GIntBig nPixelCount,
-                                  const char *pszIC )
+                                  const char *pszIC,
+                                  CSLConstList papszCreationOptions )
 
 {
     VSILFILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
@@ -5122,12 +5335,28 @@ static bool NITFPatchImageLength( const char *pszFilename,
         {
             double dfRate = static_cast<GIntBig>(nFileLen-nImageOffset) * 8
                 / static_cast<double>( nPixelCount );
-            dfRate = std::max(0.01, std::min(99.99, dfRate));
 
-            // We emit in wxyz format with an implicit decimal place
-            // between wx and yz as per spec for lossy compression.
-            // We really should have a special case for lossless compression.
-            snprintf( szCOMRAT, sizeof(szCOMRAT), "%04d", static_cast<int>( dfRate * 100 ));
+            const char* pszProfile = CSLFetchNameValueDef(
+                papszCreationOptions, "PROFILE", "");
+            if( STARTS_WITH_CI(pszProfile, "NPJE") )
+            {
+                dfRate = std::max(0.1, std::min(99.9, dfRate));
+
+                // We emit in Vxyz or Nxyz format with an implicit decimal place
+                // between yz and z as per spec.
+                snprintf( szCOMRAT, sizeof(szCOMRAT), "%c%03d",
+                          EQUAL(pszProfile, "NPJE_VISUALLY_LOSSLESS") ? 'V' : 'N',
+                          static_cast<int>( dfRate * 10 ));
+            }
+            else
+            {
+                dfRate = std::max(0.01, std::min(99.99, dfRate));
+
+                // We emit in wxyz format with an implicit decimal place
+                // between wx and yz as per spec for lossy compression.
+                // We really should have a special case for lossless compression.
+                snprintf( szCOMRAT, sizeof(szCOMRAT), "%04d", static_cast<int>( dfRate * 100 ));
+            }
         }
         else if( EQUAL(pszIC, "C3") || EQUAL(pszIC, "M3") ) /* jpeg */
         {
@@ -6032,11 +6261,46 @@ static const char * const apszFieldsBLOCKA[] = {
         "FRFC_LOC",       "97", "21",
         nullptr,             nullptr, nullptr };
 
-void GDALRegister_NITF()
+/************************************************************************/
+/*                              NITFDriver                              */
+/************************************************************************/
 
+class NITFDriver final: public GDALDriver
 {
-    if( GDALGetDriverByName( "NITF" ) != nullptr )
+    bool m_bCreationOptionListInitialized = false;
+    void InitCreationOptionList();
+
+public:
+    const char* GetMetadataItem(const char* pszName, const char* pszDomain) override
+    {
+        if(EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) )
+        {
+            InitCreationOptionList();
+        }
+        return GDALDriver::GetMetadataItem(pszName, pszDomain);
+    }
+
+    char** GetMetadata(const char* pszDomain) override
+    {
+        InitCreationOptionList();
+        return GDALDriver::GetMetadata(pszDomain);
+    }
+};
+
+/************************************************************************/
+/*                         InitCreationOptionList()                     */
+/************************************************************************/
+
+void NITFDriver::InitCreationOptionList()
+{
+    if( m_bCreationOptionListInitialized )
         return;
+    m_bCreationOptionListInitialized = true;
+
+    const bool bHasJP2ECW = GDALGetDriverByName("JP2ECW") != nullptr;
+    const bool bHasJP2KAK = GDALGetDriverByName("JP2KAK") != nullptr;
+    const bool bHasJP2OPENJPEG = GDALGetDriverByName("JP2OPENJPEG") != nullptr;
+    const bool bHasJPEG2000Drivers = bHasJP2ECW || bHasJP2KAK || bHasJP2OPENJPEG;
 
     CPLString osCreationOptions =
 "<CreationOptionList>"
@@ -6044,29 +6308,70 @@ void GDALRegister_NITF()
 #ifdef JPEG_SUPPORTED
                 "C3/M3=JPEG compression. "
 #endif
-                "C8=JP2 compression through the JP2ECW/JP2KAK/JP2OPENJPEG/JPEG2000 driver"
+                ;
+
+    if( bHasJPEG2000Drivers)
+        osCreationOptions +=
+                "C8=JP2 compression through the JPEG2000 write capable drivers";
+
+    osCreationOptions +=
                 "'>"
 "       <Value>NC</Value>"
 #ifdef JPEG_SUPPORTED
 "       <Value>C3</Value>"
 "       <Value>M3</Value>"
 #endif
-"       <Value>C8</Value>"
+        ;
+
+    if( bHasJPEG2000Drivers)
+        osCreationOptions += "       <Value>C8</Value>";
+
+    osCreationOptions +=
 "   </Option>"
 #ifdef JPEG_SUPPORTED
 "   <Option name='QUALITY' type='int' description='JPEG quality 10-100' default='75'/>"
 "   <Option name='PROGRESSIVE' type='boolean' description='JPEG progressive mode'/>"
 "   <Option name='RESTART_INTERVAL' type='int' description='Restart interval (in MCUs). -1 for auto, 0 for none, > 0 for user specified' default='-1'/>"
 #endif
-"   <Option name='NUMI' type='int' default='1' description='Number of images to create (1-999). Only works with IC=NC'/>"
+"   <Option name='NUMI' type='int' default='1' description='Number of images to create (1-999). Only works with IC=NC'/>";
+
+    if( bHasJPEG2000Drivers)
+    {
+        osCreationOptions +=
 "   <Option name='TARGET' type='float' description='For JP2 only. Compression Percentage'/>"
-"   <Option name='PROFILE' type='string-select' description='For JP2 only.'>"
-"       <Value>BASELINE_0</Value>"
+"   <Option name='PROFILE' type='string-select' description='For JP2 only.'>";
+
+        if( bHasJP2ECW )
+        {
+            osCreationOptions += "       <Value>BASELINE_0</Value>";
+        }
+        if( bHasJP2ECW || bHasJP2OPENJPEG )
+        {
+            osCreationOptions +=
 "       <Value>BASELINE_1</Value>"
 "       <Value>BASELINE_2</Value>"
 "       <Value>NPJE</Value>"
-"       <Value>EPJE</Value>"
+"       <Value>NPJE_VISUALLY_LOSSLESS</Value>"
+"       <Value>NPJE_NUMERICALLY_LOSSLESS</Value>";
+        }
+        if( bHasJP2ECW )
+        {
+            osCreationOptions += "       <Value>EPJE</Value>";
+        }
+        osCreationOptions +=
 "   </Option>"
+"   <Option name='JPEG2000_DRIVER' type='string-select' description='Short name of the JPEG2000 driver'>";
+        if( bHasJP2OPENJPEG )
+            osCreationOptions += "       <Value>JP2OPENJPEG</Value>";
+        if( bHasJP2ECW )
+            osCreationOptions += "       <Value>JP2ECW</Value>";
+        if( bHasJP2KAK )
+            osCreationOptions += "       <Value>JP2KAK</Value>";
+        osCreationOptions += "   </Option>"
+"   <Option name='J2KLRA' type='boolean' description='Write J2KLRA TRE'/>";
+    }
+
+    osCreationOptions +=
 "   <Option name='ICORDS' type='string-select' description='To ensure that space will be reserved for geographic corner coordinates in DMS (G), in decimal degrees (D), UTM North (N) or UTM South (S)'>"
 "       <Value>G</Value>"
 "       <Value>D</Value>"
@@ -6117,7 +6422,16 @@ void GDALRegister_NITF()
 "   <Option name='USE_SRC_NITF_METADATA' type='boolean' description='Whether to use NITF source metadata in NITF-to-NITF conversions' default='YES'/>";
     osCreationOptions += "</CreationOptionList>";
 
-    GDALDriver *poDriver = new GDALDriver();
+    SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions);
+}
+
+void GDALRegister_NITF()
+
+{
+    if( GDALGetDriverByName( "NITF" ) != nullptr )
+        return;
+
+    GDALDriver *poDriver = new NITFDriver();
 
     poDriver->SetDescription( "NITF" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
@@ -6130,7 +6444,6 @@ void GDALRegister_NITF()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32" );
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions);
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = NITFDataset::Identify;

@@ -93,23 +93,7 @@ Creation Options:
    -  M3 is a variation of C3. The only difference is that a block map
       is written, which allow for fast seeking to any block.
    -  C8 means JPEG2000 compression (one block) and is available for
-      CreateCopy() and/or Create() methods. JPEG2000 compression is only
-      available if the JP2ECW, JP2KAK, JP2OpenJPEG or Jasper driver are
-      available (tried in that order when several ones are available)
-
-      -  :ref:`JP2ECW <raster.jp2ecw>`: The TARGET and PROFILE
-         JP2ECW-specific creation options can be used. Both CreateCopy()
-         and/or Create() methods are available. By default the NPJE
-         PROFILE will be used (thus implying
-         BLOCKXSIZE=BLOCKYSIZE=1024).
-      -  :ref:`JP2KAK <raster.jp2kak>`: The QUALITY, BLOCKXSIZE,
-         BLOCKYSIZE, LAYERS, ROI JP2KAK-specific creation options can be
-         used. Only CreateCopy() method is available.
-      -  :ref:`JP2OpenJPEG <raster.jp2openjpeg>`:
-         (only in the CreateCopy() case). The QUALITY, BLOCKXSIZE
-         and BLOCKYSIZE JP2OpenJPEG-specific creation options can be
-         used. By default BLOCKXSIZE=BLOCKYSIZE=1024 will be used.
-      -  Jasper JPEG2000 driver: only in the CreateCopy() case.
+      CreateCopy() and/or Create() methods. See below paragraph for specificities.
 
 -  **NUMI=n** : Number of images. Default =
    1. This option is only compatible with IC=NC (uncompressed images).
@@ -173,6 +157,43 @@ Creation Options:
    NITF_xxx metadata items and TRE segments from the input dataset. It
    may needed to set this option to NO if changing the georeferencing of
    the input file. Default to YES.
+
+JPEG2000 compression (write support)
+------------------------------------
+
+JPEG2000 compression is available when using the IC=C8 creation option,
+if the JP2ECW (SDK 3.3, or for later versions assuming the user has the key to
+enable JPEG2000 writing), JP2KAK, JP2OpenJPEG or Jasper driver are available.
+
+They are tried in that order when several ones are available, unless the
+JPEG2000_DRIVER creation option (added in GDAL 3.4) is set to explicitly specify
+the JPEG2000 capable driver to use.
+
+- :ref:`JP2ECW <raster.jp2ecw>`: The TARGET (target size reduction as a
+  percentage of the original) and PROFILE=BASELINE_0/BASELINE_1/BASELINE_2/NPJE/EPJE
+  JP2ECW-specific creation options can be used. Both CreateCopy()
+  and/or Create() methods are available. By default the NPJE
+  PROFILE will be used (thus implying BLOCKXSIZE=BLOCKYSIZE=1024).
+
+- :ref:`JP2KAK <raster.jp2kak>`: The QUALITY, BLOCKXSIZE,
+  BLOCKYSIZE, LAYERS, ROI JP2KAK-specific creation options can be
+  used. Only CreateCopy() method is available.
+
+- :ref:`JP2OpenJPEG <raster.jp2openjpeg>`:
+  (only in the CreateCopy() case). The QUALITY, BLOCKXSIZE
+  and BLOCKYSIZE JP2OpenJPEG-specific creation options can be
+  used. By default BLOCKXSIZE=BLOCKYSIZE=1024 will be used.
+
+  Starting with GDAL 3.4.0 and OpenJPEG 2.5, the
+  PROFILE=NPJE_VISUALLY_LOSSLESS/NPJE_NUMERICALLY_LOSSLESS
+  creation option can be used to create files that comply with
+  `STDI-0006 NITF Version 2.1 Commercial Dataset Requirements Document (NCDRD) <https://gwg.nga.mil/ntb/baseline/docs/stdi0006/STDI-0006-NCDRD-16Feb06.doc>`__.
+  For NPJE_VISUALLY_LOSSLESS, the last quality layer defaults to 3.9 bits per
+  pixel and per band. It can be adjusted with the QUALITY creation option.
+  When those profiles are specified, the J2KLRA TRE will also be written, unless
+  the J2KLRA=NO creation option is specified.
+
+-  Jasper JPEG2000 driver: only in the CreateCopy() case.
 
 Links
 -----
