@@ -1122,14 +1122,10 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
     if( bNeedAxisFlip )
     {
-        double dfTemp;
-
         CPLDebug( "GMLJP2",
                   "Flipping axis orientation in GMLJP2 coverage description." );
 
-        dfTemp = adfGeoTransform[0];
-        adfGeoTransform[0] = adfGeoTransform[3];
-        adfGeoTransform[3] = dfTemp;
+        std::swap(adfGeoTransform[0], adfGeoTransform[3]);
 
         int swapWith1Index = 4;
         int swapWith2Index = 5;
@@ -1148,13 +1144,8 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                 "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER." );
         }
 
-        dfTemp = adfGeoTransform[1];
-        adfGeoTransform[1] = adfGeoTransform[swapWith1Index];
-        adfGeoTransform[swapWith1Index] = dfTemp;
-
-        dfTemp = adfGeoTransform[2];
-        adfGeoTransform[2] = adfGeoTransform[swapWith2Index];
-        adfGeoTransform[swapWith2Index] = dfTemp;
+        std::swap(adfGeoTransform[1], adfGeoTransform[swapWith1Index]);
+        std::swap(adfGeoTransform[2], adfGeoTransform[swapWith2Index]);
 
         /* Found in autotest/gdrivers/data/ll.jp2 */
         if( adfGeoTransform[1] == 0.0 && adfGeoTransform[2] < 0.0 &&
@@ -1339,13 +1330,9 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
     pszComment = "";
     if( bNeedAxisFlip )
     {
-        double dfTemp;
-
         CPLDebug( "GMLJP2", "Flipping GML coverage axis order." );
 
-        dfTemp = adfOrigin[0];
-        adfOrigin[0] = adfOrigin[1];
-        adfOrigin[1] = dfTemp;
+        std::swap(adfOrigin[0], adfOrigin[1]);
 
         if( CPLTestBool( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
                                                 "FALSE" ) ) )
@@ -1354,13 +1341,8 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
                 "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER." );
 
             /* In this case the swapping is done in an "X" pattern */
-            dfTemp = adfXVector[0];
-            adfXVector[0] = adfYVector[1];
-            adfYVector[1] = dfTemp;
-
-            dfTemp = adfYVector[0];
-            adfYVector[0] = adfXVector[1];
-            adfXVector[1] = dfTemp;
+            std::swap(adfXVector[0], adfYVector[1]);
+            std::swap(adfYVector[0], adfXVector[1]);
 
             /* We add this as an XML comment so that we know we must do OffsetVector flipping on reading */
             pszComment = "              <!-- GDAL_JP2K_ALT_OFFSETVECTOR_ORDER=TRUE: First "
@@ -1369,13 +1351,8 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
         }
         else
         {
-            dfTemp = adfXVector[0];
-            adfXVector[0] = adfXVector[1];
-            adfXVector[1] = dfTemp;
-
-            dfTemp = adfYVector[0];
-            adfYVector[0] = adfYVector[1];
-            adfYVector[1] = dfTemp;
+            std::swap(adfXVector[0], adfXVector[1]);
+            std::swap(adfYVector[0], adfYVector[1]);
         }
     }
 
@@ -1499,13 +1476,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
     double dfUCY = std::max(std::max(dfY1, dfY2), std::max(dfY3, dfY4));
     if( bNeedAxisFlip )
     {
-        double dfTmp = dfLCX;
-        dfLCX = dfLCY;
-        dfLCY = dfTmp;
-
-        dfTmp = dfUCX;
-        dfUCX = dfUCY;
-        dfUCY = dfTmp;
+        std::swap(dfLCX, dfLCY);
+        std::swap(dfUCX, dfUCY);
     }
 
 /* -------------------------------------------------------------------- */
