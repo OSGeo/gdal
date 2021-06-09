@@ -72,6 +72,7 @@ class NITFDataset final: public GDALPamDataset
 
     GDALDataset *poJ2KDataset;
     int         bJP2Writing;
+    int         m_nICOffset = 0;
 
     GDALDataset *poJPEGDataset;
 
