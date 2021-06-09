@@ -9,9 +9,9 @@ contributing resources to its success. The following organizations take an
 extra step, providing unrestricted funding every year to maintain and improve
 the health of the project:
 
-- Platinum level:
+- Gold level:
 
-  .. _platinum-sponsors:
+  .. _gold-sponsors:
   .. container:: horizontal-logos
 
     .. Note: they will appear in randomized order in HTML
@@ -38,9 +38,9 @@ the health of the project:
            :target: https://www.planet.com
 
 
-- Gold level:
+- Silver level:
 
-  .. _gold-sponsors:
+  .. _silver-sponsors:
   .. container:: horizontal-logos
 
     .. Note: they will appear in randomized order in HTML
@@ -68,9 +68,9 @@ the health of the project:
 
 
 
-- Silver level:
+- Bronze level:
 
-  .. _silver-sponsors:
+  .. _bronze-sponsors:
   .. container:: horizontal-logos
 
     .. Note: they will appear in randomized order in HTML
@@ -157,9 +157,9 @@ the health of the project:
 
         return this;
     };
-    $('#platinum-sponsors').randomize('div.horizontal-logo');
     $('#gold-sponsors').randomize('div.horizontal-logo');
     $('#silver-sponsors').randomize('div.horizontal-logo');
+    $('#bronze-sponsors').randomize('div.horizontal-logo');
     $('#supporter-sponsors').randomize('div.horizontal-logo');
 
   </script>

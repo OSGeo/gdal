@@ -113,7 +113,7 @@ The GDAL Advisory Council is a newly forming group that is tasked with ensuring 
 
 Our hope is that these sessions can also lead to new feature development in GDAL through joint funding initiatives between top sponsors, providing more structure to the way GDAL features are funded today. This ideally leads to more cost-sharing as organizations will be able to be more strategic when they know what everyone else is interested in. These efforts will be above and beyond the core maintenance sponsorship, but the Advisory Council will be a key forum to enable it.
 
-The Advisory board will have an email list, with members of the GDAL PSC on it, and will meet on a periodic schedule, to be determined as the group forms. It will consist of one representative from each of the Platinum sponsors, one representative for every three Gold sponsors, and one representative from Silver sponsors.
+The Advisory board will have an email list, with members of the GDAL PSC on it, and will meet on a periodic schedule, to be determined as the group forms. It will consist of one representative from each of the Gold sponsors, one representative for every three Silver sponsors, and one representative from Bronze sponsors.
 
 Acknowledgment of NumFOCUS and sponsors
 ---------------------------------------
