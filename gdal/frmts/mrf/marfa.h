@@ -643,7 +643,7 @@ protected:
 
 class JPEG_Codec {
 public:
-    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false), noJXL(false) {}
+    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false), JFIF(false) {}
 
     CPLErr CompressJPEG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPEG(buf_mgr &dst, buf_mgr &src);
@@ -663,7 +663,7 @@ public:
     bool sameres;  // No color space subsample
     bool rgb;      // No conversion to YCbCr
     bool optimize; // Optimize Huffman tables
-    bool noJXL;    // Write JFIF only
+    bool JFIF;     // Write JFIF only
 
 private:
     // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
@@ -695,7 +695,7 @@ protected:
 
     CPLErr CompressJPNG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPNG(buf_mgr &dst, buf_mgr &src);
-    bool rgb, sameres, optimize, noJXL;
+    bool rgb, sameres, optimize, JFIF;
 };
 
 class Raw_Band final: public MRFRasterBand {

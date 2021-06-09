@@ -355,7 +355,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     dst.size = fullsize - jmgr.free_in_buffer;
 
 #if defined(BRUNSLI)
-    if (!noJXL) {
+    if (!JFIF) {
         brunsli::JPEGData bjpg;
         if (!brunsli::ReadJpeg(reinterpret_cast<GByte *>(dst.buffer), dst.size, brunsli::JPEG_READ_ALL, &bjpg)) {
             CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error parsing JPEG before conversion to JPEG-XL");
@@ -765,7 +765,7 @@ JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
 
     if( GDT_Byte == image.dt ) {
         codec.optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
-        codec.noJXL = GetOptlist().FetchBoolean("NOJXL", FALSE) != FALSE;
+        codec.JFIF = GetOptlist().FetchBoolean("JFIF", FALSE) != FALSE;
     }
     else {
         codec.optimize = true; // Required for 12bit
