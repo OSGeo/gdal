@@ -57,8 +57,10 @@ def get_color_table(color_palette_or_path_or_strings_or_ds: Optional[ColorTableL
     if isinstance(color_palette_or_path_or_strings_or_ds, gdal.Dataset):
         return get_color_table_from_raster(color_palette_or_path_or_strings_or_ds)
 
-    pal = get_color_palette(color_palette_or_path_or_strings_or_ds)
-    if pal is None:
+    try:
+        pal = get_color_palette(color_palette_or_path_or_strings_or_ds)
+    except:
+        # the input might be a filename of a raster file
         return get_color_table_from_raster(color_palette_or_path_or_strings_or_ds)
     color_table = gdal.ColorTable()
     if fill_missing_colors:
