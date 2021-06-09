@@ -29,7 +29,7 @@
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "gdal_version"
+#include "gdal_version.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
