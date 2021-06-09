@@ -94,6 +94,11 @@ int      CPL_DLL  NITFCreate( const char *pszFilename,
                               int nBitsPerSample, const char *pszPVType,
                               char **papszOptions );
 
+int        NITFCreateEx( const char *pszFilename,
+                              int nPixels, int nLines, int nBands,
+                              int nBitsPerSample, const char *pszPVType,
+                              char **papszOptions, int* pnICOffset );
+
 const char CPL_DLL *NITFFindTRE( const char *pszTREData, int nTREBytes,
                                  const char *pszTag, int *pnFoundTRESize );
 const char CPL_DLL *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,

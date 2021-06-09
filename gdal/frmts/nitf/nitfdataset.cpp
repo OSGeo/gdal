@@ -67,6 +67,7 @@ static bool NITFPatchImageLength( const char *pszFilename,
                                   GUIntBig nImageOffset,
                                   GIntBig nPixelCount,
                                   const char *pszIC,
+                                  int nICOffset,
                                   CSLConstList papszCreationOptions );
 static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList );
 static bool NITFWriteTextSegments( const char *pszFilename, char **papszList );
@@ -204,7 +205,7 @@ int NITFDataset::CloseDependentDatasets()
 
         CPL_IGNORE_RET_VAL(
             NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount,
-                                  "C8", nullptr ));
+                                  "C8", m_nICOffset, nullptr ));
     }
 
     bJP2Writing = FALSE;
@@ -4151,9 +4152,10 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
 
-    if( !NITFCreate( pszFilename, nXSize, nYSize, nBands,
-                     GDALGetDataTypeSize( eType ), pszPVType,
-                     papszFullOptions ) )
+    int nICOffset = 0;
+    if( !NITFCreateEx( pszFilename, nXSize, nYSize, nBands,
+                       GDALGetDataTypeSize( eType ), pszPVType,
+                       papszFullOptions, &nICOffset ) )
     {
         CSLDestroy(papszTextMD);
         CSLDestroy(papszCgmMD);
@@ -4205,6 +4207,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
         NITFDataset::OpenInternal(&oOpenInfo, poWritableJ2KDataset, TRUE) );
     if (poDS)
     {
+        poDS->m_nICOffset = nICOffset;
         poDS->papszTextMDToWrite = papszTextMD;
         poDS->papszCgmMDToWrite = papszCgmMD;
     }
@@ -4877,9 +4880,10 @@ NITFDataset::NITFCreateCopy(
         }
     }
 
-    if (!NITFCreate( pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
+    int nICOffset = 0;
+    if (!NITFCreateEx( pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
                 GDALGetDataTypeSize( eType ), pszPVType,
-                papszFullOptions ))
+                papszFullOptions, &nICOffset ))
     {
         CSLDestroy( papszFullOptions );
         CSLDestroy(papszCgmMD);
@@ -4967,7 +4971,7 @@ NITFDataset::NITFCreateCopy(
             poSrcDS->GetRasterCount();
 
         bool bOK = NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount,
-                                         "C8", papszFullOptions );
+                                         "C8", nICOffset, papszFullOptions );
         bOK &= NITFWriteCGMSegments( pszFilename, papszCgmMD );
         bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
         if( !bOK )
@@ -5028,7 +5032,7 @@ NITFDataset::NITFCreateCopy(
         NITFClose( psFile );
 
         bool bOK = NITFPatchImageLength( pszFilename, nImageOffset,
-                              nPixelCount, pszIC, papszFullOptions );
+                              nPixelCount, pszIC, nICOffset, papszFullOptions );
 
         bOK &= NITFWriteCGMSegments( pszFilename, papszCgmMD );
         bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
@@ -5221,6 +5225,7 @@ static bool NITFPatchImageLength( const char *pszFilename,
                                   GUIntBig nImageOffset,
                                   GIntBig nPixelCount,
                                   const char *pszIC,
+                                  int nICOffset,
                                   CSLConstList papszCreationOptions )
 
 {
@@ -5273,44 +5278,11 @@ static bool NITFPatchImageLength( const char *pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Update COMRAT, the compression rate variable.  We have to       */
-/*      take into account the presence of graphic and text segments,    */
-/*      the optional presence of IGEOLO and ICOM to find its position.  */
+/*      Update COMRAT, the compression rate variable.                   */
 /* -------------------------------------------------------------------- */
-    // get number of graphic and text segment so we can calculate offset for
-    // image IC.
-    const int nNumIOffset = 360;
-    bool bOK = VSIFSeekL( fpVSIL, nNumIOffset, SEEK_SET ) == 0;
-    char achNUM[4]; // buffer for segment size.  3 digits plus null character
-    achNUM[3] = '\0';
-    bOK &= VSIFReadL( achNUM, 3, 1, fpVSIL ) == 1;
-    const int nIM = atoi(achNUM); // number of image segment
 
-    const int nNumSOffset = nNumIOffset + 3 + nIM * 16;
-    bOK &= VSIFSeekL( fpVSIL,  nNumSOffset, SEEK_SET ) == 0;
-    bOK &= VSIFReadL( achNUM, 3, 1, fpVSIL ) == 1;
-    const int nGS = atoi(achNUM); // number of graphic segment
-
-    const int nNumTOffset = nNumSOffset + 3 + 10 * nGS + 3;
-    bOK &= VSIFSeekL( fpVSIL, nNumTOffset, SEEK_SET ) == 0;
-    bOK &= VSIFReadL( achNUM, 3, 1, fpVSIL ) == 1;
-    const int nTS = atoi(achNUM); // number of text segment
-
-    const int nAdditionalOffset = nGS * 10 + nTS * 9;
-
-    /* Read ICORDS */
-    bOK &= VSIFSeekL( fpVSIL, 775 + nAdditionalOffset , SEEK_SET ) == 0;
-    char chICORDS;
-    bOK &= VSIFReadL( &chICORDS, 1, 1, fpVSIL ) == 1;
-    if (chICORDS != ' ')
-        bOK &= VSIFSeekL( fpVSIL, 60, SEEK_CUR) == 0; /* skip IGEOLO */
-
-    /* Read NICOM */
-    char achNICOM[2];
-    bOK &= VSIFReadL( achNICOM, 1, 1, fpVSIL ) == 1;
-    achNICOM[1] = 0;
-    const int nNICOM = atoi(achNICOM);
-    bOK &= VSIFSeekL( fpVSIL, nNICOM * 80, SEEK_CUR) == 0; /* skip comments */
+    /* Set to IC position */
+    bool bOK = VSIFSeekL( fpVSIL, nICOffset, SEEK_SET) == 0;
 
     /* Read IC */
     char szICBuf[2];
