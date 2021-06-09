@@ -539,6 +539,16 @@ int NITFCreate( const char *pszFilename,
                       char **papszOptions )
 
 {
+    return NITFCreateEx(pszFilename, nPixels, nLines, nBands, nBitsPerSample,
+                        pszPVType, papszOptions, NULL);
+}
+
+int NITFCreateEx( const char *pszFilename,
+                      int nPixels, int nLines, int nBands,
+                      int nBitsPerSample, const char *pszPVType,
+                      char **papszOptions,  int* pnICOffset )
+
+{
     VSILFILE	*fp;
     GUIntBig    nCur = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
@@ -1010,6 +1020,8 @@ int NITFCreate( const char *pszFilename,
         }
     }
 
+    if( pnICOffset && iIM == 0 )
+        *pnICOffset = (int)(nCur+nOffset+1);
     OVR( 2,nCur+nOffset+1, IC     , "NC"                           );
 
     if( pszIC[0] != 'N' )
