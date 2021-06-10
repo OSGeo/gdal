@@ -233,6 +233,10 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
                 {
                     hTransformArg = GDALCreateGenImgProjTransformer2(
                         GDALDataset::FromHandle(poTmpDS.get()), nullptr, aosTO.List() );
+                    if( hTransformArg == nullptr )
+                    {
+                        return false;
+                    }
                 }
             }
         }
@@ -241,6 +245,10 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
     {
         hTransformArg =
             GDALCreateGenImgProjTransformer2( poSrcDS, nullptr, aosTO.List() );
+        if( hTransformArg == nullptr )
+        {
+            return false;
+        }
     }
 
     GDALTransformerInfo* psInfo = static_cast<GDALTransformerInfo*>(hTransformArg);
