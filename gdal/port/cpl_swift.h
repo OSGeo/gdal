@@ -46,8 +46,8 @@ class VSISwiftHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osBucket;
         CPLString m_osObjectKey;
 
-        static bool     GetConfiguration(CPLString& osStorageURL,
-                                         CPLString& osAuthToken);
+        static bool GetConfiguration(CPLString& osStorageURL,
+                                     CPLString& osAuthToken);
 
         static bool GetCached(const char* pszURLKey,
                               const char* pszUserKey,
@@ -67,10 +67,11 @@ class VSISwiftHandleHelper final: public IVSIS3LikeHandleHelper
                            CPLString& osAuthToken);
 
         // V3 Authentication
-        static bool CheckCredentialsV3();
-        static bool AuthV3(CPLString& osStorageURL,
+        static bool CheckCredentialsV3(const CPLString& osAuthType);
+        static bool AuthV3(const CPLString& osAuthType,
+                           CPLString& osStorageURL,
                            CPLString& osAuthToken);
-        static CPLJSONObject CreateAuthV3RequestObject();
+        static CPLJSONObject CreateAuthV3RequestObject(const CPLString& osAuthType);
         static bool GetAuthV3StorageURL(const CPLHTTPResult *psResult,
                                         CPLString& storageURL);
 

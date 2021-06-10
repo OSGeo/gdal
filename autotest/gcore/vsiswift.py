@@ -254,9 +254,21 @@ def test_vsiswift_fake_auth_v3_url():
                   "endpoints" : [
                      {
                         "region" : "Test",
+                        "interface" : "admin",
+                        "url" : "http://127.0.0.1:%d/v1/admin/AUTH_something"
+                     },
+                     {
+                        "region" : "Test",
+                        "interface" : "internal",
+                        "url" : "http://127.0.0.1:%d/v1/internal/AUTH_something"
+                     },
+                     {
+                        "region" : "Test",
+                        "interface" : "public",
                         "url" : "http://127.0.0.1:%d/v1/AUTH_something"
                      }
                   ],
+                  "type": "object-store",
                   "name" : "swift"
                  }
                ]
