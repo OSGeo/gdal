@@ -3808,47 +3808,24 @@ def test_ogr_shape_98():
     assert ref_shx == got_shx, 'Rebuilt shx is different from original shx.'
 
 ###############################################################################
-# Import TOWGS84 from EPSG when possible (#6485)
+# Test WGS 84 with a TOWGS84[0,0,0,0,0,0]
 
 
-def test_ogr_shape_99():
+def test_ogr_shape_wgs84_with_zero_TOWGS84():
 
-    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_99.shp')
-    lyr = ds.CreateLayer('ogr_shape_99')
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test_ogr_shape_wgs84_with_zero_TOWGS84.shp')
+    lyr = ds.CreateLayer('test_ogr_shape_wgs84_with_zero_TOWGS84')
     ds = None
-    gdal.FileFromMemBuffer('/vsimem/ogr_shape_99.prj', """PROJCS["CH1903_LV03",GEOGCS["GCS_CH1903",DATUM["D_CH1903",SPHEROID["Bessel_1841",6377397.155,299.1528128]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],PARAMETER["False_Easting",600000.0],PARAMETER["False_Northing",200000.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Azimuth",90.0],PARAMETER["Longitude_Of_Center",7.439583333333333],PARAMETER["Latitude_Of_Center",46.95240555555556],UNIT["Meter",1.0],AUTHORITY["EPSG",21781]]""")
-    ds = ogr.Open('/vsimem/ogr_shape_99.shp')
+    gdal.FileFromMemBuffer('/vsimem/test_ogr_shape_wgs84_with_zero_TOWGS84.prj', """GEOGCS["WGS84 Coordinate System",DATUM["WGS 1984",SPHEROID["WGS 1984",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"],AUTHORITY["SBMG","LAT-LONG,LAT-LONG,WGS84,METERS"]]""")
+    ds = ogr.Open('/vsimem/test_ogr_shape_wgs84_with_zero_TOWGS84.shp')
     lyr = ds.GetLayer(0)
     got_wkt = lyr.GetSpatialRef().ExportToPrettyWkt()
-    expected_wkt = """PROJCS["CH1903 / LV03",
-    GEOGCS["CH1903",
-        DATUM["CH1903",
-            SPHEROID["Bessel 1841",6377397.155,299.1528128,
-                AUTHORITY["EPSG","7004"]],
-            AUTHORITY["EPSG","6149"]],
-        PRIMEM["Greenwich",0,
-            AUTHORITY["EPSG","8901"]],
-        UNIT["degree",0.0174532925199433,
-            AUTHORITY["EPSG","9122"]],
-        AUTHORITY["EPSG","4149"]],
-    PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
-    PARAMETER["latitude_of_center",46.9524055555556],
-    PARAMETER["longitude_of_center",7.43958333333333],
-    PARAMETER["azimuth",90],
-    PARAMETER["rectified_grid_angle",90],
-    PARAMETER["scale_factor",1],
-    PARAMETER["false_easting",600000],
-    PARAMETER["false_northing",200000],
-    UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]],
-    AXIS["Easting",EAST],
-    AXIS["Northing",NORTH],
-    AUTHORITY["EPSG","21781"]]"""
     ds = None
 
-    assert got_wkt == expected_wkt, ('Projections differ: got %s' % got_wkt)
+    assert got_wkt.startswith('GEOGCS[')
+    assert '4326' in got_wkt
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_99.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test_ogr_shape_wgs84_with_zero_TOWGS84.shp')
 
 ###############################################################################
 # Test REPACK with both implementations
