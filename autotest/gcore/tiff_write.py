@@ -3202,6 +3202,7 @@ def test_tiff_write_91():
         checksums[quality] = [ ds.GetRasterBand(1).Checksum(),
                                ds.GetRasterBand(1).GetOverview(0).Checksum(),
                                ds.GetRasterBand(1).GetOverview(1).Checksum() ]
+        ds = None
 
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_91.tif')
@@ -3478,6 +3479,7 @@ def test_tiff_write_96(other_options = [], nbands = 1, nbits = 8):
             [cs, cs_mask, cs_ovr_1, cs_ovr_mask_1, cs_ovr_2, cs_ovr_mask_2], \
             'did not get expected checksums'
         assert ds.GetMetadataItem('HAS_USED_READ_ENCODED_API', '_DEBUG_') == '0'
+        ds = None
 
     _check_cog('tmp/tiff_write_96_dst.tif', check_tiled=False, full_check=True)
 
