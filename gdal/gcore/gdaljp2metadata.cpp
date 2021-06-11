@@ -96,7 +96,6 @@ GDALJP2Metadata::GDALJP2Metadata() :
     bHaveGeoTransform(false),
     adfGeoTransform{0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
     bPixelIsPoint(false),
-    pszProjection(nullptr),
     nGCPCount(0),
     pasGCPList(nullptr),
     papszRPCMD(nullptr),
@@ -114,7 +113,6 @@ GDALJP2Metadata::GDALJP2Metadata() :
 GDALJP2Metadata::~GDALJP2Metadata()
 
 {
-    CPLFree( pszProjection );
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -216,7 +214,7 @@ int GDALJP2Metadata::ReadAndParse( VSILFILE *fpLL, int nGEOJP2Index,
 /* -------------------------------------------------------------------- */
     return bHaveGeoTransform
         || nGCPCount > 0
-        || (pszProjection != nullptr && strlen(pszProjection) > 0)
+        || !m_oSRS.IsEmpty()
         || papszRPCMD != nullptr;
 }
 
@@ -588,7 +586,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         return FALSE;
 
     bool abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { false };
-    char* apszProjection[MAX_JP2GEOTIFF_BOXES] = { nullptr };
+    OGRSpatialReferenceH ahSRS[MAX_JP2GEOTIFF_BOXES] = { nullptr };
     double aadfGeoTransform[MAX_JP2GEOTIFF_BOXES][6];
     int anGCPCount[MAX_JP2GEOTIFF_BOXES] = { 0 };
     GDAL_GCP    *apasGCPList[MAX_JP2GEOTIFF_BOXES] = { nullptr };
@@ -609,11 +607,11 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         aadfGeoTransform[i][5] = 1;
         if( GTIFWktFromMemBufEx( pasGeoTIFFBoxes[i].nGeoTIFFSize,
                                pasGeoTIFFBoxes[i].pabyGeoTIFFData,
-                               &apszProjection[i], aadfGeoTransform[i],
+                               &ahSRS[i], aadfGeoTransform[i],
                                &anGCPCount[i], &apasGCPList[i],
                                &abPixelIsPoint[i], &apapszRPCMD[i] ) == CE_None )
         {
-            if( apszProjection[i] != nullptr && strlen(apszProjection[i]) != 0 )
+            if( ahSRS[i] != nullptr )
                 abValidProjInfo[i] = true;
         }
     }
@@ -626,10 +624,10 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         {
             iBestIndex = i;
         }
-        else if( abValidProjInfo[i] && apszProjection[i] != nullptr )
+        else if( abValidProjInfo[i] && ahSRS[i] != nullptr )
         {
             // Anything else than a LOCAL_CS will probably be better.
-            if( STARTS_WITH_CI(apszProjection[iBestIndex], "LOCAL_CS") )
+            if( OSRIsLocal(ahSRS[iBestIndex]) )
                 iBestIndex = i;
         }
     }
@@ -654,7 +652,10 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
 
     if( iBestIndex >= 0 )
     {
-        pszProjection = apszProjection[iBestIndex];
+        m_oSRS.Clear();
+        if( ahSRS[iBestIndex] )
+            m_oSRS = *(OGRSpatialReference::FromHandle(ahSRS[iBestIndex]));
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         memcpy(adfGeoTransform, aadfGeoTransform[iBestIndex], 6 * sizeof(double));
         nGCPCount = anGCPCount[iBestIndex];
         pasGCPList = apasGCPList[iBestIndex];
@@ -669,10 +670,15 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
             || adfGeoTransform[5] != 1 )
             bHaveGeoTransform = true;
 
-        if( pszProjection )
+        if( ahSRS[iBestIndex] )
+        {
+            char* pszWKT = nullptr;
+            m_oSRS.exportToWkt(&pszWKT);
             CPLDebug( "GDALJP2Metadata",
                 "Got projection from GeoJP2 (geotiff) box (%d): %s",
-                iBestIndex, pszProjection );
+                iBestIndex, pszWKT ? pszWKT : "(null)" );
+            CPLFree(pszWKT);
+        }
     }
 
     // Cleanup unused boxes.
@@ -680,7 +686,6 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     {
         if( i != iBestIndex )
         {
-            CPLFree( apszProjection[i] );
             if( anGCPCount[i] > 0 )
             {
                 GDALDeinitGCPs( anGCPCount[i], apasGCPList[i] );
@@ -688,6 +693,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
             }
             CSLDestroy( apapszRPCMD[i] );
         }
+        OSRDestroySpatialReference( ahSRS[i] );
     }
 
     return iBestIndex >= 0;
@@ -871,10 +877,8 @@ int GDALJP2Metadata::GMLSRSLookup( const char *pszURN )
 
     if( oSRS.importFromXML( pszDictEntryXML ) == OGRERR_NONE )
     {
-        CPLFree( pszProjection );
-        pszProjection = nullptr;
-
-        oSRS.exportToWkt( &pszProjection );
+        m_oSRS = oSRS;
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         bSuccess = true;
     }
 
@@ -1033,12 +1037,12 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
     OGRSpatialReference oSRS;
     if( bSuccess && pszSRSName != nullptr
-        && (pszProjection == nullptr || strlen(pszProjection) == 0) )
+        && m_oSRS.IsEmpty() )
     {
         if( STARTS_WITH_CI(pszSRSName, "epsg:") )
         {
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
-                oSRS.exportToWkt( &pszProjection );
+                m_oSRS = oSRS;
         }
         else if( (STARTS_WITH_CI(pszSRSName, "urn:")
                  && strstr(pszSRSName,":def:") != nullptr
@@ -1047,7 +1051,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                  /* See e.g. http://schemas.opengis.net/gmljp2/2.0/examples/minimalInstance.xml */
                  (STARTS_WITH_CI(pszSRSName, "http://www.opengis.net/def/crs/")                  && oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE) )
         {
-            oSRS.exportToWkt( &pszProjection );
+            m_oSRS = oSRS;
 
             // Per #2131
             if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
@@ -1065,10 +1069,16 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         }
     }
 
-    if( pszProjection )
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if( !m_oSRS.IsEmpty() )
+    {
+        char* pszWKT = nullptr;
+        m_oSRS.exportToWkt(&pszWKT);
         CPLDebug( "GDALJP2Metadata",
                   "Got projection from GML box: %s",
-                 pszProjection );
+                 pszWKT ? pszWKT : "" );
+        CPLFree(pszWKT);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to flip the axes?                                    */
@@ -1158,18 +1168,19 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         }
     }
 
-    return pszProjection != nullptr && bSuccess;
+    return !m_oSRS.IsEmpty() && bSuccess;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                         SetSpatialRef()                              */
 /************************************************************************/
 
-void GDALJP2Metadata::SetProjection( const char *pszWKT )
+void GDALJP2Metadata::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup(pszWKT);
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 }
 
 /************************************************************************/
@@ -1224,7 +1235,8 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
     int         nGTBufSize = 0;
     unsigned char *pabyGTBuf = nullptr;
 
-    if( GTIFMemBufFromWktEx( pszProjection, adfGeoTransform,
+    if( GTIFMemBufFromSRS( OGRSpatialReference::ToHandle(&m_oSRS),
+                             adfGeoTransform,
                              nGCPCount, pasGCPList,
                              &nGTBufSize, &pabyGTBuf, bPixelIsPoint,
                              papszRPCMD ) != CE_None )
@@ -1261,12 +1273,9 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
 /* -------------------------------------------------------------------- */
 /*      Try do determine a PCS or GCS code we can use.                  */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
     nEPSGCode = 0;
     bNeedAxisFlip = FALSE;
-
-    if( oSRS.importFromWkt( pszProjection ) != OGRERR_NONE )
-        return FALSE;
+    OGRSpatialReference oSRS(m_oSRS);
 
     if( oSRS.IsProjected() )
     {
