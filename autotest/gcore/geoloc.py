@@ -39,7 +39,7 @@ import gdaltest
 
 def test_geoloc_1():
 
-    tst = gdaltest.GDALTest('VRT', 'warpsst.vrt', 1, 61818)
+    tst = gdaltest.GDALTest('VRT', 'warpsst.vrt', 1, 61957)
     return tst.testOpen(check_filelist=False)
 
 
