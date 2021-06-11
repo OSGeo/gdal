@@ -312,6 +312,21 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /*      pushing into the backmap.                                       */
 /* -------------------------------------------------------------------- */
 
+    const auto UpdateBackmap = [&](int iBMX, int iBMY, size_t iX, size_t iY,
+                                   double tempwt)
+    {
+        psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +=
+            static_cast<float>( tempwt * (
+                (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
+                psTransform->dfPIXEL_OFFSET));
+
+        psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +=
+            static_cast<float>( tempwt * (
+                (iY + FSHIFT) * psTransform->dfLINE_STEP +
+                psTransform->dfLINE_OFFSET));
+        wgtsBackMap[iBMX + iBMY * nBMXSize] += static_cast<float>(tempwt);
+    };
+
     for( size_t iY = 0; iY < nYSize; iY++ )
     {
         for( size_t iX = 0; iX < nXSize; iX++ )
@@ -348,16 +363,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (static_cast<size_t>(iBMY) < nBMYSize))
             {
                 const double tempwt = (1.0 - fracBMX) * (1.0 - fracBMY);
-                psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
-                        psTransform->dfPIXEL_OFFSET));
-
-                psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
-                        psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + iBMY * nBMXSize] += static_cast<float>(tempwt);
+                UpdateBackmap(iBMX, iBMY, iX, iY, tempwt);
             }
 
             //Check logic for top right pixel
@@ -366,17 +372,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (static_cast<size_t>(iBMY) < nBMYSize))
             {
                 const double tempwt = fracBMX * (1.0 - fracBMY);
-
-                psTransform->pafBackMapX[iBMX + 1 + iBMY * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
-                        psTransform->dfPIXEL_OFFSET));
-
-                psTransform->pafBackMapY[iBMX + 1 + iBMY * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iY + FSHIFT)* psTransform->dfLINE_STEP +
-                        psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + 1 + iBMY * nBMXSize] +=  static_cast<float>(tempwt);
+                UpdateBackmap(iBMX + 1, iBMY, iX, iY, tempwt);
             }
 
             //Check logic for bottom right pixel
@@ -384,16 +380,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (static_cast<size_t>(iBMY+1) < nBMYSize))
             {
                 const double tempwt = fracBMX * fracBMY;
-                psTransform->pafBackMapX[iBMX + 1 + (iBMY+1) * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
-                        psTransform->dfPIXEL_OFFSET));
-
-                psTransform->pafBackMapY[iBMX + 1 + (iBMY+1) * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
-                        psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + 1 + (iBMY+1) * nBMXSize] += static_cast<float>(tempwt);
+                UpdateBackmap(iBMX + 1, iBMY + 1, iX, iY, tempwt);
             }
 
             //Check logic for bottom left pixel
@@ -402,16 +389,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (static_cast<size_t>(iBMY+1) < nBMYSize))
             {
                 const double tempwt = (1.0 - fracBMX) * fracBMY;
-                psTransform->pafBackMapX[iBMX + (iBMY+1) * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
-                        psTransform->dfPIXEL_OFFSET));
-
-                psTransform->pafBackMapY[iBMX + (iBMY+1) * nBMXSize] +=
-                    static_cast<float>(tempwt * (
-                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
-                        psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + (iBMY+1) * nBMXSize] += static_cast<float>(tempwt);
+                UpdateBackmap(iBMX, iBMY + 1, iX, iY, tempwt);
             }
 
         }
