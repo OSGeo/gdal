@@ -27,6 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%rename (ExtendedDataTypeSubType) GDALExtendedDataTypeSubType;
+typedef enum {
+    GEDTST_NONE = 0,
+    GEDTST_JSON = 1
+} GDALExtendedDataTypeSubType;
+
 %rename (Group) GDALGroupHS;
 
 %apply Pointer NONNULL {const char* name};
@@ -1329,6 +1335,10 @@ public:
   size_t GetMaxStringLength()
   {
     return GDALExtendedDataTypeGetMaxStringLength(self);
+  }
+
+  GDALExtendedDataTypeSubType GetSubType() {
+    return GDALExtendedDataTypeGetSubType(self);
   }
 
 #if defined(SWIGPYTHON)
