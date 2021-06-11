@@ -324,7 +324,7 @@ def test_vsiswift_fake_auth_v3_application_credential_url():
     gdal.VSICurlClearCache()
     gdal.SetConfigOption('SWIFT_STORAGE_URL', '')
     gdal.SetConfigOption('SWIFT_AUTH_TOKEN', '')
-    with gdaltest.set_config_options( {
+    with gdaltest.config_options( {
             'OS_IDENTITY_API_VERSION': '3',
             'OS_AUTH_URL': 'http://127.0.0.1:%d/v3' % gdaltest.webserver_port,
             'OS_AUTH_TYPE': 'v3applicationcredential',
