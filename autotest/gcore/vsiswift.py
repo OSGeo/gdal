@@ -244,6 +244,8 @@ def test_vsiswift_fake_auth_v3_url():
         request_len = int(h['Content-Length'])
         request_body = request.rfile.read(request_len).decode()
         request_json = json.loads(request_body)
+        methods = request_json['auth']['identity']["methods"]
+        assert "password" in methods
         password = request_json['auth']['identity']['password']['user']['password']
         assert password == 'pwd'
 
@@ -254,9 +256,21 @@ def test_vsiswift_fake_auth_v3_url():
                   "endpoints" : [
                      {
                         "region" : "Test",
+                        "interface" : "admin",
+                        "url" : "http://127.0.0.1:8080/v1/admin/AUTH_something"
+                     },
+                     {
+                        "region" : "Test",
+                        "interface" : "internal",
+                        "url" : "http://127.0.0.1:8081/v1/internal/AUTH_something"
+                     },
+                     {
+                        "region" : "Test",
+                        "interface" : "public",
                         "url" : "http://127.0.0.1:%d/v1/AUTH_something"
                      }
                   ],
+                  "type": "object-store",
                   "name" : "swift"
                  }
                ]
@@ -295,6 +309,114 @@ def test_vsiswift_fake_auth_v3_url():
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         assert data == 'foo'
         gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test authentication with OS_IDENTITY_API_VERSION=3 OS_AUTH_TYPE="v3applicationcredential"
+# + OS_APPLICATION_CREDENTIAL_ID + OS_APPLICATION_CREDENTIAL_SECRET
+
+
+def test_vsiswift_fake_auth_v3_application_credential_url():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    gdal.SetConfigOption('SWIFT_STORAGE_URL', '')
+    gdal.SetConfigOption('SWIFT_AUTH_TOKEN', '')
+    with gdaltest.config_options( {
+            'OS_IDENTITY_API_VERSION': '3',
+            'OS_AUTH_URL': 'http://127.0.0.1:%d/v3' % gdaltest.webserver_port,
+            'OS_AUTH_TYPE': 'v3applicationcredential',
+            'OS_APPLICATION_CREDENTIAL_ID': 'xxxyyycredential-idyyyxxx==',
+            'OS_APPLICATION_CREDENTIAL_SECRET': 'xxxyyycredential-secretyyyxxx==',
+            'OS_USER_DOMAIN_NAME': 'test_user_domain',
+            'OS_REGION_NAME': 'Test'
+        } ):
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+
+            request.protocol_version = 'HTTP/1.1'
+            h = request.headers
+
+            if 'Content-Type' not in h or h['Content-Type'] != 'application/json':
+                sys.stderr.write('Bad headers: %s\n' % str(h))
+                request.send_response(403)
+                return
+
+            request_len = int(h['Content-Length'])
+            request_body = request.rfile.read(request_len).decode()
+            request_json = json.loads(request_body)
+            methods = request_json['auth']['identity']["methods"]
+            assert "application_credential" in methods
+            cred_id = request_json['auth']['identity']['application_credential']['id']
+            cred_secret = request_json['auth']['identity']['application_credential']['secret']
+
+            assert cred_id == 'xxxyyycredential-idyyyxxx=='
+            assert cred_secret == 'xxxyyycredential-secretyyyxxx=='
+
+            content = """{
+                 "token" : {
+                   "catalog" : [
+                     {
+                      "endpoints" : [
+                         {
+                            "region" : "Test",
+                            "interface" : "admin",
+                            "url" : "http://127.0.0.1:8080/v1/admin/AUTH_something"
+                         },
+                         {
+                            "region" : "Test",
+                            "interface" : "internal",
+                            "url" : "http://127.0.0.1:8081/v1/internal/AUTH_something"
+                         },
+                         {
+                            "region" : "Test",
+                            "interface" : "public",
+                            "url" : "http://127.0.0.1:%d/v1/AUTH_something"
+                         }
+                      ],
+                      "type": "object-store",
+                      "name" : "swift"
+                     }
+                   ]
+                 }
+              }""" % gdaltest.webserver_port
+            content = content.encode('ascii')
+            request.send_response(200)
+            request.send_header('Content-Length', len(content))
+            request.send_header('Content-Type', 'application/json')
+            request.send_header('X-Subject-Token', 'my_auth_token')
+            request.end_headers()
+            request.wfile.write(content)
+
+        handler.add('POST', '/v3/auth/tokens', custom_method=method)
+
+        def method(request):
+
+            request.protocol_version = 'HTTP/1.1'
+            h = request.headers
+            if 'x-auth-token' not in h or \
+                    h['x-auth-token'] != 'my_auth_token':
+                sys.stderr.write('Bad headers: %s\n' % str(h))
+                request.send_response(403)
+                return
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.send_header('Connection', 'close')
+            request.end_headers()
+            request.wfile.write('foo'.encode('ascii'))
+
+        handler.add('GET', '/v1/AUTH_something/foo/bar', custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsiswift/foo/bar')
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            assert data == 'foo'
+            gdal.VSIFCloseL(f)
 
 
 ###############################################################################
