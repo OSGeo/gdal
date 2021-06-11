@@ -455,9 +455,22 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
         snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
         poMEMDS->AddBand(GDT_Float32, apszOptions);
         poMEMDS->GetRasterBand(i)->SetNoDataValue(-1);
+    }
 
-        constexpr double dfMaxSearchDist = 3.0;
-        constexpr int nSmoothingIterations = 1;
+#ifdef DEBUG_GEOLOC
+    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+    {
+        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                              "/tmp/geoloc_before_fill.tif",
+                              poMEMDS.get(),
+                              false, nullptr, nullptr, nullptr));
+    }
+#endif
+
+    constexpr double dfMaxSearchDist = 3.0;
+    constexpr int nSmoothingIterations = 1;
+    for( int i = 1; i <= 2; i++ )
+    {
         GDALFillNodata( GDALRasterBand::ToHandle(poMEMDS->GetRasterBand(i)),
                         nullptr,
                         dfMaxSearchDist,
@@ -467,6 +480,16 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                         nullptr,
                         nullptr );
     }
+
+#ifdef DEBUG_GEOLOC
+    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+    {
+        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                              "/tmp/geoloc_after_fill.tif",
+                              poMEMDS.get(),
+                              false, nullptr, nullptr, nullptr));
+    }
+#endif
 
     CPLFree( wgtsBackMap );
 
