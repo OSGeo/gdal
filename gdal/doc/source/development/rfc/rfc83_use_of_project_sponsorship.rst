@@ -8,7 +8,7 @@ RFC 83: guidelines for the use of GDAL project sponsorship
 Author:        Even Rouault (with content from RFC 9)
 Contact:       even.rouault @ spatialys.com
 Started:       2021-May-19
-Status:        Development
+Status:        Adopted
 ============== =============================================
 
 Summary
@@ -230,4 +230,6 @@ sponsorship program.
 Voting History
 --------------
 
-TBD
+https://lists.osgeo.org/pipermail/gdal-dev/2021-June/thread.html#54249
+
++1 from PSC members MateuszL, HowardB, FrankW, KurtS, SeanG, JukkaR, DanielM and EvenR
