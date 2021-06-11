@@ -2272,7 +2272,9 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
 
         const std::string osZmetadataFilename(
                 CPLFormFilename(poOpenInfo->pszFilename, ".zmetadata", nullptr));
-        if( VSIStatL( osZmetadataFilename.c_str(), &sStat ) == 0 )
+        if( CPLTestBool(CSLFetchNameValueDef(
+                    poOpenInfo->papszOpenOptions, "USE_ZMETADATA", "YES")) &&
+            VSIStatL( osZmetadataFilename.c_str(), &sStat ) == 0 )
         {
             CPLJSONDocument oDoc;
             if( !oDoc.Load(osZmetadataFilename) )
@@ -2345,6 +2347,11 @@ void GDALRegister_Zarr()
     //poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
     //                           "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"   <Option name='USE_ZMETADATA' type='boolean' description='Whether to use consolidated metadata from .zmetadata' default='YES'/>"
+"</OpenOptionList>" );
 
     poDriver->pfnIdentify = ZarrDataset::Identify;
     poDriver->pfnOpen = ZarrDataset::Open;
