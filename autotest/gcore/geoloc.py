@@ -82,4 +82,27 @@ def test_geoloc_bounds():
     assert gt[0] == pytest.approx(-179.9)
     assert gt[3] == pytest.approx(60.4 + 0.5 * 59)
 
+###############################################################################
+# Test that the line filling logic works
 
+
+def test_geoloc_fill_line():
+
+
+    ds = gdal.GetDriverByName('MEM').Create('', 200, 372)
+    md = {
+        'LINE_OFFSET': '0',
+        'LINE_STEP': '1',
+        'PIXEL_OFFSET': '0',
+        'PIXEL_STEP': '1',
+        'X_DATASET': '../alg/data/geoloc/longitude_including_pole.tif',
+        'X_BAND' : '1',
+        'Y_DATASET': '../alg/data/geoloc/latitude_including_pole.tif',
+        'Y_BAND' : '1',
+        'SRS': 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+    }
+    ds.SetMetadata(md, 'GEOLOCATION')
+    ds.GetRasterBand(1).Fill(1)
+    warped_ds = gdal.Warp('', ds, format='MEM')
+    assert warped_ds
+    assert warped_ds.GetRasterBand(1).Checksum() == 25798

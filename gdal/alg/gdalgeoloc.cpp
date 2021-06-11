@@ -499,6 +499,48 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     }
 #endif
 
+    // A final hole filling logic, proceeding line by line, and feeling
+    // holes when the backmap values surrounding the hole are close enough.
+    for( size_t iBMY = 0; iBMY < nBMYSize; iBMY++ )
+    {
+        size_t iLastValidIX = static_cast<size_t>(-1);
+        for( size_t iBMX = 0; iBMX < nBMXSize; iBMX++ )
+        {
+            const size_t iBM = iBMX + iBMY * nBMXSize;
+            if( psTransform->pafBackMapX[iBM] < 0 )
+                continue;
+            if( iBMX > iLastValidIX + 1 &&
+                iLastValidIX != static_cast<size_t>(-1) &&
+                fabs( psTransform->pafBackMapX[iBM] -
+                    psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize]) <= 2 &&
+                fabs( psTransform->pafBackMapY[iBM] -
+                    psTransform->pafBackMapY[iLastValidIX + iBMY * nBMXSize]) <= 2 )
+            {
+                for( size_t iBMXInner = iLastValidIX + 1; iBMXInner < iBMX; ++iBMXInner )
+                {
+                    const float alpha = static_cast<float>(iBMXInner - iLastValidIX) / (iBMX - iLastValidIX);
+                    psTransform->pafBackMapX[iBMXInner + iBMY * nBMXSize] =
+                        (1.0f - alpha) * psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize] +
+                        alpha * psTransform->pafBackMapX[iBM];
+                    psTransform->pafBackMapY[iBMXInner + iBMY * nBMXSize] =
+                        (1.0f - alpha) * psTransform->pafBackMapY[iLastValidIX + iBMY * nBMXSize] +
+                        alpha * psTransform->pafBackMapY[iBM];
+                }
+            }
+            iLastValidIX = iBMX;
+        }
+    }
+
+#ifdef DEBUG_GEOLOC
+    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+    {
+        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                              "/tmp/geoloc_after_line_fill.tif",
+                              poMEMDS.get(),
+                              false, nullptr, nullptr, nullptr));
+    }
+#endif
+
     CPLFree( wgtsBackMap );
 
     return true;
