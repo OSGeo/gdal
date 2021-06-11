@@ -30,6 +30,7 @@
 
 #include "cpl_port.h"
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 
 #include <climits>
 #include <cmath>
@@ -66,45 +67,6 @@ CPL_C_END
 const double FSHIFT = 0.5;
 const double ISHIFT = 0.5;
 const double OVERSAMPLE_FACTOR=1.3;
-
-typedef struct {
-    GDALTransformerInfo sTI;
-
-    bool        bReversed;
-
-    // Map from target georef coordinates back to geolocation array
-    // pixel line coordinates.  Built only if needed.
-    size_t      nBackMapWidth;
-    size_t      nBackMapHeight;
-    double      adfBackMapGeoTransform[6];  // Maps georef to pixel/line.
-    float       *pafBackMapX;
-    float       *pafBackMapY;
-
-    // Geolocation bands.
-    GDALDatasetH     hDS_X;
-    GDALRasterBandH  hBand_X;
-    GDALDatasetH     hDS_Y;
-    GDALRasterBandH  hBand_Y;
-    int              bSwapXY;
-
-    // Located geolocation data.
-    size_t           nGeoLocXSize;
-    size_t           nGeoLocYSize;
-    double           *padfGeoLocX;
-    double           *padfGeoLocY;
-
-    int              bHasNoData;
-    double           dfNoDataX;
-
-    // Geolocation <-> base image mapping.
-    double           dfPIXEL_OFFSET;
-    double           dfPIXEL_STEP;
-    double           dfLINE_OFFSET;
-    double           dfLINE_STEP;
-
-    char **          papszGeolocationInfo;
-
-} GDALGeoLocTransformInfo;
 
 /************************************************************************/
 /*                         GeoLocLoadFullData()                         */
@@ -217,6 +179,44 @@ static bool GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
         GDALGetRasterNoDataValue( psTransform->hBand_X,
                                   &(psTransform->bHasNoData) );
 
+/* -------------------------------------------------------------------- */
+/*      Scan forward map for lat/long extents.                          */
+/* -------------------------------------------------------------------- */
+    psTransform->dfMinX = std::numeric_limits<double>::max();
+    psTransform->dfMaxX = -std::numeric_limits<double>::max();
+    psTransform->dfMinY = std::numeric_limits<double>::max();
+    psTransform->dfMaxY = -std::numeric_limits<double>::max();
+
+    const size_t nXYCount = psTransform->nGeoLocXSize * psTransform->nGeoLocYSize;
+    for( size_t i = 0; i < nXYCount; i++ )
+    {
+        if( !psTransform->bHasNoData ||
+            psTransform->padfGeoLocX[i] != psTransform->dfNoDataX )
+        {
+            if( psTransform->padfGeoLocX[i] < psTransform->dfMinX )
+            {
+                psTransform->dfMinX = psTransform->padfGeoLocX[i];
+                psTransform->dfYAtMinX = psTransform->padfGeoLocY[i];
+            }
+            if( psTransform->padfGeoLocX[i] > psTransform->dfMaxX )
+            {
+                psTransform->dfMaxX = psTransform->padfGeoLocX[i];
+                psTransform->dfYAtMaxX = psTransform->padfGeoLocY[i];
+            }
+            if( psTransform->padfGeoLocY[i] < psTransform->dfMinY )
+            {
+                psTransform->dfMinY = psTransform->padfGeoLocY[i];
+                psTransform->dfXAtMinY = psTransform->padfGeoLocX[i];
+            }
+            if( psTransform->padfGeoLocY[i] > psTransform->dfMaxY )
+            {
+                psTransform->dfMaxY = psTransform->padfGeoLocY[i];
+                psTransform->dfXAtMaxY = psTransform->padfGeoLocX[i];
+            }
+        }
+    }
+
+
     return true;
 }
 
@@ -229,39 +229,6 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 {
     const size_t nXSize = psTransform->nGeoLocXSize;
     const size_t nYSize = psTransform->nGeoLocYSize;
-    const size_t nXYCount = nXSize * nYSize;
-
-/* -------------------------------------------------------------------- */
-/*      Scan forward map for lat/long extents.                          */
-/* -------------------------------------------------------------------- */
-    double dfMinX = 0.0;
-    double dfMaxX = 0.0;
-    double dfMinY = 0.0;
-    double dfMaxY = 0.0;
-    bool bInit = false;
-
-    for( size_t i = 0; i < nXYCount; i++ )
-    {
-        if( !psTransform->bHasNoData ||
-            psTransform->padfGeoLocX[i] != psTransform->dfNoDataX )
-        {
-            if( bInit )
-            {
-                dfMinX = std::min(dfMinX, psTransform->padfGeoLocX[i]);
-                dfMaxX = std::max(dfMaxX, psTransform->padfGeoLocX[i]);
-                dfMinY = std::min(dfMinY, psTransform->padfGeoLocY[i]);
-                dfMaxY = std::max(dfMaxY, psTransform->padfGeoLocY[i]);
-            }
-            else
-            {
-                bInit = true;
-                dfMinX = psTransform->padfGeoLocX[i];
-                dfMaxX = psTransform->padfGeoLocX[i];
-                dfMinY = psTransform->padfGeoLocY[i];
-                dfMaxY = psTransform->padfGeoLocY[i];
-            }
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Decide on resolution for backmap.  We aim for slightly          */
@@ -270,16 +237,17 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /*      is approximate.                                                 */
 /* -------------------------------------------------------------------- */
     const double dfTargetPixels = (static_cast<double>(nXSize) * nYSize * OVERSAMPLE_FACTOR);
-    const double dfPixelSize = sqrt((dfMaxX - dfMinX) * (dfMaxY - dfMinY)
-                              / dfTargetPixels);
+    const double dfPixelSize = sqrt(
+        (psTransform->dfMaxX - psTransform->dfMinX) *
+        (psTransform->dfMaxY - psTransform->dfMinY) / dfTargetPixels);
     if( dfPixelSize == 0.0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid pixel size for backmap");
         return false;
     }
 
-    const double dfBMXSize = (dfMaxX - dfMinX) / dfPixelSize + 1;
-    const double dfBMYSize = (dfMaxY - dfMinY) / dfPixelSize + 1;
+    const double dfBMXSize = (psTransform->dfMaxX - psTransform->dfMinX) / dfPixelSize + 1;
+    const double dfBMYSize = (psTransform->dfMaxY - psTransform->dfMinY) / dfPixelSize + 1;
 
     if( !(dfBMXSize > 0 && dfBMXSize < INT_MAX) ||
         !(dfBMYSize > 0 && dfBMYSize < INT_MAX) )
@@ -302,9 +270,8 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     psTransform->nBackMapWidth = nBMXSize;
     psTransform->nBackMapHeight = nBMYSize;
 
-    dfMinX -= dfPixelSize / 2.0;
-    dfMaxY += dfPixelSize / 2.0;
-
+    const double dfMinX = psTransform->dfMinX - dfPixelSize / 2.0;
+    const double dfMaxY = psTransform->dfMaxY + dfPixelSize / 2.0;
 
     psTransform->adfBackMapGeoTransform[0] = dfMinX;
     psTransform->adfBackMapGeoTransform[1] = dfPixelSize;
