@@ -30,6 +30,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include "cpl_json.h"
 #include "cpl_json_streaming_writer.h"
 #include "gdal_priv.h"
 #include <limits>
@@ -242,13 +243,88 @@ static void DumpValue(CPLJSonStreamingWriter& serializer,
 }
 
 /************************************************************************/
+/*                          SerializeJSON()                             */
+/************************************************************************/
+
+static void SerializeJSON(const CPLJSONObject& obj,
+                          CPLJSonStreamingWriter& serializer)
+{
+    switch( obj.GetType() )
+    {
+        case CPLJSONObject::Type::Unknown:
+        {
+            CPLAssert(false);
+            break;
+        }
+
+        case CPLJSONObject::Type::Null:
+        {
+            serializer.AddNull();
+            break;
+        }
+
+        case CPLJSONObject::Type::Object:
+        {
+            auto objectContext(serializer.MakeObjectContext());
+            for( const auto& subobj: obj.GetChildren() )
+            {
+                serializer.AddObjKey(subobj.GetName());
+                SerializeJSON(subobj, serializer);
+            }
+            break;
+        }
+
+        case CPLJSONObject::Type::Array:
+        {
+            auto arrayContext(serializer.MakeArrayContext());
+            const CPLJSONArray array = obj.ToArray();
+            for( const auto& subobj: array )
+            {
+                SerializeJSON(subobj, serializer);
+            }
+            break;
+        }
+
+        case CPLJSONObject::Type::Boolean:
+        {
+            serializer.Add( obj.ToBool() );
+            break;
+        }
+
+        case CPLJSONObject::Type::String:
+        {
+            serializer.Add( obj.ToString() );
+            break;
+        }
+
+        case CPLJSONObject::Type::Integer:
+        {
+            serializer.Add( obj.ToInteger() );
+            break;
+        }
+
+        case CPLJSONObject::Type::Long:
+        {
+            serializer.Add( obj.ToLong() );
+            break;
+        }
+
+        case CPLJSONObject::Type::Double:
+        {
+            serializer.Add( obj.ToDouble() );
+            break;
+        }
+    }
+}
+
+/************************************************************************/
 /*                          DumpAttrValue()                             */
 /************************************************************************/
 
-static void DumpAttrValue(std::shared_ptr<GDALAttribute> attr,
+static void DumpAttrValue(const std::shared_ptr<GDALAttribute>& attr,
                           CPLJSonStreamingWriter& serializer)
 {
-    const auto dt(attr->GetDataType());
+    const auto& dt = attr->GetDataType();
     const size_t nEltCount(static_cast<size_t>(attr->GetTotalElementsCount()));
     switch( dt.GetClass() )
     {
@@ -258,9 +334,24 @@ static void DumpAttrValue(std::shared_ptr<GDALAttribute> attr,
             {
                 const char* pszStr = attr->ReadAsString();
                 if( pszStr )
-                    serializer.Add(pszStr);
-                else
-                    serializer.AddNull();
+                {
+                    if( dt.GetSubType() == GEDTST_JSON )
+                    {
+                        CPLJSONDocument oDoc;
+                        if( oDoc.LoadMemory(std::string(pszStr)) )
+                        {
+                            SerializeJSON(oDoc.GetRoot(), serializer);
+                        }
+                        else
+                        {
+                            serializer.Add(pszStr);
+                        }
+                    }
+                    else
+                    {
+                        serializer.Add(pszStr);
+                    }
+                }
             }
             else
             {
@@ -353,7 +444,7 @@ static void DumpAttr(std::shared_ptr<GDALAttribute> attr,
         return;
     }
 
-    const auto dt(attr->GetDataType());
+    const auto& dt = attr->GetDataType();
     auto objectContext(serializer.MakeObjectContext());
     if( bOutputObjType )
     {
@@ -370,6 +461,18 @@ static void DumpAttr(std::shared_ptr<GDALAttribute> attr,
     {
         serializer.AddObjKey("datatype");
         DumpDataType(dt, serializer);
+
+        switch( dt.GetSubType() )
+        {
+            case GEDTST_NONE:
+                break;
+            case GEDTST_JSON:
+            {
+                serializer.AddObjKey("subtype");
+                serializer.Add("JSON");
+                break;
+            }
+        }
 
         serializer.AddObjKey("value");
     }
@@ -811,7 +914,7 @@ static void DumpGroup(GDALDataset* poDS,
         serializer.AddObjKey("name");
         serializer.Add(group->GetName());
     }
-    
+
     CPLStringList aosOptionsGetAttr;
     if( psOptions->bDetailed )
         aosOptionsGetAttr.SetNameValue("SHOW_ALL", "YES");
