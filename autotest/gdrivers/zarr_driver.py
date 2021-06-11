@@ -798,3 +798,48 @@ def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata):
     assert ds is not None
     rg = ds.GetRootGroup()
     assert len(rg.GetDimensions()) == 2
+
+
+@pytest.mark.parametrize("use_get_names", [True, False])
+def test_zarr_read_v3(use_get_names):
+
+    filename = 'data/zarr/v3/test.zr3'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg.GetName() == '/'
+    assert rg.GetFullName() == '/'
+    if use_get_names:
+        assert rg.GetGroupNames() == ['marvin']
+    assert len(rg.GetAttributes()) == 1
+    assert rg.GetAttribute('root_foo') is not None
+    subgroup = rg.OpenGroup('marvin')
+    assert subgroup is not None
+    assert rg.OpenGroup('not_existing') is None
+    assert subgroup.GetName() == 'marvin'
+    assert subgroup.GetFullName() == '/marvin'
+    if use_get_names:
+        assert rg.GetMDArrayNames() == ['/', 'ar']
+
+    ar = rg.OpenMDArray('/')
+    assert ar
+    assert ar.Read() == array.array('i', [2] + ([1] * (5 * 10 - 1)))
+
+    ar = rg.OpenMDArray('ar')
+    assert ar
+    assert ar.Read() == array.array('b', [1, 2])
+
+    if use_get_names:
+        assert subgroup.GetGroupNames() == ['paranoid']
+    assert len(subgroup.GetAttributes()) == 1
+
+    subsubgroup = subgroup.OpenGroup('paranoid')
+    assert subsubgroup.GetName() == 'paranoid'
+    assert subsubgroup.GetFullName() == '/marvin/paranoid'
+
+    if use_get_names:
+        assert subgroup.GetMDArrayNames() == ['android']
+    ar = subgroup.OpenMDArray('android')
+    assert ar is not None
+    assert ar.Read() == array.array('b', [1] * 4 * 5)
+    assert subgroup.OpenMDArray('not_existing') is None
