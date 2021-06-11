@@ -317,20 +317,44 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                                    size_t iX, size_t iY,
                                    double tempwt)
     {
-        float fUpdatedBMX = psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +
+        const float fUpdatedBMX = psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +
             static_cast<float>( tempwt * (
                 (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
                 psTransform->dfPIXEL_OFFSET));
-        float fUpdatedBMY = psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +
+        const float fUpdatedBMY = psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +
             static_cast<float>( tempwt * (
                 (iY + FSHIFT) * psTransform->dfLINE_STEP +
                 psTransform->dfLINE_OFFSET));
-        float fUpdatedWeight = wgtsBackMap[iBMX + iBMY * nBMXSize] +
+        const float fUpdatedWeight = wgtsBackMap[iBMX + iBMY * nBMXSize] +
                                static_cast<float>(tempwt);
 
-        psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = fUpdatedBMX;
-        psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = fUpdatedBMY;
-        wgtsBackMap[iBMX + iBMY * nBMXSize] = fUpdatedWeight;
+        // Only update the backmap if the updated averaged value results in a
+        // geoloc position that isn't too different from the original one.
+        // (there's no guarantee that if padfGeoLocX[i] ~= padfGeoLoc[j],
+        //  padfGeoLoc[alpha * i + (1 - alpha) * j] ~= padfGeoLoc[i] )
+        if( fUpdatedWeight > 0 )
+        {
+            const float fX = fUpdatedBMX / fUpdatedWeight;
+            const float fY = fUpdatedBMY / fUpdatedWeight;
+            const double dfGeoLocPixel = (fX - psTransform->dfPIXEL_OFFSET) / psTransform->dfPIXEL_STEP;
+            const double dfGeoLocLine = (fY - psTransform->dfLINE_OFFSET) / psTransform->dfLINE_STEP;
+            size_t iXAvg = static_cast<size_t>(std::max(0.0, dfGeoLocPixel));
+            iXAvg = std::min(iXAvg, psTransform->nGeoLocXSize-1);
+            size_t iYAvg = static_cast<size_t>(std::max(0.0, dfGeoLocLine));
+            iYAvg = std::min(iYAvg, psTransform->nGeoLocYSize-1);
+            const double dfGLX = psTransform->padfGeoLocX[iXAvg + iYAvg * nXSize];
+            const double dfGLY = psTransform->padfGeoLocY[iXAvg + iYAvg * nXSize];
+
+            if( !(psTransform->bHasNoData &&
+                  dfGLX == psTransform->dfNoDataX ) &&
+                fabs(dfGLX - psTransform->padfGeoLocX[iX + iY * nXSize]) <= 2 * dfPixelSize &&
+                fabs(dfGLY - psTransform->padfGeoLocY[iX + iY * nXSize]) <= 2 * dfPixelSize )
+            {
+                psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = fUpdatedBMX;
+                psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = fUpdatedBMY;
+                wgtsBackMap[iBMX + iBMY * nBMXSize] = fUpdatedWeight;
+            }
+        }
     };
 
     for( size_t iY = 0; iY < nYSize; iY++ )
