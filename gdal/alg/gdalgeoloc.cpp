@@ -34,6 +34,7 @@
 
 #include <climits>
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 
@@ -312,19 +313,24 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /*      pushing into the backmap.                                       */
 /* -------------------------------------------------------------------- */
 
-    const auto UpdateBackmap = [&](int iBMX, int iBMY, size_t iX, size_t iY,
+    const auto UpdateBackmap = [&](std::ptrdiff_t iBMX, std::ptrdiff_t iBMY,
+                                   size_t iX, size_t iY,
                                    double tempwt)
     {
-        psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +=
+        float fUpdatedBMX = psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +
             static_cast<float>( tempwt * (
                 (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
                 psTransform->dfPIXEL_OFFSET));
-
-        psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +=
+        float fUpdatedBMY = psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +
             static_cast<float>( tempwt * (
                 (iY + FSHIFT) * psTransform->dfLINE_STEP +
                 psTransform->dfLINE_OFFSET));
-        wgtsBackMap[iBMX + iBMY * nBMXSize] += static_cast<float>(tempwt);
+        float fUpdatedWeight = wgtsBackMap[iBMX + iBMY * nBMXSize] +
+                               static_cast<float>(tempwt);
+
+        psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = fUpdatedBMX;
+        psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = fUpdatedBMY;
+        wgtsBackMap[iBMX + iBMY * nBMXSize] = fUpdatedWeight;
     };
 
     for( size_t iY = 0; iY < nYSize; iY++ )
@@ -346,8 +352,8 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 
 
             //Get top left index by truncation
-            const int iBMX = static_cast<int>(dBMX);
-            const int iBMY = static_cast<int>(dBMY);
+            const std::ptrdiff_t iBMX = static_cast<std::ptrdiff_t>(dBMX);
+            const std::ptrdiff_t iBMY = static_cast<std::ptrdiff_t>(dBMY);
             const double fracBMX = dBMX - iBMX;
             const double fracBMY = dBMY - iBMY;
 
@@ -883,8 +889,8 @@ int GDALGeoLocTransform( void *pTransformArg,
                 continue;
             }
 
-            const int iBMX = static_cast<int>(dfBMX);
-            const int iBMY = static_cast<int>(dfBMY);
+            const std::ptrdiff_t iBMX = static_cast<std::ptrdiff_t>(dfBMX);
+            const std::ptrdiff_t iBMY = static_cast<std::ptrdiff_t>(dfBMY);
 
             const size_t iBM = iBMX + iBMY * psTransform->nBackMapWidth;
             if( psTransform->pafBackMapX[iBM] < 0 )
