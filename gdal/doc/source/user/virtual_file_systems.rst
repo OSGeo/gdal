@@ -443,6 +443,15 @@ Three authentication methods are possible, and are attempted in the following or
    - `OS_PROJECT_DOMAIN_NAME`
    - `OS_REGION_NAME`
 
+4. Application Credential Authentication via Keystone v3, GDAL (>= 3.3.1) supports application-credential authentication with the following options:
+
+   - `OS_IDENTITY_API_VERSION=3`
+   - `OS_AUTH_TYPE=v3applicationcredential`
+   - `OS_AUTH_URL`
+   - `OS_APPLICATION_CREDENTIAL_ID`
+   - `OS_APPLICATION_CREDENTIAL_SECRET`
+   - `OS_REGION_NAME`
+
 This file system handler also allows sequential writing of files (no seeks or read operations are then allowed).
 
 In some versions of OpenStack Swift, the access to large (segmented) files fails unless they are explicitly marked as static large objects, instead of being dynamic large objects which is the default. Using the python-swiftclient this can be achieved when uploading the file by passing the ``--use-slo`` flag (see https://docs.openstack.org/python-swiftclient/latest/cli/index.html#swift-upload for all options). For more information about large objects see https://docs.openstack.org/swift/latest/api/large_objects.html.
