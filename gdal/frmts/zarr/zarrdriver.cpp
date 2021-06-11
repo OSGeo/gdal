@@ -2503,7 +2503,17 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     else if( eFillValueType == CPLJSONObject::Type::String )
     {
         const auto osFillValue = oFillValue.ToString();
-        if( oType.GetClass() == GEDTC_NUMERIC )
+        if( oType.GetClass() == GEDTC_NUMERIC &&
+            CPLGetValueType(osFillValue.c_str()) != CPL_VALUE_STRING )
+        {
+            // Be tolerant with numeric values serialized as strings.
+            const double dfNoDataValue = CPLAtof(osFillValue.c_str());
+            abyNoData.resize(oType.GetSize());
+            GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
+                          &abyNoData[0], oType.GetNumericDataType(), 0,
+                          1);
+        }
+        else if( oType.GetClass() == GEDTC_NUMERIC )
         {
             double dfNoDataValue;
             if( osFillValue == "NaN" )

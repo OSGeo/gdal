@@ -47,7 +47,7 @@ import pytest
                           ["!i1", 'b', gdal.GDT_Int16, None, None],
                           ["!i1", 'b', gdal.GDT_Int16, -1, -1],
                           ["!u1", 'B', gdal.GDT_Byte, None, None],
-                          ["!u1", 'B', gdal.GDT_Byte, 1, 1],
+                          ["!u1", 'B', gdal.GDT_Byte, "1", 1],
                           ["<i2", 'h', gdal.GDT_Int16, None, None],
                           [">i2", 'h', gdal.GDT_Int16, None, None],
                           ["<i4", 'i', gdal.GDT_Int32, None, None],
