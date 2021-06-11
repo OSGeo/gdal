@@ -1395,11 +1395,18 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
                              bool& bMissingTileOut) const
 {
     std::string osFilename;
-    for( const auto index: tileIndices )
+    if( tileIndices.empty() )
     {
-        if( !osFilename.empty() )
-            osFilename += m_osDimSeparator;
-        osFilename += std::to_string(index);
+        osFilename = "0";
+    }
+    else
+    {
+        for( const auto index: tileIndices )
+        {
+            if( !osFilename.empty() )
+                osFilename += m_osDimSeparator;
+            osFilename += std::to_string(index);
+        }
     }
 
     if( m_nVersion == 2 )
@@ -1576,10 +1583,10 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
         bufferStride = bufferStrideMod.data();
     }
 
-    std::vector<uint64_t> indicesOuterLoop(nDims);
+    std::vector<uint64_t> indicesOuterLoop(nDims + 1);
     std::vector<GByte*> dstPtrStackOuterLoop(nDims + 1);
 
-    std::vector<uint64_t> indicesInnerLoop(nDims);
+    std::vector<uint64_t> indicesInnerLoop(nDims + 1);
     std::vector<GByte*> dstPtrStackInnerLoop(nDims + 1);
 
     std::vector<GPtrDiff_t> dstBufferStrideBytes;
@@ -1588,13 +1595,14 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
         dstBufferStrideBytes.push_back(
             bufferStride[i] * static_cast<GPtrDiff_t>(nBufferDTSize));
     }
+    dstBufferStrideBytes.push_back(0);
 
     const auto nDTSize = m_oType.GetSize();
 
     std::vector<uint64_t> tileIndices(nDims);
     const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
 
-    std::vector<size_t> countInnerLoopInit(nDims);
+    std::vector<size_t> countInnerLoopInit(nDims + 1, 1);
     std::vector<size_t> countInnerLoop(nDims);
 
     const bool bBothAreNumericDT =
@@ -1619,7 +1627,7 @@ lbl_next_depth:
         size_t dimIdxSubLoop = 0;
         dstPtrStackInnerLoop[0] = dstPtrStackOuterLoop[nDims];
         bool bEmptyTile = false;
-        if( tileIndices == m_anCachedTiledIndices )
+        if( !tileIndices.empty() && tileIndices == m_anCachedTiledIndices )
         {
             if( !m_bCachedTiledValid )
                 return false;
@@ -1679,7 +1687,7 @@ lbl_next_depth:
         }
 
 lbl_next_depth_inner_loop:
-        if( dimIdxSubLoop == nDims - 1 )
+        if( nDims == 0 || dimIdxSubLoop == nDims - 1 )
         {
             indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
             void* dst_ptr = dstPtrStackInnerLoop[dimIdxSubLoop];
@@ -1783,14 +1791,15 @@ lbl_next_depth_inner_loop:
                     (indicesInnerLoop[i] - tileIndices[i] * m_anBlockSize[i]));
             }
             const GByte* src_ptr = pabySrcTile + nOffset * nSrcDTSize;
+            const auto step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
 
             if( m_bUseOptimizedCodePaths && bBothAreNumericDT &&
-                arrayStep[dimIdxSubLoop] <= static_cast<GIntBig>(std::numeric_limits<int>::max() / nDTSize) &&
+                step <= static_cast<GIntBig>(std::numeric_limits<int>::max() / nDTSize) &&
                 dstBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() )
             {
                 GDALCopyWords64( src_ptr,
                                  m_oType.GetNumericDataType(),
-                                 static_cast<int>(arrayStep[dimIdxSubLoop] * nDTSize),
+                                 static_cast<int>(step * nDTSize),
                                  dst_ptr,
                                  bufferDataType.GetNumericDataType(),
                                  static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
@@ -1801,7 +1810,7 @@ lbl_next_depth_inner_loop:
 
             for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
                     ++i,
-                    src_ptr += arrayStep[dimIdxSubLoop] * nSrcDTSize,
+                    src_ptr += step * nSrcDTSize,
                     dst_ptr = static_cast<uint8_t*>(dst_ptr) + dstBufferStrideBytes[dimIdxSubLoop] )
             {
                 if( bSameNumericDT )
@@ -2276,12 +2285,6 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "shape and chunks arrays are of different size");
-        return nullptr;
-    }
-    if( oShape.Size() == 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "empty shape array not supported");
         return nullptr;
     }
 

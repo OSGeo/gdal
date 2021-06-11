@@ -303,7 +303,6 @@ def test_zarr_invalid_json_remove_member(member):
                                          {"shape": "invalid"},
                                          {"shape": [5]},
                                          {"shape": [5, 0]},
-                                         {"chunks": [], "shape": []},
                                          {"chunks": [1 << 40, 1 << 40],
                                           "shape": [1 << 40, 1 << 40]},
                                          {"dtype": None},
@@ -988,3 +987,14 @@ def test_zarr_read_classic_too_many_samples_4d():
         assert len(ds.GetSubDatasets()) == 0
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_empty_shape():
+
+    ds = gdal.OpenEx('data/zarr/empty.zarr', gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == array.array('b', [120])
