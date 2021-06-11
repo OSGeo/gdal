@@ -306,7 +306,8 @@ Sentinel 5
 
 The most verbose metadata is reported in the ``json:ISO_METADATA``,
 ``json:ESA_METADATA``, ``json:EOP_METADATA``, ``json:QA_STATISTICS``,
-``json:GRANULE_DESCRIPTION`` and ``json:ALGORITHM_SETTINGS`` metadata domain.
+``json:GRANULE_DESCRIPTION``, ``json:ALGORITHM_SETTINGS`` and ``json:SUPPORT_DATA``
+metadata domains.
 
 Can be discovered for example with:
 

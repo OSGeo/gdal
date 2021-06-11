@@ -5639,6 +5639,15 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
             }
         }
     }
+    if( STARTS_WITH(pszVarFullName, "/PRODUCT/SUPPORT_DATA/") )
+    {
+        CPLFree(pszVarFullName);
+        JSonMetadata md;
+        md.osJSon = CPLString(NCDFReadMetadataAsJson(cdfidIn)).replaceAll("\\/", '/');
+        md.apszMD[0] = &md.osJSon[0];
+        m_oMapDomainToJSon["SUPPORT_DATA"] = std::move(md);
+        return CE_None;
+    }
 #endif
 
     size_t nMetaNameSize = sizeof(char) * (strlen(pszVarFullName) + 1
