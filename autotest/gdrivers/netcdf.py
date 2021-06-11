@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import os
 import sys
 import shutil
@@ -4634,6 +4635,42 @@ def test_netcdf_open_coords_no_georef_indexing_variables():
     assert ds is not None
     assert ds.GetGeoTransform(can_return_null=True) is None
     assert ds.GetMetadata("GEOLOCATION") is not None
+
+
+###############################################################################
+# Test opening a file that has metadata ala Sentinel 5
+
+
+def test_netcdf_metadata_sentinel5():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/fake_ISO_METADATA.nc')
+    assert ds is not None
+    assert "json:ISO_METADATA" in ds.GetMetadataDomainList()
+    md = ds.GetMetadata_List("json:ISO_METADATA")
+    assert md is not None
+    md = md[0]
+    assert json.loads(md) == {
+      "foo":"bar",
+      "bar":[
+        "bar#1",
+        "bar#2"
+      ],
+      "grp":{
+        "foo": 1.5
+      },
+      "array":[
+        {
+          "foo":"bar1"
+        },
+        {
+          "foo":"bar2"
+        }
+      ]
+    }
+
 
 
 def test_clean_tmp():
