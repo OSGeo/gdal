@@ -758,3 +758,43 @@ def test_zarr_read_group_with_zmetadata():
     assert ar.GetAttribute('bar') is not None
     assert subsubgroup.OpenMDArray('not_existing') is None
 
+
+@pytest.mark.parametrize("use_zmetadata", [True, False])
+def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata):
+
+    filename = 'data/zarr/array_dimensions.zarr'
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER, open_options=[
+                     'USE_ZMETADATA=' + str(use_zmetadata)])
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray('var')
+    assert ar
+    dims = ar.GetDimensions()
+    assert len(dims) == 2
+    assert dims[0].GetName() == 'lat'
+    assert dims[0].GetIndexingVariable() is not None
+    assert dims[0].GetIndexingVariable().GetName() == 'lat'
+    assert dims[1].GetName() == 'lon'
+    assert dims[1].GetIndexingVariable() is not None
+    assert dims[1].GetIndexingVariable().GetName() == 'lon'
+    assert len(rg.GetDimensions()) == 2
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER, open_options=[
+                     'USE_ZMETADATA=' + str(use_zmetadata)])
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray('lat')
+    assert ar
+    dims = ar.GetDimensions()
+    assert len(dims) == 1
+    assert dims[0].GetName() == 'lat'
+    assert dims[0].GetIndexingVariable() is not None
+    assert dims[0].GetIndexingVariable().GetName() == 'lat'
+    assert len(rg.GetDimensions()) == 2
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER, open_options=[
+                     'USE_ZMETADATA=' + str(use_zmetadata)])
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert len(rg.GetDimensions()) == 2

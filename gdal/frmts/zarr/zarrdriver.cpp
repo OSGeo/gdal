@@ -81,12 +81,14 @@ class ZarrGroup final: public GDALGroup
     std::string m_osDirectoryName{};
     mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     mutable std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
+    mutable std::map<CPLString, std::shared_ptr<GDALDimensionWeakIndexingVar>> m_oMapDimensions{};
     mutable bool m_bDirectoryExplored = false;
     mutable std::vector<std::string> m_aosGroups{};
     mutable std::vector<std::string> m_aosArrays{};
     mutable ZarrAttributeGroup                        m_oAttrGroup;
     mutable bool                                      m_bAttributesLoaded = false;
     bool                                              m_bReadFromZMetadata = false;
+    mutable bool                                      m_bDimensionsInstantiated = false;
 
     void ExploreDirectory() const;
     void LoadAttributes() const;
@@ -98,9 +100,9 @@ public:
         GDALGroup(osParentName, osName),
         m_oAttrGroup(osParentName) {}
 
-    std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions) const override;
+    std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions = nullptr) const override;
     std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
-                                             CSLConstList papszOptions) const override;
+                                             CSLConstList papszOptions = nullptr) const override;
 
     std::vector<std::string> GetGroupNames(CSLConstList papszOptions) const override;
     std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
@@ -112,10 +114,12 @@ public:
     std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const override
         { LoadAttributes(); return m_oAttrGroup.GetAttributes(papszOptions); }
 
+    std::vector<std::shared_ptr<GDALDimension>> GetDimensions(CSLConstList papszOptions) const override;
+
     std::shared_ptr<ZarrArray> LoadArray(const std::string& osArrayName,
                                          const std::string& osZarrayFilename,
                                          const CPLJSONObject& oRoot,
-                                         bool bHasAttributes,
+                                         bool bLoadedFromZMetadata,
                                          const CPLJSONObject& oAttributes) const;
     void RegisterArray(const std::shared_ptr<GDALMDArray>& array) const;
     void SetDirectoryName(const std::string& osDirectoryName) { m_osDirectoryName = osDirectoryName; }
@@ -399,6 +403,31 @@ void ZarrGroup::LoadAttributes() const
         return;
     auto oRoot = oDoc.GetRoot();
     m_oAttrGroup.Init(oRoot);
+}
+
+/************************************************************************/
+/*                            GetDimensions()                           */
+/************************************************************************/
+
+std::vector<std::shared_ptr<GDALDimension>> ZarrGroup::GetDimensions(CSLConstList) const
+{
+    if( !m_bReadFromZMetadata && !m_bDimensionsInstantiated )
+    {
+        m_bDimensionsInstantiated = true;
+        // We need to instantiate arrays to discover dimensions
+        const auto aosArrays = GetMDArrayNames();
+        for( const auto& osArray: aosArrays )
+        {
+            OpenMDArray(osArray);
+        }
+    }
+
+    std::vector<std::shared_ptr<GDALDimension>> oRes;
+    for( const auto& oIter: m_oMapDimensions )
+    {
+        oRes.push_back(oIter.second);
+    }
+    return oRes;
 }
 
 /************************************************************************/
@@ -1901,7 +1930,7 @@ static void SetGDALOffset(const GDALExtendedDataType& dt,
 std::shared_ptr<ZarrArray> ZarrGroup::LoadArray(const std::string& osArrayName,
                                                 const std::string& osZarrayFilename,
                                                 const CPLJSONObject& oRoot,
-                                                bool bHasAttributes,
+                                                bool bLoadedFromZMetadata,
                                                 const CPLJSONObject& oAttributesIn) const
 {
     const auto osFormat = oRoot["zarr_format"].ToString();
@@ -1955,7 +1984,7 @@ std::shared_ptr<ZarrArray> ZarrGroup::LoadArray(const std::string& osArrayName,
     }
 
     CPLJSONObject oAttributes(oAttributesIn);
-    if( !bHasAttributes )
+    if( !bLoadedFromZMetadata )
     {
         CPLJSONDocument oDoc;
         const std::string osZattrsFilename(
@@ -2001,6 +2030,84 @@ std::shared_ptr<ZarrArray> ZarrGroup::LoadArray(const std::string& osArrayName,
         aoDims.emplace_back(std::make_shared<GDALDimension>(
             std::string(), CPLSPrintf("dim%d", i),
             std::string(), std::string(), nSize));
+    }
+
+    // XArray extension
+    const auto arrayDimensionsObj = oAttributes["_ARRAY_DIMENSIONS"];
+    if( arrayDimensionsObj.GetType() == CPLJSONObject::Type::Array )
+    {
+        const auto arrayDims = arrayDimensionsObj.ToArray();
+        if( arrayDims.Size() == oShape.Size() )
+        {
+            bool ok = true;
+            for( int i = 0; i < oShape.Size(); ++i )
+            {
+                if( arrayDims[i].GetType() == CPLJSONObject::Type::String )
+                {
+                    auto oIter = m_oMapDimensions.find(arrayDims[i].ToString());
+                    if( oIter != m_oMapDimensions.end() )
+                    {
+                        if( oIter->second->GetSize() == aoDims[i]->GetSize() )
+                        {
+                            aoDims[i] = oIter->second;
+                        }
+                        else
+                        {
+                            ok = false;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Size of _ARRAY_DIMENSIONS[%d] different "
+                                 "from the one of shape", i);
+                        }
+                    }
+                    else
+                    {
+                        auto poDim = std::make_shared<GDALDimensionWeakIndexingVar>(
+                            GetFullName(), arrayDims[i].ToString(),
+                            std::string(), std::string(), aoDims[i]->GetSize());
+                        m_oMapDimensions[poDim->GetName()] = poDim;
+                        aoDims[i] = poDim;
+
+                        // Try to load the indexing variable
+                        // If loading from zmetadata, we will eventually instantiate
+                        // the indexing array, so no need to be proactive.
+                        if( !bLoadedFromZMetadata && osArrayName != poDim->GetName() )
+                        {
+                            const std::string osZarrayFilenameDim =
+                                CPLFormFilename(
+                                    CPLFormFilename(m_osDirectoryName.c_str(),
+                                                    poDim->GetName().c_str(),
+                                                    nullptr),
+                                    ".zarray", nullptr);
+                            VSIStatBufL sStat;
+                            if( VSIStatL(osZarrayFilenameDim.c_str(), &sStat) == 0 )
+                            {
+                                CPLJSONDocument oDoc;
+                                if( oDoc.Load(osZarrayFilenameDim) )
+                                {
+                                    auto poDimArray = LoadArray(
+                                        poDim->GetName(),
+                                        osZarrayFilenameDim,
+                                        oDoc.GetRoot(),
+                                        false,
+                                        CPLJSONObject());
+                                    if( poDimArray )
+                                        poDim->SetIndexingVariable(poDimArray);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if( ok )
+            {
+                oAttributes.Delete("_ARRAY_DIMENSIONS");
+            }
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Size of _ARRAY_DIMENSIONS different from the one of shape");
+        }
     }
 
     const auto oDtype = oRoot["dtype"];
@@ -2227,6 +2334,18 @@ std::shared_ptr<ZarrArray> ZarrGroup::LoadArray(const std::string& osArrayName,
     poArray->SetSRS(poSRS);
     poArray->SetAttributes(oAttributes);
     RegisterArray(poArray);
+
+    // If this is an indexing variable, attach it to the dimension.
+    if( aoDims.size() == 1 &&
+        aoDims[0]->GetName() == poArray->GetName() )
+    {
+        auto oIter = m_oMapDimensions.find(poArray->GetName());
+        if( oIter != m_oMapDimensions.end() )
+        {
+            oIter->second->SetIndexingVariable(poArray);
+        }
+    }
+
     return poArray;
 }
 
