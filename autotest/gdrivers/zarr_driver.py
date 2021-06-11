@@ -231,7 +231,7 @@ def test_zarr_string(fill_value, expected_read_data):
         "compressor": None,
         "dtype": '|S3',
         "fill_value": fill_value,
-        "filters": None,
+        "filters": [],
         "order": "C",
         "shape": [
             2

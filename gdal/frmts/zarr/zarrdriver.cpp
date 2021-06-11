@@ -2683,6 +2683,11 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         if( oFilters.GetType() == CPLJSONObject::Type::Null )
         {
         }
+        else if( oFilters.GetType() == CPLJSONObject::Type::Array &&
+                 oFilters.ToArray().Size() == 0 )
+        {
+            // ok
+        }
         else
         {
             // TODO
