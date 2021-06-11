@@ -4652,7 +4652,7 @@ def test_netcdf_metadata_sentinel5():
     md = ds.GetMetadata_List("json:ISO_METADATA")
     assert md is not None
     md = md[0]
-    assert json.loads(md) == {
+    expected = {
       "foo":"bar",
       "bar":[
         "bar#1",
@@ -4670,7 +4670,21 @@ def test_netcdf_metadata_sentinel5():
         }
       ]
     }
+    assert json.loads(md) == expected
 
+    ds = gdal.OpenEx('data/netcdf/fake_ISO_METADATA.nc', gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg.GetGroupNames() is None
+    assert 'ISO_METADATA' in [attr.GetName() for attr in rg.GetAttributes()]
+    attr = rg.GetAttribute('ISO_METADATA')
+    assert attr is not None
+    assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
+
+    j = gdal.MultiDimInfo('data/netcdf/fake_ISO_METADATA.nc')
+    assert 'attributes' in j
+    assert 'ISO_METADATA' in j['attributes']
+    assert j['attributes']['ISO_METADATA'] == expected
 
 
 def test_clean_tmp():
