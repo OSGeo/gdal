@@ -172,6 +172,8 @@ class ZarrArray final: public GDALMDArray
     mutable std::vector<GByte>                        m_abyTmpRawTileData{}; // used for Fortran order
     mutable ZarrAttributeGroup                        m_oAttrGroup;
     mutable std::shared_ptr<OGRSpatialReference>      m_poSRS{};
+    mutable bool                                      m_bAllocateWorkingBuffersDone = false;
+    mutable bool                                      m_bWorkingBuffersOK = false;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -185,6 +187,8 @@ class ZarrArray final: public GDALMDArray
                       bool& bMissingTileOut) const;
     void BlockTranspose(const std::vector<GByte>& abySrc,
                         std::vector<GByte>& abyDst) const;
+
+    bool AllocateWorkingBuffers() const;
 
 protected:
     bool IRead(const GUInt64* arrayStartIdx,
@@ -761,60 +765,6 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
                       anBlockSize, bFortranOrder));
     arr->SetSelf(arr);
 
-    // Reserve a buffer for tile content
-    const size_t nSourceSize = aoDtypeElts.back().nativeOffset + aoDtypeElts.back().nativeSize;
-    size_t nTileSize = arr->m_oType.GetClass() == GEDTC_STRING ? arr->m_oType.GetMaxStringLength() : nSourceSize;
-    for( const auto& nBlockSize: arr->m_anBlockSize )
-    {
-        nTileSize *= static_cast<size_t>(nBlockSize);
-    }
-    try
-    {
-        arr->m_abyRawTileData.resize( nTileSize );
-        if( bFortranOrder )
-            arr->m_abyTmpRawTileData.resize( nTileSize );
-    }
-    catch( const std::bad_alloc& e )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return nullptr;
-    }
-
-    bool bNeedDecodedBuffer = false;
-    if( oType.GetClass() == GEDTC_COMPOUND && nSourceSize != oType.GetSize() )
-    {
-        bNeedDecodedBuffer = true;
-    }
-    else if( oType.GetClass() != GEDTC_STRING )
-    {
-        for( const auto& elt: arr->m_aoDtypeElts )
-        {
-            if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
-                elt.nativeType == DtypeElt::NativeType::STRING )
-            {
-                bNeedDecodedBuffer = true;
-                break;
-            }
-        }
-    }
-    if( bNeedDecodedBuffer )
-    {
-        size_t nDecodedBufferSize = arr->m_oType.GetSize();
-        for( const auto& nBlockSize: arr->m_anBlockSize )
-        {
-            nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
-        }
-        try
-        {
-            arr->m_abyDecodedTileData.resize( nDecodedBufferSize );
-        }
-        catch( const std::bad_alloc& e )
-        {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-            return nullptr;
-        }
-    }
-
     arr->m_bUseOptimizedCodePaths = CPLTestBool(
         CPLGetConfigOption("GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", "YES"));
 
@@ -851,6 +801,77 @@ ZarrArray::~ZarrArray()
             }
         }
     }
+}
+
+/************************************************************************/
+/*               ZarrArray::AllocateWorkingBuffers()                    */
+/************************************************************************/
+
+bool ZarrArray::AllocateWorkingBuffers() const
+{
+    if( m_bAllocateWorkingBuffersDone )
+        return m_bWorkingBuffersOK;
+
+    m_bAllocateWorkingBuffersDone = true;
+
+    // Reserve a buffer for tile content
+    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                               m_aoDtypeElts.back().nativeSize;
+    size_t nTileSize = m_oType.GetClass() == GEDTC_STRING ?
+                                m_oType.GetMaxStringLength() : nSourceSize;
+    for( const auto& nBlockSize: m_anBlockSize )
+    {
+        nTileSize *= static_cast<size_t>(nBlockSize);
+    }
+    try
+    {
+        m_abyRawTileData.resize( nTileSize );
+        if( m_bFortranOrder )
+            m_abyTmpRawTileData.resize( nTileSize );
+    }
+    catch( const std::bad_alloc& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        return false;
+    }
+
+    bool bNeedDecodedBuffer = false;
+    if( m_oType.GetClass() == GEDTC_COMPOUND && nSourceSize != m_oType.GetSize() )
+    {
+        bNeedDecodedBuffer = true;
+    }
+    else if( m_oType.GetClass() != GEDTC_STRING )
+    {
+        for( const auto& elt: m_aoDtypeElts )
+        {
+            if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
+                elt.nativeType == DtypeElt::NativeType::STRING )
+            {
+                bNeedDecodedBuffer = true;
+                break;
+            }
+        }
+    }
+    if( bNeedDecodedBuffer )
+    {
+        size_t nDecodedBufferSize = m_oType.GetSize();
+        for( const auto& nBlockSize: m_anBlockSize )
+        {
+            nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
+        }
+        try
+        {
+            m_abyDecodedTileData.resize( nDecodedBufferSize );
+        }
+        catch( const std::bad_alloc& e )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return false;
+        }
+    }
+
+    m_bWorkingBuffersOK = true;
+    return true;
 }
 
 /************************************************************************/
@@ -1229,6 +1250,8 @@ bool ZarrArray::IRead(const GUInt64* arrayStartIdx,
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const
 {
+    if( !AllocateWorkingBuffers() )
+        return false;
 
     // Need to be kept in top-level scope
     std::vector<GUInt64> arrayStartIdxMod;
