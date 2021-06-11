@@ -99,19 +99,41 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
         m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         const auto org = crs->org();
         const auto code = crs->code();
-        const auto wkt = crs->wkt();
+        CPLString wkt = crs->wkt() ? crs->wkt()->c_str() : "";
+        double dfCoordEpoch = 0;
+        if( STARTS_WITH_CI( wkt.c_str(), "COORDINATEMETADATA[") )
+        {
+            size_t nPos = std::string::npos;
+            // We don't want to match FRAMEEPOCH[
+            for( const char* pszEpoch : { ",EPOCH[", " EPOCH[", "\tEPOCH[",
+                                          "\nEPOCH[", "\rEPOCH[" } )
+            {
+                nPos = wkt.ifind(pszEpoch);
+                if( nPos != std::string::npos )
+                    break;
+            }
+            if( nPos != std::string::npos )
+            {
+                dfCoordEpoch = CPLAtof(
+                    wkt.c_str() + nPos + strlen(",EPOCH["));
+                wkt.resize(nPos);
+                wkt = wkt.substr(strlen("COORDINATEMETADATA["));
+            }
+        }
+        CPL_IGNORE_RET_VAL(dfCoordEpoch);
+
         if ((org == nullptr || EQUAL(org->c_str(), "EPSG")) && code != 0) {
             m_poSRS->importFromEPSG(code);
         } else if( org && code != 0 ) {
             CPLString osCode;
             osCode.Printf("%s:%d", org->c_str(), code);
             if( m_poSRS->SetFromUserInput(osCode.c_str()) != OGRERR_NONE &&
-                wkt != nullptr )
+                !wkt.empty() )
             {
-                m_poSRS->importFromWkt(wkt->c_str());
+                m_poSRS->importFromWkt(wkt.c_str());
             }
-        } else if (wkt) {
-            m_poSRS->importFromWkt(wkt->c_str());
+        } else if (!wkt.empty()) {
+            m_poSRS->importFromWkt(wkt.c_str());
         }
     }
 
