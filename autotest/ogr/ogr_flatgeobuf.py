@@ -793,3 +793,15 @@ def test_ogr_flatgeobuf_ossfuzz_bug_29462():
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
     assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+
+###############################################################################
+
+
+def test_ogr_flatgeobuf_read_coordinate_metadata_wkt():
+
+    ds = gdal.OpenEx('data/flatgeobuf/test_ogr_flatgeobuf_coordinate_epoch.fgb')
+    lyr = ds.GetLayer(0)
+    got_srs = lyr.GetSpatialRef()
+    assert got_srs is not None
+    assert got_srs.IsGeographic()
