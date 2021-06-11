@@ -843,3 +843,14 @@ def test_zarr_read_v3(use_get_names):
     assert ar is not None
     assert ar.Read() == array.array('b', [1] * 4 * 5)
     assert subgroup.OpenMDArray('not_existing') is None
+
+
+@pytest.mark.parametrize("endianness", ['le', 'be'])
+def test_zarr_read_half_float(endianness):
+
+    filename = 'data/zarr/f2_' + endianness + '.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar.Read() == array.array('f', [1.5, float('nan')])

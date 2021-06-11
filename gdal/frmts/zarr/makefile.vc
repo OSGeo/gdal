@@ -5,7 +5,7 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS= -I..\mem
+EXTRAFLAGS= -I..\mem -I..\gtiff
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

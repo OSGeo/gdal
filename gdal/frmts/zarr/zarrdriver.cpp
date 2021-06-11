@@ -30,6 +30,7 @@
 #include "cpl_json.h"
 #include "gdal_priv.h"
 #include "memmultidim.h"
+#include "tif_float.h"
 
 #include <algorithm>
 #include <cassert>
@@ -1245,8 +1246,18 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
             {
                 uint16_t val;
                 memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                *reinterpret_cast<uint16_t*>(pDst + elt.gdalOffset) =
-                    CPL_SWAP16(val);
+                if( elt.gdalTypeIsApproxOfNative )
+                {
+                    CPLAssert( elt.nativeType == DtypeElt::NativeType::IEEEFP );
+                    CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float32 );
+                    uint32_t uint32Val = HalfToFloat(CPL_SWAP16(val));
+                    memcpy(pDst + elt.gdalOffset, &uint32Val, sizeof(uint32Val));
+                }
+                else
+                {
+                    *reinterpret_cast<uint16_t*>(pDst + elt.gdalOffset) =
+                        CPL_SWAP16(val);
+                }
             }
             else if( elt.nativeSize == 4 )
             {
@@ -1314,6 +1325,15 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
                 CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Int16 );
                 int16_t intVal = *reinterpret_cast<const int8_t*>(pSrc + elt.nativeOffset);
                 memcpy(pDst + elt.gdalOffset, &intVal, sizeof(intVal));
+            }
+            else if( elt.nativeType == DtypeElt::NativeType::IEEEFP &&
+                     elt.nativeSize == 2 )
+            {
+                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float32 );
+                uint16_t uint16Val;
+                memcpy(&uint16Val, pSrc + elt.nativeOffset, sizeof(uint16Val));
+                uint32_t uint32Val = HalfToFloat(uint16Val);
+                memcpy(pDst + elt.gdalOffset, &uint32Val, sizeof(uint32Val));
             }
             else if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
                      elt.nativeSize == 8 )
@@ -2074,6 +2094,12 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 elt.gdalTypeIsApproxOfNative = true;
                 eDT = GDT_Float64;
+            }
+            else if( chType == 'f' && nBytes == 2 )
+            {
+                elt.nativeType = DtypeElt::NativeType::IEEEFP;
+                elt.gdalTypeIsApproxOfNative = true;
+                eDT = GDT_Float32;
             }
             else if( chType == 'f' && nBytes == 4 )
             {
