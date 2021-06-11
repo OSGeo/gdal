@@ -1483,7 +1483,7 @@ netCDFVariable::netCDFVariable(const std::shared_ptr<netCDFSharedResources>& poS
         }
     }
     auto unit = netCDFVariable::GetAttribute(CF_UNITS);
-    if( unit )
+    if( unit && unit->GetDataType().GetClass() == GEDTC_STRING )
     {
         const char* pszVal = unit->ReadAsString();
         if( pszVal )
