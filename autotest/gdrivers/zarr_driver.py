@@ -854,3 +854,137 @@ def test_zarr_read_half_float(endianness):
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
     assert ar.Read() == array.array('f', [1.5, float('nan')])
+
+
+def test_zarr_read_classic():
+
+    ds = gdal.Open('data/zarr/zlib.zarr')
+    assert ds
+    assert not ds.GetSubDatasets()
+    assert ds.ReadRaster() == array.array('b', [1, 2])
+
+    with gdaltest.error_handler():
+        assert gdal.Open('ZARR:"data/zarr/zlib.zarr"') is None
+        assert gdal.Open('ZARR:"data/zarr/zlib.zarr":/not_existing') is None
+        assert gdal.Open('ZARR:"data/zarr/zlib.zarr":/zlib:0') is None
+
+    ds = gdal.Open('ZARR:"data/zarr/zlib.zarr":/zlib')
+    assert ds
+    assert not ds.GetSubDatasets()
+    assert ds.ReadRaster() == array.array('b', [1, 2])
+
+    ds = gdal.Open('data/zarr/order_f_u1_3d.zarr')
+    assert ds
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 2
+    ds = gdal.Open(subds[0][0])
+    assert ds
+    assert ds.ReadRaster() == array.array('b', [i for i in range(12)])
+    ds = gdal.Open(subds[1][0])
+    assert ds
+    assert ds.ReadRaster() == array.array('b', [12 + i for i in range(12)])
+
+    with gdaltest.error_handler():
+        assert gdal.Open(
+            'ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d') is None
+        assert gdal.Open(
+            'ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d:2') is None
+        assert gdal.Open(subds[0][0] + ':0') is None
+
+    ds = gdal.Open('data/zarr/v3/test.zr3')
+    assert ds
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 2
+    ds = gdal.Open(subds[0][0])
+    assert ds
+    assert ds.ReadRaster() == array.array('i', [2] + ([1] * (10 * 5 - 1)))
+    ds = gdal.Open(subds[1][0])
+    assert ds
+    assert ds.ReadRaster() == array.array('b', [1, 2])
+
+
+def test_zarr_read_classic_too_many_samples_3d():
+
+    j = {
+        "chunks": [
+            65536, 2, 1
+        ],
+        "compressor": None,
+        "dtype": '!u1',
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [
+            65536, 2, 1
+        ],
+        "zarr_format": 2
+    }
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            ds = gdal.Open('/vsimem/test.zarr')
+        assert gdal.GetLastErrorMsg() != ''
+        assert len(ds.GetSubDatasets()) == 0
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_classic_4d():
+
+    j = {
+        "chunks": [
+            3, 2, 1, 1
+        ],
+        "compressor": None,
+        "dtype": '!u1',
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [
+            3, 2, 1, 1
+        ],
+        "zarr_format": 2
+    }
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
+        ds = gdal.Open('/vsimem/test.zarr')
+        subds = ds.GetSubDatasets()
+        assert len(subds) == 6
+        for i in range(len(subds)):
+            assert gdal.Open(subds[i][0]) is not None
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_classic_too_many_samples_4d():
+
+    j = {
+        "chunks": [
+            256, 256, 1, 1
+        ],
+        "compressor": None,
+        "dtype": '!u1',
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [
+            256, 256, 1, 1
+        ],
+        "zarr_format": 2
+    }
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            ds = gdal.Open('/vsimem/test.zarr')
+        assert gdal.GetLastErrorMsg() != ''
+        assert len(ds.GetSubDatasets()) == 0
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
