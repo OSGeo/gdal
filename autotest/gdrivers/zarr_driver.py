@@ -726,3 +726,35 @@ def test_zarr_read_group(use_get_names):
     assert ar is not None
     assert ar.Read() == array.array('i', [1])
     assert subsubgroup.OpenMDArray('not_existing') is None
+
+
+def test_zarr_read_group_with_zmetadata():
+
+    filename = 'data/zarr/group_with_zmetadata.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg.GetName() == '/'
+    assert rg.GetFullName() == '/'
+    assert rg.GetGroupNames() == ['foo']
+    assert len(rg.GetAttributes()) == 1
+    assert rg.GetAttribute('key') is not None
+    subgroup = rg.OpenGroup('foo')
+    assert subgroup is not None
+    assert rg.OpenGroup('not_existing') is None
+    assert subgroup.GetName() == 'foo'
+    assert subgroup.GetFullName() == '/foo'
+    assert rg.GetMDArrayNames() is None
+    assert subgroup.GetGroupNames() == ['bar']
+    assert subgroup.GetAttributes() == []
+    subsubgroup = subgroup.OpenGroup('bar')
+    assert subsubgroup.GetName() == 'bar'
+    assert subsubgroup.GetFullName() == '/foo/bar'
+    assert subsubgroup.GetMDArrayNames() == ['baz']
+    assert subsubgroup.GetAttribute('foo') is not None
+    ar = subsubgroup.OpenMDArray('baz')
+    assert ar is not None
+    assert ar.Read() == array.array('i', [1])
+    assert ar.GetAttribute('bar') is not None
+    assert subsubgroup.OpenMDArray('not_existing') is None
+
