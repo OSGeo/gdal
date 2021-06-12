@@ -517,46 +517,46 @@ Examples
 
    ::
 
-      % gdal_translate -of GPKG byte.tif byte.gpkg
+      gdal_translate -of GPKG byte.tif byte.gpkg
 
 -  Translation of a GeoTIFF into GeoPackage using WebP tiles
 
    ::
 
-      % gdal_translate -of GPKG byte.tif byte.gpkg -co TILE_FORMAT=WEBP
+      gdal_translate -of GPKG byte.tif byte.gpkg -co TILE_FORMAT=WEBP
 
 -  Translation of a GeoTIFF into GeoPackage using GoogleMapsCompatible
    tiling scheme (with reprojection and resampling if needed)
 
    ::
 
-      % gdal_translate -of GPKG byte.tif byte.gpkg -co TILING_SCHEME=GoogleMapsCompatible
+      gdal_translate -of GPKG byte.tif byte.gpkg -co TILING_SCHEME=GoogleMapsCompatible
 
 -  Building of overviews of an existing GeoPackage, and forcing JPEG
    tiles
 
    ::
 
-      % gdaladdo -r cubic -oo TILE_FORMAT=JPEG my.gpkg 2 4 8 16 32 64
+      gdaladdo -r cubic -oo TILE_FORMAT=JPEG my.gpkg 2 4 8 16 32 64
 
 -  Addition of a new subdataset to an existing GeoPackage, and choose a
    non default name for the raster table.
 
    ::
 
-      % gdal_translate -of GPKG new.tif existing.gpkg -co APPEND_SUBDATASET=YES -co RASTER_TABLE=new_table
+      gdal_translate -of GPKG new.tif existing.gpkg -co APPEND_SUBDATASET=YES -co RASTER_TABLE=new_table
 
 -  Reprojection of an input dataset to GeoPackage
 
    ::
 
-      % gdalwarp -of GPKG in.tif out.gpkg -t_srs EPSG:3857
+      gdalwarp -of GPKG in.tif out.gpkg -t_srs EPSG:3857
 
 -  Open a specific raster table in a GeoPackage
 
    ::
 
-      % gdalinfo my.gpkg -oo TABLE=a_table
+      gdalinfo my.gpkg -oo TABLE=a_table
 
 See Also
 --------

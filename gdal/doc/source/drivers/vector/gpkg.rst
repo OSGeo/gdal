@@ -374,7 +374,7 @@ Examples
 
    ::
 
-      % ogr2ogr -f GPKG filename.gpkg abc.shp
+      ogr2ogr -f GPKG filename.gpkg abc.shp
 
 -  Translation of a directory of shapefiles into a GeoPackage. Each file
    will end up as a new table within the GPKG file. The file
@@ -382,7 +382,7 @@ Examples
 
    ::
 
-      % ogr2ogr -f GPKG filename.gpkg ./path/to/dir
+      ogr2ogr -f GPKG filename.gpkg ./path/to/dir
 
 -  Translation of a PostGIS database into a GeoPackage. Each table in
    the database will end up as a table in the GPKG file. The file
@@ -390,13 +390,13 @@ Examples
 
    ::
 
-      % ogr2ogr -f GPKG filename.gpkg PG:'dbname=mydatabase host=localhost'
+      ogr2ogr -f GPKG filename.gpkg PG:'dbname=mydatabase host=localhost'
 
 - Perform a join between 2 GeoPackage databases:
 
     ::
 
-      % ogrinfo my_spatial.gpkg \
+      ogrinfo my_spatial.gpkg \
         -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \
         -oo PRELUDE_STATEMENTS="ATTACH DATABASE 'other.gpkg' AS other_schema"
 
