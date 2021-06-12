@@ -98,7 +98,7 @@ Examples
 
     gdaltindex doq_index.shp doq/*.tif
 
-- Perform the same command as before, but now we create a GeoPacakge instead of a Shapefile. 
+- Perform the same command as before, but now we create a GeoPackage instead of a Shapefile. 
 
 ::
 
