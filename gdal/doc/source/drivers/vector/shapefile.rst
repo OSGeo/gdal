@@ -352,8 +352,8 @@ Examples
 
    ::
 
-      % ogr2ogr file_merged.shp file1.shp
-      % ogr2ogr -update -append file_merged.shp file2.shp -nln file_merged
+      ogr2ogr file_merged.shp file1.shp
+      ogr2ogr -update -append file_merged.shp file2.shp -nln file_merged
 
    The second command is opening file_merged.shp in update mode, and
    trying to find existing layers and append the features being copied.
@@ -364,14 +364,14 @@ Examples
 
    ::
 
-      % ogrinfo file1.shp -sql "CREATE SPATIAL INDEX ON file1"
+      ogrinfo file1.shp -sql "CREATE SPATIAL INDEX ON file1"
 
 -  Resizing columns of a DBF file to their optimal size
    :
 
    ::
 
-      % ogrinfo file1.dbf -sql "RESIZE file1"
+      ogrinfo file1.dbf -sql "RESIZE file1"
 
 Advanced topics
 ---------------

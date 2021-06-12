@@ -105,7 +105,7 @@ Create an image with the pixels in all bands initialized to 255.
 
 ::
 
-    % gdal_merge.py -init 255 -o out.tif in1.tif in2.tif
+    gdal_merge.py -init 255 -o out.tif in1.tif in2.tif
 
 
 Create an RGB image that shows blue in pixels with no data. The first two bands
@@ -113,4 +113,4 @@ will be initialized to 0 and the third band will be initialized to 255.
 
 ::
 
-    % gdal_merge.py -init "0 0 255" -o out.tif in1.tif in2.tif
+    gdal_merge.py -init "0 0 255" -o out.tif in1.tif in2.tif

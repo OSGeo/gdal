@@ -68,13 +68,13 @@ Examples
 
    ::
 
-      % ogr2ogr -f FlatGeobuf filename.fgb abc.shp
+      ogr2ogr -f FlatGeobuf filename.fgb abc.shp
 
 -  Conversion of a Geopackage file with multiple layers:
 
    ::
 
-      % ogr2ogr -f FlatGeobuf my_fgb_dataset input.gpkg
+      ogr2ogr -f FlatGeobuf my_fgb_dataset input.gpkg
 
 See Also
 --------

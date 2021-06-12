@@ -170,4 +170,4 @@ a data needed for linear referencing (1 km parts):
 
 .. code-block::
 
-    % ogrlineref -create -l roads.shp -p references.shp -pm dist -o parts.shp -s 1000 -progress
+    ogrlineref -create -l roads.shp -p references.shp -pm dist -o parts.shp -s 1000 -progress
