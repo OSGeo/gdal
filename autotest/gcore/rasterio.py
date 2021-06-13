@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import struct
 import sys
 
@@ -1107,18 +1108,27 @@ def test_rasterio_average_halfsize_downsampling_float32():
 
 def test_rasterio_rms_halfsize_downsampling_float32():
 
+    inf = float('inf')
+    nan = float('nan')
+
     ds = gdal.GetDriverByName('MEM').Create('', 18, 4, 1, gdal.GDT_Float32)
     ds.WriteRaster(0, 0, 18, 4,
                    struct.pack('f' * 18 * 4,
-                               0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535,
-                               2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535,
-                               65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,
-                               0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0))
+                               0,     0,     nan, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535, 0,     0,     1e-38, 1e-38, 65535, 65535,
+                               2,     65535, 0, 0,   65535, 65535, 2,     65535, 0, 0, 65535, 65535, 2,     65535, 1e-38, 1e-38, 65535, 65535,
+                               1e38,  -1e38, 0, inf, 1e-20, 1e-20,     -65535, -65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 1e38, -1e38,
+                               1e38,   1e38, 0, 0,   1e-20, 1e-20,     0,      -65535, 0, 0, 0,     0,     0,     65535, 0, 0, 1e38, 1e38))
     # Ask for at least 8 output pixels in width to trigger SSE2 optim
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 4, 9, 2, resample_alg = gdal.GRIORA_RMS)
-    assert struct.unpack('f' * 18, data) == pytest.approx(
-                                           (32767.5,       0, 65535, 32767.5,       0, 65535, 32767.5,       0, 65535,
-                                            56754.9765625, 0, 0,     56754.9765625, 0, 0,     56754.9765625, 0, 0), rel=1e-10)
+    got = struct.unpack('f' * 18, data)
+    #print(got)
+    expected = (32767.5,     nan, 65535, 32767.5,       0, 65535, 32767.5,          1e-38, 65535,
+                1e38, inf, 1e-20, 56754.974837013186, 0, 0,     56754.974837013186, 0, 1e38)
+    for i in range(len(got)):
+        if math.isnan(expected[i]):
+            assert math.isnan(got[i])
+        else:
+            assert got[i] == pytest.approx(expected[i], rel=1e-7)
 
     ds.BuildOverviews('RMS', [2])
     ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
