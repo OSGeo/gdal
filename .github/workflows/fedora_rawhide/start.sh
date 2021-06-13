@@ -4,7 +4,7 @@ set -e
 
 dnf install -y --setopt=install_weak_deps=False proj-devel
 dnf install -y clang make diffutils ccache \
-              libxml2-devel expat-devel xerces-c-devel \
+              libxml2-devel libxslt-devel expat-devel xerces-c-devel \
               zlib-devel xz-devel libzstd-devel \
               giflib-devel libjpeg-devel libpng-devel \
               openjpeg2-devel cfitsio-devel libwebp-devel \
