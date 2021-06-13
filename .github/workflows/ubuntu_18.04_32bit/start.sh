@@ -29,7 +29,7 @@ if test -f "$WORK_DIR/ccache.tar.gz"; then
 fi
 
 
-sudo apt-get install -y --no-install-recommends --allow-unauthenticated python3-dev python3-setuptools python3-pip python3-numpy libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libkml-dev libmysqlclient-dev mysql-client-core-5.7 libogdi3.2-dev libcfitsio-dev openjdk-8-jdk libzstd1-dev ccache bash zip curl libpq-dev postgresql-client postgis cmake libssl-dev libboost-dev autoconf automake sqlite3 libopenexr-dev g++ fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev git libtool automake grep
+sudo apt-get install -y --no-install-recommends --allow-unauthenticated python3-dev python3-setuptools python3-pip python3-numpy libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev poppler-utils unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libkml-dev libmysqlclient-dev mysql-client-core-5.7 libogdi3.2-dev libcfitsio-dev openjdk-8-jdk libzstd1-dev ccache bash zip curl libpq-dev postgresql-client postgis cmake libssl-dev libboost-dev autoconf automake sqlite3 libopenexr-dev g++ fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev git libtool automake grep
 
 
 SCRIPT_DIR=$(dirname "$0")
@@ -46,6 +46,11 @@ esac
 
 ccache -M 1G
 ccache -s
+
+# Build freexl
+wget http://www.gaia-gis.it/gaia-sins/freexl-sources/freexl-2.0.0-RC0.tar.gz
+tar xzf freexl-2.0.0-RC0.tar.gz
+(cd freexl-2.0.0-RC0 && CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr && make -j3 && sudo make -j3 install)
 
 # Build libspatialite
 fossil clone https://www.gaia-gis.it/fossil/libspatialite libspatialite.fossil && mkdir sl && (cd sl && fossil open ../libspatialite.fossil && CC='ccache gcc' CXX='ccache g++' ./configure  --disable-static --prefix=/usr --disable-geos370 --disable-rttopo && make -j3 && sudo make -j3 install)
