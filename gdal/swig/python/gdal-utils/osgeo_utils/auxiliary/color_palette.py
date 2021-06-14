@@ -43,17 +43,21 @@ ColorPaletteOrPathOrStrings = Union['ColorPalette', PathOrStrings]
 
 
 class ColorPalette:
-    __slots__ = ['pal', '_all_numeric']
+    __slots__ = ['pal', 'ndv', '_all_numeric']
 
     def __init__(self):
         self.pal = OrderedDict()
+        self.ndv = None
         self._all_numeric = True
 
     def __repr__(self):
         return str(self.pal)
 
     def __eq__(self, other):
-        return self.pal == other.pal
+        return self.pal == other.pal and self.ndv == other.ndv
+
+    def is_numeric(self):
+        return self._all_numeric
 
     def replace_absolute_values_with_percent(self, ndv=True):
         new_pal = ColorPalette()
@@ -67,7 +71,7 @@ class ColorPalette:
             new_pal.pal[num] = val
         new_pal._all_numeric = False
         if ndv:
-            new_pal.pal['nv'] = 0
+            new_pal.ndv = 0
         return new_pal
 
     def to_serial_values(self, first=0):
@@ -90,6 +94,8 @@ class ColorPalette:
         return False
 
     def apply_percent(self, min_val, max_val):
+        if min_val is None or max_val is None:
+            raise Exception('no min or max values to apply')
         if self._all_numeric:
             # nothing to do
             return
@@ -134,12 +140,8 @@ class ColorPalette:
         return False
 
     def set_ndv(self, ndv: Optional[int], override: bool = True):
-        if ndv is not None:
-            if override or ('nv' not in self.pal):
-                self.pal['nv'] = ndv
-        else:
-            if override and ('nv' in self.pal):
-                del self.pal['nv']
+        if override or (self.ndv is None):
+            self.ndv = ndv
 
     def read(self, filename_or_strings: Optional[ColorPaletteOrPathOrStrings]):
         if filename_or_strings is None:
@@ -264,6 +266,10 @@ class ColorPalette:
             return r, g, b, a
         else:
             return r, g, b
+
+    @staticmethod
+    def color_entry_to_color(r, g, b, a):
+        return (a << 24) + (r << 16) + (g << 8) + b
 
     @staticmethod
     def pal_color_to_rgb(cc: str) -> int:
