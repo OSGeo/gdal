@@ -1373,7 +1373,7 @@ CPLErr GDALWarpKernel::Validate()
 /*      original density.                                               */
 /************************************************************************/
 
-static void GWKOverlayDensity( GDALWarpKernel *poWK, GPtrDiff_t iDstOffset,
+static void GWKOverlayDensity( const GDALWarpKernel *poWK, GPtrDiff_t iDstOffset,
                                double dfDensity )
 {
     if( dfDensity < 0.0001 || poWK->pafDstDensity == nullptr )
@@ -1451,7 +1451,7 @@ template<> double GWKClampValueT<double>(double dfValue)
 /************************************************************************/
 
 template<class T>
-static bool GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand,
+static bool GWKSetPixelValueRealT( const GDALWarpKernel *poWK, int iBand,
                                    GPtrDiff_t iDstOffset, double dfDensity,
                                    T value)
 {
@@ -1522,7 +1522,7 @@ static bool GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand,
 /*                          GWKSetPixelValue()                          */
 /************************************************************************/
 
-static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
+static bool GWKSetPixelValue( const GDALWarpKernel *poWK, int iBand,
                               GPtrDiff_t iDstOffset, double dfDensity,
                               double dfReal, double dfImag )
 
@@ -1747,7 +1747,7 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 /*                       GWKSetPixelValueReal()                         */
 /************************************************************************/
 
-static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
+static bool GWKSetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
                                   GPtrDiff_t iDstOffset, double dfDensity,
                                   double dfReal )
 
@@ -1874,7 +1874,7 @@ static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 
 /* It is assumed that panUnifiedSrcValid has been checked before */
 
-static bool GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
+static bool GWKGetPixelValue( const GDALWarpKernel *poWK, int iBand,
                               GPtrDiff_t iSrcOffset, double *pdfDensity,
                               double *pdfReal, double *pdfImag )
 
@@ -1965,7 +1965,7 @@ static bool GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
 /*                       GWKGetPixelValueReal()                         */
 /************************************************************************/
 
-static bool GWKGetPixelValueReal( GDALWarpKernel *poWK, int iBand,
+static bool GWKGetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
                                   GPtrDiff_t iSrcOffset, double *pdfDensity,
                                   double *pdfReal )
 
@@ -2031,7 +2031,7 @@ static bool GWKGetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 /* It is assumed that adfImag[] is set to 0 by caller code for non-complex */
 /* data-types. */
 
-static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
+static bool GWKGetPixelRow( const GDALWarpKernel *poWK, int iBand,
                             GPtrDiff_t iSrcOffset, int nHalfSrcLen,
                             double* padfDensity,
                             double adfReal[],
@@ -2300,7 +2300,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<class T>
-static bool GWKGetPixelT( GDALWarpKernel *poWK, int iBand,
+static bool GWKGetPixelT( const GDALWarpKernel *poWK, int iBand,
                           GPtrDiff_t iSrcOffset, double *pdfDensity,
                           T *pValue )
 
@@ -2334,7 +2334,7 @@ static bool GWKGetPixelT( GDALWarpKernel *poWK, int iBand,
 /*     Set of bilinear interpolators                                    */
 /************************************************************************/
 
-static bool GWKBilinearResample4Sample( GDALWarpKernel *poWK, int iBand,
+static bool GWKBilinearResample4Sample( const GDALWarpKernel *poWK, int iBand,
                                 double dfSrcX, double dfSrcY,
                                 double *pdfDensity,
                                 double *pdfReal, double *pdfImag )
@@ -2487,7 +2487,7 @@ static bool GWKBilinearResample4Sample( GDALWarpKernel *poWK, int iBand,
 }
 
 template<class T>
-static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
+static bool GWKBilinearResampleNoMasks4SampleT( const GDALWarpKernel *poWK, int iBand,
                                         double dfSrcX, double dfSrcY,
                                         T *pValue )
 
@@ -2495,23 +2495,22 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
 
     const int iSrcX = static_cast<int>(floor(dfSrcX - 0.5));
     const int iSrcY = static_cast<int>(floor(dfSrcY - 0.5));
-    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
     const double dfRatioX = 1.5 - (dfSrcX - iSrcX);
     const double dfRatioY = 1.5 - (dfSrcY - iSrcY);
 
-    T* pSrc = reinterpret_cast<T *>(poWK->papabySrcImage[iBand]);
+    const T* const pSrc = reinterpret_cast<T *>(poWK->papabySrcImage[iBand]);
 
 
     if( iSrcX >= 0 && iSrcX+1 < poWK->nSrcXSize
         && iSrcY >= 0 && iSrcY+1 < poWK->nSrcYSize )
     {
-        // TODO(schwehr): Should be able to remove these casts.
         const double dfAccumulator =
-            (static_cast<double>(pSrc[iSrcOffset]) * dfRatioX +
-             static_cast<double>(pSrc[iSrcOffset+1]) * (1.0 - dfRatioX)) *
+            (pSrc[iSrcOffset] * dfRatioX +
+             pSrc[iSrcOffset+1] * (1.0 - dfRatioX)) *
             dfRatioY +
-            (static_cast<double>(pSrc[iSrcOffset+poWK->nSrcXSize]) * dfRatioX +
-             static_cast<double>(pSrc[iSrcOffset+1+poWK->nSrcXSize]) *
+            (pSrc[iSrcOffset+poWK->nSrcXSize] * dfRatioX +
+             pSrc[iSrcOffset+1+poWK->nSrcXSize] *
              (1.0 - dfRatioX)) * (1.0-dfRatioY);
 
         *pValue = GWKRoundValueT<T>(dfAccumulator);
@@ -2656,7 +2655,7 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
           (adfCoeffs)[2] * (v)[2] + (adfCoeffs)[3] * (v)[3]))
 #endif
 
-static bool GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
+static bool GWKCubicResample4Sample( const GDALWarpKernel *poWK, int iBand,
                                      double dfSrcX, double dfSrcY,
                                      double *pdfDensity,
                                      double *pdfReal, double *pdfImag )
@@ -2664,13 +2663,12 @@ static bool GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
 {
     const int iSrcX = static_cast<int>(dfSrcX - 0.5);
     const int iSrcY = static_cast<int>(dfSrcY - 0.5);
-    const int  iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
     const double dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double dfDeltaY = dfSrcY - 0.5 - iSrcY;
     double adfDensity[4] = {};
     double adfReal[4] = {};
     double adfImag[4] = {};
-    int i;
 
     // Get the bilinear interpolation at the image borders.
     if( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
@@ -2685,7 +2683,7 @@ static bool GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
     double adfCoeffsX[4] = {};
     GWKCubicComputeWeights(dfDeltaX, adfCoeffsX);
 
-    for( i = -1; i < 3; i++ )
+    for( GPtrDiff_t i = -1; i < 3; i++ )
     {
         if( !GWKGetPixelRow(poWK, iBand, iSrcOffset + i * poWK->nSrcXSize - 1,
                             2, adfDensity, adfReal, adfImag)
@@ -2808,14 +2806,14 @@ static CPL_INLINE float XMMHorizontalAdd(__m128 v)
 
 template<class T>
 static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
-    GDALWarpKernel *poWK, int iBand,
+    const GDALWarpKernel *poWK, int iBand,
     double dfSrcX, double dfSrcY,
     double *pdfDensity,
     double *pdfReal )
 {
     const int iSrcX = static_cast<int>(dfSrcX - 0.5);
     const int iSrcY = static_cast<int>(dfSrcY - 0.5);
-    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    const GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
 
     // Get the bilinear interpolation at the image borders.
     if( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
@@ -2850,7 +2848,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
     const __m128 xmmThreshold = _mm_load1_ps(&SRC_DENSITY_THRESHOLD);
 
     __m128 xmmMaskLowDensity = _mm_setzero_ps();
-    for( int i = -1, iOffset = iSrcOffset - poWK->nSrcXSize - 1;
+    for( GPtrDiff_t i = -1, iOffset = iSrcOffset - poWK->nSrcXSize - 1;
          i < 3; i++, iOffset += poWK->nSrcXSize )
     {
         const __m128 xmmDensity = _mm_loadu_ps(
@@ -2910,9 +2908,9 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
     double adfCoeffsY[4] = {};
     GWKCubicComputeWeights(dfDeltaY, adfCoeffsY);
 
-    for( int i = -1; i < 3; i++ )
+    for( GPtrDiff_t i = -1; i < 3; i++ )
     {
-        const int iOffset = iSrcOffset+i*poWK->nSrcXSize - 1;
+        const GPtrDiff_t iOffset = iSrcOffset+i*poWK->nSrcXSize - 1;
 #if !(defined(USE_SSE_CUBIC_IMPL) && (defined(__x86_64) || defined(_M_X64)))
         if( poWK->pafUnifiedSrcDensity[iOffset + 0] < SRC_DENSITY_THRESHOLD ||
             poWK->pafUnifiedSrcDensity[iOffset + 1] < SRC_DENSITY_THRESHOLD ||
@@ -2946,7 +2944,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
 /************************************************************************/
 
 static bool GWKCubicResampleSrcMaskIsDensity4SampleReal(
-                             GDALWarpKernel *poWK, int iBand,
+                             const GDALWarpKernel *poWK, int iBand,
                              double dfSrcX, double dfSrcY,
                              double *pdfDensity,
                              double *pdfReal )
@@ -2954,7 +2952,7 @@ static bool GWKCubicResampleSrcMaskIsDensity4SampleReal(
 {
     const int iSrcX = static_cast<int>(dfSrcX - 0.5);
     const int iSrcY = static_cast<int>(dfSrcY - 0.5);
-    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    const GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
     const double dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double dfDeltaY = dfSrcY - 0.5 - iSrcY;
 
@@ -2979,7 +2977,7 @@ static bool GWKCubicResampleSrcMaskIsDensity4SampleReal(
     double adfReal[4] = {};
     double adfImagIgnored[4] = {};
 
-    for( int i = -1; i < 3; i++ )
+    for( GPtrDiff_t i = -1; i < 3; i++ )
     {
         if( !GWKGetPixelRow(poWK, iBand, iSrcOffset + i * poWK->nSrcXSize - 1,
                             2, adfDensity, adfReal, adfImagIgnored)
@@ -3003,14 +3001,14 @@ static bool GWKCubicResampleSrcMaskIsDensity4SampleReal(
 }
 
 template<class T>
-static bool GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
+static bool GWKCubicResampleNoMasks4SampleT( const GDALWarpKernel *poWK, int iBand,
                                      double dfSrcX, double dfSrcY,
                                      T *pValue )
 
 {
     const int iSrcX = static_cast<int>(dfSrcX - 0.5);
     const int iSrcY = static_cast<int>(dfSrcY - 0.5);
-    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    const GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
     const double dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double dfDeltaY = dfSrcY - 0.5 - iSrcY;
     const double dfDeltaY2 = dfDeltaY * dfDeltaY;
@@ -3027,9 +3025,9 @@ static bool GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
 
     double adfValue[4] = {};
 
-    for( int i = -1; i < 3; i++ )
+    for( GPtrDiff_t i = -1; i < 3; i++ )
     {
-        const int iOffset = iSrcOffset + i * poWK->nSrcXSize - 1;
+        const GPtrDiff_t iOffset = iSrcOffset + i * poWK->nSrcXSize - 1;
 
         adfValue[i + 1] = CONVOL4(
             adfCoeffs,
@@ -3254,7 +3252,7 @@ static double GWKBSpline4Values( double* padfValues )
 
 typedef struct _GWKResampleWrkStruct GWKResampleWrkStruct;
 
-typedef bool (*pfnGWKResampleType) ( GDALWarpKernel *poWK, int iBand,
+typedef bool (*pfnGWKResampleType) ( const GDALWarpKernel *poWK, int iBand,
                                      double dfSrcX, double dfSrcY,
                                      double *pdfDensity,
                                      double *pdfReal, double *pdfImag,
@@ -3284,13 +3282,13 @@ struct _GWKResampleWrkStruct
 /*                    GWKResampleCreateWrkStruct()                      */
 /************************************************************************/
 
-static bool GWKResample( GDALWarpKernel *poWK, int iBand,
+static bool GWKResample( const GDALWarpKernel *poWK, int iBand,
                         double dfSrcX, double dfSrcY,
                         double *pdfDensity,
                         double *pdfReal, double *pdfImag,
                         GWKResampleWrkStruct* psWrkStruct );
 
-static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
+static bool GWKResampleOptimizedLanczos( const GDALWarpKernel *poWK, int iBand,
                                         double dfSrcX, double dfSrcY,
                                         double *pdfDensity,
                                         double *pdfReal, double *pdfImag,
@@ -3397,7 +3395,7 @@ static void GWKResampleDeleteWrkStruct(GWKResampleWrkStruct* psWrkStruct)
 /*                           GWKResample()                              */
 /************************************************************************/
 
-static bool GWKResample( GDALWarpKernel *poWK, int iBand,
+static bool GWKResample( const GDALWarpKernel *poWK, int iBand,
                         double dfSrcX, double dfSrcY,
                         double *pdfDensity,
                         double *pdfReal, double *pdfImag,
@@ -3557,7 +3555,7 @@ static bool GWKResample( GDALWarpKernel *poWK, int iBand,
 /*                      GWKResampleOptimizedLanczos()                   */
 /************************************************************************/
 
-static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
+static bool GWKResampleOptimizedLanczos( const GDALWarpKernel *poWK, int iBand,
                         double dfSrcX, double dfSrcY,
                         double *pdfDensity,
                         double *pdfReal, double *pdfImag,
@@ -3574,7 +3572,7 @@ static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
     double dfAccumulatorWeight = 0.0;
     const int     iSrcX = static_cast<int>(floor( dfSrcX - 0.5 ));
     const int     iSrcY = static_cast<int>(floor( dfSrcY - 0.5 ));
-    const int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+    const GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
     const double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
 
@@ -3866,7 +3864,7 @@ static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template <class T>
-static bool GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
+static bool GWKResampleNoMasksT( const GDALWarpKernel *poWK, int iBand,
                                 double dfSrcX, double dfSrcY,
                                 T *pValue, double *padfWeight )
 
@@ -3991,7 +3989,7 @@ static bool GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<class T>
-static bool GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
+static bool GWKResampleNoMasks_SSE2_T( const GDALWarpKernel *poWK, int iBand,
                                       double dfSrcX, double dfSrcY,
                                       T *pValue, double *padfWeight )
 {
@@ -4200,7 +4198,7 @@ static bool GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<GByte>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<GByte>( const GDALWarpKernel *poWK, int iBand,
                                  double dfSrcX, double dfSrcY,
                                  GByte *pValue, double *padfWeight )
 {
@@ -4213,7 +4211,7 @@ bool GWKResampleNoMasksT<GByte>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<GInt16>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<GInt16>( const GDALWarpKernel *poWK, int iBand,
                                   double dfSrcX, double dfSrcY,
                                   GInt16 *pValue, double *padfWeight )
 {
@@ -4226,7 +4224,7 @@ bool GWKResampleNoMasksT<GInt16>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<GUInt16>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<GUInt16>( const GDALWarpKernel *poWK, int iBand,
                                    double dfSrcX, double dfSrcY,
                                    GUInt16 *pValue, double *padfWeight )
 {
@@ -4239,7 +4237,7 @@ bool GWKResampleNoMasksT<GUInt16>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<float>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<float>( const GDALWarpKernel *poWK, int iBand,
                                  double dfSrcX, double dfSrcY,
                                  float *pValue, double *padfWeight )
 {
@@ -4254,7 +4252,7 @@ bool GWKResampleNoMasksT<float>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<double>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<double>( const GDALWarpKernel *poWK, int iBand,
                                   double dfSrcX, double dfSrcY,
                                   double *pValue, double *padfWeight )
 {
