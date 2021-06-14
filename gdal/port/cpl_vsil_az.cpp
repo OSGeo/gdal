@@ -1817,6 +1817,8 @@ const char* VSIAzureFSHandler::GetOptions()
         "description='Storage account. To use with AZURE_STORAGE_ACCESS_KEY'/>"
     "  <Option name='AZURE_STORAGE_ACCESS_KEY' type='string' "
         "description='Secret key'/>"
+    "  <Option name='AZURE_NO_SIGN_REQUEST' type='boolean' "
+        "description='Whether to disable signing of requests' default='NO'/>"
     "  <Option name='VSIAZ_CHUNK_SIZE' type='int' "
         "description='Size in MB for chunks of files that are uploaded' "
         "default='4' min='1' max='4'/>" +
