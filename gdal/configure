@@ -40264,7 +40264,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         PDFIUM_LIB="-L$with_pdfium/lib -lpdfium"
     fi
 
-    PDFIUM_LIB="$PDFIUM_LIB -ljpeg -lpng -lz -llcms2 -lpthread -lm -lstdc++"
+    PDFIUM_LIB="$PDFIUM_LIB -lopenjp2 -ljpeg -lpng -lz -llcms2 -lpthread -lm -lstdc++"
 
     if test ! -z "`uname | grep Darwin`" ; then
         PDFIUM_LIB="-stdlib=libstdc++ $PDFIUM_LIB"
@@ -40293,7 +40293,7 @@ $as_echo "yes" >&6; }
     rm -f testpdfium
 
     if test "$HAVE_PDFIUM" = "no" -a "$with_pdfium" != ""; then
-        as_fn_error $? "pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_2" "$LINENO" 5
+        as_fn_error $? "pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_4" "$LINENO" 5
     fi
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
