@@ -49,7 +49,8 @@ CXXFLAGS="-std=c++17 -O1 $ARCH_FLAGS" CFLAGS="-O1 $ARCH_FLAGS" ./configure --pre
     --with-ecw=/opt/libecwj2-3.3 \
     --with-mrsid=/usr/local --with-jp2mrsid \
     --with-fgdb=/usr/local/FileGDB_API \
-    --with-opencl
+    --with-opencl \
+    --with-pdfium=/usr
 
 make "-j$(nproc)" USER_DEFS=-Werror
 (cd apps; make test_ogrsf  USER_DEFS=-Werror)
