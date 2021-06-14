@@ -76,9 +76,19 @@ def test_transformgeoloc_1():
         geoloc_ds.GetRasterBand(2),
         geoloc_ds.GetRasterBand(3))
 
-    print(status)
+    assert status == 0
 
-    print(geoloc_ds.ReadAsArray())
+    expected = numpy.asarray(
+        [[[ 500000.        ,  578126.73752062],
+          [ 540087.07398217,  619246.88515195]],
+
+         [[4982950.40022655, 5038982.81207855],
+          [4871994.34702622, 4928503.38229753]],
+
+         [[      0.        ,       0.        ],
+          [      0.        ,       0.        ]]])
+
+    assert numpy.allclose(geoloc_ds.ReadAsArray(), expected)
 
 
 

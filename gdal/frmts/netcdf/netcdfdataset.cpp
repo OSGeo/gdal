@@ -9,6 +9,7 @@
  * Copyright (c) 2004, Frank Warmerdam
  * Copyright (c) 2007-2016, Even Rouault <even.rouault at spatialys.com>
  * Copyright (c) 2010, Kyle Shannon <kyle at pobox dot com>
+ * Copyright (c) 2021, CLS
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,6 +61,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_json.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_progress.h"
@@ -2358,8 +2360,11 @@ bool netCDFDataset::SetDefineMode( bool bNewDefineMode )
 
 char **netCDFDataset::GetMetadataDomainList()
 {
-    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
+    char** papszDomains = BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
                                    "SUBDATASETS", nullptr);
+    for( const auto& kv: m_oMapDomainToJSon )
+        papszDomains = CSLAddString(papszDomains, ("json:" + kv.first).c_str());
+    return papszDomains;
 }
 
 /************************************************************************/
@@ -2369,6 +2374,13 @@ char **netCDFDataset::GetMetadata( const char *pszDomain )
 {
     if( pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS") )
         return papszSubDatasets;
+
+    if( pszDomain != nullptr && STARTS_WITH(pszDomain, "json:") )
+    {
+        auto iter = m_oMapDomainToJSon.find(pszDomain + strlen("json:"));
+        if( iter != m_oMapDomainToJSon.end() )
+            return iter->second.apszMD;
+    }
 
     return GDALDataset::GetMetadata(pszDomain);
 }
@@ -5497,6 +5509,110 @@ double netCDFDataset::rint( double dfX )
 }
 
 /************************************************************************/
+/*                          NCDFReadIsoMetadata()                       */
+/************************************************************************/
+
+#ifdef NETCDF_HAS_NC4
+
+static void NCDFReadMetadataAsJson(int cdfid, CPLJSONObject& obj)
+{
+    int nbAttr = 0;
+    NCDF_ERR(nc_inq_varnatts(cdfid, NC_GLOBAL, &nbAttr));
+
+    std::map<std::string, CPLJSONArray> oMapNameToArray;
+    for( int l = 0; l < nbAttr; l++ )
+    {
+        char szAttrName[NC_MAX_NAME + 1];
+        szAttrName[0] = 0;
+        NCDF_ERR(nc_inq_attname(cdfid, NC_GLOBAL, l, szAttrName));
+
+        char *pszMetaValue = nullptr;
+        if( NCDFGetAttr(cdfid, NC_GLOBAL, szAttrName, &pszMetaValue) == CE_None )
+        {
+            nc_type nAttrType = NC_NAT;
+            size_t nAttrLen = 0;
+
+            NCDF_ERR(nc_inq_att(cdfid, NC_GLOBAL, szAttrName, &nAttrType, &nAttrLen));
+
+            std::string osAttrName(szAttrName);
+            const auto sharpPos = osAttrName.find('#');
+            if( sharpPos == std::string:: npos )
+            {
+                if( nAttrType == NC_DOUBLE || nAttrType == NC_FLOAT )
+                    obj.Add(osAttrName, CPLAtof(pszMetaValue));
+                else
+                    obj.Add(osAttrName, pszMetaValue);
+            }
+            else
+            {
+                osAttrName.resize(sharpPos);
+                auto iter = oMapNameToArray.find(osAttrName);
+                if( iter == oMapNameToArray.end() )
+                {
+                    CPLJSONArray array;
+                    obj.Add(osAttrName, array);
+                    oMapNameToArray[osAttrName] = array;
+                    array.Add(pszMetaValue);
+                }
+                else
+                {
+                    iter->second.Add(pszMetaValue);
+                }
+            }
+            CPLFree(pszMetaValue);
+            pszMetaValue = nullptr;
+        }
+    }
+
+    int nSubGroups = 0;
+    int *panSubGroupIds = nullptr;
+    NCDFGetSubGroups(cdfid, &nSubGroups, &panSubGroupIds);
+    oMapNameToArray.clear();
+    for( int i = 0; i < nSubGroups; i++ )
+    {
+        CPLJSONObject subObj;
+        NCDFReadMetadataAsJson(panSubGroupIds[i], subObj);
+
+        std::string osGroupName;
+        osGroupName.resize(NC_MAX_NAME);
+        NCDF_ERR(nc_inq_grpname(panSubGroupIds[i], &osGroupName[0]));
+        osGroupName.resize(strlen(osGroupName.data()));
+        const auto sharpPos = osGroupName.find('#');
+        if( sharpPos == std::string:: npos )
+        {
+            obj.Add(osGroupName, subObj);
+        }
+        else
+        {
+            osGroupName.resize(sharpPos);
+            auto iter = oMapNameToArray.find(osGroupName);
+            if( iter == oMapNameToArray.end() )
+            {
+                CPLJSONArray array;
+                obj.Add(osGroupName, array);
+                oMapNameToArray[osGroupName] = array;
+                array.Add(subObj);
+            }
+            else
+            {
+                iter->second.Add(subObj);
+            }
+        }
+    }
+    CPLFree(panSubGroupIds);
+}
+
+std::string NCDFReadMetadataAsJson(int cdfid)
+{
+    CPLJSONDocument oDoc;
+    CPLJSONObject oRoot = oDoc.GetRoot();
+    NCDFReadMetadataAsJson(cdfid, oRoot);
+    return oDoc.SaveAsString();
+}
+
+#endif
+
+/************************************************************************/
 /*                        ReadAttributes()                              */
 /************************************************************************/
 CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
@@ -5504,6 +5620,36 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
 {
     char *pszVarFullName = nullptr;
     ERR_RET(NCDFGetVarFullName(cdfidIn, var, &pszVarFullName));
+#ifdef NETCDF_HAS_NC4
+    // For metadata in Sentinel 5
+    if( STARTS_WITH(pszVarFullName, "/METADATA/") )
+    {
+        for( const char* key : { "ISO_METADATA", "ESA_METADATA", "EOP_METADATA",
+                                 "QA_STATISTICS", "GRANULE_DESCRIPTION", "ALGORITHM_SETTINGS" } )
+        {
+            if( var == NC_GLOBAL &&
+                strcmp(pszVarFullName, CPLSPrintf("/METADATA/%s/NC_GLOBAL", key)) == 0 )
+            {
+                CPLFree(pszVarFullName);
+                JSonMetadata md;
+                md.osJSon = CPLString(NCDFReadMetadataAsJson(cdfidIn)).replaceAll("\\/", '/');
+                md.apszMD[0] = &md.osJSon[0];
+                m_oMapDomainToJSon[key] = std::move(md);
+                return CE_None;
+            }
+        }
+    }
+    if( STARTS_WITH(pszVarFullName, "/PRODUCT/SUPPORT_DATA/") )
+    {
+        CPLFree(pszVarFullName);
+        JSonMetadata md;
+        md.osJSon = CPLString(NCDFReadMetadataAsJson(cdfidIn)).replaceAll("\\/", '/');
+        md.apszMD[0] = &md.osJSon[0];
+        m_oMapDomainToJSon["SUPPORT_DATA"] = std::move(md);
+        return CE_None;
+    }
+#endif
+
     size_t nMetaNameSize = sizeof(char) * (strlen(pszVarFullName) + 1
                                            + NC_MAX_NAME + 1);
     char *pszMetaName = static_cast<char *>(CPLMalloc(nMetaNameSize));

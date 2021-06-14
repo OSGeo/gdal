@@ -5,7 +5,7 @@
 
 GDAL_ROOT	=	..
 
-EXTRAFLAGS =	-I../frmts/vrt -I../ogr/ogrsf_frmts $(GEOS_CFLAGS) $(PROJ_FLAGS) $(PROJ_INCLUDE) -Imarching_squares
+EXTRAFLAGS =	-I../frmts/vrt -I../frmts/mem -I../ogr/ogrsf_frmts $(GEOS_CFLAGS) $(PROJ_FLAGS) $(PROJ_INCLUDE) -Imarching_squares
 
 !INCLUDE ..\nmake.opt
 

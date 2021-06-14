@@ -7,6 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2021, CLS
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,9 +30,11 @@
 
 #include "cpl_port.h"
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 
 #include <climits>
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 
@@ -45,6 +48,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "memdataset.h"
 
 CPL_CVSID("$Id$")
 
@@ -64,45 +68,6 @@ CPL_C_END
 const double FSHIFT = 0.5;
 const double ISHIFT = 0.5;
 const double OVERSAMPLE_FACTOR=1.3;
-
-typedef struct {
-    GDALTransformerInfo sTI;
-
-    bool        bReversed;
-
-    // Map from target georef coordinates back to geolocation array
-    // pixel line coordinates.  Built only if needed.
-    size_t      nBackMapWidth;
-    size_t      nBackMapHeight;
-    double      adfBackMapGeoTransform[6];  // Maps georef to pixel/line.
-    float       *pafBackMapX;
-    float       *pafBackMapY;
-
-    // Geolocation bands.
-    GDALDatasetH     hDS_X;
-    GDALRasterBandH  hBand_X;
-    GDALDatasetH     hDS_Y;
-    GDALRasterBandH  hBand_Y;
-    int              bSwapXY;
-
-    // Located geolocation data.
-    size_t           nGeoLocXSize;
-    size_t           nGeoLocYSize;
-    double           *padfGeoLocX;
-    double           *padfGeoLocY;
-
-    int              bHasNoData;
-    double           dfNoDataX;
-
-    // Geolocation <-> base image mapping.
-    double           dfPIXEL_OFFSET;
-    double           dfPIXEL_STEP;
-    double           dfLINE_OFFSET;
-    double           dfLINE_STEP;
-
-    char **          papszGeolocationInfo;
-
-} GDALGeoLocTransformInfo;
 
 /************************************************************************/
 /*                         GeoLocLoadFullData()                         */
@@ -215,6 +180,44 @@ static bool GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
         GDALGetRasterNoDataValue( psTransform->hBand_X,
                                   &(psTransform->bHasNoData) );
 
+/* -------------------------------------------------------------------- */
+/*      Scan forward map for lat/long extents.                          */
+/* -------------------------------------------------------------------- */
+    psTransform->dfMinX = std::numeric_limits<double>::max();
+    psTransform->dfMaxX = -std::numeric_limits<double>::max();
+    psTransform->dfMinY = std::numeric_limits<double>::max();
+    psTransform->dfMaxY = -std::numeric_limits<double>::max();
+
+    const size_t nXYCount = psTransform->nGeoLocXSize * psTransform->nGeoLocYSize;
+    for( size_t i = 0; i < nXYCount; i++ )
+    {
+        if( !psTransform->bHasNoData ||
+            psTransform->padfGeoLocX[i] != psTransform->dfNoDataX )
+        {
+            if( psTransform->padfGeoLocX[i] < psTransform->dfMinX )
+            {
+                psTransform->dfMinX = psTransform->padfGeoLocX[i];
+                psTransform->dfYAtMinX = psTransform->padfGeoLocY[i];
+            }
+            if( psTransform->padfGeoLocX[i] > psTransform->dfMaxX )
+            {
+                psTransform->dfMaxX = psTransform->padfGeoLocX[i];
+                psTransform->dfYAtMaxX = psTransform->padfGeoLocY[i];
+            }
+            if( psTransform->padfGeoLocY[i] < psTransform->dfMinY )
+            {
+                psTransform->dfMinY = psTransform->padfGeoLocY[i];
+                psTransform->dfXAtMinY = psTransform->padfGeoLocX[i];
+            }
+            if( psTransform->padfGeoLocY[i] > psTransform->dfMaxY )
+            {
+                psTransform->dfMaxY = psTransform->padfGeoLocY[i];
+                psTransform->dfXAtMaxY = psTransform->padfGeoLocX[i];
+            }
+        }
+    }
+
+
     return true;
 }
 
@@ -227,40 +230,6 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 {
     const size_t nXSize = psTransform->nGeoLocXSize;
     const size_t nYSize = psTransform->nGeoLocYSize;
-    const size_t nXYCount = nXSize * nYSize;
-    const int nMaxIter = 3;
-
-/* -------------------------------------------------------------------- */
-/*      Scan forward map for lat/long extents.                          */
-/* -------------------------------------------------------------------- */
-    double dfMinX = 0.0;
-    double dfMaxX = 0.0;
-    double dfMinY = 0.0;
-    double dfMaxY = 0.0;
-    bool bInit = false;
-
-    for( size_t i = 0; i < nXYCount; i++ )
-    {
-        if( !psTransform->bHasNoData ||
-            psTransform->padfGeoLocX[i] != psTransform->dfNoDataX )
-        {
-            if( bInit )
-            {
-                dfMinX = std::min(dfMinX, psTransform->padfGeoLocX[i]);
-                dfMaxX = std::max(dfMaxX, psTransform->padfGeoLocX[i]);
-                dfMinY = std::min(dfMinY, psTransform->padfGeoLocY[i]);
-                dfMaxY = std::max(dfMaxY, psTransform->padfGeoLocY[i]);
-            }
-            else
-            {
-                bInit = true;
-                dfMinX = psTransform->padfGeoLocX[i];
-                dfMaxX = psTransform->padfGeoLocX[i];
-                dfMinY = psTransform->padfGeoLocY[i];
-                dfMaxY = psTransform->padfGeoLocY[i];
-            }
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Decide on resolution for backmap.  We aim for slightly          */
@@ -269,16 +238,17 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /*      is approximate.                                                 */
 /* -------------------------------------------------------------------- */
     const double dfTargetPixels = (static_cast<double>(nXSize) * nYSize * OVERSAMPLE_FACTOR);
-    const double dfPixelSize = sqrt((dfMaxX - dfMinX) * (dfMaxY - dfMinY)
-                              / dfTargetPixels);
+    const double dfPixelSize = sqrt(
+        (psTransform->dfMaxX - psTransform->dfMinX) *
+        (psTransform->dfMaxY - psTransform->dfMinY) / dfTargetPixels);
     if( dfPixelSize == 0.0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid pixel size for backmap");
         return false;
     }
 
-    const double dfBMXSize = (dfMaxX - dfMinX) / dfPixelSize + 1;
-    const double dfBMYSize = (dfMaxY - dfMinY) / dfPixelSize + 1;
+    const double dfBMXSize = (psTransform->dfMaxX - psTransform->dfMinX) / dfPixelSize + 1;
+    const double dfBMYSize = (psTransform->dfMaxY - psTransform->dfMinY) / dfPixelSize + 1;
 
     if( !(dfBMXSize > 0 && dfBMXSize < INT_MAX) ||
         !(dfBMYSize > 0 && dfBMYSize < INT_MAX) )
@@ -301,9 +271,8 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     psTransform->nBackMapWidth = nBMXSize;
     psTransform->nBackMapHeight = nBMYSize;
 
-    dfMinX -= dfPixelSize / 2.0;
-    dfMaxY += dfPixelSize / 2.0;
-
+    const double dfMinX = psTransform->dfMinX - dfPixelSize / 2.0;
+    const double dfMaxY = psTransform->dfMaxY + dfPixelSize / 2.0;
 
     psTransform->adfBackMapGeoTransform[0] = dfMinX;
     psTransform->adfBackMapGeoTransform[1] = dfPixelSize;
@@ -315,9 +284,6 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /* -------------------------------------------------------------------- */
 /*      Allocate backmap, and initialize to nodata value (-1.0).        */
 /* -------------------------------------------------------------------- */
-    GByte *pabyValidFlag = static_cast<GByte *>(
-        VSI_CALLOC_VERBOSE(nBMXSize, nBMYSize));
-
     psTransform->pafBackMapX = static_cast<float *>(
         VSI_MALLOC3_VERBOSE(nBMXSize, nBMYSize, sizeof(float)));
     psTransform->pafBackMapY = static_cast<float *>(
@@ -326,12 +292,10 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     float *wgtsBackMap = static_cast<float *>(
         VSI_MALLOC3_VERBOSE(nBMXSize, nBMYSize, sizeof(float)));
 
-    if( pabyValidFlag == nullptr ||
-        psTransform->pafBackMapX == nullptr ||
+    if( psTransform->pafBackMapX == nullptr ||
         psTransform->pafBackMapY == nullptr ||
         wgtsBackMap == nullptr)
     {
-        CPLFree( pabyValidFlag );
         CPLFree( wgtsBackMap );
         return false;
     }
@@ -339,18 +303,59 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     const size_t nBMXYCount = nBMXSize * nBMYSize;
     for( size_t i = 0; i < nBMXYCount; i++ )
     {
-        psTransform->pafBackMapX[i] = 0.0;
-        psTransform->pafBackMapY[i] = 0.0;
+        psTransform->pafBackMapX[i] = 0;
+        psTransform->pafBackMapY[i] = 0;
         wgtsBackMap[i] = 0.0;
-        pabyValidFlag[i] = 0;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Run through the whole geoloc array forward projecting and       */
 /*      pushing into the backmap.                                       */
-/*      Initialize to the nMaxIter+1 value so we can spot genuinely     */
-/*      valid pixels in the hole-filling loop.                          */
 /* -------------------------------------------------------------------- */
+
+    const auto UpdateBackmap = [&](std::ptrdiff_t iBMX, std::ptrdiff_t iBMY,
+                                   size_t iX, size_t iY,
+                                   double tempwt)
+    {
+        const float fUpdatedBMX = psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +
+            static_cast<float>( tempwt * (
+                (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
+                psTransform->dfPIXEL_OFFSET));
+        const float fUpdatedBMY = psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +
+            static_cast<float>( tempwt * (
+                (iY + FSHIFT) * psTransform->dfLINE_STEP +
+                psTransform->dfLINE_OFFSET));
+        const float fUpdatedWeight = wgtsBackMap[iBMX + iBMY * nBMXSize] +
+                               static_cast<float>(tempwt);
+
+        // Only update the backmap if the updated averaged value results in a
+        // geoloc position that isn't too different from the original one.
+        // (there's no guarantee that if padfGeoLocX[i] ~= padfGeoLoc[j],
+        //  padfGeoLoc[alpha * i + (1 - alpha) * j] ~= padfGeoLoc[i] )
+        if( fUpdatedWeight > 0 )
+        {
+            const float fX = fUpdatedBMX / fUpdatedWeight;
+            const float fY = fUpdatedBMY / fUpdatedWeight;
+            const double dfGeoLocPixel = (fX - psTransform->dfPIXEL_OFFSET) / psTransform->dfPIXEL_STEP;
+            const double dfGeoLocLine = (fY - psTransform->dfLINE_OFFSET) / psTransform->dfLINE_STEP;
+            size_t iXAvg = static_cast<size_t>(std::max(0.0, dfGeoLocPixel));
+            iXAvg = std::min(iXAvg, psTransform->nGeoLocXSize-1);
+            size_t iYAvg = static_cast<size_t>(std::max(0.0, dfGeoLocLine));
+            iYAvg = std::min(iYAvg, psTransform->nGeoLocYSize-1);
+            const double dfGLX = psTransform->padfGeoLocX[iXAvg + iYAvg * nXSize];
+            const double dfGLY = psTransform->padfGeoLocY[iXAvg + iYAvg * nXSize];
+
+            if( !(psTransform->bHasNoData &&
+                  dfGLX == psTransform->dfNoDataX ) &&
+                fabs(dfGLX - psTransform->padfGeoLocX[iX + iY * nXSize]) <= 2 * dfPixelSize &&
+                fabs(dfGLY - psTransform->padfGeoLocY[iX + iY * nXSize]) <= 2 * dfPixelSize )
+            {
+                psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = fUpdatedBMX;
+                psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = fUpdatedBMY;
+                wgtsBackMap[iBMX + iBMY * nBMXSize] = fUpdatedWeight;
+            }
+        }
+    };
 
     for( size_t iY = 0; iY < nYSize; iY++ )
     {
@@ -371,8 +376,8 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 
 
             //Get top left index by truncation
-            const int iBMX = static_cast<int>(dBMX);
-            const int iBMY = static_cast<int>(dBMY);
+            const std::ptrdiff_t iBMX = static_cast<std::ptrdiff_t>(dBMX);
+            const std::ptrdiff_t iBMY = static_cast<std::ptrdiff_t>(dBMY);
             const double fracBMX = dBMX - iBMX;
             const double fracBMY = dBMY - iBMY;
 
@@ -388,19 +393,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (static_cast<size_t>(iBMY) < nBMYSize))
             {
                 const double tempwt = (1.0 - fracBMX) * (1.0 - fracBMY);
-                psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
-                        psTransform->dfPIXEL_OFFSET));
-
-                psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
-                        psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + iBMY * nBMXSize] += static_cast<float>(tempwt);
-
-                //For backward compatibility
-                pabyValidFlag[iBMX + iBMY * nBMXSize] = static_cast<GByte>(nMaxIter+1);
+                UpdateBackmap(iBMX, iBMY, iX, iY, tempwt);
             }
 
             //Check logic for top right pixel
@@ -409,20 +402,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (static_cast<size_t>(iBMY) < nBMYSize))
             {
                 const double tempwt = fracBMX * (1.0 - fracBMY);
-
-                psTransform->pafBackMapX[iBMX + 1 + iBMY * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
-                        psTransform->dfPIXEL_OFFSET));
-
-                psTransform->pafBackMapY[iBMX + 1 + iBMY * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iY + FSHIFT)* psTransform->dfLINE_STEP +
-                        psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + 1 + iBMY * nBMXSize] +=  static_cast<float>(tempwt);
-
-                //For backward compatibility
-                pabyValidFlag[iBMX + 1 + iBMY * nBMXSize] = static_cast<GByte>(nMaxIter+1);
+                UpdateBackmap(iBMX + 1, iBMY, iX, iY, tempwt);
             }
 
             //Check logic for bottom right pixel
@@ -430,19 +410,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (static_cast<size_t>(iBMY+1) < nBMYSize))
             {
                 const double tempwt = fracBMX * fracBMY;
-                psTransform->pafBackMapX[iBMX + 1 + (iBMY+1) * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
-                        psTransform->dfPIXEL_OFFSET));
-
-                psTransform->pafBackMapY[iBMX + 1 + (iBMY+1) * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
-                        psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + 1 + (iBMY+1) * nBMXSize] += static_cast<float>(tempwt);
-
-                //For backward compatibility
-                pabyValidFlag[iBMX + 1 + (iBMY+1) * nBMXSize] = static_cast<GByte>(nMaxIter+1);
+                UpdateBackmap(iBMX + 1, iBMY + 1, iX, iY, tempwt);
             }
 
             //Check logic for bottom left pixel
@@ -451,19 +419,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (static_cast<size_t>(iBMY+1) < nBMYSize))
             {
                 const double tempwt = (1.0 - fracBMX) * fracBMY;
-                psTransform->pafBackMapX[iBMX + (iBMY+1) * nBMXSize] +=
-                    static_cast<float>( tempwt * (
-                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
-                        psTransform->dfPIXEL_OFFSET));
-
-                psTransform->pafBackMapY[iBMX + (iBMY+1) * nBMXSize] +=
-                    static_cast<float>(tempwt * (
-                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
-                        psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + (iBMY+1) * nBMXSize] += static_cast<float>(tempwt);
-
-                //For backward compatibility
-                pabyValidFlag[iBMX + (iBMY+1) * nBMXSize] = static_cast<GByte>(nMaxIter+1);
+                UpdateBackmap(iBMX, iBMY + 1, iX, iY, tempwt);
             }
 
         }
@@ -474,149 +430,118 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     //We now go in average it out using the weights
     for( size_t i = 0; i < nBMXYCount; i++ )
     {
-        //Setting these to -1 for backward compatibility
-        if (pabyValidFlag[i] == 0)
+        //Check if pixel was only touch during neighbor scan
+        //But no real weight was added as source point matched
+        //backmap grid node
+        if (wgtsBackMap[i] > 0)
         {
-            psTransform->pafBackMapX[i] = -1.0;
-            psTransform->pafBackMapY[i] = -1.0;
+            psTransform->pafBackMapX[i] /= wgtsBackMap[i];
+            psTransform->pafBackMapY[i] /= wgtsBackMap[i];
         }
         else
         {
-            //Check if pixel was only touch during neighbor scan
-            //But no real weight was added as source point matched
-            //backmap grid node
-            if (wgtsBackMap[i] > 0)
-            {
-                psTransform->pafBackMapX[i] /= wgtsBackMap[i];
-                psTransform->pafBackMapY[i] /= wgtsBackMap[i];
-                pabyValidFlag[i] = static_cast<GByte>(nMaxIter+1);
-            }
-            else
-            {
-                psTransform->pafBackMapX[i] = -1.0;
-                psTransform->pafBackMapY[i] = -1.0;
-                pabyValidFlag[i] = 0;
-            }
+            psTransform->pafBackMapX[i] = -1.0f;
+            psTransform->pafBackMapY[i] = -1.0f;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Now, loop over the backmap trying to fill in holes with         */
-/*      nearby values.                                                  */
-/* -------------------------------------------------------------------- */
-    for( int iIter = 0; iIter < nMaxIter; iIter++ )
+    // Fill holes in backmap
+    auto poMEMDS = std::unique_ptr<GDALDataset>(
+          MEMDataset::Create( "",
+                              static_cast<int>(nBMXSize),
+                              static_cast<int>(nBMYSize),
+                              0, GDT_Float32, nullptr ));
+
+    for( int i = 1; i <= 2; i++ )
     {
-        size_t nNumValid = 0;
-        for( size_t iBMY = 0; iBMY < nBMYSize; iBMY++ )
+        char szBuffer[32] = { '\0' };
+        char szBuffer0[64] = { '\0' };
+        char* apszOptions[] = { szBuffer0, nullptr };
+
+        void* ptr = (i == 1) ? psTransform->pafBackMapX : psTransform->pafBackMapY;
+        szBuffer[CPLPrintPointer(szBuffer, ptr, sizeof(szBuffer))] = '\0';
+        snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
+        poMEMDS->AddBand(GDT_Float32, apszOptions);
+        poMEMDS->GetRasterBand(i)->SetNoDataValue(-1);
+    }
+
+#ifdef DEBUG_GEOLOC
+    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+    {
+        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                              "/tmp/geoloc_before_fill.tif",
+                              poMEMDS.get(),
+                              false, nullptr, nullptr, nullptr));
+    }
+#endif
+
+    constexpr double dfMaxSearchDist = 3.0;
+    constexpr int nSmoothingIterations = 1;
+    for( int i = 1; i <= 2; i++ )
+    {
+        GDALFillNodata( GDALRasterBand::ToHandle(poMEMDS->GetRasterBand(i)),
+                        nullptr,
+                        dfMaxSearchDist,
+                        0, // unused parameter
+                        nSmoothingIterations,
+                        nullptr,
+                        nullptr,
+                        nullptr );
+    }
+
+#ifdef DEBUG_GEOLOC
+    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+    {
+        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                              "/tmp/geoloc_after_fill.tif",
+                              poMEMDS.get(),
+                              false, nullptr, nullptr, nullptr));
+    }
+#endif
+
+    // A final hole filling logic, proceeding line by line, and feeling
+    // holes when the backmap values surrounding the hole are close enough.
+    for( size_t iBMY = 0; iBMY < nBMYSize; iBMY++ )
+    {
+        size_t iLastValidIX = static_cast<size_t>(-1);
+        for( size_t iBMX = 0; iBMX < nBMXSize; iBMX++ )
         {
-            for( size_t iBMX = 0; iBMX < nBMXSize; iBMX++ )
+            const size_t iBM = iBMX + iBMY * nBMXSize;
+            if( psTransform->pafBackMapX[iBM] < 0 )
+                continue;
+            if( iBMX > iLastValidIX + 1 &&
+                iLastValidIX != static_cast<size_t>(-1) &&
+                fabs( psTransform->pafBackMapX[iBM] -
+                    psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize]) <= 2 &&
+                fabs( psTransform->pafBackMapY[iBM] -
+                    psTransform->pafBackMapY[iLastValidIX + iBMY * nBMXSize]) <= 2 )
             {
-                // If this point is already set, ignore it.
-                if( pabyValidFlag[iBMX + iBMY*nBMXSize] )
+                for( size_t iBMXInner = iLastValidIX + 1; iBMXInner < iBMX; ++iBMXInner )
                 {
-                    nNumValid++;
-                    continue;
-                }
-
-                int nCount = 0;
-                double dfXSum = 0.0;
-                double dfYSum = 0.0;
-                const int nMarkedAsGood = nMaxIter - iIter;
-
-                // Left?
-                if( iBMX > 0 &&
-                    pabyValidFlag[iBMX-1+iBMY*nBMXSize] > nMarkedAsGood )
-                {
-                    dfXSum += psTransform->pafBackMapX[iBMX-1+iBMY*nBMXSize];
-                    dfYSum += psTransform->pafBackMapY[iBMX-1+iBMY*nBMXSize];
-                    nCount++;
-                }
-                // Right?
-                if( iBMX + 1 < nBMXSize &&
-                    pabyValidFlag[iBMX+1+iBMY*nBMXSize] > nMarkedAsGood )
-                {
-                    dfXSum += psTransform->pafBackMapX[iBMX+1+iBMY*nBMXSize];
-                    dfYSum += psTransform->pafBackMapY[iBMX+1+iBMY*nBMXSize];
-                    nCount++;
-                }
-                // Top?
-                if( iBMY > 0 &&
-                    pabyValidFlag[iBMX+(iBMY-1)*nBMXSize] > nMarkedAsGood )
-                {
-                    dfXSum += psTransform->pafBackMapX[iBMX+(iBMY-1)*nBMXSize];
-                    dfYSum += psTransform->pafBackMapY[iBMX+(iBMY-1)*nBMXSize];
-                    nCount++;
-                }
-                // Bottom?
-                if( iBMY + 1 < nBMYSize &&
-                    pabyValidFlag[iBMX+(iBMY+1)*nBMXSize] > nMarkedAsGood )
-                {
-                    dfXSum += psTransform->pafBackMapX[iBMX+(iBMY+1)*nBMXSize];
-                    dfYSum += psTransform->pafBackMapY[iBMX+(iBMY+1)*nBMXSize];
-                    nCount++;
-                }
-                // Top-left?
-                if( iBMX > 0 && iBMY > 0 &&
-                    pabyValidFlag[iBMX-1+(iBMY-1)*nBMXSize] > nMarkedAsGood )
-                {
-                    dfXSum +=
-                        psTransform->pafBackMapX[iBMX-1+(iBMY-1)*nBMXSize];
-                    dfYSum +=
-                        psTransform->pafBackMapY[iBMX-1+(iBMY-1)*nBMXSize];
-                    nCount++;
-                }
-                // Top-right?
-                if( iBMX + 1 < nBMXSize && iBMY > 0 &&
-                    pabyValidFlag[iBMX+1+(iBMY-1)*nBMXSize] > nMarkedAsGood )
-                {
-                    dfXSum +=
-                        psTransform->pafBackMapX[iBMX+1+(iBMY-1)*nBMXSize];
-                    dfYSum +=
-                        psTransform->pafBackMapY[iBMX+1+(iBMY-1)*nBMXSize];
-                    nCount++;
-                }
-                // Bottom-left?
-                if( iBMX > 0 && iBMY + 1 < nBMYSize &&
-                    pabyValidFlag[iBMX-1+(iBMY+1)*nBMXSize] > nMarkedAsGood )
-                {
-                    dfXSum +=
-                        psTransform->pafBackMapX[iBMX-1+(iBMY+1)*nBMXSize];
-                    dfYSum +=
-                        psTransform->pafBackMapY[iBMX-1+(iBMY+1)*nBMXSize];
-                    nCount++;
-                }
-                // Bottom-right?
-                if( iBMX + 1 < nBMXSize && iBMY + 1 < nBMYSize &&
-                    pabyValidFlag[iBMX+1+(iBMY+1)*nBMXSize] > nMarkedAsGood )
-                {
-                    dfXSum +=
-                        psTransform->pafBackMapX[iBMX+1+(iBMY+1)*nBMXSize];
-                    dfYSum +=
-                        psTransform->pafBackMapY[iBMX+1+(iBMY+1)*nBMXSize];
-                    nCount++;
-                }
-
-                if( nCount > 0 )
-                {
-                    psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] =
-                        static_cast<float>(dfXSum/nCount);
-                    psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] =
-                        static_cast<float>(dfYSum/nCount);
-                    // Genuinely valid points will have value iMaxIter + 1.
-                    // On each iteration mark newly valid points with a
-                    // descending value so that it will not be used on the
-                    // current iteration only on subsequent ones.
-                    pabyValidFlag[iBMX+iBMY*nBMXSize] =
-                        static_cast<GByte>(nMaxIter - iIter);
+                    const float alpha = static_cast<float>(iBMXInner - iLastValidIX) / (iBMX - iLastValidIX);
+                    psTransform->pafBackMapX[iBMXInner + iBMY * nBMXSize] =
+                        (1.0f - alpha) * psTransform->pafBackMapX[iLastValidIX + iBMY * nBMXSize] +
+                        alpha * psTransform->pafBackMapX[iBM];
+                    psTransform->pafBackMapY[iBMXInner + iBMY * nBMXSize] =
+                        (1.0f - alpha) * psTransform->pafBackMapY[iLastValidIX + iBMY * nBMXSize] +
+                        alpha * psTransform->pafBackMapY[iBM];
                 }
             }
+            iLastValidIX = iBMX;
         }
-        if( nNumValid == nBMXSize * nBMYSize )
-            break;
     }
+
+#ifdef DEBUG_GEOLOC
+    if( CPLTestBool(CPLGetConfigOption("GEOLOC_DUMP", "NO")) )
+    {
+        GDALClose(GDALCreateCopy(GDALGetDriverByName("GTiff"),
+                              "/tmp/geoloc_after_line_fill.tif",
+                              poMEMDS.get(),
+                              false, nullptr, nullptr, nullptr));
+    }
+#endif
 
     CPLFree( wgtsBackMap );
-    CPLFree( pabyValidFlag );
 
     return true;
 }
@@ -1030,8 +955,8 @@ int GDALGeoLocTransform( void *pTransformArg,
                 continue;
             }
 
-            const int iBMX = static_cast<int>(dfBMX);
-            const int iBMY = static_cast<int>(dfBMY);
+            const std::ptrdiff_t iBMX = static_cast<std::ptrdiff_t>(dfBMX);
+            const std::ptrdiff_t iBMY = static_cast<std::ptrdiff_t>(dfBMY);
 
             const size_t iBM = iBMX + iBMY * psTransform->nBackMapWidth;
             if( psTransform->pafBackMapX[iBM] < 0 )

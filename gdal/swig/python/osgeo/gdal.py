@@ -2723,6 +2723,8 @@ class Dataset(MajorObject):
 Dataset_swigregister = _gdal.Dataset_swigregister
 Dataset_swigregister(Dataset)
 
+GEDTST_NONE = _gdal.GEDTST_NONE
+GEDTST_JSON = _gdal.GEDTST_JSON
 class Group(_object):
     """Proxy of C++ GDALGroupHS class."""
 
@@ -3558,6 +3560,11 @@ class ExtendedDataType(_object):
     def GetMaxStringLength(self, *args):
         """GetMaxStringLength(ExtendedDataType self) -> size_t"""
         return _gdal.ExtendedDataType_GetMaxStringLength(self, *args)
+
+
+    def GetSubType(self, *args):
+        """GetSubType(ExtendedDataType self) -> GDALExtendedDataTypeSubType"""
+        return _gdal.ExtendedDataType_GetSubType(self, *args)
 
 
     def GetComponents(self, *args):

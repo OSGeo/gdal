@@ -170,6 +170,55 @@ void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
 void GDALRefreshGenImgProjTransformer(void* hTransformArg);
 void GDALRefreshApproxTransformer(void* hTransformArg);
 
+
+typedef struct {
+    GDALTransformerInfo sTI;
+
+    bool        bReversed;
+
+    // Map from target georef coordinates back to geolocation array
+    // pixel line coordinates.  Built only if needed.
+    size_t      nBackMapWidth;
+    size_t      nBackMapHeight;
+    double      adfBackMapGeoTransform[6];  // Maps georef to pixel/line.
+    float       *pafBackMapX;
+    float       *pafBackMapY;
+
+    // Geolocation bands.
+    GDALDatasetH     hDS_X;
+    GDALRasterBandH  hBand_X;
+    GDALDatasetH     hDS_Y;
+    GDALRasterBandH  hBand_Y;
+    int              bSwapXY;
+
+    // Located geolocation data.
+    size_t           nGeoLocXSize;
+    size_t           nGeoLocYSize;
+    double           *padfGeoLocX;
+    double           *padfGeoLocY;
+    double           dfMinX;
+    double           dfYAtMinX;
+    double           dfMinY;
+    double           dfXAtMinY;
+    double           dfMaxX;
+    double           dfYAtMaxX;
+    double           dfMaxY;
+    double           dfXAtMaxY;
+
+    int              bHasNoData;
+    double           dfNoDataX;
+
+    // Geolocation <-> base image mapping.
+    double           dfPIXEL_OFFSET;
+    double           dfPIXEL_STEP;
+    double           dfLINE_OFFSET;
+    double           dfLINE_STEP;
+
+    char **          papszGeolocationInfo;
+
+} GDALGeoLocTransformInfo;
+
+
 /************************************************************************/
 /*      Color table related                                             */
 /************************************************************************/

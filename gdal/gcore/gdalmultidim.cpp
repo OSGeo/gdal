@@ -7486,8 +7486,10 @@ GDALExtendedDataType::~GDALExtendedDataType() = default;
 /*                        GDALExtendedDataType()                        */
 /************************************************************************/
 
-GDALExtendedDataType::GDALExtendedDataType(size_t nMaxStringLength):
+GDALExtendedDataType::GDALExtendedDataType(size_t nMaxStringLength,
+                                           GDALExtendedDataTypeSubType eSubType):
     m_eClass(GEDTC_STRING),
+    m_eSubType(eSubType),
     m_nSize(sizeof(char*)),
     m_nMaxStringLength(nMaxStringLength)
 {}
@@ -7525,6 +7527,7 @@ GDALExtendedDataType::GDALExtendedDataType(
 GDALExtendedDataType::GDALExtendedDataType(const GDALExtendedDataType& other):
     m_osName(other.m_osName),
     m_eClass(other.m_eClass),
+    m_eSubType(other.m_eSubType),
     m_eNumericDT(other.m_eNumericDT),
     m_nSize(other.m_nSize),
     m_nMaxStringLength(other.m_nMaxStringLength)
@@ -7547,6 +7550,7 @@ GDALExtendedDataType& GDALExtendedDataType::operator= (GDALExtendedDataType&& ot
 {
     m_osName = std::move(other.m_osName);
     m_eClass = other.m_eClass;
+    m_eSubType = other.m_eSubType;
     m_eNumericDT = other.m_eNumericDT;
     m_nSize = other.m_nSize;
     m_nMaxStringLength = other.m_nMaxStringLength;
@@ -7630,10 +7634,12 @@ GDALExtendedDataType GDALExtendedDataType::Create(
  * This is the same as the C function GDALExtendedDataTypeCreateString().
  *
  * @param nMaxStringLength maximum length of a string in bytes. 0 if unknown/unlimited
+ * @param eSubType Subtype.
  */
-GDALExtendedDataType GDALExtendedDataType::CreateString(size_t nMaxStringLength)
+GDALExtendedDataType GDALExtendedDataType::CreateString(size_t nMaxStringLength,
+                                                        GDALExtendedDataTypeSubType eSubType)
 {
-    return GDALExtendedDataType(nMaxStringLength);
+    return GDALExtendedDataType(nMaxStringLength, eSubType);
 }
 
 /************************************************************************/
@@ -7647,6 +7653,7 @@ GDALExtendedDataType GDALExtendedDataType::CreateString(size_t nMaxStringLength)
 bool GDALExtendedDataType::operator==(const GDALExtendedDataType& other) const
 {
     if( m_eClass != other.m_eClass ||
+        m_eSubType != other.m_eSubType ||
         m_nSize != other.m_nSize ||
         m_osName != other.m_osName )
     {
@@ -8160,6 +8167,25 @@ int GDALExtendedDataTypeEquals(GDALExtendedDataTypeH hFirstEDT,
     VALIDATE_POINTER1( hSecondEDT, __func__, FALSE );
     return *(hFirstEDT->m_poImpl) == *(hSecondEDT->m_poImpl);
 }
+
+/************************************************************************/
+/*                    GDALExtendedDataTypeGetSubType()                  */
+/************************************************************************/
+
+/** Return the subtype of a type.
+ *
+ * This is the same as the C++ method GDALExtendedDataType::GetSubType()
+ *
+ * @param hEDT Data type.
+ * @return subtype.
+ * @since 3.4
+ */
+GDALExtendedDataTypeSubType GDALExtendedDataTypeGetSubType(GDALExtendedDataTypeH hEDT)
+{
+    VALIDATE_POINTER1( hEDT, __func__, GEDTST_NONE );
+    return hEDT->m_poImpl->GetSubType();
+}
+
 
 /************************************************************************/
 /*                     GDALExtendedDataTypeGetComponents()              */
@@ -10463,9 +10489,11 @@ GDALDatasetH GDALMDArrayAsClassicDataset(GDALMDArrayH hArray,
 
 GDALAttributeString::GDALAttributeString(const std::string& osParentName,
                   const std::string& osName,
-                  const std::string& osValue):
+                  const std::string& osValue,
+                  GDALExtendedDataTypeSubType eSubType):
         GDALAbstractMDArray(osParentName, osName),
         GDALAttribute(osParentName, osName),
+        m_dt(GDALExtendedDataType::CreateString(0, eSubType)),
         m_osValue(osValue)
 {}
 

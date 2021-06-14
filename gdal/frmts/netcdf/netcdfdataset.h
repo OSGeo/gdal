@@ -836,6 +836,15 @@ class netCDFDataset final: public GDALPamDataset
     int           nSubDatasets;
     char          **papszSubDatasets;
     char          **papszMetadata;
+
+    // Used to report metadata found in Sentinel 5
+    struct JSonMetadata
+    {
+        std::string osJSon{};
+        char*       apszMD[2] = {nullptr, nullptr};
+    };
+    std::map<std::string, JSonMetadata> m_oMapDomainToJSon{};
+
     CPLStringList papszDimName;
     bool          bBottomUp;
     NetCDFFormatEnum eFormat;
@@ -1213,6 +1222,8 @@ bool NCDFIsVarVerticalCoord( int nCdfId, int nVarId,
                                     const char *pszVarName );
 bool NCDFIsVarTimeCoord( int nCdfId, int nVarId,
                                 const char *pszVarName );
+
+std::string NCDFReadMetadataAsJson(int cdfid);
 
 extern CPLMutex *hNCMutex;
 

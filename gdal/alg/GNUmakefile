@@ -31,7 +31,7 @@ ifeq ($(QHULL_SETTING),internal)
 CPPFLAGS 	:=	-DINTERNAL_QHULL $(CPPFLAGS)
 endif
 
-CPPFLAGS	:=	-I../frmts/vrt $(CPPFLAGS) $(OPENCL_FLAGS) $(PROJ_FLAGS) $(PROJ_INCLUDE) -Imarching_squares
+CPPFLAGS	:=	-I../frmts/vrt -I../frmts/mem $(CPPFLAGS) $(OPENCL_FLAGS) $(PROJ_FLAGS) $(PROJ_INCLUDE) -Imarching_squares
 
 CXXFLAGS	:=	$(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
 

@@ -172,7 +172,7 @@ public:
 
     std::vector<std::string> GetGroupNames(CSLConstList papszOptions) const override;
     std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
-                                         CSLConstList papszOptions) const override;
+                                         CSLConstList papszOptions = nullptr) const override;
 
     std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions) const override;
     std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
@@ -959,6 +959,12 @@ std::vector<std::string> netCDFGroup::GetGroupNames(CSLConstList papszOptions) c
     {
         char szName[NC_MAX_NAME + 1] = {};
         NCDF_ERR(nc_inq_grpname(subgid, szName));
+        if( GetFullName() == "/" && EQUAL(szName, "METADATA") )
+        {
+            const auto poMetadata = OpenGroup(szName);
+            if( poMetadata && poMetadata->OpenGroup("ISO_METADATA") )
+                continue;
+        }
         names.emplace_back(szName);
     }
     return names;
@@ -1143,12 +1149,41 @@ std::vector<std::shared_ptr<GDALDimension>> netCDFGroup::GetDimensions(CSLConstL
 /*                         GetAttribute()                               */
 /************************************************************************/
 
+static const char* const apszJSONMDKeys[] = {
+    "ISO_METADATA", "ESA_METADATA", "EOP_METADATA",
+    "QA_STATISTICS", "GRANULE_DESCRIPTION", "ALGORITHM_SETTINGS"
+};
+
 std::shared_ptr<GDALAttribute> netCDFGroup::GetAttribute(const std::string& osName) const
 {
     CPLMutexHolderD(&hNCMutex);
     int nAttId = -1;
     if( nc_inq_attid(m_gid, NC_GLOBAL, osName.c_str(), &nAttId) != NC_NOERR )
+    {
+        if( GetFullName() == "/" )
+        {
+            for( const char* key : apszJSONMDKeys )
+            {
+                if( osName == key )
+                {
+                    auto poMetadata = OpenGroup("METADATA");
+                    if( poMetadata )
+                    {
+                        auto poSubMetadata = std::dynamic_pointer_cast<netCDFGroup>(
+                            poMetadata->OpenGroup(key));
+                        if( poSubMetadata )
+                        {
+                            const auto osJson = NCDFReadMetadataAsJson(poSubMetadata->m_gid);
+                            return std::make_shared<GDALAttributeString>(
+                                GetFullName(), key, osJson, GEDTST_JSON);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
         return nullptr;
+    }
     return netCDFAttribute::Create(m_poShared, m_gid, NC_GLOBAL, osName);
 }
 
@@ -1174,6 +1209,26 @@ std::vector<std::shared_ptr<GDALAttribute>> netCDFGroup::GetAttributes(CSLConstL
                 m_poShared, m_gid, NC_GLOBAL, szAttrName));
         }
     }
+
+    if( GetFullName() == "/" )
+    {
+        auto poMetadata = OpenGroup("METADATA");
+        if( poMetadata )
+        {
+            for( const char* key : apszJSONMDKeys )
+            {
+                auto poSubMetadata = std::dynamic_pointer_cast<netCDFGroup>(
+                    poMetadata->OpenGroup(key));
+                if( poSubMetadata )
+                {
+                    const auto osJson = NCDFReadMetadataAsJson(poSubMetadata->m_gid);
+                    res.emplace_back(std::make_shared<GDALAttributeString>(
+                        GetFullName(), key, osJson, GEDTST_JSON));
+                }
+            }
+        }
+    }
+
     return res;
 }
 
@@ -1483,7 +1538,7 @@ netCDFVariable::netCDFVariable(const std::shared_ptr<netCDFSharedResources>& poS
         }
     }
     auto unit = netCDFVariable::GetAttribute(CF_UNITS);
-    if( unit )
+    if( unit && unit->GetDataType().GetClass() == GEDTC_STRING )
     {
         const char* pszVal = unit->ReadAsString();
         if( pszVal )

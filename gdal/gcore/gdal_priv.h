@@ -1809,7 +1809,8 @@ public:
     static GDALExtendedDataType Create(const std::string& osName,
                                        size_t nTotalSize,
                                        std::vector<std::unique_ptr<GDALEDTComponent>>&& components);
-    static GDALExtendedDataType CreateString(size_t nMaxStringLength = 0);
+    static GDALExtendedDataType CreateString(size_t nMaxStringLength = 0,
+                                             GDALExtendedDataTypeSubType eSubType = GEDTST_NONE);
 
     bool operator== (const GDALExtendedDataType& ) const;
     /** Non-equality operator */
@@ -1832,6 +1833,14 @@ public:
      * This is the same as the C function GDALExtendedDataTypeGetNumericDataType()
      */
     GDALDataType              GetNumericDataType() const { return m_eNumericDT;  }
+
+    /** Return subtype.
+     *
+     * This is the same as the C function GDALExtendedDataTypeGetSubType()
+     *
+     * @since 3.4
+     */
+    GDALExtendedDataTypeSubType GetSubType() const { return m_eSubType; }
 
     /** Return the components of the data type (only valid when GetClass() == GEDTC_COMPOUND)
      *
@@ -1864,7 +1873,7 @@ public:
                      void* pDst, const GDALExtendedDataType& dstType);
 
 private:
-    explicit GDALExtendedDataType(size_t nMaxStringLength = 0);
+    GDALExtendedDataType(size_t nMaxStringLength, GDALExtendedDataTypeSubType eSubType);
     explicit  GDALExtendedDataType(GDALDataType eType);
     GDALExtendedDataType(const std::string& osName,
                          size_t nTotalSize,
@@ -1872,6 +1881,7 @@ private:
 
     std::string m_osName{};
     GDALExtendedDataTypeClass m_eClass = GEDTC_NUMERIC;
+    GDALExtendedDataTypeSubType m_eSubType = GEDTST_NONE;
     GDALDataType m_eNumericDT = GDT_Unknown;
     std::vector<std::unique_ptr<GDALEDTComponent>> m_aoComponents{};
     size_t m_nSize = 0;
@@ -2294,7 +2304,8 @@ protected:
 public:
     GDALAttributeString(const std::string& osParentName,
                   const std::string& osName,
-                  const std::string& osValue);
+                  const std::string& osValue,
+                  GDALExtendedDataTypeSubType eSubType = GEDTST_NONE);
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override;
 
