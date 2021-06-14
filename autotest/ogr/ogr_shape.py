@@ -4894,6 +4894,58 @@ def test_ogr_shape_write_multipolygon_z_non_finite():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test.shp')
 
 ###############################################################################
+# Test that date fields stored as ISO-8601 can be used with IN operator
+
+def test_ogr_in_date_filter():
+    """Test that date fields stored as ISO-8601 can be used with IN operator"""
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(
+        '/vsimem/ogr_in_date_filter.dbf')
+    lyr = ds.CreateLayer('ogr_in_date_filter', geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('date_minus', ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn('date_slash', ogr.OFTDate))
+
+    ogrtest.quick_create_feature(lyr, ["1950-12-31", "1950/12/31"], None)
+    ogrtest.quick_create_feature(lyr, ["1960-12-31", "1960/12/31"], None)
+
+    assert lyr.GetFeatureCount() == 2
+
+    def _ogr_in_date_filter_check(expected_fids):
+
+        lyr.ResetReading()
+        for expected_fid in expected_fids:
+            feat = lyr.GetNextFeature()
+            assert feat is not None
+            assert feat.GetFID() == expected_fid
+
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_minus IN ('1960-12-31')")
+    _ogr_in_date_filter_check([1])
+
+    lyr.SetAttributeFilter("date_minus IN ('1960-12-31', '1950-12-31')")
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_slash IN ('1960/12/31')")
+    _ogr_in_date_filter_check([1])
+
+    lyr.SetAttributeFilter("date_slash IN ('1960/12/31', '1950/12/31')")
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_slash IN ('1960-12-31')")
+    _ogr_in_date_filter_check([1])
+
+    lyr.SetAttributeFilter("date_slash IN ('1960-12-31', '1950-12-31')")
+    _ogr_in_date_filter_check([0, 1])
+
+    lyr.SetAttributeFilter("date_minus IN ('1960/12/31')")
+    _ogr_in_date_filter_check([1])
+
+    lyr.SetAttributeFilter("date_minus IN ('1960/12/31', '1950/12/31')")
+    _ogr_in_date_filter_check([0, 1])
+
+
+###############################################################################
 
 
 def test_ogr_shape_cleanup():
@@ -4933,3 +4985,4 @@ def test_ogr_shape_cleanup():
     shape_drv.DeleteDataSource('/vsimem/ogr_shape_90.shp')
     if os.path.exists('tmp/ogr_shape_100.shp'):
         shape_drv.DeleteDataSource('tmp/ogr_shape_100.shp')
+
