@@ -661,8 +661,9 @@ size_t CHUNK_NAME_SIZE = strlen(CHUNK_NAME) + 1;
 
 #if defined(BRUNSLI)
 // Append to end of out vector
-static size_t out_callback(std::vector<GByte>* out, const GByte* data, size_t size) {
-    out->insert(out->end(), data, data + size);
+static size_t out_callback(void* out, const GByte* data, size_t size) {
+    auto outv = static_cast<std::vector<GByte> *>(out);
+    outv->insert(outv->end(), data, data + size);
     return size;
 }
 #endif // BRUNSLI
@@ -706,7 +707,7 @@ CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
             return CE_Failure;
         }
 
-        brunsli::JPEGOutput writer((brunsli::JPEGOutputHook)out_callback, &out);
+        brunsli::JPEGOutput writer(out_callback, &out);
 
         if (!brunsli::WriteJpeg(bjpg, writer)) {
             CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG-XL (brunsli) to JPEG conversion failed");
