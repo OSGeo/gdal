@@ -221,6 +221,8 @@ const char* VSIGSFSHandler::GetOptions()
         "description='Secret access key. To use with GS_ACCESS_KEY_ID'/>"
     "  <Option name='GS_ACCESS_KEY_ID' type='string' "
         "description='Access key id'/>"
+    "  <Option name='GS_NO_SIGN_REQUEST' type='boolean' "
+        "description='Whether to disable signing of requests' default='NO'/>"
     "  <Option name='GS_OAUTH2_REFRESH_TOKEN' type='string' "
         "description='OAuth2 refresh token. For OAuth2 client authentication. "
         "To use with GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET'/>"
@@ -251,8 +253,8 @@ const char* VSIGSFSHandler::GetOptions()
         "default='~/.aws/config'/>"
     "  <Option name='CPL_GS_CREDENTIALS_FILE' type='string' "
         "description='Filename that contains Google Storage credentials' "
-        "default='~/.boto'/>" +
-        VSICurlFilesystemHandler::GetOptionsStatic() +
+        "default='~/.boto'/>"
+    + VSICurlFilesystemHandler::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }
