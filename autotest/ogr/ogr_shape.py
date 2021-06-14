@@ -4944,6 +4944,17 @@ def test_ogr_in_date_filter():
     lyr.SetAttributeFilter("date_minus IN ('1960/12/31', '1950/12/31')")
     _ogr_in_date_filter_check([0, 1])
 
+    lyr.SetAttributeFilter("date_minus IN ('2020/12/31', '2020/12/31')")
+    _ogr_in_date_filter_check([])
+
+    lyr.SetAttributeFilter("date_minus IN ('2020-12-31', '2020-12-31')")
+    _ogr_in_date_filter_check([])
+
+    lyr.SetAttributeFilter("date_slash IN ('2020/12/31', '2020/12/31')")
+    _ogr_in_date_filter_check([])
+
+    lyr.SetAttributeFilter("date_slash IN ('2020-12-31', '2020-12-31')")
+    _ogr_in_date_filter_check([])
 
 ###############################################################################
 
