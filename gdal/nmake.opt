@@ -794,7 +794,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
 # Copyright 2019 Even Rouault
 #
-# Pdfium must be built from https://github.com/rouault/pdfium_build_gdal_3_2
+# Pdfium must be built from https://github.com/rouault/pdfium_build_gdal_3_4
 
 #PDFIUM_ENABLED = YES
 #PDFIUM_CFLAGS = -IC:\dev\pdfium\install\include\pdfium
