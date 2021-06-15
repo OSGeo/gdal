@@ -1181,20 +1181,22 @@ CPLErr ECWDataset::SetGeoTransform( double * padfGeoTransform )
 }
 
 /************************************************************************/
-/*                            SetProjection()                           */
+/*                            SetSpatialRef()                           */
 /************************************************************************/
 
-CPLErr ECWDataset::_SetProjection( const char* pszProjectionIn )
+CPLErr ECWDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 {
     if ( bIsJPEG2000 || eAccess == GA_ReadOnly )
-        return GDALPamDataset::_SetProjection(pszProjectionIn);
+        return GDALPamDataset::SetSpatialRef(poSRS);
 
-    if ( !( (pszProjection == nullptr && pszProjectionIn == nullptr) ||
-            (pszProjection != nullptr && pszProjectionIn != nullptr &&
-             strcmp(pszProjection, pszProjectionIn) == 0) ) )
+    if ( !( (m_oSRS.IsEmpty() && poSRS == nullptr) ||
+            (!m_oSRS.IsEmpty() && poSRS != nullptr &&
+             m_oSRS.IsSame(poSRS)) ) )
     {
-        CPLFree(pszProjection);
-        pszProjection = pszProjectionIn ? CPLStrdup(pszProjectionIn) : nullptr;
+        m_oSRS.Clear();
+        if( poSRS )
+            m_oSRS = *poSRS;
+
         bHdrDirty = TRUE;
         bProjectionChanged = TRUE;
     }
@@ -1455,7 +1457,7 @@ void ECWDataset::WriteHeader()
     char szProjCode[32], szDatumCode[32], szUnits[32];
     if (bProjectionChanged)
     {
-        if (ECWTranslateFromWKT( pszProjection, szProjCode, sizeof(szProjCode),
+        if (ECWTranslateFromWKT( &m_oSRS, szProjCode, sizeof(szProjCode),
                                  szDatumCode, sizeof(szDatumCode), szUnits ) )
         {
             psEditInfo->szDatum = szDatumCode;
@@ -1569,7 +1571,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     // We don't setup the reading window right away, in case the actual read
     // pattern wouldn't be compatible of it. Which might be the case for
     // example if AdviseRead() requests a full image, but we don't read by
-    // chunks of the full width of one or several lines 
+    // chunks of the full width of one or several lines
     m_nAdviseReadXOff = nXOff;
     m_nAdviseReadYOff = nYOff;
     m_nAdviseReadXSize = nXSize;
@@ -3251,7 +3253,7 @@ void ECWDataset::ECW2WKTProjection()
         /* have "Upward" orientation (Y coordinates increase "Upward"). */
         /* Setting ECW_ALWAYS_UPWARD=FALSE option relexes that policy   */
         /* and makes the driver rely on the actual Y-resolution         */
-        /* value (sign) of an image. This allows correctly processing   */
+        /* value (sign) of an image. This allows to correctly process   */
         /* rare images with "Downward" orientation, where Y coordinates */
         /* increase "Downward" and Y-resolution is positive.            */
         if( CPLTestBool( CPLGetConfigOption("ECW_ALWAYS_UPWARD","TRUE") ) )
@@ -3290,7 +3292,8 @@ void ECWDataset::ECW2WKTProjection()
                             psFileInfo->szDatum,
                             osUnits ) == OGRERR_NONE )
     {
-        oSRS.exportToWkt( &pszProjection );
+        m_oSRS = oSRS;
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
     CPLErrorReset(); /* see #4187 */
@@ -3300,7 +3303,7 @@ void ECWDataset::ECW2WKTProjection()
 /*                        ECWTranslateFromWKT()                         */
 /************************************************************************/
 
-int ECWTranslateFromWKT( const char *pszWKT,
+int ECWTranslateFromWKT( const OGRSpatialReference *poSRS,
                          char *pszProjection,
                          int nProjectionLen,
                          char *pszDatum,
@@ -3314,10 +3317,10 @@ int ECWTranslateFromWKT( const char *pszWKT,
     strcpy( pszDatum, "RAW" );
     strcpy( pszUnits, "METERS" );
 
-    if( pszWKT == nullptr || strlen(pszWKT) == 0 )
+    if( poSRS == nullptr || poSRS->IsEmpty() )
         return FALSE;
 
-    oSRS.importFromWkt( pszWKT );
+    oSRS = *poSRS;
 
     if( oSRS.IsLocal() )
         return TRUE;
