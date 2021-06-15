@@ -393,18 +393,29 @@ template<> inline GByte ComputeIntegerRMS_4values<GByte, int>(int sumSquares)
     return rms;
 }
 
-template<> inline GUInt16 ComputeIntegerRMS_4values<GUInt16, double>(double sumSquares)
+template<> inline GUInt16 ComputeIntegerRMS_4values<GUInt16, float>(float sumSquares)
 {
-    const double sumDivWeight = sumSquares * 0.25;
-    GUInt16 rms = static_cast<GUInt16>(std::sqrt(sumDivWeight));
+    const float sumDivWeight = sumSquares * 0.25f;
+    const float rms = std::sqrt(sumDivWeight);
+    GUInt16 rmsI = static_cast<GUInt16>(rms);
+    constexpr float epseps = 0.001f;
+    const float eps = rms - static_cast<float>(rmsI) + epseps;
 
-    // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
-    // Naive version:
-    // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
-    // Optimized version for integer case and weight == 4
-    if( static_cast<GUInt32>(rms) * (rms + 1) < static_cast<GUInt32>(sumDivWeight + 0.25) )
-        rms += 1;
-    return rms;
+/*
+    rms = rmsI + eps
+    rms^2 = rmsI^2 + 2 * rmsI * eps + eps^2
+    left =  rms^2 - rmsI^2 = 2 * rmsI * eps + eps^2
+    right = (rmsI + 1)^2 - rms^2
+          = rmsI^2 + 2 * rmsI + 1 - (rmsI^2 + 2 * rmsI * eps + eps^2)
+          = 1 + 2 * rmsI * (1 - eps) - eps^2
+
+    right - left = 1 + 2 * rmsI * (1 - 2 * eps) - 2 * eps^2
+    right - left < 0 <==> 0.5 < rmsI * (2 * eps - 1) + eps ^ 2
+*/
+    if( 0.5f < static_cast<float>(rmsI) * (eps + eps - 1.0f) + eps * eps )
+        rmsI += 1;
+
+    return rmsI;
 }
 
 #ifdef USE_SSE2
@@ -666,8 +677,12 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
 
     int iDstPixel = 0;
     const auto zero = _mm_setzero_si128();
-    const auto zeroDot25 = _mm_set1_pd(0.25);
-    const auto zeroDot5 = _mm_set1_pd(0.5);
+    const auto allones = _mm_set1_epi32(-1);
+    const auto two = _mm_set1_epi32(2);
+    const auto zeroDot25 = _mm_set1_ps(0.25f);
+    const auto zeroDot5 = _mm_add_ps(zeroDot25, zeroDot25); // _mm_set1_ps(0.5f);
+    const auto one = _mm_add_ps(zeroDot5, zeroDot5); // _mm_set1_ps(1.0f);
+    const auto epseps = _mm_set1_ps(0.001f);
 
     for( ; iDstPixel < nDstXWidth - 3; iDstPixel += 4 )
     {
@@ -707,9 +722,10 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
             // which is equivalent to:
             // if( rms * rms + rms < (sumSquares+1) / 4 )
             //    rms += 1;
-            auto mask = _mm_cmpgt_epi32(
+            auto mask = _mm_andnot_si128(_mm_cmplt_epi32(sumSquares, two),
+                _mm_xor_si128(allones, _mm_cmplt_epi32(
                 sumSquaresPlusOneDiv4,
-                _mm_add_epi32(_mm_madd_epi16(rms, rms), rms));
+                _mm_add_epi32(_mm_madd_epi16(rms, rms), rms))));
             rms = _mm_sub_epi32(rms, mask);
             // Pack each 32 bit RMS value to 16 bits
             rms = _mm_packs_epi32(rms, rms /* could be anything */);
@@ -718,67 +734,60 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
             continue;
         }
 
-        // An approach using _mm_mullo_epi16, _mm_mulhi_epu16 before extending
-        // to 32 bit would result in 4 multiplications instead of 8, but mullo/mulhi
-        // have a worse throughput than mul_pd.
+        // Extend those UInt16s as UInt32s and convert to Float32
+        auto firstLineLo = _mm_cvtepi32_ps(_mm_unpacklo_epi16(firstLine, zero));
+        auto firstLineHi = _mm_cvtepi32_ps(_mm_unpackhi_epi16(firstLine, zero));
+        auto secondLineLo = _mm_cvtepi32_ps(_mm_unpacklo_epi16(secondLine, zero));
+        auto secondLineHi = _mm_cvtepi32_ps(_mm_unpackhi_epi16(secondLine, zero));
 
-        // Extend those UInt16s as UInt32s
-        const auto firstLineLo = _mm_unpacklo_epi16(firstLine, zero);
-        const auto firstLineHi = _mm_unpackhi_epi16(firstLine, zero);
-        const auto secondLineLo = _mm_unpacklo_epi16(secondLine, zero);
-        const auto secondLineHi = _mm_unpackhi_epi16(secondLine, zero);
+        // Compute squares
+        firstLineLo = SQUARE(firstLineLo);
+        firstLineHi = SQUARE(firstLineHi);
+        secondLineLo = SQUARE(secondLineLo);
+        secondLineHi = SQUARE(secondLineHi);
 
-        // Multiplication of 32 bit values previously converted to 64 bit double
-        const auto firstLineLoLo = SQUARE(_mm_cvtepi32_pd(firstLineLo));
-        const auto firstLineLoHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineLo,8)));
-        const auto firstLineHiLo = SQUARE(_mm_cvtepi32_pd(firstLineHi));
-        const auto firstLineHiHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineHi,8)));
+        // Vertical addition
+        const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
+        const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
 
-        const auto secondLineLoLo = SQUARE(_mm_cvtepi32_pd(secondLineLo));
-        const auto secondLineLoHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineLo,8)));
-        const auto secondLineHiLo = SQUARE(_mm_cvtepi32_pd(secondLineHi));
-        const auto secondLineHiHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineHi,8)));
+        // Horizontal addition
+        const auto A = _mm_shuffle_ps(sumLo, sumHi, _MM_SHUFFLE(2,0,2,0));
+        const auto B = _mm_shuffle_ps(sumLo, sumHi, _MM_SHUFFLE(3,1,3,1));
+        const auto sumSquaresDiv4 = _mm_mul_ps(_mm_add_ps(A, B), zeroDot25);
 
-        // Vertical addition of squares
-        const auto sumSquaresLoLo = _mm_add_pd(firstLineLoLo, secondLineLoLo);
-        const auto sumSquaresLoHi = _mm_add_pd(firstLineLoHi, secondLineLoHi);
-        const auto sumSquaresHiLo = _mm_add_pd(firstLineHiLo, secondLineHiLo);
-        const auto sumSquaresHiHi = _mm_add_pd(firstLineHiHi, secondLineHiHi);
+        const auto rms = _mm_sqrt_ps(sumSquaresDiv4);
+        auto rmsI = _mm_cvttps_epi32(rms);
+        const auto rmsTruncated = _mm_cvtepi32_ps(rmsI);
 
-        // Horizontal addition of squares
-        const auto sumSquaresLo = sse2_hadd_pd(sumSquaresLoLo, sumSquaresLoHi);
-        const auto sumSquaresHi = sse2_hadd_pd(sumSquaresHiLo, sumSquaresHiHi);
+        // Note: due to float32 approximations above, epsilon will not be
+        // exact. For example for input (65535,0,0,2), epsilon will be exactly
+        // 0.5 whereas it should be slightly above.
+        // We add an epsilon to the epsilon to get consistent results with the
+        // above nMaskFitsIn14Bits == 0 case
+        const auto eps = _mm_add_ps(_mm_sub_ps(rms, rmsTruncated), epseps);
 
-        const auto sumDivWeightLo = _mm_mul_pd(sumSquaresLo, zeroDot25);
-        const auto sumDivWeightHi = _mm_mul_pd(sumSquaresHi, zeroDot25);
-        // Take square root and truncate/floor to int32
-        const auto rmsLo = _mm_cvttpd_epi32(_mm_sqrt_pd(sumDivWeightLo));
-        const auto rmsHi = _mm_cvttpd_epi32(_mm_sqrt_pd(sumDivWeightHi));
+/*
+        rms = rmsI + eps
+        rms^2 = rmsI^2 + 2 * rmsI * eps + eps^2
+        left =  rms^2 - rmsI^2 = 2 * rmsI * eps + eps^2
+        right = (rmsI + 1)^2 - rms^2
+              = rmsI^2 + 2 * rmsI + 1 - (rmsI^2 + 2 * rmsI * eps + eps^2)
+              = 1 + 2 * rmsI * (1 - eps) - eps^2
 
-        // Correctly round rms to minimize | rms^2 - sumSquares / 4 |
-        // if( 0.5 < sumDivWeight - (rms * rms + rms) )
-        //     rms += 1;
-        const auto rmsLoDouble = _mm_cvtepi32_pd(rmsLo);
-        const auto rmsHiDouble = _mm_cvtepi32_pd(rmsHi);
-        const auto rightLo = _mm_sub_pd(sumDivWeightLo,
-                                _mm_add_pd(SQUARE(rmsLoDouble), rmsLoDouble));
-        const auto rightHi = _mm_sub_pd(sumDivWeightHi,
-                                _mm_add_pd(SQUARE(rmsHiDouble), rmsHiDouble));
+        right - left = 1 + 2 * rmsI * (1 - 2 * eps) - 2 * eps^2
+        right - left < 0 <==> 0.5 < rmsI * (2 * eps - 1) + eps ^ 2
+*/
+        const auto diffRightMinusLeft = _mm_add_ps(
+            _mm_mul_ps(rmsTruncated, _mm_sub_ps(_mm_add_ps(eps, eps), one)),
+            _mm_mul_ps(eps, eps));
+        const auto mask = _mm_cmplt_ps(zeroDot5, diffRightMinusLeft);
 
-        const auto maskLo = _mm_castpd_ps(_mm_cmplt_pd(zeroDot5, rightLo));
-        const auto maskHi = _mm_castpd_ps(_mm_cmplt_pd(zeroDot5, rightHi));
-        // The value of the mask will be -1 when the correction needs to be applied
-        const auto mask = _mm_castps_si128(_mm_shuffle_ps(
-            maskLo, maskHi, (0 << 0) | (2 << 2) | (0 << 4) | (2 << 6)));
-
-        auto rms = _mm_castps_si128(_mm_movelh_ps(
-            _mm_castsi128_ps(rmsLo), _mm_castsi128_ps(rmsHi)));
-        // Apply the correction
-        rms = _mm_sub_epi32(rms, mask);
+        rmsI = _mm_sub_epi32(rmsI, _mm_castps_si128(mask));
 
         // Pack each 32 bit RMS value to 16 bits
-        rms = sse2_packus_epi32(rms, rms /* could be anything */);
-        _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
+        rmsI = sse2_packus_epi32(rmsI, rmsI /* could be anything */);
+
+        _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rmsI);
         pSrcScanlineShifted += 8;
     }
 
@@ -1192,10 +1201,10 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                             + SQUARE<Tsum>(pSrcScanlineShifted[1+nChunkXSize]);
                     else
                         nTotal =
-                            pSrcScanlineShifted[0]
-                            + pSrcScanlineShifted[1]
-                            + pSrcScanlineShifted[nChunkXSize]
-                            + pSrcScanlineShifted[1+nChunkXSize];
+                            static_cast<Tsum>(pSrcScanlineShifted[0])
+                            + static_cast<Tsum>(pSrcScanlineShifted[1])
+                            + static_cast<Tsum>(pSrcScanlineShifted[nChunkXSize])
+                            + static_cast<Tsum>(pSrcScanlineShifted[1+nChunkXSize]);
 
                     constexpr int nTotalWeight = 4;
                     if( bQuadraticMean )
@@ -1577,8 +1586,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         *peDstBufferDataType = eWrkDataType;
         if( EQUAL(pszResampling, "RMS") )
         {
-            // Use double as accumulation type, because UInt32 could overflow
-            return GDALResampleChunk32R_AverageT<GUInt16, double, GDT_UInt16>(
+            // Use float as accumulation type, because UInt32 could overflow
+            return GDALResampleChunk32R_AverageT<GUInt16, float, GDT_UInt16>(
                 dfXRatioDstToSrc, dfYRatioDstToSrc,
                 dfSrcXDelta, dfSrcYDelta,
                 static_cast<const GUInt16 *>( pChunk ),
