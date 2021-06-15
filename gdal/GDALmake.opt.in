@@ -463,11 +463,9 @@ RASDAMAN_LIB  =   @RASDAMAN_LIB@
 #
 # BRUNSLI (JPEG XL)
 #
-# BRUNSLI_ENABLED  =	yes
-# BRUNSLI_DIR	= 
-# BRUNSLI_INCLUDE = -I$(INST_INCLUDE)
-# BRUNSLI_LIB	= -lbrunslicommon -lbrunslienc -lbrunslidec -lbrotlicommon -lbrotlienc -lbrotlidec
-#
+BRUNSLI_ENABLED = @BRUNSLI_ENABLED@
+BRUNSLI_INCLUDE = @BRUNSLI_INCLUDE@
+BRUNSLI_LIB	= @BRUNSLI_LIB@
 
 #
 # PDF stuff

@@ -642,6 +642,9 @@ USE_ONLY_CRYPTODLL_ALG
 HAVE_CRYPTOPP
 HAVE_ARMADILLO
 RDB_SETTING
+BRUNSLI_LIB
+BRUNSLI_INCLUDE
+BRUNSLI_ENABLED
 RASDAMAN_LIB
 RASDAMAN_INC
 RASDAMAN_ENABLED
@@ -1216,6 +1219,7 @@ with_mdb
 with_jvm_lib
 with_jvm_lib_add_rpath
 with_rasdaman
+with_brunsli
 with_rdb
 with_armadillo
 with_cryptopp
@@ -2227,6 +2231,7 @@ Optional Packages:
   --with-jvm-lib=ARG        ARG is dlopen or points to Java libjvm path
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
+  --with-brunsli    Include brunsli support via libbrunsli library
   --with-rdb=ARG    Include RDB support (ARG=no, yes or RDB SDK root path)
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
@@ -41358,6 +41363,27 @@ RASDAMAN_LIB=$RASDAMAN_LIB
 
 
 
+
+# Check whether --with-brunsli was given.
+if test "${with_brunsli+set}" = set; then :
+  withval=$with_brunsli;
+fi
+
+
+BRUNSLI_ENABLED=no
+
+if test "$with_brunsli" != "" -a "$with_brunsli" != "no" ; then
+  BRUNSLI_ENABLED="yes"
+  BRUNSLI_ENABLED=$BRUNSLI_ENABLED
+
+  BRUNSLI_INCLUDE=-I$prefix/include
+
+  BRUNSLI_LIB="-lbrunslicommon -lbrunslienc -lbrunslidec -lbrotlicommon -lbrotlienc -lbrotlidec"
+
+fi
+
+
+
 # Check whether --with-rdb was given.
 if test "${with_rdb+set}" = set; then :
   withval=$with_rdb;
@@ -45056,6 +45082,9 @@ echo "  Kea support:               ${HAVE_KEA}"
 
 
 echo "  LERC support:              ${HAVE_LERC}"
+
+
+echo "  libbrunsli support:        ${BRUNSLI_ENABLED}"
 
 
 echo "  libdeflate support:        ${LIBDEFLATE_SETTING}"
