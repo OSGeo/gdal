@@ -187,6 +187,9 @@ third_party_dir:      port_dir
 
 lib_dist:	default
 	if not exist $(DISTDIR) mkdir $(DISTDIR)
+	copy .\port\*.h .\$(DISTDIR)
+	copy .\gcore\*.h .\$(DISTDIR)
+	copy .\ogr\*.h .\$(DISTDIR)
 	copy $(GDAL_LIB_NAME) .\$(DISTDIR)
 	copy $(GDAL_DLL) .\$(DISTDIR)
 	copy $(GDAL_PDB) .\$(DISTDIR)
