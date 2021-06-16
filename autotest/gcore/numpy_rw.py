@@ -222,7 +222,7 @@ def test_numpy_rw_10():
 def test_numpy_rw_10_bis():
     """Attempt to reproduce https://github.com/mapbox/rasterio/issues/2180"""
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/signed8.tif', 2, 1, options=['PIXELTYPE=SIGNEDBYTE'])
-    ar = numpy.array([[-1, -1]], dtype=numpy.int8)
+    ar = numpy.array([[-1, -1]], dtype=numpy.int8).astype(np.uint8)
     ds.GetRasterBand(1).WriteArray(ar)
     ds.GetRasterBand(1).SetNoDataValue(-1)
     ds = None
