@@ -186,10 +186,13 @@ third_party_dir:      port_dir
 	cd ..
 
 lib_dist:	default
-	rm -rf $(DISTDIR)
-	mkdir $(DISTDIR)
-	cp $(GDAL_LIB_NAME) port\*.h gcore\*.h ogr\*.h $(DISTDIR)
-	zip -r $(DISTDIR).zip $(DISTDIR)
+	if not exist $(DISTDIR) mkdir $(DISTDIR)
+	copy .\port\*.h .\$(DISTDIR)
+	copy .\gcore\*.h .\$(DISTDIR)
+	copy .\ogr\*.h .\$(DISTDIR)
+	copy $(GDAL_LIB_NAME) .\$(DISTDIR)
+	copy $(GDAL_DLL) .\$(DISTDIR)
+	copy $(GDAL_PDB) .\$(DISTDIR)
 
 $(GDAL_DLL): $(LIB_DEPENDS)
 	call <<clean_main_build_output.bat
