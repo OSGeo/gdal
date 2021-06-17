@@ -200,9 +200,7 @@ def test_numpy_rw_9():
 def test_numpy_rw_10():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/signed8.tif', 2, 1, options=['PIXELTYPE=SIGNEDBYTE'])
-    ar = numpy.empty([1, 2], dtype=numpy.int8)
-    ar[0][0] = -128
-    ar[0][1] = 127
+    ar = numpy.array([[-128, 127]], dtype=numpy.int8)
     ds.GetRasterBand(1).WriteArray(ar)
     ds = None
 
@@ -217,6 +215,27 @@ def test_numpy_rw_10():
     assert ar2[0][0] == -128 and ar2[0][1] == 127, 'did not get expected result (1)'
 
     assert ar3[0][0] == -128 and ar3[0][1] == 127, 'did not get expected result (2)'
+
+###############################################################################
+# Test signed byte handling with all values set to nodata
+
+
+@pytest.mark.parametrize("options", [[], ['SPARSE_OK=YES']])
+def test_numpy_rw_10_bis(options):
+    """Reproduce https://github.com/mapbox/rasterio/issues/2180"""
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/signed8.tif', 2, 1,
+                                              options=['PIXELTYPE=SIGNEDBYTE']+options)
+    ar = numpy.array([[-1, -1]], dtype=numpy.int8)
+    ds.GetRasterBand(1).WriteArray(ar)
+    ds.GetRasterBand(1).SetNoDataValue(-1)
+    ds = None
+
+    ds = gdal.Open('/vsimem/signed8.tif')
+    ar2 = ds.ReadAsArray()
+    ds = None
+    gdal.Unlink('/vsimem/signed8.tif')
+
+    assert ar2[0][0] == -1 and ar2[0][1] == -1
 
 ###############################################################################
 # Test all datatypes
