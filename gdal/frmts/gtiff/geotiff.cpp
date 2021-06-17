@@ -5946,7 +5946,7 @@ void GTiffRasterBand::NullBlock( void *pData )
     const int nChunkSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
 
     int bNoDataSetIn = FALSE;
-    const double dfNoData = GetNoDataValue( &bNoDataSetIn );
+    double dfNoData = GetNoDataValue( &bNoDataSetIn );
     if( !bNoDataSetIn )
     {
 #ifdef ESRI_BUILD
@@ -5960,6 +5960,17 @@ void GTiffRasterBand::NullBlock( void *pData )
     }
     else
     {
+        // Hack for Signed Int8 case. As the data type is GDT_Byte (unsigned),
+        // we have to convert a negative nodata value in the range [-128,-1] in
+        // [128, 255]
+        if( m_poGDS->m_nBitsPerSample == 8 &&
+            m_poGDS->m_nSampleFormat == SAMPLEFORMAT_INT &&
+            dfNoData < 0 && dfNoData >= -128 &&
+            static_cast<int>(dfNoData) == dfNoData )
+        {
+            dfNoData = 256 + dfNoData;
+        }
+
         // Will convert nodata value to the right type and copy efficiently.
         GDALCopyWords64( &dfNoData, GDT_Float64, 0,
                        pData, eDataType, nChunkSize, nWords);
@@ -8126,7 +8137,20 @@ void GTiffDataset::FillEmptyTiles()
         if( nDataTypeSize &&
             nDataTypeSize * 8 == static_cast<int>(m_nBitsPerSample) )
         {
-            GDALCopyWords64( &m_dfNoDataValue, GDT_Float64, 0,
+            double dfNoData = m_dfNoDataValue;
+
+            // Hack for Signed Int8 case. As the data type is GDT_Byte (unsigned),
+            // we have to convert a negative nodata value in the range [-128,-1] in
+            // [128, 255]
+            if( m_nBitsPerSample == 8 &&
+                m_nSampleFormat == SAMPLEFORMAT_INT &&
+                dfNoData < 0 && dfNoData >= -128 &&
+                static_cast<int>(dfNoData) == dfNoData )
+            {
+                dfNoData = 256 + dfNoData;
+            }
+
+            GDALCopyWords64( &dfNoData, GDT_Float64, 0,
                            pabyData, eDataType,
                            nDataTypeSize,
                            nBlockBytes / nDataTypeSize );
