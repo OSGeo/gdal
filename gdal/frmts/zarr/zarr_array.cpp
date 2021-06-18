@@ -56,6 +56,7 @@ ZarrArray::ZarrArray(const std::string& osParentName,
     m_bFortranOrder(bFortranOrder),
     m_oAttrGroup(osParentName)
 {
+    m_oCompressorJSonV2.Deinit();
 }
 
 /************************************************************************/
@@ -290,7 +291,17 @@ void ZarrArray::SerializeV2()
     }
     oRoot.Add("chunks", oChunks);
 
-    oRoot.AddNull("compressor"); // TODO
+    if( m_oCompressorJSonV2.IsValid() )
+    {
+        oRoot.Add("compressor", m_oCompressorJSonV2);
+        oRoot["compressor"].Delete("num_threads"); // Blosc
+        oRoot["compressor"].Delete("typesize"); // Blosc
+        oRoot["compressor"].Delete("header"); // LZ4
+    }
+    else
+    {
+        oRoot.AddNull("compressor");
+    }
 
     if( m_dtype.GetType() == CPLJSONObject::Type::Object )
         oRoot.Add("dtype", m_dtype["dummy"]);
@@ -1911,6 +1922,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         return nullptr;
     }
 
+    const CPLCompressor* psCompressor = nullptr;
     const CPLCompressor* psDecompressor = nullptr;
     const auto oCompressor = oRoot["compressor"];
     if( isZarrV2 )
@@ -1932,8 +1944,9 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing compressor id");
                 return nullptr;
             }
+            psCompressor = CPLGetCompressor( osCompressorId.c_str() );
             psDecompressor = CPLGetDecompressor( osCompressorId.c_str() );
-            if( psDecompressor == nullptr )
+            if( psCompressor == nullptr || psDecompressor == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Decompressor %s not handled",
@@ -1960,10 +1973,11 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                 if( posSlash != std::string::npos )
                 {
                     osCodecName.resize(posSlash);
+                    psCompressor = CPLGetCompressor( osCodecName.c_str() );
                     psDecompressor = CPLGetDecompressor( osCodecName.c_str() );
                 }
             }
-            if( psDecompressor == nullptr )
+            if( psCompressor == nullptr || psDecompressor == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Decompressor %s not handled",
@@ -2008,7 +2022,9 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                                      bFortranOrder);
     poArray->SetFilename(osZarrayFilename);
     poArray->SetDimSeparator(osDimSeparator);
-    poArray->SetDecompressor(psDecompressor);
+    if( isZarrV2 )
+        poArray->SetCompressorJsonV2(oCompressor);
+    poArray->SetCompressorDecompressor(psCompressor, psDecompressor);
     if( !abyNoData.empty() )
     {
         poArray->RegisterNoDataValue(abyNoData.data());

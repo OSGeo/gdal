@@ -28,6 +28,8 @@
 
 #include "zarr.h"
 
+#include "cpl_minixml.h"
+
 #include <algorithm>
 #include <cassert>
 #include <limits>
@@ -768,6 +770,70 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
         return nullptr;
     }
 
+    CPLJSONObject oCompressor;
+    oCompressor.Deinit();
+    const char* pszCompressor = CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
+    const CPLCompressor* psCompressor = nullptr;
+    const CPLCompressor* psDecompressor = nullptr;
+    if( !EQUAL(pszCompressor, "NONE") )
+    {
+        psCompressor = CPLGetCompressor(pszCompressor);
+        psDecompressor = CPLGetCompressor(pszCompressor);
+        if( psCompressor == nullptr || psDecompressor == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Compressor/decompressor for %s not available", pszCompressor);
+            return nullptr;
+        }
+        const char* pszOptions = CSLFetchNameValue(psCompressor->papszMetadata, "OPTIONS");
+        if( pszOptions )
+        {
+            CPLXMLTreeCloser oTree(CPLParseXMLString(pszOptions));
+            const auto psRoot = oTree.get() ? CPLGetXMLNode(oTree.get(), "=Options") : nullptr;
+            if( psRoot )
+            {
+                for( const CPLXMLNode* psNode = psRoot->psChild;
+                            psNode != nullptr; psNode = psNode->psNext )
+                {
+                    if( psNode->eType == CXT_Element &&
+                        strcmp(psNode->pszValue, "Option") == 0 )
+                    {
+                        const char* pszName = CPLGetXMLValue(psNode, "name", nullptr);
+                        const char* pszType = CPLGetXMLValue(psNode, "type", nullptr);
+                        if( pszName && pszType )
+                        {
+                            const char* pszVal = CSLFetchNameValueDef(
+                                papszOptions,
+                                (std::string(pszCompressor) + '_' + pszName).c_str(),
+                                CPLGetXMLValue(psNode, "default", nullptr));
+                            if( pszVal )
+                            {
+                                if( EQUAL(pszName, "SHUFFLE") && EQUAL(pszVal, "BYTE") )
+                                {
+                                    pszVal = "1";
+                                    pszType = "integer";
+                                }
+
+                                if( !oCompressor.IsValid() )
+                                {
+                                    oCompressor = CPLJSONObject();
+                                    oCompressor.Add("id",
+                                        CPLString(pszCompressor).tolower());
+                                }
+
+                                std::string osOptName(CPLString(pszName).tolower());
+                                if( STARTS_WITH(pszType, "int") )
+                                    oCompressor.Add(osOptName, atoi(pszVal));
+                                else
+                                    oCompressor.Add(osOptName, pszVal);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     const std::string osZarrayDirectory =
         CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     if( VSIMkdir(osZarrayDirectory.c_str(), 0755) != 0 )
@@ -831,6 +897,9 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
     poArray->SetRootDirectoryName(m_osDirectoryName);
     poArray->SetVersion(2);
     poArray->SetDtype(dtype);
+    poArray->SetCompressorDecompressor(psCompressor, psDecompressor);
+    if( oCompressor.IsValid() )
+        poArray->SetCompressorJsonV2(oCompressor);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     m_oMapMDArrays[osName] = poArray;

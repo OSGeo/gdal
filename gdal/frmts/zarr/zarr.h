@@ -285,7 +285,9 @@ class ZarrArray final: public GDALMDArray
     mutable bool                                      m_bCachedTiledEmpty = false;
     bool                                              m_bUseOptimizedCodePaths = true;
     bool                                              m_bFortranOrder = false;
+    const CPLCompressor                              *m_psCompressor = nullptr;
     const CPLCompressor                              *m_psDecompressor = nullptr;
+    CPLJSONObject                                     m_oCompressorJSonV2{};
     mutable std::vector<GByte>                        m_abyTmpRawTileData{}; // used for Fortran order
     mutable ZarrAttributeGroup                        m_oAttrGroup;
     mutable std::shared_ptr<OGRSpatialReference>      m_poSRS{};
@@ -354,7 +356,11 @@ public:
 
     void SetDimSeparator(const std::string& osDimSeparator) { m_osDimSeparator = osDimSeparator; }
 
-    void SetDecompressor(const CPLCompressor* psComp) { m_psDecompressor = psComp; }
+    void SetCompressorDecompressor(const CPLCompressor* psComp,
+                                   const CPLCompressor* psDecomp) {
+        m_psCompressor = psComp;
+        m_psDecompressor = psDecomp;
+    }
 
     void SetAttributes(const CPLJSONObject& attrs) { m_oAttrGroup.Init(attrs, m_bUpdatable); }
 
@@ -377,6 +383,8 @@ public:
     void SetDtype(const CPLJSONObject& dtype) { m_dtype = dtype; }
 
     void SetDefinitionModified(bool bModified) { m_bDefinitionModified = bModified; }
+
+    void SetCompressorJsonV2(const CPLJSONObject& oCompressor) { m_oCompressorJSonV2 = oCompressor; }
 };
 
 #endif // ZARR_H

@@ -1327,3 +1327,58 @@ def test_zarr_create_array_errors(array_name):
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("compressor,options,expected_json", [
+    ["NONE", [], None],
+    ["zlib", [], {'id': 'zlib', 'level': 6}],
+    ["zlib", ["ZLIB_LEVEL=1"], {'id': 'zlib', 'level': 1}],
+    ["blosc", [], {'blocksize': 0,
+                   'clevel': 5,
+                   'cname': 'lz4',
+                   'id': 'blosc',
+                   'shuffle': 1}]])
+def test_zarr_create_array_compressor(compressor, options, expected_json):
+
+    compressors = gdal.GetDriverByName('Zarr').GetMetadataItem('COMPRESSORS')
+    if compressor != 'NONE' and compressor not in compressors:
+        pytest.skip('compressor %s not available' % compressor)
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            assert rg.CreateMDArray(
+                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ['COMPRESS=' + compressor] + options) is not None
+
+        create()
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/test/.zarray', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 1000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert j['compressor'] == expected_json
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_array_bad_compressor():
+
+    try:
+        ds = gdal.GetDriverByName(
+            'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        with gdaltest.error_handler():
+            assert rg.CreateMDArray(
+                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ['COMPRESS=invalid']) is None
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')

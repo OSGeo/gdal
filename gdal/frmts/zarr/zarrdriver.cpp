@@ -28,6 +28,8 @@
 
 #include "zarr.h"
 
+#include "cpl_minixml.h"
+
 #include <algorithm>
 #include <cassert>
 #include <limits>
@@ -438,7 +440,9 @@ public:
     const char* GetMetadataItem(const char* pszName, const char* pszDomain) override
     {
         if( EQUAL(pszName, "COMPRESSORS") ||
-            EQUAL(pszName, "BLOSC_COMPRESSORS") )
+            EQUAL(pszName, "BLOSC_COMPRESSORS") ||
+            EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) ||
+            EQUAL(pszName, GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST) )
         {
             InitMetadata();
         }
@@ -479,6 +483,93 @@ void ZarrDriver::InitMetadata()
                                     blosc_list_compressors());
     }
 #endif
+
+    {
+        CPLXMLTreeCloser oTree(CPLCreateXMLNode(
+                            nullptr, CXT_Element, "CreationOptionList"));
+        char** compressors = CPLGetCompressors();
+        auto psCompressNode = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psCompressNode, "name", "COMPRESS");
+        CPLAddXMLAttributeAndValue(psCompressNode, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psCompressNode, "description", "Compression method");
+        CPLAddXMLAttributeAndValue(psCompressNode, "default", "NONE");
+        {
+            auto poValueNode = CPLCreateXMLNode(psCompressNode, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "NONE");
+        }
+
+        for( auto iter = compressors; iter && *iter; ++iter )
+        {
+            const auto psCompressor = CPLGetCompressor(*iter);
+            if( psCompressor )
+            {
+                auto poValueNode = CPLCreateXMLNode(psCompressNode, CXT_Element, "Value");
+                CPLCreateXMLNode(poValueNode, CXT_Text,
+                                 CPLString(*iter).toupper().c_str());
+
+                const char* pszOptions = CSLFetchNameValue(
+                                    psCompressor->papszMetadata, "OPTIONS");
+                if( pszOptions )
+                {
+                    CPLXMLTreeCloser oTreeCompressor(CPLParseXMLString(pszOptions));
+                    const auto psRoot = oTreeCompressor.get() ?
+                        CPLGetXMLNode(oTreeCompressor.get(), "=Options") : nullptr;
+                    if( psRoot )
+                    {
+                        for( CPLXMLNode* psNode = psRoot->psChild;
+                                    psNode != nullptr; psNode = psNode->psNext )
+                        {
+                            if( psNode->eType == CXT_Element )
+                            {
+                                const char* pszName = CPLGetXMLValue(
+                                    psNode, "name", nullptr);
+                                if( pszName
+                                    && !EQUAL(pszName, "TYPESIZE") // Blosc
+                                    && !EQUAL(pszName, "HEADER") // LZ4
+                                  )
+                                {
+                                    CPLXMLNode* psNext = psNode->psNext;
+                                    psNode->psNext = nullptr;
+                                    CPLXMLNode* psOption = CPLCloneXMLTree(psNode);
+
+                                    CPLXMLNode* psName = CPLGetXMLNode(psOption, "name");
+                                    if( psName && psName->eType == CXT_Attribute &&
+                                        psName->psChild && psName->psChild->pszValue )
+                                    {
+                                        CPLString osNewValue(*iter);
+                                        osNewValue = osNewValue.toupper();
+                                        osNewValue += '_';
+                                        osNewValue += psName->psChild->pszValue;
+                                        CPLFree(psName->psChild->pszValue);
+                                        psName->psChild->pszValue = CPLStrdup(osNewValue.c_str());
+                                    }
+
+                                    CPLXMLNode* psDescription = CPLGetXMLNode(psOption, "description");
+                                    if( psDescription && psDescription->eType == CXT_Attribute &&
+                                        psDescription->psChild && psDescription->psChild->pszValue )
+                                    {
+                                        std::string osNewValue(psDescription->psChild->pszValue);
+                                        osNewValue += ". Only used when COMPRESS=";
+                                        osNewValue += CPLString(*iter).toupper();
+                                        CPLFree(psDescription->psChild->pszValue);
+                                        psDescription->psChild->pszValue = CPLStrdup(osNewValue.c_str());
+                                    }
+
+                                    CPLAddXMLChild(oTree.get(), psOption);
+                                    psNode->psNext = psNext;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        CSLDestroy(compressors);
+
+        char* pszXML = CPLSerializeXMLTree(oTree.get());
+        GDALDriver::SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, pszXML);
+        CPLFree(pszXML);
+    }
 }
 
 /************************************************************************/
