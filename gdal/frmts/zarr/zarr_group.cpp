@@ -120,6 +120,36 @@ std::vector<std::shared_ptr<GDALDimension>> ZarrGroupBase::GetDimensions(CSLCons
 }
 
 /************************************************************************/
+/*                             CreateDimension()                        */
+/************************************************************************/
+
+std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(const std::string& osName,
+                                                         const std::string& osType,
+                                                         const std::string& osDirection,
+                                                         GUInt64 nSize,
+                                                         CSLConstList)
+{
+    if( osName.empty() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Empty dimension name not supported");
+        return nullptr;
+    }
+    GetDimensions(nullptr);
+
+    if( m_oMapDimensions.find(osName) != m_oMapDimensions.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A dimension with same name already exists");
+        return nullptr;
+    }
+    auto newDim(std::make_shared<GDALDimensionWeakIndexingVar>(
+                    GetFullName(), osName, osType, osDirection, nSize));
+    m_oMapDimensions[osName] = newDim;
+    return newDim;
+}
+
+/************************************************************************/
 /*                      ZarrGroupV2::~ZarrGroupV2()                     */
 /************************************************************************/
 
@@ -495,6 +525,19 @@ std::shared_ptr<ZarrGroupV2> ZarrGroupV2::CreateOnDisk(const std::string& osPare
 }
 
 /************************************************************************/
+/*                         IsValidObjectName()                          */
+/************************************************************************/
+
+static bool IsValidObjectName(const std::string& osName)
+{
+    return !( osName.empty() || osName == "." || osName == ".." ||
+              osName.find('/') != std::string::npos ||
+              osName.find('\\') != std::string::npos ||
+              osName.find(':') != std::string::npos ||
+              STARTS_WITH(osName.c_str(), ".z") );
+}
+
+/************************************************************************/
 /*                      ZarrGroupV2::CreateGroup()                      */
 /************************************************************************/
 
@@ -507,11 +550,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::CreateGroup(const std::string& osName,
                  "Dataset not open in update mode");
         return nullptr;
     }
-    if( osName.empty() || osName == "." || osName == ".." ||
-        osName.find('/') != std::string::npos ||
-        osName.find('\\') != std::string::npos ||
-        osName.find(':') != std::string::npos ||
-        STARTS_WITH(osName.c_str(), ".z") )
+    if( !IsValidObjectName(osName) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid group name");
@@ -534,6 +573,269 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::CreateGroup(const std::string& osName,
     m_oMapGroups[osName] = poGroup;
     m_aosGroups.emplace_back(osName);
     return poGroup;
+}
+
+/************************************************************************/
+/*                          FillDTypeElts()                             */
+/************************************************************************/
+
+static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
+                                   size_t nGDALStartOffset,
+                                   std::vector<DtypeElt>& aoDtypeElts)
+{
+    CPLJSONObject dtype;
+    const auto eClass = oDataType.GetClass();
+    const size_t nNativeStartOffset = aoDtypeElts.empty() ? 0:
+        aoDtypeElts.back().nativeOffset + aoDtypeElts.back().nativeSize;
+    const std::string dummy("dummy");
+
+    switch( eClass )
+    {
+        case GEDTC_STRING:
+        {
+            if( oDataType.GetMaxStringLength() == 0 )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "String arrays of unlimited size are not supported");
+                dtype = CPLJSONObject();
+                dtype.Deinit();
+                return dtype;
+            }
+            DtypeElt elt;
+            elt.nativeType = DtypeElt::NativeType::STRING;
+            elt.nativeOffset = nNativeStartOffset;
+            elt.nativeSize = oDataType.GetMaxStringLength();
+            elt.gdalOffset = nGDALStartOffset;
+            elt.gdalSize = sizeof(char*);
+            aoDtypeElts.emplace_back(elt);
+            dtype.Set(dummy, CPLSPrintf("|S%d", static_cast<int>(elt.nativeSize)));
+            break;
+        }
+
+        case GEDTC_NUMERIC:
+        {
+            const auto eDT = oDataType.GetNumericDataType();
+            DtypeElt elt;
+            switch( eDT )
+            {
+                case GDT_Byte:
+                {
+                    elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
+                    dtype.Set(dummy, "|u1");
+                    break;
+                }
+                case GDT_UInt16:
+                {
+                    elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
+                    dtype.Set(dummy, "<u2");
+                    break;
+                }
+                case GDT_Int16:
+                {
+                    elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                    dtype.Set(dummy, "<i2");
+                    break;
+                }
+                case GDT_UInt32:
+                {
+                    elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
+                    dtype.Set(dummy, "<u4");
+                    break;
+                }
+                case GDT_Int32:
+                {
+                    elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                    dtype.Set(dummy, "<i4");
+                    break;
+                }
+                case GDT_Float32:
+                {
+                    elt.nativeType = DtypeElt::NativeType::IEEEFP;
+                    dtype.Set(dummy, "<f4");
+                    break;
+                }
+                case GDT_Float64:
+                {
+                    elt.nativeType = DtypeElt::NativeType::IEEEFP;
+                    dtype.Set(dummy, "<f8");
+                    break;
+                }
+                case GDT_Unknown:
+                case GDT_CInt16:
+                case GDT_CInt32:
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Unsupported data type: %s",
+                             GDALGetDataTypeName(eDT));
+                    dtype = CPLJSONObject();
+                    dtype.Deinit();
+                    return dtype;
+                }
+                case GDT_CFloat32:
+                {
+                    elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
+                    dtype.Set(dummy, "<c8");
+                    break;
+                }
+                case GDT_CFloat64:
+                {
+                    elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
+                    dtype.Set(dummy, "<c16");
+                    break;
+                }
+                case GDT_TypeCount:
+                {
+                    static_assert(GDT_TypeCount == GDT_CFloat64 + 1, "GDT_TypeCount == GDT_CFloat64 + 1");
+                    break;
+                }
+            }
+            elt.nativeOffset = nNativeStartOffset;
+            elt.nativeSize = GDALGetDataTypeSizeBytes(eDT);
+            elt.gdalOffset = nGDALStartOffset;
+            elt.gdalSize = elt.nativeSize;
+#ifdef CPL_MSB
+            elt.needByteSwapping = elt.nativeSize > 1;
+#endif
+            aoDtypeElts.emplace_back(elt);
+            break;
+        }
+
+        case GEDTC_COMPOUND:
+        {
+            const auto& comps = oDataType.GetComponents();
+            CPLJSONArray array;
+            for( const auto& comp: comps )
+            {
+                CPLJSONArray subArray;
+                subArray.Add(comp->GetName());
+                const auto subdtype = FillDTypeElts(
+                    comp->GetType(),
+                    nGDALStartOffset + comp->GetOffset(),
+                    aoDtypeElts);
+                if( !subdtype.IsValid() )
+                {
+                    dtype = CPLJSONObject();
+                    dtype.Deinit();
+                    return dtype;
+                }
+                if( subdtype.GetType() == CPLJSONObject::Type::Object )
+                    subArray.Add(subdtype["dummy"]);
+                else
+                    subArray.Add(subdtype);
+                array.Add(subArray);
+            }
+            dtype = array;
+            break;
+        }
+    }
+    return dtype;
+}
+
+/************************************************************************/
+/*                     ZarrGroupV2::CreateMDArray()                     */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
+            const std::string& osName,
+            const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+            const GDALExtendedDataType& oDataType,
+            CSLConstList papszOptions )
+{
+    if( !m_bUpdatable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return nullptr;
+    }
+    if( !IsValidObjectName(osName) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Invalid array name");
+        return nullptr;
+    }
+
+    std::vector<DtypeElt> aoDtypeElts;
+    const auto dtype = FillDTypeElts(oDataType, 0, aoDtypeElts);
+    if( !dtype.IsValid() || aoDtypeElts.empty() )
+        return nullptr;
+
+    GetMDArrayNames();
+
+    if( m_oMapMDArrays.find(osName) != m_oMapMDArrays.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An array with same name already exists");
+        return nullptr;
+    }
+
+    const std::string osZarrayDirectory =
+        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+    if( VSIMkdir(osZarrayDirectory.c_str(), 0755) != 0 )
+    {
+        VSIStatBufL sStat;
+        if( VSIStatL(osZarrayDirectory.c_str(), &sStat) == 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Directory %s already exists.",
+                     osZarrayDirectory.c_str());
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s.",
+                     osZarrayDirectory.c_str());
+        }
+        return nullptr;
+    }
+
+    const auto nDims = aoDimensions.size();
+    std::vector<GUInt64> anBlockSize(nDims, 1);
+    if( nDims >= 2 )
+    {
+        anBlockSize[nDims-2] = std::min(aoDimensions[nDims-2]->GetSize(),
+                                        static_cast<GUInt64>(256));
+        anBlockSize[nDims-1] = std::min(aoDimensions[nDims-1]->GetSize(),
+                                        static_cast<GUInt64>(256));
+    }
+    else if( nDims == 1 )
+    {
+        anBlockSize[0] = aoDimensions[0]->GetSize();
+    }
+
+    const char* pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
+    if( pszBlockSize )
+    {
+        const auto aszTokens(CPLStringList(CSLTokenizeString2(pszBlockSize, ",", 0)));
+        if( static_cast<size_t>(aszTokens.size()) != nDims )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid number of values in BLOCKSIZE");
+            return nullptr;
+        }
+        for( size_t i = 0; i < nDims; ++i )
+        {
+            anBlockSize[i] = static_cast<uint32_t>(CPLAtoGIntBig(aszTokens[i]));
+        }
+    }
+
+    const bool bFortranOrder = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
+
+    auto poArray = ZarrArray::Create(GetFullName(), osName,
+                                     aoDimensions, oDataType,
+                                     aoDtypeElts, anBlockSize, bFortranOrder);
+
+    if( !poArray )
+        return nullptr;
+    const std::string osZarrayFilename =
+        CPLFormFilename(osZarrayDirectory.c_str(), ".zarray", nullptr);
+    poArray->SetFilename(osZarrayFilename);
+    poArray->SetRootDirectoryName(m_osDirectoryName);
+    poArray->SetVersion(2);
+    poArray->SetDtype(dtype);
+    poArray->SetUpdatable(true);
+    poArray->SetDefinitionModified(true);
+    m_oMapMDArrays[osName] = poArray;
+    m_aosArrays.emplace_back(osName);
+    return poArray;
 }
 
 /************************************************************************/

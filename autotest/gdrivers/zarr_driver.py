@@ -1175,3 +1175,155 @@ def test_zarr_create_group_errors(group_name):
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def getCompoundDT():
+    x = gdal.EDTComponent.Create(
+        'x', 0, gdal.ExtendedDataType.Create(gdal.GDT_Int16))
+    y = gdal.EDTComponent.Create(
+        'y', 0, gdal.ExtendedDataType.Create(gdal.GDT_Int32))
+    subcompound = gdal.ExtendedDataType.CreateCompound("", 4, [y])
+    subcompound_component = gdal.EDTComponent.Create(
+        'y', 4, subcompound)
+    return gdal.ExtendedDataType.CreateCompound("", 8, [x, subcompound_component])
+
+
+@pytest.mark.parametrize("datatype,nodata", [
+    [gdal.ExtendedDataType.Create(gdal.GDT_Byte), None],
+    [gdal.ExtendedDataType.Create(gdal.GDT_Byte), 1],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_UInt16), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_Int16), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_UInt32), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_Int32), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_Float32), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_Float64), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_Float64), 1.5],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_Float64), float('nan')],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_Float64), float('infinity')],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_Float64), float('-infinity')],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_CInt16), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_CInt32), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_CFloat32), None],
+    [gdal.ExtendedDataType.Create(
+        gdal.GDT_CFloat64), None],
+    [gdal.ExtendedDataType.CreateString(10), None],
+    [gdal.ExtendedDataType.CreateString(10), "ab"],
+    [getCompoundDT(), None],
+    [getCompoundDT(), bytes(array.array('h', [12])) +
+     bytes(array.array('h', [0])) +  # padding
+     bytes(array.array('i', [2345678]))],
+])
+def test_zarr_create_array(datatype, nodata):
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            assert rg.GetName() == '/'
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim1 = rg.CreateDimension("dim1", None, None, 3)
+
+            if datatype.GetNumericDataType() in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+                with gdaltest.error_handler():
+                    ar = rg.CreateMDArray("my_ar", [dim0, dim1], datatype)
+                assert ar is None
+            else:
+                ar = rg.CreateMDArray("my_ar", [dim0, dim1], datatype)
+                assert ar
+                if nodata:
+                    if datatype.GetClass() == gdal.GEDTC_STRING:
+                        assert ar.SetNoDataValueString(nodata) == gdal.CE_None
+                    elif datatype.GetClass() == gdal.GEDTC_NUMERIC:
+                        assert ar.SetNoDataValueDouble(nodata) == gdal.CE_None
+                    else:
+                        assert ar.SetNoDataValueRaw(nodata) == gdal.CE_None
+
+        create()
+
+        if datatype.GetNumericDataType() not in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+            ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray('my_ar')
+            assert ar
+            got_dt = ar.GetDataType()
+            if got_dt.GetClass() == gdal.GEDTC_COMPOUND:
+                comps = got_dt.GetComponents()
+                assert len(comps) == 2
+                assert comps[1].GetType().GetClass() == gdal.GEDTC_COMPOUND
+                comps[1] = gdal.EDTComponent.Create(
+                    comps[1].GetName(), comps[1].GetType().GetSize(),
+                    gdal.ExtendedDataType.CreateCompound(
+                        "", comps[1].GetType().GetSize(),
+                        comps[1].GetType().GetComponents()))
+                got_dt = gdal.ExtendedDataType.CreateCompound(
+                    "", got_dt.GetSize(), comps)
+            assert got_dt == datatype
+            assert len(ar.GetDimensions()) == 2
+            assert [ar.GetDimensions()[i].GetSize()
+                    for i in range(2)] == [2, 3]
+            if nodata:
+                if datatype.GetClass() == gdal.GEDTC_STRING:
+                    got_nodata = ar.GetNoDataValueAsString()
+                    assert got_nodata == nodata
+                elif datatype.GetClass() == gdal.GEDTC_NUMERIC:
+                    got_nodata = ar.GetNoDataValueAsDouble()
+                    if math.isnan(nodata):
+                        assert math.isnan(got_nodata)
+                    else:
+                        assert got_nodata == nodata
+                else:
+                    got_nodata = ar.GetNoDataValueAsRaw()
+                    assert got_nodata == nodata
+            else:
+                assert ar.GetNoDataValueAsRaw() is None
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("array_name", ["foo",  # already existing
+                                        "directory_with_that_name",
+                                        "",
+                                        ".",
+                                        "..",
+                                        "a/b",
+                                        "a\\n",
+                                        "a:b",
+                                        ".zarray",
+                                        ])
+def test_zarr_create_array_errors(array_name):
+
+    try:
+        ds = gdal.GetDriverByName(
+            'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        assert rg.CreateMDArray(
+            'foo', [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)) is not None
+        gdal.Mkdir('/vsimem/test.zarr/directory_with_that_name', 0)
+        with gdaltest.error_handler():
+            assert rg.CreateMDArray(
+                array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)) is None
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')

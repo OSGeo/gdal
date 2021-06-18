@@ -165,6 +165,12 @@ public:
 
     std::vector<std::shared_ptr<GDALDimension>> GetDimensions(CSLConstList papszOptions) const override;
 
+    std::shared_ptr<GDALDimension> CreateDimension(const std::string& osName,
+                                                   const std::string& osType,
+                                                   const std::string& osDirection,
+                                                   GUInt64 nSize,
+                                                   CSLConstList papszOptions = nullptr) override;
+
     std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions = nullptr) const override;
 
     std::vector<std::string> GetGroupNames(CSLConstList papszOptions = nullptr) const override;
@@ -207,6 +213,11 @@ public:
 
     std::shared_ptr<GDALGroup> CreateGroup(const std::string& osName,
                                            CSLConstList papszOptions = nullptr) override;
+
+    std::shared_ptr<GDALMDArray> CreateMDArray(const std::string& osName,
+                                               const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                               const GDALExtendedDataType& oDataType,
+                                               CSLConstList papszOptions = nullptr) override;
 
     void InitFromZMetadata(const CPLJSONObject& oRoot);
 };
@@ -263,6 +274,7 @@ class ZarrArray final: public GDALMDArray
     const GDALExtendedDataType                        m_oType;
     const std::vector<DtypeElt>                       m_aoDtypeElts;
     const std::vector<GUInt64>                        m_anBlockSize;
+    CPLJSONObject                                     m_dtype;
     GByte                                            *m_pabyNoData = nullptr;
     std::string                                       m_osDimSeparator { "." };
     std::string                                       m_osFilename{};
@@ -282,6 +294,7 @@ class ZarrArray final: public GDALMDArray
     std::string                                       m_osRootDirectoryName{};
     int                                               m_nVersion = 0;
     bool                                              m_bUpdatable = false;
+    bool                                              m_bDefinitionModified = false;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -297,6 +310,8 @@ class ZarrArray final: public GDALMDArray
                         std::vector<GByte>& abyDst) const;
 
     bool AllocateWorkingBuffers() const;
+
+    void SerializeV2();
 
 protected:
     bool IRead(const GUInt64* arrayStartIdx,
@@ -319,7 +334,7 @@ public:
                                              const std::vector<GUInt64>& anBlockSize,
                                              bool bFortranOrder);
 
-    bool IsWritable() const override { return false; }
+    bool IsWritable() const override { return m_bUpdatable; }
 
     const std::string& GetFilename() const override { return m_osFilename; }
 
@@ -330,6 +345,8 @@ public:
     std::vector<GUInt64> GetBlockSize() const override { return m_anBlockSize; }
 
     const void* GetRawNoDataValue() const override { return m_pabyNoData; }
+
+    bool SetRawNoDataValue(const void* pRawNoData) override;
 
     void RegisterNoDataValue(const void*);
 
@@ -354,6 +371,12 @@ public:
         { return m_oAttrGroup.GetAttributes(papszOptions); }
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
+
+    void SetUpdatable(bool bUpdatable) { m_bUpdatable = bUpdatable; }
+
+    void SetDtype(const CPLJSONObject& dtype) { m_dtype = dtype; }
+
+    void SetDefinitionModified(bool bModified) { m_bDefinitionModified = bModified; }
 };
 
 #endif // ZARR_H
