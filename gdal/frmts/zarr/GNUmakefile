@@ -1,5 +1,5 @@
 
-OBJ	=	zarrdriver.o
+OBJ	=	zarrdriver.o zarr_array.o zarr_attribute.o zarr_group.o
 
 include ../../GDALmake.opt
 
@@ -9,6 +9,8 @@ XTRA_OPT := $(XTRA_OPT) -DHAVE_BLOSC
 endif
 
 CPPFLAGS :=  -I../mem -I../gtiff $(CPPFLAGS) $(XTRA_OPT)
+
+$(O_OBJ): zarr.h
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

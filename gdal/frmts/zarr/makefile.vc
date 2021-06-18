@@ -1,5 +1,5 @@
 
-OBJ	=	zarrdriver.obj
+OBJ	=	zarrdriver.obj zarr_array.obj zarr_attribute.obj zarr_group.obj
 
 GDAL_ROOT	=	..\..
 
