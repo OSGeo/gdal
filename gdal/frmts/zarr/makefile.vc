@@ -7,6 +7,10 @@ GDAL_ROOT	=	..\..
 
 EXTRAFLAGS= -I..\mem -I..\gtiff
 
+!IFDEF BLOSC_CFLAGS
+EXTRAFLAGS =	$(EXTRAFLAGS) $(BLOSC_CFLAGS) -DHAVE_BLOSC
+!ENDIF
+
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
 

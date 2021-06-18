@@ -38,6 +38,10 @@
 #include <map>
 #include <set>
 
+#ifdef HAVE_BLOSC
+#include <blosc.h>
+#endif
+
 /************************************************************************/
 /*                            ZarrDataset                               */
 /************************************************************************/
@@ -3082,14 +3086,33 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
 
 class ZarrDriver final: public GDALDriver
 {
+    bool m_bMetadataInitialized = false;
+    void InitMetadata();
+
 public:
-    const char* GetMetadataItem(const char* pszName, const char* pszDomain) override;
+    const char* GetMetadataItem(const char* pszName, const char* pszDomain) override
+    {
+        if( EQUAL(pszName, "COMPRESSORS") ||
+            EQUAL(pszName, "BLOSC_COMPRESSORS") )
+        {
+            InitMetadata();
+        }
+        return GDALDriver::GetMetadataItem(pszName, pszDomain);
+    }
+
+    char** GetMetadata(const char* pszDomain) override
+    {
+        InitMetadata();
+        return GDALDriver::GetMetadata(pszDomain);
+    }
 };
 
-const char* ZarrDriver::GetMetadataItem(const char* pszName, const char* pszDomain)
+void ZarrDriver::InitMetadata()
 {
-    if( (pszDomain == nullptr || pszDomain[0] == '\0') &&
-        EQUAL(pszName, "COMPRESSORS") )
+    if( m_bMetadataInitialized )
+        return;
+    m_bMetadataInitialized = true;
+
     {
         // A bit of a hack. Normally GetMetadata() should also return it,
         // but as this is only used for tests, just make GetMetadataItem()
@@ -3103,9 +3126,14 @@ const char* ZarrDriver::GetMetadataItem(const char* pszName, const char* pszDoma
             osCompressors += *iter;
         }
         CSLDestroy(decompressors);
-        return CPLSPrintf("%s", osCompressors.c_str());
+        GDALDriver::SetMetadataItem("COMPRESSORS", osCompressors.c_str());
     }
-    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+#ifdef HAVE_BLOSC
+    {
+        GDALDriver::SetMetadataItem("BLOSC_COMPRESSORS",
+                                    blosc_list_compressors());
+    }
+#endif
 }
 
 /************************************************************************/

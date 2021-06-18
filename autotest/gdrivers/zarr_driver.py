@@ -998,3 +998,11 @@ def test_zarr_read_empty_shape():
     ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
     assert ar
     assert ar.Read() == array.array('b', [120])
+
+
+def test_zarr_read_BLOSC_COMPRESSORS():
+
+    if 'blosc' not in gdal.GetDriverByName('Zarr').GetMetadataItem('COMPRESSORS'):
+        pytest.skip('blosc not available')
+    assert 'lz4' in gdal.GetDriverByName(
+        'Zarr').GetMetadataItem('BLOSC_COMPRESSORS')
