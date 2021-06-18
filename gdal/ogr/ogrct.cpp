@@ -543,8 +543,8 @@ class OGRProjCT : public OGRCoordinateTransformation
             reset();
         }
         PjPtr(const PjPtr& other) :
-            m_pj((other.m_pj != nullptr) ? 
-                 (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : 
+            m_pj((other.m_pj != nullptr) ?
+                 (proj_clone(OSRGetProjTLSContext(), other.m_pj)) :
                  (nullptr))
         {}
         PjPtr(PjPtr&& other) :
@@ -557,8 +557,8 @@ class OGRProjCT : public OGRCoordinateTransformation
             if(this != &other)
             {
                 reset();
-                m_pj = (other.m_pj != nullptr) ? 
-                       (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : 
+                m_pj = (other.m_pj != nullptr) ?
+                       (proj_clone(OSRGetProjTLSContext(), other.m_pj)) :
                        (nullptr);
             }
             return *this;
@@ -948,7 +948,7 @@ OCTNewCoordinateTransformationEx(
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::Clone
  *
- * @return handle to transformation's clone or NULL on error, 
+ * @return handle to transformation's clone or NULL on error,
  *         must be freed with OCTDestroyCoordinateTransformation
  *
  * @since GDAL 3.4
@@ -1020,7 +1020,7 @@ OGRSpatialReferenceH OCTGetTargetCS(OGRCoordinateTransformationH hTransform)
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::GetInverse
  *
- * @return handle to inverse transformation or NULL on error, 
+ * @return handle to inverse transformation or NULL on error,
  *         must be freed with OCTDestroyCoordinateTransformation
  *
  * @since GDAL 3.4
