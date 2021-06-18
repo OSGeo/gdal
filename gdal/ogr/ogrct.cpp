@@ -2223,14 +2223,23 @@ int OGRProjCT::TransformWithErrorCodes(
     // staticCRS -> dynamicCRS or dynamicCRS -> staticCRS transformations, and
     // in either case, the coordinate epoch of the dynamicCRS must be provided
     // as the input time.
-    const double dfDefaultTime =
-        (bSourceIsDynamicCRS && dfSourceCoordinateEpoch > 0 &&
-         !bTargetIsDynamicCRS) ?
-             dfSourceCoordinateEpoch :
-        (bTargetIsDynamicCRS && dfTargetCoordinateEpoch > 0 &&
-         !bSourceIsDynamicCRS) ?
-             dfTargetCoordinateEpoch :
-             HUGE_VAL;
+    double dfDefaultTime = HUGE_VAL;
+    if( bSourceIsDynamicCRS && dfSourceCoordinateEpoch > 0 &&
+        !bTargetIsDynamicCRS &&
+        CPLTestBool(CPLGetConfigOption("OGR_CT_USE_SRS_COORDINATE_EPOCH", "YES")) )
+    {
+        dfDefaultTime = dfSourceCoordinateEpoch;
+        CPLDebug("OGR_CT", "Using coordinate epoch %f from source CRS",
+                 dfDefaultTime);
+    }
+    else if (bTargetIsDynamicCRS && dfTargetCoordinateEpoch > 0 &&
+             !bSourceIsDynamicCRS &&
+             CPLTestBool(CPLGetConfigOption("OGR_CT_USE_SRS_COORDINATE_EPOCH", "YES")) )
+    {
+        dfDefaultTime = dfTargetCoordinateEpoch;
+        CPLDebug("OGR_CT", "Using coordinate epoch %f from target CRS",
+                 dfDefaultTime);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Select dynamically the best transformation for the data, if     */
