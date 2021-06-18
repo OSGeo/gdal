@@ -37,6 +37,21 @@
 #include <set>
 
 /************************************************************************/
+/*                          ~ZarrGroupBase()                            */
+/************************************************************************/
+
+ZarrGroupBase::~ZarrGroupBase()
+{
+    // We need to explictly flush arrays so that the _ARRAY_DIMENSIONS
+    // is properly written. As it relies on checking if the dimensions of the
+    // array have an indexing variable, then still need to be all alive.
+    for( auto& kv: m_oMapMDArrays )
+    {
+        kv.second->Flush();
+    }
+}
+
+/************************************************************************/
 /*                           GetMDArrayNames()                          */
 /************************************************************************/
 
@@ -52,7 +67,7 @@ std::vector<std::string> ZarrGroupBase::GetMDArrayNames(CSLConstList) const
 /*                            RegisterArray()                           */
 /************************************************************************/
 
-void ZarrGroupBase::RegisterArray(const std::shared_ptr<GDALMDArray>& array) const
+void ZarrGroupBase::RegisterArray(const std::shared_ptr<ZarrArray>& array) const
 {
     m_oMapMDArrays[array->GetName()] = array;
     m_aosArrays.emplace_back(array->GetName());
@@ -893,6 +908,7 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
         return nullptr;
     const std::string osZarrayFilename =
         CPLFormFilename(osZarrayDirectory.c_str(), ".zarray", nullptr);
+    poArray->SetNew(true);
     poArray->SetFilename(osZarrayFilename);
     poArray->SetRootDirectoryName(m_osDirectoryName);
     poArray->SetVersion(2);

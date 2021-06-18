@@ -88,6 +88,41 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
 
 ZarrArray::~ZarrArray()
 {
+    Flush();
+
+    if( m_pabyNoData )
+    {
+        m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
+        CPLFree(m_pabyNoData);
+    }
+
+    if( !m_abyDecodedTileData.empty() )
+    {
+        const size_t nDTSize = m_oType.GetSize();
+        GByte* pDst = &m_abyDecodedTileData[0];
+        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
+        for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
+        {
+            for( auto& elt: m_aoDtypeElts )
+            {
+                if( elt.nativeType == DtypeElt::NativeType::STRING )
+                {
+                    char* ptr;
+                    char** pptr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+                    memcpy(&ptr, pptr, sizeof(ptr));
+                    VSIFree(ptr);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                                Flush()                               */
+/************************************************************************/
+
+void ZarrArray::Flush()
+{
     if( m_bDefinitionModified  )
     {
         if( m_nVersion == 2 )
@@ -98,12 +133,43 @@ ZarrArray::~ZarrArray()
         {
             // TODO
         }
+        m_bDefinitionModified = false;
     }
 
-    if( (m_oAttrGroup.IsModified() || m_bSRSModified) && m_nVersion == 2 )
+    CPLJSONArray j_ARRAY_DIMENSIONS;
+    if( !m_aoDims.empty() )
     {
+        for( const auto& poDim: m_aoDims )
+        {
+            if( dynamic_cast<const ZarrArray*>(poDim->GetIndexingVariable().get()) != nullptr )
+            {
+                j_ARRAY_DIMENSIONS.Add( poDim->GetName() );
+            }
+            else
+            {
+                j_ARRAY_DIMENSIONS = CPLJSONArray();
+                break;
+            }
+        }
+    }
+
+    if( (m_oAttrGroup.IsModified() ||
+         (m_bNew && j_ARRAY_DIMENSIONS.Size() != 0) ||
+         m_bSRSModified) && m_nVersion == 2 )
+    {
+        m_bNew = false;
+        m_bSRSModified = false;
+        m_oAttrGroup.UnsetModified();
+
         CPLJSONDocument oDoc;
         oDoc.SetRoot(m_oAttrGroup.Serialize());
+
+        if( j_ARRAY_DIMENSIONS.Size() != 0 )
+        {
+            oDoc.GetRoot().Delete("_ARRAY_DIMENSIONS");
+            oDoc.GetRoot().Add("_ARRAY_DIMENSIONS", j_ARRAY_DIMENSIONS);
+        }
+
         if( m_poSRS )
         {
             CPLJSONObject oCRS;
@@ -144,31 +210,6 @@ ZarrArray::~ZarrArray()
             oDoc.GetRoot().Add("crs", oCRS);
         }
         oDoc.Save(CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
-    }
-
-    if( m_pabyNoData )
-    {
-        m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
-        CPLFree(m_pabyNoData);
-    }
-    if( !m_abyDecodedTileData.empty() )
-    {
-        const size_t nDTSize = m_oType.GetSize();
-        GByte* pDst = &m_abyDecodedTileData[0];
-        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
-        for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
-        {
-            for( auto& elt: m_aoDtypeElts )
-            {
-                if( elt.nativeType == DtypeElt::NativeType::STRING )
-                {
-                    char* ptr;
-                    char** pptr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
-                    memcpy(&ptr, pptr, sizeof(ptr));
-                    VSIFree(ptr);
-                }
-            }
-        }
     }
 }
 

@@ -104,6 +104,18 @@ public:
         }
     }
 
+    void UnsetModified()
+    {
+        m_bModified = false;
+        auto attrs = m_oGroup.GetAttributes(nullptr);
+        for( auto& attr: attrs )
+        {
+            auto memAttr = std::dynamic_pointer_cast<MEMAttribute>(attr);
+            if( memAttr )
+                memAttr->SetModified(false);
+        }
+    }
+
     bool IsModified() const
     {
         if( m_bModified )
@@ -132,7 +144,7 @@ class ZarrGroupBase CPL_NON_FINAL: public GDALGroup
 protected:
     std::string m_osDirectoryName{};
     mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
-    mutable std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
+    mutable std::map<CPLString, std::shared_ptr<ZarrArray>> m_oMapMDArrays{};
     mutable std::map<CPLString, std::shared_ptr<GDALDimensionWeakIndexingVar>> m_oMapDimensions{};
     mutable bool m_bDirectoryExplored = false;
     mutable std::vector<std::string> m_aosGroups{};
@@ -150,6 +162,8 @@ public:
     ZarrGroupBase(const std::string& osParentName, const std::string& osName):
         GDALGroup(osParentName, osName),
         m_oAttrGroup(osParentName) {}
+
+    ~ZarrGroupBase() override;
 
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
         { LoadAttributes(); return m_oAttrGroup.GetAttribute(osName); }
@@ -182,7 +196,7 @@ public:
                                          const CPLJSONObject& oRoot,
                                          bool bLoadedFromZMetadata,
                                          const CPLJSONObject& oAttributes) const;
-    void RegisterArray(const std::shared_ptr<GDALMDArray>& array) const;
+    void RegisterArray(const std::shared_ptr<ZarrArray>& array) const;
 
     void SetUpdatable(bool bUpdatable) { m_bUpdatable = bUpdatable; }
 };
@@ -298,6 +312,7 @@ class ZarrArray final: public GDALMDArray
     bool                                              m_bUpdatable = false;
     bool                                              m_bDefinitionModified = false;
     bool                                              m_bSRSModified = false;
+    bool                                              m_bNew = false;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -394,6 +409,10 @@ public:
     void SetDefinitionModified(bool bModified) { m_bDefinitionModified = bModified; }
 
     void SetCompressorJsonV2(const CPLJSONObject& oCompressor) { m_oCompressorJSonV2 = oCompressor; }
+
+    void SetNew(bool bNew) { m_bNew = bNew; }
+
+    void Flush();
 };
 
 #endif // ZARR_H

@@ -1476,3 +1476,35 @@ def test_zarr_create_array_set_crs():
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_array_set_dimension_name():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim0_ar = rg.CreateMDArray(
+                "dim0", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            dim0.SetIndexingVariable(dim0_ar)
+
+            rg.CreateMDArray(
+                "test", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+        create()
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/test/.zattrs', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert '_ARRAY_DIMENSIONS' in j
+        assert j['_ARRAY_DIMENSIONS'] == ['dim0']
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
