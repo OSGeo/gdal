@@ -900,6 +900,10 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
     const bool bFortranOrder = EQUAL(
         CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
 
+    const char* pszDimSeparator = CSLFetchNameValueDef(papszOptions,
+                                                       "DIM_SEPARATOR",
+                                                       ".");
+
     auto poArray = ZarrArray::Create(GetFullName(), osName,
                                      aoDimensions, oDataType,
                                      aoDtypeElts, anBlockSize, bFortranOrder);
@@ -911,6 +915,7 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
     poArray->SetNew(true);
     poArray->SetFilename(osZarrayFilename);
     poArray->SetRootDirectoryName(m_osDirectoryName);
+    poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetVersion(2);
     poArray->SetDtype(dtype);
     poArray->SetCompressorDecompressor(psCompressor, psDecompressor);

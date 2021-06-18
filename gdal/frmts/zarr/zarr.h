@@ -297,6 +297,7 @@ class ZarrArray final: public GDALMDArray
     mutable std::vector<uint64_t>                     m_anCachedTiledIndices{};
     mutable bool                                      m_bCachedTiledValid = false;
     mutable bool                                      m_bCachedTiledEmpty = false;
+    mutable bool                                      m_bDirtyTile = false;
     bool                                              m_bUseOptimizedCodePaths = true;
     bool                                              m_bFortranOrder = false;
     const CPLCompressor                              *m_psCompressor = nullptr;
@@ -325,11 +326,16 @@ class ZarrArray final: public GDALMDArray
     bool LoadTileData(const std::vector<uint64_t>& tileIndices,
                       bool& bMissingTileOut) const;
     void BlockTranspose(const std::vector<GByte>& abySrc,
-                        std::vector<GByte>& abyDst) const;
+                        std::vector<GByte>& abyDst,
+                        bool bDecode) const;
 
     bool AllocateWorkingBuffers() const;
 
     void SerializeV2();
+
+    void DeallocateDecodedTileData();
+
+    bool FlushDirtyTile() const;
 
 protected:
     bool IRead(const GUInt64* arrayStartIdx,
@@ -338,6 +344,13 @@ protected:
                       const GPtrDiff_t* bufferStride,
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const override;
+
+    bool IWrite(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      const void* pSrcBuffer) override;
 
     bool IsCacheable() const override { return false; }
 

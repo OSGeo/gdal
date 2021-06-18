@@ -96,25 +96,7 @@ ZarrArray::~ZarrArray()
         CPLFree(m_pabyNoData);
     }
 
-    if( !m_abyDecodedTileData.empty() )
-    {
-        const size_t nDTSize = m_oType.GetSize();
-        GByte* pDst = &m_abyDecodedTileData[0];
-        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
-        for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
-        {
-            for( auto& elt: m_aoDtypeElts )
-            {
-                if( elt.nativeType == DtypeElt::NativeType::STRING )
-                {
-                    char* ptr;
-                    char** pptr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
-                    memcpy(&ptr, pptr, sizeof(ptr));
-                    VSIFree(ptr);
-                }
-            }
-        }
-    }
+    DeallocateDecodedTileData();
 }
 
 /************************************************************************/
@@ -123,6 +105,8 @@ ZarrArray::~ZarrArray()
 
 void ZarrArray::Flush()
 {
+    FlushDirtyTile();
+
     if( m_bDefinitionModified  )
     {
         if( m_nVersion == 2 )
@@ -210,6 +194,33 @@ void ZarrArray::Flush()
             oDoc.GetRoot().Add("crs", oCRS);
         }
         oDoc.Save(CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
+    }
+}
+
+/************************************************************************/
+/*                      DeallocateDecodedTileData()                     */
+/************************************************************************/
+
+void ZarrArray::DeallocateDecodedTileData()
+{
+    if( !m_abyDecodedTileData.empty() )
+    {
+        const size_t nDTSize = m_oType.GetSize();
+        GByte* pDst = &m_abyDecodedTileData[0];
+        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
+        for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
+        {
+            for( auto& elt: m_aoDtypeElts )
+            {
+                if( elt.nativeType == DtypeElt::NativeType::STRING )
+                {
+                    char* ptr;
+                    char** pptr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
+                    memcpy(&ptr, pptr, sizeof(ptr));
+                    VSIFree(ptr);
+                }
+            }
+        }
     }
 }
 
@@ -469,6 +480,11 @@ void ZarrArray::SerializeV2()
 
     oRoot.Add("zarr_format", m_nVersion);
 
+    if( m_osDimSeparator != "." )
+    {
+        oRoot.Add("dimension_separator", m_osDimSeparator);
+    }
+
     oDoc.Save(m_osFilename);
 }
 
@@ -602,7 +618,8 @@ void ZarrArray::RegisterNoDataValue(const void* pNoData)
 /************************************************************************/
 
 void ZarrArray::BlockTranspose(const std::vector<GByte>& abySrc,
-                               std::vector<GByte>& abyDst) const
+                               std::vector<GByte>& abyDst,
+                               bool bDecode) const
 {
     // Perform transposition
     const size_t nDims = m_anBlockSize.size();
@@ -621,19 +638,39 @@ void ZarrArray::BlockTranspose(const std::vector<GByte>& abySrc,
     std::vector<Stack> stack(nDims + 1);
     assert(!stack.empty()); // to make gcc 9.3 -O2 -Wnull-dereference happy
 
-    stack[0].src_inc_offset = nSourceSize;
-    for( size_t i = 1; i < nDims; ++i )
+    if( bDecode )
     {
-        stack[i].src_inc_offset = stack[i-1].src_inc_offset *
-                                static_cast<size_t>(m_anBlockSize[i-1]);
-    }
+        stack[0].src_inc_offset = nSourceSize;
+        for( size_t i = 1; i < nDims; ++i )
+        {
+            stack[i].src_inc_offset = stack[i-1].src_inc_offset *
+                                    static_cast<size_t>(m_anBlockSize[i-1]);
+        }
 
-    stack[nDims-1].dst_inc_offset = nSourceSize;
-    for( size_t i = nDims - 1; i > 0; )
+        stack[nDims-1].dst_inc_offset = nSourceSize;
+        for( size_t i = nDims - 1; i > 0; )
+        {
+            --i;
+            stack[i].dst_inc_offset = stack[i+1].dst_inc_offset *
+                                    static_cast<size_t>(m_anBlockSize[i+1]);
+        }
+    }
+    else
     {
-        --i;
-        stack[i].dst_inc_offset = stack[i+1].dst_inc_offset *
-                                static_cast<size_t>(m_anBlockSize[i+1]);
+        stack[0].dst_inc_offset = nSourceSize;
+        for( size_t i = 1; i < nDims; ++i )
+        {
+            stack[i].dst_inc_offset = stack[i-1].dst_inc_offset *
+                                    static_cast<size_t>(m_anBlockSize[i-1]);
+        }
+
+        stack[nDims-1].src_inc_offset = nSourceSize;
+        for( size_t i = nDims - 1; i > 0; )
+        {
+            --i;
+            stack[i].src_inc_offset = stack[i+1].src_inc_offset *
+                                    static_cast<size_t>(m_anBlockSize[i+1]);
+        }
     }
 
     stack[0].src_ptr = abySrc.data();
@@ -941,7 +978,7 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
 
     if( bRet && !bMissingTileOut && m_bFortranOrder )
     {
-        BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData);
+        BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData, true);
         std::swap(m_abyRawTileData, m_abyTmpRawTileData);
     }
 
@@ -1075,6 +1112,9 @@ lbl_next_depth:
         }
         else
         {
+            if( !FlushDirtyTile() )
+                return false;
+
             m_anCachedTiledIndices = tileIndices;
             m_bCachedTiledValid = LoadTileData(tileIndices, bEmptyTile);
             if( !m_bCachedTiledValid )
@@ -1358,6 +1398,585 @@ lbl_return_to_caller:
             if( indicesOuterLoop[dimIdx] > arrayStartIdx[dimIdx] + (count[dimIdx]-1) * arrayStep[dimIdx] )
                 break;
             dstPtrStackOuterLoop[dimIdx] += bufferStride[dimIdx] * static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
+            tileIndices[dimIdx] = indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
+        }
+    }
+    if( dimIdx > 0 )
+        goto lbl_return_to_caller;
+
+    return true;
+}
+
+/************************************************************************/
+/*                    ZarrArray::FlushDirtyTile()                       */
+/************************************************************************/
+
+bool ZarrArray::FlushDirtyTile() const
+{
+    if( !m_bDirtyTile )
+        return true;
+    m_bDirtyTile = false;
+
+    std::string osFilename;
+    if( m_anCachedTiledIndices.empty() )
+    {
+        osFilename = "0";
+    }
+    else
+    {
+        for( const auto index: m_anCachedTiledIndices )
+        {
+            if( !osFilename.empty() )
+                osFilename += m_osDimSeparator;
+            osFilename += std::to_string(index);
+        }
+    }
+
+    if( m_nVersion == 2 )
+    {
+        osFilename = CPLFormFilename(
+            CPLGetDirname(m_osFilename.c_str()), osFilename.c_str(), nullptr);
+    }
+    else
+    {
+        std::string osTmp = m_osRootDirectoryName + "/data/root";
+        if( GetFullName() != "/" )
+            osTmp += GetFullName();
+        osFilename = osTmp + "/c" + osFilename;
+    }
+
+    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                               m_aoDtypeElts.back().nativeSize;
+    auto& abyTile = m_abyDecodedTileData.empty() ?
+                            m_abyRawTileData: m_abyDecodedTileData;
+
+    bool bEmptyTile = false;
+    if( m_pabyNoData == nullptr ||
+        (m_oType.GetClass() == GEDTC_NUMERIC && GetNoDataValueAsDouble() == 0.0) )
+    {
+        const size_t nBytes = abyTile.size();
+        size_t i = 0;
+        bEmptyTile = true;
+        for(; i + (sizeof(size_t)-1) < nBytes; i += sizeof(size_t) )
+        {
+            if( *reinterpret_cast<const size_t*>(abyTile.data() + i) != 0 )
+            {
+                bEmptyTile = false;
+                break;
+            }
+        }
+        if( bEmptyTile )
+        {
+            for(; i < nBytes; ++i )
+            {
+                if( abyTile[i] != 0 )
+                {
+                    bEmptyTile = false;
+                    break;
+                }
+            }
+        }
+    }
+    else if( m_oType.GetClass() == GEDTC_NUMERIC &&
+             !GDALDataTypeIsComplex(m_oType.GetNumericDataType()) )
+    {
+        const int nDTSize = static_cast<int>(m_oType.GetSize());
+        const size_t nElts = abyTile.size() / nDTSize;
+        const auto eDT = m_oType.GetNumericDataType();
+        bEmptyTile = GDALBufferHasOnlyNoData(
+            abyTile.data(),
+            GetNoDataValueAsDouble(),
+            nElts, // nWidth
+            1, // nHeight
+            nElts, // nLineStride
+            1, // nComponents
+            nDTSize * 8, // nBitsPerSample
+            GDALDataTypeIsInteger(eDT) ?
+                (GDALDataTypeIsSigned(eDT) ?
+                    GSF_SIGNED_INT:
+                    GSF_UNSIGNED_INT) :
+                GSF_FLOATING_POINT);
+    }
+
+    if( bEmptyTile )
+    {
+        m_bCachedTiledEmpty = true;
+
+        VSIStatBufL sStat;
+        if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
+        {
+            CPLDebugOnly("ZARR", "Deleting tile %s that has now empty content",
+                         osFilename.c_str());
+            return VSIUnlink(osFilename.c_str()) == 0;
+        }
+        return true;
+    }
+
+    if( !m_abyDecodedTileData.empty() )
+    {
+        const size_t nDTSize = m_oType.GetSize();
+        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
+        GByte* pDst = &m_abyRawTileData[0];
+        const GByte* pSrc = m_abyDecodedTileData.data();
+        for( size_t i = 0; i < nValues; i++, pDst += nSourceSize, pSrc += nDTSize )
+        {
+            EncodeElt(m_aoDtypeElts, pSrc, pDst);
+        }
+    }
+
+    if( m_bFortranOrder )
+    {
+        BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData, false);
+        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
+    }
+
+    if( m_osDimSeparator == "/" )
+    {
+        std::string osDir = CPLGetDirname(osFilename.c_str());
+        VSIStatBufL sStat;
+        if( VSIStatL(osDir.c_str(), &sStat) != 0 )
+        {
+            if( VSIMkdirRecursive(osDir.c_str(), 0755) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot create directory %s", osDir.c_str());
+                return false;
+            }
+        }
+    }
+
+    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "wb");
+    if( fp == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot create tile %s", osFilename.c_str());
+        return false;
+    }
+
+    bool bRet = true;
+    if( m_psCompressor == nullptr )
+    {
+        if( VSIFWriteL(m_abyRawTileData.data(), 1, m_abyRawTileData.size(), fp) !=
+                m_abyRawTileData.size() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not write tile %s correctly",
+                     osFilename.c_str());
+            bRet = false;
+        }
+    }
+    else
+    {
+        std::vector<GByte> abyCompressedData;
+        try
+        {
+            constexpr size_t MIN_BUF_SIZE = 64; // somewhat arbitrary
+            abyCompressedData.resize(static_cast<size_t>(
+                MIN_BUF_SIZE +
+                m_abyRawTileData.size() +
+                m_abyRawTileData.size() / 3));
+
+        }
+        catch( const std::exception& )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate memory for tile %s",
+                     osFilename.c_str());
+            bRet = false;
+        }
+
+        if( bRet )
+        {
+            void* out_buffer = &abyCompressedData[0];
+            size_t out_size = abyCompressedData.size();
+            CPLStringList aosOptions;
+            for( const auto& obj: m_oCompressorJSonV2.GetChildren() )
+            {
+                aosOptions.SetNameValue(obj.GetName().c_str(),
+                                        obj.ToString().c_str());
+            }
+
+            if( !m_psCompressor->pfnFunc(m_abyRawTileData.data(),
+                                         m_abyRawTileData.size(),
+                                         &out_buffer, &out_size,
+                                         aosOptions.List(),
+                                         m_psCompressor->user_data ) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Compression of tile %s failed",
+                         osFilename.c_str());
+                bRet = false;
+            }
+            abyCompressedData.resize(out_size);
+        }
+
+        if( bRet &&
+            VSIFWriteL(abyCompressedData.data(), 1, abyCompressedData.size(),
+                       fp) != abyCompressedData.size() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not write tile %s correctly",
+                     osFilename.c_str());
+            bRet = false;
+        }
+    }
+    VSIFCloseL(fp);
+
+    return bRet;
+}
+
+/************************************************************************/
+/*                           ZarrArray::IRead()                         */
+/************************************************************************/
+
+bool ZarrArray::IWrite(const GUInt64* arrayStartIdx,
+                       const size_t* count,
+                       const GInt64* arrayStep,
+                       const GPtrDiff_t* bufferStride,
+                       const GDALExtendedDataType& bufferDataType,
+                       const void* pSrcBuffer)
+{
+    if( !AllocateWorkingBuffers() )
+        return false;
+
+    // Need to be kept in top-level scope
+    std::vector<GUInt64> arrayStartIdxMod;
+    std::vector<GInt64> arrayStepMod;
+    std::vector<GPtrDiff_t> bufferStrideMod;
+
+    const size_t nDims = m_aoDims.size();
+    bool negativeStep = false;
+    for( size_t i = 0; i < nDims; ++i )
+    {
+        if( arrayStep[i] < 0 )
+        {
+            negativeStep = true;
+            break;
+        }
+    }
+
+    const auto nBufferDTSize = static_cast<int>(bufferDataType.GetSize());
+
+    // Make sure that arrayStep[i] are positive for sake of simplicity
+    if( negativeStep )
+    {
+        arrayStartIdxMod.resize(nDims);
+        arrayStepMod.resize(nDims);
+        bufferStrideMod.resize(nDims);
+        for( size_t i = 0; i < nDims; ++i )
+        {
+            if( arrayStep[i] < 0 )
+            {
+                arrayStartIdxMod[i] = arrayStartIdx[i] - (count[i] - 1) * (-arrayStep[i]);
+                arrayStepMod[i] = -arrayStep[i];
+                bufferStrideMod[i] = -bufferStride[i];
+                pSrcBuffer = static_cast<const GByte*>(pSrcBuffer) +
+                    bufferStride[i] * static_cast<GPtrDiff_t>(nBufferDTSize * (count[i] - 1));
+            }
+            else
+            {
+                arrayStartIdxMod[i] = arrayStartIdx[i];
+                arrayStepMod[i] = arrayStep[i];
+                bufferStrideMod[i] = bufferStride[i];
+            }
+        }
+        arrayStartIdx = arrayStartIdxMod.data();
+        arrayStep = arrayStepMod.data();
+        bufferStride = bufferStrideMod.data();
+    }
+
+    std::vector<uint64_t> indicesOuterLoop(nDims + 1);
+    std::vector<const GByte*> srcPtrStackOuterLoop(nDims + 1);
+
+    std::vector<uint64_t> indicesInnerLoop(nDims + 1);
+    std::vector<const GByte*> srcPtrStackInnerLoop(nDims + 1);
+
+    std::vector<GPtrDiff_t> srcBufferStrideBytes;
+    for( size_t i = 0; i < nDims; ++i )
+    {
+        srcBufferStrideBytes.push_back(
+            bufferStride[i] * static_cast<GPtrDiff_t>(nBufferDTSize));
+    }
+    srcBufferStrideBytes.push_back(0);
+
+    const auto nDTSize = m_oType.GetSize();
+
+    std::vector<uint64_t> tileIndices(nDims);
+    const size_t nNativeSize = m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
+
+    std::vector<size_t> countInnerLoopInit(nDims + 1, 1);
+    std::vector<size_t> countInnerLoop(nDims);
+
+    const bool bBothAreNumericDT =
+        m_oType.GetClass() == GEDTC_NUMERIC &&
+        bufferDataType.GetClass() == GEDTC_NUMERIC;
+    const bool bSameNumericDT =
+        bBothAreNumericDT &&
+        m_oType.GetNumericDataType() == bufferDataType.GetNumericDataType();
+    const auto nSameDTSize = bSameNumericDT ? m_oType.GetSize() : 0;
+    const bool bSameCompoundAndNoDynamicMem =
+        m_oType.GetClass() == GEDTC_COMPOUND &&
+        m_oType == bufferDataType &&
+        !m_oType.NeedsFreeDynamicMemory();
+
+    size_t dimIdx = 0;
+    srcPtrStackOuterLoop[0] = static_cast<const GByte*>(pSrcBuffer);
+lbl_next_depth:
+    if( dimIdx == nDims )
+    {
+        bool bWriteWholeTile = true;
+        bool bPartialTile = false;
+        for( size_t i = 0; i < nDims; ++i )
+        {
+            countInnerLoopInit[i] = 1;
+            if( arrayStep[i] != 0 )
+            {
+                const auto nextBlockIdx = std::min(
+                    (1 + indicesOuterLoop[i] / m_anBlockSize[i]) * m_anBlockSize[i],
+                    arrayStartIdx[i] + count[i] * arrayStep[i]);
+                countInnerLoopInit[i] = static_cast<size_t>(
+                        (nextBlockIdx - indicesOuterLoop[i] + arrayStep[i] - 1) / arrayStep[i]);
+            }
+            if( bWriteWholeTile )
+            {
+                const bool bWholePartialTileThisDim =
+                    arrayStartIdx[i] + countInnerLoopInit[i] == m_aoDims[i]->GetSize();
+                bWriteWholeTile = (countInnerLoopInit[i] == m_anBlockSize[i] ||
+                                   bWholePartialTileThisDim);
+                if( bWholePartialTileThisDim )
+                {
+                    bPartialTile = true;
+                }
+            }
+        }
+
+        size_t dimIdxSubLoop = 0;
+        srcPtrStackInnerLoop[0] = srcPtrStackOuterLoop[nDims];
+        const size_t nCacheDTSize = m_abyDecodedTileData.empty() ? nNativeSize : nDTSize;
+        auto& abyTile = m_abyDecodedTileData.empty() ?
+                            m_abyRawTileData: m_abyDecodedTileData;
+
+        if( !tileIndices.empty() && tileIndices == m_anCachedTiledIndices )
+        {
+            if( !m_bCachedTiledValid )
+                return false;
+        }
+        else
+        {
+            if( !FlushDirtyTile() )
+                return false;
+
+            m_anCachedTiledIndices = tileIndices;
+            m_bCachedTiledValid = true;
+
+            if( bWriteWholeTile )
+            {
+                if( bPartialTile )
+                {
+                    DeallocateDecodedTileData();
+                    memset(&abyTile[0], 0, abyTile.size());
+                }
+            }
+            else
+            {
+                // If we don't write the whole tile, we need to fetch a
+                // potentially existing one.
+                bool bEmptyTile = false;
+                m_bCachedTiledValid = LoadTileData(tileIndices, bEmptyTile);
+                if( !m_bCachedTiledValid )
+                {
+                    return false;
+                }
+
+                if( bEmptyTile )
+                {
+                    DeallocateDecodedTileData();
+
+                    if( m_pabyNoData == nullptr )
+                    {
+                        memset(&abyTile[0], 0, abyTile.size());
+                    }
+                    else
+                    {
+                        const size_t nElts = abyTile.size() / nCacheDTSize;
+                        GByte* dstPtr = &abyTile[0];
+                        if( m_oType.GetClass() == GEDTC_NUMERIC )
+                        {
+                            GDALCopyWords64( m_pabyNoData,
+                                             m_oType.GetNumericDataType(),
+                                             0,
+                                             dstPtr,
+                                             m_oType.GetNumericDataType(),
+                                             static_cast<int>(m_oType.GetSize()),
+                                             static_cast<GPtrDiff_t>(nElts) );
+                        }
+                        else
+                        {
+                            for(size_t i = 0; i < nElts; ++i )
+                            {
+                                GDALExtendedDataType::CopyValue(m_pabyNoData, m_oType,
+                                                                dstPtr, m_oType);
+                                dstPtr += nCacheDTSize;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        m_bDirtyTile = true;
+        m_bCachedTiledEmpty = false;
+
+        GByte* pabyTile = &abyTile[0];
+
+lbl_next_depth_inner_loop:
+        if( nDims == 0 || dimIdxSubLoop == nDims - 1 )
+        {
+            indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
+            const void* src_ptr = srcPtrStackInnerLoop[dimIdxSubLoop];
+
+            size_t nOffset = 0;
+            for( size_t i = 0; i < nDims; i++ )
+            {
+                nOffset = static_cast<size_t>(nOffset * m_anBlockSize[i] +
+                    (indicesInnerLoop[i] - tileIndices[i] * m_anBlockSize[i]));
+            }
+            GByte* dst_ptr = pabyTile + nOffset * nCacheDTSize;
+            const auto step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
+
+            if( m_bUseOptimizedCodePaths && bBothAreNumericDT &&
+                step <= static_cast<GIntBig>(std::numeric_limits<int>::max() / nDTSize) &&
+                srcBufferStrideBytes[dimIdxSubLoop] <= std::numeric_limits<int>::max() )
+            {
+                GDALCopyWords64( src_ptr,
+                                 bufferDataType.GetNumericDataType(),
+                                 static_cast<int>(srcBufferStrideBytes[dimIdxSubLoop]),
+                                 dst_ptr,
+                                 m_oType.GetNumericDataType(),
+                                 static_cast<int>(step * nDTSize),
+                                 static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]) );
+
+                goto end_inner_loop;
+            }
+
+            for( size_t i = 0; i < countInnerLoopInit[dimIdxSubLoop];
+                    ++i,
+                    dst_ptr += step * nCacheDTSize,
+                    src_ptr = static_cast<const uint8_t*>(src_ptr) + srcBufferStrideBytes[dimIdxSubLoop] )
+            {
+                if( bSameNumericDT )
+                {
+                    void* dst_ptr_v = dst_ptr;
+                    if( nSameDTSize == 1 )
+                        *static_cast<uint8_t*>(dst_ptr_v) = *static_cast<const uint8_t*>(src_ptr);
+                    else if( nSameDTSize == 2 )
+                    {
+                        *static_cast<uint16_t*>(dst_ptr_v) = *static_cast<const uint16_t*>(src_ptr);
+                    }
+                    else if( nSameDTSize == 4 )
+                    {
+                        *static_cast<uint32_t*>(dst_ptr_v) = *static_cast<const uint32_t*>(src_ptr);
+                    }
+                    else if( nSameDTSize == 8 )
+                    {
+                        *static_cast<uint64_t*>(dst_ptr_v) = *static_cast<const uint64_t*>(src_ptr);
+                    }
+                    else if( nSameDTSize == 16 )
+                    {
+                        static_cast<uint64_t*>(dst_ptr_v)[0] = static_cast<const uint64_t*>(src_ptr)[0];
+                        static_cast<uint64_t*>(dst_ptr_v)[1] = static_cast<const uint64_t*>(src_ptr)[1];
+                    }
+                    else
+                    {
+                        CPLAssert(false);
+                    }
+                }
+                else if( bSameCompoundAndNoDynamicMem )
+                {
+                    memcpy(dst_ptr, src_ptr, nDTSize);
+                }
+                else if( m_oType.GetClass() == GEDTC_STRING )
+                {
+                    const char* pSrcStr = *static_cast<const char* const*>(src_ptr);
+                    if( pSrcStr )
+                    {
+                        const size_t nLen = strlen(pSrcStr);
+                        memcpy(dst_ptr, pSrcStr, std::min(nLen, nNativeSize));
+                        if( nLen < nNativeSize )
+                            memset(dst_ptr + nLen, 0, nNativeSize - nLen);
+                    }
+                    else
+                    {
+                        memset(dst_ptr, 0, nNativeSize);
+                    }
+                }
+                else
+                {
+                    if( m_oType.NeedsFreeDynamicMemory() )
+                        m_oType.FreeDynamicMemory(dst_ptr);
+                    GDALExtendedDataType::CopyValue(src_ptr, bufferDataType,
+                                                    dst_ptr, m_oType);
+                }
+            }
+        }
+        else
+        {
+            // This level of loop loops over individual samples, within a
+            // block
+            indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
+            countInnerLoop[dimIdxSubLoop] = countInnerLoopInit[dimIdxSubLoop];
+            while(true)
+            {
+                dimIdxSubLoop ++;
+                srcPtrStackInnerLoop[dimIdxSubLoop] = srcPtrStackInnerLoop[dimIdxSubLoop-1];
+                goto lbl_next_depth_inner_loop;
+lbl_return_to_caller_inner_loop:
+                dimIdxSubLoop --;
+                -- countInnerLoop[dimIdxSubLoop];
+                if( countInnerLoop[dimIdxSubLoop] == 0 )
+                {
+                    break;
+                }
+                indicesInnerLoop[dimIdxSubLoop] += arrayStep[dimIdxSubLoop];
+                srcPtrStackInnerLoop[dimIdxSubLoop] += srcBufferStrideBytes[dimIdxSubLoop];
+            }
+        }
+end_inner_loop:
+        if( dimIdxSubLoop > 0 )
+            goto lbl_return_to_caller_inner_loop;
+    }
+    else
+    {
+        // This level of loop loops over blocks
+        indicesOuterLoop[dimIdx] = arrayStartIdx[dimIdx];
+        tileIndices[dimIdx] = indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
+        while(true)
+        {
+            dimIdx ++;
+            srcPtrStackOuterLoop[dimIdx] = srcPtrStackOuterLoop[dimIdx - 1];
+            goto lbl_next_depth;
+lbl_return_to_caller:
+            dimIdx --;
+            if( count[dimIdx] == 1 || arrayStep[dimIdx] == 0 )
+                break;
+
+            size_t nIncr;
+            if( static_cast<GUInt64>(arrayStep[dimIdx]) < m_anBlockSize[dimIdx] )
+            {
+                // Compute index at next block boundary
+                auto newIdx = indicesOuterLoop[dimIdx] +
+                    (m_anBlockSize[dimIdx] - (indicesOuterLoop[dimIdx] % m_anBlockSize[dimIdx]));
+                // And round up compared to arrayStartIdx, arrayStep
+                nIncr = static_cast<size_t>(
+                    (newIdx - indicesOuterLoop[dimIdx] + arrayStep[dimIdx] - 1) / arrayStep[dimIdx]);
+            }
+            else
+            {
+                nIncr = 1;
+            }
+            indicesOuterLoop[dimIdx] += nIncr * arrayStep[dimIdx];
+            if( indicesOuterLoop[dimIdx] > arrayStartIdx[dimIdx] + (count[dimIdx]-1) * arrayStep[dimIdx] )
+                break;
+            srcPtrStackOuterLoop[dimIdx] += bufferStride[dimIdx] * static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
             tileIndices[dimIdx] = indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
         }
     }

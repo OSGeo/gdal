@@ -1508,3 +1508,213 @@ def test_zarr_create_array_set_dimension_name():
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("dtype,structtype,gdaltype,fill_value,nodata_value",
+                         [["!b1", 'B', gdal.GDT_Byte, None, None],
+                          ["!i1", 'b', gdal.GDT_Int16, None, None],
+                          ["!i1", 'b', gdal.GDT_Int16, -1, -1],
+                          ["!u1", 'B', gdal.GDT_Byte, None, None],
+                          ["!u1", 'B', gdal.GDT_Byte, "1", 1],
+                          ["<i2", 'h', gdal.GDT_Int16, None, None],
+                          [">i2", 'h', gdal.GDT_Int16, None, None],
+                          ["<i4", 'i', gdal.GDT_Int32, None, None],
+                          [">i4", 'i', gdal.GDT_Int32, None, None],
+                          ["<i8", 'q', gdal.GDT_Float64, None, None],
+                          [">i8", 'q', gdal.GDT_Float64, None, None],
+                          ["<u2", 'H', gdal.GDT_UInt16, None, None],
+                          [">u2", 'H', gdal.GDT_UInt16, None, None],
+                          ["<u4", 'I', gdal.GDT_UInt32, None, None],
+                          [">u4", 'I', gdal.GDT_UInt32, None, None],
+                          ["<u4", 'I', gdal.GDT_UInt32, 4000000000, 4000000000],
+                          ["<u8", 'Q', gdal.GDT_Float64, 4000000000, 4000000000],
+                          [">u8", 'Q', gdal.GDT_Float64, None, None],
+                          ["<f4", 'f', gdal.GDT_Float32, None, None],
+                          [">f4", 'f', gdal.GDT_Float32, None, None],
+                          ["<f4", 'f', gdal.GDT_Float32, 1.5, 1.5],
+                          ["<f4", 'f', gdal.GDT_Float32, "NaN", float('nan')],
+                          ["<f4", 'f', gdal.GDT_Float32,
+                           "Infinity", float('infinity')],
+                          ["<f4", 'f', gdal.GDT_Float32,
+                           "-Infinity", float('-infinity')],
+                          ["<f8", 'd', gdal.GDT_Float64, None, None],
+                          [">f8", 'd', gdal.GDT_Float64, None, None],
+                          ["<f8", 'd', gdal.GDT_Float64, "NaN", float('nan')],
+                          ["<f8", 'd', gdal.GDT_Float64,
+                           "Infinity", float('infinity')],
+                          ["<f8", 'd', gdal.GDT_Float64,
+                           "-Infinity", float('-infinity')],
+                          ["<c8", 'f', gdal.GDT_CFloat32, None, None],
+                          [">c8", 'f', gdal.GDT_CFloat32, None, None],
+                          ["<c16", 'd', gdal.GDT_CFloat64, None, None],
+                          [">c16", 'd', gdal.GDT_CFloat64, None, None]])
+@pytest.mark.parametrize("use_optimized_code_paths", [True, False])
+def test_zarr_write_array_content(dtype, structtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths):
+
+    j = {
+        "chunks": [
+            2,
+            3
+        ],
+        "compressor": None,
+        "dtype": dtype,
+        "fill_value": fill_value,
+        "filters": None,
+        "order": "C",
+        "shape": [
+            5,
+            4
+        ],
+        "zarr_format": 2
+    }
+
+    filename = '/vsimem/test' + \
+        dtype.replace('<', 'lt').replace('>', 'gt').replace(
+            '!', 'not') + structtype + '.zarr'
+    try:
+        gdal.Mkdir(filename, 0o755)
+        f = gdal.VSIFOpenL(filename + '/.zarray', 'wb')
+        assert f
+        data = json.dumps(j)
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+
+        if gdaltype not in (gdal.GDT_CFloat32, gdal.GDT_CFloat64):
+            tile_0_0_data = struct.pack(
+                dtype[0] + (structtype * 6), 1, 2, 3, 5, 6, 7)
+            tile_0_1_data = struct.pack(
+                dtype[0] + (structtype * 6), 4, 0, 0, 8, 0, 0)
+        else:
+            tile_0_0_data = struct.pack(
+                dtype[0] + (structtype * 12), 1, 11, 2, 0, 3, 0, 5, 0, 6, 0, 7, 0)
+            tile_0_1_data = struct.pack(
+                dtype[0] + (structtype * 12), 4, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0)
+        gdal.FileFromMemBuffer(filename + '/0.0', tile_0_0_data)
+        gdal.FileFromMemBuffer(filename + '/0.1', tile_0_1_data)
+
+        with gdaltest.config_option('GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS',
+                                    'YES' if use_optimized_code_paths else 'NO'):
+            ds = gdal.OpenEx(
+                filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+
+        dt = gdal.ExtendedDataType.Create(gdal.GDT_CFloat64 if gdaltype in (
+            gdal.GDT_CFloat32, gdal.GDT_CFloat64) else gdal.GDT_Float64)
+
+        # Write all nodataset. That should cause tiles to be removed.
+        nv = nodata_value if nodata_value else 0
+        buf_nodata = array.array(
+            'd', [nv] * (5 * 4 * (2 if gdaltype in (gdal.GDT_CFloat32, gdal.GDT_CFloat64) else 1)))
+        assert ar.Write(buf_nodata, buffer_datatype=dt) == gdal.CE_None
+        assert ar.Read(buffer_datatype=dt) == bytearray(buf_nodata)
+
+        if fill_value is None or fill_value == 0 or not gdal.DataTypeIsComplex(gdaltype):
+            assert gdal.VSIStatL(filename + '/0.0') is None
+
+        # Write all ones
+        ones = array.array('d', [
+                           0] * (5 * 4 * (2 if gdaltype in (gdal.GDT_CFloat32, gdal.GDT_CFloat64) else 1)))
+        assert ar.Write(ones, buffer_datatype=dt) == gdal.CE_None
+        assert ar.Read(buffer_datatype=dt) == bytearray(ones)
+
+        # Write with odd array_step
+        assert ar.Write(struct.pack('d' * 4, nv, nv, 6, 5),
+                        array_start_idx=[2, 1],
+                        count=[2, 2],
+                        array_step=[-1, -1],
+                        buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == gdal.CE_None
+
+        # Check back
+        assert ar.Read(array_start_idx=[2, 1],
+                       count=[2, 2],
+                       array_step=[-1, -1],
+                       buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == struct.pack('d' * 4, nv, nv, 6, 5)
+
+        # Force dirty block eviction
+        ar.Read(buffer_datatype=dt)
+
+        # Check back again
+        assert ar.Read(array_start_idx=[2, 1],
+                       count=[2, 2],
+                       array_step=[-1, -1],
+                       buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == struct.pack('d' * 4, nv, nv, 6, 5)
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+def test_zarr_create_array_string():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+
+            ar = rg.CreateMDArray(
+                "test", [dim0], gdal.ExtendedDataType.CreateString(10))
+            assert ar.Write(['ab', '0123456789truncated']) == gdal.CE_None
+        create()
+
+        ds = gdal.OpenEx(
+            '/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar.Read() == ['ab', '0123456789']
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim1 = rg.CreateDimension("dim1", None, None, 3)
+            dim2 = rg.CreateDimension("dim2", None, None, 4)
+
+            ar = rg.CreateMDArray(
+                "test", [dim0, dim1, dim2],
+                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ['CHUNK_MEMORY_LAYOUT=F', 'COMPRESS=zlib', 'DIM_SEPARATOR=/'])
+            assert ar.Write(array.array(
+                'b', [i for i in range(2 * 3 * 4)])) == gdal.CE_None
+
+        create()
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/test/.zarray', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert 'order' in j
+        assert j['order'] == 'F'
+
+        ds = gdal.OpenEx(
+            '/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar.Read() == \
+            array.array('b', [i for i in range(2 * 3 * 4)])
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')

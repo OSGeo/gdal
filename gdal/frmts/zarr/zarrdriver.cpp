@@ -498,6 +498,33 @@ void ZarrDriver::InitMetadata()
             CPLCreateXMLNode(poValueNode, CXT_Text, "NONE");
         }
 
+        auto psBlockSizeNode = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psBlockSizeNode, "name", "BLOCKSIZE");
+        CPLAddXMLAttributeAndValue(psBlockSizeNode, "type", "string");
+        CPLAddXMLAttributeAndValue(psBlockSizeNode, "description",
+            "Comma separated list of chunk size along each dimension");
+
+        auto psChunkMemoryLayout = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psChunkMemoryLayout, "name", "CHUNK_MEMORY_LAYOUT");
+        CPLAddXMLAttributeAndValue(psChunkMemoryLayout, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psChunkMemoryLayout, "description",
+            "Whether to use C (row-major) order or F (column-major) order in chunks");
+        CPLAddXMLAttributeAndValue(psChunkMemoryLayout, "default", "C");
+        {
+            auto poValueNode = CPLCreateXMLNode(psChunkMemoryLayout, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "C");
+        }
+        {
+            auto poValueNode = CPLCreateXMLNode(psChunkMemoryLayout, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "F");
+        }
+
+        auto psDimSeparatorNode = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psDimSeparatorNode, "name", "DIM_SEPARATOR");
+        CPLAddXMLAttributeAndValue(psDimSeparatorNode, "type", "string");
+        CPLAddXMLAttributeAndValue(psDimSeparatorNode, "description",
+            "Dimension separator in chunk filenames. Default to decimal point for ZarrV2 and slash for ZarrV3");
+
         for( auto iter = compressors; iter && *iter; ++iter )
         {
             const auto psCompressor = CPLGetCompressor(*iter);
@@ -568,6 +595,9 @@ void ZarrDriver::InitMetadata()
 
         char* pszXML = CPLSerializeXMLTree(oTree.get());
         GDALDriver::SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, pszXML);
+        GDALDriver::SetMetadataItem(GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+            CPLString(pszXML).replaceAll("CreationOptionList",
+                                         "MultiDimArrayCreationOptionList").c_str());
         CPLFree(pszXML);
     }
 }
