@@ -223,6 +223,7 @@ public:
 
     CPLJSONObject GetRoot();
     const CPLJSONObject GetRoot() const;
+    void SetRoot(const CPLJSONObject& oRoot);
     bool Load(const std::string &osPath);
     bool LoadMemory(const std::string &osStr);
     bool LoadMemory(const GByte *pabyData, int nLength = -1);

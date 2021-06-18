@@ -147,6 +147,19 @@ CPLJSONObject CPLJSONDocument::GetRoot()
 }
 
 /**
+ * Set json document root object
+ * @param oRoot CPLJSONObject root object
+ *
+ * @since GDAL 3.4
+ */
+void CPLJSONDocument::SetRoot(const CPLJSONObject& oRoot)
+{
+    if( m_poRootJsonObject )
+        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+    m_poRootJsonObject = json_object_get( TO_JSONOBJ(oRoot.m_poJsonObject) );
+}
+
+/**
  * Load json document from file by provided path
  * @param  osPath Path to json file.
  * @return         true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
