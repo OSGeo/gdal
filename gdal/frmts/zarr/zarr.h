@@ -376,6 +376,12 @@ public:
     std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const override
         { return m_oAttrGroup.GetAttributes(papszOptions); }
 
+    std::shared_ptr<GDALAttribute> CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList papszOptions = nullptr) override;
+
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
 
     void SetUpdatable(bool bUpdatable) { m_bUpdatable = bUpdatable; }

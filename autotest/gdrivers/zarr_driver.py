@@ -1382,3 +1382,63 @@ def test_zarr_create_array_bad_compressor():
                 ['COMPRESS=invalid']) is None
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_array_attributes():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.CreateMDArray(
+                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            assert ar
+
+            attr = ar.CreateAttribute(
+                'str_attr', [], gdal.ExtendedDataType.CreateString())
+            assert attr
+            assert attr.Write('my_string') == gdal.CE_None
+
+            with gdaltest.error_handler():
+                assert ar.CreateAttribute(
+                    'invalid_2d', [2, 3], gdal.ExtendedDataType.CreateString()) is None
+
+        create()
+
+        def update():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray('test')
+            assert ar
+
+            attr = ar.GetAttribute('str_attr')
+            assert attr
+            assert attr.Read() == 'my_string'
+            assert attr.Write('my_string_modified') == gdal.CE_None
+
+        update()
+
+        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray('test')
+        assert ar
+
+        attr = ar.GetAttribute('str_attr')
+        assert attr
+        assert attr.Read() == 'my_string_modified'
+        with gdaltest.error_handler():
+            assert attr.Write('foo') == gdal.CE_Failure
+
+        with gdaltest.error_handler():
+            assert ar.CreateAttribute(
+                'another_attr', [], gdal.ExtendedDataType.CreateString()) is None
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')

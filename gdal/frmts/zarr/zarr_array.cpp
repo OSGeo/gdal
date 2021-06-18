@@ -99,6 +99,14 @@ ZarrArray::~ZarrArray()
             // TODO
         }
     }
+
+    if( m_oAttrGroup.IsModified() && m_nVersion == 2 )
+    {
+        CPLJSONDocument oDoc;
+        oDoc.SetRoot(m_oAttrGroup.Serialize());
+        oDoc.Save(CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
+    }
+
     if( m_pabyNoData )
     {
         m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
@@ -2020,6 +2028,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                                      osArrayName,
                                      aoDims, oType, aoDtypeElts, anBlockSize,
                                      bFortranOrder);
+    poArray->SetUpdatable(m_bUpdatable); // must be set before SetAttributes()
     poArray->SetFilename(osZarrayFilename);
     poArray->SetDimSeparator(osDimSeparator);
     if( isZarrV2 )
@@ -2048,4 +2057,29 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     }
 
     return poArray;
+}
+
+/************************************************************************/
+/*                      ZarrArray::CreateAttribute()                    */
+/************************************************************************/
+
+std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList papszOptions)
+{
+    if( !m_bUpdatable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return nullptr;
+    }
+    if( anDimensions.size() >= 2 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot create attributes of dimension >= 2");
+        return nullptr;
+    }
+    return m_oAttrGroup.CreateAttribute(osName, anDimensions, oDataType, papszOptions);
 }
