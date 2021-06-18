@@ -1442,3 +1442,37 @@ def test_zarr_create_array_attributes():
                 'another_attr', [], gdal.ExtendedDataType.CreateString()) is None
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_array_set_crs():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.CreateMDArray(
+                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            assert ar
+            crs = osr.SpatialReference()
+            crs.ImportFromEPSG(4326)
+            assert ar.SetSpatialRef(crs) == gdal.CE_None
+
+        create()
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/test/.zattrs', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert 'crs' in j
+        crs = j['crs']
+        assert 'wkt' in crs
+        assert 'url' in crs
+        if 'projjson' in crs:
+            assert crs['projjson']['type'] == 'GeographicCRS'
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')

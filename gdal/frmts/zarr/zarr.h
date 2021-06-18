@@ -297,6 +297,7 @@ class ZarrArray final: public GDALMDArray
     int                                               m_nVersion = 0;
     bool                                              m_bUpdatable = false;
     bool                                              m_bDefinitionModified = false;
+    bool                                              m_bSRSModified = false;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -383,6 +384,8 @@ public:
         CSLConstList papszOptions = nullptr) override;
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
+
+    bool SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     void SetUpdatable(bool bUpdatable) { m_bUpdatable = bUpdatable; }
 

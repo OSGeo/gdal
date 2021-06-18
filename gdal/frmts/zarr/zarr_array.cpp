@@ -88,7 +88,7 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
 
 ZarrArray::~ZarrArray()
 {
-    if( m_bDefinitionModified )
+    if( m_bDefinitionModified  )
     {
         if( m_nVersion == 2 )
         {
@@ -100,10 +100,49 @@ ZarrArray::~ZarrArray()
         }
     }
 
-    if( m_oAttrGroup.IsModified() && m_nVersion == 2 )
+    if( (m_oAttrGroup.IsModified() || m_bSRSModified) && m_nVersion == 2 )
     {
         CPLJSONDocument oDoc;
         oDoc.SetRoot(m_oAttrGroup.Serialize());
+        if( m_poSRS )
+        {
+            CPLJSONObject oCRS;
+            const char* const apszOptions[] = { "FORMAT=WKT2_2019", nullptr };
+            char* pszWKT = nullptr;
+            if( m_poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE )
+            {
+                oCRS.Add("wkt", pszWKT);
+            }
+            CPLFree(pszWKT);
+
+            {
+                CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
+                CPLErrorStateBackuper errorStateBackuper;
+                char* projjson = nullptr;
+                if( m_poSRS->exportToPROJJSON(&projjson, nullptr) == OGRERR_NONE &&
+                    projjson != nullptr )
+                {
+                    CPLJSONDocument oDocProjJSON;
+                    if( oDocProjJSON.LoadMemory(std::string(projjson)) )
+                    {
+                        oCRS.Add("projjson", oDocProjJSON.GetRoot());
+                    }
+                }
+                CPLFree(projjson);
+            }
+
+            const char* pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
+            const char* pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+            if( pszAuthorityCode && pszAuthorityName &&
+                EQUAL(pszAuthorityName, "EPSG") )
+            {
+                oCRS.Add("url",
+                         std::string("http://www.opengis.net/def/crs/EPSG/0/") +
+                             pszAuthorityCode);
+            }
+
+            oDoc.GetRoot().Add("crs", oCRS);
+        }
         oDoc.Save(CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
     }
 
@@ -2082,4 +2121,23 @@ std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
         return nullptr;
     }
     return m_oAttrGroup.CreateAttribute(osName, anDimensions, oDataType, papszOptions);
+}
+
+/************************************************************************/
+/*                      ZarrArray::SetSpatialRef()                      */
+/************************************************************************/
+
+bool ZarrArray::SetSpatialRef(const OGRSpatialReference* poSRS)
+{
+    if( !m_bUpdatable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+    m_poSRS.reset();
+    if( poSRS )
+        m_poSRS.reset(poSRS->Clone());
+    m_bSRSModified = true;
+    return true;
 }
