@@ -8,7 +8,8 @@ RFC 81: Support for coordinate epochs in geospatial formats
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2021-May-10
-Status:        Development
+Last Updated:  2021-Jun-18
+Status:        Adopted
 Target:        GDAL 3.4
 ============== =============================================
 
@@ -51,7 +52,7 @@ coordinate transformation.
 Details
 -------
 
-See https://github.com/rouault/gdal/blob/coordinate_epoch/gdal/doc/source/user/coordinate_epoch.rst
+See https://github.com/rouault/gdal/blob/coordinate_epoch_v2/gdal/doc/source/user/coordinate_epoch.rst
 for impacts on the API, encoding of CRS in a number of formats, and impacts on
 existing utilities.
 
@@ -84,9 +85,9 @@ also received new tests.
 Related PRs:
 -------------
 
-https://github.com/OSGeo/gdal/pull/3810
+https://github.com/OSGeo/gdal/pull/4011
 
 Voting history
 --------------
 
-TBC
++1 from JukkaR and EvenR, -0 from HowardB and +0 from KurtS
