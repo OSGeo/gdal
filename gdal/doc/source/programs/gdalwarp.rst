@@ -17,6 +17,7 @@ Synopsis
 
     gdalwarp [--help-general] [--formats]
         [-s_srs srs_def] [-t_srs srs_def] [-ct string] [-to "NAME=VALUE"]* [-novshiftgrid]
+        [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]
         [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
         [-refine_gcps tolerance [minimum_gcps]]
         [-te xmin ymin xmax ymax] [-te_srs srs_def]
@@ -49,6 +50,17 @@ with control information.
 
     .. include:: options/srs_def_gdalwarp.rst
 
+.. option:: -s_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the source SRS. Useful when the
+    source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
+    is used.
+
+    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
+
 .. option:: -t_srs <srs_def>
 
     Set target spatial reference.
@@ -58,6 +70,17 @@ with control information.
     or as overridden by the user with :option:`-s_srs`
 
     .. include:: options/srs_def_gdalwarp.rst
+
+.. option:: -t_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the target SRS. Useful when the
+    target SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
+    is used.
+
+    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
 

@@ -3529,7 +3529,9 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 
         if( oTargetSRS.IsDynamic() )
         {
-            double dfCoordEpoch = CPLAtof(CSLFetchNameValueDef(papszTO, "COORDINATE_EPOCH", "0"));
+            double dfCoordEpoch = CPLAtof(CSLFetchNameValueDef(
+                papszTO, "DST_COORDINATE_EPOCH",
+                CSLFetchNameValueDef(papszTO, "COORDINATE_EPOCH", "0")));
             if( dfCoordEpoch == 0 )
             {
                 const OGRSpatialReferenceH hSrcSRS = GDALGetSpatialRef( pahSrcDS[0] );
@@ -4242,6 +4244,11 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
             }
             psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "DST_SRS", pszSRS );
         }
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-t_coord_epoch") )
+        {
+            const char *pszCoordinateEpoch = papszArgv[++i];
+            psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "DST_COORDINATE_EPOCH", pszCoordinateEpoch );
+        }
         else if( EQUAL(papszArgv[i],"-s_srs") && i+1 < argc )
         {
             const char *pszSRS = papszArgv[++i];
@@ -4251,6 +4258,11 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
                 return nullptr;
             }
             psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "SRC_SRS", pszSRS );
+        }
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-s_coord_epoch") )
+        {
+            const char *pszCoordinateEpoch = papszArgv[++i];
+            psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "SRC_COORDINATE_EPOCH", pszCoordinateEpoch );
         }
         else if( EQUAL(papszArgv[i],"-ct") && i+1 < argc )
         {
