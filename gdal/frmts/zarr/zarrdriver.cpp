@@ -52,11 +52,15 @@ class ZarrDataset final: public GDALDataset
     CPLStringList              m_aosSubdatasets{};
 
     static GDALDataset* OpenMultidim(const char* pszFilename,
+                                     bool bUpdateMode,
                                      CSLConstList papszOpenOptions);
 
 public:
     static int Identify( GDALOpenInfo *poOpenInfo );
     static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
+    static GDALDataset* CreateMultiDimensional( const char * pszFilename,
+                                                CSLConstList /*papszRootGroupOptions*/,
+                                                CSLConstList /*papszOptions*/ );
 
     const char* GetMetadataItem(const char* pszName, const char* pszDomain) override;
     char** GetMetadata(const char* pszDomain) override;
@@ -103,6 +107,7 @@ protected:
     mutable bool                                      m_bAttributesLoaded = false;
     bool                                              m_bReadFromZMetadata = false;
     mutable bool                                      m_bDimensionsInstantiated = false;
+    bool                                              m_bUpdatable = false;
 
     virtual void ExploreDirectory() const = 0;
     virtual void LoadAttributes() const = 0;
@@ -122,7 +127,7 @@ public:
 
     std::vector<std::string> GetMDArrayNames(CSLConstList papszOptions = nullptr) const override;
 
-    std::vector<std::string> GetGroupNames(CSLConstList papszOptions) const override;
+    std::vector<std::string> GetGroupNames(CSLConstList papszOptions = nullptr) const override;
 
     void SetDirectoryName(const std::string& osDirectoryName) { m_osDirectoryName = osDirectoryName; }
 
@@ -132,6 +137,8 @@ public:
                                          bool bLoadedFromZMetadata,
                                          const CPLJSONObject& oAttributes) const;
     void RegisterArray(const std::shared_ptr<GDALMDArray>& array) const;
+
+    void SetUpdatable(bool bUpdatable) { m_bUpdatable = bUpdatable; }
 };
 
 class ZarrGroupV2 final: public ZarrGroupBase
@@ -146,11 +153,18 @@ public:
     ZarrGroupV2(const std::string& osParentName, const std::string& osName):
         ZarrGroupBase(osParentName, osName) {}
 
+    static std::shared_ptr<ZarrGroupV2> CreateOnDisk(const std::string& osParentName,
+                                                     const std::string& osName,
+                                                     const std::string& osDirectoryName);
+
     std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
                                              CSLConstList papszOptions = nullptr) const override;
 
     std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
                                          CSLConstList papszOptions) const override;
+
+    std::shared_ptr<GDALGroup> CreateGroup(const std::string& osName,
+                                           CSLConstList papszOptions = nullptr) override;
 
     void InitFromZMetadata(const CPLJSONObject& oRoot);
 };
@@ -463,6 +477,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::OpenGroup(const std::string& osName,
                 return nullptr;
 
             auto poSubGroup = std::make_shared<ZarrGroupV2>(GetFullName(), osName);
+            poSubGroup->SetUpdatable(m_bUpdatable);
             poSubGroup->SetDirectoryName(osSubDir);
             m_oMapGroups[osName] = poSubGroup;
             return poSubGroup;
@@ -572,6 +587,7 @@ std::shared_ptr<ZarrGroupV2> ZarrGroupV2::GetOrCreateSubGroup(
     poSubGroup->m_bDirectoryExplored = true;
     poSubGroup->m_bAttributesLoaded = true;
     poSubGroup->m_bReadFromZMetadata = true;
+    poSubGroup->SetUpdatable(m_bUpdatable);
 
     poBelongingGroup->m_oMapGroups[poSubGroup->GetName()] = poSubGroup;
     poBelongingGroup->m_aosGroups.emplace_back(poSubGroup->GetName());
@@ -764,6 +780,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     {
         auto poSubGroup = std::make_shared<ZarrGroupV3>(GetFullName(), osName);
         poSubGroup->SetDirectoryName(m_osDirectoryName);
+        poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
     }
@@ -774,6 +791,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     {
         auto poSubGroup = std::make_shared<ZarrGroupV3>(GetFullName(), osName);
         poSubGroup->SetDirectoryName(m_osDirectoryName);
+        poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
     }
@@ -2739,6 +2757,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 /************************************************************************/
 
 GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
+                                       bool bUpdateMode,
                                        CSLConstList papszOpenOptions)
 {
     CPLString osFilename(pszFilename);
@@ -2747,6 +2766,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
 
     auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
     auto poRG = std::make_shared<ZarrGroupV2>(std::string(), "/");
+    poRG->SetUpdatable(bUpdateMode);
     poDS->m_poRootGroup = poRG;
 
     const std::string osZarrayFilename(
@@ -2795,6 +2815,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
     // Zarr v3
     auto poRG_V3 = std::make_shared<ZarrGroupV3>(std::string(), "/");
     poRG_V3->SetDirectoryName(osFilename);
+    // poRG_V3->SetUpdatable(bUpdateMode); // TODO
     poDS->m_poRootGroup = poRG_V3;
     return poDS.release();
 }
@@ -2860,7 +2881,8 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     {
         return nullptr;
     }
-    if( poOpenInfo->eAccess == GA_Update )
+    if( poOpenInfo->eAccess == GA_Update &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Update not supported");
         return nullptr;
@@ -2885,7 +2907,8 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     }
 
     auto poDSMultiDim = std::unique_ptr<GDALDataset>(
-        OpenMultidim(osFilename.c_str(), poOpenInfo->papszOpenOptions));
+        OpenMultidim(osFilename.c_str(), poOpenInfo->eAccess == GA_Update,
+                     poOpenInfo->papszOpenOptions));
     if( poDSMultiDim == nullptr ||
         (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0 )
     {
@@ -3137,6 +3160,109 @@ void ZarrDriver::InitMetadata()
 }
 
 /************************************************************************/
+/*                   ZarrGroupV2::CreateOnDisk()                        */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupV2> ZarrGroupV2::CreateOnDisk(const std::string& osParentName,
+                                                       const std::string& osName,
+                                                       const std::string& osDirectoryName)
+{
+    if( VSIMkdir(osDirectoryName.c_str(), 0755) != 0 )
+    {
+        VSIStatBufL sStat;
+        if( VSIStatL(osDirectoryName.c_str(), &sStat) == 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Directory %s already exists.",
+                     osDirectoryName.c_str());
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s.",
+                     osDirectoryName.c_str());
+        }
+        return nullptr;
+    }
+
+    const std::string osZgroupFilename(
+        CPLFormFilename(osDirectoryName.c_str(), ".zgroup", nullptr));
+    VSILFILE* fp = VSIFOpenL(osZgroupFilename.c_str(), "wb" );
+    if( !fp )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create file %s.",
+                 osZgroupFilename.c_str());
+        return nullptr;
+    }
+    VSIFPrintfL(fp, "{\n  \"zarr_format\": 2\n}\n");
+    VSIFCloseL(fp);
+
+    auto poGroup = std::make_shared<ZarrGroupV2>(osParentName, osName);
+    poGroup->SetDirectoryName(osDirectoryName);
+    poGroup->SetUpdatable(true);
+    poGroup->m_bDirectoryExplored = true;
+    return poGroup;
+}
+
+/************************************************************************/
+/*                      ZarrGroupV2::CreateGroup()                      */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> ZarrGroupV2::CreateGroup(const std::string& osName,
+                                                    CSLConstList /* papszOptions */)
+{
+    if( !m_bUpdatable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return nullptr;
+    }
+    if( osName.empty() || osName == "." || osName == ".." ||
+        osName.find('/') != std::string::npos ||
+        osName.find('\\') != std::string::npos ||
+        osName.find(':') != std::string::npos ||
+        STARTS_WITH(osName.c_str(), ".z") )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Invalid group name");
+        return nullptr;
+    }
+
+    GetGroupNames();
+
+    if( m_oMapGroups.find(osName) != m_oMapGroups.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A group with same name already exists");
+        return nullptr;
+    }
+    const std::string osDirectoryName =
+        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+    auto poGroup = CreateOnDisk(GetFullName(), osName, osDirectoryName);
+    if( !poGroup )
+        return nullptr;
+    m_oMapGroups[osName] = poGroup;
+    m_aosGroups.emplace_back(osName);
+    return poGroup;
+}
+
+/************************************************************************/
+/*                     CreateMultiDimensional()                         */
+/************************************************************************/
+
+GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
+                                                  CSLConstList /*papszRootGroupOptions*/,
+                                                  CSLConstList /*papszOptions*/ )
+{
+    auto poRG = ZarrGroupV2::CreateOnDisk(std::string(), "/", pszFilename);
+    if( !poRG )
+        return nullptr;
+
+    auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
+    poDS->SetDescription(pszFilename);
+    poDS->m_poRootGroup = poRG;
+    return poDS.release();
+}
+
+/************************************************************************/
 /*                          GDALRegister_Zarr()                         */
 /************************************************************************/
 
@@ -3164,6 +3290,7 @@ void GDALRegister_Zarr()
 
     poDriver->pfnIdentify = ZarrDataset::Identify;
     poDriver->pfnOpen = ZarrDataset::Open;
+    poDriver->pfnCreateMultiDimensional = ZarrDataset::CreateMultiDimensional;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

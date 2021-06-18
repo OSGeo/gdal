@@ -1006,3 +1006,88 @@ def test_zarr_read_BLOSC_COMPRESSORS():
         pytest.skip('blosc not available')
     assert 'lz4' in gdal.GetDriverByName(
         'Zarr').GetMetadataItem('BLOSC_COMPRESSORS')
+
+
+def test_zarr_create_group():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            assert rg.GetName() == '/'
+            subgroup = rg.CreateGroup('foo')
+            assert subgroup
+            assert subgroup.GetName() == 'foo'
+            assert subgroup.GetFullName() == '/foo'
+            assert rg.GetGroupNames() == ['foo']
+            subgroup = rg.OpenGroup('foo')
+            assert subgroup
+
+        create()
+
+        def update():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            assert rg.GetGroupNames() == ['foo']
+            subgroup = rg.OpenGroup('foo')
+            assert subgroup
+            subgroup = rg.CreateGroup('bar')
+            assert subgroup
+            assert set(rg.GetGroupNames()) == set(['foo', 'bar'])
+            subgroup = rg.OpenGroup('foo')
+            assert subgroup
+            subsubgroup = subgroup.CreateGroup('baz')
+            assert subsubgroup
+            ds = None
+
+        update()
+
+        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        assert set(rg.GetGroupNames()) == set(['foo', 'bar'])
+        with gdaltest.error_handler():
+            assert rg.CreateGroup('not_opened_in_update_mode') is None
+        subgroup = rg.OpenGroup('foo')
+        assert subgroup
+        subsubgroup = subgroup.OpenGroup('baz')
+        assert subsubgroup
+        ds = None
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("group_name", ["foo",  # already existing
+                                        "directory_with_that_name",
+                                        "",
+                                        ".",
+                                        "..",
+                                        "a/b",
+                                        "a\\n",
+                                        "a:b",
+                                        ".zarray",
+                                        ])
+def test_zarr_create_group_errors(group_name):
+
+    try:
+        ds = gdal.GetDriverByName(
+            'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+        assert ds is not None
+        rg = ds.GetRootGroup()
+        assert rg
+        subgroup = rg.CreateGroup('foo')
+        assert subgroup
+        gdal.Mkdir('/vsimem/test.zarr/directory_with_that_name', 0)
+        with gdaltest.error_handler():
+            assert rg.CreateGroup(group_name) is None
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
