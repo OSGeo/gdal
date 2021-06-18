@@ -76,15 +76,57 @@ class ZarrAttributeGroup
 {
     // Use a MEMGroup as a convenient container for attributes.
     MEMGroup m_oGroup;
+    bool m_bModified = false;
 
 public:
     explicit ZarrAttributeGroup(const std::string& osParentName);
 
-    void Init(const CPLJSONObject& obj);
+    void Init(const CPLJSONObject& obj, bool bUpdatable);
 
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const { return m_oGroup.GetAttribute(osName); }
 
-    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const { return m_oGroup.GetAttributes(papszOptions); }
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions = nullptr) const { return m_oGroup.GetAttributes(papszOptions); }
+
+    std::shared_ptr<GDALAttribute> CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList /* papszOptions */ = nullptr )
+    {
+        auto poAttr = m_oGroup.CreateAttribute(osName, anDimensions, oDataType, nullptr);
+        if( poAttr )
+        {
+            m_bModified = true;
+        }
+        return poAttr;
+    }
+
+    void SetUpdatable(bool bUpdatable)
+    {
+        auto attrs = m_oGroup.GetAttributes(nullptr);
+        for( auto attr: attrs )
+        {
+            auto memAttr = std::dynamic_pointer_cast<MEMAttribute>(attr);
+            if( memAttr )
+                memAttr->SetWritable(bUpdatable);
+        }
+    }
+
+    bool IsModified() const
+    {
+        if( m_bModified )
+            return true;
+        const auto attrs = m_oGroup.GetAttributes(nullptr);
+        for( const auto& attr: attrs )
+        {
+            const auto memAttr = std::dynamic_pointer_cast<MEMAttribute>(attr);
+            if( memAttr && memAttr->IsModified() )
+                return true;
+        }
+        return false;
+    }
+
+    CPLJSONObject Serialize() const;
 };
 
 /************************************************************************/
@@ -120,8 +162,14 @@ public:
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
         { LoadAttributes(); return m_oAttrGroup.GetAttribute(osName); }
 
-    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions) const override
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions = nullptr) const override
         { LoadAttributes(); return m_oAttrGroup.GetAttributes(papszOptions); }
+
+    std::shared_ptr<GDALAttribute> CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList papszOptions = nullptr) override;
 
     std::vector<std::shared_ptr<GDALDimension>> GetDimensions(CSLConstList papszOptions) const override;
 
@@ -152,6 +200,8 @@ class ZarrGroupV2 final: public ZarrGroupBase
 public:
     ZarrGroupV2(const std::string& osParentName, const std::string& osName):
         ZarrGroupBase(osParentName, osName) {}
+
+    ~ZarrGroupV2() override;
 
     static std::shared_ptr<ZarrGroupV2> CreateOnDisk(const std::string& osParentName,
                                                      const std::string& osName,
@@ -239,6 +289,7 @@ class ZarrArray final: public GDALMDArray
     mutable bool                                      m_bWorkingBuffersOK = false;
     std::string                                       m_osRootDirectoryName{};
     int                                               m_nVersion = 0;
+    bool                                              m_bUpdatable = false;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -296,7 +347,7 @@ public:
 
     void SetDecompressor(const CPLCompressor* psComp) { m_psDecompressor = psComp; }
 
-    void SetAttributes(const CPLJSONObject& attrs) { m_oAttrGroup.Init(attrs); }
+    void SetAttributes(const CPLJSONObject& attrs) { m_oAttrGroup.Init(attrs, m_bUpdatable); }
 
     void SetSRS(const std::shared_ptr<OGRSpatialReference>& srs) { m_poSRS = srs; }
 
@@ -505,7 +556,7 @@ void ZarrGroupV2::LoadAttributes() const
     if( !oDoc.Load(osZattrsFilename) )
         return;
     auto oRoot = oDoc.GetRoot();
-    m_oAttrGroup.Init(oRoot);
+    m_oAttrGroup.Init(oRoot, m_bUpdatable);
 }
 
 /************************************************************************/
@@ -530,7 +581,7 @@ void ZarrGroupV3::LoadAttributes() const
         if( !oDoc.Load(osFilename) )
             return;
         auto oRoot = oDoc.GetRoot();
-        m_oAttrGroup.Init(oRoot["attributes"]);
+        m_oAttrGroup.Init(oRoot["attributes"], m_bUpdatable);
     }
 }
 
@@ -621,7 +672,7 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
         }
         if( osName == ".zattrs" )
         {
-            m_oAttrGroup.Init(child);
+            m_oAttrGroup.Init(child, m_bUpdatable);
         }
         else if( osName.size() > strlen("/.zgroup") &&
                  osName.substr(osName.size() - strlen("/.zgroup")) == "/.zgroup" )
@@ -668,7 +719,7 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
                     OpenGroupFromFullname('/'  + osObjectFullnameNoLeadingSlash));
             if( poSubGroup )
             {
-                poSubGroup->m_oAttrGroup.Init(child);
+                poSubGroup->m_oAttrGroup.Init(child, m_bUpdatable);
             }
             else
             {
@@ -812,7 +863,7 @@ ZarrAttributeGroup::ZarrAttributeGroup(const std::string& osParentName):
 /*                   ZarrAttributeGroup::Init()                         */
 /************************************************************************/
 
-void ZarrAttributeGroup::Init(const CPLJSONObject& obj)
+void ZarrAttributeGroup::Init(const CPLJSONObject& obj, bool bUpdatable)
 {
     if( obj.GetType() != CPLJSONObject::Type::Object )
         return;
@@ -821,10 +872,11 @@ void ZarrAttributeGroup::Init(const CPLJSONObject& obj)
     {
         const auto itemType = item.GetType();
         bool bDone = false;
+        std::shared_ptr<GDALAttribute> poAttr;
         if( itemType == CPLJSONObject::Type::String )
         {
             bDone = true;
-            auto poAttr = m_oGroup.CreateAttribute(
+            poAttr = m_oGroup.CreateAttribute(
                 item.GetName(), {},
                 GDALExtendedDataType::CreateString(), nullptr);
             if( poAttr )
@@ -848,7 +900,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject& obj)
                  itemType == CPLJSONObject::Type::Double )
         {
             bDone = true;
-            auto poAttr = m_oGroup.CreateAttribute(
+            poAttr = m_oGroup.CreateAttribute(
                 item.GetName(), {},
                 GDALExtendedDataType::Create(
                     itemType == CPLJSONObject::Type::Integer ?
@@ -925,7 +977,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject& obj)
             if( !mixedType && !isFirst )
             {
                 bDone = true;
-                auto poAttr = m_oGroup.CreateAttribute(
+                poAttr = m_oGroup.CreateAttribute(
                     item.GetName(), { countItems },
                     isString ?
                         GDALExtendedDataType::CreateString():
@@ -973,7 +1025,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject& obj)
 
         if( !bDone )
         {
-            auto poAttr = m_oGroup.CreateAttribute(
+            poAttr = m_oGroup.CreateAttribute(
                 item.GetName(), {}, GDALExtendedDataType::CreateString(), nullptr);
             if( poAttr )
             {
@@ -991,6 +1043,132 @@ void ZarrAttributeGroup::Init(const CPLJSONObject& obj)
                               &c_str);
             }
         }
+
+        auto poMemAttr = std::dynamic_pointer_cast<MEMAttribute>(poAttr);
+        if( poMemAttr )
+            poMemAttr->SetModified(false);
+    }
+    SetUpdatable(bUpdatable);
+}
+
+/************************************************************************/
+/*                  ZarrGroupBase::CreateAttribute()                    */
+/************************************************************************/
+
+std::shared_ptr<GDALAttribute> ZarrGroupBase::CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList papszOptions)
+{
+    if( !m_bUpdatable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return nullptr;
+    }
+    if( anDimensions.size() >= 2 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot create attributes of dimension >= 2");
+        return nullptr;
+    }
+    LoadAttributes();
+    return m_oAttrGroup.CreateAttribute(osName, anDimensions, oDataType, papszOptions);
+}
+
+/************************************************************************/
+/*                    ZarrAttributeGroup::Serialize()                   */
+/************************************************************************/
+
+CPLJSONObject ZarrAttributeGroup::Serialize() const
+{
+    CPLJSONObject o;
+    const auto attrs = m_oGroup.GetAttributes(nullptr);
+    for( const auto& attr: attrs )
+    {
+        const auto oType = attr->GetDataType();
+        if( oType.GetClass() == GEDTC_STRING )
+        {
+            const auto anDims = attr->GetDimensionsSize();
+            if( anDims.size() == 0 )
+            {
+                o.Add(attr->GetName(), attr->ReadAsString());
+            }
+            else if ( anDims.size() == 1 )
+            {
+                const auto list = attr->ReadAsStringArray();
+                CPLJSONArray arr;
+                for( int i = 0; i < list.size(); ++i )
+                {
+                    arr.Add(list[i]);
+                }
+                o.Add(attr->GetName(), arr);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot serialize attribute %s of dimension count >= 2",
+                         attr->GetName().c_str());
+            }
+        }
+        else if( oType.GetClass() == GEDTC_NUMERIC )
+        {
+            const auto anDims = attr->GetDimensionsSize();
+            const auto eDT = oType.GetNumericDataType();
+            if( anDims.size() == 0 )
+            {
+                const double dfVal = attr->ReadAsDouble();
+                if( eDT == GDT_Byte || eDT == GDT_UInt16 || eDT == GDT_UInt32 ||
+                    eDT == GDT_Int16 || eDT == GDT_Int32 )
+                {
+                    o.Add(attr->GetName(), static_cast<GInt64>(dfVal));
+                }
+                else
+                {
+                    o.Add(attr->GetName(), dfVal);
+                }
+            }
+            else if ( anDims.size() == 1 )
+            {
+                const auto list = attr->ReadAsDoubleArray();
+                CPLJSONArray arr;
+                for( const auto dfVal: list )
+                {
+                    if( eDT == GDT_Byte || eDT == GDT_UInt16 || eDT == GDT_UInt32 ||
+                        eDT == GDT_Int16 || eDT == GDT_Int32 )
+                    {
+                        arr.Add(static_cast<GInt64>(dfVal));
+                    }
+                    else
+                    {
+                        arr.Add(dfVal);
+                    }
+                }
+                o.Add(attr->GetName(), arr);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot serialize attribute %s of dimension count >= 2",
+                         attr->GetName().c_str());
+            }
+        }
+    }
+    return o;
+}
+
+/************************************************************************/
+/*                      ZarrGroupV2::~ZarrGroupV2()                     */
+/************************************************************************/
+
+ZarrGroupV2::~ZarrGroupV2()
+{
+    if( m_oAttrGroup.IsModified() )
+    {
+        CPLJSONDocument oDoc;
+        oDoc.SetRoot(m_oAttrGroup.Serialize());
+        oDoc.Save(CPLFormFilename(m_osDirectoryName.c_str(), ".zattrs", nullptr));
     }
 }
 

@@ -1018,6 +1018,48 @@ def test_zarr_create_group():
             rg = ds.GetRootGroup()
             assert rg
             assert rg.GetName() == '/'
+
+            attr = rg.CreateAttribute(
+                'str_attr', [], gdal.ExtendedDataType.CreateString())
+            assert attr
+            assert attr.Write('my_string') == gdal.CE_None
+
+            attr = rg.CreateAttribute(
+                'str_array_attr', [2], gdal.ExtendedDataType.CreateString())
+            assert attr
+            assert attr.Write(
+                ['first_string', 'second_string']) == gdal.CE_None
+
+            with gdaltest.error_handler():
+                attr = rg.CreateAttribute('dim_2_not_supported', [
+                                          2, 2], gdal.ExtendedDataType.CreateString())
+                assert attr is None
+
+            attr = rg.CreateAttribute(
+                'int_attr', [], gdal.ExtendedDataType.Create(gdal.GDT_Int32))
+            assert attr
+            assert attr.Write(12345678) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
+                'uint_attr', [], gdal.ExtendedDataType.Create(gdal.GDT_UInt32))
+            assert attr
+            assert attr.Write(4000000000) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
+                'int_array_attr', [2], gdal.ExtendedDataType.Create(gdal.GDT_Int32))
+            assert attr
+            assert attr.Write([12345678, -12345678]) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
+                'double_attr', [], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+            assert attr
+            assert attr.Write(12345678.5) == gdal.CE_None
+
+            attr = rg.CreateAttribute('double_array_attr', [
+                                      2], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+            assert attr
+            assert attr.Write([12345678.5, -12345678.5]) == gdal.CE_None
+
             subgroup = rg.CreateGroup('foo')
             assert subgroup
             assert subgroup.GetName() == 'foo'
@@ -1035,6 +1077,12 @@ def test_zarr_create_group():
             rg = ds.GetRootGroup()
             assert rg
             assert rg.GetGroupNames() == ['foo']
+
+            attr = rg.GetAttribute('str_attr')
+            assert attr
+            assert attr.Read() == 'my_string'
+            assert attr.Write('my_string_modified') == gdal.CE_None
+
             subgroup = rg.OpenGroup('foo')
             assert subgroup
             subgroup = rg.CreateGroup('bar')
@@ -1052,9 +1100,45 @@ def test_zarr_create_group():
         assert ds
         rg = ds.GetRootGroup()
         assert rg
+
+        attr = rg.GetAttribute('str_attr')
+        assert attr
+        assert attr.Read() == 'my_string_modified'
+
+        attr = rg.GetAttribute('str_array_attr')
+        assert attr
+        assert attr.Read() == ['first_string', 'second_string']
+
+        attr = rg.GetAttribute('int_attr')
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+        assert attr.ReadAsDouble() == 12345678
+
+        attr = rg.GetAttribute('uint_attr')
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+        assert attr.ReadAsDouble() == 4000000000
+
+        attr = rg.GetAttribute('int_array_attr')
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+        assert attr.ReadAsIntArray() == (12345678, -12345678)
+
+        attr = rg.GetAttribute('double_attr')
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+        assert attr.ReadAsDouble() == 12345678.5
+
+        attr = rg.GetAttribute('double_array_attr')
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+        assert attr.Read() == (12345678.5, -12345678.5)
+
         assert set(rg.GetGroupNames()) == set(['foo', 'bar'])
         with gdaltest.error_handler():
             assert rg.CreateGroup('not_opened_in_update_mode') is None
+            assert rg.CreateAttribute(
+                'not_opened_in_update_mode', [], gdal.ExtendedDataType.CreateString()) is None
         subgroup = rg.OpenGroup('foo')
         assert subgroup
         subsubgroup = subgroup.OpenGroup('baz')
