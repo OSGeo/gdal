@@ -455,6 +455,7 @@ void GDALRegister_VRT()
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 
     poDriver->AddSourceParser( "SimpleSource", VRTParseCoreSources );
     poDriver->AddSourceParser( "ComplexSource", VRTParseCoreSources );

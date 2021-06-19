@@ -146,4 +146,15 @@ def test_gdalinfo_lib_nodatavalues():
     assert 'PER_DATASET NODATA' in ret, 'wrong value for mask flags.'
 
 
+###############################################################################
 
+
+def test_gdalinfo_lib_coordinate_epoch():
+
+    ds = gdal.Translate('', '../gcore/data/byte.tif', options='-of MEM -a_coord_epoch 2021.3"')
+    ret = gdal.Info(ds)
+    assert 'Coordinate epoch: 2021.3' in ret
+
+    ret = gdal.Info(ds, format = 'json')
+    assert 'coordinateEpoch' in ret
+    assert ret['coordinateEpoch'] == 2021.3

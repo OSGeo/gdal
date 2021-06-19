@@ -48,6 +48,7 @@ Synopsis
             [-resolveDomains]
             [-explodecollections] [-zfield field_name]
             [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]
+            [[-s_coord_epoch epoch] | [-t_coord_epoch epoch] | [-a_coord_epoch epoch]]
             [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
 
 Description
@@ -187,6 +188,14 @@ output coordinate system or even reprojecting the features during translation.
 
     .. include:: options/srs_def.rst
 
+.. option:: -a_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS. Only taken into account if :option:`-a_srs`
+    is used.
+
 .. option:: -t_srs <srs_def>
 
     Reproject/transform to this SRS on output, and assign it as output SRS.
@@ -197,6 +206,17 @@ output coordinate system or even reprojecting the features during translation.
 
     .. include:: options/srs_def.rst
 
+.. option:: -t_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
+    is used. It is also mutually exclusive with  :option:`-a_coord_epoch`.
+
+    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
+
 .. option:: -s_srs <srs_def>
 
     Override source SRS. If not specified the SRS found in the input layer will
@@ -204,6 +224,17 @@ output coordinate system or even reprojecting the features during translation.
     to reproject.
 
     .. include:: options/srs_def.rst
+
+.. option:: -s_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the source SRS. Useful when the
+    source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
+    is used.
+
+    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
 

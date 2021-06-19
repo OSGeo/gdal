@@ -372,10 +372,11 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
     }
 
     CPLString oSQL;
-    oSQL.Printf( "SELECT definition, organization, organization_coordsys_id%s "
+    oSQL.Printf( "SELECT definition, organization, organization_coordsys_id%s%s "
                  "FROM gpkg_spatial_ref_sys WHERE definition IS NOT NULL AND "
                  "srs_id = %d LIMIT 2",
                  m_bHasDefinition12_063 ? ", definition_12_063" : "",
+                 m_bHasEpochColumn ? ", epoch" : "",
                  iSrsId );
 
     auto oResult = SQLQuery(hDB, oSQL.c_str());
@@ -411,6 +412,10 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
     const char *pszWkt2 = m_bHasDefinition12_063 ? oResult->GetValue(3, 0) : nullptr;
     if( pszWkt2 && !EQUAL(pszWkt2, "undefined") )
         pszWkt = pszWkt2;
+    const char* pszCoordinateEpoch =
+        m_bHasEpochColumn ? oResult->GetValue(4, 0) : nullptr;
+    const double dfCoordinateEpoch =
+        pszCoordinateEpoch ? CPLAtof(pszCoordinateEpoch) : 0.0;
 
     OGRSpatialReference *poSpatialRef = new OGRSpatialReference();
     poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -431,6 +436,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
     }
 
     poSpatialRef->StripTOWGS84IfKnownDatumAndAllowed();
+    poSpatialRef->SetCoordinateEpoch(dfCoordinateEpoch);
     m_oMapSrsIdToSrs[iSrsId] = poSpatialRef;
     poSpatialRef->Reference();
     return poSpatialRef;
@@ -602,6 +608,8 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                 pszAuthorityName = poSRS->GetAuthorityName(nullptr);
             }
         }
+
+        poSRS->SetCoordinateEpoch(oSRS.GetCoordinateEpoch());
     }
 
     // Check whether the EPSG authority code is already mapped to a
@@ -612,7 +620,9 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     OGRErr err = OGRERR_NONE;
     bool bCanUseAuthorityCode = false;
     const char* const apszIsSameOptions[] = {
-        "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+        "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES",
+        "IGNORE_COORDINATE_EPOCH=YES",
+        nullptr };
     if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 )
     {
         const char* pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
@@ -634,13 +644,14 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         }
     }
 
-    if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 )
+    if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 &&
+         oSRS.GetCoordinateEpoch() == 0 )
     {
         pszSQL = sqlite3_mprintf(
                          "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
                          "upper(organization) = upper('%q') AND "
                          "organization_coordsys_id = %d",
-                         pszAuthorityName, nAuthorityCode );
+                         pszAuthorityName, nAuthorityCode);
 
         nSRSId = SQLGetInteger(hDB, pszSQL, &err);
         sqlite3_free(pszSQL);
@@ -677,6 +688,14 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     CPLCharUniquePtr pszWKT2;
     const char* const apszOptionsWkt1[] = { "FORMAT=WKT1_GDAL", nullptr };
     const char* const apszOptionsWkt2[] = { "FORMAT=WKT2_2015", nullptr };
+
+    std::string osEpochTest;
+    if( oSRS.GetCoordinateEpoch() > 0 && m_bHasEpochColumn )
+    {
+        osEpochTest = CPLSPrintf(" AND epoch = %.18g",
+                                 oSRS.GetCoordinateEpoch());
+    }
+
     if( !(poSRS->IsGeographic() && poSRS->GetAxesCount() == 3) )
     {
         char* pszTmp = nullptr;
@@ -702,44 +721,50 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         return DEFAULT_SRID;
     }
 
-    // Search if there is already an existing entry with this WKT
-    if( m_bHasDefinition12_063 && pszWKT2 )
+    if( oSRS.GetCoordinateEpoch() == 0 || m_bHasEpochColumn )
     {
-        if( pszWKT1 )
+        // Search if there is already an existing entry with this WKT
+        if( m_bHasDefinition12_063 && pszWKT2 )
+        {
+            if( pszWKT1 )
+            {
+                pszSQL = sqlite3_mprintf(
+                        "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
+                        "(definition = '%q' OR definition_12_063 = '%q')%s",
+                        pszWKT1.get(), pszWKT2.get(), osEpochTest.c_str() );
+            }
+            else
+            {
+                pszSQL = sqlite3_mprintf(
+                        "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
+                        "definition_12_063 = '%q'%s", pszWKT2.get(),
+                        osEpochTest.c_str() );
+            }
+        }
+        else if( pszWKT1 )
         {
             pszSQL = sqlite3_mprintf(
                     "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
-                    "definition = '%q' OR definition_12_063 = '%q'",
-                    pszWKT1.get(), pszWKT2.get() );
+                    "definition = '%q'%s", pszWKT1.get(),
+                    osEpochTest.c_str() );
         }
         else
         {
-            pszSQL = sqlite3_mprintf(
-                    "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
-                    "definition_12_063 = '%q'", pszWKT2.get() );
+            pszSQL = nullptr;
         }
-    }
-    else if( pszWKT1 )
-    {
-        pszSQL = sqlite3_mprintf(
-                "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
-                "definition = '%q'", pszWKT1.get() );
-    }
-    else
-    {
-        pszSQL = nullptr;
-    }
-    if( pszSQL )
-    {
-        nSRSId = SQLGetInteger(hDB, pszSQL, &err);
-        sqlite3_free(pszSQL);
-        if ( OGRERR_NONE == err )
+        if( pszSQL )
         {
-            return nSRSId;
+            nSRSId = SQLGetInteger(hDB, pszSQL, &err);
+            sqlite3_free(pszSQL);
+            if ( OGRERR_NONE == err )
+            {
+                return nSRSId;
+            }
         }
     }
 
-    if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 )
+    if ( pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 &&
+        oSRS.GetCoordinateEpoch() == 0 )
     {
         bool bTryToReuseSRSId = true;
         if( EQUAL( pszAuthorityName, "EPSG") )
@@ -784,6 +809,26 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         }
     }
 
+    // Add epoch column if needed
+    if( oSRS.GetCoordinateEpoch() > 0 && !m_bHasEpochColumn )
+    {
+        if( !m_bHasDefinition12_063 )
+        {
+            if( !ConvertGpkgSpatialRefSysToExtensionWkt2() )
+            {
+                return DEFAULT_SRID;
+            }
+        }
+
+        if( SQLCommand(hDB,
+                "ALTER TABLE gpkg_spatial_ref_sys "
+                "ADD COLUMN epoch DOUBLE") != OGRERR_NONE )
+        {
+            return DEFAULT_SRID;
+        }
+        m_bHasEpochColumn = true;
+    }
+
     // Reuse the authority code number as SRS_ID if we can
     if ( bCanUseAuthorityCode )
     {
@@ -800,6 +845,14 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         nSRSId = std::max(100000, nMaxSRSId + 1);
     }
 
+    std::string osEpochColumn;
+    std::string osEpochVal;
+    if( oSRS.GetCoordinateEpoch() > 0 )
+    {
+        osEpochColumn = ", epoch";
+        osEpochVal = CPLSPrintf(", %.18g", oSRS.GetCoordinateEpoch());
+    }
+
     // Add new SRS row to gpkg_spatial_ref_sys.
     if( m_bHasDefinition12_063 )
     {
@@ -808,22 +861,26 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
             pszSQL = sqlite3_mprintf(
                 "INSERT INTO gpkg_spatial_ref_sys "
                 "(srs_name,srs_id,organization,organization_coordsys_id,"
-                "definition, definition_12_063) VALUES "
-                "('%q', %d, upper('%q'), %d, '%q', '%q')",
+                "definition, definition_12_063%s) VALUES "
+                "('%q', %d, upper('%q'), %d, '%q', '%q'%s)",
+                osEpochColumn.c_str(),
                 GetSrsName(*poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
                 pszWKT1 ? pszWKT1.get() : "undefined",
-                pszWKT2 ? pszWKT2.get() : "undefined" );
+                pszWKT2 ? pszWKT2.get() : "undefined",
+                osEpochVal.c_str());
         }
         else
         {
             pszSQL = sqlite3_mprintf(
                 "INSERT INTO gpkg_spatial_ref_sys "
                 "(srs_name,srs_id,organization,organization_coordsys_id,"
-                "definition, definition_12_063) VALUES "
+                "definition, definition_12_063%s) VALUES "
                 "('%q', %d, upper('%q'), %d, '%q', '%q')",
+                osEpochColumn.c_str(),
                 GetSrsName(*poSRS), nSRSId, "NONE", nSRSId,
                 pszWKT1 ? pszWKT1.get() : "undefined",
-                pszWKT2 ? pszWKT2.get() : "undefined" );
+                pszWKT2 ? pszWKT2.get() : "undefined",
+                osEpochVal.c_str());
         }
     }
     else
@@ -875,7 +932,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_bDescriptionAsCO(false),
     m_bHasReadMetadataFromStorage(false),
     m_bMetadataDirty(false),
-    m_pszProjection(nullptr),
     m_bRecordInsertedInGPKGContent(false),
     m_bGeoTransformValid(false),
     m_nSRID(-1),  // Unknown cartesian.
@@ -942,7 +998,6 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
     CPLFree( m_papoLayers );
     CPLFree( m_papoOverviewDS );
-    CPLFree(m_pszProjection);
 
     std::map<int, OGRSpatialReference*>::iterator oIter =
                                                     m_oMapSrsIdToSrs.begin();
@@ -1384,18 +1439,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         return FALSE;
     }
 
-    // Detect definition_12_063 column
-    {
-        sqlite3_stmt* hSQLStmt = nullptr;
-        int rc = sqlite3_prepare_v2( hDB,
-            "SELECT definition_12_063 FROM gpkg_spatial_ref_sys ", -1,
-            &hSQLStmt, nullptr );
-        if( rc == SQLITE_OK )
-        {
-            m_bHasDefinition12_063 = true;
-            sqlite3_finalize(hSQLStmt);
-        }
-    }
+    DetectSpatialRefSysColumns();
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( SQLGetInteger(hDB,
@@ -1655,6 +1699,41 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     return bRet;
+}
+
+
+/************************************************************************/
+/*                    DetectSpatialRefSysColumns()                      */
+/************************************************************************/
+
+void GDALGeoPackageDataset::DetectSpatialRefSysColumns()
+{
+    // Detect definition_12_063 column
+    {
+        sqlite3_stmt* hSQLStmt = nullptr;
+        int rc = sqlite3_prepare_v2( hDB,
+            "SELECT definition_12_063 FROM gpkg_spatial_ref_sys ", -1,
+            &hSQLStmt, nullptr );
+        if( rc == SQLITE_OK )
+        {
+            m_bHasDefinition12_063 = true;
+            sqlite3_finalize(hSQLStmt);
+        }
+    }
+
+    // Detect epoch column
+    if( m_bHasDefinition12_063 )
+    {
+        sqlite3_stmt* hSQLStmt = nullptr;
+        int rc = sqlite3_prepare_v2( hDB,
+            "SELECT epoch FROM gpkg_spatial_ref_sys ", -1,
+            &hSQLStmt, nullptr );
+        if( rc == SQLITE_OK )
+        {
+            m_bHasEpochColumn = true;
+            sqlite3_finalize(hSQLStmt);
+        }
+    }
 }
 
 /************************************************************************/
@@ -2182,7 +2261,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     OGRSpatialReference* poSRS = GetSpatialRef( nSRSId );
     if( poSRS )
     {
-        poSRS->exportToWkt(&m_pszProjection);
+        m_oSRS = *poSRS;
         poSRS->Release();
     }
 
@@ -2437,19 +2516,19 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 }
 
 /************************************************************************/
-/*                         GetProjectionRef()                           */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char* GDALGeoPackageDataset::_GetProjectionRef()
+const OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef() const
 {
-    return (m_pszProjection) ? m_pszProjection : "";
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::_SetProjection( const char* pszProjection )
+CPLErr GDALGeoPackageDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
 {
     if( nBands == 0)
     {
@@ -2465,16 +2544,13 @@ CPLErr GDALGeoPackageDataset::_SetProjection( const char* pszProjection )
     }
 
     int nSRID = -1;
-    if( pszProjection == nullptr || pszProjection[0] == '\0' )
+    if( poSRS == nullptr || poSRS->IsEmpty() )
     {
       // nSRID = -1;
     }
     else
     {
-        OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
-            return CE_Failure;
-        nSRID = GetSrsId( oSRS );
+        nSRID = GetSrsId( *poSRS );
     }
 
     const auto poTS = GetTilingScheme(m_osTilingScheme);
@@ -2488,8 +2564,9 @@ CPLErr GDALGeoPackageDataset::_SetProjection( const char* pszProjection )
     }
 
     m_nSRID = nSRID;
-    CPLFree(m_pszProjection);
-    m_pszProjection = pszProjection ? CPLStrdup(pszProjection) : CPLStrdup("");
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     if( m_bRecordInsertedInGPKGContent )
     {
@@ -4024,18 +4101,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             }
         }
 
-        // Detect definition_12_063 column
-        {
-            sqlite3_stmt* hSQLStmt = nullptr;
-            int rc = sqlite3_prepare_v2( hDB,
-                "SELECT definition_12_063 FROM gpkg_spatial_ref_sys ", -1,
-                &hSQLStmt, nullptr );
-            if( rc == SQLITE_OK )
-            {
-                m_bHasDefinition12_063 = true;
-                sqlite3_finalize(hSQLStmt);
-            }
-        }
+        DetectSpatialRefSysColumns();
     }
 
     const char* pszVersion = CSLFetchNameValue(papszOptions, "VERSION");

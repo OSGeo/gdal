@@ -4301,6 +4301,15 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
             EQUAL(pszMimeType, "text/xml") )
             continue;
 
+        if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            EQUAL(pszMimeType, "text/plain") )
+        {
+            if( STARTS_WITH_CI(pszMetadata, "coordinate_epoch=") )
+            {
+                continue;
+            }
+        }
+
         /*if( strcmp( pszMDStandardURI, "http://www.isotc211.org/2005/gmd" ) == 0 &&
             strcmp( pszMimeType, "text/xml" ) == 0 )
         {

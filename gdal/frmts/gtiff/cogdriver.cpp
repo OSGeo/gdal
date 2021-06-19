@@ -1286,6 +1286,8 @@ void GDALRegister_COG()
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
+
     poDriver->pfnCreateCopy = COGCreateCopy;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );

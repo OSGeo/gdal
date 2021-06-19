@@ -194,6 +194,9 @@ struct GDALTranslateOptions
         GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the WKT. */
     char *pszOutputSRS;
 
+    /*! Coordinate epoch of output SRS */
+    double dfOutputCoordinateEpoch;
+
     /*! does not copy source GCP into destination dataset (when TRUE) */
     bool bNoGCP;
 
@@ -1118,7 +1121,9 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         && bSpatialArrangementPreserved
         && !psOptions->bNoGCP
         && psOptions->nGCPCount == 0 && !bGotBounds
-        && psOptions->pszOutputSRS == nullptr && !psOptions->bSetNoData && !psOptions->bUnsetNoData
+        && psOptions->pszOutputSRS == nullptr
+        && psOptions->dfOutputCoordinateEpoch == 0
+        && !psOptions->bSetNoData && !psOptions->bUnsetNoData
         && psOptions->nRGBExpand == 0 && !psOptions->bNoRAT
         && psOptions->panColorInterp == nullptr
         && !psOptions->bNoXMP )
@@ -1362,15 +1367,23 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if( psOptions->nGCPCount == 0 )
     {
+        OGRSpatialReference oSRS;
         if( psOptions->pszOutputSRS != nullptr )
         {
-            poVDS->SetProjection( psOptions->pszOutputSRS );
+            oSRS.SetFromUserInput( psOptions->pszOutputSRS );
+            oSRS.SetAxisMappingStrategy( OAMS_TRADITIONAL_GIS_ORDER );
         }
         else
         {
-            pszProjection = GDALGetProjectionRef( hSrcDataset );
-            if( pszProjection != nullptr && strlen(pszProjection) > 0 )
-                poVDS->SetProjection( pszProjection );
+            const OGRSpatialReference* poSrcSRS = GDALDataset::FromHandle(hSrcDataset)->GetSpatialRef();
+            if( poSrcSRS )
+                oSRS = *poSrcSRS;
+        }
+        if( !oSRS.IsEmpty() )
+        {
+            if( psOptions->dfOutputCoordinateEpoch > 0 )
+                oSRS.SetCoordinateEpoch(psOptions->dfOutputCoordinateEpoch);
+            poVDS->SetSpatialRef( &oSRS );
         }
     }
 
@@ -2772,6 +2785,12 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         {
             CPLFree(psOptions->pszOutputSRS);
             psOptions->pszOutputSRS = CPLStrdup(papszArgv[i+1]);
+            i++;
+        }
+
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-a_coord_epoch") )
+        {
+            psOptions->dfOutputCoordinateEpoch = CPLAtofM(papszArgv[i+1]);
             i++;
         }
 

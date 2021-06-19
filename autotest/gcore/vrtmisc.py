@@ -563,3 +563,19 @@ def test_vrtmisc_blocksize():
     vrt_ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test support for coordinate epoch
+
+
+def test_vrtmisc_coordinate_epoch():
+
+    filename = '/vsimem/temp.vrt'
+    gdal.Translate(filename, 'data/byte.tif', options='-a_coord_epoch 2021.3')
+    ds = gdal.Open(filename)
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+    gdal.Unlink(filename)

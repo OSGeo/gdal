@@ -1688,3 +1688,69 @@ def test_SetPROJAuxDbPaths():
         [sys.executable, 'osr_basic_subprocess.py'],
         env=os.environ.copy())
 
+
+
+###############################################################################
+# Test IsDynamic()
+
+
+def test_osr_basic_is_dynamic():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(7665) # WGS 84 (G1762) (3D)
+    assert srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4171) # RGF93
+    assert not srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326) # WGS84 (generic), using datum ensemble
+    assert srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258) # ETRS89 (generic), using datum ensemble
+    assert not srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AXIS["Latitude",NORTH],
+    AXIS["Longitude",EAST],
+    AUTHORITY["EPSG","4326"]]""")
+    assert srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:9057+3855') # WGS 84 (G1762) + EGM2008 height
+    assert srs.IsDynamic()
+
+
+###############################################################################
+# Test SetCoordinateEpoch() / GetCoordinateEpoch
+
+
+def test_osr_basic_set_get_coordinate_epoch():
+
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS("WGS84")
+
+    srs.SetCoordinateEpoch(2021.3)
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+    clone = srs.Clone()
+    assert clone.GetCoordinateEpoch() == 2021.3
+    assert srs.IsSame(clone)
+
+    clone.SetCoordinateEpoch(0)
+    assert not srs.IsSame(clone)
+    assert srs.IsSame(clone, ['IGNORE_COORDINATE_EPOCH=YES'])
