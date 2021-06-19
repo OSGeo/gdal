@@ -302,7 +302,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         if 'test' in query2:
             test = query2['test'][0]
 
-        if gdaltest.is_travis_branch('s390x') or gdaltest.is_travis_branch('graviton2'):
+        if gdaltest.is_travis_branch('s390x') or gdaltest.is_travis_branch('graviton2') or gdaltest.is_travis_branch('ubuntu_2004'):
             # cannot strictly compare URL due to subtle difference of roundings
             # in BOUNDINGBOX computations.
             pass

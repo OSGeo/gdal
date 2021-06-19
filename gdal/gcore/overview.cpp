@@ -851,10 +851,37 @@ template<class T> static int AverageUInt16SSE2(
 /*                      QuadraticMeanFloatSSE2()                        */
 /************************************************************************/
 
-inline __m128 SQUARE(__m128 x)
+#ifdef __AVX2__
+#define RMS_FLOAT_ELTS 8
+#define set1_ps     _mm256_set1_ps
+#define loadu_ps    _mm256_loadu_ps
+#define andnot_ps   _mm256_andnot_ps
+#define and_ps      _mm256_and_ps
+#define max_ps      _mm256_max_ps
+#define shuffle_ps  _mm256_shuffle_ps
+#define div_ps      _mm256_div_ps
+#define cmpeq_ps(x,y) _mm256_cmp_ps(x,y,_CMP_EQ_OQ)
+#define mul_ps      _mm256_mul_ps
+#define add_ps      _mm256_add_ps
+#define hadd_ps     _mm256_hadd_ps
+#define sqrt_ps     _mm256_sqrt_ps
+#define or_ps       _mm256_or_ps
+#define unpacklo_ps _mm256_unpacklo_ps
+#define unpackhi_ps _mm256_unpackhi_ps
+#define storeu_ps   _mm256_storeu_ps
+
+inline __m256 SQUARE(__m256 x)
 {
-    return _mm_mul_ps(x, x);
+    return _mm256_mul_ps(x, x);
 }
+
+inline __m256 FIXUP_LANES(__m256 x)
+{
+    return _mm256_castpd_ps(_mm256_permute4x64_pd(
+                    _mm256_castps_pd(x), _MM_SHUFFLE(3,1,2,0)));
+}
+
+#else
 
 #ifdef __SSE3__
 #define sse2_hadd_ps _mm_hadd_ps
@@ -867,58 +894,103 @@ inline __m128 sse2_hadd_ps(__m128 a, __m128 b)
 }
 #endif
 
-template<class T> static int QuadraticMeanFloatSSE2(int nDstXWidth,
+#define RMS_FLOAT_ELTS 4
+#define set1_ps     _mm_set1_ps
+#define loadu_ps    _mm_loadu_ps
+#define andnot_ps   _mm_andnot_ps
+#define and_ps      _mm_and_ps
+#define max_ps      _mm_max_ps
+#define shuffle_ps  _mm_shuffle_ps
+#define div_ps      _mm_div_ps
+#define cmpeq_ps    _mm_cmpeq_ps
+#define mul_ps      _mm_mul_ps
+#define add_ps      _mm_add_ps
+#define hadd_ps     sse2_hadd_ps
+#define sqrt_ps     _mm_sqrt_ps
+#define or_ps       _mm_or_ps
+#define unpacklo_ps _mm_unpacklo_ps
+#define unpackhi_ps _mm_unpackhi_ps
+#define storeu_ps   _mm_storeu_ps
+
+inline __m128 SQUARE(__m128 x)
+{
+    return _mm_mul_ps(x, x);
+}
+
+inline __m128 FIXUP_LANES(__m128 x)
+{
+    return x;
+}
+
+#endif
+
+#if defined(__GNUC__) && defined(__AVX2__)
+// Disabling inlining works around a bug with gcc 9.3 (Ubuntu 20.04) in
+// -O2 -mavx2 mode, where the registry that contains minus_zero is correctly
+// loaded the first time the function is called (looking at the disassembly,
+// one sees it is loaded much earlier than the function), but gets corrupted
+// (zeroed) in following iterations.
+// It appears the bug is due to the explicit zeroupper() call at the end of
+// the function.
+// The bug is at least solved in gcc 10.2.
+// Inlining doesn't bring much here to performance.
+#define NOINLINE __attribute__ ((noinline))
+#else
+#define NOINLINE
+#endif
+
+template<class T> static int NOINLINE QuadraticMeanFloatSSE2(int nDstXWidth,
                                                     int nChunkXSize,
                                                     const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
                                                     T* CPL_RESTRICT pDstScanline)
 {
     // Optimized implementation for RMS on Float32 by
-    // processing by group of 4 output pixels.
+    // processing by group of RMS_FLOAT_ELTS output pixels.
     const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
-    const auto minus_zero = _mm_set1_ps(-0.0f);
-    const auto zeroDot25 = _mm_set1_ps(0.25f);
-    const auto one = _mm_set1_ps(1.0f);
-    const auto infv = _mm_set1_ps(std::numeric_limits<float>::infinity());
+    const auto minus_zero = set1_ps(-0.0f);
+    const auto zeroDot25 = set1_ps(0.25f);
+    const auto one = set1_ps(1.0f);
+    const auto infv = set1_ps(std::numeric_limits<float>::infinity());
 
-    for( ; iDstPixel < nDstXWidth - 3; iDstPixel += 4 )
+    for( ; iDstPixel < nDstXWidth - (RMS_FLOAT_ELTS-1); iDstPixel += RMS_FLOAT_ELTS )
     {
-        // Load 8 Float32 from each line
-        auto firstLineLo = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted));
-        auto firstLineHi = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4));
-        auto secondLineLo = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + nChunkXSize));
-        auto secondLineHi = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4 + nChunkXSize));
+        // Load 2*RMS_FLOAT_ELTS Float32 from each line
+        auto firstLineLo = loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted));
+        auto firstLineHi = loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + RMS_FLOAT_ELTS));
+        auto secondLineLo = loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + nChunkXSize));
+        auto secondLineHi = loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + RMS_FLOAT_ELTS + nChunkXSize));
 
         // Take the absolute value
-        firstLineLo = _mm_andnot_ps(minus_zero, firstLineLo);
-        firstLineHi = _mm_andnot_ps(minus_zero, firstLineHi);
-        secondLineLo = _mm_andnot_ps(minus_zero, secondLineLo);
-        secondLineHi = _mm_andnot_ps(minus_zero, secondLineHi);
+        firstLineLo = andnot_ps(minus_zero, firstLineLo);
+        firstLineHi = andnot_ps(minus_zero, firstLineHi);
+        secondLineLo = andnot_ps(minus_zero, secondLineLo);
+        secondLineHi = andnot_ps(minus_zero, secondLineHi);
 
-        // Compute the maximum of each 4 value to RMS-average
-        auto maxLo = _mm_max_ps(firstLineLo, secondLineLo);
-        maxLo = _mm_max_ps(maxLo, _mm_shuffle_ps(maxLo, maxLo, _MM_SHUFFLE(2,3,0,1)));
-        auto maxHi = _mm_max_ps(firstLineHi, secondLineHi);
-        maxHi = _mm_max_ps(maxHi, _mm_shuffle_ps(maxHi, maxHi, _MM_SHUFFLE(2,3,0,1)));
+        // Compute the maximum of each RMS_FLOAT_ELTS value to RMS-average
+        auto maxLo = max_ps(firstLineLo, secondLineLo);
+        maxLo = max_ps(maxLo, shuffle_ps(maxLo, maxLo, _MM_SHUFFLE(2,3,0,1)));
+        auto maxHi = max_ps(firstLineHi, secondLineHi);
+        maxHi = max_ps(maxHi, shuffle_ps(maxHi, maxHi, _MM_SHUFFLE(2,3,0,1)));
 
-        const auto maxV = _mm_shuffle_ps(maxLo, maxHi, _MM_SHUFFLE(2,0,2,0));
+        const auto maxV = FIXUP_LANES(shuffle_ps(maxLo, maxHi, _MM_SHUFFLE(2,0,2,0)));
 
-        // Normalize each value by the maximum of the 4 ones.
+        // Normalize each value by the maximum of the RMS_FLOAT_ELTS ones.
         // This step is important to avoid that the square evaluates to infinity
         // for sufficiently big input.
-        auto invMax = _mm_div_ps(one, maxV);
+        auto invMax = div_ps(one, maxV);
         // Deal with 0 being the maximum to correct division by zero
         // note: comparing to -0 leads to identical results as to comparing with 0
-        invMax = _mm_andnot_ps(_mm_cmpeq_ps(maxV, minus_zero), invMax);
+        invMax = FIXUP_LANES(andnot_ps(cmpeq_ps(maxV, minus_zero), invMax));
 
-        const auto invMaxLo = _mm_shuffle_ps(invMax, invMax, _MM_SHUFFLE(1,1,0,0));
-        const auto invMaxHi = _mm_shuffle_ps(invMax, invMax, _MM_SHUFFLE(3,3,2,2));
+        const auto invMaxLo = unpacklo_ps(invMax, invMax);
+        const auto invMaxHi = unpackhi_ps(invMax, invMax);
 
-        firstLineLo = _mm_mul_ps(firstLineLo, invMaxLo);
-        firstLineHi = _mm_mul_ps(firstLineHi, invMaxHi);
-        secondLineLo = _mm_mul_ps(secondLineLo, invMaxLo);
-        secondLineHi = _mm_mul_ps(secondLineHi, invMaxHi);
+        firstLineLo = mul_ps(firstLineLo, invMaxLo);
+        firstLineHi = mul_ps(firstLineHi, invMaxHi);
+        secondLineLo = mul_ps(secondLineLo, invMaxLo);
+        secondLineHi = mul_ps(secondLineHi, invMaxHi);
 
         // Compute squares
         firstLineLo = SQUARE(firstLineLo);
@@ -927,22 +999,24 @@ template<class T> static int QuadraticMeanFloatSSE2(int nDstXWidth,
         secondLineHi = SQUARE(secondLineHi);
 
         // Vertical addition
-        const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
-        const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
+        const auto sumLo = add_ps(firstLineLo, secondLineLo);
+        const auto sumHi = add_ps(firstLineHi, secondLineHi);
 
         // Horizontal addition
-        const auto sumSquares = sse2_hadd_ps(sumLo, sumHi);
+        const auto sumSquares = FIXUP_LANES(hadd_ps(sumLo, sumHi));
 
-        auto rms = _mm_mul_ps(maxV, _mm_sqrt_ps(_mm_mul_ps(sumSquares, zeroDot25)));
+        auto rms = mul_ps(maxV, sqrt_ps(mul_ps(sumSquares, zeroDot25)));
 
         // Deal with infinity being the maximum
-        const auto maskIsInf = _mm_cmpeq_ps(maxV, infv);
-        rms = _mm_or_ps(_mm_andnot_ps(maskIsInf, rms), _mm_and_ps(maskIsInf, infv));
+        const auto maskIsInf = cmpeq_ps(maxV, infv);
+        rms = or_ps(andnot_ps(maskIsInf, rms), and_ps(maskIsInf, infv));
 
         // coverity[incompatible_cast]
-        _mm_storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), rms);
-        pSrcScanlineShifted += 8;
+        storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), rms);
+        pSrcScanlineShifted += RMS_FLOAT_ELTS * 2;
     }
+
+    zeroupper();
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
     return iDstPixel;

@@ -1171,7 +1171,7 @@ def test_rasterio_rms_halfsize_downsampling_float32():
         if math.isnan(expected[i]):
             assert math.isnan(got[i])
         else:
-            assert got[i] == pytest.approx(expected[i], rel=1e-7)
+            assert got[i] == pytest.approx(expected[i], rel=1e-7), i
 
     ds.BuildOverviews('RMS', [2])
     ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
