@@ -18,6 +18,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Get Architecture
+        id: get-arch
+        run: |
+          export ARCH=$(cc -march=native -### -E - < /dev/null 2>&1 | sed -ne 's/.*cc1 .*-march=\([^ "]*\)[ "].*/\1/p')
+          echo "Architecture: $ARCH"
+          echo "::set-output name=arch::$ARCH"
+
       - name: Cache
         uses: actions/cache@v2
         id: cache
@@ -25,8 +32,8 @@ jobs:
           path: |
                 /tmp/docker
                 ${{ github.workspace }}/ccache.tar.gz
-          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
-          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
+          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
 
       - name: Build or restore dependencies
         run: |
