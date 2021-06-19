@@ -1923,7 +1923,10 @@ void OGR2SQLITE_ogr_layer_FeatureCount(sqlite3_context* pContext,
 
 static void OGR2SQLITEDestroyModule(void* pData)
 {
-    CPLDebug("OGR", "Unloading VirtualOGR module");
+    // Comment out this debug message, as the module can be registered in the connection
+    // of proj.db that is since PROJ 8.1 a cache that is destroyed at PROJ
+    // unloading, after GDAL itself has cleaned up itself.
+    // CPLDebug("OGR", "Unloading VirtualOGR module");
     delete (OGR2SQLITEModule*) pData;
 }
 
