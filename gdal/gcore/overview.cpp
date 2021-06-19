@@ -968,13 +968,14 @@ template<class T> static int NOINLINE QuadraticMeanFloatSSE2(int nDstXWidth,
         secondLineLo = andnot_ps(minus_zero, secondLineLo);
         secondLineHi = andnot_ps(minus_zero, secondLineHi);
 
-        // Compute the maximum of each RMS_FLOAT_ELTS value to RMS-average
-        auto maxLo = max_ps(firstLineLo, secondLineLo);
-        maxLo = max_ps(maxLo, shuffle_ps(maxLo, maxLo, _MM_SHUFFLE(2,3,0,1)));
-        auto maxHi = max_ps(firstLineHi, secondLineHi);
-        maxHi = max_ps(maxHi, shuffle_ps(maxHi, maxHi, _MM_SHUFFLE(2,3,0,1)));
+        auto firstLineEven = shuffle_ps(firstLineLo, firstLineHi, _MM_SHUFFLE(2,0,2,0));
+        auto firstLineOdd = shuffle_ps(firstLineLo, firstLineHi, _MM_SHUFFLE(3,1,3,1));
+        auto secondLineEven = shuffle_ps(secondLineLo, secondLineHi, _MM_SHUFFLE(2,0,2,0));
+        auto secondLineOdd = shuffle_ps(secondLineLo, secondLineHi, _MM_SHUFFLE(3,1,3,1));
 
-        const auto maxV = FIXUP_LANES(shuffle_ps(maxLo, maxHi, _MM_SHUFFLE(2,0,2,0)));
+        // Compute the maximum of each RMS_FLOAT_ELTS value to RMS-average
+        const auto maxV = max_ps(max_ps(firstLineEven,firstLineOdd),
+                                 max_ps(secondLineEven, secondLineEven));
 
         // Normalize each value by the maximum of the RMS_FLOAT_ELTS ones.
         // This step is important to avoid that the square evaluates to infinity
@@ -982,34 +983,29 @@ template<class T> static int NOINLINE QuadraticMeanFloatSSE2(int nDstXWidth,
         auto invMax = div_ps(one, maxV);
         // Deal with 0 being the maximum to correct division by zero
         // note: comparing to -0 leads to identical results as to comparing with 0
-        invMax = FIXUP_LANES(andnot_ps(cmpeq_ps(maxV, minus_zero), invMax));
+        invMax = andnot_ps(cmpeq_ps(maxV, minus_zero), invMax);
 
-        const auto invMaxLo = unpacklo_ps(invMax, invMax);
-        const auto invMaxHi = unpackhi_ps(invMax, invMax);
-
-        firstLineLo = mul_ps(firstLineLo, invMaxLo);
-        firstLineHi = mul_ps(firstLineHi, invMaxHi);
-        secondLineLo = mul_ps(secondLineLo, invMaxLo);
-        secondLineHi = mul_ps(secondLineHi, invMaxHi);
+        firstLineEven = mul_ps(firstLineEven, invMax);
+        firstLineOdd = mul_ps(firstLineOdd, invMax);
+        secondLineEven = mul_ps(secondLineEven, invMax);
+        secondLineOdd = mul_ps(secondLineOdd, invMax);
 
         // Compute squares
-        firstLineLo = SQUARE(firstLineLo);
-        firstLineHi = SQUARE(firstLineHi);
-        secondLineLo = SQUARE(secondLineLo);
-        secondLineHi = SQUARE(secondLineHi);
+        firstLineEven = SQUARE(firstLineEven);
+        firstLineOdd = SQUARE(firstLineOdd);
+        secondLineEven = SQUARE(secondLineEven);
+        secondLineOdd = SQUARE(secondLineOdd);
 
-        // Vertical addition
-        const auto sumLo = add_ps(firstLineLo, secondLineLo);
-        const auto sumHi = add_ps(firstLineHi, secondLineHi);
-
-        // Horizontal addition
-        const auto sumSquares = FIXUP_LANES(hadd_ps(sumLo, sumHi));
+        const auto sumSquares = add_ps(add_ps(firstLineEven, firstLineOdd),
+                                       add_ps(secondLineEven, secondLineOdd));
 
         auto rms = mul_ps(maxV, sqrt_ps(mul_ps(sumSquares, zeroDot25)));
 
         // Deal with infinity being the maximum
         const auto maskIsInf = cmpeq_ps(maxV, infv);
         rms = or_ps(andnot_ps(maskIsInf, rms), and_ps(maskIsInf, infv));
+
+        rms = FIXUP_LANES(rms);
 
         // coverity[incompatible_cast]
         storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), rms);
