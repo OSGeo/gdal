@@ -655,6 +655,20 @@ inline __m128d SQUARE(__m128d x)
     return _mm_mul_pd(x, x);
 }
 
+#ifdef __AVX2__
+
+inline __m256d FIXUP_LANES(__m256d x)
+{
+    return _mm256_permute4x64_pd(x, _MM_SHUFFLE(3,1,2,0));
+}
+
+inline __m256 FIXUP_LANES(__m256 x)
+{
+    return _mm256_castpd_ps(FIXUP_LANES(_mm256_castps_pd(x)));
+}
+
+#endif
+
 template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
                                                      int nChunkXSize,
                                                      const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
@@ -666,8 +680,18 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
 
     int iDstPixel = 0;
     const auto zero = _mm_setzero_si128();
+
+#ifdef __AVX2__
+    const auto zeroDot25 = _mm256_set1_pd(0.25);
+    const auto zeroDot5 = _mm256_set1_pd(0.5);
+
+    // The first four 0's could be anything, as we only take the bottom
+    // 128 bits.
+    const auto permutation =  _mm256_set_epi32(0,0,0,0,6,4,2,0);
+#else
     const auto zeroDot25 = _mm_set1_pd(0.25);
     const auto zeroDot5 = _mm_set1_pd(0.5);
+#endif
 
     for( ; iDstPixel < nDstXWidth - 3; iDstPixel += 4 )
     {
@@ -728,6 +752,40 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
         const auto secondLineLo = _mm_unpacklo_epi16(secondLine, zero);
         const auto secondLineHi = _mm_unpackhi_epi16(secondLine, zero);
 
+#ifdef __AVX2__
+        // Multiplication of 32 bit values previously converted to 64 bit double
+        const auto firstLineLoDbl = SQUARE(_mm256_cvtepi32_pd(firstLineLo));
+        const auto firstLineHiDbl = SQUARE(_mm256_cvtepi32_pd(firstLineHi));
+        const auto secondLineLoDbl = SQUARE(_mm256_cvtepi32_pd(secondLineLo));
+        const auto secondLineHiDbl = SQUARE(_mm256_cvtepi32_pd(secondLineHi));
+
+        // Vertical addition of squares
+        const auto sumSquaresLo = _mm256_add_pd(firstLineLoDbl, secondLineLoDbl);
+        const auto sumSquaresHi = _mm256_add_pd(firstLineHiDbl, secondLineHiDbl);
+
+        // Horizontal addition of squares
+        const auto sumSquares = FIXUP_LANES(_mm256_hadd_pd(sumSquaresLo, sumSquaresHi));
+
+        const auto sumDivWeight = _mm256_mul_pd(sumSquares, zeroDot25);
+
+        // Take square root and truncate/floor to int32
+        auto rms = _mm256_cvttpd_epi32(_mm256_sqrt_pd(sumDivWeight));
+        const auto rmsDouble = _mm256_cvtepi32_pd(rms);
+        const auto right = _mm256_sub_pd(sumDivWeight,
+                                _mm256_add_pd(SQUARE(rmsDouble), rmsDouble));
+
+        auto mask = _mm256_castpd_ps(_mm256_cmp_pd(zeroDot5, right, _CMP_LT_OS));
+        // Extract 32-bit from each of the 4 64-bit masks
+        //mask = FIXUP_LANES(_mm256_shuffle_ps(mask, mask, _MM_SHUFFLE(2,0,2,0)));
+        mask = _mm256_permutevar8x32_ps(mask, permutation);
+        const auto maskI = _mm_castps_si128(_mm256_extractf128_ps(mask, 0));
+
+        // Apply the correction
+        rms = _mm_sub_epi32(rms, maskI);
+
+        // Pack each 32 bit RMS value to 16 bits
+        rms = _mm_packus_epi32(rms, rms /* could be anything */);
+#else
         // Multiplication of 32 bit values previously converted to 64 bit double
         const auto firstLineLoLo = SQUARE(_mm_cvtepi32_pd(firstLineLo));
         const auto firstLineLoHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineLo,8)));
@@ -778,9 +836,13 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
 
         // Pack each 32 bit RMS value to 16 bits
         rms = sse2_packus_epi32(rms, rms /* could be anything */);
+#endif
+
         _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
         pSrcScanlineShifted += 8;
     }
+
+    zeroupper();
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
     return iDstPixel;
@@ -873,12 +935,6 @@ template<class T> static int AverageUInt16SSE2(
 inline __m256 SQUARE(__m256 x)
 {
     return _mm256_mul_ps(x, x);
-}
-
-inline __m256 FIXUP_LANES(__m256 x)
-{
-    return _mm256_castpd_ps(_mm256_permute4x64_pd(
-                    _mm256_castps_pd(x), _MM_SHUFFLE(3,1,2,0)));
 }
 
 #else
