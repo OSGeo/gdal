@@ -6,7 +6,7 @@
 include ../../GDALmake.opt
 
 ifeq ($(PNG_SETTING),internal)
-XTRA_OPT =	-DPNG_IMPEXP= -Ilibpng
+XTRA_OPT =	-DPNG_IMPEXP= -DPNG_ARM_NEON_OPT=0 -Ilibpng
 OBJ = \
 	png.o \
 	pngerror.o \
