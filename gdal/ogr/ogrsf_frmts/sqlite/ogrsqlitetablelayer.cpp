@@ -161,11 +161,13 @@ void OGRSQLiteTableLayer::ClearInsertStmt()
 /************************************************************************/
 
 CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableNameIn,
-                                        int bIsVirtualShapeIn,
-                                        int bDeferredCreationIn )
+                                        bool bIsTable,
+                                        bool bIsVirtualShapeIn,
+                                        bool bDeferredCreationIn )
 {
     SetDescription( pszTableNameIn );
 
+    m_bIsTable = bIsTable;
     bIsVirtualShape = bIsVirtualShapeIn;
     pszTableName = CPLStrdup(pszTableNameIn);
     bDeferredCreation = bDeferredCreationIn;
@@ -338,7 +340,9 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
 /* -------------------------------------------------------------------- */
 
     const char *pszSQL =
-        CPLSPrintf("SELECT _rowid_, * FROM '%s' LIMIT 1", pszEscapedTableName);
+        CPLSPrintf("SELECT %s* FROM '%s' LIMIT 1",
+                   m_bIsTable ? "_rowid_, " : "",
+                   pszEscapedTableName);
 
     sqlite3_stmt *hColStmt = nullptr;
     int rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, nullptr );
@@ -371,8 +375,11 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
 /*      name if the rowid corresponds to another primary key            */
 /*      column.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLFree( pszFIDColumn );
-    pszFIDColumn = CPLStrdup(SQLUnescape(sqlite3_column_name( hColStmt, 0 )));
+    if( m_bIsTable )
+    {
+        CPLFree( pszFIDColumn );
+        pszFIDColumn = CPLStrdup(SQLUnescape(sqlite3_column_name( hColStmt, 0 )));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Collect the rest of the fields.                                 */
@@ -737,9 +744,10 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    osSQL.Printf( "SELECT _rowid_, * FROM '%s' %s",
-                    pszEscapedTableName,
-                    osWHERE.c_str() );
+    osSQL.Printf( "SELECT %s* FROM '%s' %s",
+                  m_bIsTable ? "_rowid_, " : "",
+                  pszEscapedTableName,
+                  osWHERE.c_str() );
 #ifdef DEBUG_VERBOSE
     CPLDebug("SQLite", "%s", osSQL.c_str());
 #endif
