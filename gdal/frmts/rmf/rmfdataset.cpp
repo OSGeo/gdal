@@ -1093,13 +1093,13 @@ int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    GDALDataset* poDS = Open( poOpenInfo, nullptr, 0 );
+    auto poDS = Open( poOpenInfo, nullptr, 0 );
     if( poDS == nullptr )
     {
         return nullptr;
     }
 
-    RMFDataset* poCurrentLayer = dynamic_cast<RMFDataset*>( poDS );
+    RMFDataset* poCurrentLayer = poDS;
     RMFDataset* poParent = poCurrentLayer;
     const int   nMaxPossibleOvCount = 64;
 
@@ -1114,7 +1114,7 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
+RMFDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
                               RMFDataset* poParentDS,
                               vsi_l_offset nNextHeaderOffset )
 {
@@ -1144,43 +1144,35 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
 
 #define RMF_READ_SHORT(ptr, value, offset)                              \
 do {                                                                    \
+    memcpy(&(value), (GInt16*)((ptr) + (offset)), sizeof(GInt16));      \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
-        (value) = CPL_MSBWORD16(*(GInt16*)((ptr) + (offset)));          \
+        CPL_MSBPTR16(&(value));                                         \
     }                                                                   \
     else                                                                \
     {                                                                   \
-        (value) = CPL_LSBWORD16(*(GInt16*)((ptr) + (offset)));          \
+        CPL_LSBPTR16(&(value));                                         \
     }                                                                   \
 } while( false );
 
 #define RMF_READ_ULONG(ptr, value, offset)                              \
 do {                                                                    \
+    memcpy(&(value), (GUInt32*)((ptr) + (offset)), sizeof(GUInt32));    \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
-        (value) = CPL_MSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+        CPL_MSBPTR32(&(value));                                         \
     }                                                                   \
     else                                                                \
     {                                                                   \
-        (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
+        CPL_LSBPTR32(&(value));                                         \
     }                                                                   \
 } while( false );
 
-#define RMF_READ_LONG(ptr, value, offset)                               \
-do {                                                                    \
-    if( poDS->bBigEndian )                                              \
-    {                                                                   \
-        (value) = CPL_MSBWORD32(*(GInt32*)((ptr) + (offset)));          \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)));          \
-    }                                                                   \
-} while( false );
+#define RMF_READ_LONG(ptr, value, offset) RMF_READ_ULONG(ptr, value, offset)
 
 #define RMF_READ_DOUBLE(ptr, value, offset)                             \
 do {                                                                    \
-    (value) = *reinterpret_cast<double*>((ptr) + (offset));             \
+    memcpy(&(value), (double*)((ptr) + (offset)), sizeof(double));      \
     if( poDS->bBigEndian )                                              \
     {                                                                   \
         CPL_MSBPTR64(&(value));                                         \

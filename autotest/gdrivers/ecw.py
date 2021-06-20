@@ -706,10 +706,11 @@ def test_ecw_23():
 
     ds = gdal.Open('tmp/spif83.ecw')
 
-    expected_wkt = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","27700"]]"""
     wkt = ds.GetProjectionRef()
 
-    assert wkt == expected_wkt, 'did not get expected SRS.'
+    assert '36 / British National Grid' in wkt
+    assert 'TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489]' in wkt
+    assert 'AUTHORITY["EPSG","27700"]' in wkt
 
     gt = ds.GetGeoTransform()
     expected_gt = (6138559.5576418638, 195.5116973254697, 0.0, 2274798.7836679211, 0.0, -198.32414964918371)
@@ -1716,9 +1717,6 @@ def test_ecw_46():
 
 def test_ecw_47():
 
-    if gdaltest.ecw_drv.major_version == 3:
-        pytest.skip()
-
     data = open('data/ecw/jrc.ecw', 'rb').read()
     gdal.FileFromMemBuffer('/vsimem/ecw_47.ecw', data)
 
@@ -1729,8 +1727,10 @@ def test_ecw_47():
 
     if gdaltest.ecw_drv.major_version == 5:
         (exp_mean, exp_stddev) = (141.606, 67.2919)
-    else:
+    elif gdaltest.ecw_drv.major_version == 4:
         (exp_mean, exp_stddev) = (140.332, 67.611)
+    elif gdaltest.ecw_drv.major_version == 3:
+        (exp_mean, exp_stddev) = (141.172, 67.3636)
 
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 

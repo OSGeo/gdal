@@ -33,7 +33,6 @@
 
 from osgeo import ogr, gdal
 import gdaltest
-import ogrtest
 import pytest
 
 pytestmark = pytest.mark.require_driver('LVBAG')
@@ -275,7 +274,7 @@ def test_ogr_lvbag_read_zip_1():
     ds = ogr.Open('/vsizip/./data/lvbag/archive_pnd.zip/9999PND08102020-000001.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 2
@@ -285,7 +284,7 @@ def test_ogr_lvbag_read_zip_2():
     ds = ogr.Open('/vsizip/./data/lvbag/archive_pnd.zip')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 4
@@ -295,7 +294,7 @@ def test_ogr_lvbag_read_zip_3():
     ds = ogr.Open('/vsizip/./data/lvbag/archive_mixed.zip')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 2, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Standplaats', 'bad layer name'
     assert lyr.GetFeatureCount() > 0
@@ -309,24 +308,23 @@ def test_ogr_lvbag_read_zip_4():
     ds = ogr.Open('/vsizip/./data/lvbag/archive_single.zip')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Woonplaats', 'bad layer name'
     assert lyr.GetFeatureCount() > 0
 
-def test_ogr_lvbag_invalid_polygon():
+def test_ogr_lvbag_fix_invalid_polygon():
 
-    pytest.skip()
-
-    if not ogrtest.have_geos() and not ogrtest.have_sfcgal():
-        pytest.skip()
+    _test = ogr.CreateGeometryFromWkt('POLYGON ((0 0,1 1,0 1,1 0,0 0))')
+    if _test.MakeValid() is None:
+        pytest.skip("MakeValid() not available")
 
     ds = gdal.OpenEx('data/lvbag/inval_polygon.xml', gdal.OF_VECTOR, open_options=['AUTOCORRECT_INVALID_DATA=YES'])
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
-    
+
     feat = lyr.GetNextFeature()
     assert feat.GetGeomFieldRef(0).IsValid()
 
@@ -342,12 +340,36 @@ def test_ogr_lvbag_invalid_polygon():
     feat = lyr.GetNextFeature()
     assert feat is None
 
+def test_ogr_lvbag_fix_invalid_polygon_to_polygon():
+
+    _test = ogr.CreateGeometryFromWkt('POLYGON ((0 0,1 1,0 1,1 0,0 0))')
+    if _test.MakeValid() is None:
+        pytest.skip("MakeValid() not available")
+
+    ds = gdal.OpenEx('data/lvbag/inval_polygon2.xml', gdal.OF_VECTOR, open_options=['AUTOCORRECT_INVALID_DATA=YES'])
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).GetGeometryType() == ogr.wkbPolygon
+
 def test_ogr_lvbag_read_errors():
 
     ds = ogr.Open('data/lvbag/inval_pnd.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         assert lyr.GetName() == ''
@@ -358,7 +380,7 @@ def test_ogr_lvbag_fix_identificatie():
     ds = ogr.Open('data/lvbag/pnd2.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    
+
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 1
@@ -371,6 +393,8 @@ def test_ogr_lvbag_old_schema():
     ds = ogr.Open('data/lvbag/lig_old.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 0, 'bad layer count'
+    ds = None
+    gdal.Unlink('data/lvbag/lig_old.gfs')
 
 def test_ogr_lvbag_stringlist_feat():
 

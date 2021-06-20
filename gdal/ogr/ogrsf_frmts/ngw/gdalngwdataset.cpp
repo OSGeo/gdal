@@ -201,6 +201,14 @@ bool OGRNGWDataset::Open( const std::string &osUrlIn,
     osJsonDepth = CSLFetchNameValueDef( papszOpenOptionsIn, "JSON_DEPTH",
         CPLGetConfigOption("NGW_JSON_DEPTH", "32"));
 
+    osExtensions = CSLFetchNameValueDef(papszOpenOptionsIn, "EXTENSIONS",
+        CPLGetConfigOption("NGW_EXTENSIONS", ""));
+
+    if (osExtensions.empty())
+    {
+        bExtInNativeData = false;
+    }
+
     return Init( nOpenFlagsIn );
 }
 
@@ -1101,14 +1109,38 @@ OGRLayer *OGRNGWDataset::ExecuteSQL( const char *pszStatement,
             }
 
             std::string osNgwSelect;
+            for( int iKey = 0; iKey < oSelect.order_specs; iKey++ )
+            {
+                swq_order_def *psKeyDef = oSelect.order_defs + iKey;
+                if(iKey > 0 )
+                {
+                    osNgwSelect += ",";
+                }
+
+                if( psKeyDef->ascending_flag == TRUE )
+                {
+                    osNgwSelect += psKeyDef->field_name;
+                }
+                else 
+                {
+                    osNgwSelect += "-" + std::string(psKeyDef->field_name);
+                }
+            }
+
             if( oSelect.where_expr != nullptr )
             {
-                osNgwSelect = OGRNGWLayer::TranslateSQLToFilter(
-                    oSelect.where_expr);
-                if( osNgwSelect.empty() )
+                if( !osNgwSelect.empty() )
                 {
-                    bSkip = true;
+                    osNgwSelect += "&";
                 }
+                osNgwSelect += OGRNGWLayer::TranslateSQLToFilter(
+                    oSelect.where_expr );
+
+            }
+
+            if( osNgwSelect.empty() )
+            {
+                bSkip = true;
             }
 
             if( !bSkip )
@@ -1237,4 +1269,13 @@ void OGRNGWDataset::FillCapabilities( char **papszOptions )
                 bHasFeaturePaging ? "yes" : "no");
         }
     }
+}
+
+
+/*
+ * Extensions()
+ */
+std::string OGRNGWDataset::Extensions() const
+{
+    return osExtensions;
 }

@@ -4,7 +4,8 @@
 Software using GDAL
 ================================================================================
 
-- `3D DEM Viewer <http://www.msmacrosystem.nl/Ilwis/index.html>`_ from MS MacroSystem
+- `3D DEM Viewer <http://www.msmacrosystem.nl/Ilwis/index.html>`_ from MS MacroSystem.
+- `actinia <https://actinia.mundialis.de/>`_ A cloud based geoprocessing platform from mundialis.
 - `Biodiverse <http://shawnlaffan.github.io/biodiverse>`_ A tool for the spatial analysis of diversity. Uses GDAL for import/export of data.
 - `Bluemapia <http://www.bluemapia.com>`_ Multi-Map(Google,Microsoft,Open Street Map, NOAA/BSB Charts,self-calibrated raster) location-based GPS app for Windows Mobile.
 - `BRL-CAD <https://brlcad.org>`_ An open source solid modeling computer-aided design system.
@@ -111,4 +112,5 @@ Software using GDAL
 - `TravTime  <http://www.geostats.com/product_trav.htm>`_  .NET Application for visualizing, processing and analyzing GPS data for travel time, speed, and de
 - `VectorWorks <http://www.vectorworks.net>`_ The Vectorworks line of software products provides professional design solutions in the AEC, entertainment and landscape design industries.
 - `Vertual Terrain Project  <http://www.vterrain.org>`_  fostering tools for easy construction of the real world in interactive, 3D digital form.
+- `ViRGiS <https://www.virgis.org/>`__ Creating a GIS Platform in Virtual Reality / Mixed Reality
 - `WindNinja  <https://www.firelab.org/project/windninja>`_  wind model for fire behavior modeling.

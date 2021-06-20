@@ -13,8 +13,7 @@ OGR_OBJ  +=   kml.o kmlnode.o kmlvector.o
 CPPFLAGS +=   -DHAVE_EXPAT
 endif
 
-CPPFLAGS := -I. -I.. -I../.. -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg \
-	-I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogrsf_frmts $(EXPAT_INCLUDE) $(CPPFLAGS)
+CPPFLAGS := -I. $(CPPFLAGS) $(EXPAT_INCLUDE)
 
 #CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
 

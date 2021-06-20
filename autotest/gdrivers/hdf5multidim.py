@@ -164,6 +164,9 @@ def test_hdf5_multidim_var_alldatatypes():
     assert len(data) == 2 * 8
     assert struct.unpack('ihihh', data) == (1, 2, 3, 4, 0)
 
+    assert struct.unpack('i' * 2, var['x'].Read()) == (1, 3)
+    assert struct.unpack('h' * 2, var['y'].Read()) == (2, 4)
+
     var = rg.OpenMDArray('custom_type_3_elts_var')
     dt = var.GetDataType()
     assert dt.GetClass() == gdal.GEDTC_COMPOUND
@@ -396,7 +399,7 @@ def test_hdf5_netcdf_dimensions():
     rg = ds.GetRootGroup()
 
     assert rg.GetAttribute('CDI')
- 
+
     dims = rg.GetDimensions()
     assert len(dims) == 3
 

@@ -134,6 +134,8 @@ public:
                                     CSLConstList papszMetadata,
                                     const char* pszDomain,
                                     CSLConstList papszOptions );
+
+    virtual bool    AbortPendingUploads(const char* /*pszFilename*/) { return true;}
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

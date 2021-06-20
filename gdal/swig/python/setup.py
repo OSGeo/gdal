@@ -7,7 +7,7 @@
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '3.2.0'
+gdal_version = '3.3.0'
 
 import sys
 import os
@@ -339,11 +339,13 @@ if GNM_ENABLED:
 if HAVE_NUMPY:
     ext_modules.append(array_module)
 
+utils_package_root = 'gdal-utils'   # path for gdal-utils sources
 if HAVE_SETUPTOOLS:
-    packages = find_packages()
+    packages = find_packages(utils_package_root)
 else:
-    packages = ['osgeo', 'osgeo.utils', 'osgeo.utils.auxiliary']
-package_dir = {'': '.'}  # package sources are under the same dir as setup.py
+    packages = ['osgeo_utils', 'osgeo_utils.auxiliary', 'osgeo_utils.samples']
+packages = ['osgeo'] + packages
+package_dir = {'osgeo': 'osgeo', '': utils_package_root}
 
 readme = open('README.rst', encoding="utf-8").read()
 
@@ -397,7 +399,7 @@ setup_kwargs = dict(
     python_requires='>=3.6.0',
     data_files=data_files,
     ext_modules=ext_modules,
-    scripts=glob('scripts/*.py'),
+    scripts=glob(utils_package_root + '/scripts/*.py'),
     cmdclass={'build_ext': gdal_ext},
     extras_require={'numpy': ['numpy > 1.0.0']},
 )

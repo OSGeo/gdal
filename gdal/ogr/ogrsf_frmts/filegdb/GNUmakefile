@@ -4,14 +4,14 @@ include ../../../GDALmake.opt
 
 OBJ	=	FGdbDatasource.o FGdbDriver.o FGdbLayer.o FGdbUtils.o FGdbResultLayer.o
 
-CPPFLAGS	:=	-I../generic  $(FGDB_INC) $(CPPFLAGS)
+CPPFLAGS	:=	-I../generic -I../openfilegdb $(FGDB_INC) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ)
 
-$(O_OBJ):	ogr_fgdb.h
+$(O_OBJ):	ogr_fgdb.h ../openfilegdb/filegdb_fielddomain.h
 
 PLUGIN_SO	= ogr_FileGDB.$(SO_EXT)
 

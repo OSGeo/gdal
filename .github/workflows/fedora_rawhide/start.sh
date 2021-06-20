@@ -4,7 +4,7 @@ set -e
 
 dnf install -y --setopt=install_weak_deps=False proj-devel
 dnf install -y clang make diffutils ccache \
-              libxml2-devel expat-devel xerces-c-devel \
+              libxml2-devel libxslt-devel expat-devel xerces-c-devel \
               zlib-devel xz-devel libzstd-devel \
               giflib-devel libjpeg-devel libpng-devel \
               openjpeg2-devel cfitsio-devel libwebp-devel \
@@ -67,13 +67,14 @@ rm -f "$WORK_DIR/ccache.tar.gz"
 
 export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
+projsync --system-directory --file us_noaa_conus.tif
+projsync --system-directory --file us_nga_egm96
+projsync --system-directory --file ca_nrc_ntv1_can.tif
+
 (cd autotest/cpp && make quick_test)
 
 # install pip and use it to install test dependencies
 pip3 install -U -r autotest/requirements.txt
-
-projsync --system-directory --file us_noaa_conus.tif
-projsync --system-directory --file us_nga_egm96
 
 (cd autotest && $PYTEST)
 

@@ -908,10 +908,10 @@ GBool GDALFloatEquals( float A, float B )
  * attribute into which the pixel value of the polygon should be written. Or
  * -1 to indicate that the pixel value must not be written.
  * @param papszOptions a name/value list of additional options
- * <dl>
- * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
- * Otherwise 4 connectedness will be applied to the algorithm
- * </dl>
+ * <ul>
+ * <li>8CONNECTED=8: May be set to "8" to use 8 connectedness.
+ * Otherwise 4 connectedness will be applied to the algorithm</li>
+ * </ul>
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
  * @param pProgressArg callback argument passed to pfnProgress.
@@ -982,13 +982,13 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
  * @param hOutLayer the vector feature layer to which the polygons should
  * be written.
  * @param iPixValField the attribute field index indicating the feature
- * attribute into which the pixel value of the polygon should be written.
+ * attribute into which the pixel value of the polygon should be written. Or
  * -1 to indicate that the pixel value must not be written.
  * @param papszOptions a name/value list of additional options
- * <dl>
- * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
- * Otherwise 4 connectedness will be applied to the algorithm
- * </dl>
+ * <ul>
+ * <li>8CONNECTED=8: May be set to "8" to use 8 connectedness.
+ * Otherwise 4 connectedness will be applied to the algorithm</li>
+ * </ul>
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
  * @param pProgressArg callback argument passed to pfnProgress.

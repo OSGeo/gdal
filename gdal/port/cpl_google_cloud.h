@@ -52,6 +52,7 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osAccessKeyId;
         bool      m_bUseHeaderFile;
         GOA2Manager m_oManager;
+        std::string m_osUserProject{};
 
         static bool     GetConfiguration(CSLConstList papszOptions,
                                          CPLString& osSecretAccessKey,
@@ -75,12 +76,15 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
                           const CPLString& osSecretAccessKey,
                           const CPLString& osAccessKeyId,
                           bool bUseHeaderFile,
-                          const GOA2Manager& oManager);
+                          const GOA2Manager& oManager,
+                          const std::string& osUserProject);
        ~VSIGSHandleHelper();
 
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
                                                const char* pszFSPrefix,
                                                CSLConstList papszOptions = nullptr);
+
+        bool UsesHMACKey() const;
 
         struct curl_slist* GetCurlHeaders(
             const CPLString& osVerbosVerb,
@@ -91,6 +95,7 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
         const CPLString& GetURL() const override { return m_osURL; }
 
         CPLString GetCopySourceHeader() const override { return "x-goog-copy-source"; }
+        const char* GetMetadataDirectiveREPLACE() const override { return "x-goog-metadata-directive: REPLACE"; }
 
         CPLString GetSignedURL(CSLConstList papszOptions);
 

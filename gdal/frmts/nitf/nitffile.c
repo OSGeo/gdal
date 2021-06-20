@@ -539,10 +539,20 @@ int NITFCreate( const char *pszFilename,
                       char **papszOptions )
 
 {
+    return NITFCreateEx(pszFilename, nPixels, nLines, nBands, nBitsPerSample,
+                        pszPVType, papszOptions, NULL);
+}
+
+int NITFCreateEx( const char *pszFilename,
+                      int nPixels, int nLines, int nBands,
+                      int nBitsPerSample, const char *pszPVType,
+                      char **papszOptions,  int* pnICOffset )
+
+{
     VSILFILE	*fp;
     GUIntBig    nCur = 0;
     int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
-    GIntBig     nImageSize;
+    GUIntBig    nImageSize;
     int         nNBPR, nNBPC;
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
@@ -652,7 +662,7 @@ int NITFCreate( const char *pszFilename,
 
         nImageSize =
             ((nBitsPerSample)/8)
-            * ((GIntBig) nPixels *nLines)
+            * ((GUIntBig) nPixels *nLines)
             * nBands;
     }
     else if ( (EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) &&
@@ -674,7 +684,7 @@ int NITFCreate( const char *pszFilename,
 
         nImageSize =
             ((nBitsPerSample)/8)
-            * ((GIntBig) nPixels * (nNBPC * nNPPBV))
+            * ((GUIntBig) nPixels * (nNBPC * nNPPBV))
             * nBands;
     }
     else if ( (EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) &&
@@ -696,7 +706,7 @@ int NITFCreate( const char *pszFilename,
 
         nImageSize =
             ((nBitsPerSample)/8)
-            * ((GIntBig) nLines * (nNBPR * nNPPBH))
+            * ((GUIntBig) nLines * (nNBPR * nNPPBH))
             * nBands;
     }
     else
@@ -718,13 +728,13 @@ int NITFCreate( const char *pszFilename,
 
         nImageSize =
             ((nBitsPerSample)/8)
-            * ((GIntBig) nNBPR * nNBPC)
+            * ((GUIntBig) nNBPR * nNBPC)
             * nNPPBH * nNPPBV * nBands;
     }
 
     if (EQUAL(pszIC, "NC"))
     {
-        if ((double)nImageSize >= 1e10 - 1)
+        if (nImageSize >= NITF_MAX_IMAGE_SIZE)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to create file %s,\n"
@@ -732,7 +742,7 @@ int NITFCreate( const char *pszFilename,
                     pszFilename, nImageSize );
             return FALSE;
         }
-        if ((double)(nImageSize * nIM) >= 1e12 - 1)
+        if (nImageSize * nIM >= NITF_MAX_FILE_SIZE)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to create file %s,\n"
@@ -1010,6 +1020,8 @@ int NITFCreate( const char *pszFilename,
         }
     }
 
+    if( pnICOffset && iIM == 0 )
+        *pnICOffset = (int)(nCur+nOffset+1);
     OVR( 2,nCur+nOffset+1, IC     , "NC"                           );
 
     if( pszIC[0] != 'N' )
@@ -1236,7 +1248,7 @@ int NITFCreate( const char *pszFilename,
 
     /* According to the spec, CLEVEL 7 supports up to 10,737,418,330 bytes */
     /* but we can support technically much more */
-    if (EQUAL(pszIC, "NC") && GUINTBIG_TO_DOUBLE(nCur) >= 1e12 - 1)
+    if (EQUAL(pszIC, "NC") && nCur >= 999999999999ULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too big file : " CPL_FRMT_GUIB, nCur);

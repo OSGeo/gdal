@@ -527,9 +527,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         if( bHasM )
             adfM.reserve(nNumGeometries);
 
-        for( int iPoint = 0; iPoint < nNumGeometries; iPoint++ )
+        for( const OGRPoint *poPoint: *poMP )
         {
-            const OGRPoint *poPoint = poMP->getGeometryRef(iPoint)->toPoint();
             // Ignore POINT EMPTY.
             if( !poPoint->IsEmpty() )
             {

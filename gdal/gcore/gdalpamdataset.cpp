@@ -218,6 +218,19 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
         }
         CPLAddXMLAttributeAndValue(psSRSNode, "dataAxisToSRSAxisMapping",
                                    osMapping.c_str());
+
+        const double dfCoordinateEpoch = psPam->poSRS->GetCoordinateEpoch();
+        if( dfCoordinateEpoch > 0 )
+        {
+            std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+            if( osCoordinateEpoch.find('.') != std::string::npos )
+            {
+                while( osCoordinateEpoch.back() == '0' )
+                    osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+            }
+            CPLAddXMLAttributeAndValue(psSRSNode, "coordinateEpoch",
+                                       osCoordinateEpoch.c_str());
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -448,6 +461,11 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
         {
             psPam->poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
+
+        const char* pszCoordinateEpoch =
+            CPLGetXMLValue(psSRSNode, "coordinateEpoch", nullptr);
+        if( pszCoordinateEpoch )
+            psPam->poSRS->SetCoordinateEpoch(CPLAtof(pszCoordinateEpoch));
     }
 
 /* -------------------------------------------------------------------- */

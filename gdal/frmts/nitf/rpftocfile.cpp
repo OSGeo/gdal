@@ -589,7 +589,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
             return nullptr;
         }
         frameEntry->directory[pathLength] = 0;
-        if (pathLength > 0 && frameEntry->directory[pathLength-1] == '/')
+        if (frameEntry->directory[pathLength-1] == '/')
             frameEntry->directory[pathLength-1] = 0;
 
         if (frameEntry->directory[0] == '.' && frameEntry->directory[1] == '/')

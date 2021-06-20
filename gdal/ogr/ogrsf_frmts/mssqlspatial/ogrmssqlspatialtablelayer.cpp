@@ -709,7 +709,7 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExten
                 poStatement->Appendf("WITH ENVELOPE as (SELECT geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
             else
                 poStatement->Appendf("WITH ENVELOPE as (SELECT %s.MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszSchemaName, pszTableName);
-            
+
             poStatement->Appendf(" CORNERS as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE)");
             poStatement->Appendf("SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), MAX(point.STY) FROM CORNERS;");
         }
@@ -719,7 +719,7 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExten
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "Error getting extents, %s",
-                poDS->GetSession()->GetLastError());   
+                poDS->GetSession()->GetLastError());
         }
         else
         {
@@ -1072,7 +1072,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
                 "Geometry with FID = " CPL_FRMT_GIB " has been modified to valid geometry.", poFeature->GetFID());
         }
     }
-    
+
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int bind_num = 0;
     void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * nFieldCount);
@@ -1115,10 +1115,13 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
         }
         else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
         {
-            int nWKBLen = poGeom->WkbSize();
-            GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
-
-            if( poGeom->exportToWkb( wkbNDR, pabyWKB, wkbVariantIso ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
+            const size_t nWKBLen = poGeom->WkbSize();
+            GByte *pabyWKB = (GByte *) VSI_MALLOC_VERBOSE(nWKBLen + 1); // do we need the +1 ?
+            if( pabyWKB == nullptr )
+            {
+                oStmt.Append( "null" );
+            }
+            else if( poGeom->exportToWkb( wkbNDR, pabyWKB, wkbVariantIso ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
                 || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
             {
                 nWKBLenBindParameter = nWKBLen;
@@ -1681,7 +1684,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                             "Geometry with FID = " CPL_FRMT_GIB " has been modified to valid geometry.", poFeature->GetFID());
                     }
                 }
-                
+
                 OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
                 papstBindBuffer[iCol]->RawData.nSize = poWriter.GetDataLen();
                 papstBindBuffer[iCol]->RawData.pData = (GByte *) CPLMalloc(papstBindBuffer[iCol]->RawData.nSize + 1);
@@ -2241,10 +2244,13 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
             }
             else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
             {
-                int nWKBLen = poGeom->WkbSize();
-                GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
-
-                if( poGeom->exportToWkb( wkbNDR, pabyWKB, wkbVariantIso ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
+                const size_t nWKBLen = poGeom->WkbSize();
+                GByte *pabyWKB = (GByte *) VSI_MALLOC_VERBOSE(nWKBLen + 1); // do we need the +1 ?
+                if( pabyWKB == nullptr )
+                {
+                    oStatement.Append( "null" );
+                }
+                else if( poGeom->exportToWkb( wkbNDR, pabyWKB, wkbVariantIso ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY
                     || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
                 {
                     nWKBLenBindParameter = nWKBLen;
@@ -2512,7 +2518,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
                 {
                     OGRMSSQLAppendEscaped(poStatement, pszStrValue);
                 }
-            }   
+            }
             else
             {
                 // bind UTF8 as unicode parameter
@@ -2551,7 +2557,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
                     OGRMSSQLAppendEscaped(poStatement, pszStrValue);
                     CPLFree(buffer);
                 }
-            } 
+            }
         }
         else
             OGRMSSQLAppendEscaped(poStatement, pszStrValue);

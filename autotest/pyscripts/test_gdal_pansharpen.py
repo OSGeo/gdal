@@ -66,7 +66,9 @@ def test_gdal_pansharpen_1():
     ds = None
     gdal.GetDriverByName('GTiff').Delete('tmp/out.tif')
 
-    assert cs == [4735, 10000, 9742]
+    assert cs in ([4735, 10000, 9742],
+                  [4731, 9991, 9734] # s390x or graviton2
+                 )
 
 ###############################################################################
 # Full options
@@ -85,7 +87,10 @@ def test_gdal_pansharpen_2():
     ds = None
     gdal.GetDriverByName('VRT').Delete('tmp/out.vrt')
 
-    assert cs == [9742, 4735]
+    assert cs in ([9742, 4735],
+                  [9734, 4731] # s390x or graviton2
+                 )
+
 
 ###############################################################################
 # Cleanup

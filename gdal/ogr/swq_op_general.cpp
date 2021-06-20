@@ -631,6 +631,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                  || node->nOperation == SWQ_GE
                  || node->nOperation == SWQ_LT
                  || node->nOperation == SWQ_LE
+                 || node->nOperation == SWQ_IN
                  || node->nOperation == SWQ_BETWEEN) )
     {
         OGRField sField0, sField1;
@@ -694,6 +695,31 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
               poRet->int_value =
                   (OGRCompareDate(&sField0, &sField1) >= 0)
                   && (OGRCompareDate(&sField0, &sField2) <= 0);
+          }
+          break;
+
+          case SWQ_IN:
+          {
+            OGRField sFieldIn;
+            bool bFound = false;
+            for( int i = 1; i < node->nSubExprCount; ++i )
+            {
+              if( !OGRParseDate(sub_node_values[i]->string_value, &sFieldIn, 0) )
+              {
+                  CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Failed to parse date '%s' evaluating OGR WHERE expression",
+                    sub_node_values[i]->string_value);
+                  delete poRet;
+                  return nullptr;
+              }
+              if ( OGRCompareDate(&sField0, &sFieldIn) == 0 )
+              {
+                bFound = true;
+                break;
+              }
+            }
+            poRet->int_value = bFound;
           }
           break;
 

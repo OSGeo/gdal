@@ -39,14 +39,7 @@ CPL_CVSID("$Id$")
 
 OGRPGDumpDataSource::OGRPGDumpDataSource( const char* pszNameIn,
                                           char** papszOptions ) :
-    nLayers(0),
-    papoLayers(nullptr),
-    pszName(CPLStrdup(pszNameIn)),
-    bTriedOpen(false),
-    fp(nullptr),
-    bInTransaction(false),
-    poLayerInCopyMode(nullptr),
-    pszEOL("\n")
+    pszName(CPLStrdup(pszNameIn))
 {
     const char *pszCRLFFormat = CSLFetchNameValue( papszOptions, "LINEFORMAT");
 

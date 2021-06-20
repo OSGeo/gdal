@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -272,6 +273,9 @@ const char* OGRSQLiteTableLayer::GetName()
 char **OGRSQLiteTableLayer::GetMetadata( const char *pszDomain )
 
 {
+    // Update GetMetadataItem() optimization that skips calling GetMetadata()
+    // when key != OLMD_FID64 if we add more metadata items.
+
     GetLayerDefn();
     if( !m_bHasTriedDetectingFID64 && pszFIDColumn != nullptr )
     {
@@ -316,6 +320,8 @@ char **OGRSQLiteTableLayer::GetMetadata( const char *pszDomain )
 const char *OGRSQLiteTableLayer::GetMetadataItem( const char * pszName,
                                                   const char * pszDomain )
 {
+    if( !((pszDomain == nullptr || EQUAL(pszDomain, "")) && EQUAL(pszName, OLMD_FID64)) )
+        return nullptr;
     return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
 }
 
@@ -377,13 +383,13 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         aosGeomCols.insert(pszGeomCol);
         std::set<CPLString> aosIgnoredCols(poDS->GetGeomColsForTable(pszTableName));
         aosIgnoredCols.erase(pszGeomCol);
-        BuildFeatureDefn( GetDescription(), hColStmt, &aosGeomCols, aosIgnoredCols);
+        BuildFeatureDefn( GetDescription(),false, hColStmt, &aosGeomCols, aosIgnoredCols);
     }
     else
     {
         std::set<CPLString> aosIgnoredCols;
         const std::set<CPLString>& aosGeomCols(poDS->GetGeomColsForTable(pszTableName));
-        BuildFeatureDefn( GetDescription(), hColStmt,
+        BuildFeatureDefn( GetDescription(), false, hColStmt,
                           (bIsVirtualShape) ? nullptr : &aosGeomCols, aosIgnoredCols );
     }
     sqlite3_finalize( hColStmt );
@@ -2192,11 +2198,22 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
             }
             else if( eGeomFormat == OSGF_WKB )
             {
-                int nWKBLen = poGeom->WkbSize();
-                GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
-
-                poGeom->exportToWkb( wkbNDR, pabyWKB );
-                rc = sqlite3_bind_blob( hStmtIn, nBindField++, pabyWKB, nWKBLen, CPLFree );
+                const size_t nWKBLen = poGeom->WkbSize();
+                if( nWKBLen > static_cast<size_t>(std::numeric_limits<int>::max()) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported, "Too large geometry");
+                    return OGRERR_FAILURE;
+                }
+                GByte *pabyWKB = (GByte *) VSI_MALLOC_VERBOSE(nWKBLen);
+                if( pabyWKB )
+                {
+                    poGeom->exportToWkb( wkbNDR, pabyWKB );
+                    rc = sqlite3_bind_blob( hStmtIn, nBindField++, pabyWKB, static_cast<int>(nWKBLen), CPLFree );
+                }
+                else
+                {
+                    return OGRERR_FAILURE;
+                }
             }
             else if ( eGeomFormat == OSGF_SpatiaLite )
             {

@@ -94,7 +94,8 @@ OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     bIgnore(FALSE),  // TODO(schwehr): Can we use IsIgnored()?
     eSubType(poPrototype->GetSubType()),
     bNullable(poPrototype->IsNullable()),
-    bUnique(poPrototype->IsUnique())
+    bUnique(poPrototype->IsUnique()),
+    m_osDomainName(poPrototype->m_osDomainName)
 {
     SetDefault(poPrototype->GetDefault());
 }
@@ -1441,6 +1442,89 @@ void OGR_Fld_SetUnique( OGRFieldDefnH hDefn, int bUniqueIn )
 }
 
 /************************************************************************/
+/*                           GetDomainName()                            */
+/************************************************************************/
+
+/**
+ * \fn const std::string& OGRFieldDefn::GetDomainName() const
+ *
+ * \brief Return the name of the field domain for this field.
+ *
+ * By default, none (empty string) is returned.
+ *
+ * Field domains (OGRFieldDomain class) are attached at the GDALDataset level
+ * and should be retrieved with GDALDataset::GetFieldDomain().
+ *
+ * This method is the same as the C function OGR_Fld_GetDomainName().
+ *
+ * @return the field domain name, or an empty string if there is none.
+ * @since GDAL 3.3
+ */
+
+/************************************************************************/
+/*                      OGR_Fld_GetDomainName()                         */
+/************************************************************************/
+
+/**
+ * \brief Return the name of the field domain for this field.
+ *
+ * By default, none (empty string) is returned.
+ *
+ * Field domains (OGRFieldDomain class) are attached at the GDALDataset level
+ * and should be retrieved with GDALDatasetGetFieldDomain().
+ *
+ * This method is the same as the C++ method OGRFieldDefn::GetDomainName().
+ *
+ * @param hDefn handle to the field definition
+ * @return the field domain name, or an empty string if there is none.
+ * @since GDAL 3.3
+ */
+
+const char* OGR_Fld_GetDomainName( OGRFieldDefnH hDefn )
+{
+    return OGRFieldDefn::FromHandle(hDefn)->GetDomainName().c_str();
+}
+
+/************************************************************************/
+/*                           SetDomainName()                            */
+/************************************************************************/
+
+/**
+ * \fn void OGRFieldDefn::SetDomainName( const std:string& osDomainName );
+ *
+ * \brief Set the name of the field domain for this field.
+ *
+ * Field domains (OGRFieldDomain) are attached at the GDALDataset level.
+ *
+ * This method is the same as the C function OGR_Fld_SetDomainName().
+ *
+ * @param osDomainName Field domain name.
+ * @since GDAL 3.3
+ */
+
+/************************************************************************/
+/*                      OGR_Fld_SetDomainName()                         */
+/************************************************************************/
+
+/**
+ * \brief Set the name of the field domain for this field.
+ *
+ * Field domains (OGRFieldDomain) are attached at the GDALDataset level.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::SetDomainName().
+ *
+ * @param hDefn handle to the field definition
+ * @param pszFieldName Field domain name.
+ * @since GDAL 3.3
+ */
+
+void OGR_Fld_SetDomainName( OGRFieldDefnH hDefn, const char* pszFieldName )
+{
+    OGRFieldDefn::FromHandle(hDefn)->SetDomainName(
+        pszFieldName ? pszFieldName : "");
+}
+
+/************************************************************************/
 /*                        OGRUpdateFieldType()                          */
 /************************************************************************/
 
@@ -1593,3 +1677,610 @@ void OGRUpdateFieldType( OGRFieldDefn* poFDefn,
         poFDefn->SetType(OFTStringList);
     }
 }
+
+/************************************************************************/
+/*                          OGRFieldDomain()                            */
+/************************************************************************/
+
+/*! @cond Doxygen_Suppress */
+OGRFieldDomain::OGRFieldDomain(const std::string& osName,
+                               const std::string& osDescription,
+                               OGRFieldDomainType eDomainType,
+                               OGRFieldType eFieldType,
+                               OGRFieldSubType eFieldSubType):
+    m_osName(osName),
+    m_osDescription(osDescription),
+    m_eDomainType(eDomainType),
+    m_eFieldType(eFieldType),
+    m_eFieldSubType(eFieldSubType)
+{
+}
+/*! @endcond */
+
+/************************************************************************/
+/*                         ~OGRFieldDomain()                            */
+/************************************************************************/
+
+OGRFieldDomain::~OGRFieldDomain() = default;
+
+/************************************************************************/
+/*                         ~OGRFieldDomain()                            */
+/************************************************************************/
+
+/** Destroy a field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::~OGRFieldDomain()
+ *
+ * @param hFieldDomain the field domain.
+ * @since GDAL 3.3
+ */
+void OGR_FldDomain_Destroy(OGRFieldDomainH hFieldDomain)
+{
+    delete OGRFieldDomain::FromHandle(hFieldDomain);
+}
+
+/************************************************************************/
+/*                        OGRCodedFieldDomain()                         */
+/************************************************************************/
+
+OGRCodedFieldDomain::OGRCodedFieldDomain(const std::string& osName,
+                                         const std::string& osDescription,
+                                         OGRFieldType eFieldType,
+                                         OGRFieldSubType eFieldSubType,
+                                         std::vector<OGRCodedValue>&& asValues):
+    OGRFieldDomain(osName, osDescription, OFDT_CODED, eFieldType, eFieldSubType),
+    m_asValues(std::move(asValues))
+{
+    // Guard
+    if( m_asValues.empty() || m_asValues.back().pszCode != nullptr )
+    {
+        OGRCodedValue cv;
+        cv.pszCode = nullptr;
+        cv.pszValue = nullptr;
+        m_asValues.emplace_back(cv);
+    }
+}
+
+/************************************************************************/
+/*                     OGR_CodedFldDomain_Create()                      */
+/************************************************************************/
+
+/** Creates a new coded field domain.
+ *
+ * This is the same as the C++ method OGRCodedFieldDomain::OGRCodedFieldDomain()
+ * (except that the C function copies the enumeration, whereas the C++
+ * method moves it)
+ *
+ * @param pszName        Domain name. Should not be NULL.
+ * @param pszDescription Domain description (can be NULL)
+ * @param eFieldType     Field type. Generally numeric. Potentially OFTDateTime
+ * @param eFieldSubType  Field subtype.
+ * @param enumeration    Enumeration as (code, value) pairs. Should not be
+ *                       NULL. The end of the enumeration is marked by a code
+ *                       set to NULL. The enumeration will be copied.
+ *                       Each code should appear only once, but it is the
+ *                       responsibility of the user to check it.
+ * @return a new handle that should be freed with OGR_FldDomain_Destroy(),
+ *         or NULL in case of error.
+ * @since GDAL 3.3
+ */
+OGRFieldDomainH OGR_CodedFldDomain_Create(const char* pszName,
+                                          const char* pszDescription,
+                                          OGRFieldType eFieldType,
+                                          OGRFieldSubType eFieldSubType,
+                                          const OGRCodedValue* enumeration)
+{
+    VALIDATE_POINTER1(pszName, __func__, nullptr);
+    VALIDATE_POINTER1(enumeration, __func__, nullptr);
+    size_t count = 0;
+    for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
+    {
+        ++count;
+    }
+    std::vector<OGRCodedValue> asValues;
+    try
+    {
+        asValues.reserve(count + 1);
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        return nullptr;
+    }
+    bool error = false;
+    for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
+    {
+        OGRCodedValue cv;
+        cv.pszCode = VSI_STRDUP_VERBOSE(enumeration[i].pszCode);
+        if( cv.pszCode == nullptr )
+        {
+            error = true;
+            break;
+        }
+        if( enumeration[i].pszValue )
+        {
+            cv.pszValue = VSI_STRDUP_VERBOSE(enumeration[i].pszValue);
+            if( cv.pszValue == nullptr )
+            {
+                VSIFree(cv.pszCode);
+                error = true;
+                break;
+            }
+        }
+        else
+        {
+            cv.pszValue = nullptr;
+        }
+        asValues.emplace_back(cv);
+    }
+    if( error )
+    {
+        for( auto& cv: asValues )
+        {
+            VSIFree(cv.pszCode);
+            VSIFree(cv.pszValue);
+        }
+        return nullptr;
+    }
+    // Add guard
+    {
+        OGRCodedValue cv;
+        cv.pszCode = nullptr;
+        cv.pszValue = nullptr;
+        asValues.emplace_back(cv);
+    }
+    return OGRFieldDomain::ToHandle(new OGRCodedFieldDomain(
+                                       pszName,
+                                       pszDescription ? pszDescription : "",
+                                       eFieldType,
+                                       eFieldSubType,
+                                       std::move(asValues)));
+}
+
+/************************************************************************/
+/*                   OGRCodedFieldDomain::Clone()                       */
+/************************************************************************/
+
+OGRCodedFieldDomain* OGRCodedFieldDomain::Clone() const
+{
+    return cpl::down_cast<OGRCodedFieldDomain*>(
+            OGRFieldDomain::FromHandle(OGR_CodedFldDomain_Create(
+                m_osName.c_str(), m_osDescription.c_str(),
+                m_eFieldType, m_eFieldSubType, m_asValues.data())));
+}
+
+/************************************************************************/
+/*                      ~OGRCodedFieldDomain()                          */
+/************************************************************************/
+
+OGRCodedFieldDomain::~OGRCodedFieldDomain()
+{
+    for( auto& cv: m_asValues )
+    {
+        CPLFree(cv.pszCode);
+        CPLFree(cv.pszValue);
+    }
+}
+
+/************************************************************************/
+/*                       OGRRangeFieldDomain()                          */
+/************************************************************************/
+
+OGRRangeFieldDomain::OGRRangeFieldDomain(const std::string& osName,
+                                         const std::string& osDescription,
+                                         OGRFieldType eFieldType,
+                                         OGRFieldSubType eFieldSubType,
+                                         const OGRField& sMin,
+                                         bool        bMinIsInclusive,
+                                         const OGRField& sMax,
+                                         bool        bMaxIsInclusive):
+    OGRFieldDomain(osName, osDescription, OFDT_RANGE, eFieldType, eFieldSubType),
+    m_sMin(sMin),
+    m_sMax(sMax),
+    m_bMinIsInclusive(bMinIsInclusive),
+    m_bMaxIsInclusive(bMaxIsInclusive)
+{
+    CPLAssert( eFieldType == OFTInteger ||
+               eFieldType == OFTInteger64 ||
+               eFieldType == OFTReal ||
+               eFieldType == OFTDateTime );
+}
+
+/************************************************************************/
+/*                     OGR_RangeFldDomain_Create()                      */
+/************************************************************************/
+
+static OGRField GetUnsetField()
+{
+    OGRField sUnset;
+    OGR_RawField_SetUnset(&sUnset);
+    return sUnset;
+}
+
+/** Creates a new range field domain.
+ *
+ * This is the same as the C++ method OGRRangeFieldDomain::OGRRangeFieldDomain().
+ *
+ * @param pszName        Domain name. Should not be NULL.
+ * @param pszDescription Domain description (can be NULL)
+ * @param eFieldType     Field type. Among OFTInteger, OFTInteger64, OFTReal
+ *                       and OFTDateTime.
+ * @param eFieldSubType  Field subtype.
+ * @param psMin          Minimum value (can be NULL). The member in the union
+ *                       that is read is consistent with eFieldType
+ * @param bMinIsInclusive Whether the minimum value is included in the range.
+ * @param psMax          Maximum value (can be NULL). The member in the union
+ *                       that is read is consistent with eFieldType
+ * @param bMaxIsInclusive Whether the maximum value is included in the range.
+ * @return a new handle that should be freed with OGR_FldDomain_Destroy()
+ * @since GDAL 3.3
+ */
+OGRFieldDomainH OGR_RangeFldDomain_Create(const char* pszName,
+                                          const char* pszDescription,
+                                          OGRFieldType eFieldType,
+                                          OGRFieldSubType eFieldSubType,
+                                          const OGRField* psMin,
+                                          bool bMinIsInclusive,
+                                          const OGRField* psMax,
+                                          bool bMaxIsInclusive)
+{
+    VALIDATE_POINTER1(pszName, __func__, nullptr);
+    if( eFieldType != OFTInteger &&
+        eFieldType != OFTInteger64 &&
+        eFieldType != OFTReal &&
+        eFieldType != OFTDateTime )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported field type");
+        return nullptr;
+    }
+    const OGRField unsetField = GetUnsetField();
+    return OGRFieldDomain::ToHandle(new OGRRangeFieldDomain(
+                                       pszName,
+                                       pszDescription ? pszDescription : "",
+                                       eFieldType,
+                                       eFieldSubType,
+                                       psMin ? *psMin : unsetField,
+                                       bMinIsInclusive,
+                                       psMax ? *psMax : unsetField,
+                                       bMaxIsInclusive));
+}
+
+/************************************************************************/
+/*                        OGRGlobFieldDomain()                          */
+/************************************************************************/
+
+OGRGlobFieldDomain::OGRGlobFieldDomain(const std::string& osName,
+                                        const std::string& osDescription,
+                                        OGRFieldType eFieldType,
+                                        OGRFieldSubType eFieldSubType,
+                                        const std::string& osGlob):
+    OGRFieldDomain(osName, osDescription, OFDT_GLOB, eFieldType, eFieldSubType),
+    m_osGlob(osGlob)
+{
+}
+
+/************************************************************************/
+/*                       OGR_GlobFldDomain_Create()                     */
+/************************************************************************/
+
+/** Creates a new blob field domain.
+ *
+ * This is the same as the C++ method OGRGlobFieldDomain::OGRGlobFieldDomain()
+ *
+ * @param pszName        Domain name. Should not be NULL.
+ * @param pszDescription Domain description (can be NULL)
+ * @param eFieldType     Field type.
+ * @param eFieldSubType  Field subtype.
+ * @param pszGlob        Glob expression. Should not be NULL.
+ * @return a new handle that should be freed with OGR_FldDomain_Destroy()
+ * @since GDAL 3.3
+ */
+OGRFieldDomainH OGR_GlobFldDomain_Create(const char* pszName,
+                                         const char* pszDescription,
+                                         OGRFieldType eFieldType,
+                                         OGRFieldSubType eFieldSubType,
+                                         const char* pszGlob)
+{
+    VALIDATE_POINTER1(pszName, __func__, nullptr);
+    VALIDATE_POINTER1(pszGlob, __func__, nullptr);
+    return OGRFieldDomain::ToHandle(new OGRGlobFieldDomain(
+                                       pszName,
+                                       pszDescription ? pszDescription : "",
+                                       eFieldType,
+                                       eFieldSubType,
+                                       pszGlob));
+}
+
+/************************************************************************/
+/*                       OGR_FldDomain_GetName()                        */
+/************************************************************************/
+
+/** Get the name of the field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::GetName()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the field domain name.
+ * @since GDAL 3.3
+ */
+const char* OGR_FldDomain_GetName(OGRFieldDomainH hFieldDomain)
+{
+    return OGRFieldDomain::FromHandle(hFieldDomain)->GetName().c_str();
+}
+
+/************************************************************************/
+/*                     OGR_FldDomain_GetDescription()                   */
+/************************************************************************/
+
+/** Get the description of the field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::GetDescription()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the field domain description (might be empty string).
+ * @since GDAL 3.3
+ */
+const char* OGR_FldDomain_GetDescription(OGRFieldDomainH hFieldDomain)
+{
+    return OGRFieldDomain::FromHandle(hFieldDomain)->GetDescription().c_str();
+}
+
+/************************************************************************/
+/*                     OGR_FldDomain_GetDomainType()                    */
+/************************************************************************/
+
+/** Get the type of the field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::GetDomainType()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the type of the field domain.
+ * @since GDAL 3.3
+ */
+OGRFieldDomainType OGR_FldDomain_GetDomainType(OGRFieldDomainH hFieldDomain)
+{
+    return OGRFieldDomain::FromHandle(hFieldDomain)->GetDomainType();
+}
+
+/************************************************************************/
+/*                     OGR_FldDomain_GetFieldType()                     */
+/************************************************************************/
+
+/** Get the field type of the field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::GetFieldType()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the field type of the field domain.
+ * @since GDAL 3.3
+ */
+OGRFieldType OGR_FldDomain_GetFieldType(OGRFieldDomainH hFieldDomain)
+{
+    return OGRFieldDomain::FromHandle(hFieldDomain)->GetFieldType();
+}
+
+/************************************************************************/
+/*                   OGR_FldDomain_GetFieldSubType()                    */
+/************************************************************************/
+
+/** Get the field subtype of the field domain.
+ *
+ * This is the same as OGRFieldDomain::GetFieldSubType()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the field subtype of the field domain.
+ * @since GDAL 3.3
+ */
+OGRFieldSubType OGR_FldDomain_GetFieldSubType(OGRFieldDomainH hFieldDomain)
+{
+    return OGRFieldDomain::FromHandle(hFieldDomain)->GetFieldSubType();
+}
+
+/************************************************************************/
+/*                    OGR_FldDomain_GetSplitPolicy()                    */
+/************************************************************************/
+
+/** Get the split policy of the field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::GetSplitPolicy()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the split policy of the field domain.
+ * @since GDAL 3.3
+ */
+
+OGRFieldDomainSplitPolicy OGR_FldDomain_GetSplitPolicy(OGRFieldDomainH hFieldDomain)
+{
+    return OGRFieldDomain::FromHandle(hFieldDomain)->GetSplitPolicy();
+}
+
+/************************************************************************/
+/*                    OGR_FldDomain_SetSplitPolicy()                    */
+/************************************************************************/
+
+/** Set the split policy of the field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::SetSplitPolicy()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @param policy the split policy of the field domain.
+ * @since GDAL 3.3
+ */
+
+void OGR_FldDomain_SetSplitPolicy(OGRFieldDomainH hFieldDomain,
+                                  OGRFieldDomainSplitPolicy policy)
+{
+    OGRFieldDomain::FromHandle(hFieldDomain)->SetSplitPolicy(policy);
+}
+
+/************************************************************************/
+/*                    OGR_FldDomain_GetMergePolicy()                    */
+/************************************************************************/
+
+/** Get the split policy of the field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::GetMergePolicy()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the split policy of the field domain.
+ * @since GDAL 3.3
+ */
+
+OGRFieldDomainMergePolicy OGR_FldDomain_GetMergePolicy(OGRFieldDomainH hFieldDomain)
+{
+    return OGRFieldDomain::FromHandle(hFieldDomain)->GetMergePolicy();
+}
+
+/************************************************************************/
+/*                    OGR_FldDomain_SetMergePolicy()                    */
+/************************************************************************/
+
+/** Set the split policy of the field domain.
+ *
+ * This is the same as the C++ method OGRFieldDomain::SetMergePolicy()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @param policy the split policy of the field domain.
+ * @since GDAL 3.3
+ */
+
+void OGR_FldDomain_SetMergePolicy(OGRFieldDomainH hFieldDomain,
+                                  OGRFieldDomainMergePolicy policy)
+{
+    OGRFieldDomain::FromHandle(hFieldDomain)->SetMergePolicy(policy);
+}
+
+/************************************************************************/
+/*                  OGR_CodedFldDomain_GetEnumeration()                 */
+/************************************************************************/
+
+/** Get the enumeration as (code, value) pairs.
+ *
+ * The end of the enumeration is signaled by code == NULL
+ *
+ * This is the same as the C++ method OGRCodedFieldDomain::GetEnumeration()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the (code, value) pairs, or nullptr in case of error.
+ * @since GDAL 3.3
+ */
+const OGRCodedValue* OGR_CodedFldDomain_GetEnumeration(OGRFieldDomainH hFieldDomain)
+{
+    // The user should normally only call us with the right object type, but
+    // it doesn't hurt to check.
+    auto poFieldDomain = dynamic_cast<const OGRCodedFieldDomain*>(
+                                OGRFieldDomain::FromHandle(hFieldDomain));
+    if( !poFieldDomain )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This function should be called with a coded field domain object");
+        return nullptr;
+    }
+    return poFieldDomain->GetEnumeration();
+}
+
+/************************************************************************/
+/*                     OGR_RangeFldDomain_GetMin()                      */
+/************************************************************************/
+
+/** Get the minimum value.
+ *
+ * Which member in the returned OGRField enum must be read depends on the field type.
+ *
+ * If no minimum value is set, the OGR_RawField_IsUnset() will return true when
+ * called on the result.
+ *
+ * This is the same as the C++ method OGRRangeFieldDomain::GetMin()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @param pbIsInclusiveOut set to true if the minimum is included in the range.
+ * @return the minimum value.
+ * @since GDAL 3.3
+ */
+const OGRField *OGR_RangeFldDomain_GetMin(OGRFieldDomainH hFieldDomain,
+                                          bool* pbIsInclusiveOut)
+{
+    // The user should normally only call us with the right object type, but
+    // it doesn't hurt to check.
+    auto poFieldDomain = dynamic_cast<const OGRRangeFieldDomain*>(
+                                OGRFieldDomain::FromHandle(hFieldDomain));
+    if( !poFieldDomain )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This function should be called with a range field domain object");
+        static const OGRField dummyField = GetUnsetField();
+        return &dummyField;
+    }
+    bool bIsInclusive = false;
+    const auto& ret = poFieldDomain->GetMin(bIsInclusive);
+    if( pbIsInclusiveOut )
+        *pbIsInclusiveOut = bIsInclusive;
+    return &ret;
+}
+
+/************************************************************************/
+/*                     OGR_RangeFldDomain_GetMax()                      */
+/************************************************************************/
+
+/** Get the maximum value.
+ *
+ * Which member in the returned OGRField enum must be read depends on the field type.
+ *
+ * If no maximum value is set, the OGR_RawField_IsUnset() will return true when
+ * called on the result.
+ *
+ * This is the same as the C++ method OGRRangeFieldDomain::GetMax()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @param pbIsInclusiveOut set to true if the maximum is included in the range.
+ * @return the maximum value.
+ * @since GDAL 3.3
+ */
+const OGRField *OGR_RangeFldDomain_GetMax(OGRFieldDomainH hFieldDomain,
+                                          bool* pbIsInclusiveOut)
+{
+    // The user should normally only call us with the right object type, but
+    // it doesn't hurt to check.
+    auto poFieldDomain = dynamic_cast<const OGRRangeFieldDomain*>(
+                                OGRFieldDomain::FromHandle(hFieldDomain));
+    if( !poFieldDomain )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This function should be called with a range field domain object");
+        static const OGRField dummyField = GetUnsetField();
+        return &dummyField;
+    }
+    bool bIsInclusive = false;
+    const auto& ret = poFieldDomain->GetMax(bIsInclusive);
+    if( pbIsInclusiveOut )
+        *pbIsInclusiveOut = bIsInclusive;
+    return &ret;
+}
+
+/************************************************************************/
+/*                     OGR_GlobFldDomain_GetGlob()                      */
+/************************************************************************/
+
+/** Get the glob expression.
+ *
+ * This is the same as the C++ method OGRGlobFieldDomain::GetGlob()
+ *
+ * @param hFieldDomain Field domain handle.
+ * @return the glob expression, or nullptr in case of error
+ * @since GDAL 3.3
+ */
+const char *OGR_GlobFldDomain_GetGlob(OGRFieldDomainH hFieldDomain)
+{
+    // The user should normally only call us with the right object type, but
+    // it doesn't hurt to check.
+    auto poFieldDomain = dynamic_cast<const OGRGlobFieldDomain*>(
+                                OGRFieldDomain::FromHandle(hFieldDomain));
+    if( !poFieldDomain )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This function should be called with a glob field domain object");
+        return nullptr;
+    }
+    return poFieldDomain->GetGlob().c_str();
+}
+

@@ -76,6 +76,7 @@ AX_CHECK_COMPILE_FLAG([-Wformat -Werror=format-security -Wno-format-nonliteral],
 AX_CHECK_COMPILE_FLAG([-Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-include-dirs], [C_WFLAGS="$C_WFLAGS -Wmissing-include-dirs" CXX_WFLAGS="$CXX_WFLAGS -Wmissing-include-dirs"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Error out on things that will fail with MSVC
 AX_CHECK_COMPILE_FLAG([-Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"],,[$ERROR_ON_UNKNOWN_OPTIONS])
@@ -288,6 +289,16 @@ AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h 
 dnl Check for userfaultfd support
 AC_CHECK_HEADERS([linux/userfaultfd.h], [ENABLE_UFFD="yes"], [ENABLE_UFFD="no"], [])
 AC_SUBST(ENABLE_UFFD,$ENABLE_UFFD)
+
+dnl cpl_vsil_unix_stdio_64.h requires linux/fs.h on Linux, and this isn't
+dnl installed by default on Alpine
+case "${host_os}" in
+    linux*)
+        AC_CHECK_HEADERS([linux/fs.h], [], [AC_MSG_ERROR([Unable to find linux/fs.h header])])
+        ;;
+    *)
+        ;;
+esac
 
 AC_C_BIGENDIAN
 
@@ -1250,6 +1261,76 @@ elif test "x$with_bash_completion" = "xyes"; then
 else
   AC_SUBST(bashcompdir, $with_bash_completion)
 fi
+
+dnl ---------------------------------------------------------------------------
+dnl Select a JPEG Library to use, or disable driver.
+dnl libtiff could depend on it so it must appear before.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support (ARG=internal, no or path)],,)
+
+if test "$with_jpeg" = "no" ; then
+
+  JPEG_SETTING=no
+
+  echo "jpeg support disabled."
+
+elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
+
+  AC_CHECK_LIB(jpeg,jpeg_read_scanlines,JPEG_SETTING=external,JPEG_SETTING=internal,)
+  AC_CHECK_HEADERS(jpeglib.h)
+
+  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
+    JPEG_SETTING=internal
+  fi
+
+  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
+    AC_MSG_CHECKING([for width_in_blocks in jpeglib.h])
+
+    rm -f conftest.c
+    echo '#include <stdio.h>' >> conftest.c
+    echo '#include "jpeglib.h"' >> conftest.c
+    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
+    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
+      AC_MSG_RESULT([yes])
+    else
+      AC_MSG_RESULT([no])
+      JPEG_SETTING=internal
+    fi
+    rm -f conftest*
+  fi
+
+  if test "$JPEG_SETTING" = "external" ; then
+    LIBS="-ljpeg $LIBS"
+    echo "using pre-installed libjpeg."
+  else
+    echo "using internal jpeg code."
+  fi
+
+elif test "$with_jpeg" = "internal" ; then
+
+  JPEG_SETTING=internal
+
+  echo "using internal jpeg code."
+
+else
+
+  JPEG_SETTING=external
+  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
+  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
+
+  echo "using libjpeg from $with_jpeg."
+
+fi
+
+AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
+
+if test "$JPEG_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
+fi
+
+
+
 
 dnl ---------------------------------------------------------------------------
 dnl Select a libtiff library to use.
@@ -2313,72 +2394,6 @@ fi
 
 AC_SUBST(GEOTIFF_SETTING,$GEOTIFF_SETTING)
 AC_SUBST(GEOTIFF_INCLUDE,$GEOTIFF_INCLUDE)
-
-dnl ---------------------------------------------------------------------------
-dnl Select a JPEG Library to use, or disable driver.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(jpeg,[  --with-jpeg[=ARG]       Include JPEG support (ARG=internal, no or path)],,)
-
-if test "$with_jpeg" = "no" ; then
-
-  JPEG_SETTING=no
-
-  echo "jpeg support disabled."
-
-elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
-
-  AC_CHECK_LIB(jpeg,jpeg_read_scanlines,JPEG_SETTING=external,JPEG_SETTING=internal,)
-  AC_CHECK_HEADERS(jpeglib.h)
-
-  if test "$JPEG_SETTING" = "external" -a "$ac_cv_header_jpeglib_h" = "no" ; then
-    JPEG_SETTING=internal
-  fi
-
-  if test "$JPEG_SETTING" = "external" -a "$TIFF_SETTING" = "internal" ; then
-    AC_MSG_CHECKING([for width_in_blocks in jpeglib.h])
-
-    rm -f conftest.c
-    echo '#include <stdio.h>' >> conftest.c
-    echo '#include "jpeglib.h"' >> conftest.c
-    echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
-    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
-      AC_MSG_RESULT([yes])
-    else
-      AC_MSG_RESULT([no])
-      JPEG_SETTING=internal
-    fi
-    rm -f conftest*
-  fi
-
-  if test "$JPEG_SETTING" = "external" ; then
-    LIBS="-ljpeg $LIBS"
-    echo "using pre-installed libjpeg."
-  else
-    echo "using internal jpeg code."
-  fi
-
-elif test "$with_jpeg" = "internal" ; then
-
-  JPEG_SETTING=internal
-
-  echo "using internal jpeg code."
-
-else
-
-  JPEG_SETTING=external
-  LIBS="-L$with_jpeg -L$with_jpeg/lib -ljpeg $LIBS"
-  EXTRA_INCLUDES="-I$with_jpeg -I$with_jpeg/include $EXTRA_INCLUDES"
-
-  echo "using libjpeg from $with_jpeg."
-
-fi
-
-AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
-
-if test "$JPEG_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
-fi
 
 
 dnl ---------------------------------------------------------------------------
@@ -4170,7 +4185,12 @@ elif test "$with_dods_root" = "yes" ; then
     AC_MSG_ERROR([--with-dods-root requires path to dods root as argument])
 else
     DODS_LIB=$with_dods_root/lib
-    DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
+    DODS_INC="-I$with_dods_root/include"
+    if test -d "$with_dods_root/include/libdap"; then
+       DODS_INC="$DODS_INC -I$with_dods_root/include/libdap";
+    elif test -d "$with_dods_root/include/dap"; then
+       DODS_INC="$DODS_INC -I$with_dods_root/include/dap";
+   fi
     DODS_BIN=$with_dods_root/bin
 
     dnl Check libdap version the sane way (if possible through dap-config)
@@ -4521,14 +4541,11 @@ dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
 GEOS_INIT(3.1.0)
-HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
-
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
   STRIP_SYSTEM_LIBRARY_PATHS("${GEOS_LIBS}")
   GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
-  HAVE_GEOS_RESULT="yes"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -4536,14 +4553,11 @@ dnl Check if SFCGAL library is available.
 dnl ---------------------------------------------------------------------------
 
 SFCGAL_INIT(1.2.2)
-HAVE_SFCGAL_RESULT="no"
 if test "${HAVE_SFCGAL}" = "yes" ; then
-
   AC_MSG_NOTICE([Using C API from SFCGAL $SFCGAL_VERSION])
   STRIP_SYSTEM_LIBRARY_PATHS("${SFCGAL_LIBS}")
   SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
-  HAVE_SFCGAL_RESULT="yes"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -4999,7 +5013,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         PDFIUM_LIB="-L$with_pdfium/lib -lpdfium"
     fi
 
-    PDFIUM_LIB="$PDFIUM_LIB -ljpeg -lpng -lz -llcms2 -lpthread -lm -lstdc++"
+    PDFIUM_LIB="$PDFIUM_LIB -lopenjp2 -ljpeg -lpng -lz -llcms2 -lpthread -lm -lstdc++"
 
     if test ! -z "`uname | grep Darwin`" ; then
         PDFIUM_LIB="-stdlib=libstdc++ $PDFIUM_LIB"
@@ -5027,7 +5041,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
     rm -f testpdfium
 
     if test "$HAVE_PDFIUM" = "no" -a "$with_pdfium" != ""; then
-        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_2])
+        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_4])
     fi
 else
     AC_MSG_RESULT([disabled])
@@ -6044,94 +6058,90 @@ LOC_MSG([  C++14 support:             ${CXX14_SUPPORT}])
 LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
-LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
-LOC_MSG([  libdeflate support:        ${LIBDEFLATE_SETTING}])
-LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
-LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
-LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
-LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
-LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
+LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
-LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
-LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
+LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
+LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
+LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
 LOC_MSG([  DDS support:               ${DDS_SETTING}])
+LOC_MSG([  DODS support:              ${HAVE_DODS}])
+LOC_MSG([  ECW support:               ${ECW_SETTING}])
+LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
+LOC_MSG([  EXR support:               ${HAVE_EXR}])
+LOC_MSG([  FGDB support:              ${FGDB_ENABLED}])
+LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
+LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
+LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
+LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
+LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  GTA support:               ${GTA_SETTING}])
-LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
-LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
-LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
-LOC_MSG([  12 bit JPEG:               ${JPEG12_ENABLED}])
-LOC_MSG([  12 bit JPEG-in-TIFF:       ${TIFF_JPEG12_ENABLED}])
-LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
-LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
-LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])
+LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
+LOC_MSG([  HEIF support:              ${HAVE_HEIF}])
+LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
+LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
+LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
+LOC_MSG([  JPEG 12 bit:               ${JPEG12_ENABLED}])
+LOC_MSG([  JPEG-in-TIFF 12 bit:       ${TIFF_JPEG12_ENABLED}])
+if test "x$HAVE_JASPER_UUID" != "x" ; then
+  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
+else
+  LOC_MSG([  JPEG JasPer support:       ${HAVE_JASPER}])
+fi
+LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
+LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 LOC_MSG([  Kea support:               ${HAVE_KEA}])
-LOC_MSG([  NetCDF support:            ${NETCDF_SETTING}])
+LOC_MSG([  LERC support:              ${HAVE_LERC}])
+LOC_MSG([  libdeflate support:        ${LIBDEFLATE_SETTING}])
+LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
+LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
+LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
+LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
+LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
+LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
+LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
+LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
+LOC_MSG([  MDB support:               ${MDB_ENABLED}])
+LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
+LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
+LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
+LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
+LOC_MSG([  MSG support:               ${HAVE_MSG}])
+LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 if test "$NETCDF_SETTING" = "yes" ; then
   LOC_MSG([  NetCDF has netcdf_mem.h:   ${NETCDF_MEM}])
 fi
-LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
-if test "x$HAVE_JASPER_UUID" != "x" ; then
-  LOC_MSG([  JasPer support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
-else
-  LOC_MSG([  JasPer support:            ${HAVE_JASPER}])
-fi
-LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
-LOC_MSG([  ECW support:               ${ECW_SETTING}])
-LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
-LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
-LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
-LOC_MSG([  MSG support:               ${HAVE_MSG}])
-LOC_MSG([  WebP support:              ${WEBP_SETTING}])
-LOC_MSG([  cURL support (wms/wcs/...):${CURL_SETTING}])
-LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
-LOC_MSG([  LERC support:              ${HAVE_LERC}])
-LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
-LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
-LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
-LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
-LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
-LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
-LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
-LOC_MSG([  FGDB support:              ${FGDB_ENABLED}])
-LOC_MSG([  MDB support:               ${MDB_ENABLED}])
-LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
+LOC_MSG([  NetCDF support:            ${NETCDF_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
-LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
-LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
-LOC_MSG([  RDB support:               ${RDB_SETTING}])
-LOC_MSG([  DODS support:              ${HAVE_DODS}])
-LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
+LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
+LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
+LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
+LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
+LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
+LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
 LOC_MSG([  PCRE support:              ${HAVE_PCRE}])
+LOC_MSG([  PDFium support:            ${HAVE_PDFIUM}])
+LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
+LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
+LOC_MSG([  PostgreSQL support:        ${HAVE_PG}])
+LOC_MSG([  QHull support:             ${QHULL_SETTING}])
+LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
+LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
+LOC_MSG([  RDB support:               ${RDB_SETTING}])
+LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL}])
+LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 if test "x$SPATIALITE_SONAME" != "x"; then
-LOC_MSG([  SpatiaLite shared obj name:${SPATIALITE_SONAME}])
+  LOC_MSG([  SpatiaLite shared obj name:${SPATIALITE_SONAME}])
 fi
-LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
+LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  Teigha (DWG and DGNv8):    ${HAVE_TEIGHA}])
-LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
-LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
-LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL_RESULT}])
-LOC_MSG([  QHull support:             ${QHULL_SETTING}])
-LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
-LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
-LOC_MSG([  PDFium support:            ${HAVE_PDFIUM}])
-LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
-LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
-LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
-LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
-LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
-LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
-LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
-LOC_MSG([  EXR support:               ${HAVE_EXR}])
-LOC_MSG([  HEIF support:              ${HAVE_HEIF}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
-LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
-LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])
-LOC_MSG([  misc. ogr formats:        ${OGRFORMATS_ENABLED}])
-LOC_MSG([  disabled ogr formats:     ${OGRFORMATS_DISABLED}])
+LOC_MSG([  WebP support:              ${WEBP_SETTING}])
+LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
+LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
 
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
@@ -6143,6 +6153,12 @@ if test -z "$BINDINGS"; then
 else
     WHAT_BINDINGS="$BINDINGS"
 fi
+LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
+LOC_MSG([  misc. ogr formats:        ${OGRFORMATS_ENABLED}])
+LOC_MSG()
+LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])
+LOC_MSG([  disabled ogr formats:     ${OGRFORMATS_DISABLED}])
+LOC_MSG()
 LOC_MSG([  SWIG Bindings:             ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  PROJ >= 6:                 yes])

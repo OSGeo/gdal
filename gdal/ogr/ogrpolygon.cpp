@@ -306,10 +306,10 @@ int OGRPolygon::checkRing( OGRCurve * poNewRing ) const
 /*      representation including the byte order, and type information.  */
 /************************************************************************/
 
-int OGRPolygon::WkbSize() const
+size_t OGRPolygon::WkbSize() const
 
 {
-    int nSize = 9;
+    size_t nSize = 9;
 
     for( auto&& poRing: *this )
     {
@@ -327,14 +327,14 @@ int OGRPolygon::WkbSize() const
 /************************************************************************/
 
 OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
-                                  int nSize,
+                                  size_t nSize,
                                   OGRwkbVariant eWkbVariant,
-                                  int& nBytesConsumedOut )
+                                  size_t& nBytesConsumedOut )
 
 {
-    nBytesConsumedOut = -1;
+    nBytesConsumedOut = 0;
     OGRwkbByteOrder eByteOrder = wkbNDR;
-    int nDataOffset = 0;
+    size_t nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 4, eWkbVariant);
@@ -348,7 +348,7 @@ OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
     {
         OGRLinearRing* poLR = new OGRLinearRing();
         oCC.papoCurves[iRing] = poLR;
-        int nBytesConsumedRing = -1;
+        size_t nBytesConsumedRing = 0;
         eErr = poLR->_importFromWkb( eByteOrder, flags,
                                      pabyData + nDataOffset,
                                      nSize,
@@ -361,7 +361,7 @@ OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
         }
 
         CPLAssert( nBytesConsumedRing > 0 );
-        if( nSize != -1 )
+        if( nSize != static_cast<size_t>(-1) )
         {
             CPLAssert( nSize >= nBytesConsumedRing );
             nSize -= nBytesConsumedRing;
@@ -433,7 +433,7 @@ OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* ==================================================================== */
 /*      Serialize each of the rings.                                    */
 /* ==================================================================== */
-    int nOffset = 9;
+    size_t nOffset = 9;
 
     for( auto&& poRing: *this )
     {

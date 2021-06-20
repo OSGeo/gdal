@@ -18,6 +18,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Get Architecture
+        id: get-arch
+        run: |
+          export ARCH=$(cc -march=native -### -E - < /dev/null 2>&1 | sed -ne 's/.*cc1 .*-march=\([^ "]*\)[ "].*/\1/p')
+          echo "Architecture: $ARCH"
+          echo "::set-output name=arch::$ARCH"
+
       - name: Cache
         uses: actions/cache@v2
         id: cache
@@ -25,8 +32,8 @@ jobs:
           path: |
                 /tmp/docker
                 ${{ github.workspace }}/ccache.tar.gz
-          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
-          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
+          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
 
       - name: Build or restore dependencies
         run: |
@@ -58,10 +65,13 @@ jobs:
         run: docker run --rm gdal sh -c "cd /build/gdal/swig/java && make test"
 
       - name: Run SWIG CSharp tests
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make && make test"
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make test"
 
-      - name: Build Python sdist package
+      - name: Build GDAL Python sdist distribution
         run: docker run --rm gdal sh -c "cd /build/gdal/swig/python && python3 setup.py sdist"
+
+      - name: Build gdal-utils Python bdist_wheel distribution
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/python/gdal-utils && python3 -m pip install wheel && python3 setup.py bdist_wheel"
 
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available

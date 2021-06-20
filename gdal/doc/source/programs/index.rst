@@ -25,6 +25,7 @@ Raster programs
    gdalattachpct
    gdal_merge
    gdal2tiles
+   gdal2xyz
    gdal_rasterize
    gdaltransform
    nearblack
@@ -53,7 +54,7 @@ Raster programs
     - :ref:`gdal_translate`: Converts raster data between different formats.
     - :ref:`gdaladdo`: Builds or rebuilds overview images.
     - :ref:`gdalwarp`: Image reprojection and warping utility.
-    - :ref:`gdaltindex`: Builds a shapefile as a raster tileindex.
+    - :ref:`gdaltindex`: Builds an OGR-supported dataset as a raster tileindex.
     - :ref:`gdalbuildvrt`: Builds a VRT from a list of datasets.
     - :ref:`gdal_contour`: Builds vector contour lines from a raster elevation model.
     - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
@@ -62,6 +63,7 @@ Raster programs
     - :ref:`gdalattachpct`: Attach a color table to a raster file from an input file.
     - :ref:`gdal_merge`: Mosaics a set of images.
     - :ref:`gdal2tiles`: Generates directory with TMS tiles, KMLs and simple web viewers.
+    - :ref:`gdal2xyz`: Translates a raster file into xyz format.
     - :ref:`gdal_rasterize`: Burns vector geometries into a raster.
     - :ref:`gdaltransform`: Transforms coordinates.
     - :ref:`nearblack`: Convert nearly black/white borders to black.

@@ -29,6 +29,7 @@
 #include "metaname.h"
 #include "clock.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 
 /* default missing data value (see: bitmap GRIB1: sect3 and sect4) */
 /* UNDEFINED is default, UNDEFINED_PRIM is desired choice. */
@@ -239,6 +240,8 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
                return &parm_table_ecmwf_170[0];
             case 180:
                return &parm_table_ecmwf_180[0];
+            case 228:
+               return &parm_table_ecmwf_228[0];
          }
          break;
       case DWD:
@@ -282,16 +285,16 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
          break;
    }
    if (pdsMeta->mstrVersion > 3) {
-      CPLDebug( "GRIB", "Don't understand the parameter table, since center %d-%d used\n"
+      CPLError( CE_Warning, CPLE_AppDefined, "GRIB: Don't understand the parameter table, since center %d-%d used\n"
               "parameter table version %d instead of 3 (international exchange).\n"
-              "Using default for now, but please email arthur.taylor@noaa.gov\n"
+              "Using default for now (which might lead to erroneous interpretation), but please email arthur.taylor@noaa.gov\n"
               "about adding this table to his 'degrib1.c' and 'grib1tab.c' files.",
               center, subcenter, pdsMeta->mstrVersion);
    }
    if (pdsMeta->cat > 127) {
-      CPLDebug( "GRIB", "Parameter %d is > 127, so it falls in the local use section of\n"
+      CPLError(CE_Warning, CPLE_AppDefined, "GRIB: Parameter %d is > 127, so it falls in the local use section of\n"
               "the parameter table (and is undefined on the international table.\n"
-              "Using default for now, but please email arthur.taylor@noaa.gov\n"
+              "Using default for now(which might lead to erroneous interpretation), but please email arthur.taylor@noaa.gov\n"
               "about adding this table to his 'degrib1.c' and 'grib1tab.c' files.",
               pdsMeta->cat);
    }
@@ -345,6 +348,13 @@ static void GRIB1_Table2LookUp (pdsG1Type *pdsMeta, const char **name,
       }
    }
    *name = table[pdsMeta->cat].name;
+   if( strcmp(*name, CPLSPrintf("var%d", pdsMeta->cat)) == 0 )
+   {
+       if( center == ECMWF )
+           *name = CPLSPrintf("var%d of table %d of center ECMWF", pdsMeta->cat, pdsMeta->mstrVersion);
+       else
+           *name = CPLSPrintf("var%d of table %d of center %d", pdsMeta->cat, pdsMeta->mstrVersion, center);
+   }
    *comment = table[pdsMeta->cat].comment;
    *unit = table[pdsMeta->cat].unit;
    *convert = table[pdsMeta->cat].convert;

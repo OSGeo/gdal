@@ -536,7 +536,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
         }
     }
 
-    Zone oZ =  { oEnvelope, poGeom->toPolygon()->clone(), dfZ };
+    Zone oZ =  { oEnvelope, poGeom->clone(), dfZ };
     oZones.push_back( oZ );
     return err;
 }

@@ -19,6 +19,8 @@ GDAL - Geospatial Data Abstraction Library
 
 It is sometimes pronounced "goo-doll" (a bit like goo-gle), while others pronounce it "gee-doll," and others pronounce it "gee-dall."
 
+`Listen <https://soundcloud.com/danabauer/how-do-you-pronounce-gdal#t=00:02:58>`__ how Frank Warmerdam prounounces it and the history behind the acronym.
+
 What is this OGR stuff?
 +++++++++++++++++++++++++
 

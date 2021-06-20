@@ -142,21 +142,12 @@ ThunderDecode(TIFF* tif, uint8_t* op, tmsize_t maxpixels)
 	tif->tif_rawcp = (uint8_t*) bp;
 	tif->tif_rawcc = cc;
 	if (npixels != maxpixels) {
-#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 		TIFFErrorExt(tif->tif_clientdata, module,
-			     "%s data at scanline %lu (%I64u != %I64u)",
+			     "%s data at scanline %lu (%"PRIu64" != %"PRIu64")",
 			     npixels < maxpixels ? "Not enough" : "Too much",
 			     (unsigned long) tif->tif_row,
-			     (unsigned __int64) npixels,
-			     (unsigned __int64) maxpixels);
-#else
-		TIFFErrorExt(tif->tif_clientdata, module,
-			     "%s data at scanline %lu (%llu != %llu)",
-			     npixels < maxpixels ? "Not enough" : "Too much",
-			     (unsigned long) tif->tif_row,
-			     (unsigned long long) npixels,
-			     (unsigned long long) maxpixels);
-#endif
+			     (uint64_t) npixels,
+			     (uint64_t) maxpixels);
 		return (0);
 	}
 

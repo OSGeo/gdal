@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <mutex>
 #include <new>
 #include <vector>
 
@@ -200,33 +201,39 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyUShort( GDALWarpKernel * );
 /*                           GWKJobStruct                               */
 /************************************************************************/
 
-typedef struct _GWKJobStruct GWKJobStruct;
-
-struct _GWKJobStruct
+struct GWKJobStruct
 {
+    std::mutex& mutex;
+    std::condition_variable& cv;
+    int& counter;
+    bool& stopFlag;
     GDALWarpKernel *poWK;
-    int             iYMin;
-    int             iYMax;
-    volatile int   *pnCounter;
-    volatile int   *pbStop;
-    CPLCond        *hCond;
-    CPLMutex       *hCondMutex;
-    int           (*pfnProgress)(GWKJobStruct* psJob);
-    void           *pTransformerArg;
+    int iYMin;
+    int iYMax;
+    int (*pfnProgress)(GWKJobStruct* psJob);
+    void *pTransformerArg;
+    void (*pfnFunc)(void*); // used by GWKRun() to assign the proper pTransformerArg
 
-    void           (*pfnFunc)(void*); // used by GWKRun() to assign the proper pTransformerArg
+    GWKJobStruct(std::mutex& mutex_, std::condition_variable& cv_,
+            int& counter_, bool& stopFlag_) :
+        mutex(mutex_), cv(cv_), counter(counter_), stopFlag(stopFlag_),
+        poWK(nullptr), iYMin(0), iYMax(0), pfnProgress(nullptr), pTransformerArg(nullptr),
+        pfnFunc(nullptr)
+    {}
 } ;
 
 struct GWKThreadData
 {
-    std::unique_ptr<CPLJobQueue> poJobQueue{};
-    GWKJobStruct* pasThreadJob = nullptr;
-    int nThreads = 0;
-    CPLCond* hCond = nullptr;
-    CPLMutex* hCondMutex = nullptr;
-    bool bTransformerArgInputAssignedToThread = false;
-    void* pTransformerArgInput = nullptr; // owned by calling layer. Not to be destroyed
-    std::map<GIntBig, void*> mapThreadToTransformerArg{};
+    std::unique_ptr<CPLJobQueue> poJobQueue {};
+    std::unique_ptr<std::vector<GWKJobStruct>> threadJobs {};
+    int nThreads {0};
+    int counter {0};
+    bool stopFlag {false};
+    std::mutex mutex {};
+    std::condition_variable cv {};
+    bool bTransformerArgInputAssignedToThread {false};
+    void * pTransformerArgInput {nullptr}; // owned by calling layer. Not to be destroyed
+    std::map<GIntBig, void*> mapThreadToTransformerArg {};
 };
 
 /************************************************************************/
@@ -236,13 +243,15 @@ struct GWKThreadData
 // Return TRUE if the computation must be interrupted.
 static int GWKProgressThread( GWKJobStruct* psJob )
 {
-    CPLAcquireMutex(psJob->hCondMutex, 1.0);
-    (*(psJob->pnCounter))++;
-    CPLCondSignal(psJob->hCond);
-    int bStop = *(psJob->pbStop);
-    CPLReleaseMutex(psJob->hCondMutex);
+    bool stop = false;
+    {
+        std::lock_guard<std::mutex> lock(psJob->mutex);
+        psJob->counter++;
+        stop = psJob->stopFlag;
+    }
+    psJob->cv.notify_one();
 
-    return bStop;
+    return stop;
 }
 
 /************************************************************************/
@@ -253,13 +262,12 @@ static int GWKProgressThread( GWKJobStruct* psJob )
 static int GWKProgressMonoThread( GWKJobStruct* psJob )
 {
     GDALWarpKernel *poWK = psJob->poWK;
-    int nCounter = ++(*(psJob->pnCounter));
     if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                            (nCounter / static_cast<double>(psJob->iYMax)),
-                            "", poWK->pProgress ) )
+        (++psJob->counter / static_cast<double>(psJob->iYMax)),
+        "", poWK->pProgress ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        *(psJob->pbStop) = TRUE;
+        psJob->stopFlag = true;
         return TRUE;
     }
     return FALSE;
@@ -270,25 +278,20 @@ static int GWKProgressMonoThread( GWKJobStruct* psJob )
 /************************************************************************/
 
 static CPLErr GWKGenericMonoThread( GDALWarpKernel *poWK,
-                                    void (*pfnFunc) (void *pUserData) )
+    void (*pfnFunc) (void *pUserData) )
 {
-    volatile int bStop = FALSE;
-    volatile int nCounter = 0;
+    GWKThreadData td;
 
-    GWKJobStruct sThreadJob;
-    sThreadJob.poWK = poWK;
-    sThreadJob.pnCounter = &nCounter;
-    sThreadJob.iYMin = 0;
-    sThreadJob.iYMax = poWK->nDstYSize;
-    sThreadJob.pbStop = &bStop;
-    sThreadJob.hCond = nullptr;
-    sThreadJob.hCondMutex = nullptr;
-    sThreadJob.pfnProgress = GWKProgressMonoThread;
-    sThreadJob.pTransformerArg = poWK->pTransformerArg;
+    // NOTE: the mutex is not used.
+    GWKJobStruct job(td.mutex, td.cv, td.counter, td.stopFlag);
+    job.poWK = poWK;
+    job.iYMin = 0;
+    job.iYMax = poWK->nDstYSize;
+    job.pfnProgress = GWKProgressMonoThread;
+    job.pTransformerArg = poWK->pTransformerArg;
+    pfnFunc(&job);
 
-    pfnFunc(&sThreadJob);
-
-    return !bStop ? CE_None : CE_Failure;
+    return td.stopFlag ? CE_Failure : CE_None;
 }
 
 /************************************************************************/
@@ -315,41 +318,18 @@ void* GWKThreadsCreate( char** papszWarpOptions,
         nThreads = 128;
 
     GWKThreadData* psThreadData = new GWKThreadData();
-    CPLCond* hCond = nullptr;
-    if( nThreads )
-        hCond = CPLCreateCond();
-    auto poThreadPool = nThreads > 0 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
-    if( nThreads && hCond && poThreadPool )
+    auto poThreadPool =
+        nThreads > 0 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+    if( nThreads && poThreadPool )
     {
         psThreadData->nThreads = nThreads;
-        psThreadData->hCond = hCond;
-        psThreadData->pasThreadJob = static_cast<GWKJobStruct *>(
-            VSI_CALLOC_VERBOSE(sizeof(GWKJobStruct), nThreads));
-        if( psThreadData->pasThreadJob == nullptr )
-        {
-            GWKThreadsEnd(psThreadData);
-            return nullptr;
-        }
-
-        psThreadData->hCondMutex = CPLCreateMutex();
-        if( psThreadData->hCondMutex == nullptr )
-        {
-            GWKThreadsEnd(psThreadData);
-            return nullptr;
-        }
-        CPLReleaseMutex(psThreadData->hCondMutex);
-
-        for( int i = 0; i < nThreads; i++ )
-        {
-            psThreadData->pasThreadJob[i].hCond = psThreadData->hCond;
-            psThreadData->pasThreadJob[i].hCondMutex = psThreadData->hCondMutex;
-        }
+        psThreadData->threadJobs.reset(new std::vector<GWKJobStruct>(nThreads,
+            GWKJobStruct(psThreadData->mutex, psThreadData->cv,
+                psThreadData->counter, psThreadData->stopFlag)));
 
         psThreadData->poJobQueue = poThreadPool->CreateJobQueue();
         psThreadData->pTransformerArgInput = pTransformerArg;
     }
-    else if( hCond )
-        CPLDestroyCond(hCond);
 
     return psThreadData;
 }
@@ -373,11 +353,6 @@ void GWKThreadsEnd( void* psThreadDataIn )
         }
         psThreadData->poJobQueue.reset();
     }
-    CPLFree(psThreadData->pasThreadJob);
-    if( psThreadData->hCond )
-        CPLDestroyCond(psThreadData->hCond);
-    if( psThreadData->hCondMutex )
-        CPLDestroyMutex(psThreadData->hCondMutex);
     delete psThreadData;
 }
 
@@ -394,20 +369,23 @@ static void ThreadFuncAdapter(void* pData)
     // Look if we have already a per-thread transformer
     void* pTransformerArg = nullptr;
     const GIntBig nThreadId = CPLGetPID();
-    CPLAcquireMutex(psThreadData->hCondMutex, 1.0);
-    auto oIter = psThreadData->mapThreadToTransformerArg.find(nThreadId);
-    if (oIter != psThreadData->mapThreadToTransformerArg.end())
+
+
     {
-        pTransformerArg = oIter->second;
+        std::lock_guard<std::mutex> lock(psThreadData->mutex);
+        auto oIter = psThreadData->mapThreadToTransformerArg.find(nThreadId);
+        if (oIter != psThreadData->mapThreadToTransformerArg.end())
+        {
+            pTransformerArg = oIter->second;
+        }
+        else if( !psThreadData->bTransformerArgInputAssignedToThread )
+        {
+            // Borrow the original transformer, as it has not already been done
+            psThreadData->bTransformerArgInputAssignedToThread = true;
+            pTransformerArg = psThreadData->pTransformerArgInput;
+            psThreadData->mapThreadToTransformerArg[nThreadId] = pTransformerArg;
+        }
     }
-    else if( !psThreadData->bTransformerArgInputAssignedToThread )
-    {
-        // Borrow the original transformer, as it has not already been done
-        psThreadData->bTransformerArgInputAssignedToThread = true;
-        pTransformerArg = psThreadData->pTransformerArgInput;
-        psThreadData->mapThreadToTransformerArg[nThreadId] = pTransformerArg;
-    }
-    CPLReleaseMutex(psThreadData->hCondMutex);
 
     // If no transformer assigned to current thread, instantiate one
     if( pTransformerArg == nullptr )
@@ -416,16 +394,15 @@ static void ThreadFuncAdapter(void* pData)
         // which should normally be the case.
         pTransformerArg =
             GDALCloneTransformer(psThreadData->pTransformerArgInput);
+
+        // Lock for the stop flag and the transformer map.
+        std::lock_guard<std::mutex> lock(psThreadData->mutex);
         if( !pTransformerArg )
         {
-            *(psJob->pbStop) = TRUE;
+            psJob->stopFlag = true;
             return;
         }
-
-        // register in map
-        CPLAcquireMutex(psThreadData->hCondMutex, 1.0);
         psThreadData->mapThreadToTransformerArg[nThreadId] = pTransformerArg;
-        CPLReleaseMutex(psThreadData->hCondMutex);
     }
 
     psJob->pTransformerArg = pTransformerArg;
@@ -482,64 +459,57 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 
     CPLDebug("WARP", "Using %d threads", nThreads);
 
-    volatile int bStop = FALSE;
-    volatile int nCounter = 0;
-
-    CPLAcquireMutex(psThreadData->hCondMutex, 1000);
-
-/* -------------------------------------------------------------------- */
-/*      Submit jobs                                                     */
-/* -------------------------------------------------------------------- */
-    for( int i = 0; i < nThreads; i++ )
+    auto& jobs = *psThreadData->threadJobs;
+    // Fill-in job structures.
+    GIntBig i = 0;
+    for (auto& job : jobs)
     {
-        psThreadData->pasThreadJob[i].poWK = poWK;
-        psThreadData->pasThreadJob[i].pnCounter = &nCounter;
-        psThreadData->pasThreadJob[i].iYMin =
-            static_cast<int>((static_cast<GIntBig>(i)) * nDstYSize / nThreads);
-        psThreadData->pasThreadJob[i].iYMax =
-            static_cast<int>((static_cast<GIntBig>(i + 1)) *
-                             nDstYSize / nThreads);
-        psThreadData->pasThreadJob[i].pbStop = &bStop;
+        job.poWK = poWK;
+        job.iYMin = static_cast<int>(i * nDstYSize / nThreads);
+        job.iYMax = static_cast<int>((i + 1) * nDstYSize / nThreads);
         if( poWK->pfnProgress != GDALDummyProgress )
-            psThreadData->pasThreadJob[i].pfnProgress = GWKProgressThread;
-        else
-            psThreadData->pasThreadJob[i].pfnProgress = nullptr;
-        psThreadData->pasThreadJob[i].pfnFunc = pfnFunc;
-        psThreadData->poJobQueue->SubmitJob( ThreadFuncAdapter,
-                            static_cast<void*>(&psThreadData->pasThreadJob[i]) );
+            job.pfnProgress = GWKProgressThread;
+        job.pfnFunc = pfnFunc;
+        i++;
     }
+
+    {
+        std::unique_lock<std::mutex> lock(psThreadData->mutex);
+
+        // Start jobs.
+        for (auto& job : jobs)
+            psThreadData->poJobQueue->SubmitJob( ThreadFuncAdapter,
+                static_cast<void*>(&job) );
 
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
-    if( poWK->pfnProgress != GDALDummyProgress )
-    {
-        while( nCounter < nDstYSize )
+        if( poWK->pfnProgress != GDALDummyProgress )
         {
-            CPLCondWait(psThreadData->hCond, psThreadData->hCondMutex);
-
-            if( !poWK->pfnProgress(
-                    poWK->dfProgressBase + poWK->dfProgressScale *
-                    (nCounter / static_cast<double>(nDstYSize)),
-                    "", poWK->pProgress ) )
+            int& counter = psThreadData->counter;
+            while (counter < nDstYSize)
             {
-                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                bStop = TRUE;
-                break;
+                psThreadData->cv.wait(lock);
+                if( !poWK->pfnProgress(
+                    poWK->dfProgressBase + poWK->dfProgressScale *
+                        (counter / static_cast<double>(nDstYSize)),
+                    "", poWK->pProgress ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt,
+                        "User terminated" );
+                    psThreadData->stopFlag = true;
+                    break;
+                }
             }
         }
     }
-
-    /* Release mutex before joining threads, otherwise they will dead-lock */
-    /* forever in GWKProgressThread() */
-    CPLReleaseMutex(psThreadData->hCondMutex);
 
 /* -------------------------------------------------------------------- */
 /*      Wait for all jobs to complete.                                  */
 /* -------------------------------------------------------------------- */
     psThreadData->poJobQueue->WaitCompletion();
 
-    return !bStop ? CE_None : CE_Failure;
+    return psThreadData->stopFlag ? CE_Failure : CE_None;
 }
 
 /************************************************************************/
@@ -1403,7 +1373,7 @@ CPLErr GDALWarpKernel::Validate()
 /*      original density.                                               */
 /************************************************************************/
 
-static void GWKOverlayDensity( GDALWarpKernel *poWK, GPtrDiff_t iDstOffset,
+static void GWKOverlayDensity( const GDALWarpKernel *poWK, GPtrDiff_t iDstOffset,
                                double dfDensity )
 {
     if( dfDensity < 0.0001 || poWK->pafDstDensity == nullptr )
@@ -1481,7 +1451,7 @@ template<> double GWKClampValueT<double>(double dfValue)
 /************************************************************************/
 
 template<class T>
-static bool GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand,
+static bool GWKSetPixelValueRealT( const GDALWarpKernel *poWK, int iBand,
                                    GPtrDiff_t iDstOffset, double dfDensity,
                                    T value)
 {
@@ -1552,7 +1522,7 @@ static bool GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand,
 /*                          GWKSetPixelValue()                          */
 /************************************************************************/
 
-static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
+static bool GWKSetPixelValue( const GDALWarpKernel *poWK, int iBand,
                               GPtrDiff_t iDstOffset, double dfDensity,
                               double dfReal, double dfImag )
 
@@ -1777,7 +1747,7 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 /*                       GWKSetPixelValueReal()                         */
 /************************************************************************/
 
-static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
+static bool GWKSetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
                                   GPtrDiff_t iDstOffset, double dfDensity,
                                   double dfReal )
 
@@ -1904,7 +1874,7 @@ static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 
 /* It is assumed that panUnifiedSrcValid has been checked before */
 
-static bool GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
+static bool GWKGetPixelValue( const GDALWarpKernel *poWK, int iBand,
                               GPtrDiff_t iSrcOffset, double *pdfDensity,
                               double *pdfReal, double *pdfImag )
 
@@ -1995,7 +1965,7 @@ static bool GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
 /*                       GWKGetPixelValueReal()                         */
 /************************************************************************/
 
-static bool GWKGetPixelValueReal( GDALWarpKernel *poWK, int iBand,
+static bool GWKGetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
                                   GPtrDiff_t iSrcOffset, double *pdfDensity,
                                   double *pdfReal )
 
@@ -2061,7 +2031,7 @@ static bool GWKGetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 /* It is assumed that adfImag[] is set to 0 by caller code for non-complex */
 /* data-types. */
 
-static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
+static bool GWKGetPixelRow( const GDALWarpKernel *poWK, int iBand,
                             GPtrDiff_t iSrcOffset, int nHalfSrcLen,
                             double* padfDensity,
                             double adfReal[],
@@ -2330,7 +2300,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<class T>
-static bool GWKGetPixelT( GDALWarpKernel *poWK, int iBand,
+static bool GWKGetPixelT( const GDALWarpKernel *poWK, int iBand,
                           GPtrDiff_t iSrcOffset, double *pdfDensity,
                           T *pValue )
 
@@ -2364,7 +2334,7 @@ static bool GWKGetPixelT( GDALWarpKernel *poWK, int iBand,
 /*     Set of bilinear interpolators                                    */
 /************************************************************************/
 
-static bool GWKBilinearResample4Sample( GDALWarpKernel *poWK, int iBand,
+static bool GWKBilinearResample4Sample( const GDALWarpKernel *poWK, int iBand,
                                 double dfSrcX, double dfSrcY,
                                 double *pdfDensity,
                                 double *pdfReal, double *pdfImag )
@@ -2517,7 +2487,7 @@ static bool GWKBilinearResample4Sample( GDALWarpKernel *poWK, int iBand,
 }
 
 template<class T>
-static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
+static bool GWKBilinearResampleNoMasks4SampleT( const GDALWarpKernel *poWK, int iBand,
                                         double dfSrcX, double dfSrcY,
                                         T *pValue )
 
@@ -2525,23 +2495,22 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
 
     const int iSrcX = static_cast<int>(floor(dfSrcX - 0.5));
     const int iSrcY = static_cast<int>(floor(dfSrcY - 0.5));
-    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
     const double dfRatioX = 1.5 - (dfSrcX - iSrcX);
     const double dfRatioY = 1.5 - (dfSrcY - iSrcY);
 
-    T* pSrc = reinterpret_cast<T *>(poWK->papabySrcImage[iBand]);
+    const T* const pSrc = reinterpret_cast<T *>(poWK->papabySrcImage[iBand]);
 
 
     if( iSrcX >= 0 && iSrcX+1 < poWK->nSrcXSize
         && iSrcY >= 0 && iSrcY+1 < poWK->nSrcYSize )
     {
-        // TODO(schwehr): Should be able to remove these casts.
         const double dfAccumulator =
-            (static_cast<double>(pSrc[iSrcOffset]) * dfRatioX +
-             static_cast<double>(pSrc[iSrcOffset+1]) * (1.0 - dfRatioX)) *
+            (pSrc[iSrcOffset] * dfRatioX +
+             pSrc[iSrcOffset+1] * (1.0 - dfRatioX)) *
             dfRatioY +
-            (static_cast<double>(pSrc[iSrcOffset+poWK->nSrcXSize]) * dfRatioX +
-             static_cast<double>(pSrc[iSrcOffset+1+poWK->nSrcXSize]) *
+            (pSrc[iSrcOffset+poWK->nSrcXSize] * dfRatioX +
+             pSrc[iSrcOffset+1+poWK->nSrcXSize] *
              (1.0 - dfRatioX)) * (1.0-dfRatioY);
 
         *pValue = GWKRoundValueT<T>(dfAccumulator);
@@ -2686,7 +2655,7 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
           (adfCoeffs)[2] * (v)[2] + (adfCoeffs)[3] * (v)[3]))
 #endif
 
-static bool GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
+static bool GWKCubicResample4Sample( const GDALWarpKernel *poWK, int iBand,
                                      double dfSrcX, double dfSrcY,
                                      double *pdfDensity,
                                      double *pdfReal, double *pdfImag )
@@ -2694,13 +2663,12 @@ static bool GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
 {
     const int iSrcX = static_cast<int>(dfSrcX - 0.5);
     const int iSrcY = static_cast<int>(dfSrcY - 0.5);
-    const int  iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
     const double dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double dfDeltaY = dfSrcY - 0.5 - iSrcY;
     double adfDensity[4] = {};
     double adfReal[4] = {};
     double adfImag[4] = {};
-    int i;
 
     // Get the bilinear interpolation at the image borders.
     if( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
@@ -2715,7 +2683,7 @@ static bool GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
     double adfCoeffsX[4] = {};
     GWKCubicComputeWeights(dfDeltaX, adfCoeffsX);
 
-    for( i = -1; i < 3; i++ )
+    for( GPtrDiff_t i = -1; i < 3; i++ )
     {
         if( !GWKGetPixelRow(poWK, iBand, iSrcOffset + i * poWK->nSrcXSize - 1,
                             2, adfDensity, adfReal, adfImag)
@@ -2838,14 +2806,14 @@ static CPL_INLINE float XMMHorizontalAdd(__m128 v)
 
 template<class T>
 static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
-    GDALWarpKernel *poWK, int iBand,
+    const GDALWarpKernel *poWK, int iBand,
     double dfSrcX, double dfSrcY,
     double *pdfDensity,
     double *pdfReal )
 {
     const int iSrcX = static_cast<int>(dfSrcX - 0.5);
     const int iSrcY = static_cast<int>(dfSrcY - 0.5);
-    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    const GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
 
     // Get the bilinear interpolation at the image borders.
     if( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
@@ -2880,7 +2848,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
     const __m128 xmmThreshold = _mm_load1_ps(&SRC_DENSITY_THRESHOLD);
 
     __m128 xmmMaskLowDensity = _mm_setzero_ps();
-    for( int i = -1, iOffset = iSrcOffset - poWK->nSrcXSize - 1;
+    for( GPtrDiff_t i = -1, iOffset = iSrcOffset - poWK->nSrcXSize - 1;
          i < 3; i++, iOffset += poWK->nSrcXSize )
     {
         const __m128 xmmDensity = _mm_loadu_ps(
@@ -2940,9 +2908,9 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
     double adfCoeffsY[4] = {};
     GWKCubicComputeWeights(dfDeltaY, adfCoeffsY);
 
-    for( int i = -1; i < 3; i++ )
+    for( GPtrDiff_t i = -1; i < 3; i++ )
     {
-        const int iOffset = iSrcOffset+i*poWK->nSrcXSize - 1;
+        const GPtrDiff_t iOffset = iSrcOffset+i*poWK->nSrcXSize - 1;
 #if !(defined(USE_SSE_CUBIC_IMPL) && (defined(__x86_64) || defined(_M_X64)))
         if( poWK->pafUnifiedSrcDensity[iOffset + 0] < SRC_DENSITY_THRESHOLD ||
             poWK->pafUnifiedSrcDensity[iOffset + 1] < SRC_DENSITY_THRESHOLD ||
@@ -2976,7 +2944,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
 /************************************************************************/
 
 static bool GWKCubicResampleSrcMaskIsDensity4SampleReal(
-                             GDALWarpKernel *poWK, int iBand,
+                             const GDALWarpKernel *poWK, int iBand,
                              double dfSrcX, double dfSrcY,
                              double *pdfDensity,
                              double *pdfReal )
@@ -2984,7 +2952,7 @@ static bool GWKCubicResampleSrcMaskIsDensity4SampleReal(
 {
     const int iSrcX = static_cast<int>(dfSrcX - 0.5);
     const int iSrcY = static_cast<int>(dfSrcY - 0.5);
-    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    const GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
     const double dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double dfDeltaY = dfSrcY - 0.5 - iSrcY;
 
@@ -3009,7 +2977,7 @@ static bool GWKCubicResampleSrcMaskIsDensity4SampleReal(
     double adfReal[4] = {};
     double adfImagIgnored[4] = {};
 
-    for( int i = -1; i < 3; i++ )
+    for( GPtrDiff_t i = -1; i < 3; i++ )
     {
         if( !GWKGetPixelRow(poWK, iBand, iSrcOffset + i * poWK->nSrcXSize - 1,
                             2, adfDensity, adfReal, adfImagIgnored)
@@ -3033,14 +3001,14 @@ static bool GWKCubicResampleSrcMaskIsDensity4SampleReal(
 }
 
 template<class T>
-static bool GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
+static bool GWKCubicResampleNoMasks4SampleT( const GDALWarpKernel *poWK, int iBand,
                                      double dfSrcX, double dfSrcY,
                                      T *pValue )
 
 {
     const int iSrcX = static_cast<int>(dfSrcX - 0.5);
     const int iSrcY = static_cast<int>(dfSrcY - 0.5);
-    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    const GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
     const double dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double dfDeltaY = dfSrcY - 0.5 - iSrcY;
     const double dfDeltaY2 = dfDeltaY * dfDeltaY;
@@ -3057,9 +3025,9 @@ static bool GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
 
     double adfValue[4] = {};
 
-    for( int i = -1; i < 3; i++ )
+    for( GPtrDiff_t i = -1; i < 3; i++ )
     {
-        const int iOffset = iSrcOffset + i * poWK->nSrcXSize - 1;
+        const GPtrDiff_t iOffset = iSrcOffset + i * poWK->nSrcXSize - 1;
 
         adfValue[i + 1] = CONVOL4(
             adfCoeffs,
@@ -3284,7 +3252,7 @@ static double GWKBSpline4Values( double* padfValues )
 
 typedef struct _GWKResampleWrkStruct GWKResampleWrkStruct;
 
-typedef bool (*pfnGWKResampleType) ( GDALWarpKernel *poWK, int iBand,
+typedef bool (*pfnGWKResampleType) ( const GDALWarpKernel *poWK, int iBand,
                                      double dfSrcX, double dfSrcY,
                                      double *pdfDensity,
                                      double *pdfReal, double *pdfImag,
@@ -3314,13 +3282,13 @@ struct _GWKResampleWrkStruct
 /*                    GWKResampleCreateWrkStruct()                      */
 /************************************************************************/
 
-static bool GWKResample( GDALWarpKernel *poWK, int iBand,
+static bool GWKResample( const GDALWarpKernel *poWK, int iBand,
                         double dfSrcX, double dfSrcY,
                         double *pdfDensity,
                         double *pdfReal, double *pdfImag,
                         GWKResampleWrkStruct* psWrkStruct );
 
-static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
+static bool GWKResampleOptimizedLanczos( const GDALWarpKernel *poWK, int iBand,
                                         double dfSrcX, double dfSrcY,
                                         double *pdfDensity,
                                         double *pdfReal, double *pdfImag,
@@ -3427,7 +3395,7 @@ static void GWKResampleDeleteWrkStruct(GWKResampleWrkStruct* psWrkStruct)
 /*                           GWKResample()                              */
 /************************************************************************/
 
-static bool GWKResample( GDALWarpKernel *poWK, int iBand,
+static bool GWKResample( const GDALWarpKernel *poWK, int iBand,
                         double dfSrcX, double dfSrcY,
                         double *pdfDensity,
                         double *pdfReal, double *pdfImag,
@@ -3587,7 +3555,7 @@ static bool GWKResample( GDALWarpKernel *poWK, int iBand,
 /*                      GWKResampleOptimizedLanczos()                   */
 /************************************************************************/
 
-static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
+static bool GWKResampleOptimizedLanczos( const GDALWarpKernel *poWK, int iBand,
                         double dfSrcX, double dfSrcY,
                         double *pdfDensity,
                         double *pdfReal, double *pdfImag,
@@ -3604,7 +3572,7 @@ static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
     double dfAccumulatorWeight = 0.0;
     const int     iSrcX = static_cast<int>(floor( dfSrcX - 0.5 ));
     const int     iSrcY = static_cast<int>(floor( dfSrcY - 0.5 ));
-    const int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+    const GPtrDiff_t iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
     const double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
 
@@ -3896,7 +3864,7 @@ static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template <class T>
-static bool GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
+static bool GWKResampleNoMasksT( const GDALWarpKernel *poWK, int iBand,
                                 double dfSrcX, double dfSrcY,
                                 T *pValue, double *padfWeight )
 
@@ -4021,7 +3989,7 @@ static bool GWKResampleNoMasksT( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<class T>
-static bool GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
+static bool GWKResampleNoMasks_SSE2_T( const GDALWarpKernel *poWK, int iBand,
                                       double dfSrcX, double dfSrcY,
                                       T *pValue, double *padfWeight )
 {
@@ -4230,7 +4198,7 @@ static bool GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<GByte>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<GByte>( const GDALWarpKernel *poWK, int iBand,
                                  double dfSrcX, double dfSrcY,
                                  GByte *pValue, double *padfWeight )
 {
@@ -4243,7 +4211,7 @@ bool GWKResampleNoMasksT<GByte>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<GInt16>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<GInt16>( const GDALWarpKernel *poWK, int iBand,
                                   double dfSrcX, double dfSrcY,
                                   GInt16 *pValue, double *padfWeight )
 {
@@ -4256,7 +4224,7 @@ bool GWKResampleNoMasksT<GInt16>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<GUInt16>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<GUInt16>( const GDALWarpKernel *poWK, int iBand,
                                    double dfSrcX, double dfSrcY,
                                    GUInt16 *pValue, double *padfWeight )
 {
@@ -4269,7 +4237,7 @@ bool GWKResampleNoMasksT<GUInt16>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<float>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<float>( const GDALWarpKernel *poWK, int iBand,
                                  double dfSrcX, double dfSrcY,
                                  float *pValue, double *padfWeight )
 {
@@ -4284,7 +4252,7 @@ bool GWKResampleNoMasksT<float>( GDALWarpKernel *poWK, int iBand,
 /************************************************************************/
 
 template<>
-bool GWKResampleNoMasksT<double>( GDALWarpKernel *poWK, int iBand,
+bool GWKResampleNoMasksT<double>( const GDALWarpKernel *poWK, int iBand,
                                   double dfSrcX, double dfSrcY,
                                   double *pValue, double *padfWeight )
 {
@@ -4812,7 +4780,6 @@ static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(
 /************************************************************************/
 
 static void GWKGeneralCaseThread( void* pData)
-
 {
     GWKJobStruct* psJob = reinterpret_cast<GWKJobStruct *>(pData);
     GDALWarpKernel *poWK = psJob->poWK;

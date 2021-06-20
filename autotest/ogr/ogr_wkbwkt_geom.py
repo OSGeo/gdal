@@ -360,7 +360,7 @@ def test_ogr_wkbwkt_test_broken_geom():
         gdal.PopErrorHandler()
         assert geom is None, ('geom %s instantiated but not expected' % wkt)
 
-    
+
 ###############################################################################
 # Test importing WKT SF1.2
 
@@ -484,7 +484,7 @@ def test_ogr_wkbwkt_test_import_wkt_sf12():
             ('in=%s, out=%s, expected=%s.' % (wkt_tuple[0], out_wkt,
                                                  wkt_tuple[1]))
 
-    
+
 ###############################################################################
 # Test that importing the wkb that would be equivalent to MULTIPOINT(POLYGON((0 0))
 # doesn't work
@@ -525,7 +525,7 @@ def test_ogr_wkbwkt_test_geometrycollection_wktwkb():
         wkt2 = g.ExportToWkt()
         assert wkt == wkt2, ('fail for %s' % wkt)
 
-    
+
 ###############################################################################
 # Test that importing too nested WKT doesn't cause stack overflows
 
@@ -607,6 +607,17 @@ def test_ogr_wkt_multipolygon_corrupted():
     with gdaltest.error_handler():
         g = ogr.CreateGeometryFromWkt('MULTIPOLYGON(POLYGON((N')
     assert g is None
+
+###############################################################################
+# Test multiline WKT
+
+
+def test_ogr_wkt_multiline():
+    g = ogr.CreateGeometryFromWkt("""GEOMETRYCOLLECTION(
+    POINT (1 2),
+    LINESTRING (3 3, 4 4))
+    """)
+    assert g is not None
 
 ###############################################################################
 # When imported build a list of units based on the files available.

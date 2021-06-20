@@ -150,7 +150,7 @@ if test -f "doc/Makefile"; then
     rm -rf doc/build
     rm -f doc/.doxygen_up_to_date
 else
-    (cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES"; echo "QUIET=YES") | doxygen -
+    (cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/gdal-utils/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES"; echo "QUIET=YES") | doxygen -
     rm -f doxygen_sqlite3.db
     rm -f man/man1/*_dist_wrk_gdal_gdal_apps_.1
 fi

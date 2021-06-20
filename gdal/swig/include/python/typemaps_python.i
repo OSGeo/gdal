@@ -486,9 +486,30 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( *$1 ) {
-    free( *$2 );
+    VSIFree( *$2 );
   }
 }
+
+%typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen = 0, char *pBuf = 0 )
+{
+  /* %typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+%typemap(argout) (size_t *nLen, char **pBuf )
+{
+  /* %typemap(argout) (size_t *nLen, char **pBuf ) */
+  Py_XDECREF($result);
+  $result = PyByteArray_FromStringAndSize( *$2, *$1 );
+}
+%typemap(freearg) (size_t *nLen, char **pBuf )
+{
+  /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
+  if( *$1 ) {
+    VSIFree( *$2 );
+  }
+}
+
 
 
 %typemap(in,numinputs=1) (int nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
@@ -514,7 +535,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   if (PyUnicode_Check($input))
   {
     size_t safeLen = 0;
-    int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    int ret;
+    try {
+      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    }
+    catch( const std::exception& )
+    {
+      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+    }
     if (!SWIG_IsOK(ret)) {
       SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
     }
@@ -545,6 +573,60 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 
+%typemap(in,numinputs=1) (size_t nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
+{
+  /* %typemap(in,numinputs=1) (size_t nLen, char *pBuf ) */
+  {
+    if (PyObject_GetBuffer($input, &view, PyBUF_SIMPLE) == 0)
+    {
+      viewIsValid = true;
+      $1 = view.len;
+      $2 = ($2_ltype) view.buf;
+      goto ok;
+    }
+    else
+    {
+        PyErr_Clear();
+    }
+  }
+  if (PyUnicode_Check($input))
+  {
+    size_t safeLen = 0;
+    int ret;
+    try {
+      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    }
+    catch( const std::exception& )
+    {
+      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+    }
+    if (!SWIG_IsOK(ret)) {
+      SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+    }
+
+    if (safeLen) safeLen--;
+    $1 = safeLen;
+  }
+  else
+  {
+    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
+    SWIG_fail;
+  }
+  ok: ;
+}
+
+%typemap(freearg) (size_t nLen, char *pBuf )
+{
+  /* %typemap(freearg) (size_t *nLen, char *pBuf ) */
+  if( viewIsValid$argnum ) {
+    PyBuffer_Release(&view$argnum);
+  }
+  else if( alloc$argnum == SWIG_NEWOBJ ) {
+    delete[] $2;
+  }
+}
+
+
 %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
 {
   /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
@@ -564,7 +646,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   if (PyUnicode_Check($input))
   {
     size_t safeLen = 0;
-    int ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    int ret;
+    try {
+      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+    }
+    catch( const std::exception& )
+    {
+      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+    }
     if (!SWIG_IsOK(ret)) {
       SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
     }
@@ -858,25 +947,48 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         PyObject *k, *v;
         if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
           Py_DECREF(it);
-          PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
+          Py_DECREF(item_list);
+          PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
           SWIG_fail;
         }
 
+        PyObject* kStr = PyObject_Str(k);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(item_list);
+            SWIG_fail;
+        }
+
+        PyObject* vStr = PyObject_Str(v);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(kStr);
+            Py_DECREF(item_list);
+            SWIG_fail;
+        }
+
         int bFreeK, bFreeV;
-        char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
-        char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
+        char* pszK = GDALPythonObjectToCStr(kStr, &bFreeK);
+        char* pszV = GDALPythonObjectToCStr(vStr, &bFreeV);
         if( pszK == NULL || pszV == NULL )
         {
             GDALPythonFreeCStr(pszK, bFreeK);
             GDALPythonFreeCStr(pszV, bFreeV);
+            Py_DECREF(kStr);
+            Py_DECREF(vStr);
             Py_DECREF(it);
-            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
+            Py_DECREF(item_list);
+            PyErr_SetString(PyExc_TypeError,"Cannot get key/value as string");
             SWIG_fail;
         }
-         $1 = CSLAddNameValue( $1, pszK, pszV );
+        $1 = CSLAddNameValue( $1, pszK, pszV );
 
         GDALPythonFreeCStr(pszK, bFreeK);
         GDALPythonFreeCStr(pszV, bFreeV);
+        Py_DECREF(kStr);
+        Py_DECREF(vStr);
         Py_DECREF(it);
       }
       Py_DECREF(item_list);
@@ -2249,6 +2361,51 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 OBJECT_LIST_INPUT(GDALDimensionHS);
 
 
+%define OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(type)
+%typemap(in, numinputs=1) (int object_list_count, type **poObjectsItemMaybeNull)
+{
+  /*  OBJECT_LIST_INPUT %typemap(in) (int itemcount, type *optional_##type)*/
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  Py_ssize_t size = PySequence_Size($input);
+  if( size != (int)size ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
+  $2 = (type**) CPLMalloc($1*sizeof(type*));
+
+  for( int i = 0; i<$1; i++ ) {
+
+      PyObject *o = PySequence_GetItem($input,i);
+      type* rawobjectpointer = NULL;
+      if( o != Py_None )
+      {
+          CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( o, (void**)&rawobjectpointer, SWIGTYPE_p_##type, SWIG_POINTER_EXCEPTION | 0 ));
+          if (!rawobjectpointer) {
+              Py_DECREF(o);
+              PyErr_SetString(PyExc_TypeError, "object of wrong type");
+              SWIG_fail;
+          }
+      }
+      $2[i] = rawobjectpointer;
+      Py_DECREF(o);
+
+  }
+}
+
+%typemap(freearg)  (int object_list_count, type **poObjectsItemMaybeNull)
+{
+  /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, type **poObjectsItemMaybeNull)*/
+  CPLFree( $2 );
+}
+%enddef
+
+OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
+
+
 /*
  * Typemap argout for GDALMDArrayGetDimensions()
  */
@@ -2273,6 +2430,34 @@ OBJECT_LIST_INPUT(GDALDimensionHS);
 %typemap(freearg) (GDALDimensionHS*** pdims, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALDimensionHS*** pdims, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
+
+/*
+ * Typemap argout for GDALMDArrayGetIndexingVariables()
+ */
+%typemap(in,numinputs=0) (GDALMDArrayHS*** parrays, size_t* pnCount) ( GDALMDArrayHS** arrays=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (GDALMDArrayHS*** parrays, size_t* pnCount) */
+  $1 = &arrays;
+  $2 = &nCount;
+}
+%typemap(argout) (GDALMDArrayHS*** parrays, size_t* pnCount)
+{
+  /* %typemap(argout) (GDALMDArrayHS*** parrays, size_t* pnCount) */
+  PyObject *list = PyList_New( *$2 );
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem(list, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALMDArrayHS,SWIG_POINTER_OWN) );
+  }
+  Py_DECREF($result);
+  $result = list;
+}
+
+%typemap(freearg) (GDALMDArrayHS*** parrays, size_t* pnCount)
+{
+  /* %typemap(freearg) (GDALMDArrayHS*** parrays, size_t* pnCount) */
   CPLFree(*$1);
 }
 
@@ -2466,4 +2651,148 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
 {
   /* %typemap(typecheck,precedence=0) (GDALDataType *optional_GDALDataType) */
   $1 = (($input==Py_None) || my_PyCheck_int($input)) ? 1 : 0;
+}
+
+
+
+/*
+ * Typemap OGRCodedValue*<- dict.
+ */
+
+%typemap(in) OGRCodedValue* enumeration
+{
+    /* %typemap(in) OGRCodedValue* enumeration */
+    $1 = NULL;
+
+    if ($input == NULL || !PyMapping_Check($input)) {
+        SWIG_exception_fail(SWIG_ValueError,"Expected dict.");
+    }
+    Py_ssize_t size = PyMapping_Length( $input );
+    $1 = (OGRCodedValue*)CPLCalloc(size+1, sizeof(OGRCodedValue) );
+
+    PyObject *item_list = PyMapping_Items( $input );
+    if( item_list == NULL )
+    {
+      PyErr_SetString(PyExc_TypeError,"Cannot retrieve items");
+      SWIG_fail;
+    }
+
+    for( Py_ssize_t i=0; i<size; i++ ) {
+        PyObject *it = PySequence_GetItem( item_list, i );
+        if( it == NULL )
+        {
+          Py_DECREF(item_list);
+          PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
+          SWIG_fail;
+        }
+
+        PyObject *k, *v;
+        if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
+          Py_DECREF(it);
+          Py_DECREF(item_list);
+          PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
+          SWIG_fail;
+        }
+
+        PyObject* kStr = PyObject_Str(k);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(item_list);
+            SWIG_fail;
+        }
+
+        PyObject* vStr = v != Py_None ? PyObject_Str(v) : Py_None;
+        if( v == Py_None )
+            Py_INCREF(Py_None);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(kStr);
+            Py_DECREF(item_list);
+            SWIG_fail;
+        }
+
+        int bFreeK, bFreeV;
+        char* pszK = GDALPythonObjectToCStr(kStr, &bFreeK);
+        char* pszV = vStr != Py_None ? GDALPythonObjectToCStr(vStr, &bFreeV) : NULL;
+        if( pszK == NULL || (pszV == NULL && vStr != Py_None) )
+        {
+            GDALPythonFreeCStr(pszK, bFreeK);
+            if( pszV )
+                GDALPythonFreeCStr(pszV, bFreeV);
+            Py_DECREF(kStr);
+            Py_DECREF(vStr);
+            Py_DECREF(it);
+            Py_DECREF(item_list);
+            PyErr_SetString(PyExc_TypeError,"Cannot get key/value as string");
+            SWIG_fail;
+        }
+        ($1)[i].pszCode = CPLStrdup(pszK);
+        ($1)[i].pszValue = pszV ? CPLStrdup(pszV) : NULL;
+
+        GDALPythonFreeCStr(pszK, bFreeK);
+        if( pszV )
+            GDALPythonFreeCStr(pszV, bFreeV);
+        Py_DECREF(kStr);
+        Py_DECREF(vStr);
+        Py_DECREF(it);
+    }
+    Py_DECREF(item_list);
+}
+
+%typemap(freearg) OGRCodedValue*
+{
+  /* %typemap(freearg) OGRCodedValue* */
+  if( $1 )
+  {
+      for( size_t i = 0; ($1)[i].pszCode != NULL; ++i )
+      {
+          CPLFree(($1)[i].pszCode);
+          CPLFree(($1)[i].pszValue);
+      }
+  }
+  CPLFree( $1 );
+}
+
+%typemap(out) OGRCodedValue*
+{
+  /* %typemap(out) OGRCodedValue* */
+  if( $1 == NULL )
+  {
+      PyErr_SetString( PyExc_RuntimeError, CPLGetLastErrorMsg() );
+      SWIG_fail;
+  }
+  PyObject *dict = PyDict_New();
+  for( int i = 0; ($1)[i].pszCode != NULL; i++ )
+  {
+    if( ($1)[i].pszValue )
+    {
+        PyObject* val = GDALPythonObjectFromCStr(($1)[i].pszValue);
+        PyDict_SetItemString(dict, ($1)[i].pszCode, val);
+        Py_DECREF(val);
+    }
+    else
+    {
+        PyDict_SetItemString(dict, ($1)[i].pszCode, Py_None);
+    }
+  }
+  $result = dict;
+}
+
+%typemap(in) (OSRSpatialReferenceShadow** optional_OSRSpatialReferenceShadow) ( OSRSpatialReferenceShadow* val )
+{
+  /* %typemap(in) (OSRSpatialReferenceShadow** optional_OSRSpatialReferenceShadow) */
+  if ( $input == Py_None ) {
+    $1 = NULL;
+  }
+  else {
+    void* argp = NULL;
+    int res = SWIG_ConvertPtr($input, &argp, SWIGTYPE_p_OSRSpatialReferenceShadow,  0  | 0);
+    if (!SWIG_IsOK(res)) {
+      SWIG_exception_fail(SWIG_ArgError(res), "argument of type != OSRSpatialReferenceShadow");
+    }
+    val = reinterpret_cast< OSRSpatialReferenceShadow * >(argp);
+    $1 = &val;
+  }
 }

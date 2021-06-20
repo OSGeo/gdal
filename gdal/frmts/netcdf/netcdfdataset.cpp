@@ -9,6 +9,7 @@
  * Copyright (c) 2004, Frank Warmerdam
  * Copyright (c) 2007-2016, Even Rouault <even.rouault at spatialys.com>
  * Copyright (c) 2010, Kyle Shannon <kyle at pobox dot com>
+ * Copyright (c) 2021, CLS
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,6 +61,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_json.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_progress.h"
@@ -1624,6 +1626,8 @@ void netCDFRasterBand::CheckData( void *pImage, void *pImageNC,
     // Only check first and last block elements since lon must be monotonic.
     const bool bIsSigned = std::numeric_limits<T>::is_signed;
     if( bCheckLongitude && bIsSigned &&
+        !CPLIsEqual((double)((T *)pImage)[0], dfNoDataValue) &&
+        !CPLIsEqual((double)((T *)pImage)[nTmpBlockXSize - 1], dfNoDataValue) &&
         std::min(((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize - 1]) > 180.0 )
     {
         T *ptrImage = static_cast<T*>(pImage);
@@ -2356,8 +2360,11 @@ bool netCDFDataset::SetDefineMode( bool bNewDefineMode )
 
 char **netCDFDataset::GetMetadataDomainList()
 {
-    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
+    char** papszDomains = BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
                                    "SUBDATASETS", nullptr);
+    for( const auto& kv: m_oMapDomainToJSon )
+        papszDomains = CSLAddString(papszDomains, ("json:" + kv.first).c_str());
+    return papszDomains;
 }
 
 /************************************************************************/
@@ -2367,6 +2374,13 @@ char **netCDFDataset::GetMetadata( const char *pszDomain )
 {
     if( pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS") )
         return papszSubDatasets;
+
+    if( pszDomain != nullptr && STARTS_WITH(pszDomain, "json:") )
+    {
+        auto iter = m_oMapDomainToJSon.find(pszDomain + strlen("json:"));
+        if( iter != m_oMapDomainToJSon.end() )
+            return iter->second.apszMD;
+    }
 
     return GDALDataset::GetMetadata(pszDomain);
 }
@@ -3386,6 +3400,17 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             nc_inq_varndims(nGroupId, nVarDimXID, &ndims);
             if( ndims == 0 || ndims > 2 )
                 nVarDimXID = -1;
+            else
+            {
+                if( !NCDFIsVarLongitude(nGroupId, nVarDimXID, nullptr) &&
+                    !NCDFIsVarProjectionX(nGroupId, nVarDimXID, nullptr) &&
+                    // In case of inversion of X/Y
+                    !NCDFIsVarLatitude(nGroupId, nVarDimXID, nullptr) &&
+                    !NCDFIsVarProjectionY(nGroupId, nVarDimXID, nullptr) )
+                {
+                    nVarDimXID = -1;
+                }
+            }
         }
 
         if( nVarDimYID >= 0 )
@@ -3394,6 +3419,17 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             nc_inq_varndims(nGroupId, nVarDimYID, &ndims);
             if( ndims == 0 || ndims > 2 )
                 nVarDimYID = -1;
+            else
+            {
+                if( !NCDFIsVarLatitude(nGroupId, nVarDimYID, nullptr) &&
+                    !NCDFIsVarProjectionY(nGroupId, nVarDimYID, nullptr) &&
+                    // In case of inversion of X/Y
+                    !NCDFIsVarLongitude(nGroupId, nVarDimYID, nullptr) &&
+                    !NCDFIsVarProjectionX(nGroupId, nVarDimYID, nullptr) )
+                {
+                    nVarDimYID = -1;
+                }
+            }
         }
     }
 
@@ -3490,6 +3526,14 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                                     start, edge, pdfYCoord);
         NCDF_ERR(status);
 
+        nc_type nc_var_dimx_datatype = NC_NAT;
+        status = nc_inq_vartype(nGroupDimXID, nVarDimXID, &nc_var_dimx_datatype);
+        NCDF_ERR(status);
+
+        nc_type nc_var_dimy_datatype = NC_NAT;
+        status = nc_inq_vartype(nGroupDimYID, nVarDimYID, &nc_var_dimy_datatype);
+        NCDF_ERR(status);
+
         if( !poDS->bSwitchedXY )
         {
             // Convert ]180,540] longitude values to ]-180,0].
@@ -3572,7 +3616,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
             // ftp://ftp.cdc.noaa.gov/Datasets/NARR/Dailies/monolevel/vwnd.10m.2015.nc
             // requires a 0.02% tolerance, so let's settle for 0.05%
-            const double dfEps = 0.0005 * std::max(fabs(dfSpacingBegin),
+
+            // For float variables, increase to 0.2% (as seen in https://github.com/OSGeo/gdal/issues/3663)
+            const double dfEpsRel =
+                nc_var_dimx_datatype == NC_FLOAT ? 0.002 : 0.0005;
+
+            const double dfEps = dfEpsRel * std::max(fabs(dfSpacingBegin),
                         std::max(fabs(dfSpacingMiddle), fabs(dfSpacingLast)));
             if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, dfEps) &&
                 IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, dfEps) &&
@@ -3626,9 +3675,10 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                      pdfYCoord[ydim - 2], pdfYCoord[ydim - 1]);
 #endif
 
-            // For Latitude we allow an error of 0.1 degrees for gaussian
-            // gridding (only if this is not a projected SRS).
-            const double dfEps = 0.0005 * std::max(fabs(dfSpacingBegin),
+            const double dfEpsRel =
+                nc_var_dimy_datatype == NC_FLOAT ? 0.002 : 0.0005;
+
+            const double dfEps = dfEpsRel * std::max(fabs(dfSpacingBegin),
                         std::max(fabs(dfSpacingMiddle), fabs(dfSpacingLast)));
             if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, dfEps) &&
                 IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, dfEps) &&
@@ -5459,6 +5509,110 @@ double netCDFDataset::rint( double dfX )
 }
 
 /************************************************************************/
+/*                          NCDFReadIsoMetadata()                       */
+/************************************************************************/
+
+#ifdef NETCDF_HAS_NC4
+
+static void NCDFReadMetadataAsJson(int cdfid, CPLJSONObject& obj)
+{
+    int nbAttr = 0;
+    NCDF_ERR(nc_inq_varnatts(cdfid, NC_GLOBAL, &nbAttr));
+
+    std::map<std::string, CPLJSONArray> oMapNameToArray;
+    for( int l = 0; l < nbAttr; l++ )
+    {
+        char szAttrName[NC_MAX_NAME + 1];
+        szAttrName[0] = 0;
+        NCDF_ERR(nc_inq_attname(cdfid, NC_GLOBAL, l, szAttrName));
+
+        char *pszMetaValue = nullptr;
+        if( NCDFGetAttr(cdfid, NC_GLOBAL, szAttrName, &pszMetaValue) == CE_None )
+        {
+            nc_type nAttrType = NC_NAT;
+            size_t nAttrLen = 0;
+
+            NCDF_ERR(nc_inq_att(cdfid, NC_GLOBAL, szAttrName, &nAttrType, &nAttrLen));
+
+            std::string osAttrName(szAttrName);
+            const auto sharpPos = osAttrName.find('#');
+            if( sharpPos == std::string:: npos )
+            {
+                if( nAttrType == NC_DOUBLE || nAttrType == NC_FLOAT )
+                    obj.Add(osAttrName, CPLAtof(pszMetaValue));
+                else
+                    obj.Add(osAttrName, pszMetaValue);
+            }
+            else
+            {
+                osAttrName.resize(sharpPos);
+                auto iter = oMapNameToArray.find(osAttrName);
+                if( iter == oMapNameToArray.end() )
+                {
+                    CPLJSONArray array;
+                    obj.Add(osAttrName, array);
+                    oMapNameToArray[osAttrName] = array;
+                    array.Add(pszMetaValue);
+                }
+                else
+                {
+                    iter->second.Add(pszMetaValue);
+                }
+            }
+            CPLFree(pszMetaValue);
+            pszMetaValue = nullptr;
+        }
+    }
+
+    int nSubGroups = 0;
+    int *panSubGroupIds = nullptr;
+    NCDFGetSubGroups(cdfid, &nSubGroups, &panSubGroupIds);
+    oMapNameToArray.clear();
+    for( int i = 0; i < nSubGroups; i++ )
+    {
+        CPLJSONObject subObj;
+        NCDFReadMetadataAsJson(panSubGroupIds[i], subObj);
+
+        std::string osGroupName;
+        osGroupName.resize(NC_MAX_NAME);
+        NCDF_ERR(nc_inq_grpname(panSubGroupIds[i], &osGroupName[0]));
+        osGroupName.resize(strlen(osGroupName.data()));
+        const auto sharpPos = osGroupName.find('#');
+        if( sharpPos == std::string:: npos )
+        {
+            obj.Add(osGroupName, subObj);
+        }
+        else
+        {
+            osGroupName.resize(sharpPos);
+            auto iter = oMapNameToArray.find(osGroupName);
+            if( iter == oMapNameToArray.end() )
+            {
+                CPLJSONArray array;
+                obj.Add(osGroupName, array);
+                oMapNameToArray[osGroupName] = array;
+                array.Add(subObj);
+            }
+            else
+            {
+                iter->second.Add(subObj);
+            }
+        }
+    }
+    CPLFree(panSubGroupIds);
+}
+
+std::string NCDFReadMetadataAsJson(int cdfid)
+{
+    CPLJSONDocument oDoc;
+    CPLJSONObject oRoot = oDoc.GetRoot();
+    NCDFReadMetadataAsJson(cdfid, oRoot);
+    return oDoc.SaveAsString();
+}
+
+#endif
+
+/************************************************************************/
 /*                        ReadAttributes()                              */
 /************************************************************************/
 CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
@@ -5466,6 +5620,36 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
 {
     char *pszVarFullName = nullptr;
     ERR_RET(NCDFGetVarFullName(cdfidIn, var, &pszVarFullName));
+#ifdef NETCDF_HAS_NC4
+    // For metadata in Sentinel 5
+    if( STARTS_WITH(pszVarFullName, "/METADATA/") )
+    {
+        for( const char* key : { "ISO_METADATA", "ESA_METADATA", "EOP_METADATA",
+                                 "QA_STATISTICS", "GRANULE_DESCRIPTION", "ALGORITHM_SETTINGS" } )
+        {
+            if( var == NC_GLOBAL &&
+                strcmp(pszVarFullName, CPLSPrintf("/METADATA/%s/NC_GLOBAL", key)) == 0 )
+            {
+                CPLFree(pszVarFullName);
+                JSonMetadata md;
+                md.osJSon = CPLString(NCDFReadMetadataAsJson(cdfidIn)).replaceAll("\\/", '/');
+                md.apszMD[0] = &md.osJSon[0];
+                m_oMapDomainToJSon[key] = std::move(md);
+                return CE_None;
+            }
+        }
+    }
+    if( STARTS_WITH(pszVarFullName, "/PRODUCT/SUPPORT_DATA/") )
+    {
+        CPLFree(pszVarFullName);
+        JSonMetadata md;
+        md.osJSon = CPLString(NCDFReadMetadataAsJson(cdfidIn)).replaceAll("\\/", '/');
+        md.apszMD[0] = &md.osJSon[0];
+        m_oMapDomainToJSon["SUPPORT_DATA"] = std::move(md);
+        return CE_None;
+    }
+#endif
+
     size_t nMetaNameSize = sizeof(char) * (strlen(pszVarFullName) + 1
                                            + NC_MAX_NAME + 1);
     char *pszMetaName = static_cast<char *>(CPLMalloc(nMetaNameSize));
@@ -5738,7 +5922,8 @@ CPL_UNUSED
             const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
             if( !(EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
                   EQUAL(pszExtension, "nc2") || EQUAL(pszExtension, "nc4") ||
-                  EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd")) )
+                  EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd") ||
+                  EQUAL(pszExtension, "gmac") ) )
                 return NCDF_FORMAT_HDF5;
         }
 #endif
@@ -7596,7 +7781,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         nc_get_att_text(cdfid, NC_GLOBAL, "Conventions",
                                   szConventions) != NC_NOERR )
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
+        CPLDebug("GDAL_netCDF",
                  "No UNIDATA NC_GLOBAL:Conventions attribute");
         // Note that 'Conventions' is always capital 'C' in CF spec.
     }
@@ -10874,12 +11059,12 @@ bool NCDFIsVarLongitude( int nCdfId, int nVarId,
     }
     else if ( bVal )
     {
-        // Check that the units is not 'm'. See #6759
+        // Check that the units is not 'm' or '1'. See #6759
         char *pszTemp = nullptr;
         if( NCDFGetAttr(nCdfId, nVarId, "units", &pszTemp) == CE_None &&
             pszTemp != nullptr )
         {
-            if( EQUAL(pszTemp, "m") )
+            if( EQUAL(pszTemp, "m") || EQUAL(pszTemp, "1") )
                 bVal = false;
             CPLFree(pszTemp);
         }
@@ -10904,12 +11089,12 @@ bool NCDFIsVarLatitude( int nCdfId, int nVarId, const char *pszVarName )
     }
     else if ( bVal )
     {
-        // Check that the units is not 'm'. See #6759
+        // Check that the units is not 'm' or '1'. See #6759
         char *pszTemp = nullptr;
         if( NCDFGetAttr(nCdfId, nVarId, "units", &pszTemp) == CE_None &&
             pszTemp != nullptr )
         {
-            if( EQUAL(pszTemp, "m") )
+            if( EQUAL(pszTemp, "m") || EQUAL(pszTemp, "1") )
                 bVal = false;
             CPLFree(pszTemp);
         }
@@ -10933,6 +11118,19 @@ bool NCDFIsVarProjectionX( int nCdfId, int nVarId,
         else
             bVal = FALSE;
     }
+    else if ( bVal )
+    {
+        // Check that the units is not '1'
+        char *pszTemp = nullptr;
+        if( NCDFGetAttr(nCdfId, nVarId, "units", &pszTemp) == CE_None &&
+            pszTemp != nullptr )
+        {
+            if( EQUAL(pszTemp, "1") )
+                bVal = false;
+            CPLFree(pszTemp);
+        }
+    }
+
     return CPL_TO_BOOL(bVal);
 }
 
@@ -10951,6 +11149,19 @@ bool NCDFIsVarProjectionY( int nCdfId, int nVarId,
         else
             bVal = FALSE;
     }
+    else if ( bVal )
+    {
+        // Check that the units is not '1'
+        char *pszTemp = nullptr;
+        if( NCDFGetAttr(nCdfId, nVarId, "units", &pszTemp) == CE_None &&
+            pszTemp != nullptr )
+        {
+            if( EQUAL(pszTemp, "1") )
+                bVal = false;
+            CPLFree(pszTemp);
+        }
+    }
+
     return CPL_TO_BOOL(bVal);
 }
 

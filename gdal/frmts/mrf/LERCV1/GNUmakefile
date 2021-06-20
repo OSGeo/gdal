@@ -16,5 +16,5 @@ clean:
 	rm -f $(O_OBJ) *.o *.lo $(O_OBJ:.o=.$(OBJ_EXT))
 
 ../../o/%.$(OBJ_EXT):   %.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -I../../port $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 

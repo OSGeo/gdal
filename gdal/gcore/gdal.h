@@ -50,6 +50,8 @@
 #include "ogr_api.h"
 #endif
 
+#include <stdbool.h>
+
 /* -------------------------------------------------------------------- */
 /*      Significant constants.                                          */
 /* -------------------------------------------------------------------- */
@@ -151,8 +153,8 @@ typedef enum
 } GDALRIOResampleAlg;
 
 /* NOTE to developers: only add members, and if so edit INIT_RASTERIO_EXTRA_ARG */
-/* and INIT_RASTERIO_EXTRA_ARG */
-/** Structure to pass extra arguments to RasterIO() method
+/** Structure to pass extra arguments to RasterIO() method,
+ * must be initialized with INIT_RASTERIO_EXTRA_ARG
   * @since GDAL 2.0
   */
 typedef struct
@@ -294,6 +296,16 @@ typedef enum {
     /** Compound data type. */
     GEDTC_COMPOUND
 } GDALExtendedDataTypeClass;
+
+/** Enumeration giving the subtype of a GDALExtendedDataType.
+ * @since GDAL 3.4
+ */
+typedef enum {
+    /** None. */
+    GEDTST_NONE,
+    /** JSon. Only applies to GEDTC_STRING */
+    GEDTST_JSON
+} GDALExtendedDataTypeSubType;
 
 /** Opaque type for C++ GDALExtendedDataType */
 typedef struct GDALExtendedDataTypeHS* GDALExtendedDataTypeH;
@@ -477,6 +489,12 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  * @since GDAL 2.3
  */
 #define GDAL_DCAP_FEATURE_STYLES     "DCAP_FEATURE_STYLES"
+
+/** Capability set by drivers which support storing/retrieving coordinate epoch for dynamic CRS
+ * @since GDAL 3.4
+ */
+#define GDAL_DCAP_COORDINATE_EPOCH   "DCAP_COORDINATE_EPOCH"
+
 
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal CRS.
  * @since GDAL 3.1
@@ -850,6 +868,12 @@ OGRErr CPL_DLL GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce);
 OGRErr CPL_DLL GDALDatasetCommitTransaction(GDALDatasetH hDS);
 OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
 void CPL_DLL GDALDatasetClearStatistics(GDALDatasetH hDS);
+
+OGRFieldDomainH CPL_DLL GDALDatasetGetFieldDomain(GDALDatasetH hDS,
+                                                  const char* pszName);
+bool CPL_DLL GDALDatasetAddFieldDomain(GDALDatasetH hDS,
+                                       OGRFieldDomainH hFieldDomain,
+                                       char** ppszFailureReason);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -1492,6 +1516,7 @@ int CPL_DLL GDALExtendedDataTypeCanConvertTo(GDALExtendedDataTypeH hSourceEDT,
                                              GDALExtendedDataTypeH hTargetEDT);
 int CPL_DLL GDALExtendedDataTypeEquals(GDALExtendedDataTypeH hFirstEDT,
                                        GDALExtendedDataTypeH hSecondEDT);
+GDALExtendedDataTypeSubType CPL_DLL GDALExtendedDataTypeGetSubType(GDALExtendedDataTypeH hEDT);
 
 GDALEDTComponentH CPL_DLL GDALEDTComponentCreate(const char* pszName, size_t nOffset, GDALExtendedDataTypeH hType) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL GDALEDTComponentRelease(GDALEDTComponentH hComp);
@@ -1513,6 +1538,8 @@ GDALMDArrayH CPL_DLL  GDALGroupResolveMDArray(GDALGroupH hGroup,
 char CPL_DLL **GDALGroupGetGroupNames(GDALGroupH hGroup, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALGroupH CPL_DLL GDALGroupOpenGroup(GDALGroupH hGroup, const char* pszSubGroupName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALGroupH CPL_DLL GDALGroupOpenGroupFromFullname(GDALGroupH hGroup, const char* pszMDArrayName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL **GDALGroupGetVectorLayerNames(GDALGroupH hGroup, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+OGRLayerH CPL_DLL GDALGroupOpenVectorLayer(GDALGroupH hGroup, const char* pszVectorLayerName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALDimensionH CPL_DLL *GDALGroupGetDimensions(GDALGroupH hGroup, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL GDALGroupGetAttribute(GDALGroupH hGroup, const char* pszName) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL *GDALGroupGetAttributes(GDALGroupH hGroup, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
@@ -1617,6 +1644,15 @@ int CPL_DLL GDALMDArrayComputeStatistics( GDALMDArrayH hArray, GDALDatasetH,
                                     double *pdfMean, double *pdfStdDev,
                                     GUInt64* pnValidCount,
                                     GDALProgressFunc, void *pProgressData );
+GDALMDArrayH CPL_DLL GDALMDArrayGetResampled(GDALMDArrayH hArray,
+                                     size_t nNewDimCount,
+                                     const GDALDimensionH* pahNewDims,
+                                     GDALRIOResampleAlg resampleAlg,
+                                     OGRSpatialReferenceH hTargetSRS,
+                                     CSLConstList papszOptions);
+GDALMDArrayH CPL_DLL* GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray, size_t *pnCount) CPL_WARN_UNUSED_RESULT;
+void CPL_DLL GDALReleaseArrays(GDALMDArrayH* arrays, size_t nCount);
+int CPL_DLL GDALMDArrayCache( GDALMDArrayH hArray, CSLConstList papszOptions );
 
 void CPL_DLL GDALAttributeRelease(GDALAttributeH hAttr);
 void CPL_DLL GDALReleaseAttributes(GDALAttributeH* attributes, size_t nCount);

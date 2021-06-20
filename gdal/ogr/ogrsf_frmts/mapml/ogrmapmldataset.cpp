@@ -1164,13 +1164,12 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode* psContainer,
             CPLXMLNode* psCoordinates = CPLCreateXMLNode(
                 psMultiPoint, CXT_Element, "coordinates");
             std::string osCoordinates;
-            for( const auto poSubGeom: *poMP )
+            for( const auto poPoint: *poMP )
             {
-                if( !osCoordinates.empty() )
-                    osCoordinates += ' ';
-                const OGRPoint* poPoint = poSubGeom->toPoint();
                 if( !poPoint->IsEmpty() )
                 {
+                    if( !osCoordinates.empty() )
+                        osCoordinates += ' ';
                     osCoordinates += CPLSPrintf(m_poDS->m_pszFormatCoordTuple,
                                                 poPoint->getX(),
                                                 poPoint->getY());
@@ -1185,9 +1184,8 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode* psContainer,
             const OGRMultiLineString* poMLS = poGeom->toMultiLineString();
             CPLXMLNode* psMultiLineString = CPLCreateXMLNode(
                 psContainer, CXT_Element, "multilinestring");
-            for( const auto poSubGeom: *poMLS )
+            for( const auto poLS: *poMLS )
             {
-                const OGRLineString* poLS = poSubGeom->toLineString();
                 if( !poLS->IsEmpty() )
                 {
                     writeLineStringCoordinates(psMultiLineString, poLS);
@@ -1201,9 +1199,8 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode* psContainer,
             const OGRMultiPolygon* poMLP = poGeom->toMultiPolygon();
             CPLXMLNode* psMultiPolygon = CPLCreateXMLNode(
                 psContainer, CXT_Element, "multipolygon");
-            for( const auto poSubGeom: *poMLP )
+            for( const auto poPoly: *poMLP )
             {
-                const OGRPolygon* poPoly = poSubGeom->toPolygon();
                 if( !poPoly->IsEmpty() )
                 {
                     writePolygon(psMultiPolygon, poPoly);

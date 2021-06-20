@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.13
+ARG ALPINE_VERSION=3.14
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -26,7 +26,7 @@ ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
     curl-dev tiff-dev \
-    zlib-dev zstd-dev \
+    zlib-dev zstd-dev xz-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
     py3-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
@@ -204,8 +204,10 @@ RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
+ARG GDAL_REPOSITORY=OSGeo/gdal
+
 RUN if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
@@ -231,7 +233,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     fi \
     && echo ${GDAL_EXTRA_ARGS} \
     && mkdir gdal \
-    && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
+    && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal/gdal \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -249,6 +251,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     fi \
     && ./configure --prefix=/usr --without-libtool \
     --with-hide-internal-symbols \
+    --with-liblzma \
     --with-proj=/usr \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
@@ -272,13 +275,14 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python3.8          /build_gdal_python/usr/lib \
+    && export py_version=$(python3 -c "import sys; print(str(sys.version_info.major) + '.' + str(sys.version_info.minor))") \
+    && mv /build/usr/lib/python${py_version} /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python3.8/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python${py_version}/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \
@@ -298,7 +302,7 @@ RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
         libcurl tiff \
-        zlib zstd-libs\
+        zlib zstd-libs xz-libs \
         libjpeg-turbo libpng libwebp expat \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \

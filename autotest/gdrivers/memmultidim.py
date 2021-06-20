@@ -58,6 +58,8 @@ def test_mem_md_basic():
     assert not rg.OpenGroup("not existing")
     assert not rg.OpenGroupFromFullname("not existing")
     assert not rg.GetAttribute("not existing")
+    assert not rg.GetVectorLayerNames()
+    assert not rg.OpenVectorLayer("not existing")
 
 
 def test_mem_md_subgroup():
@@ -155,6 +157,8 @@ def test_mem_md_array_nodim():
     assert copy_myarray
     assert copy_myarray.Read() == got_data
 
+    assert len(myarray.GetCoordinateVariables()) == 0
+
 
 def test_mem_md_array_single_dim():
 
@@ -182,6 +186,41 @@ def test_mem_md_array_single_dim():
     got_data = myarray.Read()
     assert len(got_data) == 2
     assert struct.unpack('B' * 2, got_data) == (0, 0)
+
+    # Test writing a list with only integer values
+    assert myarray.Write([0, 1]) == gdal.CE_None
+    assert struct.unpack('B' * 2, myarray.Read()) == (0, 1)
+
+    # Unsupported type in list
+    with pytest.raises(Exception):
+        myarray.Write([0, 'aa'])
+
+    # Test writing a list with a mix of int and double
+    assert myarray.Write([0, 2.1]) == gdal.CE_None
+    assert struct.unpack('B' * 2, myarray.Read()) == (0, 2)
+
+    # Test writing a list with only double values
+    assert myarray.Write([1.0, 2.1]) == gdal.CE_None
+    assert struct.unpack('B' * 2, myarray.Read()) == (1, 2)
+
+    # Test writing a list with only integer values, but one out of int32 range
+    assert myarray.Write([1, 1 << 31]) == gdal.CE_None
+    assert struct.unpack('B' * 2, myarray.Read()) == (1, 255)
+
+    # Test writing a array
+    for typecode, in_ar, out_tuple in [ ('B', [1, 2], (1, 2)),
+                                        ('h', [-32768, 32767], (0, 255)),
+                                        ('H', [0, 65535], (0, 255)),
+                                        ('i', [-(1<<31), (1<<31)-1], (0, 255)),
+                                        ('I', [0, (1<<32)-1], (0, 255)),
+                                        ('f', [1.0, 2.1], (1, 2)),
+                                        ('d', [2.0, 3.1], (2, 3)) ]:
+        assert myarray.Write(array.array(typecode, in_ar)) == gdal.CE_None
+        assert struct.unpack('B' * 2, myarray.Read()) == out_tuple
+
+    # Unsupported array type
+    with pytest.raises(Exception):
+        myarray.Write(array.array('b', [1, 2]))
 
     assert myarray.AdviseRead() == gdal.CE_None
 
@@ -220,6 +259,8 @@ def test_mem_md_array_single_dim():
         tab[0] = pct
         return 1
 
+    got_data = myarray.Read()
+
     tab = [ 0 ]
     copy_ds = drv.CreateCopy('', ds, callback = my_cbk,
                              callback_data = tab)
@@ -234,6 +275,8 @@ def test_mem_md_array_single_dim():
 
     assert myarray.DeleteNoDataValue() == gdal.CE_None
     assert myarray.GetNoDataValueAsDouble() is None
+    with gdaltest.error_handler():
+        assert myarray.GetNoDataValueAsString() is None
 
     assert myarray.SetUnit('foo') == gdal.CE_None
     assert myarray.GetUnit() == 'foo'
@@ -248,7 +291,13 @@ def test_mem_md_array_string():
     dim = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
     var = rg.CreateMDArray('var', [dim], gdal.ExtendedDataType.CreateString())
     assert var
+    assert var.Read() == [None, None]
     assert var.Write(['', '0123456789']) == gdal.CE_None
+    assert var.GetNoDataValueAsString() is None
+    assert var.SetNoDataValueString(None) == gdal.CE_None
+    assert var.GetNoDataValueAsString() is None
+    assert var.SetNoDataValueString('123') == gdal.CE_None
+    assert var.GetNoDataValueAsString() == '123'
     var = rg.OpenMDArray('var')
     assert var
     assert var.Read() == ['', '0123456789']
@@ -299,6 +348,11 @@ def test_mem_md_datatypes():
 
     comp0 = gdal.EDTComponent.Create('x', 0, gdal.ExtendedDataType.Create(gdal.GDT_Int16))
     comp1 = gdal.EDTComponent.Create('y', 4, gdal.ExtendedDataType.Create(gdal.GDT_Int32))
+
+    with gdaltest.error_handler():
+        assert gdal.ExtendedDataType.CreateCompound("mytype", 8, []) is None
+        assert gdal.ExtendedDataType.CreateCompound("mytype", 2000 * 1000 * 1000, [comp0]) is None
+
     compound_dt = gdal.ExtendedDataType.CreateCompound("mytype", 8, [comp0, comp1])
     assert compound_dt.GetClass() == gdal.GEDTC_COMPOUND
     assert compound_dt.GetName() == 'mytype'
@@ -813,7 +867,7 @@ def test_mem_md_array_slice():
     dim_2 = rg.CreateDimension("dim_2", None, None, 2)
     dim_3 = rg.CreateDimension("dim_3", None, None, 3)
     dim_4 = rg.CreateDimension("dim_4", None, None, 4)
-    
+
     ar = rg.CreateMDArray("nodim", [],
                           gdal.ExtendedDataType.Create(gdal.GDT_Byte))
     assert ar.Write(struct.pack('B', 1)) == gdal.CE_None
@@ -1115,9 +1169,9 @@ def test_mem_md_array_as_classic_dataset():
     data = struct.pack('B' * 3, 0, 1, 2)
     assert ar.Write(data) == gdal.CE_None
     band = ds.GetRasterBand(1)
-    assert len(band.ReadRaster()) == len(data)
-    assert band.ReadRaster() == data
-    assert band.WriteRaster(0, 0, 3, 1, data) == gdal.CE_None
+    assert len(band.ReadRaster(buf_type = gdal.GDT_UInt16)) == len(data) * 2
+    assert band.ReadRaster(buf_type = gdal.GDT_UInt16) == struct.pack('H' * 3, 0, 1, 2)
+    assert band.WriteRaster(0, 0, 3, 1, struct.pack('H' * 3, 0, 1, 2), buf_type = gdal.GDT_UInt16) == gdal.CE_None
     assert band.ReadRaster() == data
 
     ar = rg.CreateMDArray("2d_string", [ dim_y, dim_x ],

@@ -135,7 +135,7 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
  * @param pszFilename the path of a filename to inspect
  * UTF-8 encoded.
  * @return The list of entries, relative to the directory, of all sidecar
- * files available or NULL if the list is not known. 
+ * files available or NULL if the list is not known.
  * Filenames are returned in UTF-8 encoding.
  * Most implementations will return NULL, and a subsequent ReadDir will
  * list all files available in the file's directory. This function will be
@@ -542,6 +542,9 @@ int VSIUnlink( const char * pszFilename )
  *
  * All files should belong to the same file system handler.
  *
+ * This is implemented efficiently for /vsis3/ and /vsigs/ (provided for /vsigs/
+ * that OAuth2 authentication is used).
+ *
  * @param papszFiles NULL terminated list of files. UTF-8 encoded.
  *
  * @return an array of size CSLCount(papszFiles), whose values are TRUE or FALSE
@@ -713,6 +716,33 @@ int VSISync( const char* pszSource, const char* pszTarget,
 }
 
 /************************************************************************/
+/*                         VSIAbortOngoingUploads()                     */
+/************************************************************************/
+
+/**
+ * \brief Abort ongoing multi-part uploads.
+ *
+ * Abort ongoing multi-part uploads on AWS S3 and Google Cloud Storage. This
+ * can be used in case a process doing such uploads was killed in a unclean way.
+ *
+ * Without effect on other virtual file systems.
+ *
+ * @param pszFilename filename or prefix of a directory into which multipart uploads must be
+ *                    aborted. This can be the root directory of a bucket.  UTF-8 encoded.
+ *
+ * @return TRUE on success or FALSE on an error.
+ * @since GDAL 3.4
+ */
+
+int VSIAbortPendingUploads( const char* pszFilename )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszFilename );
+
+    return poFSHandler->AbortPendingUploads( pszFilename );
+}
+
+/************************************************************************/
 /*                              VSIRmdir()                              */
 /************************************************************************/
 
@@ -752,6 +782,8 @@ int VSIRmdir( const char * pszDirname )
  *
  * Starting with GDAL 3.1, /vsis3/ has an efficient implementation of this
  * function.
+ * Starting with GDAL 3.4, /vsigs/ has an efficient implementation of this
+ * function, provided that OAuth2 authentication is used.
  *
  * @return 0 on success or -1 on an error.
  * @since GDAL 2.3
@@ -875,7 +907,7 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  * @param pszDomain Metadata domain to query. Depends on the file system.
  * The following are supported:
  * <ul>
- * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/, /vsis3/, etc)</li>
+ * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/, /vsis3/, /vsgis/, etc)</li>
  * <li>TAGS:
  *    <ul>
  *      <li>/vsis3/: to get S3 Object tagging information</li>
@@ -883,7 +915,9 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  *    </ul>
  * </li>
  * <li>STATUS: specific to /vsiadls/: returns all system defined properties for a path (seems in practice to be a subset of HEADERS)</li>
- * <li>ACL: specific to /vsiadls/: returns the access control list for a path.</li>
+ * <li>ACL: specific to /vsiadls/ and /vsigs/: returns the access control list for a path.
+ *     For /vsigs/, a single XML=xml_content string is returned. Refer to https://cloud.google.com/storage/docs/xml-api/get-object-acls
+ * </li>
  * <li>METADATA: specific to /vsiaz/: to set blob metadata. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-metadata. Note: this will be a subset of what pszDomain=HEADERS returns</li>
  * </ul>
  * @param papszOptions Unused. Should be set to NULL.
@@ -909,7 +943,7 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
 /**
  * \brief Set metadata on files.
  *
- * Implemented currently only for /vsis3/, /vsiaz/ and /vsiadls/
+ * Implemented currently only for /vsis3/, /vsigs/, /vsiaz/ and /vsiadls/
  *
  * @param pszFilename the path of the filesystem object to be set.
  * UTF-8 encoded.
@@ -917,7 +951,11 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  * @param pszDomain Metadata domain to set. Depends on the file system.
  * The following are supported:
  * <ul>
- * <li>HEADERS: specific to /vsis3/: to set HTTP headers</li>
+ * <li>HEADERS: specific to /vsis3/ and /vsigs/: to set HTTP headers, such as
+ * "Content-Type", or other file system specific header.
+ * For /vsigs/, this also includes: x-goog-meta-{key}={value}. Note that you
+ * should specify all metadata to be set, as existing metadata will be overriden.
+ * </li>
  * <li>TAGS: Content of papszMetadata should be KEY=VALUE pairs.
  *    <ul>
  *      <li>/vsis3/: to set S3 Object tagging information</li>
@@ -930,7 +968,10 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  *      <li>to /vsiadls/: to set properties. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setProperties.</li>
  *    </ul>
  * </li>
- * <li>ACL: specific to /vsiadls/: to set access control list. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setAccessControl or setAccessControlRecursive. In setAccessControlRecursive, x-ms-acl must be specified in papszMetadata</li>
+ * <li>ACL: specific to /vsiadls/ and /vsigs/: to set access control list.
+ * For /vsiadls/, refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setAccessControl or setAccessControlRecursive. In setAccessControlRecursive, x-ms-acl must be specified in papszMetadata.
+ * For /vsigs/, refer to https://cloud.google.com/storage/docs/xml-api/put-object-acls. A single XML=xml_content string should be specified as in papszMetadata.
+ * </li>
  * <li>METADATA: specific to /vsiaz/: to set blob metadata. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-metadata. Content of papszMetadata should be strings in the form x-ms-meta-name=value</li>
  * </ul>
  * @param papszOptions NULL or NULL terminated list of options.
@@ -1054,7 +1095,7 @@ int VSIHasOptimizedReadMultiRange( const char* pszPath )
  * Currently only returns a non-NULL value for network-based virtual file systems.
  * For example "/vsis3/bucket/filename" will be expanded as
  * "https://bucket.s3.amazon.com/filename"
- * 
+ *
  * Note that the lifetime of the returned string, is short, and may be
  * invalidated by any following GDAL functions.
  *
@@ -1275,7 +1316,7 @@ bool VSIFilesystemHandler::Sync( const char* pszSource, const char* pszTarget,
         {
             osTarget = CPLFormFilename(osTarget,
                                        CPLGetFilename(pszSource), nullptr);
-            bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 && 
+            bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 &&
                             !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
         }
         if( bTargetIsFile )

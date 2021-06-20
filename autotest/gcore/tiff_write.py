@@ -153,7 +153,7 @@ def test_tiff_write_4():
 
     assert gt == new_ds.GetGeoTransform(), 'Wrong geotransform.'
 
-    new_ds.SetMetadata({'TEST_KEY': 'TestValue'})
+    new_ds.SetMetadata({'TEST_KEY': 'TestValue <>'})
 
     new_ds = None
 
@@ -168,7 +168,7 @@ def test_tiff_write_4():
     assert nd is None, 'Got unexpected nodata value.'
 
     md_dict = new_ds.GetMetadata()
-    assert md_dict['TEST_KEY'] == 'TestValue', 'Missing metadata'
+    assert md_dict['TEST_KEY'] == 'TestValue <>', 'Missing metadata'
 
     new_ds = None
 
@@ -229,6 +229,11 @@ def test_tiff_write_6():
         gdaltest.tiff_write_6_failed = True
         pytest.fail('did not get back expected data.')
 
+    ds = None
+
+    ds = gdal.Open('tmp/test_6.tif')
+    assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'DEFLATE'
+    assert ds.GetMetadataItem('PREDICTOR', 'IMAGE_STRUCTURE') == '2'
     ds = None
 
     gdaltest.tiff_write_6_failed = False
@@ -3197,6 +3202,7 @@ def test_tiff_write_91():
         checksums[quality] = [ ds.GetRasterBand(1).Checksum(),
                                ds.GetRasterBand(1).GetOverview(0).Checksum(),
                                ds.GetRasterBand(1).GetOverview(1).Checksum() ]
+        ds = None
 
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_91.tif')
@@ -3473,6 +3479,7 @@ def test_tiff_write_96(other_options = [], nbands = 1, nbits = 8):
             [cs, cs_mask, cs_ovr_1, cs_ovr_mask_1, cs_ovr_2, cs_ovr_mask_2], \
             'did not get expected checksums'
         assert ds.GetMetadataItem('HAS_USED_READ_ENCODED_API', '_DEBUG_') == '0'
+        ds = None
 
     _check_cog('tmp/tiff_write_96_dst.tif', check_tiled=False, full_check=True)
 
@@ -3812,6 +3819,9 @@ Band 1}""".encode('ascii'))
 
 
 def test_tiff_write_102():
+
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip('requires libgeotiff >= 1.6')
 
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_102.tif', 1, 1)
     sr = osr.SpatialReference()
@@ -7441,6 +7451,44 @@ def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
     assert math.isnan(got_data[1])
     ds = None
     gdal.Unlink(filename)
+
+###############################################################################
+# Test creating overviews with NaN nodata
+
+
+def test_tiff_write_overviews_nan_nodata():
+
+    filename = '/vsimem/test_tiff_write_overviews_nan_nodata.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 32, 32, 1, gdal.GDT_Float32, options=['TILED=YES', 'SPARSE_OK=YES'])
+    ds.GetRasterBand(1).SetNoDataValue(float('nan'))
+    ds.BuildOverviews('NONE', [2, 4])
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test support for coordinate epoch
+
+
+def test_tiff_write_coordinate_epoch():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_tiff_write_coordinate_epoch.tif', 1, 1)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    ds = gdal.Open('/vsimem/test_tiff_write_coordinate_epoch.tif')
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+    gdal.Unlink('/vsimem/test_tiff_write_coordinate_epoch.tif')
 
 
 def test_tiff_write_cleanup():

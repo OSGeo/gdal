@@ -273,7 +273,7 @@ private:
 
     static int          Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
-    static GDALDataset  *Open(GDALOpenInfo *, RMFDataset* poParentDS, vsi_l_offset nNextHeaderOffset );
+    static RMFDataset   *Open(GDALOpenInfo *, RMFDataset* poParentDS, vsi_l_offset nNextHeaderOffset );
     static GDALDataset  *Create( const char *, int, int, int,
                                  GDALDataType, char ** );
     static GDALDataset  *Create( const char *, int, int, int,

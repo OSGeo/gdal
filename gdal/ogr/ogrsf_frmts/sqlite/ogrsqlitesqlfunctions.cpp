@@ -38,6 +38,8 @@
 #include "ogrsqliteregexp.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
 #include "ogr_swq.h"
 
+#include <limits>
+
 CPL_CVSID("$Id$")
 
 #undef SQLITE_STATIC
@@ -748,12 +750,19 @@ void OGR2SQLITE_ST_AsBinary(sqlite3_context* pContext,
     OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
     if( poGeom != nullptr )
     {
-        int nBLOBLen = poGeom->WkbSize();
+        const size_t nBLOBLen = poGeom->WkbSize();
+        if( nBLOBLen > static_cast<size_t>(std::numeric_limits<int>::max()) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Too large geometry");
+            sqlite3_result_null (pContext);
+            return;
+        }
         GByte* pabyGeomBLOB = (GByte*) VSI_MALLOC_VERBOSE(nBLOBLen);
         if( pabyGeomBLOB != nullptr )
         {
             if( poGeom->exportToWkb(wkbNDR, pabyGeomBLOB) == OGRERR_NONE )
-                sqlite3_result_blob( pContext, pabyGeomBLOB, nBLOBLen, CPLFree);
+                sqlite3_result_blob( pContext, pabyGeomBLOB,
+                                     static_cast<int>(nBLOBLen), CPLFree);
             else
             {
                 VSIFree(pabyGeomBLOB);

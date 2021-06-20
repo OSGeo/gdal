@@ -67,6 +67,9 @@ typedef void *OGRStyleTableH;
 #endif
 /** Opaque type for a geometry field definition (OGRGeomFieldDefn) */
 typedef struct OGRGeomFieldDefnHS *OGRGeomFieldDefnH;
+
+/** Opaque type for a field domain definition (OGRFieldDomain) */
+typedef struct OGRFieldDomainHS *OGRFieldDomainH;
 #endif /* DEFINE_OGRFeatureH */
 
 class OGRStyleTable;
@@ -88,6 +91,7 @@ class OGRStyleTable;
  * <li>a UNIQUE constraint (optional). See SetUnique() / IsUnique()</li>
  * <li>a default value (optional).  See SetDefault() / GetDefault()</li>
  * <li>a boolean to indicate whether it should be ignored when retrieving features.  See SetIgnored() / IsIgnored()</li>
+ * <li>a field domain name (optional). See SetDomainName() / Get DomainName()</li>
  * </ul>
  */
 
@@ -107,6 +111,8 @@ class CPL_DLL OGRFieldDefn
 
     int                 bNullable;
     int                 bUnique;
+
+    std::string         m_osDomainName{}; // field domain name. Might be empty
 
   public:
                         OGRFieldDefn( const char *, OGRFieldType );
@@ -153,6 +159,9 @@ class CPL_DLL OGRFieldDefn
 
     int                 IsUnique() const { return bUnique; }
     void                SetUnique( int bUniqueIn ) { bUnique = bUniqueIn; }
+
+    const std::string&  GetDomainName() const { return m_osDomainName; }
+    void                SetDomainName(const std::string& osDomainName) { m_osDomainName = osDomainName; }
 
     int                 IsSame( const OGRFieldDefn * ) const;
 
@@ -801,6 +810,302 @@ inline OGRFeature::ConstFieldIterator begin(const OGRFeatureUniquePtr& poFeature
 inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr& poFeature) { return poFeature->end(); }
 
 //! @endcond
+
+/************************************************************************/
+/*                           OGRFieldDomain                             */
+/************************************************************************/
+
+/**
+ * Definition of a field domain.
+ *
+ * A field domain is a set of constraints that apply to one or several fields.
+ *
+ * This is a concept found in
+ * <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/an-overview-of-attribute-domains.htm">File Geodatabase</a>
+ * or GeoPackage (using the
+ * <a href="http://www.geopackage.org/spec/#extension_schema">schema extension</a>)
+ * for example.
+ *
+ * A field domain can be:
+ * <ul>
+ * <li>OGRCodedFieldDomain: an enumerated list of (code, value) tuples.</li>
+ * <li>OGRRangeFieldDomain: a range constraint (min, max).</li>
+ * <li>OGRGlobFieldDomain: a glob expression.</li>
+ * </ul>
+ *
+ * @since GDAL 3.3
+ */
+class CPL_DLL OGRFieldDomain
+{
+protected:
+/*! @cond Doxygen_Suppress */
+    std::string                 m_osName;
+    std::string                 m_osDescription;
+    OGRFieldDomainType          m_eDomainType;
+    OGRFieldType                m_eFieldType;
+    OGRFieldSubType             m_eFieldSubType;
+    OGRFieldDomainSplitPolicy   m_eSplitPolicy = OFDSP_DEFAULT_VALUE;
+    OGRFieldDomainMergePolicy   m_eMergePolicy = OFDMP_DEFAULT_VALUE;
+
+    OGRFieldDomain(const std::string& osName,
+                   const std::string& osDescription,
+                   OGRFieldDomainType eDomainType,
+                   OGRFieldType eFieldType,
+                   OGRFieldSubType eFieldSubType);
+/*! @endcond */
+
+public:
+    /** Destructor.
+     *
+     * This is the same as the C function OGR_FldDomain_Destroy().
+     */
+    virtual ~OGRFieldDomain() = 0;
+
+    /** Clone.
+     *
+     * Return a cloned object, or nullptr in case of error.
+     */
+    virtual OGRFieldDomain* Clone() const = 0;
+
+    /** Get the name of the field domain.
+     *
+     * This is the same as the C function OGR_FldDomain_GetName().
+     */
+    const std::string& GetName() const { return m_osName; }
+
+    /** Get the description of the field domain.
+     * Empty string if there is none.
+     *
+     * This is the same as the C function OGR_FldDomain_GetDescription().
+     */
+    const std::string& GetDescription() const { return m_osDescription; }
+
+    /** Get the type of the field domain.
+     *
+     * This is the same as the C function OGR_FldDomain_GetDomainType().
+     */
+    OGRFieldDomainType GetDomainType() const { return m_eDomainType; }
+
+    /** Get the field type.
+     *
+     * This is the same as the C function OGR_FldDomain_GetFieldType().
+     */
+    OGRFieldType GetFieldType() const { return m_eFieldType; }
+
+    /** Get the field subtype.
+     *
+     * This is the same as the C function OGR_FldDomain_GetFieldSubType().
+     */
+    OGRFieldSubType GetFieldSubType() const { return m_eFieldSubType; }
+
+    /** Convert a OGRFieldDomain* to a OGRFieldDomainH. */
+    static inline OGRFieldDomainH ToHandle(OGRFieldDomain* poFieldDomain)
+        { return reinterpret_cast<OGRFieldDomainH>(poFieldDomain); }
+
+    /** Convert a OGRFieldDomainH to a OGRFieldDomain*. */
+    static inline OGRFieldDomain* FromHandle(OGRFieldDomainH hFieldDomain)
+        { return reinterpret_cast<OGRFieldDomain*>(hFieldDomain); }
+
+    /** Get the split policy.
+     *
+     * This is the same as the C function OGR_FldDomain_GetSplitPolicy().
+     */
+    OGRFieldDomainSplitPolicy GetSplitPolicy() const { return m_eSplitPolicy; }
+
+    /** Set the split policy.
+     *
+     * This is the same as the C function OGR_FldDomain_SetSplitPolicy().
+     */
+    void SetSplitPolicy(OGRFieldDomainSplitPolicy policy) { m_eSplitPolicy = policy; }
+
+    /** Get the merge policy.
+     *
+     * This is the same as the C function OGR_FldDomain_GetMergePolicy().
+     */
+    OGRFieldDomainMergePolicy GetMergePolicy() const { return m_eMergePolicy; }
+
+    /** Set the merge policy.
+     *
+     * This is the same as the C function OGR_FldDomain_SetMergePolicy().
+     */
+    void SetMergePolicy(OGRFieldDomainMergePolicy policy) { m_eMergePolicy = policy; }
+};
+
+/** Definition of a coded / enumerated field domain.
+ *
+ * A code field domain is a domain for which only a limited set of codes,
+ * associated with their expanded value, are allowed.
+ * The type of the code should be the one of the field domain.
+ */
+class CPL_DLL OGRCodedFieldDomain final: public OGRFieldDomain
+{
+private:
+    std::vector<OGRCodedValue>  m_asValues{};
+
+    OGRCodedFieldDomain(const OGRCodedFieldDomain&) = delete;
+    OGRCodedFieldDomain& operator= (const OGRCodedFieldDomain&) = delete;
+
+public:
+    /** Constructor.
+     *
+     * This is the same as the C function OGR_CodedFldDomain_Create()
+     * (except that the C function copies the enumeration, whereas the C++
+     * method moves it)
+     *
+     * @param osName         Domain name.
+     * @param osDescription  Domain description.
+     * @param eFieldType     Field type. Generally numeric. Potentially OFTDateTime
+     * @param eFieldSubType  Field subtype.
+     * @param asValues       Enumeration as (code, value) pairs.
+     *                       Each code should appear only once, but it is the
+     *                       responsibility of the user to check it.
+     */
+    OGRCodedFieldDomain(const std::string& osName,
+                        const std::string& osDescription,
+                        OGRFieldType eFieldType,
+                        OGRFieldSubType eFieldSubType,
+                        std::vector<OGRCodedValue>&& asValues);
+
+    ~OGRCodedFieldDomain() override;
+
+    OGRCodedFieldDomain* Clone() const override;
+
+    /** Get the enumeration as (code, value) pairs.
+     * The end of the enumeration is signaled by code == NULL.
+     *
+     * This is the same as the C function OGR_CodedFldDomain_GetEnumeration().
+     */
+    const OGRCodedValue* GetEnumeration() const { return m_asValues.data(); }
+};
+
+/** Definition of a numeric field domain with a range of validity for values.
+ */
+class CPL_DLL OGRRangeFieldDomain final: public OGRFieldDomain
+{
+private:
+    OGRField            m_sMin;
+    OGRField            m_sMax;
+    bool                m_bMinIsInclusive;
+    bool                m_bMaxIsInclusive;
+
+    OGRRangeFieldDomain(const OGRRangeFieldDomain&) = delete;
+    OGRRangeFieldDomain& operator= (const OGRRangeFieldDomain&) = delete;
+
+public:
+    /** Constructor.
+     *
+     * This is the same as the C function OGR_RangeFldDomain_Create().
+     *
+     * @param osName          Domain name.
+     * @param osDescription   Domain description.
+     * @param eFieldType      Field type.
+     *                        One among OFTInteger, OFTInteger64, OFTReal or OFTDateTime
+     * @param eFieldSubType   Field subtype.
+     * @param sMin            Minimum value.
+     *                        Which member in the OGRField enum must be read
+     *                        depends on the field type.
+     *                        If no minimum is set (might not be supported by
+     *                        all backends), then initialize the value with
+     *                        OGR_RawField_SetUnset().
+     * @param bMinIsInclusive Whether the minimum value is included in the range.
+     * @param sMax            Minimum value.
+     *                        Which member in the OGRField enum must be read
+     *                        depends on the field type.
+     *                        If no maximum is set (might not be supported by
+     *                        all backends), then initialize the value with
+     *                        OGR_RawField_SetUnset().
+     * @param bMaxIsInclusive Whether the minimum value is included in the range.
+     */
+    OGRRangeFieldDomain(const std::string& osName,
+                        const std::string& osDescription,
+                        OGRFieldType eFieldType,
+                        OGRFieldSubType eFieldSubType,
+                        const OGRField& sMin,
+                        bool        bMinIsInclusive,
+                        const OGRField& sMax,
+                        bool        bMaxIsInclusive);
+
+    OGRRangeFieldDomain* Clone() const override {
+        return new OGRRangeFieldDomain(m_osName, m_osDescription,
+                                       m_eFieldType, m_eFieldSubType,
+                                       m_sMin, m_bMinIsInclusive,
+                                       m_sMax, m_bMaxIsInclusive);
+    }
+
+    /** Get the minimum value.
+     *
+     * Which member in the returned OGRField enum must be read depends on the field type.
+     *
+     * If no minimum value is set, the OGR_RawField_IsUnset() will return true
+     * when called on the result.
+     *
+     * This is the same as the C function OGR_RangeFldDomain_GetMin().
+     *
+     * @param bIsInclusiveOut set to true if the minimum is included in the range.
+     */
+    const OGRField& GetMin(bool& bIsInclusiveOut) const {
+        bIsInclusiveOut = m_bMinIsInclusive;
+        return m_sMin;
+    }
+
+    /** Get the maximum value.
+     *
+     * Which member in the returned OGRField enum must be read depends on the field type.
+     *
+     * If no maximum value is set, the OGR_RawField_IsUnset() will return true
+     * when called on the result.
+     *
+     * This is the same as the C function OGR_RangeFldDomain_GetMax().
+     *
+     * @param bIsInclusiveOut set to true if the maximum is included in the range.
+     */
+    const OGRField& GetMax(bool& bIsInclusiveOut) const {
+        bIsInclusiveOut = m_bMaxIsInclusive;
+        return m_sMax;
+    }
+};
+
+/** Definition of a field domain for field content validated by a glob.
+ *
+ * Globs are matching expression like "*[a-z][0-1]?"
+ */
+class CPL_DLL OGRGlobFieldDomain final: public OGRFieldDomain
+{
+private:
+    std::string     m_osGlob;
+
+    OGRGlobFieldDomain(const OGRGlobFieldDomain&) = delete;
+    OGRGlobFieldDomain& operator= (const OGRGlobFieldDomain&) = delete;
+
+public:
+    /** Constructor.
+     *
+     * This is the same as the C function OGR_GlobFldDomain_Create().
+     *
+     * @param osName          Domain name.
+     * @param osDescription   Domain description.
+     * @param eFieldType      Field type.
+     * @param eFieldSubType   Field subtype.
+     * @param osBlob          Blob expression
+     */
+    OGRGlobFieldDomain(const std::string& osName,
+                       const std::string& osDescription,
+                       OGRFieldType eFieldType,
+                       OGRFieldSubType eFieldSubType,
+                       const std::string& osBlob);
+
+    OGRGlobFieldDomain* Clone() const override {
+        return new OGRGlobFieldDomain(m_osName, m_osDescription,
+                                      m_eFieldType, m_eFieldSubType,
+                                      m_osGlob);
+    }
+
+    /** Get the glob expression.
+     *
+     * This is the same as the C function OGR_GlobFldDomain_GetGlob().
+     */
+    const std::string& GetGlob() const { return m_osGlob; }
+};
 
 /************************************************************************/
 /*                           OGRFeatureQuery                            */

@@ -71,7 +71,10 @@ ccache -s
 
 # Build proj
 (cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure --disable-static --prefix=/usr/local && make -j3)
-(cd proj; sudo make -j3 install && sudo mv /usr/local/lib/libproj.so.15.0.0 /usr/local/lib/libinternalproj.so.15.0.0 && sudo rm /usr/local/lib/libproj.so*  && sudo rm /usr/local/lib/libproj.la && sudo ln -f -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so.15 && sudo ln -f -s libinternalproj.so.15.0.0  /usr/local/lib/libinternalproj.so)
+(cd proj; sudo make -j3 install)
+sudo sh -c "apt-get remove -y libproj-dev"
+
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 CURRENT_DIR=$PWD
 cd gdal

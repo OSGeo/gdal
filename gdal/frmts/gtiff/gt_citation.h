@@ -65,7 +65,7 @@ void SetLinearUnitCitation( std::map<geokey_t, std::string>& oMapAsciiKeys,
                             const char* pszLinearUOMName );
 void SetGeogCSCitation( GTIF * psGTIF,
                         std::map<geokey_t, std::string>& oMapAsciiKeys,
-                        OGRSpatialReference *poSRS,
+                        const OGRSpatialReference *poSRS,
                         const char* angUnitName, int nDatum, short nSpheroid );
 OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
                             geokey_t geoKey, OGRSpatialReference* poSRS,

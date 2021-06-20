@@ -53,20 +53,20 @@ namespace nccfdriver
     class SGeometry_Feature
     {
         bool hasInteriorRing;
-        OGRGeometry * geometry_ref;
+        const OGRGeometry * geometry_ref;
         geom_t type;
         size_t total_point_count;
         size_t total_part_count;
         std::vector<size_t> ppart_node_count;
         std::vector<bool> part_at_ind_interior; // for use with Multipolygons ONLY
-        OGRPoint pt_buffer;
+        mutable OGRPoint pt_buffer;
 
         public:
             geom_t getType() { return this->type; }
             size_t getTotalNodeCount() { return this->total_point_count; }
             size_t getTotalPartCount() { return this->total_part_count;  }
             std::vector<size_t> & getPerPartNodeCount() { return this->ppart_node_count; }
-            OGRPoint& getPoint(size_t part_no, int point_index);
+            const OGRPoint& getPoint(size_t part_no, int point_index) const;
             explicit SGeometry_Feature(OGRFeature&);
             bool getHasInteriorRing() { return this->hasInteriorRing; }
             bool IsPartAtIndInteriorRing(size_t ind) { return this->part_at_ind_interior[ind]; } // ONLY used for Multipolygon
@@ -381,7 +381,7 @@ namespace nccfdriver
 
            /* setSingleDatumMode(...)
             * Enables or disables single datum mode
-            * DO NOT use this when a commit is taking place, otherwise 
+            * DO NOT use this when a commit is taking place, otherwise
             * corruption may occur...
             */
            void setSingleDatumMode(bool sdm) { this->singleDatumMode = sdm; }

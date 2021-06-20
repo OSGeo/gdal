@@ -460,7 +460,7 @@ void OGROpenFileGDBLayer::TryToDetectMultiPatchKind()
 
     int nLastIdx = m_poLyrTable->GetTotalRecordCount()-1;
     const GUInt32 nErrorCount = CPLGetErrorCounter();
-    while( nLastIdx > nFirstIdx && 
+    while( nLastIdx > nFirstIdx &&
            m_poLyrTable->GetOffsetInTableForRow(nLastIdx) == 0 &&
            nErrorCount == CPLGetErrorCounter() )
     {
@@ -608,8 +608,24 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         m_eGeomType = wkbNone;
     }
 
-    CPLXMLNode* psTree = nullptr;
-    CPLXMLNode* psGPFieldInfoExs = nullptr;
+    CPLXMLTreeCloser oTree(nullptr);
+    const CPLXMLNode* psGPFieldInfoExs = nullptr;
+
+    if( !m_osDefinition.empty() )
+    {
+        oTree.reset(CPLParseXMLString(m_osDefinition.c_str()));
+        if( oTree != nullptr )
+        {
+            CPLStripXMLNamespace( oTree.get(), nullptr, TRUE );
+            CPLXMLNode* psInfo =
+                CPLSearchXMLNode( oTree.get(), "=DEFeatureClassInfo" );
+            if( psInfo == nullptr )
+                psInfo = CPLSearchXMLNode( oTree.get(), "=DETableInfo" );
+            if( psInfo != nullptr )
+                psGPFieldInfoExs =
+                    CPLGetXMLNode(psInfo, "GPFieldInfoExs");
+        }
+    }
 
     for(int i=0;i<m_poLyrTable->GetFieldCount();i++)
     {
@@ -678,6 +694,26 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         if( eType == OFTString && nWidth < 65535 )
             oFieldDefn.SetWidth(nWidth);
         oFieldDefn.SetNullable(poGDBField->IsNullable());
+
+        const CPLXMLNode* psFieldDef = nullptr;
+        if( psGPFieldInfoExs != nullptr )
+        {
+            for(const CPLXMLNode* psChild = psGPFieldInfoExs->psChild;
+                            psChild != nullptr;
+                            psChild = psChild->psNext )
+            {
+                if( psChild->eType != CXT_Element )
+                    continue;
+                if( EQUAL( psChild->pszValue, "GPFieldInfoEx") &&
+                    EQUAL( CPLGetXMLValue(psChild, "Name", ""),
+                           poGDBField->GetName().c_str()) )
+                {
+                    psFieldDef = psChild;
+                    break;
+                }
+            }
+        }
+
         const OGRField* psDefault = poGDBField->GetDefault();
         if( !OGR_RawField_IsUnset(psDefault) && !OGR_RawField_IsNull(psDefault) )
         {
@@ -697,48 +733,22 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 // a00000004.gdbtable does not match the default values (in
                 // binary) found in the field definition section of the
                 // .gdbtable of the layers themselves So check consistency.
-                if( !m_osDefinition.empty() && psTree == nullptr )
-                {
-                    psTree = CPLParseXMLString(m_osDefinition.c_str());
-                    if( psTree != nullptr )
-                    {
-                        CPLStripXMLNamespace( psTree, nullptr, TRUE );
-                        CPLXMLNode* psInfo =
-                            CPLSearchXMLNode( psTree, "=DEFeatureClassInfo" );
-                        if( psInfo == nullptr )
-                            psInfo = CPLSearchXMLNode( psTree, "=DETableInfo" );
-                        if( psInfo != nullptr )
-                            psGPFieldInfoExs =
-                                CPLGetXMLNode(psInfo, "GPFieldInfoExs");
-                    }
-                }
+
                 const char* pszDefaultValue = nullptr;
-                if( psGPFieldInfoExs != nullptr )
+                if( psFieldDef )
                 {
-                    for(CPLXMLNode* psChild = psGPFieldInfoExs->psChild;
-                                    psChild != nullptr;
-                                    psChild = psChild->psNext )
-                    {
-                        if( psChild->eType != CXT_Element )
-                            continue;
-                        if( EQUAL( psChild->pszValue, "GPFieldInfoEx") &&
-                            EQUAL( CPLGetXMLValue(psChild, "Name", ""),
-                                   poGDBField->GetName().c_str()) )
-                        {
-                            // From ArcGIS this is called DefaultValueNumeric
-                            // for integer and real From FileGDB API this is
-                            // called DefaultValue xsi:type=xs:int for integer
-                            // and DefaultValueNumeric for real ...
-                            pszDefaultValue =
-                                CPLGetXMLValue( psChild, "DefaultValueNumeric",
-                                                nullptr );
-                            if( pszDefaultValue == nullptr )
-                                pszDefaultValue =
-                                    CPLGetXMLValue( psChild, "DefaultValue",
-                                                    nullptr );
-                            break;
-                        }
-                    }
+                    // From ArcGIS this is called DefaultValueNumeric
+                    // for integer and real.
+                    // From FileGDB API this is
+                    // called DefaultValue xsi:type=xs:int for integer
+                    // and DefaultValueNumeric for real ...
+                    pszDefaultValue =
+                        CPLGetXMLValue( psFieldDef, "DefaultValueNumeric",
+                                        nullptr );
+                    if( pszDefaultValue == nullptr )
+                        pszDefaultValue =
+                            CPLGetXMLValue( psFieldDef, "DefaultValue",
+                                            nullptr );
                 }
                 if( pszDefaultValue != nullptr )
                 {
@@ -786,6 +796,14 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                                 psDefault->Date.Minute,
                                 static_cast<int>(psDefault->Date.Second) ));
         }
+
+        if( psFieldDef )
+        {
+            const char* pszDomainName = CPLGetXMLValue(psFieldDef, "DomainName", nullptr);
+            if( pszDomainName )
+                oFieldDefn.SetDomainName(pszDomainName);
+        }
+
         m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
     }
 
@@ -794,9 +812,6 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         OGRFieldDefn oFieldDefn("_deleted_", OFTInteger);
         m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
     }
-
-    if( psTree != nullptr )
-        CPLDestroyXMLNode(psTree);
 
     return TRUE;
 }

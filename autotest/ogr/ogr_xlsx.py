@@ -96,7 +96,7 @@ def ogr_xlsx_check(ds):
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Basic tests
 
@@ -393,7 +393,7 @@ def test_ogr_xlsx_13():
         assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ, \
             'invalid type for field {}'.format(i + 1)
 
-    
+
 ###############################################################################
 # Test that field names are picked up even if last field has no data
 
@@ -435,7 +435,7 @@ def test_ogr_xlsx_14():
         assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == typ, \
             'invalid type for field {}'.format(i + 1)
 
-    
+
 ###############################################################################
 # Test appending a layer to an existing document
 
@@ -501,3 +501,15 @@ def test_ogr_xlsx_read_datetime():
                    '2020/04/07 10:10:00',
                    '2020/04/07 10:29:00',
                    '2020/04/07 10:42:00']
+
+
+###############################################################################
+# Test reading cells with inline formatting (#3729)
+
+
+def test_ogr_xlsx_read_cells_with_inline_formatting():
+
+    ds = ogr.Open('data/xlsx/cells_with_inline_formatting.xlsx')
+    lyr = ds.GetLayer(0)
+    got = [ (f[0], f[1], f[2]) for f in lyr ]
+    assert got == [(1, 'text 2', 'text 3'), (2, 'text 4', 'text5')]

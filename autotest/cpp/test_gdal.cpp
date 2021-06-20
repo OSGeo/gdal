@@ -654,6 +654,7 @@ namespace tut
                 GDALExtendedDataType m_dt;
                 std::vector<std::shared_ptr<GDALDimension>> m_dims;
                 std::vector<GUInt64> m_blockSize;
+                const std::string m_osEmptyFilename{};
 
                 static std::vector<std::shared_ptr<GDALDimension>> BuildDims(
                     const std::vector<GUInt64>& sizes)
@@ -698,6 +699,8 @@ namespace tut
                 }
 
                 bool IsWritable() const override { return true; }
+
+                const std::string& GetFilename() const override { return m_osEmptyFilename; }
 
                 static std::shared_ptr<myArray> Create(GDALDataType eDT,
                                 const std::vector<GUInt64>& sizes,
@@ -1675,5 +1678,80 @@ namespace tut
 
         poDS.reset();
         VSIUnlink("/vsimem/tmp.pix");
+    }
+
+    // Test GDALBufferHasOnlyNoData()
+    template<> template<> void object::test<22>()
+    {
+        /* bool CPL_DLL GDALBufferHasOnlyNoData(const void* pBuffer,
+                                     double dfNoDataValue,
+                                     size_t nWidth, size_t nHeight,
+                                     size_t nLineStride,
+                                     size_t nComponents,
+                                     int nBitsPerSample,
+                                     GDALBufferSampleFormat nSampleFormat);
+         */
+        ensure( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x01", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 1, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x00", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 2, 2, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+                                        0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
+                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
+
+        uint8_t uint8val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint8val, 1.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint8val, 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint8val, 128 + 1, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+
+        int8_t int8val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int8val, -1.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int8val, 0.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int8val, 256, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+
+        uint16_t uint16val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint16val, 1.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint16val, 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint16val, 65536 + 1, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+
+        int16_t int16val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int16val, -1.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int16val, 0.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int16val, 32768, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+
+        uint32_t uint32val = 1;
+        ensure( GDALBufferHasOnlyNoData(&uint32val, 1.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint32val, 0.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&uint32val, static_cast<double>(0x100000000LL + 1),
+                                         1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+
+        int32_t int32val = -1;
+        ensure( GDALBufferHasOnlyNoData(&int32val, -1.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int32val, 0.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        ensure( !GDALBufferHasOnlyNoData(&int32val, 0x80000000, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+
+        float float32val = -1;
+        ensure( GDALBufferHasOnlyNoData(&float32val, -1.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32val, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32val, 1e50, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+
+        float float32nan = std::numeric_limits<float>::quiet_NaN();
+        ensure( GDALBufferHasOnlyNoData(&float32nan, float32nan, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float32nan, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+
+        double float64val = -1;
+        ensure( GDALBufferHasOnlyNoData(&float64val, -1.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float64val, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+
+        double float64nan = std::numeric_limits<double>::quiet_NaN();
+        ensure( GDALBufferHasOnlyNoData(&float64nan, float64nan, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        ensure( !GDALBufferHasOnlyNoData(&float64nan, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
     }
 } // namespace tut

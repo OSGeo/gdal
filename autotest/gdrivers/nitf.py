@@ -600,7 +600,7 @@ def test_nitf_28_jp2openjpeg():
     return ret
 
 ###############################################################################
-# Test Create() with IC=C8 compression with the JP2OpenJPEG driver
+# Test CreateCopy() with IC=C8 compression with the JP2OpenJPEG driver
 
 
 def test_nitf_28_jp2openjpeg_bis():
@@ -631,6 +631,163 @@ def test_nitf_28_jp2openjpeg_bis():
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return ret
+
+
+###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_jp2openjpeg_npje_numerically_lossless():
+    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if jp2openjpeg_drv is None:
+        pytest.skip()
+
+    src_ds = gdal.Open('../gcore/data/uint16.tif')
+    # May throw a warning with openjpeg < 2.5
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/tmp.ntf',
+                                                src_ds,
+                                                strict=False,
+                                                options=['IC=C8',
+                                                         'ABPP=12',
+                                                         'JPEG2000_DRIVER=JP2OpenJPEG',
+                                                         'PROFILE=NPJE_NUMERICALLY_LOSSLESS'])
+
+    ds = gdal.Open('/vsimem/tmp.ntf')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetMetadataItem('J2KLRA', 'TRE') == '0050000102000000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.90000001912.000000'
+    assert ds.GetMetadataItem('COMRAT', 'DEBUG') in ('N141', 'N142', 'N143', 'N169')
+
+    # Get the JPEG2000 code stream subfile
+    jpeg2000_ds_name = ds.GetMetadataItem('JPEG2000_DATASET_NAME', 'DEBUG')
+    assert jpeg2000_ds_name
+    structure = gdal.GetJPEG2000StructureAsString(jpeg2000_ds_name, ['ALL=YES'])
+    assert structure is not None
+
+    # Check that the structure of the JPEG2000 codestream is the one expected
+    # from the NPJE profile
+    # print(structure)
+    assert '<Field name="Rsiz" type="uint16" description="Profile 1">2</Field>' in structure
+    assert '<Field name="Ssiz0" type="uint8" description="Unsigned 16 bits">15</Field>' in structure
+    assert '<Field name="XTsiz" type="uint32">1024</Field>' in structure
+    assert '<Field name="YTsiz" type="uint32">1024</Field>' in structure
+    assert '<Field name="Scod" type="uint8" description="Standard precincts, No SOP marker segments, No EPH marker segments">0</Field>' in structure
+    assert '<Field name="SGcod_NumLayers" type="uint16">20</Field>' in structure
+    assert '<Field name="SGcod_MCT" type="uint8">0</Field>' in structure
+    assert '<Field name="SPcod_NumDecompositions" type="uint8">5</Field>' in structure
+    assert '<Field name="SPcod_xcb_minus_2" type="uint8" description="64">4</Field>' in structure
+    assert '<Field name="SPcod_ycb_minus_2" type="uint8" description="64">4</Field>' in structure
+    assert '<Field name="SPcod_cbstyle" type="uint8" description="No selective arithmetic coding bypass, No reset of context probabilities on coding pass boundaries, No termination on each coding pass, No vertically causal context, No predictable termination, No segmentation symbols are used">0</Field>' in structure
+    assert '<Field name="SPcod_transformation" type="uint8" description="5-3 reversible">1</Field>' in structure
+
+    if 'TLM' in jp2openjpeg_drv.GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        assert '<Marker name="TLM"' in structure
+        assert '<Marker name="PLT"' in structure
+
+    gdal.Unlink('/vsimem/tmp.ntf')
+
+
+###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_jp2openjpeg_npje_visually_lossless():
+    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if jp2openjpeg_drv is None:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/byte.tif')
+    # May throw a warning with openjpeg < 2.5
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/tmp.ntf',
+                                                src_ds,
+                                                strict=False,
+                                                options=['IC=C8',
+                                                         'JPEG2000_DRIVER=JP2OpenJPEG',
+                                                         'PROFILE=NPJE_VISUALLY_LOSSLESS'])
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    try:
+        ds = gdal.Open('/vsimem/tmp.ntf')
+        assert ds.GetRasterBand(1).Checksum() in (4595, 4606, 4633)
+        assert ds.GetMetadataItem('J2KLRA', 'TRE') == '0050000101900000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.900000'
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
+    assert ds.GetMetadataItem('COMRAT', 'DEBUG').startswith('V')
+
+    # Get the JPEG2000 code stream subfile
+    jpeg2000_ds_name = ds.GetMetadataItem('JPEG2000_DATASET_NAME', 'DEBUG')
+    assert jpeg2000_ds_name
+    structure = gdal.GetJPEG2000StructureAsString(jpeg2000_ds_name, ['ALL=YES'])
+    assert structure is not None
+
+    # Check that the structure of the JPEG2000 codestream is the one expected
+    # from the NPJE profile
+    # print(structure)
+    assert '<Field name="Rsiz" type="uint16" description="Profile 1">2</Field>' in structure
+    assert '<Field name="Ssiz0" type="uint8" description="Unsigned 8 bits">7</Field>' in structure
+    assert '<Field name="XTsiz" type="uint32">1024</Field>' in structure
+    assert '<Field name="YTsiz" type="uint32">1024</Field>' in structure
+    assert '<Field name="Scod" type="uint8" description="Standard precincts, No SOP marker segments, No EPH marker segments">0</Field>' in structure
+    assert '<Field name="SGcod_NumLayers" type="uint16">19</Field>' in structure
+    assert '<Field name="SGcod_MCT" type="uint8">0</Field>' in structure
+    assert '<Field name="SPcod_NumDecompositions" type="uint8">5</Field>' in structure
+    assert '<Field name="SPcod_xcb_minus_2" type="uint8" description="64">4</Field>' in structure
+    assert '<Field name="SPcod_ycb_minus_2" type="uint8" description="64">4</Field>' in structure
+    assert '<Field name="SPcod_cbstyle" type="uint8" description="No selective arithmetic coding bypass, No reset of context probabilities on coding pass boundaries, No termination on each coding pass, No vertically causal context, No predictable termination, No segmentation symbols are used">0</Field>' in structure
+    assert '<Field name="SPcod_transformation" type="uint8" description="9-7 irreversible">0</Field>' in structure
+
+    if 'TLM' in jp2openjpeg_drv.GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        assert '<Marker name="TLM"' in structure
+        assert '<Marker name="PLT"' in structure
+
+    gdal.Unlink('/vsimem/tmp.ntf')
+
+
+###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_jp2openjpeg_npje_visually_lossless_with_quality():
+    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if jp2openjpeg_drv is None:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/byte.tif')
+    # May throw a warning with openjpeg < 2.5
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').CreateCopy('/vsimem/tmp.ntf',
+                                                src_ds,
+                                                strict=False,
+                                                options=['IC=C8',
+                                                         'JPEG2000_DRIVER=JP2OpenJPEG',
+                                                         'PROFILE=NPJE_VISUALLY_LOSSLESS',
+                                                         'QUALITY=30'])
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    try:
+        ds = gdal.Open('/vsimem/tmp.ntf')
+        assert ds.GetRasterBand(1).Checksum() in (4580, 4582, 4600)
+        assert ds.GetMetadataItem('J2KLRA', 'TRE') == '0050000101800000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001702.400000'
+    finally:
+        gdaltest.reregister_all_jpeg2000_drivers()
+
+    # Get the JPEG2000 code stream subfile
+    jpeg2000_ds_name = ds.GetMetadataItem('JPEG2000_DATASET_NAME', 'DEBUG')
+    assert jpeg2000_ds_name
+    structure = gdal.GetJPEG2000StructureAsString(jpeg2000_ds_name, ['ALL=YES'])
+    assert structure is not None
+
+    # Check that the structure of the JPEG2000 codestream is the one expected
+    # from the NPJE profile
+    # print(structure)
+    assert '<Field name="SGcod_NumLayers" type="uint16">18</Field>' in structure
+
+    gdal.Unlink('/vsimem/tmp.ntf')
 
 ###############################################################################
 # Test Create() with a LUT
@@ -1313,7 +1470,7 @@ def test_nitf_48():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test TEXT and CGM creation options with CreateCopy() (#3376)
 
@@ -1448,7 +1605,7 @@ def test_nitf_51():
                     print('xsize = %d, nbpp = %d' % (xsize, nbpp))
                     pytest.fail('did not get expected data')
 
-    
+
 ###############################################################################
 # Test reading GeoSDE TREs
 
@@ -1579,7 +1736,7 @@ def test_nitf_57():
         print(gt)
         return
 
-    
+
 ###############################################################################
 # Test reading STDIDC
 
@@ -1693,7 +1850,7 @@ def test_nitf_60():
     for i in range(6):
         assert gt[i] == pytest.approx(ref_gt[i], abs=1e-6), 'did not get expected geotransform'
 
-    
+
 ###############################################################################
 # Test reading TRE from DE segment
 
@@ -1732,7 +1889,7 @@ def test_nitf_62():
         print("'%s'" % got_comments)
         pytest.fail('did not get expected comments')
 
-    
+
 ###############################################################################
 # Test NITFReadImageLine() and NITFWriteImageLine() when nCols < nBlockWidth (#3551)
 
@@ -2061,7 +2218,7 @@ def compare_rpc(src_md, md):
         elif float(src_md[key]) != float(md[key]):
             print(md)
             pytest.fail('fail: %s value is not the one expected' % key)
-    
+
 
 def test_nitf_72():
 
@@ -2324,7 +2481,7 @@ def test_nitf_73():
     with gdaltest.error_handler():
         gdal.Open('data/nitf/oss_fuzz_1525.ntf')
 
-    
+
 ###############################################################################
 # Test cases for CCLSTA
 #  - Simple case
@@ -2365,10 +2522,10 @@ def test_nitf_74():
 def test_nitf_75():
 
     listing_AG1 = """<?xml version="1.0" encoding="UTF-8"?>
-<genc:GeopoliticalEntityEntry 
-    xmlns:genc="http://api.nsgreg.nga.mil/schema/genc/3.0" 
-    xmlns:genc-cmn="http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<genc:GeopoliticalEntityEntry
+    xmlns:genc="http://api.nsgreg.nga.mil/schema/genc/3.0"
+    xmlns:genc-cmn="http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd">
     <genc:encoding>
         <genc-cmn:char3Code>MMR</genc-cmn:char3Code>
@@ -2423,9 +2580,13 @@ def test_nitf_75():
         <genc:iso6393Char3Code>mya</genc:iso6393Char3Code>
     </genc:localShortName>
 </genc:GeopoliticalEntityEntry>"""
+    len_listing_AG1 = len(listing_AG1)
 
-    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' +
-                                                                                   listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1,
+        options=['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR' +
+                 ('%05d' % len_listing_AG1) + ' ' +
+                 listing_AG1 +
+                 '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
     ds = None
 
     ds = gdal.Open('/vsimem/nitf_75.ntf')
@@ -2460,67 +2621,9 @@ def test_nitf_75():
         <field name="EQTYPE" value="" />
         <field name="ESURN_LEN" value="17" />
         <field name="ESURN" value="ge:GENC:3:3-5:MMR" />
-        <field name="DETAIL_LEN" value="04108" />
+        <field name="DETAIL_LEN" value="%05d" />
         <field name="DETAIL_CMPR" value="" />
-        <field name="DETAIL" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;genc:GeopoliticalEntityEntry 
-    xmlns:genc=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0&quot; 
-    xmlns:genc-cmn=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn&quot; 
-    xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; 
-    xsi:schemaLocation=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd&quot;&gt;
-    &lt;genc:encoding&gt;
-        &lt;genc-cmn:char3Code&gt;MMR&lt;/genc-cmn:char3Code&gt;
-        &lt;genc-cmn:char3CodeURISet&gt;
-            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/3/3-5&lt;/genc-cmn:codespaceURL&gt;
-            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:3:3-5&lt;/genc-cmn:codespaceURN&gt;
-            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:3:3-5&lt;/genc-cmn:codespaceURNBased&gt;
-            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:3:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
-        &lt;/genc-cmn:char3CodeURISet&gt;
-        &lt;genc-cmn:char2Code&gt;MM&lt;/genc-cmn:char2Code&gt;
-        &lt;genc-cmn:char2CodeURISet&gt;
-            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/2/3-5&lt;/genc-cmn:codespaceURL&gt;
-            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:2:3-5&lt;/genc-cmn:codespaceURN&gt;
-            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:2:3-5&lt;/genc-cmn:codespaceURNBased&gt;
-            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:2:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
-        &lt;/genc-cmn:char2CodeURISet&gt;
-        &lt;genc-cmn:numericCode&gt;104&lt;/genc-cmn:numericCode&gt;
-        &lt;genc-cmn:numericCodeURISet&gt;
-            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/n/3-5&lt;/genc-cmn:codespaceURL&gt;
-            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:n:3-5&lt;/genc-cmn:codespaceURN&gt;
-            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:n:3-5&lt;/genc-cmn:codespaceURNBased&gt;
-            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:n:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
-        &lt;/genc-cmn:numericCodeURISet&gt;
-    &lt;/genc:encoding&gt;
-    &lt;genc:name&gt;&lt;![CDATA[BURMA]]&gt;&lt;/genc:name&gt;
-    &lt;genc:shortName&gt;&lt;![CDATA[Burma]]&gt;&lt;/genc:shortName&gt;
-    &lt;genc:fullName&gt;&lt;![CDATA[Union of Burma]]&gt;&lt;/genc:fullName&gt;
-    &lt;genc:gencStatus&gt;exception&lt;/genc:gencStatus&gt;
-    &lt;genc:entryDate&gt;2016-09-30&lt;/genc:entryDate&gt;
-    &lt;genc:entryType&gt;unchanged&lt;/genc:entryType&gt;
-    &lt;genc:usRecognition&gt;independent&lt;/genc:usRecognition&gt;
-    &lt;genc:entryNotesOnNaming&gt;&lt;![CDATA[
-        The GENC Standard specifies the name &quot;BURMA&quot; where instead ISO 3166-1 specifies &quot;MYANMAR&quot;; GENC specifies the short name &quot;Burma&quot; where instead ISO 3166-1 specifies &quot;Myanmar&quot;; and GENC specifies the full name &quot;Union of Burma&quot; where instead ISO 3166-1 specifies &quot;the Republic of the Union of Myanmar&quot;. The GENC Standard specifies the local short name for 'my'/'mya' as &quot;Myanma Naingngandaw&quot; where instead ISO 3166-1 specifies &quot;Myanma&quot;.
-        ]]&gt;&lt;/genc:entryNotesOnNaming&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-01&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-02&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-03&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-04&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-05&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-06&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-07&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-11&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-12&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-13&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-14&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-15&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-16&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-17&lt;/genc:division&gt;
-    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-18&lt;/genc:division&gt;
-    &lt;genc:localShortName&gt;
-        &lt;genc:name&gt;&lt;![CDATA[Myanma Naingngandaw]]&gt;&lt;/genc:name&gt;
-        &lt;genc:iso6393Char3Code&gt;mya&lt;/genc:iso6393Char3Code&gt;
-    &lt;/genc:localShortName&gt;
-&lt;/genc:GeopoliticalEntityEntry&gt;" />
+        <field name="DETAIL" value="%s" />
       </group>
       <group index="3">
         <field name="CODE_LEN" value="3" />
@@ -2549,7 +2652,7 @@ def test_nitf_75():
     </repeated>
   </tre>
 </tres>
-"""
+""" % (len_listing_AG1, gdal.EscapeString(listing_AG1, gdal.CPLES_XML))
 
     assert data == expected_data
 
@@ -3111,7 +3214,7 @@ def test_nitf_87():
         hex_string("GEOD") + \
         bit_mask + hex_string("00120050407072410+33.234974+044.333405+27.8100000E+0132.8+54.9167.5+52.5") + \
         hex_string("-163.4004099.2+84.0")
-               
+
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_87.ntf', 1, 1, options=[tre_data])
     ds = None
 
@@ -3176,7 +3279,7 @@ def test_nitf_87():
 def test_nitf_88():
     tre_data = "TRE=CSWRPB=1F199.9999999900000010000002000000300000040000005000000600000070000008" \
                "1111-9.99999999999999E-99+9.99999999999999E+9900000"
-               
+
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_88.ntf', 1, 1, options=[tre_data])
     ds = None
 
@@ -3237,7 +3340,7 @@ def test_nitf_88():
 
 def test_nitf_89():
     tre_data = "TRE=CSRLSB=0101+11111111.11-22222222.22+33333333.33-44444444.44"
-               
+
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_89.ntf', 1, 1, options=[tre_data])
     ds = None
 
@@ -3841,6 +3944,26 @@ def test_nitf_invalid_udid():
         'BLOCKA metadata has unexpected value.'
 
 ###############################################################################
+# Test limits on creation
+
+
+def test_nitf_create_too_large_file():
+
+    # Test 1e10 byte limit for a single image
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create('/vsimem/out.ntf', int(1e5), int(1e5))
+    assert gdal.GetLastErrorMsg() != ''
+
+    # Test 1e12 byte limit for while file
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create('/vsimem/out.ntf', int(1e5), int(1e5) // 2, options = ['NUMI=200'])
+    assert gdal.GetLastErrorMsg() != ''
+
+    gdal.Unlink('/vsimem/out.ntf')
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 
@@ -3959,7 +4082,7 @@ def test_nitf_online_7():
                                      % filename)
         ds = None
 
-    
+
 ###############################################################################
 # Test JPEG-compressed multi-block mono-band image with a data mask subheader (IC=M3, IMODE=B)
 
@@ -4036,7 +4159,7 @@ def test_nitf_online_10():
     for item in tab:
         assert mdCGM[item[0]] == item[1], ('wrong value for %s.' % item[0])
 
-    
+
 ###############################################################################
 # 5 text files
 
@@ -4153,7 +4276,7 @@ def test_nitf_online_14(not_jpeg_9b):
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test opening a IC=C8 NITF file with the various JPEG2000 drivers
 
@@ -4482,7 +4605,7 @@ def test_nitf_online_22():
         assert md[item[0]] == item[1], ('(4) wrong value for %s, got %s instead of %s.'
                                  % (item[0], md[item[0]], item[1]))
 
-    
+
 ###############################################################################
 # Test reading a M4 compressed file (fixed for #3848)
 

@@ -1753,7 +1753,7 @@ def test_warp_ds_rms():
     if gdaltest.tiff_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('VRT', 'utmsmall_ds_rms.vrt', 1, 4770)
+    tst = gdaltest.GDALTest('VRT', 'utmsmall_ds_rms.vrt', 1, 4926)
 
     return tst.testOpen()
 
@@ -1763,7 +1763,7 @@ def test_warp_rms_1():
     if gdaltest.tiff_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('VRT', 'utmsmall_rms_float.vrt', 1, 30396)
+    tst = gdaltest.GDALTest('VRT', 'utmsmall_rms_float.vrt', 1, 29819)
 
     return tst.testOpen()
 
@@ -1773,6 +1773,6 @@ def test_warp_rms_2():
     if gdaltest.tiff_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('VRT', 'utmsmall_rms.vrt', 1, 30396)
-
-    return tst.testOpen()
+    ds = gdal.Open('data/utmsmall_rms.vrt')
+    # 29818 on non-Intel archs
+    assert ds.GetRasterBand(1).Checksum() in (29818, 29819)

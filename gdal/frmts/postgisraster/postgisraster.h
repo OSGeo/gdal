@@ -182,8 +182,10 @@ private:
 public:
     PostGISRasterDriver();
     virtual ~PostGISRasterDriver();
-    PGconn* GetConnection(const char* pszConnectionString,
-        const char * pszDbnameIn, const char * pszHostIn, const char * pszPortIn, const char * pszUserIn);
+  PGconn *GetConnection(const char *pszConnectionString,
+                        const char *pszServiceIn, const char *pszDbnameIn,
+                        const char *pszHostIn, const char *pszPortIn,
+                        const char *pszUserIn);
 };
 
 /***********************************************************************

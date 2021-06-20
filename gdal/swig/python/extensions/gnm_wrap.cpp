@@ -3250,7 +3250,10 @@ void DontUseExceptions() {
     }
     char* pszNewValue = CPLStrdup(pszValue + strlen(MODULE_NAME) + 1);
     if( pszNewValue[0] == ' ' && pszNewValue[1] == '\0' )
+    {
+        CPLFree(pszNewValue);
         pszNewValue = NULL;
+    }
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     CPLFree(pszNewValue);
     bUseExceptions = 0;
@@ -3345,6 +3348,13 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
         return NULL;
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
       pszNewStr = (char *) malloc(nLen+1);
+      if( pszNewStr == NULL )
+      {
+          CPLError(CE_Failure, CPLE_OutOfMemory, "Failed to allocate %llu bytes",
+                   (unsigned long long)(nLen + 1));
+          Py_XDECREF(pyUTF8Str);
+          return NULL;
+      }
       memcpy(pszNewStr, pszStr, nLen+1);
       Py_XDECREF(pyUTF8Str);
       *pbToFree = 1;
@@ -4677,11 +4687,6 @@ SWIGINTERN PyObject *_wrap_Network_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
       {
         SWIG_fail;
       }
-    }
-  }
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
     }
   }
   {
@@ -6118,7 +6123,7 @@ static swig_type_info _swigt__p_OGRFeatureShadow = {"_p_OGRFeatureShadow", "OGRF
 static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OSRAxisMappingStrategy *|OGRFieldType *|CPLErr *|int *|OGRwkbGeometryType *|OGRJustification *|OGRAxisOrientation *|GNMDirection *|OGRwkbByteOrder *|OGRErr *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldType *|OGRFieldDomainType *|OGRFieldSubType *|int *|OSRAxisMappingStrategy *|OGRwkbByteOrder *|CPLErr *|GNMDirection *|OGRAxisOrientation *|OGRJustification *|OGRErr *|OGRwkbGeometryType *|OGRFieldDomainMergePolicy *|OGRFieldDomainSplitPolicy *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
@@ -6878,3 +6883,4 @@ SWIG_init(void) {
 #endif
 }
 
+#define POST_PROCESSING_APPLIED

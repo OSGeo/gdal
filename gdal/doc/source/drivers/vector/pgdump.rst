@@ -149,13 +149,13 @@ Example
 
    ::
 
-      % ogr2ogr --config PG_USE_COPY YES -f PGDump abc.sql abc.shp -lco SRID=32631
+      ogr2ogr --config PG_USE_COPY YES -f PGDump abc.sql abc.shp -lco SRID=32631
 
 -  Pipe the output of the PGDump driver into the psql utility.
 
    ::
 
-      % ogr2ogr --config PG_USE_COPY YES -f PGDump /vsistdout/ abc.shp | psql -d my_dbname -f -
+      ogr2ogr --config PG_USE_COPY YES -f PGDump /vsistdout/ abc.shp | psql -d my_dbname -f -
 
 See Also
 ~~~~~~~~

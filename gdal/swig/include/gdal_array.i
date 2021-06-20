@@ -1688,18 +1688,21 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
         _RaiseException()
     return ret
 
-def ExtendedDataTypeToNumPyDataType(dt):
+def _ExtendedDataTypeToNumPyDataType(dt):
     klass = dt.GetClass()
 
     if klass == gdal.GEDTC_STRING:
-        return numpy.bytes_
+        return numpy.bytes_, dt
 
     if klass == gdal.GEDTC_NUMERIC:
         buf_type = dt.GetNumericDataType()
         typecode = GDALTypeCodeToNumericTypeCode(buf_type)
         if typecode is None:
             typecode = numpy.float32
-        return typecode
+            dt = gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+        else:
+            dt = gdal.ExtendedDataType.Create(NumericTypeCodeToGDALTypeCode(typecode))
+        return typecode, dt
 
     assert klass == gdal.GEDTC_COMPOUND
     names = []
@@ -1707,13 +1710,20 @@ def ExtendedDataTypeToNumPyDataType(dt):
     offsets = []
     for comp in dt.GetComponents():
         names.append(comp.GetName())
-        formats.append(ExtendedDataTypeToNumPyDataType(comp.GetType()))
+        typecode, subdt = _ExtendedDataTypeToNumPyDataType(comp.GetType())
+        if subdt != comp.GetType():
+            raise Exception("Incompatible datatype")
+        formats.append(typecode)
         offsets.append(comp.GetOffset())
 
     return numpy.dtype({'names': names,
                         'formats': formats,
                         'offsets': offsets,
-                        'itemsize': dt.GetSize()})
+                        'itemsize': dt.GetSize()}), dt
+
+def ExtendedDataTypeToNumPyDataType(dt):
+    typecode, _ = _ExtendedDataTypeToNumPyDataType(dt)
+    return typecode
 
 def MDArrayReadAsArray(mdarray,
                         array_start_idx = None,
@@ -1727,12 +1737,18 @@ def MDArrayReadAsArray(mdarray,
         count = [ dim.GetSize() for dim in mdarray.GetDimensions() ]
     if not array_step:
         array_step = [1] * mdarray.GetDimensionCount()
-    if not buffer_datatype:
-        buffer_datatype = mdarray.GetDataType()
 
     if buf_obj is None:
-        typecode = ExtendedDataTypeToNumPyDataType(buffer_datatype)
+        if not buffer_datatype:
+            buffer_datatype = mdarray.GetDataType()
+        typecode, buffer_datatype = _ExtendedDataTypeToNumPyDataType(buffer_datatype)
         buf_obj = numpy.empty(count, dtype=typecode)
+    else:
+        datatype = NumericTypeCodeToGDALTypeCode(buf_obj.dtype.type)
+        if not datatype:
+            raise ValueError("array does not have corresponding GDAL data type")
+
+        buffer_datatype = gdal.ExtendedDataType.Create(datatype)
 
     ret = MDArrayIONumPy(False, mdarray, buf_obj, array_start_idx, array_step, buffer_datatype)
     if ret != 0:
@@ -1748,7 +1764,8 @@ def MDArrayWriteArray(mdarray, array,
         array_step = [1] * mdarray.GetDimensionCount()
 
     buffer_datatype = mdarray.GetDataType()
-    if array.dtype != ExtendedDataTypeToNumPyDataType(buffer_datatype):
+    typecode = ExtendedDataTypeToNumPyDataType(buffer_datatype)
+    if array.dtype != typecode:
         datatype = NumericTypeCodeToGDALTypeCode(array.dtype.type)
 
         # if we receive some odd type, like int64, try casting to a very

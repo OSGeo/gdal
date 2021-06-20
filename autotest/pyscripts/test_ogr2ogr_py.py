@@ -1270,7 +1270,7 @@ def test_ogr2ogr_py_44():
     lyr.CreateFeature(feat)
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
 
     f = open('tmp/test_ogr2ogr_44.xsd')
     data = f.read()
@@ -1317,7 +1317,7 @@ def test_ogr2ogr_py_45():
     lyr.CreateFeature(feat)
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
 
     f = open('tmp/test_ogr2ogr_44.xsd')
     data = f.read()
@@ -1364,7 +1364,7 @@ def test_ogr2ogr_py_46():
     lyr.CreateFeature(feat)
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML tmp/test_ogr2ogr_45.gml tmp/test_ogr2ogr_45_src.shp -nlt PROMOTE_TO_MULTI')
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' -f GML -dsco FORMAT=GML2 tmp/test_ogr2ogr_45.gml tmp/test_ogr2ogr_45_src.shp -nlt PROMOTE_TO_MULTI')
 
     f = open('tmp/test_ogr2ogr_45.xsd')
     data = f.read()

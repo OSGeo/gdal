@@ -363,45 +363,45 @@ Examples
 
    ::
 
-      % gdal_translate -of DB2ODBC byte.tif DB2ODBC:database=sample;DSN=SAMPLE
+      gdal_translate -of DB2ODBC byte.tif DB2ODBC:database=sample;DSN=SAMPLE
 
 -  Translation of a GeoTIFF into DB2 using WebP tiles
 
    ::
 
-      % gdal_translate -of DB2ODBC byte.tif DB2ODBC:database=sample;DSN=SAMPLE -co TILE_FORMAT=WEBP
+      gdal_translate -of DB2ODBC byte.tif DB2ODBC:database=sample;DSN=SAMPLE -co TILE_FORMAT=WEBP
 
 -  Translation of a GeoTIFF into DB2 using GoogleMapsCompatible tiling
    scheme (with reprojection and resampling if needed)
 
    ::
 
-      % gdal_translate -of DB2ODBC byte.tif DB2ODBC:database=sample;DSN=SAMPLE -co TILING_SCHEME=GoogleMapsCompatible
+      gdal_translate -of DB2ODBC byte.tif DB2ODBC:database=sample;DSN=SAMPLE -co TILING_SCHEME=GoogleMapsCompatible
 
 -  Building of overviews of an existing DB2
 
    ::
 
-      % gdaladdo -oo RASTER_TABLE=world -r cubic DB2ODBC:database=sample;DSN=SAMPLE 2 4 8 16 32 64
+      gdaladdo -oo RASTER_TABLE=world -r cubic DB2ODBC:database=sample;DSN=SAMPLE 2 4 8 16 32 64
 
 -  Addition of a new subdataset to an existing DB2, and choose a non
    default name for the raster table.
 
    ::
 
-      % gdal_translate -of DB2ODBC new.tif DB2ODBC:database=sample;DSN=SAMPLE -co APPEND_SUBDATASET=YES -co RASTER_TABLE=new_table
+      gdal_translate -of DB2ODBC new.tif DB2ODBC:database=sample;DSN=SAMPLE -co APPEND_SUBDATASET=YES -co RASTER_TABLE=new_table
 
 -  Reprojection of an input dataset to DB2
 
    ::
 
-      % gdalwarp -of DB2ODBC -co RASTER_TABLE=new_table in.tif DB2ODBC:database=sample;DSN=SAMPLE -t_srs EPSG:3857
+      gdalwarp -of DB2ODBC -co RASTER_TABLE=new_table in.tif DB2ODBC:database=sample;DSN=SAMPLE -t_srs EPSG:3857
 
 -  Open a specific raster table in a DB2
 
    ::
 
-      % gdalinfo DB2ODBC:database=sample;DSN=SAMPLE -oo TABLE=a_table
+      gdalinfo DB2ODBC:database=sample;DSN=SAMPLE -oo TABLE=a_table
 
 See Also
 --------

@@ -23,7 +23,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     libopenexr-dev libheif-dev \
     libdeflate-dev \
     mono-mcs libmono-system-drawing4.0-cil ccache \
-    perl ant
+    perl ant \
+    opencl-c-headers ocl-icd-opencl-dev
 
 # Build likbkea
 KEA_VERSION=1.4.13
@@ -81,5 +82,30 @@ wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.
   && cp /usr/local/FileGDB_API/include/* /usr/include \
   && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
   && echo "/usr/local/FileGDB_API/lib" > /etc/ld.so.conf.d/filegdbapi.conf
+
+# Build and install GEOS (3.10dev)
+GEOS_SHA1=cab7d3cc63dc6ffaa48630b517c9ab69be6505e0
+mkdir geos \
+    && wget -q https://github.com/libgeos/geos/archive/${GEOS_SHA1}.tar.gz -O - \
+        | tar xz -C geos --strip-components=1 \
+    && cd geos \
+    && mkdir build_cmake \
+    && cd build_cmake \
+    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=OFF \
+    && make -j$(nproc) \
+    && make install \
+    && cd ../.. \
+    && rm -rf geos
+
+# Install pdfium
+wget -q https://github.com/rouault/pdfium_build_gdal_3_4/releases/download/v1_pdfium_4538/install-ubuntu2004-rev4538.tar.gz \
+  && tar -xzf install-ubuntu2004-rev4538.tar.gz \
+  && chown -R root:root install \
+  && mv install/lib/* /usr/lib/ \
+  && mv install/include/* /usr/include/ \
+  && rm -rf install-ubuntu2004-rev4538.tar.gz install \
+  && apt-get update -y \
+  && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev \
+  && rm -rf /var/lib/apt/lists/*
 
 ldconfig

@@ -1634,7 +1634,22 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         {
             oField.SetType(wkbUnknown);
         }
-        oField.SetSpatialRef(poSRS);
+        const auto& osSRSName = poProperty->GetSRSName();
+        if( !osSRSName.empty() )
+        {
+            OGRSpatialReference* poSRS2 = new OGRSpatialReference();
+            poSRS2->SetAxisMappingStrategy(
+                m_bInvertAxisOrderIfLatLong ? OAMS_TRADITIONAL_GIS_ORDER : OAMS_AUTHORITY_COMPLIANT);
+            if( poSRS2->SetFromUserInput(osSRSName.c_str()) == OGRERR_NONE )
+            {
+                oField.SetSpatialRef(poSRS2);
+            }
+            poSRS2->Release();
+        }
+        else
+        {
+            oField.SetSpatialRef(poSRS);
+        }
         oField.SetNullable(poProperty->IsNullable());
         poLayer->GetLayerDefn()->AddGeomFieldDefn(&oField);
     }
@@ -1697,10 +1712,10 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
     CSLDestroy(papszCreateOptions);
     papszCreateOptions = CSLDuplicate(papszOptions);
 
-    const char* pszFormat = CSLFetchNameValue(papszCreateOptions, "FORMAT");
-    bIsOutputGML3 = pszFormat && EQUAL(pszFormat, "GML3");
-    bIsOutputGML3Deegree = pszFormat && EQUAL(pszFormat, "GML3Deegree");
-    bIsOutputGML32 = pszFormat && EQUAL(pszFormat, "GML3.2");
+    const char* pszFormat = CSLFetchNameValueDef(papszCreateOptions, "FORMAT", "GML3.2");
+    bIsOutputGML3 = EQUAL(pszFormat, "GML3");
+    bIsOutputGML3Deegree = EQUAL(pszFormat, "GML3Deegree");
+    bIsOutputGML32 = EQUAL(pszFormat, "GML3.2");
     if (bIsOutputGML3Deegree || bIsOutputGML32)
         bIsOutputGML3 = true;
 
@@ -2371,7 +2386,7 @@ void OGRGMLDataSource::InsertHeader()
 
             // Define the geometry attribute.
             const char *pszGeometryTypeName = "GeometryPropertyType";
-            const char *pszComment = "";
+            const char *pszGeomTypeComment = "";
             OGRwkbGeometryType eGType = wkbFlatten(poFieldDefn->GetType());
             switch(eGType)
             {
@@ -2384,11 +2399,11 @@ void OGRGMLDataSource::InsertHeader()
                     if (IsGML3Output())
                     {
                         if( eGType == wkbLineString )
-                            pszComment = " <!-- restricted to LineString -->";
+                            pszGeomTypeComment = " <!-- restricted to LineString -->";
                         else if( eGType == wkbCircularString )
-                            pszComment = " <!-- contains CircularString -->";
+                            pszGeomTypeComment = " <!-- contains CircularString -->";
                         else if( eGType == wkbCompoundCurve )
-                            pszComment = " <!-- contains CompoundCurve -->";
+                            pszGeomTypeComment = " <!-- contains CompoundCurve -->";
                         pszGeometryTypeName = "CurvePropertyType";
                     }
                     else
@@ -2399,9 +2414,9 @@ void OGRGMLDataSource::InsertHeader()
                     if (IsGML3Output())
                     {
                         if( eGType == wkbPolygon )
-                            pszComment = " <!-- restricted to Polygon -->";
+                            pszGeomTypeComment = " <!-- restricted to Polygon -->";
                         else if( eGType == wkbCurvePolygon )
-                            pszComment = " <!-- contains CurvePolygon -->";
+                            pszGeomTypeComment = " <!-- contains CurvePolygon -->";
                         pszGeometryTypeName = "SurfacePropertyType";
                     }
                     else
@@ -2415,9 +2430,9 @@ void OGRGMLDataSource::InsertHeader()
                     if (IsGML3Output())
                     {
                         if( eGType == wkbMultiLineString )
-                            pszComment = " <!-- restricted to MultiLineString -->";
+                            pszGeomTypeComment = " <!-- restricted to MultiLineString -->";
                         else if( eGType == wkbMultiCurve )
-                            pszComment = " <!-- contains non-linear MultiCurve -->";
+                            pszGeomTypeComment = " <!-- contains non-linear MultiCurve -->";
                         pszGeometryTypeName = "MultiCurvePropertyType";
                     }
                     else
@@ -2428,9 +2443,9 @@ void OGRGMLDataSource::InsertHeader()
                     if (IsGML3Output())
                     {
                         if( eGType == wkbMultiPolygon )
-                            pszComment = " <!-- restricted to MultiPolygon -->";
+                            pszGeomTypeComment = " <!-- restricted to MultiPolygon -->";
                         else if( eGType == wkbMultiSurface )
-                            pszComment = " <!-- contains non-linear MultiSurface -->";
+                            pszGeomTypeComment = " <!-- contains non-linear MultiSurface -->";
                         pszGeometryTypeName = "MultiSurfacePropertyType";
                     }
                     else
@@ -2443,11 +2458,27 @@ void OGRGMLDataSource::InsertHeader()
                     break;
             }
 
+            const auto poSRS = poFieldDefn->GetSpatialRef();
+            std::string osSRSNameComment;
+            if( poSRS )
+            {
+                bool bCoordSwap = false;
+                char* pszSRSName =
+                    GML_GetSRSName(poSRS, GetSRSNameFormat(), &bCoordSwap);
+                if( pszSRSName[0] )
+                {
+                    osSRSNameComment = "<!--";
+                    osSRSNameComment += pszSRSName;
+                    osSRSNameComment += " -->";
+                }
+                CPLFree(pszSRSName);
+            }
+
             int nMinOccurs = poFieldDefn->IsNullable() ? 0 : 1;
             PrintLine(fpSchema,
-                "        <xs:element name=\"%s\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"1\"/>%s",
+                "        <xs:element name=\"%s\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"1\"/>%s%s",
                       poFieldDefn->GetNameRef(), pszGeometryTypeName,
-                      nMinOccurs, pszComment);
+                      nMinOccurs, pszGeomTypeComment, osSRSNameComment.c_str());
         }
 
         // Emit each of the attributes.

@@ -73,6 +73,7 @@ static void Usage( const char* pszErrorMsg = nullptr )
            "               [-geom={YES/NO/SUMMARY}] [[-oo NAME=VALUE] ...]\n"
            "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
            "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|...]\n"
+           "               [-fielddomain name]\n"
            "               datasource_name [layer [layer ...]]\n");
 
     if( pszErrorMsg != nullptr )
@@ -297,7 +298,20 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                       oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
         }
 
-        const auto displayDataAxisMapping = [](const OGRSpatialReference* poSRS) {
+        const auto displayExtraInfoSRS = [](const OGRSpatialReference* poSRS) {
+
+            const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
+            if( dfCoordinateEpoch > 0 )
+            {
+                std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+                if( osCoordinateEpoch.find('.') != std::string::npos )
+                {
+                    while( osCoordinateEpoch.back() == '0' )
+                        osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+                }
+                printf("Coordinate epoch: %s\n", osCoordinateEpoch.c_str());
+            }
+
             const auto mapping = poSRS->GetDataAxisToSRSAxisMapping();
             printf("Data axis to CRS axis mapping: ");
             for( size_t i = 0; i < mapping.size(); i++ )
@@ -337,7 +351,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                 CPLFree(pszWKT);
                 if( poSRS )
                 {
-                    displayDataAxisMapping(poSRS);
+                    displayExtraInfoSRS(poSRS);
                 }
             }
         }
@@ -362,7 +376,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
             CPLFree(pszWKT);
             if( poSRS )
             {
-                displayDataAxisMapping(poSRS);
+                displayExtraInfoSRS(poSRS);
             }
         }
 
@@ -392,9 +406,9 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
             const char* pszType = (poField->GetSubType() != OFSTNone)
                 ? CPLSPrintf(
                       "%s(%s)",
-                      poField->GetFieldTypeName(poField->GetType()),
-                      poField->GetFieldSubTypeName(poField->GetSubType()))
-                : poField->GetFieldTypeName(poField->GetType());
+                      OGRFieldDefn::GetFieldTypeName(poField->GetType()),
+                      OGRFieldDefn::GetFieldSubTypeName(poField->GetSubType()))
+                : OGRFieldDefn::GetFieldTypeName(poField->GetType());
             printf("%s: %s (%d.%d)",
                    poField->GetNameRef(),
                    pszType,
@@ -409,6 +423,9 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
             const char* pszAlias = poField->GetAlternativeNameRef();
             if( pszAlias != nullptr && pszAlias[0])
                 printf(", alternative name=\"%s\"", pszAlias);
+            const std::string& osDomain = poField->GetDomainName();
+            if( !osDomain.empty() )
+                printf(", domain name=%s", osDomain.c_str());
             printf("\n");
         }
     }
@@ -440,6 +457,133 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         {
             poFeature->DumpReadable(nullptr, papszOptions);
             OGRFeature::DestroyFeature(poFeature);
+        }
+    }
+}
+
+/************************************************************************/
+/*                        ReportFieldDomain()                           */
+/************************************************************************/
+
+static void ReportFieldDomain(const OGRFieldDomain* poDomain)
+{
+    printf("Domain %s:\n", poDomain->GetName().c_str());
+    const std::string& osDesc = poDomain->GetDescription();
+    if( !osDesc.empty() )
+    {
+        printf("  Description: %s\n", osDesc.c_str());
+    }
+    switch( poDomain->GetDomainType() )
+    {
+        case OFDT_CODED: printf("  Type: coded\n"); break;
+        case OFDT_RANGE: printf("  Type: range\n"); break;
+        case OFDT_GLOB:  printf("  Type: glob\n"); break;
+    }
+    const char* pszFieldType = (poDomain->GetFieldSubType() != OFSTNone)
+        ? CPLSPrintf(
+              "%s(%s)",
+              OGRFieldDefn::GetFieldTypeName(poDomain->GetFieldType()),
+              OGRFieldDefn::GetFieldSubTypeName(poDomain->GetFieldSubType()))
+        : OGRFieldDefn::GetFieldTypeName(poDomain->GetFieldType());
+    printf("  Field type: %s\n", pszFieldType);
+    switch( poDomain->GetSplitPolicy() )
+    {
+        case OFDSP_DEFAULT_VALUE:  printf("  Split policy: default value\n"); break;
+        case OFDSP_DUPLICATE:      printf("  Split policy: duplicate\n"); break;
+        case OFDSP_GEOMETRY_RATIO: printf("  Split policy: geometry ratio\n"); break;
+    }
+    switch( poDomain->GetMergePolicy() )
+    {
+        case OFDMP_DEFAULT_VALUE:     printf("  Merge policy: default value\n"); break;
+        case OFDMP_SUM:               printf("  Merge policy: sum\n"); break;
+        case OFDMP_GEOMETRY_WEIGHTED: printf("  Merge policy: geometry weighted\n"); break;
+    }
+    switch( poDomain->GetDomainType() )
+    {
+        case OFDT_CODED:
+        {
+            const auto poCodedFieldDomain =
+                cpl::down_cast<const OGRCodedFieldDomain*>(poDomain);
+            const OGRCodedValue* enumeration = poCodedFieldDomain->GetEnumeration();
+            printf("  Coded values:\n");
+            for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
+            {
+                if( enumeration[i].pszValue )
+                {
+                    printf("    %s: %s\n",
+                           enumeration[i].pszCode,
+                           enumeration[i].pszValue);
+                }
+                else
+                {
+                    printf("    %s\n", enumeration[i].pszCode);
+                }
+            }
+            break;
+        }
+
+        case OFDT_RANGE:
+        {
+            const auto poRangeFieldDomain =
+                cpl::down_cast<const OGRRangeFieldDomain*>(poDomain);
+            bool bMinIsIncluded = false;
+            const OGRField& sMin = poRangeFieldDomain->GetMin(bMinIsIncluded);
+            bool bMaxIsIncluded = false;
+            const OGRField& sMax = poRangeFieldDomain->GetMax(bMaxIsIncluded);
+            if( poDomain->GetFieldType() == OFTInteger )
+            {
+                if( !OGR_RawField_IsUnset(&sMin) )
+                {
+                    printf("  Minimum value: %d%s\n",
+                           sMin.Integer,
+                           bMinIsIncluded ? "" : " (excluded)");
+                }
+                if( !OGR_RawField_IsUnset(&sMax) )
+                {
+                    printf("  Maximum value: %d%s\n",
+                           sMax.Integer,
+                           bMaxIsIncluded ? "" : " (excluded)");
+                }
+            }
+            else if( poDomain->GetFieldType() == OFTInteger64 )
+            {
+                if( !OGR_RawField_IsUnset(&sMin) )
+                {
+                    printf("  Minimum value: " CPL_FRMT_GIB "%s\n",
+                           sMin.Integer64,
+                           bMinIsIncluded ? "" : " (excluded)");
+                }
+                if( !OGR_RawField_IsUnset(&sMax) )
+                {
+                    printf("  Maximum value: " CPL_FRMT_GIB "%s\n",
+                           sMax.Integer64,
+                           bMaxIsIncluded ? "" : " (excluded)");
+                }
+            }
+            else if( poDomain->GetFieldType() == OFTReal )
+            {
+                if( !OGR_RawField_IsUnset(&sMin) )
+                {
+                    printf("  Minimum value: %g%s\n",
+                           sMin.Real,
+                           bMinIsIncluded ? "" : " (excluded)");
+                }
+                if( !OGR_RawField_IsUnset(&sMax) )
+                {
+                    printf("  Maximum value: %g%s\n",
+                           sMax.Real,
+                           bMaxIsIncluded ? "" : " (excluded)");
+                }
+            }
+            break;
+        }
+
+        case OFDT_GLOB:
+        {
+            const auto poGlobFieldDomain =
+                cpl::down_cast<const OGRGlobFieldDomain*>(poDomain);
+            printf("  Glob: %s\n", poGlobFieldDomain->GetGlob().c_str());
+            break;
         }
     }
 }
@@ -504,6 +648,80 @@ static void RemoveSQLComments(char*& pszSQL)
 }
 
 /************************************************************************/
+/*                           PrintLayerSummary()                        */
+/************************************************************************/
+
+static void PrintLayerSummary(OGRLayer* poLayer, bool bGeomType)
+{
+    printf("%s", poLayer->GetName());
+
+    const char* pszTitle = poLayer->GetMetadataItem("TITLE");
+    if( pszTitle )
+    {
+        printf(" (title: %s)", pszTitle);
+    }
+
+    const int nGeomFieldCount =
+        bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
+    if( nGeomFieldCount > 1 )
+    {
+        printf(" (");
+        for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom++ )
+        {
+            if( iGeom > 0 )
+                printf(", ");
+            OGRGeomFieldDefn* poGFldDefn =
+                poLayer->GetLayerDefn()->
+                    GetGeomFieldDefn(iGeom);
+            printf(
+                "%s",
+                OGRGeometryTypeToName(
+                    poGFldDefn->GetType()));
+        }
+        printf(")");
+    }
+    else if( bGeomType && poLayer->GetGeomType() != wkbUnknown )
+        printf(" (%s)",
+               OGRGeometryTypeToName(
+                   poLayer->GetGeomType()));
+
+    printf("\n");
+}
+
+/************************************************************************/
+/*                       ReportHiearchicalLayers()                      */
+/************************************************************************/
+
+static void ReportHiearchicalLayers(const GDALGroup* group,
+                                    const std::string& indent,
+                                    bool bGeomType)
+{
+    const auto aosVectorLayerNames = group->GetVectorLayerNames();
+    for( const auto& osVectorLayerName: aosVectorLayerNames )
+    {
+        OGRLayer* poLayer = group->OpenVectorLayer(osVectorLayerName);
+        if( poLayer )
+        {
+            printf("%sLayer: ", indent.c_str());
+            PrintLayerSummary(poLayer, bGeomType);
+        }
+    }
+
+    const std::string subIndent(indent + "  ");
+    auto aosSubGroupNames = group->GetGroupNames();
+    for( const auto& osSubGroupName: aosSubGroupNames )
+    {
+        auto poSubGroup = group->OpenGroup(osSubGroupName);
+        if( poSubGroup )
+        {
+            printf("Group %s", indent.c_str());
+            printf("%s:\n", osSubGroupName.c_str());
+            ReportHiearchicalLayers(poSubGroup.get(), subIndent, bGeomType);
+        }
+    }
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -551,6 +769,7 @@ MAIN_START(nArgc, papszArgv)
     bool bReadOnly = false;
     bool bUpdate = false;
     const char* pszWKTFormat = "WKT2";
+    std::string osFieldDomain;
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
@@ -733,6 +952,11 @@ MAIN_START(nArgc, papszArgv)
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszWKTFormat = papszArgv[++iArg];
         }
+        else if( EQUAL(papszArgv[iArg], "-fielddomain") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            osFieldDomain = papszArgv[++iArg];
+        }
 
         else if( papszArgv[iArg][0] == '-' )
         {
@@ -805,6 +1029,7 @@ MAIN_START(nArgc, papszArgv)
     GDALDriver *poDriver = nullptr;
     if( poDS != nullptr )
         poDriver = poDS->GetDriver();
+    const int nLayerCount = poDS ? poDS->GetLayerCount() : 0;
 
 /* -------------------------------------------------------------------- */
 /*      Report failure                                                  */
@@ -849,6 +1074,19 @@ MAIN_START(nArgc, papszArgv)
                            bListMDD,
                            bShowMetadata,
                            papszExtraMDDomains);
+
+    if( !osFieldDomain.empty() )
+    {
+        auto poDomain = poDS->GetFieldDomain(osFieldDomain);
+        if( poDomain == nullptr )
+        {
+            printf("Domain %s cannot be found.\n", osFieldDomain.c_str());
+            exit(1);
+        }
+        printf("\n");
+        ReportFieldDomain(poDomain);
+        printf("\n");
+    }
 
     if( bDatasetGetNextFeature )
     {
@@ -983,12 +1221,23 @@ MAIN_START(nArgc, papszArgv)
         {
             if( iRepeat == 0 )
                 CPLDebug("OGR", "GetLayerCount() = %d\n",
-                         poDS->GetLayerCount());
+                         nLayerCount);
+
+            bool bDone = false;
+            auto poRootGroup = poDS->GetRootGroup();
+            if( !bAllLayers && poRootGroup &&
+                (!poRootGroup->GetGroupNames().empty() ||
+                 !poRootGroup->GetVectorLayerNames().empty()) )
+            {
+                ReportHiearchicalLayers(poRootGroup.get(),
+                                        std::string(), bGeomType);
+                bDone = true;
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-            for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+            for( int iLayer = 0; !bDone && iLayer < nLayerCount; iLayer++ )
             {
                 OGRLayer *poLayer = poDS->GetLayer(iLayer);
 
@@ -1001,39 +1250,8 @@ MAIN_START(nArgc, papszArgv)
 
                 if( !bAllLayers )
                 {
-                    printf("%d: %s", iLayer + 1, poLayer->GetName());
-
-                    const char* pszTitle = poLayer->GetMetadataItem("TITLE");
-                    if( pszTitle )
-                    {
-                        printf(" (title: %s)", pszTitle);
-                    }
-
-                    const int nGeomFieldCount =
-                        bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
-                    if( nGeomFieldCount > 1 )
-                    {
-                        printf(" (");
-                        for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom++ )
-                        {
-                            if( iGeom > 0 )
-                                printf(", ");
-                            OGRGeomFieldDefn* poGFldDefn =
-                                poLayer->GetLayerDefn()->
-                                    GetGeomFieldDefn(iGeom);
-                            printf(
-                                "%s",
-                                OGRGeometryTypeToName(
-                                    poGFldDefn->GetType()));
-                        }
-                        printf(")");
-                    }
-                    else if( bGeomType && poLayer->GetGeomType() != wkbUnknown )
-                        printf(" (%s)",
-                               OGRGeometryTypeToName(
-                                   poLayer->GetGeomType()));
-
-                    printf("\n");
+                    printf("%d: ", iLayer + 1);
+                    PrintLayerSummary(poLayer, bGeomType);
                 }
                 else
                 {

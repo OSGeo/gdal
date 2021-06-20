@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 
 #include "cpl_conv.h"
 #include "cpl_cpu_features.h"
@@ -2279,6 +2280,8 @@ template<class Tout> void GDALCopyWordsByteTo16Bit(
                                 int nDstPixelStride,
                                 GPtrDiff_t nWordCount )
 {
+    static_assert( std::is_integral<Tout>::value &&
+                   sizeof(Tout) == sizeof(uint16_t), "Bad Tout" );
     if( nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)) )
     {
@@ -2336,6 +2339,8 @@ template<class Tout> void GDALCopyWordsByteTo32Bit(
                                 int nDstPixelStride,
                                 GPtrDiff_t nWordCount )
 {
+    static_assert( std::is_integral<Tout>::value &&
+                   sizeof(Tout) == sizeof(uint32_t), "Bad Tout" );
     if( nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)) )
     {
@@ -3108,7 +3113,7 @@ static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
     GDALUnrolledCopyGeneric<T,srcStride,dstStride>(pDest, pSrc, nIters);
 }
 
-#if (defined(__x86_64) || defined(_M_X64)) &&  !(defined(__GNUC__) && __GNUC__ < 4)
+#if (defined(__x86_64) || defined(_M_X64))
 
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 
@@ -3222,25 +3227,26 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
                                  int nSrcStride,
                                  GPtrDiff_t nIters )
 {
+    constexpr int sizeofT = static_cast<int>(sizeof(T));
     if( nIters == 1 )
     {
         *pDest = *pSrc;
     }
-    else if( nDestStride == static_cast<int>(sizeof(T)) )
+    else if( nDestStride == sizeofT )
     {
-        if( nSrcStride == static_cast<int>(sizeof(T)) )
+        if( nSrcStride == sizeofT )
         {
             memcpy(pDest, pSrc, nIters * sizeof(T));
         }
-        else if( nSrcStride == 2 * static_cast<int>(sizeof(T)) )
+        else if( nSrcStride == 2 * sizeofT )
         {
             GDALUnrolledCopy<T, 2,1>(pDest, pSrc, nIters);
         }
-        else if( nSrcStride == 3 * static_cast<int>(sizeof(T)) )
+        else if( nSrcStride == 3 * sizeofT )
         {
             GDALUnrolledCopy<T, 3,1>(pDest, pSrc, nIters);
         }
-        else if( nSrcStride == 4 * static_cast<int>(sizeof(T)) )
+        else if( nSrcStride == 4 * sizeofT )
         {
             GDALUnrolledCopy<T, 4,1>(pDest, pSrc, nIters);
         }
@@ -3249,22 +3255,22 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
             while( nIters-- > 0 )
             {
                 *pDest = *pSrc;
-                pSrc += nSrcStride / static_cast<int>(sizeof(T));
+                pSrc += nSrcStride / sizeofT;
                 pDest ++;
             }
         }
     }
-    else if( nSrcStride == static_cast<int>(sizeof(T))  )
+    else if( nSrcStride == sizeofT  )
     {
-        if( nDestStride == 2 * static_cast<int>(sizeof(T)) )
+        if( nDestStride == 2 * sizeofT )
         {
             GDALUnrolledCopy<T, 1,2>(pDest, pSrc, nIters);
         }
-        else if( nDestStride == 3 * static_cast<int>(sizeof(T)) )
+        else if( nDestStride == 3 * sizeofT )
         {
             GDALUnrolledCopy<T, 1,3>(pDest, pSrc, nIters);
         }
-        else if( nDestStride == 4 * static_cast<int>(sizeof(T))  )
+        else if( nDestStride == 4 * sizeofT  )
         {
             GDALUnrolledCopy<T, 1,4>(pDest, pSrc, nIters);
         }
@@ -3274,7 +3280,7 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
             {
                 *pDest = *pSrc;
                 pSrc ++;
-                pDest += nDestStride / static_cast<int>(sizeof(T));
+                pDest += nDestStride / sizeofT;
             }
         }
     }
@@ -3283,8 +3289,8 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
         while( nIters-- > 0 )
         {
             *pDest = *pSrc;
-            pSrc += nSrcStride / static_cast<int>(sizeof(T));
-            pDest += nDestStride / static_cast<int>(sizeof(T));
+            pSrc += nSrcStride / sizeofT;
+            pDest += nDestStride / sizeofT;
         }
     }
 }
@@ -5128,4 +5134,187 @@ void GDALCopyRasterIOExtraArg( GDALRasterIOExtraArg* psDestArg,
             psDestArg->dfYSize = psSrcArg->dfYSize;
         }
     }
+}
+
+/************************************************************************/
+/*                         HasOnlyNoData()                              */
+/************************************************************************/
+
+template<class T>
+static inline bool IsEqualToNoData( T value, T noDataValue )
+{
+    return value == noDataValue;
+}
+
+template<> bool IsEqualToNoData<float>( float value, float noDataValue )
+{
+    return
+        std::isnan(noDataValue) ?
+            std::isnan(value) : value == noDataValue;
+}
+
+template<> bool IsEqualToNoData<double>( double value, double noDataValue )
+{
+    return
+        std::isnan(noDataValue) ?
+            std::isnan(value) : value == noDataValue;
+}
+
+template<class T>
+static bool HasOnlyNoDataT( const T* pBuffer, T noDataValue,
+                            size_t nWidth, size_t nHeight,
+                            size_t nLineStride, size_t nComponents )
+{
+    // Fast test: check the 4 corners and the middle pixel.
+    for( size_t iBand = 0; iBand < nComponents; iBand++ )
+    {
+        if( !(IsEqualToNoData(pBuffer[iBand], noDataValue) &&
+              IsEqualToNoData(
+                  pBuffer[(nWidth - 1) * nComponents +
+                          iBand],
+                  noDataValue) &&
+              IsEqualToNoData(
+                  pBuffer[((nHeight-1)/2 * nLineStride +
+                           (nWidth - 1)/2) * nComponents + iBand],
+                  noDataValue) &&
+              IsEqualToNoData(
+                  pBuffer[(nHeight - 1) * nLineStride *
+                          nComponents + iBand], noDataValue) &&
+              IsEqualToNoData(
+                  pBuffer[((nHeight - 1) * nLineStride +
+                           nWidth - 1) * nComponents + iBand], noDataValue) ) )
+        {
+            return false;
+        }
+    }
+
+    // Test all pixels.
+    for( size_t iY = 0; iY < nHeight; iY++ )
+    {
+        const T* pBufferLine = pBuffer + iY * nLineStride * nComponents;
+        for( size_t iX = 0; iX < nWidth * nComponents; iX++ )
+        {
+            if( !IsEqualToNoData(pBufferLine[iX], noDataValue) )
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                    GDALBufferHasOnlyNoData()                         */
+/************************************************************************/
+
+bool GDALBufferHasOnlyNoData( const void* pBuffer,
+                              double dfNoDataValue,
+                              size_t nWidth, size_t nHeight,
+                              size_t nLineStride,
+                              size_t nComponents,
+                              int nBitsPerSample,
+                              GDALBufferSampleFormat nSampleFormat)
+{
+    // In the case where the nodata is 0, we can compare several bytes at
+    // once. Select the largest natural integer type for the architecture.
+#if SIZEOF_VOIDP == 8 || defined(__x86_64__)
+    // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
+    typedef std::uint64_t WordType;
+#else
+    typedef std::uint32_t WordType;
+#endif
+    if( dfNoDataValue == 0.0 && nWidth == nLineStride )
+    {
+        const GByte* pabyBuffer = static_cast<const GByte*>(pBuffer);
+        const size_t nSize = (nWidth * nHeight *
+                                nComponents * nBitsPerSample + 7) / 8;
+        size_t i = 0;
+        const size_t nInitialIters = std::min(
+            sizeof(WordType) -
+                (reinterpret_cast<std::uintptr_t>(pabyBuffer) % sizeof(WordType)),
+            nSize);
+        for( ; i < nInitialIters; i++ )
+        {
+            if( pabyBuffer[i] )
+                return false;
+        }
+        for( ; i + sizeof(WordType) - 1 < nSize; i += sizeof(WordType) )
+        {
+            if( *(reinterpret_cast<const WordType*>(pabyBuffer + i)) )
+                return false;
+        }
+        for( ; i < nSize; i++ )
+        {
+            if( pabyBuffer[i] )
+                return false;
+        }
+        return true;
+    }
+
+    if( nBitsPerSample == 8 && nSampleFormat == GSF_UNSIGNED_INT )
+    {
+        return GDALIsValueInRange<uint8_t>(dfNoDataValue) &&
+               HasOnlyNoDataT(static_cast<const uint8_t*>(pBuffer),
+                              static_cast<uint8_t>(dfNoDataValue),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 8 && nSampleFormat == GSF_SIGNED_INT )
+    {
+        // Use unsigned implementation by converting the nodatavalue to
+        // unsigned
+        return GDALIsValueInRange<int8_t>(dfNoDataValue) &&
+               HasOnlyNoDataT(static_cast<const uint8_t*>(pBuffer),
+                              static_cast<uint8_t>(
+                                  static_cast<int8_t>(dfNoDataValue)),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 16 && nSampleFormat == GSF_UNSIGNED_INT )
+    {
+        return GDALIsValueInRange<uint16_t>(dfNoDataValue) &&
+               HasOnlyNoDataT(static_cast<const uint16_t*>(pBuffer),
+                              static_cast<uint16_t>(dfNoDataValue),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 16 && nSampleFormat == GSF_SIGNED_INT )
+    {
+        // Use unsigned implementation by converting the nodatavalue to
+        // unsigned
+        return GDALIsValueInRange<int16_t>(dfNoDataValue) &&
+               HasOnlyNoDataT(static_cast<const uint16_t*>(pBuffer),
+                              static_cast<uint16_t>(
+                                  static_cast<int16_t>(dfNoDataValue)),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 32 && nSampleFormat == GSF_UNSIGNED_INT )
+    {
+        return GDALIsValueInRange<uint32_t>(dfNoDataValue) &&
+               HasOnlyNoDataT(static_cast<const uint32_t*>(pBuffer),
+                              static_cast<uint32_t>(dfNoDataValue),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 32 && nSampleFormat == GSF_SIGNED_INT )
+    {
+        // Use unsigned implementation by converting the nodatavalue to
+        // unsigned
+        return GDALIsValueInRange<int32_t>(dfNoDataValue) &&
+               HasOnlyNoDataT(static_cast<const uint32_t*>(pBuffer),
+                              static_cast<uint32_t>(
+                                  static_cast<int32_t>(dfNoDataValue)),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 32 && nSampleFormat == GSF_FLOATING_POINT )
+    {
+        return (std::isnan(dfNoDataValue) ||
+                GDALIsValueInRange<float>(dfNoDataValue)) &&
+               HasOnlyNoDataT(static_cast<const float*>(pBuffer),
+                              static_cast<float>(dfNoDataValue),
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    if( nBitsPerSample == 64 && nSampleFormat == GSF_FLOATING_POINT )
+    {
+        return HasOnlyNoDataT(static_cast<const double*>(pBuffer),
+                              dfNoDataValue,
+                              nWidth, nHeight, nLineStride, nComponents);
+    }
+    return false;
 }

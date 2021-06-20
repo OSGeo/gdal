@@ -7,6 +7,8 @@ OBJ	=	ogrpgdriver.o ogrpgdatasource.o ogrpglayer.o ogrpgtablelayer.o\
 
 CPPFLAGS	:=	 $(PG_INC) -I../pgdump $(CPPFLAGS)
 
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 clean:

@@ -42,8 +42,9 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o libpng/*.o $(O_OBJ)
 
+# Disable Neon optimizations for internal libpng as we don't include the needed source file
 ../o/%.$(OBJ_EXT):	libpng/%.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS_NOFTRAPV) $< -o $@
+	$(CC) -c $(CPPFLAGS) $(CFLAGS_NOFTRAPV) -DPNG_ARM_NEON_IMPLEMENTATION=0 -DPNG_ARM_NEON_OPT=0 $< -o $@
 
 all:	$(OBJ:.o=.$(OBJ_EXT))
 

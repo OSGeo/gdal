@@ -11,4 +11,4 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 
-$(O_OBJ):	ogr_openfilegdb.h filegdbtable.h filegdbtable_priv.h ../../ogr_swq.h ../mem/ogr_mem.h
+$(O_OBJ):	ogr_openfilegdb.h filegdbtable.h filegdbtable_priv.h filegdb_fielddomain.h ../../ogr_swq.h ../mem/ogr_mem.h

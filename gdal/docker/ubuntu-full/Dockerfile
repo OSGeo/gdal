@@ -60,7 +60,7 @@ RUN wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongo-c-driver
-ARG MONGO_C_DRIVER_VERSION=1.17.4
+ARG MONGO_C_DRIVER_VERSION=1.17.6
 RUN mkdir mongo-c-driver \
     && wget -q https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz -O - \
         | tar xz -C mongo-c-driver --strip-components=1 \
@@ -78,7 +78,7 @@ RUN mkdir mongo-c-driver \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongocxx
-ARG MONGOCXX_VERSION=3.6.2
+ARG MONGOCXX_VERSION=3.6.5
 RUN mkdir mongocxx \
     && wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz -O - \
         | tar xz -C mongocxx --strip-components=1 \
@@ -95,7 +95,7 @@ RUN mkdir mongocxx \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=2.2.4
+ARG TILEDB_VERSION=2.3.0
 RUN mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
@@ -156,6 +156,19 @@ RUN if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
   ) ; fi
 
 
+ARG WITH_PDFIUM=yes
+RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
+  wget -q https://github.com/rouault/pdfium_build_gdal_3_4/releases/download/v1_pdfium_4538/install-ubuntu2004-rev4538.tar.gz \
+  && tar -xzf install-ubuntu2004-rev4538.tar.gz \
+  && chown -R root:root install \
+  && mv install/lib/* /usr/lib/ \
+  && mv install/include/* /usr/include/ \
+  && rm -rf install-ubuntu2004-rev4538.tar.gz install \
+  && apt-get update -y \
+  && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev \
+  && rm -rf /var/lib/apt/lists/* \
+  ) ; fi
+
 
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
@@ -179,8 +192,10 @@ RUN /buildscripts/bh-proj.sh
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
+ARG GDAL_REPOSITORY=OSGeo/gdal
 
 # Build GDAL
+
 COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
 RUN /buildscripts/bh-gdal.sh
 

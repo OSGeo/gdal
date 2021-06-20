@@ -324,6 +324,9 @@ JP2KAKRasterBand::~JP2KAKRasterBand()
 int JP2KAKRasterBand::GetOverviewCount()
 
 {
+    if( !poBaseDS->AreOverviewsEnabled() )
+        return 0;
+
     if( GDALPamRasterBand::GetOverviewCount() > 0 )
         return GDALPamRasterBand::GetOverviewCount();
 
@@ -451,13 +454,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 if( nDiscardLevels == 0 )
                 {
-                    poBand = dynamic_cast<JP2KAKRasterBand *>(poBaseBand);
-                    if( poBand == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AssertionFailed,
-                                 "dynamic_cast failed.");
-                        return CE_Fatal;
-                    }
+                    poBand = cpl::down_cast<JP2KAKRasterBand *>(poBaseBand);
                 }
                 else
                 {
@@ -465,12 +462,9 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                     for( ; iOver < poBaseBand->GetOverviewCount(); iOver++ )
                     {
-                        poBand = dynamic_cast<JP2KAKRasterBand *>(
+                        poBand = cpl::down_cast<JP2KAKRasterBand *>(
                             poBaseBand->GetOverview( iOver ) );
-                        if( poBand == nullptr )
-                            CPLError(CE_Fatal, CPLE_AppDefined,
-                                     "Dynamic cast failed");
-                        else if( poBand->nDiscardLevels == nDiscardLevels )
+                        if( poBand->nDiscardLevels == nDiscardLevels )
                             break;
                     }
                     if( iOver == poBaseBand->GetOverviewCount() )
@@ -714,12 +708,7 @@ CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling,
     for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
         JP2KAKRasterBand *poBand =
-            dynamic_cast<JP2KAKRasterBand *>(GetRasterBand(iBand + 1));
-        if( poBand == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined, "Dynamic cast failed");
-            return CE_Failure;
-        }
+            cpl::down_cast<JP2KAKRasterBand *>(GetRasterBand(iBand + 1));
         for( int i = 0; i < poBand->nOverviewCount; i++ )
             delete poBand->papoOverviewBand[i];
 
@@ -1342,12 +1331,15 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
     int nDiscardLevels = 0;
     int nResMult = 1;
 
-    while( nDiscardLevels < nResCount - 1 &&
-           nBufXSize * nResMult * 2 < nXSize * 1.01 &&
-           nBufYSize * nResMult * 2 < nYSize * 1.01 )
+    if( AreOverviewsEnabled() )
     {
-        nDiscardLevels++;
-        nResMult *= 2;
+        while( nDiscardLevels < nResCount - 1 &&
+               nBufXSize * nResMult * 2 < nXSize * 1.01 &&
+               nBufYSize * nResMult * 2 < nYSize * 1.01 )
+        {
+            nDiscardLevels++;
+            nResMult *= 2;
+        }
     }
 
     // Prepare component indices list.
@@ -2514,12 +2506,12 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( poSrcDS->GetGCPCount() > 0 )
         {
-            oJP2MD.SetProjection(poSrcDS->GetGCPProjection());
+            oJP2MD.SetSpatialRef(poSrcDS->GetGCPSpatialRef());
             oJP2MD.SetGCPs(poSrcDS->GetGCPCount(), poSrcDS->GetGCPs());
         }
         else
         {
-            oJP2MD.SetProjection(poSrcDS->GetProjectionRef());
+            oJP2MD.SetSpatialRef(poSrcDS->GetSpatialRef());
             oJP2MD.SetGeoTransform(adfGeoTransform);
         }
 

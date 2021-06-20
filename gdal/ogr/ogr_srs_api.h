@@ -465,6 +465,8 @@ typedef void *OGRCoordinateTransformationH;
 
 void CPL_DLL OSRSetPROJSearchPaths( const char* const * papszPaths );
 char CPL_DLL **OSRGetPROJSearchPaths( void );
+void CPL_DLL OSRSetPROJAuxDbPaths( const char* const * papszPaths );
+char CPL_DLL **OSRGetPROJAuxDbPaths( void );
 void CPL_DLL OSRGetPROJVersion( int* pnMajor, int* pnMinor, int* pnPatch );
 
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL
@@ -551,11 +553,15 @@ int CPL_DLL OSRIsProjected( OGRSpatialReferenceH );
 int CPL_DLL OSRIsCompound( OGRSpatialReferenceH );
 int CPL_DLL OSRIsGeocentric( OGRSpatialReferenceH );
 int CPL_DLL OSRIsVertical( OGRSpatialReferenceH );
+int CPL_DLL OSRIsDynamic( OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameVertCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameEx( OGRSpatialReferenceH, OGRSpatialReferenceH,
                          const char* const *papszOptions );
+
+void CPL_DLL OSRSetCoordinateEpoch( OGRSpatialReferenceH hSRS, double dfCoordinateEpoch );
+double CPL_DLL OSRGetCoordinateEpoch( OGRSpatialReferenceH hSRS );
 
 OGRErr CPL_DLL OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char *pszName );
 OGRErr CPL_DLL OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
@@ -1018,7 +1024,7 @@ typedef struct
 } OSRCRSInfo;
 
 /** \brief Structure to describe optional parameters to OSRGetCRSInfoListFromDatabase()
- * 
+ *
  * Unused for now.
  */
 typedef struct OSRCRSListParameters OSRCRSListParameters;
@@ -1066,6 +1072,11 @@ OGRCoordinateTransformationH CPL_DLL
 OCTNewCoordinateTransformationEx( OGRSpatialReferenceH hSourceSRS,
                                   OGRSpatialReferenceH hTargetSRS,
                                   OGRCoordinateTransformationOptionsH hOptions );
+
+OGRCoordinateTransformationH CPL_DLL OCTClone(OGRCoordinateTransformationH hTransform);
+OGRSpatialReferenceH CPL_DLL OCTGetSourceCS(OGRCoordinateTransformationH hTransform);
+OGRSpatialReferenceH CPL_DLL OCTGetTargetCS(OGRCoordinateTransformationH hTransform);
+OGRCoordinateTransformationH CPL_DLL OCTGetInverse(OGRCoordinateTransformationH hTransform);
 
 void CPL_DLL CPL_STDCALL
       OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH );

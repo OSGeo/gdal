@@ -50,6 +50,7 @@ void    GTIFFSetWebPLevel( GDALDatasetH hGTIFFDS, int nWebPLevel );
 void    GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
 int     GTIFFGetCompressionMethod( const char* pszValue,
                                    const char* pszVariableName );
+bool    GTIFFSupportsPredictor(int nCompression);
 
 void GTiffDatasetWriteRPCTag( TIFF *hTIFF, char **papszRPCMD );
 char** GTiffDatasetReadRPCTag( TIFF *hTIFF );

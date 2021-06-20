@@ -10,14 +10,14 @@ OBJ	=	\
         jdinput.obj jdmainct.obj jdmarker.obj jdmaster.obj jdmerge.obj jdphuff.obj \
         jdpostct.obj jdsample.obj jdtrans.obj jerror.obj jfdctflt.obj jfdctfst.obj \
         jfdctint.obj jidctflt.obj jidctfst.obj jidctint.obj jidctred.obj jquant1.obj \
-        jquant2.obj jutils.obj jmemmgr.obj jmemansi.obj 
+        jquant2.obj jutils.obj jmemmgr.obj jmemnobs.obj 
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS      = -DDEFAULT_MAX_MEM=500000000L $(SOFTWARNFLAGS)
+EXTRAFLAGS      = $(SOFTWARNFLAGS)
 
 default:	$(OBJ)
-        lib /out:libjpeg.lib $(OBJ)
+	lib /out:libjpeg.lib $(OBJ)
 	xcopy /D  /Y *.obj ..\..\o
 
 clean:

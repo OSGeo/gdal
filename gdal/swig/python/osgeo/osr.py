@@ -442,6 +442,21 @@ class SpatialReference(_object):
         return _osr.SpatialReference_IsVertical(self, *args)
 
 
+    def IsDynamic(self, *args):
+        """IsDynamic(SpatialReference self) -> bool"""
+        return _osr.SpatialReference_IsDynamic(self, *args)
+
+
+    def GetCoordinateEpoch(self, *args):
+        """GetCoordinateEpoch(SpatialReference self) -> double"""
+        return _osr.SpatialReference_GetCoordinateEpoch(self, *args)
+
+
+    def SetCoordinateEpoch(self, *args):
+        """SetCoordinateEpoch(SpatialReference self, double coordinateEpoch)"""
+        return _osr.SpatialReference_SetCoordinateEpoch(self, *args)
+
+
     def EPSGTreatsAsLatLong(self, *args):
         """EPSGTreatsAsLatLong(SpatialReference self) -> int"""
         return _osr.SpatialReference_EPSGTreatsAsLatLong(self, *args)
@@ -1291,6 +1306,18 @@ def GetPROJVersionMinor(*args):
 def GetPROJVersionMicro(*args):
     """GetPROJVersionMicro() -> int"""
     return _osr.GetPROJVersionMicro(*args)
+
+def SetPROJAuxDbPath(*args):
+    """SetPROJAuxDbPath(char const * utf8_path)"""
+    return _osr.SetPROJAuxDbPath(*args)
+
+def SetPROJAuxDbPaths(*args):
+    """SetPROJAuxDbPaths(char ** paths)"""
+    return _osr.SetPROJAuxDbPaths(*args)
+
+def GetPROJAuxDbPaths(*args):
+    """GetPROJAuxDbPaths() -> char **"""
+    return _osr.GetPROJAuxDbPaths(*args)
 # This file is compatible with both classic and new-style classes.
 
 

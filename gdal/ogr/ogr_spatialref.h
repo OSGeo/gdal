@@ -148,9 +148,9 @@ class CPL_DLL OGR_SRSNode
  *
  * See <a href="https://gdal.org/tutorials/osr_api_tut.html">the tutorial
  * </a> for more information on how to use this class.
- * 
+ *
  * Consult also the <a href="https://gdal.org/tutorials/wktproblems.html">
- * OGC WKT Coordinate System Issues</a> page for implementation details of 
+ * OGC WKT Coordinate System Issues</a> page for implementation details of
  * WKT in OGR.
  */
 
@@ -161,6 +161,7 @@ class CPL_DLL OGRSpatialReference
 
     void        GetNormInfo() const;
 
+    // No longer used with PROJ >= 8.1.0
     OGRErr      importFromURNPart(const char* pszAuthority,
                                   const char* pszCode,
                                   const char* pszURN);
@@ -345,6 +346,7 @@ class CPL_DLL OGRSpatialReference
     int         IsDerivedGeographic() const;
     int         IsProjected() const;
     int         IsGeocentric() const;
+    bool        IsDynamic() const;
     int         IsLocal() const;
     int         IsVertical() const;
     int         IsCompound() const;
@@ -377,6 +379,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetCompoundCS( const char *pszName,
                                const OGRSpatialReference *poHorizSRS,
                                const OGRSpatialReference *poVertSRS );
+
+    void        SetCoordinateEpoch( double dfCoordinateEpoch );
+    double      GetCoordinateEpoch() const;
 
     // cppcheck-suppress functionStatic
     OGRErr      PromoteTo3D( const char* pszName );
@@ -830,6 +835,17 @@ public:
      * @since GDAL 3.1
      */
     virtual OGRCoordinateTransformation* Clone() const = 0;
+
+    /** Return a coordinate transformation that performs the inverse transformation
+     * of the current one.
+     *
+     * In some cases, this is not possible, and this method might return nullptr,
+     * or fail to perform the transformations.
+     *
+     * @return the new coordinate transformation, or nullptr in case of error.
+     * @since GDAL 3.3
+     */
+    virtual OGRCoordinateTransformation* GetInverse() const = 0;
 };
 
 OGRCoordinateTransformation CPL_DLL *
@@ -839,7 +855,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
 
 /**
  * Context for coordinate transformation.
- * 
+ *
  * @since GDAL 3.0
  */
 

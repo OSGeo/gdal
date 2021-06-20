@@ -191,6 +191,15 @@ OFSTUUID = _ogr.OFSTUUID
 OJUndefined = _ogr.OJUndefined
 OJLeft = _ogr.OJLeft
 OJRight = _ogr.OJRight
+OFDT_CODED = _ogr.OFDT_CODED
+OFDT_RANGE = _ogr.OFDT_RANGE
+OFDT_GLOB = _ogr.OFDT_GLOB
+OFDSP_DEFAULT_VALUE = _ogr.OFDSP_DEFAULT_VALUE
+OFDSP_DUPLICATE = _ogr.OFDSP_DUPLICATE
+OFDSP_GEOMETRY_RATIO = _ogr.OFDSP_GEOMETRY_RATIO
+OFDMP_DEFAULT_VALUE = _ogr.OFDMP_DEFAULT_VALUE
+OFDMP_SUM = _ogr.OFDMP_SUM
+OFDMP_GEOMETRY_WEIGHTED = _ogr.OFDMP_GEOMETRY_WEIGHTED
 wkbXDR = _ogr.wkbXDR
 wkbNDR = _ogr.wkbNDR
 NullFID = _ogr.NullFID
@@ -201,6 +210,7 @@ ALTER_NULLABLE_FLAG = _ogr.ALTER_NULLABLE_FLAG
 ALTER__FLAG = _ogr.ALTER__FLAG
 ALTER_DEFAULT_FLAG = _ogr.ALTER_DEFAULT_FLAG
 ALTER_UNIQUE_FLAG = _ogr.ALTER_UNIQUE_FLAG
+ALTER_DOMAIN_FLAG = _ogr.ALTER_DOMAIN_FLAG
 ALTER_ALL_FLAG = _ogr.ALTER_ALL_FLAG
 F_VAL_NULL = _ogr.F_VAL_NULL
 F_VAL_GEOM_TYPE = _ogr.F_VAL_GEOM_TYPE
@@ -234,6 +244,7 @@ ODsCEmulatedTransactions = _ogr.ODsCEmulatedTransactions
 ODsCMeasuredGeometries = _ogr.ODsCMeasuredGeometries
 ODsCRandomLayerRead = _ogr.ODsCRandomLayerRead
 ODsCRandomLayerWrite = _ogr.ODsCRandomLayerWrite
+ODsCAddFieldDomain = _ogr.ODsCAddFieldDomain
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 ODrCDeleteDataSource = _ogr.ODrCDeleteDataSource
 OLMD_FID64 = _ogr.OLMD_FID64
@@ -5751,6 +5762,16 @@ class FieldDefn(_object):
         return _ogr.FieldDefn_IsDefaultDriverSpecific(self, *args)
 
 
+    def GetDomainName(self, *args):
+        """GetDomainName(FieldDefn self) -> char const *"""
+        return _ogr.FieldDefn_GetDomainName(self, *args)
+
+
+    def SetDomainName(self, *args):
+        """SetDomainName(FieldDefn self, char const * name)"""
+        return _ogr.FieldDefn_SetDomainName(self, *args)
+
+
     width = property(GetWidth, SetWidth)
     type = property(GetType, SetType)
     precision = property(GetPrecision, SetPrecision)
@@ -5849,7 +5870,7 @@ GeomFieldDefn_swigregister(GeomFieldDefn)
 
 
 def CreateGeometryFromWkb(*args, **kwargs):
-    """CreateGeometryFromWkb(int len, SpatialReference reference=None) -> Geometry"""
+    """CreateGeometryFromWkb(size_t len, SpatialReference reference=None) -> Geometry"""
     return _ogr.CreateGeometryFromWkb(*args, **kwargs)
 
 def CreateGeometryFromWkt(*args, **kwargs):
@@ -6503,7 +6524,7 @@ class Geometry(_object):
 
     def MakeValid(self, *args):
         """
-        MakeValid(Geometry self) -> Geometry
+        MakeValid(Geometry self, char ** options=None) -> Geometry
 
         OGRGeometryH
         OGR_G_MakeValid(OGRGeometryH hGeom)
@@ -7522,7 +7543,7 @@ class Geometry(_object):
 
     def WkbSize(self, *args):
         """
-        WkbSize(Geometry self) -> int
+        WkbSize(Geometry self) -> size_t
 
         int OGR_G_WkbSize(OGRGeometryH hGeom)
 
@@ -7897,6 +7918,109 @@ class GeomTransformer(_object):
 GeomTransformer_swigregister = _ogr.GeomTransformer_swigregister
 GeomTransformer_swigregister(GeomTransformer)
 
+class FieldDomain(_object):
+    """Proxy of C++ OGRFieldDomainShadow class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, FieldDomain, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, FieldDomain, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _ogr.delete_FieldDomain
+    __del__ = lambda self: None
+
+    def GetName(self, *args):
+        """GetName(FieldDomain self) -> char const *"""
+        return _ogr.FieldDomain_GetName(self, *args)
+
+
+    def GetDescription(self, *args):
+        """GetDescription(FieldDomain self) -> char const *"""
+        return _ogr.FieldDomain_GetDescription(self, *args)
+
+
+    def GetFieldType(self, *args):
+        """GetFieldType(FieldDomain self) -> OGRFieldType"""
+        return _ogr.FieldDomain_GetFieldType(self, *args)
+
+
+    def GetFieldSubType(self, *args):
+        """GetFieldSubType(FieldDomain self) -> OGRFieldSubType"""
+        return _ogr.FieldDomain_GetFieldSubType(self, *args)
+
+
+    def GetDomainType(self, *args):
+        """GetDomainType(FieldDomain self) -> OGRFieldDomainType"""
+        return _ogr.FieldDomain_GetDomainType(self, *args)
+
+
+    def GetSplitPolicy(self, *args):
+        """GetSplitPolicy(FieldDomain self) -> OGRFieldDomainSplitPolicy"""
+        return _ogr.FieldDomain_GetSplitPolicy(self, *args)
+
+
+    def SetSplitPolicy(self, *args):
+        """SetSplitPolicy(FieldDomain self, OGRFieldDomainSplitPolicy policy)"""
+        return _ogr.FieldDomain_SetSplitPolicy(self, *args)
+
+
+    def GetMergePolicy(self, *args):
+        """GetMergePolicy(FieldDomain self) -> OGRFieldDomainMergePolicy"""
+        return _ogr.FieldDomain_GetMergePolicy(self, *args)
+
+
+    def SetMergePolicy(self, *args):
+        """SetMergePolicy(FieldDomain self, OGRFieldDomainMergePolicy policy)"""
+        return _ogr.FieldDomain_SetMergePolicy(self, *args)
+
+
+    def GetEnumeration(self, *args):
+        """GetEnumeration(FieldDomain self) -> OGRCodedValue const *"""
+        return _ogr.FieldDomain_GetEnumeration(self, *args)
+
+
+    def GetMinAsDouble(self, *args):
+        """GetMinAsDouble(FieldDomain self) -> double"""
+        return _ogr.FieldDomain_GetMinAsDouble(self, *args)
+
+
+    def IsMinInclusive(self, *args):
+        """IsMinInclusive(FieldDomain self) -> bool"""
+        return _ogr.FieldDomain_IsMinInclusive(self, *args)
+
+
+    def GetMaxAsDouble(self, *args):
+        """GetMaxAsDouble(FieldDomain self) -> double"""
+        return _ogr.FieldDomain_GetMaxAsDouble(self, *args)
+
+
+    def IsMaxInclusive(self, *args):
+        """IsMaxInclusive(FieldDomain self) -> bool"""
+        return _ogr.FieldDomain_IsMaxInclusive(self, *args)
+
+
+    def GetGlob(self, *args):
+        """GetGlob(FieldDomain self) -> char const *"""
+        return _ogr.FieldDomain_GetGlob(self, *args)
+
+FieldDomain_swigregister = _ogr.FieldDomain_swigregister
+FieldDomain_swigregister(FieldDomain)
+
+
+def CreateCodedFieldDomain(*args):
+    """CreateCodedFieldDomain(char const * name, char const * description, OGRFieldType type, OGRFieldSubType subtype, OGRCodedValue const * enumeration) -> FieldDomain"""
+    return _ogr.CreateCodedFieldDomain(*args)
+
+def CreateRangeFieldDomain(*args):
+    """CreateRangeFieldDomain(char const * name, char const * description, OGRFieldType type, OGRFieldSubType subtype, double min, bool minIsInclusive, double max, double maxIsInclusive) -> FieldDomain"""
+    return _ogr.CreateRangeFieldDomain(*args)
+
+def CreateGlobFieldDomain(*args):
+    """CreateGlobFieldDomain(char const * name, char const * description, OGRFieldType type, OGRFieldSubType subtype, char const * glob) -> FieldDomain"""
+    return _ogr.CreateGlobFieldDomain(*args)
 
 def GetDriverCount(*args):
     """GetDriverCount() -> int"""

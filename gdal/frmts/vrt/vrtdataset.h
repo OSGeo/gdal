@@ -1365,6 +1365,7 @@ public:
     const std::string& GetVRTPath() const { return m_osVRTPath; }
     void SetDirty();
     void SetFilename(const std::string& osFilename) { m_osFilename = osFilename; }
+    const std::string& GetFilename() const { return m_osFilename; }
     void Serialize() const;
     CPLXMLNode* SerializeToXML( const char *pszVRTPathIn ) const;
     void Serialize(CPLXMLNode* psParent, const char *pszVRTPathIn) const;
@@ -1522,6 +1523,7 @@ protected:
     double m_dfOffset = 0.0;
     bool m_bHasScale = false;
     bool m_bHasOffset = false;
+    std::string m_osFilename{};
 
     bool IRead(const GUInt64* arrayStartIdx,
                       const size_t* count,
@@ -1545,7 +1547,8 @@ public:
         m_osVRTPath(poGroupRef->m_ptr->GetVRTPath()),
         m_dt(dt),
         m_dims(std::move(dims)),
-        m_oMapAttributes(std::move(oMapAttributes))
+        m_oMapAttributes(std::move(oMapAttributes)),
+        m_osFilename(poGroupRef->m_ptr->GetFilename())
     {
     }
 
@@ -1559,11 +1562,14 @@ public:
         m_poGroupRef(poGroupRef),
         m_osVRTPath(poGroupRef->m_ptr->GetVRTPath()),
         m_dt(dt),
-        m_dims(dims)
+        m_dims(dims),
+        m_osFilename(poGroupRef->m_ptr->GetFilename())
     {
     }
 
     bool IsWritable() const override { return false; }
+
+    const std::string& GetFilename() const override { return m_osFilename; }
 
     static std::shared_ptr<VRTMDArray> Create(const std::shared_ptr<VRTGroup>& poThisGroup,
                                               const std::string& osParentName,

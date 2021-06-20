@@ -3843,6 +3843,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GRA_Med",SWIG_From_int((int)(GRA_Med)));
   SWIG_Python_SetConstant(d, "GRA_Q1",SWIG_From_int((int)(GRA_Q1)));
   SWIG_Python_SetConstant(d, "GRA_Q3",SWIG_From_int((int)(GRA_Q3)));
+  SWIG_Python_SetConstant(d, "GRA_Sum",SWIG_From_int((int)(GRA_Sum)));
   SWIG_Python_SetConstant(d, "GPI_Gray",SWIG_From_int((int)(GPI_Gray)));
   SWIG_Python_SetConstant(d, "GPI_RGB",SWIG_From_int((int)(GPI_RGB)));
   SWIG_Python_SetConstant(d, "GPI_CMYK",SWIG_From_int((int)(GPI_CMYK)));
@@ -3903,6 +3904,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DCAP_DEFAULT_FIELDS",SWIG_FromCharPtr(GDAL_DCAP_DEFAULT_FIELDS));
   SWIG_Python_SetConstant(d, "DCAP_NOTNULL_GEOMFIELDS",SWIG_FromCharPtr(GDAL_DCAP_NOTNULL_GEOMFIELDS));
   SWIG_Python_SetConstant(d, "DCAP_UNIQUE_FIELDS",SWIG_FromCharPtr(GDAL_DCAP_UNIQUE_FIELDS));
+  SWIG_Python_SetConstant(d, "DCAP_COORDINATE_EPOCH",SWIG_FromCharPtr(GDAL_DCAP_COORDINATE_EPOCH));
   SWIG_Python_SetConstant(d, "DIM_TYPE_HORIZONTAL_X",SWIG_FromCharPtr(GDAL_DIM_TYPE_HORIZONTAL_X));
   SWIG_Python_SetConstant(d, "DIM_TYPE_HORIZONTAL_Y",SWIG_FromCharPtr(GDAL_DIM_TYPE_HORIZONTAL_Y));
   SWIG_Python_SetConstant(d, "DIM_TYPE_VERTICAL",SWIG_FromCharPtr(GDAL_DIM_TYPE_VERTICAL));
@@ -3910,6 +3912,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DIM_TYPE_PARAMETRIC",SWIG_FromCharPtr(GDAL_DIM_TYPE_PARAMETRIC));
   SWIG_Python_SetConstant(d, "CPLES_BackslashQuotable",SWIG_From_int((int)(CPLES_BackslashQuotable)));
   SWIG_Python_SetConstant(d, "CPLES_XML",SWIG_From_int((int)(CPLES_XML)));
+  SWIG_Python_SetConstant(d, "CPLES_XML_BUT_QUOTES",SWIG_From_int((int)(CPLES_XML_BUT_QUOTES)));
   SWIG_Python_SetConstant(d, "CPLES_URL",SWIG_From_int((int)(CPLES_URL)));
   SWIG_Python_SetConstant(d, "CPLES_SQL",SWIG_From_int((int)(CPLES_SQL)));
   SWIG_Python_SetConstant(d, "CPLES_CSV",SWIG_From_int((int)(CPLES_CSV)));
@@ -3961,3 +3964,4 @@ SWIG_init(void) {
 #endif
 }
 
+#define POST_PROCESSING_APPLIED

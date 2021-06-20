@@ -94,6 +94,10 @@ static const char * const papszDatumEquiv[] =
 # define CT_CylindricalEqualArea 28
 #endif
 
+#if LIBGEOTIFF_VERSION < 1700
+constexpr geokey_t CoordinateEpochGeoKey = static_cast<geokey_t>(5120);
+#endif
+
 /************************************************************************/
 /*                       LibgeotiffOneTimeInit()                        */
 /************************************************************************/
@@ -1418,6 +1422,13 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 
     oSRS.StripTOWGS84IfKnownDatumAndAllowed();
 
+    double dfCoordinateEpoch = 0.0;
+    if( GDALGTIFKeyGetDOUBLE(hGTIF, CoordinateEpochGeoKey, &dfCoordinateEpoch,
+                             0, 1) )
+    {
+        oSRS.SetCoordinateEpoch(dfCoordinateEpoch);
+    }
+
     return OGRSpatialReference::ToHandle(oSRS.Clone());
 }
 
@@ -1518,11 +1529,22 @@ static int OGCDatumName2EPSGDatumCode( GTIF * psGTIF,
 int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
 {
-    return GTIFSetFromOGISDefnEx(psGTIF, pszOGCWKT, GEOTIFF_KEYS_STANDARD,
+/* -------------------------------------------------------------------- */
+/*      Create an OGRSpatialReference object corresponding to the       */
+/*      string.                                                         */
+/* -------------------------------------------------------------------- */
+
+    OGRSpatialReference oSRS;
+    if( oSRS.importFromWkt(pszOGCWKT) != OGRERR_NONE )
+    {
+        return FALSE;
+    }
+    return GTIFSetFromOGISDefnEx(psGTIF, OGRSpatialReference::ToHandle(&oSRS) ,
+                                 GEOTIFF_KEYS_STANDARD,
                                  GEOTIFF_VERSION_1_0);
 }
 
-int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
+int GTIFSetFromOGISDefnEx( GTIF * psGTIF, OGRSpatialReferenceH hSRS,
                            GTIFFKeysFlavorEnum eFlavor,
                            GeoTIFFVersionEnum eVersion )
 {
@@ -1530,16 +1552,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 
     GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1, RasterPixelIsArea);
 
-/* -------------------------------------------------------------------- */
-/*      Create an OGRSpatialReference object corresponding to the       */
-/*      string.                                                         */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReference *poSRS = new OGRSpatialReference();
-    if( poSRS->importFromWkt(pszOGCWKT) != OGRERR_NONE )
-    {
-        delete poSRS;
-        return FALSE;
-    }
+    const OGRSpatialReference *poSRS = OGRSpatialReference::FromHandle(hSRS);
 
 /* -------------------------------------------------------------------- */
 /*      Set version number.                                             */
@@ -2549,9 +2562,11 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 
     // Note that VERTCS is an ESRI "spelling" of VERT_CS so we assume if
     // we find it that we should try to treat this as a PE string.
-    bWritePEString |= (poSRS->GetAttrValue("VERTCS") != nullptr);
-
-    bWritePEString |= (eFlavor == GEOTIFF_KEYS_ESRI_PE);
+    if( eFlavor == GEOTIFF_KEYS_ESRI_PE ||
+        poSRS->GetAttrValue("VERTCS") != nullptr )
+    {
+        bWritePEString = true;
+    }
 
     if( nPCS == KvUserDefined )
     {
@@ -2573,12 +2588,15 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         char *pszPEString = nullptr;
         // We cheat a bit, but if we have a custom_proj4, do not morph to ESRI
         // so as to keep the EXTENSION PROJ4 node
+        const char* const apszOptionsDefault[] = { nullptr };
+        const char* const apszOptionsEsri[] = { "FORMAT=WKT1_ESRI", nullptr };
+        const char* const * papszOptions = apszOptionsDefault;
         if( !(bUnknownProjection &&
               poSRS->GetExtension("PROJCS", "PROJ4", nullptr) != nullptr) )
         {
-            poSRS->morphToESRI();
+            papszOptions = apszOptionsEsri;
         }
-        poSRS->exportToWkt( &pszPEString );
+        poSRS->exportToWkt( &pszPEString, papszOptions );
         const int peStrLen = static_cast<int>(strlen(pszPEString));
         if(peStrLen > 0)
         {
@@ -2722,7 +2740,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /* -------------------------------------------------------------------- */
     if( nGCS == KvUserDefined || eVersion == GEOTIFF_VERSION_1_0 )
     {
-        OGR_SRSNode *poGCS = poSRS->GetAttrNode( "GEOGCS" );
+        const OGR_SRSNode *poGCS = poSRS->GetAttrNode( "GEOGCS" );
 
         if( poGCS != nullptr && poGCS->GetChild(0) != nullptr )
         {
@@ -2906,6 +2924,13 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         GTIFKeySet( psGTIF, VerticalCSTypeGeoKey, TYPE_SHORT, 1, nVerticalCSKeyValue );
     }
 
+    const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
+    if( dfCoordinateEpoch > 0 )
+    {
+        GTIFKeySet(psGTIF, CoordinateEpochGeoKey, TYPE_DOUBLE, 1,
+                   dfCoordinateEpoch );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Write all ascii keys                                            */
 /* -------------------------------------------------------------------- */
@@ -2914,10 +2939,6 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         GTIFKeySet( psGTIF, oIter.first, TYPE_ASCII, 0, oIter.second.c_str() );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    delete poSRS;
     return TRUE;
 }
 
@@ -2929,12 +2950,24 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList )
 {
-    return GTIFWktFromMemBufEx( nSize, pabyBuffer, ppszWKT, padfGeoTransform,
+    OGRSpatialReferenceH hSRS = nullptr;
+    if( ppszWKT )
+        *ppszWKT = nullptr;
+    CPLErr eErr = GTIFWktFromMemBufEx( nSize, pabyBuffer, &hSRS, padfGeoTransform,
                                 pnGCPCount, ppasGCPList, nullptr, nullptr );
+    if( eErr == CE_None )
+    {
+        if( hSRS && ppszWKT )
+        {
+            OSRExportToWkt(hSRS, ppszWKT);
+        }
+    }
+    OSRDestroySpatialReference(hSRS);
+    return eErr;
 }
 
 CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
-                            char **ppszWKT, double *padfGeoTransform,
+                            OGRSpatialReferenceH* phSRS, double *padfGeoTransform,
                             int *pnGCPCount, GDAL_GCP **ppasGCPList,
                             int *pbPixelIsPoint, char*** ppapszRPCMD )
 
@@ -2995,17 +3028,21 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     if( ppapszRPCMD )
         *ppapszRPCMD = nullptr;
 
-    GTIFDefn *psGTIFDefn = GTIFAllocDefn();
-
-    if( hGTIF != nullptr && GTIFGetDefn( hGTIF, psGTIFDefn ) )
-        *ppszWKT = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
-    else
-        *ppszWKT = nullptr;
-
+    if( phSRS )
+    {
+        *phSRS = nullptr;
+        if( hGTIF != nullptr )
+        {
+            GTIFDefn *psGTIFDefn = GTIFAllocDefn();
+            if( GTIFGetDefn( hGTIF, psGTIFDefn) )
+            {
+                *phSRS = GTIFGetOGISDefnAsOSR( hGTIF, psGTIFDefn );
+            }
+            GTIFFreeDefn(psGTIFDefn);
+        }
+    }
     if( hGTIF )
         GTIFFree( hGTIF );
-
-    GTIFFreeDefn(psGTIFDefn);
 
 /* -------------------------------------------------------------------- */
 /*      Get geotransform or tiepoints.                                  */
@@ -3098,7 +3135,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
 
     VSIUnlink( szFilename );
 
-    if( *ppszWKT == nullptr )
+    if( phSRS && *phSRS == nullptr )
         return CE_Failure;
 
     return CE_None;
@@ -3112,12 +3149,16 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
                           int nGCPCount, const GDAL_GCP *pasGCPList,
                           int *pnSize, unsigned char **ppabyBuffer )
 {
-    return GTIFMemBufFromWktEx(pszWKT, padfGeoTransform,
-                               nGCPCount,pasGCPList,
-                               pnSize, ppabyBuffer, FALSE, nullptr);
+    OGRSpatialReference oSRS;
+    if( pszWKT != nullptr )
+        oSRS.importFromWkt(pszWKT);
+    return GTIFMemBufFromSRS(OGRSpatialReference::ToHandle(&oSRS),
+                             padfGeoTransform,
+                             nGCPCount,pasGCPList,
+                             pnSize, ppabyBuffer, FALSE, nullptr);
 }
 
-CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
+CPLErr GTIFMemBufFromSRS( OGRSpatialReferenceH hSRS, const double *padfGeoTransform,
                             int nGCPCount, const GDAL_GCP *pasGCPList,
                             int *pnSize, unsigned char **ppabyBuffer,
                             int bPixelIsPoint, char** papszRPCMD )
@@ -3176,11 +3217,13 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
     }
 
     GTIF *hGTIF = nullptr;
-    if( pszWKT != nullptr || bPixelIsPoint )
+    if( hSRS != nullptr || bPixelIsPoint )
     {
         hGTIF = GTIFNew(hTIFF);
-        if( pszWKT != nullptr )
-            GTIFSetFromOGISDefn( hGTIF, pszWKT );
+        if( hSRS != nullptr )
+            GTIFSetFromOGISDefnEx( hGTIF, hSRS,
+                                   GEOTIFF_KEYS_STANDARD,
+                                   GEOTIFF_VERSION_1_0 );
 
         if( bPixelIsPoint )
         {

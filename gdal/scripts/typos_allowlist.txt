@@ -257,3 +257,4 @@ static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DE
 int CPL_DLL creat( const char *path, mode_t mode )
     // CASE_ALG(Gost) (obsolete)
                     "Invalid txe or tye parameters detected. Please check your -txe or -tye argument.");
+    assert domain.GetDescription() == 'The maximun speed of the road'

@@ -81,8 +81,7 @@ void generate(int nBands, uint16_t nPhotometric, uint nBitsPerSample)
     CPLString osTmpFilename;
     osTmpFilename.Printf( "/vsimem/gtiffdataset_guess_jpeg_quality_tmp" );
 
-    int nRet = -1;
-    for( int nQuality = 1; nQuality <= 100 && nRet < 0; ++nQuality )
+    for( int nQuality = 1; nQuality <= 100; ++nQuality )
     {
         papszOpts = CSLSetNameValue(papszOpts,
                                "JPEG_QUALITY", CPLSPrintf("%d", nQuality));

@@ -515,13 +515,6 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 
     GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, nBand );
 
-    if (adfX.empty())
-    {
-        // FIXME: Should have set to nodata value instead
-        GDALFillRaster( hBand, 0.0 , 0.0 );
-        return CE_None;
-    }
-
     int nBlockXSize = 0;
     int nBlockYSize = 0;
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eType);

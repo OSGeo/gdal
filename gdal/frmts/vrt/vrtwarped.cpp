@@ -327,7 +327,7 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
     {
         int nDstBand = psOptions->panDstBands[i];
         while( poDS->GetRasterCount() < nDstBand )
-        {   
+        {
             poDS->AddBand( psOptions->eWorkingDataType, nullptr );
         }
 
@@ -592,6 +592,7 @@ public:
     virtual OGRCoordinateTransformation* Clone() const override {
         return new GDALWarpCoordRescaler(*this); }
 
+    virtual OGRCoordinateTransformation* GetInverse() const override { return nullptr; }
 };
 
 /************************************************************************/
@@ -1534,7 +1535,7 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
 /* -------------------------------------------------------------------- */
     for(size_t i = 0; i < m_aoVerticalShiftGrids.size(); ++i )
     {
-        CPLXMLNode* psVertShiftGridNode = 
+        CPLXMLNode* psVertShiftGridNode =
             CPLCreateXMLNode( psTree, CXT_Element, "VerticalShiftGrids" );
         CPLCreateXMLElementAndValue(psVertShiftGridNode,
                                     "Grids",
@@ -1658,7 +1659,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 /* -------------------------------------------------------------------- */
 /*      Warp into this buffer.                                          */
 /* -------------------------------------------------------------------- */
-    
+
     const GDALWarpOptions *psWO = m_poWarper->GetOptions();
     const CPLErr eErr =
         m_poWarper->WarpRegionToBuffer(
@@ -1685,7 +1686,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         GDALRasterBlock *poBlock
             = poBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
 
-        const GByte* pabyDstBandBuffer = 
+        const GByte* pabyDstBandBuffer =
             pabyDstBuffer + static_cast<GPtrDiff_t>(i)*nReqXSize*nReqYSize*nWordSize;
 
         if( poBlock != nullptr )

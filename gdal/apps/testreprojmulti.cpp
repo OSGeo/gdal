@@ -63,7 +63,7 @@ static void ReprojFunc(void* /* unused */)
         CPLAtomicInc(&nIter);
         memcpy(padfResultX, padfRefX, 1024 * sizeof(double));
         memcpy(padfResultY, padfRefY, 1024 * sizeof(double));
-        poCT->TransformEx( 1024, padfResultX, padfResultY, nullptr, nullptr );
+        poCT->Transform( 1024, padfResultX, padfResultY, nullptr, nullptr );
 
         /* Check that the results are consistent with the reference results */
         assert(memcmp(padfResultX, padfRefResultX, 1024 * sizeof(double)) == 0);
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
     memcpy(padfRefResultX, padfRefX, 1024 * sizeof(double));
     memcpy(padfRefResultY, padfRefY, 1024 * sizeof(double));
 
-    poCT->TransformEx( 1024, padfRefResultX, padfRefResultY, nullptr, nullptr );
+    poCT->Transform( 1024, padfRefResultX, padfRefResultY, nullptr, nullptr );
 
     for(int i=0;i<nThreads;i++)
         CPLCreateThread(ReprojFunc, nullptr);

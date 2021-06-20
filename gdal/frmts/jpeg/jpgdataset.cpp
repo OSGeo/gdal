@@ -1416,13 +1416,11 @@ int JPGRasterBand::GetMaskFlags()
 
 GDALRasterBand *JPGRasterBand::GetOverview(int i)
 {
-    poGDS->InitInternalOverviews();
+    if( i < 0 || i >= GetOverviewCount() )
+        return nullptr;
 
     if( poGDS->nInternalOverviewsCurrent == 0 )
         return GDALPamRasterBand::GetOverview(i);
-
-    if( i < 0 || i >= poGDS->nInternalOverviewsCurrent )
-        return nullptr;
 
     return poGDS->papoInternalOverviews[i]->GetRasterBand(nBand);
 }
@@ -1433,6 +1431,9 @@ GDALRasterBand *JPGRasterBand::GetOverview(int i)
 
 int JPGRasterBand::GetOverviewCount()
 {
+    if( !poGDS->AreOverviewsEnabled() )
+        return 0;
+
     poGDS->InitInternalOverviews();
 
     if( poGDS->nInternalOverviewsCurrent == 0 )
@@ -4105,7 +4106,7 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
         sArgs.bDoPAMInitialize = true;
         sArgs.bUseInternalOverviews = true;
 
-        JPGDataset *poDS = dynamic_cast<JPGDataset *>(Open(&sArgs));
+        auto poDS = Open(&sArgs);
         CPLPopErrorHandler();
         if( poDS )
         {

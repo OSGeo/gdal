@@ -26,7 +26,6 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		ogr2ogr$(EXE) \
 		ogrtindex$(EXE) \
 		ogrlineref$(EXE) \
-		testepsg$(EXE) \
 		gdalbuildvrt$(EXE)
 
 ifeq ($(GNM_ENABLED),yes)

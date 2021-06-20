@@ -2,7 +2,7 @@
 
 set -e
 
-sudo apt-get install jq
+sudo apt-get install -y jq
 
 rm -f filtered_scanbuild.txt
 files=$(find gdal/scanbuildoutput -name "*.sarif")

@@ -233,6 +233,26 @@ CPLErr      OGRMutexedDataSource::SetMetadataItem( const char * pszName,
     return m_poBaseDataSource->SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
+const OGRFieldDomain* OGRMutexedDataSource::GetFieldDomain(const std::string& name) const
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->GetFieldDomain(name);
+}
+
+bool OGRMutexedDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                          std::string& failureReason)
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->AddFieldDomain(std::move(domain), failureReason);
+}
+
+std::shared_ptr<GDALGroup> OGRMutexedDataSource::GetRootGroup() const
+{
+    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
+    return m_poBaseDataSource->GetRootGroup();
+}
+
+
 #if defined(WIN32) && defined(_MSC_VER)
 // Horrible hack: for some reason MSVC doesn't export the class
 // if it is not referenced from the DLL itself

@@ -21,7 +21,7 @@ The VRT format can also describe :ref:`gdal_vrttut_warped`
 and :ref:`gdal_vrttut_pansharpen`
 
 An example of a simple .vrt file referring to a 512x512 dataset with one band
-loaded from utm.tif might look like this:
+loaded from :file:`utm.tif` might look like this:
 
 .. code-block:: xml
 
@@ -70,7 +70,7 @@ VRTDataset
 
 The allowed subelements for VRTDataset are :
 
-- **SRS**: This element contains the spatial reference system (coordinate system) in OGC WKT format.  Note that this must be appropriately escaped for XML, so items like quotes will have the ampersand escape sequences substituted. As as well WKT, and valid input to the SetFromUserInput() method (such as well known GEOGCS names, and PROJ.4 format) is also allowed in the SRS element.
+- **SRS**: This element contains the spatial reference system (coordinate system) in OGC WKT format.  Note that this must be appropriately escaped for XML, so items like quotes will have the ampersand escape sequences substituted. As well as WKT, valid input to the :cpp:func:`OGRSpatialReference::SetFromUserInput` method (such as well known GEOGCS names, and PROJ.4 format) is also allowed in the SRS element.
 
 .. code-block:: xml
 
@@ -120,13 +120,13 @@ The **dataAxisToSRSAxisMapping** attribute is allowed since GDAL 3.0 to describe
   This elements contains a list of overview factors, separated by space, to
   create "virtual overviews". For example ``2 4``. It can be used so that bands
   of the VRT datasets declare overviews. This only makes sense to use if the
-  sources added in those bands have themselves overviews compatible of the
-  declared factor. It is generally not needed to use this mechanism, since
-  downsampling pixel requests on a VRT dataset/band are able to use  of the
+  sources added in those bands have themselves overviews compatible with the
+  declared factor. It is generally not necessary to use this mechanism, since
+  downsampling pixel requests on a VRT dataset/band are able to use overviews of the
   sources, even when the VRT bands do not declare them. One situation where
-  explicit overviews are needed at the VRT level is for example warping a VRT
+  explicit overviews are needed at the VRT level is the warping of a VRT
   to a lower resolution.
-  This element can also be used to an existing VRT dataset by running
+  This element can also be used with an existing VRT dataset by running
   :cpp:func:`GDALDataset::BuildOverviews` or :program:`gdaladdo` with the
   :decl_configoption:`VRT_VIRTUAL_OVERVIEWS` configuration option set to ``YES``.
   Virtual overviews have the least priority compared to the **Overview** element
@@ -143,7 +143,7 @@ The attributes for VRTRasterBand are:
 - **dataType** (optional): type of the pixel data associated with this band (use
   names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64).
   If not specified, defaults to 1
- 
+
 - **band** (optional): band number this element represents (1 based).
 
 - **blockXSize** (optional, GDAL >= 3.3): block width.
@@ -183,7 +183,7 @@ The allowed subelements for VRTRasterBand are :
       <Entry c1="145" c2="78" c3="224" c4="255"/>
     </ColorTable>
 
-- **GDALRasterAttributeTable**: (GDAL >=2.3) This element is parent to a set of FieldDefn elements defining the columns of a raster attribute table, followed by a set of Row element defining the values of the columns of each row.
+- **GDALRasterAttributeTable**: (GDAL >=2.3) This element is parent to a set of FieldDefn elements defining the columns of a raster attribute table, followed by a set of Row elements defining the values of the columns of each row.
 
 .. code-block:: xml
 
@@ -559,14 +559,14 @@ Creation of VRT Datasets
 ------------------------
 
 The VRT driver supports several methods of creating VRT datasets.
-The vrtdataset.h include file should be installed with the core
+The :file:`vrtdataset.h` include file should be installed with the core
 GDAL include files, allowing direct access to the VRT classes.  However,
 even without that most capabilities remain available through standard GDAL
 interfaces.
 
 To create a VRT dataset that is a clone of an existing dataset use the
-CreateCopy() method.  For example to clone utm.tif into a wrk.vrt file in
-C++ the following could be used:
+:cpp:func:`GDALDriver::CreateCopy` method.  For example to clone
+:file:`utm.tif` into a :file:`wrk.vrt` file in C++ the following could be used:
 
 .. code-block:: cpp
 
@@ -580,18 +580,18 @@ C++ the following could be used:
   GDALClose((GDALDatasetH) poVRTDS);
   GDALClose((GDALDatasetH) poSrcDS);
 
-Note the use of GDALOpenShared() when opening the source dataset. It is advised
-to use GDALOpenShared() in this situation so that you are able to release
+Note the use of :cpp:func:`GDALOpenShared` when opening the source dataset. It is advised
+to use :cpp:func:`GDALOpenShared` in this situation so that you are able to release
 the explicit reference to it before closing the VRT dataset itself. In other
 words, in the previous example, you could also invert the 2 last lines, whereas
-if you open the source dataset with GDALOpen(), you'd need to close the VRT dataset
+if you open the source dataset with :cpp:func:`GDALOpen`, you'd need to close the VRT dataset
 before closing the source dataset.
 
 To create a virtual copy of a dataset with some attributes added or changed
 such as metadata or coordinate system that are often hard to change on other
 formats, you might do the following.  In this case, the virtual dataset is
 created "in memory" only by virtual of creating it with an empty filename, and
-then used as a modified source to pass to a CreateCopy() written out in TIFF
+then used as a modified source to pass to a :cpp:func:`GDALDriver::CreateCopy` written out in TIFF
 format.
 
 .. code-block:: cpp
@@ -611,17 +611,17 @@ format.
   GDALClose((GDALDatasetH) poTiffDS);
 
 In the above example the nodata value is set as -999. You can set the
-HideNoDataValue element in the VRT dataset's band using SetMetadataItem() on
+HideNoDataValue element in the VRT dataset's band using :cpp:func:`GDALRasterBand::SetMetadataItem` on
 that band.
 
 .. code-block:: cpp
 
   poVRTDS->GetRasterBand( 1 )->SetMetadataItem( "HideNoDataValue" , "1" );
 
-In this example a virtual dataset is created with the Create() method, and
+In this example a virtual dataset is created with the :cpp:func:`GDALDriver::Create` method, and
 adding bands and sources programmatically, but still via the "generic" API.
 A special attribute of VRT datasets is that sources can be added to the VRTRasterBand
-(but not to VRTRawRasterBand) by passing the XML describing the source into SetMetadata() on the special
+(but not to VRTRawRasterBand) by passing the XML describing the source into :cpp:func:`GDALRasterBand::SetMetadataItem` on the special
 domain target "new_vrt_sources".  The domain target "vrt_sources" may also be
 used, in which case any existing sources will be discarded before adding the
 new ones.  In this example we construct a simple averaging filter source
@@ -647,8 +647,8 @@ instead of using the simple source.
 A more general form of this that will produce a 3x3 average filtered clone
 of any input datasource might look like the following.  In this case we
 deliberately set the filtered datasource as in the "vrt_sources" domain
-to override the SimpleSource created by the CreateCopy() method.  The fact
-that we used CreateCopy() ensures that all the other metadata, georeferencing
+to override the SimpleSource created by the `cpp:func:`GDALDriver::CreateCopy` method.  The fact
+that we used `cpp:func:GDALDriver::CreateCopy` ensures that all the other metadata, georeferencing
 and so forth is preserved from the source dataset ... the only thing we are
 changing is the data source for each band.
 
@@ -681,11 +681,11 @@ changing is the data source for each band.
         poBand->SetMetadataItem( "source_0", szFilterSourceXML, "vrt_sources" );
     }
 
-The VRTDataset class is one of the few dataset implementations that supports the AddBand()
-method. The options passed to the AddBand() method can be used to control the type of the
+The :cpp:class:`VRTDataset` class is one of the few dataset implementations that supports the :cpp:func:`GDALDataset::AddBand`
+method. The options passed to the :cpp:func:`GDALDataset::AddBand` method can be used to control the type of the
 band created (VRTRasterBand, VRTRawRasterBand, VRTDerivedRasterBand), and in the case of
 the VRTRawRasterBand to set its various parameters. For standard VRTRasterBand, sources
-should be specified with the above SetMetadata() / SetMetadataItem() examples.
+should be specified with the above :cpp:func:`GDALRasterBand::SetMetadataItem` examples.
 
 .. code-block:: cpp
 
@@ -822,47 +822,40 @@ GDALAddDerivedBandPixelFunc with a key and a GDALDerivedPixelFunc:
 A good time to do this is at the beginning of an application when the
 GDAL drivers are registered.
 
-GDALDerivedPixelFunc is defined with a signature similar to IRasterIO:
+A :cpp:type:`GDALDerivedPixelFunc` is defined with a signature similar to :cpp:func:`GDALRasterBand::IRasterIO`:
 
-@param papoSources A pointer to packed rasters; one per source.  The
-datatype of all will be the same, specified in the eSrcType parameter.
 
-@param nSources The number of source rasters.
+.. cpp:function:: CPL_Err TestFunction(void** papoSources, int nSources, void* pData, int nBufXSize, int nBufYSize, GDALDataType eSrcType, GDALDataType eBufType, int nPixelSpace, int nLineSpace)
 
-@param pData The buffer into which the data should be read, or from which
-it should be written.  This buffer must contain at least nBufXSize *
-nBufYSize words of type eBufType.  It is organized in left to right,
-top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
-and nLineSpace parameters.
+   :param papoSources: A pointer to packed rasters; one per source.  The
+    datatype of all will be the same, specified in the ``eSrcType`` parameter.
 
-@param nBufXSize The width of the buffer image into which the desired
-region is to be read, or from which it is to be written.
+   :param nSources: The number of source rasters.
 
-@param nBufYSize The height of the buffer image into which the desired
-region is to be read, or from which it is to be written.
+   :param pData: The buffer into which the data should be read, or from which
+    it should be written.  This buffer must contain at least ``nBufXSize *
+    nBufYSize`` words of type eBufType.  It is organized in left to right, top
+    to bottom pixel order.  Spacing is controlled by the ``nPixelSpace`` and
+    ``nLineSpace`` parameters.
 
-@param eSrcType The type of the pixel values in the papoSources raster
-array.
+   :param nBufXSize: The width of the buffer image into which the desired
+    region is to be read, or from which it is to be written.
 
-@param eBufType The type of the pixel values that the pixel function must
-generate in the pData data buffer.
+   :param nBufYSize: The height of the buffer image into which the desired
+    region is to be read, or from which it is to be written.
 
-@param nPixelSpace The byte offset from the start of one pixel value in
-pData to the start of the next pixel value within a scanline.  If
-defaulted (0) the size of the datatype eBufType is used.
+   :param eSrcType: The type of the pixel values in the ``papoSources`` raster
+    array.
 
-@param nLineSpace The byte offset from the start of one scanline in
-pData to the start of the next.
+   :param eBufType: The type of the pixel values that the pixel function must
+    generate in the ``pData`` data buffer.
 
-@return CE_Failure on failure, otherwise CE_None.
+   :param nPixelSpace: The byte offset from the start of one pixel value in
+    ``pData`` to the start of the next pixel value within a scanline.  If
+    defaulted (0) the size of the datatype eBufType is used.
 
-.. code-block:: cpp
-
-    typedef CPLErr
-    (*GDALDerivedPixelFunc)(void **papoSources, int nSources, void *pData,
-                            int nXSize, int nYSize,
-                            GDALDataType eSrcType, GDALDataType eBufType,
-                            int nPixelSpace, int nLineSpace);
+   :param nLineSpace: The byte offset from the start of one scanline in
+    pData to the start of the next.
 
 The following is an implementation of the pixel function:
 
@@ -910,7 +903,7 @@ Using Derived Bands (with pixel functions in Python)
 ----------------------------------------------------
 
 Starting with GDAL 2.2, in addition to pixel functions written in C/C++ as
-documented in the \ref gdal_vrttut_derived_c section, it is possible to use
+documented in the :ref:`vrt_derived_bands` section, it is possible to use
 pixel functions written in Python. Both `CPython <https://www.python.org/>`_
 and `NumPy <http://www.numpy.org/>`_ are requirements at run-time.
 
@@ -1094,7 +1087,7 @@ code (PixelFunctionType of the form "module_name.function_name"), you need
 to make sure the modules are accessible through the python path. Note that
 contrary to the Python interactive interpreter, the current path is not
 automatically added when used from GDAL. So you may need to define the
-PYTHONPATH environment variable if you get ModuleNotFoundError exceptions.
+**PYTHONPATH** environment variable if you get ModuleNotFoundError exceptions.
 
 Security implications
 *********************
@@ -1102,12 +1095,12 @@ Security implications
 The ability to run Python code potentially opens the door to many potential
 vulnerabilities if the user of GDAL may process untrusted datasets. To avoid
 such issues, by default, execution of Python pixel function will be disabled.
-The execution policy can be controlled with the GDAL_VRT_ENABLE_PYTHON
+The execution policy can be controlled with the :decl_configoption:`GDAL_VRT_ENABLE_PYTHON`
 configuration option, which can accept 3 values:
 
 - YES: all VRT scripts are considered as trusted and their Python pixel functions will be run when pixel operations are involved.
 - NO: all VRT scripts are considered untrusted, and none Python pixelfunction will be run.
-- TRUSTED_MODULES (default setting): all VRT scripts with inline Python code in their PixelFunctionCode elements will be considered untrusted and will not be run. VRT scripts that use a PixelFunctionType of the form "module_name.function_name" will be considered as trusted, only if "module_name" is allowed in the GDAL_VRT_TRUSTED_MODULES configuration option. The value of this configuration option is a comma separated listed of trusted module names. The '*' wildcard can be used at the name of a string to match all strings beginning with the substring before the '*' character. For example 'every*' will make 'every.thing' or 'everything' module trusted. '*' can also be used to make all modules to be trusted. The ".*" wildcard can also be used to match exact modules or submodules names. For example 'every.*' will make 'every' and 'every.thing' modules trusted, but not 'everything'.
+- TRUSTED_MODULES (default setting): all VRT scripts with inline Python code in their PixelFunctionCode elements will be considered untrusted and will not be run. VRT scripts that use a PixelFunctionType of the form "module_name.function_name" will be considered as trusted, only if "module_name" is allowed in the :decl_configoption:`GDAL_VRT_TRUSTED_MODULES` configuration option. The value of this configuration option is a comma separated listed of trusted module names. The '*' wildcard can be used at the name of a string to match all strings beginning with the substring before the '*' character. For example 'every*' will make 'every.thing' or 'everything' module trusted. '*' can also be used to make all modules to be trusted. The ".*" wildcard can also be used to match exact modules or submodules names. For example 'every.*' will make 'every' and 'every.thing' modules trusted, but not 'everything'.
 
 .. _linking_mechanism_to_python_interpreter:
 
@@ -1119,13 +1112,13 @@ is not explicitly linked at build time to any of the CPython library. When GDAL
 will need to run Python code, it will first determine if the Python interpreter
 is loaded in the current process (which is the case if the program is a Python
 interpreter itself, or if another program, e.g. QGIS, has already loaded the
-CPython library). Otherwise it will look if the PYTHONSO configuration option is
+CPython library). Otherwise it will look if the :decl_configoption:`PYTHONSO` configuration option is
 defined. This option can be set to point to the name of the Python library to
 use, either as a shortname like "libpython2.7.so" if it is accessible through
 the Linux dynamic loader (so typically in one of the paths in /etc/ld.so.conf or
 LD_LIBRARY_PATH) or as a full path name like "/usr/lib/x86_64-linux-gnu/libpython2.7.so".
 The same holds on Windows will shortnames like "python27.dll" if accessible through
-the PATH or full path names like "c:\\python27\\python27.dll". If the PYTHONSO
+the PATH or full path names like "c:\\python27\\python27.dll". If the :decl_configoption:`PYTHONSO`
 configuration option is not defined, it will look for a "python" binary in the
 directories of the PATH and will try to determine the related shared object
 (it will retry with "python3" if no "python" has been found). If the above
@@ -1142,7 +1135,7 @@ The use of a just-in-time compiler may significantly speed up execution times.
 better performance, it is recommended to use a offline pixel function so that
 the just-in-time compiler may cache its compilation.
 
-Given the following mandelbrot.py file :
+Given the following :file:`mandelbrot.py` file :
 
 .. code-block:: python
 
@@ -1370,7 +1363,7 @@ the PansharpeningOptions element may have the following children elements :
 - **Algorithm**: to specify the pansharpening algorithm. Currently, only WeightedBrovey is supported.
 - **AlgorithmOptions**: to specify the options of the pansharpening algorithm. With WeightedBrovey algorithm, the only supported option is a **Weights** child element whose content must be a comma separated list of real values assigning the weight of each of the declared input spectral bands. There must be as many values as declared input spectral bands.
 - **Resampling**: the resampling kernel used to resample the spectral bands to the resolution of the panchromatic band. Can be one of Cubic (default), Average, Near, CubicSpline, Bilinear, Lanczos.
-- **NumThreads**: Number of worker threads. Integer number or ALL_CPUS. If this option is not set, the GDAL_NUM_THREADS configuration option will be queried (its value can also be set to an integer or ALL_CPUS)
+- **NumThreads**: Number of worker threads. Integer number or ALL_CPUS. If this option is not set, the :decl_configoption:`GDAL_NUM_THREADS` configuration option will be queried (its value can also be set to an integer or ALL_CPUS)
 - **BitDepth**: Can be used to specify the bit depth of the panchromatic and spectral bands (e.g. 12). If not specified, the NBITS metadata item from the panchromatic band will be used if it exists.
 - **NoData**: Nodata value to take into account for panchromatic and spectral bands. It will be also used as the output nodata value. If not specified and all input bands have the same nodata value, it will be implicitly used (unless the special None value is put in NoData to prevent that).
 - **SpatialExtentAdjustment**: Can be one of **Union** (default), **Intersection**, **None** or **NoneWithoutWarning**. Controls the behavior when panchromatic and spectral bands have not the same geospatial extent. By default, Union will take the union of all spatial extents. Intersection the intersection of all spatial extents. None will not proceed to any adjustment at all (might be useful if the geotransform are somehow dummy, and the top-left and bottom-right corners of all bands match), but will emit a warning. NoneWithoutWarning is the same as None, but in a silent way.
@@ -1493,7 +1486,7 @@ Multi-threading issues
 
 When using VRT datasets in a multi-threading environment, you should be
 careful to open the VRT dataset by the thread that will use it afterwards. The
-reason for that is that the VRT dataset uses GDALOpenShared when opening the
+reason for that is that the VRT dataset uses :cpp:func:`GDALOpenShared` when opening the
 underlying datasets. So, if you open twice the same VRT dataset by the same
 thread, both VRT datasets will share the same handles to the underlying
 datasets.
@@ -1514,7 +1507,7 @@ of datasets opened by VRT files whose maximum limit is 100 by default. When it
 needs to access a dataset referenced by a VRT, it checks if it is already in
 the pool of open datasets. If not, when the pool has reached its limit, it closes
 the least recently used dataset to be able to open the new one. This maximum
-limit of the pool can be increased by setting the GDAL_MAX_DATASET_POOL_SIZE
+limit of the pool can be increased by setting the :decl_configoption:`GDAL_MAX_DATASET_POOL_SIZE`
 configuration option to a bigger value. Note that a typical user process on
 Linux is limited to 1024 simultaneously opened files, and you should let some
 margin for shared libraries, etc...

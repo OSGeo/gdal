@@ -861,9 +861,9 @@ CPLErr GS7BGDataset::SetGeoTransform( double *padfGeoTransform )
         return CE_Failure;
     }
 
-    GS7BGRasterBand *poGRB = dynamic_cast<GS7BGRasterBand *>(GetRasterBand( 1 ));
+    GS7BGRasterBand *poGRB = cpl::down_cast<GS7BGRasterBand *>(GetRasterBand( 1 ));
 
-    if( poGRB == nullptr || padfGeoTransform == nullptr)
+    if( padfGeoTransform == nullptr)
         return CE_Failure;
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */

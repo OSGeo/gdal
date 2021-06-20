@@ -31,7 +31,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+import os
+import subprocess
+import sys
 
 import gdaltest
 from osgeo import osr
@@ -81,7 +83,7 @@ def test_osr_basic_1():
                                  % (utm_srs.GetAuthorityName(auth[0]),
                                      auth[1], auth[0]))
 
-    
+
 ###############################################################################
 # Simple default NAD83 State Plane zone.
 
@@ -121,7 +123,7 @@ def test_osr_basic_2():
                                  % (srs.GetAuthorityCode(auth[0]),
                                     auth[1], auth[0]))
 
-    
+
 ###############################################################################
 # NAD83 State Plane zone, but overridden to be in Feet.
 
@@ -207,9 +209,14 @@ def test_osr_basic_4():
 def test_osr_basic_5():
 
     wkt_1 = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC:1.3:CRS84')
+    assert 'GEOGCS["WGS 84' in wkt_1
+    assert 'AXIS["Longitude",EAST],AXIS["Latitude",NORTH]' in wkt_1
+    assert '4326' not in wkt_1
+
     wkt_2 = osr.GetUserInputAsWKT('WGS84')
-    assert wkt_1 == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Longitude",EAST],AXIS["Latitude",NORTH]]'
-    assert wkt_2 == 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+    assert 'GEOGCS["WGS 84' in wkt_2
+    assert 'AXIS["Latitude",NORTH],AXIS["Longitude",EAST]' in wkt_2
+    assert '4326' in wkt_2
 
 ###############################################################################
 # Test URN support for EPSG
@@ -236,15 +243,20 @@ def test_osr_basic_6():
         print(wkt_1)
         pytest.fail('EPSG:4326 urn lookup not as expected.')
 
-    
+
 ###############################################################################
 # Test URN support for auto projection.
 
 
 def test_osr_basic_7():
 
-    wkt = osr.GetUserInputAsWKT('urn:ogc:def:crs:OGC::AUTO42001:-117:33')
-    assert wkt.find('GEOGCS["WGS 84"') > 0 and wkt.find('PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]') > 0, 'AUTO42001 urn lookup not as expected.'
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('urn:ogc:def:crs:OGC::AUTO42001:-117:33')
+
+    srs_ref = osr.SpatialReference()
+    srs_ref.ImportFromEPSG(32611)
+    assert srs.IsSame(srs_ref)
+
 
 ###############################################################################
 # Test the SetLinearUnitsAndUpdateParameters() method.
@@ -518,7 +530,7 @@ def test_osr_basic_16():
     with gdaltest.error_handler():
         assert srs.SetFromUserInput("""GEOGCS["foo"]""") != 0
 
-    
+
 ###############################################################################
 # Test OGC URL support
 
@@ -1663,3 +1675,82 @@ def test_osr_GetUTMZone_Projected3D():
     utm_srs.PromoteTo3D()
 
     assert utm_srs.GetUTMZone() == -11
+
+
+###############################################################################
+def test_SetPROJAuxDbPaths():
+    # This test use auxiliary database created with proj 6.3.2
+    # (tested up to 8.0.0) and can be sensitive to future
+    # database structure change.
+    #
+    # See PR https://github.com/OSGeo/gdal/pull/3590
+    subprocess.check_call(
+        [sys.executable, 'osr_basic_subprocess.py'],
+        env=os.environ.copy())
+
+
+
+###############################################################################
+# Test IsDynamic()
+
+
+def test_osr_basic_is_dynamic():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(7665) # WGS 84 (G1762) (3D)
+    assert srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4171) # RGF93
+    assert not srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326) # WGS84 (generic), using datum ensemble
+    assert srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258) # ETRS89 (generic), using datum ensemble
+    assert not srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AXIS["Latitude",NORTH],
+    AXIS["Longitude",EAST],
+    AUTHORITY["EPSG","4326"]]""")
+    assert srs.IsDynamic()
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:9057+3855') # WGS 84 (G1762) + EGM2008 height
+    assert srs.IsDynamic()
+
+
+###############################################################################
+# Test SetCoordinateEpoch() / GetCoordinateEpoch
+
+
+def test_osr_basic_set_get_coordinate_epoch():
+
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS("WGS84")
+
+    srs.SetCoordinateEpoch(2021.3)
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+    clone = srs.Clone()
+    assert clone.GetCoordinateEpoch() == 2021.3
+    assert srs.IsSame(clone)
+
+    clone.SetCoordinateEpoch(0)
+    assert not srs.IsSame(clone)
+    assert srs.IsSame(clone, ['IGNORE_COORDINATE_EPOCH=YES'])

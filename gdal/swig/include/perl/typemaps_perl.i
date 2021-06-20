@@ -663,9 +663,30 @@
 {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
     if( *$1 ) {
-        free( *$2 );
+        VSIFree( *$2 );
     }
 }
+
+%typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen = 0, char *pBuf = 0 )
+{
+    /* %typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) */
+    $1 = &nLen;
+    $2 = &pBuf;
+}
+%typemap(argout) (size_t *nLen, char **pBuf )
+{
+    /* %typemap(argout) (size_t *nLen, char **pBuf ) */
+    $result = sv_2mortal(newSVpv( *$2, *$1 ));
+    argvi++;
+}
+%typemap(freearg) (size_t *nLen, char **pBuf )
+{
+    /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
+    if( *$1 ) {
+        VSIFree( *$2 );
+    }
+}
+
 %typemap(in,numinputs=0) (GIntBig *nLen, char **pBuf ) ( GIntBig nLen = 0, char *pBuf = 0 )
 {
     /* %typemap(in,numinputs=0) (GIntBig *nLen, char **pBuf ) */
@@ -685,6 +706,7 @@
         free( *$2 );
     }
 }
+
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
@@ -719,6 +741,42 @@
         $1 = 0;
     }
 }
+
+%typemap(in,numinputs=1) (size_t nLen, char *pBuf )
+{
+    /* %typemap(in,numinputs=1) (size_t nLen, char *pBuf ) */
+    if (SvOK($input)) {
+        SV *sv = $input;
+        if (SvROK(sv) && SvTYPE(SvRV(sv)) < SVt_PVAV)
+            sv = SvRV(sv);
+        if (!SvPOK(sv))
+            do_confess(NEED_BINARY_DATA, 1);
+        STRLEN len = SvCUR(sv);
+        $2 = SvPV_nolen(sv);
+        $1 = len;
+    } else {
+        $2 = NULL;
+        $1 = 0;
+    }
+}
+%typemap(in,numinputs=1) (size_t nLen, unsigned char *pBuf )
+{
+    /* %typemap(in,numinputs=1) (size_t nLen, unsigned char *pBuf ) */
+    if (SvOK($input)) {
+        SV *sv = $input;
+        if (SvROK(sv) && SvTYPE(SvRV(sv)) < SVt_PVAV)
+            sv = SvRV(sv);
+        if (!SvPOK(sv))
+            do_confess(NEED_BINARY_DATA, 1);
+        STRLEN len = SvCUR(sv);
+        $2 = (unsigned char *)SvPV_nolen(sv);
+        $1 = len;
+    } else {
+        $2 = NULL;
+        $1 = 0;
+    }
+}
+
 %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf )
 {
     /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */

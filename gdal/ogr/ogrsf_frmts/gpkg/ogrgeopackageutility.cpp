@@ -112,6 +112,11 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
     else if ( EQUAL("REAL", pszGpkgType) )
         return OFTReal;
 
+    // Only used normally in gpkg_data_column_constraints table, and we
+    // need this only is reading it through ExecuteSQL()
+    else if ( EQUAL("NUMERIC", pszGpkgType) )
+        return OFTReal;
+
     /* String/binary types */
     else if ( STRNCASECMP("TEXT", pszGpkgType, 4) == 0 )
     {

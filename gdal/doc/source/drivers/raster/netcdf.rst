@@ -296,44 +296,28 @@ Variables attributes for: tos, lon, lat and time
      time#bounds=time_bnds
      time#original_units=seconds since 2001-1-1
 
-Important Changes
-~~~~~~~~~~~~~~~~~
+Product specific behaviour
+--------------------------
 
--  Added support for NC2, NC4 and NC4C file types for reading and
-   writing, and HDF4 for reading. See `NetCDF File
-   Format <http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/File-Format.html#File-Format>`__
-   for details.
+Sentinel 5
+++++++++++
 
-   -  ``NC`` : NetCDF Classic Format: The Original Binary Format.
-   -  ``NC2`` : 64-bit Offset Format: Supporting Larger Variables
-   -  ``NC4`` : NetCDF-4 Format: Uses HDF5
-   -  ``NC4C`` : NetCDF-4 Classic Model Format: HDF5 with NetCDF
-      Limitations
-   -  ``HDF4`` : HDF4 SD Format
+.. versionadded:: 3.4
 
--  Improved support for CF-1.5 projected and geographic SRS reading and
-   writing
+The most verbose metadata is reported in the ``json:ISO_METADATA``,
+``json:ESA_METADATA``, ``json:EOP_METADATA``, ``json:QA_STATISTICS``,
+``json:GRANULE_DESCRIPTION``, ``json:ALGORITHM_SETTINGS`` and ``json:SUPPORT_DATA``
+metadata domains.
 
--  Improvements to metadata (global and variable) handling
+Can be discovered for example with:
 
--  Added simple progress indicator
+::
 
--  Added support for DEFLATE compression (reading and writing) and szip
-   (reading) - requires NetCDF-4 support
+    gdalinfo -mdd all -json S5P.nc
 
--  Added support for valid_range/valid_min/valid_max
-
--  Proper handling of signed/unsigned byte data
-
--  Added support for Create() function - enables to use NetCDF directly
-   with gdalwarp
-
--  Added support for CF two-dimensional coordinate variables (see `CF
-   Conventions <http://cfconventions.org/1.6.html#idp5559280>`__) via
-   GDAL GEOLOCATION arrays (see :ref:`rfc-4`)
 
 Creation Options
-~~~~~~~~~~~~~~~~
+----------------
 
 -  **FORMAT=[NC/NC2/NC4/NC4C]**: Set the NetCDF file format to use, NC
    is the default. NC2 is normally supported by recent NetCDF
@@ -382,7 +366,7 @@ Creation Options
    new Byte file can be forced to be written as signed byte.
 
 Configuration Options
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 -  **GDAL_NETCDF_BOTTOMUP=[YES/NO]** : Set the y-axis order for import,
    overriding the order detected by the driver. This option is usually

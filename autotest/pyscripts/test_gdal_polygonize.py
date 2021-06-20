@@ -185,8 +185,9 @@ def test_gdal_polygonize_4():
     content = open('tmp/out.gml', 'rt').read()
 
     os.unlink('tmp/out.gml')
+    os.unlink('tmp/out.xsd')
 
-    assert '<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>' in content
+    assert '<gml:Polygon srsName="urn:ogc:def:crs:EPSG::26711" gml:id="out.geom.0"><gml:exterior><gml:LinearRing><gml:posList>440720 3751320 440720 3750120 441920 3750120 441920 3751320 440720 3751320</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>' in content
 
     # Test mask,1 syntax
     test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask,1 ' + test_py_scripts.get_data_path('gcore') + 'byte.tif tmp/out.gml')
@@ -194,8 +195,9 @@ def test_gdal_polygonize_4():
     content = open('tmp/out.gml', 'rt').read()
 
     os.unlink('tmp/out.gml')
+    os.unlink('tmp/out.xsd')
 
-    assert '<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>' in content
+    assert '<gml:Polygon srsName="urn:ogc:def:crs:EPSG::26711" gml:id="out.geom.0"><gml:exterior><gml:LinearRing><gml:posList>440720 3751320 440720 3750120 441920 3750120 441920 3751320 440720 3751320</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>' in content
 
 
 

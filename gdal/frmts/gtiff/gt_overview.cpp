@@ -133,9 +133,7 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                       panExtraSampleValues );
     }
 
-    if( nCompressFlag == COMPRESSION_LZW ||
-        nCompressFlag == COMPRESSION_ADOBE_DEFLATE ||
-        nCompressFlag == COMPRESSION_ZSTD )
+    if( GTIFFSupportsPredictor(nCompressFlag) )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
 
 /* -------------------------------------------------------------------- */
@@ -655,8 +653,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 /*      Figure out the predictor value to use.                          */
 /* -------------------------------------------------------------------- */
     int nPredictor = PREDICTOR_NONE;
-    if( nCompression == COMPRESSION_LZW ||
-        nCompression == COMPRESSION_ADOBE_DEFLATE )
+    if( GTIFFSupportsPredictor(nCompression) )
     {
         const char* pszPredictor = papszOptions ?
             CSLFetchNameValue(papszOptions, "PREDICTOR") :

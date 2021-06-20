@@ -400,7 +400,8 @@ public:
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
-    static GDALDataset *Open(GDALOpenInfo *);
+    static PDS4Dataset *OpenInternal(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo * poOpenInfo) { return OpenInternal(poOpenInfo); }
     static GDALDataset *Create(const char *pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char **papszOptions);

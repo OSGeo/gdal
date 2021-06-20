@@ -1195,8 +1195,19 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
         }
 
         OGRSpatialReference oSRS;
-        const std::string srsName( oDomainSet["generalGrid"].GetString("srsName") );
+        std::string srsName( oDomainSet["generalGrid"].GetString("srsName") );
         bool bSwap = false;
+
+        // Strip of time component, as found in
+        // OGCAPI:https://maps.ecere.com/ogcapi/collections/blueMarble
+        if( STARTS_WITH(srsName.c_str(),
+                        "http://www.opengis.net/def/crs-compound?1=") &&
+            srsName.find("&2=http://www.opengis.net/def/crs/OGC/0/") != std::string::npos )
+        {
+            srsName = srsName.substr(strlen("http://www.opengis.net/def/crs-compound?1="));
+            srsName.resize(srsName.find("&2="));
+        }
+
         if( oSRS.SetFromUserInput( srsName.c_str() ) == OGRERR_NONE )
         {
             if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
@@ -1376,7 +1387,11 @@ GDALRasterBand* OGCAPIMapWrapperBand::GetOverview(int nLevel)
 GDALColorInterp OGCAPIMapWrapperBand::GetColorInterpretation()
 {
     OGCAPIDataset* poGDS = cpl::down_cast<OGCAPIDataset*>(poDS);
-    return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetColorInterpretation();
+    // The WMS driver returns Grey-Alpha for 2 band, RGB(A) for 3 or 4 bands
+    // Restrict that behavior to Byte only data.
+    if( eDataType == GDT_Byte )
+        return poGDS->m_poWMSDS->GetRasterBand(nBand)->GetColorInterpretation();
+    return GCI_Undefined;
 }
 
 /************************************************************************/

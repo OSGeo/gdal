@@ -375,6 +375,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     bool        bIsInternal = true;
     bool        bSuppressOnClose = false;
 
+    mutable std::map<std::string, std::unique_ptr<OGRFieldDomain>> m_oMapFieldDomains{};
+
                 GDALDataset(void);
     explicit    GDALDataset(int bForceCachedIO);
 
@@ -670,6 +672,14 @@ class CPL_DLL GDALDataset : public GDALMajorObject
         OGRLayer* layer = nullptr;
     };
 
+//! @cond Doxygen_Suppress
+    // SetEnableOverviews() only to be used by GDALOverviewDataset
+    void SetEnableOverviews(bool bEnable);
+
+    // Only to be used by driver's GetOverviewCount() method.
+    bool AreOverviewsEnabled() const;
+//! @endcond
+
 private:
     class Private;
     Private *m_poPrivate;
@@ -783,6 +793,11 @@ private:
     Features            GetFeatures();
 
     virtual int         TestCapability( const char * );
+
+    virtual const OGRFieldDomain* GetFieldDomain(const std::string& name) const;
+
+    virtual bool        AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
+                                       std::string& failureReason);
 
     virtual OGRLayer   *CreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = nullptr,
@@ -1794,40 +1809,49 @@ public:
     static GDALExtendedDataType Create(const std::string& osName,
                                        size_t nTotalSize,
                                        std::vector<std::unique_ptr<GDALEDTComponent>>&& components);
-    static GDALExtendedDataType CreateString(size_t nMaxStringLength = 0);
+    static GDALExtendedDataType CreateString(size_t nMaxStringLength = 0,
+                                             GDALExtendedDataTypeSubType eSubType = GEDTST_NONE);
 
     bool operator== (const GDALExtendedDataType& ) const;
     /** Non-equality operator */
     bool operator!= (const GDALExtendedDataType& other) const { return !(operator==(other)); }
 
     /** Return type name.
-     * 
+     *
      * This is the same as the C function GDALExtendedDataTypeGetName()
      */
     const std::string&        GetName() const { return m_osName; }
 
     /** Return type class.
-     * 
+     *
      * This is the same as the C function GDALExtendedDataTypeGetClass()
      */
     GDALExtendedDataTypeClass GetClass() const { return m_eClass; }
 
     /** Return numeric data type (only valid when GetClass() == GEDTC_NUMERIC)
-     * 
+     *
      * This is the same as the C function GDALExtendedDataTypeGetNumericDataType()
      */
     GDALDataType              GetNumericDataType() const { return m_eNumericDT;  }
 
+    /** Return subtype.
+     *
+     * This is the same as the C function GDALExtendedDataTypeGetSubType()
+     *
+     * @since 3.4
+     */
+    GDALExtendedDataTypeSubType GetSubType() const { return m_eSubType; }
+
     /** Return the components of the data type (only valid when GetClass() == GEDTC_COMPOUND)
-     * 
+     *
      * This is the same as the C function GDALExtendedDataTypeGetComponents()
      */
     const std::vector<std::unique_ptr<GDALEDTComponent>>& GetComponents() const { return m_aoComponents; }
 
     /** Return data type size in bytes.
-     * 
+     *
      * For a string, this will be size of a char* pointer.
-     * 
+     *
      * This is the same as the C function GDALExtendedDataTypeGetSize()
      */
     size_t                    GetSize() const { return m_nSize; }
@@ -1849,7 +1873,7 @@ public:
                      void* pDst, const GDALExtendedDataType& dstType);
 
 private:
-    explicit GDALExtendedDataType(size_t nMaxStringLength = 0);
+    GDALExtendedDataType(size_t nMaxStringLength, GDALExtendedDataTypeSubType eSubType);
     explicit  GDALExtendedDataType(GDALDataType eType);
     GDALExtendedDataType(const std::string& osName,
                          size_t nTotalSize,
@@ -1857,6 +1881,7 @@ private:
 
     std::string m_osName{};
     GDALExtendedDataTypeClass m_eClass = GEDTC_NUMERIC;
+    GDALExtendedDataTypeSubType m_eSubType = GEDTST_NONE;
     GDALDataType m_eNumericDT = GDT_Unknown;
     std::vector<std::unique_ptr<GDALEDTComponent>> m_aoComponents{};
     size_t m_nSize = 0;
@@ -1938,9 +1963,9 @@ public:
 /* ******************************************************************** */
 
 /**
- * Class modeling a named container of GDALAttribute, GDALMDArray or other
+ * Class modeling a named container of GDALAttribute, GDALMDArray, OGRLayer or other
  * GDALGroup. Hence GDALGroup can describe a hierarchy of objects.
- * 
+ *
  * This is based on the <a href="https://portal.opengeospatial.org/files/81716#_hdf5_group">HDF5 group concept</a>
  *
  * @since GDAL 3.1
@@ -1981,6 +2006,10 @@ public:
     virtual std::vector<std::string> GetGroupNames(CSLConstList papszOptions = nullptr) const;
     virtual std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
                                                  CSLConstList papszOptions = nullptr) const;
+
+    virtual std::vector<std::string> GetVectorLayerNames(CSLConstList papszOptions = nullptr) const;
+    virtual OGRLayer* OpenVectorLayer(const std::string& osName,
+                                      CSLConstList papszOptions = nullptr) const;
 
     virtual std::vector<std::shared_ptr<GDALDimension>> GetDimensions(CSLConstList papszOptions = nullptr) const;
 
@@ -2135,7 +2164,7 @@ public:
                                  FuncProcessPerChunkType pfnFunc,
                                  void* pUserData);
 
-    bool Read(const GUInt64* arrayStartIdx,     // array of size GetDimensionCount()
+    virtual bool Read(const GUInt64* arrayStartIdx,     // array of size GetDimensionCount()
                       const size_t* count,                 // array of size GetDimensionCount()
                       const GInt64* arrayStep,        // step in elements
                       const GPtrDiff_t* bufferStride, // stride in elements
@@ -2212,7 +2241,7 @@ public:
  * typically used to describe a metadata item. The value can be (for the
  * HDF5 format) in the general case a multidimensional array of "any" type
  * (in most cases, this will be a single value of string or numeric type)
- * 
+ *
  * This is based on the <a href="https://portal.opengeospatial.org/files/81716#_hdf5_attribute">HDF5 attribute concept</a>
  *
  * @since GDAL 3.1
@@ -2275,7 +2304,8 @@ protected:
 public:
     GDALAttributeString(const std::string& osParentName,
                   const std::string& osName,
-                  const std::string& osValue);
+                  const std::string& osValue,
+                  GDALExtendedDataTypeSubType eSubType = GEDTST_NONE);
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override;
 
@@ -2329,13 +2359,14 @@ public:
 /**
  * Class modeling a multi-dimensional array. It has a name, values organized
  * as an array and a list of GDALAttribute.
- * 
+ *
  * This is based on the <a href="https://portal.opengeospatial.org/files/81716#_hdf5_dataset">HDF5 dataset concept</a>
  *
  * @since GDAL 3.1
  */
 class CPL_DLL GDALMDArray: virtual public GDALAbstractMDArray, public GDALIHasAttribute
 {
+    friend class GDALMDArrayResampled;
     std::shared_ptr<GDALMDArray> GetView(const std::vector<GUInt64>& indices) const;
 
     inline std::shared_ptr<GDALMDArray> atInternal(std::vector<GUInt64>& indices) const
@@ -2358,6 +2389,9 @@ class CPL_DLL GDALMDArray: virtual public GDALAbstractMDArray, public GDALIHasAt
                         double dfMean, double dfStdDev,
                         GUInt64 nValidCount );
 
+    mutable bool m_bHasTriedCachedArray = false;
+    mutable std::shared_ptr<GDALMDArray> m_poCachedArray{};
+
 protected:
 //! @cond Doxygen_Suppress
     GDALMDArray(const std::string& osParentName, const std::string& osName);
@@ -2365,6 +2399,7 @@ protected:
     virtual bool IAdviseRead(const GUInt64* arrayStartIdx,
                              const size_t* count) const;
 
+    virtual bool IsCacheable() const { return true; }
 //! @endcond
 
 public:
@@ -2379,8 +2414,18 @@ public:
                           GDALProgressFunc pfnProgress,
                           void * pProgressData);
 
-    /** Return whether an array is writable; */
+    /** Return whether an array is writable. */
     virtual bool IsWritable() const = 0;
+
+    /** Return the filename that contains that array.
+     *
+     * This is used in particular for caching.
+     *
+     * Might be empty if the array is not linked to a file.
+     * 
+     * @since GDAL 3.4
+     */
+    virtual const std::string& GetFilename() const = 0;
 
     virtual CSLConstList GetStructuralInfo() const;
 
@@ -2436,6 +2481,12 @@ public:
 
     virtual std::shared_ptr<GDALMDArray> GetMask(CSLConstList papszOptions) const;
 
+    std::shared_ptr<GDALMDArray>
+        GetResampled( const std::vector<std::shared_ptr<GDALDimension>>& apoNewDims,
+                      GDALRIOResampleAlg resampleAlg,
+                      const OGRSpatialReference* poTargetSRS,
+                      CSLConstList papszOptions ) const;
+
     virtual GDALDataset* AsClassicDataset(size_t iXDim, size_t iYDim) const;
 
     virtual CPLErr GetStatistics( GDALDataset* poDS,
@@ -2452,8 +2503,26 @@ public:
                                     GUInt64* pnValidCount,
                                     GDALProgressFunc, void *pProgressData );
 
+    virtual std::vector<std::shared_ptr<GDALMDArray>> GetCoordinateVariables() const;
+
     bool AdviseRead(const GUInt64* arrayStartIdx,
                     const size_t* count) const;
+
+    bool IsRegularlySpaced(double& dfStart, double& dfIncrement) const;
+
+    bool GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint,
+                           double adfGeoTransform[6]) const;
+
+    bool Cache( CSLConstList papszOptions = nullptr ) const;
+
+    bool Read(const GUInt64* arrayStartIdx,     // array of size GetDimensionCount()
+                      const size_t* count,                 // array of size GetDimensionCount()
+                      const GInt64* arrayStep,        // step in elements
+                      const GPtrDiff_t* bufferStride, // stride in elements
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer,
+                      const void* pDstBufferAllocStart = nullptr,
+                      size_t nDstBufferAllocSize = 0) const override final;
 
 //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
@@ -2488,6 +2557,18 @@ public:
 //! @endcond
 };
 
+//! @cond Doxygen_Suppress
+bool GDALMDRasterIOFromBand(GDALRasterBand* poBand,
+                            GDALRWFlag eRWFlag,
+                            size_t iDimX,
+                            size_t iDimY,
+                            const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            const GInt64* arrayStep,
+                            const GPtrDiff_t* bufferStride,
+                            const GDALExtendedDataType& bufferDataType,
+                            void* pBuffer);
+//! @endcond
 
 /************************************************************************/
 /*                     GDALMDArrayRegularlySpaced                       */
@@ -2502,6 +2583,7 @@ class CPL_DLL GDALMDArrayRegularlySpaced: public GDALMDArray
     GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
     std::vector<std::shared_ptr<GDALDimension>> m_dims;
     std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
+    std::string m_osEmptyFilename{};
 
 protected:
 
@@ -2521,6 +2603,8 @@ public:
                 double dfOffsetInIncrement);
 
     bool IsWritable() const override { return false; }
+
+    const std::string& GetFilename() const override { return m_osEmptyFilename; }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override;
 
@@ -2573,7 +2657,7 @@ public:
     const std::string& GetFullName() const { return m_osFullName; }
 
     /** Return the axis type.
-     * 
+     *
      * Predefined values are:
      * HORIZONTAL_X, HORIZONTAL_Y, VERTICAL, TEMPORAL, PARAMETRIC
      * Other values might be returned. Empty value means unknown.
@@ -2583,7 +2667,7 @@ public:
     const std::string& GetType() const { return m_osType; }
 
     /** Return the axis direction.
-     * 
+     *
      * Predefined values are:
      * EAST, WEST, SOUTH, NORTH, UP, DOWN, FUTURE, PAST
      * Other values might be returned. Empty value means unknown.
@@ -2801,7 +2885,22 @@ int GDALCanFileAcceptSidecarFile(const char* pszFilename);
 
 bool GDALCanReliablyUseSiblingFileList(const char* pszFilename);
 
-bool GDALIsDriverDeprecatedForGDAL35StillEnabled(const char* pszDriverName, const char* pszExtraMsg = "");
+bool CPL_DLL GDALIsDriverDeprecatedForGDAL35StillEnabled(const char* pszDriverName, const char* pszExtraMsg = "");
+
+typedef enum
+{
+    GSF_UNSIGNED_INT,
+    GSF_SIGNED_INT,
+    GSF_FLOATING_POINT,
+} GDALBufferSampleFormat;
+
+bool CPL_DLL GDALBufferHasOnlyNoData(const void* pBuffer,
+                                     double dfNoDataValue,
+                                     size_t nWidth, size_t nHeight,
+                                     size_t nLineStride,
+                                     size_t nComponents,
+                                     int nBitsPerSample,
+                                     GDALBufferSampleFormat nSampleFormat);
 
 //! @endcond
 

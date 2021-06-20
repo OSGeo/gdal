@@ -173,7 +173,7 @@ OGRCircularString *ILI2Reader::getArc(DOMElement *elem) {
   OGRPoint *ptStart = getPoint(elemPrev); // COORD or ARC
   if( ptStart == nullptr )
       return nullptr;
-  
+
   // elem -> ARC
   OGRCircularString *arc = new OGRCircularString();
   // end point
@@ -256,21 +256,21 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
         char* pszObjValue = getObjValue(arcElem);
         if( pszObjValue )
         {
-            if (cmpStr("C1", pszTagName2) == 0)
+          if (cmpStr("C1", pszTagName2) == 0)
             ptEnd->setX(CPLAtof(pszObjValue));
-            else if (cmpStr("C2", pszTagName2) == 0)
+          else if (cmpStr("C2", pszTagName2) == 0)
             ptEnd->setY(CPLAtof(pszObjValue));
-            else if (cmpStr("C3", pszTagName2) == 0)
+          else if (cmpStr("C3", pszTagName2) == 0)
             ptEnd->setZ(CPLAtof(pszObjValue));
-            else if (cmpStr("A1", pszTagName2) == 0)
+          else if (cmpStr("A1", pszTagName2) == 0)
             ptOnArc->setX(CPLAtof(pszObjValue));
-            else if (cmpStr("A2", pszTagName2) == 0)
+          else if (cmpStr("A2", pszTagName2) == 0)
             ptOnArc->setY(CPLAtof(pszObjValue));
-            else if (cmpStr("A3", pszTagName2) == 0)
+          else if (cmpStr("A3", pszTagName2) == 0)
             ptOnArc->setZ(CPLAtof(pszObjValue));
-            else if (cmpStr("R", pszTagName2) == 0) {
+          else if (cmpStr("R", pszTagName2) == 0) {
             // radius = CPLAtof(pszObjValue);
-            }
+          }
         }
         CPLFree(pszObjValue);
         XMLString::release(&pszTagName2);
@@ -289,6 +289,17 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
       arc->addPoint(ptOnArc);
       arc->addPoint(ptEnd);
       ogrCurve->addCurveDirectly(arc);
+
+      // Add arc endpoint as next start point, if COORD sequence follows.
+      DOMElement *nextElem = dynamic_cast<DOMElement *>(lineElem->getNextSibling());
+      if( nextElem )
+      {
+        char* nextTagName = XMLString::transcode(nextElem->getTagName());
+        if (cmpStr(ILI2_COORD, nextTagName) == 0) {
+            ls->addPoint(ptEnd);
+        }
+        XMLString::release(&nextTagName);
+      }
 
       delete ptEnd;
       delete ptOnArc;
@@ -443,7 +454,7 @@ static char* fieldName(DOMElement* elem) {
 }
 
 void ILI2Reader::setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
-  int type = 0; 
+  int type = 0;
   //recursively search children
   for (DOMNode *childNode = elem->getFirstChild();
         type == 0 && childNode && childNode->getNodeType() == DOMNode::ELEMENT_NODE;
@@ -498,7 +509,7 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
       char *fName = fieldName(childElem);
       int fIndex = feature->GetGeomFieldIndex(fName);
       OGRGeometry *geom = getGeometry(childElem, type);
-      if( geom ) 
+      if( geom )
       {
         if (fIndex == -1) { // Unknown model
             feature->SetGeometryDirectly(geom);
@@ -623,7 +634,7 @@ int ILI2Reader::SaveClasses( const char *pszFile = nullptr ) {
     // Add logic later to determine reasonable default schema file.
     if( pszFile == nullptr )
         return FALSE;
-    
+
     VSILFILE* fp = VSIFOpenL(pszFile, "rb");
     if( fp == nullptr )
         return FALSE;

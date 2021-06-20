@@ -389,6 +389,18 @@ public:
     return OSRIsVertical(self);
   }
 
+  bool IsDynamic() {
+    return OSRIsDynamic(self);
+  }
+
+  double GetCoordinateEpoch() {
+    return OSRGetCoordinateEpoch(self);
+  }
+
+  void SetCoordinateEpoch(double coordinateEpoch) {
+    OSRSetCoordinateEpoch(self, coordinateEpoch);
+  }
+
   int EPSGTreatsAsLatLong() {
     return OSREPSGTreatsAsLatLong(self);
   }
@@ -1148,7 +1160,7 @@ public:
  *  CoordinateTransformation Object
  *
  */
- 
+
 %rename (CoordinateTransformationOptions) OGRCoordinateTransformationOptions;
 class OGRCoordinateTransformationOptions {
 private:
@@ -1163,7 +1175,7 @@ public:
   ~OGRCoordinateTransformationOptions() {
     OCTDestroyCoordinateTransformationOptions( self );
   }
-  
+
   bool SetAreaOfInterest( double westLongitudeDeg,
                           double southLatitudeDeg,
                           double eastLongitudeDeg,
@@ -1203,7 +1215,7 @@ public:
   }
 
   OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options ) {
-    return (OSRCoordinateTransformationShadow*) 
+    return (OSRCoordinateTransformationShadow*)
         options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
   }
 
@@ -1326,7 +1338,7 @@ public:
 %newobject CreateCoordinateTransformation;
 %inline %{
   OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {
-    return (OSRCoordinateTransformationShadow*) 
+    return (OSRCoordinateTransformationShadow*)
         options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
 }
 %}
@@ -1543,6 +1555,32 @@ int GetPROJVersionMicro()
     return num;
 }
 %}
+
+%inline %{
+void SetPROJAuxDbPath( const char *utf8_path )
+{
+    const char* const apszPaths[2] = { utf8_path, NULL };
+    OSRSetPROJAuxDbPaths(apszPaths);
+}
+%}
+
+%apply (char **options) { (char **) };
+%inline %{
+void SetPROJAuxDbPaths( char** paths )
+{
+    OSRSetPROJAuxDbPaths(paths);
+}
+%}
+%clear (char **);
+
+%apply (char **CSL) {(char **)};
+%inline %{
+char** GetPROJAuxDbPaths()
+{
+    return OSRGetPROJAuxDbPaths();
+}
+%}
+%clear (char **);
 
 #ifdef SWIGPYTHON
 %thread;

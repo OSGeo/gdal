@@ -9,7 +9,7 @@ sudo apt-get purge -y libgeos*
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 #sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update -qq
-sudo apt-get install python-numpy postgis libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-8-jdk libepsilon-dev liblcms2-2 libpcre3-dev mercurial cmake libkml-dev libopenjp2-7-dev libzstd1-dev sqlite3
+sudo apt-get install -y python-numpy postgis libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-8-jdk libepsilon-dev liblcms2-2 libpcre3-dev mercurial cmake libkml-dev libopenjp2-7-dev libzstd1-dev sqlite3 wget unzip curl
 # libgda-dev
 # libcrypto++-dev
 #sudo apt-get install python-lxml
@@ -19,8 +19,8 @@ sudo apt-get install libogdi3.2-dev
 #sudo apt-get install libboost-regex-dev libboost-system-dev libboost-thread-dev
 #sudo pip install pyflakes
 #pyflakes autotest
-#pyflakes gdal/swig/python/scripts
-#pyflakes gdal/swig/python/samples
+#pyflakes gdal/swig/python/gdal-utils/scripts
+#pyflakes gdal/swig/python/gdal-utils/osgeo_utils/samples
 #psql -c "drop database if exists autotest" -U postgres
 #psql -c "create database autotest" -U postgres
 #psql -c "create extension postgis" -d autotest -U postgres

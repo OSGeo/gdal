@@ -106,5 +106,7 @@ void RegisterOGRMEM()
         "the layer will contain UTF-8 strings' default='NO'/>"
         "</LayerCreationOptionList>");
 
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

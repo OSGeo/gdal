@@ -338,7 +338,8 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
         nRowBlobLength > 10 * (nFileSize / nValidRecordCount) )
     {
         /* Is it a deleted record ? */
-        if( (int)nRowBlobLength < 0 && nRowBlobLength != 0x80000000U )
+        if( (nRowBlobLength >> (8 * sizeof(nRowBlobLength) - 1)) != 0 &&
+            nRowBlobLength != 0x80000000U )
         {
             nRowBlobLength = (GUInt32) (-(int)nRowBlobLength);
             if( nRowBlobLength < (GUInt32)nNullableFieldsSizeInBytes ||
@@ -2401,7 +2402,7 @@ class ZMultiPointSetter
 
         void set(int i, double dfZ)
         {
-            poMPoint->getGeometryRef(i)->toPoint()->setZ(dfZ);
+            poMPoint->getGeometryRef(i)->setZ(dfZ);
         }
 };
 
@@ -2474,7 +2475,7 @@ class MMultiPointSetter
 
         void set(int i, double dfM)
         {
-            poMPoint->getGeometryRef(i)->toPoint()->setM(dfM);
+            poMPoint->getGeometryRef(i)->setM(dfM);
         }
 };
 

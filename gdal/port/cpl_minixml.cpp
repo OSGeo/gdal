@@ -1562,14 +1562,21 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
         pszPath++;
     }
 
-    char *apszTokens[2] = { const_cast<char*>(pszPath), nullptr };
+    const char * const apszTokens[2] = { pszPath, nullptr };
 
     // Slight optimization: avoid using CSLTokenizeStringComplex that
     // does memory allocations when it is not really necessary.
-    char **papszTokens =
-        strchr(pszPath, '.')
-        ? CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE )
-        : apszTokens;
+    char **papszTokensToFree = nullptr;
+    const char* const* papszTokens;
+    if( strchr(pszPath, '.') )
+    {
+        papszTokensToFree = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
+        papszTokens = papszTokensToFree;
+    }
+    else
+    {
+        papszTokens = apszTokens;
+    }
 
     int iToken = 0;
     while( papszTokens[iToken] != nullptr && psRoot != nullptr )
@@ -1601,8 +1608,8 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
         iToken++;
     }
 
-    if( papszTokens != apszTokens )
-        CSLDestroy( papszTokens );
+    if( papszTokensToFree )
+        CSLDestroy( papszTokensToFree );
     return psRoot;
 }
 

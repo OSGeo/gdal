@@ -316,19 +316,19 @@ Then repeat the operation with the 4 upper
 order uint16 of the intermediate result.
 
     v_sum_square = _mm_add_epi32(v_sum_square,
-        _mm_unpacklo_epi16(_mm_shuffle_epi32(v_low_square, 2 | (3 <<2)), zero) )
+        _mm_unpacklo_epi16(_mm_srli_si128(v_low_square, 8), zero) )
 
-_mm_shuffle_epi32(v, 2 | (3 <<2) is a trick to replicate the high 64 bits of
-a XMM register into its low 64 bits. We don't care about the values of the
-resulting high 64 bits since they will be lost with the later unpack operations.
+_mm_srli_si128(v, 8) moves the high 64 bits of a XMM register into its low 64
+bits (and set the resulting high 64 bits with zeroes, but we don't care since
+they will be lost with the later unpack operations.)
 
 And then repeat the whole process with the 8 highest order bytes.
 
-    v_high = _mm_unpacklo_epi8(_mm_shuffle_epi32(v, 2 | (3 <<2)), zero)
+    v_high = _mm_unpacklo_epi8(_mm_srli_si128(v, 8), zero)
     v_high_square = _mm_mullo_epi16(v_high, v_high)
     v_sum_square = _mm_add_epi32(v_sum_square, _mm_unpacklo_epi16(v_high_square, zero)
     v_sum_square = _mm_add_epi32(v_sum_square,
-        _mm_unpacklo_epi16(_mm_shuffle_epi32(v_high_square, 2 | (3 <<2)), zero) )
+        _mm_unpacklo_epi16(_mm_srli_si128(v_high_square, 8), zero) )
 
 We can actually do much better with the _mm_madd_epi16() mnemonics
 https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=madd&techs=SSE2
@@ -341,7 +341,7 @@ is both a uint16/int16)
 
     v_low_16bit = _mm_unpacklo_epi8(v, zero)
     v_sum_square = _mm_add_epi32(v_sum_square, _mm_madd_epi16(v_low_16bit, v_low_16bit))
-    v_high_16bit = _mm_unpacklo_epi8(_mm_shuffle_epi32(v, 2 | (3 <<2)), zero)
+    v_high_16bit = _mm_unpacklo_epi8(_mm_srli_si128(v, 8), zero)
     v_sum_square = _mm_add_epi32(v_sum_square, _mm_madd_epi16(v_high_16bit, v_high_16bit))
 
 The latencies and throughput of _mm_mullo_epi16 and _mm_madd_epi16 are the same,

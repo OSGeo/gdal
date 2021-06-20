@@ -99,20 +99,21 @@ except __builtin__.Exception:
 
 
 have_warned = 0
-def deprecation_warn(module, sub_package=None):
-  global have_warned
+def deprecation_warn(module, sub_package=None, new_module=None):
+    global have_warned
 
-  if have_warned == 1:
-      return
+    if have_warned == 1:
+        return
 
-  have_warned = 1
-  if sub_package:
-      new_module = sub_package+'.'+module
-  else:
-      new_module = module
+    have_warned = 1
+    if sub_package is None or sub_package == 'utils':
+        sub_package = 'osgeo_utils'
+    if new_module is None:
+        new_module = module
+    new_module = '{}.{}'.format(sub_package, new_module)
 
-  from warnings import warn
-  warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module, new_module),
+    from warnings import warn
+    warn('{}.py was placed in a namespace, it is now available as {}' .format(module, new_module),
        DeprecationWarning)
 
 
@@ -708,6 +709,7 @@ def VectorTranslateOptions(options=None, format=None,
          segmentizeMaxDist= None,
          makeValid=False,
          zField=None,
+         resolveDomains=False,
          skipFailures=False,
          limit=None,
          callback=None, callback_data=None):
@@ -738,6 +740,7 @@ def VectorTranslateOptions(options=None, format=None,
           segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
           makeValid --- run MakeValid() on geometries
           zField --- name of field to use to set the Z component of geometries
+          resolveDomains --- whether to create an additional field for each field associated with a coded field domain.
           skipFailures --- whether to skip failures
           limit -- maximum number of features to read per layer
           callback --- callback method
@@ -820,6 +823,8 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-dim', dim]
         if zField is not None:
             new_options += ['-zfield', zField]
+        if resolveDomains:
+            new_options += ['-resolveDomains']
         if skipFailures:
             new_options += ['-skip']
         if limit is not None:
@@ -1708,6 +1713,10 @@ def Sync(*args, **kwargs):
     """Sync(char const * pszSource, char const * pszTarget, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> bool"""
     return _gdal.Sync(*args, **kwargs)
 
+def AbortPendingUploads(*args):
+    """AbortPendingUploads(char const * utf8_path) -> bool"""
+    return _gdal.AbortPendingUploads(*args)
+
 def GetActualURL(*args):
     """GetActualURL(char const * utf8_path) -> char const *"""
     return _gdal.GetActualURL(*args)
@@ -1910,7 +1919,7 @@ class MajorObject(_object):
 
 
     def GetMetadata(self, domain=''):
-      if domain[:4] == 'xml:':
+      if domain and domain[:4] == 'xml:':
         return self.GetMetadata_List(domain)
       return self.GetMetadata_Dict(domain)
 
@@ -2472,6 +2481,16 @@ class Dataset(MajorObject):
         return _gdal.Dataset_ClearStatistics(self, *args)
 
 
+    def GetFieldDomain(self, *args):
+        """GetFieldDomain(Dataset self, char const * name) -> FieldDomain"""
+        return _gdal.Dataset_GetFieldDomain(self, *args)
+
+
+    def AddFieldDomain(self, *args):
+        """AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
+        return _gdal.Dataset_AddFieldDomain(self, *args)
+
+
     def ReadRaster1(self, *args, **kwargs):
         """ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
@@ -2704,6 +2723,8 @@ class Dataset(MajorObject):
 Dataset_swigregister = _gdal.Dataset_swigregister
 Dataset_swigregister(Dataset)
 
+GEDTST_NONE = _gdal.GEDTST_NONE
+GEDTST_JSON = _gdal.GEDTST_JSON
 class Group(_object):
     """Proxy of C++ GDALGroupHS class."""
 
@@ -2761,6 +2782,16 @@ class Group(_object):
     def OpenGroupFromFullname(self, *args):
         """OpenGroupFromFullname(Group self, char const * name, char ** options=None) -> Group"""
         return _gdal.Group_OpenGroupFromFullname(self, *args)
+
+
+    def GetVectorLayerNames(self, *args):
+        """GetVectorLayerNames(Group self, char ** options=None) -> char **"""
+        return _gdal.Group_GetVectorLayerNames(self, *args)
+
+
+    def OpenVectorLayer(self, *args):
+        """OpenVectorLayer(Group self, char const * name, char ** options=None) -> Layer"""
+        return _gdal.Group_OpenVectorLayer(self, *args)
 
 
     def GetDimensions(self, *args):
@@ -2880,6 +2911,11 @@ class MDArray(_object):
         return _gdal.MDArray_GetDimensions(self, *args)
 
 
+    def GetCoordinateVariables(self, *args):
+        """GetCoordinateVariables(MDArray self)"""
+        return _gdal.MDArray_GetCoordinateVariables(self, *args)
+
+
     def GetBlockSize(self, *args):
         """GetBlockSize(MDArray self)"""
         return _gdal.MDArray_GetBlockSize(self, *args)
@@ -2945,9 +2981,19 @@ class MDArray(_object):
         return _gdal.MDArray_GetNoDataValueAsDouble(self, *args)
 
 
+    def GetNoDataValueAsString(self, *args):
+        """GetNoDataValueAsString(MDArray self) -> retStringAndCPLFree *"""
+        return _gdal.MDArray_GetNoDataValueAsString(self, *args)
+
+
     def SetNoDataValueDouble(self, *args):
         """SetNoDataValueDouble(MDArray self, double d) -> CPLErr"""
         return _gdal.MDArray_SetNoDataValueDouble(self, *args)
+
+
+    def SetNoDataValueString(self, *args):
+        """SetNoDataValueString(MDArray self, char const * nodata) -> CPLErr"""
+        return _gdal.MDArray_SetNoDataValueString(self, *args)
 
 
     def SetNoDataValueRaw(self, *args):
@@ -3045,6 +3091,16 @@ class MDArray(_object):
         return _gdal.MDArray_ComputeStatistics(self, *args, **kwargs)
 
 
+    def GetResampled(self, *args):
+        """GetResampled(MDArray self, int nDimensions, GDALRIOResampleAlg resample_alg, OSRSpatialReferenceShadow ** srs, char ** options=None) -> MDArray"""
+        return _gdal.MDArray_GetResampled(self, *args)
+
+
+    def Cache(self, *args):
+        """Cache(MDArray self, char ** options=None) -> bool"""
+        return _gdal.MDArray_Cache(self, *args)
+
+
     def Read(self,
              array_start_idx = None,
              count = None,
@@ -3124,13 +3180,58 @@ class MDArray(_object):
              buffer_stride = None,
              buffer_datatype = None):
 
+        dimCount = self.GetDimensionCount()
+
+    # Redirect to numpy-friendly WriteArray() if buffer is a numpy array
+    # and other arguments are compatible
+        if type(buffer).__name__ == 'ndarray' and \
+           count is None and buffer_stride is None and buffer_datatype is None:
+            return self.WriteArray(buffer, array_start_idx=array_start_idx, array_step=array_step)
+
+    # Special case for buffer of type array and 1D arrays
+        if dimCount == 1 and type(buffer).__name__ == 'array' and \
+           count is None and buffer_stride is None and buffer_datatype is None:
+            map_typecode_itemsize_to_gdal = {
+               ('B',1): GDT_Byte,
+               ('h',2): GDT_Int16,
+               ('H',2): GDT_UInt16,
+               ('i',4): GDT_Int32,
+               ('I',4): GDT_UInt32,
+               ('l',4): GDT_Int32,
+    # ('l',8): GDT_Int64,
+    # ('q',8): GDT_Int64,
+    # ('Q',8): GDT_UInt64,
+               ('f', 4): GDT_Float32,
+               ('d', 8): GDT_Float64
+            }
+            key = (buffer.typecode, buffer.itemsize)
+            if key not in map_typecode_itemsize_to_gdal:
+                raise Exception("unhandled type for buffer of type array")
+            buffer_datatype = ExtendedDataType.Create(map_typecode_itemsize_to_gdal[key])
+
+    # Special case for a list of numeric values and 1D arrays
+        elif dimCount == 1 and type(buffer) == type([]) and len(buffer) != 0 \
+             and self.GetDataType().GetClass() != GEDTC_STRING:
+            buffer_datatype = GDT_Int32
+            for v in buffer:
+                if isinstance(v, int):
+                    if v >= (1 << 31) or v < -(1 << 31):
+                        buffer_datatype = GDT_Float64
+                elif isinstance(v, float):
+                    buffer_datatype = GDT_Float64
+                else:
+                    raise ValueError('Only lists with integer or float elements are supported')
+            import array
+            buffer = array.array('d' if buffer_datatype == GDT_Float64 else 'i', buffer)
+            buffer_datatype = ExtendedDataType.Create(buffer_datatype)
+
         if not buffer_datatype:
           buffer_datatype = self.GetDataType()
 
-        is_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and self.GetDimensionCount() == 1
+        is_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and dimCount == 1
 
         if not array_start_idx:
-          array_start_idx = [0] * self.GetDimensionCount()
+          array_start_idx = [0] * dimCount
 
         if not count:
           if is_1d_string:
@@ -3140,7 +3241,7 @@ class MDArray(_object):
               count = [ dim.GetSize() for dim in self.GetDimensions() ]
 
         if not array_step:
-          array_step = [1] * self.GetDimensionCount()
+          array_step = [1] * dimCount
 
         if not buffer_stride:
           stride = 1
@@ -3459,6 +3560,11 @@ class ExtendedDataType(_object):
     def GetMaxStringLength(self, *args):
         """GetMaxStringLength(ExtendedDataType self) -> size_t"""
         return _gdal.ExtendedDataType_GetMaxStringLength(self, *args)
+
+
+    def GetSubType(self, *args):
+        """GetSubType(ExtendedDataType self) -> GDALExtendedDataTypeSubType"""
+        return _gdal.ExtendedDataType_GetSubType(self, *args)
 
 
     def GetComponents(self, *args):

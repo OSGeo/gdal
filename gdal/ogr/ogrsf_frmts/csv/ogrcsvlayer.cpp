@@ -2129,6 +2129,8 @@ OGRErr OGRCSVLayer::WriteHeader()
                 poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), -1,
                 m_eStringQuoting == StringQuoting::ALWAYS ?
                     CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
+            if( pszEscaped == nullptr )
+                return OGRERR_FAILURE;
 
             if( fpCSV )
             {
@@ -2450,8 +2452,11 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
                             CPLES_CSV_FORCE_QUOTING : CPLES_CSV);
             }
         }
-
-        const int nLen = static_cast<int>(strlen(pszEscaped));
+        if( pszEscaped == nullptr )
+        {
+            return OGRERR_FAILURE;
+        }
+        const size_t nLen = strlen(pszEscaped);
         bNonEmptyLine |= nLen != 0;
         bool bAddDoubleQuote = false;
         if( chDelimiter == ' ' && pszEscaped[0] != '"' &&

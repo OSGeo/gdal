@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import struct
 import sys
 
@@ -1037,6 +1038,52 @@ def test_rasterio_floating_point_window_no_resampling_numpy():
 
 
 ###############################################################################
+# Test average downsampling by a factor of 2 on exact boundaries, with byte data type
+
+
+def test_rasterio_average_halfsize_downsampling_byte():
+
+    v1 = 255
+    v2 = 255
+    v3 = 255
+    v4 = 255
+    m1 = (v1 + v2 + v3 + v4 + 2) >> 2
+
+    v5 = 255
+    v6 = 2
+    v7 = 0
+    v8 = 0
+    m2 = (v5 + v6 + v7 + v8 + 2) >> 2
+
+    v9 = 127
+    v10 = 127
+    v11 = 127
+    v12 = 127
+    m3 = (v9 + v10 + v11 + v12 + 2) >> 2
+
+    v13 = 1
+    v14 = 0
+    v15 = 1
+    v16 = 1
+    m4 = (v13 + v14 + v15 + v16 + 2) >> 2
+    ds = gdal.GetDriverByName('MEM').Create('', 18, 4, 1, gdal.GDT_Byte)
+    ds.WriteRaster(0, 0, 18, 4,
+                   struct.pack('B' * 18 * 4,
+                               v1, v2, v5, v6, v9,  v10, v13, v14, v5, v6, v9,  v10, v13, v14, v1, v2, v5, v6,
+                               v3, v4, v7, v8, v11, v12, v15, v16, v7, v8, v11, v12, v15, v16, v3, v4, v7, v8,
+                               v1, v2, v5, v6, v9,  v10, v13, v14, v5, v6, v9,  v10, v13, v14, v1, v2, v5, v6,
+                               v3, v4, v7, v8, v11, v12, v15, v16, v7, v8, v11, v12, v15, v16, v3, v4, v7, v8))
+    # Ask for at least 8 output pixels in width to trigger SSE2 optim
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 4, 9, 2, resample_alg = gdal.GRIORA_Average)
+    assert struct.unpack('B' * 9 * 2, data) == (m1, m2, m3, m4, m2, m3, m4, m1, m2,
+                                                m1, m2, m3, m4, m2, m3, m4, m1, m2)
+
+    ds.BuildOverviews('AVERAGE', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data
+
+
+###############################################################################
 # Test average downsampling by a factor of 2 on exact boundaries, with uint16 data type
 
 
@@ -1065,14 +1112,16 @@ def test_rasterio_average_halfsize_downsampling_uint16():
     v15 = 1
     v16 = 1
     m4 = (v13 + v14 + v15 + v16 + 2) >> 2
-    ds = gdal.GetDriverByName('MEM').Create('', 18, 2, 1, gdal.GDT_UInt16)
-    ds.WriteRaster(0, 0, 18, 2,
-                   struct.pack('H' * 18 * 2,
+    ds = gdal.GetDriverByName('MEM').Create('', 18, 4, 1, gdal.GDT_UInt16)
+    ds.WriteRaster(0, 0, 18, 4,
+                   struct.pack('H' * 18 * 4,
                                v1, v2, v5, v6, v9,  v10, v13, v14, v5, v6, v9,  v10, v13, v14, v1, v2, v5, v6,
-                               v3, v4, v7, v8, v11, v12, v15, v16, v7, v8, v11, v12, v15, v16, v3, v4, v7, v8))
-    # Ask for at least 8 output pixels in width to trigger SSE2 optim
-    data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 2, 9, 1, resample_alg = gdal.GRIORA_Average)
-    assert struct.unpack('H' * 9, data) == (m1, m2, m3, m4, m2, m3, m4, m1, m2)
+                               v3, v4, v7, v8, v11, v12, v15, v16, v7, v8, v11, v12, v15, v16, v3, v4, v7, v8,
+                               v1, v2, v5, v6, v9,  v10, v13, v14, v5, v6, v9,  v10, v13, v14, v1, v2, v5, v6,
+                               v3, v4, v7, v8, v11, v12, v15, v16, v7, v8, v11, v12, v15, v16, v3, v4, v7, v8))    # Ask for at least 8 output pixels in width to trigger SSE2 optim
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 4, 9, 2, resample_alg = gdal.GRIORA_Average)
+    assert struct.unpack('H' * 9 * 2, data) == (m1, m2, m3, m4, m2, m3, m4, m1, m2,
+                                                m1, m2, m3, m4, m2, m3, m4, m1, m2)
 
     ds.BuildOverviews('AVERAGE', [2])
     ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
@@ -1107,18 +1156,27 @@ def test_rasterio_average_halfsize_downsampling_float32():
 
 def test_rasterio_rms_halfsize_downsampling_float32():
 
+    inf = float('inf')
+    nan = float('nan')
+
     ds = gdal.GetDriverByName('MEM').Create('', 18, 4, 1, gdal.GDT_Float32)
     ds.WriteRaster(0, 0, 18, 4,
                    struct.pack('f' * 18 * 4,
-                               0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535,
-                               2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535,
-                               65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,
-                               0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0))
+                               0,     0,     nan, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535, 0,     0,     1e-38, 1e-38, 65535, 65535,
+                               2,     65535, 0, 0,   65535, 65535, 2,     65535, 0, 0, 65535, 65535, 2,     65535, 1e-38, 1e-38, 65535, 65535,
+                               1e38,  -1e38, 0, inf, 1e-20, 1e-20,     -65535, -65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 1e38, -1e38,
+                               1e38,   1e38, 0, 0,   1e-20, 1e-20,     0,      -65535, 0, 0, 0,     0,     0,     65535, 0, 0, 1e38, 1e38))
     # Ask for at least 8 output pixels in width to trigger SSE2 optim
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 4, 9, 2, resample_alg = gdal.GRIORA_RMS)
-    assert struct.unpack('f' * 18, data) == pytest.approx(
-                                           (32767.5,       0, 65535, 32767.5,       0, 65535, 32767.5,       0, 65535,
-                                            56754.9765625, 0, 0,     56754.9765625, 0, 0,     56754.9765625, 0, 0), rel=1e-10)
+    got = struct.unpack('f' * 18, data)
+    #print(got)
+    expected = (32767.5,     nan, 65535, 32767.5,       0, 65535, 32767.5,          1e-38, 65535,
+                1e38, inf, 1e-20, 56754.974837013186, 0, 0,     56754.974837013186, 0, 1e38)
+    for i in range(len(got)):
+        if math.isnan(expected[i]):
+            assert math.isnan(got[i])
+        else:
+            assert got[i] == pytest.approx(expected[i], rel=1e-7), i
 
     ds.BuildOverviews('RMS', [2])
     ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
@@ -1205,14 +1263,17 @@ def test_rasterio_rms_halfsize_downsampling_uint16():
 
 def test_rasterio_rms_halfsize_downsampling_uint16_fits_in_14bits():
 
-    ds = gdal.GetDriverByName('MEM').Create('', 8, 2, 1, gdal.GDT_UInt16)
-    ds.WriteRaster(0, 0, 8, 2,
-                   struct.pack('H' * 8 * 2,
+    ds = gdal.GetDriverByName('MEM').Create('', 8, 4, 1, gdal.GDT_UInt16)
+    ds.WriteRaster(0, 0, 8, 4,
+                   struct.pack('H' * 8 * 4,
+                               10, 9,  16383, 16383, 1, 0, 16380, 16380,
+                               10, 10, 16383, 16383, 1, 1, 16378, 16380,
                                10, 9,  16383, 16383, 1, 0, 16380, 16380,
                                10, 10, 16383, 16383, 1, 1, 16378, 16380))
     # Ask for at least 4 output pixels in width to trigger SSE2 optim
-    data = ds.GetRasterBand(1).ReadRaster(0, 0, 8, 2, 4, 1, resample_alg = gdal.GRIORA_RMS)
-    assert struct.unpack('H' * 4, data) == (10, 16383, 1, 16380)
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 8, 4, 4, 2, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('H' * 8, data) == (10, 16383, 1, 16380,
+                                            10, 16383, 1, 16380)
 
 ###############################################################################
 # Test rms downsampling by a factor of 2 on exact boundaries, with uint16 data type

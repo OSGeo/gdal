@@ -3496,14 +3496,13 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
                 "WHERE zoom_level = %d",
                 poGDS->m_osRasterTable.c_str(),
                 poGDS->m_nZoomLevel);
-            SQLResult sResult;
-            if( SQLQuery( poGDS->IGetDB(), pszSQL, &sResult) == OGRERR_NONE &&
-                sResult.nRowCount == 1 )
+            auto sResult = SQLQuery(poGDS->IGetDB(), pszSQL);
+            if( sResult && sResult->RowCount() == 1 )
             {
-                const char* pszMinX = SQLResultGetValue(&sResult, 0, 0);
-                const char* pszMaxX = SQLResultGetValue(&sResult, 1, 0);
-                const char* pszMinY = SQLResultGetValue(&sResult, 2, 0);
-                const char* pszMaxY = SQLResultGetValue(&sResult, 3, 0);
+                const char* pszMinX = sResult->GetValue(0, 0);
+                const char* pszMaxX = sResult->GetValue(1, 0);
+                const char* pszMinY = sResult->GetValue(2, 0);
+                const char* pszMaxY = sResult->GetValue(3, 0);
                 if( pszMinX && pszMaxX && pszMinY && pszMaxY )
                 {
                     bOK = atoi(pszMinX) >= nColMin &&
@@ -3512,7 +3511,6 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
                           atoi(pszMaxY) <= nRowMax;
                 }
             }
-            SQLResultFree(&sResult);
             sqlite3_free(pszSQL);
         }
 
@@ -3529,13 +3527,12 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
                 poGDS->m_nZoomLevel,
                 nColMin, nColMax,
                 nRowMin, nRowMax);
-            SQLResult sResult;
+            auto sResult = SQLQuery(poGDS->IGetDB(), pszSQL);
             CPLDebug("GPKG", "%s", pszSQL);
-            if( SQLQuery( poGDS->IGetDB(), pszSQL, &sResult) == OGRERR_NONE &&
-                sResult.nRowCount == 1 )
+            if( sResult && sResult->RowCount() == 1 )
             {
-                const char* pszMin = SQLResultGetValue(&sResult, 0, 0);
-                const char* pszMax = SQLResultGetValue(&sResult, 1, 0);
+                const char* pszMin = sResult->GetValue(0, 0);
+                const char* pszMax = sResult->GetValue(1, 0);
                 if( pszMin )
                 {
                     GDALGPKGMBTilesLikeRasterBand::SetMetadataItem(
@@ -3549,7 +3546,6 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
                         CPLSPrintf("%.14g", CPLAtof(pszMax)) );
                 }
             }
-            SQLResultFree(&sResult);
             sqlite3_free(pszSQL);
         }
     }

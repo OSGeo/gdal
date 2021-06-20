@@ -14,7 +14,6 @@ SWIGOUTPUTDIR=extensions/
 
 include ../SWIGmake.base
 
-SCRIPTS			= `ls ./scripts/*.py`
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
                         gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
                         gcps2vec.py
@@ -29,10 +28,11 @@ clean:
 	-rm -rf dist
 
 SWIGARGS += -relativeimport -threads
-SWIGARGS += -outdir "${PACKAGE_DIR}" 
+SWIGARGS += -outdir "${PACKAGE_DIR}"
 
 
 veryclean: clean
+	-rm -f .generated_files_up_to_date
 	-rm -f ${WRAPPERS} ${PY_MODULES}
 	-rm -f $(SWIGOUTPUTDIR)gdal_wrap.cpp
 	-rm -f $(SWIGOUTPUTDIR)gdalconst_wrap.c
@@ -56,41 +56,51 @@ SED_COMMANDS += -e 's/module_head = \&swig_module;/\/\*module_head = \&swig_modu
 # SWIG defect fixed per https://github.com/swig/swig/commit/b0e29fbdf31bb94b11cb8a7cc830b4a76467afa3#diff-ba23eb3671d250e6a62261f19f653dd2R93
 SED_COMMANDS += -e 's/obj = PyUnicode_AsUTF8String(obj);/obj = PyUnicode_AsUTF8String(obj); if (!obj) return SWIG_TypeError;/'
 
-generate: ${WRAPPERS} $(SWIGOUTPUTDIR)gdal_array_wrap.cpp
+.generated_files_up_to_date: ${WRAPPERS} $(SWIGOUTPUTDIR)gdal_array_wrap.cpp
+	rm -f .generated_files_up_to_date
 	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do \
-	    if test -f $(SWIGOUTPUTDIR)$$i; then \
-	        sed $(SED_COMMANDS) $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
-	        mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
-	        \
-	        if test $$i = "gdal_wrap.cpp" ; then \
-	            sed \
-	              -e 's/result = (CPLErr)\(.*\);/CPL_IGNORE_RET_VAL(result = (CPLErr)\1);/' \
-	              $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
-	            mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
-	        fi; \
-	    fi; \
+		if test -f $(SWIGOUTPUTDIR)$$i; then \
+		    if ! grep "#define POST_PROCESSING_APPLIED" $(SWIGOUTPUTDIR)$$i>/dev/null; then \
+		        sed $(SED_COMMANDS) $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
+		        echo "#define POST_PROCESSING_APPLIED" >> $(SWIGOUTPUTDIR)$$i.tmp; \
+		        mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
+		        \
+		        if test $$i = "gdal_wrap.cpp" ; then \
+		            sed \
+		              -e 's/result = (CPLErr)\(.*\);/CPL_IGNORE_RET_VAL(result = (CPLErr)\1);/' \
+		              $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
+		            mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
+		        fi; \
+		    fi; \
+		fi; \
 	done
 ifeq ($(shell sed --version | grep GNU >/dev/null; echo $$?), 0)
 	# Only GNU sed accepts inserting newlines with \n. This is just to please Coverity, so no need to find a workaround
 	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gnm_wrap.cpp; do \
-	    if test -f $(SWIGOUTPUTDIR)$$i; then \
-	        sed \
-	          -e 's/PyObject \*resultobj = 0;/PyObject \*resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;/' \
-	          -e 's/\#define SWIGPYTHON/\#define SWIGPYTHON\n\#define SED_HACKS/' \
-	          -e 's/return resultobj;/if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }\n  return resultobj;/' \
-	          $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
-	        mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
-	    fi; \
-	done
+		if test -f $(SWIGOUTPUTDIR)$$i; then \
+		    if ! grep "define SED_HACKS" $(SWIGOUTPUTDIR)$$i>/dev/null; then \
+		        sed \
+		          -e 's/PyObject \*resultobj = 0;/PyObject \*resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;/' \
+		          -e 's/\#define SWIGPYTHON/\#define SWIGPYTHON\n\#define SED_HACKS/' \
+		          -e 's/return resultobj;/if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }\n  return resultobj;/' \
+		          $(SWIGOUTPUTDIR)$$i > $(SWIGOUTPUTDIR)$$i.tmp; \
+		        mv -f $(SWIGOUTPUTDIR)$$i.tmp $(SWIGOUTPUTDIR)$$i; \
+		    fi; \
+		fi; \
+	done;
 endif
+	echo "done" > .generated_files_up_to_date
 
-build: $(SWIGOUTPUTDIR)gdal_wrap.cpp
+generate: veryclean
+	 $(MAKE) .generated_files_up_to_date
+
+build: .generated_files_up_to_date
 	rm -f setup_vars.ini
 	echo 'GNM_ENABLED=$(GNM_ENABLED)' >> setup_vars.ini
 	$(PYTHON) setup.py build
 
 egg:
-	$(PYTHON) setup.py bdist_egg 
+	$(PYTHON) setup.py bdist_egg
 
 site_package_dir=$(shell $(PYTHON) -c "from __future__ import print_function;from distutils.sysconfig import get_python_lib;print(get_python_lib(prefix=\"$(PREFIX)\"))")
 
@@ -139,7 +149,6 @@ install:
 	fi
 	env PYTHONPATH=$(site_package_dir)$${PYTHONPATH:+:$$PYTHONPATH} \
 		$(PYTHON) setup.py install ${setup_opts}
-	for f in $(SCRIPTS) ; do $(INSTALL) $$f $(DESTDIR)$(INST_BIN) ; done
 
 # see swig/include/python/docs/README to refresh the  ../include/python/docs/ files
 docs:

@@ -128,13 +128,20 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 /*      Operational Systems's authentication option                     */
 /* -------------------------------------------------------------------- */
 
+    //Setting to "/" for backward compatibility
+    const char* pszUser = "/";
+
     ub4 eCred = OCI_CRED_RDBMS;
 
-    if( EQUAL(pszDatabaseIn, "") &&
-        EQUAL(pszPasswordIn, "") &&
-        EQUAL(pszUseridIn, "/") )
+    if( EQUAL(pszPasswordIn, "") &&
+        EQUAL(pszUseridIn, "") )
     {
+        //user and password are ignored in this credential type. 
         eCred = OCI_CRED_EXT;
+    }
+    else
+    {
+        pszUser = pszUseridIn;
     }
 
 /* -------------------------------------------------------------------- */
@@ -197,7 +204,7 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
     }
 
     if( Failed( OCIAttrSet((dvoid *) hSession, (ub4) OCI_HTYPE_SESSION,
-                (dvoid *) pszUseridIn, (ub4) strlen((char *) pszUseridIn),
+                (dvoid *) pszUser, (ub4) strlen((char *) pszUser),
                 (ub4) OCI_ATTR_USERNAME, hError) ) )
     {
         return FALSE;

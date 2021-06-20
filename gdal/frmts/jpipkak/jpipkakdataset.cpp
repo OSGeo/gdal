@@ -407,9 +407,6 @@ JPIPKAKDataset::~JPIPKAKDataset()
 
     Deinitialize();
 
-    CPLFree(pszProjection);
-    pszProjection = nullptr;
-
     CPLFree(pszPath);
 
     if (nGCPCount > 0 )
@@ -784,7 +781,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         // parse gml first, followed by geojp2 as a fallback
         if (oJP2Geo.ParseGMLCoverageDesc() || oJP2Geo.ParseJP2GeoTIFF())
         {
-            pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+            m_oSRS = oJP2Geo.m_oSRS;
             bGeoTransformValid = TRUE;
 
             memcpy(adfGeoTransform, oJP2Geo.adfGeoTransform,
@@ -1082,16 +1079,16 @@ int JPIPKAKDataset::ReadFromInput(GByte* pabyData, int nLen, int &bError )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *JPIPKAKDataset::_GetProjectionRef()
+const OGRSpatialReference *JPIPKAKDataset::GetSpatialRef() const
 
 {
-    if( pszProjection && *pszProjection )
-        return pszProjection;
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
     else
-        return GDALPamDataset::_GetProjectionRef();
+        return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -1122,16 +1119,16 @@ int JPIPKAKDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                           GetGCPSpatialRef()                         */
 /************************************************************************/
 
-const char *JPIPKAKDataset::_GetGCPProjection()
+const OGRSpatialReference *JPIPKAKDataset::GetGCPSpatialRef() const
 
 {
-    if( nGCPCount > 0 )
-        return pszProjection;
+    if( nGCPCount > 0 && !m_oSRS.IsEmpty() )
+        return &m_oSRS;
     else
-        return "";
+        return nullptr;
 }
 
 /************************************************************************/

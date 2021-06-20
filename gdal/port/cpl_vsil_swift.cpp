@@ -367,8 +367,24 @@ const char* VSISwiftFSHandler::GetOptions()
     "  <Option name='SWIFT_USER' type='string' "
         "description='User name to use with authentication V1'/>"
     "  <Option name='SWIFT_KEY' type='string' "
-        "description='Key/password to use with authentication V1'/>" +
-        VSICurlFilesystemHandler::GetOptionsStatic() +
+        "description='Key/password to use with authentication V1'/>"
+    "  <Option name='OS_IDENTITY_API_VERSION' type='string' "
+        "description='OpenStack identity API version'/>"
+    "  <Option name='OS_AUTH_TYPE' type='string' "
+        "description='Authentication URL'/>"
+    "  <Option name='OS_USERNAME' type='string' "
+        "description='User name'/>"
+    "  <Option name='OS_PASSWORD' type='string' "
+        "description='Password'/>"
+    "  <Option name='OS_USER_DOMAIN_NAME' type='string' "
+        "description='User domain name'/>"
+    "  <Option name='OS_PROJECT_NAME' type='string' "
+        "description='Project name'/>"
+    "  <Option name='OS_PROJECT_DOMAIN_NAME' type='string' "
+        "description='Project domain name'/>"
+    "  <Option name='OS_REGION_NAME' type='string' "
+        "description='Region name'/>"
+    +  VSICurlFilesystemHandler::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }

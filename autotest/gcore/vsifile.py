@@ -33,7 +33,7 @@ import os
 import sys
 import time
 from osgeo import gdal
-
+from lxml import etree
 
 import gdaltest
 import pytest
@@ -531,7 +531,7 @@ def test_vsifile_14():
 
     with gdaltest.error_handler():
         gdal.VSIFOpenL('/vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz', 'rb')
-    
+
 ###############################################################################
 # Test issue with Eof() not detecting end of corrupted gzip stream (#6944)
 
@@ -606,10 +606,12 @@ def test_vsifile_19():
         options = gdal.GetFileSystemOptions(prefix)
         # Check that the options is XML correct
         if options is not None:
-            ret = gdal.ParseXMLString(options)
-            assert ret is not None, (prefix, options)
+            try:
+                etree.fromstring(options)
+            except:
+                assert False, (prefix, options)
 
-    
+
 ###############################################################################
 # Test gdal.VSIFReadL with None fp
 
@@ -654,7 +656,7 @@ def test_vsifile_21():
         data3 = gdal.VSIGetMemFileBuffer_unsafe(filename)
         assert data3 == None
 
-    
+
 
 def test_vsifile_22():
     # VSIOpenL doesn't set errorno
@@ -714,7 +716,7 @@ def test_vsigzip_multi_thread():
 
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test vsisync()
 

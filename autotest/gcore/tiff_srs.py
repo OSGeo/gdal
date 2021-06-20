@@ -808,3 +808,34 @@ def test_tiff_srs_read_compoundcrs_without_gtcitation():
     ds = gdal.Open('data/gtiff/compdcrs_without_gtcitation.tif')
     sr = ds.GetSpatialRef()
     assert sr.GetName() == 'WGS 84 / UTM zone 32N + EGM08_Geoid'
+
+
+def test_tiff_srs_read_getspatialref_getgcpspatialref():
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is None
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetGCPSpatialRef() is None
+    assert ds.GetSpatialRef() is not None
+
+    ds = gdal.Open('data/byte.tif')
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is None
+    assert ds.GetGCPSpatialRef() is None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetSpatialRef() is None
+    assert ds.GetGCPSpatialRef() is not None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetSpatialRef() is None
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetGCPSpatialRef() is not None
+    assert ds.GetSpatialRef() is None
+    assert ds.GetSpatialRef() is None

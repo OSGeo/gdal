@@ -311,7 +311,7 @@ supported by GRASS r.colors utility. ESRI HDR color table files (.clr)
 also match that syntax. The alpha component and the support of tab and
 comma as separators are GDAL specific extensions.
 
-For example :
+For example:
 
 ::
 
@@ -328,6 +328,7 @@ duplicate with a new value being slightly above the threshold.
 For example to have red in [0,10], green in ]10,20] and blue in ]20,30]:
 
 ::
+
     0       red
     10      red
     10.001  green
@@ -404,8 +405,8 @@ See also
 
 Documentation of related GRASS utilities:
 
-http://grass.osgeo.org/grass64/manuals/html64_user/r.slope.aspect.html
+https://grass.osgeo.org/grass79/manuals/r.slope.aspect.html
 
-http://grass.osgeo.org/grass64/manuals/html64_user/r.shaded.relief.html
+https://grass.osgeo.org/grass79/manuals/r.relief.html
 
-http://grass.osgeo.org/grass64/manuals/html64_user/r.colors.html
+https://grass.osgeo.org/grass79/manuals/r.colors.html

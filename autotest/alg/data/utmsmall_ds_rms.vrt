@@ -9,7 +9,7 @@
   <BlockYSize>128</BlockYSize>
   <GDALWarpOptions>
     <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
-    <ResampleAlg>NearestNeighbour</ResampleAlg>
+    <ResampleAlg>RootMeanSquare</ResampleAlg>
     <WorkingDataType>Byte</WorkingDataType>
     <SourceDataset relativeToVRT="1">../../gcore/data/utmsmall.tif</SourceDataset>
     <Transformer>

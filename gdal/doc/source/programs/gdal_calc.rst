@@ -37,7 +37,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --calc=expression
 
-    Calculation in numpy syntax using ``+``, ``-``, ``/``, ``*``, or any numpy array functions (i.e. ``log10()`).
+    Calculation in numpy syntax using ``+``, ``-``, ``/``, ``*``, or any numpy array functions (i.e. ``log10()``).
     Multiple ``--calc`` options can be listed to produce a multiband file (GDAL >= 3.2).
 
 .. option:: -A <filename>
@@ -90,7 +90,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: color-table=<filename>
 
-    Allows to specify a filename of a color table (or a ColorTable object) (with Palette Index interpretation) to be used for the output raster.
+    Allows specifying a filename of a color table (or a ColorTable object) (with Palette Index interpretation) to be used for the output raster.
     Supported formats: txt (i.e. like gdaldem, but color names are not supported), qlr, qml (i.e. exported from QGIS)
 
 .. option:: --extent=<option>
@@ -165,7 +165,7 @@ They are not available using the command prompt.
 
 .. option:: color_table
 
-    Allows to specify a ColorTable object (with Palette Index interpretation) to be used for the output raster.
+    Allows specifying a ColorTable object (with Palette Index interpretation) to be used for the output raster.
 
 Example
 -------

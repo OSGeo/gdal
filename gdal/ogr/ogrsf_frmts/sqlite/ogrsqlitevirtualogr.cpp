@@ -33,6 +33,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -1263,14 +1264,21 @@ static void OGR2SQLITE_ExportGeometry(OGRGeometry* poGeom, int nSRSId,
     /* the spatialite blob */
     else if( poGeom->hasCurveGeometry() )
     {
-        int nWkbSize = poGeom->WkbSize();
+        const size_t nWkbSize = poGeom->WkbSize();
+        if( nWkbSize + 1 >
+                static_cast<size_t>(std::numeric_limits<int>::max()) - nGeomBLOBLen )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Too large geometry");
+            nGeomBLOBLen = 0;
+            return;
+        }
 
         pabyGeomBLOB = (GByte*) CPLRealloc(pabyGeomBLOB,
                                 nGeomBLOBLen + nWkbSize + 1);
         poGeom->exportToWkb(wkbNDR, pabyGeomBLOB + nGeomBLOBLen, wkbVariantIso);
         /* Cheat a bit and add a end-of-blob spatialite marker */
         pabyGeomBLOB[nGeomBLOBLen + nWkbSize] = 0xFE;
-        nGeomBLOBLen += nWkbSize + 1;
+        nGeomBLOBLen += static_cast<int>(nWkbSize) + 1;
     }
 }
 
@@ -1915,7 +1923,10 @@ void OGR2SQLITE_ogr_layer_FeatureCount(sqlite3_context* pContext,
 
 static void OGR2SQLITEDestroyModule(void* pData)
 {
-    CPLDebug("OGR", "Unloading VirtualOGR module");
+    // Comment out this debug message, as the module can be registered in the connection
+    // of proj.db that is since PROJ 8.1 a cache that is destroyed at PROJ
+    // unloading, after GDAL itself has cleaned up itself.
+    // CPLDebug("OGR", "Unloading VirtualOGR module");
     delete (OGR2SQLITEModule*) pData;
 }
 
