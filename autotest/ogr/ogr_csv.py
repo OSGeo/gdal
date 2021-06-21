@@ -943,7 +943,7 @@ def test_ogr_csv_27():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Check that we don't rewrite erroneously a file that has no header (#5161).
 
@@ -1197,7 +1197,7 @@ def test_ogr_csv_32():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test Boolean, Int16 and Float32 support
 
@@ -1968,10 +1968,10 @@ def test_ogr_csv_47():
 
 def test_ogr_csv_48():
 
-    gdal.FileFromMemBuffer('/vsimem/ogr_csv_48.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList\n')
+    gdal.FileFromMemBuffer('/vsimem/ogr_csv_48.csvt', 'JsonStringList,JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList\n')
     gdal.FileFromMemBuffer('/vsimem/ogr_csv_48.csv',
-                           """stringlist,intlist,int64list,reallist
-"[""a"",null]","[1]","[1234567890123]","[0.125]"
+                           """stringlist,emptystringlist,intlist,int64list,reallist
+"[""a"",null]",[],"[1]","[1234567890123]","[0.125]"
 """)
 
     gdal.VectorTranslate('/vsimem/ogr_csv_48_out.csv', '/vsimem/ogr_csv_48.csv', format='CSV', layerCreationOptions=['CREATE_CSVT=YES', 'LINEFORMAT=LF'])
@@ -1980,13 +1980,13 @@ def test_ogr_csv_48():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.startswith('stringlist,intlist,int64list,reallist\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125')
+    assert data.startswith('stringlist,emptystringlist,intlist,int64list,reallist\n"[ ""a"", """" ]",[],[ 1 ],[ 1234567890123 ],[ 0.125')
 
     f = gdal.VSIFOpenL('/vsimem/ogr_csv_48_out.csvt', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    assert data.startswith('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList')
+    assert data.startswith('JSonStringList,JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList')
 
     gdal.Unlink('/vsimem/ogr_csv_48.csv')
     gdal.Unlink('/vsimem/ogr_csv_48.csvt')
