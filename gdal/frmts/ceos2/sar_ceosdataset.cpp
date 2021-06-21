@@ -1502,22 +1502,25 @@ int SAR_CEOSDataset::ScanForMapProjection()
                                            LEADER_MAP_PROJ_RECORD_TC,
                                            CEOS_LEADER_FILE, -1, -1 );
 
+    int gcp_ordering_mode = CEOS_STD_GCP_ORDER;
     /* JERS from Japan */
     if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList,
                              LEADER_MAP_PROJ_RECORD_JERS_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
-    if( record == nullptr )
+    if( record == nullptr ) {
         record = FindCeosRecord( sVolume.RecordList,
                              LEADER_MAP_PROJ_RECORD_ASF_TC,
                              CEOS_LEADER_FILE, -1, -1 );
-
+        gcp_ordering_mode = CEOS_ASF_MAPREC_ORDER;
+    }
     if( record == nullptr ) {
         record = FindCeosRecord( sVolume.RecordList,
                              LEADER_FACILITY_ASF_TC,
                              CEOS_LEADER_FILE, -1, -1 );
-    }
+        gcp_ordering_mode = CEOS_ASF_FACREC_ORDER;
+	}
 
     if( record == nullptr )
         return FALSE;
@@ -1574,29 +1577,42 @@ int SAR_CEOSDataset::ScanForMapProjection()
 
     /* Map Projection Record has the order UL UR LR LL
      ASF Facility Data Record has the order UL,LL,UR,LR
-     with fields 17 bytes wide starting at byte 157 */
+     ASF Map Projection Record has the order LL, LR, UR, UL */
 
     pasGCPList[0].dfGCPLine = 0.5;
     pasGCPList[0].dfGCPPixel = 0.5;
 
-    if(GCPFieldSize == 17) {
-        pasGCPList[1].dfGCPLine = nRasterYSize-0.5;
-        pasGCPList[1].dfGCPPixel = 0.5;
+    switch(gcp_ordering_mode) {
+        case CEOS_ASF_FACREC_ORDER:
+            pasGCPList[1].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[1].dfGCPPixel = 0.5;
 
-        pasGCPList[2].dfGCPLine = 0.5;
-        pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+            pasGCPList[2].dfGCPLine = 0.5;
+            pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
 
-        pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
-        pasGCPList[3].dfGCPPixel = nRasterXSize-0.5;
-    } else {
-        pasGCPList[1].dfGCPLine = 0.5;
-        pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+            pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[3].dfGCPPixel = nRasterXSize-0.5;
+            break;
+        case CEOS_STD_GCP_ORDER:
+            pasGCPList[1].dfGCPLine = 0.5;
+            pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
 
-        pasGCPList[2].dfGCPLine = nRasterYSize-0.5;
-        pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+            pasGCPList[2].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
 
-        pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
-        pasGCPList[3].dfGCPPixel = 0.5;
+            pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[3].dfGCPPixel = 0.5;
+            break;
+        case CEOS_ASF_MAPREC_ORDER:
+            pasGCPList[0].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[0].dfGCPPixel = 0.5;
+            pasGCPList[1].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+            pasGCPList[2].dfGCPLine = 0.5;
+            pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+            pasGCPList[3].dfGCPLine = 0.5;
+            pasGCPList[3].dfGCPPixel = 0.5;
+            break;
     }
 
     return TRUE;
