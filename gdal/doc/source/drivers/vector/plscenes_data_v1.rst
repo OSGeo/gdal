@@ -207,5 +207,5 @@ See Also
 -  :ref:`General documentation page for PLScenes
    driver <vector.plscenes>`
 -  `Documentation of Planet Scenes Data API
-   v1 <https://developers.planet.com/docs/api/>`__
+   v1 <https://developers.planet.com/docs/apis/data/>`__
 -  :ref:`Raster PLMosaic / Planet Mosaics API driver <raster.plmosaic>`
