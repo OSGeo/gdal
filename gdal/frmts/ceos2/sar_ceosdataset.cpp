@@ -74,6 +74,9 @@ static const char * const CeosExtension[][6] = {
 /* Radarsat-1 per #2051 */
 { "vol", "sarl", "sard", "sart", "nvol", "ext" },
 
+/* Radarsat-1 ASF */
+{ "", "L", "D", "", "", "ext" },
+
 /* end marker */
 { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }
 };
@@ -106,6 +109,11 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 /* JERS from Japan has MAP_PROJ recond with different identifiers */
 /* see CEOS-SAR-CCT Iss/Rev: 2/0 February 10, 1989 */
 #define LEADER_MAP_PROJ_RECORD_JERS_TC         QuadToTC( 18, 20, 18, 20 )
+
+/* Leader from ASF has different identifiers */
+#define LEADER_MAP_PROJ_RECORD_ASF_TC      QuadToTC( 10, 20, 18, 20 )
+#define LEADER_DATASET_SUMMARY_ASF_TC      QuadToTC( 10, 10, 18, 20 )
+#define LEADER_FACILITY_ASF_TC             QuadToTC( 90, 210, 18, 61 )
 
 /* For ERS calibration and incidence angle information */
 #define ERS_GENERAL_FACILITY_DATA_TC  QuadToTC( 10, 200, 31, 50 )
@@ -956,6 +964,10 @@ void SAR_CEOSDataset::ScanForMetadata()
                              CEOS_LEADER_FILE, -1, -1 );
 
     if( record == nullptr )
+        record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_ASF_TC,
+                                 CEOS_LEADER_FILE, -1, -1 );
+
+    if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_TC,
                                  CEOS_TRAILER_FILE, -1, -1 );
 
@@ -1109,6 +1121,14 @@ void SAR_CEOSDataset::ScanForMetadata()
         if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_INC_ANGLE", szField );
 
+/* -------------------------------------------------------------------- */
+/*      Facility                                                         */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 1047, "A16", szField );
+        szField[16] = '\0';
+
+        if( !STARTS_WITH_CI(szField, "                ") )
+            SetMetadataItem( "CEOS_FACILITY", szField );
 /* -------------------------------------------------------------------- */
 /*      Pixel time direction indicator                                  */
 /* -------------------------------------------------------------------- */
@@ -1489,17 +1509,44 @@ int SAR_CEOSDataset::ScanForMapProjection()
                              CEOS_LEADER_FILE, -1, -1 );
 
     if( record == nullptr )
+        record = FindCeosRecord( sVolume.RecordList,
+                             LEADER_MAP_PROJ_RECORD_ASF_TC,
+                             CEOS_LEADER_FILE, -1, -1 );
+
+    if( record == nullptr ) {
+        record = FindCeosRecord( sVolume.RecordList,
+                             LEADER_FACILITY_ASF_TC,
+                             CEOS_LEADER_FILE, -1, -1 );
+    }
+
+    if( record == nullptr )
         return FALSE;
 
     char szField[100];
     memset( szField, 0, 17 );
     GetCeosField( record, 29, "A16", szField );
 
-    if( !STARTS_WITH_CI(szField, "Slant Range") && !STARTS_WITH_CI(szField, "Ground Range")
-        && !STARTS_WITH_CI(szField, "GEOCODED") )
-        return FALSE;
+    int GCPFieldSize = 16;
+    int GCPOffset = 1073;
 
-    GetCeosField( record, 1073, "A16", szField );
+    if( !STARTS_WITH_CI(szField, "Slant Range") &&
+        !STARTS_WITH_CI(szField, "Ground Range")
+        && !STARTS_WITH_CI(szField, "GEOCODED") ) {
+        /* detect ASF map projection record */
+        GetCeosField( record, 1079, "A7", szField );
+        if( !STARTS_WITH_CI(szField, "Slant") &&
+            !STARTS_WITH_CI(szField, "Ground") ) {
+            return FALSE;
+        } else {
+            GCPFieldSize = 17;
+            GCPOffset = 157;
+        }
+    }
+
+    char FieldSize[4];
+    snprintf(FieldSize,4,"A%d",GCPFieldSize);
+
+    GetCeosField( record, GCPOffset, FieldSize, szField );
     if( STARTS_WITH_CI(szField, "        ") )
         return FALSE;
 
@@ -1513,29 +1560,44 @@ int SAR_CEOSDataset::ScanForMapProjection()
 
     for( int i = 0; i < nGCPCount; i++ )
     {
-        char         szId[32];
+        char         szId[34];
 
         snprintf( szId, sizeof(szId), "%d", i+1 );
         pasGCPList[i].pszId = CPLStrdup( szId );
 
-        GetCeosField( record, 1073+32*i, "A16", szField );
+        GetCeosField( record, GCPOffset+(GCPFieldSize*2)*i, FieldSize, szField );
         pasGCPList[i].dfGCPY = CPLAtof(szField);
-        GetCeosField( record, 1089+32*i, "A16", szField );
+        GetCeosField( record, GCPOffset+GCPFieldSize+(GCPFieldSize*2)*i, FieldSize, szField );
         pasGCPList[i].dfGCPX = CPLAtof(szField);
         pasGCPList[i].dfGCPZ = 0.0;
     }
 
+    /* Map Projection Record has the order UL UR LR LL
+     ASF Facility Data Record has the order UL,LL,UR,LR
+     with fields 17 bytes wide starting at byte 157 */
+
     pasGCPList[0].dfGCPLine = 0.5;
     pasGCPList[0].dfGCPPixel = 0.5;
 
-    pasGCPList[1].dfGCPLine = 0.5;
-    pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+    if(GCPFieldSize == 17) {
+        pasGCPList[1].dfGCPLine = nRasterYSize-0.5;
+        pasGCPList[1].dfGCPPixel = 0.5;
 
-    pasGCPList[2].dfGCPLine = nRasterYSize-0.5;
-    pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+        pasGCPList[2].dfGCPLine = 0.5;
+        pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
 
-    pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
-    pasGCPList[3].dfGCPPixel = 0.5;
+        pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
+        pasGCPList[3].dfGCPPixel = nRasterXSize-0.5;
+    } else {
+        pasGCPList[1].dfGCPLine = 0.5;
+        pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+
+        pasGCPList[2].dfGCPLine = nRasterYSize-0.5;
+        pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+
+        pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
+        pasGCPList[3].dfGCPPixel = 0.5;
+    }
 
     return TRUE;
 }
@@ -1554,6 +1616,14 @@ void SAR_CEOSDataset::ScanForGCPs()
 /* -------------------------------------------------------------------- */
     if( sVolume.ImageDesc.ImageDataStart < 192 )
     {
+        ScanForMapProjection();
+        return;
+    }
+
+    /* ASF L1 products do not have valid data
+       in the lat/long first/mid/last fields */
+    const char *pszValue = GetMetadataItem("CEOS_FACILITY");
+    if(strncmp((char *)pszValue,"ASF",3) == 0) {
         ScanForMapProjection();
         return;
     }
@@ -1885,7 +1955,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = psImageDesc->PixelsPerLine;
+    poDS->nRasterXSize = psImageDesc->PixelsPerLine + psImageDesc->LeftBorderPixels + psImageDesc->RightBorderPixels;
     poDS->nRasterYSize = psImageDesc->Lines;
 
     const int bNative =
