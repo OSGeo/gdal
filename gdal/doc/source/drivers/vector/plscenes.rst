@@ -21,5 +21,5 @@ See Also
 --------
 
 -  `Documentation of Planet Scenes Data API
-   V1 <https://www.planet.com/docs/reference/data-api/>`__
+   V1 <https://developers.planet.com/docs/apis/data/>`__
 -  :ref:`Raster PLMosaic / Planet Mosaics API driver <raster.plmosaic>`

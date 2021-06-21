@@ -348,6 +348,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual std::string DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
     bool                m_bUseHead = false;
+    bool                m_bUseRedirectURLIfNoQueryStringParams = false;
 
     int          ReadMultiRangeSingleGet( int nRanges, void ** ppData,
                                          const vsi_l_offset* panOffsets,
