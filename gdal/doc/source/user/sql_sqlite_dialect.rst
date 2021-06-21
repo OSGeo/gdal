@@ -62,8 +62,8 @@ the following syntax : "other_datasource_name"."layer_name".
 
     SELECT p.*, NAME FROM poly p JOIN "idlink.dbf"."idlink" il USING (eas_id)
 
-If the master datasource is SQLite database (GeoPackage, SpatiaLite) it is necessary to 
-use indirect SQLite dialect. Otherwise additional datasources are never opened but tables to 
+If the master datasource is SQLite database (GeoPackage, SpatiaLite) it is necessary to
+use indirect SQLite dialect. Otherwise additional datasources are never opened but tables to
 be used in joins are searched from the master database.
 
 .. code-block:: shell
@@ -138,6 +138,25 @@ returns:
     EAS_ID (Real) = 168
     PRFEDEA (String) = 35043411
     POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,[...],479819.84375 4765180.5))
+
+Feature id
+++++++++++
+
+The feature id is a special property of a feature and not treated
+as an attribute of the feature.  In some cases it is convenient to be able to
+utilize the feature id in queries and result sets as a regular field.  To do
+so use the name ``rowid``. The field wildcard expansions will not include
+the feature id, but it may be explicitly included using a syntax like:
+
+.. code-block::
+
+    SELECT rowid, * FROM nation
+
+It is of course possible to rename it:
+
+.. code-block::
+
+    SELECT rowid AS fid, * FROM nation
 
 OGR_STYLE special field
 +++++++++++++++++++++++
