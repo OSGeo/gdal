@@ -89,10 +89,10 @@ static const CeosRecipeType_t RadarSatRecipe[] =
       265, 4, CEOS_REC_TYP_I }, /* Bottom border pixels */
     { CEOS_REC_PPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       249, 8, CEOS_REC_TYP_I }, /* Pixels per line */
-    { CEOS_REC_LBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+    { CEOS_REC_LBP, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       245, 4, CEOS_REC_TYP_I }, /* Left Border Pixels */
-    { CEOS_REC_RBP, 0, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
-      257, 4, CEOS_REC_TYP_I }, /* Isn't available for RadarSAT */
+    { CEOS_REC_RBP, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
+      257, 4, CEOS_REC_TYP_I }, /* Right Border Pixels */
     { CEOS_REC_BPP, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
       225, 4, CEOS_REC_TYP_I }, /* Bytes Per Pixel */
     { CEOS_REC_RPL, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_OPT,
@@ -661,27 +661,26 @@ void GetCeosSARImageDesc( CeosSARVolume_t *volume )
 
     if( RecipeFunctions == NULL )
     {
-	RegisterRecipes();
+        RegisterRecipes();
     }
 
     if(RecipeFunctions == NULL )
     {
-	return ;
+        return ;
     }
 
     for(l_link = RecipeFunctions; l_link != NULL; l_link = l_link->next)
     {
-	if(l_link->object)
-	{
-	    rec_data = l_link->object;
+    if(l_link->object)
+    {
+        rec_data = l_link->object;
             function = rec_data->function;
-	    if(( *function )( volume, rec_data->token ) )
-            {
-                CPLDebug( "CEOS", "Using recipe '%s'.",
-                          rec_data->name );
-		return;
-            }
-	}
+        if(( *function )( volume, rec_data->token ) )
+        {
+           CPLDebug( "CEOS", "Using recipe '%s'.", rec_data->name );
+           return;
+        }
+    }
     }
 
     return ;
