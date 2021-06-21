@@ -206,6 +206,7 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
 {
     friend class JP2OpenJPEGRasterBand;
 
+    std::string  m_osFilename;
     VSILFILE   *fp = nullptr; /* Large FILE API */
     vsi_l_offset nCodeStreamStart = 0;
     vsi_l_offset nCodeStreamLength = 0;
@@ -532,10 +533,10 @@ void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
     int nPairs = (int)poJob->oPairs.size();
     int nBandCount = poJob->nBandCount;
     int* panBandMap = poJob->panBandMap;
-    VSILFILE* fp = VSIFOpenL(poGDS->GetDescription(), "rb");
+    VSILFILE* fp = VSIFOpenL(poGDS->m_osFilename.c_str(), "rb");
     if( fp == nullptr )
     {
-        CPLDebug("OPENJPEG", "Cannot open %s", poGDS->GetDescription());
+        CPLDebug("OPENJPEG", "Cannot open %s", poGDS->m_osFilename.c_str());
         poJob->bSuccess = false;
         //VSIFree(pDummy);
         return;
@@ -1876,6 +1877,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     int                 iBand;
 
     poDS = new JP2OpenJPEGDataset();
+    poDS->m_osFilename = poOpenInfo->pszFilename;
     if( eCodecFormat == OPJ_CODEC_JP2 )
         poDS->eAccess = poOpenInfo->eAccess;
     poDS->eColorSpace = psImage->color_space;
@@ -2192,6 +2194,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->papoOverviewDS,
                     (poDS->nOverviewCount + 1) * sizeof(JP2OpenJPEGDataset*));
         JP2OpenJPEGDataset* poODS = new JP2OpenJPEGDataset();
+        poODS->m_osFilename = poDS->m_osFilename;
         poODS->nParentXSize = poDS->nRasterXSize;
         poODS->nParentYSize = poDS->nRasterYSize;
         poODS->SetDescription( poOpenInfo->pszFilename );
