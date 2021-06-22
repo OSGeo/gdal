@@ -141,31 +141,6 @@ element.
       <!-- snip -->
     </PAMDataset>
 
-Shapefile
-+++++++++
-
-The coordinate epoch is encoded as a WKT:2019 string using the ``EPOCH`` subnode of the
-`COORDINATEMETADATA <http://docs.opengeospatial.org/is/18-010r7/18-010r7.html#130>`__
-construct, and put in a sidecar file of extension ``wkt2``. This file has
-precedence over the ``prj`` sidecar file.
-
-::
-
-    COORDINATEMETADATA[
-        GEOGCRS["WGS 84 (G1762)",
-            DYNAMIC[FRAMEEPOCH[2005.0]],
-            DATUM["World Geodetic System 1984 (G1762)",
-              ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1.0]]
-            ],
-            CS[ellipsoidal,3],
-              AXIS["(lat)",north,ANGLEUNIT["degree",0.0174532925199433]],
-              AXIS["(lon)",east,ANGLEUNIT["degree",0.0174532925199433]],
-              AXIS["ellipsoidal height (h)",up,LENGTHUNIT["metre",1.0]]
-        ],
-        EPOCH[2016.47]
-    ]
-
-
 GDAL VRT
 ++++++++
 

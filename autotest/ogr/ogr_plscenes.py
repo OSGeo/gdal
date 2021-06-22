@@ -141,7 +141,7 @@ def test_ogr_plscenes_data_v1_nominal():
     assert ext == (-180.0, 180.0, -90.0, 90.0)
 
     field_count = lyr.GetLayerDefn().GetFieldCount()
-    assert field_count == 78
+    assert field_count == 106
 
     # Regular /items/ fetching
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[]}}""",
@@ -517,7 +517,7 @@ def test_ogr_plscenes_data_v1_nominal():
     for filename in fl:
         gdal.Unlink(filename)
 
-    
+
 ###############################################################################
 # Test robustness to errors in Data V1 API
 
@@ -700,8 +700,9 @@ def test_ogr_plscenes_data_v1_live():
 
     ds = None
 
-    ds = gdal.Open('PLScenes:version=data_v1,itemtypes=%s,scene=%s,asset=%s' % (catalog, scene, asset_name))
-    assert ds is not None
+    dsname = 'PLScenes:version=data_v1,itemtypes=%s,scene=%s,asset=%s' % (catalog, scene, asset_name)
+    ds = gdal.Open(dsname)
+    assert ds is not None, dsname
     assert ds.RasterCount != 0
 
 

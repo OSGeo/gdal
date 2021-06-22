@@ -343,6 +343,8 @@ class OGRSQLiteLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpatial
 
 class OGRSQLiteTableLayer final: public OGRSQLiteLayer
 {
+    bool                m_bIsTable = true;
+
     int                 bLaunderColumnNames;
     int                 bSpatialite2D;
 
@@ -407,8 +409,9 @@ class OGRSQLiteTableLayer final: public OGRSQLiteLayer
                         virtual ~OGRSQLiteTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
-                                    int bIsVirtualShapeIn,
-                                    int bDeferredCreation);
+                                    bool bIsTable,
+                                    bool bIsVirtualShapeIn,
+                                    bool bDeferredCreation);
     void                SetCreationParameters( const char *pszFIDColumnName,
                                                OGRwkbGeometryType eGeomType,
                                                const char *pszGeomFormat,
@@ -826,7 +829,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     int                 Create( const char *, char **papszOptions );
 
     int                 OpenTable( const char *pszTableName,
-                                   int bIsVirtualShapeIn = FALSE );
+                                   bool IsTable,
+                                   bool bIsVirtualShape );
     int                  OpenView( const char *pszViewName,
                                    const char *pszViewGeometry,
                                    const char *pszViewRowid,

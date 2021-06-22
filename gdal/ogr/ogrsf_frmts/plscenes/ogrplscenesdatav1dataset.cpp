@@ -571,7 +571,7 @@ retry:
     if( bUseVSICURL && !(STARTS_WITH(m_osBaseURL, "/vsimem/")) )
     {
         char* pszEscapedURL = CPLEscapeString(osRasterURL, -1, CPLES_URL);
-        CPLString osTmpURL("/vsicurl?use_head=no&max_retry=3&empty_dir=yes&url=");
+        CPLString osTmpURL("/vsicurl?use_head=no&max_retry=3&empty_dir=yes&use_redirect_url_if_no_query_string_params=yes&url=");
         osTmpURL += pszEscapedURL;
         CPLFree(pszEscapedURL);
         CPLDebug("PLSCENES", "URL = %s", osTmpURL.c_str());
@@ -594,6 +594,10 @@ retry:
     papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "PNG");
     papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JPEG");
     papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "NITF");
+    papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JP2KAK");
+    papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JP2ECW");
+    papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JP2MrSID");
+    papszAllowedDrivers = CSLAddString(papszAllowedDrivers, "JP2OpenJPEG");
     GDALDataset* poOutDS = (GDALDataset*) GDALOpenEx(osRasterURL, GDAL_OF_RASTER,
                                                      papszAllowedDrivers, nullptr, nullptr);
     CSLDestroy(papszAllowedDrivers);
