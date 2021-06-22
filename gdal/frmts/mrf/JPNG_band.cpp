@@ -86,16 +86,15 @@ static CPLErr initBuffer(buf_mgr &b) {
 }
 
 CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
-    const static GUInt32 JPEG_SIG = 0xe0ffd8ff; // JPEG 4CC code
     const static GUInt32 PNG_SIG  = 0x474e5089;  // PNG 4CC code
 
     CPLErr retval = CE_None;
     ILImage image(img);
     GUInt32 signature;
-    memcpy(&signature, src.buffer, sizeof(GUInt32));
+    memcpy(&signature, src.buffer, sizeof(signature));
 
     // test against an LSB signature
-    if (JPEG_SIG == CPL_LSBWORD32(signature)) {
+    if (JPEG_Codec::IsJPEG(src)) {
         image.pagesize.c -= 1;
         JPEG_Codec codec(image);
 
@@ -142,6 +141,7 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
         codec.rgb = rgb;
         codec.optimize = optimize;
         codec.sameres = sameres;
+        codec.JFIF = JFIF;
         retval = codec.CompressJPEG(dst, temp);
     }
     else if (!AllAlpha<0>(src, image)) {
@@ -165,7 +165,8 @@ JPNG_Band::JPNG_Band( MRFDataset *pDS, const ILImage &image,
     MRFRasterBand(pDS, image, b, level),
     rgb(FALSE),
     sameres(FALSE),
-    optimize(false)
+    optimize(false),
+    JFIF(false)
 {   // Check error conditions
     if (image.dt != GDT_Byte) {
         CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPNG");
@@ -187,6 +188,7 @@ JPNG_Band::JPNG_Band( MRFDataset *pDS, const ILImage &image,
     }
 
     optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
+    JFIF = GetOptlist().FetchBoolean("JFIF", FALSE) != FALSE;
 
     // PNGs and JPGs can be larger than the source, especially for
     // small page size.

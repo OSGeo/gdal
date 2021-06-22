@@ -48,6 +48,10 @@ XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I../../third_party/LercLib
 SUBLIBS := lib-LERCV1
 endif
 
+ifeq ($(BRUNSLI_ENABLED),yes)
+XTRA_OPT		:=	$(XTRA_OPT) -DBRUNSLI $(BRUNSLI_INCLUDE)
+endif
+
 CPPFLAGS        :=  $(XTRA_OPT)  $(CPPFLAGS)
 
 default:  $(PREDEPEND)	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)

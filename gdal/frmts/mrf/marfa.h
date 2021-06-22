@@ -643,10 +643,13 @@ protected:
 
 class JPEG_Codec {
 public:
-    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false) {}
+    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false), JFIF(false) {}
 
     CPLErr CompressJPEG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPEG(buf_mgr &dst, buf_mgr &src);
+
+    // Returns true for both JPEG and JPEG-XL (brunsli)
+    static bool IsJPEG(const buf_mgr& src);
 
 #if defined(JPEG12_SUPPORTED) // Internal only
 #define LIBJPEG_12_H "../jpeg/libjpeg12/jpeglib.h"
@@ -657,12 +660,14 @@ public:
     const ILImage img;
 
     // JPEG specific flags
-    bool sameres;
-    bool rgb;
-    bool optimize;
+    bool sameres;  // No color space subsample
+    bool rgb;      // No conversion to YCbCr
+    bool optimize; // Optimize Huffman tables
+    bool JFIF;     // Write JFIF only
 
 private:
-    JPEG_Codec& operator= (const JPEG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+    // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
+    JPEG_Codec& operator= (const JPEG_Codec& src); 
 };
 
 class JPEG_Band final: public MRFRasterBand {
@@ -690,7 +695,7 @@ protected:
 
     CPLErr CompressJPNG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPNG(buf_mgr &dst, buf_mgr &src);
-    bool rgb, sameres, optimize;
+    bool rgb, sameres, optimize, JFIF;
 };
 
 class Raw_Band final: public MRFRasterBand {
