@@ -1502,7 +1502,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
                                            LEADER_MAP_PROJ_RECORD_TC,
                                            CEOS_LEADER_FILE, -1, -1 );
 
-    int gcp_ordering_mode = CEOS_STD_GCP_ORDER;
+    int gcp_ordering_mode = CEOS_STD_MAPREC_GCP_ORDER;
     /* JERS from Japan */
     if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList,
@@ -1513,13 +1513,13 @@ int SAR_CEOSDataset::ScanForMapProjection()
         record = FindCeosRecord( sVolume.RecordList,
                              LEADER_MAP_PROJ_RECORD_ASF_TC,
                              CEOS_LEADER_FILE, -1, -1 );
-        gcp_ordering_mode = CEOS_ASF_MAPREC_ORDER;
+        gcp_ordering_mode = CEOS_ASF_MAPREC_GCP_ORDER;
     }
     if( record == nullptr ) {
         record = FindCeosRecord( sVolume.RecordList,
                              LEADER_FACILITY_ASF_TC,
                              CEOS_LEADER_FILE, -1, -1 );
-        gcp_ordering_mode = CEOS_ASF_FACREC_ORDER;
+        gcp_ordering_mode = CEOS_ASF_FACREC_GCP_ORDER;
 	}
 
     if( record == nullptr )
@@ -1583,7 +1583,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
     pasGCPList[0].dfGCPPixel = 0.5;
 
     switch(gcp_ordering_mode) {
-        case CEOS_ASF_FACREC_ORDER:
+        case CEOS_ASF_FACREC_GCP_ORDER:
             pasGCPList[1].dfGCPLine = nRasterYSize-0.5;
             pasGCPList[1].dfGCPPixel = 0.5;
 
@@ -1593,7 +1593,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
             pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
             pasGCPList[3].dfGCPPixel = nRasterXSize-0.5;
             break;
-        case CEOS_STD_GCP_ORDER:
+        case CEOS_STD_MAPREC_GCP_ORDER:
             pasGCPList[1].dfGCPLine = 0.5;
             pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
 
@@ -1603,13 +1603,16 @@ int SAR_CEOSDataset::ScanForMapProjection()
             pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
             pasGCPList[3].dfGCPPixel = 0.5;
             break;
-        case CEOS_ASF_MAPREC_ORDER:
+        case CEOS_ASF_MAPREC_GCP_ORDER:
             pasGCPList[0].dfGCPLine = nRasterYSize-0.5;
             pasGCPList[0].dfGCPPixel = 0.5;
+
             pasGCPList[1].dfGCPLine = nRasterYSize-0.5;
             pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+
             pasGCPList[2].dfGCPLine = 0.5;
             pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+
             pasGCPList[3].dfGCPLine = 0.5;
             pasGCPList[3].dfGCPPixel = 0.5;
             break;
