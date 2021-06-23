@@ -1520,7 +1520,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
                              LEADER_FACILITY_ASF_TC,
                              CEOS_LEADER_FILE, -1, -1 );
         gcp_ordering_mode = CEOS_ASF_FACREC_GCP_ORDER;
-	}
+    }
 
     if( record == nullptr )
         return FALSE;
