@@ -78,9 +78,7 @@ static bool NITFWriteJPEGImage( GDALDataset *, VSILFILE *, vsi_l_offset, char **
                                void * pProgressData );
 #endif
 
-#ifdef ESRI_BUILD
 static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBand );
-#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -373,6 +371,8 @@ static char **ExtractEsriMD( char **papszMD )
     return papszEsriMD;
 }
 
+#endif /* def ESRI_BUILD */
+
 /************************************************************************/
 /*                          SetBandMetadata()                           */
 /************************************************************************/
@@ -430,8 +430,6 @@ static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBa
         }
     }
 }
-
-#endif /* def ESRI_BUILD */
 
 /************************************************************************/
 /*                              Identify()                              */
@@ -837,9 +835,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             GDALRasterBand* poBaseBand =
                 poBaseDS->GetRasterBand(iBand+1);
 
-#ifdef ESRI_BUILD
             SetBandMetadata( psImage, poBaseBand, iBand+1 );
-#endif
 
             NITFWrapperRasterBand* poBand =
                 new NITFWrapperRasterBand(poDS, poBaseBand, iBand+1 );
@@ -883,9 +879,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                 return nullptr;
             }
 
-#ifdef ESRI_BUILD
             SetBandMetadata( psImage, poBand, iBand+1 );
-#endif
 
             poDS->SetBand( iBand+1, poBand );
         }
