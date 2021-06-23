@@ -1563,7 +1563,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
 
     for( int i = 0; i < nGCPCount; i++ )
     {
-        char         szId[34];
+        char         szId[32];
 
         snprintf( szId, sizeof(szId), "%d", i+1 );
         pasGCPList[i].pszId = CPLStrdup( szId );
