@@ -1547,7 +1547,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
     }
 
     char FieldSize[4];
-    snprintf(FieldSize,4,"A%d",GCPFieldSize);
+    snprintf(FieldSize,sizeof(FieldSize),"A%d",GCPFieldSize);
 
     GetCeosField( record, GCPOffset, FieldSize, szField );
     if( STARTS_WITH_CI(szField, "        ") )
