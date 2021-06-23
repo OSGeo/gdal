@@ -35,6 +35,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 from osgeo import gdal
+from osgeo import osr
 import pytest
 
 
@@ -93,7 +94,7 @@ def test_ogr_mem_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    
+
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
@@ -153,7 +154,7 @@ def test_ogr_mem_4():
 
         assert ogrtest.check_feature_geometry(feat_read, geom) == 0
 
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -361,7 +362,7 @@ def test_ogr_mem_12():
     result = f.GetFieldAsDateTime(idx)
     for i, value in enumerate(result):
         assert value == expected[i], ('%s != %s' % (result, expected))
-    
+
 ###############################################################################
 # Test Get/Set on StringList, IntegerList, RealList
 
@@ -616,4 +617,18 @@ def test_ogr_mem_17():
     assert f is not None
 
 
+###############################################################################
 
+
+def test_ogr_mem_coordinate_epoch():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('foo', srs=srs)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == '4326'
+    assert srs.GetCoordinateEpoch() == 2021.3
+    assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]

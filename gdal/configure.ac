@@ -5594,6 +5594,22 @@ AC_SUBST(RASDAMAN_ENABLED,$RASDAMAN_ENABLED)
 AC_SUBST(RASDAMAN_INC,    $RASDAMAN_INC)
 AC_SUBST(RASDAMAN_LIB,    $RASDAMAN_LIB)
 
+
+dnl ---------------------------------------------------------------------------
+dnl brunsli support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(brunsli,[  --with-brunsli    Include brunsli support via libbrunsli library],,)
+
+BRUNSLI_ENABLED=no
+
+if test "$with_brunsli" != "" -a "$with_brunsli" != "no" ; then
+  BRUNSLI_ENABLED="yes"
+  AC_SUBST(BRUNSLI_ENABLED, $BRUNSLI_ENABLED)
+  AC_SUBST(BRUNSLI_INCLUDE, -I$prefix/include)
+  AC_SUBST(BRUNSLI_LIB, "-lbrunslicommon -lbrunslienc -lbrunslidec -lbrotlicommon -lbrotlienc -lbrotlidec")
+fi 
+
 dnl ---------------------------------------------------------------------------
 dnl RDB support
 dnl ---------------------------------------------------------------------------
@@ -6093,6 +6109,7 @@ LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
 LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 LOC_MSG([  Kea support:               ${HAVE_KEA}])
 LOC_MSG([  LERC support:              ${HAVE_LERC}])
+LOC_MSG([  libbrunsli support:        ${BRUNSLI_ENABLED}])
 LOC_MSG([  libdeflate support:        ${LIBDEFLATE_SETTING}])
 LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
 LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])

@@ -140,29 +140,41 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
 {
     CPLFree(panFieldOrdinals);
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * m_poFeatureDefn->GetFieldCount() );
+    int iCurCol = 0;
 
     /* Always start with a primary key */
-    CPLString soColumns = "m.";
-    soColumns += m_pszFidColumn ?
-        "\"" + SQLEscapeName(m_pszFidColumn) + "\"" : "_rowid_";
-    iFIDCol = 0;
+    CPLString soColumns;
+    if( m_bIsTable || m_pszFidColumn != nullptr )
+    {
+        soColumns += "m.";
+        soColumns += m_pszFidColumn ?
+            "\"" + SQLEscapeName(m_pszFidColumn) + "\"" : "_rowid_";
+        iFIDCol = iCurCol;
+        iCurCol ++;
+    }
 
     /* Add a geometry column if there is one (just one) */
     if ( m_poFeatureDefn->GetGeomFieldCount() )
     {
-        soColumns += ", m.\"";
+        if( !soColumns.empty() )
+            soColumns += ", ";
+        soColumns += "m.\"";
         soColumns += SQLEscapeName(m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         soColumns += "\"";
-        iGeomCol = 1;
+        iGeomCol = iCurCol;
+        iCurCol ++;
     }
 
     /* Add all the attribute columns */
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
-        soColumns += ", m.\"";
+        if( !soColumns.empty() )
+            soColumns += ", ";
+        soColumns += "m.\"";
         soColumns += SQLEscapeName(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
         soColumns += "\"";
-        panFieldOrdinals[i] = 1 + (iGeomCol >= 0) + i;
+        panFieldOrdinals[i] = iCurCol;
+        iCurCol ++;
     }
 
     m_soColumns = soColumns;
@@ -1196,6 +1208,17 @@ void OGRGeoPackageTableLayer::InitView()
                         // We cannot just take the FID of a source table as
                         // a FID because of potential joins that would result
                         // in multiple records with same source FID.
+                        CPLFree(m_pszFidColumn);
+                        m_pszFidColumn = CPLStrdup(osColName);
+                        m_poFeatureDefn->DeleteFieldDefn(
+                            m_poFeatureDefn->GetFieldIndex(osColName));
+                    }
+                    else if( iCol == 0 &&
+                             sqlite3_column_type( hStmt, iCol ) == SQLITE_INTEGER )
+                    {
+                        // Assume the first column of integer type is the FID column
+                        // per the latest requirements of the GPKG spec
+                        CPLFree(m_pszFidColumn);
                         m_pszFidColumn = CPLStrdup(osColName);
                         m_poFeatureDefn->DeleteFieldDefn(
                             m_poFeatureDefn->GetFieldIndex(osColName));
@@ -4300,6 +4323,15 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
         if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
             EQUAL(pszMimeType, "text/xml") )
             continue;
+
+        if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            EQUAL(pszMimeType, "text/plain") )
+        {
+            if( STARTS_WITH_CI(pszMetadata, "coordinate_epoch=") )
+            {
+                continue;
+            }
+        }
 
         /*if( strcmp( pszMDStandardURI, "http://www.isotc211.org/2005/gmd" ) == 0 &&
             strcmp( pszMimeType, "text/xml" ) == 0 )

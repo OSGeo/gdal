@@ -3526,6 +3526,26 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         OGRSpatialReference oTargetSRS;
         oTargetSRS.SetFromUserInput(osThisTargetSRS);
         oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        if( oTargetSRS.IsDynamic() )
+        {
+            double dfCoordEpoch = CPLAtof(CSLFetchNameValueDef(
+                papszTO, "DST_COORDINATE_EPOCH",
+                CSLFetchNameValueDef(papszTO, "COORDINATE_EPOCH", "0")));
+            if( dfCoordEpoch == 0 )
+            {
+                const OGRSpatialReferenceH hSrcSRS = GDALGetSpatialRef( pahSrcDS[0] );
+                const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
+                if( hSrcSRS
+                    && (pszMethod == nullptr || EQUAL(pszMethod,"GEOTRANSFORM")) )
+                {
+                    dfCoordEpoch = OSRGetCoordinateEpoch(hSrcSRS);
+                }
+            }
+            if( dfCoordEpoch > 0 )
+                oTargetSRS.SetCoordinateEpoch(dfCoordEpoch);
+        }
+
         if( GDALSetSpatialRef( hDstDS, OGRSpatialReference::ToHandle(&oTargetSRS) ) == CE_Failure ||
             GDALSetGeoTransform( hDstDS, adfDstGeoTransform ) == CE_Failure )
         {
@@ -4224,6 +4244,11 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
             }
             psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "DST_SRS", pszSRS );
         }
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-t_coord_epoch") )
+        {
+            const char *pszCoordinateEpoch = papszArgv[++i];
+            psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "DST_COORDINATE_EPOCH", pszCoordinateEpoch );
+        }
         else if( EQUAL(papszArgv[i],"-s_srs") && i+1 < argc )
         {
             const char *pszSRS = papszArgv[++i];
@@ -4233,6 +4258,11 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
                 return nullptr;
             }
             psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "SRC_SRS", pszSRS );
+        }
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-s_coord_epoch") )
+        {
+            const char *pszCoordinateEpoch = papszArgv[++i];
+            psOptions->papszTO = CSLSetNameValue( psOptions->papszTO, "SRC_COORDINATE_EPOCH", pszCoordinateEpoch );
         }
         else if( EQUAL(papszArgv[i],"-ct") && i+1 < argc )
         {

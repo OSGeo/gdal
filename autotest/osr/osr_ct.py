@@ -531,3 +531,46 @@ def test_osr_ct_non_specified_time_with_time_dependent_transformation():
     x, y, _ = ct.TransformPoint(50, -40, 0)
     assert x == pytest.approx(50, abs=1e-10)
     assert y == pytest.approx(-40, abs=1e-10)
+
+
+###############################################################################
+# Test using OGRSpatialReference::CoordinateEpoch()
+
+def test_osr_ct_take_into_account_srs_coordinate_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("EPSG:7844") # GDA2020
+
+    t_2020 = osr.SpatialReference()
+    t_2020.SetFromUserInput("EPSG:9000") # ITRF2014
+    t_2020.SetCoordinateEpoch(2020)
+
+    # 2020 is the central epoch of the transformation, so no coordinate
+    # change is expected
+    ct = osr.CoordinateTransformation(s, t_2020)
+    x, y, _ = ct.TransformPoint(-30, 150, 0)
+    assert x == pytest.approx(-30, abs=1e-10)
+    assert y == pytest.approx(150, abs=1e-10)
+
+    t_2030 = osr.SpatialReference()
+    t_2030.SetFromUserInput("EPSG:9000") # ITRF2014
+    t_2030.SetCoordinateEpoch(2030)
+
+    ct = osr.CoordinateTransformation(s, t_2030)
+    x, y, _ = ct.TransformPoint(-30, 150, 0)
+    assert x == pytest.approx(-29.9999950478, abs=1e-10)
+    assert y == pytest.approx(150.0000022212, abs=1e-10)
+
+    ct = osr.CoordinateTransformation(t_2030, s)
+    x, y, _ = ct.TransformPoint(-29.9999950478, 150.0000022212, 0)
+    assert x == pytest.approx(-30, abs=1e-10)
+    assert y == pytest.approx(150, abs=1e-10)
+
+    # Not properly supported currently
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ct = osr.CoordinateTransformation(t_2020, t_2030)
+    assert gdal.GetLastErrorMsg() != ''

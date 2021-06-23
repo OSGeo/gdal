@@ -120,7 +120,6 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
                 wkt = wkt.substr(strlen("COORDINATEMETADATA["));
             }
         }
-        CPL_IGNORE_RET_VAL(dfCoordEpoch);
 
         if ((org == nullptr || EQUAL(org->c_str(), "EPSG")) && code != 0) {
             m_poSRS->importFromEPSG(code);
@@ -135,6 +134,9 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
         } else if (!wkt.empty()) {
             m_poSRS->importFromWkt(wkt.c_str());
         }
+
+        if( dfCoordEpoch > 0 )
+            m_poSRS->SetCoordinateEpoch( dfCoordEpoch );
     }
 
     m_eGType = getOGRwkbGeometryType();
@@ -346,12 +348,30 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount, std
 
         // Translate SRS to WKT.
         char *pszWKT = nullptr;
-        const char* const apszOptionsWkt[] = { "FORMAT=WKT2_2018", nullptr };
+        const char* const apszOptionsWkt[] = { "FORMAT=WKT2_2019", nullptr };
         m_poSRS->exportToWkt( &pszWKT, apszOptionsWkt );
         if( pszWKT && pszWKT[0] == '\0' )
         {
             CPLFree(pszWKT);
             pszWKT = nullptr;
+        }
+
+        if( pszWKT && m_poSRS->GetCoordinateEpoch() > 0 )
+        {
+            std::string osCoordinateEpoch = CPLSPrintf("%f", m_poSRS->GetCoordinateEpoch());
+            if( osCoordinateEpoch.find('.') != std::string::npos )
+            {
+                while( osCoordinateEpoch.back() == '0' )
+                    osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+            }
+
+            std::string osWKT("COORDINATEMETADATA[");
+            osWKT += pszWKT;
+            osWKT += ",EPOCH[";
+            osWKT += osCoordinateEpoch;
+            osWKT += "]]";
+            CPLFree(pszWKT);
+            pszWKT = CPLStrdup(osWKT.c_str());
         }
 
         crs = CreateCrsDirect(fbb, pszAuthorityName, nAuthorityCode, m_poSRS->GetName(), nullptr, pszWKT);

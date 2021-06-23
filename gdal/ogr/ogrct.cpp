@@ -543,8 +543,8 @@ class OGRProjCT : public OGRCoordinateTransformation
             reset();
         }
         PjPtr(const PjPtr& other) :
-            m_pj((other.m_pj != nullptr) ? 
-                 (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : 
+            m_pj((other.m_pj != nullptr) ?
+                 (proj_clone(OSRGetProjTLSContext(), other.m_pj)) :
                  (nullptr))
         {}
         PjPtr(PjPtr&& other) :
@@ -557,8 +557,8 @@ class OGRProjCT : public OGRCoordinateTransformation
             if(this != &other)
             {
                 reset();
-                m_pj = (other.m_pj != nullptr) ? 
-                       (proj_clone(OSRGetProjTLSContext(), other.m_pj)) : 
+                m_pj = (other.m_pj != nullptr) ?
+                       (proj_clone(OSRGetProjTLSContext(), other.m_pj)) :
                        (nullptr);
             }
             return *this;
@@ -580,11 +580,15 @@ class OGRProjCT : public OGRCoordinateTransformation
     bool        bSourceLatLong = false;
     bool        bSourceWrap = false;
     double      dfSourceWrapLong = 0.0;
+    bool        bSourceIsDynamicCRS = false;
+    double      dfSourceCoordinateEpoch = 0.0;
 
     OGRSpatialReference *poSRSTarget = nullptr;
     bool        bTargetLatLong = false;
     bool        bTargetWrap = false;
     double      dfTargetWrapLong = 0.0;
+    bool        bTargetIsDynamicCRS = false;
+    double      dfTargetCoordinateEpoch = 0.0;
 
     bool        bWebMercatorToWGS84LongLat = false;
 
@@ -948,7 +952,7 @@ OCTNewCoordinateTransformationEx(
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::Clone
  *
- * @return handle to transformation's clone or NULL on error, 
+ * @return handle to transformation's clone or NULL on error,
  *         must be freed with OCTDestroyCoordinateTransformation
  *
  * @since GDAL 3.4
@@ -1020,7 +1024,7 @@ OGRSpatialReferenceH OCTGetTargetCS(OGRCoordinateTransformationH hTransform)
  *
  * This is the same as the C++ function OGRCreateCoordinateTransformation::GetInverse
  *
- * @return handle to inverse transformation or NULL on error, 
+ * @return handle to inverse transformation or NULL on error,
  *         must be freed with OCTDestroyCoordinateTransformation
  *
  * @since GDAL 3.4
@@ -1147,9 +1151,26 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     }
 
     if( poSRSSource )
+    {
         bSourceLatLong = CPL_TO_BOOL(poSRSSource->IsGeographic());
+        bSourceIsDynamicCRS = poSRSSource->IsDynamic();
+        dfSourceCoordinateEpoch = poSRSSource->GetCoordinateEpoch();
+    }
     if( poSRSTarget )
+    {
         bTargetLatLong = CPL_TO_BOOL(poSRSTarget->IsGeographic());
+        bTargetIsDynamicCRS = poSRSTarget->IsDynamic();
+        dfTargetCoordinateEpoch = poSRSTarget->GetCoordinateEpoch();
+    }
+
+    if( bSourceIsDynamicCRS && bTargetIsDynamicCRS &&
+        dfSourceCoordinateEpoch > 0 && dfTargetCoordinateEpoch > 0 &&
+        dfSourceCoordinateEpoch != dfTargetCoordinateEpoch )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Coordinate transformation between different epochs are "
+                 "not currently supported");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup source and target translations to radians for lat/long    */
@@ -2196,11 +2217,34 @@ int OGRProjCT::TransformWithErrorCodes(
         bTransformDone = true;
     }
 
+    // Determine the default coordinate epoch, if not provided in the point to
+    // transform.
+    // For time-dependent transformations, PROJ can currently only do
+    // staticCRS -> dynamicCRS or dynamicCRS -> staticCRS transformations, and
+    // in either case, the coordinate epoch of the dynamicCRS must be provided
+    // as the input time.
+    double dfDefaultTime = HUGE_VAL;
+    if( bSourceIsDynamicCRS && dfSourceCoordinateEpoch > 0 &&
+        !bTargetIsDynamicCRS &&
+        CPLTestBool(CPLGetConfigOption("OGR_CT_USE_SRS_COORDINATE_EPOCH", "YES")) )
+    {
+        dfDefaultTime = dfSourceCoordinateEpoch;
+        CPLDebug("OGR_CT", "Using coordinate epoch %f from source CRS",
+                 dfDefaultTime);
+    }
+    else if (bTargetIsDynamicCRS && dfTargetCoordinateEpoch > 0 &&
+             !bSourceIsDynamicCRS &&
+             CPLTestBool(CPLGetConfigOption("OGR_CT_USE_SRS_COORDINATE_EPOCH", "YES")) )
+    {
+        dfDefaultTime = dfTargetCoordinateEpoch;
+        CPLDebug("OGR_CT", "Using coordinate epoch %f from target CRS",
+                 dfDefaultTime);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Select dynamically the best transformation for the data, if     */
 /*      needed.                                                         */
 /* -------------------------------------------------------------------- */
-
     auto ctx = OSRGetProjTLSContext();
     PJ* pj = m_pj;
     if( !bTransformDone && !pj )
@@ -2231,7 +2275,7 @@ int OGRProjCT::TransformWithErrorCodes(
         coord.xyzt.x = avgX;
         coord.xyzt.y = avgY;
         coord.xyzt.z = z ? z[0] : 0;
-        coord.xyzt.t = t ? t[0] : HUGE_VAL;
+        coord.xyzt.t = t ? t[0] : dfDefaultTime;
 
         // We may need several attempts. For example the point at
         // lon=-111.5 lat=45.26 falls into the bounding box of the Canadian
@@ -2367,7 +2411,7 @@ int OGRProjCT::TransformWithErrorCodes(
             coord.xyzt.x = x[i];
             coord.xyzt.y = y[i];
             coord.xyzt.z = z ? z[i] : 0;
-            coord.xyzt.t = t ? t[i] : HUGE_VAL;
+            coord.xyzt.t = t ? t[i] : dfDefaultTime;
             proj_errno_reset(pj);
             coord = proj_trans(pj, m_bReversePj ? PJ_INV : PJ_FWD, coord);
             x[i] = coord.xyzt.x;
@@ -2597,12 +2641,16 @@ OGRCoordinateTransformation* OGRProjCT::GetInverse() const
     poNewCT->bSourceLatLong = bTargetLatLong;
     poNewCT->bSourceWrap = bTargetWrap;
     poNewCT->dfSourceWrapLong = dfTargetWrapLong;
+    poNewCT->bSourceIsDynamicCRS = bTargetIsDynamicCRS;
+    poNewCT->dfSourceCoordinateEpoch = dfTargetCoordinateEpoch;
 
     if( poSRSSource )
         poNewCT->poSRSTarget = poSRSSource->Clone();
     poNewCT->bTargetLatLong = bSourceLatLong;
     poNewCT->bTargetWrap = bSourceWrap;
     poNewCT->dfTargetWrapLong = dfSourceWrapLong;
+    poNewCT->bTargetIsDynamicCRS = bSourceIsDynamicCRS;
+    poNewCT->dfTargetCoordinateEpoch = dfSourceCoordinateEpoch;
 
     poNewCT->ComputeThreshold();
 

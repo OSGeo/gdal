@@ -2061,6 +2061,61 @@ def test_gdalwarp_lib_cutline_zero_width_sliver():
     assert ds is not None
 
 ###############################################################################
+# Test support for propagating coordinate epoch
+
+
+def test_gdalwarp_lib_propagating_coordinate_epoch():
+
+    src_ds = gdal.Translate('', '../gcore/data/byte.tif',
+                            options='-of MEM -a_srs EPSG:32611 -a_coord_epoch 2021.3')
+    ds = gdal.Warp('', src_ds, format='MEM')
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+###############################################################################
+# Test support for -s_coord_epoch
+
+
+def test_gdalwarp_lib_s_coord_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.SetGeoTransform([120, 1e-7, 0, -40, 0, -1e-7])
+
+    # ITRF2014 to GDA2020
+    ds = gdal.Warp('', src_ds, options='-of MEM -s_srs EPSG:9000 -s_coord_epoch 2030 -t_srs EPSG:7844')
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 0
+    gt = ds.GetGeoTransform()
+    assert abs(gt[0] - 120) > 1e-15 and abs(gt[0] - 120) < 1e-5
+    assert abs(gt[3] - -40) > 1e-15 and abs(gt[3] - -40) < 1e-5
+    ds = None
+
+###############################################################################
+# Test support for -s_coord_epoch
+
+
+def test_gdalwarp_lib_t_coord_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.SetGeoTransform([120, 1e-7, 0, -40, 0, -1e-7])
+
+    # GDA2020 to ITRF2014
+    ds = gdal.Warp('', src_ds, options='-of MEM -t_srs EPSG:9000 -t_coord_epoch 2030 -s_srs EPSG:7844')
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2030.0
+    gt = ds.GetGeoTransform()
+    assert abs(gt[0] - 120) > 1e-15 and abs(gt[0] - 120) < 1e-5
+    assert abs(gt[3] - -40) > 1e-15 and abs(gt[3] - -40) < 1e-5
+    ds = None
+
+###############################################################################
 # Cleanup
 
 

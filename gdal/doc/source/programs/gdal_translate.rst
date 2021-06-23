@@ -26,7 +26,8 @@ Synopsis
         [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
         [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
         [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
-        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
+        [-a_srs srs_def] [-a_coord_epoch <epoch>]
+        [-a_ullr ulx uly lrx lry] [-a_nodata value]
         [-a_scale value] [-a_offset value]
         [-nogcp] [-gcp pixel line easting northing [elevation]]*
         |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
@@ -193,6 +194,13 @@ resampling, and rescaling pixels in the process.
     .. include:: options/srs_def.rst
 
     .. note:: No reprojection is done.
+
+.. option:: -a_coord_epoch <epoch>
+
+    .. versionadded:: 3.4
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS.
 
 .. option:: -a_scale <value>
 

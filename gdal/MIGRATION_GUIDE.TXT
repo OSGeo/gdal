@@ -21,7 +21,7 @@ MIGRATION GUIDE FROM GDAL 3.2 to GDAL 3.3
     - "gdal/swig/python/samples" moved to: "gdal/swig/python/gdal-utils/osgeo_utils/samples"
     - "gdal/swig/python/scripts" moved to: "gdal/swig/python/gdal-utils/scripts"
 - gdaldem TRI: default algorithm has been changed to use Riley et al. 1999. Use -alg Wilson to select the algorithm used previously
-- Disable by default raster drivers DODS, JPEG2000, JPEGLS, MG4LIDAR, FUJIBAS, IDA, INGR, ZMAP and vector driver ARCGEN, ArcObjects, CLOUDANT, COUCHDB, DB2, DODS, FME, GEOMEDIA, GTM, INGRES, MONGODB, REC, WALK at runtime, unless the GDAL_ENABLE_DEPRECATED_DRIVER_{drivername} configuration option is set to YES. Those drivers are planned for complete removal in GDAL 3.5
+- Disable by default raster drivers DODS, JPEG2000(Jasper), JPEGLS, MG4LIDAR, FUJIBAS, IDA, INGR, ZMAP and vector driver ARCGEN, ArcObjects, CLOUDANT, COUCHDB, DB2, DODS, FME, GEOMEDIA, GTM, INGRES, MONGODB, REC, WALK at runtime, unless the GDAL_ENABLE_DEPRECATED_DRIVER_{drivername} configuration option is set to YES. Those drivers are planned for complete removal in GDAL 3.5
 - Perl bindings are deprecated. Removal planned for GDAL 3.5. Use Geo::GDAL::FFI instead
 - Removal of BNA, AeronavFAA, HTF, OpenAir, SEGUKOOA, SEGY, SUA, XPlane, BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid, NTV1 drivers. Moved to (unsupported) https://github.com/OSGeo/gdal-extra-drivers repository.
 

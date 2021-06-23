@@ -2043,7 +2043,7 @@ const char* VSIS3FSHandler::GetOptions()
     "  <Option name='AWS_DEFAULT_REGION' type='string' "
         "description='AWS S3 default region' default='us-east-1'/>"
     "  <Option name='CPL_AWS_AUTODETECT_EC2' type='boolean' "
-        "description='Whether to check Hypervisor & DMI identifiers to "
+        "description='Whether to check Hypervisor and DMI identifiers to "
         "determine if current host is an AWS EC2 instance' default='YES'/>"
     "  <Option name='AWS_DEFAULT_PROFILE' type='string' "
         "description='Name of the profile to use for IAM credentials "

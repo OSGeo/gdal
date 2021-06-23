@@ -3244,6 +3244,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  No support for geometries.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_FEATURE_STYLES, false ) )
                 printf( "  Supports: Feature styles.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_COORDINATE_EPOCH, false ) )
+                printf( "  Supports: Coordinate epoch.\n" );/*ok*/
 
             for( const char* key: { GDAL_DMD_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,

@@ -575,7 +575,6 @@ void GDALRegister_mrf() {
         "   </Option>\n"
         "   <Option name='ZSIZE' type='int' description='Third dimension size' default='1'/>"
         "   <Option name='QUALITY' type='int' description='best=99, bad=0, default=85'/>\n"
-        "   <Option name='OPTIONS' type='string' description='Freeform dataset parameters'/>\n"
         "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
         "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
         "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
@@ -595,6 +594,21 @@ void GDALRegister_mrf() {
         "       <Value>RGB</Value>"
         "       <Value>YCC</Value>"
         "   </Option>\n"
+        "   <Option name='OPTIONS' type='string' description='\n"
+        "     Compression dependent parameters, space separated:\n"
+        "       DEFLATE - boolean, enable zlib as final stage\n"
+        "       GZ - boolean, enable gzip headers instead of zlib ones when using zlib\n"
+        "       RAWZ - boolean, disable all zlib headers\n"
+        "       Z_STRATEGY - Z_HUFFMAN_ONLY | Z_FILTERED | Z_RLE | Z_FIXED, zlib restricted strategy\n"
+#if defined(LERC)
+        "       LERC_PREC - numeric, set LERC precision, defaults to 0.5 for int and 0.001 for float\n"
+        "       V1 - boolean, enable LERC V1 format\n"
+#endif
+        "       OPTIMIZE - boolean, enables Huffman table optimization for JPEG\n"
+#if defined(BRUNSLI)
+        "       JFIF - boolean, disable brunsli\n"
+#endif
+        "'/>"
         "</CreationOptionList>\n");
 
     driver->SetMetadataItem(

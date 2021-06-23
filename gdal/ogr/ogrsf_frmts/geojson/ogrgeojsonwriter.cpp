@@ -1079,9 +1079,9 @@ json_object* OGRGeoJSONWriteGeometry( const OGRGeometry* poGeometry,
                                             oOptions );
         else
         {
-            CPLDebug( "GeoJSON",
-                      "Unsupported geometry type detected. "
-                      "Feature gets NULL geometry assigned." );
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "OGR geometry type unsupported as a GeoJSON geometry detected. "
+                     "Feature gets NULL geometry assigned.");
         }
 
         if( poObjGeom != nullptr )

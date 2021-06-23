@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.13
+ARG ALPINE_VERSION=3.14
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -275,13 +275,14 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python3.8          /build_gdal_python/usr/lib \
+    && export py_version=$(python3 -c "import sys; print(str(sys.version_info.major) + '.' + str(sys.version_info.minor))") \
+    && mv /build/usr/lib/python${py_version} /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python3.8/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python${py_version}/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \

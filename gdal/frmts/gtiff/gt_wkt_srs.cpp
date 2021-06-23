@@ -94,6 +94,10 @@ static const char * const papszDatumEquiv[] =
 # define CT_CylindricalEqualArea 28
 #endif
 
+#if LIBGEOTIFF_VERSION < 1700
+constexpr geokey_t CoordinateEpochGeoKey = static_cast<geokey_t>(5120);
+#endif
+
 /************************************************************************/
 /*                       LibgeotiffOneTimeInit()                        */
 /************************************************************************/
@@ -1418,6 +1422,13 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 
     oSRS.StripTOWGS84IfKnownDatumAndAllowed();
 
+    double dfCoordinateEpoch = 0.0;
+    if( GDALGTIFKeyGetDOUBLE(hGTIF, CoordinateEpochGeoKey, &dfCoordinateEpoch,
+                             0, 1) )
+    {
+        oSRS.SetCoordinateEpoch(dfCoordinateEpoch);
+    }
+
     return OGRSpatialReference::ToHandle(oSRS.Clone());
 }
 
@@ -2551,9 +2562,11 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, OGRSpatialReferenceH hSRS,
 
     // Note that VERTCS is an ESRI "spelling" of VERT_CS so we assume if
     // we find it that we should try to treat this as a PE string.
-    bWritePEString |= (poSRS->GetAttrValue("VERTCS") != nullptr);
-
-    bWritePEString |= (eFlavor == GEOTIFF_KEYS_ESRI_PE);
+    if( eFlavor == GEOTIFF_KEYS_ESRI_PE ||
+        poSRS->GetAttrValue("VERTCS") != nullptr )
+    {
+        bWritePEString = true;
+    }
 
     if( nPCS == KvUserDefined )
     {
@@ -2909,6 +2922,13 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, OGRSpatialReferenceH hSRS,
     else if( eVersion >= GEOTIFF_VERSION_1_1 && nVerticalCSKeyValue != 0 )
     {
         GTIFKeySet( psGTIF, VerticalCSTypeGeoKey, TYPE_SHORT, 1, nVerticalCSKeyValue );
+    }
+
+    const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
+    if( dfCoordinateEpoch > 0 )
+    {
+        GTIFKeySet(psGTIF, CoordinateEpochGeoKey, TYPE_DOUBLE, 1,
+                   dfCoordinateEpoch );
     }
 
 /* -------------------------------------------------------------------- */

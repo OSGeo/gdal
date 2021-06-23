@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal, gdalconst, ogr
+from osgeo import gdal, gdalconst, ogr, osr
 import gdaltest
 import ogrtest
 import pytest
@@ -693,3 +693,63 @@ def test_ogr2ogr_fielddomain_():
     f = lyr.GetNextFeature()
     assert f['bar'] == -1
     assert not f.IsFieldSet('bar_resolved')
+
+###############################################################################
+# Test -a_coord_epoch
+
+
+def test_ogr2ogr_assign_coord_epoch():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer('layer')
+
+    ds = gdal.VectorTranslate('', src_ds, options = '-f Memory -a_srs EPSG:7665 -a_coord_epoch 2021.3')
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+###############################################################################
+# Test -s_coord_epoch
+
+
+def test_ogr2ogr_s_coord_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer')
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(120 -40)'))
+    src_lyr.CreateFeature(f)
+
+    # ITRF2014 to GDA2020
+    ds = gdal.VectorTranslate('', src_ds, options = '-f Memory -s_srs EPSG:9000 -s_coord_epoch 2030 -t_srs EPSG:7844')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) != 120 and abs(g.GetX(0) - 120) < 1e-5
+    assert g.GetY(0) != -40 and abs(g.GetY(0) - -40) < 1e-5
+
+###############################################################################
+# Test -t_coord_epoch
+
+
+def test_ogr2ogr_t_coord_epoch():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip('requires PROJ 7.2 or later')
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer('layer')
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(120 -40)'))
+    src_lyr.CreateFeature(f)
+
+    # GDA2020 to ITRF2014
+    ds = gdal.VectorTranslate('', src_ds, options = '-f Memory -t_srs EPSG:9000 -t_coord_epoch 2030 -s_srs EPSG:7844')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) != 120 and abs(g.GetX(0) - 120) < 1e-5
+    assert g.GetY(0) != -40 and abs(g.GetY(0) - -40) < 1e-5

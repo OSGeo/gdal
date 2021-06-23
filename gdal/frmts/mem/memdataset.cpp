@@ -770,7 +770,6 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
 MEMDataset::MEMDataset() :
     GDALDataset(FALSE),
     bGeoTransformSet(FALSE),
-    pszProjection(nullptr),
     m_nGCPCount(0),
     m_pasGCPs(nullptr),
     m_nOverviewDSCount(0),
@@ -794,7 +793,6 @@ MEMDataset::~MEMDataset()
 
 {
     FlushCache();
-    CPLFree( pszProjection );
 
     GDALDeinitGCPs( m_nGCPCount, m_pasGCPs );
     CPLFree( m_pasGCPs );
@@ -824,27 +822,25 @@ void MEMDataset::LeaveReadWrite()
 #endif  // if 0
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *MEMDataset::_GetProjectionRef()
+const OGRSpatialReference *MEMDataset::GetSpatialRef() const
 
 {
-    if( pszProjection == nullptr )
-        return "";
-
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr MEMDataset::_SetProjection( const char *pszProjectionIn )
+CPLErr MEMDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszProjectionIn );
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     return CE_None;
 }
@@ -2449,6 +2445,7 @@ void GDALRegister_MEM()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
                                "CInt16 CInt32 CFloat32 CFloat64" );
+    poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

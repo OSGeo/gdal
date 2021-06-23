@@ -42,6 +42,8 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
 from osgeo import osr, gdal, ogr
 import gdaltest
 
+pytestmark = pytest.mark.require_driver('GPKG')
+
 ###############################################################################
 # Validate a geopackage
 
@@ -3359,6 +3361,30 @@ def test_gpkg_float32_png_negative_values():
     ds = None
     ds = gdal.Open('/vsimem/tmp.gpkg')
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (-10, -10)
+    ds = None
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
+
+###############################################################################
+# Test support for coordinate epoch
+
+
+def test_gpkg_coordinate_epoch():
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
+    ds = gdal.GetDriverByName('GPKG').Create('/vsimem/tmp.gpkg', 1, 1)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    ds = gdal.Open('/vsimem/tmp.gpkg')
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
     ds = None
 
     gdal.Unlink('/vsimem/tmp.gpkg')

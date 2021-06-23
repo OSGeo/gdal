@@ -346,6 +346,7 @@ class CPL_DLL OGRSpatialReference
     int         IsDerivedGeographic() const;
     int         IsProjected() const;
     int         IsGeocentric() const;
+    bool        IsDynamic() const;
     int         IsLocal() const;
     int         IsVertical() const;
     int         IsCompound() const;
@@ -378,6 +379,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetCompoundCS( const char *pszName,
                                const OGRSpatialReference *poHorizSRS,
                                const OGRSpatialReference *poVertSRS );
+
+    void        SetCoordinateEpoch( double dfCoordinateEpoch );
+    double      GetCoordinateEpoch() const;
 
     // cppcheck-suppress functionStatic
     OGRErr      PromoteTo3D( const char* pszName );

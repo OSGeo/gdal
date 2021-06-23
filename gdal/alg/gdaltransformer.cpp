@@ -1508,6 +1508,10 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
  * SRS.
  * <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch, expressed as a
  * decimal year. Useful for time-dependant coordinate operations.
+ * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
+ * expressed as a decimal year. Useful for time-dependant coordinate operations.
+ * <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of target CRS,
+ * expressed as a decimal year. Useful for time-dependant coordinate operations.
  * <li> GCPS_OK: If false, GCPs will not be used, default is TRUE.
  * <li> REFINE_MINIMUM_GCPS: The minimum amount of GCPs that should be available
  * after the refinement.
@@ -2066,11 +2070,26 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         {
             aosOptions.SetNameValue("COORDINATE_OPERATION", pszCO);
         }
+
         const char* pszCoordEpoch = CSLFetchNameValue(papszOptions,
                                                       "COORDINATE_EPOCH");
         if( pszCoordEpoch )
         {
             aosOptions.SetNameValue("COORDINATE_EPOCH", pszCoordEpoch);
+        }
+
+        const char* pszSrcCoordEpoch = CSLFetchNameValue(papszOptions,
+                                                      "SRC_COORDINATE_EPOCH");
+        if( pszSrcCoordEpoch )
+        {
+            aosOptions.SetNameValue("SRC_COORDINATE_EPOCH", pszSrcCoordEpoch);
+        }
+
+        const char* pszDstCoordEpoch = CSLFetchNameValue(papszOptions,
+                                                      "DST_COORDINATE_EPOCH");
+        if( pszDstCoordEpoch )
+        {
+            aosOptions.SetNameValue("DST_COORDINATE_EPOCH", pszDstCoordEpoch);
         }
 
         psInfo->pReprojectArg =
@@ -2896,6 +2915,10 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
  * coordinate operation, overriding the default computed transformation.</li>
  * <li>COORDINATE_EPOCH=decimal_year: Coordinate epoch, expressed as a
  * decimal year. Useful for time-dependant coordinate operations.</li>
+ * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
+ * expressed as a decimal year. Useful for time-dependant coordinate operations.</li>
+ * <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of target CRS,
+ * expressed as a decimal year. Useful for time-dependant coordinate operations.</li>
  * </ul>
  *
  * @return Handle for use with GDALReprojectionTransform(), or NULL if the
@@ -2972,8 +2995,10 @@ void *GDALCreateReprojectionTransformerEx(
 
     psInfo->papszOptions = CSLDuplicate(papszOptions);
     psInfo->poForwardTransform = poForwardTransform;
-    psInfo->dfTime = CPLAtof(CSLFetchNameValueDef(papszOptions,
-                                                  "COORDINATE_EPOCH", "0"));
+    psInfo->dfTime = CPLAtof(CSLFetchNameValueDef(
+        papszOptions, "COORDINATE_EPOCH",
+        CSLFetchNameValueDef(papszOptions, "DST_COORDINATE_EPOCH",
+             CSLFetchNameValueDef(papszOptions, "SRC_COORDINATE_EPOCH", "0"))));
     psInfo->poReverseTransform = poForwardTransform->GetInverse();
 
     if( psInfo->poReverseTransform )

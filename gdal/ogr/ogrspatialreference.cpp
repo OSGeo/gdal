@@ -131,6 +131,8 @@ struct OGRSpatialReference::Private
     OSRAxisMappingStrategy m_axisMappingStrategy = OAMS_AUTHORITY_COMPLIANT;
     std::vector<int>       m_axisMapping{1,2,3};
 
+    double              m_coordinateEpoch = 0; // as decimal year
+
     Private();
     ~Private();
     Private(const Private&) = delete;
@@ -223,6 +225,8 @@ void OGRSpatialReference::Private::clear()
 
     m_bMorphToESRI = false;
     m_bHasCenterLong = false;
+
+    m_coordinateEpoch = 0.0;
 }
 
 void OGRSpatialReference::Private::setRoot(OGR_SRSNode* poRoot)
@@ -265,7 +269,9 @@ void OGRSpatialReference::Private::refreshProjObj()
         m_poRoot->exportToWkt(&pszWKT);
         auto poRootBackup = m_poRoot;
         m_poRoot = nullptr;
+        const double dfCoordinateEpochBackup = m_coordinateEpoch;
         clear();
+        m_coordinateEpoch = dfCoordinateEpochBackup;
         m_bHasCenterLong = strstr(pszWKT, "CENTER_LONG") != nullptr;
 
         const char* const options[] = { "STRICT=NO", nullptr };
@@ -858,6 +864,8 @@ OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
             SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         else if ( oSource.d->m_axisMappingStrategy == OAMS_CUSTOM )
             SetDataAxisToSRSAxisMapping( oSource.d->m_axisMapping );
+
+        d->m_coordinateEpoch = oSource.d->m_coordinateEpoch;
     }
 
     return *this;
@@ -1241,6 +1249,7 @@ OGRSpatialReference *OGRSpatialReference::Clone() const
     }
     poNewRef->d->m_axisMapping = d->m_axisMapping;
     poNewRef->d->m_axisMappingStrategy = d->m_axisMappingStrategy;
+    poNewRef->d->m_coordinateEpoch = d->m_coordinateEpoch;
     return poNewRef;
 }
 
@@ -8530,6 +8539,100 @@ int OSRIsVertical( OGRSpatialReferenceH hSRS )
 }
 
 /************************************************************************/
+/*                            IsDynamic()                               */
+/************************************************************************/
+
+/**
+ * \brief Check if a CRS is a dynamic CRS.
+ *
+ * A dynamic CRS relies on a dynamic datum, that is a datum that is not
+ * plate-fixed.
+ *
+ * This method is the same as the C function OSRIsDynamic().
+ *
+ * @return true if the CRS is dynamic
+ *
+ * @since OGR 3.4.0
+ */
+
+bool OGRSpatialReference::IsDynamic() const
+
+{
+    bool isDynamic = false;
+    d->refreshProjObj();
+    d->demoteFromBoundCRS();
+    auto ctxt = d->getPROJContext();
+    PJ* horiz = nullptr;
+    if( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
+    {
+        horiz = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 0);
+    }
+    else if( d->m_pj_crs )
+    {
+        horiz = proj_clone(ctxt, d->m_pj_crs);
+    }
+    auto datum = horiz ? proj_crs_get_datum(ctxt, horiz) : nullptr;
+    if( datum )
+    {
+        const auto type = proj_get_type(datum);
+        isDynamic = type == PJ_TYPE_DYNAMIC_GEODETIC_REFERENCE_FRAME ||
+                    type == PJ_TYPE_DYNAMIC_VERTICAL_REFERENCE_FRAME;
+        if( !isDynamic )
+        {
+            const char* auth_name = proj_get_id_auth_name(datum, 0);
+            const char* code = proj_get_id_code(datum, 0);
+            if( auth_name && code && EQUAL(auth_name, "EPSG") && EQUAL(code, "6326") )
+            {
+                isDynamic = true;
+            }
+        }
+        proj_destroy(datum);
+    }
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+    else
+    {
+        auto ensemble = horiz ? proj_crs_get_datum_ensemble(ctxt, horiz) : nullptr;
+        if( ensemble )
+        {
+            auto member = proj_datum_ensemble_get_member(ctxt, ensemble, 0);
+            if( member )
+            {
+                const auto type = proj_get_type(member);
+                isDynamic = type == PJ_TYPE_DYNAMIC_GEODETIC_REFERENCE_FRAME ||
+                            type == PJ_TYPE_DYNAMIC_VERTICAL_REFERENCE_FRAME;
+                proj_destroy(member);
+            }
+            proj_destroy(ensemble);
+        }
+    }
+#endif
+    proj_destroy(horiz);
+    d->undoDemoteFromBoundCRS();
+    return isDynamic;
+}
+
+/************************************************************************/
+/*                           OSRIsDynamic()                             */
+/************************************************************************/
+/**
+ * \brief Check if a CRS is a dynamic CRS.
+ *
+ * A dynamic CRS relies on a dynamic datum, that is a datum that is not
+ * plate-fixed.
+ *
+ * This function is the same as OGRSpatialReference::IsDynamic().
+ *
+ * @since OGR 3.4.0
+ */
+int OSRIsDynamic( OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRIsDynamic", 0 );
+
+    return ToPointer(hSRS)->IsDynamic();
+}
+
+/************************************************************************/
 /*                            CloneGeogCS()                             */
 /************************************************************************/
 
@@ -8800,6 +8903,7 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
  * <li>IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES/NO. Defaults to NO</li>
  * <li>CRITERION=STRICT/EQUIVALENT/EQUIVALENT_EXCEPT_AXIS_ORDER_GEOGCRS.
  *     Defaults to EQUIVALENT_EXCEPT_AXIS_ORDER_GEOGCRS.</li>
+ * <li>IGNORE_COORDINATE_EPOCH=YES/NO. Defaults to NO</li>
  * </ul>
  *
  * @return TRUE if equivalent or FALSE otherwise.
@@ -8817,6 +8921,13 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
                      "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING", "NO")) )
     {
         if( d->m_axisMapping != poOtherSRS->d->m_axisMapping )
+            return false;
+    }
+
+    if( !CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                     "IGNORE_COORDINATE_EPOCH", "NO")) )
+    {
+        if( d->m_coordinateEpoch != poOtherSRS->d->m_coordinateEpoch )
             return false;
     }
 
@@ -11792,4 +11903,93 @@ int OGRSpatialReference::GetEPSGGeogCS() const
     }
 
     return -1;
+}
+
+/************************************************************************/
+/*                          SetCoordinateEpoch()                        */
+/************************************************************************/
+
+/** Set the coordinate epoch, as decimal year.
+ *
+ * In a dynamic CRS, coordinates of a point on the surface of the Earth may
+ * change with time. To be unambiguous the coordinates must always be qualified
+ * with the epoch at which they are valid. The coordinate epoch is not necessarily
+ * the epoch at which the observation was collected.
+ *
+ * Pedantically the coordinate epoch of an observation belongs to the
+ * observation, and not to the CRS, however it is often more practical to
+ * bind it to the CRS. The coordinate epoch should be specified for dynamic
+ * CRS (see IsDynamic())
+ *
+ * This method is the same as the OSRSetCoordinateEpoch() function.
+ *
+ * @param dfCoordinateEpoch Coordinate epoch as decimal year (e.g. 2021.3)
+ * @since OGR 3.4
+ */
+
+void OGRSpatialReference::SetCoordinateEpoch( double dfCoordinateEpoch )
+{
+    d->m_coordinateEpoch = dfCoordinateEpoch;
+}
+
+/************************************************************************/
+/*                      OSRSetCoordinateEpoch()                         */
+/************************************************************************/
+
+/** \brief Set the coordinate epoch, as decimal year.
+ *
+ * See OGRSpatialReference::SetCoordinateEpoch()
+ *
+ * @since OGR 3.4
+ */
+void OSRSetCoordinateEpoch( OGRSpatialReferenceH hSRS, double dfCoordinateEpoch )
+{
+    VALIDATE_POINTER0( hSRS, "OSRSetCoordinateEpoch" );
+
+    return OGRSpatialReference::FromHandle(hSRS)->SetCoordinateEpoch(dfCoordinateEpoch);
+}
+
+/************************************************************************/
+/*                          GetCoordinateEpoch()                        */
+/************************************************************************/
+
+/** Return the coordinate epoch, as decimal year.
+ *
+ * In a dynamic CRS, coordinates of a point on the surface of the Earth may
+ * change with time. To be unambiguous the coordinates must always be qualified
+ * with the epoch at which they are valid. The coordinate epoch is not necessarily
+ * the epoch at which the observation was collected.
+ *
+ * Pedantically the coordinate epoch of an observation belongs to the
+ * observation, and not to the CRS, however it is often more practical to
+ * bind it to the CRS. The coordinate epoch should be specified for dynamic
+ * CRS (see IsDynamic())
+ *
+ * This method is the same as the OSRGetCoordinateEpoch() function.
+ *
+ * @return coordinateEpoch Coordinate epoch as decimal year (e.g. 2021.3), or 0
+ *                         if not set, or relevant.
+ * @since OGR 3.4
+ */
+
+double OGRSpatialReference::GetCoordinateEpoch() const
+{
+    return d->m_coordinateEpoch;
+}
+
+/************************************************************************/
+/*                      OSRGetCoordinateEpoch()                        */
+/************************************************************************/
+
+/** \brief Get the coordinate epoch, as decimal year.
+ *
+ * See OGRSpatialReference::GetCoordinateEpoch()
+ *
+ * @since OGR 3.4
+ */
+double OSRGetCoordinateEpoch( OGRSpatialReferenceH hSRS )
+{
+    VALIDATE_POINTER1( hSRS, "OSRGetCoordinateEpoch", 0 );
+
+    return OGRSpatialReference::FromHandle(hSRS)->GetCoordinateEpoch();
 }

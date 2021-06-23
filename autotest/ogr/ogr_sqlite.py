@@ -3105,6 +3105,13 @@ def test_ogr_sqlite_view_type():
     assert lyr.GetLayerDefn().GetFieldCount() == 1
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
 
+    ds.ExecuteSQL('INSERT INTO t VALUES(1)')
+    f = lyr.GetNextFeature()
+    assert f['c'] == 1
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f['c'] == 1
+
 ###############################################################################
 #
 

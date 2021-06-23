@@ -3400,16 +3400,17 @@ def test_ogr_gpkg_46():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
     lyr.CreateFeature(f)
-    # Note: those definitions of views are non conformant with GPKG 1.3 clarifications on views
+    # Note: this definition of a view is non conformant with GPKG 1.3 clarifications on views
     ds.ExecuteSQL('CREATE VIEW my_view AS SELECT geom AS my_geom, fid AS my_fid FROM foo')
     ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 0 )")
     ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 0, 0, 0)")
 
+    # Note: this definition of a view is non conformant with GPKG 1.3 clarifications on views
     ds.ExecuteSQL("CREATE VIEW my_view2 AS SELECT geom, fid AS OGC_FID, 'bla' as another_column FROM foo")
     ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view2', 'my_view2', 'features', 0 )")
     ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view2', 'geom', 'GEOMETRY', 0, 0, 0)")
 
-    ds.ExecuteSQL('CREATE VIEW my_view3 AS SELECT a.fid, a.geom, b.fid as fid2 FROM foo a, foo b')
+    ds.ExecuteSQL('CREATE VIEW my_view3 AS SELECT a.fid * 10000 + b.fid as my_fid, a.fid as fid1, a.geom, b.fid as fid2 FROM foo a, foo b')
     ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view3', 'my_view3', 'features', 0 )")
     ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view3', 'geom', 'GEOMETRY', 0, 0, 0)")
 
@@ -3447,7 +3448,7 @@ def test_ogr_gpkg_46():
     f = lyr.GetNextFeature()
     assert f is None
 
-    # View with FID
+    # View with FID in non-first position
     lyr = ds.GetLayerByName('my_view2')
     assert lyr.GetLayerDefn().GetFieldCount() == 1
     assert lyr.GetFIDColumn() == 'OGC_FID'
@@ -3456,23 +3457,15 @@ def test_ogr_gpkg_46():
         f.DumpReadable()
         pytest.fail()
 
-    # View without valid rowid
+    # View with FID in first position
     lyr = ds.GetLayerByName('my_view3')
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     f = lyr.GetNextFeature()
-    if f.GetFID() != 0:
-        f.DumpReadable()
-        pytest.fail()
+    assert f.GetFID() == 10001
     f = lyr.GetNextFeature()
-    if f.GetFID() != 1:
-        f.DumpReadable()
-        pytest.fail()
-    f2 = lyr.GetFeature(1)
-    if not f.Equal(f2):
-        f.DumpReadable()
-        f2.DumpReadable()
-        pytest.fail()
-
+    assert f.GetFID() == 10002
+    f2 = lyr.GetFeature(10002)
+    assert f.Equal(f2)
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_46.gpkg')
@@ -5105,3 +5098,87 @@ def test_ogr_gpkg_fixup_wrong_mr_column_name_update_trigger():
 
     gdal.Unlink(filename)
     assert 'column_nameIS' not in sql
+
+###############################################################################
+# Test support for CRS coordinate_epoch
+
+
+def test_ogr_gpkg_crs_coordinate_epoch():
+
+    filename = '/vsimem/test_ogr_gpkg_crs_coordinate_epoch.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(7665) # WGS 84 (G1762) (3D)
+    srs.SetCoordinateEpoch(2021.3)
+    ds.CreateLayer('lyr_with_coordinate_epoch', srs=srs)
+
+    srs.SetCoordinateEpoch(2021.3)
+    ds.CreateLayer('lyr_with_same_coordinate_epoch', srs=srs)
+
+    srs.SetCoordinateEpoch(2021.2)
+    ds.CreateLayer('lyr_with_different_coordinate_epoch', srs=srs)
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258) # ETRS89
+    ds.CreateLayer('lyr_without_coordinate_epoch', srs=srs)
+
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_spatial_ref_sys ORDER BY srs_id')
+    assert sql_lyr.GetFeatureCount() == 6
+
+    sql_lyr.GetNextFeature()
+    sql_lyr.GetNextFeature()
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f['srs_id'] == 4258
+    assert f['organization'] == 'EPSG'
+    assert f['organization_coordsys_id'] == 4258
+    assert f['epoch'] is None
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f['srs_id'] == 4326
+    assert f['organization'] == 'EPSG'
+    assert f['organization_coordsys_id'] == 4326
+    assert f['epoch'] is None
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f['srs_id'] == 100000
+    assert f['organization'] == 'EPSG'
+    assert f['organization_coordsys_id'] == 7665
+    assert f['epoch'] == 2021.3
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f['srs_id'] == 100001
+    assert f['organization'] == 'EPSG'
+    assert f['organization_coordsys_id'] == 7665
+    assert f['epoch'] == 2021.2
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayerByName('lyr_with_coordinate_epoch')
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+    lyr = ds.GetLayerByName('lyr_with_same_coordinate_epoch')
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+    lyr = ds.GetLayerByName('lyr_with_different_coordinate_epoch')
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.2
+
+    lyr = ds.GetLayerByName('lyr_without_coordinate_epoch')
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 0
+
+    ds = None
+
+    gdal.Unlink(filename)

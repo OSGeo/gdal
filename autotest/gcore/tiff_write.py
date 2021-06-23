@@ -7469,5 +7469,27 @@ def test_tiff_write_overviews_nan_nodata():
     gdal.Unlink(filename)
 
 
+###############################################################################
+# Test support for coordinate epoch
+
+
+def test_tiff_write_coordinate_epoch():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_tiff_write_coordinate_epoch.tif', 1, 1)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    ds = gdal.Open('/vsimem/test_tiff_write_coordinate_epoch.tif')
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+    gdal.Unlink('/vsimem/test_tiff_write_coordinate_epoch.tif')
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None

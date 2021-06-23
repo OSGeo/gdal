@@ -37,6 +37,7 @@ import stat
 
 import gdaltest
 from osgeo import gdal
+from osgeo import osr
 import pytest
 
 ###############################################################################
@@ -515,6 +516,26 @@ def test_pam_esri_GeodataXform_gcp():
     ds = None
 
 ###############################################################################
+
+
+def test_pam_metadata_coordinate_epoch():
+
+    tmpfilename = '/vsimem/tmp.pnm'
+    ds = gdal.GetDriverByName('PNM').Create(tmpfilename, 1, 1)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(2021.3)
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    srs = ds.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
+    ds = None
+
+    gdal.GetDriverByName('PNM').Delete(tmpfilename)
+
+###############################################################################
 # Cleanup.
 
 def test_pam_cleanup():
@@ -534,6 +555,6 @@ def test_pam_cleanup():
     except OSError:
         pass
 
-    
+
 
 

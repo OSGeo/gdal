@@ -303,6 +303,18 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
         }
         CPLAddXMLAttributeAndValue(psSRSNode, "dataAxisToSRSAxisMapping",
                                    osMapping.c_str());
+        const double dfCoordinateEpoch = m_poSRS->GetCoordinateEpoch();
+        if( dfCoordinateEpoch > 0 )
+        {
+            std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+            if( osCoordinateEpoch.find('.') != std::string::npos )
+            {
+                while( osCoordinateEpoch.back() == '0' )
+                    osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+            }
+            CPLAddXMLAttributeAndValue(psSRSNode, "coordinateEpoch",
+                                       osCoordinateEpoch.c_str());
+        }
     }
 
  /* -------------------------------------------------------------------- */
@@ -489,6 +501,11 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         {
             m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
+
+        const char* pszCoordinateEpoch =
+            CPLGetXMLValue(psSRSNode, "coordinateEpoch", nullptr);
+        if( pszCoordinateEpoch )
+            m_poSRS->SetCoordinateEpoch(CPLAtof(pszCoordinateEpoch));
     }
 
 /* -------------------------------------------------------------------- */
@@ -1170,7 +1187,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             nPixelOffset = atoi(pszPixelOffset);
 
         int nLineOffset;
-        const char* pszLineOffset = 
+        const char* pszLineOffset =
                                 CSLFetchNameValue(papszOptions, "LineOffset");
         if( pszLineOffset != nullptr )
             nLineOffset = atoi(pszLineOffset);

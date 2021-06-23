@@ -70,6 +70,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
     printf(
         "Usage: gdalwarp [--help-general] [--formats]\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]* [-novshiftgrid]\n"
+        "    [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]\n"
         "    [-order n | -tps | -rpc | -geoloc] [-et err_threshold]\n"
         "    [-refine_gcps tolerance [minimum_gcps]]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]\n"
