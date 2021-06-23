@@ -254,6 +254,10 @@ Note: all the following are build options, not required.
 
 * Copyright mostly FrankW, but also Mark Phillips, clean.
 
+=== gdal/ogr/ogrsf_frmts/vrc ===
+
+* Copyright Andrew Aitchison, clean.
+
 === gdal/ogr/ogrsf_frmts/vrt ===
 
 * FrankW, clean.

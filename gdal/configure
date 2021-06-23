@@ -809,6 +809,7 @@ PCIDSK_INCLUDE
 PCIDSK_LIB
 PCIDSK_SETTING
 GTA_SETTING
+VRC_SETTING
 DDS_SETTING
 CRUNCHDIR
 PNG_SETTING
@@ -1073,6 +1074,7 @@ enable_driver_grib
 enable_driver_ozi
 enable_driver_pdf
 enable_driver_rik
+enable_driver_vrc
 enable_driver_arcgen
 enable_driver_avc
 enable_driver_cad
@@ -1143,6 +1145,7 @@ with_cfitsio
 with_pcraster
 with_png
 with_dds
+with_vrc
 with_gta
 with_pcidsk
 with_geotiff
@@ -1983,6 +1986,8 @@ Optional Features:
                           requires dependency)
   --disable-driver-rik    disable rik format support (enabled by default,
                           requires dependency)
+  --disable-driver-vrc    disable vrc format support (enabled by default,
+                          requires dependency)
   --disable-driver-arcgen disable arcgen driver support (enabled by default)
   --disable-driver-avc    disable avc driver support (enabled by default)
   --disable-driver-cad    disable cad driver support (enabled by default)
@@ -2148,6 +2153,7 @@ Optional Packages:
   --with-pcraster=ARG   Include PCRaster (libcsf) support (ARG=internal, no or path)
   --with-png=ARG        Include PNG support (ARG=internal, no or path)
   --with-dds=ARG        Include DDS support (ARG=no, or path)
+  --with-vrc=ARG        Include VRC support (ARG=no, or path)
   --with-gta=ARG        Include GTA support (ARG=no or libgta tree prefix)
   --with-pcidsk=ARG     Path to external PCIDSK SDK or internal (default)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
@@ -28042,6 +28048,33 @@ else
   INTERNAL_FORMAT_rik_ENABLED=no
 fi
 
+# Check whether --enable-driver-vrc was given.
+if test "${enable_driver_vrc+set}" = set; then :
+  enableval=$enable_driver_vrc;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_vrc
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_vrc_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED vrc"
+  INTERNAL_FORMAT_vrc_ENABLED=no
+fi
+
 
 
 
@@ -30873,6 +30906,40 @@ DDS_SETTING=$DDS_SETTING
 
 if test "$DDS_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="dds $OPT_GDAL_FORMATS"
+fi
+
+
+
+# Check whether --with-vrc was given.
+if test "${with_vrc+set}" = set; then :
+  withval=$with_vrc;
+fi
+
+
+if test "$PNG_SETTING" = "no" ; then
+
+  VRC_SETTING="no"
+
+  echo "vrc support disabled as it needs PNG."
+
+elif test "$with_vrc" = "no" ; then
+
+  VRC_SETTING="no"
+
+  echo "vrc support disabled."
+
+else
+
+  VRC_SETTING=yes
+  echo "using VRC from $with_vrc."
+
+fi
+
+VRC_SETTING=$VRC_SETTING
+
+
+if test "$VRC_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="$OPT_GDAL_FORMATS vrc"
 fi
 
 
@@ -45211,6 +45278,9 @@ echo "  TileDB support:            ${TILEDB_SETTING}"
 
 
 echo "  userfaultfd support:       ${ENABLE_UFFD}"
+
+
+echo "  VRC support:               ${VRC_SETTING}"
 
 
 echo "  WebP support:              ${WEBP_SETTING}"

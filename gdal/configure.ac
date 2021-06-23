@@ -1700,7 +1700,7 @@ OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
 AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted elas envisat ers esric fit gff gsg gxf hf2 idrisi ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacta terragen tga til tsx usgsdem xpm xyz zmap])
-AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
+AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik vrc])
 AC_DEFUN([INTERNAL_DRIVERS],[arcgen avc cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm jml mapml mvt ntf openfilegdb pgdump rec s57 selafin shape svg sxf tiger vdv wasp])dnl
 AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas ogcapi])dnl
 AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic ngw plscenes wfs])dnl
@@ -2232,6 +2232,37 @@ AC_SUBST([DDS_SETTING], [$DDS_SETTING])
 
 if test "$DDS_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="dds $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl Enable VRC driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([vrc], [  --with-vrc[=ARG]        Include VRC support (ARG=no, or path)],,)
+
+if test "$PNG_SETTING" = "no" ; then
+
+  VRC_SETTING="no"
+
+  echo "vrc support disabled as it needs PNG."
+
+elif test "$with_vrc" = "no" ; then
+
+  VRC_SETTING="no"
+
+  echo "vrc support disabled."
+
+else
+
+  VRC_SETTING=yes
+  echo "using VRC from $with_vrc."
+
+fi
+
+AC_SUBST([VRC_SETTING], [$VRC_SETTING])
+
+if test "$VRC_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="$OPT_GDAL_FORMATS vrc"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -6156,6 +6187,7 @@ LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  Teigha (DWG and DGNv8):    ${HAVE_TEIGHA}])
 LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
+LOC_MSG([  VRC support:               ${VRC_SETTING}])
 LOC_MSG([  WebP support:              ${WEBP_SETTING}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
 LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])

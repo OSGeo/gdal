@@ -16,7 +16,7 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg \
 		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_iris -DFRMT_map -DFRMT_cals \
 		-DFRMT_safe -DFRMT_sentinel2 -DFRMT_derived -DFRMT_prf \
-		-DFRMT_sigdem -DFRMT_tga -DFRMT_stacta
+		-DFRMT_sigdem -DFRMT_tga -DFRMT_stacta -DFRMT_vrc
 
 MOREEXTRA 	=	
 
@@ -189,6 +189,10 @@ PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_kea
 
 !IFDEF MRF_SETTING
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_mrf
+!ENDIF
+
+!IFDEF VRC_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_vrc
 !ENDIF
 
 !IFDEF CHARLS_LIB

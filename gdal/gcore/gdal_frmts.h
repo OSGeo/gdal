@@ -112,6 +112,7 @@ void CPL_DLL GDALRegister_HDF5Image(void);
 void CPL_DLL GDALRegister_MSGN(void);
 void CPL_DLL GDALRegister_MSG(void);
 void CPL_DLL GDALRegister_RIK(void);
+void CPL_DLL GDALRegister_VRC(void);
 void CPL_DLL GDALRegister_Leveller(void);
 void CPL_DLL GDALRegister_SGI(void);
 void CPL_DLL GDALRegister_SRTMHGT(void);
