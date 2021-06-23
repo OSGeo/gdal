@@ -3950,17 +3950,16 @@ def test_nitf_isubcat_populated():
 
     # Check a dataset with IQ complex data.
     ds = gdal.Open('data/nitf/sar_sicd.ntf')
-    md = ds.GetMetadata()
-    assert md["NITF_ISUBCAT_1"] == "I", \
-        "Missing I subcat on band #1"
-    assert md["NITF_ISUBCAT_2"] == "Q", \
-        "Missing ISUBCAT on band #2"
+    expected = ["I", "Q"]
+    for b in range(ds.RasterCount):
+        md = ds.GetRasterBand(b + 1).GetMetadata()
+        assert md["NITF_ISUBCAT"] == expected[b]
 
     # Check a dataset with an empty ISUBCAT.
     ds = gdal.Open('data/nitf/rgb.ntf')
-    md = ds.GetMetadata()
-    assert "NITF_ISUBCAT_1" not in md, \
-        "ISUBCAT should only be available when non-empty"
+    for b in range(ds.RasterCount):
+        md = ds.GetRasterBand(b + 1).GetMetadata()
+        assert "NITF_ISUBCAT" not in md
 
 
 ###############################################################################
