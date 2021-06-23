@@ -530,6 +530,20 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         }
     }
 
+    /* Expose a subset of the per-band metadata fields. This is similar in intent     */
+    /* to the disabled ESRI_BUILD SetBandMetadata() method. The ISUBCAT in particular */
+    /* is useful for interpreting complex SAR imagery.                                */
+    for( iBand = 0; iBand < psImage->nBands; iBand++)
+    {
+        NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
+        if( strlen(psBandInfo->szISUBCAT) > 0 )
+        {
+            snprintf( szTemp, sizeof(szTemp), "NITF_ISUBCAT_%d", iBand + 1 );
+            psImage->papszMetadata =
+                CSLSetNameValue( psImage->papszMetadata, szTemp, psBandInfo->szISUBCAT );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Some files (i.e. NSIF datasets) have truncated image              */
 /*      headers.  This has been observed with JPEG compressed           */
