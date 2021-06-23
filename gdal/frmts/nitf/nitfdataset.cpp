@@ -384,7 +384,7 @@ static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBa
         return;
     }
     NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
-    if(psBandInfo == NULL)
+    if(psBandInfo == nullptr)
     {
         return;
     }
