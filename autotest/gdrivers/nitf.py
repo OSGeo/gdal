@@ -3944,6 +3944,26 @@ def test_nitf_invalid_udid():
         'BLOCKA metadata has unexpected value.'
 
 ###############################################################################
+# Verify ISUBCAT is present when non-empty.
+
+def test_nitf_isubcat_populated():
+
+    # Check a dataset with IQ complex data.
+    ds = gdal.Open('data/nitf/sar_sicd.ntf')
+    md = ds.GetMetadata()
+    assert md["NITF_ISUBCAT_1"] == "I", \
+        "Missing I subcat on band #1"
+    assert md["NITF_ISUBCAT_2"] == "Q", \
+        "Missing ISUBCAT on band #2"
+
+    # Check a dataset with an empty ISUBCAT.
+    ds = gdal.Open('data/nitf/rgb.ntf')
+    md = ds.GetMetadata()
+    assert "NITF_ISUBCAT_1" not in md, \
+        "ISUBCAT should only be available when non-empty"
+
+
+###############################################################################
 # Test limits on creation
 
 
