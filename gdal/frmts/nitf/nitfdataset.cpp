@@ -379,7 +379,7 @@ static char **ExtractEsriMD( char **papszMD )
 
 static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBand )
 {
-    if(psImage == NULL || poBand == NULL || nBand <= 0)
+    if(psImage == nullptr || poBand == nullptr || nBand <= 0)
     {
         return;
     }
