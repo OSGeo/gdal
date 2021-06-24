@@ -243,6 +243,14 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
         return NULL;
     }
 
+    char format_doc[13] = { 0 };
+    memcpy(format_doc,psRecord->pachData+16,12);
+    if(strncmp("CEOS-SAR-CCT",format_doc,12) == 0) {
+        CEOSDestroyRecord( psRecord );
+        CEOSClose( psImage );
+        return NULL;
+    }
+
     if( psRecord->nRecordType != CRT_IMAGE_FDR )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
