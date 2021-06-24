@@ -50,5 +50,14 @@ def test_sar_ceos_online_1():
     tst = gdaltest.GDALTest('SAR_CEOS', 'tmp/cache/ottawa_patch.img', 1, 23026, filename_absolute=1)
     return tst.testOpen()
 
+def test_sar_ceos_online_2():
+    list_files = ['R1_26161_FN1_F164.D',
+                  'R1_26161_FN1_F164.L']
 
+    for filename in list_files:
+        if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ceos/' + filename, filename):
+            pytest.skip()
+
+    tst = gdaltest.GDALTest('SAR_CEOS', 'tmp/cache/R1_26161_FN1_F164.D', 1, 29301, filename_absolute=1)
+    return tst.testOpen()
 
