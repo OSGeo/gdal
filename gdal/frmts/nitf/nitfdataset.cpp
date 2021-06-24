@@ -78,9 +78,7 @@ static bool NITFWriteJPEGImage( GDALDataset *, VSILFILE *, vsi_l_offset, char **
                                void * pProgressData );
 #endif
 
-#ifdef ESRI_BUILD
 static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBand );
-#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -373,65 +371,30 @@ static char **ExtractEsriMD( char **papszMD )
     return papszEsriMD;
 }
 
+#endif /* def ESRI_BUILD */
+
 /************************************************************************/
 /*                          SetBandMetadata()                           */
 /************************************************************************/
 
 static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBand )
 {
-    if( (psImage != NULL) && (poBand != NULL) && (nBand > 0) )
+    if(psImage == nullptr || poBand == nullptr || nBand <= 0)
     {
-        NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
+        return;
+    }
+    NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
+    if(psBandInfo == nullptr)
+    {
+        return;
+    }
 
-        if( psBandInfo != NULL )
-        {
-            // Set metadata BandName, WavelengthMax and WavelengthMin.
-
-            if ( psBandInfo->szIREPBAND != NULL )
-            {
-                if( EQUAL(psBandInfo->szIREPBAND,"B") )
-                {
-                    poBand->SetMetadataItem( "BandName", "Blue" );
-                    poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
-                    poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
-                }
-                else if( EQUAL(psBandInfo->szIREPBAND,"G") )
-                {
-                    poBand->SetMetadataItem( "BandName", "Green" );
-                    poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
-                    poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
-                }
-                else if( EQUAL(psBandInfo->szIREPBAND,"R") )
-                {
-                    poBand->SetMetadataItem( "BandName", "Red" );
-                    poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
-                    poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
-                }
-                else if( EQUAL(psBandInfo->szIREPBAND,"N") )
-                {
-                    poBand->SetMetadataItem( "BandName", "NearInfrared" );
-                    poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
-                    poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
-                }
-                else if( ( EQUAL(psBandInfo->szIREPBAND,"M") ) || ( ( psImage->szIREP != NULL ) && ( EQUAL(psImage->szIREP,"MONO") ) ) )
-                {
-                    poBand->SetMetadataItem( "BandName", "Panchromatic" );
-                }
-                else
-                {
-                    if( ( psImage->szICAT != NULL ) && ( EQUAL(psImage->szICAT,"IR") ) )
-                    {
-                        poBand->SetMetadataItem( "BandName", "Infrared" );
-                        poBand->SetMetadataItem( "WavelengthMax", psBandInfo->szISUBCAT );
-                        poBand->SetMetadataItem( "WavelengthMin", psBandInfo->szISUBCAT );
-                    }
-                }
-            }
-        }
+    /* The ISUBCAT is particularly valuable for interpreting SAR bands */
+    if( strlen(psBandInfo->szISUBCAT) > 0 )
+    {
+        poBand->SetMetadataItem( "NITF_ISUBCAT", psBandInfo->szISUBCAT );
     }
 }
-
-#endif /* def ESRI_BUILD */
 
 /************************************************************************/
 /*                              Identify()                              */
@@ -837,9 +800,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             GDALRasterBand* poBaseBand =
                 poBaseDS->GetRasterBand(iBand+1);
 
-#ifdef ESRI_BUILD
             SetBandMetadata( psImage, poBaseBand, iBand+1 );
-#endif
 
             NITFWrapperRasterBand* poBand =
                 new NITFWrapperRasterBand(poDS, poBaseBand, iBand+1 );
@@ -883,9 +844,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                 return nullptr;
             }
 
-#ifdef ESRI_BUILD
             SetBandMetadata( psImage, poBand, iBand+1 );
-#endif
 
             poDS->SetBand( iBand+1, poBand );
         }
