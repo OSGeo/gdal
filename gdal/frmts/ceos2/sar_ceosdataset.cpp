@@ -149,6 +149,7 @@ class SAR_CEOSDataset final: public GDALPamDataset
     void        ScanForGCPs();
     void        ScanForMetadata();
     int         ScanForMapProjection();
+    char        **papszExtraFiles;
 
   public:
     SAR_CEOSDataset();
@@ -165,6 +166,7 @@ class SAR_CEOSDataset final: public GDALPamDataset
     char **GetMetadata( const char * pszDomain ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
+    virtual char **GetFileList(void) override;
 };
 
 /************************************************************************/
@@ -639,7 +641,8 @@ SAR_CEOSDataset::SAR_CEOSDataset() :
     fpImage(nullptr),
     papszTempMD(nullptr),
     nGCPCount(0),
-    pasGCPList(nullptr)
+    pasGCPList(nullptr),
+    papszExtraFiles(nullptr)
 {
     sVolume.Flavor = 0;
     sVolume.Sensor = 0;
@@ -711,6 +714,7 @@ SAR_CEOSDataset::~SAR_CEOSDataset()
         DestroyList( sVolume.RecordList );
     }
     FreeRecipes();
+    CSLDestroy( papszExtraFiles );
 }
 
 /************************************************************************/
@@ -1864,6 +1868,9 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 CPLDebug( "CEOS", "Opened %s.\n", pszFilename );
 
+                poDS->papszExtraFiles =
+                    CSLAddString( poDS->papszExtraFiles, pszFilename );
+
                 CPL_IGNORE_RET_VAL(VSIFSeekL( process_fp, 0, SEEK_END ));
                 if( ProcessData( process_fp, iFile, psVolume, -1,
                                  VSIFTellL( process_fp ) ) == 0 )
@@ -2291,4 +2298,18 @@ void GDALRegister_SAR_CEOS()
     poDriver->pfnOpen = SAR_CEOSDataset::Open;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **SAR_CEOSDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    papszFileList = CSLInsertStrings( papszFileList, -1, papszExtraFiles );
+
+    return papszFileList;
 }
