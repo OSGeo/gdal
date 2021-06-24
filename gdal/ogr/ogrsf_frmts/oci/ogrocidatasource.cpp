@@ -507,11 +507,13 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
     int iLayer;
+    bool bIsNewLayer = TRUE;
 
     if( CPLFetchBool( papszOptions, "TRUNCATE", false ) )
     {
         CPLDebug( "OCI", "Calling TruncateLayer for %s", pszLayerName );
         TruncateLayer( pszSafeLayerName );
+        bIsNewLayer = false;  // Oracle table already exists
     }
     else
     {
@@ -621,7 +623,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     if( pszLoaderFile == nullptr )
         poLayer = new OGROCITableLayer( this, pszSafeLayerName, eType,
                                         EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
-                                        TRUE, TRUE );
+                                        TRUE, bIsNewLayer);
     else
         poLayer =
             new OGROCILoaderLayer( this, pszSafeLayerName,
