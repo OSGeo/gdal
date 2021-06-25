@@ -1886,3 +1886,33 @@ def test_zarr_create_append_subdataset():
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("blocksize", ['1,2',
+                                       '2,2,0',
+                                       '4000000000,4000000000,4000000000'])
+def test_zarr_create_array_invalid_blocksize(blocksize):
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim1 = rg.CreateDimension("dim1", None, None, 2)
+            dim2 = rg.CreateDimension("dim2", None, None, 2)
+
+            with gdaltest.error_handler():
+                ar = rg.CreateMDArray(
+                    "test", [dim0, dim1, dim2],
+                    gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                    ['BLOCKSIZE=' + blocksize])
+                assert ar is None
+
+        create()
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')

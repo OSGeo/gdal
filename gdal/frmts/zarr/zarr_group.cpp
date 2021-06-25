@@ -916,9 +916,23 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
                      "Invalid number of values in BLOCKSIZE");
             return nullptr;
         }
+        size_t nBlockSize = 1;
         for( size_t i = 0; i < nDims; ++i )
         {
-            anBlockSize[i] = static_cast<uint32_t>(CPLAtoGIntBig(aszTokens[i]));
+            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            if( anBlockSize[i] == 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Values in BLOCKSIZE should be > 0");
+                return nullptr;
+            }
+            if( anBlockSize[i] > std::numeric_limits<size_t>::max() / nBlockSize )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too large values in BLOCKSIZE");
+                return nullptr;
+            }
+            nBlockSize *= static_cast<size_t>(anBlockSize[i]);
         }
     }
 
