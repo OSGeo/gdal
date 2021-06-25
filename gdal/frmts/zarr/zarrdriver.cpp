@@ -593,12 +593,32 @@ void ZarrDriver::InitMetadata()
         }
         CSLDestroy(compressors);
 
-        char* pszXML = CPLSerializeXMLTree(oTree.get());
-        GDALDriver::SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, pszXML);
-        GDALDriver::SetMetadataItem(GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
-            CPLString(pszXML).replaceAll("CreationOptionList",
-                                         "MultiDimArrayCreationOptionList").c_str());
-        CPLFree(pszXML);
+        {
+            char* pszXML = CPLSerializeXMLTree(oTree.get());
+            GDALDriver::SetMetadataItem(GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+                CPLString(pszXML).replaceAll("CreationOptionList",
+                                             "MultiDimArrayCreationOptionList").c_str());
+            CPLFree(pszXML);
+        }
+
+        {
+            auto psArrayNameOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+            CPLAddXMLAttributeAndValue(psArrayNameOption, "name", "ARRAY_NAME");
+            CPLAddXMLAttributeAndValue(psArrayNameOption, "type", "string");
+            CPLAddXMLAttributeAndValue(psArrayNameOption, "description",
+                "Array name. If not specified, deduced from the filename");
+
+            auto psAppendSubDSOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+            CPLAddXMLAttributeAndValue(psAppendSubDSOption, "name", "APPEND_SUBDATASET");
+            CPLAddXMLAttributeAndValue(psAppendSubDSOption, "type", "boolean");
+            CPLAddXMLAttributeAndValue(psAppendSubDSOption, "description",
+                "Whether to append the new dataset to an existing Zarr hierarchy");
+            CPLAddXMLAttributeAndValue(psAppendSubDSOption, "default", "NO");
+
+            char* pszXML = CPLSerializeXMLTree(oTree.get());
+            GDALDriver::SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, pszXML);
+            CPLFree(pszXML);
+        }
     }
 }
 
@@ -621,6 +641,456 @@ GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                            Create()                                  */
+/************************************************************************/
+
+GDALDataset * ZarrDataset::Create( const char * pszName,
+                                   int nXSize, int nYSize, int nBands,
+                                   GDALDataType eType,
+                                   char ** papszOptions )
+{
+    if( nBands <= 0 || nXSize <= 0 || nYSize <= 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "nBands, nXSize, nYSize should be > 0");
+        return nullptr;
+    }
+
+    const bool bAppendSubDS = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO"));
+    const char* pszArrayName = CSLFetchNameValue(papszOptions, "ARRAY_NAME");
+
+    std::shared_ptr<GDALGroup> poRG;
+    if( bAppendSubDS )
+    {
+        if( pszArrayName == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ARRAY_NAME should be provided when "
+                     "APPEND_SUBDATASET is set to YES");
+            return nullptr;
+        }
+        auto poDS = std::unique_ptr<GDALDataset>(OpenMultidim(pszName, true, nullptr));
+        if( poDS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszName);
+            return nullptr;
+        }
+        poRG = poDS->GetRootGroup();
+    }
+    else
+    {
+        poRG = ZarrGroupV2::CreateOnDisk(std::string(), "/", pszName);
+    }
+    if( !poRG )
+        return nullptr;
+
+    auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
+    poDS->SetDescription(pszName);
+    poDS->m_poRootGroup = poRG;
+    poDS->nRasterYSize = nYSize;
+    poDS->nRasterXSize = nXSize;
+    poDS->eAccess = GA_Update;
+
+    if( bAppendSubDS )
+    {
+        auto aoDims = poRG->GetDimensions();
+        for( const auto& poDim: aoDims )
+        {
+            if( poDim->GetName() == "Y" &&
+                poDim->GetSize() == static_cast<GUInt64>(nYSize) )
+            {
+                poDS->m_poDimY = poDim;
+            }
+            else if( poDim->GetName() == "X" &&
+                poDim->GetSize() == static_cast<GUInt64>(nXSize) )
+            {
+                poDS->m_poDimX = poDim;
+            }
+        }
+        if( poDS->m_poDimY == nullptr )
+        {
+            poDS->m_poDimY = poRG->CreateDimension(
+                std::string(pszArrayName) + "_Y", std::string(), std::string(), nYSize);
+        }
+        if( poDS->m_poDimX == nullptr )
+        {
+            poDS->m_poDimX = poRG->CreateDimension(
+                std::string(pszArrayName) + "_X", std::string(), std::string(), nXSize);
+        }
+    }
+    else
+    {
+        poDS->m_poDimY = poRG->CreateDimension("Y", std::string(), std::string(), nYSize);
+        poDS->m_poDimX = poRG->CreateDimension("X", std::string(), std::string(), nXSize);
+    }
+    if( poDS->m_poDimY == nullptr || poDS->m_poDimX == nullptr )
+        return nullptr;
+    const auto aoDims = std::vector<std::shared_ptr<GDALDimension>>{
+        poDS->m_poDimY, poDS->m_poDimX};
+
+    for( int i = 0; i < nBands; i++ )
+    {
+        auto poArray = poRG->CreateMDArray(
+            pszArrayName ?
+                (nBands == 1 ? pszArrayName : CPLSPrintf("%s_band%d", pszArrayName, i+1)):
+                (nBands == 1 ? CPLGetBasename(pszName) : CPLSPrintf("Band%d", i+1)),
+            aoDims,
+            GDALExtendedDataType::Create(eType),
+            papszOptions);
+        if( poArray == nullptr )
+            return nullptr;
+        poDS->SetBand(i + 1, new ZarrRasterBand(poArray));
+    }
+
+    return poDS.release();
+}
+
+/************************************************************************/
+/*                          GetSpatialRef()                             */
+/************************************************************************/
+
+const OGRSpatialReference* ZarrDataset::GetSpatialRef() const
+{
+    if( nBands >= 1 )
+        return cpl::down_cast<ZarrRasterBand*>(papoBands[0])->m_poArray->GetSpatialRef().get();
+    return nullptr;
+}
+
+/************************************************************************/
+/*                          SetSpatialRef()                             */
+/************************************************************************/
+
+CPLErr ZarrDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
+{
+    for( int i = 0; i < nBands; ++i )
+    {
+        cpl::down_cast<ZarrRasterBand*>(papoBands[i])->m_poArray->SetSpatialRef(poSRS);
+    }
+    return CE_None;
+}
+
+/************************************************************************/
+/*                         GetGeoTransform()                            */
+/************************************************************************/
+
+CPLErr ZarrDataset::GetGeoTransform( double * padfTransform )
+{
+    memcpy(padfTransform, &m_adfGeoTransform[0], 6 * sizeof(double));
+    return m_bHasGT ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                         SetGeoTransform()                            */
+/************************************************************************/
+
+CPLErr ZarrDataset::SetGeoTransform( double * padfTransform )
+{
+    if( padfTransform[2] != 0 || padfTransform[4] != 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Geotransform with rotated terms not supported");
+        return CE_Failure;
+    }
+    if( m_poDimX == nullptr || m_poDimY == nullptr )
+        return CE_Failure;
+
+    memcpy(&m_adfGeoTransform[0], padfTransform, 6 * sizeof(double));
+    m_bHasGT = true;
+
+    const auto oDTFloat64 = GDALExtendedDataType::Create(GDT_Float64);
+    {
+        auto poX = m_poRootGroup->OpenMDArray(m_poDimX->GetName());
+        if( !poX )
+            poX = m_poRootGroup->CreateMDArray(m_poDimX->GetName(), { m_poDimX },
+                                               oDTFloat64,
+                                               nullptr);
+        if( !poX )
+            return CE_Failure;
+        m_poDimX->SetIndexingVariable(poX);
+        std::vector<double> adfX;
+        try
+        {
+            adfX.reserve(nRasterXSize);
+            for( int i = 0; i < nRasterXSize; ++i )
+                adfX.emplace_back( padfTransform[0] + padfTransform[1] * (i + 0.5) );
+        }
+        catch( const std::exception& )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory when allocating X array");
+            return CE_Failure;
+        }
+        const GUInt64 nStartIndex = 0;
+        const size_t nCount = adfX.size();
+        const GInt64 arrayStep = 1;
+        const GPtrDiff_t bufferStride = 1;
+        if( !poX->Write(&nStartIndex, &nCount, &arrayStep, &bufferStride,
+                        poX->GetDataType(), adfX.data()) )
+        {
+            return CE_Failure;
+        }
+    }
+
+    {
+        auto poY = m_poRootGroup->OpenMDArray(m_poDimY->GetName());
+        if( !poY )
+            poY = m_poRootGroup->CreateMDArray(m_poDimY->GetName(), { m_poDimY },
+                                               oDTFloat64,
+                                               nullptr);
+        if( !poY )
+            return CE_Failure;
+        m_poDimY->SetIndexingVariable(poY);
+        std::vector<double> adfY;
+        try
+        {
+            adfY.reserve(nRasterYSize);
+            for( int i = 0; i < nRasterYSize; ++i )
+                adfY.emplace_back( padfTransform[3] + padfTransform[5] * (i + 0.5) );
+        }
+        catch( const std::exception& )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory when allocating Y array");
+            return CE_Failure;
+        }
+        const GUInt64 nStartIndex = 0;
+        const size_t nCount = adfY.size();
+        const GInt64 arrayStep = 1;
+        const GPtrDiff_t bufferStride = 1;
+        if( !poY->Write(&nStartIndex, &nCount, &arrayStep, &bufferStride,
+                        poY->GetDataType(), adfY.data()) )
+        {
+            return CE_Failure;
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          SetMetadata()                               */
+/************************************************************************/
+
+CPLErr ZarrDataset::SetMetadata(char** papszMetadata, const char* pszDomain)
+{
+    if( nBands >= 1 && (pszDomain == nullptr || pszDomain[0] == '\0') )
+    {
+        const auto oStringDT = GDALExtendedDataType::CreateString();
+        for( int i = 0; i < nBands; ++i )
+        {
+            auto& poArray = cpl::down_cast<ZarrRasterBand*>(papoBands[i])->m_poArray;
+            for( auto iter = papszMetadata; iter && *iter; ++iter )
+            {
+                char* pszKey = nullptr;
+                const char* pszValue = CPLParseNameValue(*iter, &pszKey);
+                if( pszKey && pszValue )
+                {
+                    auto poAttr = poArray->CreateAttribute(pszKey, {},
+                                                           oStringDT);
+                    if( poAttr )
+                    {
+                        const GUInt64 nStartIndex = 0;
+                        const size_t nCount = 1;
+                        const GInt64 arrayStep = 1;
+                        const GPtrDiff_t bufferStride = 1;
+                        poAttr->Write(&nStartIndex, &nCount,
+                                      &arrayStep, &bufferStride,
+                                      oStringDT, &pszValue);
+                    }
+                }
+                CPLFree(pszKey);
+            }
+        }
+    }
+    return GDALDataset::SetMetadata(papszMetadata, pszDomain);
+}
+
+/************************************************************************/
+/*                    ZarrRasterBand::ZarrRasterBand()                  */
+/************************************************************************/
+
+ZarrRasterBand::ZarrRasterBand(const std::shared_ptr<GDALMDArray>& poArray):
+    m_poArray(poArray)
+{
+    assert( poArray->GetDimensionCount() == 2 );
+    eDataType = poArray->GetDataType().GetNumericDataType();
+    nBlockXSize = static_cast<int>(poArray->GetBlockSize()[1]);
+    nBlockYSize = static_cast<int>(poArray->GetBlockSize()[0]);
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double ZarrRasterBand::GetNoDataValue(int* pbHasNoData)
+{
+    bool bHasNodata = false;
+    double dfRes = m_poArray->GetNoDataValueAsDouble(&bHasNodata);
+    if( pbHasNoData )
+        *pbHasNoData = bHasNodata;
+    return dfRes;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetNoDataValue(double dfNoData)
+{
+    return m_poArray->SetNoDataValue(dfNoData) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                              GetOffset()                             */
+/************************************************************************/
+
+double ZarrRasterBand::GetOffset( int *pbSuccess )
+{
+    bool bHasValue = false;
+    double dfRet = m_poArray->GetOffset(&bHasValue);
+    if( pbSuccess )
+        *pbSuccess = bHasValue ? TRUE : FALSE;
+    return dfRet;
+}
+
+/************************************************************************/
+/*                              SetOffset()                             */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetOffset( double dfNewOffset )
+{
+    return m_poArray->SetOffset(dfNewOffset) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                              GetScale()                              */
+/************************************************************************/
+
+double ZarrRasterBand::GetScale( int *pbSuccess )
+{
+    bool bHasValue = false;
+    double dfRet = m_poArray->GetScale(&bHasValue);
+    if( pbSuccess )
+        *pbSuccess = bHasValue ? TRUE : FALSE;
+    return dfRet;
+}
+
+/************************************************************************/
+/*                              SetScale()                              */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetScale( double dfNewScale )
+{
+    return m_poArray->SetScale(dfNewScale) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                             GetUnitType()                            */
+/************************************************************************/
+
+const char *ZarrRasterBand::GetUnitType()
+{
+    return m_poArray->GetUnit().c_str();
+}
+
+/************************************************************************/
+/*                             SetUnitType()                            */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetUnitType( const char * pszNewValue )
+{
+    return m_poArray->SetUnit(pszNewValue ? pszNewValue : "") ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                    ZarrRasterBand::IReadBlock()                      */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pData )
+{
+
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nReqXSize = std::min(nRasterXSize - nXOff, nBlockXSize);
+    const int nReqYSize = std::min(nRasterYSize - nYOff, nBlockYSize);
+    GUInt64 arrayStartIdx[] = { static_cast<GUInt64>(nYOff),
+                                static_cast<GUInt64>(nXOff) };
+    size_t count[] = { static_cast<size_t>(nReqYSize),
+                       static_cast<size_t>(nReqXSize) };
+    constexpr GInt64 arrayStep[] = { 1, 1 };
+    GPtrDiff_t bufferStride[] = { nBlockXSize , 1 };
+    return m_poArray->Read(arrayStartIdx, count, arrayStep, bufferStride,
+                           m_poArray->GetDataType(), pData) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                    ZarrRasterBand::IWriteBlock()                      */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff, void * pData )
+{
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nReqXSize = std::min(nRasterXSize - nXOff, nBlockXSize);
+    const int nReqYSize = std::min(nRasterYSize - nYOff, nBlockYSize);
+    GUInt64 arrayStartIdx[] = { static_cast<GUInt64>(nYOff),
+                                static_cast<GUInt64>(nXOff) };
+    size_t count[] = { static_cast<size_t>(nReqYSize),
+                       static_cast<size_t>(nReqXSize) };
+    constexpr GInt64 arrayStep[] = { 1, 1 };
+    GPtrDiff_t bufferStride[] = { nBlockXSize, 1 };
+    return m_poArray->Write(arrayStartIdx, count, arrayStep, bufferStride,
+                            m_poArray->GetDataType(), pData) ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                            IRasterIO()                               */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  GSpacing nPixelSpaceBuf,
+                                  GSpacing nLineSpaceBuf,
+                                  GDALRasterIOExtraArg* psExtraArg )
+{
+    const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
+    if( nXSize == nBufXSize && nYSize == nBufYSize && nBufferDTSize > 0 &&
+        (nPixelSpaceBuf % nBufferDTSize) == 0 &&
+        (nLineSpaceBuf % nBufferDTSize) == 0 )
+    {
+        GUInt64 arrayStartIdx[] = { static_cast<GUInt64>(nYOff),
+                                    static_cast<GUInt64>(nXOff) };
+        size_t count[] = { static_cast<size_t>(nYSize),
+                           static_cast<size_t>(nXSize) };
+        constexpr GInt64 arrayStep[] = { 1, 1 };
+        GPtrDiff_t bufferStride[] = {
+            static_cast<GPtrDiff_t>(nLineSpaceBuf / nBufferDTSize),
+            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nBufferDTSize) };
+
+        if( eRWFlag == GF_Read )
+        {
+            return m_poArray->Read(arrayStartIdx, count, arrayStep, bufferStride,
+                                   GDALExtendedDataType::Create(eBufType), pData) ?
+                                 CE_None : CE_Failure;
+        }
+        else
+        {
+            return m_poArray->Write(arrayStartIdx, count, arrayStep, bufferStride,
+                                   GDALExtendedDataType::Create(eBufType), pData) ?
+                                 CE_None : CE_Failure;
+        }
+    }
+    return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize,
+                                     eBufType,
+                                     nPixelSpaceBuf, nLineSpaceBuf,
+                                     psExtraArg);
+}
+
+/************************************************************************/
 /*                          GDALRegister_Zarr()                         */
 /************************************************************************/
 
@@ -636,8 +1106,9 @@ void GDALRegister_Zarr()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Zarr" );
-    //poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-    //                           "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte Int16 UInt16 Int32 UInt32 "
+                               "Float32 Float64 CFloat32 CFloat64" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
@@ -649,6 +1120,7 @@ void GDALRegister_Zarr()
     poDriver->pfnIdentify = ZarrDataset::Identify;
     poDriver->pfnOpen = ZarrDataset::Open;
     poDriver->pfnCreateMultiDimensional = ZarrDataset::CreateMultiDimensional;
+    poDriver->pfnCreate = ZarrDataset::Create;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

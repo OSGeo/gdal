@@ -34,6 +34,8 @@
 #include "gdal_priv.h"
 #include "memmultidim.h"
 
+#include <array>
+
 /************************************************************************/
 /*                            ZarrDataset                               */
 /************************************************************************/
@@ -42,6 +44,10 @@ class ZarrDataset final: public GDALDataset
 {
     std::shared_ptr<GDALGroup> m_poRootGroup{};
     CPLStringList              m_aosSubdatasets{};
+    std::array<double,6>       m_adfGeoTransform{{ 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 }};
+    bool                       m_bHasGT = false;
+    std::shared_ptr<GDALDimension> m_poDimX{};
+    std::shared_ptr<GDALDimension> m_poDimY{};
 
     static GDALDataset* OpenMultidim(const char* pszFilename,
                                      bool bUpdateMode,
@@ -54,10 +60,58 @@ public:
                                                 CSLConstList /*papszRootGroupOptions*/,
                                                 CSLConstList /*papszOptions*/ );
 
+    static GDALDataset*  Create( const char * pszName,
+                                       int nXSize, int nYSize, int nBands,
+                                       GDALDataType eType,
+                                       char ** papszOptions );
+
+
     const char* GetMetadataItem(const char* pszName, const char* pszDomain) override;
     char** GetMetadata(const char* pszDomain) override;
 
+    CPLErr SetMetadata(char** papszMetadata, const char* pszDomain) override;
+
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
+
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    CPLErr SetGeoTransform( double * padfTransform ) override;
+
     std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
+};
+
+/************************************************************************/
+/*                          ZarrRasterBand                              */
+/************************************************************************/
+
+class ZarrRasterBand final: public GDALRasterBand
+{
+    friend class ZarrDataset;
+
+    std::shared_ptr<GDALMDArray> m_poArray;
+
+protected:
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData ) override;
+    CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void * pData ) override;
+    CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  GSpacing nPixelSpaceBuf,
+                                  GSpacing nLineSpaceBuf,
+                                  GDALRasterIOExtraArg* psExtraArg ) override;
+
+public:
+    explicit ZarrRasterBand(const std::shared_ptr<GDALMDArray>& poArray);
+
+    double GetNoDataValue(int* pbHasNoData) override;
+    CPLErr SetNoDataValue(double dfNoData) override;
+    double GetOffset( int *pbSuccess = nullptr ) override;
+    CPLErr SetOffset( double dfNewOffset ) override;
+    double GetScale( int *pbSuccess = nullptr ) override;
+    CPLErr SetScale( double dfNewScale ) override;
+    const char *GetUnitType() override;
+    CPLErr SetUnitType( const char * pszNewValue ) override;
 };
 
 /************************************************************************/

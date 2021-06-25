@@ -1795,3 +1795,94 @@ def test_zarr_getcoordinatevariables():
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_copy():
+
+    tst = gdaltest.GDALTest('Zarr', '../../gcore/data/uint16.tif', 1, 4672)
+
+    try:
+        return tst.testCreate(vsimem=1, new_filename='/vsimem/test.zarr')
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create():
+
+    try:
+        ds = gdal.GetDriverByName('Zarr').Create('/vsimem/test.zarr', 1, 1, 3,
+                                                 options=['ARRAY_NAME=foo'])
+        assert ds.GetGeoTransform(can_return_null=True) is None
+        assert ds.GetSpatialRef() is None
+        assert ds.GetRasterBand(1).GetNoDataValue() is None
+        assert ds.GetRasterBand(1).SetNoDataValue(10) == gdal.CE_None
+        assert ds.GetRasterBand(1).GetOffset() is None
+        assert ds.GetRasterBand(1).SetOffset(1.5) == gdal.CE_None
+        assert ds.GetRasterBand(1).GetScale() is None
+        assert ds.GetRasterBand(1).SetScale(2.5) == gdal.CE_None
+        assert ds.GetRasterBand(1).GetUnitType() == ''
+        assert ds.GetRasterBand(1).SetUnitType("my_unit") == gdal.CE_None
+        assert ds.SetMetadata({"FOO": "BAR"}) == gdal.CE_None
+        ds = None
+
+        ds = gdal.Open('ZARR:/vsimem/test.zarr:/foo_band1')
+        assert ds
+        assert ds.GetMetadata() == {"FOO": "BAR"}
+        assert ds.GetRasterBand(1).GetNoDataValue() == 10.0
+        assert ds.GetRasterBand(1).GetOffset() == 1.5
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_append_subdataset():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName('Zarr').Create('/vsimem/test.zarr', 3, 2, 1,
+                                                     options=['ARRAY_NAME=foo'])
+            assert ds
+            ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+            ds = None
+
+            # Same dimensions. Will reuse the ones of foo
+            ds = gdal.GetDriverByName('Zarr').Create('/vsimem/test.zarr', 3, 2, 1,
+                                                     options=['APPEND_SUBDATASET=YES',
+                                                              'ARRAY_NAME=bar'])
+            assert ds
+            ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+            ds = None
+
+            # Different dimensions.
+            ds = gdal.GetDriverByName('Zarr').Create('/vsimem/test.zarr', 30, 20, 1,
+                                                     options=['APPEND_SUBDATASET=YES',
+                                                              'ARRAY_NAME=baz'])
+            assert ds
+            ds.SetGeoTransform([2, .1, 0, 49, 0, -.1])
+            ds = None
+
+        create()
+
+        def check():
+            ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+
+            foo = rg.OpenMDArray('foo')
+            assert foo
+            assert foo.GetDimensions()[0].GetName() == 'Y'
+            assert foo.GetDimensions()[1].GetName() == 'X'
+
+            bar = rg.OpenMDArray('bar')
+            assert bar
+            assert bar.GetDimensions()[0].GetName() == 'Y'
+            assert bar.GetDimensions()[1].GetName() == 'X'
+
+            baz = rg.OpenMDArray('baz')
+            assert baz
+            assert baz.GetDimensions()[0].GetName() == 'baz_Y'
+            assert baz.GetDimensions()[1].GetName() == 'baz_X'
+
+        check()
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
