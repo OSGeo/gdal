@@ -479,7 +479,8 @@ namespace tut
             CPLErrorReset();
             char    *pszDecodedString = CPLRecode( oTestString.szString,
                 oTestString.szEncoding, oReferenceString.szEncoding);
-            if( strstr(CPLGetLastErrorMsg(), "Recode from KOI8-R to UTF-8 not supported") != nullptr )
+            if( strstr(CPLGetLastErrorMsg(), "Recode from CP1251 to UTF-8 not supported") != nullptr ||
+                strstr(CPLGetLastErrorMsg(), "Recode from KOI8-R to UTF-8 not supported") != nullptr )
             {
                 CPLFree( pszDecodedString );
                 break;
