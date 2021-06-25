@@ -314,6 +314,14 @@ class ZarrArray final: public GDALMDArray
     bool                                              m_bDefinitionModified = false;
     bool                                              m_bSRSModified = false;
     bool                                              m_bNew = false;
+    std::string                                       m_osUnit{};
+    bool                                              m_bUnitModified = false;
+    double                                            m_dfOffset = 0.0;
+    bool                                              m_bHasOffset = false;
+    bool                                              m_bOffsetModified = false;
+    double                                            m_dfScale = 1.0;
+    bool                                              m_bHasScale = false;
+    bool                                              m_bScaleModified = false;
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -376,6 +384,24 @@ public:
     std::vector<GUInt64> GetBlockSize() const override { return m_anBlockSize; }
 
     const void* GetRawNoDataValue() const override { return m_pabyNoData; }
+
+    const std::string& GetUnit() const override { return m_osUnit; }
+
+    bool SetUnit(const std::string& osUnit) override;
+
+    void RegisterUnit(const std::string& osUnit) { m_osUnit = osUnit; }
+
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override;
+
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override;
+
+    bool SetOffset(double dfOffset, GDALDataType eStorageType) override;
+
+    bool SetScale(double dfScale, GDALDataType eStorageType) override;
+
+    void RegisterOffset(double dfOffset) { m_bHasOffset = true; m_dfOffset = dfOffset; }
+
+    void RegisterScale(double dfScale) { m_bHasScale = true; m_dfScale = dfScale; }
 
     bool SetRawNoDataValue(const void* pRawNoData) override;
 

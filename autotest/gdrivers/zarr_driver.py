@@ -131,6 +131,10 @@ def test_zarr_basic(dtype, structtype, gdaltype, fill_value, nodata_value, use_o
         else:
             assert ar.GetNoDataValueAsDouble() == nodata_value
 
+        assert ar.GetOffset() is None
+        assert ar.GetScale() is None
+        assert ar.GetUnit() == ''
+
         # Check reading one single value
         assert ar[1, 2].Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == \
             struct.pack('d' * 1, 7)
@@ -1715,6 +1719,50 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator():
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         assert ar.Read() == \
             array.array('b', [i for i in range(2 * 3 * 4)])
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_unit_offset_scale():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            ar = rg.CreateMDArray(
+                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+            assert ar.SetOffset(1.5) == gdal.CE_None
+            assert ar.SetScale(2.5) == gdal.CE_None
+            assert ar.SetUnit("my unit") == gdal.CE_None
+
+        create()
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/test/.zattrs', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert 'add_offset' in j
+        assert j['add_offset'] == 1.5
+        assert 'scale_factor' in j
+        assert j['scale_factor'] == 2.5
+        assert 'units' in j
+        assert j['units'] == 'my unit'
+
+        ds = gdal.OpenEx(
+            '/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar.GetOffset() == 1.5
+        assert ar.GetScale() == 2.5
+        assert ar.GetUnit() == 'my unit'
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')

@@ -8,7 +8,7 @@ ifeq ($(HAVE_BLOSC),yes)
 XTRA_OPT := $(XTRA_OPT) -DHAVE_BLOSC
 endif
 
-CPPFLAGS :=  -I../mem -I../gtiff $(CPPFLAGS) $(XTRA_OPT)
+CPPFLAGS :=  -I../mem -I../gtiff -I../netcdf $(CPPFLAGS) $(XTRA_OPT)
 
 $(O_OBJ): zarr.h
 

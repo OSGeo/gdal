@@ -30,6 +30,8 @@
 
 #include "tif_float.h"
 
+#include "netcdf_cf_constants.h" // for CF_UNITS, etc
+
 #include <algorithm>
 #include <cassert>
 #include <limits>
@@ -139,6 +141,9 @@ void ZarrArray::Flush()
 
     if( (m_oAttrGroup.IsModified() ||
          (m_bNew && j_ARRAY_DIMENSIONS.Size() != 0) ||
+         m_bUnitModified ||
+         m_bOffsetModified ||
+         m_bScaleModified ||
          m_bSRSModified) && m_nVersion == 2 )
     {
         m_bNew = false;
@@ -193,6 +198,38 @@ void ZarrArray::Flush()
 
             oDoc.GetRoot().Add("crs", oCRS);
         }
+
+        if( m_osUnit.empty() )
+        {
+            if( m_bUnitModified )
+                oDoc.GetRoot().Delete(CF_UNITS);
+        }
+        else
+        {
+            oDoc.GetRoot().Set(CF_UNITS, m_osUnit);
+        }
+        m_bUnitModified = false;
+
+        if( !m_bHasOffset )
+        {
+            oDoc.GetRoot().Delete(CF_ADD_OFFSET);
+        }
+        else
+        {
+            oDoc.GetRoot().Set(CF_ADD_OFFSET, m_dfOffset);
+        }
+        m_bOffsetModified = false;
+
+        if( !m_bHasScale )
+        {
+            oDoc.GetRoot().Delete(CF_SCALE_FACTOR);
+        }
+        else
+        {
+            oDoc.GetRoot().Set(CF_SCALE_FACTOR, m_dfScale);
+        }
+        m_bScaleModified = false;
+
         oDoc.Save(CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
     }
 }
@@ -2348,6 +2385,40 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
     }
 
+    const auto unit = oAttributes[CF_UNITS];
+    std::string osUnit;
+    if( unit.GetType() == CPLJSONObject::Type::String )
+    {
+        osUnit = unit.ToString();
+        oAttributes.Delete(CF_UNITS);
+    }
+
+    bool bHasOffset = false;
+    double dfOffset = 0.0;
+    const auto offset = oAttributes[CF_ADD_OFFSET];
+    const auto offsetType = offset.GetType();
+    if( offsetType == CPLJSONObject::Type::Integer ||
+        offsetType == CPLJSONObject::Type::Long ||
+        offsetType == CPLJSONObject::Type::Double )
+    {
+        dfOffset = offset.ToDouble();
+        bHasOffset = true;
+        oAttributes.Delete(CF_ADD_OFFSET);
+    }
+
+    bool bHasScale = false;
+    double dfScale = 1.0;
+    const auto scale = oAttributes[CF_SCALE_FACTOR];
+    const auto scaleType = scale.GetType();
+    if( scaleType == CPLJSONObject::Type::Integer ||
+        scaleType == CPLJSONObject::Type::Long ||
+        scaleType == CPLJSONObject::Type::Double )
+    {
+        dfScale = scale.ToDouble();
+        bHasScale = true;
+        oAttributes.Delete(CF_SCALE_FACTOR);
+    }
+
     std::vector<std::shared_ptr<GDALDimension>> aoDims;
     for( int i = 0; i < oShape.Size(); ++i )
     {
@@ -2742,6 +2813,11 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     poArray->SetRootDirectoryName(m_osDirectoryName);
     poArray->SetVersion(isZarrV2 ? 2 : 3);
     poArray->SetDtype(oDtype);
+    poArray->RegisterUnit(osUnit);
+    if( bHasOffset )
+        poArray->RegisterOffset(dfOffset);
+    if( bHasScale )
+        poArray->RegisterScale(dfScale);
     RegisterArray(poArray);
 
     // If this is an indexing variable, attach it to the dimension.
@@ -2801,3 +2877,71 @@ bool ZarrArray::SetSpatialRef(const OGRSpatialReference* poSRS)
     m_bSRSModified = true;
     return true;
 }
+
+/************************************************************************/
+/*                         ZarrArray::SetUnit()                         */
+/************************************************************************/
+
+bool ZarrArray::SetUnit(const std::string& osUnit)
+{
+    if( !m_bUpdatable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+    m_osUnit = osUnit;
+    m_bUnitModified = true;
+    return true;
+}
+
+/************************************************************************/
+/*                       ZarrArray::GetOffset()                         */
+/************************************************************************/
+
+double ZarrArray::GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const
+{
+    if( pbHasOffset )
+        *pbHasOffset = m_bHasOffset;
+    if( peStorageType )
+        *peStorageType = GDT_Unknown;
+    return m_dfOffset;
+}
+
+/************************************************************************/
+/*                       ZarrArray::GetScale()                          */
+/************************************************************************/
+
+double ZarrArray::GetScale(bool* pbHasScale, GDALDataType* peStorageType) const
+{
+    if( pbHasScale )
+        *pbHasScale = m_bHasScale;
+    if( peStorageType )
+        *peStorageType = GDT_Unknown;
+    return m_dfScale;
+}
+
+/************************************************************************/
+/*                       ZarrArray::SetOffset()                         */
+/************************************************************************/
+
+bool ZarrArray::SetOffset(double dfOffset, GDALDataType /* eStorageType */)
+{
+    m_dfOffset = dfOffset;
+    m_bHasOffset = true;
+    m_bOffsetModified = true;
+    return true;
+}
+
+/************************************************************************/
+/*                       ZarrArray::SetScale()                          */
+/************************************************************************/
+
+bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
+{
+    m_dfScale = dfScale;
+    m_bHasScale = true;
+    m_bScaleModified = true;
+    return true;
+}
+
