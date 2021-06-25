@@ -1164,17 +1164,22 @@ def test_zarr_create_group(format):
                                         "a:b",
                                         ".zarray",
                                         ])
-def test_zarr_create_group_errors(group_name):
+@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
+def test_zarr_create_group_errors(group_name, format):
 
     try:
         ds = gdal.GetDriverByName(
-            'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            'ZARR').CreateMultiDimensional('/vsimem/test.zarr', options=['FORMAT='+format])
         assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
         subgroup = rg.CreateGroup('foo')
         assert subgroup
-        gdal.Mkdir('/vsimem/test.zarr/directory_with_that_name', 0)
+        if format == 'ZARR_V2':
+            gdal.Mkdir('/vsimem/test.zarr/directory_with_that_name', 0)
+        else:
+            gdal.Mkdir(
+                '/vsimem/test.zarr/meta/root/directory_with_that_name', 0)
         with gdaltest.error_handler():
             assert rg.CreateGroup(group_name) is None
 
@@ -1231,12 +1236,22 @@ def getCompoundDT():
      bytes(array.array('h', [0])) +  # padding
      bytes(array.array('i', [2345678]))],
 ])
-def test_zarr_create_array(datatype, nodata):
+@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
+def test_zarr_create_array(datatype, nodata, format):
+
+    error_expected = False
+    if format == 'ZARR_V3':
+        if datatype.GetClass() != gdal.GEDTC_NUMERIC or \
+                gdal.DataTypeIsComplex(datatype.GetNumericDataType()):
+            error_expected = True
+    elif datatype.GetNumericDataType() in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+        error_expected = True
 
     try:
         def create():
             ds = gdal.GetDriverByName(
-                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr',
+                                               options=['FORMAT='+format])
             assert ds is not None
             rg = ds.GetRootGroup()
             assert rg
@@ -1245,10 +1260,11 @@ def test_zarr_create_array(datatype, nodata):
             dim0 = rg.CreateDimension("dim0", None, None, 2)
             dim1 = rg.CreateDimension("dim1", None, None, 3)
 
-            if datatype.GetNumericDataType() in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+            if error_expected:
                 with gdaltest.error_handler():
                     ar = rg.CreateMDArray("my_ar", [dim0, dim1], datatype)
                 assert ar is None
+                return False
             else:
                 ar = rg.CreateMDArray("my_ar", [dim0, dim1], datatype)
                 assert ar
@@ -1259,10 +1275,9 @@ def test_zarr_create_array(datatype, nodata):
                         assert ar.SetNoDataValueDouble(nodata) == gdal.CE_None
                     else:
                         assert ar.SetNoDataValueRaw(nodata) == gdal.CE_None
+                return True
 
-        create()
-
-        if datatype.GetNumericDataType() not in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+        if create():
             ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
             assert ds
             rg = ds.GetRootGroup()
@@ -1373,11 +1388,51 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
         gdal.RmdirRecursive('/vsimem/test.zarr')
 
 
-def test_zarr_create_array_bad_compressor():
+@pytest.mark.parametrize("compressor,options,expected_json", [
+    ["NONE", [], None],
+    ["gzip", [], {'codec': 'https://purl.org/zarr/spec/codecs/gzip/1.0',
+                  'configuration': {'level': 6}}]])
+def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
+
+    compressors = gdal.GetDriverByName('Zarr').GetMetadataItem('COMPRESSORS')
+    if compressor != 'NONE' and compressor not in compressors:
+        pytest.skip('compressor %s not available' % compressor)
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr',
+                                               options=['FORMAT=ZARR_V3'])
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            assert rg.CreateMDArray(
+                "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ['COMPRESS=' + compressor] + options) is not None
+
+        create()
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/meta/root/test.array.json', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 1000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        if expected_json is None:
+            assert 'compressor' not in j
+        else:
+            assert j['compressor'] == expected_json
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
+def test_zarr_create_array_bad_compressor(format):
 
     try:
         ds = gdal.GetDriverByName(
-            'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            'ZARR').CreateMultiDimensional('/vsimem/test.zarr',
+                                           options=['FORMAT='+format])
         assert ds is not None
         rg = ds.GetRootGroup()
         assert rg
@@ -1389,12 +1444,14 @@ def test_zarr_create_array_bad_compressor():
         gdal.RmdirRecursive('/vsimem/test.zarr')
 
 
-def test_zarr_create_array_attributes():
+@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
+def test_zarr_create_array_attributes(format):
 
     try:
         def create():
             ds = gdal.GetDriverByName(
-                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr',
+                                               options=['FORMAT='+format])
             assert ds is not None
             rg = ds.GetRootGroup()
             assert rg
@@ -1681,12 +1738,14 @@ def test_zarr_create_array_string():
         gdal.RmdirRecursive('/vsimem/test.zarr')
 
 
-def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator():
+@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
+def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(format):
 
     try:
         def create():
             ds = gdal.GetDriverByName(
-                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr',
+                                               options=['FORMAT='+format])
             assert ds is not None
             rg = ds.GetRootGroup()
             assert rg
@@ -1704,13 +1763,21 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator():
 
         create()
 
-        f = gdal.VSIFOpenL('/vsimem/test.zarr/test/.zarray', 'rb')
+        if format == 'ZARR_V2':
+            f = gdal.VSIFOpenL('/vsimem/test.zarr/test/.zarray', 'rb')
+        else:
+            f = gdal.VSIFOpenL(
+                '/vsimem/test.zarr/meta/root/test.array.json', 'rb')
         assert f
         data = gdal.VSIFReadL(1, 10000, f)
         gdal.VSIFCloseL(f)
         j = json.loads(data)
-        assert 'order' in j
-        assert j['order'] == 'F'
+        if format == 'ZARR_V2':
+            assert 'order' in j
+            assert j['order'] == 'F'
+        else:
+            assert 'chunk_memory_layout' in j
+            assert j['chunk_memory_layout'] == 'F'
 
         ds = gdal.OpenEx(
             '/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
@@ -1808,11 +1875,13 @@ def test_zarr_create_copy():
         gdal.RmdirRecursive('/vsimem/test.zarr')
 
 
-def test_zarr_create():
+@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
+def test_zarr_create(format):
 
     try:
         ds = gdal.GetDriverByName('Zarr').Create('/vsimem/test.zarr', 1, 1, 3,
-                                                 options=['ARRAY_NAME=foo'])
+                                                 options=['ARRAY_NAME=foo',
+                                                          'FORMAT=' + format])
         assert ds.GetGeoTransform(can_return_null=True) is None
         assert ds.GetSpatialRef() is None
         assert ds.GetRasterBand(1).GetNoDataValue() is None

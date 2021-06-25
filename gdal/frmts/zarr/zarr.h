@@ -261,6 +261,10 @@ public:
     void SetUpdatable(bool bUpdatable) { m_bUpdatable = bUpdatable; }
 };
 
+/************************************************************************/
+/*                             ZarrGroupV2                              */
+/************************************************************************/
+
 class ZarrGroupV2 final: public ZarrGroupBase
 {
     void ExploreDirectory() const override;
@@ -298,6 +302,10 @@ public:
     void InitFromZMetadata(const CPLJSONObject& oRoot);
 };
 
+/************************************************************************/
+/*                             ZarrGroupV3                              */
+/************************************************************************/
+
 class ZarrGroupV3 final: public ZarrGroupBase
 {
     std::string m_osGroupFilename;
@@ -329,6 +337,11 @@ public:
 
     std::shared_ptr<GDALGroup> CreateGroup(const std::string& osName,
                                            CSLConstList papszOptions = nullptr) override;
+
+    std::shared_ptr<GDALMDArray> CreateMDArray(const std::string& osName,
+                                               const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                               const GDALExtendedDataType& oDataType,
+                                               CSLConstList papszOptions = nullptr) override;
 };
 
 /************************************************************************/
@@ -382,6 +395,7 @@ class ZarrArray final: public GDALMDArray
     const CPLCompressor                              *m_psCompressor = nullptr;
     const CPLCompressor                              *m_psDecompressor = nullptr;
     CPLJSONObject                                     m_oCompressorJSonV2{};
+    CPLJSONObject                                     m_oCompressorJSonV3{};
     mutable std::vector<GByte>                        m_abyTmpRawTileData{}; // used for Fortran order
     mutable ZarrAttributeGroup                        m_oAttrGroup;
     mutable std::shared_ptr<OGRSpatialReference>      m_poSRS{};
@@ -420,6 +434,8 @@ class ZarrArray final: public GDALMDArray
     bool AllocateWorkingBuffers() const;
 
     void SerializeV2();
+
+    void SerializeV3(const CPLJSONObject& oAttrs);
 
     void DeallocateDecodedTileData();
 
@@ -532,6 +548,8 @@ public:
     void SetDefinitionModified(bool bModified) { m_bDefinitionModified = bModified; }
 
     void SetCompressorJsonV2(const CPLJSONObject& oCompressor) { m_oCompressorJSonV2 = oCompressor; }
+
+    void SetCompressorJsonV3(const CPLJSONObject& oCompressor) { m_oCompressorJSonV3 = oCompressor; }
 
     void SetNew(bool bNew) { m_bNew = bNew; }
 

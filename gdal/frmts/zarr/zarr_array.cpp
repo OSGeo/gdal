@@ -59,6 +59,7 @@ ZarrArray::ZarrArray(const std::string& osParentName,
     m_oAttrGroup(osParentName)
 {
     m_oCompressorJSonV2.Deinit();
+    m_oCompressorJSonV3.Deinit();
 }
 
 /************************************************************************/
@@ -108,6 +109,7 @@ ZarrArray::~ZarrArray()
 void ZarrArray::Flush()
 {
     FlushDirtyTile();
+    bool bSerializeV3 = false;
 
     if( m_bDefinitionModified  )
     {
@@ -117,7 +119,7 @@ void ZarrArray::Flush()
         }
         else
         {
-            // TODO
+            bSerializeV3 = true;
         }
         m_bDefinitionModified = false;
     }
@@ -139,24 +141,24 @@ void ZarrArray::Flush()
         }
     }
 
-    if( (m_oAttrGroup.IsModified() ||
-         (m_bNew && j_ARRAY_DIMENSIONS.Size() != 0) ||
-         m_bUnitModified ||
-         m_bOffsetModified ||
-         m_bScaleModified ||
-         m_bSRSModified) && m_nVersion == 2 )
+    CPLJSONObject oAttrs;
+    if( m_oAttrGroup.IsModified() ||
+        (m_bNew && j_ARRAY_DIMENSIONS.Size() != 0) ||
+        m_bUnitModified ||
+        m_bOffsetModified ||
+        m_bScaleModified ||
+        m_bSRSModified )
     {
         m_bNew = false;
         m_bSRSModified = false;
         m_oAttrGroup.UnsetModified();
 
-        CPLJSONDocument oDoc;
-        oDoc.SetRoot(m_oAttrGroup.Serialize());
+        oAttrs = m_oAttrGroup.Serialize();
 
         if( j_ARRAY_DIMENSIONS.Size() != 0 )
         {
-            oDoc.GetRoot().Delete("_ARRAY_DIMENSIONS");
-            oDoc.GetRoot().Add("_ARRAY_DIMENSIONS", j_ARRAY_DIMENSIONS);
+            oAttrs.Delete("_ARRAY_DIMENSIONS");
+            oAttrs.Add("_ARRAY_DIMENSIONS", j_ARRAY_DIMENSIONS);
         }
 
         if( m_poSRS )
@@ -196,41 +198,55 @@ void ZarrArray::Flush()
                              pszAuthorityCode);
             }
 
-            oDoc.GetRoot().Add("crs", oCRS);
+            oAttrs.Add("crs", oCRS);
         }
 
         if( m_osUnit.empty() )
         {
             if( m_bUnitModified )
-                oDoc.GetRoot().Delete(CF_UNITS);
+                oAttrs.Delete(CF_UNITS);
         }
         else
         {
-            oDoc.GetRoot().Set(CF_UNITS, m_osUnit);
+            oAttrs.Set(CF_UNITS, m_osUnit);
         }
         m_bUnitModified = false;
 
         if( !m_bHasOffset )
         {
-            oDoc.GetRoot().Delete(CF_ADD_OFFSET);
+            oAttrs.Delete(CF_ADD_OFFSET);
         }
         else
         {
-            oDoc.GetRoot().Set(CF_ADD_OFFSET, m_dfOffset);
+            oAttrs.Set(CF_ADD_OFFSET, m_dfOffset);
         }
         m_bOffsetModified = false;
 
         if( !m_bHasScale )
         {
-            oDoc.GetRoot().Delete(CF_SCALE_FACTOR);
+            oAttrs.Delete(CF_SCALE_FACTOR);
         }
         else
         {
-            oDoc.GetRoot().Set(CF_SCALE_FACTOR, m_dfScale);
+            oAttrs.Set(CF_SCALE_FACTOR, m_dfScale);
         }
         m_bScaleModified = false;
 
-        oDoc.Save(CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
+        if( m_nVersion == 2 )
+        {
+            CPLJSONDocument oDoc;
+            oDoc.SetRoot(oAttrs);
+            oDoc.Save(CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
+        }
+        else
+        {
+            bSerializeV3 = true;
+        }
+    }
+
+    if( bSerializeV3 )
+    {
+        SerializeV3(oAttrs);
     }
 }
 
@@ -412,6 +428,17 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
 }
 
 /************************************************************************/
+/*           StripUselessItemsFromCompressorConfiguration()             */
+/************************************************************************/
+
+static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject& o)
+{
+    o.Delete("num_threads"); // Blosc
+    o.Delete("typesize"); // Blosc
+    o.Delete("header"); // LZ4
+}
+
+/************************************************************************/
 /*                    ZarrArray::SerializeV2()                          */
 /************************************************************************/
 
@@ -430,9 +457,8 @@ void ZarrArray::SerializeV2()
     if( m_oCompressorJSonV2.IsValid() )
     {
         oRoot.Add("compressor", m_oCompressorJSonV2);
-        oRoot["compressor"].Delete("num_threads"); // Blosc
-        oRoot["compressor"].Delete("typesize"); // Blosc
-        oRoot["compressor"].Delete("header"); // LZ4
+        CPLJSONObject compressor = oRoot["compressor"];
+        StripUselessItemsFromCompressorConfiguration(compressor);
     }
     else
     {
@@ -521,6 +547,70 @@ void ZarrArray::SerializeV2()
     {
         oRoot.Add("dimension_separator", m_osDimSeparator);
     }
+
+    oDoc.Save(m_osFilename);
+}
+
+/************************************************************************/
+/*                    ZarrArray::SerializeV3()                          */
+/************************************************************************/
+
+void ZarrArray::SerializeV3(const CPLJSONObject& oAttrs)
+{
+    CPLJSONDocument oDoc;
+    CPLJSONObject oRoot = oDoc.GetRoot();
+
+    CPLJSONArray oShape;
+    for( const auto& poDim: m_aoDims )
+    {
+        oShape.Add(static_cast<GInt64>(poDim->GetSize()));
+    }
+    oRoot.Add("shape", oShape);
+
+    oRoot.Add("data_type", m_dtype.ToString());
+
+    CPLJSONObject oChunkGrid;
+    oChunkGrid.Add("type", "regular");
+    CPLJSONArray oChunks;
+    for( const auto nBlockSize: m_anBlockSize )
+    {
+        oChunks.Add(static_cast<GInt64>(nBlockSize));
+    }
+    oChunkGrid.Add("chunk_shape", oChunks);
+    oChunkGrid.Add("separator", m_osDimSeparator);
+    oRoot.Add("chunk_grid", oChunkGrid);
+
+    if( m_oCompressorJSonV3.IsValid() )
+    {
+        oRoot.Add("compressor", m_oCompressorJSonV3);
+        CPLJSONObject oConfiguration = oRoot["compressor"]["configuration"];
+        StripUselessItemsFromCompressorConfiguration(oConfiguration);
+    }
+
+    if( m_pabyNoData == nullptr )
+    {
+        oRoot.AddNull("fill_value");
+    }
+    else
+    {
+        const double dfVal = GetNoDataValueAsDouble();
+        if( std::isnan(dfVal) )
+            oRoot.Add("fill_value", "NaN");
+        else if( dfVal == std::numeric_limits<double>::infinity() )
+            oRoot.Add("fill_value", "Infinity");
+        else if( dfVal == -std::numeric_limits<double>::infinity() )
+            oRoot.Add("fill_value", "-Infinity");
+        else if( GDALDataTypeIsInteger(m_oType.GetNumericDataType()) )
+            oRoot.Add("fill_value", static_cast<GInt64>(dfVal));
+        else
+            oRoot.Add("fill_value", dfVal);
+    }
+
+    oRoot.Add("chunk_memory_layout", m_bFortranOrder ? "F": "C");
+
+    oRoot.Add("extensions", CPLJSONArray());
+
+    oRoot.Add("attributes", oAttrs);
 
     oDoc.Save(m_osFilename);
 }
@@ -1627,7 +1717,9 @@ bool ZarrArray::FlushDirtyTile() const
             void* out_buffer = &abyCompressedData[0];
             size_t out_size = abyCompressedData.size();
             CPLStringList aosOptions;
-            for( const auto& obj: m_oCompressorJSonV2.GetChildren() )
+            const auto compressorConfig = m_nVersion == 2 ?
+                m_oCompressorJSonV2 : m_oCompressorJSonV3["configuration"];
+            for( const auto& obj: compressorConfig.GetChildren() )
             {
                 aosOptions.SetNameValue(obj.GetName().c_str(),
                                         obj.ToString().c_str());
@@ -2744,15 +2836,21 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         if( oCodec.GetType() == CPLJSONObject::Type::String )
         {
             const auto osCodec = oCodec.ToString();
-            if( osCodec.find("https://purl.org/zarr/spec/codec/") == 0 )
+            // See https://github.com/zarr-developers/zarr-specs/issues/116
+            for( const char* key : { "https://purl.org/zarr/spec/codec/",
+                                     "https://purl.org/zarr/spec/codecs/" } )
             {
-                auto osCodecName = osCodec.substr(strlen("https://purl.org/zarr/spec/codec/"));
-                auto posSlash = osCodecName.find('/');
-                if( posSlash != std::string::npos )
+                if( osCodec.find(key) == 0 )
                 {
-                    osCodecName.resize(posSlash);
-                    psCompressor = CPLGetCompressor( osCodecName.c_str() );
-                    psDecompressor = CPLGetDecompressor( osCodecName.c_str() );
+                    auto osCodecName = osCodec.substr(strlen(key));
+                    auto posSlash = osCodecName.find('/');
+                    if( posSlash != std::string::npos )
+                    {
+                        osCodecName.resize(posSlash);
+                        psCompressor = CPLGetCompressor( osCodecName.c_str() );
+                        psDecompressor = CPLGetDecompressor( osCodecName.c_str() );
+                    }
+                    break;
                 }
             }
             if( psCompressor == nullptr || psDecompressor == nullptr )

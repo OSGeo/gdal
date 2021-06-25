@@ -614,6 +614,19 @@ void ZarrDriver::InitMetadata()
                 "Whether to append the new dataset to an existing Zarr hierarchy");
             CPLAddXMLAttributeAndValue(psAppendSubDSOption, "default", "NO");
 
+            auto psFormat = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+            CPLAddXMLAttributeAndValue(psFormat, "name", "FORMAT");
+            CPLAddXMLAttributeAndValue(psFormat, "type", "string-select");
+            CPLAddXMLAttributeAndValue(psFormat, "default", "ZARR_V2");
+            {
+                auto poValueNode = CPLCreateXMLNode(psFormat, CXT_Element, "Value");
+                CPLCreateXMLNode(poValueNode, CXT_Text, "ZARR_V2");
+            }
+            {
+                auto poValueNode = CPLCreateXMLNode(psFormat, CXT_Element, "Value");
+                CPLCreateXMLNode(poValueNode, CXT_Text, "ZARR_V3");
+            }
+
             char* pszXML = CPLSerializeXMLTree(oTree.get());
             GDALDriver::SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, pszXML);
             CPLFree(pszXML);
@@ -684,7 +697,11 @@ GDALDataset * ZarrDataset::Create( const char * pszName,
     }
     else
     {
-        poRG = ZarrGroupV2::CreateOnDisk(std::string(), "/", pszName);
+        const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
+        if( EQUAL(pszFormat, "ZARR_V3") )
+            poRG = ZarrGroupV3::CreateOnDisk(std::string(), "/", pszName);
+        else
+            poRG = ZarrGroupV2::CreateOnDisk(std::string(), "/", pszName);
     }
     if( !poRG )
         return nullptr;

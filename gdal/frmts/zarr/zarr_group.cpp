@@ -626,7 +626,8 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::CreateGroup(const std::string& osName,
 
 static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                                    size_t nGDALStartOffset,
-                                   std::vector<DtypeElt>& aoDtypeElts)
+                                   std::vector<DtypeElt>& aoDtypeElts,
+                                   bool bZarrV2)
 {
     CPLJSONObject dtype;
     const auto eClass = oDataType.GetClass();
@@ -661,12 +662,13 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
         {
             const auto eDT = oDataType.GetNumericDataType();
             DtypeElt elt;
+            bool bUnsupported = false;
             switch( eDT )
             {
                 case GDT_Byte:
                 {
                     elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                    dtype.Set(dummy, "|u1");
+                    dtype.Set(dummy, bZarrV2 ? "|u1" : "u1");
                     break;
                 }
                 case GDT_UInt16:
@@ -709,21 +711,27 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                 case GDT_CInt16:
                 case GDT_CInt32:
                 {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Unsupported data type: %s",
-                             GDALGetDataTypeName(eDT));
-                    dtype = CPLJSONObject();
-                    dtype.Deinit();
-                    return dtype;
+                    bUnsupported = true;
+                    break;
                 }
                 case GDT_CFloat32:
                 {
+                    if( !bZarrV2 )
+                    {
+                        bUnsupported = true;
+                        break;
+                    }
                     elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                     dtype.Set(dummy, "<c8");
                     break;
                 }
                 case GDT_CFloat64:
                 {
+                    if( !bZarrV2 )
+                    {
+                        bUnsupported = true;
+                        break;
+                    }
                     elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                     dtype.Set(dummy, "<c16");
                     break;
@@ -733,6 +741,15 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                     static_assert(GDT_TypeCount == GDT_CFloat64 + 1, "GDT_TypeCount == GDT_CFloat64 + 1");
                     break;
                 }
+            }
+            if( bUnsupported )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported data type: %s",
+                         GDALGetDataTypeName(eDT));
+                dtype = CPLJSONObject();
+                dtype.Deinit();
+                return dtype;
             }
             elt.nativeOffset = nNativeStartOffset;
             elt.nativeSize = GDALGetDataTypeSizeBytes(eDT);
@@ -756,7 +773,8 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                 const auto subdtype = FillDTypeElts(
                     comp->GetType(),
                     nGDALStartOffset + comp->GetOffset(),
-                    aoDtypeElts);
+                    aoDtypeElts,
+                    bZarrV2);
                 if( !subdtype.IsValid() )
                 {
                     dtype = CPLJSONObject();
@@ -774,6 +792,63 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
         }
     }
     return dtype;
+}
+
+/************************************************************************/
+/*                          FillBlockSize()                             */
+/************************************************************************/
+
+static bool FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                          const GDALExtendedDataType& oDataType,
+                          std::vector<GUInt64>& anBlockSize,
+                          CSLConstList papszOptions)
+{
+    const auto nDims = aoDimensions.size();
+    anBlockSize.resize(nDims);
+    for( size_t i = 0; i < nDims; ++i )
+        anBlockSize[i] = 1;
+    if( nDims >= 2 )
+    {
+        anBlockSize[nDims-2] = std::min(aoDimensions[nDims-2]->GetSize(),
+                                        static_cast<GUInt64>(256));
+        anBlockSize[nDims-1] = std::min(aoDimensions[nDims-1]->GetSize(),
+                                        static_cast<GUInt64>(256));
+    }
+    else if( nDims == 1 )
+    {
+        anBlockSize[0] = aoDimensions[0]->GetSize();
+    }
+
+    const char* pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
+    if( pszBlockSize )
+    {
+        const auto aszTokens(CPLStringList(CSLTokenizeString2(pszBlockSize, ",", 0)));
+        if( static_cast<size_t>(aszTokens.size()) != nDims )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid number of values in BLOCKSIZE");
+            return false;
+        }
+        size_t nBlockSize = oDataType.GetSize();
+        for( size_t i = 0; i < nDims; ++i )
+        {
+            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            if( anBlockSize[i] == 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Values in BLOCKSIZE should be > 0");
+                return false;
+            }
+            if( anBlockSize[i] > std::numeric_limits<size_t>::max() / nBlockSize )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too large values in BLOCKSIZE");
+                return false;
+            }
+            nBlockSize *= static_cast<size_t>(anBlockSize[i]);
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -800,7 +875,8 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
     }
 
     std::vector<DtypeElt> aoDtypeElts;
-    const auto dtype = FillDTypeElts(oDataType, 0, aoDtypeElts);
+    constexpr bool bZarrV2 = true;
+    const auto dtype = FillDTypeElts(oDataType, 0, aoDtypeElts, bZarrV2);
     if( !dtype.IsValid() || aoDtypeElts.empty() )
         return nullptr;
 
@@ -895,49 +971,9 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
         return nullptr;
     }
 
-    const auto nDims = aoDimensions.size();
-    std::vector<GUInt64> anBlockSize(nDims, 1);
-    if( nDims >= 2 )
-    {
-        anBlockSize[nDims-2] = std::min(aoDimensions[nDims-2]->GetSize(),
-                                        static_cast<GUInt64>(256));
-        anBlockSize[nDims-1] = std::min(aoDimensions[nDims-1]->GetSize(),
-                                        static_cast<GUInt64>(256));
-    }
-    else if( nDims == 1 )
-    {
-        anBlockSize[0] = aoDimensions[0]->GetSize();
-    }
-
-    const char* pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
-    if( pszBlockSize )
-    {
-        const auto aszTokens(CPLStringList(CSLTokenizeString2(pszBlockSize, ",", 0)));
-        if( static_cast<size_t>(aszTokens.size()) != nDims )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid number of values in BLOCKSIZE");
-            return nullptr;
-        }
-        size_t nBlockSize = 1;
-        for( size_t i = 0; i < nDims; ++i )
-        {
-            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
-            if( anBlockSize[i] == 0 )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Values in BLOCKSIZE should be > 0");
-                return nullptr;
-            }
-            if( anBlockSize[i] > std::numeric_limits<size_t>::max() / nBlockSize )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Too large values in BLOCKSIZE");
-                return nullptr;
-            }
-            nBlockSize *= static_cast<size_t>(anBlockSize[i]);
-        }
-    }
+    std::vector<GUInt64> anBlockSize;
+    if( !FillBlockSize(aoDimensions, oDataType, anBlockSize, papszOptions) )
+        return nullptr;
 
     const bool bFortranOrder = EQUAL(
         CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
@@ -1250,4 +1286,162 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::CreateGroup(const std::string& osName,
     m_oMapGroups[osName] = poGroup;
     m_aosGroups.emplace_back(osName);
     return poGroup;
+}
+
+/************************************************************************/
+/*                     ZarrGroupV3::CreateMDArray()                     */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
+            const std::string& osName,
+            const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+            const GDALExtendedDataType& oDataType,
+            CSLConstList papszOptions )
+{
+    if( !m_bUpdatable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return nullptr;
+    }
+    if( !IsValidObjectName(osName) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Invalid array name");
+        return nullptr;
+    }
+
+    if( oDataType.GetClass() != GEDTC_NUMERIC )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unsupported data type with Zarr V3");
+        return nullptr;
+    }
+
+    std::vector<DtypeElt> aoDtypeElts;
+    constexpr bool bZarrV2 = false;
+    const auto dtype = FillDTypeElts(oDataType, 0, aoDtypeElts, bZarrV2)["dummy"];
+    if( !dtype.IsValid() || aoDtypeElts.empty() )
+        return nullptr;
+
+    GetMDArrayNames();
+
+    if( m_oMapMDArrays.find(osName) != m_oMapMDArrays.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An array with same name already exists");
+        return nullptr;
+    }
+
+    CPLJSONObject oCompressor;
+    oCompressor.Deinit();
+    const char* pszCompressor = CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
+    const CPLCompressor* psCompressor = nullptr;
+    const CPLCompressor* psDecompressor = nullptr;
+    if( !EQUAL(pszCompressor, "NONE") )
+    {
+        psCompressor = CPLGetCompressor(pszCompressor);
+        psDecompressor = CPLGetCompressor(pszCompressor);
+        if( psCompressor == nullptr || psDecompressor == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Compressor/decompressor for %s not available", pszCompressor);
+            return nullptr;
+        }
+        const char* pszOptions = CSLFetchNameValue(psCompressor->papszMetadata, "OPTIONS");
+        if( pszOptions )
+        {
+            CPLXMLTreeCloser oTree(CPLParseXMLString(pszOptions));
+            const auto psRoot = oTree.get() ? CPLGetXMLNode(oTree.get(), "=Options") : nullptr;
+            if( psRoot )
+            {
+                CPLJSONObject configuration;
+                for( const CPLXMLNode* psNode = psRoot->psChild;
+                            psNode != nullptr; psNode = psNode->psNext )
+                {
+                    if( psNode->eType == CXT_Element &&
+                        strcmp(psNode->pszValue, "Option") == 0 )
+                    {
+                        const char* pszName = CPLGetXMLValue(psNode, "name", nullptr);
+                        const char* pszType = CPLGetXMLValue(psNode, "type", nullptr);
+                        if( pszName && pszType )
+                        {
+                            const char* pszVal = CSLFetchNameValueDef(
+                                papszOptions,
+                                (std::string(pszCompressor) + '_' + pszName).c_str(),
+                                CPLGetXMLValue(psNode, "default", nullptr));
+                            if( pszVal )
+                            {
+                                if( EQUAL(pszName, "SHUFFLE") && EQUAL(pszVal, "BYTE") )
+                                {
+                                    pszVal = "1";
+                                    pszType = "integer";
+                                }
+
+                                if( !oCompressor.IsValid() )
+                                {
+                                    oCompressor = CPLJSONObject();
+                                    oCompressor.Add("codec",
+                                        "https://purl.org/zarr/spec/codecs/" +
+                                        CPLString(pszCompressor).tolower() + "/1.0");
+                                    oCompressor.Add("configuration", configuration);
+                                }
+
+                                std::string osOptName(CPLString(pszName).tolower());
+                                if( STARTS_WITH(pszType, "int") )
+                                    configuration.Add(osOptName, atoi(pszVal));
+                                else
+                                    configuration.Add(osOptName, pszVal);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::string osFilenamePrefix =
+        m_osDirectoryName + "/meta/root";
+    if( !(GetFullName() == "/" && osName == "/" ) )
+    {
+        osFilenamePrefix += GetFullName();
+        if( GetFullName() != "/" )
+            osFilenamePrefix += '/';
+        osFilenamePrefix += osName;
+    }
+
+    std::string osFilename(osFilenamePrefix);
+    osFilename += ".array.json";
+
+    std::vector<GUInt64> anBlockSize;
+    if( !FillBlockSize(aoDimensions, oDataType, anBlockSize, papszOptions) )
+        return nullptr;
+
+    const bool bFortranOrder = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
+
+    const char* pszDimSeparator = CSLFetchNameValueDef(papszOptions,
+                                                       "DIM_SEPARATOR",
+                                                       "/");
+
+    auto poArray = ZarrArray::Create(GetFullName(), osName,
+                                     aoDimensions, oDataType,
+                                     aoDtypeElts, anBlockSize, bFortranOrder);
+
+    if( !poArray )
+        return nullptr;
+    poArray->SetNew(true);
+    poArray->SetFilename(osFilename);
+    poArray->SetRootDirectoryName(m_osDirectoryName);
+    poArray->SetDimSeparator(pszDimSeparator);
+    poArray->SetVersion(3);
+    poArray->SetDtype(dtype);
+    poArray->SetCompressorDecompressor(psCompressor, psDecompressor);
+    if( oCompressor.IsValid() )
+        poArray->SetCompressorJsonV3(oCompressor);
+    poArray->SetUpdatable(true);
+    poArray->SetDefinitionModified(true);
+    RegisterArray(poArray);
+
+    return poArray;
 }
