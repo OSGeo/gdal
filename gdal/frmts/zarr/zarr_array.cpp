@@ -2945,3 +2945,48 @@ bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
     return true;
 }
 
+/************************************************************************/
+/*                      GetCoordinateVariables()                        */
+/************************************************************************/
+
+std::vector<std::shared_ptr<GDALMDArray>> ZarrArray::GetCoordinateVariables() const
+{
+    std::vector<std::shared_ptr<GDALMDArray>> ret;
+    const auto poCoordinates = GetAttribute("coordinates");
+    if( poCoordinates && poCoordinates->GetDataType().GetClass() == GEDTC_STRING &&
+        poCoordinates->GetDimensionCount() == 0 )
+    {
+        const char* pszCoordinates = poCoordinates->ReadAsString();
+        if( pszCoordinates )
+        {
+            auto poGroup = m_poGroupWeak.lock();
+            if( !poGroup )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot access coordinate variables of %s has "
+                         "belonging group has gone out of scope",
+                         GetName().c_str());
+            }
+            else
+            {
+                const CPLStringList aosNames(CSLTokenizeString2(pszCoordinates, " ", 0));
+                for( int i = 0; i < aosNames.size(); i++ )
+                {
+                    auto poCoordinateVar = poGroup->OpenMDArray(aosNames[i]);
+                    if( poCoordinateVar )
+                    {
+                        ret.emplace_back(poCoordinateVar);
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Cannot find variable corresponding to coordinate %s",
+                                 aosNames[i]);
+                    }
+                }
+            }
+        }
+    }
+
+    return ret;
+}

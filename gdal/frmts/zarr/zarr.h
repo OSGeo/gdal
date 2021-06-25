@@ -154,16 +154,20 @@ protected:
     bool                                              m_bReadFromZMetadata = false;
     mutable bool                                      m_bDimensionsInstantiated = false;
     bool                                              m_bUpdatable = false;
+    std::weak_ptr<GDALGroup> m_pSelf{};
 
     virtual void ExploreDirectory() const = 0;
     virtual void LoadAttributes() const = 0;
 
-public:
     ZarrGroupBase(const std::string& osParentName, const std::string& osName):
         GDALGroup(osParentName, osName),
         m_oAttrGroup(osParentName) {}
 
+public:
+
     ~ZarrGroupBase() override;
+
+    void SetSelf(std::weak_ptr<GDALGroup> self) { m_pSelf = self; }
 
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
         { LoadAttributes(); return m_oAttrGroup.GetAttribute(osName); }
@@ -209,9 +213,11 @@ class ZarrGroupV2 final: public ZarrGroupBase
     std::shared_ptr<ZarrGroupV2> GetOrCreateSubGroup(
                                         const std::string& osSubGroupFullname);
 
-public:
     ZarrGroupV2(const std::string& osParentName, const std::string& osName):
         ZarrGroupBase(osParentName, osName) {}
+
+public:
+    static std::shared_ptr<ZarrGroupV2> Create(const std::string& osParentName, const std::string& osName);
 
     ~ZarrGroupV2() override;
 
@@ -241,9 +247,11 @@ class ZarrGroupV3 final: public ZarrGroupBase
     void ExploreDirectory() const override;
     void LoadAttributes() const override;
 
-public:
     ZarrGroupV3(const std::string& osParentName, const std::string& osName):
         ZarrGroupBase(osParentName, osName) {}
+public:
+
+    static std::shared_ptr<ZarrGroupV3> Create(const std::string& osParentName, const std::string& osName);
 
     std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
                                              CSLConstList papszOptions = nullptr) const override;
@@ -322,6 +330,7 @@ class ZarrArray final: public GDALMDArray
     double                                            m_dfScale = 1.0;
     bool                                              m_bHasScale = false;
     bool                                              m_bScaleModified = false;
+    std::weak_ptr<GDALGroup>                          m_poGroupWeak{};
 
     ZarrArray(const std::string& osParentName,
               const std::string& osName,
@@ -391,6 +400,8 @@ public:
 
     void RegisterUnit(const std::string& osUnit) { m_osUnit = osUnit; }
 
+    void RegisterGroup(std::weak_ptr<GDALGroup> group) { m_poGroupWeak = group; }
+
     double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override;
 
     double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override;
@@ -398,6 +409,8 @@ public:
     bool SetOffset(double dfOffset, GDALDataType eStorageType) override;
 
     bool SetScale(double dfScale, GDALDataType eStorageType) override;
+
+    std::vector<std::shared_ptr<GDALMDArray>> GetCoordinateVariables() const override;
 
     void RegisterOffset(double dfOffset) { m_bHasOffset = true; m_dfOffset = dfOffset; }
 

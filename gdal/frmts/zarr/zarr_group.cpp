@@ -71,6 +71,7 @@ void ZarrGroupBase::RegisterArray(const std::shared_ptr<ZarrArray>& array) const
 {
     m_oMapMDArrays[array->GetName()] = array;
     m_aosArrays.emplace_back(array->GetName());
+    array->RegisterGroup(m_pSelf);
 }
 
 /************************************************************************/
@@ -164,6 +165,18 @@ std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(const std::string&
                     GetFullName(), osName, osType, osDirection, nSize));
     m_oMapDimensions[osName] = newDim;
     return newDim;
+}
+
+/************************************************************************/
+/*                      ZarrGroupV2::Create()                           */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupV2> ZarrGroupV2::Create(
+                const std::string& osParentName, const std::string& osName)
+{
+    auto poGroup = std::shared_ptr<ZarrGroupV2>(new ZarrGroupV2(osParentName, osName));
+    poGroup->SetSelf(poGroup);
+    return poGroup;
 }
 
 /************************************************************************/
@@ -272,7 +285,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::OpenGroup(const std::string& osName,
             if( !oDoc.Load(osZgroupFilename) )
                 return nullptr;
 
-            auto poSubGroup = std::make_shared<ZarrGroupV2>(GetFullName(), osName);
+            auto poSubGroup = ZarrGroupV2::Create(GetFullName(), osName);
             poSubGroup->SetUpdatable(m_bUpdatable);
             poSubGroup->SetDirectoryName(osSubDir);
             m_oMapGroups[osName] = poSubGroup;
@@ -302,6 +315,18 @@ void ZarrGroupV2::LoadAttributes() const
         return;
     auto oRoot = oDoc.GetRoot();
     m_oAttrGroup.Init(oRoot, m_bUpdatable);
+}
+
+/************************************************************************/
+/*                      ZarrGroupV3::Create()                           */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupV3> ZarrGroupV3::Create(
+                const std::string& osParentName, const std::string& osName)
+{
+    auto poGroup = std::shared_ptr<ZarrGroupV3>(new ZarrGroupV3(osParentName, osName));
+    poGroup->SetSelf(poGroup);
+    return poGroup;
 }
 
 /************************************************************************/
@@ -386,7 +411,7 @@ std::shared_ptr<ZarrGroupV2> ZarrGroupV2::GetOrCreateSubGroup(
         this :
         GetOrCreateSubGroup(osSubGroupFullname.substr(0, nLastSlashPos)).get();
 
-    poSubGroup = std::make_shared<ZarrGroupV2>(
+    poSubGroup = ZarrGroupV2::Create(
             poBelongingGroup->GetFullName(),
             osSubGroupFullname.substr(nLastSlashPos + 1));
     poSubGroup->SetDirectoryName(CPLFormFilename(
@@ -534,7 +559,7 @@ std::shared_ptr<ZarrGroupV2> ZarrGroupV2::CreateOnDisk(const std::string& osPare
     VSIFPrintfL(fp, "{\n  \"zarr_format\": 2\n}\n");
     VSIFCloseL(fp);
 
-    auto poGroup = std::make_shared<ZarrGroupV2>(osParentName, osName);
+    auto poGroup = ZarrGroupV2::Create(osParentName, osName);
     poGroup->SetDirectoryName(osDirectoryName);
     poGroup->SetUpdatable(true);
     poGroup->m_bDirectoryExplored = true;
@@ -923,8 +948,8 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
         poArray->SetCompressorJsonV2(oCompressor);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
-    m_oMapMDArrays[osName] = poArray;
-    m_aosArrays.emplace_back(osName);
+    RegisterArray(poArray);
+
     return poArray;
 }
 
@@ -1016,7 +1041,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     // Explicit group
     if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
     {
-        auto poSubGroup = std::make_shared<ZarrGroupV3>(GetFullName(), osName);
+        auto poSubGroup = ZarrGroupV3::Create(GetFullName(), osName);
         poSubGroup->SetDirectoryName(m_osDirectoryName);
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
@@ -1027,7 +1052,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     if( VSIStatL(osFilenamePrefix.c_str(), &sStat) == 0 &&
         VSI_ISDIR(sStat.st_mode) )
     {
-        auto poSubGroup = std::make_shared<ZarrGroupV3>(GetFullName(), osName);
+        auto poSubGroup = ZarrGroupV3::Create(GetFullName(), osName);
         poSubGroup->SetDirectoryName(m_osDirectoryName);
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;

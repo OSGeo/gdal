@@ -1766,3 +1766,32 @@ def test_zarr_create_unit_offset_scale():
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_getcoordinatevariables():
+
+    src_ds = gdal.OpenEx(
+        'data/netcdf/expanded_form_of_grid_mapping.nc', gdal.OF_MULTIDIM_RASTER)
+    if src_ds is None:
+        pytest.skip()
+
+    try:
+        def create(src_ds):
+            ds = gdal.MultiDimTranslate(
+                '/vsimem/test.zarr', src_ds, format='Zarr')
+            src_ds = None
+            assert ds
+            rg = ds.GetRootGroup()
+
+            ar = rg.OpenMDArray('temp')
+            coordinate_vars = ar.GetCoordinateVariables()
+            assert len(coordinate_vars) == 2
+            assert coordinate_vars[0].GetName() == 'lat'
+            assert coordinate_vars[1].GetName() == 'lon'
+
+            assert len(coordinate_vars[0].GetCoordinateVariables()) == 0
+
+        create(src_ds)
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')

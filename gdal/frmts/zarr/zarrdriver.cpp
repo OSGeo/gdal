@@ -89,7 +89,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         osFilename.resize(osFilename.size() - 1);
 
     auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
-    auto poRG = std::make_shared<ZarrGroupV2>(std::string(), "/");
+    auto poRG = ZarrGroupV2::Create(std::string(), "/");
     poRG->SetUpdatable(bUpdateMode);
     poDS->m_poRootGroup = poRG;
 
@@ -137,7 +137,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
     }
 
     // Zarr v3
-    auto poRG_V3 = std::make_shared<ZarrGroupV3>(std::string(), "/");
+    auto poRG_V3 = ZarrGroupV3::Create(std::string(), "/");
     poRG_V3->SetDirectoryName(osFilename);
     // poRG_V3->SetUpdatable(bUpdateMode); // TODO
     poDS->m_poRootGroup = poRG_V3;
