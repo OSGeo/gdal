@@ -1646,10 +1646,7 @@ void SAR_CEOSDataset::ScanForGCPs()
     /* ASF L1 products do not have valid data
        in the lat/long first/mid/last fields */
     const char *pszValue = GetMetadataItem("CEOS_FACILITY");
-    if(pszValue == nullptr)
-        return;
-
-    if(strncmp(pszValue,"ASF",3) == 0) {
+    if( (pszValue != nullptr) && (strncmp(pszValue,"ASF",3) == 0) ) {
         ScanForMapProjection();
         return;
     }
