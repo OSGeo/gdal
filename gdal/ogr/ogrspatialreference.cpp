@@ -2413,7 +2413,8 @@ OGRErr OSRSetLinearUnitsAndUpdateParameters( OGRSpatialReferenceH hSRS,
  * \brief Set the linear units for the projection.
  *
  * This method creates a UNIT subnode with the specified values as a
- * child of the PROJCS, GEOCCS or LOCAL_CS node.
+ * child of the PROJCS, GEOCCS, GEOGCS or LOCAL_CS node. When called on a
+ * Geographic 3D CRS the vertical axis units will be set.
  *
  * This method does the same as the C function OSRSetLinearUnits().
  *
@@ -2588,8 +2589,9 @@ OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS,
  * \brief Fetch linear projection units.
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
- * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node
- * for units.
+ * This method only checks directly under the PROJCS, GEOCCS, GEOGCS or
+ * LOCAL_CS node for units. When called on a Geographic 3D CRS the vertical
+ * axis units will be returned.
  *
  * This method does the same thing as the C function OSRGetLinearUnits()
  *
@@ -2664,7 +2666,7 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
  *
  * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS". Might be
  * NULL, in which case PROJCS will be implied (and if not found, LOCAL_CS,
- * GEOCCS and VERT_CS are looked up)
+ * GEOCCS, GEOGCS and VERT_CS are looked up)
  * @param ppszName a pointer to be updated with the pointer to the units name.
  * The returned value remains internal to the OGRSpatialReference and should not
  * be freed, or modified.  It may be invalidated on the next
@@ -2739,16 +2741,39 @@ double OGRSpatialReference::GetTargetLinearUnits( const char *pszTargetKey,
                 break;
             }
             auto csType = proj_cs_get_type(d->getPROJContext(), coordSys);
-            if(csType != PJ_CS_TYPE_CARTESIAN && csType != PJ_CS_TYPE_VERTICAL )
+
+            if( csType != PJ_CS_TYPE_CARTESIAN
+                && csType != PJ_CS_TYPE_VERTICAL
+                && csType != PJ_CS_TYPE_ELLIPSOIDAL
+                && csType != PJ_CS_TYPE_SPHERICAL )
             {
                 proj_destroy(coordSys);
                 break;
             }
 
+            int axis = 0;
+
+            if ( csType == PJ_CS_TYPE_ELLIPSOIDAL
+                 || csType == PJ_CS_TYPE_SPHERICAL )
+            {
+                const int axisCount = proj_cs_get_axis_count(
+                    d->getPROJContext(), coordSys);
+
+                if( axisCount == 3 )
+                {
+                    axis = 2;
+                }
+                else
+                {
+                    proj_destroy(coordSys);
+                    break;
+                }
+            }
+
             double dfConvFactor = 0.0;
             const char* pszUnitName = nullptr;
             if( !proj_cs_get_axis_info(
-                d->getPROJContext(), coordSys, 0, nullptr, nullptr, nullptr,
+                d->getPROJContext(), coordSys, axis, nullptr, nullptr, nullptr,
                 &dfConvFactor, &pszUnitName, nullptr, nullptr) )
             {
                 proj_destroy(coordSys);
