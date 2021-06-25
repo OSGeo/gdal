@@ -322,9 +322,12 @@ void ZarrGroupV2::LoadAttributes() const
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupV3> ZarrGroupV3::Create(
-                const std::string& osParentName, const std::string& osName)
+                const std::string& osParentName,
+                const std::string& osName,
+                const std::string& osRootDirectoryName)
 {
-    auto poGroup = std::shared_ptr<ZarrGroupV3>(new ZarrGroupV3(osParentName, osName));
+    auto poGroup = std::shared_ptr<ZarrGroupV3>(
+        new ZarrGroupV3(osParentName, osName, osRootDirectoryName));
     poGroup->SetSelf(poGroup);
     return poGroup;
 }
@@ -1032,6 +1035,64 @@ void ZarrGroupV3::ExploreDirectory() const
 }
 
 /************************************************************************/
+/*                      ZarrGroupV3GetFilename()                        */
+/************************************************************************/
+
+static std::string ZarrGroupV3GetFilename(const std::string& osParentFullName,
+                                          const std::string& osName,
+                                          const std::string& osRootDirectoryName)
+{
+    const std::string osMetaDir(
+        CPLFormFilename(osRootDirectoryName.c_str(), "meta", nullptr));
+
+    std::string osGroupFilename(osMetaDir);
+    if( osName == "/" )
+    {
+        osGroupFilename += "/root.group.json";
+    }
+    else
+    {
+        osGroupFilename += "/root";
+        osGroupFilename += (osParentFullName == "/" ? std::string() : osParentFullName);
+        osGroupFilename += '/';
+        osGroupFilename += osName;
+        osGroupFilename += ".group.json";
+    }
+    return osGroupFilename;
+}
+
+/************************************************************************/
+/*                      ZarrGroupV3::ZarrGroupV3()                      */
+/************************************************************************/
+
+ZarrGroupV3::ZarrGroupV3(const std::string& osParentName,
+                         const std::string& osName,
+                         const std::string& osRootDirectoryName):
+        ZarrGroupBase(osParentName, osName),
+        m_osGroupFilename(ZarrGroupV3GetFilename(osParentName,
+                                                 osName,
+                                                 osRootDirectoryName))
+{
+    m_osDirectoryName = osRootDirectoryName;
+}
+
+/************************************************************************/
+/*                      ZarrGroupV3::~ZarrGroupV3()                     */
+/************************************************************************/
+
+ZarrGroupV3::~ZarrGroupV3()
+{
+    if( m_bNew || m_oAttrGroup.IsModified() )
+    {
+        CPLJSONDocument oDoc;
+        auto oRoot = oDoc.GetRoot();
+        oRoot.Add("extensions", CPLJSONArray());
+        oRoot.Add("attributes", m_oAttrGroup.Serialize());
+        oDoc.Save(m_osGroupFilename);
+    }
+}
+
+/************************************************************************/
 /*                              OpenGroup()                             */
 /************************************************************************/
 
@@ -1055,8 +1116,8 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     // Explicit group
     if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
     {
-        auto poSubGroup = ZarrGroupV3::Create(GetFullName(), osName);
-        poSubGroup->SetDirectoryName(m_osDirectoryName);
+        auto poSubGroup = ZarrGroupV3::Create(
+                                GetFullName(), osName, m_osDirectoryName);
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
@@ -1066,12 +1127,127 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     if( VSIStatL(osFilenamePrefix.c_str(), &sStat) == 0 &&
         VSI_ISDIR(sStat.st_mode) )
     {
-        auto poSubGroup = ZarrGroupV3::Create(GetFullName(), osName);
-        poSubGroup->SetDirectoryName(m_osDirectoryName);
+        auto poSubGroup = ZarrGroupV3::Create(
+                                GetFullName(), osName, m_osDirectoryName);
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
     }
 
     return nullptr;
+}
+
+/************************************************************************/
+/*                   ZarrGroupV3::CreateOnDisk()                        */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupV3> ZarrGroupV3::CreateOnDisk(const std::string& osParentFullName,
+                                                       const std::string& osName,
+                                                       const std::string& osRootDirectoryName)
+{
+    const std::string osMetaDir(
+        CPLFormFilename(osRootDirectoryName.c_str(), "meta", nullptr));
+    std::string osGroupDir(osMetaDir);
+    osGroupDir += "/root";
+
+    if( osParentFullName.empty() )
+    {
+        if( VSIMkdir(osRootDirectoryName.c_str(), 0755) != 0 )
+        {
+            VSIStatBufL sStat;
+            if( VSIStatL(osRootDirectoryName.c_str(), &sStat) == 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Directory %s already exists.",
+                         osRootDirectoryName.c_str());
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s.",
+                         osRootDirectoryName.c_str());
+            }
+            return nullptr;
+        }
+
+        const std::string osZarrJsonFilename(
+            CPLFormFilename(osRootDirectoryName.c_str(), "zarr.json", nullptr));
+        VSILFILE* fp = VSIFOpenL(osZarrJsonFilename.c_str(), "wb" );
+        if( !fp )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create file %s.",
+                     osZarrJsonFilename.c_str());
+            return nullptr;
+        }
+        VSIFPrintfL(fp,
+            "{\n"
+            "    \"zarr_format\": \"https://purl.org/zarr/spec/protocol/core/3.0\",\n"
+            "    \"metadata_encoding\": \"https://purl.org/zarr/spec/protocol/core/3.0\",\n"
+            "    \"metadata_key_suffix\": \".json\",\n"
+            "    \"extensions\": []\n"
+            "}\n");
+        VSIFCloseL(fp);
+
+        if( VSIMkdir(osMetaDir.c_str(), 0755) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s.",
+                     osMetaDir.c_str());
+            return nullptr;
+        }
+    }
+    else
+    {
+        osGroupDir += (osParentFullName == "/" ? std::string() : osParentFullName);
+        osGroupDir += '/';
+        osGroupDir += osName;
+    }
+
+    if( VSIMkdir(osGroupDir.c_str(), 0755) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s.",
+                 osGroupDir.c_str());
+        return nullptr;
+    }
+
+    auto poGroup = ZarrGroupV3::Create(osParentFullName, osName,
+                                       osRootDirectoryName);
+    poGroup->SetUpdatable(true);
+    poGroup->m_bDirectoryExplored = true;
+    poGroup->m_bNew = true;
+    return poGroup;
+}
+
+/************************************************************************/
+/*                      ZarrGroupV3::CreateGroup()                      */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> ZarrGroupV3::CreateGroup(const std::string& osName,
+                                                    CSLConstList /* papszOptions */)
+{
+    if( !m_bUpdatable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return nullptr;
+    }
+    if( !IsValidObjectName(osName) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Invalid group name");
+        return nullptr;
+    }
+
+    GetGroupNames();
+
+    if( m_oMapGroups.find(osName) != m_oMapGroups.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A group with same name already exists");
+        return nullptr;
+    }
+
+    auto poGroup = CreateOnDisk(GetFullName(), osName, m_osDirectoryName);
+    if( !poGroup )
+        return nullptr;
+    m_oMapGroups[osName] = poGroup;
+    m_aosGroups.emplace_back(osName);
+    return poGroup;
 }

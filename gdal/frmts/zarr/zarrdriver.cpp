@@ -137,9 +137,8 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
     }
 
     // Zarr v3
-    auto poRG_V3 = ZarrGroupV3::Create(std::string(), "/");
-    poRG_V3->SetDirectoryName(osFilename);
-    // poRG_V3->SetUpdatable(bUpdateMode); // TODO
+    auto poRG_V3 = ZarrGroupV3::Create(std::string(), "/", osFilename);
+    poRG_V3->SetUpdatable(bUpdateMode);
     poDS->m_poRootGroup = poRG_V3;
     return poDS.release();
 }
@@ -628,9 +627,14 @@ void ZarrDriver::InitMetadata()
 
 GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
                                                   CSLConstList /*papszRootGroupOptions*/,
-                                                  CSLConstList /*papszOptions*/ )
+                                                  CSLConstList papszOptions )
 {
-    auto poRG = ZarrGroupV2::CreateOnDisk(std::string(), "/", pszFilename);
+    const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
+    std::shared_ptr<GDALGroup> poRG;
+    if( EQUAL(pszFormat, "ZARR_V3") )
+        poRG = ZarrGroupV3::CreateOnDisk(std::string(), "/", pszFilename);
+    else
+        poRG = ZarrGroupV2::CreateOnDisk(std::string(), "/", pszFilename);
     if( !poRG )
         return nullptr;
 
@@ -1116,6 +1120,15 @@ void GDALRegister_Zarr()
 "<OpenOptionList>"
 "   <Option name='USE_ZMETADATA' type='boolean' description='Whether to use consolidated metadata from .zmetadata' default='YES'/>"
 "</OpenOptionList>" );
+
+    poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
+"<MultiDimDatasetCreationOptionList>"
+"   <Option name='FORMAT' type='string-select' default='ZARR_V2'>"
+"     <Value>ZARR_V2</Value>"
+"     <Value>ZARR_V3</Value>"
+"   </Option>"
+"</MultiDimDatasetCreationOptionList>" );
+
 
     poDriver->pfnIdentify = ZarrDataset::Identify;
     poDriver->pfnOpen = ZarrDataset::Open;

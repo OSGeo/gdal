@@ -1012,12 +1012,13 @@ def test_zarr_read_BLOSC_COMPRESSORS():
         'Zarr').GetMetadataItem('BLOSC_COMPRESSORS')
 
 
-def test_zarr_create_group():
+@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
+def test_zarr_create_group(format):
 
     try:
         def create():
             ds = gdal.GetDriverByName(
-                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr', options=['FORMAT='+format])
             assert ds is not None
             rg = ds.GetRootGroup()
             assert rg

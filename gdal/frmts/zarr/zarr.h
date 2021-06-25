@@ -196,6 +196,8 @@ class ZarrArray;
 class ZarrGroupBase CPL_NON_FINAL: public GDALGroup
 {
 protected:
+    // For ZarrV2, this is the directory of the group
+    // For ZarrV3, this is the root directory of the dataset
     std::string m_osDirectoryName{};
     mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     mutable std::map<CPLString, std::shared_ptr<ZarrArray>> m_oMapMDArrays{};
@@ -298,20 +300,35 @@ public:
 
 class ZarrGroupV3 final: public ZarrGroupBase
 {
+    std::string m_osGroupFilename;
+    bool m_bNew = false;
+
     void ExploreDirectory() const override;
     void LoadAttributes() const override;
 
-    ZarrGroupV3(const std::string& osParentName, const std::string& osName):
-        ZarrGroupBase(osParentName, osName) {}
+    ZarrGroupV3(const std::string& osParentName,
+                const std::string& osName,
+                const std::string& osRootDirectoryName);
 public:
 
-    static std::shared_ptr<ZarrGroupV3> Create(const std::string& osParentName, const std::string& osName);
+    ~ZarrGroupV3() override;
+
+    static std::shared_ptr<ZarrGroupV3> Create(const std::string& osParentName,
+                                               const std::string& osName,
+                                               const std::string& osRootDirectoryName);
 
     std::shared_ptr<GDALMDArray> OpenMDArray(const std::string& osName,
                                              CSLConstList papszOptions = nullptr) const override;
 
     std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
                                          CSLConstList papszOptions) const override;
+
+    static std::shared_ptr<ZarrGroupV3> CreateOnDisk(const std::string& osParentFullName,
+                                                     const std::string& osName,
+                                                     const std::string& osRootDirectoryName);
+
+    std::shared_ptr<GDALGroup> CreateGroup(const std::string& osName,
+                                           CSLConstList papszOptions = nullptr) override;
 };
 
 /************************************************************************/
