@@ -141,6 +141,11 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define CEOS_RADAR_FLIP_DATE 19980101
 #define CEOS_RADAR_FACILITY "CDPF-RSAT"
 
+/* Defines for GCP Ordering mode */
+#define CEOS_STD_MAPREC_GCP_ORDER 0
+#define CEOS_ASF_MAPREC_GCP_ORDER 1
+#define CEOS_ASF_FACREC_GCP_ORDER 2
+
 typedef union
 {
     int32          Int32Code;
