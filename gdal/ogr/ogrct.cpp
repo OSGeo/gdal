@@ -1410,7 +1410,8 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                 OGRSpatialReference oTmpSRS;
                 oTmpSRS.SetFromUserInput(osAuthCode);
                 oTmpSRS.SetDataAxisToSRSAxisMapping(poSRS->GetDataAxisToSRSAxisMapping());
-                if( oTmpSRS.IsSame(poSRS) )
+                const char* const apszOptionsIsSame[] = { "CRITERION=EQUIVALENT", nullptr };
+                if( oTmpSRS.IsSame(poSRS, apszOptionsIsSame) )
                 {
                     if( CanUseAuthorityDef(poSRS, &oTmpSRS, pszAuth) )
                     {
