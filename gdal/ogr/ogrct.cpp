@@ -1513,8 +1513,9 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     if( options.d->osCoordOperation.empty() && poSRSSource && poSRSTarget )
     {
         // Determine if we can skip the transformation completely.
+        const char* const apszOptionsIsSame[] = { "CRITERION=EQUIVALENT", nullptr };
         bNoTransform = !bSourceWrap && !bTargetWrap &&
-                       CPL_TO_BOOL(poSRSSource->IsSame(poSRSTarget));
+                       CPL_TO_BOOL(poSRSSource->IsSame(poSRSTarget, apszOptionsIsSame));
     }
 
     return TRUE;
