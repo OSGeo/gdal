@@ -1873,7 +1873,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             m_poInsertStatement = nullptr;
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "failed to prepare SQL: %s", osCommand.c_str());
+                      "failed to prepare SQL: %s - %s", osCommand.c_str(), sqlite3_errmsg( poDb ));
             return OGRERR_FAILURE;
         }
     }
