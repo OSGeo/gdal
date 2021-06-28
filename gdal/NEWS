@@ -1,3 +1,163 @@
+= GDAL/OGR 3.3.1 Release Notes =
+
+The 3.3.1 release is a bug fix release.
+
+== Build ==
+
+* configure: fix explicit disabling of geos/sfcgal
+* fix build against OpenEXR 3.0.1 (#3770)
+* fix lack of compilation of nasakeywordhandler.o with some old/non-gnu
+  versions of grep (#3836)
+
+== Port ==
+
+* /vsiaz/: avoid appending same chunk several times
+* /vsiaz/: advertize missing AZURE_NO_SIGN_REQUEST option
+* IVSIS3LikeFSHandler::Sync(): add missing lock
+* VSIS3FSHandler::GetOptions(): fix non-XML conformity (fixes
+  https://github.com/postgis/postgis/pull/618#discussion_r652143176)
+* /vsiswift/: Fix openstack swift endpoint detection, add application_credential
+  authentication support (#3960)
+* /vsiswift/: advertize missing options
+* Fix incorrect ODBC type mapping for a number of SQL types
+
+== GDAL utilities ==
+
+* gdal_contour: fix bad coordinate order when outputing from raster with
+  geographic CRS to KML driver (#3757)
+* gdalasyncread.cpp: add missing .h to gdal_version include. (#3951)
+
+== Python scripts ==
+
+* gdalattachpct.py: and add types hints and init `driver_name` variable
+* osgeo_utils/auxiliary/color_table.py - fix type hints
+* osgeo_utils/auxiliary/array_util.py - add ArrayLike, ScalarLike,
+  ArrayOrScalarLike types (to be used instead of NumpyCompatibleArray,
+  NumpyCompatibleArrayOrReal), removes numpy dependency
+* osr_util.py, gdallocationinfo.py, numpy_util.py - use new types
+* osgeo_utils/auxiliary/osr_util.py - get_srs() - add `default_axis_order` flag
+  (with get and set) to allow the user to change the default; add get_srs_pj(),
+  are_srs_equivalent() support functions
+* osgeo_utils/samples/gdallocationinfo.py - adapt for the new axis_order variable
+* util.py - `get_bands(ovr_idx)` to support also negative `ovr_idx` and resolution
+* osgeo_utils/auxiliary/base.py - fix `num()`
+* osgeo_utils/auxiliary/util.py - fix `get_bands()` for `ovr_idx==0`
+* batch_creator.py - accept also `root: str`
+* gdal_calc.py - fix type hint - color_table: Optional[ColorTableLike]
+* osgeo_utils/auxiliary/color_palette.py - merge read() + read_color_file()
+  logic and fix the functions for reading qlr, qml files; rename some internal
+  functions
+* osgeo_utils/auxiliary/color_table.py - get_color_palette now raises an
+  Exception to indicate a failure
+
+== GDAL core ==
+
+* GDALRasterBand::AsMDArray(): fix data axis to SRS Axis mapping in the return
+  of GetSpatialRef()
+* GDALMDArray::AsClassicDataset(): fix RasterIO() when buffer data type is not
+  native data type
+* fixed issue with GDALLoadRPBFile failing when RPB file does not contain
+  errBias or errRand fields
+* GMLJP2v2 writing: fix axis order issue for gml:Envelope (#3866)
+* Overview/rasterio: fix RMS on large Float32 values
+
+== GDAL algorithms ==
+
+* Warp kernel: prevent potential int overflows for > 2 GB work buffers
+
+== GDAL drivers ==
+
+COG driver:
+ * don't crash if GDALCreateGenImgProjTransformer2() fails
+
+GRIB driver:
+ * add/fill a few GRIB1 ECMWF table to read a ERA5 product
+ * turn debug messages about unknown GRIB1 table as warnings
+
+GTiff driver:
+ * GTiff/COG: fix overviews with NaN nodata value
+ * Fix RAT SetDefaultRAT for GTiff driver (#3783)
+ * when reading NoData value of Float32 dataset, cast it to float to avoid
+   overprecision (#3791)
+ * GTiff signedbyte: do not write 0 values for tiles/strips entirely at a
+   negative nodata value (#3984)
+ * Internal libtiff: fix when writing a IFD with a single tile that is a sparse
+   one, on big endian hosts
+ * Internal libtiff: merge upstream changes to make JPEG-in-TIFF generation work
+   with mozjpeg and libjpeg 9d
+
+HDF5 driver:
+ * multidim API: fix crash when extracting a field from a compound HDF5 data type
+
+netCDF driver:
+ * fix wrong offseting by -360 of longitude values when huge nodata value found
+   at beginning or end of line
+ * be more restrictive on axis to decide if to advertize a geotransform
+
+PostgisRaster driver:
+ * support for libpq services (#3820)
+
+== OGR core ==
+
+* Support multiline WKT geometry input
+* OGRSQL: fix wrong evaluation of attribute filter when a OR with >= 3 clauses
+  is nested inside in another OR
+* OGRSQL: Support ISO-8601 literal dates with IN operator (#3977)
+* OGRFeature::GetFieldAsSerializedJSon(): fix nullptr dereference on empty
+  string list (#3831)
+
+== OGRSpatialReference ==
+
+* Fix crash in AutoIdentifyEPSG/GetEPSGGeogCS() on some WKTs (#3915)
+* WKT: prevent putting quotes around spatial CS type
+* Add `DERIVEDPROJCRS` to WKT keywords for `OGRSpatialReference::SetFromUserInput`
+* Support GetLinearUnits for ellipsoidal and spherical coordinate systems that
+  have a height axis (#4030)
+
+== OGR drivers ==
+
+FlatGeobuf driver:
+ * accept COORDINATEMETADATA[] construct on reading but ignore it
+
+GeoJSON driver:
+ * GeoJSON writer: emit error msg when geometry type is not supported in
+   GeoJSON (#4006)
+
+GeoPackage driver:
+ * accept CreateField with a column with the fid column name and type=real,
+   width=20, precision=0
+ * add code to correct files with wrong gpkg_metadata_reference_column_name_update
+   trigger definition.
+
+MapInfo driver:
+ * Fix mapping of mapinfo symbol numbers to corresponding OGR symbol IDs
+
+OCI driver:
+ * Fix the Oracle DB connection when user and pwd are empty, while Oracle wallet
+   is used. (#3768)
+ * Don't try to create new layer with TRUNCATE option (#4027)
+
+PLScenes driver:
+ * add PSScene and SkySatVideo item types to conf, and update other item types
+
+Shapefile driver:
+ * fix wrong SRS when reading a WGS 84 SRS with a TOWGS84[0,0,0,0,0,0,0] (#3958)
+
+SQLite driver:
+ * fix crash when calling GetMetadataItem() with domain==nullptr
+ * VirtualOGR module: avoid bad interaction with PROJ 8.1 database handling
+
+VRT driver:
+ * Fix vrt spatial filter for geometry columns with space
+
+== Python bindings ==
+
+* Python >= 3.8 import: fix FileNotFoundError when PATH has nonexistent paths
+  on Windows (#3898)
+* fix MDArray.ReadAsArray() with CInt16/CInt32 data type
+* fix crash when reading null strings with MDArray.Read()
+* fix memleak in gdal|ogr|osr.DontUseExceptions()
+
 = GDAL/OGR 3.3.0 Release Notes
 
 == In a nutshell... ==
