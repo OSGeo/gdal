@@ -103,5 +103,5 @@ Links
 -  `VDV-452 data
    model <https://www.vdv.de/452--sdsv15.pdfx?forced=true>`__ (German)
 -  `Austrian INTREST data
-   format <http://open.gip.gv.at/ogd/0_dokumentation_gipat_ogd.pdf>`__
+   format <https://gip.gv.at/assets/downloads/1908_dokumentation_gipat_ogd.pdf>`__
    (German)
