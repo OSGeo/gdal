@@ -11818,11 +11818,40 @@ OGRErr OSRDemoteTo2D( OGRSpatialReferenceH hSRS, const char* pszName  )
 int OGRSpatialReference::GetEPSGGeogCS() const
 
 {
-    const char *pszAuthName = GetAuthorityName( "GEOGCS" );
+/* -------------------------------------------------------------------- */
+/*      Check axis order.                                               */
+/* -------------------------------------------------------------------- */
+    auto poGeogCRS = std::unique_ptr<OGRSpatialReference>(CloneGeogCS());
+    if( !poGeogCRS )
+        return -1;
+
+    bool ret = false;
+    poGeogCRS->d->demoteFromBoundCRS();
+    auto cs = proj_crs_get_coordinate_system(d->getPROJContext(),
+                                             poGeogCRS->d->m_pj_crs);
+    poGeogCRS->d->undoDemoteFromBoundCRS();
+    if( cs )
+    {
+        const char* pszDirection = nullptr;
+        if( proj_cs_get_axis_info(
+            d->getPROJContext(), cs, 0, nullptr, nullptr, &pszDirection,
+            nullptr, nullptr, nullptr, nullptr) )
+        {
+            if( EQUAL(pszDirection, "north") )
+            {
+                ret = true;
+            }
+        }
+
+        proj_destroy(cs);
+    }
+    if( !ret )
+        return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have it?                                          */
 /* -------------------------------------------------------------------- */
+    const char *pszAuthName = GetAuthorityName( "GEOGCS" );
     if( pszAuthName != nullptr && EQUAL(pszAuthName, "epsg") )
         return atoi(GetAuthorityCode( "GEOGCS" ));
 
