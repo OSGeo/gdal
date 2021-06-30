@@ -157,5 +157,14 @@ def test_derived_test3():
             ds.GetRasterBand(1).Checksum()
 
     
+# test that metadata is transferred 
 
+def test_derived_test4():
+    filename = "../gcore/data/byte_rpc.tif"
+    gdal.ErrorReset()
+    ds = gdal.Open(filename)
+    assert ds is not None and gdal.GetLastErrorMsg() == ''
+    derived_ds = gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE:" + filename)
+    assert "RPC" in derived_ds.GetMetadataDomainList()
+    assert ds.GetMetadata("RPC") == derived_ds.GetMetadata("RPC")
 
