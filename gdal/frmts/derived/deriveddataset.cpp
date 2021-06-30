@@ -139,6 +139,19 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
     // Transfer metadata
     poDS->SetMetadata(poTmpDS->GetMetadata());
 
+    char ** papszMDList = poTmpDS->GetMetadataDomainList();
+
+    for( char** papszMDListIter = papszMDList;
+            papszMDListIter && *papszMDListIter;
+            ++papszMDListIter )
+    {
+        if ( EQUAL(*papszMDListIter, "RPC") )
+        {
+            poDS->SetMetadata(poTmpDS->GetMetadata(*papszMDListIter), *papszMDListIter);
+        }
+    }
+    CSLDestroy(papszMDList);
+
     // Transfer projection
     poDS->SetProjection(poTmpDS->GetProjectionRef());
 
