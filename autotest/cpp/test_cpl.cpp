@@ -3109,6 +3109,7 @@ namespace tut
 
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "my_comp";
         const char* const apszMetadata[] = { "FOO=BAR", nullptr };
         sComp.papszMetadata = apszMetadata;
@@ -3172,6 +3173,7 @@ namespace tut
 
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "my_comp";
         const char* const apszMetadata[] = { "FOO=BAR", nullptr };
         sComp.papszMetadata = apszMetadata;
@@ -3321,6 +3323,92 @@ namespace tut
             ensure_equals( out_size3, strlen(my_str) );
             ensure( memcmp(out_buffer3.data(), my_str, strlen(my_str)) == 0 );
         }
+    }
+
+    template<class T> struct TesterDelta
+    {
+        static void test(const char* dtypeOption)
+        {
+            const auto pCompressor = CPLGetCompressor("delta");
+            ensure(pCompressor);
+            const auto pDecompressor = CPLGetDecompressor("delta");
+            ensure(pDecompressor);
+
+            const T tabIn[] = { static_cast<T>(-2), 3, 1 };
+            T tabCompress[3];
+            T tabOut[3];
+            const char* const apszOptions[] = { dtypeOption, nullptr };
+
+            void* outPtr = &tabCompress[0];
+            size_t outSize = sizeof(tabCompress);
+            ensure( pCompressor->pfnFunc( &tabIn[0], sizeof(tabIn),
+                                          &outPtr, &outSize,
+                                          apszOptions, pCompressor->user_data) );
+            ensure_equals(outSize, sizeof(tabCompress));
+
+            // ensure_equals(tabCompress[0], 2);
+            // ensure_equals(tabCompress[1], 1);
+            // ensure_equals(tabCompress[2], -2);
+
+            outPtr = &tabOut[0];
+            outSize = sizeof(tabOut);
+            ensure( pDecompressor->pfnFunc( &tabCompress[0], sizeof(tabCompress),
+                                            &outPtr, &outSize,
+                                            apszOptions, pDecompressor->user_data) );
+            ensure_equals(outSize, sizeof(tabOut));
+            ensure_equals(tabOut[0], tabIn[0]);
+            ensure_equals(tabOut[1], tabIn[1]);
+            ensure_equals(tabOut[2], tabIn[2]);
+        }
+    };
+
+    // Test delta compressors/decompressor
+    template<>
+    template<>
+    void object::test<48>()
+    {
+        TesterDelta<int8_t>::test("DTYPE=i1");
+
+        TesterDelta<uint8_t>::test("DTYPE=u1");
+
+        TesterDelta<int16_t>::test("DTYPE=i2");
+        TesterDelta<int16_t>::test("DTYPE=<i2");
+        TesterDelta<int16_t>::test("DTYPE=>i2");
+
+        TesterDelta<uint16_t>::test("DTYPE=u2");
+        TesterDelta<uint16_t>::test("DTYPE=<u2");
+        TesterDelta<uint16_t>::test("DTYPE=>u2");
+
+        TesterDelta<int32_t>::test("DTYPE=i4");
+        TesterDelta<int32_t>::test("DTYPE=<i4");
+        TesterDelta<int32_t>::test("DTYPE=>i4");
+
+        TesterDelta<uint32_t>::test("DTYPE=u4");
+        TesterDelta<uint32_t>::test("DTYPE=<u4");
+        TesterDelta<uint32_t>::test("DTYPE=>u4");
+
+        TesterDelta<int64_t>::test("DTYPE=i8");
+        TesterDelta<int64_t>::test("DTYPE=<i8");
+        TesterDelta<int64_t>::test("DTYPE=>i8");
+
+        TesterDelta<uint64_t>::test("DTYPE=u8");
+        TesterDelta<uint64_t>::test("DTYPE=<u8");
+        TesterDelta<uint64_t>::test("DTYPE=>u8");
+
+        TesterDelta<float>::test("DTYPE=f4");
+#ifdef CPL_MSB
+        TesterDelta<float>::test("DTYPE=>f4");
+#else
+        TesterDelta<float>::test("DTYPE=<f4");
+#endif
+
+        TesterDelta<double>::test("DTYPE=f8");
+#ifdef CPL_MSB
+        TesterDelta<double>::test("DTYPE=>f8");
+#else
+        TesterDelta<double>::test("DTYPE=<f8");
+#endif
+
     }
 
 } // namespace tut

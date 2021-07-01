@@ -74,6 +74,15 @@ typedef bool (*CPLCompressionFunc)(const void* input_data,
                                    CSLConstList options,
                                    void* compressor_user_data);
 
+/** Type of compressor */
+typedef enum
+{
+    /** Compressor */
+    CCT_COMPRESSOR,
+    /** Filter */
+    CCT_FILTER
+} CPLCompressorType;
+
 /** Compressor/decompressor description */
 typedef struct
 {
@@ -81,6 +90,8 @@ typedef struct
     int                 nStructVersion;
     /** Id of the compressor/decompressor. Should NOT be NULL. */
     const char*         pszId;
+    /** Compressor type */
+    CPLCompressorType   eType;
     /** Metadata, as a NULL terminated list of strings. Or NULL.
      * The OPTIONS metadata key is reserved for compressors/decompressors to
      * provide the available options as a XML string of the form

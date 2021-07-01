@@ -54,6 +54,7 @@
 #endif
 
 #include <mutex>
+#include <type_traits>
 #include <vector>
 
 static std::mutex gMutex;
@@ -931,14 +932,238 @@ static bool CPLZlibCompressor(const void* input_data,
     return false;
 }
 
+namespace {
+template<class T> inline T swap(T x) { return x; }
+template<> inline uint16_t swap<uint16_t>(uint16_t x) { return CPL_SWAP16(x); }
+template<> inline int16_t swap<int16_t>(int16_t x) { return CPL_SWAP16(x); }
+template<> inline uint32_t swap<uint32_t>(uint32_t x) { return CPL_SWAP32(x); }
+template<> inline int32_t swap<int32_t>(int32_t x) { return CPL_SWAP32(x); }
+template<> inline uint64_t swap<uint64_t>(uint64_t x) { return CPL_SWAP64(x); }
+template<> inline int64_t swap<int64_t>(int64_t x) { return CPL_SWAP64(x); }
+template<> inline float swap<float>(float x) { float ret = x; CPL_SWAP32PTR(&ret); return ret; }
+template<> inline double swap<double>(double x) { double ret = x; CPL_SWAP64PTR(&ret); return ret; }
+} // namespace
+
+namespace {
+// Workaround -ftrapv
+template<class T> CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW inline T SubNoOverflow( T left, T right )
+{
+    typedef typename std::make_unsigned<T>::type U;
+    U leftU = static_cast<U>(left);
+    U rightU = static_cast<U>(right);
+    leftU = static_cast<U>(leftU - rightU);
+    T ret;
+    memcpy(&ret, &leftU, sizeof(ret));
+    return leftU;
+}
+template<> inline float SubNoOverflow<float>(float x, float y) { return x - y; }
+template<> inline double SubNoOverflow<double>(double x, double y) { return x - y; }
+} // namespace
+
+
+template<class T> static bool DeltaCompressor(const void* input_data,
+                                              size_t input_size,
+                                              const char* dtype,
+                                              void* output_data)
+{
+    if( (input_size % sizeof(T)) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid input size");
+        return false;
+    }
+
+    const size_t nElts = input_size / sizeof(T);
+    const T* pSrc = static_cast<const T*>(input_data);
+    T* pDst = static_cast<T*>(output_data);
+#ifdef CPL_MSB
+    const bool bNeedSwap = dtype[0] == '<';
+#else
+    const bool bNeedSwap = dtype[0] == '>';
+#endif
+    for( size_t i = 0; i < nElts; i++ )
+    {
+        if( i == 0 )
+        {
+            pDst[0] = pSrc[0];
+        }
+        else
+        {
+            if( bNeedSwap )
+            {
+                pDst[i] = swap(SubNoOverflow(swap(pSrc[i]), swap(pSrc[i-1])));
+            }
+            else
+            {
+                pDst[i] = SubNoOverflow(pSrc[i], pSrc[i-1]);
+            }
+        }
+    }
+    return true;
+}
+
+static bool CPLDeltaCompressor(const void* input_data,
+                                 size_t input_size,
+                                 void** output_data,
+                                 size_t* output_size,
+                                 CSLConstList options,
+                                 void* /* compressor_user_data */)
+{
+    const char* dtype = CSLFetchNameValue(options, "DTYPE");
+    if( dtype == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing DTYPE parameter");
+        if( output_size )
+            *output_size = 0;
+        return false;
+    }
+    const char* astype = CSLFetchNameValue(options, "ASTYPE");
+    if( astype != nullptr && !EQUAL(astype, dtype) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Only ASTYPE=DTYPE currently supported");
+        if( output_size )
+            *output_size = 0;
+        return false;
+    }
+
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        if( *output_size < input_size )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too small output size");
+            *output_size = input_size;
+            return false;
+        }
+
+        if( EQUAL(dtype, "i1") )
+        {
+            if( !DeltaCompressor<int8_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "u1") )
+        {
+            if( !DeltaCompressor<uint8_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<i2") || EQUAL(dtype, ">i2") || EQUAL(dtype, "i2") )
+        {
+            if( !DeltaCompressor<int16_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<u2") || EQUAL(dtype, ">u2") || EQUAL(dtype, "u2") )
+        {
+            if( !DeltaCompressor<uint16_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<i4") || EQUAL(dtype, ">i4") || EQUAL(dtype, "i4") )
+        {
+            if( !DeltaCompressor<int32_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<u4") || EQUAL(dtype, ">u4") || EQUAL(dtype, "u4") )
+        {
+            if( !DeltaCompressor<uint32_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<i8") || EQUAL(dtype, ">i8") || EQUAL(dtype, "i8") )
+        {
+            if( !DeltaCompressor<int64_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<u8") || EQUAL(dtype, ">u8") || EQUAL(dtype, "u8") )
+        {
+            if( !DeltaCompressor<uint64_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<f4") || EQUAL(dtype, ">f4") || EQUAL(dtype, "f4") )
+        {
+            if( !DeltaCompressor<float>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<f8") || EQUAL(dtype, ">f8") || EQUAL(dtype, "f8") )
+        {
+            if( !DeltaCompressor<double>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported dtype=%s for delta filter", dtype);
+            *output_size = 0;
+            return false;
+        }
+
+        *output_size = input_size;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        *output_size = input_size;
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        *output_data = VSI_MALLOC_VERBOSE(input_size);
+        *output_size = input_size;
+        if( *output_data == nullptr )
+            return false;
+        bool ret = CPLDeltaCompressor(input_data, input_size,
+                                      output_data, output_size,
+                                      options, nullptr);
+        if( !ret )
+        {
+            VSIFree(*output_data);
+            *output_data = nullptr;
+        }
+        return ret;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
+
 static void CPLAddCompressor(const CPLCompressor* compressor)
 {
-    CPLCompressor* copy = new CPLCompressor();
-    copy->nStructVersion = 1;
+    CPLCompressor* copy = new CPLCompressor(*compressor);
     copy->pszId = CPLStrdup(compressor->pszId);
     copy->papszMetadata = CSLDuplicate(compressor->papszMetadata);
-    copy->pfnFunc = compressor->pfnFunc;
-    copy->user_data = compressor->user_data;
     gpCompressors->emplace_back(copy);
 }
 
@@ -948,6 +1173,7 @@ static void CPLAddBuiltinCompressors()
     do {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "blosc";
 
         const CPLStringList aosCompressors(CSLTokenizeString2(blosc_list_compressors(), ",", 0));
@@ -1003,6 +1229,7 @@ static void CPLAddBuiltinCompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "zlib";
         const char* const apszMetadata[] = {
             "OPTIONS=<Options>"
@@ -1018,6 +1245,7 @@ static void CPLAddBuiltinCompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "gzip";
         const char* const apszMetadata[] = {
             "OPTIONS=<Options>"
@@ -1034,6 +1262,7 @@ static void CPLAddBuiltinCompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "lzma";
         const char* const apszMetadata[] = {
             "OPTIONS=<Options>"
@@ -1052,6 +1281,7 @@ static void CPLAddBuiltinCompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "zstd";
         const char* const apszMetadata[] = {
             "OPTIONS=<Options>"
@@ -1069,6 +1299,7 @@ static void CPLAddBuiltinCompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "lz4";
         const char* const apszMetadata[] = {
             "OPTIONS=<Options>"
@@ -1083,6 +1314,22 @@ static void CPLAddBuiltinCompressors()
         CPLAddCompressor(&sComp);
     }
 #endif
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.eType = CCT_FILTER;
+        sComp.pszId = "delta";
+        const char* const apszMetadata[] = {
+            "OPTIONS=<Options>"
+            "  <Option name='DTYPE' type='string' description='Data type following NumPy array protocol type string (typestr) format'/>"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLDeltaCompressor;
+        sComp.user_data = nullptr;
+        CPLAddCompressor(&sComp);
+    }
 }
 
 
@@ -1159,15 +1406,225 @@ static bool CPLZlibDecompressor(const void* input_data,
     return false;
 }
 
+namespace {
+// Workaround -ftrapv
+template<class T> CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW inline T AddNoOverflow( T left, T right )
+{
+    typedef typename std::make_unsigned<T>::type U;
+    U leftU = static_cast<U>(left);
+    U rightU = static_cast<U>(right);
+    leftU = static_cast<U>(leftU + rightU);
+    T ret;
+    memcpy(&ret, &leftU, sizeof(ret));
+    return leftU;
+}
+template<> inline float AddNoOverflow<float>(float x, float y) { return x + y; }
+template<> inline double AddNoOverflow<double>(double x, double y) { return x + y; }
+} // namespace
+
+template<class T> static bool DeltaDecompressor(const void* input_data,
+                                                size_t input_size,
+                                                const char* dtype,
+                                                void* output_data)
+{
+    if( (input_size % sizeof(T)) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid input size");
+        return false;
+    }
+
+    const size_t nElts = input_size / sizeof(T);
+    const T* pSrc = static_cast<const T*>(input_data);
+    T* pDst = static_cast<T*>(output_data);
+#ifdef CPL_MSB
+    const bool bNeedSwap = dtype[0] == '<';
+#else
+    const bool bNeedSwap = dtype[0] == '>';
+#endif
+    for( size_t i = 0; i < nElts; i++ )
+    {
+        if( i == 0 )
+        {
+            pDst[0] = pSrc[0];
+        }
+        else
+        {
+            if( bNeedSwap )
+            {
+                pDst[i] = swap(AddNoOverflow(swap(pDst[i-1]), swap(pSrc[i])));
+            }
+            else
+            {
+                pDst[i] = AddNoOverflow(pDst[i-1], pSrc[i]);
+            }
+        }
+    }
+    return true;
+}
+
+static bool CPLDeltaDecompressor(const void* input_data,
+                                 size_t input_size,
+                                 void** output_data,
+                                 size_t* output_size,
+                                 CSLConstList options,
+                                 void* /* compressor_user_data */)
+{
+    const char* dtype = CSLFetchNameValue(options, "DTYPE");
+    if( dtype == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing DTYPE parameter");
+        if( output_size )
+            *output_size = 0;
+        return false;
+    }
+    const char* astype = CSLFetchNameValue(options, "ASTYPE");
+    if( astype != nullptr && !EQUAL(astype, dtype) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Only ASTYPE=DTYPE currently supported");
+        if( output_size )
+            *output_size = 0;
+        return false;
+    }
+
+    if( output_data != nullptr && *output_data != nullptr &&
+        output_size != nullptr && *output_size != 0 )
+    {
+        if( *output_size < input_size )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too small output size");
+            *output_size = input_size;
+            return false;
+        }
+
+        if( EQUAL(dtype, "i1") )
+        {
+            if( !DeltaDecompressor<int8_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "u1") )
+        {
+            if( !DeltaDecompressor<uint8_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<i2") || EQUAL(dtype, ">i2") || EQUAL(dtype, "i2") )
+        {
+            if( !DeltaDecompressor<int16_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<u2") || EQUAL(dtype, ">u2") || EQUAL(dtype, "u2") )
+        {
+            if( !DeltaDecompressor<uint16_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<i4") || EQUAL(dtype, ">i4") || EQUAL(dtype, "i4") )
+        {
+            if( !DeltaDecompressor<int32_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<u4") || EQUAL(dtype, ">u4") || EQUAL(dtype, "u4") )
+        {
+            if( !DeltaDecompressor<uint32_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<i8") || EQUAL(dtype, ">i8") || EQUAL(dtype, "i8") )
+        {
+            if( !DeltaDecompressor<int64_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<u8") || EQUAL(dtype, ">u8") || EQUAL(dtype, "u8") )
+        {
+            if( !DeltaDecompressor<uint64_t>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<f4") || EQUAL(dtype, ">f4") || EQUAL(dtype, "f4") )
+        {
+            if( !DeltaDecompressor<float>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else if( EQUAL(dtype, "<f8") || EQUAL(dtype, ">f8") || EQUAL(dtype, "f8") )
+        {
+            if( !DeltaDecompressor<double>(input_data, input_size, dtype, *output_data) )
+            {
+                *output_size = 0;
+                return false;
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported dtype=%s for delta filter", dtype);
+            *output_size = 0;
+            return false;
+        }
+
+        *output_size = input_size;
+        return true;
+    }
+
+    if( output_data == nullptr && output_size != nullptr )
+    {
+        *output_size = input_size;
+        return true;
+    }
+
+    if( output_data != nullptr && *output_data == nullptr &&
+        output_size != nullptr )
+    {
+        *output_data = VSI_MALLOC_VERBOSE(input_size);
+        *output_size = input_size;
+        if( *output_data == nullptr )
+            return false;
+        bool ret = CPLDeltaDecompressor(input_data, input_size,
+                                      output_data, output_size,
+                                      options, nullptr);
+        if( !ret )
+        {
+            VSIFree(*output_data);
+            *output_data = nullptr;
+        }
+        return ret;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Invalid use of API");
+    return false;
+}
+
 
 static void CPLAddDecompressor(const CPLCompressor* decompressor)
 {
-    CPLCompressor* copy = new CPLCompressor();
-    copy->nStructVersion = 1;
+    CPLCompressor* copy = new CPLCompressor(*decompressor);
     copy->pszId = CPLStrdup(decompressor->pszId);
     copy->papszMetadata = CSLDuplicate(decompressor->papszMetadata);
-    copy->pfnFunc = decompressor->pfnFunc;
-    copy->user_data = decompressor->user_data;
     gpDecompressors->emplace_back(copy);
 }
 
@@ -1177,6 +1634,7 @@ static void CPLAddBuiltinDecompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "blosc";
         const char* const apszMetadata[] = {
             "BLOSC_VERSION=" BLOSC_VERSION_STRING,
@@ -1195,6 +1653,7 @@ static void CPLAddBuiltinDecompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "zlib";
         sComp.papszMetadata = nullptr;
         sComp.pfnFunc = CPLZlibDecompressor;
@@ -1204,6 +1663,7 @@ static void CPLAddBuiltinDecompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "gzip";
         sComp.papszMetadata = nullptr;
         sComp.pfnFunc = CPLZlibDecompressor;
@@ -1214,6 +1674,7 @@ static void CPLAddBuiltinDecompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "lzma";
         sComp.papszMetadata = nullptr;
         sComp.pfnFunc = CPLLZMADecompressor;
@@ -1225,6 +1686,7 @@ static void CPLAddBuiltinDecompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "zstd";
         sComp.papszMetadata = nullptr;
         sComp.pfnFunc = CPLZSTDDecompressor;
@@ -1236,6 +1698,7 @@ static void CPLAddBuiltinDecompressors()
     {
         CPLCompressor sComp;
         sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "lz4";
         const char* const apszMetadata[] = {
             "OPTIONS=<Options>"
@@ -1249,6 +1712,22 @@ static void CPLAddBuiltinDecompressors()
         CPLAddDecompressor(&sComp);
     }
 #endif
+    {
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.eType = CCT_FILTER;
+        sComp.pszId = "delta";
+        const char* const apszMetadata[] = {
+            "OPTIONS=<Options>"
+            "  <Option name='DTYPE' type='string' description='Data type following NumPy array protocol type string (typestr) format'/>"
+            "</Options>",
+            nullptr
+        };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = CPLDeltaDecompressor;
+        sComp.user_data = nullptr;
+        CPLAddDecompressor(&sComp);
+    }
 }
 
 
