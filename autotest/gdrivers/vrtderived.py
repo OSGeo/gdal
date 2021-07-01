@@ -273,7 +273,7 @@ def test_vrtderived_7():
             print(err)
         assert 'Checksum=0' in ret, err
 
-    
+
 ###############################################################################
 # Check that GDAL_VRT_ENABLE_PYTHON=NO or undefined is honored
 
@@ -341,17 +341,6 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
     syntax_error
 ]]>
      </PixelFunctionCode>
-  </VRTRasterBand>
-</VRTDataset>
-""")
-    assert ds is None
-
-    # PixelFunctionArguments can only be used with Python
-    with gdaltest.error_handler():
-        ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
-  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
-    <PixelFunctionType>identity</PixelFunctionType>
-    <PixelFunctionArguments foo="bar"/>
   </VRTRasterBand>
 </VRTDataset>
 """)
@@ -522,7 +511,7 @@ uncallable_object = True
         print(gdal.GetLastErrorMsg())
         pytest.fail('invalid checksum')
 
-    
+
 
 def vrtderived_code_that_only_makes_sense_with_GDAL_VRT_ENABLE_PYTHON_equal_IF_SAFE_but_that_is_now_disabled():
 
@@ -578,7 +567,7 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
         print(gdal.GetLastErrorMsg())
         pytest.fail('invalid checksum')
 
-    
+
 ###############################################################################
 # Check Python function in another module
 
@@ -650,7 +639,7 @@ def test_vrtderived_10():
             print(gdal.GetLastErrorMsg())
             pytest.fail('invalid checksum')
 
-    
+
 ###############################################################################
 # Test serializing with python code
 
@@ -736,7 +725,7 @@ def test_vrtderived_12():
             print(gdal.GetLastErrorMsg())
             pytest.fail('invalid checksum')
 
-    
+
 ###############################################################################
 # Test translating a Python derived VRT
 
@@ -849,6 +838,6 @@ def test_vrtderived_cleanup():
         os.remove('tmp/derived.vrt')
     except OSError:
         pass
-    
+
 
 
