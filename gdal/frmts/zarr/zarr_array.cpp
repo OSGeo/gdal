@@ -42,7 +42,8 @@
 /*                         ZarrArray::ZarrArray()                       */
 /************************************************************************/
 
-ZarrArray::ZarrArray(const std::string& osParentName,
+ZarrArray::ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                     const std::string& osParentName,
                      const std::string& osName,
                      const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
                      const GDALExtendedDataType& oType,
@@ -51,6 +52,7 @@ ZarrArray::ZarrArray(const std::string& osParentName,
                      bool bFortranOrder):
     GDALAbstractMDArray(osParentName, osName),
     GDALMDArray(osParentName, osName),
+    m_poSharedResource(poSharedResource),
     m_aoDims(aoDims),
     m_oType(oType),
     m_aoDtypeElts(aoDtypeElts),
@@ -66,7 +68,8 @@ ZarrArray::ZarrArray(const std::string& osParentName,
 /*                          ZarrArray::Create()                         */
 /************************************************************************/
 
-std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
+std::shared_ptr<ZarrArray> ZarrArray::Create(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                                             const std::string& osParentName,
                                              const std::string& osName,
                                              const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
                                              const GDALExtendedDataType& oType,
@@ -75,7 +78,8 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::string& osParentName,
                                              bool bFortranOrder)
 {
     auto arr = std::shared_ptr<ZarrArray>(
-        new ZarrArray(osParentName, osName, aoDims, oType, aoDtypeElts,
+        new ZarrArray(poSharedResource,
+                      osParentName, osName, aoDims, oType, aoDtypeElts,
                       anBlockSize, bFortranOrder));
     arr->SetSelf(arr);
 
@@ -236,7 +240,10 @@ void ZarrArray::Flush()
         {
             CPLJSONDocument oDoc;
             oDoc.SetRoot(oAttrs);
-            oDoc.Save(CPLFormFilename(CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr));
+            const std::string osAttrFilename = CPLFormFilename(
+                CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr);
+            oDoc.Save(osAttrFilename);
+            m_poSharedResource->SetZMetadataItem(osAttrFilename, oAttrs);
         }
         else
         {
@@ -549,6 +556,8 @@ void ZarrArray::SerializeV2()
     }
 
     oDoc.Save(m_osFilename);
+
+    m_poSharedResource->SetZMetadataItem(m_osFilename, oRoot);
 }
 
 /************************************************************************/
@@ -2465,6 +2474,14 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         oAttributes = oRoot["attributes"];
     }
 
+    // Deep-clone of oAttributes
+    {
+        CPLJSONDocument oTmpDoc;
+        oTmpDoc.SetRoot(oAttributes);
+        oTmpDoc.LoadMemory(oTmpDoc.SaveAsString());
+        oAttributes = oTmpDoc.GetRoot();
+    }
+
     const auto crs = oAttributes["crs"];
     std::shared_ptr<OGRSpatialReference> poSRS;
     if( crs.GetType() == CPLJSONObject::Type::Object )
@@ -2901,7 +2918,8 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
     }
 
-    auto poArray = ZarrArray::Create(GetFullName(),
+    auto poArray = ZarrArray::Create(m_poSharedResource,
+                                     GetFullName(),
                                      osArrayName,
                                      aoDims, oType, aoDtypeElts, anBlockSize,
                                      bFortranOrder);

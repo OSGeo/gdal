@@ -1,4 +1,4 @@
- /******************************************************************************
+/******************************************************************************
  *
  * Project:  GDAL
  * Purpose:  Zarr driver
@@ -89,7 +89,8 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         osFilename.resize(osFilename.size() - 1);
 
     auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
-    auto poRG = ZarrGroupV2::Create(std::string(), "/");
+    auto poSharedResource = std::make_shared<ZarrSharedResource>();
+    auto poRG = ZarrGroupV2::Create(poSharedResource, std::string(), "/");
     poRG->SetUpdatable(bUpdateMode);
     poDS->m_poRootGroup = poRG;
 
@@ -123,6 +124,8 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
             return nullptr;
 
         poRG->InitFromZMetadata(oDoc.GetRoot());
+        poSharedResource->SetRootDirectoryName(osFilename);
+        poSharedResource->InitFromZMetadata(oDoc.GetRoot());
         return poDS.release();
     }
 
@@ -137,7 +140,8 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
     }
 
     // Zarr v3
-    auto poRG_V3 = ZarrGroupV3::Create(std::string(), "/", osFilename);
+    auto poRG_V3 = ZarrGroupV3::Create(poSharedResource,
+                                       std::string(), "/", osFilename);
     poRG_V3->SetUpdatable(bUpdateMode);
     poDS->m_poRootGroup = poRG_V3;
     return poDS.release();
@@ -627,6 +631,13 @@ void ZarrDriver::InitMetadata()
                 CPLCreateXMLNode(poValueNode, CXT_Text, "ZARR_V3");
             }
 
+            auto psCreateZMetadata = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+            CPLAddXMLAttributeAndValue(psCreateZMetadata, "name", "CREATE_ZMETADATA");
+            CPLAddXMLAttributeAndValue(psCreateZMetadata, "type", "boolean");
+            CPLAddXMLAttributeAndValue(psCreateZMetadata, "description",
+                "Whether to create consolidated metadata into .zmetadata (Zarr V2 only)");
+            CPLAddXMLAttributeAndValue(psCreateZMetadata, "default", "YES");
+
             char* pszXML = CPLSerializeXMLTree(oTree.get());
             GDALDriver::SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, pszXML);
             CPLFree(pszXML);
@@ -644,10 +655,23 @@ GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
 {
     const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
     std::shared_ptr<GDALGroup> poRG;
+    auto poSharedResource = std::make_shared<ZarrSharedResource>();
     if( EQUAL(pszFormat, "ZARR_V3") )
-        poRG = ZarrGroupV3::CreateOnDisk(std::string(), "/", pszFilename);
+    {
+        poRG = ZarrGroupV3::CreateOnDisk(poSharedResource,
+                                         std::string(), "/", pszFilename);
+    }
     else
-        poRG = ZarrGroupV2::CreateOnDisk(std::string(), "/", pszFilename);
+    {
+        const bool bCreateZMetadata = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "CREATE_ZMETADATA", "YES"));
+        if( bCreateZMetadata )
+        {
+            poSharedResource->SetRootDirectoryName(pszFilename);
+        }
+        poRG = ZarrGroupV2::CreateOnDisk(poSharedResource,
+                                         std::string(), "/", pszFilename);
+    }
     if( !poRG )
         return nullptr;
 
@@ -698,10 +722,23 @@ GDALDataset * ZarrDataset::Create( const char * pszName,
     else
     {
         const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
+        auto poSharedResource = std::make_shared<ZarrSharedResource>();
         if( EQUAL(pszFormat, "ZARR_V3") )
-            poRG = ZarrGroupV3::CreateOnDisk(std::string(), "/", pszName);
+        {
+            poRG = ZarrGroupV3::CreateOnDisk(poSharedResource,
+                                             std::string(), "/", pszName);
+        }
         else
-            poRG = ZarrGroupV2::CreateOnDisk(std::string(), "/", pszName);
+        {
+            const bool bCreateZMetadata = CPLTestBool(
+                CSLFetchNameValueDef(papszOptions, "CREATE_ZMETADATA", "YES"));
+            if( bCreateZMetadata )
+            {
+                poSharedResource->SetRootDirectoryName(pszName);
+            }
+            poRG = ZarrGroupV2::CreateOnDisk(poSharedResource,
+                                             std::string(), "/", pszName);
+        }
     }
     if( !poRG )
         return nullptr;
@@ -1144,6 +1181,8 @@ void GDALRegister_Zarr()
 "     <Value>ZARR_V2</Value>"
 "     <Value>ZARR_V3</Value>"
 "   </Option>"
+"   <Option name='CREATE_ZMETADATA' type='boolean' "
+    "description='Whether to create consolidated metadata into .zmetadata (Zarr V2 only)' default='YES'/>"
 "</MultiDimDatasetCreationOptionList>" );
 
 

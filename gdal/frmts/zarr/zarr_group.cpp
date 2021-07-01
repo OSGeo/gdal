@@ -172,9 +172,12 @@ std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(const std::string&
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupV2> ZarrGroupV2::Create(
-                const std::string& osParentName, const std::string& osName)
+                const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                const std::string& osParentName,
+                const std::string& osName)
 {
-    auto poGroup = std::shared_ptr<ZarrGroupV2>(new ZarrGroupV2(osParentName, osName));
+    auto poGroup = std::shared_ptr<ZarrGroupV2>(
+        new ZarrGroupV2(poSharedResource, osParentName, osName));
     poGroup->SetSelf(poGroup);
     return poGroup;
 }
@@ -189,7 +192,10 @@ ZarrGroupV2::~ZarrGroupV2()
     {
         CPLJSONDocument oDoc;
         oDoc.SetRoot(m_oAttrGroup.Serialize());
-        oDoc.Save(CPLFormFilename(m_osDirectoryName.c_str(), ".zattrs", nullptr));
+        const std::string osAttrFilename =
+            CPLFormFilename(m_osDirectoryName.c_str(), ".zattrs", nullptr);
+        oDoc.Save(osAttrFilename);
+        m_poSharedResource->SetZMetadataItem(osAttrFilename, oDoc.GetRoot());
     }
 }
 
@@ -285,7 +291,8 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::OpenGroup(const std::string& osName,
             if( !oDoc.Load(osZgroupFilename) )
                 return nullptr;
 
-            auto poSubGroup = ZarrGroupV2::Create(GetFullName(), osName);
+            auto poSubGroup = ZarrGroupV2::Create(m_poSharedResource,
+                                                  GetFullName(), osName);
             poSubGroup->SetUpdatable(m_bUpdatable);
             poSubGroup->SetDirectoryName(osSubDir);
             m_oMapGroups[osName] = poSubGroup;
@@ -322,12 +329,13 @@ void ZarrGroupV2::LoadAttributes() const
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupV3> ZarrGroupV3::Create(
+                const std::shared_ptr<ZarrSharedResource>& poSharedResource,
                 const std::string& osParentName,
                 const std::string& osName,
                 const std::string& osRootDirectoryName)
 {
     auto poGroup = std::shared_ptr<ZarrGroupV3>(
-        new ZarrGroupV3(osParentName, osName, osRootDirectoryName));
+        new ZarrGroupV3(poSharedResource, osParentName, osName, osRootDirectoryName));
     poGroup->SetSelf(poGroup);
     return poGroup;
 }
@@ -415,6 +423,7 @@ std::shared_ptr<ZarrGroupV2> ZarrGroupV2::GetOrCreateSubGroup(
         GetOrCreateSubGroup(osSubGroupFullname.substr(0, nLastSlashPos)).get();
 
     poSubGroup = ZarrGroupV2::Create(
+            m_poSharedResource,
             poBelongingGroup->GetFullName(),
             osSubGroupFullname.substr(nLastSlashPos + 1));
     poSubGroup->SetDirectoryName(CPLFormFilename(
@@ -530,7 +539,8 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
 /*                   ZarrGroupV2::CreateOnDisk()                        */
 /************************************************************************/
 
-std::shared_ptr<ZarrGroupV2> ZarrGroupV2::CreateOnDisk(const std::string& osParentName,
+std::shared_ptr<ZarrGroupV2> ZarrGroupV2::CreateOnDisk(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                                                       const std::string& osParentName,
                                                        const std::string& osName,
                                                        const std::string& osDirectoryName)
 {
@@ -562,10 +572,15 @@ std::shared_ptr<ZarrGroupV2> ZarrGroupV2::CreateOnDisk(const std::string& osPare
     VSIFPrintfL(fp, "{\n  \"zarr_format\": 2\n}\n");
     VSIFCloseL(fp);
 
-    auto poGroup = ZarrGroupV2::Create(osParentName, osName);
+    auto poGroup = ZarrGroupV2::Create(poSharedResource, osParentName, osName);
     poGroup->SetDirectoryName(osDirectoryName);
     poGroup->SetUpdatable(true);
     poGroup->m_bDirectoryExplored = true;
+
+    CPLJSONObject oObj;
+    oObj.Add("zarr_format", 2);
+    poSharedResource->SetZMetadataItem(osZgroupFilename, oObj);
+
     return poGroup;
 }
 
@@ -612,7 +627,8 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::CreateGroup(const std::string& osName,
     }
     const std::string osDirectoryName =
         CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
-    auto poGroup = CreateOnDisk(GetFullName(), osName, osDirectoryName);
+    auto poGroup = CreateOnDisk(m_poSharedResource,
+                                GetFullName(), osName, osDirectoryName);
     if( !poGroup )
         return nullptr;
     m_oMapGroups[osName] = poGroup;
@@ -982,7 +998,8 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
                                                        "DIM_SEPARATOR",
                                                        ".");
 
-    auto poArray = ZarrArray::Create(GetFullName(), osName,
+    auto poArray = ZarrArray::Create(m_poSharedResource,
+                                     GetFullName(), osName,
                                      aoDimensions, oDataType,
                                      aoDtypeElts, anBlockSize, bFortranOrder);
 
@@ -1101,10 +1118,11 @@ static std::string ZarrGroupV3GetFilename(const std::string& osParentFullName,
 /*                      ZarrGroupV3::ZarrGroupV3()                      */
 /************************************************************************/
 
-ZarrGroupV3::ZarrGroupV3(const std::string& osParentName,
+ZarrGroupV3::ZarrGroupV3(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                         const std::string& osParentName,
                          const std::string& osName,
                          const std::string& osRootDirectoryName):
-        ZarrGroupBase(osParentName, osName),
+        ZarrGroupBase(poSharedResource, osParentName, osName),
         m_osGroupFilename(ZarrGroupV3GetFilename(osParentName,
                                                  osName,
                                                  osRootDirectoryName))
@@ -1153,7 +1171,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
     {
         auto poSubGroup = ZarrGroupV3::Create(
-                                GetFullName(), osName, m_osDirectoryName);
+            m_poSharedResource, GetFullName(), osName, m_osDirectoryName);
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
@@ -1164,7 +1182,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
         VSI_ISDIR(sStat.st_mode) )
     {
         auto poSubGroup = ZarrGroupV3::Create(
-                                GetFullName(), osName, m_osDirectoryName);
+            m_poSharedResource, GetFullName(), osName, m_osDirectoryName);
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
@@ -1177,7 +1195,8 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
 /*                   ZarrGroupV3::CreateOnDisk()                        */
 /************************************************************************/
 
-std::shared_ptr<ZarrGroupV3> ZarrGroupV3::CreateOnDisk(const std::string& osParentFullName,
+std::shared_ptr<ZarrGroupV3> ZarrGroupV3::CreateOnDisk(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                                                       const std::string& osParentFullName,
                                                        const std::string& osName,
                                                        const std::string& osRootDirectoryName)
 {
@@ -1243,7 +1262,8 @@ std::shared_ptr<ZarrGroupV3> ZarrGroupV3::CreateOnDisk(const std::string& osPare
         return nullptr;
     }
 
-    auto poGroup = ZarrGroupV3::Create(osParentFullName, osName,
+    auto poGroup = ZarrGroupV3::Create(poSharedResource,
+                                       osParentFullName, osName,
                                        osRootDirectoryName);
     poGroup->SetUpdatable(true);
     poGroup->m_bDirectoryExplored = true;
@@ -1280,7 +1300,8 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::CreateGroup(const std::string& osName,
         return nullptr;
     }
 
-    auto poGroup = CreateOnDisk(GetFullName(), osName, m_osDirectoryName);
+    auto poGroup = CreateOnDisk(m_poSharedResource,
+                                GetFullName(), osName, m_osDirectoryName);
     if( !poGroup )
         return nullptr;
     m_oMapGroups[osName] = poGroup;
@@ -1424,7 +1445,8 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
                                                        "DIM_SEPARATOR",
                                                        "/");
 
-    auto poArray = ZarrArray::Create(GetFullName(), osName,
+    auto poArray = ZarrArray::Create(m_poSharedResource,
+                                     GetFullName(), osName,
                                      aoDimensions, oDataType,
                                      aoDtypeElts, anBlockSize, bFortranOrder);
 
@@ -1444,4 +1466,60 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
     RegisterArray(poArray);
 
     return poArray;
+}
+
+/************************************************************************/
+/*              ZarrSharedResource::ZarrSharedResource()                */
+/************************************************************************/
+
+ZarrSharedResource::ZarrSharedResource()
+{
+    m_oObj.Add("zarr_consolidated_format", 1);
+    m_oObj.Add("metadata", CPLJSONObject());
+}
+
+/************************************************************************/
+/*              ZarrSharedResource::~ZarrSharedResource()               */
+/************************************************************************/
+
+ZarrSharedResource::~ZarrSharedResource()
+{
+    if( m_bZMetadataModified && !m_osRootDirectoryName.empty() )
+    {
+        CPLJSONDocument oDoc;
+        oDoc.SetRoot(m_oObj);
+        oDoc.Save(
+            CPLFormFilename(m_osRootDirectoryName.c_str(), ".zmetadata", nullptr));
+    }
+}
+
+/************************************************************************/
+/*             ZarrSharedResource::SetZMetadataItem()                   */
+/************************************************************************/
+
+void ZarrSharedResource::SetZMetadataItem(const std::string& osFilename,
+                                              const CPLJSONObject& obj)
+{
+    if( !m_osRootDirectoryName.empty() )
+    {
+        CPLAssert( STARTS_WITH(osFilename.c_str(),
+                               (m_osRootDirectoryName + '/').c_str()) );
+        m_bZMetadataModified = true;
+        const char* pszKey = osFilename.c_str() + m_osRootDirectoryName.size() + 1;
+        m_oObj["metadata"].DeleteNoSplitName(pszKey);
+        m_oObj["metadata"].AddNoSplitName(pszKey, obj);
+    }
+}
+
+/************************************************************************/
+/*             ZarrSharedResource::SetRootDirectoryName()               */
+/************************************************************************/
+
+void ZarrSharedResource::SetRootDirectoryName(const std::string& osRootDirectoryName)
+{
+    m_osRootDirectoryName = osRootDirectoryName;
+    if( !m_osRootDirectoryName.empty() && m_osRootDirectoryName.back() == '/' )
+    {
+        m_osRootDirectoryName.resize(m_osRootDirectoryName.size() - 1);
+    }
 }

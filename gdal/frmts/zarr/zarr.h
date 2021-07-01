@@ -188,6 +188,28 @@ public:
 };
 
 /************************************************************************/
+/*                         ZarrSharedResource                           */
+/************************************************************************/
+
+class ZarrSharedResource
+{
+    std::string m_osRootDirectoryName{};
+    CPLJSONObject m_oObj{}; // For .zmetadata
+    bool m_bZMetadataModified = false;
+
+public:
+    ZarrSharedResource();
+
+    ~ZarrSharedResource();
+
+    void SetRootDirectoryName(const std::string& osRootDirectoryName);
+
+    void InitFromZMetadata(const CPLJSONObject& obj) { m_oObj = obj; }
+
+    void SetZMetadataItem(const std::string& osFilename, const CPLJSONObject& obj);
+};
+
+/************************************************************************/
 /*                             ZarrGroup                                */
 /************************************************************************/
 
@@ -198,6 +220,7 @@ class ZarrGroupBase CPL_NON_FINAL: public GDALGroup
 protected:
     // For ZarrV2, this is the directory of the group
     // For ZarrV3, this is the root directory of the dataset
+    std::shared_ptr<ZarrSharedResource> m_poSharedResource;
     std::string m_osDirectoryName{};
     mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     mutable std::map<CPLString, std::shared_ptr<ZarrArray>> m_oMapMDArrays{};
@@ -215,8 +238,10 @@ protected:
     virtual void ExploreDirectory() const = 0;
     virtual void LoadAttributes() const = 0;
 
-    ZarrGroupBase(const std::string& osParentName, const std::string& osName):
+    ZarrGroupBase(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                  const std::string& osParentName, const std::string& osName):
         GDALGroup(osParentName, osName),
+        m_poSharedResource(poSharedResource),
         m_oAttrGroup(osParentName) {}
 
 public:
@@ -273,15 +298,19 @@ class ZarrGroupV2 final: public ZarrGroupBase
     std::shared_ptr<ZarrGroupV2> GetOrCreateSubGroup(
                                         const std::string& osSubGroupFullname);
 
-    ZarrGroupV2(const std::string& osParentName, const std::string& osName):
-        ZarrGroupBase(osParentName, osName) {}
+    ZarrGroupV2(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                const std::string& osParentName, const std::string& osName):
+        ZarrGroupBase(poSharedResource, osParentName, osName) {}
 
 public:
-    static std::shared_ptr<ZarrGroupV2> Create(const std::string& osParentName, const std::string& osName);
+    static std::shared_ptr<ZarrGroupV2> Create(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                                               const std::string& osParentName,
+                                               const std::string& osName);
 
     ~ZarrGroupV2() override;
 
-    static std::shared_ptr<ZarrGroupV2> CreateOnDisk(const std::string& osParentName,
+    static std::shared_ptr<ZarrGroupV2> CreateOnDisk(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                                                     const std::string& osParentName,
                                                      const std::string& osName,
                                                      const std::string& osDirectoryName);
 
@@ -314,14 +343,16 @@ class ZarrGroupV3 final: public ZarrGroupBase
     void ExploreDirectory() const override;
     void LoadAttributes() const override;
 
-    ZarrGroupV3(const std::string& osParentName,
+    ZarrGroupV3(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                const std::string& osParentName,
                 const std::string& osName,
                 const std::string& osRootDirectoryName);
 public:
 
     ~ZarrGroupV3() override;
 
-    static std::shared_ptr<ZarrGroupV3> Create(const std::string& osParentName,
+    static std::shared_ptr<ZarrGroupV3> Create(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                                               const std::string& osParentName,
                                                const std::string& osName,
                                                const std::string& osRootDirectoryName);
 
@@ -331,7 +362,8 @@ public:
     std::shared_ptr<GDALGroup> OpenGroup(const std::string& osName,
                                          CSLConstList papszOptions) const override;
 
-    static std::shared_ptr<ZarrGroupV3> CreateOnDisk(const std::string& osParentFullName,
+    static std::shared_ptr<ZarrGroupV3> CreateOnDisk(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                                                     const std::string& osParentFullName,
                                                      const std::string& osName,
                                                      const std::string& osRootDirectoryName);
 
@@ -376,6 +408,7 @@ struct DtypeElt
 
 class ZarrArray final: public GDALMDArray
 {
+    std::shared_ptr<ZarrSharedResource>               m_poSharedResource;
     const std::vector<std::shared_ptr<GDALDimension>> m_aoDims;
     const GDALExtendedDataType                        m_oType;
     const std::vector<DtypeElt>                       m_aoDtypeElts;
@@ -417,7 +450,8 @@ class ZarrArray final: public GDALMDArray
     bool                                              m_bScaleModified = false;
     std::weak_ptr<GDALGroup>                          m_poGroupWeak{};
 
-    ZarrArray(const std::string& osParentName,
+    ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+              const std::string& osParentName,
               const std::string& osName,
               const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
               const GDALExtendedDataType& oType,
@@ -461,7 +495,8 @@ protected:
 public:
     ~ZarrArray() override;
 
-    static std::shared_ptr<ZarrArray> Create(const std::string& osParentName,
+    static std::shared_ptr<ZarrArray> Create(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
+                                             const std::string& osParentName,
                                              const std::string& osName,
                                              const std::vector<std::shared_ptr<GDALDimension>>& aoDims,
                                              const GDALExtendedDataType& oType,

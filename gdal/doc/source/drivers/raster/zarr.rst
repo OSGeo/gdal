@@ -283,6 +283,9 @@ dataset-level creation options for the multidimensional API :
 
 - **FORMAT=[ZARR_V2/ZARR_V3]**: Defaults to ZARR_V2
 
+- **CREATE_ZMETADATA=[YES/NO]**: Whether to create consolidated metadata into
+  .zmetadata (Zarr V2 only). Defaults to YES.
+
 
 The following options are creation options of the classic raster API only:
 
