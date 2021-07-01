@@ -470,19 +470,30 @@ void ZarrDriver::InitMetadata()
         // but as this is only used for tests, just make GetMetadataItem()
         // handle it
         std::string osCompressors;
+        std::string osFilters;
         char** decompressors = CPLGetDecompressors();
         for( auto iter = decompressors; iter && *iter; ++iter )
         {
             const auto psCompressor = CPLGetCompressor(*iter);
-            if( psCompressor && psCompressor->eType == CCT_COMPRESSOR )
+            if( psCompressor )
             {
-                if( !osCompressors.empty() )
-                    osCompressors += ',';
-                osCompressors += *iter;
+                if( psCompressor->eType == CCT_COMPRESSOR )
+                {
+                    if( !osCompressors.empty() )
+                        osCompressors += ',';
+                    osCompressors += *iter;
+                }
+                else if( psCompressor->eType == CCT_FILTER )
+                {
+                    if( !osFilters.empty() )
+                        osFilters += ',';
+                    osFilters += *iter;
+                }
             }
         }
         CSLDestroy(decompressors);
         GDALDriver::SetMetadataItem("COMPRESSORS", osCompressors.c_str());
+        GDALDriver::SetMetadataItem("FILTERS", osFilters.c_str());
     }
 #ifdef HAVE_BLOSC
     {
@@ -495,6 +506,7 @@ void ZarrDriver::InitMetadata()
         CPLXMLTreeCloser oTree(CPLCreateXMLNode(
                             nullptr, CXT_Element, "CreationOptionList"));
         char** compressors = CPLGetCompressors();
+
         auto psCompressNode = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
         CPLAddXMLAttributeAndValue(psCompressNode, "name", "COMPRESS");
         CPLAddXMLAttributeAndValue(psCompressNode, "type", "string-select");
@@ -502,6 +514,16 @@ void ZarrDriver::InitMetadata()
         CPLAddXMLAttributeAndValue(psCompressNode, "default", "NONE");
         {
             auto poValueNode = CPLCreateXMLNode(psCompressNode, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "NONE");
+        }
+
+        auto psFilterNode = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psFilterNode, "name", "FILTER");
+        CPLAddXMLAttributeAndValue(psFilterNode, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psFilterNode, "description", "Filter method (only for ZARR_V2)");
+        CPLAddXMLAttributeAndValue(psFilterNode, "default", "NONE");
+        {
+            auto poValueNode = CPLCreateXMLNode(psFilterNode, CXT_Element, "Value");
             CPLCreateXMLNode(poValueNode, CXT_Text, "NONE");
         }
 
@@ -535,9 +557,11 @@ void ZarrDriver::InitMetadata()
         for( auto iter = compressors; iter && *iter; ++iter )
         {
             const auto psCompressor = CPLGetCompressor(*iter);
-            if( psCompressor && psCompressor->eType == CCT_COMPRESSOR )
+            if( psCompressor )
             {
-                auto poValueNode = CPLCreateXMLNode(psCompressNode, CXT_Element, "Value");
+                auto poValueNode = CPLCreateXMLNode(
+                    (psCompressor->eType == CCT_COMPRESSOR) ? psCompressNode : psFilterNode,
+                    CXT_Element, "Value");
                 CPLCreateXMLNode(poValueNode, CXT_Text,
                                  CPLString(*iter).toupper().c_str());
 
@@ -583,7 +607,14 @@ void ZarrDriver::InitMetadata()
                                         psDescription->psChild && psDescription->psChild->pszValue )
                                     {
                                         std::string osNewValue(psDescription->psChild->pszValue);
-                                        osNewValue += ". Only used when COMPRESS=";
+                                        if( psCompressor->eType == CCT_COMPRESSOR )
+                                        {
+                                            osNewValue += ". Only used when COMPRESS=";
+                                        }
+                                        else
+                                        {
+                                            osNewValue += ". Only used when FILTER=";
+                                        }
                                         osNewValue += CPLString(*iter).toupper();
                                         CPLFree(psDescription->psChild->pszValue);
                                         psDescription->psChild->pszValue = CPLStrdup(osNewValue.c_str());

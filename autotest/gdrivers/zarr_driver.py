@@ -2036,3 +2036,24 @@ def test_zarr_update_with_filters():
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_create_with_filter():
+
+    tst = gdaltest.GDALTest('Zarr', '../../gcore/data/uint16.tif', 1, 4672,
+                            options=['FILTER=delta'])
+
+    try:
+        ret = tst.testCreate(vsimem=1, new_filename='/vsimem/test.zarr')
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/test/.zarray', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert 'filters' in j
+        assert j['filters'] == [{'id': 'delta', 'dtype': '<u2'}]
+
+        return ret
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')

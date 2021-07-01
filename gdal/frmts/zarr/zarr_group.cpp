@@ -969,6 +969,86 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
         }
     }
 
+    CPLJSONArray oFilters;
+    const char* pszFilter = CSLFetchNameValueDef(papszOptions, "FILTER", "NONE");
+    if( !EQUAL(pszFilter, "NONE") )
+    {
+        const auto psFilterCompressor = CPLGetCompressor(pszFilter);
+        const auto psFilterDecompressor = CPLGetCompressor(pszFilter);
+        if( psFilterCompressor == nullptr || psFilterDecompressor == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Compressor/decompressor for filter %s not available", pszFilter);
+            return nullptr;
+        }
+
+        CPLJSONObject oFilter;
+        oFilter.Add("id", CPLString(pszFilter).tolower());
+        oFilters.Add(oFilter);
+
+        const char* pszOptions = CSLFetchNameValue(psFilterCompressor->papszMetadata, "OPTIONS");
+        if( pszOptions )
+        {
+            CPLXMLTreeCloser oTree(CPLParseXMLString(pszOptions));
+            const auto psRoot = oTree.get() ? CPLGetXMLNode(oTree.get(), "=Options") : nullptr;
+            if( psRoot )
+            {
+                for( const CPLXMLNode* psNode = psRoot->psChild;
+                            psNode != nullptr; psNode = psNode->psNext )
+                {
+                    if( psNode->eType == CXT_Element &&
+                        strcmp(psNode->pszValue, "Option") == 0 )
+                    {
+                        const char* pszName = CPLGetXMLValue(psNode, "name", nullptr);
+                        const char* pszType = CPLGetXMLValue(psNode, "type", nullptr);
+                        if( pszName && pszType )
+                        {
+                            const char* pszVal = CSLFetchNameValueDef(
+                                papszOptions,
+                                (std::string(pszFilter) + '_' + pszName).c_str(),
+                                CPLGetXMLValue(psNode, "default", nullptr));
+                            if( pszVal )
+                            {
+                                std::string osOptName(CPLString(pszName).tolower());
+                                if( STARTS_WITH(pszType, "int") )
+                                    oFilter.Add(osOptName, atoi(pszVal));
+                                else
+                                    oFilter.Add(osOptName, pszVal);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if( EQUAL(pszFilter, "delta") &&
+            CSLFetchNameValue(papszOptions, "DELTA_DTYPE") == nullptr )
+        {
+            if( oDataType.GetClass() != GEDTC_NUMERIC )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "DELTA_DTYPE option must be specified");
+                return nullptr;
+            }
+            switch( oDataType.GetNumericDataType() )
+            {
+                case GDT_Unknown: break;
+                case GDT_Byte: oFilter.Add("dtype", "u1"); break;
+                case GDT_UInt16: oFilter.Add("dtype", "<u2"); break;
+                case GDT_Int16: oFilter.Add("dtype", "<i2"); break;
+                case GDT_UInt32: oFilter.Add("dtype", "<u4"); break;
+                case GDT_Int32: oFilter.Add("dtype", "<i4"); break;
+                case GDT_Float32: oFilter.Add("dtype", "<f4"); break;
+                case GDT_Float64: oFilter.Add("dtype", "<f8"); break;
+                case GDT_CInt16: oFilter.Add("dtype", "<i2"); break;
+                case GDT_CInt32: oFilter.Add("dtype", "<i4"); break;
+                case GDT_CFloat32: oFilter.Add("dtype", "<f4"); break;
+                case GDT_CFloat64: oFilter.Add("dtype", "<f8"); break;
+                case GDT_TypeCount: break;
+            }
+        }
+    }
+
     const std::string osZarrayDirectory =
         CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     if( VSIMkdir(osZarrayDirectory.c_str(), 0755) != 0 )
@@ -1016,6 +1096,7 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
     poArray->SetCompressorDecompressor(psCompressor, psDecompressor);
     if( oCompressor.IsValid() )
         poArray->SetCompressorJsonV2(oCompressor);
+    poArray->SetFilters(oFilters);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     RegisterArray(poArray);
@@ -1336,6 +1417,13 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unsupported data type with Zarr V3");
+        return nullptr;
+    }
+
+    if( !EQUAL(CSLFetchNameValueDef(papszOptions, "FILTER", "NONE"), "NONE") )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "FILTER option not supported with Zarr V3");
         return nullptr;
     }
 

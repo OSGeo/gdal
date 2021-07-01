@@ -232,6 +232,9 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
 - **COMPRESS=[NONE/BLOSC/ZLIB/GZIP/LZMA/ZSTD/LZ4]**: Compression method.
   Defaults to NONE.
 
+- **FILTER=[NONE/DELTA]**: Filter method. Only support for FORMAT=ZARR_V2.
+  Defaults to NONE.
+
 - **BLOCKSIZE=string**: Comma separated list of chunk size along each dimension.
   If not specified, the fastest varying 2 dimensions (the last ones) used a
   block size of 256 samples, and the other ones of 1.
@@ -276,6 +279,13 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
 - **LZ4_ACCELERATION=integer** [1-]: LZ4 acceleration factor.
   The higher, the less compressed. Only used when COMPRESS=LZ4.
   Defaults to 1 (the fastest).
+
+- **DELTA_DTYPE=string** [1-]: Data type following NumPy array protocol type
+  string (typestr) format (https://numpy.org/doc/stable/reference/arrays.interface.html#arrays-interface).
+  Only ``u1``, ``i1``, ``u2``, ``i2``, ``u4``, ``i4``, ``u8``, ``i8``, ``f4``, ``f8``,
+  potentially prefixed with the endianness flag (``<`` for little endian, ``>`` for big endian)
+  are supported.
+  Only used when FILTER=DELTA. Defaults to the native data type.
 
 
 The following options are creation options of the classic raster API, or
