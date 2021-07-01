@@ -139,6 +139,12 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
     // Transfer metadata
     poDS->SetMetadata(poTmpDS->GetMetadata());
 
+    char** papszRPC = poTmpDS->GetMetadata("RPC");
+    if( papszRPC )
+    {
+        poDS->SetMetadata(papszRPC, "RPC");
+    }
+
     // Transfer projection
     poDS->SetProjection(poTmpDS->GetProjectionRef());
 
