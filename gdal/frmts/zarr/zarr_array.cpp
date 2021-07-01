@@ -1724,6 +1724,15 @@ bool ZarrArray::FlushDirtyTile() const
                 aosOptions.SetNameValue(obj.GetName().c_str(),
                                         obj.ToString().c_str());
             }
+            if( EQUAL(m_psCompressor->pszId, "blosc") &&
+                m_oType.GetClass() == GEDTC_NUMERIC )
+            {
+                aosOptions.SetNameValue("TYPESIZE",
+                    CPLSPrintf("%d",
+                       GDALGetDataTypeSizeBytes(
+                           GDALGetNonComplexDataType(
+                               m_oType.GetNumericDataType()))));
+            }
 
             if( !m_psCompressor->pfnFunc(m_abyRawTileData.data(),
                                          m_abyRawTileData.size(),
