@@ -2751,13 +2751,12 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
             osDimSeparator = "/";
     }
 
-    const auto oFillValue = oRoot["fill_value"];
+    auto oFillValue = oRoot["fill_value"];
     if( !oFillValue.IsValid() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "fill_value missing");
         return nullptr;
     }
-    const auto eFillValueType = oFillValue.GetType();
     std::vector<GByte> abyNoData;
 
     struct NoDataFreer
@@ -2776,6 +2775,16 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
     };
     NoDataFreer NoDataFreer(abyNoData, oType);
+
+    auto eFillValueType = oFillValue.GetType();
+
+    // Normally arrays are not supported, but that's what NCZarr 4.8.0 outputs
+    if( eFillValueType == CPLJSONObject::Type::Array &&
+        oFillValue.ToArray().Size() == 1 )
+    {
+        oFillValue = oFillValue.ToArray()[0];
+        eFillValueType = oFillValue.GetType();
+    }
 
     if( eFillValueType == CPLJSONObject::Type::Null )
     {
