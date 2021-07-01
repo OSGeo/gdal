@@ -10,6 +10,8 @@ endif
 
 CPPFLAGS :=  -I../mem -I../gtiff -I../netcdf $(CPPFLAGS) $(XTRA_OPT)
 
+CXXFLAGS	:=	$(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
+
 $(O_OBJ): zarr.h
 
 default:	$(OBJ:.o=.$(OBJ_EXT))

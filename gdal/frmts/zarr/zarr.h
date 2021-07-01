@@ -413,7 +413,7 @@ class ZarrArray final: public GDALMDArray
     const GDALExtendedDataType                        m_oType;
     const std::vector<DtypeElt>                       m_aoDtypeElts;
     const std::vector<GUInt64>                        m_anBlockSize;
-    CPLJSONObject                                     m_dtype;
+    CPLJSONObject                                     m_dtype{};
     GByte                                            *m_pabyNoData = nullptr;
     std::string                                       m_osDimSeparator { "." };
     std::string                                       m_osFilename{};
@@ -475,6 +475,10 @@ class ZarrArray final: public GDALMDArray
     void DeallocateDecodedTileData();
 
     bool FlushDirtyTile() const;
+
+    // Disable copy constructor and assignment operator
+    ZarrArray(const ZarrArray&) = delete;
+    ZarrArray& operator= (const ZarrArray&) = delete;
 
 protected:
     bool IRead(const GUInt64* arrayStartIdx,
