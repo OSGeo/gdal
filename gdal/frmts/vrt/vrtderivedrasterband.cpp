@@ -270,19 +270,23 @@ GDALAddDerivedBandPixelFunc( const char *pszFuncName,
  * @param pfnNewFunction Pixel function associated with name.  An
  *  existing pixel function registered with the same name will be
  *  replaced with the new one.
+ * @param pszMetadata Pixel function metadata (not currently implemented)
  *
  * @return CE_None, invalid (NULL) parameters are currently ignored.
  * @since GDAL 3.4
  */
 CPLErr CPL_STDCALL
 GDALAddDerivedBandPixelFuncWithArgs(const char *pszFuncName,
-                                    GDALDerivedPixelFuncWithArgs pfnNewFunction )
+                                    GDALDerivedPixelFuncWithArgs pfnNewFunction,
+                                    const char *pszMetadata)
 {
     if( pszFuncName == nullptr || pszFuncName[0] == '\0' ||
         pfnNewFunction == nullptr )
     {
         return CE_None;
     }
+
+    (void) pszMetadata;
 
     osMapPixelFunction[pszFuncName] = pfnNewFunction;
 
@@ -313,9 +317,11 @@ VRTDerivedRasterBand::AddPixelFunction(
 
 CPLErr
 VRTDerivedRasterBand::AddPixelFunction(
-        const char *pszFuncName, GDALDerivedPixelFuncWithArgs pfnNewFunction )
+        const char *pszFuncName,
+        GDALDerivedPixelFuncWithArgs pfnNewFunction,
+        const char *pszMetadata)
 {
-    return GDALAddDerivedBandPixelFuncWithArgs(pszFuncName, pfnNewFunction);
+    return GDALAddDerivedBandPixelFuncWithArgs(pszFuncName, pfnNewFunction, pszMetadata);
 }
 
 /************************************************************************/

@@ -782,7 +782,8 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL: public VRTSourcedRasterBand
     static CPLErr AddPixelFunction( const char *pszFuncName,
                                     GDALDerivedPixelFunc pfnPixelFunc );
     static CPLErr AddPixelFunction( const char *pszFuncName,
-                                    GDALDerivedPixelFuncWithArgs pfnPixelFunc );
+                                    GDALDerivedPixelFuncWithArgs pfnPixelFunc,
+                                    const char *pszMetadata);
 
     static PixelFunc* GetPixelFunction( const char *pszFuncName );
 

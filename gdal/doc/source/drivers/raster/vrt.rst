@@ -824,7 +824,7 @@ with derived bands that use this function), an application calls
 
 .. code-block:: cpp
 
-    GDALAddDerivedBandPixelFunc("MyFirstFunction", TestFunction);
+    GDALAddDerivedBandPixelFunc("MyFirstFunction", TestFunction, nullptr);
 
 A good time to do this is at the beginning of an application when the
 GDAL drivers are registered.

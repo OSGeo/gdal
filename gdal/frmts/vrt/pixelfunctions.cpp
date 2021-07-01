@@ -976,7 +976,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("dB", DBPixelFunc);
     GDALAddDerivedBandPixelFunc("dB2amp", dB2AmpPixelFunc);
     GDALAddDerivedBandPixelFunc("dB2pow", dB2PowPixelFunc);
-    GDALAddDerivedBandPixelFuncWithArgs("pow", PowPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("pow", PowPixelFunc, nullptr);
 
     return CE_None;
 }
