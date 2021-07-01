@@ -473,9 +473,13 @@ void ZarrDriver::InitMetadata()
         char** decompressors = CPLGetDecompressors();
         for( auto iter = decompressors; iter && *iter; ++iter )
         {
-            if( !osCompressors.empty() )
-                osCompressors += ',';
-            osCompressors += *iter;
+            const auto psCompressor = CPLGetCompressor(*iter);
+            if( psCompressor && psCompressor->eType == CCT_COMPRESSOR )
+            {
+                if( !osCompressors.empty() )
+                    osCompressors += ',';
+                osCompressors += *iter;
+            }
         }
         CSLDestroy(decompressors);
         GDALDriver::SetMetadataItem("COMPRESSORS", osCompressors.c_str());
@@ -531,7 +535,7 @@ void ZarrDriver::InitMetadata()
         for( auto iter = compressors; iter && *iter; ++iter )
         {
             const auto psCompressor = CPLGetCompressor(*iter);
-            if( psCompressor )
+            if( psCompressor && psCompressor->eType == CCT_COMPRESSOR )
             {
                 auto poValueNode = CPLCreateXMLNode(psCompressNode, CXT_Element, "Value");
                 CPLCreateXMLNode(poValueNode, CXT_Text,

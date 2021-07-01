@@ -429,6 +429,7 @@ class ZarrArray final: public GDALMDArray
     const CPLCompressor                              *m_psDecompressor = nullptr;
     CPLJSONObject                                     m_oCompressorJSonV2{};
     CPLJSONObject                                     m_oCompressorJSonV3{};
+    CPLJSONArray                                      m_oFiltersArray{};
     mutable std::vector<GByte>                        m_abyTmpRawTileData{}; // used for Fortran order
     mutable ZarrAttributeGroup                        m_oAttrGroup;
     mutable std::shared_ptr<OGRSpatialReference>      m_poSRS{};
@@ -551,6 +552,8 @@ public:
         m_psCompressor = psComp;
         m_psDecompressor = psDecomp;
     }
+
+    void SetFilters(const CPLJSONArray& oFiltersArray) { m_oFiltersArray = oFiltersArray; }
 
     void SetAttributes(const CPLJSONObject& attrs) { m_oAttrGroup.Init(attrs, m_bUpdatable); }
 

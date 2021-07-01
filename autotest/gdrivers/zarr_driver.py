@@ -324,6 +324,9 @@ def test_zarr_invalid_json_remove_member(member):
                                          {"compressor": "invalid"},
                                          {"compressor": {}},
                                          {"compressor": {"id": "invalid"}},
+                                         {"filters": "invalid"},
+                                         {"filters": {}},
+                                         {"filters": [{"missing_id": True}]},
                                          {"zarr_format": None},
                                          {"zarr_format": 1},
                                          ])
@@ -1983,6 +1986,53 @@ def test_zarr_create_array_invalid_blocksize(blocksize):
                 assert ar is None
 
         create()
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_filters():
+
+    filename = 'data/zarr/delta_filter_i4.zarr'
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() == array.array('i', [i for i in range(10)])
+
+
+def test_zarr_update_with_filters():
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray',
+                               open('data/zarr/delta_filter_i4.zarr/.zarray', 'rb').read())
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/0',
+                               open('data/zarr/delta_filter_i4.zarr/0', 'rb').read())
+
+        def update():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            assert ar.Read() == array.array('i', [i for i in range(10)])
+            assert ar.Write(array.array(
+                'i', [10-i for i in range(10)])) == gdal.CE_None
+
+        update()
+
+        ds = gdal.OpenEx('/vsimem/test.zarr',
+                         gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar
+        assert ar.Read() == array.array('i', [10 - i for i in range(10)])
 
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')

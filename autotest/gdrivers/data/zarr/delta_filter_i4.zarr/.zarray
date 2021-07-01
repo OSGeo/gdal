@@ -1,0 +1,17 @@
+{
+    "chunks": [
+        10
+    ],
+    "compressor": {
+        "id": "gzip",
+        "level": 6
+    },
+    "dtype": "<i4",
+    "fill_value": 0,
+    "filters": [{ "id": "delta", "dtype": "<i4" }],
+    "order": "C",
+    "shape": [
+        10
+    ],
+    "zarr_format": 2
+}

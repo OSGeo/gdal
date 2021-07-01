@@ -1162,7 +1162,9 @@ static bool CPLDeltaCompressor(const void* input_data,
 static void CPLAddCompressor(const CPLCompressor* compressor)
 {
     CPLCompressor* copy = new CPLCompressor(*compressor);
+    // cppcheck-suppress uninitdata
     copy->pszId = CPLStrdup(compressor->pszId);
+    // cppcheck-suppress uninitdata
     copy->papszMetadata = CSLDuplicate(compressor->papszMetadata);
     gpCompressors->emplace_back(copy);
 }
@@ -1623,7 +1625,9 @@ static bool CPLDeltaDecompressor(const void* input_data,
 static void CPLAddDecompressor(const CPLCompressor* decompressor)
 {
     CPLCompressor* copy = new CPLCompressor(*decompressor);
+    // cppcheck-suppress uninitdata
     copy->pszId = CPLStrdup(decompressor->pszId);
+    // cppcheck-suppress uninitdata
     copy->papszMetadata = CSLDuplicate(decompressor->papszMetadata);
     gpDecompressors->emplace_back(copy);
 }

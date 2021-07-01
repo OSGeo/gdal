@@ -537,7 +537,10 @@ void ZarrArray::SerializeV2()
         }
     }
 
-    oRoot.AddNull("filters");
+    if( m_oFiltersArray.Size() == 0 )
+        oRoot.AddNull("filters");
+    else
+        oRoot.Add("filters", m_oFiltersArray);
 
     oRoot.Add("order", m_bFortranOrder ? "F": "C");
 
@@ -647,7 +650,7 @@ bool ZarrArray::AllocateWorkingBuffers() const
     try
     {
         m_abyRawTileData.resize( nTileSize );
-        if( m_bFortranOrder )
+        if( m_bFortranOrder || m_oFiltersArray.Size() != 0 )
             m_abyTmpRawTileData.resize( nTileSize );
     }
     catch( const std::bad_alloc& e )
@@ -1046,14 +1049,10 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
 
     bMissingTileOut = false;
     bool bRet = true;
+    size_t nRawDataSize = m_abyRawTileData.size();
     if( m_psDecompressor == nullptr )
     {
-        if( VSIFReadL(&m_abyRawTileData[0], 1, m_abyRawTileData.size(), fp) != m_abyRawTileData.size() )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Could not read tile %s correctly",
-                     osFilename.c_str());
-            bRet = false;
-        }
+        nRawDataSize = VSIFReadL(&m_abyRawTileData[0], 1, nRawDataSize, fp);
     }
     else
     {
@@ -1094,13 +1093,11 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
             else
             {
                 void* out_buffer = &m_abyRawTileData[0];
-                size_t out_size = m_abyRawTileData.size();
                 if( !m_psDecompressor->pfnFunc(abyCompressedData.data(),
                                                abyCompressedData.size(),
-                                               &out_buffer, &out_size,
+                                               &out_buffer, &nRawDataSize,
                                                nullptr,
-                                               m_psDecompressor->user_data ) ||
-                    out_size != m_abyRawTileData.size() )
+                                               m_psDecompressor->user_data ))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Decompression of tile %s failed",
@@ -1111,6 +1108,46 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
         }
     }
     VSIFCloseL(fp);
+
+    for( int i = m_oFiltersArray.Size(); bRet && i > 0; )
+    {
+        --i;
+        const auto& oFilter = m_oFiltersArray[i];
+        const auto osFilterId = oFilter["id"].ToString();
+        const auto psFilterDecompressor = CPLGetDecompressor( osFilterId.c_str() );
+        CPLAssert(psFilterDecompressor);
+
+        CPLStringList aosOptions;
+        for( const auto& obj: oFilter.GetChildren() )
+        {
+            aosOptions.SetNameValue(obj.GetName().c_str(),
+                                    obj.ToString().c_str());
+        }
+        void* out_buffer = &m_abyTmpRawTileData[0];
+        size_t nOutSize = m_abyTmpRawTileData.size();
+        if( !psFilterDecompressor->pfnFunc(m_abyRawTileData.data(),
+                                         nRawDataSize,
+                                         &out_buffer,
+                                         &nOutSize,
+                                         aosOptions.List(),
+                                         psFilterDecompressor->user_data ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Filter %s for tile %s failed",
+                     osFilterId.c_str(), osFilename.c_str());
+            return false;
+        }
+
+        nRawDataSize = nOutSize;
+        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
+    }
+    if( nRawDataSize != m_abyRawTileData.size() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Decompressed tile %s has not expected size after filters",
+                 osFilename.c_str());
+        return false;
+    }
 
     if( bRet && !bMissingTileOut && m_bFortranOrder )
     {
@@ -1666,6 +1703,38 @@ bool ZarrArray::FlushDirtyTile() const
         std::swap(m_abyRawTileData, m_abyTmpRawTileData);
     }
 
+    size_t nRawDataSize = m_abyRawTileData.size();
+    for( const auto& oFilter: m_oFiltersArray )
+    {
+        const auto osFilterId = oFilter["id"].ToString();
+        const auto psFilterCompressor = CPLGetCompressor( osFilterId.c_str() );
+        CPLAssert(psFilterCompressor);
+
+        CPLStringList aosOptions;
+        for( const auto& obj: oFilter.GetChildren() )
+        {
+            aosOptions.SetNameValue(obj.GetName().c_str(),
+                                    obj.ToString().c_str());
+        }
+        void* out_buffer = &m_abyTmpRawTileData[0];
+        size_t nOutSize = m_abyTmpRawTileData.size();
+        if( !psFilterCompressor->pfnFunc(m_abyRawTileData.data(),
+                                         nRawDataSize,
+                                         &out_buffer,
+                                         &nOutSize,
+                                         aosOptions.List(),
+                                         psFilterCompressor->user_data ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Filter %s for tile %s failed",
+                     osFilterId.c_str(), osFilename.c_str());
+            return false;
+        }
+
+        nRawDataSize = nOutSize;
+        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
+    }
+
     if( m_osDimSeparator == "/" )
     {
         std::string osDir = CPLGetDirname(osFilename.c_str());
@@ -1692,8 +1761,7 @@ bool ZarrArray::FlushDirtyTile() const
     bool bRet = true;
     if( m_psCompressor == nullptr )
     {
-        if( VSIFWriteL(m_abyRawTileData.data(), 1, m_abyRawTileData.size(), fp) !=
-                m_abyRawTileData.size() )
+        if( VSIFWriteL(m_abyRawTileData.data(), 1, nRawDataSize, fp) != nRawDataSize )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not write tile %s correctly",
@@ -1709,8 +1777,8 @@ bool ZarrArray::FlushDirtyTile() const
             constexpr size_t MIN_BUF_SIZE = 64; // somewhat arbitrary
             abyCompressedData.resize(static_cast<size_t>(
                 MIN_BUF_SIZE +
-                m_abyRawTileData.size() +
-                m_abyRawTileData.size() / 3));
+                nRawDataSize +
+                nRawDataSize / 3));
 
         }
         catch( const std::exception& )
@@ -1744,7 +1812,7 @@ bool ZarrArray::FlushDirtyTile() const
             }
 
             if( !m_psCompressor->pfnFunc(m_abyRawTileData.data(),
-                                         m_abyRawTileData.size(),
+                                         nRawDataSize,
                                          &out_buffer, &out_size,
                                          aosOptions.List(),
                                          m_psCompressor->user_data ) )
@@ -2894,6 +2962,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
     }
 
+    CPLJSONArray oFiltersArray;
     if( isZarrV2 )
     {
         const auto oFilters = oRoot["filters"];
@@ -2905,15 +2974,31 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         if( oFilters.GetType() == CPLJSONObject::Type::Null )
         {
         }
-        else if( oFilters.GetType() == CPLJSONObject::Type::Array &&
-                 oFilters.ToArray().Size() == 0 )
+        else if( oFilters.GetType() == CPLJSONObject::Type::Array )
         {
-            // ok
+            oFiltersArray = oFilters.ToArray();
+            for( const auto& oFilter: oFiltersArray )
+            {
+                const auto osFilterId = oFilter["id"].ToString();
+                if( osFilterId.empty() )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Missing filter id");
+                    return nullptr;
+                }
+                const auto psFilterCompressor = CPLGetCompressor( osFilterId.c_str() );
+                const auto psFilterDecompressor = CPLGetDecompressor( osFilterId.c_str() );
+                if( psFilterCompressor == nullptr || psFilterDecompressor == nullptr )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Filter %s not handled",
+                             osFilterId.c_str());
+                    return nullptr;
+                }
+            }
         }
         else
         {
-            // TODO
-            CPLError(CE_Failure, CPLE_AppDefined, "Unsupported filters");
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid filters");
             return nullptr;
         }
     }
@@ -2929,6 +3014,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     if( isZarrV2 )
         poArray->SetCompressorJsonV2(oCompressor);
     poArray->SetCompressorDecompressor(psCompressor, psDecompressor);
+    poArray->SetFilters(oFiltersArray);
     if( !abyNoData.empty() )
     {
         poArray->RegisterNoDataValue(abyNoData.data());
