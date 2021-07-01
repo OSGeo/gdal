@@ -922,7 +922,7 @@ typedef CPLErr
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eSrcType, GDALDataType eBufType,
                                 int nPixelSpace, int nLineSpace,
-                                char** papszFunctionArgs);
+                                CSLConstList papszFunctionArgs);
 
 GDALDataType CPL_DLL CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH );
 void CPL_DLL CPL_STDCALL

@@ -248,7 +248,7 @@ GDALAddDerivedBandPixelFunc( const char *pszFuncName,
     osMapPixelFunction[pszFuncName] = [pfnNewFunction](void **papoSources, int nSources, void *pData,
                                          int nBufXSize, int nBufYSize,
                                          GDALDataType eSrcType, GDALDataType eBufType,
-                                         int nPixelSpace, int nLineSpace, char** papszFunctionArgs) {
+                                         int nPixelSpace, int nLineSpace, CSLConstList papszFunctionArgs) {
         (void) papszFunctionArgs;
         return pfnNewFunction(papoSources, nSources, pData, nBufXSize, nBufYSize,
                               eSrcType, eBufType, nPixelSpace, nLineSpace);
@@ -272,6 +272,7 @@ GDALAddDerivedBandPixelFunc( const char *pszFuncName,
  *  replaced with the new one.
  *
  * @return CE_None, invalid (NULL) parameters are currently ignored.
+ * @since GDAL 3.4
  */
 CPLErr CPL_STDCALL
 GDALAddDerivedBandPixelFuncWithArgs(const char *pszFuncName,

@@ -876,7 +876,7 @@ static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
 static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
                                int nXSize, int nYSize,
                                GDALDataType eSrcType, GDALDataType eBufType,
-                               int nPixelSpace, int nLineSpace, char **papszArgs ) {
+                               int nPixelSpace, int nLineSpace, CSLConstList papszArgs ) {
     /* ---- Init ---- */
     if( nSources != 1 ) return CE_Failure;
     if( GDALDataTypeIsComplex( eSrcType ) ) return CE_Failure;
