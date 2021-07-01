@@ -612,6 +612,30 @@ def test_tiff_write_18():
     gdaltest.tiff_drv.Delete('tmp/tw_18.tif')
 
 ###############################################################################
+# Test writing a IMD files with space in values
+
+
+def test_tiff_write_imd_with_space_in_values():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/out.tif', 1, 1)
+    ds.SetMetadataItem('foo.key', 'value with space', 'IMD')
+    ds.SetMetadataItem('foo.key2', 'value with " double quote', 'IMD')
+    ds.SetMetadataItem('foo.key3', "value with ' single quote", 'IMD')
+    ds.SetMetadataItem('foo.key4', """value with " double and ' single quote""", 'IMD')
+    ds.SetMetadataItem('foo.key5', 'value_with_;', 'IMD')
+    ds.SetMetadataItem('foo.key6', 'regular_value', 'IMD')
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/out.IMD', 'rb')
+    assert f
+    data = gdal.VSIFReadL(1, 1000, f)
+    gdal.VSIFCloseL(f)
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/out.tif')
+
+    assert data == b'BEGIN_GROUP = foo\n\tkey = "value with space";\n\tkey2 = \'value with " double quote\';\n\tkey3 = "value with \' single quote";\n\tkey4 = "value with \'\' double and \' single quote";\n\tkey5 = "value_with_;";\n\tkey6 = regular_value;\nEND_GROUP = foo\nEND;\n'
+
+###############################################################################
 # Test that above test still work with the optimization in the GDAL_DISABLE_READDIR_ON_OPEN
 # case (#3996)
 
