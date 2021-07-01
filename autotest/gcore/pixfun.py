@@ -620,3 +620,22 @@ def test_pixfun_dB2pow():
 
 
 ###############################################################################
+# Verify raising values to a power
+
+def test_pixfun_pow():
+
+    filename = 'data/pixfun_pow.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/float32.tif'
+    refds = gdal.Open(reffilename)
+    assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+    refdata = refdata.astype('float64')
+
+    assert numpy.allclose(data, refdata**3.14)
+
+
+###############################################################################

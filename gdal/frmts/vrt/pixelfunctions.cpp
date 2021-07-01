@@ -873,6 +873,48 @@ static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
                               nPixelSpace, nLineSpace, 10.0, 10.0);
 }  // dB2PowPixelFunc
 
+static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
+                               int nXSize, int nYSize,
+                               GDALDataType eSrcType, GDALDataType eBufType,
+                               int nPixelSpace, int nLineSpace, CSLConstList papszArgs ) {
+    /* ---- Init ---- */
+    if( nSources != 1 ) return CE_Failure;
+    if( GDALDataTypeIsComplex( eSrcType ) ) return CE_Failure;
+
+    const char *pszPower = CSLFetchNameValue(papszArgs, "power");
+    if ( pszPower == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing pixel function argument: power");
+        return CE_Failure;
+    }
+
+    char *end = nullptr;
+    double power = std::strtod(pszPower, &end);
+    if ( end == pszPower )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to parse pixel function argument: power");
+        return CE_Failure;
+    }
+
+    /* ---- Set pixels ---- */
+    for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            const double dfPixVal = std::pow(
+                    SRCVAL(papoSources[0], eSrcType, ii),
+                    power);
+
+            GDALCopyWords(
+                    &dfPixVal, GDT_Float64, 0,
+                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+
+}
+
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
 /************************************************************************/
@@ -934,6 +976,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("dB", DBPixelFunc);
     GDALAddDerivedBandPixelFunc("dB2amp", dB2AmpPixelFunc);
     GDALAddDerivedBandPixelFunc("dB2pow", dB2PowPixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("pow", PowPixelFunc, nullptr);
 
     return CE_None;
 }

@@ -915,6 +915,15 @@ typedef CPLErr
                         GDALDataType eSrcType, GDALDataType eBufType,
                         int nPixelSpace, int nLineSpace);
 
+/** Type of functions to pass to GDALAddDerivedBandPixelFuncWithArgs.
+ * @since GDAL 3.4 */
+typedef CPLErr
+(*GDALDerivedPixelFuncWithArgs)(void **papoSources, int nSources, void *pData,
+                                int nBufXSize, int nBufYSize,
+                                GDALDataType eSrcType, GDALDataType eBufType,
+                                int nPixelSpace, int nLineSpace,
+                                CSLConstList papszFunctionArgs);
+
 GDALDataType CPL_DLL CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH );
 void CPL_DLL CPL_STDCALL
 GDALGetBlockSize( GDALRasterBandH, int * pnXSize, int * pnYSize );
@@ -1052,6 +1061,9 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH,
                                               GDALRasterAttributeTableH );
 CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc( const char *pszName,
                                     GDALDerivedPixelFunc pfnPixelFunc );
+CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFuncWithArgs( const char *pszName,
+                                                                GDALDerivedPixelFuncWithArgs pfnPixelFunc,
+                                                                const char *pszMetadata);
 
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand );
 int CPL_DLL CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand );
