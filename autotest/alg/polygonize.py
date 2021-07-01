@@ -30,6 +30,8 @@
 ###############################################################################
 
 
+from collections import defaultdict
+import struct
 
 import ogrtest
 
@@ -283,8 +285,6 @@ def test_polygonize_6():
 ###############################################################################
 # Test a complex case to make sure the polygonized area match original raster.
 
-from collections import defaultdict
-
 def test_polygonize_7():
 
     src_ds = gdal.Open('data/polygonize_check_area.tif')
@@ -307,13 +307,13 @@ def test_polygonize_7():
     transform = src_ds.GetGeoTransform()
     pixel_area = abs(transform[1] * transform[5])
 
-    data = src_band.ReadAsArray(0, 0, src_ds.RasterXSize, src_ds.RasterYSize)
+    data = struct.unpack('h' * src_ds.RasterXSize * src_ds.RasterYSize,
+                         src_band.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
     dn_area_raster = defaultdict(int)
 
-    for row in range(src_ds.RasterYSize):
-        for col in range(src_ds.RasterXSize):
-            if data[row, col] !=  src_band.GetNoDataValue():
-                dn_area_raster[data[row, col]] += pixel_area
+    for v in data:
+        if v !=  src_band.GetNoDataValue():
+            dn_area_raster[v] += pixel_area
 
     # collect vector image areas by DN value
     dn_area_vector = defaultdict(float)
