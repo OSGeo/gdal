@@ -133,6 +133,7 @@ public:
 
     //
     void Delete(const std::string &osName);
+    void DeleteNoSplitName(const std::string &osName);
     CPLJSONArray GetArray(const std::string &osName) const;
     CPLJSONObject GetObj(const std::string &osName) const;
     CPLJSONObject operator[](const std::string &osName) const;

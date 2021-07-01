@@ -874,6 +874,23 @@ void CPLJSONObject::Delete(const std::string &osName)
 }
 
 /**
+ * Delete json object by key (without splitting on /)
+ * @param  osName Key name.
+ *
+ * @since GDAL 3.4
+ */
+void CPLJSONObject::DeleteNoSplitName(const std::string &osName)
+{
+    if( m_osKey == INVALID_OBJ_KEY )
+        m_osKey.clear();
+    if( m_poJsonObject )
+    {
+        json_object_object_del( TO_JSONOBJ(m_poJsonObject),
+                                osName.c_str() );
+    }
+}
+
+/**
  * Get value by key.
  * @param  osName    Key name.
  * @param  osDefault Default value.
