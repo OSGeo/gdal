@@ -882,11 +882,19 @@ static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
     if( GDALDataTypeIsComplex( eSrcType ) ) return CE_Failure;
 
     const char *pszPower = CSLFetchNameValue(papszArgs, "power");
-    if ( pszPower == nullptr ) return CE_Failure;
+    if ( pszPower == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing pixel function argument: power");
+        return CE_Failure;
+    }
 
     char *end = nullptr;
     double power = std::strtod(pszPower, &end);
-    if ( end == pszPower ) return CE_Failure;
+    if ( end == pszPower )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to parse pixel function argument: power");
+        return CE_Failure;
+    }
 
     /* ---- Set pixels ---- */
     for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
