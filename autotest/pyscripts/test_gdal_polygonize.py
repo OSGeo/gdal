@@ -35,7 +35,7 @@ import os
 import ogrtest
 import test_py_scripts
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 import pytest
 
 ###############################################################################
@@ -106,32 +106,27 @@ def test_gdal_polygonize_2():
     if script_path is None:
         pytest.skip()
 
-    shp_drv = ogr.GetDriverByName('ESRI Shapefile')
-    try:
-        os.stat('tmp/out.shp')
-        shp_drv.DeleteDataSource('tmp/out.shp')
-    except OSError:
-        pass
+    gdal.Unlink('tmp/out.geojson')
 
     # run the algorithm.
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "ESRI Shapefile" -q -nomask '+test_py_scripts.get_data_path('alg')+'polygonize_in.grd tmp')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -q -nomask '+test_py_scripts.get_data_path('alg')+'polygonize_in.grd tmp/out.geojson')
 
     # Confirm we get the set of expected features in the output layer.
-    shp_ds = ogr.Open('tmp')
-    shp_lyr = shp_ds.GetLayerByName('out')
+    ds = gdal.OpenEx('tmp/out.geojson')
+    assert ds.GetDriver().ShortName == 'GeoJSON'
+    lyr = ds.GetLayerByName('out')
 
     expected_feature_number = 17
-    assert shp_lyr.GetFeatureCount() == expected_feature_number
+    assert lyr.GetFeatureCount() == expected_feature_number
 
     expect = [107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
               132, 156, 100, 101, 102, 103]
 
-    tr = ogrtest.check_features_against_list(shp_lyr, 'DN', expect)
+    tr = ogrtest.check_features_against_list(lyr, 'DN', expect)
 
-    shp_ds.Destroy()
-    # Reload drv because of side effects of run_py_script()
-    shp_drv = ogr.GetDriverByName('ESRI Shapefile')
-    shp_drv.DeleteDataSource('tmp/out.shp')
+    ds = None
+
+    gdal.Unlink('tmp/out.geojson')
 
     assert tr
 
