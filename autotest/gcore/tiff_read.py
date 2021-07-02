@@ -1587,6 +1587,22 @@ def test_tiff_read_md1():
 
     assert not os.path.exists('data/md_dg.tif.aux.xml')
 
+###############################################################################
+# Test CPLKeywordParser on non-conformant .IMD files
+# See https://github.com/OSGeo/gdal/issues/4037
+
+
+def test_tiff_read_non_conformant_imd():
+
+    gdal.FileFromMemBuffer('/vsimem/test.imd',
+                           """BEGIN_GROUP = foo\n\tkey = value with space ' not quoted;\n\tkey2 = another one ;\r\nEND_GROUP\nEND\n""");
+    gdal.FileFromMemBuffer('/vsimem/test.tif', open('data/byte.tif', 'rb').read())
+    ds = gdal.Open('/vsimem/test.tif')
+    md = ds.GetMetadata('IMD')
+    gdal.Unlink('/vsimem/test.imd')
+    gdal.Unlink('/vsimem/test.tif')
+    assert md == { 'foo.key': "value with space ' not quoted",
+                   'foo.key2': "another one" }
 
 ###############################################################################
 # Check read Digital Globe metadata XML format
