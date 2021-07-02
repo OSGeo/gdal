@@ -841,6 +841,14 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 1
      - -
      - computes the intensity ``Re(x*conj(x))`` of a single raster band (real or complex)
+   * - **interpolate_exp**
+     - >= 2
+     - ``t0``, ``dt``, ``t``
+     - interpolate a value at time (or position) ``t`` given input sources beginning at position ``t0`` with spacing ``dt`` using exponential interpolation
+   * - **interpolate_linear**
+     - >= 2
+     - ``t0``, ``dt``, ``t``
+     - interpolate a value at time (or position) ``t`` given input sources beginning at ``t0`` with spacing ``dt`` using linear interpolation
    * - **inv**
      - 1
      - -
@@ -863,7 +871,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
    * - **pow**
      - 1
-     - `power`
+     - ``power``
      - raise a single raster band to a constant power, specified with argument ``power`` (real only)
    * - **real**
      - 1

@@ -124,6 +124,27 @@ static CPLErr PowPixelFuncHelper( void **papoSources, int nSources, void *pData,
                                   int nPixelSpace, int nLineSpace,
                                   double base, double fact );
 
+static CPLErr FetchDoubleArg(CSLConstList papszArgs, const char *pszName, double* pdfX)
+{
+    const char* pszVal = CSLFetchNameValue(papszArgs, pszName);
+
+    if ( pszVal == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing pixel function argument: %s", pszName);
+        return CE_Failure;
+    }
+
+    char *pszEnd = nullptr;
+    *pdfX = std::strtod(pszVal, &pszEnd);
+    if ( pszEnd == pszVal )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to parse pixel function argument: %s", pszName);
+        return CE_Failure;
+    }
+
+    return CE_None;
+}
+
 static CPLErr RealPixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
                              GDALDataType eSrcType, GDALDataType eBufType,
@@ -881,20 +902,8 @@ static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
     if( nSources != 1 ) return CE_Failure;
     if( GDALDataTypeIsComplex( eSrcType ) ) return CE_Failure;
 
-    const char *pszPower = CSLFetchNameValue(papszArgs, "power");
-    if ( pszPower == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Missing pixel function argument: power");
-        return CE_Failure;
-    }
-
-    char *end = nullptr;
-    double power = std::strtod(pszPower, &end);
-    if ( end == pszPower )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to parse pixel function argument: power");
-        return CE_Failure;
-    }
+    double power;
+    if ( FetchDoubleArg(papszArgs, "power", &power) != CE_None ) return CE_Failure;
 
     /* ---- Set pixels ---- */
     for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
@@ -913,6 +922,84 @@ static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 
+}
+
+// Given nt intervals spaced by dt and beginning at t0, return the the index of
+// the lower bound of the interval that should be used to interpolate/extrapolate
+// a value for t.
+static std::size_t intervalLeft(double t0, double dt, std::size_t nt, double t)
+{
+    if (t < t0) {
+        return 0;
+    }
+
+    std::size_t n = static_cast<std::size_t>((t - t0) / dt);
+
+    if (n >= nt - 1) {
+        return nt - 2;
+    }
+
+    return n;
+}
+
+static double InterpolateLinear(double dfX0, double dfX1, double dfY0, double dfY1, double dfX) {
+    return dfY0 + (dfX - dfX0) * (dfY1 - dfY0) / (dfX1 - dfX0);
+}
+
+static double InterpolateExponential(double dfX0, double dfX1, double dfY0, double dfY1, double dfX) {
+    const double r = std::log(dfY1 / dfY0) / (dfX1 - dfX0);
+    return dfY0*std::exp(r * (dfX - dfX0));
+}
+
+template<decltype(InterpolateLinear) InterpolationFunction>
+CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
+                             int nXSize, int nYSize,
+                             GDALDataType eSrcType, GDALDataType eBufType,
+                             int nPixelSpace, int nLineSpace, CSLConstList papszArgs ) {
+    /* ---- Init ---- */
+    if( GDALDataTypeIsComplex( eSrcType ) ) return CE_Failure;
+
+    double dfT0;
+    if (FetchDoubleArg(papszArgs, "t0", &dfT0) == CE_Failure ) return CE_Failure;
+
+    double dfT;
+    if (FetchDoubleArg(papszArgs, "t", &dfT) == CE_Failure ) return CE_Failure;
+
+    double dfDt;
+    if (FetchDoubleArg(papszArgs, "dt", &dfDt) == CE_Failure ) return CE_Failure;
+
+    if( nSources < 2 ) {
+        CPLError(CE_Failure, CPLE_AppDefined, "At least two sources required for interpolation.");
+        return CE_Failure;
+    }
+
+    if (dfT == 0 || !std::isfinite(dfT) ) {
+        CPLError(CE_Failure, CPLE_AppDefined, "dt must be finite and non-zero");
+        return CE_Failure;
+    }
+
+    const auto i0 = intervalLeft(dfT0, dfDt, nSources, dfT);
+    const auto i1 = i0 + 1;
+    dfT0 = dfT0 + static_cast<double>(i0) * dfDt;
+    double dfX1 = dfT0 + dfDt;
+
+    /* ---- Set pixels ---- */
+    for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+            const double dfY0 = SRCVAL(papoSources[i0], eSrcType, ii);
+            const double dfY1 = SRCVAL(papoSources[i1], eSrcType, ii);
+
+            const double dfPixVal = InterpolationFunction(dfT0, dfX1, dfY0, dfY1, dfT);
+
+            GDALCopyWords(
+                    &dfPixVal, GDT_Float64, 0,
+                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
 }
 
 /************************************************************************/
@@ -952,6 +1039,11 @@ static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
  * - "dB2pow": perform scale conversion from logarithmic to linear
  *             (power) (i.e. 10 ^ ( x / 10 ) ) of a single raster
  *             band (real only)
+ * - "pow": raise a single raster band to a constant power
+ * - "interpolate_linear": interpolate values between two raster bands
+ *                         using linear interpolation
+ * - "interpolate_exp": interpolate values between two raster bands using
+ *                      exponential interpolation
  *
  * @see GDALAddDerivedBandPixelFunc
  *
@@ -977,6 +1069,8 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("dB2amp", dB2AmpPixelFunc);
     GDALAddDerivedBandPixelFunc("dB2pow", dB2PowPixelFunc);
     GDALAddDerivedBandPixelFuncWithArgs("pow", PowPixelFunc, nullptr);
+    GDALAddDerivedBandPixelFuncWithArgs("interpolate_linear", InterpolatePixelFunc<InterpolateLinear>, nullptr);
+    GDALAddDerivedBandPixelFuncWithArgs("interpolate_exp", InterpolatePixelFunc<InterpolateExponential>, nullptr);
 
     return CE_None;
 }

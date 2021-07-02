@@ -639,3 +639,85 @@ def test_pixfun_pow():
 
 
 ###############################################################################
+# Verify linear pixel interpolation
+
+def interpolate_vrt(*, fname, bands, method, nx, ny, t0, dt, t):
+    vrtXml =  """
+    <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+      <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+        <Description>Interpolated</Description>
+        <PixelFunctionType>interpolate_{method}</PixelFunctionType>
+        <PixelFunctionArguments t0="{t0}" dt="{dt}" t="{t}" />
+        <SourceTransferType>Float32</SourceTransferType>""".format(nx=nx, ny=ny, t0=t0, dt=dt, t=t, method=method)
+
+    for b in range(1, bands+1):
+        vrtXml += """
+         <SimpleSource>
+          <SourceFilename relativeToVRT="0">{fname}</SourceFilename>
+          <SourceBand>{band}</SourceBand>
+          <SrcRect xOff="0" yOff="0" xSize="{nx}" ySize="{ny}"/>
+          <DstRect xOff="0" yOff="0" xSize="{nx}" ySize="{ny}"/>
+        </SimpleSource>
+        """.format(fname=fname, band=b, nx=nx, ny=ny)
+
+    vrtXml += """
+    </VRTRasterBand>
+    </VRTDataset>
+    """
+
+    return vrtXml
+
+
+def test_pixfun_interpolate_linear():
+
+    np = pytest.importorskip('numpy')
+
+    x = np.array([[1, 2], [3, 4]])
+
+    layers = [x, x + 17, x + 23]
+
+    nx = x.shape[0]
+    ny = x.shape[1]
+    bands = len(layers)
+
+    drv = gdal.GetDriverByName('GTiff')
+    fname = "/vsimem/test.tif"
+    ds = drv.Create(fname, xsize=nx, ysize=ny, bands=bands, eType=gdal.GDT_Float32)
+
+    for i, lyr in enumerate(layers):
+        ds.GetRasterBand(i + 1).WriteArray(lyr)
+
+    ds = None
+
+    # interpolate between bands 2 and 3
+    ds = gdal.Open(interpolate_vrt(method='linear', fname=fname, nx=nx, ny=ny, bands=bands, t0=10, dt=5, t=17))
+    interpolated = ds.GetRasterBand(1).ReadAsArray()
+    assert np.allclose(interpolated, layers[1] + (17-15)*(layers[2]-layers[1])/5)
+
+    ds = gdal.Open(interpolate_vrt(method='exp', fname=fname, nx=nx, ny=ny, bands=bands, t0=10, dt=5, t=17))
+    interpolated = ds.GetRasterBand(1).ReadAsArray()
+    assert np.allclose(interpolated, layers[1]*np.exp(np.log(layers[2]/layers[1])/5 * (17-15)))
+
+    # extrapolate beyond band 3
+    ds = gdal.Open(interpolate_vrt(method='linear', fname=fname, nx=nx, ny=ny, bands=bands, t0=0, dt=10, t=38))
+    interpolated = ds.GetRasterBand(1).ReadAsArray()
+    assert np.allclose(interpolated, layers[2] + (38-20)*(layers[2]-layers[1])/10)
+
+    ds = gdal.Open(interpolate_vrt(method='linear', fname=fname, nx=nx, ny=ny, bands=bands, t0=0, dt=10, t=28))
+    interpolated = ds.GetRasterBand(1).ReadAsArray()
+    assert np.allclose(interpolated, layers[2] + (28-20)*(layers[2]-layers[1])/10)
+
+    ds = gdal.Open(interpolate_vrt(method='exp', fname=fname, nx=nx, ny=ny, bands=bands, t0=0, dt=10, t=38))
+    interpolated = ds.GetRasterBand(1).ReadAsArray()
+    assert np.allclose(interpolated, layers[2]*np.exp(np.log(layers[2]/layers[1])/10 * (38-20)))
+
+    # extrapolate before band 1
+    ds = gdal.Open(interpolate_vrt(method='linear', fname=fname, nx=nx, ny=ny, bands=bands, t0=-10, dt=1, t=-22.7))
+    interpolated = ds.GetRasterBand(1).ReadAsArray()
+    assert np.allclose(interpolated, layers[0] + (-22.7 - -10)*(layers[1]-layers[0])/1)
+
+    ds = gdal.Open(interpolate_vrt(method='exp', fname=fname, nx=nx, ny=ny, bands=bands, t0=-10, dt=1, t=-22.7))
+    interpolated = ds.GetRasterBand(1).ReadAsArray()
+    assert np.allclose(interpolated, layers[0]*np.exp(np.log(layers[1]/layers[0])/1 * (-22.7 - -10)))
+
+###############################################################################
