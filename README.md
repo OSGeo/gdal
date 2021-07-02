@@ -29,6 +29,26 @@ GDAL is an open source X/MIT licensed translator library for raster and vector g
 * Wiki: https://trac.osgeo.org/gdal - Various user and developer contributed documentation and hints
 * Mailing list: https://lists.osgeo.org/mailman/listinfo/gdal-dev
 
+[//]: # (numfocus-fiscal-sponsor-attribution)
+
+The GDAL project uses a [custom governance](./GOVERNANCE.md)
+and is fiscally sponsored by [NumFOCUS](https://numfocus.org/). Consider making
+a [tax-deductible donation](https://numfocus.org/donate-to-gdal) to help the project
+pay for developer time, professional services, travel, workshops, and a variety of other needs.
+
+<div align="center">
+  <a href="https://numfocus.org/project/gdal">
+    <img height="60px"
+         src="https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png"
+         align="center">
+  </a>
+</div>
+<br>
+
+NumFOCUS is 501(c)(3) non-profit charity in the United States; as such, donations to
+NumFOCUS are tax-deductible as allowed by law. As with any donation, you should
+consult with your personal tax adviser or the IRS about your particular tax situation.
+
 ### How to contribute
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
