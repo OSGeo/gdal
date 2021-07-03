@@ -40,6 +40,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
 
     if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$" ; then
       GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-fgdb=/usr/local/FileGDB_API "
+      export LD_LIBRARY_PATH=/usr/local/FileGDB_API/lib
     fi
 
     if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$" ; then
