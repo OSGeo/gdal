@@ -74,7 +74,7 @@ template<class T> static T h5check(T ret, const char* filename, int line)
     if( ret < 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "HDF5 API failed at %s:%d", 
+                 "HDF5 API failed at %s:%d",
                  filename, line);
     }
     return ret;
@@ -141,7 +141,7 @@ class BAGDataset final: public GDALPamDataset
 
     unsigned     m_nChunkSizeVarresRefinement = 0;
     void         GetVarresRefinementChunkSize(unsigned& nChunkSize);
- 
+
     bool         ReadVarresMetadataValue(int y, int x, hid_t memspace,
                                          BAGRefinementGrid* rgrid,
                                          int height, int width);
@@ -733,6 +733,14 @@ CPLErr BAGRasterBand::SetNoDataValue( double dfNoData )
     if( eAccess == GA_ReadOnly )
         return GDALPamRasterBand::SetNoDataValue(dfNoData);
 
+    if( m_hDatasetID > 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Setting the nodata value after grid values have been written "
+                 "is not supported");
+        return CE_Failure;
+    }
+
     m_bHasNoData = true;
     m_fNoDataValue = static_cast<float>(dfNoData);
     return CE_None;
@@ -900,8 +908,11 @@ CPLErr BAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             GDALCopyWords(pabyTemp + iY * nLineSize + iX * nSizeOfData, eDataType, 0,
                           &f, GDT_Float32, 0,
                           1);
-            m_dfMinimum = std::min(m_dfMinimum, static_cast<double>(f));
-            m_dfMaximum = std::max(m_dfMaximum, static_cast<double>(f));
+            if( !m_bHasNoData || m_fNoDataValue != f )
+            {
+                m_dfMinimum = std::min(m_dfMinimum, static_cast<double>(f));
+                m_dfMaximum = std::max(m_dfMaximum, static_cast<double>(f));
+            }
         }
     }
 
@@ -1124,7 +1135,7 @@ CPLErr BAGResampledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     BAGDataset* poGDS = cpl::down_cast<BAGDataset*>(poDS);
 #ifdef DEBUG_VERBOSE
-    CPLDebug("BAG", 
+    CPLDebug("BAG",
              "IReadBlock: nRasterXSize=%d, nBlockXOff=%d, nBlockYOff=%d, nBand=%d",
              nRasterXSize, nBlockXOff, nBlockYOff, nBand);
 #endif
@@ -1571,7 +1582,7 @@ CPLErr BAGGeorefMDBandBase::IReadBlockFromElevBand( int nBlockXOff, int nBlockYO
                                 nReqXSize, nReqYSize,
                                 &afData[0],
                                 nReqXSize, nReqYSize,
-                                GDT_Float32, 
+                                GDT_Float32,
                                 4,
                                 nBlockXSize * 4,
                                 nullptr) != CE_None)
@@ -4641,7 +4652,7 @@ bool BAGCreator::CreateAndWriteMetadata(hid_t hdf5,
             break;
         }
 
-        if( H5_CHECK(H5Dwrite (hDatasetID, hDataType, hDataSpace, hFileSpace, 
+        if( H5_CHECK(H5Dwrite (hDatasetID, hDataType, hDataSpace, hFileSpace,
                            H5P_DEFAULT, osXMLMetadata.data())) < 0 )
         {
             break;
@@ -4670,7 +4681,7 @@ bool BAGCreator::CreateAndWriteMetadata(hid_t hdf5,
 
 bool BAGCreator::CreateTrackingListDataset()
 {
-    typedef struct 
+    typedef struct
     {
         uint32_t row;
         uint32_t col;
@@ -4884,7 +4895,7 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
                             afValues.data() + (nReqCountY - 1) * nReqCountX:
                             afValues.data(),
                         nReqCountX, nReqCountY,
-                        GDT_Float32, 
+                        GDT_Float32,
                         0,
                         bReverseY ? -4 * nReqCountX : 0,
                         nullptr) != CE_None )
@@ -4928,7 +4939,7 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
                         break;
 
                     if( H5_CHECK(H5Dwrite(
-                            hDatasetID, H5T_NATIVE_FLOAT, hMemSpace, hFileSpace, 
+                            hDatasetID, H5T_NATIVE_FLOAT, hMemSpace, hFileSpace,
                             H5P_DEFAULT, afValues.data())) < 0 )
                     {
                         H5Sclose(hMemSpace);
