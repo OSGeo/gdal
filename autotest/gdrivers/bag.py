@@ -132,7 +132,7 @@ def test_bag_read_resolution():
     # BAG version 1.1
     ds = gdal.Open('data/bag/true_n_nominal.bag')
     gt = ds.GetGeoTransform()
-    # UpperLeft corner, resX, resY 
+    # UpperLeft corner, resX, resY
     got = (gt[0], gt[3], gt[1], gt[5])
     assert got == (12344.12345678, 22142.12345678, 2.0, -2.0)
 
@@ -141,7 +141,7 @@ def test_bag_read_resolution():
     gt = ds.GetGeoTransform()
     got = (gt[0], gt[3], gt[1], gt[5])
     assert got == (615037.5,  9559387.5, 75.0, -75.0)
-    
+
     # BAG version 1.6
     ds = gdal.Open('data/bag/test_offset_ne_corner.bag')
     gt = ds.GetGeoTransform()
@@ -863,5 +863,29 @@ def test_bag_write_and_check_xml_size_and_res():
     xml = ds.GetMetadata_List('xml:BAG')[0]
     xml = xml.replace('  ', '').replace('\n', '').replace('> <','><')
     assert '<gmd:axisDimensionProperties><gmd:MD_Dimension><gmd:dimensionName><gmd:MD_DimensionNameTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_DimensionNameTypeCode" codeListValue="row">row</gmd:MD_DimensionNameTypeCode></gmd:dimensionName><gmd:dimensionSize><gco:Integer>10</gco:Integer></gmd:dimensionSize><gmd:resolution><gco:Measure uom="m">120</gco:Measure></gmd:resolution></gmd:MD_Dimension></gmd:axisDimensionProperties><gmd:axisDimensionProperties><gmd:MD_Dimension><gmd:dimensionName><gmd:MD_DimensionNameTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_DimensionNameTypeCode" codeListValue="column">column</gmd:MD_DimensionNameTypeCode></gmd:dimensionName><gmd:dimensionSize><gco:Integer>20</gco:Integer></gmd:dimensionSize><gmd:resolution><gco:Measure uom="m">60</gco:Measure></gmd:resolution></gmd:MD_Dimension></gmd:axisDimensionProperties>' in xml
+
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/4057
+
+
+def test_bag_write_values_at_nodata():
+
+    tmpfilename = '/vsimem/out.bag'
+    ds = gdal.GetDriverByName('BAG').Create(tmpfilename, 1, 3, 2, gdal.GDT_Float32)
+    assert ds.GetRasterBand(1).SetNoDataValue(1000000) == gdal.CE_None
+    assert ds.GetRasterBand(2).SetNoDataValue(1000000) == gdal.CE_None
+    ds.GetRasterBand(1).WriteRaster(0, 0, 1, 3, struct.pack('f' * 3, -12, 1000000, -11))
+    ds.GetRasterBand(2).WriteRaster(0, 0, 1, 3, struct.pack('f' * 3, 5, 1000000, 4))
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetMinimum() == -12
+    assert ds.GetRasterBand(1).GetMaximum() == -11
+    assert ds.GetRasterBand(2).GetMinimum() == 4
+    assert ds.GetRasterBand(2).GetMaximum() == 5
+    ds = None
 
     gdal.Unlink(tmpfilename)
