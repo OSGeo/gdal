@@ -206,6 +206,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
     };
     const int nLibNames = sizeof(aszDefaultLibName) / sizeof(aszDefaultLibName[0]);
     const char* libPath[] = {
+        "/usr/lib/x86_64-linux-gnu/odbc", /* ubuntu 20.04 */
         "/usr/lib64",
         "/usr/local/lib64",
         "/usr/lib",
