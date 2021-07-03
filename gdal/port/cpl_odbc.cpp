@@ -1756,7 +1756,8 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 
 {
     CPLDebug( "ODBC", "CatalogNameL: %s\nSchema name: %s",
-                pszCatalog, pszSchema );
+              pszCatalog ? pszCatalog : "(null)",
+              pszSchema ? pszSchema : "(null)" );
 
 #if (ODBCVER >= 0x0300)
 
