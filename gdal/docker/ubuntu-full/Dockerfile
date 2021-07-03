@@ -138,6 +138,23 @@ RUN wget -q https://storage.googleapis.com/google-code-archive-downloads/v2/code
   && cp mdb-sqlite-1.0.2/lib/*.jar /build/usr/share/java \
   && rm -rf mdb-sqlite-1.0.2.tar.bz2 && rm -rf mdb-sqlite-1.0.2
 
+# Build recent mdbtools
+RUN wget -q https://github.com/mdbtools/mdbtools/releases/download/v0.9.3/mdbtools-0.9.3.tar.gz \
+  && tar xzf mdbtools-0.9.3.tar.gz \
+  && apt-get update -y \
+  && apt-get install -y --fix-missing --no-install-recommends bison flex gawk \
+  && rm -rf /var/lib/apt/lists/* \
+  && cd mdbtools-0.9.3 \
+  && ./configure --with-unixodbc=/usr \
+  && make -j$(nproc) \
+  && mkdir -p /build_thirdparty/usr/lib/x86_64-linux-gnu/odbc \
+  && mkdir -p /build_thirdparty/lib/x86_64-linux-gnu \
+  && cp ./src/odbc/.libs/libmdbodbc.so /build_thirdparty/usr/lib/x86_64-linux-gnu/odbc \
+  && cp ./src/libmdb/.libs/libmdb.so.3 /build_thirdparty/lib/x86_64-linux-gnu \
+  && cp ./src/sql/.libs/libmdbsql.so.3 /build_thirdparty/lib/x86_64-linux-gnu \
+  && cd .. \
+  && rm -rf mdbtools-0.9.3*
+
 #Set CLASSPATH so jars are found
 ENV CLASSPATH="/build/usr/share/java/jackcess-1.1.14.jar:/build/usr/share/java/commons-logging-1.1.1.jar:/build/usr/share/java/commons-lang-2.4.jar"
 
@@ -232,6 +249,7 @@ RUN apt-get update \
 # Attempt to order layers starting with less frequently varying ones
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
+COPY --from=builder  /build_thirdparty/lib/ /lib/
 
 ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY --from=builder  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
