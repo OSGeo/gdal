@@ -35,7 +35,7 @@ import os
 import ogrtest
 import test_py_scripts
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 import pytest
 
 ###############################################################################
@@ -48,15 +48,13 @@ def test_gdal_polygonize_1():
     if script_path is None:
         pytest.skip()
 
+    outfilename = 'tmp/poly.shp'
     # Create a OGR datasource to put results in.
     shp_drv = ogr.GetDriverByName('ESRI Shapefile')
-    try:
-        os.stat('tmp/poly.shp')
-        shp_drv.DeleteDataSource('tmp/poly.shp')
-    except OSError:
-        pass
+    if os.path.exists(outfilename):
+        shp_drv.DeleteDataSource(outfilename)
 
-    shp_ds = shp_drv.CreateDataSource('tmp/poly.shp')
+    shp_ds = shp_drv.CreateDataSource(outfilename)
 
     shp_layer = shp_ds.CreateLayer('poly', None, ogr.wkbPolygon)
 
@@ -92,7 +90,7 @@ def test_gdal_polygonize_1():
     shp_ds.Destroy()
     # Reload drv because of side effects of run_py_script()
     shp_drv = ogr.GetDriverByName('ESRI Shapefile')
-    shp_drv.DeleteDataSource('tmp/poly.shp')
+    shp_drv.DeleteDataSource(outfilename)
 
     assert tr
 
@@ -106,32 +104,28 @@ def test_gdal_polygonize_2():
     if script_path is None:
         pytest.skip()
 
-    shp_drv = ogr.GetDriverByName('ESRI Shapefile')
-    try:
-        os.stat('tmp/out.shp')
-        shp_drv.DeleteDataSource('tmp/out.shp')
-    except OSError:
-        pass
+    outfilename = 'tmp/out.geojson'
+    gdal.Unlink(outfilename)
 
     # run the algorithm.
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "ESRI Shapefile" -q -nomask '+test_py_scripts.get_data_path('alg')+'polygonize_in.grd tmp')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -q -nomask '+test_py_scripts.get_data_path('alg')+'polygonize_in.grd ' + outfilename)
 
     # Confirm we get the set of expected features in the output layer.
-    shp_ds = ogr.Open('tmp')
-    shp_lyr = shp_ds.GetLayerByName('out')
+    ds = gdal.OpenEx(outfilename)
+    assert ds.GetDriver().ShortName == 'GeoJSON'
+    lyr = ds.GetLayerByName('out')
 
     expected_feature_number = 17
-    assert shp_lyr.GetFeatureCount() == expected_feature_number
+    assert lyr.GetFeatureCount() == expected_feature_number
 
     expect = [107, 123, 115, 132, 115, 132, 140, 132, 148, 123, 140,
               132, 156, 100, 101, 102, 103]
 
-    tr = ogrtest.check_features_against_list(shp_lyr, 'DN', expect)
+    tr = ogrtest.check_features_against_list(lyr, 'DN', expect)
 
-    shp_ds.Destroy()
-    # Reload drv because of side effects of run_py_script()
-    shp_drv = ogr.GetDriverByName('ESRI Shapefile')
-    shp_drv.DeleteDataSource('tmp/out.shp')
+    ds = None
+
+    gdal.Unlink(outfilename)
 
     assert tr
 
@@ -145,17 +139,15 @@ def test_gdal_polygonize_3():
     drv = ogr.GetDriverByName('GPKG')
     if drv is None:
         pytest.skip()
-    try:
-        os.stat('tmp/out.gpkg')
-        drv.DeleteDataSource('tmp/out.gpkg')
-    except OSError:
-        pass
+    outfilename = 'tmp/out.gpkg'
+    if os.path.exists(outfilename):
+        drv.DeleteDataSource(outfilename)
 
     # run the algorithm.
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "GPKG" -q -nomask '+test_py_scripts.get_data_path('alg')+'polygonize_in.grd tmp/out.gpkg')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-b 1 -f "GPKG" -q -nomask '+test_py_scripts.get_data_path('alg')+'polygonize_in.grd ' + outfilename)
 
     # Confirm we get the set of expected features in the output layer.
-    gpkg_ds = ogr.Open('tmp/out.gpkg')
+    gpkg_ds = ogr.Open(outfilename)
     gpkg_lyr = gpkg_ds.GetLayerByName('out')
     geom_type = gpkg_lyr.GetGeomType()
     geom_is_polygon = geom_type in (ogr.wkbPolygon, ogr.wkbMultiPolygon)
@@ -163,7 +155,7 @@ def test_gdal_polygonize_3():
     gpkg_ds.Destroy()
     # Reload drv because of side effects of run_py_script()
     drv = ogr.GetDriverByName('GPKG')
-    drv.DeleteDataSource('tmp/out.gpkg')
+    drv.DeleteDataSource(outfilename)
 
     if geom_is_polygon:
         return
@@ -179,23 +171,24 @@ def test_gdal_polygonize_4():
     if script_path is None:
         pytest.skip()
 
+    outfilename = 'tmp/out.gml'
     # Test mask syntax
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask ' + test_py_scripts.get_data_path('gcore') + 'byte.tif tmp/out.gml')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask ' + test_py_scripts.get_data_path('gcore') + 'byte.tif '  + outfilename)
 
-    content = open('tmp/out.gml', 'rt').read()
+    content = open(outfilename, 'rt').read()
 
-    os.unlink('tmp/out.gml')
-    os.unlink('tmp/out.xsd')
+    os.unlink(outfilename)
+    os.unlink(outfilename[0:-3] + 'xsd')
 
     assert '<gml:Polygon srsName="urn:ogc:def:crs:EPSG::26711" gml:id="out.geom.0"><gml:exterior><gml:LinearRing><gml:posList>440720 3751320 440720 3750120 441920 3750120 441920 3751320 440720 3751320</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>' in content
 
     # Test mask,1 syntax
-    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask,1 ' + test_py_scripts.get_data_path('gcore') + 'byte.tif tmp/out.gml')
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask,1 ' + test_py_scripts.get_data_path('gcore') + 'byte.tif ' + outfilename)
 
-    content = open('tmp/out.gml', 'rt').read()
+    content = open(outfilename, 'rt').read()
 
-    os.unlink('tmp/out.gml')
-    os.unlink('tmp/out.xsd')
+    os.unlink(outfilename)
+    os.unlink(outfilename[0:-3] + 'xsd')
 
     assert '<gml:Polygon srsName="urn:ogc:def:crs:EPSG::26711" gml:id="out.geom.0"><gml:exterior><gml:LinearRing><gml:posList>440720 3751320 440720 3750120 441920 3750120 441920 3751320 440720 3751320</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>' in content
 

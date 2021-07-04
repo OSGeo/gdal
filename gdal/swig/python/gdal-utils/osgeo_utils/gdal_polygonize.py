@@ -43,7 +43,7 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
 def gdal_polygonize(src_filename: Optional[str] = None, band_number: Union[int, str] = 1,
-                    dst_filename: Optional[str] = None, driver_name: str = 'GTiff',
+                    dst_filename: Optional[str] = None, driver_name: Optional[str] = None,
                     dst_layername: Optional[str] = None, dst_fieldname: Optional[str] = None,
                     quiet: bool = False, mask: str = 'default', options: Optional[list] = None,
                     connectedness8: bool = False):
@@ -210,7 +210,7 @@ class GDALPolygonize(GDALScript):
                                  "to indicate that the mask band of the first band must be used "
                                  "(or “mask,band_number” for the mask of a specified band).")
 
-        parser.add_argument("-of", "-f", dest="driver_name", metavar='ogr_format', default='GTiff',
+        parser.add_argument("-of", "-f", dest="driver_name", metavar='ogr_format',
                             help="Select the output format. "
                                  "if not specified, the format is guessed from the extension. "
                                  "Use the short format name.")
