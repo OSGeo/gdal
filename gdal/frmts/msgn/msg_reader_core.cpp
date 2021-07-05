@@ -236,13 +236,15 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
 
 #ifdef DEBUG
     printf("lines = %u, cols = %u\n", _lines, _columns);/*ok*/
+    int records_per_line = 0;
 #endif // DEBUG
 
-    int records_per_line = 0;
     for (i=0; i < MSG_NUM_CHANNELS; i++) {
         if (_sec_header.selectedBandIds.value[i] == 'X') {
             _bands[i] = 1;
+#ifdef DEBUG
             records_per_line += (i == (MSG_NUM_CHANNELS-1)) ? 3 : 1;
+#endif // DEBUG
         } else {
             _bands[i] = 0;
         }
