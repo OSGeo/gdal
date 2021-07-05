@@ -434,54 +434,50 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
  */
 bool CPLODBCSession::ConnectToMsAccess(const char *pszName, const char *pszDSNStringTemplate)
 {
-    char *pszDSN = nullptr;
-
-    const bool usingAutomaticDSNStringTemplate = pszDSNStringTemplate == nullptr;
-
-    if( usingAutomaticDSNStringTemplate )
+    const auto Connect = [this, &pszName](const char* l_pszDSNStringTemplate, bool bVerboseError)
     {
-#ifdef WIN32
-        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
-#else
-        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
-#endif
-    }
-    pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100) );
-    /* coverity[tainted_string] */
-    snprintf( pszDSN,
-        strlen(pszName)+strlen(pszDSNStringTemplate)+100,
-        pszDSNStringTemplate,  pszName );
-
-    CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
-    int bError = !EstablishSession( pszDSN, nullptr, nullptr );
-    if( bError && usingAutomaticDSNStringTemplate )
-    {
-        // Trying with another template (#5594)
-#ifdef WIN32
-        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
-#else
-        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
-#endif
-        CPLFree( pszDSN );
-        pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100) );
+        char* pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(l_pszDSNStringTemplate)+100) );
+        /* coverity[tainted_string] */
         snprintf( pszDSN,
-            strlen(pszName)+strlen(pszDSNStringTemplate)+100,
-            pszDSNStringTemplate,  pszName );
+            strlen(pszName)+strlen(l_pszDSNStringTemplate)+100,
+            l_pszDSNStringTemplate,  pszName );
         CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
-        bError = !EstablishSession( pszDSN, nullptr, nullptr );
-    }
+        int bError = !EstablishSession( pszDSN, nullptr, nullptr );
+        if ( bError )
+        {
+            if( bVerboseError )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unable to initialize ODBC connection to DSN for %s,\n"
+                          "%s", pszDSN, GetLastError() );
+            }
+            CPLFree( pszDSN );
+            return false;
+        }
 
-    if ( bError )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to initialize ODBC connection to DSN for %s,\n"
-                  "%s", pszDSN, GetLastError() );
         CPLFree( pszDSN );
-        return false;
+        return true;
+    };
+
+    if( pszDSNStringTemplate )
+    {
+        return Connect(pszDSNStringTemplate, true);
     }
 
-    CPLFree( pszDSN );
-    return true;
+    for( const char* l_pszDSNStringTemplate:
+            { "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s",
+              "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"",
+              "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s",
+              "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"" } )
+    {
+        if( Connect(l_pszDSNStringTemplate, false) )
+            return true;
+    }
+
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "Unable to initialize ODBC connection to DSN for %s,\n"
+              "%s", pszName, GetLastError() );
+    return false;
 }
 
 /************************************************************************/
@@ -1756,7 +1752,8 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 
 {
     CPLDebug( "ODBC", "CatalogNameL: %s\nSchema name: %s",
-                pszCatalog, pszSchema );
+              pszCatalog ? pszCatalog : "(null)",
+              pszSchema ? pszSchema : "(null)" );
 
 #if (ODBCVER >= 0x0300)
 
