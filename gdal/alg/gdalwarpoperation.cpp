@@ -542,7 +542,7 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
         && GDALGetRasterCount( psOptions->hSrcDS )
         == GDALGetRasterCount( psOptions->hDstDS ) )
     {
-        GDALWarpInitDefaultBandMapping( 
+        GDALWarpInitDefaultBandMapping(
             psOptions, GDALGetRasterCount( psOptions->hSrcDS ) );
     }
 
@@ -635,6 +635,26 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
                                         psOptions->pTransformerArg);
         if( psThreadData == nullptr )
             eErr = CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Compute dstcoordinates of a few special points.                 */
+/* -------------------------------------------------------------------- */
+
+        // South and north poles. Do not exactly take +/-90 as the round-tripping of
+        // the longitude value fails with some projections.
+        for( double dfY : { -89.9999, 89.9999 } )
+        {
+            double dfX = 0;
+            if( (psOptions->pfnTransformer == GDALApproxTransform &&
+                 GDALTransformLonLatToDestApproxTransformer(
+                     psOptions->pTransformerArg, &dfX, &dfY)) ||
+                (psOptions->pfnTransformer == GDALGenImgProjTransform &&
+                 GDALTransformLonLatToDestGenImgProjTransformer(
+                     psOptions->pTransformerArg, &dfX, &dfY)) )
+            {
+                aDstXYSpecialPoints.emplace_back(std::pair<double, double>(dfX, dfY));
+            }
+        }
     }
 
     return eErr;
@@ -676,14 +696,14 @@ void* GDALWarpOperation::CreateDestinationBuffer(
     const char *pszInitDest = CSLFetchNameValue( psOptions->papszWarpOptions,
                                                  "INIT_DEST" );
 
-    if( pszInitDest == nullptr || EQUAL(pszInitDest, "") ) 
+    if( pszInitDest == nullptr || EQUAL(pszInitDest, "") )
     {
         if( pbInitialized != nullptr )
         {
             *pbInitialized = FALSE;
-        } 
-        
-        return pDstBuffer; 
+        }
+
+        return pDstBuffer;
     }
 
 
@@ -1547,7 +1567,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /*      Allocate the output buffer.                                     */
 /* -------------------------------------------------------------------- */
     int bDstBufferInitialized = FALSE;
-    void *pDstBuffer = CreateDestinationBuffer(nDstXSize, nDstYSize, &bDstBufferInitialized); 
+    void *pDstBuffer = CreateDestinationBuffer(nDstXSize, nDstYSize, &bDstBufferInitialized);
     if( pDstBuffer == nullptr )
     {
         return CE_Failure;
@@ -2579,6 +2599,22 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 
     bool bUseGrid =
         CPLFetchBool(psOptions->papszWarpOptions, "SAMPLE_GRID", false);
+
+    // Use grid sampling as soon as a special point falls into the extent of
+    // the target raster.
+    if( !bUseGrid && psOptions->hDstDS )
+    {
+        for( const auto &xy: aDstXYSpecialPoints )
+        {
+            if( 0 <= xy.first && GDALGetRasterXSize(psOptions->hDstDS) >= xy.first &&
+                0 <= xy.second && GDALGetRasterYSize(psOptions->hDstDS) >= xy.second )
+            {
+                bUseGrid = true;
+                break;
+            }
+        }
+    }
+
     bool bTryWithCheckWithInvertProj = false;
 
   TryAgain:
