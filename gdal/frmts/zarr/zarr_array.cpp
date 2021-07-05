@@ -2939,7 +2939,8 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         if( oCodec.GetType() == CPLJSONObject::Type::String )
         {
             const auto osCodec = oCodec.ToString();
-            // See https://github.com/zarr-developers/zarr-specs/issues/116
+            // See https://github.com/zarr-developers/zarr-specs/pull/119
+            // We accept the plural form, but singular is the official one.
             for( const char* key : { "https://purl.org/zarr/spec/codec/",
                                      "https://purl.org/zarr/spec/codecs/" } )
             {

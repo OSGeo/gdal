@@ -1393,7 +1393,7 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
 
 @pytest.mark.parametrize("compressor,options,expected_json", [
     ["NONE", [], None],
-    ["gzip", [], {'codec': 'https://purl.org/zarr/spec/codecs/gzip/1.0',
+    ["gzip", [], {'codec': 'https://purl.org/zarr/spec/codec/gzip/1.0',
                   'configuration': {'level': 6}}]])
 def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
 

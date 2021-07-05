@@ -1491,7 +1491,7 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
                                 {
                                     oCompressor = CPLJSONObject();
                                     oCompressor.Add("codec",
-                                        "https://purl.org/zarr/spec/codecs/" +
+                                        "https://purl.org/zarr/spec/codec/" +
                                         CPLString(pszCompressor).tolower() + "/1.0");
                                     oCompressor.Add("configuration", configuration);
                                 }
