@@ -531,3 +531,58 @@ def test_osr_ct_non_specified_time_with_time_dependent_transformation():
     x, y, _ = ct.TransformPoint(50, -40, 0)
     assert x == pytest.approx(50, abs=1e-10)
     assert y == pytest.approx(-40, abs=1e-10)
+
+###############################################################################
+# Test transformation between CRS that only differ by axis order
+
+def test_osr_ct_only_axis_order_different():
+
+    s_wrong_axis_order = osr.SpatialReference()
+    s_wrong_axis_order.SetFromUserInput("""GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AXIS["Longitude",EAST],
+    AXIS["Latitude",NORTH]]""")
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(4326)
+
+    ct = osr.CoordinateTransformation(s_wrong_axis_order, t)
+    x, y, _ = ct.TransformPoint(2, 49, 0)
+    assert x == 49
+    assert y == 2
+
+###############################################################################
+# Test transformation for a CRS whose definition contradicts the one of the
+# authority. NOTE: it is arguable that this is the correct behaviour. One
+# could consider that the AUTHORITY would have precedence.
+
+def test_osr_ct_wkt_non_consistent_with_epsg_definition():
+
+    s_wrong_axis_order = osr.SpatialReference()
+    s_wrong_axis_order.SetFromUserInput("""GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AXIS["Longitude",EAST],
+    AXIS["Latitude",NORTH],
+    AUTHORITY["EPSG","4326"]]""")
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(4326)
+
+    ct = osr.CoordinateTransformation(s_wrong_axis_order, t)
+    x, y, _ = ct.TransformPoint(2, 49, 0)
+    assert x == 49
+    assert y == 2

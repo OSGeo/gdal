@@ -818,7 +818,7 @@ def test_ogr_sqlite_17(require_spatialite):
     assert lyr is None, 'layer creation should have failed'
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]""")
+    srs.ImportFromEPSG(4326)
     lyr = ds.CreateLayer('geomspatialite', srs=srs)
 
     geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
