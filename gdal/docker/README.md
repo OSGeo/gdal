@@ -93,12 +93,12 @@ docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.t
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.2.2 and PROJ 8.0.0:
-* osgeo/alpine-ultrasmall-3.2.2
-* osgeo/alpine-small-3.2.2
-* osgeo/alpine-normal-3.2.2
-* osgeo/ubuntu-small-3.2.2
-* osgeo/ubuntu-full-3.2.2
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.3.1 and PROJ 8.1.0, for linux/amd64 and linux/arm64:
+* osgeo/alpine-ultrasmall-3.3.1
+* osgeo/alpine-small-3.3.1
+* osgeo/alpine-normal-3.3.1
+* osgeo/ubuntu-small-3.3.1
+* osgeo/ubuntu-full-3.3.1
 
 ## Multi-arch Images
 

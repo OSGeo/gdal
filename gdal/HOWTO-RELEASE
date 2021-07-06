@@ -339,7 +339,7 @@ e) Click the "Release" button and that is it! The release should be available in
 20) Regenerate Docker images
 
     e.g
-        ./docker/build-all.sh --tag 3.0.2 --gdal v3.0.2 --proj 6.2.1 --release --push
+        ./docker/build-all.sh --with-multi-arch --release --tag 3.3.1 --gdal v3.3.1 --proj 8.1.0 --platform linux/arm64,linux/amd64 --push
 
     and update gdal/docker/README.md with the latest release
 
