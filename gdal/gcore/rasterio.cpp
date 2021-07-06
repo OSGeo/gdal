@@ -4142,7 +4142,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
             if( psExtraArg->pfnProgress != nullptr &&
                 !psExtraArg->pfnProgress(
-                    1.0 * std::max(nBufYSize,
+                    1.0 * std::min(nBufYSize,
                                    iBufYOff + nChunkYSize) /
                     nBufYSize, "", psExtraArg->pProgressData) )
             {
