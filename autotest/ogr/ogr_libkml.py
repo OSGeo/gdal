@@ -131,7 +131,7 @@ def test_ogr_libkml_attributes_1():
         print('got: ', feat.GetField('description'))
         pytest.fail('Wrong description field value')
 
-    
+
 ###############################################################################
 # Test reading attributes for another layer (point).
 #
@@ -214,7 +214,7 @@ def test_ogr_libkml_attributes_4():
         i = i + 1
         feat = lyr.GetNextFeature()
 
-    
+
 ###############################################################################
 # Test reading of KML point geometry
 #
@@ -876,7 +876,7 @@ def test_ogr_libkml_write_multigeometry():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test writing <snippet>
 
@@ -912,7 +912,7 @@ def test_ogr_libkml_write_snippet():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test writing <atom:author>
 
@@ -1135,7 +1135,7 @@ def test_ogr_libkml_write_model():
         assert gdaltest.gdalurlopen('http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae') is None, \
             data
 
-    
+
 ###############################################################################
 # Test read / write of style
 
@@ -1372,7 +1372,7 @@ def test_ogr_libkml_read_write_style():
         print(data)
         pytest.fail(styles)
 
-    
+
 ###############################################################################
 # Test writing Update
 
@@ -1428,7 +1428,7 @@ def test_ogr_libkml_write_update():
                 data.find('<Delete>') == -1 or \
                 data.find('<Placemark targetId="layer_to_edit.3"/>') == -1))
 
-    
+
 ###############################################################################
 # Test writing NetworkLinkControl
 
@@ -1480,7 +1480,7 @@ def test_ogr_libkml_write_networklinkcontrol():
                 data.find('<linkSnippet>linksnippet</linkSnippet>') == -1 or \
                 data.find('<expires>2014-12-31T23:59:59Z</expires>') == -1))
 
-    
+
 ###############################################################################
 # Test writing ListStyle
 
@@ -1775,7 +1775,7 @@ def test_ogr_libkml_read_gx_timestamp():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test reading KML with kml: prefix
 
@@ -1890,7 +1890,7 @@ def test_ogr_libkml_read_several_schema():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 
 
@@ -1914,3 +1914,28 @@ def test_ogr_libkml_update_existing_kml():
     assert fc_after == fc_before + 1
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test reading KML with non-conformant MultiPolygon, MultiLineString, MultiPoint (#4031)
+
+
+def test_ogr_libkml_read_non_conformant_multi_geometries():
+
+    if not ogrtest.have_read_libkml:
+        pytest.skip()
+
+    ds = ogr.Open('data/kml/non_conformant_multi.kml')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    wkt = 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
+
+    feat = lyr.GetNextFeature()
+    wkt = 'MULTILINESTRING ((0 0,1 1))'
+    assert not ogrtest.check_feature_geometry(feat, wkt)
+
+    feat = lyr.GetNextFeature()
+    wkt = 'MULTIPOINT ((0 0))'
+    assert not ogrtest.check_feature_geometry(feat, wkt)

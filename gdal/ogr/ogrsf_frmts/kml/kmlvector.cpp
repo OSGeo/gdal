@@ -61,6 +61,9 @@ bool KMLVector::isContainer(std::string const& sIn) const
 bool KMLVector::isFeatureContainer(std::string const& sIn) const
 {
     return sIn.compare("MultiGeometry") == 0
+        || sIn.compare("MultiPolygon") == 0 // non conformant
+        || sIn.compare("MultiLineString") == 0 // non conformant
+        || sIn.compare("MultiPoint") == 0 // non conformant
         || sIn.compare("Placemark") == 0;
 }
 
