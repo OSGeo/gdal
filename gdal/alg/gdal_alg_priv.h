@@ -170,6 +170,12 @@ void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
 void GDALRefreshGenImgProjTransformer(void* hTransformArg);
 void GDALRefreshApproxTransformer(void* hTransformArg);
 
+int GDALTransformLonLatToDestGenImgProjTransformer(void* hTransformArg,
+                                                    double* pdfX,
+                                                    double* pdfY);
+int GDALTransformLonLatToDestApproxTransformer(void* hTransformArg,
+                                                    double* pdfX,
+                                                    double* pdfY);
 
 typedef struct {
     GDALTransformerInfo sTI;

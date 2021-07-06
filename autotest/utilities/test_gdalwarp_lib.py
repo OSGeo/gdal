@@ -2116,6 +2116,18 @@ def test_gdalwarp_lib_t_coord_epoch():
     ds = None
 
 ###############################################################################
+# Test automatic grid sampling
+
+
+def test_gdalwarp_lib_automatic_grid_sampling():
+
+    ds = gdal.Warp('', '../gdrivers/data/small_world.tif',
+                   format='MEM',
+                   outputBounds=[-7655830,-6385994,7152182,8423302],
+                   dstSRS='+proj=laea +lat_0=48.514 +lon_0=-145.204 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs')
+    assert ds.GetRasterBand(1).Checksum() == 46790
+
+###############################################################################
 # Cleanup
 
 

@@ -234,19 +234,19 @@ void CPL_DLL CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions * );
 GDALWarpOptions CPL_DLL * CPL_STDCALL
 GDALCloneWarpOptions( const GDALWarpOptions * );
 
-void CPL_DLL CPL_STDCALL 
+void CPL_DLL CPL_STDCALL
 GDALWarpInitDstNoDataReal( GDALWarpOptions *, double dNoDataReal );
 
-void CPL_DLL CPL_STDCALL 
+void CPL_DLL CPL_STDCALL
 GDALWarpInitSrcNoDataReal( GDALWarpOptions *, double dNoDataReal );
 
-void CPL_DLL CPL_STDCALL 
+void CPL_DLL CPL_STDCALL
 GDALWarpInitNoDataReal( GDALWarpOptions *, double dNoDataReal );
 
-void CPL_DLL CPL_STDCALL 
+void CPL_DLL CPL_STDCALL
 GDALWarpInitDstNoDataImag( GDALWarpOptions *, double dNoDataImag );
 
-void CPL_DLL CPL_STDCALL 
+void CPL_DLL CPL_STDCALL
 GDALWarpInitSrcNoDataImag( GDALWarpOptions *, double dNoDataImag );
 
 void CPL_DLL CPL_STDCALL
@@ -312,6 +312,9 @@ GDALInitializeWarpedVRT( GDALDatasetH hDS,
 CPL_C_END
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+#include <vector>
+#include <utility>
 
 /************************************************************************/
 /*                            GDALWarpKernel                            */
@@ -491,6 +494,10 @@ private:
 
     void           *psThreadData;
 
+    // Coordinates a few special points in target image space, to determine
+    // if ComputeSourceWindow() must use a grid based sampling.
+    std::vector<std::pair<double, double>> aDstXYSpecialPoints{};
+
     void            WipeChunkList();
     CPLErr          CollectChunkListInternal( int nDstXOff, int nDstYOff,
                                       int nDstXSize, int nDstYSize );
@@ -503,7 +510,7 @@ public:
     virtual        ~GDALWarpOperation();
 
     CPLErr          Initialize( const GDALWarpOptions *psNewOptions );
-    void*           CreateDestinationBuffer( int nDstXSize, int nDstYSize, 
+    void*           CreateDestinationBuffer( int nDstXSize, int nDstYSize,
                                              int *pbWasInitialized = nullptr );
     static void     DestroyDestinationBuffer(void* pDstBuffer);
 
