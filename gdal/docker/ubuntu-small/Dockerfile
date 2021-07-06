@@ -28,7 +28,7 @@ RUN apt-get update -y \
        python3-dev python3-numpy \
        libjpeg-dev libgeos-dev \
        libexpat-dev libxerces-c-dev \
-       libwebp-dev \
+       libwebp-dev libpng-dev \
        libzstd-dev bash zip curl \
        libpq-dev libssl-dev libopenjp2-7-dev \
        autoconf automake sqlite3 bash-completion
@@ -185,7 +185,7 @@ RUN apt-get update -y; \
         libjpeg-turbo8 libgeos-3.8.0 libgeos-c1v5 \
         libexpat1 \
         libxerces-c3.2 \
-        libwebp6 \
+        libwebp6 libpng16-16 \
         libzstd1 bash libpq5 libssl1.1 libopenjp2-7
 
 RUN apt-get update; \

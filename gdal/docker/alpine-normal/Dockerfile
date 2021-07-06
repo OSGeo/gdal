@@ -54,7 +54,7 @@ RUN if test "${SZIP_VERSION}" != ""; then ( \
 
 # Build hdf4
 ARG HDF4_VERSION=4.2.15
-RUN if test "${HDF4_VERSION}" != ""; then ( \
+RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     apk add --no-cache byacc flex portablexdr-dev \
     && mkdir hdf4 \
     && wget -q https://support.hdfgroup.org/ftp/HDF/releases/HDF${HDF4_VERSION}/src/hdf-${HDF4_VERSION}.tar.gz -O - \
@@ -165,7 +165,7 @@ RUN mkdir proj \
 
 # Build spatialite
 ARG SPATIALITE_VERSION=5.0.1
-RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
+RUN if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
@@ -218,14 +218,14 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && if test "${XERCESC_VERSION}" != ""; then \
         export GDAL_EXTRA_ARGS="--with-xerces ${GDAL_EXTRA_ARGS}"; \
     fi \
-    && if test "${HDF4_VERSION}" != ""; then \
+    && if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then \
         apk add --no-cache portablexdr-dev \
         && export LDFLAGS="-lportablexdr ${LDFLAGS}" \
         && export GDAL_EXTRA_ARGS="--with-hdf4 ${GDAL_EXTRA_ARGS}"; \
     fi \
     && export GDAL_EXTRA_ARGS="--with-hdf5 ${GDAL_EXTRA_ARGS}" \
     && export GDAL_EXTRA_ARGS="--with-netcdf ${GDAL_EXTRA_ARGS}" \
-    && if test "${SPATIALITE_VERSION}" != ""; then \
+    && if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then \
         export GDAL_EXTRA_ARGS="--with-spatialite ${GDAL_EXTRA_ARGS}"; \
     fi \
     && if test "${POPPLER_DEV}" != ""; then \

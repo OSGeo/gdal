@@ -44,7 +44,21 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     fi
 
     if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$" ; then
-      GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-pdfium=/usr "
+      if test "$(uname -m)" = "x86_64"; then
+        GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-pdfium=/usr "
+      fi
+    fi
+
+    if test "$(uname -m)" = "x86_64"; then
+      GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS --with-tiledb "
+    fi
+
+    if test "$(uname -m)" = "x86_64"; then
+      JAVA_ARCH=amd64;
+    elif test "$(uname -m)" = "aarch64"; then
+      JAVA_ARCH=arm64;
+    else
+      echo "Unknown arch. FIXME!"
     fi
 
     LDFLAGS="-L/build${PROJ_INSTALL_PREFIX-/usr/local}/lib -linternalproj" ./configure --prefix=/usr \
@@ -67,9 +81,8 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --with-kea=/usr/bin/kea-config \
     --with-mongocxxv3 \
-    --with-tiledb \
     --with-crypto \
-    --with-java=/usr/lib/jvm/java-"$JAVA_VERSION"-openjdk-amd64 --with-jvm-lib=/usr/lib/jvm/java-"$JAVA_VERSION"-openjdk-amd64/lib/server --with-jvm-lib-add-rpath \
+    --with-java=/usr/lib/jvm/java-"$JAVA_VERSION"-openjdk-"$JAVA_ARCH" --with-jvm-lib=/usr/lib/jvm/java-"$JAVA_VERSION"-openjdk-"$JAVA_ARCH"/lib/server --with-jvm-lib-add-rpath \
     --with-mdb $GDAL_CONFIG_OPTS
 
     make "-j$(nproc)"
