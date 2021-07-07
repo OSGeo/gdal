@@ -4687,6 +4687,17 @@ def test_netcdf_metadata_sentinel5():
     assert j['attributes']['ISO_METADATA'] == expected
 
 
+###############################################################################
+# Test opening a file with particular georeferencing encoding
+
+
+def test_netcdf_modis_array():
+
+    ds = gdal.Open('data/netcdf/MODIS_ARRAY.nc')
+    assert ds.GetGeoTransform(can_return_null=True) is not None
+    assert ds.GetSpatialRef() is not None
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
