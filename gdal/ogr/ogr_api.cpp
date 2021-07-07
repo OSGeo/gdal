@@ -32,7 +32,6 @@
 #include "ogr_api.h"
 
 #include <cstddef>
-#include <regex>
 
 #include "cpl_error.h"
 #include "ogr_geometry.h"
@@ -67,7 +66,7 @@ bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
     return TRUE;
 }
 #else
-bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
+bool OGRGetGEOSVersion(int *, int *, int *) {
     return FALSE;
 }
 #endif
