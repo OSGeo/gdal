@@ -34,6 +34,7 @@ import os
 import shutil
 import array
 import stat
+import struct
 from osgeo import osr
 from osgeo import gdal
 
@@ -1936,7 +1937,7 @@ def test_tiff_ovr_color_table_bug_3336_bis():
 def test_tiff_ovr_nodata_multiband():
 
     numpy = pytest.importorskip('numpy')
-    
+
     temp_path = '/vsimem/test.tif'
     ds = gdal.GetDriverByName('GTiff').Create(temp_path, 4, 4, 2, gdal.GDT_Float32)
     ds.GetRasterBand(1).SetNoDataValue(-10000)
@@ -1951,14 +1952,64 @@ def test_tiff_ovr_nodata_multiband():
     assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
         'Overview could not be generated'
 
-    pix = ds.GetRasterBand(1).GetOverview(0).ReadAsArray(win_xsize=1, win_ysize=1) 
+    pix = ds.GetRasterBand(1).GetOverview(0).ReadAsArray(win_xsize=1, win_ysize=1)
     assert pix[0,0] == 2.0
 
-    pix = ds.GetRasterBand(2).GetOverview(0).ReadAsArray(win_xsize=1, win_ysize=1) 
+    pix = ds.GetRasterBand(2).GetOverview(0).ReadAsArray(win_xsize=1, win_ysize=1)
     assert pix[0,0] == 3.0
 
     ds = None
 
+###############################################################################
+
+@pytest.mark.parametrize("external_ovr", [False,True])
+def test_tiff_ovr_nodata_multiband_interleave_band_non_default_color_interp(external_ovr):
+
+    nodatavalue = -10000
+    data = struct.pack('f' * 4 * 4,
+        0.5, 0.2, 0.5, 0.2,
+        0.2, nodatavalue, 0.2, nodatavalue,
+        0.5, 0.2, nodatavalue, nodatavalue,
+        0.2, nodatavalue, nodatavalue, nodatavalue)
+    numbands = 5
+
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(
+        temp_path, 4, 4, numbands, gdal.GDT_Float32,
+        options=['INTERLEAVE=BAND', 'PHOTOMETRIC=MINISBLACK', 'ALPHA=YES'])
+    for i in range(1, numbands):
+        ds.GetRasterBand(i).SetColorInterpretation(gdal.GCI_GreenBand)
+        ds.GetRasterBand(i).SetNoDataValue(nodatavalue)
+        ds.GetRasterBand(i).WriteRaster(0, 0, 4, 4, data)
+
+    ds.GetRasterBand(numbands).SetColorInterpretation(gdal.GCI_AlphaBand)
+    ds.GetRasterBand(numbands).SetNoDataValue(nodatavalue)
+    ds.GetRasterBand(numbands).WriteRaster(0, 0, 4, 4, struct.pack('f' * 4 * 4,
+        255, 255, 255, 255,
+        255, 255, 255, 255,
+        255, 0, 0, 0,
+        0, 0, 0, 0))
+
+    if external_ovr:
+        ds = None
+        ds = gdal.Open(temp_path)
+    ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
+    assert ds.GetRasterBand(1).GetOverview(0).GetColorInterpretation() == gdal.GCI_GreenBand
+
+    ds = None
+    ds = gdal.Open(temp_path)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2, 'Overview could not be generated'
+    assert ds.GetRasterBand(1).GetOverview(0).GetColorInterpretation() == gdal.GCI_GreenBand
+
+    for i in range(1, numbands):
+        pix = struct.unpack('f', ds.GetRasterBand(i).GetOverview(1).ReadRaster(0,0,1,1))[0]
+        assert abs(pix - 0.3) < 0.01, 'Error in band ' + str(i)
+
+    pix = struct.unpack('f', ds.GetRasterBand(numbands).GetOverview(1).ReadRaster(0,0,1,1))[0]
+    assert pix == 255, 'Error in alpha band '
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(temp_path)
 
 ###############################################################################
 # Cleanup
