@@ -339,6 +339,18 @@ class MajorObject(_object):
 MajorObject_swigregister = _ogr.MajorObject_swigregister
 MajorObject_swigregister(MajorObject)
 
+
+def GetGEOSVersionMajor(*args):
+    """GetGEOSVersionMajor() -> int"""
+    return _ogr.GetGEOSVersionMajor(*args)
+
+def GetGEOSVersionMinor(*args):
+    """GetGEOSVersionMinor() -> int"""
+    return _ogr.GetGEOSVersionMinor(*args)
+
+def GetGEOSVersionMicro(*args):
+    """GetGEOSVersionMicro() -> int"""
+    return _ogr.GetGEOSVersionMicro(*args)
 class StyleTable(_object):
     """Proxy of C++ OGRStyleTableShadow class."""
 
