@@ -68,6 +68,10 @@ constexpr uint16_t DEFAULT_ALPHA_TYPE = EXTRASAMPLE_UNASSALPHA;
 
 uint16_t GTiffGetAlphaValue(const char* pszValue, uint16_t nDefault);
 
+bool GTIFFIsStandardColorInterpretation(GDALDatasetH hSrcDS,
+                                        uint16_t nPhotometric,
+                                        CSLConstList papszCreationOptions);
+
 CPLString CPL_DLL GTiffGetCompressValues(bool& bHasLZW,
                                  bool& bHasDEFLATE,
                                  bool& bHasLZMA,
