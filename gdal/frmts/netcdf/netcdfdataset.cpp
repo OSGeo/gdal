@@ -3368,6 +3368,17 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             // oSRS.SetWellKnownGeogCS("WGS84");
         }
     }
+    else
+    {
+        // Dataset from https://github.com/OSGeo/gdal/issues/4075 has a "crs"
+        // attribute hold on the variable of interest that contains a PROJ.4 string
+        pszValue = FetchAttr(nGroupId, nVarId, "crs");
+        if( pszValue && strstr(pszValue, "+proj=") &&
+            oSRS.importFromProj4(pszValue) == OGRERR_NONE )
+        {
+            bGotCfSRS = true;
+        }
+    }
     // Read projection coordinates.
 
     int nGroupDimXID = -1;
@@ -3392,6 +3403,11 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         // variables without same name than dimension using the same resolving
         // logic. This should handle for example NASA Ocean Color L2 products.
 
+        const bool bIgnoreXYAxisNameChecks =
+            CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS", "NO")) ||
+            // Dataset from https://github.com/OSGeo/gdal/issues/4075 has a res and transform attributes
+            (FetchAttr(nGroupId, nVarId, "res") != nullptr &&
+             FetchAttr(nGroupId, nVarId, "transform") != nullptr);
 
         // Check that they are 1D or 2D variables
         if( nVarDimXID >= 0 )
@@ -3400,7 +3416,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             nc_inq_varndims(nGroupId, nVarDimXID, &ndims);
             if( ndims == 0 || ndims > 2 )
                 nVarDimXID = -1;
-            else
+            else if( !bIgnoreXYAxisNameChecks )
             {
                 if( !NCDFIsVarLongitude(nGroupId, nVarDimXID, nullptr) &&
                     !NCDFIsVarProjectionX(nGroupId, nVarDimXID, nullptr) &&
@@ -3408,6 +3424,11 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     !NCDFIsVarLatitude(nGroupId, nVarDimXID, nullptr) &&
                     !NCDFIsVarProjectionY(nGroupId, nVarDimXID, nullptr) )
                 {
+                    CPLDebug("netCDF",
+                             "Georeferencing ignored due to non-specific "
+                             "enough X axis name. "
+                             "Set GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=YES "
+                             "as configuration option to bypass this check");
                     nVarDimXID = -1;
                 }
             }
@@ -3419,7 +3440,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             nc_inq_varndims(nGroupId, nVarDimYID, &ndims);
             if( ndims == 0 || ndims > 2 )
                 nVarDimYID = -1;
-            else
+            else if( !bIgnoreXYAxisNameChecks )
             {
                 if( !NCDFIsVarLatitude(nGroupId, nVarDimYID, nullptr) &&
                     !NCDFIsVarProjectionY(nGroupId, nVarDimYID, nullptr) &&
@@ -3427,6 +3448,11 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     !NCDFIsVarLongitude(nGroupId, nVarDimYID, nullptr) &&
                     !NCDFIsVarProjectionX(nGroupId, nVarDimYID, nullptr) )
                 {
+                    CPLDebug("netCDF",
+                             "Georeferencing ignored due to non-specific "
+                             "enough Y axis name. "
+                             "Set GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=YES "
+                             "as configuration option to bypass this check");
                     nVarDimYID = -1;
                 }
             }
