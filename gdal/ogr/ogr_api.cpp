@@ -55,28 +55,20 @@ static bool bNonLinearGeometriesEnabled = true;
  * @since GDAL 3.4.0
  */
 #ifdef HAVE_GEOS
-void OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
-    std::string verstring = GEOSversion();
-    auto tokenizer = std::regex("\\.");
-    std::vector<std::string> version(std::sregex_token_iterator(
-        verstring.begin(), verstring.end(), tokenizer, -1),
-        std::sregex_token_iterator());
+bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
+    CPLStringList aosTokens(CSLTokenizeString2(GEOSversion(), ".", 0));
 
-    if (pnMajor && version.size() > 0)
-        *pnMajor = std::stoi(version[0]);
-    if (pnMinor && version.size() > 1)
-        *pnMinor = std::stoi(version[1]);
-    if (pnPatch && version.size() > 2)
-        *pnPatch = std::stoi(version[2]);
+    if (pnMajor && aosTokens.size() > 0)
+        *pnMajor = std::stoi(aosTokens[0]);
+    if (pnMinor && aosTokens.size() > 1)
+        *pnMinor = std::stoi(aosTokens[1]);
+    if (pnPatch && aosTokens.size() > 2)
+        *pnPatch = std::stoi(aosTokens[2]);
+    return TRUE;
 }
 #else
-void OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
-    if (pnMajor)
-        *pnMajor = 0;
-    if (pnMinor)
-        *pnMinor = 0;
-    if (pnPatch)
-        *pnPatch = 0;
+bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
+    return FALSE;
 }
 #endif
 
