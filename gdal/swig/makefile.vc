@@ -14,12 +14,12 @@ python: gdalvars
         cd python
         -del setup_vars.ini
         echo 'GNM_ENABLED=$(INCLUDE_GNM_FRMTS)' > setup_vars.ini
-        $(SWIG) -python -o extensions/gdalconst_wrap.c -outdir osgeo ..\include\gdalconst.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/gdal_wrap.cpp -outdir osgeo ..\include\gdal.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/osr_wrap.cpp -outdir osgeo ..\include\osr.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/ogr_wrap.cpp -outdir osgeo ..\include\ogr.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/gnm_wrap.cpp -outdir osgeo ..\include\gnm.i
-        $(SWIG) -c++ -python -I../include/python -I../include/python/docs -o extensions/gdal_array_wrap.cpp -outdir osgeo ..\include\gdal_array.i
+        $(SWIG) -python -threads -o extensions/gdalconst_wrap.c -outdir osgeo ..\include\gdalconst.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/gdal_wrap.cpp -outdir osgeo ..\include\gdal.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/osr_wrap.cpp -outdir osgeo ..\include\osr.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/ogr_wrap.cpp -outdir osgeo ..\include\ogr.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/gnm_wrap.cpp -outdir osgeo ..\include\gnm.i
+        $(SWIG) -c++ -python -threads -I../include/python -I../include/python/docs -o extensions/gdal_array_wrap.cpp -outdir osgeo ..\include\gdal_array.i
         $(PYDIR)\$(PYEXEC) setup.py build
 	cd ..
 
