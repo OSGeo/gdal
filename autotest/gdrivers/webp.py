@@ -136,4 +136,27 @@ def test_webp_5():
     assert cs4 == 10807, 'did not get expected checksum on band 4'
 
 
+###############################################################################
+# CreateCopy() on RGBA with lossless compression and exact rgb values
 
+
+def test_webp_6():
+
+    if gdaltest.webp_drv is None:
+        pytest.skip()
+
+    md = gdaltest.webp_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1 or md['DMD_CREATIONOPTIONLIST'].find('EXACT') == -1:
+        pytest.skip()
+
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_6.webp', src_ds, options=['LOSSLESS=YES', 'EXACT=1'])
+    src_ds = None
+    cs1 = out_ds.GetRasterBand(1).Checksum()
+    cs4 = out_ds.GetRasterBand(4).Checksum()
+    out_ds = None
+    gdal.Unlink('/vsimem/webp_6.webp')
+
+    assert cs1 == 12603, 'did not get expected checksum on band 1'
+
+    assert cs4 == 10807, 'did not get expected checksum on band 4'

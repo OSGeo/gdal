@@ -695,6 +695,9 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (sConfig.lossless)
         sPicture.use_argb = 1;
 #endif
+#if WEBP_ENCODER_ABI_VERSION >= 0x0209
+    FETCH_AND_SET_OPTION_INT("EXACT", exact, 0, 1);
+#endif
 
     if (!WebPValidateConfig(&sConfig))
     {
@@ -907,6 +910,9 @@ void GDALRegister_WEBP()
 "   <Option name='PARTITIONS' type='int' description='log2(number of token partitions) in [0..3]' default='0'/>\n"
 #if WEBP_ENCODER_ABI_VERSION >= 0x0002
 "   <Option name='PARTITION_LIMIT' type='int' description='quality degradation allowed to fit the 512k limit on prediction modes coding (0=no degradation, 100=full)' default='0'/>\n"
+#endif
+#if WEBP_ENCODER_ABI_VERSION >= 0x0209
+"   <Option name='EXACT' type='int' description='preserve the exact RGB values under transparent area. off=0, on=1' default='0'/>\n"
 #endif
 "</CreationOptionList>\n" );
 
