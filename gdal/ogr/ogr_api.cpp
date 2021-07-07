@@ -51,6 +51,7 @@ static bool bNonLinearGeometriesEnabled = true;
  * @param pnMajor Pointer to major version number, or NULL
  * @param pnMinor Pointer to minor version number, or NULL
  * @param pnPatch Pointer to patch version number, or NULL
+ * @return TRUE if GDAL is built against GEOS
  * @since GDAL 3.4.0
  */
 #ifdef HAVE_GEOS
