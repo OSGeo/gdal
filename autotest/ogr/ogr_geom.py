@@ -3369,7 +3369,7 @@ def test_ogr_geom_makevalid():
     g = g.MakeValid()
     assert g is None or ogrtest.check_feature_geometry(g, 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))') == 0, g.ExportToWkt()
 
-    if ogr.GetGEOSVersionMajor() * 10000 + ogr.GetGEOSVersionMinor() * 100 + osr.GetGEOSVersionMicro() >= 31000:
+    if ogr.GetGEOSVersionMajor() * 10000 + ogr.GetGEOSVersionMinor() * 100 + ogr.GetGEOSVersionMicro() >= 31000:
         g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0),(5 5,15 10,15 0,5 5))')
         # Only since GEOS 3.10
         g = g.MakeValid(['METHOD=STRUCTURE'])
