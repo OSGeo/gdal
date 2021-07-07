@@ -66,7 +66,13 @@ bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
     return TRUE;
 }
 #else
-bool OGRGetGEOSVersion(int *, int *, int *) {
+bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
+    if (pnMajor)
+        *pnMajor = 0;
+    if (pnMinor)
+        *pnMinor = 0;
+    if (pnPatch)
+        *pnPatch = 0;
     return FALSE;
 }
 #endif
