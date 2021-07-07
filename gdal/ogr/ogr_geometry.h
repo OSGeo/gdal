@@ -3338,6 +3338,4 @@ struct CPL_DLL OGRPreparedGeometryUniquePtrDeleter
  */
 typedef std::unique_ptr<OGRPreparedGeometry, OGRPreparedGeometryUniquePtrDeleter> OGRPreparedGeometryUniquePtr;
 
-void CPL_DLL OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch);
-
 #endif /* ndef OGR_GEOMETRY_H_INCLUDED */

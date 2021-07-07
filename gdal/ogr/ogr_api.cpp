@@ -32,13 +32,52 @@
 #include "ogr_api.h"
 
 #include <cstddef>
+#include <regex>
 
 #include "cpl_error.h"
 #include "ogr_geometry.h"
+#include "ogr_geos.h"
 
 CPL_CVSID("$Id$")
 
 static bool bNonLinearGeometriesEnabled = true;
+
+/************************************************************************/
+/*                         OGRGetGEOSVersion()                          */
+/************************************************************************/
+
+/** \brief Get the GEOS version
+ *
+ * @param pnMajor Pointer to major version number, or NULL
+ * @param pnMinor Pointer to minor version number, or NULL
+ * @param pnPatch Pointer to patch version number, or NULL
+ * @since GDAL 3.4.0
+ */
+#ifdef HAVE_GEOS
+void OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
+    std::string verstring = GEOSversion();
+    auto tokenizer = std::regex("\\.");
+    std::vector<std::string> version(std::sregex_token_iterator(
+        verstring.begin(), verstring.end(), tokenizer, -1),
+        std::sregex_token_iterator());
+
+    if (pnMajor && version.size() > 0)
+        *pnMajor = std::stoi(version[0]);
+    if (pnMinor && version.size() > 1)
+        *pnMinor = std::stoi(version[1]);
+    if (pnPatch && version.size() > 2)
+        *pnPatch = std::stoi(version[2]);
+}
+#else
+void OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
+    if (pnMajor)
+        *pnMajor = 0;
+    if (pnMinor)
+        *pnMinor = 0;
+    if (pnPatch)
+        *pnPatch = 0;
+}
+#endif
 
 /************************************************************************/
 /*                           ToPointer()                                */

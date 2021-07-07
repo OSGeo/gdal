@@ -82,38 +82,6 @@ static void OGRGEOSWarningHandler(const char *fmt, ...)
     CPLErrorV( CE_Warning, CPLE_AppDefined, fmt, args );
     va_end(args);
 }
-
-/************************************************************************/
-/*                         OGRGetGEOSVersion()                          */
-/************************************************************************/
-
-/** \brief Get the GEOS version
- *
- * @param pnMajor Pointer to major version number, or NULL
- * @param pnMinor Pointer to minor version number, or NULL
- * @param pnPatch Pointer to patch version number, or NULL
- * @since GDAL 3.4.0
- */
-void OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
-    std::string version = geosversion();
-    std::vector<std::string> split(std::sregex_token_iterator(s.begin(), s.end(), regex("\\."), -1),
-                                                                std::sregex_token_iterator());
-    if (pnMajor && split.length > 0)
-        *pnMajor = std::stoi(split[0]);
-    if (pnMinor && split.length > 1)
-        *pnMinor = std::stoi(split[1]);
-    if (pnPatch && split.length > 2)
-        *pnPatch = std::stoi(split[2]);
-}
-#else
-void OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
-    if (pnMajor)
-        *pnMajor = 0;
-    if (pnMinor)
-        *pnMinor = 0;
-    if (pnPatch)
-        *pnPatch = 0;
-}
 #endif
 
 /************************************************************************/
