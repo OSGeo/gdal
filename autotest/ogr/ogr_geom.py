@@ -3339,7 +3339,7 @@ def test_ogr_geom_makevalid():
     if not ogrtest.have_geos():
         pytest.skip()
 
-    if ogr.GetGEOSVersionMajor() * 10000 + ogr.GetGEOSVersionMinor() * 100 + osr.GetGEOSVersionMicro() < 30800:
+    if ogr.GetGEOSVersionMajor() * 10000 + ogr.GetGEOSVersionMinor() * 100 + ogr.GetGEOSVersionMicro() < 30800:
         pytest.skip()
 
     g = ogr.CreateGeometryFromWkt('POINT (0 0)')
