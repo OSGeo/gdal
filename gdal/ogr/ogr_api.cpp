@@ -64,6 +64,8 @@ bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
         *pnMinor = std::stoi(aosTokens[1]);
     if (pnPatch && aosTokens.size() > 2)
         *pnPatch = std::stoi(aosTokens[2]);
+
+    CSLDestroy(aosTokens);
     return TRUE;
 }
 #else
