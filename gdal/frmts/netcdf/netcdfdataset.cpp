@@ -3373,8 +3373,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         // Dataset from https://github.com/OSGeo/gdal/issues/4075 has a "crs"
         // attribute hold on the variable of interest that contains a PROJ.4 string
         pszValue = FetchAttr(nGroupId, nVarId, "crs");
-        if( pszValue && strstr(pszValue, "+proj=") &&
-            oSRS.importFromProj4(pszValue) == OGRERR_NONE )
+        if( pszValue &&
+            (strstr(pszValue, "+proj=") != nullptr ||
+             strstr(pszValue, "GEOGCS") != nullptr ||
+             strstr(pszValue, "PROJCS") != nullptr ||
+             strstr(pszValue, "EPSG:") != nullptr ) &&
+            oSRS.SetFromUserInput(pszValue) == OGRERR_NONE )
         {
             bGotCfSRS = true;
         }
