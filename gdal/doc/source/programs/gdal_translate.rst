@@ -224,7 +224,7 @@ resampling, and rescaling pixels in the process.
 .. option:: -a_nodata <value>
 
     Assign a specified nodata value to output bands. It can
-    be set to <i>none</i> to avoid setting a nodata value to the output file if
+    be set to ``none`` to avoid setting a nodata value to the output file if
     one exists for the source file. Note that, if the input dataset has a
     nodata value, this does not cause pixel values that are equal to that nodata
     value to be changed to the value specified with this option.
