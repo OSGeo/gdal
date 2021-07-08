@@ -597,6 +597,29 @@ typedef int CPLErr;
 #endif /* FROM_GDAL_I */
 
 /************************************************************************/
+/*                               OGRGetGEOSVersion                      */
+/************************************************************************/
+%inline %{
+int GetGEOSVersionMajor() {
+    int num;
+    OGRGetGEOSVersion(&num, NULL, NULL);
+    return num;
+}
+
+int GetGEOSVersionMinor() {
+    int num;
+    OGRGetGEOSVersion(NULL, &num, NULL);
+    return num;
+}
+
+int GetGEOSVersionMicro() {
+    int num;
+    OGRGetGEOSVersion(NULL, NULL, &num);
+    return num;
+}
+%}
+
+/************************************************************************/
 /*                               OGREnvelope                            */
 /************************************************************************/
 

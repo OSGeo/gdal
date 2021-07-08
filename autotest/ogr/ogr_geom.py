@@ -3339,6 +3339,9 @@ def test_ogr_geom_makevalid():
     if not ogrtest.have_geos():
         pytest.skip()
 
+    if ogr.GetGEOSVersionMajor() * 10000 + ogr.GetGEOSVersionMinor() * 100 + ogr.GetGEOSVersionMicro() < 30800:
+        pytest.skip()
+
     g = ogr.CreateGeometryFromWkt('POINT (0 0)')
     g = g.MakeValid()
     assert g is None or g.ExportToWkt() == 'POINT (0 0)'
@@ -3366,11 +3369,11 @@ def test_ogr_geom_makevalid():
     g = g.MakeValid()
     assert g is None or ogrtest.check_feature_geometry(g, 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))') == 0, g.ExportToWkt()
 
-    g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0),(5 5,15 10,15 0,5 5))')
-    with gdaltest.error_handler():
+    if ogr.GetGEOSVersionMajor() * 10000 + ogr.GetGEOSVersionMinor() * 100 + ogr.GetGEOSVersionMicro() >= 31000:
+        g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0),(5 5,15 10,15 0,5 5))')
         # Only since GEOS 3.10
         g = g.MakeValid(['METHOD=STRUCTURE'])
-    assert g is None or ogrtest.check_feature_geometry(g, 'POLYGON ((0 10,10 10,10.0 7.5,5 5,10.0 2.5,10 0,0 0,0 10))') == 0, g.ExportToWkt()
+        assert g is None or ogrtest.check_feature_geometry(g, 'POLYGON ((0 10,10 10,10.0 7.5,5 5,10.0 2.5,10 0,0 0,0 10))') == 0, g.ExportToWkt()
 
     return 'success'
 

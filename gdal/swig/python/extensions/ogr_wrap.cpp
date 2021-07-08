@@ -3674,6 +3674,25 @@ SWIGINTERN char const *GDALMajorObjectShadow_GetMetadataItem(GDALMajorObjectShad
 SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadataItem(GDALMajorObjectShadow *self,char const *pszName,char const *pszValue,char const *pszDomain=""){
     return GDALSetMetadataItem( self, pszName, pszValue, pszDomain);
   }
+
+int GetGEOSVersionMajor() {
+    int num;
+    OGRGetGEOSVersion(&num, NULL, NULL);
+    return num;
+}
+
+int GetGEOSVersionMinor() {
+    int num;
+    OGRGetGEOSVersion(NULL, &num, NULL);
+    return num;
+}
+
+int GetGEOSVersionMicro() {
+    int num;
+    OGRGetGEOSVersion(NULL, NULL, &num);
+    return num;
+}
+
 SWIGINTERN OGRStyleTableShadow *new_OGRStyleTableShadow(){
         return (OGRStyleTableShadow*) OGR_STBL_Create();
    }
@@ -6734,6 +6753,99 @@ SWIGINTERN PyObject *MajorObject_swigregister(PyObject *SWIGUNUSEDPARM(self), Py
   SWIG_TypeNewClientData(SWIGTYPE_p_GDALMajorObjectShadow, SWIG_NewClientData(obj));
   return SWIG_Py_Void();
 }
+
+SWIGINTERN PyObject *_wrap_GetGEOSVersionMajor(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetGEOSVersionMajor")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)GetGEOSVersionMajor();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetGEOSVersionMinor(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetGEOSVersionMinor")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)GetGEOSVersionMinor();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetGEOSVersionMicro(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)":GetGEOSVersionMicro")) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)GetGEOSVersionMicro();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
 
 SWIGINTERN PyObject *_wrap_new_StyleTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
@@ -30593,6 +30705,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"MajorObject_GetMetadataItem", _wrap_MajorObject_GetMetadataItem, METH_VARARGS, (char *)"MajorObject_GetMetadataItem(MajorObject self, char const * pszName, char const * pszDomain) -> char const *"},
 	 { (char *)"MajorObject_SetMetadataItem", _wrap_MajorObject_SetMetadataItem, METH_VARARGS, (char *)"MajorObject_SetMetadataItem(MajorObject self, char const * pszName, char const * pszValue, char const * pszDomain) -> CPLErr"},
 	 { (char *)"MajorObject_swigregister", MajorObject_swigregister, METH_VARARGS, NULL},
+	 { (char *)"GetGEOSVersionMajor", _wrap_GetGEOSVersionMajor, METH_VARARGS, (char *)"GetGEOSVersionMajor() -> int"},
+	 { (char *)"GetGEOSVersionMinor", _wrap_GetGEOSVersionMinor, METH_VARARGS, (char *)"GetGEOSVersionMinor() -> int"},
+	 { (char *)"GetGEOSVersionMicro", _wrap_GetGEOSVersionMicro, METH_VARARGS, (char *)"GetGEOSVersionMicro() -> int"},
 	 { (char *)"new_StyleTable", _wrap_new_StyleTable, METH_VARARGS, (char *)"new_StyleTable() -> StyleTable"},
 	 { (char *)"delete_StyleTable", _wrap_delete_StyleTable, METH_VARARGS, (char *)"delete_StyleTable(StyleTable self)"},
 	 { (char *)"StyleTable_AddStyle", _wrap_StyleTable_AddStyle, METH_VARARGS, (char *)"StyleTable_AddStyle(StyleTable self, char const * pszName, char const * pszStyleString) -> int"},
