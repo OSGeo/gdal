@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: VRC.h,v 1.23 2021/06/21 13:03:42 werdna Exp $
+ * $Id: VRC.h,v 1.24 2021/07/08 11:56:03 werdna Exp $
  *
  * Author:  Andrew C Aitchison
  *
@@ -110,28 +110,28 @@ class VRCDataset : public GDALPamDataset
 {
     friend class VRCRasterBand;
     
-    VSILFILE            *fp;
-    GDALColorTable      *poColorTable;
+    VSILFILE            *fp = nullptr;
+    GDALColorTable      *poColorTable = nullptr;
     GByte       abyHeader[0x5a0];
     
-    unsigned int *anColumnIndex;
-    unsigned int *anTileIndex;
-    unsigned int nMagic;
-    double dfPixelMetres;
-    signed int nMapID;
-    signed int nLeft, nRight, nTop, nBottom;
-    signed int nTopSkipPix, nRightSkipPix;
-    unsigned int nScale;
-    unsigned int nMaxOverviewCount;
-    short nCountry;
+    unsigned int *anColumnIndex = nullptr;
+    unsigned int *anTileIndex = nullptr;
+    unsigned int nMagic=0;
+    double dfPixelMetres=0.0;
+    signed int nMapID=-1;
+    signed int nLeft=INT_MAX, nRight=INT_MAX, nTop=INT_MIN, nBottom=INT_MIN;
+    signed int nTopSkipPix=0, nRightSkipPix=0;
+    unsigned int nScale=0;
+    unsigned int nMaxOverviewCount=7;
+    short nCountry=-1;
     OGRSpatialReference* poSRS = nullptr;
 
     std::string sLongTitle;
     std::string sCopyright;
     // std::string sDatum;
 
-    unsigned int tileSizeMax, tileSizeMin;
-    int tileXcount, tileYcount;
+    unsigned int tileSizeMax=0, tileSizeMin=INT_MAX;
+    int tileXcount=0, tileYcount=0;
 
     unsigned int* VRCGetTileIndex( unsigned int nTileIndexStart );
     unsigned int* VRCBuildTileIndex( unsigned int nTileIndexStart );

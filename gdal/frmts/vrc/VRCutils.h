@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: VRCutils.h,v 1.4 2021/04/28 15:38:13 werdna Exp werdna $
+ * $Id: VRCutils.h,v 1.6 2021/06/26 19:10:13 werdna Exp $
  *
  * Author:  Andrew C Aitchison
  *
@@ -16,23 +16,21 @@
 #pragma clang diagnostic push
 // #pragma clang diagnostic ignored "-Wformat-pedantic"
 #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
+#pragma clang diagnostic ignored "-Wdouble-promotion"
+#pragma clang diagnostic ignored "-Wfloat-equal"
 #pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
 #pragma clang diagnostic ignored "-Winconsistent-missing-destructor-override"
 #pragma clang diagnostic ignored "-Wpadded"
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#pragma clang diagnostic ignored "-Wsuggest-destructor-override"
+#pragma clang diagnostic ignored "-Wundef"
+#pragma clang diagnostic ignored "-Wunknown-warning-option"
 #pragma clang diagnostic ignored "-Wunused-template"
 #pragma clang diagnostic ignored "-Wweak-vtables"
 #include "gdal_pam.h"
 #pragma clang diagnostic pop
 #include "ogr_spatialref.h"
 //#include "cpl_string.h"
-
-// We have not fully deciphered the data format
-// of VRC files with magic=0x01ce6336.
-// Set *one* of these definitions (to 1)
-// VRC36_PIXEL_IS_PIXEL is to be assumed if none are set.
-#define VRC36_PIXEL_IS_PIXEL 1
-// #define VRC36_PIXEL_IS_TILE 1
-// #define VRC36_PIXEL_IS_FILE 1
 
 #if GDAL_VERSION_NUM < 2010000
 #define GDAL_IDENTIFY_UNKNOWN -1

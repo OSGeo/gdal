@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: VRHV.cpp,v 1.101 2021/06/18 17:33:29 werdna Exp werdna $
+ * $Id: VRHV.cpp,v 1.102 2021/06/26 20:28:41 werdna Exp werdna $
  *
  * Project:  GDAL
  * Purpose:  Viewranger GDAL Driver
@@ -14,31 +14,9 @@
 //#ifdef FRMT_vrc
 //#ifdef FRMT_vrhv
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation-unknown-command" // 3 errors
-#pragma clang diagnostic ignored "-Wdouble-promotion"
-#pragma clang diagnostic ignored "-Wfloat-equal"
-#pragma clang diagnostic ignored "-Wimplicit-int-float-conversion" // 1 error
-#pragma clang diagnostic ignored "-Winconsistent-missing-destructor-override" // 1 error
-#pragma clang diagnostic ignored "-Wpadded"          // 11 errors
-#pragma clang diagnostic ignored "-Wsuggest-destructor-override"
-#pragma clang diagnostic ignored "-Wundef"
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#pragma clang diagnostic ignored "-Wunknown-warning-option"
-#pragma clang diagnostic ignored "-Wunused-template" // 1 error
-#pragma clang diagnostic ignored "-Wweak-vtables"    // 1 error
+#include "VRCutils.h"
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
-
-#include "cpl_port.h"
-#include "cpl_string.h"
-
-#pragma clang diagnostic pop
-
-#include "VRC.h"
-
-CPL_CVSID("$Id: VRHV.cpp,v 1.101 2021/06/18 17:33:29 werdna Exp werdna $")
+CPL_CVSID("$Id: VRHV.cpp,v 1.102 2021/06/26 20:28:41 werdna Exp werdna $")
 
 CPL_C_START
 void   GDALRegister_VRHV(void);
@@ -70,8 +48,6 @@ static const unsigned int nVRVNoData = 255;
 
 // typedef struct {double lat; double lon; } latlon;
 
-
-#include "VRCutils.h"
 
 /************************************************************************/
 /* ==================================================================== */
@@ -598,20 +574,24 @@ CPLErr VRHVDataset::GetGeoTransform( double * padfTransform )
         // USA, Discovery (Spain) and some Belgium (VRH height) maps have coordinate unit of
         //   1 degree/ten million
         CPLDebug("ViewrangerHV", "country/srs 17 USA?Belgium?Discovery(Spain) grid is unknown. Current guess is unlikely to be correct.");
-#if 0 // standard until 20 Sept 2020
+        CPLDebug("ViewrangerHV", "raw position: TL: %d %d BR: %d %d",
+                 nTop,nLeft,nBottom,nRight);
+#if 1 // standard until 20 Sept 2020
         dLeft   /= tenMillion;
         dRight  /= tenMillion;
         dTop    /= tenMillion;
         dBottom /= tenMillion;
+        CPLDebug("ViewrangerHV", "scaling by 10 million: TL: %g %g BR: %g %g",
+                 dTop,dLeft,dBottom,dRight);
 #else
         const double nineMillion = 9.0 * 1000 * 1000;
         dLeft   /= nineMillion;
         dRight  /= nineMillion;
         dTop    /= nineMillion;
         dBottom /= nineMillion;
-#endif
-        CPLDebug("ViewrangerHV", "scaling by 10 million: TL: %g %g BR: %g %g",
+        CPLDebug("ViewrangerHV", "scaling by 9 million: TL: %g %g BR: %g %g",
                  dTop,dLeft,dBottom,dRight);
+#endif
     } else if (nCountry == 155) {
         // New South Wales srs is not quite GDA94/MGA55 EPSG:28355
         dLeft   = 1.0*nLeft;

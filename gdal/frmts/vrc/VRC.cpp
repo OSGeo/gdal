@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: VRC.cpp,v 1.279 2021/06/20 08:58:41 werdna Exp $
+ * $Id: VRC.cpp,v 1.281 2021/07/08 11:52:49 werdna Exp $
  *
  * Project:  GDAL
  * Purpose:  Viewranger GDAL Driver
@@ -18,49 +18,17 @@
 // #ifdef FRMT_vrc
 
 #include "VRC.h"
-
 #include "png_crc.h"  // for crc pngcrc_for_VRC, used in:
                     //   PNGCRCcheck
 
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
-#pragma clang diagnostic ignored "-Wdouble-promotion"
-#pragma clang diagnostic ignored "-Wfloat-equal"
-#pragma clang diagnostic ignored "-Wmicrosoft-enum-value"
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#pragma clang diagnostic ignored "-Wswitch-enum"
-#pragma clang diagnostic ignored "-Wundef"
-#pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
-#pragma clang diagnostic ignored "-Wpadded"
-#pragma clang diagnostic ignored "-Wweak-vtables"
-#pragma clang diagnostic ignored "-Wsuggest-destructor-override"
-#pragma clang diagnostic ignored "-Winconsistent-missing-destructor-override"
-#pragma clang diagnostic ignored "-Wunused-template"
-// #pragma clang diagnostic ignored ""
-#pragma clang diagnostic ignored "-Wformat-pedantic"
-#pragma clang diagnostic ignored "-Wc++98-compat"
-#pragma clang diagnostic ignored "-Wc++98-compat-pedantic"
-#pragma clang diagnostic ignored "-Wsign-conversion"
-
-#include "cpl_port.h"
-#include "cpl_string.h"
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
-
-#pragma clang diagnostic pop
-
-#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winfinite-recursion"
 //#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-CPL_CVSID("$Id: VRC.cpp,v 1.279 2021/06/20 08:58:41 werdna Exp $")
+CPL_CVSID("$Id: VRC.cpp,v 1.281 2021/07/08 11:52:49 werdna Exp $")
 #pragma clang diagnostic push
-
-#include <cerrno>
-#include <cstdio>
 
 CPL_C_START
 void CPL_DLL GDALRegister_VRC(void);
-
 CPL_C_END
 
 void VRC_file_strerror_r(int nFileErr, char* const buf, size_t buflen)
@@ -2026,11 +1994,11 @@ GDALDataset *VRCDataset::Open( GDALOpenInfo * poOpenInfo )
             // It ignores CPLDebug then deduces that dfheight2 is not used.
             double dfheight2 =
                 (anCorners[3]-anCorners[1]) / poDS->dfPixelMetres;
-#endif
             CPLDebug("Viewranger",
                      "height either %d %g or %g pixels",
                      poDS->nRasterYSize, dfHeightPix, dfheight2
                      );
+#endif
         }
 
         if (nFullHeightPix < dfHeightPix) {

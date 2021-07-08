@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: VRCthirtysix.cpp,v 1.19 2021/06/20 08:58:41 werdna Exp werdna $
+ * $Id: VRCthirtysix.cpp,v 1.20 2021/06/26 20:37:41 werdna Exp $
  *
  * Author:  Andrew C Aitchison
  *
