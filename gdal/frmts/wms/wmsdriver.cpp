@@ -168,11 +168,22 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
                     dfEastLongitudeDeg, dfNorthLatitudeDeg;
             oSRS.GetAreaOfUse(&dfWestLongitudeDeg, &dfSouthLatitudeDeg,
                     &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr);
-            OGRCoordinateTransformation *poCT = 
+            auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
                     OGRCreateCoordinateTransformation(OGRSpatialReference::GetWGS84SRS(),
-                                                        &oSRS);
-            poCT->Transform(1, &dfWestLongitudeDeg, &dfNorthLatitudeDeg);
-            poCT->Transform(1, &dfEastLongitudeDeg, &dfSouthLatitudeDeg);
+                                                        &oSRS));
+            if (!poCT)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "Failed creating a coordinate transformation for the requested SRS");
+                return nullptr;
+            }
+            if (!poCT->Transform(1, &dfWestLongitudeDeg, &dfNorthLatitudeDeg) ||
+                !poCT->Transform(1, &dfEastLongitudeDeg, &dfSouthLatitudeDeg))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, 
+                    "Failed transforming coordinates to the requested SRS");
+                return nullptr;
+            }
             const double dfMaxX = std::max(dfWestLongitudeDeg, dfEastLongitudeDeg);
             const double dfMinX = std::min(dfWestLongitudeDeg, dfEastLongitudeDeg);
             const double dfMaxY = std::max(dfNorthLatitudeDeg, dfSouthLatitudeDeg);
@@ -182,7 +193,6 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             } else {
                 osBBOX = CPLSPrintf("%lf,%lf,%lf,%lf", dfMinX, dfMinY, dfMaxX, dfMaxY);
             }
-            delete poCT;
         }
     }
 
