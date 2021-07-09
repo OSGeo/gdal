@@ -267,7 +267,7 @@ The allowed subelements for VRTRasterBand are :
     <Category>Soybeans</Category>
   </CategoryNames>
 
-- **SimpleSource**: The SimpleSource_ indicates that raster data should be read from a separate dataset, indicating the dataset, and band to be read from, and how the data should map into this bands raster space.
+- **SimpleSource**: The SimpleSource_ indicates that raster data should be read from a separate dataset, indicating the dataset, and band to be read from, and how the data should map into this band's raster space.
 
 - **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
 
@@ -293,7 +293,7 @@ filename should be interpreted as relative to the .vrt file (value is 1)
 or not relative to the .vrt file (value is 0).  The default is 0.
 
 Some characteristics of the source band can be specified in the optional
-SourceProperties tag to enable the VRT driver to differ the opening of the source
+SourceProperties tag to enable the VRT driver to defer the opening of the source
 dataset until it really needs to read data from it. This is particularly useful
 when building VRTs with a big number of source datasets. The needed parameters are the
 raster dimensions, the size of the blocks and the data type. If the SourceProperties
@@ -796,24 +796,95 @@ Default Pixel Functions
 
 GDAL provides a set of default pixel functions that can be used without writing new code:
 
-- **real**: extract real part from a single raster band (just a copy if the input is non-complex)
-- **imag**: extract imaginary part from a single raster band (0 for non-complex)
-- **complex**: make a complex band merging two bands used as real and imag values
-- **mod**: extract module from a single raster band (real or complex)
-- **phase**: extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
-- **conj**: computes the complex conjugate of a single raster band (just a copy if the input is non-complex)
-- **sum**: sum 2 or more raster bands
-- **diff**: computes the difference between 2 raster bands (b1 - b2)
-- **mul**: multiply 2 or more raster bands
-- **cmul**: multiply the first band for the complex conjugate of the second
-- **inv**: inverse (1./x). Note: no check is performed on zero division
-- **intensity**: computes the intensity Re(x*conj(x)) of a single raster band (real or complex)
-- **sqrt**:perform the square root of a single raster band (real only)
-- **pow**: raise a single raster band to a constant power, specified with argument "power" (real only)
-- **log10**: compute the logarithm (base 10) of the abs of a single raster band (real or complex): log10( abs( x ) )
-- **dB**: perform conversion to dB of the abs of a single raster band (real or complex): 20. * log10( abs( x ) )
-- **dB2amp**: perform scale conversion from logarithmic to linear (amplitude) (i.e. 10 ^ ( x / 20 ) ) of a single raster band (real only)
-- **dB2pow**: perform scale conversion from logarithmic to linear (power) (i.e. 10 ^ ( x / 10 ) ) of a single raster band (real only)
+
+.. list-table::
+   :widths: 15 10 20 55
+   :header-rows: 1
+
+   * - PixelFunctionType
+     - Number of input sources
+     - PixelFunctionArguments
+     - Description
+   * - **cmul**
+     - 2
+     - -
+     - multiply the first band for the complex conjugate of the second
+   * - **complex**
+     - 2
+     - -
+     - make a complex band merging two bands used as real and imag values
+   * - **conj**
+     - 1
+     - -
+     - computes the complex conjugate of a single raster band (just a copy if the input is non-complex)
+   * - **dB**
+     - 1
+     - -
+     - perform conversion to dB of the abs of a single raster band (real or complex): ``20. * log10( abs( x ) )``
+   * - **dB2amp**
+     - 1
+     - -
+     - perform scale conversion from logarithmic to linear (amplitude) (i.e. ``10 ^ ( x / 20 )`` ) of a single raster band (real only)
+   * - **dB2pow**
+     - 1
+     - -
+     - perform scale conversion from logarithmic to linear (power) (i.e. ``10 ^ ( x / 10 )`` ) of a single raster band (real only)
+   * - **diff**
+     - 2
+     - -
+     - computes the difference between 2 raster bands (``b1 - b2``)
+   * - **imag**
+     - 1
+     - -
+     - extract imaginary part from a single raster band (0 for non-complex)
+   * - **intensity**
+     - 1
+     - -
+     - computes the intensity ``Re(x*conj(x))`` of a single raster band (real or complex)
+   * - **interpolate_exp**
+     - >= 2
+     - ``t0``, ``dt``, ``t``
+     - interpolate a value at time (or position) ``t`` given input sources beginning at position ``t0`` with spacing ``dt`` using exponential interpolation
+   * - **interpolate_linear**
+     - >= 2
+     - ``t0``, ``dt``, ``t``
+     - interpolate a value at time (or position) ``t`` given input sources beginning at ``t0`` with spacing ``dt`` using linear interpolation
+   * - **inv**
+     - 1
+     - -
+     - inverse (1./x). Note: no check is performed on zero division
+   * - **log10**
+     - 1
+     - -
+     - compute the logarithm (base 10) of the abs of a single raster band (real or complex): ``log10( abs( x ) )``
+   * - **mod**
+     - 1
+     - -
+     - extract module from a single raster band (real or complex)
+   * - **mul**
+     - >= 2
+     - -
+     - multiply 2 or more raster bands
+   * - **phase**
+     - 1
+     - -
+     - extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
+   * - **pow**
+     - 1
+     - ``power``
+     - raise a single raster band to a constant power, specified with argument ``power`` (real only)
+   * - **real**
+     - 1
+     - -
+     - extract real part from a single raster band (just a copy if the input is non-complex)
+   * - **sqrt**
+     - 1
+     - -
+     - perform the square root of a single raster band (real only)
+   * - **sum**
+     - >= 2
+     - -
+     - sum 2 or more raster bands
 
 Writing Pixel Functions
 +++++++++++++++++++++++
