@@ -164,9 +164,13 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             oSRS.SetFromUserInput(osSRSValue);
             oSRS.AutoIdentifyEPSG();
 
-            double dfWestLongitudeDeg, dfSouthLatitudeDeg, dfEastLongitudeDeg, dfNorthLatitudeDeg;
-            oSRS.GetAreaOfUse(&dfWestLongitudeDeg, &dfSouthLatitudeDeg, &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr);
-            OGRCoordinateTransformation *poCT = OGRCreateCoordinateTransformation(OGRSpatialReference::GetWGS84SRS(), &oSRS);
+            double dfWestLongitudeDeg, dfSouthLatitudeDeg,
+                    dfEastLongitudeDeg, dfNorthLatitudeDeg;
+            oSRS.GetAreaOfUse(&dfWestLongitudeDeg, &dfSouthLatitudeDeg,
+                    &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr);
+            OGRCoordinateTransformation *poCT = 
+                    OGRCreateCoordinateTransformation(OGRSpatialReference::GetWGS84SRS(),
+                                                        &oSRS);
             poCT->Transform(1, &dfWestLongitudeDeg, &dfNorthLatitudeDeg);
             poCT->Transform(1, &dfEastLongitudeDeg, &dfSouthLatitudeDeg);
             const double dfMaxX = std::max(dfWestLongitudeDeg, dfEastLongitudeDeg);
