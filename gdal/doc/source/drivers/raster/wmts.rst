@@ -236,6 +236,15 @@ It is important that there be no spaces or other content before the
 |                                   | configuration option is not       |
 |                                   | specified)                        |
 +-----------------------------------+-----------------------------------+
+| <Type>file</Type>                 | Cache type. Now supported only    |
+|                                   | 'file' and 'none' type. In 'file' |
+|                                   | cache type files are stored in    |
+|                                   | file system folders. (optional,   |
+|                                   | defaults to 'file' if             |
+|                                   | GDAL_DEFAULT_WMS_CACHE_TYPE       |
+|                                   | configuration option is not       |
+|                                   | specified)                        |
++-----------------------------------+-----------------------------------+
 | <Depth>2</Depth>                  | Number of directory layers. 2     |
 |                                   | will result in files being        |
 |                                   | written as                        |

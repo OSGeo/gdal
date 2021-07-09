@@ -371,6 +371,15 @@ def test_wms_8():
     gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", None)
     assert cs == 0, 'cs != 0'
 
+    # Test with GDAL_DEFAULT_WMS_CACHE_TYPE
+    # Now, we should not read from the cache anymore
+    gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_TYPE", "none")
+    ds = gdal.Open(tms_nocache)
+    cs = ds.GetRasterBand(1).GetOverview(ovr_upper_level).Checksum()
+    ds = None
+    gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_TYPE", None)
+    assert cs != 0, 'cs == 0'
+
     # Check maxsize and expired tags
     tms_expires = """<GDAL_WMS>
     <Service name="TMS">
