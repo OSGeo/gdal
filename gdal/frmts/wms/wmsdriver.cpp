@@ -48,6 +48,7 @@
 
 #include <limits>
 #include <utility>
+#include <algorithm>
 
 CPL_CVSID("$Id$")
 
@@ -206,6 +207,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     const char* pszMinY = papszTokens[1];
     const char* pszMaxX = papszTokens[2];
     const char* pszMaxY = papszTokens[3];
+
 
     if (osBBOXOrder.compare("yxYX") == 0)
     {
