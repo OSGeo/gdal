@@ -146,14 +146,40 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     }
 
     if (osSRSValue.empty())
+    {
         osSRSValue = "EPSG:4326";
 
-    if (osBBOX.empty())
+        if (osBBOX.empty())
+        {
+            if (osBBOXOrder.compare("yxYX") == 0)
+                osBBOX = "-90,-180,90,180";
+            else
+                osBBOX = "-180,-90,180,90";
+        }
+    }
+    else
     {
-        if (osBBOXOrder.compare("yxYX") == 0)
-            osBBOX = "-90,-180,90,180";
-        else
-            osBBOX = "-180,-90,180,90";
+        if (osBBOX.empty()) {
+            OGRSpatialReference oSRS;
+            oSRS.SetFromUserInput(osSRSValue);
+            oSRS.AutoIdentifyEPSG();
+
+            double dfWestLongitudeDeg, dfSouthLatitudeDeg, dfEastLongitudeDeg, dfNorthLatitudeDeg;
+            oSRS.GetAreaOfUse(&dfWestLongitudeDeg, &dfSouthLatitudeDeg, &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr);
+            OGRCoordinateTransformation *poCT = OGRCreateCoordinateTransformation(OGRSpatialReference::GetWGS84SRS(), &oSRS);
+            poCT->Transform(1, &dfWestLongitudeDeg, &dfNorthLatitudeDeg);
+            poCT->Transform(1, &dfEastLongitudeDeg, &dfSouthLatitudeDeg);
+            const double dfMaxX = std::max(dfWestLongitudeDeg, dfEastLongitudeDeg);
+            const double dfMinX = std::min(dfWestLongitudeDeg, dfEastLongitudeDeg);
+            const double dfMaxY = std::max(dfNorthLatitudeDeg, dfSouthLatitudeDeg);
+            const double dfMinY = std::min(dfNorthLatitudeDeg, dfSouthLatitudeDeg);
+            if (osBBOXOrder.compare("yxYX") == 0) {
+                osBBOX = CPLSPrintf("%lf,%lf,%lf,%lf", dfMinY, dfMinX, dfMaxY, dfMaxX);
+            } else {
+                osBBOX = CPLSPrintf("%lf,%lf,%lf,%lf", dfMinX, dfMinY, dfMaxX, dfMaxY);
+            }
+            delete poCT;
+        }
     }
 
     char** papszTokens = CSLTokenizeStringComplex(osBBOX, ",", 0, 0);
