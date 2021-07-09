@@ -3,7 +3,7 @@ OBJ	=	xpmdataset.o
 
 include ../../GDALmake.opt
 
-XTRAOPTS = -I../mem
+XTRAOPTS = -iquote ../mem
 
 CPPFLAGS	:=	 $(XTRAOPTS) $(CPPFLAGS)
 

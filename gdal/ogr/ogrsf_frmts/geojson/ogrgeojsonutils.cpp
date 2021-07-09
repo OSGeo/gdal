@@ -29,9 +29,9 @@
 
 #include "ogrgeojsonutils.h"
 #include <assert.h>
-#include <cpl_port.h>
-#include <cpl_conv.h>
-#include <ogr_geometry.h>
+#include "cpl_port.h"
+#include "cpl_conv.h"
+#include "ogr_geometry.h"
 #include <json.h> // JSON-C
 
 #include <algorithm>

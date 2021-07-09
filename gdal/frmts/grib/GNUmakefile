@@ -1,6 +1,6 @@
 
 
-EXTRAFLAGS = -Idegrib/degrib -I../mem
+EXTRAFLAGS = -iquote degrib/degrib -iquote ../mem
 
 include ../../GDALmake.opt
 
@@ -28,7 +28,7 @@ CPPFLAGS	:=	 $(EXTRAFLAGS) $(CPPFLAGS)
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 ../o/%.$(OBJ_EXT):	degrib/degrib/%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib/g2clib $< -o $@
+	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -iquote degrib/g2clib $< -o $@
 
 ../o/%.$(OBJ_EXT):	degrib/degrib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
@@ -40,7 +40,7 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	degrib/degrib/%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib/g2clib $< -o $@
+	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -iquote degrib/g2clib $< -o $@
 
 %.$(OBJ_EXT):	degrib/degrib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@

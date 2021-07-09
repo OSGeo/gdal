@@ -13,7 +13,7 @@ OGR_OBJ  +=   kml.o kmlnode.o kmlvector.o
 CPPFLAGS +=   -DHAVE_EXPAT
 endif
 
-CPPFLAGS := -I. $(CPPFLAGS) $(EXPAT_INCLUDE)
+CPPFLAGS := -iquote . $(CPPFLAGS) $(EXPAT_INCLUDE)
 
 #CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
 

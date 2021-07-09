@@ -3022,9 +3022,9 @@ elif test "$with_hdf5" = "yes" -o "$with_hdf5" = "" ; then
     fi
 
     dnl Some Linux distros install hdf include files here.
-    if test "$HAVE_HDF5" = "yes" -a -r /usr/include/hdf5.h ; then
-        HDF5_INCLUDE="-I/usr/include"
-    fi
+    dnl if test "$HAVE_HDF5" = "yes" -a -r /usr/include/hdf5.h ; then
+    dnl    HDF5_INCLUDE="-I/usr/include"
+    dnl fi
   fi
 
 else
@@ -4917,7 +4917,7 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
       [  --with-podofo-lib=ARG   podofo Link Flags (i.e. -L/xxx -lpodofo ...). Mainly for static libpodofo],,,)
 
     if test "$with_podofo" = "yes" ; then
-        TEST_PODOFO_INC="-I/usr/include -I/usr/include/podofo"
+        TEST_PODOFO_INC="-I/usr/include/podofo"
         PODOFO_LIB="-lpodofo"
     else
         TEST_PODOFO_INC="-I$with_podofo/include -I$with_podofo/include/podofo"

@@ -33152,10 +33152,7 @@ fi
         LIBS="-lhdf5 $LIBS"
     fi
 
-        if test "$HAVE_HDF5" = "yes" -a -r /usr/include/hdf5.h ; then
-        HDF5_INCLUDE="-I/usr/include"
-    fi
-  fi
+                  fi
 
 else
 
@@ -40165,7 +40162,7 @@ fi
 
 
     if test "$with_podofo" = "yes" ; then
-        TEST_PODOFO_INC="-I/usr/include -I/usr/include/podofo"
+        TEST_PODOFO_INC="-I/usr/include/podofo"
         PODOFO_LIB="-lpodofo"
     else
         TEST_PODOFO_INC="-I$with_podofo/include -I$with_podofo/include/podofo"

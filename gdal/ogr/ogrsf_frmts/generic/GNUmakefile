@@ -95,7 +95,7 @@ ifeq ($(HAVE_MONGOCXXV3),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMONGODBV3_ENABLED
 endif
 
-CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
+CPPFLAGS	:=	-iquote .. -iquote ../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

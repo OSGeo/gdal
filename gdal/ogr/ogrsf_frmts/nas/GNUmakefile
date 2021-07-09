@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 OBJ =	ogrnasdriver.o ogrnasdatasource.o ogrnaslayer.o \
 	nashandler.o nasreader.o ogrnasrelationlayer.o
 
-CPPFLAGS :=	-I../gml -I.. -I../.. -DHAVE_XERCES=1 \
+CPPFLAGS :=	-iquote ../gml -iquote .. -iquote ../.. -DHAVE_XERCES=1 \
 		 $(XERCES_INCLUDE) $(CPPFLAGS)
 
 # To satisfy One Definition Rule, we have to define HAVE_EXPAT if it is used

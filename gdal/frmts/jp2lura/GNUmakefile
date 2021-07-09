@@ -2,7 +2,7 @@ include ../../GDALmake.opt
 
 OBJ	=	jp2luracallbacks.o jp2lurarasterband.o jp2luradataset.o
 
-CPPFLAGS	:=	 -DFRMT_jp2lura -I.. $(CPPFLAGS) $(JP2LURA_INCLUDE) $(EXTRA_CFLAGS)
+CPPFLAGS	:=	 -DFRMT_jp2lura -iquote .. $(CPPFLAGS) $(JP2LURA_INCLUDE) $(EXTRA_CFLAGS)
 
 PLUGIN_SO =	gdal_JP2Lura.so
 

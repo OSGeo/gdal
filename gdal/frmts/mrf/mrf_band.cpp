@@ -43,9 +43,9 @@
 ****************************************************************************/
 
 #include "marfa.h"
-#include <gdal_priv.h>
-#include <ogr_srs_api.h>
-#include <ogr_spatialref.h>
+#include "gdal_priv.h"
+#include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 
 #include <vector>
 #include <assert.h>

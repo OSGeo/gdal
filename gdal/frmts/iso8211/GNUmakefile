@@ -5,7 +5,7 @@ VERSION =	1.4
 DISTDIR =	iso8211lib-$(VERSION)
 WEB_DIR =	/u/www/projects/iso8211
 
-CPPFLAGS	:=	-I. -I../../port $(CPPFLAGS)
+CPPFLAGS	:=	-iquote . -iquote ../../port $(CPPFLAGS)
 
 ISOLIB = libiso8211.a
 OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \

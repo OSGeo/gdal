@@ -3,14 +3,14 @@
 #define __STDC_LIMIT_MACROS 1
 #endif
 
-#include <cpl_port.h>
+#include "cpl_port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <gdal_pam.h>
-#include <cpl_conv.h>
+#include "gdal_pam.h"
+#include "cpl_conv.h"
 
 CPL_C_START
 #include "grib2.h"

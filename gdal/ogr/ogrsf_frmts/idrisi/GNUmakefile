@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogridrisidriver.o ogridrisidatasource.o ogridrisilayer.o
 
-CPPFLAGS	:=	-I.. -I../.. -I../../../frmts/idrisi  $(CPPFLAGS)
+CPPFLAGS	:=	-iquote .. -iquote ../.. -iquote ../../../frmts/idrisi  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

@@ -42,7 +42,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <cpl_http.h>
+#include "cpl_http.h"
 
 using TileCacheType = lru11::Cache<std::string,
                                    std::shared_ptr<GDALDataset>, std::mutex>;

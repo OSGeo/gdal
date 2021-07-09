@@ -32,7 +32,7 @@
 #define OGR_GEOJSON_H_INCLUDED
 
 #include "cpl_port.h"
-#include <ogrsf_frmts.h>
+#include "ogrsf_frmts.h"
 #include "../mem/ogr_mem.h"
 
 #include <cstdio>

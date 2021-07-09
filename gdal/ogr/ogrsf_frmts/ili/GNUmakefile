@@ -11,7 +11,7 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
 
-CPPFLAGS :=	-I.. -I../.. -DHAVE_XERCES $(XERCES_INCLUDE) $(CPPFLAGS)
+CPPFLAGS :=	-iquote .. -iquote ../.. -DHAVE_XERCES $(XERCES_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

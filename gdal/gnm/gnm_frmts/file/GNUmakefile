@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	gnmfiledriver.o gnmfilenetwork.o
 
-CPPFLAGS	:=	-I. -I../ -I../../ $(CPPFLAGS)
+CPPFLAGS	:=	-iquote . -iquote ../ -iquote ../../ $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -7,7 +7,7 @@ OBJ	=	ogridbdatasource.o ogridblayer.o ogridbdriver.o \
 
 IDB_DEFS =	-DIT_DLLIB -DIT_DO_NOT_SIMULATE_BOOL
 
-CPPFLAGS :=	-I.. -I../..  $(IDB_INC) $(IDB_DEFS) $(CPPFLAGS)
+CPPFLAGS :=	-iquote .. -iquote ../..  $(IDB_INC) $(IDB_DEFS) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrcloudantdriver.o ogrcloudantdatasource.o ogrcloudanttablelayer.o
 
-CPPFLAGS	:=	$(JSON_INCLUDE) -I.. -I../.. -I../geojson -I../couchdb $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(JSON_INCLUDE) -iquote .. -iquote ../.. -iquote ../geojson -iquote ../couchdb $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

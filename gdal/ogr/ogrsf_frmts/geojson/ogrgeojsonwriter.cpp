@@ -40,8 +40,8 @@
 #endif
 
 #include <printbuf.h>
-#include <ogr_api.h>
-#include <ogr_p.h>
+#include "ogr_api.h"
+#include "ogr_p.h"
 
 #include <algorithm>
 #include <cstdint>

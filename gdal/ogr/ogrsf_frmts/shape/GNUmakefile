@@ -6,7 +6,7 @@ OBJ	=	shape2ogr.o shpopen_wrapper.o dbfopen_wrapper.o shptree_wrapper.o sbnsearc
 		ogrshapedriver.o ogrshapedatasource.o ogrshapelayer.o
 
 CPPFLAGS :=	-DSAOffset=vsi_l_offset -DUSE_CPL \
-		-I.. -I../.. -I../generic  $(CPPFLAGS)
+		-iquote .. -iquote ../.. -iquote ../generic  $(CPPFLAGS)
 
 ifeq ($(RENAME_INTERNAL_SHAPELIB_SYMBOLS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DRENAME_INTERNAL_SHAPELIB_SYMBOLS -DSHPAPI_CALL=

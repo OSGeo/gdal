@@ -4,7 +4,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	IntergraphDataset.o IntergraphBand.o IngrTypes.o JpegHelper.o
 
-CPPFLAGS	:=	 -I../gtiff $(CPPFLAGS)
+CPPFLAGS	:=	 -iquote ../gtiff $(CPPFLAGS)
 
 ifeq ($(TIFF_SETTING),internal)
 ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
