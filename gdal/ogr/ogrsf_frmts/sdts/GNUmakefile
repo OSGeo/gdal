@@ -12,7 +12,7 @@ ISOLIB  =	$(ISODIR)/libiso8211.a
 SDTSDIR = 	../../../frmts/sdts
 SDTSLIB =	$(SDTSDIR)/libsdts_al.a
 
-CPPFLAGS :=	-I.. -I../.. -I$(SDTSDIR) -I$(ISODIR)  $(CPPFLAGS)
+CPPFLAGS :=	-iquote .. -iquote ../.. -iquote $(SDTSDIR) -iquote $(ISODIR)  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

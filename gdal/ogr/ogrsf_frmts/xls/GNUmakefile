@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrxlsdriver.o ogrxlsdatasource.o ogrxlslayer.o
 
-CPPFLAGS	:=	-I.. -I../.. $(FREEXL_INCLUDE)  $(CPPFLAGS)
+CPPFLAGS	:=	-iquote .. -iquote ../.. $(FREEXL_INCLUDE)  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

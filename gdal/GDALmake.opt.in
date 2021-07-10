@@ -73,7 +73,7 @@ INST_DOCS	=	@htmldir@
 INST_MAN	=	@mandir@
 INST_WEB	=	$(HOME)/www/gdal
 
-CPPFLAGS	:= @CPPFLAGS@ -I$(GDAL_ROOT)/port @EXTRA_INCLUDES@ -DGDAL_COMPILATION
+CPPFLAGS	:= @CPPFLAGS@ -iquote $(GDAL_ROOT)/port @EXTRA_INCLUDES@ -DGDAL_COMPILATION
 CFLAGS		= @CFLAGS@ @C_WFLAGS@ $(USER_DEFS)
 CXXFLAGS	= @CXXFLAGS@ @CXX_WFLAGS@ $(USER_DEFS)
 CFLAGS_NOFTRAPV          = @CFLAGS_NOFTRAPV@ @C_WFLAGS@ $(USER_DEFS)
@@ -120,10 +120,10 @@ else
 HAVE_LD_SHARED  =	yes
 endif
 
-GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
-			-I$(GDAL_ROOT)/alg \
-                        -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts \
-                        -I$(GDAL_ROOT)/gnm -I$(GDAL_ROOT)/apps
+GDAL_INCLUDE	=	-iquote $(GDAL_ROOT)/port -iquote $(GDAL_ROOT)/gcore \
+			-iquote $(GDAL_ROOT)/alg \
+                        -iquote $(GDAL_ROOT)/ogr -iquote $(GDAL_ROOT)/ogr/ogrsf_frmts \
+                        -iquote $(GDAL_ROOT)/gnm -iquote $(GDAL_ROOT)/apps
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
@@ -174,7 +174,7 @@ LIBS	   +=	$(MYSQL_LIB)
 # HDF4 Support.
 #
 HAVE_HDF4     = @HAVE_HDF4@
-HDF4_INCLUDE  = @HDF4_INCLUDE@ -I$(GDAL_ROOT)/ogr
+HDF4_INCLUDE  = @HDF4_INCLUDE@ -iquote $(GDAL_ROOT)/ogr
 HDF4_HAS_MAXOPENFILES = @HDF4_HAS_MAXOPENFILES@
 ifeq ($(HDF4_HAS_MAXOPENFILES),yes)
 HDF4_FLAGS=-DHDF4_HAS_MAXOPENFILES

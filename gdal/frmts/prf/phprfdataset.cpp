@@ -23,10 +23,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cpl_minixml.h>
-#include <gdal.h>
-#include <gdal_priv.h>
-#include <gdal_proxy.h>
+#include "cpl_minixml.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "gdal_proxy.h"
 #include "../vrt/vrtdataset.h"
 
 enum ph_format

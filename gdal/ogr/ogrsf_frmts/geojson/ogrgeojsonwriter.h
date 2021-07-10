@@ -31,7 +31,7 @@
 #ifndef OGR_GEOJSONWRITER_H_INCLUDED
 #define OGR_GEOJSONWRITER_H_INCLUDED
 
-#include <ogr_core.h>
+#include "ogr_core.h"
 
 #include "cpl_json_header.h"
 #include "cpl_string.h"

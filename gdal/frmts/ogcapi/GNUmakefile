@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	gdalogcapidataset.o
 
-CPPFLAGS	:=	 -I../../gcore -I../../ogr -I../../ogr/ogrsf_frmts/gml $(CPPFLAGS)
+CPPFLAGS	:=	 -iquote ../../gcore -iquote ../../ogr -iquote ../../ogr/ogrsf_frmts/gml $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

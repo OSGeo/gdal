@@ -5,7 +5,7 @@ OBJ	=	pdsdataset.o isis2dataset.o isis3dataset.o vicardataset.o \
 		vicarkeywordhandler.o \
 		pds4dataset.o pds4vector.o
 
-CPPFLAGS	:=	-I../vrt -I../../ogr/ogrsf_frmts/geojson -I../../ogr/ogrsf_frmts/generic -I../../ogr/ogrsf_frmts/vrt $(JSON_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	-iquote ../vrt -iquote ../../ogr/ogrsf_frmts/geojson -iquote ../../ogr/ogrsf_frmts/generic -iquote ../../ogr/ogrsf_frmts/vrt $(JSON_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

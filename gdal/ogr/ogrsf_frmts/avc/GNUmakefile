@@ -12,7 +12,7 @@ AVC_OBJ	=	avc_bin.o avc_e00gen.o avc_e00parse.o \
 
 OBJ =	$(AVC_OBJ) $(OGR_OBJ)
 
-CPPFLAGS	:=	-I../shape -I.. -I../..  $(CPPFLAGS)
+CPPFLAGS	:=	-iquote ../shape -iquote .. -iquote ../..  $(CPPFLAGS)
 
 ifeq ($(RENAME_INTERNAL_SHAPELIB_SYMBOLS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DRENAME_INTERNAL_SHAPELIB_SYMBOLS -DSHPAPI_CALL=

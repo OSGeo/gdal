@@ -50,7 +50,7 @@
 
 #include "marfa.h"
 #include "cpl_multiproc.h" /* for CPLSleep() */
-#include <gdal_priv.h>
+#include "gdal_priv.h"
 #include <assert.h>
 
 #include <algorithm>

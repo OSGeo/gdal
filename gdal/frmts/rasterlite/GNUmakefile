@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	rasterlitedataset.o rasterlitecreatecopy.o rasterliteoverviews.o
 
-CPPFLAGS	:=	 $(CPPFLAGS) -I../../ogr
+CPPFLAGS	:=	 $(CPPFLAGS) -iquote ../../ogr
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

@@ -33,7 +33,7 @@ OBJ :=	jcapimin12.o jcapistd12.o jccoefct12.o jccolor12.o jcdctmgr12.o jchuff12.
         $(OBJ) jpgdataset_12.o vsidataio_12.o
 endif
 
-CPPFLAGS	:=	-I../mem $(XTRA_OPT)  $(CPPFLAGS)  -DENABLE_LIBJPEG_NO_RETURN
+CPPFLAGS	:=	-iquote ../mem $(XTRA_OPT)  $(CPPFLAGS)  -DENABLE_LIBJPEG_NO_RETURN
 # # Enable this to compile with -Wextra -Werror and get around the jump complaint.
 # CPPFLAGS += -Wno-clobbered
 

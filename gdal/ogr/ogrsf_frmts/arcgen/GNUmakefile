@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ograrcgendriver.o ograrcgendatasource.o ograrcgenlayer.o
 
-CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
+CPPFLAGS	:=	-iquote .. -iquote ../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

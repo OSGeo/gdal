@@ -7,7 +7,7 @@ OBJ	=	ogrmongodbv3driver.o
 # -foperator-names needed for mongocxx headers...
 CXXFLAGS := $(subst -fno-operator-names,,${CXXFLAGS})
 
-CPPFLAGS	:=	-I../generic $(MONGOCXXV3_CFLAGS) $(CPPFLAGS)
+CPPFLAGS	:=	-iquote ../generic $(MONGOCXXV3_CFLAGS) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

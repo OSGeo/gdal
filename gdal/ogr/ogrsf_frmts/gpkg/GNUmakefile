@@ -17,7 +17,7 @@ ifeq ($(HAVE_RASTERLITE2),yes)
 CPPFLAGS +=  -DHAVE_RASTERLITE2 $(RASTERLITE2_CFLAGS)
 endif
 
-CPPFLAGS := -I.. -I../sqlite -I../../../frmts/mem -I../../../frmts $(SQLITE_INC) $(CPPFLAGS)
+CPPFLAGS := -iquote .. -iquote ../sqlite -iquote ../../../frmts/mem -iquote ../../../frmts $(SQLITE_INC) $(CPPFLAGS)
 
 default: $(O_OBJ:.o=.$(OBJ_EXT))
 

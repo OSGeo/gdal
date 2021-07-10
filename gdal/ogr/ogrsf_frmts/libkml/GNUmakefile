@@ -12,7 +12,7 @@ OGR_OBJ =	ogrlibkmldriver.o ogrlibkmldatasource.o ogrlibkmllayer.o
 
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
-CPPFLAGS := -I. $(CPPFLAGS) $(LIBKML_INCLUDE)
+CPPFLAGS := -iquote . $(CPPFLAGS) $(LIBKML_INCLUDE)
 
 #CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
 

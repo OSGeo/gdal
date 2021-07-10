@@ -48,9 +48,9 @@
 #ifndef GDAL_FRMTS_MRF_MARFA_H_INCLUDED
 #define GDAL_FRMTS_MRF_MARFA_H_INCLUDED
 
-#include <gdal_pam.h>
-#include <ogr_srs_api.h>
-#include <ogr_spatialref.h>
+#include "gdal_pam.h"
+#include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 
 #include <limits>
 // For printing values

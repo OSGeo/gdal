@@ -2,7 +2,7 @@ include ../../GDALmake.opt
 
 OBJ	=	stactadataset.o
 
-CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(CXXFLAGS) -I../mem
+CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(CXXFLAGS) -iquote ../mem
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

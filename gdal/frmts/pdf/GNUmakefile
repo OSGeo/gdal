@@ -31,7 +31,7 @@ endif
 
 $(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h pdfcreatefromcomposition.h gdal_pdf.h ../../ogr/ogrsf_frmts/mem/ogr_mem.h
 
-CPPFLAGS	:=	 -I../vrt -I../mem -I../../ogr/ogrsf_frmts/mem $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC) $(PDFIUM_INC) -DDO_NOT_USE_DEBUG_BOOL
+CPPFLAGS	:=	 -iquote ../vrt -iquote ../mem -iquote ../../ogr/ogrsf_frmts/mem $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC) $(PDFIUM_INC) -DDO_NOT_USE_DEBUG_BOOL
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

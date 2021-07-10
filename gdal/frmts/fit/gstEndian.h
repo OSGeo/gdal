@@ -33,7 +33,7 @@
 // endian swapping tools
 
 #include <stdio.h>
-#include <cpl_port.h>
+#include "cpl_port.h"
 
 #include "gstTypes.h"
 

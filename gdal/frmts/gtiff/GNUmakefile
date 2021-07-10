@@ -37,7 +37,7 @@ ifeq ($(JPEG_SETTING),internal)
 TIFF_OPTS 	:=	$(TIFF_OPTS) -I../jpeg/libjpeg
 endif
 
-CPPFLAGS	:=	 -I.. $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
+CPPFLAGS	:=	 -iquote .. $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
 # issue with $(WARN_OLD_STYLE_CAST) with x86_64-w64-mingw32-g++. See https://travis-ci.org/OSGeo/gdal/jobs/375654138
@@ -71,6 +71,6 @@ lib-geotiff:
 install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
 generate_quant_table_md5sum: generate_quant_table_md5sum.cpp
-	$(CXX) -O2 -g -Wall generate_quant_table_md5sum.cpp -o generate_quant_table_md5sum -I../../port -I../../gcore -I../../ogr -L../../ -lgdal
+	$(CXX) -O2 -g -Wall generate_quant_table_md5sum.cpp -o generate_quant_table_md5sum -iquote ../../port -iquote ../../gcore -iquote ../../ogr -L../../ -lgdal
 	./generate_quant_table_md5sum > quant_table_md5sum.h
 	$(RM) -f generate_quant_table_md5sum

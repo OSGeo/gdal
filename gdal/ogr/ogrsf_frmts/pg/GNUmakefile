@@ -5,7 +5,7 @@ include ../../../GDALmake.opt
 OBJ	=	ogrpgdriver.o ogrpgdatasource.o ogrpglayer.o ogrpgtablelayer.o\
 		ogrpgresultlayer.o ogrpgutility.o
 
-CPPFLAGS	:=	 $(PG_INC) -I../pgdump $(CPPFLAGS)
+CPPFLAGS	:=	 $(PG_INC) -iquote ../pgdump $(CPPFLAGS)
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
 

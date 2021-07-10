@@ -9,7 +9,7 @@ OBJ	=	ogrdxfdriver.o ogrdxfdatasource.o ogrdxflayer.o \
 		ogr_autocad_services.o ogrdxf_feature.o \
 		ogrdxf_leader.o ogrdxf_ocstransformer.o
 
-CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
+CPPFLAGS	:=	-iquote .. -iquote ../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

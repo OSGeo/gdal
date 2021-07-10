@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ    =       msgndataset.o msg_basic_types.o msg_reader_core.o
 
-CPPFLAGS :=	 $(CPPFLAGS) -I. -DGDAL_SUPPORT
+CPPFLAGS :=	 $(CPPFLAGS) -iquote . -DGDAL_SUPPORT
 
 default:       $(OBJ:.o=.$(OBJ_EXT))
 

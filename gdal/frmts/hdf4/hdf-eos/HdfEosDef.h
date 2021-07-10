@@ -20,7 +20,7 @@ this permission notice appear in supporting documentation.
 #define HDFEOSDEF_H_
 
 /* include header file for EASE grid */
-#include <ease.h>
+#include "ease.h"
 
 /* Working Buffer Sizes */
 #define HDFE_MAXMEMBUF  256*256*16

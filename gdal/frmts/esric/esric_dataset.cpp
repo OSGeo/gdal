@@ -30,7 +30,7 @@
 *****************************************************************************/
 
 
-#include <gdal_priv.h>
+#include "gdal_priv.h"
 #include <cassert>
 #include <vector>
 #include <algorithm>

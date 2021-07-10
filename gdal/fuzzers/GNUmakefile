@@ -14,7 +14,7 @@ OBJ	=	gdal_fuzzer.o \
 		gml_geom_import_fuzzer.o \
 		fuzzingengine.o
 
-CPPFLAGS	:=	$(CPPFLAGS) -I../ogr/ogrsf_frmts/sqlite
+CPPFLAGS	:=	$(CPPFLAGS) -iquote ../ogr/ogrsf_frmts/sqlite
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
