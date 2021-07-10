@@ -101,7 +101,7 @@ RUN mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
     && cd tiledb \
-    && patch -p1 < /buildscripts/tiledeb-5cad65f4c.patch \
+    && patch -p1 < /buildscripts/tiledb-5cad65f4c.patch \
     && mkdir build_cmake \
     && cd build_cmake \
     && ../bootstrap --prefix=/usr --disable-werror \
