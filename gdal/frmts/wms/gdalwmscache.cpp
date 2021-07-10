@@ -257,8 +257,7 @@ CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig) {
 
     // TODO: Add sqlite db cache type
     const char *pszType = CPLGetXMLValue( pConfig, "Type", "file" );
-    const char *pszUserType = CPLGetConfigOption("GDAL_DEFAULT_WMS_CACHE_TYPE", pszType);
-    if( EQUAL(pszUserType, "file") )
+    if( EQUAL(pszType, "file") )
     {
         m_poCache = new GDALWMSFileCache(m_osCachePath, pConfig);
     }
