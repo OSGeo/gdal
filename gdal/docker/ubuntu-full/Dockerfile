@@ -164,14 +164,14 @@ ENV CLASSPATH="/build/usr/share/java/jackcess-1.1.14.jar:/build/usr/share/java/c
 
 ARG WITH_FILEGDB=
 RUN if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64gcc51.tar.gz \
-  && tar -xzf FileGDB_API_1_5_1-64gcc51.tar.gz \
-  && chown -R root:root FileGDB_API-64gcc51 \
-  && mv FileGDB_API-64gcc51 /usr/local/FileGDB_API \
+  wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.2/FileGDB_API-RHEL7-64gcc83.tar.gz \
+  && tar -xzf FileGDB_API-RHEL7-64gcc83.tar.gz \
+  && chown -R root:root FileGDB_API-RHEL7-64gcc83 \
+  && mv FileGDB_API-RHEL7-64gcc83 /usr/local/FileGDB_API \
   && rm -rf /usr/local/FileGDB_API/lib/libstdc++* \
   && cp /usr/local/FileGDB_API/lib/* /build_thirdparty/usr/lib \
   && cp /usr/local/FileGDB_API/include/* /usr/include \
-  && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && rm -rf FileGDB_API-RHEL7-64gcc83.tar.gz \
   ) ; fi
 
 
