@@ -948,7 +948,8 @@ public:
     const CPLString& GetResampling() const { return m_osResampling; }
     void           SetResampling( const char* pszResampling );
 
-    int            GetSrcDstWindow( int, int, int, int, int, int,
+    int            GetSrcDstWindow( double, double, double, double,
+                                    int, int,
                                     double *pdfReqXOff, double *pdfReqYOff,
                                     double *pdfReqXSize, double *pdfReqYSize,
                                     int *, int *, int *, int *,
