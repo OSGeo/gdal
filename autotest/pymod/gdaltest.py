@@ -1703,14 +1703,7 @@ def gdalurlopen(url, timeout=10):
         urllib.request.install_opener(opener)
 
     try:
-        req = urllib.request.Request(
-            url,
-            data = None,
-            headers = {
-                'User-Agent': 'GDAL pytest'
-            }
-        )
-        handle = urllib.request.urlopen(req)
+        handle = urllib.request.urlopen(url)
         socket.setdefaulttimeout(old_timeout)
         return handle
     except urllib.error.HTTPError as e:
