@@ -838,12 +838,7 @@ class netCDFDataset final: public GDALPamDataset
     char          **papszMetadata;
 
     // Used to report metadata found in Sentinel 5
-    struct JSonMetadata
-    {
-        std::string osJSon{};
-        char*       apszMD[2] = {nullptr, nullptr};
-    };
-    std::map<std::string, JSonMetadata> m_oMapDomainToJSon{};
+    std::map<std::string, CPLStringList> m_oMapDomainToJSon{};
 
     CPLStringList papszDimName;
     bool          bBottomUp;
