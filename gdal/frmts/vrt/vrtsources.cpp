@@ -945,7 +945,8 @@ void VRTSimpleSource::DstToSrc( double dfX, double dfY,
 /************************************************************************/
 
 int
-VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
+VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
+                                  double dfXSize, double dfYSize,
                                   int nBufXSize, int nBufYSize,
                                   double *pdfReqXOff, double *pdfReqYOff,
                                   double *pdfReqXSize, double *pdfReqYSize,
@@ -980,10 +981,10 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     if( bDstWinSet )
     {
-        if( nXOff >= m_dfDstXOff + m_dfDstXSize
-            || nYOff >= m_dfDstYOff + m_dfDstYSize
-            || nXOff + nXSize < m_dfDstXOff
-            || nYOff + nYSize < m_dfDstYOff )
+        if( dfXOff >= m_dfDstXOff + m_dfDstXSize
+            || dfYOff >= m_dfDstYOff + m_dfDstYSize
+            || dfXOff + dfXSize < m_dfDstXOff
+            || dfYOff +dfYSize < m_dfDstYOff )
             return FALSE;
     }
 
@@ -1002,10 +1003,10 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     bool bModifiedX = false;
     bool bModifiedY = false;
-    double dfRXOff = nXOff;
-    double dfRYOff = nYOff;
-    double dfRXSize = nXSize;
-    double dfRYSize = nYSize;
+    double dfRXOff = dfXOff;
+    double dfRYOff = dfYOff;
+    double dfRXSize = dfXSize;
+    double dfRYSize = dfYSize;
 
     if( bDstWinSet )
     {
@@ -1160,10 +1161,9 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 
     if( bModifiedX )
     {
-        const double dfScaleWinToBufX =
-            nBufXSize / static_cast<double>( nXSize );
+        const double dfScaleWinToBufX = nBufXSize / dfXSize;
 
-        const double dfOutXOff = (dfDstULX - nXOff) * dfScaleWinToBufX;
+        const double dfOutXOff = (dfDstULX - dfXOff) * dfScaleWinToBufX;
         if( dfOutXOff <= 0 )
             *pnOutXOff = 0;
         else if( dfOutXOff > INT_MAX )
@@ -1180,7 +1180,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
                                      static_cast<double>(INT_MAX) );
         }
 
-        double dfOutRightXOff = (dfDstLRX - nXOff) * dfScaleWinToBufX;
+        double dfOutRightXOff = (dfDstLRX - dfXOff) * dfScaleWinToBufX;
         if( dfOutRightXOff < dfOutXOff )
             return FALSE;
         if( dfOutRightXOff > INT_MAX )
@@ -1202,10 +1202,9 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 
     if( bModifiedY )
     {
-        const double dfScaleWinToBufY =
-            nBufYSize / static_cast<double>( nYSize );
+        const double dfScaleWinToBufY = nBufYSize / dfYSize;
 
-        const double dfOutYOff = (dfDstULY - nYOff) * dfScaleWinToBufY;
+        const double dfOutYOff = (dfDstULY - dfYOff) * dfScaleWinToBufY;
         if( dfOutYOff <= 0 )
             *pnOutYOff = 0;
         else if( dfOutYOff > INT_MAX )
@@ -1222,7 +1221,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
                                      static_cast<double>(INT_MAX) );
         }
 
-        double dfOutTopYOff = (dfDstLRY - nYOff) * dfScaleWinToBufY;
+        double dfOutTopYOff = (dfDstLRY - dfYOff) * dfScaleWinToBufY;
         if( dfOutTopYOff < dfOutYOff )
             return FALSE;
         if( dfOutTopYOff > INT_MAX )
@@ -1286,6 +1285,18 @@ VRTSimpleSource::RasterIO( GDALDataType eBandDataType,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     GDALRasterIOExtraArg* psExtraArg = &sExtraArg;
 
+    double dfXOff = nXOff;
+    double dfYOff = nYOff;
+    double dfXSize = nXSize;
+    double dfYSize = nYSize;
+    if( psExtraArgIn != nullptr && psExtraArgIn->bFloatingPointWindowValidity )
+    {
+        dfXOff = psExtraArgIn->dfXOff;
+        dfYOff = psExtraArgIn->dfYOff;
+        dfXSize = psExtraArgIn->dfXSize;
+        dfYSize = psExtraArgIn->dfYSize;
+    }
+
     // The window we will actually request from the source raster band.
     double dfReqXOff = 0.0;
     double dfReqYOff = 0.0;
@@ -1302,7 +1313,7 @@ VRTSimpleSource::RasterIO( GDALDataType eBandDataType,
     int nOutXSize = 0;
     int nOutYSize = 0;
 
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize,
+    if( !GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize,
                           nBufXSize, nBufYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
@@ -1660,6 +1671,18 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     GDALRasterIOExtraArg* psExtraArg = &sExtraArg;
 
+    double dfXOff = nXOff;
+    double dfYOff = nYOff;
+    double dfXSize = nXSize;
+    double dfYSize = nYSize;
+    if( psExtraArgIn != nullptr && psExtraArgIn->bFloatingPointWindowValidity )
+    {
+        dfXOff = psExtraArgIn->dfXOff;
+        dfYOff = psExtraArgIn->dfYOff;
+        dfXSize = psExtraArgIn->dfXSize;
+        dfYSize = psExtraArgIn->dfYSize;
+    }
+
     // The window we will actually request from the source raster band.
     double dfReqXOff = 0.0;
     double dfReqYOff = 0.0;
@@ -1676,7 +1699,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     int nOutXSize = 0;
     int nOutYSize = 0;
 
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize,
+    if( !GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize,
                           nBufXSize, nBufYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
@@ -1849,6 +1872,18 @@ VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     GDALRasterIOExtraArg* psExtraArg = &sExtraArg;
 
+    double dfXOff = nXOff;
+    double dfYOff = nYOff;
+    double dfXSize = nXSize;
+    double dfYSize = nYSize;
+    if( psExtraArgIn != nullptr && psExtraArgIn->bFloatingPointWindowValidity )
+    {
+        dfXOff = psExtraArgIn->dfXOff;
+        dfYOff = psExtraArgIn->dfYOff;
+        dfXSize = psExtraArgIn->dfXSize;
+        dfYSize = psExtraArgIn->dfYSize;
+    }
+
     // The window we will actually request from the source raster band.
     double dfReqXOff = 0.0;
     double dfReqYOff = 0.0;
@@ -1865,7 +1900,8 @@ VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
     int nOutXSize = 0;
     int nOutYSize = 0;
 
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+    if( !GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize,
+                          nBufXSize, nBufYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
@@ -2493,6 +2529,18 @@ VRTComplexSource::RasterIO( GDALDataType /*eBandDataType*/,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     GDALRasterIOExtraArg* psExtraArg = &sExtraArg;
 
+    double dfXOff = nXOff;
+    double dfYOff = nYOff;
+    double dfXSize = nXSize;
+    double dfYSize = nYSize;
+    if( psExtraArgIn != nullptr && psExtraArgIn->bFloatingPointWindowValidity )
+    {
+        dfXOff = psExtraArgIn->dfXOff;
+        dfYOff = psExtraArgIn->dfYOff;
+        dfXSize = psExtraArgIn->dfXSize;
+        dfYSize = psExtraArgIn->dfYSize;
+    }
+
     // The window we will actually request from the source raster band.
     double dfReqXOff = 0.0;
     double dfReqYOff = 0.0;
@@ -2509,7 +2557,8 @@ VRTComplexSource::RasterIO( GDALDataType /*eBandDataType*/,
     int nOutXSize = 0;
     int nOutYSize = 0;
 
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+    if( !GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize,
+                          nBufXSize, nBufYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
