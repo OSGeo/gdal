@@ -50,10 +50,6 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     fi
 
     if test "$(uname -m)" = "x86_64"; then
-      GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS --with-tiledb "
-    fi
-
-    if test "$(uname -m)" = "x86_64"; then
       JAVA_ARCH=amd64;
     elif test "$(uname -m)" = "aarch64"; then
       JAVA_ARCH=arm64;

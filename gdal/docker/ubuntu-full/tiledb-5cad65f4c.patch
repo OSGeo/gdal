@@ -1,0 +1,31 @@
+commit 5cad65f4c47c8208c20767031beeeb1a30bf38cb
+Author: Isaiah Norton <ihnorton@users.noreply.github.com>
+Date:   Tue May 25 13:45:37 2021 -0400
+
+    Add missing cast to fix range warning (#2290)
+    
+    Fixes the following warning/Werror on linux/aarch64; matches existing casts earlier in
+    function:
+    ```
+    tiledb::sm::Range&, const ByteVecValue&, tiledb::sm::Range*, tiledb::sm::Range*) [with T = char; tiledb::sm::ByteVecValue = std::vector<unsigned char>]’:
+    /home/ubuntu/TileDB-Py/build/TileDB-2.2.9/tiledb/sm/array_schema/dimension.cc:797:47: error: comparison is always false due to limited range of data type [-Werror=type-limits]
+      797 |   } while (pos >= 0 && (int)new_r2_start[pos] < 0);
+          |
+    ```
+    
+    TYPE: NO_HISTORY
+    DESC: Add missing cast to fix range warning
+
+diff --git a/tiledb/sm/array_schema/dimension.cc b/tiledb/sm/array_schema/dimension.cc
+index a18a40ec..ffd69a62 100644
+--- a/tiledb/sm/array_schema/dimension.cc
++++ b/tiledb/sm/array_schema/dimension.cc
+@@ -803,7 +803,7 @@ void Dimension::split_range<char>(
+     assert(pos != 0);
+     new_r2_start[pos] = 0;
+     new_r2_start[--pos]++;
+-  } while (pos >= 0 && (int)new_r2_start[pos] < 0);
++  } while (pos >= 0 && (int)(signed char)new_r2_start[pos] < 0);
+   new_r2_start.resize(pos + 1);
+ 
+   auto max_string = std::string("\x7F", 1);

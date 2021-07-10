@@ -95,23 +95,23 @@ RUN mkdir mongocxx \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=2.3.0
-RUN if test "$(uname -m)" = "x86_64"; then \
-    mkdir tiledb \
+COPY ./tiledb-5cad65f4c.patch /buildscripts/tiledb-5cad65f4c.patch
+ARG TILEDB_VERSION=2.3.1
+RUN mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
     && cd tiledb \
+    && patch -p1 < /buildscripts/tiledeb-5cad65f4c.patch \
     && mkdir build_cmake \
     && cd build_cmake \
-    && ../bootstrap --prefix=/usr \
+    && ../bootstrap --prefix=/usr --disable-werror \
     && make -j$(nproc) \
     && make install-tiledb DESTDIR="/build_thirdparty" \
     && make install-tiledb \
     && cd ../.. \
     && rm -rf tiledb \
     && for i in /build_thirdparty/usr/lib/$(uname -m)-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    fi
+    && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build openjpeg
 ARG OPENJPEG_VERSION=
