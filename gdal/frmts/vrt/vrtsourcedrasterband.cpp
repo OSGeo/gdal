@@ -218,7 +218,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 double dfYOff = nYOff;
                 double dfXSize = nXSize;
                 double dfYSize = nYSize;
-                if( psExtraArg != nullptr && psExtraArg->bFloatingPointWindowValidity )
+                if( psExtraArg->bFloatingPointWindowValidity )
                 {
                     dfXOff = psExtraArg->dfXOff;
                     dfYOff = psExtraArg->dfYOff;
