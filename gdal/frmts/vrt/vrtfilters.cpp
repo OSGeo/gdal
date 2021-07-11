@@ -146,6 +146,18 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
                                            psExtraArg );
     }
 
+    double dfXOff = nXOff;
+    double dfYOff = nYOff;
+    double dfXSize = nXSize;
+    double dfYSize = nYSize;
+    if( psExtraArg != nullptr && psExtraArg->bFloatingPointWindowValidity )
+    {
+        dfXOff = psExtraArg->dfXOff;
+        dfYOff = psExtraArg->dfYOff;
+        dfXSize = psExtraArg->dfXSize;
+        dfYSize = psExtraArg->dfYSize;
+    }
+
     // The window we will actually request from the source raster band.
     double dfReqXOff = 0.0;
     double dfReqYOff = 0.0;
@@ -162,7 +174,7 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
     int nOutXSize = 0;
     int nOutYSize = 0;
 
-    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+    if( !GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )

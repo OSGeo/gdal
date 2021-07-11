@@ -213,6 +213,19 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             {
                 VRTSimpleSource* const poSource
                     = static_cast<VRTSimpleSource *>( papoSources[i] );
+
+                double dfXOff = nXOff;
+                double dfYOff = nYOff;
+                double dfXSize = nXSize;
+                double dfYSize = nYSize;
+                if( psExtraArg->bFloatingPointWindowValidity )
+                {
+                    dfXOff = psExtraArg->dfXOff;
+                    dfYOff = psExtraArg->dfYOff;
+                    dfXSize = psExtraArg->dfXSize;
+                    dfYSize = psExtraArg->dfYSize;
+                }
+
                 // The window we will actually request from the source raster band.
                 double dfReqXOff = 0.0;
                 double dfReqYOff = 0.0;
@@ -229,7 +242,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 int nOutXSize = 0;
                 int nOutYSize = 0;
 
-                if( !poSource->GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize,
+                if( !poSource->GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize,
                                       nBufXSize, nBufYSize,
                                       &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                                       &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
