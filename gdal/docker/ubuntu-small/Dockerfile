@@ -7,35 +7,60 @@
 
 ARG PROJ_INSTALL_PREFIX=/usr/local
 ARG BASE_IMAGE=ubuntu:20.04
+ARG TARGET_BASE_IMAGE=ubuntu:20.04
 
 FROM $BASE_IMAGE as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
+ARG TARGET_ARCH=
+RUN echo ${TARGET_ARCH}
+COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
+
+RUN . /buildscripts/bh-set-envvars.sh \
+    && if test "${TARGET_ARCH}" != ""; then \
+    rm -f /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu focal-security main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list \
+    && dpkg --add-architecture ${TARGET_ARCH} \
+    && apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-9-${GCC_ARCH}-linux-gnu \
+    && ln -s ${GCC_ARCH}-linux-gnu-gcc-9 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-9 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
+    fi
+
 # Setup build env for PROJ
 USER root
-RUN apt-get update -y \
+RUN . /buildscripts/bh-set-envvars.sh \
+    && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-            software-properties-common build-essential ca-certificates \
+            build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
-            zlib1g-dev libsqlite3-dev pkg-config sqlite3 libcurl4-gnutls-dev \
-            libtiff5-dev
+            zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-gnutls-dev${APT_ARCH_SUFFIX} \
+            libtiff5-dev${APT_ARCH_SUFFIX}
 
 # Setup build env for GDAL
-RUN apt-get update -y \
+RUN . /buildscripts/bh-set-envvars.sh \
+    && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-       python3-dev python3-numpy \
-       libjpeg-dev libgeos-dev \
-       libexpat-dev libxerces-c-dev \
-       libwebp-dev libpng-dev \
-       libzstd-dev bash zip curl \
-       libpq-dev libssl-dev libopenjp2-7-dev \
+       python3-dev${APT_ARCH_SUFFIX} python3-numpy${APT_ARCH_SUFFIX} \
+       libjpeg-dev${APT_ARCH_SUFFIX} libgeos-dev${APT_ARCH_SUFFIX} \
+       libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
+       libwebp-dev${APT_ARCH_SUFFIX} libpng-dev${APT_ARCH_SUFFIX} \
+       libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
+       libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion
 
 # Build openjpeg
 ARG OPENJPEG_VERSION=
-RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
+RUN . /buildscripts/bh-set-envvars.sh \
+    && if test "${OPENJPEG_VERSION}" != ""; then ( \
     wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
     && rm -f v${OPENJPEG_VERSION}.tar.gz \
@@ -65,28 +90,29 @@ ARG RSYNC_REMOTE
 
 # Build PROJ
 ARG PROJ_VERSION=master
-RUN mkdir proj \
+RUN . /buildscripts/bh-set-envvars.sh \
+    && mkdir proj \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
+        rsync -ra ${RSYNC_REMOTE}/proj/${GCC_ARCH}/ $HOME/; \
         echo "Finished"; \
-        export CC="ccache gcc"; \
-        export CXX="ccache g++"; \
+        export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"; \
+        export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"; \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
-        ./configure --prefix=${PROJ_INSTALL_PREFIX} --disable-static \
+        ./configure --prefix=${PROJ_INSTALL_PREFIX} "${WITH_HOST}" --disable-static \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/${GCC_ARCH}/; \
         echo "Finished"; \
         rm -rf $HOME/.ccache; \
         unset CC; \
@@ -101,8 +127,8 @@ RUN mkdir proj \
     && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so \
     && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
     && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST} \
-    && strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
-    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && ${GCC_ARCH}-linux-gnu-strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
+    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
 ARG GDAL_VERSION=master
@@ -110,11 +136,12 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
-RUN if test "${GDAL_VERSION}" = "master"; then \
+RUN . /buildscripts/bh-set-envvars.sh \
+    && if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
-    && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
+    && if test "x${GDAL_BUILD_IS_RELEASE:-}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
     && mkdir gdal \
@@ -123,18 +150,18 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && cd gdal/gdal \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/; \
         echo "Finished"; \
         # Little trick to avoid issues with Python bindings
-        printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
+        printf "#!/bin/sh\nccache %s-linux-gnu-gcc \$*" "${GCC_ARCH}" > ccache_gcc.sh; \
         chmod +x ccache_gcc.sh; \
-        printf "#!/bin/sh\nccache g++ \$*" > ccache_g++.sh; \
+        printf "#!/bin/sh\nccache %s-linux-gnu-g++ \$*" "${GCC_ARCH}" > ccache_g++.sh; \
         chmod +x ccache_g++.sh; \
         export CC=$PWD/ccache_gcc.sh; \
         export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
     fi \
-    && LDFLAGS="-L/build${PROJ_INSTALL_PREFIX}/lib -linternalproj" ./configure --prefix=/usr --without-libtool \
+    && LDFLAGS="-L/build${PROJ_INSTALL_PREFIX}/lib -linternalproj" ./configure --prefix=/usr "${WITH_HOST}" --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
     --with-python \
@@ -146,7 +173,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/; \
         echo "Finished"; \
         rm -rf $HOME/.ccache; \
         unset CC; \
@@ -162,12 +189,12 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
-    && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+    && for i in /build_gdal_version_changing/usr/lib/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
-FROM $BASE_IMAGE as runner
+FROM $TARGET_BASE_IMAGE as runner
 
 USER root
 RUN date

@@ -20,15 +20,16 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
 
 (
     cd gdal/gdal
+
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
-        rsync -ra "${RSYNC_REMOTE}/gdal/" "$HOME/"
+        rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/"
         echo "Finished"
 
         # Little trick to avoid issues with Python bindings
-        printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh
+        printf "#!/bin/sh\nccache %s-linux-gnu-gcc \$*" "${GCC_ARCH}" > ccache_gcc.sh
         chmod +x ccache_gcc.sh
-        printf "#!/bin/sh\nccache g++ \$*" > ccache_g++.sh
+        printf "#!/bin/sh\nccache %s-linux-gnu-g++ \$*" "${GCC_ARCH}" > ccache_g++.sh
         chmod +x ccache_g++.sh
         export CC=$PWD/ccache_gcc.sh
         export CXX=$PWD/ccache_g++.sh
@@ -44,20 +45,24 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     fi
 
     if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$" ; then
-      if test "$(uname -m)" = "x86_64"; then
+      if test "${GCC_ARCH}" = "x86_64"; then
         GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-pdfium=/usr "
       fi
     fi
 
-    if test "$(uname -m)" = "x86_64"; then
+    if test "${GCC_ARCH}" = "x86_64"; then
       JAVA_ARCH=amd64;
-    elif test "$(uname -m)" = "aarch64"; then
+    elif test "${GCC_ARCH}" = "aarch64"; then
       JAVA_ARCH=arm64;
     else
       echo "Unknown arch. FIXME!"
     fi
 
-    LDFLAGS="-L/build${PROJ_INSTALL_PREFIX-/usr/local}/lib -linternalproj" ./configure --prefix=/usr \
+    if test "${WITH_HOST}" = ""; then
+      GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS --with-dods-root=/usr "
+    fi
+
+    LDFLAGS="-L/build${PROJ_INSTALL_PREFIX-/usr/local}/lib -linternalproj" ./configure --prefix=/usr "${WITH_HOST}" \
     --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
@@ -67,11 +72,9 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     --with-mysql \
     --with-liblzma \
     --with-webp \
-    --with-epsilon \
     --with-proj="/build${PROJ_INSTALL_PREFIX-/usr/local}" \
     --with-poppler \
     --with-hdf5 \
-    --with-dods-root=/usr \
     --with-sosi \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
@@ -93,7 +96,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
         ccache -s
 
         echo "Uploading cache..."
-        rsync -ra --delete "$HOME/.ccache" "${RSYNC_REMOTE}/gdal/"
+        rsync -ra --delete "$HOME/.ccache" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
         echo "Finished"
 
         rm -rf "$HOME/.ccache"
@@ -119,13 +122,13 @@ if [ "${WITH_DEBUG_SYMBOLS}" = "yes" ]; then
             F=$(basename "$P")
             mkdir -p "$(dirname "$P")/.debug"
             DEBUG_P="$(dirname "$P")/.debug/${F}.debug"
-            objcopy -v --only-keep-debug --compress-debug-sections "$P" "${DEBUG_P}"
-            strip --strip-debug --strip-unneeded "$P"
-            objcopy --add-gnu-debuglink="${DEBUG_P}" "$P"
+            ${GCC_ARCH}-linux-gnu-objcopy -v --only-keep-debug --compress-debug-sections "$P" "${DEBUG_P}"
+            ${GCC_ARCH}-linux-gnu-strip --strip-debug --strip-unneeded "$P"
+            ${GCC_ARCH}-linux-gnu-objcopy --add-gnu-debuglink="${DEBUG_P}" "$P"
         fi
     done
 else
-    for P in /build_gdal_version_changing/usr/lib/*; do strip -s "$P" 2>/dev/null || /bin/true; done
-    for P in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do strip -s "$P" 2>/dev/null || /bin/true; done
-    for P in /build_gdal_version_changing/usr/bin/*; do strip -s "$P" 2>/dev/null || /bin/true; done
+    for P in /build_gdal_version_changing/usr/lib/*; do ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true; done
+    for P in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true; done
+    for P in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true; done
 fi
