@@ -92,3 +92,23 @@ DEFINE_EXTERNAL_CLASS(GDALMajorObjectShadow, OSGeo.GDAL.MajorObject)
     if (OgrPINVOKE.SWIGPendingException.Pending) throw OgrPINVOKE.SWIGPendingException.Retrieve();
   }
 }
+
+%typemap(cscode, noblock="1") OGRFeatureShadow {
+  public byte[] GetFieldAsBinary(int id) {
+    IntPtr[] nPtr = new IntPtr[1];
+    GCHandle pinnedArray = GCHandle.Alloc(nPtr, GCHandleType.Pinned);
+    IntPtr pointer = pinnedArray.AddrOfPinnedObject();
+
+    int length;
+
+    GetFieldAsBinary(id, out length, pointer);
+
+    byte[] buffer = new byte[length];
+
+    if (nPtr[0] != IntPtr.Zero) Marshal.Copy(nPtr[0], buffer, 0, length);
+
+    pinnedArray.Free();
+
+    return buffer;
+  }
+}

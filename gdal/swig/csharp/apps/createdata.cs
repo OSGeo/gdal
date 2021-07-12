@@ -34,7 +34,7 @@ using System;
 
 using OSGeo.OGR;
 using OSGeo.OSR;
-
+using System.Text;
 
 /**
 
@@ -242,13 +242,21 @@ class CreateData {
 		{
 			FieldDefn fdef = def.GetFieldDefn( iField );
 
-			Console.Write( fdef.GetNameRef() + " (" +
+			Console.Write(fdef.GetNameRef() + " (" +
 				fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
+				FieldType ft = fdef.GetFieldType();
 
-			if( feat.IsFieldSet( iField ) )
-				Console.WriteLine( feat.GetFieldAsString( iField ) );
+			if (feat.IsFieldSet(iField))
+			{
+				Console.WriteLine(feat.GetFieldAsString(iField));
+				if (ft == FieldType.OFTString 
+						&& Encoding.ASCII.GetString(feat.GetFieldAsBinary( iField )) != feat.GetFieldAsString(iField))
+				{
+					Environment.Exit(-1);
+				}
+			}
 			else
-				Console.WriteLine( "(null)" );
+				Console.WriteLine("(null)");
 
 		}
 
