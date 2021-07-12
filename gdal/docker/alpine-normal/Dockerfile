@@ -138,7 +138,7 @@ RUN mkdir proj \
     && ./autogen.sh \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
+        rsync -ra ${RSYNC_REMOTE}/proj/$(uname -m)/ $HOME/; \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
@@ -153,7 +153,7 @@ RUN mkdir proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/$(uname -m)/; \
         echo "Finished"; \
         rm -rf $HOME/.ccache; \
         unset CC; \
@@ -240,7 +240,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && cd gdal/gdal \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/$(uname -m)/ $HOME/; \
         echo "Finished"; \
         # Little trick to avoid issues with Python bindings
         printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
@@ -267,7 +267,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
+        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/$(uname -m)/; \
         echo "Finished"; \
         rm -rf $HOME/.ccache; \
         unset CC; \
