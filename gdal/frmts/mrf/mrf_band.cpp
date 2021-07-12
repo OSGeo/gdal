@@ -49,7 +49,10 @@
 
 #include <vector>
 #include <assert.h>
-#include "zlib.h"
+#include <zlib.h>
+#if defined(ZSTD_SUPPORT)
+#include <zstd.h>
+#endif
 
 NAMESPACE_MRF_START
 
@@ -145,24 +148,84 @@ static void swab_buff(buf_mgr &src, const ILImage &img)
     }
 }
 
-/**
-*\brief Deflates a buffer, extrasize is the available size in the buffer past the input
-*  If the output fits past the data, it uses that area
-* otherwise it uses a temporary buffer and copies the data over the input on return, returning a pointer to it
+// Similar to compress2() but with flags to control zlib features
+// Returns true if it worked
+static int ZPack(const buf_mgr& src, buf_mgr& dst, int flags) {
+    z_stream stream;
+    int err;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*)src.buffer;
+    stream.avail_in = (uInt)src.size;
+    stream.next_out = (Bytef*)dst.buffer;
+    stream.avail_out = (uInt)dst.size;
+
+    int level = std::min(9, flags & ZFLAG_LMASK);
+    int wb = MAX_WBITS;
+    // if gz flag is set, ignore raw request
+    if (flags & ZFLAG_GZ) wb += 16;
+    else if (flags & ZFLAG_RAW) wb = -wb;
+    int memlevel = 8; // Good compromise
+    int strategy = (flags & ZFLAG_SMASK) >> 6;
+    if (strategy > 4) strategy = 0;
+
+    err = deflateInit2(&stream, level, Z_DEFLATED, wb, memlevel, strategy);
+    if (err != Z_OK) return err;
+
+    err = deflate(&stream, Z_FINISH);
+    if (err != Z_STREAM_END) {
+        deflateEnd(&stream);
+        return false;
+    }
+    dst.size = stream.total_out;
+    err = deflateEnd(&stream);
+    return err == Z_OK;
+}
+
+// Similar to uncompress() from zlib, accepts the ZFLAG_RAW
+// Return true if it worked
+static int ZUnPack(const buf_mgr& src, buf_mgr& dst, int flags) {
+
+    z_stream stream;
+    int err;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*)src.buffer;
+    stream.avail_in = (uInt)src.size;
+    stream.next_out = (Bytef*)dst.buffer;
+    stream.avail_out = (uInt)dst.size;
+
+    // 32 means autodetec gzip or zlib header, negative 15 is for raw
+    int wb = (ZFLAG_RAW & flags) ? -MAX_WBITS : 32 + MAX_WBITS;
+    err = inflateInit2(&stream, wb);
+    if (err != Z_OK) return false;
+
+    err = inflate(&stream, Z_FINISH);
+    if (err != Z_STREAM_END) {
+        inflateEnd(&stream);
+        return false;
+    }
+    dst.size = stream.total_out;
+    err = inflateEnd(&stream);
+    return err == Z_OK;
+}
+
+/*
+* Deflates a buffer, extrasize is the available size in the buffer past the input
+* If the output fits past the data, it uses that area, otherwise it uses a temporary buffer
+* and copies the data over the input on return, returning a pointer to it.
+* The output size is returned in src.size
+* Returns nullptr when compression failed
 */
 static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
     // The one we might need to allocate
     void *dbuff = nullptr;
-    buf_mgr dst;
-    // The one we could use, after the packed data
-    dst.buffer = src.buffer + src.size;
-    dst.size = extrasize;
+    buf_mgr dst = { src.buffer + src.size, extrasize };
 
     // Allocate a temp buffer if there is not sufficient space,
     // We need to have a bit more than half the buffer available
     if (extrasize < (src.size + 64)) {
         dst.size = src.size + 64;
-
         dbuff = VSIMalloc(dst.size);
         dst.buffer = (char *)dbuff;
         if (!dst.buffer)
@@ -186,6 +249,55 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
     return src.buffer;
 }
 
+#if defined(ZSTD_SUPPORT)
+/*
+* Compress a buffer using zstd, extrasize is the available size in the buffer past the input
+* If the output fits past the data, it uses that area, otherwise it uses a temporary buffer
+* and copies the data over the input on return, returning a pointer to it.
+* The output size is returned in src.size
+* Returns nullptr when compression failed
+*/
+static void* ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level) {
+    // The buffer pointer we might allocate
+    void* dbuff = nullptr;
+    buf_mgr dst = { src.buffer + src.size, extrasize };
+
+    // Allocate a temp buffer if there is not sufficient space.
+    // Zstd bound is about (size * 1.004 + 64)
+    if (extrasize < ZSTD_compressBound(src.size)) {
+        dst.size = ZSTD_compressBound(src.size);
+        dbuff = VSIMalloc(dst.size);
+        dst.buffer = (char*)dbuff;
+        if (!dst.buffer)
+            return nullptr;
+    }
+
+    size_t val = ZSTD_compress(dst.buffer, dst.size, src.buffer, src.size, c_level);
+    if (ZSTD_isError(val)) {
+        CPLFree(dbuff);
+        return nullptr;
+    }
+
+    // If we didn't allocate a buffer, return it
+    if (nullptr == dbuff) {
+        src.size = val;
+        return dst.buffer;
+    }
+
+    // Didn't allocate a buffer
+    if (val > (src.size + extrasize)) { // Doesn't fit in buffer, this should never happen
+        CPLFree(dbuff);
+        CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: ZSTD compression buffer too small");
+        return nullptr; // Error
+    }
+
+    memcpy(src.buffer, dbuff, val);
+    src.size = val;
+    CPLFree(dbuff);
+    return src.buffer;
+}
+#endif
+
 //
 // The deflate_flags are available in all bands even if the DEFLATE option
 // itself is not set.  This allows for PNG features to be controlled, as well
@@ -197,6 +309,8 @@ MRFRasterBand::MRFRasterBand( MRFDataset *parent_dataset,
     dodeflate(GetOptlist().FetchBoolean("DEFLATE", FALSE)),
     // Bring the quality to 0 to 9
     deflate_flags(image.quality / 10),
+    dozstd(GetOptlist().FetchBoolean("ZSTD", FALSE)),
+    zstd_level(9),
     m_l(ov),
     img(image)
 {
@@ -227,6 +341,18 @@ MRFRasterBand::MRFRasterBand( MRFDataset *parent_dataset,
     else if (EQUAL(zstrategy, "Z_FIXED"))
         zv = Z_FIXED;
     deflate_flags |= (zv << 6);
+    if (image.quality < 23 && image.quality > 0)
+        zstd_level = image.quality;
+
+#if !defined(ZSTD_SUPPORT)
+    if (dodeflate) { // signal error condition to caller
+        CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: ZSTD support is not available");
+        dodeflate = FALSE;
+    }
+#endif
+        // Chose zstd over deflate if both are enabled and available
+    if (dozstd && dodeflate)
+        dodeflate = FALSE;
 }
 
 // Clean up the overviews if they exist
@@ -519,7 +645,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
         return CE_Failure;
     }
 
-    buf_mgr filedst={(char *)outbuff, poDS->pbsize};
+    buf_mgr filedst={static_cast<char *>(outbuff), poDS->pbsize};
     Compress(filedst, filesrc);
 
     // Where the output is, in case we deflate
@@ -528,6 +654,14 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
         usebuff = DeflateBlock( filedst, poDS->pbsize - filedst.size, deflate_flags);
         if (!usebuff) {
             CPLError(CE_Failure,CPLE_AppDefined, "MRF: Deflate error");
+            return CE_Failure;
+        }
+    }
+
+    if (dozstd) {
+        usebuff = ZstdCompBlock(filedst, poDS->pbsize - filedst.size, zstd_level);
+        if (!usebuff) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZSTD compression error");
             return CE_Failure;
         }
     }
@@ -841,6 +975,13 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                 return CE_Failure;
             }
         }
+        if (dozstd) {
+            usebuff = ZstdCompBlock(dst, poDS->pbsize - dst.size, zstd_level);
+            if (!usebuff) {
+                CPLError(CE_Failure, CPLE_AppDefined, "MRF: Zstd Compression error");
+                return CE_Failure;
+            }
+        }
         return poDS->WriteTile(usebuff, infooffset , dst.size);
     }
 
@@ -955,15 +1096,29 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     if (dodeflate) {
         // Move the packed part at the start of tbuffer, to make more space available
         memcpy(tbuffer, outbuff, dst.size);
-        dst.buffer = (char *)tbuffer;
-        usebuff = DeflateBlock(dst, img.pageSizeBytes + poDS->pbsize - dst.size, deflate_flags);
-        if (!usebuff) {
+        dst.buffer = static_cast<char*>(tbuffer);
+        usebuff = DeflateBlock(dst,
+            static_cast<size_t>(img.pageSizeBytes) + poDS->pbsize - dst.size, deflate_flags);
+        if (!usebuff)
             CPLError(CE_Failure,CPLE_AppDefined, "MRF: Deflate error");
-            CPLFree(tbuffer);
-            poDS->WriteTile(nullptr, infooffset, 0);
-            poDS->bdirty = 0;
-            return CE_Failure;
-        }
+    }
+
+#if defined(ZSTD_SUPPORT)
+    if (dozstd) {
+        memcpy(tbuffer, outbuff, dst.size);
+        dst.buffer = static_cast<char*>(tbuffer);
+        usebuff = ZstdCompBlock(dst,
+            static_cast<size_t>(img.pageSizeBytes) + poDS->pbsize - dst.size, zstd_level);
+        if (!usebuff)
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZStd compression error");
+    }
+#endif
+
+    if (!usebuff) { // Error was signaled
+        CPLFree(tbuffer);
+        poDS->WriteTile(nullptr, infooffset, 0);
+        poDS->bdirty = 0;
+        return CE_Failure;
     }
 
     ret = poDS->WriteTile(usebuff, infooffset, dst.size);

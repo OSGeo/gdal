@@ -111,6 +111,16 @@ bool MRFDataset::SetPBuffer(unsigned int sz) {
     return true;
 }
 
+static GDALColorEntry GetXMLColorEntry(CPLXMLNode* p) {
+    GDALColorEntry ce;
+    ce.c1 = static_cast<short>(getXMLNum(p, "c1", 0));
+    ce.c2 = static_cast<short>(getXMLNum(p, "c2", 0));
+    ce.c3 = static_cast<short>(getXMLNum(p, "c3", 0));
+    ce.c4 = static_cast<short>(getXMLNum(p, "c4", 255));
+    return ce;
+}
+
+
 //
 // Called by dataset destructor or at GDAL termination, to avoid
 // closing datasets whose drivers have already been unloaded
@@ -1457,6 +1467,16 @@ GIntBig MRFDataset::AddOverviews(int scaleIn) {
     // Last adjustment, should be a single set of c and leftover z tiles
     return img.idxoffset + sizeof(ILIdx) * img.pagecount.l / img.size.z * (img.size.z - zslice);
 }
+
+//
+// set an entry if it doesn't already exist
+//
+static char** CSLAddIfMissing(char** papszList, const char* pszName, const char* pszValue) {
+    if (CSLFetchNameValue(papszList, pszName))
+        return papszList;
+    return CSLSetNameValue(papszList, pszName, pszValue);
+}
+
 
 // CreateCopy implemented based on Create
 GDALDataset* MRFDataset::CreateCopy(const char* pszFilename,
