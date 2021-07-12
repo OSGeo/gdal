@@ -21,4 +21,31 @@ export SCRIPT_DIR
 TAG_NAME=$(basename "${SCRIPT_DIR}")
 export TARGET_IMAGE=${TARGET_IMAGE:-osgeo/gdal:${TAG_NAME}}
 
+HAS_PLATFORM=0
+if echo "$*" | grep "\-\-platform" > /dev/null; then
+  HAS_PLATFORM=1
+fi
+
+HAS_RELEASE=0
+if echo "$*" | grep "\-\-release" > /dev/null; then
+  HAS_RELEASE=1
+fi
+
+HAS_PUSH=0
+if echo "$*" | grep "\-\-push" > /dev/null; then
+  HAS_PUSH=1
+fi
+
 "${SCRIPT_DIR}/../util.sh" "$@" --test-python
+
+if test "${HAS_PLATFORM}" = "0" -a "${HAS_RELEASE}" = "0" -a "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-small"; then
+ "${SCRIPT_DIR}/../util.sh" --platform linux/arm64 "$@" --test-python
+
+ if test "$HAS_PUSH" = "1"; then
+   docker manifest rm ${TARGET_IMAGE}-latest || /bin/true
+   docker manifest create ${TARGET_IMAGE}-latest \
+     --amend ${TARGET_IMAGE}-latest-amd64 \
+     --amend ${TARGET_IMAGE}-latest-arm64
+   docker manifest push ${TARGET_IMAGE}-latest
+ fi
+fi

@@ -147,11 +147,11 @@ fi
 
 check_image()
 {
-    IMAGE_NAME="$1"
-    docker run --rm "${IMAGE_NAME}" gdalinfo --version
-    docker run --rm "${IMAGE_NAME}" projinfo EPSG:4326
+    TMP_IMAGE_NAME="$1"
+    docker run --rm "${TMP_IMAGE_NAME}" gdalinfo --version
+    docker run --rm "${TMP_IMAGE_NAME}" projinfo EPSG:4326
     if test "x${TEST_PYTHON}" != "x"; then
-        docker run --rm "${IMAGE_NAME}" python3 -c "from osgeo import gdal, gdalnumeric; print(gdal.VersionInfo(''))"
+        docker run --rm "${TMP_IMAGE_NAME}" python3 -c "from osgeo import gdal, gdalnumeric; print(gdal.VersionInfo(''))"
     fi
 }
 
@@ -267,6 +267,9 @@ if test "${RELEASE}" = "yes"; then
 
     if test "x${BASE_IMAGE}" != "x"; then
         BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
+        if test "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-full" -o "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-small"; then
+          BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}")
+        fi
     fi
 
     docker $(build_cmd) "${BUILD_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
@@ -286,8 +289,17 @@ if test "${RELEASE}" = "yes"; then
 
 else
 
+    IMAGE_NAME_WITH_ARCH="${IMAGE_NAME}"
+    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest"; then
+        if test "${DOCKER_BUILDX}" != "buildx"; then
+          ARCH_PLATFORM_ARCH=$(echo ${ARCH_PLATFORMS} | sed "s/linux\///")
+          IMAGE_NAME_WITH_ARCH="${IMAGE_NAME}-${ARCH_PLATFORM_ARCH}"
+          BUILDER_IMAGE_NAME="${BUILDER_IMAGE_NAME}_${ARCH_PLATFORM_ARCH}"
+        fi
+    fi
+
     OLD_BUILDER_ID=$(docker image ls "${BUILDER_IMAGE_NAME}" -q)
-    OLD_IMAGE_ID=$(docker image ls "${IMAGE_NAME}" -q)
+    OLD_IMAGE_ID=$(docker image ls "${IMAGE_NAME_WITH_ARCH}" -q)
 
     if test "${GDAL_RELEASE_DATE}" = ""; then
         GDAL_RELEASE_DATE=$(date "+%Y%m%d")
@@ -298,8 +310,10 @@ else
     BUILD_NETWORK=docker_build_gdal
     HOST_CACHE_DIR="$HOME/gdal-docker-cache"
 
-    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj"
-    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj/x86_64"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj/aarch64"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal/x86_64"
+    mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal/aarch64"
     mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/spatialite"
 
     # Start a Docker container that has a rsync daemon, mounting HOST_CACHE_DIR
@@ -354,44 +368,65 @@ EOF
 
     if test "x${BASE_IMAGE}" != "x"; then
         BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
+        if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest"; then
+          BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}")
+        fi
+    else
+      if test "${DOCKER_BUILDX}" != "buildx" -a \( "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest" \); then
+        if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
+          BASE_IMAGE=$(grep "ARG BASE_IMAGE=" ${SCRIPT_DIR}/Dockerfile | sed "s/ARG BASE_IMAGE=//")
+          echo "Fetching digest for ${BASE_IMAGE} ${ARCH_PLATFORMS}..."
+          ARCH_PLATFORM_ARCH=$(echo ${ARCH_PLATFORMS} | sed "s/linux\///")
+          TARGET_BASE_IMAGE_DIGEST=$(docker manifest inspect ${BASE_IMAGE} | jq --raw-output '.manifests[] | (if .platform.architecture == "'${ARCH_PLATFORM_ARCH}'" then .digest else empty end)')
+          echo "${TARGET_BASE_IMAGE_DIGEST}"
+          BUILD_ARGS+=("--build-arg" "TARGET_ARCH=${ARCH_PLATFORM_ARCH}")
+          BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}@${TARGET_BASE_IMAGE_DIGEST}")
+          # echo "${BUILD_ARGS[@]}"
+        fi
+      fi
     fi
 
     docker $(build_cmd) --network "${BUILD_NETWORK}" "${BUILD_ARGS[@]}" --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
 
-    docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" "${SCRIPT_DIR}"
 
     if test "${DOCKER_BUILDX}" != "buildx"; then
-        check_image "${IMAGE_NAME}"
-    fi
-
-    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
-        docker image tag "${IMAGE_NAME}" "osgeo/gdal:latest"
+        check_image "${IMAGE_NAME_WITH_ARCH}"
     fi
 
     if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
         if test "${DOCKER_BUILDX}" = "buildx"; then
             docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
         else
-            docker push "${IMAGE_NAME}"
+            docker push "${IMAGE_NAME_WITH_ARCH}"
         fi
 
         if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
             if test "${DOCKER_BUILDX}" = "buildx"; then
                 docker $(build_cmd) "${BUILD_ARGS[@]}" -t "osgeo/gdal:latest" --push "${SCRIPT_DIR}"
             else
-                docker push osgeo/gdal:latest
+                if test "${ARCH_PLATFORMS}" = "linux/amd64"; then
+                    docker image tag "${IMAGE_NAME_WITH_ARCH}" "osgeo/gdal:latest"
+                    docker push osgeo/gdal:latest
+                fi
             fi
         fi
     fi
 
     # Cleanup previous images
     NEW_BUILDER_ID=$(docker image ls "${BUILDER_IMAGE_NAME}" -q)
-    NEW_IMAGE_ID=$(docker image ls "${IMAGE_NAME}" -q)
+    NEW_IMAGE_ID=$(docker image ls "${IMAGE_NAME_WITH_ARCH}" -q)
     if test "${OLD_BUILDER_ID}" != "" -a  "${OLD_BUILDER_ID}" != "${NEW_BUILDER_ID}"; then
         docker rmi "${OLD_BUILDER_ID}"
     fi
     if test "${OLD_IMAGE_ID}" != "" -a  "${OLD_IMAGE_ID}" != "${NEW_IMAGE_ID}"; then
         docker rmi "${OLD_IMAGE_ID}"
+    fi
+
+    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest"; then
+        if test "${DOCKER_BUILDX}" != "buildx" -a "${ARCH_PLATFORMS}" = "linux/amd64"; then
+          docker image tag "${IMAGE_NAME_WITH_ARCH}" "${IMAGE_NAME}"
+        fi
     fi
 fi
