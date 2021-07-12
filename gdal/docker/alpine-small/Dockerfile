@@ -65,6 +65,7 @@ RUN mkdir proj \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        mkdir -p "$HOME/.ccache"; \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
@@ -105,6 +106,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        mkdir -p "$HOME/.ccache"; \
         ccache -M 1G; \
     fi \
     && mkdir gdal \

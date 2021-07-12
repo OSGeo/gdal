@@ -142,6 +142,7 @@ RUN mkdir proj \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        mkdir -p "$HOME/.ccache"; \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
@@ -177,6 +178,7 @@ RUN if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
+        mkdir -p "$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
     && ./configure --prefix=/usr --disable-static --disable-rttopo \
@@ -247,6 +249,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         chmod +x ccache_g++.sh; \
         export CC=$PWD/ccache_gcc.sh; \
         export CXX=$PWD/ccache_g++.sh; \
+        mkdir -p "$HOME/.ccache"; \
         ccache -M 1G; \
     fi \
     && ./configure --prefix=/usr --without-libtool \
