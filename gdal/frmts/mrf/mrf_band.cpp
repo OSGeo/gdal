@@ -658,6 +658,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
         }
     }
 
+#if defined(ZSTD_SUPPORT)
     if (dozstd) {
         usebuff = ZstdCompBlock(filedst, poDS->pbsize - filedst.size, zstd_level);
         if (!usebuff) {
@@ -665,6 +666,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
             return CE_Failure;
         }
     }
+#endif
 
     // Write and update the tile index
     ret = poDS->WriteTile(usebuff, infooffset, filedst.size);
@@ -868,7 +870,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
             return CE_Failure;
         }
         dst.size = img.pageSizeBytes + 1440; // in case the packed page is a bit larger than the raw one
-        dst.buffer = (char *)VSIMalloc(dst.size);
+        dst.buffer = static_cast<char*>(VSIMalloc(dst.size));
         if (nullptr == dst.buffer) {
             CPLFree(data);
             CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate %d bytes", static_cast<int>(dst.size));
@@ -886,7 +888,37 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
         }
     }
 
-    src.buffer = (char *)data;
+#if defined(ZSTD_SUPPORT)
+    // same, for ZSTD
+    if (dozstd) {
+        if (img.pageSizeBytes > INT_MAX - 1440) {
+            CPLFree(data);
+            CPLError(CE_Failure, CPLE_AppDefined, "Page is too large at %d", img.pageSizeBytes);
+            return CE_Failure;
+        }
+        dst.size = img.pageSizeBytes + 1440; // Allow for a slight increase from previous compressions
+        dst.buffer = static_cast<char*>(VSIMalloc(dst.size));
+        if (nullptr == dst.buffer) {
+            CPLFree(data);
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate %d bytes", static_cast<int>(dst.size));
+            return CE_Failure;
+        }
+
+        size_t raw_size = ZSTD_decompress(dst.buffer, dst.size, src.buffer, src.size);
+        if (ZSTD_isError(raw_size)) { // assume page was not packed, warn only
+            CPLFree(dst.buffer);
+            if (!poDS->no_errors)
+                CPLError(CE_Warning, CPLE_AppDefined, "Can't unpack ZSTD page!");
+        }
+        else {
+            CPLFree(data); // The compressed data
+            data = dst.buffer;
+            tinfo.size = raw_size;
+        }
+    }
+#endif
+
+    src.buffer = static_cast<char *>(data);
     src.size = static_cast<size_t>(tinfo.size);
 
     // After unpacking, the size has to be pageSizeBytes
@@ -975,6 +1007,8 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                 return CE_Failure;
             }
         }
+
+# if defined(ZSTD_SUPPORT)
         if (dozstd) {
             usebuff = ZstdCompBlock(dst, poDS->pbsize - dst.size, zstd_level);
             if (!usebuff) {
@@ -982,6 +1016,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                 return CE_Failure;
             }
         }
+#endif
         return poDS->WriteTile(usebuff, infooffset , dst.size);
     }
 
