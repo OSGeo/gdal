@@ -18,7 +18,7 @@ OBJ	=	Packer_RLE.obj Tif_band.obj PNG_band.obj JPEG_band.obj JPNG_band.obj\
 
 PLUGIN_DLL =	gdal_mrf.dll
 
-EXTRAFLAGS = $(EXTRAFLAGS) $(ZSTD_FLAGS)
+EXTRAFLAGS = $(EXTRAFLAGS) $(ZSTD_CFLAGS)
 
 # MRF Lerc support only possible for internal LercLib since it requires Lerc2.h
 !IF "$(HAVE_LERC)" == "internal"
@@ -28,7 +28,7 @@ OBJ = $(LERC1) LERC_Band.obj $(OBJ)
 !ENDIF
 
 !IFDEF ZSTD_CFLAGS
-ZSTD_FLAGS = $(ZSTD_FLAGS) -DZSTD_SUPPORT
+ZSTD_CFLAGS = $(ZSTD_CFLAGS) -DZSTD_SUPPORT
 !ENDIF
 
 # Brotli is needed for brunsli
