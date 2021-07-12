@@ -2436,7 +2436,10 @@ public:
     * ar->at(0,3,2)
     * \endcode
     */
+    // sphinx 4.1.0 / breathe 4.30.0 don't like typename...
+//! @cond Doxygen_Suppress
     template<typename... GUInt64VarArg>
+//! @endcond
     // cppcheck-suppress functionStatic
     std::shared_ptr<GDALMDArray> at(GUInt64 idx, GUInt64VarArg... tail) const
     {
