@@ -171,6 +171,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
   && rm -rf mdb-sqlite-1.0.2.tar.bz2 && rm -rf mdb-sqlite-1.0.2
 
 # Build recent mdbtools
+# Patch to fix an issue with SELECT COUNT(*). See https://github.com/OSGeo/gdal/pull/4104
+COPY ./mdbtools-lexer.patch /buildscripts/mdbtools-lexer.patch
 RUN . /buildscripts/bh-set-envvars.sh \
   && wget -q https://github.com/mdbtools/mdbtools/releases/download/v0.9.3/mdbtools-0.9.3.tar.gz \
   && tar xzf mdbtools-0.9.3.tar.gz \
@@ -178,6 +180,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
   && apt-get install -y --fix-missing --no-install-recommends bison flex gawk \
   && rm -rf /var/lib/apt/lists/* \
   && cd mdbtools-0.9.3 \
+  && patch -p0 < /buildscripts/mdbtools-lexer.patch \
   && ./configure --with-unixodbc=/usr "${WITH_HOST}" \
   && make -j$(nproc) \
   && mkdir -p /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/odbc \
