@@ -257,7 +257,7 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
 * The output size is returned in src.size
 * Returns nullptr when compression failed
 */
-static void* ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level) {
+static void* ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level, ZSTD_CCtx *cctx = nullptr) {
     // The buffer pointer we might allocate
     void* dbuff = nullptr;
     buf_mgr dst = { src.buffer + src.size, extrasize };
@@ -272,19 +272,19 @@ static void* ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level) {
             return nullptr;
     }
 
-    size_t val = ZSTD_compress(dst.buffer, dst.size, src.buffer, src.size, c_level);
+    size_t val = cctx ? ZSTD_compressCCtx(cctx, dst.buffer, dst.size, src.buffer, src.size, c_level)
+        : ZSTD_compress(dst.buffer, dst.size, src.buffer, src.size, c_level);
     if (ZSTD_isError(val)) {
         CPLFree(dbuff);
         return nullptr;
     }
 
-    // If we didn't allocate a buffer, return it
+    // If we didn't allocate a buffer, data is in destination buffer
     if (nullptr == dbuff) {
         src.size = val;
         return dst.buffer;
     }
 
-    // Didn't allocate a buffer
     if (val > (src.size + extrasize)) { // Doesn't fit in buffer, this should never happen
         CPLFree(dbuff);
         CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: ZSTD compression buffer too small");
@@ -660,7 +660,10 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
 
 #if defined(ZSTD_SUPPORT)
     if (dozstd) {
-        usebuff = ZstdCompBlock(filedst, poDS->pbsize - filedst.size, zstd_level);
+        if (!poDS->pzscctx)
+            poDS->pzscctx = ZSTD_createCCtx();
+        usebuff = ZstdCompBlock(filedst, poDS->pbsize - filedst.size,
+            zstd_level, static_cast<ZSTD_CCtx *>(poDS->pzscctx));
         if (!usebuff) {
             CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZSTD compression error");
             return CE_Failure;
@@ -904,7 +907,11 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
             return CE_Failure;
         }
 
-        size_t raw_size = ZSTD_decompress(dst.buffer, dst.size, src.buffer, src.size);
+        if (!poDS->pzsdctx)
+            poDS->pzsdctx = ZSTD_createDCtx();
+        auto ctx = static_cast<ZSTD_DCtx*>(poDS->pzsdctx);
+        auto raw_size = ctx ? ZSTD_decompressDCtx(ctx, dst.buffer, dst.size, src.buffer, src.size)
+            : ZSTD_decompress(dst.buffer, dst.size, src.buffer, src.size);
         if (ZSTD_isError(raw_size)) { // assume page was not packed, warn only
             CPLFree(dst.buffer);
             if (!poDS->no_errors)
@@ -1010,7 +1017,10 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
 # if defined(ZSTD_SUPPORT)
         if (dozstd) {
-            usebuff = ZstdCompBlock(dst, poDS->pbsize - dst.size, zstd_level);
+            if (!poDS->pzscctx)
+                poDS->pzscctx = ZSTD_createCCtx();
+            usebuff = ZstdCompBlock(dst, poDS->pbsize - dst.size,
+                zstd_level, reinterpret_cast<ZSTD_CCtx*>(poDS->pzscctx));
             if (!usebuff) {
                 CPLError(CE_Failure, CPLE_AppDefined, "MRF: Zstd Compression error");
                 return CE_Failure;
@@ -1142,8 +1152,10 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     if (dozstd) {
         memcpy(tbuffer, outbuff, dst.size);
         dst.buffer = static_cast<char*>(tbuffer);
-        usebuff = ZstdCompBlock(dst,
-            static_cast<size_t>(img.pageSizeBytes) + poDS->pbsize - dst.size, zstd_level);
+        if (!poDS->pzscctx)
+            poDS->pzscctx = ZSTD_createCCtx();
+        usebuff = ZstdCompBlock(dst, static_cast<size_t>(img.pageSizeBytes) + poDS->pbsize - dst.size,
+                zstd_level, reinterpret_cast<ZSTD_CCtx *>(poDS->pzscctx));
         if (!usebuff)
             CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZStd compression error");
     }

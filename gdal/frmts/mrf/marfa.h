@@ -495,6 +495,8 @@ protected:
 
     // statistical values
     std::vector<double> vNoData, vMin, vMax;
+    // Context for zstd compress and decompress
+    void* pzscctx, *pzsdctx;
 };
 
 class MRFRasterBand CPL_NON_FINAL: public GDALPamRasterBand {
