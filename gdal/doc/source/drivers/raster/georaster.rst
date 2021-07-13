@@ -175,11 +175,11 @@ MDSYS.SDO_GEORASTER)" \\
    options is TRUE, that means that this option only need to be informed
    to force the Spatial Extent to remain as NULL. If EXTENTSRID is not
    informed the Spatial Extent geometry will be generated with the same
-   SRID as the GeoGeoraster object.
+   SRID as the GeoRaster object.
 -  **EXTENTSRID**: SRID code to be used on the Spatial Extent geometry.
-   If the table/column has already a spatial extent, the value informed
-   should be the same as the SRID on the Spatial Extent of the other
-   existing GeoRaster.
+   If the table/column has already a spatial index, the value informed
+   should be the same as the SRID on the Spatial Extents of the other
+   existing GeoRaster objects, on which the spatial index is built.
 -  **OBJECTTABLE**: To create RDT as SDO_RASTER object inform TRUE
    otherwise, the default is FALSE and the RDT will be created as
    regular relational tables. That does not apply for Oracle version
