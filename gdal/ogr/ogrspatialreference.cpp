@@ -8596,6 +8596,15 @@ bool OGRSpatialReference::IsDynamic() const
     {
         horiz = proj_clone(ctxt, d->m_pj_crs);
     }
+    if( horiz && proj_get_type(horiz) == PJ_TYPE_BOUND_CRS )
+    {
+        auto baseCRS = proj_get_source_crs(ctxt, horiz);
+        if( baseCRS )
+        {
+            proj_destroy(horiz);
+            horiz = baseCRS;
+        }
+    }
     auto datum = horiz ? proj_crs_get_datum(ctxt, horiz) : nullptr;
     if( datum )
     {

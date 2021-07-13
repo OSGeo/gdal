@@ -1726,6 +1726,10 @@ def test_osr_basic_is_dynamic():
     assert srs.IsDynamic()
 
     srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
+    assert not srs.IsDynamic()
+
+    srs = osr.SpatialReference()
     srs.ImportFromEPSG(4258) # ETRS89 (generic), using datum ensemble
     assert not srs.IsDynamic()
 
