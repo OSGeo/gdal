@@ -290,7 +290,10 @@ if test "${RELEASE}" = "yes"; then
 else
 
     IMAGE_NAME_WITH_ARCH="${IMAGE_NAME}"
-    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest"; then
+    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" \
+         -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest" \
+         -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-small-latest" \
+         -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-normal-latest"; then
         if test "${DOCKER_BUILDX}" != "buildx"; then
           ARCH_PLATFORM_ARCH=$(echo ${ARCH_PLATFORMS} | sed "s/linux\///")
           IMAGE_NAME_WITH_ARCH="${IMAGE_NAME}-${ARCH_PLATFORM_ARCH}"
@@ -383,6 +386,17 @@ EOF
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}@${TARGET_BASE_IMAGE_DIGEST}")
           # echo "${BUILD_ARGS[@]}"
         fi
+      elif test "${DOCKER_BUILDX}" != "buildx" -a \( "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-small-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-normal-latest" \); then
+        if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
+          ALPINE_VERSION=$(grep "ARG ALPINE_VERSION=" ${SCRIPT_DIR}/Dockerfile | sed "s/ARG ALPINE_VERSION=//")
+          BASE_IMAGE="alpine:${ALPINE_VERSION}"
+          echo "Fetching digest for ${BASE_IMAGE} ${ARCH_PLATFORMS}..."
+          ARCH_PLATFORM_ARCH=$(echo ${ARCH_PLATFORMS} | sed "s/linux\///")
+          TARGET_BASE_IMAGE_DIGEST=$(docker manifest inspect ${BASE_IMAGE} | jq --raw-output '.manifests[] | (if .platform.architecture == "'${ARCH_PLATFORM_ARCH}'" then .digest else empty end)')
+          echo "${TARGET_BASE_IMAGE_DIGEST}"
+          BUILD_ARGS+=("--build-arg" "ALPINE_VERSION=${ALPINE_VERSION}@${TARGET_BASE_IMAGE_DIGEST}")
+          # echo "${BUILD_ARGS[@]}"
+        fi
       fi
     fi
 
@@ -424,7 +438,10 @@ EOF
         docker rmi "${OLD_IMAGE_ID}"
     fi
 
-    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest"; then
+    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" \
+         -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest" \
+         -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-small-latest" \
+         -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-normal-latest"; then
         if test "${DOCKER_BUILDX}" != "buildx" -a "${ARCH_PLATFORMS}" = "linux/amd64"; then
           docker image tag "${IMAGE_NAME_WITH_ARCH}" "${IMAGE_NAME}"
         fi
