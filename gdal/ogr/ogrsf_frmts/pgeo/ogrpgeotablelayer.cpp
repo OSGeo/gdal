@@ -326,7 +326,7 @@ int OGRPGeoTableLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == nullptr;
+        return m_poFilterGeom == nullptr && poDS->CountStarWorking();
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
@@ -347,7 +347,7 @@ int OGRPGeoTableLayer::TestCapability( const char * pszCap )
 GIntBig OGRPGeoTableLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom != nullptr )
+    if( m_poFilterGeom != nullptr || !poDS->CountStarWorking() )
         return OGRPGeoLayer::GetFeatureCount( bForce );
 
     CPLODBCStatement oStmt( poDS->GetSession() );

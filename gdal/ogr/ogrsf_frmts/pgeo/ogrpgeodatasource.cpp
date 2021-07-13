@@ -33,6 +33,12 @@
 #include <vector>
 #include <unordered_set>
 
+#ifdef __linux
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#endif
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -356,4 +362,57 @@ void OGRPGeoDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+bool OGRPGeoDataSource::CountStarWorking() const
+{
+#ifdef _WIN32
+    return true;
+#else
+    // SELECT COUNT(*) worked in mdbtools 0.9.0 to 0.9.2, but got broken in
+    // 0.9.3. So test if it is working
+    // See https://github.com/OSGeo/gdal/issues/4103
+    if( !m_COUNT_STAR_state_known )
+    {
+        m_COUNT_STAR_state_known = true;
+
+#ifdef __linux
+        // Temporarily redirect stderr to /dev/null
+        int new_fd = open("/dev/null", O_WRONLY|O_CREAT|O_TRUNC, 0666);
+        int old_stderr = -1;
+        if( new_fd != -1 )
+        {
+            old_stderr = dup(fileno(stderr));
+            if( old_stderr != -1 )
+            {
+                dup2(new_fd, fileno(stderr));
+                close(new_fd);
+            }
+        }
+#endif
+
+        CPLErrorHandlerPusher oErrorHandler(CPLErrorHandlerPusher);
+        CPLErrorStateBackuper oStateBackuper;
+
+        CPLODBCStatement oStmt( &oSession );
+        oStmt.Append( "SELECT COUNT(*) FROM GDB_GeomColumns" );
+        if( oStmt.ExecuteSQL() && oStmt.Fetch() )
+        {
+            m_COUNT_STAR_working = true;
+        }
+
+#ifdef __linux
+        if( old_stderr != -1 )
+        {
+            dup2(old_stderr, fileno(stderr));
+            close(old_stderr);
+        }
+#endif
+    }
+    return m_COUNT_STAR_working;
+#endif
 }
