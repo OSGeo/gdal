@@ -252,17 +252,60 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
 }
 
 #if defined(ZSTD_SUPPORT)
+
+// Arange bytes by rank in the input
+static void rankfilter(buf_mgr& src, size_t factor) {
+    std::vector<char> tempb(src.size);
+    char* d = tempb.data();
+    // variation at start for low endian
+    for (size_t j = 0; j < factor; j++)
+        for (size_t i = j; i < src.size; i += factor)
+            *d++ = src.buffer[i];
+    char b(0);
+    // Apply per byte delta
+    for (auto& v : tempb) {
+        v -= b;
+        b += v;
+    }
+    // Replace the source content with the interleaved one
+    memcpy(src.buffer, tempb.data(), src.size);
+}
+
+static void derank(buf_mgr& src, size_t factor) {
+    // undo the delta
+    char b(0);
+    auto guard = src.buffer + src.size;
+    for (auto p = src.buffer; p < guard; p++) {
+        b += *p;
+        *p = b;
+    }
+    // undo the rank separation
+    std::vector<char> tempb(src.size);
+    char* d = tempb.data();
+    size_t chunk = src.size / factor;
+    for (size_t i = 0; i < chunk; i++)
+        for (size_t j = 0; j < factor; j++)
+            *d++ = src.buffer[chunk * j + i];
+    memcpy(src.buffer, tempb.data(), src.size);
+}
+
 /*
 * Compress a buffer using zstd, extrasize is the available size in the buffer past the input
+* If ranks > 1, it separates the input bytes by rank before compression
 * If the output fits past the data, it uses that area, otherwise it uses a temporary buffer
 * and copies the data over the input on return, returning a pointer to it.
 * The output size is returned in src.size
 * Returns nullptr when compression failed
 */
-static void* ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level, ZSTD_CCtx *cctx = nullptr) {
+static void* ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level, ZSTD_CCtx *cctx, size_t ranks)
+{
     // The buffer pointer we might allocate
     void* dbuff = nullptr;
     buf_mgr dst = { src.buffer + src.size, extrasize };
+
+    // Separate input by byte ranks if requested
+    if (ranks > 1 && (src.size % ranks) == 0)
+        rankfilter(src, ranks);
 
     // Allocate a temp buffer if there is not sufficient space.
     // Zstd bound is about (size * 1.004 + 64)
@@ -664,8 +707,11 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
     if (dozstd) {
         if (!poDS->pzscctx)
             poDS->pzscctx = ZSTD_createCCtx();
+        size_t ranks = 1; // Assume no need for byte rank sort
+        if (img.comp == IL_NONE || img.comp == IL_ZSTD)
+            ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt)) * cstride;
         usebuff = ZstdCompBlock(filedst, poDS->pbsize - filedst.size,
-            zstd_level, static_cast<ZSTD_CCtx *>(poDS->pzscctx));
+            zstd_level, static_cast<ZSTD_CCtx *>(poDS->pzscctx), ranks);
         if (!usebuff) {
             CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZSTD compression error");
             return CE_Failure;
@@ -923,6 +969,15 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
             CPLFree(data); // The compressed data
             data = dst.buffer;
             tinfo.size = raw_size;
+            // Might need to undo the rank sort
+            size_t ranks = 1;
+            if (img.comp == IL_NONE || img.comp == IL_ZSTD)
+                ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt)) * img.pagesize.c;
+            if (ranks > 1) {
+                src.buffer = static_cast<char*>(data);
+                src.size = static_cast<size_t>(tinfo.size);
+                derank(src, ranks);
+            }
         }
     }
 #endif
@@ -1021,8 +1076,11 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         if (dozstd) {
             if (!poDS->pzscctx)
                 poDS->pzscctx = ZSTD_createCCtx();
+            size_t ranks = 1; // Assume no need for byte rank sort
+            if (img.comp == IL_NONE || img.comp == IL_ZSTD)
+                ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt));
             usebuff = ZstdCompBlock(dst, poDS->pbsize - dst.size,
-                zstd_level, reinterpret_cast<ZSTD_CCtx*>(poDS->pzscctx));
+                zstd_level, reinterpret_cast<ZSTD_CCtx*>(poDS->pzscctx), ranks);
             if (!usebuff) {
                 CPLError(CE_Failure, CPLE_AppDefined, "MRF: Zstd Compression error");
                 return CE_Failure;
@@ -1156,8 +1214,11 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         dst.buffer = static_cast<char*>(tbuffer);
         if (!poDS->pzscctx)
             poDS->pzscctx = ZSTD_createCCtx();
+        size_t ranks = 1; // Assume no need for byte rank sort
+        if (img.comp == IL_NONE || img.comp == IL_ZSTD)
+            ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt)) * cstride;
         usebuff = ZstdCompBlock(dst, static_cast<size_t>(img.pageSizeBytes) + poDS->pbsize - dst.size,
-                zstd_level, reinterpret_cast<ZSTD_CCtx *>(poDS->pzscctx));
+                zstd_level, reinterpret_cast<ZSTD_CCtx *>(poDS->pzscctx), ranks);
         if (!usebuff)
             CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZStd compression error");
     }
