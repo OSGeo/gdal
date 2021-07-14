@@ -166,8 +166,11 @@ class OGRPGeoDataSource final: public OGRDataSource
     char               *pszName;
 
     int                 bDSUpdate;
-    CPLODBCSession      oSession;
-
+    mutable CPLODBCSession oSession;
+#ifndef _WIN32
+    mutable bool        m_COUNT_STAR_state_known = false;
+    mutable bool        m_COUNT_STAR_working = false;
+#endif
   public:
                         OGRPGeoDataSource();
                         virtual ~OGRPGeoDataSource();
@@ -190,6 +193,8 @@ class OGRPGeoDataSource final: public OGRDataSource
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
+
+    bool CountStarWorking() const;
 };
 
 /************************************************************************/
