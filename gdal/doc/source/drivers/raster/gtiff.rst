@@ -394,8 +394,8 @@ Creation Options
      built against libzstd >=1.0, or if built against external libtiff with zstd support.
 
    * ``LERC`` and ``LERC_DEFLATE`` are available only when using internal libtiff for GDAL < 3.3.0.
-      Since GDAL 3.3.0, LERC compression is also available when building GDAL
-      against external libtiff >= 4.3.0, built itself against https://github.com/esri/lerc
+     Since GDAL 3.3.0, LERC compression is also available when building GDAL
+     against external libtiff >= 4.3.0, built itself against https://github.com/esri/lerc
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
