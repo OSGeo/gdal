@@ -527,18 +527,20 @@ void GDALRegister_mrf() {
         "   </Option>\n"
         "   <Option name='OPTIONS' type='string' description='\n"
         "     Compression dependent parameters, space separated:\n"
+#if defined(ZSTD_SUPPORT)
         "       ZSTD - boolean, enable libzstd as final stage, preferred over DEFLATE\n"
+#endif
         "       DEFLATE - boolean, enable zlib as final stage\n"
-        "       GZ - boolean, enable gzip headers instead of zlib ones when using zlib\n"
-        "       RAWZ - boolean, disable all zlib headers\n"
-        "       Z_STRATEGY - Z_HUFFMAN_ONLY | Z_FILTERED | Z_RLE | Z_FIXED, zlib restricted strategy\n"
+        "       GZ - boolean, for DEFLATE enable gzip headers instead of zlib ones when using zlib\n"
+        "       RAWZ - boolean, for DEFLATE disable all zlib headers\n"
+        "       Z_STRATEGY - Z_HUFFMAN_ONLY | Z_FILTERED | Z_RLE | Z_FIXED: restricts DEFLATE and PNG strategy\n"
 #if defined(LERC)
         "       LERC_PREC - numeric, set LERC precision, defaults to 0.5 for int and 0.001 for float\n"
-        "       V1 - boolean, enable LERC V1 format\n"
+        "       V1 - boolean, enable LERC V1 (older) format\n"
 #endif
-        "       OPTIMIZE - boolean, enables Huffman table optimization for JPEG\n"
+        "       OPTIMIZE - boolean, for JPEG, enables Huffman table optimization\n"
 #if defined(BRUNSLI)
-        "       JFIF - boolean, disable brunsli\n"
+        "       JFIF - boolean, for JPEG, disable brunsli encoding\n"
 #endif
         "'/>"
         "</CreationOptionList>\n");
