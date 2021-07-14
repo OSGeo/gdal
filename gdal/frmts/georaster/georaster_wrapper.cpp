@@ -3522,6 +3522,11 @@ bool GeoRasterWrapper::FlushMetadata()
                 }
             }
         }
+        else
+        {
+            if (nExtentSRID == 0)
+                nExtentSRID = nSRID;
+        }
 
         delete poStmt;
 
