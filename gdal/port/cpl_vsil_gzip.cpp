@@ -3331,11 +3331,11 @@ void VSIInstallZipFileHandler()
 /************************************************************************/
 
 /**
- * \brief Compress a buffer with ZLib DEFLATE compression.
+ * \brief Compress a buffer with ZLib compression.
  *
  * @param ptr input buffer.
  * @param nBytes size of input buffer in bytes.
- * @param nLevel ZLib compression level (-1 for default). Currently unused
+ * @param nLevel ZLib compression level (-1 for default).
  * @param outptr output buffer, or NULL to let the function allocate it.
  * @param nOutAvailableBytes size of output buffer if provided, or ignored.
  * @param pnOutBytes pointer to a size_t, where to store the size of the
@@ -3349,7 +3349,7 @@ void VSIInstallZipFileHandler()
 
 void* CPLZLibDeflate( const void* ptr,
                       size_t nBytes,
-                      CPL_UNUSED int nLevel,
+                      int nLevel,
                       void* outptr,
                       size_t nOutAvailableBytes,
                       size_t* pnOutBytes )
@@ -3359,12 +3359,26 @@ void* CPLZLibDeflate( const void* ptr,
 
     size_t nTmpSize = 0;
     void* pTmp;
+#ifdef HAVE_LIBDEFLATE
+    struct libdeflate_compressor* enc = libdeflate_alloc_compressor(nLevel < 0 ? 7 : nLevel);
+    if( enc == nullptr )
+    {
+        return nullptr;
+    }
+#endif
     if( outptr == nullptr )
     {
+#ifdef HAVE_LIBDEFLATE
+        nTmpSize = libdeflate_zlib_compress_bound(enc, nBytes);
+#else
         nTmpSize = 32 + nBytes * 2;
+#endif
         pTmp = VSIMalloc(nTmpSize);
         if( pTmp == nullptr )
         {
+#ifdef HAVE_LIBDEFLATE
+            libdeflate_free_compressor(enc);
+#endif
             return nullptr;
         }
     }
@@ -3375,13 +3389,6 @@ void* CPLZLibDeflate( const void* ptr,
     }
 
 #ifdef HAVE_LIBDEFLATE
-    struct libdeflate_compressor* enc = libdeflate_alloc_compressor(7);
-    if( enc == nullptr )
-    {
-        if( pTmp != outptr )
-            VSIFree(pTmp);
-        return nullptr;
-    }
     size_t nCompressedBytes = libdeflate_zlib_compress(
                     enc, ptr, nBytes, pTmp, nTmpSize);
     libdeflate_free_compressor(enc);
@@ -3398,7 +3405,7 @@ void* CPLZLibDeflate( const void* ptr,
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
     strm.opaque = nullptr;
-    int ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+    int ret = deflateInit(&strm, nLevel < 0 ? Z_DEFAULT_COMPRESSION : nLevel);
     if( ret != Z_OK )
     {
         if( pTmp != outptr )
@@ -3430,7 +3437,7 @@ void* CPLZLibDeflate( const void* ptr,
 /************************************************************************/
 
 /**
- * \brief Uncompress a buffer compressed with ZLib DEFLATE compression.
+ * \brief Uncompress a buffer compressed with ZLib compression.
  *
  * @param ptr input buffer.
  * @param nBytes size of input buffer in bytes.

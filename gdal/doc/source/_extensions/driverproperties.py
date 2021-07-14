@@ -8,6 +8,7 @@ sphinx.locale.admonitionlabels['supports_create'] = ''  # 'Supports Create()'
 sphinx.locale.admonitionlabels['supports_createcopy'] = ''  # 'Supports CreateCopy()'
 sphinx.locale.admonitionlabels['supports_georeferencing'] = ''  # 'Supports georeferencing'
 sphinx.locale.admonitionlabels['supports_virtualio'] = ''  # 'Supports VirtualIO'
+sphinx.locale.admonitionlabels['supports_multidimensional'] = ''  # 'Supports multidimensional'
 
 def setup(app):
     app.add_node(shortname,
@@ -51,6 +52,12 @@ def setup(app):
                  latex=(visit_admonition, depart_node),
                  text=(visit_admonition, depart_node))
     app.add_directive('supports_virtualio', VirtualIODirective)
+
+    app.add_node(supports_multidimensional,
+                 html=(visit_supports_multidimensional_node, depart_node),
+                 latex=(visit_admonition, depart_node),
+                 text=(visit_admonition, depart_node))
+    app.add_directive('supports_multidimensional', MultiDimensionalDirective)
 
     app.connect('env-purge-doc', purge_driverproperties)
 
@@ -99,20 +106,26 @@ def visit_supports_createcopy_node(self, node):
     self.body.append(self.starttag(
             node, 'div', CLASS=('admonition supports_createcopy')))
 
-class supports_virtualio(nodes.Admonition, nodes.Element):
+class supports_georeferencing(nodes.Admonition, nodes.Element):
     pass
 
 def visit_supports_georeferencing_node(self, node):
     self.body.append(self.starttag(
             node, 'div', CLASS=('admonition supports_georeferencing')))
 
-class supports_georeferencing(nodes.Admonition, nodes.Element):
+class supports_virtualio(nodes.Admonition, nodes.Element):
     pass
 
 def visit_supports_virtualio_node(self, node):
     self.body.append(self.starttag(
             node, 'div', CLASS=('admonition supports_virtualio')))
 
+class supports_multidimensional(nodes.Admonition, nodes.Element):
+    pass
+
+def visit_supports_multidimensional_node(self, node):
+    self.body.append(self.starttag(
+            node, 'div', CLASS=('admonition supports_multidimensional')))
 
 from docutils.parsers.rst import Directive
 
@@ -123,7 +136,7 @@ from sphinx.locale import _
 def finish_directive(_self, directive, node):
 
     env = _self.state.document.settings.env
- 
+
     targetid = "%s-%d" % (directive, env.new_serialno(directive))
     targetnode = nodes.target('', '', ids=[targetid])
 
@@ -242,6 +255,21 @@ class VirtualIODirective(Directive):
         return finish_directive(self, 'supports_virtualio', node)
 
 
+class MultiDimensionalDirective(Directive):
+
+    # this enables content in the directive
+    has_content = True
+
+    def run(self):
+
+        if not self.content:
+            self.content = docutils.statemachine.StringList(['This driver supports the :ref:`multidim_raster_data_model`'])
+        node = supports_virtualio('\n'.join(self.content))
+        node += nodes.title(_('Supports multidimensional API'), _('Supports multidimensional API'))
+
+        return finish_directive(self, 'supports_multidimensional', node)
+
+
 def purge_driverproperties(app, env, docname):
     for directive in ['all_shortname',
                       'all_built_in_by_default',
@@ -249,6 +277,7 @@ def purge_driverproperties(app, env, docname):
                       'all_supports_create',
                       'all_supports_createcopy',
                       'all_supports_georeferencing',
-                      'all_supports_virtualio']:
+                      'all_supports_virtualio',
+                      'all_supports_multidimensional']:
         if hasattr(env, directive):
             setattr(env, directive, [ embed for embed in getattr(env, directive) if embed['docname'] != docname])

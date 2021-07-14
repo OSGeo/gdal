@@ -16,9 +16,9 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg \
 		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_iris -DFRMT_map -DFRMT_cals \
 		-DFRMT_safe -DFRMT_sentinel2 -DFRMT_derived -DFRMT_prf \
-		-DFRMT_sigdem -DFRMT_tga -DFRMT_stacta
+		-DFRMT_sigdem -DFRMT_tga -DFRMT_stacta -DFRMT_zarr
 
-MOREEXTRA 	=	
+MOREEXTRA 	=
 
 DIRLIST 	=	$(EXTRAFLAGS:-DFRMT_=)
 
@@ -56,7 +56,7 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_openjpeg
 !ENDIF
 
 !IFDEF KAKDIR
-!IF "$(JP2KAK_PLUGIN)" != "YES" 
+!IF "$(JP2KAK_PLUGIN)" != "YES"
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jp2kak -DFRMT_jpipkak
 !ELSE
 PLUGINFLAGS	=	$(PLUGINFLAGS) -DFRMT_jp2kak -DFRMT_jpipkak

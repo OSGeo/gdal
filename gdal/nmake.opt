@@ -813,6 +813,14 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #ZSTD_CFLAGS = -IC:/install-zstd/include
 #ZSTD_LIBS = C:/install-zstd/lib/libzstd.lib
 
+# Uncomment for Blosc support (for Zarr in particular)
+#BLOSC_CFLAGS = -IC:/install-blosc/include
+#BLOSC_LIBS = C:/install-blosc/lib/libblosc.lib
+
+# Uncomment for LZ4 support (for Zarr in particular)
+#LZ4_CFLAGS = -IC:/install-lz4/include
+#LZ4_LIBS = C:/install-lz4/lib/liblz4.lib
+
 # Uncomment for TileDB support
 #TILEDB_ENABLED = YES
 #TILEDB_CFLAGS = -IC:/install-tiledb/dist/include
@@ -1163,7 +1171,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(ARCOBJECTS_LIB) $(DWG_LIB_LINK) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ZLIB_LIB) $(LIBDEFLATE_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
-	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) \
+	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) $(BLOSC_LIBS) $(LZ4_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(TILEDB_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(MONGODBV3_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) $(CHARLS_LIB) ws2_32.lib \
 	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) $(LERC_LIB) $(BROTLI_LIB) $(BRUNSLI_LIB)\

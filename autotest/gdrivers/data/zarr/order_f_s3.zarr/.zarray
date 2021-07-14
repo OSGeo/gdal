@@ -1,0 +1,16 @@
+{
+    "chunks": [
+        2,
+        3
+    ],
+    "compressor": null,
+    "dtype": "|S3",
+    "fill_value": "MA==",
+    "filters": null,
+    "order": "F",
+    "shape": [
+        4,
+        4
+    ],
+    "zarr_format": 2
+}

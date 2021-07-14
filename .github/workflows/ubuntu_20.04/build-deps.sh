@@ -21,7 +21,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     libpq-dev libssl-dev libboost-dev \
     autoconf automake bash-completion libarmadillo-dev \
     libopenexr-dev libheif-dev \
-    libdeflate-dev \
+    libdeflate-dev libblosc-dev liblz4-dev \
     mono-mcs libmono-system-drawing4.0-cil ccache \
     perl ant \
     opencl-c-headers ocl-icd-opencl-dev

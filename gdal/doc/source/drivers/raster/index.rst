@@ -187,4 +187,5 @@ Raster drivers
    wmts
    xpm
    xyz
+   zarr
    zmap

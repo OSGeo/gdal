@@ -3496,7 +3496,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
     size_t nTotalOut = 0;
     if ( eErr == CE_None )
     {
-        if( CPLZLibDeflate(pabyBitBuf, nBitBufSize, 9,
+        if( CPLZLibDeflate(pabyBitBuf, nBitBufSize, -1,
                            pabyCMask, nBitBufSize + 30,
                            &nTotalOut) == nullptr )
         {

@@ -1,0 +1,20 @@
+{
+    "chunks": [
+        2
+    ],
+    "compressor": {
+        "check": -1,
+        "filters": null,
+        "format": 1,
+        "id": "lzma",
+        "preset": null
+    },
+    "dtype": "|u1",
+    "fill_value": 0,
+    "filters": null,
+    "order": "C",
+    "shape": [
+        2
+    ],
+    "zarr_format": 2
+}

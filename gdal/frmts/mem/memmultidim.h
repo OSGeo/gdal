@@ -127,6 +127,9 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
 
+    bool m_bWritable = true;
+    bool m_bModified = false;
+
 public:
     MEMAbstractMDArray(const std::string& osParentName,
                        const std::string& osName,
@@ -140,6 +143,12 @@ public:
 
     bool Init(GByte* pData = nullptr,
               const std::vector<GPtrDiff_t>& anStrides = std::vector<GPtrDiff_t>());
+
+    void SetWritable(bool bWritable) { m_bWritable = bWritable; }
+
+    bool IsModified() const { return m_bModified; }
+
+    void SetModified(bool bModified) { m_bModified = bModified; }
 };
 
 /************************************************************************/
@@ -188,7 +197,7 @@ public:
     }
     ~MEMMDArray();
 
-    bool IsWritable() const override { return true; }
+    bool IsWritable() const override { return m_bWritable; }
 
     const std::string& GetFilename() const override { return m_osFilename; }
 

@@ -1,0 +1,19 @@
+
+OBJ	=	zarrdriver.obj zarr_array.obj zarr_attribute.obj zarr_group.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS= -I..\mem -I..\gtiff -I..\netcdf
+
+!IFDEF BLOSC_CFLAGS
+EXTRAFLAGS =	$(EXTRAFLAGS) $(BLOSC_CFLAGS) -DHAVE_BLOSC
+!ENDIF
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

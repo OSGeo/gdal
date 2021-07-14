@@ -1,0 +1,15 @@
+{
+    "str": "foo",
+    "null": null,
+    "int": 1,
+    "int64": 1234567890123,
+    "double": 1.5,
+    "strarray": ["foo", "bar"],
+    "intarray": [1, 2],
+    "int64array": [1234567890123, -1234567890123],
+    "doublearray": [1.5, 2.5],
+    "intdoublearray": [1, 2.5],
+    "mixedstrintarray": ["foo", 1],
+    "bool": true,
+    "obj": {}
+}

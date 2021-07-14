@@ -6703,6 +6703,7 @@ class GDALDatasetFromArray final: public GDALDataset
     double m_adfGeoTransform[6]{0,1,0,0,0,1};
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
+    GDALMultiDomainMetadata m_oMDD{};
 
 public:
     GDALDatasetFromArray(const std::shared_ptr<GDALMDArray>& array,
@@ -6754,7 +6755,7 @@ public:
             {
                 val += '}';
             }
-            SetMetadataItem(attr->GetName().c_str(), val.c_str());
+            m_oMDD.SetMetadataItem(attr->GetName().c_str(), val.c_str());
         }
 
         // Instantiate bands by iterating over non-XY variables
@@ -6811,6 +6812,21 @@ lbl_return_to_caller:
             m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
         }
         return m_poSRS.get();
+    }
+
+    CPLErr SetMetadata(char** papszMetadata, const char* pszDomain) override
+    {
+        return m_oMDD.SetMetadata(papszMetadata, pszDomain);
+    }
+
+    char** GetMetadata(const char* pszDomain) override
+    {
+        return m_oMDD.GetMetadata(pszDomain);
+    }
+
+    const char* GetMetadataItem(const char* pszName, const char* pszDomain) override
+    {
+        return m_oMDD.GetMetadataItem(pszName, pszDomain);
     }
 };
 

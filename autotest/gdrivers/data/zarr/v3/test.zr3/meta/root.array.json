@@ -1,0 +1,19 @@
+{
+    "shape": [
+        5,
+        10
+    ],
+    "data_type": "<i4",
+    "chunk_grid": {
+        "type": "regular",
+        "chunk_shape": [
+            2,
+            5
+        ],
+        "separator": "/"
+    },
+    "chunk_memory_layout": "C",
+    "fill_value": null,
+    "extensions": [],
+    "attributes": { "f": "bar" }
+}

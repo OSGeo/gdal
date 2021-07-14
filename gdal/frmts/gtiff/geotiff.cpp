@@ -6524,7 +6524,7 @@ GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *m_poGDSIn, int nBandIn )
 /*                            FloatToHalf()                             */
 /************************************************************************/
 
-static GUInt16 FloatToHalf( GUInt32 iFloat32, bool& bHasWarned )
+GUInt16 FloatToHalf( GUInt32 iFloat32, bool& bHasWarned )
 {
     GUInt32 iSign =     (iFloat32 >> 31) & 0x00000001;
     GUInt32 iExponent = (iFloat32 >> 23) & 0x000000ff;

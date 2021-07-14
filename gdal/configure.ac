@@ -1689,6 +1689,77 @@ fi
 
 AC_SUBST(ZSTD_SETTING,$ZSTD_SETTING)
 
+
+dnl ---------------------------------------------------------------------------
+dnl Check if blosc is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(blosc,[  --with-blosc[=ARG]       Include blosc support (ARG=yes/no/installation_prefix)],,)
+
+if test "$with_blosc" = "" -o "$with_blosc" = "yes" ; then
+  AC_CHECK_LIB(blosc,blosc_cbuffer_validate,HAVE_BLOSC=yes,HAVE_BLOSC=no,)
+
+  if test "$HAVE_BLOSC" = "yes" ; then
+    LIBS="-lblosc $LIBS"
+  else
+    if test "$with_blosc" = "yes" ; then
+      AC_MSG_ERROR([libblosc not found])
+    else
+      echo "libblosc not found - BLOSC support disabled"
+    fi
+  fi
+elif test "$with_blosc" != "" -a "$with_blosc" != "no"; then
+
+  AC_CHECK_LIB(blosc,blosc_cbuffer_validate,HAVE_BLOSC=yes,HAVE_BLOSC=no,-L$with_blosc/lib)
+
+  if test "$HAVE_BLOSC" = "yes" -a -f "$with_blosc/include/blosc.h" ; then
+    LIBS="-L$with_blosc/lib -lblosc $LIBS"
+    EXTRA_INCLUDES="-I$with_blosc/include $EXTRA_INCLUDES"
+  else
+    AC_MSG_ERROR([libblosc not found])
+  fi
+
+else
+    HAVE_BLOSC=no
+fi
+
+AC_SUBST(HAVE_BLOSC,$HAVE_BLOSC)
+
+dnl ---------------------------------------------------------------------------
+dnl Check if lz4 is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(lz4,[  --with-lz4[=ARG]       Include lz4 support (ARG=yes/no/installation_prefix)],,)
+
+if test "$with_lz4" = "" -o "$with_lz4" = "yes" ; then
+  AC_CHECK_LIB(lz4,LZ4_decompress_safe,HAVE_LZ4=yes,HAVE_LZ4=no,)
+
+  if test "$HAVE_LZ4" = "yes" ; then
+    LIBS="-llz4 $LIBS"
+  else
+    if test "$with_lz4" = "yes" ; then
+      AC_MSG_ERROR([liblz4 not found])
+    else
+      echo "liblz4 not found - LZ4 support disabled"
+    fi
+  fi
+elif test "$with_lz4" != "" -a "$with_lz4" != "no"; then
+
+  AC_CHECK_LIB(lz4,LZ4_decompress_safe,HAVE_LZ4=yes,HAVE_LZ4=no,-L$with_lz4/lib)
+
+  if test "$HAVE_LZ4" = "yes" -a -f "$with_lz4/include/lz4.h" ; then
+    LIBS="-L$with_lz4/lib -llz4 $LIBS"
+    EXTRA_INCLUDES="-I$with_lz4/include $EXTRA_INCLUDES"
+  else
+    AC_MSG_ERROR([liblz4 not found])
+  fi
+
+else
+    HAVE_LZ4=no
+fi
+
+AC_SUBST(HAVE_LZ4,$HAVE_LZ4)
+
 dnl ---------------------------------------------------------------------------
 dnl Set up drivers and formats
 dnl ---------------------------------------------------------------------------
@@ -1699,7 +1770,7 @@ OGRFORMATS_ENABLED=
 OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
-AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted elas envisat ers esric fit gff gsg gxf hf2 idrisi ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacta terragen tga til tsx usgsdem xpm xyz zmap])
+AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted elas envisat ers esric fit gff gsg gxf hf2 idrisi ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt stacta terragen tga til tsx usgsdem xpm xyz zarr zmap])
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
 AC_DEFUN([INTERNAL_DRIVERS],[arcgen avc cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm jml mapml mvt ntf openfilegdb pgdump rec s57 selafin shape svg sxf tiger vdv wasp])dnl
 AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas ogcapi])dnl
@@ -6075,6 +6146,7 @@ LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
 LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
+LOC_MSG([  Blosc support:             ${HAVE_BLOSC}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
 LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
@@ -6119,6 +6191,7 @@ LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
 LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
 LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
+LOC_MSG([  LZ4 support:               ${HAVE_LZ4}])
 LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])

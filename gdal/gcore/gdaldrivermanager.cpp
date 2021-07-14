@@ -40,6 +40,7 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_compressor.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal.h"
@@ -264,6 +265,7 @@ GDALDriverManager::~GDALDriverManager()
 /*      Cleanup VSIFileManager.                                         */
 /* -------------------------------------------------------------------- */
     VSICleanupFileManager();
+    CPLDestroyCompressorRegistry();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup thread local storage ... I hope the program is all      */

@@ -55,4 +55,8 @@ GUInt32 HalfToFloat( GUInt16 iHalf );
 GUInt32 TripleToFloat( GUInt32 iTriple );
 CPL_C_END
 
+#ifdef __cplusplus
+GUInt16 FloatToHalf( GUInt32 iFloat32, bool& bHasWarned );
+#endif
+
 #endif // TIF_FLOAT_H_INCLUDED
