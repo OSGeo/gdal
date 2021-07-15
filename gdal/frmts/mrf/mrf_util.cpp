@@ -58,13 +58,19 @@ static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DE
 #if defined(LERC)
         "LERC",
 #endif
+#if defined(ZSTD_SUPPORT)
+        "ZSTD",
+#endif
         "Unknown" };
 
 static const char * const ILC_E[]={ ".ppg", ".ppg", ".pjg", ".pjp", ".til", ".pzp", ".ptf",
 #if defined(LERC)
-        ".lrc" ,
+    ".lrc",
 #endif
-        "" };
+#if defined(ZSTD_SUPPORT)
+    ".pzs",
+#endif
+    "" };
 
 static const char * const ILO_N[]={ "PIXEL", "BAND", "LINE", "Unknown" };
 
@@ -288,11 +294,18 @@ MRFRasterBand *newMRFRasterBand(MRFDataset *pDS, const ILImage &image, int b, in
 #if defined(LERC)
     case IL_LERC: bnd = new LERC_Band(pDS, image, b, level); break;
 #endif
-        // ZLIB is just raw + deflate
+    // ZLIB is just raw + deflate
     case IL_ZLIB:
         bnd = new Raw_Band(pDS, image, b, level);
         bnd->SetDeflate(1);
         break;
+    // Same for ZSTD
+#if defined(ZSTD_SUPPORT)
+    case IL_ZSTD:
+        bnd = new Raw_Band(pDS, image, b, level);
+        bnd->SetZstd(1);
+        break;
+#endif
     case IL_TIF:
         if (image.pageSizeBytes > INT_MAX - 1024)
             return nullptr;
@@ -365,15 +378,6 @@ CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement ) {
 }
 
 //
-// Extension to CSL, set an entry if it doesn't already exist
-//
-char **CSLAddIfMissing(char **papszList, const char *pszName, const char *pszValue) {
-    if (CSLFetchNameValue(papszList, pszName))
-        return papszList;
-    return CSLSetNameValue(papszList, pszName, pszValue);
-}
-
-//
 // Print a double so it can be read with strod while preserving precision
 // Unfortunately this is not quite possible or portable enough at this time
 //
@@ -432,20 +436,6 @@ void XMLSetAttributeVal(CPLXMLNode *parent, const char*pszName, std::vector<doub
 }
 
 /**
- *\brief Read a ColorEntry XML node, return a GDALColorEntry structure
- *
- */
-
-GDALColorEntry GetXMLColorEntry(CPLXMLNode *p) {
-    GDALColorEntry ce;
-    ce.c1 = static_cast<short>(getXMLNum(p, "c1", 0));
-    ce.c2 = static_cast<short>(getXMLNum(p, "c2", 0));
-    ce.c3 = static_cast<short>(getXMLNum(p, "c3", 0));
-    ce.c4 = static_cast<short>(getXMLNum(p, "c4", 255));
-    return ce;
-}
-
-/**
  *\brief Verify or make a file that big
  *
  * @return true if size is OK or if extend succeeded
@@ -471,68 +461,6 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
     int ret = VSIFTruncateL(ifp, sz);
     VSIFCloseL(ifp);
     return !ret;
-}
-
-// Similar to compress2() but with flags to control zlib features
-// Returns true if it worked
-int ZPack(const buf_mgr &src, buf_mgr &dst, int flags) {
-    z_stream stream;
-    int err;
-
-    memset(&stream, 0, sizeof(stream));
-    stream.next_in = (Bytef*)src.buffer;
-    stream.avail_in = (uInt)src.size;
-    stream.next_out = (Bytef*)dst.buffer;
-    stream.avail_out = (uInt)dst.size;
-
-    int level = std::min(9, flags & ZFLAG_LMASK);
-    int wb = MAX_WBITS;
-    // if gz flag is set, ignore raw request
-    if (flags & ZFLAG_GZ) wb += 16;
-    else if (flags & ZFLAG_RAW) wb = -wb;
-    int memlevel = 8; // Good compromise
-    int strategy = (flags & ZFLAG_SMASK) >> 6;
-    if (strategy > 4) strategy = 0;
-
-    err = deflateInit2(&stream, level, Z_DEFLATED, wb, memlevel, strategy);
-    if (err != Z_OK) return err;
-
-    err = deflate(&stream, Z_FINISH);
-    if (err != Z_STREAM_END) {
-        deflateEnd(&stream);
-        return false;
-    }
-    dst.size = stream.total_out;
-    err = deflateEnd(&stream);
-    return err == Z_OK;
-}
-
-// Similar to uncompress() from zlib, accepts the ZFLAG_RAW
-// Return true if it worked
-int ZUnPack(const buf_mgr &src, buf_mgr &dst, int flags) {
-
-    z_stream stream;
-    int err;
-
-    memset(&stream, 0, sizeof(stream));
-    stream.next_in = (Bytef*)src.buffer;
-    stream.avail_in = (uInt)src.size;
-    stream.next_out = (Bytef*)dst.buffer;
-    stream.avail_out = (uInt)dst.size;
-
-    // 32 means autodetec gzip or zlib header, negative 15 is for raw
-    int wb = (ZFLAG_RAW & flags) ? -MAX_WBITS: 32 + MAX_WBITS;
-    err = inflateInit2(&stream, wb);
-    if (err != Z_OK) return false;
-
-    err = inflate(&stream, Z_FINISH);
-    if (err != Z_STREAM_END) {
-        inflateEnd(&stream);
-        return false;
-    }
-    dst.size = stream.total_out;
-    err = inflateEnd(&stream);
-    return err == Z_OK;
 }
 
 NAMESPACE_MRF_END
@@ -568,13 +496,16 @@ void GDALRegister_mrf() {
 #if defined(LERC)
         "       <Value>LERC</Value>"
 #endif
+#if defined(ZSTD_SUPPORT)
+        "       <Value>ZSTD</Value>"
+#endif
         "   </Option>"
         "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
         "       <Value>PIXEL</Value>"
         "       <Value>BAND</Value>"
         "   </Option>\n"
         "   <Option name='ZSIZE' type='int' description='Third dimension size' default='1'/>"
-        "   <Option name='QUALITY' type='int' description='best=99, bad=0, default=85'/>\n"
+        "   <Option name='QUALITY' type='int' description='Compression dependent control value, for JPEG best=99, bad=0, default=85'/>\n"
         "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
         "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
         "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
@@ -596,17 +527,20 @@ void GDALRegister_mrf() {
         "   </Option>\n"
         "   <Option name='OPTIONS' type='string' description='\n"
         "     Compression dependent parameters, space separated:\n"
+#if defined(ZSTD_SUPPORT)
+        "       ZSTD - boolean, enable libzstd as final stage, preferred over DEFLATE\n"
+#endif
         "       DEFLATE - boolean, enable zlib as final stage\n"
-        "       GZ - boolean, enable gzip headers instead of zlib ones when using zlib\n"
-        "       RAWZ - boolean, disable all zlib headers\n"
-        "       Z_STRATEGY - Z_HUFFMAN_ONLY | Z_FILTERED | Z_RLE | Z_FIXED, zlib restricted strategy\n"
+        "       GZ - boolean, for DEFLATE enable gzip headers instead of zlib ones when using zlib\n"
+        "       RAWZ - boolean, for DEFLATE disable all zlib headers\n"
+        "       Z_STRATEGY - Z_HUFFMAN_ONLY | Z_FILTERED | Z_RLE | Z_FIXED: restricts DEFLATE and PNG strategy\n"
 #if defined(LERC)
         "       LERC_PREC - numeric, set LERC precision, defaults to 0.5 for int and 0.001 for float\n"
-        "       V1 - boolean, enable LERC V1 format\n"
+        "       V1 - boolean, enable LERC V1 (older) format\n"
 #endif
-        "       OPTIMIZE - boolean, enables Huffman table optimization for JPEG\n"
+        "       OPTIMIZE - boolean, for JPEG, enables Huffman table optimization\n"
 #if defined(BRUNSLI)
-        "       JFIF - boolean, disable brunsli\n"
+        "       JFIF - boolean, for JPEG, disable brunsli encoding\n"
 #endif
         "'/>"
         "</CreationOptionList>\n");
