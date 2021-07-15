@@ -253,8 +253,8 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
 
 #if defined(ZSTD_SUPPORT)
 
-// Arange bytes by rank in the input
 static void rankfilter(buf_mgr& src, size_t factor) {
+    // Arange bytes by rank
     if (factor > 1) {
         std::vector<char> tempb(src.size);
         char* d = tempb.data();
@@ -263,23 +263,27 @@ static void rankfilter(buf_mgr& src, size_t factor) {
                 *d++ = src.buffer[i];
         memcpy(src.buffer, tempb.data(), src.size);
     }
-    // Apply per byte delta
-    auto guard = src.buffer + src.size;
-    char b(0);
-    for (auto p = src.buffer; p < guard; p++) {
-        char temp = *p;
+    // byte delta
+    auto p = reinterpret_cast<GByte*>(src.buffer);
+    auto guard = p + src.size;
+    GByte b(0);
+    while (p < guard) {
+        GByte temp = *p;
         *p -= b;
         b = temp;
+        p++;
     }
 }
 
 static void derank(buf_mgr& src, size_t factor) {
-    // undo the delta
-    char b(0);
-    auto guard = src.buffer + src.size;
-    for (auto p = src.buffer; p < guard; p++) {
+    // undo delta
+    auto p = reinterpret_cast<GByte*>(src.buffer);
+    auto guard = p + src.size;
+    GByte b(0);
+    while (p < guard) {
         b += *p;
         *p = b;
+        p++;
     }
     if (factor > 1) { // undo rank separation
         std::vector<char> tempb(src.size);
@@ -302,44 +306,40 @@ static void derank(buf_mgr& src, size_t factor) {
 */
 static void* ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level, ZSTD_CCtx *cctx, size_t ranks)
 {
+    if (!cctx)
+        return nullptr;
     if (ranks && (src.size % ranks) == 0)
         rankfilter(src, ranks);
 
-    // The buffer pointer we might allocate
-    void* dbuff = nullptr;
-    buf_mgr dst = { src.buffer + src.size, extrasize };
+    // might need a buffer for the zstd output
+    std::vector<char> dbuff;
+    void* dst = src.buffer + src.size;
+    size_t size = extrasize;
     // Allocate a temp buffer if there is not sufficient space.
     // Zstd bound is about (size * 1.004 + 64)
-    if (extrasize < ZSTD_compressBound(src.size)) {
-        dst.size = ZSTD_compressBound(src.size);
-        dbuff = VSIMalloc(dst.size);
-        dst.buffer = (char*)dbuff;
-        if (!dst.buffer)
-            return nullptr;
+    if (size < ZSTD_compressBound(src.size)) {
+        size = ZSTD_compressBound(src.size);
+        dbuff.resize(size);
+        dst = dbuff.data();
     }
 
-    size_t val = cctx ? ZSTD_compressCCtx(cctx, dst.buffer, dst.size, src.buffer, src.size, c_level)
-        : ZSTD_compress(dst.buffer, dst.size, src.buffer, src.size, c_level);
-    if (ZSTD_isError(val)) {
-        CPLFree(dbuff);
+    size_t val = ZSTD_compressCCtx(cctx, dst, size, src.buffer, src.size, c_level);
+    if (ZSTD_isError(val))
         return nullptr;
-    }
 
-    // If we didn't allocate a buffer, data is in destination buffer
-    if (nullptr == dbuff) {
+    // If we didn't need the buffer, packed data is already in the user buffer
+    if (dbuff.empty()) {
         src.size = val;
-        return dst.buffer;
+        return dst;
     }
 
-    if (val > (src.size + extrasize)) { // Doesn't fit in buffer, this should never happen
-        CPLFree(dbuff);
+    if (val > (src.size + extrasize)) { // Doesn't fit in user buffer
         CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: ZSTD compression buffer too small");
         return nullptr; // Error
     }
 
-    memcpy(src.buffer, dbuff, val);
+    memcpy(src.buffer, dbuff.data(), val);
     src.size = val;
-    CPLFree(dbuff);
     return src.buffer;
 }
 #endif
@@ -941,6 +941,12 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
 #if defined(ZSTD_SUPPORT)
     // undo ZSTD
     if (dozstd) {
+        auto ctx = poDS->getzsd();
+        if (!ctx) {
+            CPLFree(data);
+            CPLError(CE_Failure, CPLE_AppDefined, "Can't aquire ZSTD context");
+            return CE_Failure;
+        }
         if (img.pageSizeBytes > INT_MAX - 1440) {
             CPLFree(data);
             CPLError(CE_Failure, CPLE_AppDefined, "Page is too large at %d", img.pageSizeBytes);
@@ -954,11 +960,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
             return CE_Failure;
         }
 
-        if (!poDS->pzsdctx)
-            poDS->pzsdctx = ZSTD_createDCtx();
-        auto ctx = static_cast<ZSTD_DCtx*>(poDS->pzsdctx);
-        auto raw_size = ctx ? ZSTD_decompressDCtx(ctx, dst.buffer, dst.size, src.buffer, src.size)
-            : ZSTD_decompress(dst.buffer, dst.size, src.buffer, src.size);
+        auto raw_size = ZSTD_decompressDCtx(ctx, dst.buffer, dst.size, src.buffer, src.size);
         if (ZSTD_isError(raw_size)) { // assume page was not packed, warn only
             CPLFree(dst.buffer);
             if (!poDS->no_errors)

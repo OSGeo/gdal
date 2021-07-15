@@ -168,8 +168,8 @@ MRFDataset::~MRFDataset() {   // Make sure everything gets written
     CPLFree(pbuffer);
     pbsize = 0;
 #if defined(ZSTD_SUPPORT)
-    ZSTD_freeCCtx(reinterpret_cast<ZSTD_CCtx*>(pzscctx));
-    ZSTD_freeDCtx(reinterpret_cast<ZSTD_DCtx*>(pzsdctx));
+    ZSTD_freeCCtx(static_cast<ZSTD_CCtx*>(pzscctx));
+    ZSTD_freeDCtx(static_cast<ZSTD_DCtx*>(pzsdctx));
 #endif
 }
 
