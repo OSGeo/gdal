@@ -49,7 +49,10 @@
 
 #include <vector>
 #include <assert.h>
-#include "zlib.h"
+#include <zlib.h>
+#if defined(ZSTD_SUPPORT)
+#include <zstd.h>
+#endif
 
 NAMESPACE_MRF_START
 
@@ -145,24 +148,86 @@ static void swab_buff(buf_mgr &src, const ILImage &img)
     }
 }
 
-/**
-*\brief Deflates a buffer, extrasize is the available size in the buffer past the input
-*  If the output fits past the data, it uses that area
-* otherwise it uses a temporary buffer and copies the data over the input on return, returning a pointer to it
+// Similar to compress2() but with flags to control zlib features
+// Returns true if it worked
+static int ZPack(const buf_mgr& src, buf_mgr& dst, int flags) {
+    z_stream stream;
+    int err;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*)src.buffer;
+    stream.avail_in = (uInt)src.size;
+    stream.next_out = (Bytef*)dst.buffer;
+    stream.avail_out = (uInt)dst.size;
+
+    int level = flags & ZFLAG_LMASK;
+    if (level > 9) level = 9;
+    if (level < 1) level = 1;
+    int wb = MAX_WBITS;
+    // if gz flag is set, ignore raw request
+    if (flags & ZFLAG_GZ) wb += 16;
+    else if (flags & ZFLAG_RAW) wb = -wb;
+    int memlevel = 8; // Good compromise
+    int strategy = (flags & ZFLAG_SMASK) >> 6;
+    if (strategy > 4) strategy = 0;
+
+    err = deflateInit2(&stream, level, Z_DEFLATED, wb, memlevel, strategy);
+    if (err != Z_OK) return err;
+
+    err = deflate(&stream, Z_FINISH);
+    if (err != Z_STREAM_END) {
+        deflateEnd(&stream);
+        return false;
+    }
+    dst.size = stream.total_out;
+    err = deflateEnd(&stream);
+    return err == Z_OK;
+}
+
+// Similar to uncompress() from zlib, accepts the ZFLAG_RAW
+// Return true if it worked
+static int ZUnPack(const buf_mgr& src, buf_mgr& dst, int flags) {
+
+    z_stream stream;
+    int err;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*)src.buffer;
+    stream.avail_in = (uInt)src.size;
+    stream.next_out = (Bytef*)dst.buffer;
+    stream.avail_out = (uInt)dst.size;
+
+    // 32 means autodetec gzip or zlib header, negative 15 is for raw
+    int wb = (ZFLAG_RAW & flags) ? -MAX_WBITS : 32 + MAX_WBITS;
+    err = inflateInit2(&stream, wb);
+    if (err != Z_OK) return false;
+
+    err = inflate(&stream, Z_FINISH);
+    if (err != Z_STREAM_END) {
+        inflateEnd(&stream);
+        return false;
+    }
+    dst.size = stream.total_out;
+    err = inflateEnd(&stream);
+    return err == Z_OK;
+}
+
+/*
+* Deflates a buffer, extrasize is the available size in the buffer past the input
+* If the output fits past the data, it uses that area, otherwise it uses a temporary buffer
+* and copies the data over the input on return, returning a pointer to it.
+* The output size is returned in src.size
+* Returns nullptr when compression failed
 */
 static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
     // The one we might need to allocate
     void *dbuff = nullptr;
-    buf_mgr dst;
-    // The one we could use, after the packed data
-    dst.buffer = src.buffer + src.size;
-    dst.size = extrasize;
+    buf_mgr dst = { src.buffer + src.size, extrasize };
 
     // Allocate a temp buffer if there is not sufficient space,
     // We need to have a bit more than half the buffer available
     if (extrasize < (src.size + 64)) {
         dst.size = src.size + 64;
-
         dbuff = VSIMalloc(dst.size);
         dst.buffer = (char *)dbuff;
         if (!dst.buffer)
@@ -186,6 +251,99 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
     return src.buffer;
 }
 
+#if defined(ZSTD_SUPPORT)
+
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static void rankfilter(buf_mgr& src, size_t factor) {
+    // Arange bytes by rank
+    if (factor > 1) {
+        std::vector<char> tempb(src.size);
+        char* d = tempb.data();
+        for (size_t j = 0; j < factor; j++)
+            for (size_t i = j; i < src.size; i += factor)
+                *d++ = src.buffer[i];
+        memcpy(src.buffer, tempb.data(), src.size);
+    }
+    // byte delta
+    auto p = reinterpret_cast<GByte*>(src.buffer);
+    auto guard = p + src.size;
+    GByte b(0);
+    while (p < guard) {
+        GByte temp = *p;
+        *p -= b;
+        b = temp;
+        p++;
+    }
+}
+
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static void derank(buf_mgr& src, size_t factor) {
+    // undo delta
+    auto p = reinterpret_cast<GByte*>(src.buffer);
+    auto guard = p + src.size;
+    GByte b(0);
+    while (p < guard) {
+        b += *p;
+        *p = b;
+        p++;
+    }
+    if (factor > 1) { // undo rank separation
+        std::vector<char> tempb(src.size);
+        char* d = tempb.data();
+        size_t chunk = src.size / factor;
+        for (size_t i = 0; i < chunk; i++)
+            for (size_t j = 0; j < factor; j++)
+                *d++ = src.buffer[chunk * j + i];
+        memcpy(src.buffer, tempb.data(), src.size);
+    }
+}
+
+/*
+* Compress a buffer using zstd, extrasize is the available size in the buffer past the input
+* If ranks > 0, apply the rank filter
+* If the output fits past the data, it uses that area, otherwise it uses a temporary buffer
+* and copies the data over the input on return, returning a pointer to it.
+* The output size is returned in src.size
+* Returns nullptr when compression failed
+*/
+static void* ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level, ZSTD_CCtx *cctx, size_t ranks)
+{
+    if (!cctx)
+        return nullptr;
+    if (ranks && (src.size % ranks) == 0)
+        rankfilter(src, ranks);
+
+    // might need a buffer for the zstd output
+    std::vector<char> dbuff;
+    void* dst = src.buffer + src.size;
+    size_t size = extrasize;
+    // Allocate a temp buffer if there is not sufficient space.
+    // Zstd bound is about (size * 1.004 + 64)
+    if (size < ZSTD_compressBound(src.size)) {
+        size = ZSTD_compressBound(src.size);
+        dbuff.resize(size);
+        dst = dbuff.data();
+    }
+
+    size_t val = ZSTD_compressCCtx(cctx, dst, size, src.buffer, src.size, c_level);
+    if (ZSTD_isError(val))
+        return nullptr;
+
+    // If we didn't need the buffer, packed data is already in the user buffer
+    if (dbuff.empty()) {
+        src.size = val;
+        return dst;
+    }
+
+    if (val > (src.size + extrasize)) { // Doesn't fit in user buffer
+        CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: ZSTD compression buffer too small");
+        return nullptr; // Error
+    }
+
+    memcpy(src.buffer, dbuff.data(), val);
+    src.size = val;
+    return src.buffer;
+}
+#endif
+
 //
 // The deflate_flags are available in all bands even if the DEFLATE option
 // itself is not set.  This allows for PNG features to be controlled, as well
@@ -197,6 +355,8 @@ MRFRasterBand::MRFRasterBand( MRFDataset *parent_dataset,
     dodeflate(GetOptlist().FetchBoolean("DEFLATE", FALSE)),
     // Bring the quality to 0 to 9
     deflate_flags(image.quality / 10),
+    dozstd(GetOptlist().FetchBoolean("ZSTD", FALSE)),
+    zstd_level(9),
     m_l(ov),
     img(image)
 {
@@ -227,6 +387,18 @@ MRFRasterBand::MRFRasterBand( MRFDataset *parent_dataset,
     else if (EQUAL(zstrategy, "Z_FIXED"))
         zv = Z_FIXED;
     deflate_flags |= (zv << 6);
+    if (image.quality < 23 && image.quality > 0)
+        zstd_level = image.quality;
+
+#if !defined(ZSTD_SUPPORT)
+    if (dodeflate) { // signal error condition to caller
+        CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: ZSTD support is not available");
+        dodeflate = FALSE;
+    }
+#endif
+        // Chose zstd over deflate if both are enabled and available
+    if (dozstd && dodeflate)
+        dodeflate = FALSE;
 }
 
 // Clean up the overviews if they exist
@@ -519,7 +691,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
         return CE_Failure;
     }
 
-    buf_mgr filedst={(char *)outbuff, poDS->pbsize};
+    buf_mgr filedst={static_cast<char *>(outbuff), poDS->pbsize};
     Compress(filedst, filesrc);
 
     // Where the output is, in case we deflate
@@ -531,6 +703,20 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
             return CE_Failure;
         }
     }
+
+#if defined(ZSTD_SUPPORT)
+    if (dozstd) {
+        size_t ranks = 0; // Assume no need for byte rank sort
+        if (img.comp == IL_NONE || img.comp == IL_ZSTD)
+            ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt)) * cstride;
+        usebuff = ZstdCompBlock(filedst, poDS->pbsize - filedst.size,
+            zstd_level, poDS->getzsc(), ranks);
+        if (!usebuff) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZSTD compression error");
+            return CE_Failure;
+        }
+    }
+#endif
 
     // Write and update the tile index
     ret = poDS->WriteTile(usebuff, infooffset, filedst.size);
@@ -734,7 +920,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
             return CE_Failure;
         }
         dst.size = img.pageSizeBytes + 1440; // in case the packed page is a bit larger than the raw one
-        dst.buffer = (char *)VSIMalloc(dst.size);
+        dst.buffer = static_cast<char*>(VSIMalloc(dst.size));
         if (nullptr == dst.buffer) {
             CPLFree(data);
             CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate %d bytes", static_cast<int>(dst.size));
@@ -752,7 +938,52 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
         }
     }
 
-    src.buffer = (char *)data;
+#if defined(ZSTD_SUPPORT)
+    // undo ZSTD
+    if (dozstd) {
+        auto ctx = poDS->getzsd();
+        if (!ctx) {
+            CPLFree(data);
+            CPLError(CE_Failure, CPLE_AppDefined, "Can't aquire ZSTD context");
+            return CE_Failure;
+        }
+        if (img.pageSizeBytes > INT_MAX - 1440) {
+            CPLFree(data);
+            CPLError(CE_Failure, CPLE_AppDefined, "Page is too large at %d", img.pageSizeBytes);
+            return CE_Failure;
+        }
+        dst.size = img.pageSizeBytes + 1440; // Allow for a slight increase from previous compressions
+        dst.buffer = static_cast<char*>(VSIMalloc(dst.size));
+        if (nullptr == dst.buffer) {
+            CPLFree(data);
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate %d bytes", static_cast<int>(dst.size));
+            return CE_Failure;
+        }
+
+        auto raw_size = ZSTD_decompressDCtx(ctx, dst.buffer, dst.size, src.buffer, src.size);
+        if (ZSTD_isError(raw_size)) { // assume page was not packed, warn only
+            CPLFree(dst.buffer);
+            if (!poDS->no_errors)
+                CPLError(CE_Warning, CPLE_AppDefined, "Can't unpack ZSTD page!");
+        }
+        else {
+            CPLFree(data); // The compressed data
+            data = dst.buffer;
+            tinfo.size = raw_size;
+            // Might need to undo the rank sort
+            size_t ranks = 0;
+            if (img.comp == IL_NONE || img.comp == IL_ZSTD)
+                ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt)) * img.pagesize.c;
+            if (ranks) {
+                src.buffer = static_cast<char*>(data);
+                src.size = static_cast<size_t>(tinfo.size);
+                derank(src, ranks);
+            }
+        }
+    }
+#endif
+
+    src.buffer = static_cast<char *>(data);
     src.size = static_cast<size_t>(tinfo.size);
 
     // After unpacking, the size has to be pageSizeBytes
@@ -841,6 +1072,20 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                 return CE_Failure;
             }
         }
+
+# if defined(ZSTD_SUPPORT)
+        if (dozstd) {
+            size_t ranks = 0; // Assume no need for byte rank sort
+            if (img.comp == IL_NONE || img.comp == IL_ZSTD)
+                ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt));
+            usebuff = ZstdCompBlock(dst, poDS->pbsize - dst.size,
+                zstd_level, poDS->getzsc(), ranks);
+            if (!usebuff) {
+                CPLError(CE_Failure, CPLE_AppDefined, "MRF: Zstd Compression error");
+                return CE_Failure;
+            }
+        }
+#endif
         return poDS->WriteTile(usebuff, infooffset , dst.size);
     }
 
@@ -955,15 +1200,32 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     if (dodeflate) {
         // Move the packed part at the start of tbuffer, to make more space available
         memcpy(tbuffer, outbuff, dst.size);
-        dst.buffer = (char *)tbuffer;
-        usebuff = DeflateBlock(dst, img.pageSizeBytes + poDS->pbsize - dst.size, deflate_flags);
-        if (!usebuff) {
+        dst.buffer = static_cast<char*>(tbuffer);
+        usebuff = DeflateBlock(dst,
+            static_cast<size_t>(img.pageSizeBytes) + poDS->pbsize - dst.size, deflate_flags);
+        if (!usebuff)
             CPLError(CE_Failure,CPLE_AppDefined, "MRF: Deflate error");
-            CPLFree(tbuffer);
-            poDS->WriteTile(nullptr, infooffset, 0);
-            poDS->bdirty = 0;
-            return CE_Failure;
-        }
+    }
+
+#if defined(ZSTD_SUPPORT)
+    if (dozstd) {
+        memcpy(tbuffer, outbuff, dst.size);
+        dst.buffer = static_cast<char*>(tbuffer);
+        size_t ranks = 0; // Assume no need for byte rank sort
+        if (img.comp == IL_NONE || img.comp == IL_ZSTD)
+            ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt)) * cstride;
+        usebuff = ZstdCompBlock(dst, static_cast<size_t>(img.pageSizeBytes) + poDS->pbsize - dst.size,
+                zstd_level, poDS->getzsc(), ranks);
+        if (!usebuff)
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZStd compression error");
+    }
+#endif
+
+    if (!usebuff) { // Error was signaled
+        CPLFree(tbuffer);
+        poDS->WriteTile(nullptr, infooffset, 0);
+        poDS->bdirty = 0;
+        return CE_Failure;
     }
 
     ret = poDS->WriteTile(usebuff, infooffset, dst.size);
@@ -1019,4 +1281,3 @@ GDALRasterBand* MRFRasterBand::GetOverview(int n) {
 }
 
 NAMESPACE_MRF_END
-

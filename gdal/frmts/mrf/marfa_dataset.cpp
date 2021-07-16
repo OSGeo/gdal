@@ -55,7 +55,9 @@
 
 #include <algorithm>
 #include <vector>
-
+#if defined(ZSTD_SUPPORT)
+#include <zstd.h>
+#endif
 using std::vector;
 using std::string;
 
@@ -85,7 +87,9 @@ MRFDataset::MRFDataset() :
     bdirty(0),
     bGeoTransformValid(TRUE),
     poColorTable(nullptr),
-    Quality(0)
+    Quality(0),
+    pzscctx(nullptr),
+    pzsdctx(nullptr)
 {
     //                X0   Xx   Xy  Y0    Yx   Yy
     double gt[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
@@ -110,6 +114,16 @@ bool MRFDataset::SetPBuffer(unsigned int sz) {
     pbsize = sz;
     return true;
 }
+
+static GDALColorEntry GetXMLColorEntry(CPLXMLNode* p) {
+    GDALColorEntry ce;
+    ce.c1 = static_cast<short>(getXMLNum(p, "c1", 0));
+    ce.c2 = static_cast<short>(getXMLNum(p, "c2", 0));
+    ce.c3 = static_cast<short>(getXMLNum(p, "c3", 0));
+    ce.c4 = static_cast<short>(getXMLNum(p, "c4", 255));
+    return ce;
+}
+
 
 //
 // Called by dataset destructor or at GDAL termination, to avoid
@@ -153,6 +167,10 @@ MRFDataset::~MRFDataset() {   // Make sure everything gets written
     // CPLFree ignores being called with NULL
     CPLFree(pbuffer);
     pbsize = 0;
+#if defined(ZSTD_SUPPORT)
+    ZSTD_freeCCtx(static_cast<ZSTD_CCtx*>(pzscctx));
+    ZSTD_freeDCtx(static_cast<ZSTD_DCtx*>(pzsdctx));
+#endif
 }
 
 /*
@@ -1457,6 +1475,16 @@ GIntBig MRFDataset::AddOverviews(int scaleIn) {
     // Last adjustment, should be a single set of c and leftover z tiles
     return img.idxoffset + sizeof(ILIdx) * img.pagecount.l / img.size.z * (img.size.z - zslice);
 }
+
+//
+// set an entry if it doesn't already exist
+//
+static char** CSLAddIfMissing(char** papszList, const char* pszName, const char* pszValue) {
+    if (CSLFetchNameValue(papszList, pszName))
+        return papszList;
+    return CSLSetNameValue(papszList, pszName, pszValue);
+}
+
 
 // CreateCopy implemented based on Create
 GDALDataset* MRFDataset::CreateCopy(const char* pszFilename,

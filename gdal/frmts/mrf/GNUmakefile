@@ -52,6 +52,10 @@ ifeq ($(BRUNSLI_ENABLED),yes)
 XTRA_OPT		:=	$(XTRA_OPT) -DBRUNSLI $(BRUNSLI_INCLUDE)
 endif
 
+ifeq ($(ZSTD_SETTING),yes)
+XTRA_OPT		:=	$(XTRA_OPT) -DZSTD_SUPPORT
+endif
+
 CPPFLAGS        :=  $(XTRA_OPT)  $(CPPFLAGS)
 
 default:  $(PREDEPEND)	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
