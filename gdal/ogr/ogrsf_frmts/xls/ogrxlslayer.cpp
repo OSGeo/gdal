@@ -340,6 +340,8 @@ int OGRXLSLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap, OLCFastFeatureCount) )
         return m_poAttrQuery == nullptr /* && m_poFilterGeom == NULL */;
+    else if( EQUAL(pszCap, OLCStringsAsUTF8) )
+        return TRUE;
 
     return FALSE;
 }
