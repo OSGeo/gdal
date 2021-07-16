@@ -275,7 +275,7 @@ CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static void rankfilter(buf_mgr& src, size_t
     }
 }
 
-static void derank(buf_mgr& src, size_t factor) {
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static void derank(buf_mgr& src, size_t factor) {
     // undo delta
     auto p = reinterpret_cast<GByte*>(src.buffer);
     auto guard = p + src.size;
