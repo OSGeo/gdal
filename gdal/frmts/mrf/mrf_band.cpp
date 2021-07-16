@@ -253,7 +253,7 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
 
 #if defined(ZSTD_SUPPORT)
 
-static void rankfilter(buf_mgr& src, size_t factor) {
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static void rankfilter(buf_mgr& src, size_t factor) {
     // Arange bytes by rank
     if (factor > 1) {
         std::vector<char> tempb(src.size);
@@ -1281,4 +1281,3 @@ GDALRasterBand* MRFRasterBand::GetOverview(int n) {
 }
 
 NAMESPACE_MRF_END
-
