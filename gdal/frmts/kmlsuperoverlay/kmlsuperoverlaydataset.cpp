@@ -2469,11 +2469,10 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
                     return nullptr;
             }
         }
-        if( psFolder == nullptr )
-        {
-            return nullptr;
-        }
-        for( auto psIter = psFolder->psChild; psIter; psIter = psIter->psNext )
+
+        // folder is not mandatory -- some kml have a structure kml.Document.GroundOverlay
+        CPLXMLNode* psParent = psFolder != nullptr ? psFolder : psDoc;
+        for( auto psIter = psParent->psChild; psIter; psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element &&
                 strcmp(psIter->pszValue, "GroundOverlay") == 0 )
@@ -2608,15 +2607,6 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
         return psSingleDocDS;
     }
 
-    GDALDataset* psSingleOverlayDS = KmlSingleOverlayRasterDataset::Open(pszFilename,
-                                                                 osFilename,
-                                                                 psNode);
-    if( psSingleOverlayDS != nullptr )
-    {
-        CPLDestroyXMLNode(psNode);
-        return psSingleOverlayDS;
-    }
-
     CPLXMLNode* psRegion = nullptr;
     CPLXMLNode* psDocument = nullptr;
     CPLXMLNode* psGroundOverlay = nullptr;
@@ -2624,8 +2614,15 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
     if( !KmlSuperOverlayFindRegionStart(psNode, &psRegion,
                                         &psDocument, &psGroundOverlay, &psLink) )
     {
+        // If we didn't find a super overlay, this still could be a valid kml containing
+        // a single overlay. Test for that now. (Note that we need to test first for super overlay
+        // in order to avoid false positive matches of super overlay datasets to single overlay
+        // datasets)
+        GDALDataset* psSingleOverlayDS = KmlSingleOverlayRasterDataset::Open(pszFilename,
+                                                                     osFilename,
+                                                                     psNode);
         CPLDestroyXMLNode(psNode);
-        return nullptr;
+        return psSingleOverlayDS;
     }
 
     if( psLink != nullptr )
