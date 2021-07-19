@@ -826,6 +826,8 @@ PQ_CFLAGS
 GDALFORMATS_ENABLED
 OGRFORMATS_ENABLED_CFLAGS
 OGRFORMATS_ENABLED
+HAVE_LZ4
+HAVE_BLOSC
 ZSTD_SETTING
 LIBLZMA_SETTING
 SPATIALITE_412_OR_LATER
@@ -1005,6 +1007,8 @@ with_spatialite
 with_spatialite_soname
 with_liblzma
 with_zstd
+with_blosc
+with_lz4
 enable_all_optional_drivers
 enable_driver_aaigrid
 enable_driver_adrg
@@ -1068,6 +1072,7 @@ enable_driver_tsx
 enable_driver_usgsdem
 enable_driver_xpm
 enable_driver_xyz
+enable_driver_zarr
 enable_driver_zmap
 enable_driver_grib
 enable_driver_ozi
@@ -1974,6 +1979,7 @@ Optional Features:
                           disable usgsdem driver support (enabled by default)
   --disable-driver-xpm    disable xpm driver support (enabled by default)
   --disable-driver-xyz    disable xyz driver support (enabled by default)
+  --disable-driver-zarr   disable zarr driver support (enabled by default)
   --disable-driver-zmap   disable zmap driver support (enabled by default)
   --disable-driver-grib   disable grib format support (enabled by default,
                           requires dependency)
@@ -2141,6 +2147,8 @@ Optional Packages:
   --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen
   --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
   --with-zstd=ARG       Include zstd support (ARG=yes/no/installation_prefix)
+  --with-blosc=ARG       Include blosc support (ARG=yes/no/installation_prefix)
+  --with-lz4=ARG       Include lz4 support (ARG=yes/no/installation_prefix)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=yes,no)
   --with-grass=ARG      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)
   --with-libgrass=ARG   Include GRASS support based on libgrass (GRASS 5.0+)
@@ -26143,6 +26151,247 @@ ZSTD_SETTING=$ZSTD_SETTING
 
 
 
+
+
+# Check whether --with-blosc was given.
+if test "${with_blosc+set}" = set; then :
+  withval=$with_blosc;
+fi
+
+
+if test "$with_blosc" = "" -o "$with_blosc" = "yes" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for blosc_cbuffer_validate in -lblosc" >&5
+$as_echo_n "checking for blosc_cbuffer_validate in -lblosc... " >&6; }
+if ${ac_cv_lib_blosc_blosc_cbuffer_validate+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblosc  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char blosc_cbuffer_validate ();
+int
+main ()
+{
+return blosc_cbuffer_validate ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_blosc_blosc_cbuffer_validate=yes
+else
+  ac_cv_lib_blosc_blosc_cbuffer_validate=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_blosc_blosc_cbuffer_validate" >&5
+$as_echo "$ac_cv_lib_blosc_blosc_cbuffer_validate" >&6; }
+if test "x$ac_cv_lib_blosc_blosc_cbuffer_validate" = xyes; then :
+  HAVE_BLOSC=yes
+else
+  HAVE_BLOSC=no
+fi
+
+
+  if test "$HAVE_BLOSC" = "yes" ; then
+    LIBS="-lblosc $LIBS"
+  else
+    if test "$with_blosc" = "yes" ; then
+      as_fn_error $? "libblosc not found" "$LINENO" 5
+    else
+      echo "libblosc not found - BLOSC support disabled"
+    fi
+  fi
+elif test "$with_blosc" != "" -a "$with_blosc" != "no"; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for blosc_cbuffer_validate in -lblosc" >&5
+$as_echo_n "checking for blosc_cbuffer_validate in -lblosc... " >&6; }
+if ${ac_cv_lib_blosc_blosc_cbuffer_validate+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblosc -L$with_blosc/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char blosc_cbuffer_validate ();
+int
+main ()
+{
+return blosc_cbuffer_validate ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_blosc_blosc_cbuffer_validate=yes
+else
+  ac_cv_lib_blosc_blosc_cbuffer_validate=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_blosc_blosc_cbuffer_validate" >&5
+$as_echo "$ac_cv_lib_blosc_blosc_cbuffer_validate" >&6; }
+if test "x$ac_cv_lib_blosc_blosc_cbuffer_validate" = xyes; then :
+  HAVE_BLOSC=yes
+else
+  HAVE_BLOSC=no
+fi
+
+
+  if test "$HAVE_BLOSC" = "yes" -a -f "$with_blosc/include/blosc.h" ; then
+    LIBS="-L$with_blosc/lib -lblosc $LIBS"
+    EXTRA_INCLUDES="-I$with_blosc/include $EXTRA_INCLUDES"
+  else
+    as_fn_error $? "libblosc not found" "$LINENO" 5
+  fi
+
+else
+    HAVE_BLOSC=no
+fi
+
+HAVE_BLOSC=$HAVE_BLOSC
+
+
+
+
+# Check whether --with-lz4 was given.
+if test "${with_lz4+set}" = set; then :
+  withval=$with_lz4;
+fi
+
+
+if test "$with_lz4" = "" -o "$with_lz4" = "yes" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4_decompress_safe in -llz4" >&5
+$as_echo_n "checking for LZ4_decompress_safe in -llz4... " >&6; }
+if ${ac_cv_lib_lz4_LZ4_decompress_safe+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llz4  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char LZ4_decompress_safe ();
+int
+main ()
+{
+return LZ4_decompress_safe ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_lz4_LZ4_decompress_safe=yes
+else
+  ac_cv_lib_lz4_LZ4_decompress_safe=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lz4_LZ4_decompress_safe" >&5
+$as_echo "$ac_cv_lib_lz4_LZ4_decompress_safe" >&6; }
+if test "x$ac_cv_lib_lz4_LZ4_decompress_safe" = xyes; then :
+  HAVE_LZ4=yes
+else
+  HAVE_LZ4=no
+fi
+
+
+  if test "$HAVE_LZ4" = "yes" ; then
+    LIBS="-llz4 $LIBS"
+  else
+    if test "$with_lz4" = "yes" ; then
+      as_fn_error $? "liblz4 not found" "$LINENO" 5
+    else
+      echo "liblz4 not found - LZ4 support disabled"
+    fi
+  fi
+elif test "$with_lz4" != "" -a "$with_lz4" != "no"; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4_decompress_safe in -llz4" >&5
+$as_echo_n "checking for LZ4_decompress_safe in -llz4... " >&6; }
+if ${ac_cv_lib_lz4_LZ4_decompress_safe+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llz4 -L$with_lz4/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char LZ4_decompress_safe ();
+int
+main ()
+{
+return LZ4_decompress_safe ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_lz4_LZ4_decompress_safe=yes
+else
+  ac_cv_lib_lz4_LZ4_decompress_safe=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lz4_LZ4_decompress_safe" >&5
+$as_echo "$ac_cv_lib_lz4_LZ4_decompress_safe" >&6; }
+if test "x$ac_cv_lib_lz4_LZ4_decompress_safe" = xyes; then :
+  HAVE_LZ4=yes
+else
+  HAVE_LZ4=no
+fi
+
+
+  if test "$HAVE_LZ4" = "yes" -a -f "$with_lz4/include/lz4.h" ; then
+    LIBS="-L$with_lz4/lib -llz4 $LIBS"
+    EXTRA_INCLUDES="-I$with_lz4/include $EXTRA_INCLUDES"
+  else
+    as_fn_error $? "liblz4 not found" "$LINENO" 5
+  fi
+
+else
+    HAVE_LZ4=no
+fi
+
+HAVE_LZ4=$HAVE_LZ4
+
+
+
 GDALFORMATS_ENABLED=
 GDALFORMATS_DISABLED=
 OGRFORMATS_ENABLED=
@@ -27902,6 +28151,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED xyz"
   INTERNAL_FORMAT_xyz_ENABLED=no
+fi
+
+# Check whether --enable-driver-zarr was given.
+if test "${enable_driver_zarr+set}" = set; then :
+  enableval=$enable_driver_zarr;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_zarr
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED zarr"
+  INTERNAL_FORMAT_zarr_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED zarr"
+  INTERNAL_FORMAT_zarr_ENABLED=no
 fi
 
 # Check whether --enable-driver-zmap was given.
@@ -44981,6 +45258,9 @@ echo ""
 echo "  Armadillo support:         ${HAVE_ARMADILLO}"
 
 
+echo "  Blosc support:             ${HAVE_BLOSC}"
+
+
 echo "  CFITSIO support:           ${FITS_SETTING}"
 
 
@@ -45105,6 +45385,9 @@ echo "  libxml2 support:           ${HAVE_LIBXML2}"
 
 
 echo "  LIBZ support:              ${LIBZ_SETTING}"
+
+
+echo "  LZ4 support:               ${HAVE_LZ4}"
 
 
 echo "  MDB support:               ${MDB_ENABLED}"

@@ -30,6 +30,7 @@
 
 #include "gdal_unit_test.h"
 
+#include "cpl_compressor.h"
 #include "cpl_error.h"
 #include "cpl_hash_set.h"
 #include "cpl_list.h"
@@ -3088,6 +3089,326 @@ namespace tut
             CPLSetConfigOption(pszHOMEEnvVarName, nullptr);
 
         VSIUnlink("/vsimem/.gdal/gdalrc");
+    }
+
+    // Test decompressor side of cpl_compressor.h
+    template<>
+    template<>
+    void object::test<45>()
+    {
+        const auto compressionLambda = [](const void* /* input_data */,
+                                          size_t /* input_size */,
+                                          void** /* output_data */,
+                                          size_t* /* output_size */,
+                                          CSLConstList /* options */,
+                                          void* /* compressor_user_data */)
+        {
+            return false;
+        };
+        int dummy = 0;
+
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
+        sComp.pszId = "my_comp";
+        const char* const apszMetadata[] = { "FOO=BAR", nullptr };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = compressionLambda;
+        sComp.user_data = &dummy;
+
+        ensure( CPLRegisterDecompressor(&sComp) );
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLRegisterDecompressor(&sComp) );
+        CPLPopErrorHandler();
+
+        char** decompressors = CPLGetDecompressors();
+        ensure( decompressors != nullptr );
+        ensure( CSLFindString(decompressors, sComp.pszId) >= 0 );
+        for( auto iter = decompressors; *iter; ++iter )
+        {
+            const auto pCompressor = CPLGetDecompressor(*iter);
+            ensure( pCompressor );
+            const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
+            if( pszOptions )
+            {
+                auto psNode = CPLParseXMLString(pszOptions);
+                ensure(psNode);
+                CPLDestroyXMLNode(psNode);
+            }
+            else
+            {
+                CPLDebug("TEST", "Decompressor %s has no OPTIONS", *iter);
+            }
+        }
+        CSLDestroy( decompressors );
+
+        ensure( CPLGetDecompressor("invalid") == nullptr );
+        const auto pCompressor = CPLGetDecompressor(sComp.pszId);
+        ensure( pCompressor );
+        ensure_equals( std::string(pCompressor->pszId), std::string(sComp.pszId) );
+        ensure_equals( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
+        ensure( pCompressor->pfnFunc != nullptr );
+        ensure_equals( pCompressor->user_data, sComp.user_data );
+
+        CPLDestroyCompressorRegistry();
+        ensure( CPLGetDecompressor(sComp.pszId) == nullptr );
+    }
+
+    // Test compressor side of cpl_compressor.h
+    template<>
+    template<>
+    void object::test<46>()
+    {
+        const auto compressionLambda = [](const void* /* input_data */,
+                                          size_t /* input_size */,
+                                          void** /* output_data */,
+                                          size_t* /* output_size */,
+                                          CSLConstList /* options */,
+                                          void* /* compressor_user_data */)
+        {
+            return false;
+        };
+        int dummy = 0;
+
+        CPLCompressor sComp;
+        sComp.nStructVersion = 1;
+        sComp.eType = CCT_COMPRESSOR;
+        sComp.pszId = "my_comp";
+        const char* const apszMetadata[] = { "FOO=BAR", nullptr };
+        sComp.papszMetadata = apszMetadata;
+        sComp.pfnFunc = compressionLambda;
+        sComp.user_data = &dummy;
+
+        ensure( CPLRegisterCompressor(&sComp) );
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLRegisterCompressor(&sComp) );
+        CPLPopErrorHandler();
+
+        char** compressors = CPLGetCompressors();
+        ensure( compressors != nullptr );
+        ensure( CSLFindString(compressors, sComp.pszId) >= 0 );
+        for( auto iter = compressors; *iter; ++iter )
+        {
+            const auto pCompressor = CPLGetCompressor(*iter);
+            ensure( pCompressor );
+            const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
+            if( pszOptions )
+            {
+                auto psNode = CPLParseXMLString(pszOptions);
+                ensure(psNode);
+                CPLDestroyXMLNode(psNode);
+            }
+            else
+            {
+                CPLDebug("TEST", "Compressor %s has no OPTIONS", *iter);
+            }
+        }
+        CSLDestroy( compressors );
+
+        ensure( CPLGetCompressor("invalid") == nullptr );
+        const auto pCompressor = CPLGetCompressor(sComp.pszId);
+        ensure( pCompressor );
+        ensure_equals( std::string(pCompressor->pszId), std::string(sComp.pszId) );
+        ensure_equals( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
+        ensure( pCompressor->pfnFunc != nullptr );
+        ensure_equals( pCompressor->user_data, sComp.user_data );
+
+        CPLDestroyCompressorRegistry();
+        ensure( CPLGetDecompressor(sComp.pszId) == nullptr );
+    }
+
+    // Test builtin compressors/decompressor
+    template<>
+    template<>
+    void object::test<47>()
+    {
+        for( const char* id : { "blosc", "zlib", "gzip", "lzma", "zstd", "lz4" } )
+        {
+            const auto pCompressor = CPLGetCompressor(id);
+            if( pCompressor == nullptr )
+            {
+                CPLDebug("TEST", "%s not available", id);
+                if( strcmp(id, "zlib") == 0 || strcmp(id, "gzip") == 0 )
+                {
+                    ensure( false );
+                }
+                continue;
+            }
+            CPLDebug("TEST", "Testing %s", id);
+
+            const char my_str[] = "my string to compress";
+            const char* const options[] = { "TYPESIZE=1", nullptr };
+
+            // Compressor side
+
+            // Just get output size
+            size_t out_size = 0;
+            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+                                          nullptr, &out_size,
+                                          options, pCompressor->user_data ) );
+            ensure( out_size != 0 );
+
+            // Let it alloc the output buffer
+            void* out_buffer2 = nullptr;
+            size_t out_size2 = 0;
+            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+                                          &out_buffer2, &out_size2,
+                                          options, pCompressor->user_data ) );
+            ensure( out_buffer2 != nullptr );
+            ensure( out_size2 != 0 );
+            ensure( out_size2 <= out_size );
+
+            std::vector<GByte> out_buffer3(out_size);
+
+            // Provide not large enough buffer size
+            size_t out_size3 = 1;
+            void* out_buffer3_ptr = &out_buffer3[0];
+            ensure( !(pCompressor->pfnFunc( my_str, strlen(my_str),
+                                          &out_buffer3_ptr, &out_size3,
+                                          options, pCompressor->user_data )) );
+
+            // Provide the output buffer
+            out_size3 = out_buffer3.size();
+            out_buffer3_ptr = &out_buffer3[0];
+            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+                                          &out_buffer3_ptr, &out_size3,
+                                          options, pCompressor->user_data ) );
+            ensure( out_buffer3_ptr != nullptr );
+            ensure( out_buffer3_ptr == &out_buffer3[0] );
+            ensure( out_size3 != 0 );
+            ensure_equals( out_size3, out_size2 );
+
+            out_buffer3.resize( out_size3 );
+            out_buffer3_ptr = &out_buffer3[0];
+
+            ensure( memcmp(out_buffer3_ptr, out_buffer2, out_size2) == 0 );
+
+            CPLFree(out_buffer2);
+
+            const std::vector<GByte> compressedData(out_buffer3);
+
+            // Decompressor side
+            const auto pDecompressor = CPLGetDecompressor(id);
+            ensure( pDecompressor != nullptr );
+
+            out_size = 0;
+            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+                                            nullptr, &out_size,
+                                            nullptr, pDecompressor->user_data ) );
+            ensure( out_size != 0 );
+            ensure( out_size >= strlen(my_str) );
+
+            out_buffer2 = nullptr;
+            out_size2 = 0;
+            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+                                            &out_buffer2, &out_size2,
+                                            options, pDecompressor->user_data ) );
+            ensure( out_buffer2 != nullptr );
+            ensure( out_size2 != 0 );
+            ensure_equals( out_size2, strlen(my_str) );
+            ensure( memcmp(out_buffer2, my_str, strlen(my_str)) == 0 );
+            CPLFree(out_buffer2);
+
+            out_buffer3.clear();
+            out_buffer3.resize(out_size);
+            out_size3 = out_buffer3.size();
+            out_buffer3_ptr = &out_buffer3[0];
+            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+                                            &out_buffer3_ptr, &out_size3,
+                                            options, pDecompressor->user_data ) );
+            ensure( out_buffer3_ptr != nullptr );
+            ensure( out_buffer3_ptr == &out_buffer3[0] );
+            ensure_equals( out_size3, strlen(my_str) );
+            ensure( memcmp(out_buffer3.data(), my_str, strlen(my_str)) == 0 );
+        }
+    }
+
+    template<class T> struct TesterDelta
+    {
+        static void test(const char* dtypeOption)
+        {
+            const auto pCompressor = CPLGetCompressor("delta");
+            ensure(pCompressor);
+            const auto pDecompressor = CPLGetDecompressor("delta");
+            ensure(pDecompressor);
+
+            const T tabIn[] = { static_cast<T>(-2), 3, 1 };
+            T tabCompress[3];
+            T tabOut[3];
+            const char* const apszOptions[] = { dtypeOption, nullptr };
+
+            void* outPtr = &tabCompress[0];
+            size_t outSize = sizeof(tabCompress);
+            ensure( pCompressor->pfnFunc( &tabIn[0], sizeof(tabIn),
+                                          &outPtr, &outSize,
+                                          apszOptions, pCompressor->user_data) );
+            ensure_equals(outSize, sizeof(tabCompress));
+
+            // ensure_equals(tabCompress[0], 2);
+            // ensure_equals(tabCompress[1], 1);
+            // ensure_equals(tabCompress[2], -2);
+
+            outPtr = &tabOut[0];
+            outSize = sizeof(tabOut);
+            ensure( pDecompressor->pfnFunc( &tabCompress[0], sizeof(tabCompress),
+                                            &outPtr, &outSize,
+                                            apszOptions, pDecompressor->user_data) );
+            ensure_equals(outSize, sizeof(tabOut));
+            ensure_equals(tabOut[0], tabIn[0]);
+            ensure_equals(tabOut[1], tabIn[1]);
+            ensure_equals(tabOut[2], tabIn[2]);
+        }
+    };
+
+    // Test delta compressors/decompressor
+    template<>
+    template<>
+    void object::test<48>()
+    {
+        TesterDelta<int8_t>::test("DTYPE=i1");
+
+        TesterDelta<uint8_t>::test("DTYPE=u1");
+
+        TesterDelta<int16_t>::test("DTYPE=i2");
+        TesterDelta<int16_t>::test("DTYPE=<i2");
+        TesterDelta<int16_t>::test("DTYPE=>i2");
+
+        TesterDelta<uint16_t>::test("DTYPE=u2");
+        TesterDelta<uint16_t>::test("DTYPE=<u2");
+        TesterDelta<uint16_t>::test("DTYPE=>u2");
+
+        TesterDelta<int32_t>::test("DTYPE=i4");
+        TesterDelta<int32_t>::test("DTYPE=<i4");
+        TesterDelta<int32_t>::test("DTYPE=>i4");
+
+        TesterDelta<uint32_t>::test("DTYPE=u4");
+        TesterDelta<uint32_t>::test("DTYPE=<u4");
+        TesterDelta<uint32_t>::test("DTYPE=>u4");
+
+        TesterDelta<int64_t>::test("DTYPE=i8");
+        TesterDelta<int64_t>::test("DTYPE=<i8");
+        TesterDelta<int64_t>::test("DTYPE=>i8");
+
+        TesterDelta<uint64_t>::test("DTYPE=u8");
+        TesterDelta<uint64_t>::test("DTYPE=<u8");
+        TesterDelta<uint64_t>::test("DTYPE=>u8");
+
+        TesterDelta<float>::test("DTYPE=f4");
+#ifdef CPL_MSB
+        TesterDelta<float>::test("DTYPE=>f4");
+#else
+        TesterDelta<float>::test("DTYPE=<f4");
+#endif
+
+        TesterDelta<double>::test("DTYPE=f8");
+#ifdef CPL_MSB
+        TesterDelta<double>::test("DTYPE=>f8");
+#else
+        TesterDelta<double>::test("DTYPE=<f8");
+#endif
+
     }
 
 } // namespace tut

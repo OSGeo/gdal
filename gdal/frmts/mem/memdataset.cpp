@@ -2138,6 +2138,13 @@ bool MEMAbstractMDArray::IWrite(const GUInt64* arrayStartIdx,
                                const GDALExtendedDataType& bufferDataType,
                                const void* pSrcBuffer)
 {
+    if( !m_bWritable )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Non updatable object");
+        return false;
+    }
+    m_bModified = true;
+
     const auto nDims = m_aoDims.size();
     if( nDims == 0 )
     {

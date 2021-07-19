@@ -7,10 +7,26 @@ else
 include GDALmake.opt
 endif
 
+XTRA_OPT=
+
 ifeq ($(LIBZ_SETTING),internal)
-XTRA_OPT =      -I../frmts/zlib
-else
-XTRA_OPT =
+XTRA_OPT := $(XTRA_OPT) -I../frmts/zlib
+endif
+
+ifeq ($(HAVE_BLOSC),yes)
+XTRA_OPT := $(XTRA_OPT) -DHAVE_BLOSC
+endif
+
+ifeq ($(LIBLZMA_SETTING),yes)
+XTRA_OPT := $(XTRA_OPT) -DHAVE_LZMA
+endif
+
+ifeq ($(ZSTD_SETTING),yes)
+XTRA_OPT := $(XTRA_OPT) -DHAVE_ZSTD
+endif
+
+ifeq ($(HAVE_LZ4),yes)
+XTRA_OPT := $(XTRA_OPT) -DHAVE_LZ4
 endif
 
 CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) $(JSON_INCLUDE) $(XTRA_OPT) -DINST_DATA=\"$(INST_DATA)\" -DSYSCONFDIR=\"$(sysconfdir)\"
@@ -35,7 +51,7 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_google_cloud.o cpl_azure.o cpl_alibaba_oss.o cpl_json_streaming_parser.o \
 	cpl_json.o cpl_md5.o cpl_swift.o cpl_vsil_plugin.o \
 	cpl_vsil_hdfs.o cpl_userfaultfd.o cpl_json_streaming_writer.o \
-	cpl_vax.o cpl_vsil_uploadonclose.o
+	cpl_vax.o cpl_vsil_uploadonclose.o cpl_compressor.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
@@ -127,7 +143,8 @@ INST_H_FILES = \
 	cpl_vsi_error.h \
 	cpl_vsi_virtual.h \
 	gdal_csv.h \
-	cpl_auto_close.h
+	cpl_auto_close.h \
+	cpl_compressor.h
 
 install:
 	for f in $(INST_H_FILES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done

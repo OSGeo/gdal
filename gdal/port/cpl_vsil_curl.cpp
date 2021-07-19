@@ -3188,7 +3188,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         !STARTS_WITH(CPLGetExtension(osFilename), "zip") && !bSkipReadDir)
     {
         char** papszFileList =
-            ReadDirInternal(CPLGetDirname(osFilename), 0, &bGotFileList);
+            ReadDirInternal((std::string(CPLGetDirname(osFilename)) + '/').c_str(), 0, &bGotFileList);
         const bool bFound =
             VSICurlIsFileInList(papszFileList,
                                 CPLGetFilename(osFilename)) != -1;

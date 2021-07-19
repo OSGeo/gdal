@@ -63,7 +63,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libboost-dev${APT_ARCH_SUFFIX} \
        autoconf automake bash-completion libarmadillo-dev${APT_ARCH_SUFFIX} \
        libopenexr-dev${APT_ARCH_SUFFIX} libheif-dev${APT_ARCH_SUFFIX} \
-       libdeflate-dev${APT_ARCH_SUFFIX} libbz2-dev${APT_ARCH_SUFFIX} \
+       libdeflate-dev${APT_ARCH_SUFFIX} libblosc-dev${APT_ARCH_SUFFIX} liblz4-dev${APT_ARCH_SUFFIX} libbz2-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
@@ -280,7 +280,7 @@ RUN apt-get update \
         libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-"$JAVA_VERSION"-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
         libarmadillo9 libpython3.8 libopenexr24 libheif1 \
-        libdeflate0 \
+        libdeflate0 libblosc1 liblz4-1 \
         python-is-python3 \
     # Workaround bug in ogdi packaging
     && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \

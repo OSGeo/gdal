@@ -1,0 +1,23 @@
+{
+    "shape": [
+        2
+    ],
+    "data_type": "u1",
+    "chunk_grid": {
+        "type": "regular",
+        "chunk_shape": [
+            2
+        ],
+        "separator": "/"
+    },
+    "chunk_memory_layout": "C",
+    "compressor": {
+        "codec": "https://purl.org/zarr/spec/codec/gzip/1.0",
+        "configuration": {
+            "level": 1
+        }
+    },
+    "fill_value": null,
+    "extensions": [],
+    "attributes": {}
+}

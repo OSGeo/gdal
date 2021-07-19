@@ -1,0 +1,19 @@
+{
+    "shape": [
+        5,
+        4
+    ],
+    "data_type": "bool",
+    "chunk_grid": {
+        "type": "regular",
+        "chunk_shape": [
+            2,
+            2
+        ],
+        "separator": "/"
+    },
+    "chunk_memory_layout": "C",
+    "fill_value": null,
+    "extensions": [],
+    "attributes": {}
+}
