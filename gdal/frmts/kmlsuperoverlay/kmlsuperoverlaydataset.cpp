@@ -2607,15 +2607,6 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
         return psSingleDocDS;
     }
 
-    GDALDataset* psSingleOverlayDS = KmlSingleOverlayRasterDataset::Open(pszFilename,
-                                                                 osFilename,
-                                                                 psNode);
-    if( psSingleOverlayDS != nullptr )
-    {
-        CPLDestroyXMLNode(psNode);
-        return psSingleOverlayDS;
-    }
-
     CPLXMLNode* psRegion = nullptr;
     CPLXMLNode* psDocument = nullptr;
     CPLXMLNode* psGroundOverlay = nullptr;
@@ -2623,8 +2614,15 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
     if( !KmlSuperOverlayFindRegionStart(psNode, &psRegion,
                                         &psDocument, &psGroundOverlay, &psLink) )
     {
+        // If we didn't find a super overlay, this still could be a valid kml containing
+        // a single overlay. Test for that now. (Note that we need to test first for super overlay
+        // in order to avoid false positive matches of super overlay datasets to single overlay
+        // datasets)
+        GDALDataset* psSingleOverlayDS = KmlSingleOverlayRasterDataset::Open(pszFilename,
+                                                                     osFilename,
+                                                                     psNode);
         CPLDestroyXMLNode(psNode);
-        return nullptr;
+        return psSingleOverlayDS;
     }
 
     if( psLink != nullptr )
