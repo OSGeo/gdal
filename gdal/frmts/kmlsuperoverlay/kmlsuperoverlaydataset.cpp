@@ -2469,11 +2469,10 @@ GDALDataset* KmlSingleOverlayRasterDataset::Open(const char* pszFilename,
                     return nullptr;
             }
         }
-        if( psFolder == nullptr )
-        {
-            return nullptr;
-        }
-        for( auto psIter = psFolder->psChild; psIter; psIter = psIter->psNext )
+
+        // folder is not mandatory -- some kml have a structure kml.Document.GroundOverlay
+        CPLXMLNode* psParent = psFolder != nullptr ? psFolder : psDoc;
+        for( auto psIter = psParent->psChild; psIter; psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element &&
                 strcmp(psIter->pszValue, "GroundOverlay") == 0 )
