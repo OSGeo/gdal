@@ -988,13 +988,11 @@ CPLErr CPL_STDCALL VRTAddSource( VRTSourcedRasterBandH hVRTBand,
 
 CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
                                       const char *pszVRTPath,
-                                      void* pUniqueHandle,
                                       std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     {
         const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath,
-                                                    pUniqueHandle,
                                                     oMapSharedSources );
         if( eErr != CE_None )
             return eErr;
@@ -1015,7 +1013,7 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 
         CPLErrorReset();
         VRTSource * const poSource =
-            poDriver->ParseSource( psChild, pszVRTPath, pUniqueHandle,
+            poDriver->ParseSource( psChild, pszVRTPath,
                                    oMapSharedSources );
         if( poSource != nullptr )
             AddSource( poSource );
@@ -1640,7 +1638,6 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
 
         auto l_poDS = cpl::down_cast<VRTDataset*>(GetDataset());
         VRTSource * const poSource = poDriver->ParseSource( psTree, nullptr,
-                                                            l_poDS,
                                                             l_poDS->m_oMapSharedSources );
         CPLDestroyXMLNode( psTree );
 
@@ -1673,7 +1670,6 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
 
         auto l_poDS = cpl::down_cast<VRTDataset*>(GetDataset());
         VRTSource * const poSource = poDriver->ParseSource( psTree, nullptr,
-                                                            l_poDS,
                                                             l_poDS->m_oMapSharedSources );
         CPLDestroyXMLNode( psTree );
 
@@ -1725,7 +1721,6 @@ CPLErr VRTSourcedRasterBand::SetMetadata( char **papszNewMD, const char *pszDoma
 
             auto l_poDS = cpl::down_cast<VRTDataset*>(GetDataset());
             VRTSource * const poSource = poDriver->ParseSource( psTree, nullptr,
-                                                                l_poDS,
                                                                 l_poDS->m_oMapSharedSources );
             CPLDestroyXMLNode( psTree );
 

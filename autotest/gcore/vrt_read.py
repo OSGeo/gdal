@@ -79,38 +79,20 @@ def test_vrt_open(filename, checksum):
 ###############################################################################
 # The VRT references a non existing TIF file
 
+@pytest.mark.parametrize('filename', ['data/idontexist.vrt', 'data/idontexist2.vrt'])
+def test_vrt_read_non_existing_source(filename):
 
-def test_vrt_read_1():
-
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open('data/idontexist.vrt')
-    gdal.PopErrorHandler()
-
+    ds = gdal.Open(filename)
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
     if ds is None:
         return
-
-    pytest.fail()
-
-###############################################################################
-# The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
-
-
-def test_vrt_read_2():
-
-    ds = gdal.Open('data/idontexist2.vrt')
-    assert ds is not None
-
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    cs = ds.GetRasterBand(1).Checksum()
-    gdal.PopErrorHandler()
 
     assert cs == 0
 
     ds.GetMetadata()
     ds.GetRasterBand(1).GetMetadata()
     ds.GetGCPs()
-
-    ds = None
 
 ###############################################################################
 # Test init of band data in case of cascaded VRT (ticket #2867)
@@ -277,15 +259,10 @@ def test_vrt_read_7():
 </VRTDataset>""" % filename
 
     gdal.FileFromMemBuffer(filename, content)
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open(filename)
-    gdal.PopErrorHandler()
-    error_msg = gdal.GetLastErrorMsg()
+    with gdaltest.error_handler():
+        assert ds.GetRasterBand(1).Checksum() == 0
     gdal.Unlink(filename)
-
-    assert ds is None
-
-    assert error_msg != ''
 
 ###############################################################################
 # Test ComputeRasterMinMax()
@@ -1294,7 +1271,7 @@ def test_vrt_shared_no_proxy_pool():
     assert len(before) == len(after)
 
 
-def test_vrt_shared_no_proxy_pool_error():
+def test_vrt_invalid_source_band():
 
     vrt_text = """<VRTDataset rasterXSize="50" rasterYSize="50">
   <VRTRasterBand dataType="Byte" band="1">
@@ -1303,16 +1280,10 @@ def test_vrt_shared_no_proxy_pool_error():
       <SourceBand>10</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-  <VRTRasterBand dataType="Byte" band="2">
-    <SimpleSource>
-      <SourceFilename>data/byte.tif</SourceFilename>
-      <SourceBand>11</SourceBand>
-    </SimpleSource>
-  </VRTRasterBand>
 </VRTDataset>"""
+    ds = gdal.Open(vrt_text)
     with gdaltest.error_handler():
-        ds = gdal.Open(vrt_text)
-    assert not ds
+        assert ds.GetRasterBand(1).Checksum() == 0
 
 
 def test_vrt_protocol():
@@ -1636,3 +1607,36 @@ def test_vrt_usemaskband_alpha():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/src1.tif')
     gdal.GetDriverByName('GTiff').Delete('/vsimem/src2.tif')
+
+
+def test_vrt_check_dont_open_unneeded_source():
+
+    vrt = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename>data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">i_do_not_exist.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="10" yOff="10" xSize="10" ySize="10" />
+      <DstRect xOff="10" yOff="10" xSize="10" ySize="10" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+
+    tmpfilename = '/vsimem/tmp.vrt'
+    gdal.FileFromMemBuffer(tmpfilename, vrt)
+    try:
+        ds = gdal.Translate('', tmpfilename, options = '-of MEM -srcwin 0 0 10 10')
+        assert ds is not None
+
+        with gdaltest.error_handler():
+            ds = gdal.Translate('', tmpfilename, options = '-of MEM -srcwin 0 0 10.1 10.1')
+        assert ds is None
+    finally:
+        gdal.Unlink(tmpfilename)

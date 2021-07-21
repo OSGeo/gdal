@@ -572,7 +572,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
 
             VRTRasterBand  *poBand = InitBand(pszSubclass, 0, false);
             if( poBand != nullptr
-                && poBand->XMLInit( psChild, pszVRTPathIn, this,
+                && poBand->XMLInit( psChild, pszVRTPathIn,
                                     m_oMapSharedSources ) == CE_None )
             {
                 SetMaskBand(poBand);
@@ -600,7 +600,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
 
             VRTRasterBand  *poBand = InitBand(pszSubclass, l_nBands+1, true);
             if( poBand != nullptr
-                && poBand->XMLInit( psChild, pszVRTPathIn, this,
+                && poBand->XMLInit( psChild, pszVRTPathIn,
                                     m_oMapSharedSources ) == CE_None )
             {
                 l_nBands ++;
@@ -1633,63 +1633,6 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 
 
 /************************************************************************/
-/*                      ExpandProxyBands()                              */
-/************************************************************************/
-/* In ProxyPoolDatasets, by default only one band is initialized. When using
- * VRTDataset::IRasterIO and CheckCompatibleForDatasetIO is True, we need to have
- * all bands initialized (but only for the last band in the VRTDataset). This function
- * assumes CheckCompatibleForDatasetIO() has already been run and returned successful.
- */
-void VRTDataset::ExpandProxyBands()
-{
-    VRTSourcedRasterBand * poLastBand = static_cast<VRTSourcedRasterBand*>(papoBands[nBands - 1]);
-
-    CPLAssert(poLastBand != nullptr); // CheckCompatibleForDatasetIO()
-
-    int nSources = poLastBand->nSources;
-
-    for (int iSource = 0; iSource < nSources; iSource++)
-    {
-        VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(poLastBand->papoSources[iSource]);
-
-        CPLAssert(poSource != nullptr); // CheckCompatibleForDatasetIO()
-
-        auto l_poBand = poSource->GetRasterBand();
-        if( !l_poBand )
-            continue;
-        GDALProxyPoolDataset * dataset = dynamic_cast<GDALProxyPoolDataset *>(l_poBand->GetDataset());
-
-        if (dataset == nullptr)
-        {
-            continue; // only GDALProxyPoolDataset needs to be expanded
-        }
-
-        if (dataset->GetBands()[0] != nullptr)
-        {
-            continue; // first band already set, so just assume all the others are set as well
-        }
-
-        for (int iBand = 1; iBand <= nBands - 1; iBand++ )
-        {
-            VRTSourcedRasterBand * srcband = static_cast<VRTSourcedRasterBand *>(papoBands[iBand - 1]);
-            VRTSimpleSource* src = static_cast<VRTSimpleSource *>(srcband->papoSources[iSource]);
-            GDALRasterBand * rasterband = src->GetRasterBand();
-            if( !rasterband )
-                continue;
-
-            int nBlockXSize, nBlockYSize;
-
-            rasterband->GetBlockSize(&nBlockXSize, &nBlockYSize);
-
-            dataset->AddSrcBand(iBand, rasterband->GetRasterDataType(), nBlockXSize, nBlockYSize);
-        }
-    }
-}
-
-
-
-
-/************************************************************************/
 /*                         GetSingleSimpleSource()                      */
 /*                                                                      */
 /* Returns a non-NULL dataset if the VRT is made of a single source     */
@@ -1926,10 +1869,6 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     if( bLocalCompatibleForDatasetIO && eRWFlag == GF_Read )
     {
-
-        // Make sure the expand the last band before using them below
-        ExpandProxyBands();
-
         for(int iBandIndex=0; iBandIndex<nBandCount; iBandIndex++)
         {
             VRTSourcedRasterBand* poBand

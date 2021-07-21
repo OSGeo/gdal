@@ -1254,12 +1254,10 @@ int  VRTDerivedRasterBand::IGetDataCoverageStatus( int /* nXOff */,
 
 CPLErr VRTDerivedRasterBand::XMLInit( CPLXMLNode *psTree,
                                       const char *pszVRTPath,
-                                      void* pUniqueHandle,
                                       std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     const CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath,
-                                                       pUniqueHandle,
                                                        oMapSharedSources );
     if( eErr != CE_None )
         return eErr;

@@ -486,7 +486,6 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 /************************************************************************/
 
 CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
-                                 void* pUniqueHandle,
                                  std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
@@ -520,15 +519,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     {
         pszShared = CPLGetConfigOption("VRT_SHARED_SOURCE", nullptr );
     }
-    bool bShared = false;
     if( pszShared != nullptr )
     {
-        bShared = CPLTestBool(pszShared);
-        m_nExplicitSharedStatus = bShared;
-    }
-    else
-    {
-        bShared = true;
+        m_nExplicitSharedStatus = CPLTestBool(pszShared);
     }
 
     if( pszVRTPath != nullptr && m_bRelativeToVRTOri )
@@ -616,153 +609,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         return CE_Failure;
     }
 
-    // Newly generated VRT will have RasterXSize, RasterYSize, DataType,
-    // BlockXSize, BlockYSize tags, so that we don't have actually to
-    // open the real dataset immediately, but we can use a proxy dataset
-    // instead. This is particularly useful when dealing with huge VRT
-    // For example, a VRT with the world coverage of DTED0 (25594 files).
-    CPLXMLNode* psSrcProperties = CPLGetXMLNode(psSrc,"SourceProperties");
-    int nRasterXSize = 0;
-    int nRasterYSize = 0;
-    GDALDataType eDataType = GDT_Unknown;
-    int nBlockXSize = 0;
-    int nBlockYSize = 0;
-    if( psSrcProperties )
-    {
-        nRasterXSize =
-            atoi(CPLGetXMLValue(psSrcProperties, "RasterXSize", "0"));
-        nRasterYSize =
-            atoi(CPLGetXMLValue(psSrcProperties, "RasterYSize", "0"));
-        const char *pszDataType =
-            CPLGetXMLValue(psSrcProperties, "DataType", nullptr);
-        if( pszDataType != nullptr )
-        {
-            for( int iType = 0; iType < GDT_TypeCount; iType++ )
-            {
-                const char *pszThisName =
-                    GDALGetDataTypeName(static_cast<GDALDataType>(iType));
-
-                if( pszThisName != nullptr && EQUAL(pszDataType, pszThisName) )
-                {
-                    eDataType = static_cast<GDALDataType>(iType);
-                    break;
-                }
-            }
-        }
-        nBlockXSize = atoi(CPLGetXMLValue(psSrcProperties, "BlockXSize", "0"));
-        nBlockYSize = atoi(CPLGetXMLValue(psSrcProperties, "BlockYSize", "0"));
-        if( nRasterXSize < 0 || nRasterYSize < 0 ||
-            nBlockXSize < 0 || nBlockYSize < 0 )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Invalid <SourceProperties> element in VRTRasterBand." );
-            return CE_Failure;
-        }
-    }
-
     m_aosOpenOptions = GDALDeserializeOpenOptionsFromXML(psSrc);
     if( strstr(m_osSrcDSName.c_str(),"<VRTDataset") != nullptr )
         m_aosOpenOptions.SetNameValue("ROOT_PATH", pszVRTPath);
-
-    bool bAddToMapIfOk = false;
-    GDALDataset *poSrcDS = nullptr;
-    if( nRasterXSize == 0 || nRasterYSize == 0 ||
-        eDataType == GDT_Unknown ||
-        nBlockXSize == 0 || nBlockYSize == 0 )
-    {
-        /* ----------------------------------------------------------------- */
-        /*      Open the file (shared).                                      */
-        /* ----------------------------------------------------------------- */
-        const int nOpenFlags = GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR;
-        if( bShared )
-        {
-            // We no longer use GDAL_OF_SHARED as this can cause quite
-            // annoying reference cycles in situations like you have
-            // foo.tif and foo.tif.ovr, the later being actually a VRT file
-            // that points to foo.tif
-            auto oIter = oMapSharedSources.find(m_osSrcDSName);
-            if( oIter != oMapSharedSources.end() )
-            {
-                poSrcDS = oIter->second;
-                poSrcDS->Reference();
-            }
-            else
-            {
-                poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
-                        m_osSrcDSName, nOpenFlags, nullptr,
-                        m_aosOpenOptions.List(), nullptr ) );
-                if( poSrcDS )
-                {
-                    bAddToMapIfOk = true;
-                }
-            }
-        }
-        else
-        {
-            poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
-                        m_osSrcDSName, nOpenFlags, nullptr,
-                        m_aosOpenOptions.List(), nullptr ) );
-        }
-    }
-    else
-    {
-        /* ----------------------------------------------------------------- */
-        /*      Create a proxy dataset                                       */
-        /* ----------------------------------------------------------------- */
-        CPLString osUniqueHandle( CPLSPrintf("%p", pUniqueHandle) );
-        GDALProxyPoolDataset * const proxyDS =
-            new GDALProxyPoolDataset( m_osSrcDSName, nRasterXSize, nRasterYSize,
-                                      GA_ReadOnly, bShared, nullptr, nullptr,
-                                      osUniqueHandle.c_str() );
-        proxyDS->SetOpenOptions(m_aosOpenOptions.List());
-        poSrcDS = proxyDS;
-
-        // Only the information of rasterBand m_nBand will be accurate
-        // but that's OK since we only use that band afterwards.
-        //
-        // Previously this added a src band for every band <= m_nBand, but this becomes
-        // prohibitely expensive for files with a large number of bands. This optimization
-        // only adds the desired band and the rest of the bands will simply be initialized with a nullptr.
-        // This assumes no other code here accesses any of the lower bands in the GDALProxyPoolDataset.
-        // It has been suggested that in addition, we should to try share GDALProxyPoolDataset between multiple
-        // Simple Sources, which would save on memory for papoBands. For now, that's not implemented.
-        proxyDS->AddSrcBand(m_nBand, eDataType, nBlockXSize, nBlockYSize);
-
-        if( m_bGetMaskBand )
-        {
-          GDALProxyPoolRasterBand *poMaskBand =
-              cpl::down_cast<GDALProxyPoolRasterBand *>(
-              proxyDS->GetRasterBand(m_nBand) );
-          poMaskBand->AddSrcMaskBandDescription(
-              eDataType, nBlockXSize, nBlockYSize );
-        }
-    }
-
-    if( poSrcDS == nullptr )
-        return CE_Failure;
-
-/* -------------------------------------------------------------------- */
-/*      Get the raster band.                                            */
-/* -------------------------------------------------------------------- */
-
-    m_poRasterBand = poSrcDS->GetRasterBand(m_nBand);
-    if( m_poRasterBand == nullptr )
-    {
-        poSrcDS->ReleaseRef();
-        return CE_Failure;
-    }
-    else if( bAddToMapIfOk )
-    {
-        oMapSharedSources[m_osSrcDSName] = poSrcDS;
-    }
-
-    if( m_bGetMaskBand )
-    {
-        m_poMaskBandMainBand = m_poRasterBand;
-        m_poRasterBand = m_poRasterBand->GetMaskBand();
-        if( m_poRasterBand == nullptr )
-            return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Set characteristics.                                            */
@@ -876,11 +725,87 @@ void VRTSimpleSource::GetFileList( char*** ppapszFileList, int *pnSize,
 }
 
 /************************************************************************/
+/*                           OpenSource()                               */
+/************************************************************************/
+
+void VRTSimpleSource::OpenSource() const
+{
+    CPLAssert( m_poRasterBand == nullptr );
+
+    /* ----------------------------------------------------------------- */
+    /*      Create a proxy dataset                                       */
+    /* ----------------------------------------------------------------- */
+    GDALProxyPoolDataset * proxyDS = nullptr;
+    if( m_poMapSharedSources )
+    {
+        auto oIter = m_poMapSharedSources->find(m_osSrcDSName);
+        if( oIter != m_poMapSharedSources->end() )
+            proxyDS = cpl::down_cast<GDALProxyPoolDataset*>(oIter->second);
+    }
+
+    if( proxyDS == nullptr )
+    {
+        int bShared = true;
+        if( m_nExplicitSharedStatus != -1 )
+            bShared = m_nExplicitSharedStatus;
+
+        const CPLString osUniqueHandle( CPLSPrintf("%p", m_poMapSharedSources) );
+        proxyDS = GDALProxyPoolDataset::Create( m_osSrcDSName,
+                                                m_aosOpenOptions.List(),
+                                                GA_ReadOnly, bShared,
+                                                osUniqueHandle.c_str() );
+        if( proxyDS == nullptr )
+            return;
+    }
+    else
+    {
+        proxyDS->Reference();
+    }
+
+    if( m_bGetMaskBand )
+    {
+        GDALProxyPoolRasterBand *poMaskBand =
+          cpl::down_cast<GDALProxyPoolRasterBand *>(
+              proxyDS->GetRasterBand(m_nBand) );
+        poMaskBand->AddSrcMaskBandDescriptionFromUnderlying();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the raster band.                                            */
+/* -------------------------------------------------------------------- */
+
+    m_poRasterBand = proxyDS->GetRasterBand(m_nBand);
+    if( m_poRasterBand == nullptr )
+    {
+        proxyDS->ReleaseRef();
+        return;
+    }
+
+    if( m_bGetMaskBand )
+    {
+        m_poRasterBand = m_poRasterBand->GetMaskBand();
+        if( m_poRasterBand == nullptr )
+        {
+            proxyDS->ReleaseRef();
+            return;
+        }
+        m_poMaskBandMainBand = m_poRasterBand;
+    }
+
+    if( m_poMapSharedSources )
+    {
+        (*m_poMapSharedSources)[m_osSrcDSName] = proxyDS;
+    }
+}
+
+/************************************************************************/
 /*                         GetRasterBand()                              */
 /************************************************************************/
 
 GDALRasterBand* VRTSimpleSource::GetRasterBand() const
 {
+    if( m_poRasterBand == nullptr )
+        OpenSource();
     return m_poRasterBand;
 }
 
@@ -890,6 +815,8 @@ GDALRasterBand* VRTSimpleSource::GetRasterBand() const
 
 GDALRasterBand* VRTSimpleSource::GetMaskBandMainBand()
 {
+    if( m_poRasterBand == nullptr )
+        OpenSource();
     return m_poMaskBandMainBand;
 }
 
@@ -987,8 +914,8 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
     {
         if( dfXOff >= m_dfDstXOff + m_dfDstXSize
             || dfYOff >= m_dfDstYOff + m_dfDstYSize
-            || dfXOff + dfXSize < m_dfDstXOff
-            || dfYOff +dfYSize < m_dfDstYOff )
+            || dfXOff + dfXSize <= m_dfDstXOff
+            || dfYOff + dfYSize <= m_dfDstYOff )
             return FALSE;
     }
 
@@ -2361,7 +2288,6 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 /************************************************************************/
 
 CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
-                                  void* pUniqueHandle,
                                   std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
@@ -2370,7 +2296,6 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
 /* -------------------------------------------------------------------- */
     {
         const CPLErr eErr = VRTSimpleSource::XMLInit( psSrc, pszVRTPath,
-                                                      pUniqueHandle,
                                                       oMapSharedSources );
         if( eErr != CE_None )
             return eErr;
@@ -3250,7 +3175,6 @@ CPLErr VRTFuncSource::GetHistogram( int /* nXSize */,
 /************************************************************************/
 
 VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath,
-                                void* pUniqueHandle,
                                 std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
@@ -3278,7 +3202,7 @@ VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath,
         return nullptr;
     }
 
-    if( poSource->XMLInit( psChild, pszVRTPath, pUniqueHandle,
+    if( poSource->XMLInit( psChild, pszVRTPath,
                            oMapSharedSources ) == CE_None )
         return poSource;
 
