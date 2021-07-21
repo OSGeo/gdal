@@ -1174,6 +1174,54 @@ void VRTSourcedRasterBand::ConfigureSource( VRTSimpleSource *poSimpleSource,
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::AddSimpleSource(
+    const char* pszFilename,
+    int nBandIn,
+    double dfSrcXOff, double dfSrcYOff,
+    double dfSrcXSize, double dfSrcYSize,
+    double dfDstXOff, double dfDstYOff,
+    double dfDstXSize, double dfDstYSize,
+    const char *pszResampling,
+    double dfNoDataValueIn )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Create source.                                                  */
+/* -------------------------------------------------------------------- */
+    VRTSimpleSource *poSimpleSource = nullptr;
+
+    if( pszResampling != nullptr && STARTS_WITH_CI(pszResampling, "aver") )
+        poSimpleSource = new VRTAveragedSource();
+    else
+    {
+        poSimpleSource = new VRTSimpleSource();
+        if( dfNoDataValueIn != VRT_NODATA_UNSET )
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "NODATA setting not currently supported for nearest  "
+                "neighbour sampled simple sources on Virtual Datasources." );
+    }
+
+    poSimpleSource->SetSrcBand( pszFilename, nBandIn );
+
+    poSimpleSource->SetSrcWindow( dfSrcXOff, dfSrcYOff,
+                                  dfSrcXSize, dfSrcYSize );
+    poSimpleSource->SetDstWindow( dfDstXOff, dfDstYOff,
+                                  dfDstXSize, dfDstYSize );
+
+    if( dfNoDataValueIn != VRT_NODATA_UNSET )
+        poSimpleSource->SetNoDataValue( dfNoDataValueIn );
+
+/* -------------------------------------------------------------------- */
+/*      add to list.                                                    */
+/* -------------------------------------------------------------------- */
+    return AddSource( poSimpleSource );
+}
+
+/************************************************************************/
+/*                          AddSimpleSource()                           */
+/************************************************************************/
+
+CPLErr VRTSourcedRasterBand::AddSimpleSource(
     GDALRasterBand *poSrcBand,
     double dfSrcXOff, double dfSrcYOff,
     double dfSrcXSize, double dfSrcYSize,
@@ -1281,6 +1329,52 @@ CPLErr CPL_STDCALL VRTAddSimpleSource( VRTSourcedRasterBandH hVRTBand,
 }
 
 /*! @cond Doxygen_Suppress */
+
+/************************************************************************/
+/*                          AddComplexSource()                          */
+/************************************************************************/
+
+CPLErr VRTSourcedRasterBand::AddComplexSource(
+    const char* pszFilename,
+    int nBandIn,
+    double dfSrcXOff, double dfSrcYOff,
+    double dfSrcXSize, double dfSrcYSize,
+    double dfDstXOff, double dfDstYOff,
+    double dfDstXSize, double dfDstYSize,
+    double dfScaleOff,
+    double dfScaleRatio,
+    double dfNoDataValueIn,
+    int nColorTableComponent )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Create source.                                                  */
+/* -------------------------------------------------------------------- */
+    VRTComplexSource * const poSource = new VRTComplexSource();
+
+    poSource->SetSrcBand( pszFilename, nBandIn );
+
+    poSource->SetSrcWindow( dfSrcXOff, dfSrcYOff,
+                                  dfSrcXSize, dfSrcYSize );
+    poSource->SetDstWindow( dfDstXOff, dfDstYOff,
+                                  dfDstXSize, dfDstYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Set complex parameters.                                         */
+/* -------------------------------------------------------------------- */
+    if( dfNoDataValueIn != VRT_NODATA_UNSET )
+        poSource->SetNoDataValue( dfNoDataValueIn );
+
+    if( dfScaleOff != 0.0 || dfScaleRatio != 1.0 )
+        poSource->SetLinearScaling(dfScaleOff, dfScaleRatio);
+
+    poSource->SetColorTableComponent(nColorTableComponent);
+
+/* -------------------------------------------------------------------- */
+/*      add to list.                                                    */
+/* -------------------------------------------------------------------- */
+    return AddSource( poSource );
+}
 
 /************************************************************************/
 /*                          AddComplexSource()                          */

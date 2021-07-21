@@ -643,6 +643,16 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
                                   void *pProgressData ) override;
 
     CPLErr         AddSource( VRTSource * );
+
+    CPLErr         AddSimpleSource( const char* pszFilename,
+                                    int nBand,
+                                    double dfSrcXOff=-1, double dfSrcYOff=-1,
+                                    double dfSrcXSize=-1, double dfSrcYSize=-1,
+                                    double dfDstXOff=-1, double dfDstYOff=-1,
+                                    double dfDstXSize=-1, double dfDstYSize=-1,
+                                    const char *pszResampling = "near",
+                                    double dfNoDataValue = VRT_NODATA_UNSET);
+
     CPLErr         AddSimpleSource( GDALRasterBand *poSrcBand,
                                     double dfSrcXOff=-1, double dfSrcYOff=-1,
                                     double dfSrcXSize=-1, double dfSrcYSize=-1,
@@ -650,6 +660,18 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
                                     double dfDstXSize=-1, double dfDstYSize=-1,
                                     const char *pszResampling = "near",
                                     double dfNoDataValue = VRT_NODATA_UNSET);
+
+    CPLErr         AddComplexSource( const char* pszFilename,
+                                     int nBand,
+                                     double dfSrcXOff=-1, double dfSrcYOff=-1,
+                                     double dfSrcXSize=-1, double dfSrcYSize=-1,
+                                     double dfDstXOff=-1, double dfDstYOff=-1,
+                                     double dfDstXSize=-1, double dfDstYSize=-1,
+                                     double dfScaleOff=0.0,
+                                     double dfScaleRatio=1.0,
+                                     double dfNoDataValue = VRT_NODATA_UNSET,
+                                     int nColorTableComponent = 0);
+
     CPLErr         AddComplexSource( GDALRasterBand *poSrcBand,
                                      double dfSrcXOff=-1, double dfSrcYOff=-1,
                                      double dfSrcXSize=-1, double dfSrcYSize=-1,
@@ -952,6 +974,7 @@ public:
                              std::map<CPLString, GDALDataset*>& ) override;
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
 
+    void           SetSrcBand( const char* pszFilename, int nBand );
     void           SetSrcBand( GDALRasterBand * );
     void           SetSrcMaskBand( GDALRasterBand * );
     void           SetSrcWindow( double, double, double, double );

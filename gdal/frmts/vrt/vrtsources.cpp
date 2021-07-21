@@ -182,6 +182,17 @@ void VRTSimpleSource::UnsetPreservedRelativeFilenames()
 /*                             SetSrcBand()                             */
 /************************************************************************/
 
+void VRTSimpleSource::SetSrcBand( const char* pszFilename, int nBand )
+
+{
+    m_nBand = nBand;
+    m_osSrcDSName = pszFilename;
+}
+
+/************************************************************************/
+/*                             SetSrcBand()                             */
+/************************************************************************/
+
 void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
 
 {
