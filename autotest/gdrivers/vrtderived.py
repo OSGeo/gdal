@@ -71,11 +71,8 @@ def test_vrtderived_1():
     expected_md_read = (
         '<SimpleSource>\n'
         '  <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>\n'
-        '  <SourceBand>1</SourceBand>\n'
-        '  <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" '
-        'BlockXSize="20" BlockYSize="20" />\n'
-        '</SimpleSource>\n')
-    assert md_read['source_0'] == expected_md_read
+        '  <SourceBand>1</SourceBand>\n')
+    assert expected_md_read in md_read['source_0']
 
     xmlstring = open(filename).read()
     gdal.Unlink(filename)
