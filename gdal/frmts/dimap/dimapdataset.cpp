@@ -32,7 +32,6 @@
 #include "cpl_minixml.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
-#include "gdal_proxy.h"
 #include "ogr_spatialref.h"
 #include "mdreader/reader_pleiades.h"
 #include "vrtdataset.h"
@@ -835,34 +834,22 @@ int DIMAPDataset::ReadImageInformation()
     // Don't try to write a VRT file.
     poVRTDS->SetWritable(FALSE);
 
-    GDALDataset *poTileDS =
-          new GDALProxyPoolDataset( osImageFilename, nRasterXSize, nRasterYSize,
-                                    GA_ReadOnly, TRUE );
-
     for( int iBand = 0; iBand < poImageDS->GetRasterCount(); iBand++ )
     {
         poVRTDS->AddBand(
             poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(), nullptr );
 
-        reinterpret_cast<GDALProxyPoolDataset *>( poTileDS )->
-            AddSrcBandDescription(
-                poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(),
-                nRasterXSize, 1 );
-
-        GDALRasterBand *poSrcBand = poTileDS->GetRasterBand(iBand+1);
-
         VRTSourcedRasterBand *poVRTBand =
             reinterpret_cast<VRTSourcedRasterBand *>(
                 poVRTDS->GetRasterBand(iBand+1) );
 
-        poVRTBand->AddSimpleSource( poSrcBand,
+        poVRTBand->AddSimpleSource( osImageFilename,
+                                    iBand+1,
                                     0, 0,
                                     nRasterXSize, nRasterYSize,
                                     0, 0,
                                     nRasterXSize, nRasterYSize );
     }
-
-    poTileDS->Dereference();
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -1270,39 +1257,6 @@ int DIMAPDataset::ReadImageInformation2()
     // Don't try to write a VRT file.
     poVRTDS->SetWritable(FALSE);
 
-    std::map< TileIdx, GDALDataset* > oMapTileIdxToProxyPoolDataset;
-    for( const auto& oTileIdxNameTuple: oMapTileIdxToName )
-    {
-        const int nRow = oTileIdxNameTuple.first.nRow;
-        const int nCol = oTileIdxNameTuple.first.nCol;
-        if( (nRow - 1) * nTileHeight < nRasterYSize &&
-            (nCol - 1) * nTileWidth < nRasterXSize )
-        {
-            int nHeight = nTileHeight;
-            if( nRow * nTileHeight > nRasterYSize )
-            {
-                nHeight = nRasterYSize - (nRow - 1) * nTileHeight;
-            }
-            int nWidth = nTileWidth;
-            if( nCol * nTileWidth > nRasterXSize )
-            {
-                nWidth = nRasterXSize - (nCol - 1) * nTileWidth;
-            }
-            GDALProxyPoolDataset* poPPDs = new GDALProxyPoolDataset(
-                oTileIdxNameTuple.second, nWidth, nHeight, GA_ReadOnly, TRUE );
-            oMapTileIdxToProxyPoolDataset[ oTileIdxNameTuple.first ] = poPPDs;
-
-            // MS-FS products have 3-bands for each of the RGB and NED files
-            const int nTileBands = bTwoDataFilesPerTile ? 3 : poImageDS->GetRasterCount();
-            for( int iBand = 0; iBand < nTileBands; iBand++ )
-            {
-                poPPDs->AddSrcBandDescription(
-                    poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(),
-                    nRasterXSize, 1 );
-            }
-        }
-    }
-
     for( int iBand = 0; iBand < l_nBands; iBand++ )
     {
         auto poSrcBandFirstImage = poImageDS->GetRasterBand( iBand < poImageDS->GetRasterCount() ? iBand+1 : 1);
@@ -1328,58 +1282,55 @@ int DIMAPDataset::ReadImageInformation2()
                 "NBITS", CPLSPrintf("%d", nBits), "IMAGE_STRUCTURE" );
         }
 
-        for( const auto& oTileIdxProxyPoolTuple: oMapTileIdxToProxyPoolDataset )
+        for( const auto& oTileIdxNameTuple: oMapTileIdxToName )
         {
-            const int nPart = oTileIdxProxyPoolTuple.first.nPart;
-            GDALRasterBand *poSrcBand;
-            if( bTwoDataFilesPerTile )
+            const int nRow = oTileIdxNameTuple.first.nRow;
+            const int nCol = oTileIdxNameTuple.first.nCol;
+            if( (nRow - 1) * nTileHeight < nRasterYSize &&
+                (nCol - 1) * nTileWidth < nRasterXSize )
             {
-                if( nPart == 0 && iBand < 3 )
+                int nSrcBand;
+                if( bTwoDataFilesPerTile )
                 {
-                    poSrcBand =
-                        oTileIdxProxyPoolTuple.second->GetRasterBand(iBand+1);
-                }
-                else if( nPart == 1 && iBand >= 3 )
-                {
-                    poSrcBand =
-                        oTileIdxProxyPoolTuple.second->GetRasterBand(iBand+1 - 3);
+                    const int nPart = oTileIdxNameTuple.first.nPart;
+                    if( nPart == 0 && iBand < 3 )
+                    {
+                        nSrcBand = iBand+1;
+                    }
+                    else if( nPart == 1 && iBand >= 3 )
+                    {
+                        nSrcBand = iBand+1 - 3;
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
                 else
                 {
-                    continue;
+                    nSrcBand = iBand+1;
                 }
-            }
-            else
-            {
-                poSrcBand =
-                    oTileIdxProxyPoolTuple.second->GetRasterBand(iBand+1);
-            }
 
-            const int nRow = oTileIdxProxyPoolTuple.first.nRow;
-            const int nCol = oTileIdxProxyPoolTuple.first.nCol;
-            int nHeight = nTileHeight;
-            if( nRow * nTileHeight > nRasterYSize )
-            {
-                nHeight = nRasterYSize - (nRow - 1) * nTileHeight;
-            }
-            int nWidth = nTileWidth;
-            if( nCol * nTileWidth > nRasterXSize )
-            {
-                nWidth = nRasterXSize - (nCol - 1) * nTileWidth;
-            }
+                int nHeight = nTileHeight;
+                if( nRow * nTileHeight > nRasterYSize )
+                {
+                    nHeight = nRasterYSize - (nRow - 1) * nTileHeight;
+                }
+                int nWidth = nTileWidth;
+                if( nCol * nTileWidth > nRasterXSize )
+                {
+                    nWidth = nRasterXSize - (nCol - 1) * nTileWidth;
+                }
 
-            poVRTBand->AddSimpleSource( poSrcBand,
-                                        0, 0,
-                                        nWidth, nHeight,
-                                        (nCol - 1) * nTileWidth,
-                                        (nRow - 1) * nTileHeight,
-                                        nWidth, nHeight );
+                poVRTBand->AddSimpleSource( oTileIdxNameTuple.second,
+                                            nSrcBand,
+                                            0, 0,
+                                            nWidth, nHeight,
+                                            (nCol - 1) * nTileWidth,
+                                            (nRow - 1) * nTileHeight,
+                                            nWidth, nHeight );
+            }
         }
-    }
-
-    for( const auto& oTileIdxProxyPoolTuple: oMapTileIdxToProxyPoolDataset )
-    {
-        oTileIdxProxyPoolTuple.second->Dereference();
     }
 
 #ifdef DEBUG_VERBOSE
