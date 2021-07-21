@@ -242,17 +242,19 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 int nOutXSize = 0;
                 int nOutYSize = 0;
 
+                bool bError = false;
                 if( !poSource->GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize,
                                       nBufXSize, nBufYSize,
                                       &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                                       &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                                      &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
+                                      &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
+                                      bError ) )
                 {
                     continue;
                 }
                 int bSrcHasNoData = FALSE;
                 const double dfSrcNoData =
-                    poSource->GetBand()->GetNoDataValue(&bSrcHasNoData);
+                    poSource->GetRasterBand()->GetNoDataValue(&bSrcHasNoData);
                 if( !bSrcHasNoData || dfSrcNoData != m_dfNoDataValue )
                     bFallbackToBase = true;
             }
@@ -400,10 +402,13 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
         double dfDstYOff = std::max(0.0, poSS->m_dfDstYOff);
         double dfDstXSize = poSS->m_dfDstXSize;
         double dfDstYSize = poSS->m_dfDstYSize;
+        auto l_poBand = poSS->GetRasterBand();
+        if( !l_poBand )
+            continue;
         if( dfDstXSize == -1 )
-            dfDstXSize = poSS->m_poRasterBand->GetXSize() - dfDstXOff;
+            dfDstXSize = l_poBand->GetXSize() - dfDstXOff;
         if( dfDstYSize == -1 )
-            dfDstYSize = poSS->m_poRasterBand->GetYSize() - dfDstYOff;
+            dfDstYSize = l_poBand->GetYSize() - dfDstYOff;
 
         if( nXOff >= dfDstXOff &&
             nYOff >= dfDstYOff &&
@@ -532,8 +537,8 @@ bool VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
             return false;
         VRTSimpleSource * const poSimpleSource
             = static_cast<VRTSimpleSource *>( papoSources[iSource] );
-        GDALRasterBand* poBand = poSimpleSource->GetBand();
-        if( poBand == nullptr )
+        GDALRasterBand* poBand = poSimpleSource->GetRasterBand();
+        if( poBand == nullptr || poSimpleSource->GetMaskBandMainBand() != nullptr )
             return false;
         if( poBand->GetDataset() == nullptr )
             return false;
@@ -771,13 +776,24 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                          void *pProgressData )
 
 {
+    const auto GetNoDataValueOfSingleSource = [this](int& bHasNoData)
+    {
+        auto poBand = cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetRasterBand();
+        if( !poBand )
+        {
+            bHasNoData = FALSE;
+            return 0.0;
+        }
+        return poBand->GetNoDataValue(&bHasNoData);
+    };
+
     int bHasNoData = FALSE;
     if( nSources != 1 ||
         (m_bNoDataValueSet && !(
             papoSources[0]->IsSimpleSource() &
             EQUAL(cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetType(),
                   "SimpleSource") &&
-            m_dfNoDataValue == cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetBand()->GetNoDataValue(&bHasNoData) &&
+            m_dfNoDataValue == GetNoDataValueOfSingleSource(bHasNoData) &&
             bHasNoData)) )
     {
         return GDALRasterBand::ComputeStatistics(  bApproxOK,
@@ -1087,17 +1103,21 @@ void VRTSourcedRasterBand::CheckSource( VRTSimpleSource *poSS )
 /* -------------------------------------------------------------------- */
 
     // Note: if one day we do alpha compositing, we will need to check that.
-    if( strcmp(poSS->GetType(), "SimpleSource") == 0 &&
-        poSS->m_dfSrcXOff >= 0.0 &&
-        poSS->m_dfSrcYOff >= 0.0 &&
-        poSS->m_dfSrcXOff + poSS->m_dfSrcXSize <= poSS->m_poRasterBand->GetXSize() &&
-        poSS->m_dfSrcYOff + poSS->m_dfSrcYSize <= poSS->m_poRasterBand->GetYSize() &&
-        poSS->m_dfDstXOff <= 0.0 &&
-        poSS->m_dfDstYOff <= 0.0 &&
-        poSS->m_dfDstXOff + poSS->m_dfDstXSize >= nRasterXSize &&
-        poSS->m_dfDstYOff + poSS->m_dfDstYSize >= nRasterYSize )
+    if( strcmp(poSS->GetType(), "SimpleSource") == 0 )
     {
-        bSkipBufferInitialization = TRUE;
+        auto l_poBand = poSS->GetRasterBand();
+        if( l_poBand != nullptr &&
+            poSS->m_dfSrcXOff >= 0.0 &&
+            poSS->m_dfSrcYOff >= 0.0 &&
+            poSS->m_dfSrcXOff + poSS->m_dfSrcXSize <= l_poBand->GetXSize() &&
+            poSS->m_dfSrcYOff + poSS->m_dfSrcYSize <= l_poBand->GetYSize() &&
+            poSS->m_dfDstXOff <= 0.0 &&
+            poSS->m_dfDstYOff <= 0.0 &&
+            poSS->m_dfDstXOff + poSS->m_dfDstXSize >= nRasterXSize &&
+            poSS->m_dfDstYOff + poSS->m_dfDstYSize >= nRasterYSize )
+        {
+            bSkipBufferInitialization = TRUE;
+        }
     }
 }
 
@@ -1516,14 +1536,24 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
             int nOutXSize = 0;
             int nOutYSize = 0;
 
+            bool bError = false;
             if( !poSrc->GetSrcDstWindow( iPixel, iLine, 1, 1, 1, 1,
                                          &dfReqXOff, &dfReqYOff,
                                          &dfReqXSize, &dfReqYSize,
                                          &nReqXOff, &nReqYOff,
                                          &nReqXSize, &nReqYSize,
                                          &nOutXOff, &nOutYOff,
-                                         &nOutXSize, &nOutYSize ) )
+                                         &nOutXSize, &nOutYSize,
+                                         bError ) )
+            {
+                if( bError )
+                {
+                    CSLDestroy( papszFileList );
+                    CPLHashSetDestroy( hSetFiles );
+                    return nullptr;
+                }
                 continue;
+            }
 
             poSrc->GetFileList( &papszFileList, &nListSize, &nListMaxSize,
                                 hSetFiles );

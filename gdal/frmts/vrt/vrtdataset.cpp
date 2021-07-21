@@ -1591,14 +1591,9 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                 if( !EQUAL(poSource->GetType(), "SimpleSource") )
                     return FALSE;
 
-                GDALRasterBand *srcband = poSource->GetBand();
-                if( srcband == nullptr )
-                    return FALSE;
-                if( srcband->GetDataset() == nullptr )
-                    return FALSE;
-                if( srcband->GetDataset()->GetRasterCount() <= iBand )
-                    return FALSE;
-                if( srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband )
+                if( poSource->m_nBand != iBand + 1 ||
+                    poSource->m_bGetMaskBand ||
+                    poSource->m_osSrcDSName.empty() )
                     return FALSE;
                 osResampling = poSource->GetResampling();
             }
@@ -1621,17 +1616,11 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                     poBand->papoSources[iSource] );
                 if( !EQUAL(poSource->GetType(), "SimpleSource") )
                     return FALSE;
+                if( poSource->m_nBand != iBand + 1 ||
+                    poSource->m_bGetMaskBand ||
+                    poSource->m_osSrcDSName.empty() )
+                    return FALSE;
                 if( !poSource->IsSameExceptBandNumber(poRefSource) )
-                    return FALSE;
-
-                GDALRasterBand *srcband = poSource->GetBand();
-                if( srcband == nullptr )
-                    return FALSE;
-                if( srcband->GetDataset() == nullptr )
-                    return FALSE;
-                if( srcband->GetDataset()->GetRasterCount() <= iBand )
-                    return FALSE;
-                if( srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband )
                     return FALSE;
                 if( osResampling.compare(poSource->GetResampling()) != 0 )
                     return FALSE;
@@ -1665,7 +1654,10 @@ void VRTDataset::ExpandProxyBands()
 
         CPLAssert(poSource != nullptr); // CheckCompatibleForDatasetIO()
 
-        GDALProxyPoolDataset * dataset = dynamic_cast<GDALProxyPoolDataset *>(poSource->GetBand()->GetDataset());
+        auto l_poBand = poSource->GetRasterBand();
+        if( !l_poBand )
+            continue;
+        GDALProxyPoolDataset * dataset = dynamic_cast<GDALProxyPoolDataset *>(l_poBand->GetDataset());
 
         if (dataset == nullptr)
         {
@@ -1681,7 +1673,9 @@ void VRTDataset::ExpandProxyBands()
         {
             VRTSourcedRasterBand * srcband = static_cast<VRTSourcedRasterBand *>(papoBands[iBand - 1]);
             VRTSimpleSource* src = static_cast<VRTSimpleSource *>(srcband->papoSources[iSource]);
-            GDALRasterBand * rasterband = src->GetBand();
+            GDALRasterBand * rasterband = src->GetRasterBand();
+            if( !rasterband )
+                continue;
 
             int nBlockXSize, nBlockYSize;
 
@@ -1717,8 +1711,8 @@ GDALDataset* VRTDataset::GetSingleSimpleSource()
     VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(
         poVRTBand->papoSources[0] );
 
-    GDALRasterBand* poBand = poSource->GetBand();
-    if( poBand == nullptr )
+    GDALRasterBand* poBand = poSource->GetRasterBand();
+    if( poBand == nullptr || poSource->GetMaskBandMainBand() != nullptr )
         return nullptr;
 
     GDALDataset* poSrcDS = poBand->GetDataset();
@@ -1738,6 +1732,7 @@ GDALDataset* VRTDataset::GetSingleSimpleSource()
     int nOutYOff = 0;
     int nOutXSize = 0;
     int nOutYSize = 0;
+    bool bError = false;
     if( !poSource->GetSrcDstWindow(
            0, 0,
            poSrcDS->GetRasterXSize(),
@@ -1749,7 +1744,8 @@ GDALDataset* VRTDataset::GetSingleSimpleSource()
            &nReqXOff, &nReqYOff,
            &nReqXSize, &nReqYSize,
            &nOutXOff, &nOutYOff,
-           &nOutXSize, &nOutYSize ) )
+           &nOutXSize, &nOutYSize,
+           bError ) )
         return nullptr;
 
     if( nReqXOff != 0 || nReqYOff != 0 ||
@@ -1786,14 +1782,6 @@ CPLErr VRTDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(
         poVRTBand->papoSources[0] );
 
-    GDALRasterBand* poBand = poSource->GetBand();
-    if( poBand == nullptr )
-        return CE_None;
-
-    GDALDataset* poSrcDS = poBand->GetDataset();
-    if( poSrcDS == nullptr )
-        return CE_None;
-
     /* Find source window and buffer size */
     double dfReqXOff = 0.0;
     double dfReqYOff = 0.0;
@@ -1807,6 +1795,7 @@ CPLErr VRTDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     int nOutYOff = 0;
     int nOutXSize = 0;
     int nOutYSize = 0;
+    bool bError = false;
     if( !poSource->GetSrcDstWindow(
            nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
            &dfReqXOff, &dfReqYOff,
@@ -1814,7 +1803,18 @@ CPLErr VRTDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
            &nReqXOff, &nReqYOff,
            &nReqXSize, &nReqYSize,
            &nOutXOff, &nOutYOff,
-           &nOutXSize, &nOutYSize ) )
+           &nOutXSize, &nOutYSize,
+           bError ) )
+    {
+        return bError ? CE_Failure : CE_None;
+    }
+
+    GDALRasterBand* poBand = poSource->GetRasterBand();
+    if( poBand == nullptr || poSource->GetMaskBandMainBand() != nullptr )
+        return CE_None;
+
+    GDALDataset* poSrcDS = poBand->GetDataset();
+    if( poSrcDS == nullptr )
         return CE_None;
 
     return poSrcDS->AdviseRead(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
@@ -1904,8 +1904,14 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                         = static_cast<VRTSimpleSource *>(
                             poBand->papoSources[i] );
                     int bSrcHasNoData = FALSE;
+                    auto l_poBand = poSource->GetRasterBand();
+                    if( !l_poBand )
+                    {
+                        bLocalCompatibleForDatasetIO = false;
+                        break;
+                    }
                     const double dfSrcNoData
-                        = poSource->GetBand()->GetNoDataValue(&bSrcHasNoData);
+                        = l_poBand->GetNoDataValue(&bSrcHasNoData);
                     if( !bSrcHasNoData || dfSrcNoData != dfNoDataValue )
                     {
                         bLocalCompatibleForDatasetIO = false;
@@ -2070,7 +2076,7 @@ static bool CheckBandForOverview(GDALRasterBand* poBand,
         !EQUAL(poSource->GetType(), "ComplexSource") )
         return false;
     GDALRasterBand* poSrcBand =
-        poBand->GetBand() == 0 ? poSource->GetMaskBandMainBand() : poSource->GetBand();
+        poBand->GetBand() == 0 ? poSource->GetMaskBandMainBand() : poSource->GetRasterBand();
     if( poSrcBand == nullptr )
         return false;
 
@@ -2187,7 +2193,7 @@ void VRTDataset::BuildVirtualOverviews()
             {
                 auto poNewSourceBand = poVRTBand->GetBand() == 0 ?
                     poNewSource->GetMaskBandMainBand() :
-                    poNewSource->GetBand();
+                    poNewSource->GetRasterBand();
                 CPLAssert(poNewSourceBand);
                 auto poNewSourceBandDS = poNewSourceBand->GetDataset();
                 if( poNewSourceBandDS )
