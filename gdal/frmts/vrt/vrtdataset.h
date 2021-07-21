@@ -577,19 +577,21 @@ class VRTSimpleSource;
 class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
 {
   private:
-    int            m_nRecursionCounter;
+    int            m_nRecursionCounter = 0;
     CPLString      m_osLastLocationInfo{};
-    char         **m_papszSourceList;
+    char         **m_papszSourceList = nullptr;
+    int            m_nSkipBufferInitialization = -1;
 
     bool           CanUseSourcesMinMaxImplementations();
-    void           CheckSource( VRTSimpleSource *poSS );
 
     CPL_DISALLOW_COPY_ASSIGN(VRTSourcedRasterBand)
 
+  protected:
+    bool           SkipBufferInitialization();
+
   public:
-    int            nSources;
-    VRTSource    **papoSources;
-    int            bSkipBufferInitialization;
+    int            nSources = 0;
+    VRTSource    **papoSources = nullptr;
 
                    VRTSourcedRasterBand( GDALDataset *poDS, int nBand );
                    VRTSourcedRasterBand( GDALDataType eType,

@@ -826,7 +826,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Initialize the buffer to some background value. Use the         */
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
-    if( bSkipBufferInitialization )
+    if( SkipBufferInitialization() )
     {
         // Do nothing
     }

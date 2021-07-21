@@ -64,12 +64,7 @@ CPL_CVSID("$Id$")
 /*                        VRTSourcedRasterBand()                        */
 /************************************************************************/
 
-VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn ) :
-    m_nRecursionCounter(0),
-    m_papszSourceList(nullptr),
-    nSources(0),
-    papoSources(nullptr),
-    bSkipBufferInitialization(FALSE)
+VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn )
 {
     VRTRasterBand::Initialize( poDSIn->GetRasterXSize(),
                                poDSIn->GetRasterYSize() );
@@ -83,12 +78,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn ) :
 /************************************************************************/
 
 VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataType eType,
-                                            int nXSize, int nYSize ) :
-    m_nRecursionCounter(0),
-    m_papszSourceList(nullptr),
-    nSources(0),
-    papoSources(nullptr),
-    bSkipBufferInitialization(FALSE)
+                                            int nXSize, int nYSize )
 {
     VRTRasterBand::Initialize( nXSize, nYSize );
 
@@ -113,12 +103,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
 VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
                                             GDALDataType eType,
                                             int nXSize, int nYSize,
-                                            int nBlockXSizeIn, int nBlockYSizeIn ) :
-    m_nRecursionCounter(0),
-    m_papszSourceList(nullptr),
-    nSources(0),
-    papoSources(nullptr),
-    bSkipBufferInitialization(FALSE)
+                                            int nBlockXSizeIn, int nBlockYSizeIn )
 {
     VRTRasterBand::Initialize( nXSize, nYSize );
 
@@ -275,7 +260,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Initialize the buffer to some background value. Use the         */
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
-    if( bSkipBufferInitialization )
+    if( SkipBufferInitialization() )
     {
         // Do nothing
     }
@@ -537,14 +522,7 @@ bool VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
             return false;
         VRTSimpleSource * const poSimpleSource
             = static_cast<VRTSimpleSource *>( papoSources[iSource] );
-        GDALRasterBand* poBand = poSimpleSource->GetRasterBand();
-        if( poBand == nullptr || poSimpleSource->GetMaskBandMainBand() != nullptr )
-            return false;
-        if( poBand->GetDataset() == nullptr )
-            return false;
-        const char* pszFilename = poBand->GetDataset()->GetDescription();
-        if( pszFilename == nullptr )
-            return false;
+        const char* pszFilename = poSimpleSource->m_osSrcDSName.c_str();
         // /vsimem/ should be fast.
         if( STARTS_WITH(pszFilename, "/vsimem/") )
             continue;
@@ -978,8 +956,6 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
                 poSS->SetMaxValue( static_cast<int>((1U << nBits) -1) );
             }
         }
-
-        CheckSource( poSS );
     }
 
     return CE_None;
@@ -1093,16 +1069,24 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML( const char *pszVRTPath )
 }
 
 /************************************************************************/
-/*                            CheckSource()                             */
+/*                     SkipBufferInitialization()                       */
 /************************************************************************/
 
-void VRTSourcedRasterBand::CheckSource( VRTSimpleSource *poSS )
+bool VRTSourcedRasterBand::SkipBufferInitialization()
 {
+    if( m_nSkipBufferInitialization >= 0 )
+        return m_nSkipBufferInitialization != 0;
 /* -------------------------------------------------------------------- */
 /*      Check if we can avoid buffer initialization.                    */
 /* -------------------------------------------------------------------- */
 
     // Note: if one day we do alpha compositing, we will need to check that.
+    m_nSkipBufferInitialization = FALSE;
+    if( nSources != 1 || !papoSources[0]->IsSimpleSource() )
+    {
+        return false;
+    }
+    VRTSimpleSource* poSS = static_cast<VRTSimpleSource*>(papoSources[0]);
     if( strcmp(poSS->GetType(), "SimpleSource") == 0 )
     {
         auto l_poBand = poSS->GetRasterBand();
@@ -1116,9 +1100,10 @@ void VRTSourcedRasterBand::CheckSource( VRTSimpleSource *poSS )
             poSS->m_dfDstXOff + poSS->m_dfDstXSize >= nRasterXSize &&
             poSS->m_dfDstYOff + poSS->m_dfDstYSize >= nRasterYSize )
         {
-            bSkipBufferInitialization = TRUE;
+            m_nSkipBufferInitialization = TRUE;
         }
     }
+    return m_nSkipBufferInitialization != 0;
 }
 
 /************************************************************************/
@@ -1162,8 +1147,6 @@ void VRTSourcedRasterBand::ConfigureSource( VRTSimpleSource *poSimpleSource,
                                   dfSrcXSize, dfSrcYSize );
     poSimpleSource->SetDstWindow( dfDstXOff, dfDstYOff,
                                   dfDstXSize, dfDstYSize );
-
-    CheckSource( poSimpleSource );
 
 /* -------------------------------------------------------------------- */
 /*      If we can get the associated GDALDataset, add a reference to it.*/

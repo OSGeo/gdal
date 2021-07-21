@@ -829,11 +829,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
 void VRTSimpleSource::GetFileList( char*** ppapszFileList, int *pnSize,
                                    int *pnMaxSize, CPLHashSet* hSetFiles )
 {
-    const char* pszFilename = nullptr;
-    auto l_band = GetRasterBand();
-    if( l_band != nullptr && l_band->GetDataset() != nullptr &&
-        (pszFilename = l_band->GetDataset()->GetDescription()) != nullptr )
+    if( !m_osSrcDSName.empty() )
     {
+        const char* pszFilename = m_osSrcDSName.c_str();
 /* -------------------------------------------------------------------- */
 /*      Is the filename even a real filesystem object?                  */
 /* -------------------------------------------------------------------- */
