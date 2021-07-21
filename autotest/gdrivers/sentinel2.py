@@ -126,21 +126,6 @@ def test_sentinel2_l1c_1():
         assert ds is None, name
 
 ###############################################################################
-
-
-def strip_source_properties(xml):
-    pos = 0
-    while True:
-        pos = xml.find('      <SourceProperties', pos)
-        if pos == -1:
-            break
-        pos2 = xml.find('>\n', pos)
-        assert pos2 != -1
-        xml = xml[0:pos] + xml[pos2+2:]
-
-    return xml
-
-###############################################################################
 # Test opening a L1C subdataset on the 10m bands
 
 
@@ -193,7 +178,7 @@ def test_sentinel2_l1c_2():
 
     assert ds.RasterCount == 4
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_T32TQR_B08.jp2</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -730,7 +715,7 @@ def test_sentinel2_l1c_tile_3():
 
     assert ds.RasterCount == 4
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_T32TQR_B08.jp2</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -813,7 +798,7 @@ def test_sentinel2_l1c_tile_4():
 
     assert ds.RasterCount == 5
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_T32TQR_B08.jp2</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -866,7 +851,7 @@ def test_sentinel2_l1c_tile_5():
 
     assert ds.RasterCount == 3
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/GRANULE/S2A_OPER_MSI_L1C_T32TQR_N01.03/QI_DATA/S2A_OPER_PVI_L1C_T32TQR.jp2</SourceFilename>
       <SourceBand>3</SourceBand>
@@ -1168,7 +1153,7 @@ def test_sentinel2_l1b_3():
 
     assert ds.RasterCount == 3
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l1b/S2B_OPER_PRD_MSIL1B.SAFE/GRANULE/S2B_OPER_MSI_L1B_N01.03/IMG_DATA/S2B_OPER_MSI_L1B_B01.jp2</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -1641,7 +1626,7 @@ def test_sentinel2_l2a_2():
 
     assert ds.RasterCount == 17
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l2a/S2A_USER_PRD_MSIL2A.SAFE/GRANULE/S2A_USER_MSI_L2A_T32TQR_N01.03/IMG_DATA/R60m/S2A_USER_MSI_L2A_T32TQR_B01_60m.jp2</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -1960,7 +1945,7 @@ def test_sentinel2_l2a_5():
 
     assert ds.RasterCount == 7
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/GRANULE/L2A_T34VFJ_A016478_20180818T094030/IMG_DATA/R60m/T34VFJ_20180818T094031_B01_60m.jp2</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -2183,7 +2168,7 @@ def test_sentinel2_l2a_7():
 
     assert ds.RasterCount == 7
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/GRANULE/L2A_T34VFJ_A011330_20170823T094252/IMG_DATA/R60m/L2A_T34VFJ_20170823T094031_B01_60m.jp2</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -2353,7 +2338,7 @@ def test_sentinel2_l1c_safe_compact_2():
 
     assert ds.RasterCount == 4
 
-    vrt = strip_source_properties(ds.GetMetadata('xml:VRT')[0])
+    vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/GRANULE/FOO/IMG_DATA/BAR_B04.jp2</SourceFilename>
       <SourceBand>1</SourceBand>
