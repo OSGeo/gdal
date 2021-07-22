@@ -170,7 +170,7 @@ bool CPLJSONDocument::Load(const std::string &osPath)
 {
     GByte *pabyOut = nullptr;
     vsi_l_offset nSize = 0;
-    if( !VSIIngestFile( nullptr, osPath.c_str(), &pabyOut, &nSize, 8 * 1024 * 1024) ) // Maximum 8 Mb allowed
+    if( !VSIIngestFile( nullptr, osPath.c_str(), &pabyOut, &nSize, 100 * 1024 * 1024) ) // Maximum 100 Mb allowed
     {
         CPLError( CE_Failure, CPLE_FileIO, "Load json file %s failed", osPath.c_str() );
         return false;
