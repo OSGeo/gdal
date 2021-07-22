@@ -3629,6 +3629,23 @@ def test_ogr_dxf_54():
 
 
 ###############################################################################
+# Test hidden objects in blocks
+
+
+def test_ogr_dxf_55():
+
+    with gdaltest.config_option('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE'):
+        ds = ogr.Open('data/dxf/block-hidden-entities.dxf')
+    lyr = ds.GetLayer(0)
+
+    # Red features should be hidden, black features should be visible
+    for number, f in enumerate(lyr):
+        if not ('#ff000000)' in f.GetStyleString() or '#000000)' in f.GetStyleString()):
+            f.DumpReadable()
+            pytest.fail('Wrong visibility on feature %d' % number)
+
+
+###############################################################################
 def test_ogr_dxf_insert_too_many_errors():
 
     with gdaltest.error_handler():
