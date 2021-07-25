@@ -37,6 +37,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"
@@ -44,6 +45,7 @@
 #include "cpl_hash_set.h"
 #include "cpl_minixml.h"
 #include "cpl_progress.h"
+#include "cpl_quad_tree.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
@@ -1882,6 +1884,172 @@ CPLErr VRTSourcedRasterBand::FlushCache()
         eErr = papoSources[i]->FlushCache();
     }
     return eErr;
+}
+
+/************************************************************************/
+/*                           RemoveCoveredSources()                     */
+/************************************************************************/
+
+/** Remove sources that are covered by other sources.
+ *
+ * This method removes sources that are covered entirely by (one or several)
+ * sources of higher priority (even if they declare a nodata setting).
+ * This optimizes the size of the VRT and the rendering time.
+ */
+void VRTSourcedRasterBand::RemoveCoveredSources(CSLConstList papszOptions)
+{
+#ifndef HAVE_GEOS
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                    "EMIT_ERROR_IF_GEOS_NOT_AVAILABLE", "TRUE")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "RemoveCoveredSources() not implemented in builds "
+                 "without GEOS support");
+    }
+#else
+    (void)papszOptions;
+
+    CPLRectObj globalBounds;
+    globalBounds.minx = 0;
+    globalBounds.miny = 0;
+    globalBounds.maxx = nRasterXSize;
+    globalBounds.maxy = nRasterYSize;
+
+    // Create an index with the bbox of all sources
+    CPLQuadTree* hTree = CPLQuadTreeCreate(&globalBounds, nullptr);
+    for( int i = 0; i < nSources; i++ )
+    {
+        if( papoSources[i]->IsSimpleSource() )
+        {
+            VRTSimpleSource* poSS = cpl::down_cast<VRTSimpleSource*>(papoSources[i]);
+            void* hFeature = reinterpret_cast<void*>(static_cast<uintptr_t>(i));
+            CPLRectObj rect;
+            rect.minx = std::max(0.0, poSS->m_dfDstXOff);
+            rect.miny = std::max(0.0, poSS->m_dfDstYOff);
+            rect.maxx = std::min(double(nRasterXSize), poSS->m_dfDstXOff + poSS->m_dfDstXSize);
+            rect.maxy = std::min(double(nRasterYSize), poSS->m_dfDstYOff + poSS->m_dfDstYSize);
+            CPLQuadTreeInsertWithBounds(hTree, hFeature, &rect);
+        }
+    }
+
+    for( int i = 0; i < nSources; i++ )
+    {
+        if( papoSources[i]->IsSimpleSource() )
+        {
+            VRTSimpleSource* poSS = cpl::down_cast<VRTSimpleSource*>(papoSources[i]);
+            CPLRectObj rect;
+            rect.minx = std::max(0.0, poSS->m_dfDstXOff);
+            rect.miny = std::max(0.0, poSS->m_dfDstYOff);
+            rect.maxx = std::min(double(nRasterXSize), poSS->m_dfDstXOff + poSS->m_dfDstXSize);
+            rect.maxy = std::min(double(nRasterYSize), poSS->m_dfDstYOff + poSS->m_dfDstYSize);
+
+            // Find sources whose extent intersect with the current one
+            int nFeatureCount = 0;
+            void** pahFeatures = CPLQuadTreeSearch(hTree, &rect, &nFeatureCount);
+
+            // Compute the bounding box of those sources, only if they are
+            // on top of the current one
+            CPLRectObj rectIntersecting;
+            rectIntersecting.minx = std::numeric_limits<double>::max();
+            rectIntersecting.miny = std::numeric_limits<double>::max();
+            rectIntersecting.maxx = -std::numeric_limits<double>::max();
+            rectIntersecting.maxy = -std::numeric_limits<double>::max();
+            for( int j = 0; j < nFeatureCount; j++ )
+            {
+                const int curFeature = static_cast<int>(
+                    reinterpret_cast<uintptr_t>(pahFeatures[j]));
+                if( curFeature > i )
+                {
+                    VRTSimpleSource* poOtherSS =
+                        cpl::down_cast<VRTSimpleSource*>(papoSources[curFeature]);
+                    rectIntersecting.minx = std::min(
+                        rectIntersecting.minx, poOtherSS->m_dfDstXOff);
+                    rectIntersecting.miny = std::min(
+                        rectIntersecting.miny, poOtherSS->m_dfDstYOff);
+                    rectIntersecting.maxx = std::max(rectIntersecting.maxx,
+                         poOtherSS->m_dfDstXOff + poOtherSS->m_dfDstXSize);
+                    rectIntersecting.maxy = std::max(rectIntersecting.maxy,
+                         poOtherSS->m_dfDstYOff + poOtherSS->m_dfDstXSize);
+                }
+            }
+
+            // If the boundinx box of those sources overlap the current one,
+            // then compute their union, and check if it contains the current
+            // source
+            if( rectIntersecting.minx <= rect.minx &&
+                rectIntersecting.miny <= rect.miny &&
+                rectIntersecting.maxx >= rect.maxx &&
+                rectIntersecting.maxy >= rect.maxy )
+            {
+                OGRPolygon oPoly;
+                {
+                    auto poLR = new OGRLinearRing();
+                    poLR->addPoint( rect.minx, rect.miny );
+                    poLR->addPoint( rect.minx, rect.maxy );
+                    poLR->addPoint( rect.maxx, rect.maxy );
+                    poLR->addPoint( rect.maxx, rect.miny );
+                    poLR->addPoint( rect.minx, rect.miny );
+                    oPoly.addRingDirectly(poLR);
+                }
+
+                std::unique_ptr<OGRGeometry> poUnion;
+                for( int j = 0; j < nFeatureCount; j++ )
+                {
+                    const int curFeature = static_cast<int>(
+                        reinterpret_cast<uintptr_t>(pahFeatures[j]));
+                    if( curFeature > i )
+                    {
+                        VRTSimpleSource* poOtherSS =
+                            cpl::down_cast<VRTSimpleSource*>(papoSources[curFeature]);
+                        CPLRectObj otherRect;
+                        otherRect.minx = std::max(0.0, poOtherSS->m_dfDstXOff);
+                        otherRect.miny = std::max(0.0, poOtherSS->m_dfDstYOff);
+                        otherRect.maxx = std::min(double(nRasterXSize),
+                                                  poOtherSS->m_dfDstXOff + poOtherSS->m_dfDstXSize);
+                        otherRect.maxy = std::min(double(nRasterYSize),
+                                                  poOtherSS->m_dfDstYOff + poOtherSS->m_dfDstYSize);
+                        OGRPolygon oOtherPoly;
+                        {
+                            auto poLR = new OGRLinearRing();
+                            poLR->addPoint( otherRect.minx, otherRect.miny );
+                            poLR->addPoint( otherRect.minx, otherRect.maxy );
+                            poLR->addPoint( otherRect.maxx, otherRect.maxy );
+                            poLR->addPoint( otherRect.maxx, otherRect.miny );
+                            poLR->addPoint( otherRect.minx, otherRect.miny );
+                            oOtherPoly.addRingDirectly(poLR);
+                        }
+                        if( poUnion == nullptr )
+                            poUnion.reset(oOtherPoly.clone());
+                        else
+                            poUnion.reset(oOtherPoly.Union(poUnion.get()));
+                    }
+                }
+
+                if( poUnion != nullptr && poUnion->Contains(&oPoly) )
+                {
+                    // We can remove the current source
+                    delete papoSources[i];
+                    papoSources[i] = nullptr;
+                }
+            }
+            CPLFree(pahFeatures);
+
+            void* hFeature = reinterpret_cast<void*>(static_cast<uintptr_t>(i));
+            CPLQuadTreeRemove(hTree, hFeature, &rect);
+        }
+    }
+
+    // Compact the papoSources array
+    int iDst = 0;
+    for( int iSrc = 0; iSrc < nSources; iSrc++ )
+    {
+        if( papoSources[iSrc] )
+            papoSources[iDst++] = papoSources[iSrc];
+    }
+    nSources = iDst;
+
+    CPLQuadTreeDestroy(hTree);
+#endif
 }
 
 /*! @endcond */

@@ -701,6 +701,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
                                    double dfDstXOff, double dfDstYOff,
                                    double dfDstXSize, double dfDstYSize );
 
+    void RemoveCoveredSources(CSLConstList papszOptions = nullptr);
+
     virtual CPLErr IReadBlock( int, int, void * ) override;
 
     virtual void   GetFileList(char*** ppapszFileList, int *pnSize,
