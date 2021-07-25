@@ -31,7 +31,7 @@
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver('STACIT')
 
@@ -121,3 +121,26 @@ def test_stacit_multiple_assets():
     with gdaltest.error_handler():
         ds = gdal.Open('STACIT:"data/stacit/test_multiple_assets.json":asset=i_dont_exist')
     assert ds is None
+
+
+def test_stacit_overlapping_sources():
+
+    if ogr.GetGEOSVersionMajor() == 0:
+        pytest.skip('GEOS not available')
+
+    ds = gdal.Open('data/stacit/overlapping_sources.json')
+    assert ds is not None
+
+    # Check that the source covered by another one is not listed
+    vrt = ds.GetMetadata('xml:VRT')[0]
+    placement_vrt = """
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+  </VRTRasterBand>"""
+    # print(vrt)
+    assert placement_vrt in vrt

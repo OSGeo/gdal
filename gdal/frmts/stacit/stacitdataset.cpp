@@ -600,6 +600,10 @@ bool STACITDataset::SetupDataset(GDALOpenInfo* poOpenInfo,
                                             dfNoData );
             }
         }
+
+        const char* apszOptions[] = { "EMIT_ERROR_IF_GEOS_NOT_AVAILABLE=NO",
+                                      nullptr };
+        poVRTBand->RemoveCoveredSources(apszOptions);
     }
     return true;
 }
