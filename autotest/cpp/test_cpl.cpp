@@ -45,6 +45,7 @@
 #include "cpl_http.h"
 #include "cpl_auto_close.h"
 #include "cpl_minixml.h"
+#include "cpl_quad_tree.h"
 #include "cpl_worker_thread_pool.h"
 
 #include <fstream>
@@ -3411,4 +3412,78 @@ namespace tut
 
     }
 
+    // Test CPLQuadTree
+    template<>
+    template<>
+    void object::test<49>()
+    {
+        unsigned next = 0;
+
+        const auto DummyRandInit = [&next](unsigned initValue)
+        {
+            next = initValue;
+        };
+
+        constexpr int MAX_RAND_VAL = 32767;
+
+        // Slighly improved version of https://xkcd.com/221/, as suggested by
+        // "man srand"
+        const auto DummyRand = [&next, MAX_RAND_VAL]()
+        {
+           next = next * 1103515245 + 12345;
+           return((unsigned)(next/65536) % (MAX_RAND_VAL+1));
+        };
+
+        CPLRectObj globalbounds;
+        globalbounds.minx = 0;
+        globalbounds.miny = 0;
+        globalbounds.maxx = 1;
+        globalbounds.maxy = 1;
+
+        auto hTree = CPLQuadTreeCreate(&globalbounds, nullptr);
+        ensure(hTree != nullptr);
+
+        const auto GenerateRandomRect = [&DummyRand, MAX_RAND_VAL](CPLRectObj& rect)
+        {
+            rect.minx = double(DummyRand()) / MAX_RAND_VAL;
+            rect.miny = double(DummyRand()) / MAX_RAND_VAL;
+            rect.maxx = rect.minx + double(DummyRand()) / MAX_RAND_VAL * (1 - rect.minx);
+            rect.maxy = rect.miny + double(DummyRand()) / MAX_RAND_VAL * (1 - rect.miny);
+        };
+
+        for( int j = 0; j < 2; j++ )
+        {
+            DummyRandInit(j);
+            for( int i = 0; i < 1000; i++ )
+            {
+                CPLRectObj rect;
+                GenerateRandomRect(rect);
+                void* hFeature = reinterpret_cast<void*>(static_cast<uintptr_t>(i));
+                CPLQuadTreeInsertWithBounds(hTree, hFeature, &rect);
+            }
+
+            {
+                int nFeatureCount = 0;
+                CPLFree(CPLQuadTreeSearch(hTree, &globalbounds, &nFeatureCount));
+                ensure_equals(nFeatureCount, 1000);
+            }
+
+            DummyRandInit(j);
+            for( int i = 0; i < 1000; i++ )
+            {
+                CPLRectObj rect;
+                GenerateRandomRect(rect);
+                void* hFeature = reinterpret_cast<void*>(static_cast<uintptr_t>(i));
+                CPLQuadTreeRemove(hTree, hFeature, &rect);
+            }
+
+            {
+                int nFeatureCount = 0;
+                CPLFree(CPLQuadTreeSearch(hTree, &globalbounds, &nFeatureCount));
+                ensure_equals(nFeatureCount, 0);
+            }
+        }
+
+        CPLQuadTreeDestroy(hTree);
+    }
 } // namespace tut
