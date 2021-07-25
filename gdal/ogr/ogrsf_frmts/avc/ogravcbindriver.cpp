@@ -89,6 +89,7 @@ void RegisterOGRAVCBin()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Arc/Info Binary Coverage" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/avcbin.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRAVCBinDriverOpen;
 

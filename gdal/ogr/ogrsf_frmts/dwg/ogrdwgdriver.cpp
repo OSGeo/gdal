@@ -114,6 +114,7 @@ void RegisterOGRDWG()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dwg" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/dwg.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

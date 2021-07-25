@@ -7151,6 +7151,7 @@ void GDALRegister_PDF()
 #endif
 
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
 #ifdef HAVE_POPPLER
     poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );
@@ -7230,6 +7231,7 @@ void GDALRegister_PDF()
     poDriver->pfnOpen = PDFDataset::OpenWrapper;
     poDriver->pfnIdentify = PDFDataset::Identify;
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 #endif // HAVE_PDF_READ_SUPPORT
 
     poDriver->pfnCreateCopy = GDALPDFCreateCopy;
