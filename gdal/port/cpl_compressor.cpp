@@ -404,6 +404,7 @@ static bool CPLZSTDCompressor (const void* input_data,
         size_t ret = ZSTD_compressCCtx(ctx, *output_data, *output_size,
                                        input_data, input_size,
                                        level);
+        ZSTD_freeCCtx(ctx);
         if( ZSTD_isError(ret) )
         {
             *output_size = 0;
