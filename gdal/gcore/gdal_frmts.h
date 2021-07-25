@@ -205,6 +205,7 @@ void CPL_DLL GDALRegister_TGA(void);
 void CPL_DLL GDALRegister_OGCAPI(void);
 void CPL_DLL GDALRegister_STACTA(void);
 void CPL_DLL GDALRegister_Zarr(void);
+void CPL_DLL GDALRegister_STACIT(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

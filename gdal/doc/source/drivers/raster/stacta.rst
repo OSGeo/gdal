@@ -56,3 +56,8 @@ Driver capabilities
 -------------------
 
 .. supports_virtualio::
+
+See Also
+--------
+
+-  :ref:`raster.stacit` documentation page.
