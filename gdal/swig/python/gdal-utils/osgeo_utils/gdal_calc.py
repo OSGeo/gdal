@@ -368,8 +368,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
             myOut.SetProjection(ProjectionCheck)
 
         if NoDataValue is None:
-            myOutNDV = None if hideNoData else DefaultNDVLookup[
-                myOutType]  # use the default noDataValue for this datatype
+            myOutNDV = DefaultNDVLookup[myOutType]  # use the default noDataValue for this datatype
         elif isinstance(NoDataValue, str) and NoDataValue.lower() == 'none':
             myOutNDV = None  # not to set any noDataValue
         else:
@@ -387,6 +386,9 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                 myOutB.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
 
             myOutB = None  # write to band
+
+        if hideNoData:
+            myOutNDV = None
 
     myOutTypeName = gdal.GetDataTypeName(myOutType)
     if debug:
