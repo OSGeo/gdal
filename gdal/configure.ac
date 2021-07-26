@@ -2525,7 +2525,7 @@ AC_SUBST(HAVE_CHARLS,$HAVE_CHARLS)
 AC_SUBST(CHARLS_INC,$CHARLS_INC)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for BSB in the local tree.
+dnl Check for JPEG 12 bit
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH([jpeg12],
@@ -2538,34 +2538,19 @@ if test "$with_jpeg12" =  no ; then
     JPEG12_ENABLED=no
     AC_MSG_RESULT([disabled by user])
 
-elif test "$JPEG_SETTING" = "internal" -a "$TIFF_SETTING" = "internal" ; then
+elif test "$JPEG_SETTING" = "no" -a "$with_jpeg12" = ""; then
+    JPEG12_ENABLED=no
+    AC_MSG_RESULT([disabled, JPEG disabled])
+
+elif test "$TIFF_SETTING" = "internal" ; then
     AC_MSG_RESULT([enabled])
     JPEG12_ENABLED=yes
     TIFF_JPEG12_ENABLED=yes
 
-elif test "$with_jpeg12" = yes ; then
+else
     AC_MSG_RESULT([enabled])
     JPEG12_ENABLED=yes
 
-    echo '#include <stdlib.h>' > check_jpeg_abi.c
-    echo '#include <stdio.h>' >> check_jpeg_abi.c
-    echo '#include "jpeglib.h"' >> check_jpeg_abi.c
-    echo '#if JPEG_LIB_VERSION == 62' >> check_jpeg_abi.c
-    echo 'int main() { return 0; }' >> check_jpeg_abi.c
-    echo '#else' >> check_jpeg_abi.c
-    echo '#error "ABI difference"' >> check_jpeg_abi.c
-    echo '#endif' >> check_jpeg_abi.c
-    if test -z "`${CC} ${CFLAGS} ${EXTRA_INCLUDES} check_jpeg_abi.c -c -o check_jpeg_abi.o 2>&1`" ; then
-      TIFF_JPEG12_ENABLED=yes
-    else
-      TIFF_JPEG12_ENABLED=no
-      AC_MSG_WARN([Internal libjpeg12 has not the same ABI as libjpeg 8 bit. Disabling JPEG-in-TIFF 12 bit])
-    fi
-    rm -f check_jpeg_abi.*
-
-else
-    JPEG12_ENABLED=no
-    AC_MSG_RESULT([disabled, libjpeg or libtiff not internal])
 fi
 
 AC_SUBST(JPEG12_ENABLED,$JPEG12_ENABLED)
@@ -5679,7 +5664,7 @@ if test "$with_brunsli" != "" -a "$with_brunsli" != "no" ; then
   AC_SUBST(BRUNSLI_ENABLED, $BRUNSLI_ENABLED)
   AC_SUBST(BRUNSLI_INCLUDE, -I$prefix/include)
   AC_SUBST(BRUNSLI_LIB, "-lbrunslicommon -lbrunslienc -lbrunslidec -lbrotlicommon -lbrotlienc -lbrotlidec")
-fi 
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl RDB support

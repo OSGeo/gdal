@@ -13,44 +13,31 @@ TIFFInitJPEG_12(TIFF* tif, int scheme);
 
 #  include "tif_jpeg.c"
 
-int TIFFReInitJPEG_12( TIFF *tif, int scheme, int is_encode )
-
+int TIFFReInitJPEG_12( TIFF *tif,
+                       const JPEGOtherSettings* otherSettings,
+                       int scheme,
+                       int is_encode )
 {
     JPEGState* sp;
+    uint8_t* new_tif_data;
 
     assert(scheme == COMPRESSION_JPEG);
 
+    new_tif_data = (uint8_t*) _TIFFrealloc(tif->tif_data, sizeof (JPEGState));
+
+    if (new_tif_data == NULL) {
+        TIFFErrorExt(tif->tif_clientdata,
+                 "TIFFReInitJPEG_12", "No space for JPEG state block");
+        return 0;
+    }
+
+    tif->tif_data = new_tif_data;
+    _TIFFmemset(tif->tif_data, 0, sizeof(JPEGState));
+
+    TIFFInitJPEGCommon(tif);
+
     sp = JState(tif);
-    sp->tif = tif;				/* back link */
-
-    /*
-     * Override parent get/set field methods.
-     */
-    tif->tif_tagmethods.vgetfield = JPEGVGetField; /* hook for codec tags */
-    tif->tif_tagmethods.vsetfield = JPEGVSetField; /* hook for codec tags */
-    tif->tif_tagmethods.printdir = JPEGPrintDir;   /* hook for codec tags */
-
-    /*
-     * Install codec methods.
-     */
-    tif->tif_fixuptags = JPEGFixupTags;
-    tif->tif_setupdecode = JPEGSetupDecode;
-    tif->tif_predecode = JPEGPreDecode;
-    tif->tif_decoderow = JPEGDecode;
-    tif->tif_decodestrip = JPEGDecode;
-    tif->tif_decodetile = JPEGDecode;
-    tif->tif_setupencode = JPEGSetupEncode;
-    tif->tif_preencode = JPEGPreEncode;
-    tif->tif_postencode = JPEGPostEncode;
-    tif->tif_encoderow = JPEGEncode;
-    tif->tif_encodestrip = JPEGEncode;
-    tif->tif_encodetile = JPEGEncode;  
-    tif->tif_cleanup = JPEGCleanup;
-    tif->tif_defstripsize = JPEGDefaultStripSize;
-    tif->tif_deftilesize = JPEGDefaultTileSize;
-    tif->tif_flags |= TIFF_NOBITREV;	/* no bit reversal, please */
-
-    sp->cinfo_initialized = FALSE;
+    sp->otherSettings = *otherSettings;
 
     if( is_encode )
         return JPEGSetupEncode(tif);

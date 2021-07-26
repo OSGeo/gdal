@@ -43,18 +43,17 @@ The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
 library. Also note that the GeoTIFF driver supports tiled TIFF with JPEG
 compressed tiles.
 
-To be able to read and write JPEG images with 12-bit sample, you can
-build GDAL with its internal libjpeg (based on IJG libjpeg-6b, with
-additional changes for 12-bit sample support), or explicitly pass
---with-jpeg12=yes to configure script when building with external
-libjpeg. See `"8 and 12 bit JPEG in
-TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki page for
-more details.
-
 It is also possible to use the JPEG driver with the libjpeg-turbo, a
 version of libjpeg, API and ABI compatible with IJG libjpeg-6b, which
 uses MMX, SSE, and SSE2 SIMD instructions to accelerate baseline JPEG
 compression/decompression.
+
+Starting with GDAL 3.4, read and write support for JPEG images with 12-bit sample
+is enabled by default (if JPEG support is also enabled), using GDAL internal libjpeg
+(based on IJG libjpeg-6b, with additional changes for 12-bit sample support).
+Support for JPEG with 12-bit sample is independent of whether
+8-bit JPEG support is enabled through internal IJG libjpeg-6b or external libjpeg
+(like libjpeg-turbo)
 
 XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.

@@ -304,12 +304,15 @@ ODBC_SUPPORTED = 1
 JPEG_SUPPORTED = 1
 !ENDIF
 
-# This will enable 12bit libjpeg - use only with internal jpeg builds.
+# This will enable 12bit libjpeg, using internal IJG libjpeg-6b in 12-bit mode
+# Note: it is possible to have 12bit JPEG support with this internal IJG libjpeg-6b
+# and 8bit JPEG support through an external libjpeg, such as libjpeg-turbo
 !IFNDEF JPEG12_SUPPORTED
 JPEG12_SUPPORTED = 1
 !ENDIF
 
 #if using an external jpeg library uncomment the following lines
+# libjpeg-turbo is also supported (and recommended for better performance)
 #JPEG_EXTERNAL_LIB = 1
 #JPEGDIR = c:/projects/jpeg-6b
 #JPEG_LIB = $(JPEGDIR)/libjpeg.lib
