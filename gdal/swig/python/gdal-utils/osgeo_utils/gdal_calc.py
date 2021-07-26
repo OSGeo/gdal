@@ -351,7 +351,7 @@ def doit(opts):
             myOut.SetProjection(ProjectionCheck)
 
         if opts.NoDataValue is None:
-            myOutNDV = None if opts.hideNoData else DefaultNDVLookup[
+            myOutNDV = DefaultNDVLookup[
                 myOutType]  # use the default noDataValue for this datatype
         elif isinstance(opts.NoDataValue, str) and opts.NoDataValue.lower() == 'none':
             myOutNDV = None  # not to set any noDataValue
@@ -370,6 +370,9 @@ def doit(opts):
                 myOutB.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
 
             myOutB = None  # write to band
+
+        if opts.hideNoData:
+            myOutNDV = None
 
     myOutTypeName = gdal.GetDataTypeName(myOutType)
     if opts.debug:
