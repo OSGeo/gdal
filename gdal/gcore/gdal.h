@@ -393,7 +393,14 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  * */
 #define GDAL_DMD_CREATIONFIELDDATASUBTYPES "DMD_CREATIONFIELDDATASUBTYPES"
 
-/** Capability set by a driver that exposes Subdatasets. */
+/** Capability set by a driver that exposes Subdatasets.
+ *
+ * This capability reflects that a raster driver supports child layers, such as NetCDF
+ * or multi-table raster Geopackages.
+ *
+ * See GDAL_DCAP_MULTIPLE_VECTOR_LAYERS for a similar capability flag
+ * for vector drivers.
+ */
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
 
 /** Capability set by a driver that implements the Open() API. */
@@ -495,6 +502,15 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_COORDINATE_EPOCH   "DCAP_COORDINATE_EPOCH"
 
+/** Capability set by drivers for formats which support multiple vector layers.
+ *
+ * Note: some GDAL drivers expose "virtual" layer support while the underlying formats themselves
+ * do not. This capability is only set for drivers of formats which have a native
+ * concept of multiple vector layers (such as GeoPackage).
+ *
+ * @since GDAL 3.4
+ */
+#define GDAL_DCAP_MULTIPLE_VECTOR_LAYERS "DCAP_MULTIPLE_VECTOR_LAYERS"
 
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal CRS.
  * @since GDAL 3.1

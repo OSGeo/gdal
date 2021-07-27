@@ -118,5 +118,7 @@ void RegisterOGRMDB()
                                "Access MDB (PGeo and Geomedia capable)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mdb.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

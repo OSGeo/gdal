@@ -142,6 +142,7 @@ void RegisterOGRGPX()
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRGPXDriverOpen;
     poDriver->pfnCreate = OGRGPXDriverCreate;

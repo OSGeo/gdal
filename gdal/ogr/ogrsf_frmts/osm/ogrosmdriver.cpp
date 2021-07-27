@@ -113,6 +113,7 @@ void RegisterOGROSM()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "osm pbf" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/osm.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
