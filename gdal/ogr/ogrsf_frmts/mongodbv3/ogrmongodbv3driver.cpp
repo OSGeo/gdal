@@ -2671,6 +2671,7 @@ void RegisterOGRMongoDBv3()
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRMongoDBv3DriverOpen;
     poDriver->pfnIdentify = OGRMongoDBv3DriverIdentify;

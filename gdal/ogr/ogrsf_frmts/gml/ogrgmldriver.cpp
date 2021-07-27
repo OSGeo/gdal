@@ -232,6 +232,7 @@ void RegisterOGRGML()
     poDriver->SetMetadataItem( GDAL_DCAP_UNIQUE_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRGMLDriverOpen;
     poDriver->pfnIdentify = OGRGMLDriverIdentify;
