@@ -649,6 +649,9 @@ def test_tiff_srs_read_epsg32631_4979_geotiff1_1():
 
 def test_tiff_srs_write_vertical_perspective():
 
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 700:
+        pytest.skip('requires PROJ 7 or later')
+
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src.tif', 1, 1)
     sr = osr.SpatialReference()
     sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 3000000, 0)
@@ -657,7 +660,6 @@ def test_tiff_srs_write_vertical_perspective():
     ds.SetSpatialRef(sr)
     assert gdal.GetLastErrorMsg() == ''
     ds = None
-    assert gdal.VSIStatL('/vsimem/src.tif.aux.xml')
 
     src_ds = gdal.Open('/vsimem/src.tif')
     # First is PROJ 7
@@ -665,7 +667,6 @@ def test_tiff_srs_write_vertical_perspective():
     gdal.ErrorReset()
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/dst.tif', src_ds)
     assert gdal.GetLastErrorMsg() == ''
-    assert gdal.VSIStatL('/vsimem/dst.tif.aux.xml')
 
     ds = gdal.Open('/vsimem/dst.tif')
     assert ds.GetSpatialRef().ExportToProj4() == src_ds.GetSpatialRef().ExportToProj4()
