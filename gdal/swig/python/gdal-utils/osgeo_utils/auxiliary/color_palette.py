@@ -219,9 +219,12 @@ class ColorPalette:
             try:
                 key = base.num(key)
             except ValueError:
-                # should be percent
-                self._all_numeric = False
-                pass
+                if key.lower() in ['nv', 'ndv']:
+                    self.ndv = color
+                    continue
+                else:
+                    # maybe percent
+                    self._all_numeric = False
             self.pal[key] = color
 
     def write_file(self, color_filename: Optional[PathLikeOrStr] = None):
