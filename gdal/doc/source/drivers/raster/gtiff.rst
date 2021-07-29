@@ -377,14 +377,17 @@ Creation Options
 -  **COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/WEBP/NONE]**:
    Set the compression to use.
 
-   * ``JPEG`` should generally only be used with
-     Byte data (8 bit per channel). But if GDAL is built with internal libtiff and
-     libjpeg, it is    possible to read and write TIFF files with 12bit JPEG compressed TIFF
-     files (seen as UInt16 bands with NBITS=12). See the `"8 and 12 bit
-     JPEG in TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki
-     page for more details.
+   * ``JPEG`` should generally only be used with Byte data (8 bit per channel).
      Better compression for RGB images can be obtained by using the PHOTOMETRIC=YCBCR
      colorspace with a 4:2:2 subsampling of the Y,Cb,Cr components.
+
+     Starting with GDAL 3.4, if GDAL is built with its internal libtiff,
+     read and write support for JPEG-in-TIFF compressed images with 12-bit sample
+     is enabled by default (if JPEG support is also enabled), using GDAL internal libjpeg
+     (based on IJG libjpeg-6b, with additional changes for 12-bit sample support).
+     Support for JPEG with 12-bit sample is independent of whether
+     8-bit JPEG support is enabled through internal IJG libjpeg-6b or external libjpeg
+     (like libjpeg-turbo)
 
    * ``CCITTFAX3``, ``CCITTFAX4`` or ``CCITRLE`` compression should only be used with 1bit (NBITS=1) data
 
