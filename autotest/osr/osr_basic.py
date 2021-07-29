@@ -36,7 +36,7 @@ import subprocess
 import sys
 
 import gdaltest
-from osgeo import osr
+from osgeo import gdal, osr
 import pytest
 from threading import Thread
 
@@ -1702,3 +1702,16 @@ def test_SetPROJAuxDbPaths():
         [sys.executable, 'osr_basic_subprocess.py'],
         env=os.environ.copy())
 
+###############################################################################
+# Test exporting a projection method that is WKT2-only (#4133)
+
+
+def test_osr_basic_export_equal_earth_to_wkt():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(8859)
+    wkt = srs.ExportToWkt()
+    assert wkt
+    assert wkt == srs.ExportToWkt(['FORMAT=WKT2'])
+    assert 'METHOD["Equal Earth",' in wkt
+    assert gdal.GetLastErrorMsg() == ''
