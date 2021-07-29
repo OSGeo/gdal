@@ -29,7 +29,10 @@
 ###############################################################################
 import array
 import os
+from numbers import Real
 from pathlib import Path
+from typing import Optional
+
 from osgeo import gdal
 
 import pytest
@@ -152,26 +155,44 @@ def test_utils_np_arrays():
             assert isinstance(arr, array_util.ArrayLike.__args__)
 
 
-def test_utils_color_files():
+@pytest.mark.parametrize("name,count,pal",
+                         [['color_paletted_red_green_0-255.qml', 256, {0: 0x00ffffff, 1: 0xFF808080}],
+                          ['color_pseudocolor_spectral_0-100.qml', 5, {0: 0xFFD7191C, 25: 0xFFFFFFBF}]])
+def test_utils_color_files(name: str, count: int, pal: dict):
     """ test color palettes: read QML and TXT files """
-    items = [
-        dict(name='color_paletted_red_green_0-255.qml', count=256, pal={0: 0x00ffffff, 1: 0xFF808080}),
-        dict(name='colro_pseudocolor_spectral_0-100.qml', count=5, pal={0: 0xFFD7191C, 25: 0xFFFFFFBF}),
-    ]
     root = Path(test_py_scripts.get_data_path('utilities'))
-    for item in items:
-        path = root / item['name']
-        path2 = path.with_suffix('.txt')
-        cp1 = ColorPalette()
-        cp2 = ColorPalette()
-        cp1.read_file(path)
-        # cp1.write_file(path2)
-        cp2.read_file(path2)
-        assert cp1 == cp2
-        assert len(cp1.pal) == item['count']
-        for k, v in item['pal'].items():
-            # compare the first values against the hard-coded test sample
-            assert cp1.pal[k] == v
+    path = root / name
+    path2 = path.with_suffix('.txt')
+    cp1 = ColorPalette()
+    cp2 = ColorPalette()
+    cp1.read_file(path)
+    # cp1.write_file(path2)
+    cp2.read_file(path2)
+    assert cp1 == cp2
+    assert len(cp1.pal) == count
+    for k, v in pal.items():
+        # compare the first values against the hard-coded test sample
+        assert cp1.pal[k] == v
+
+
+@pytest.mark.parametrize("name,ndv",
+                         [['color_paletted_red_green_0-255.txt', None],
+                          ['color_paletted_red_green_0-1-nv.txt', 0]])
+def test_utils_color_files_nv(name: str, ndv: Optional[Real]):
+    """ test color palettes with and without nv """
+    root = Path(test_py_scripts.get_data_path('utilities'))
+
+    path = root / name
+    cp1 = ColorPalette()
+    cp1.read_file(path)
+    assert cp1.ndv == ndv
+
+    tmp_filename = Path('tmp') / name
+    temp_files.append(tmp_filename)
+    cp1.write_file(tmp_filename)
+    cp2 = ColorPalette()
+    cp2.read_file(tmp_filename)
+    assert cp1 == cp2
 
 
 def test_utils_color_table_and_palette():
