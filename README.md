@@ -61,6 +61,10 @@ See [gdal/docker/](gdal/docker/)
 
 See [gdal/doc/source/community/code_of_conduct.rst](gdal/doc/source/community/code_of_conduct.rst)
 
+### Security policy
+
+See [SECURITY.md](SECURITY.md)
+
 ### Citing GDAL/OGR in publications
 
 See [CITATION](CITATION)
