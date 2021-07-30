@@ -30,10 +30,12 @@
 
 import os
 import re
+from numbers import Real
+from pathlib import Path
 from xml.dom import minidom
 from collections import OrderedDict
 import tempfile
-from typing import Sequence, Union, Optional
+from typing import Sequence, Union, Optional, Tuple
 
 from osgeo_utils.auxiliary import base
 from osgeo_utils.auxiliary.base import PathLikeOrStr
@@ -93,7 +95,7 @@ class ColorPalette:
                 return True
         return False
 
-    def apply_percent(self, min_val, max_val):
+    def apply_percent(self, min_val: Real, max_val: Real):
         if min_val is None or max_val is None:
             raise Exception('no min or max values to apply')
         if self._all_numeric:
@@ -126,14 +128,14 @@ class ColorPalette:
         self._all_numeric = other._all_numeric
 
     @staticmethod
-    def get_supported_extenstions():
+    def get_supported_extenstions() -> Sequence[str]:
         return [
             'txt',  # GDAL Text-based color configuration file
             'qlr',  # QGIS Layer Definition File (qlr)
             'qml',  # QGIS Layer Style File (qml)
         ]
 
-    def is_supported_format(self, filename):
+    def is_supported_format(self, filename: PathLikeOrStr):
         if base.is_path_like(filename):
             ext = base.get_extension().lower()
             return ext in self.get_supported_extenstions()
@@ -163,7 +165,7 @@ class ColorPalette:
         else:
             self.read_file_txt(filename)
 
-    def read_file_qml(self, qml_filename, tag_name=None, type=None):
+    def read_file_qml(self, qml_filename: PathLikeOrStr, tag_name=None, type=None):
         """ Read QGIS Layer Style File (qml) or QGIS Layer Definition File (qlr) """
         qlr = minidom.parse(str(qml_filename))
         if tag_name is None:
@@ -233,7 +235,7 @@ class ColorPalette:
                 fp.write('{} {}\n'.format(key, color_entry))
         return color_filename
 
-    def to_mem_buffer(self):
+    def to_mem_buffer(self) -> str:
         s = ''
         for key, color in self.pal.items():
             cc = self.color_to_color_entry(color)
@@ -242,7 +244,7 @@ class ColorPalette:
         return s
 
     @staticmethod
-    def from_string_list(color_palette_strings):
+    def from_string_list(color_palette_strings: Optional[ColorPaletteOrPathOrStrings]) -> 'ColorPalette':
         res = ColorPalette()
         res.read_color_file(color_palette_strings)
         return res
@@ -300,7 +302,7 @@ class ColorPalette:
         return int(col, 16)
 
     @staticmethod
-    def from_color_list(color_list):
+    def from_color_list(color_list: Sequence[int]):
         res = ColorPalette()
         res.pal.clear()
         res._all_numeric = True
@@ -334,8 +336,7 @@ class ColorPalette:
     read_file_xml = read_file_qlr = read_file_qml
 
 
-def xml_to_color_file(xml_filename, **kwargs):
-    # def xml_to_color_file(xml_filename: Path, **kwargs) -> ColorPalette, Path:
+def xml_to_color_file(xml_filename: Path, **kwargs) -> Tuple[ColorPalette, Path]:
     xml_filename = xml_filename
     pal = ColorPalette()
     pal.read_file_xml(xml_filename, **kwargs)
@@ -344,7 +345,7 @@ def xml_to_color_file(xml_filename, **kwargs):
     return pal, color_filename
 
 
-def get_file_from_strings(color_palette: ColorPaletteOrPathOrStrings):
+def get_file_from_strings(color_palette: ColorPaletteOrPathOrStrings) -> Tuple[str, str]:
     temp_color_filename = None
     if isinstance(color_palette, ColorPalette):
         temp_color_filename = tempfile.mktemp(suffix='.txt')
@@ -363,7 +364,7 @@ def get_file_from_strings(color_palette: ColorPaletteOrPathOrStrings):
     return color_filename, temp_color_filename
 
 
-def get_color_palette(color_palette_or_path_or_strings: ColorPaletteOrPathOrStrings):
+def get_color_palette(color_palette_or_path_or_strings: ColorPaletteOrPathOrStrings) -> Optional[ColorPalette]:
     if color_palette_or_path_or_strings is None:
         return None
     if isinstance(color_palette_or_path_or_strings, ColorPalette):
