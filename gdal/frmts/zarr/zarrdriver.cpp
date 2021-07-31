@@ -222,14 +222,17 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     {
         const CPLStringList aosTokens(
             CSLTokenizeString2( poOpenInfo->pszFilename, ":", CSLT_HONOURSTRINGS ));
-        if( aosTokens.size() < 3 )
+        if( aosTokens.size() < 2 )
             return nullptr;
         osFilename = aosTokens[1];
-        osArrayOfInterest = aosTokens[2];
-        for( int i = 3; i < aosTokens.size(); ++i )
+        if( aosTokens.size() >= 3 )
         {
-            anExtraDimIndices.push_back(
-                static_cast<uint64_t>(CPLAtoGIntBig(aosTokens[i])));
+            osArrayOfInterest = aosTokens[2];
+            for( int i = 3; i < aosTokens.size(); ++i )
+            {
+                anExtraDimIndices.push_back(
+                    static_cast<uint64_t>(CPLAtoGIntBig(aosTokens[i])));
+            }
         }
     }
 
@@ -342,7 +345,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
                              "Too many samples along the > 2D dimensions of %s. "
                              "Use ZARR:\"%s\":%s:{i} syntax",
                              osMainArray.c_str(),
-                             poOpenInfo->pszFilename, osMainArray.c_str());
+                             osFilename.c_str(), osMainArray.c_str());
                 }
                 else
                 {
@@ -350,7 +353,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
                              "Too many samples along the > 2D dimensions of %s. "
                              "Use ZARR:\"%s\":%s:{i}:{j} syntax",
                              osMainArray.c_str(),
-                             poOpenInfo->pszFilename, osMainArray.c_str());
+                             osFilename.c_str(), osMainArray.c_str());
                 }
             }
             else if( nExtraDimSamples > 1 && apoDims.size() == 3 )
@@ -359,7 +362,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
                 {
                     poDS->m_aosSubdatasets.AddString(
                         CPLSPrintf("SUBDATASET_%d_NAME=ZARR:\"%s\":%s:%d",
-                                   iCountSubDS, poOpenInfo->pszFilename,
+                                   iCountSubDS, osFilename.c_str(),
                                    osMainArray.c_str(), i));
                     poDS->m_aosSubdatasets.AddString(
                         CPLSPrintf("SUBDATASET_%d_DESC=Array %s at index %d of %s",
@@ -376,7 +379,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
                 {
                     poDS->m_aosSubdatasets.AddString(
                         CPLSPrintf("SUBDATASET_%d_NAME=ZARR:\"%s\":%s:%d:%d",
-                                   iCountSubDS, poOpenInfo->pszFilename,
+                                   iCountSubDS, osFilename.c_str(),
                                    osMainArray.c_str(), nDimIdxI, nDimIdxJ));
                     poDS->m_aosSubdatasets.AddString(
                         CPLSPrintf("SUBDATASET_%d_DESC=Array %s at "
@@ -403,7 +406,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
                 {
                     poDS->m_aosSubdatasets.AddString(
                         CPLSPrintf("SUBDATASET_%d_NAME=ZARR:\"%s\":%s",
-                                   iCountSubDS, poOpenInfo->pszFilename,
+                                   iCountSubDS, osFilename.c_str(),
                                    aosArrays[i].c_str()));
                     poDS->m_aosSubdatasets.AddString(
                         CPLSPrintf("SUBDATASET_%d_DESC=Array %s",

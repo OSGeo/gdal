@@ -35,7 +35,9 @@
             "zarr_format": 2
         },
         "lat/.zattrs": {
-            "_ARRAY_DIMENSIONS": [ "lat" ]
+            "_ARRAY_DIMENSIONS": [ "lat" ],
+            "standard_name": "latitude",
+            "units": "degrees_north"
         },
         "lon/.zarray": {
             "chunks": [
@@ -52,7 +54,9 @@
             "zarr_format": 2
         },
         "lon/.zattrs": {
-            "_ARRAY_DIMENSIONS": [ "lon" ]
+            "_ARRAY_DIMENSIONS": [ "lon" ],
+            "standard_name": "longitude",
+            "units": "degrees_east"
         }
     },
     "zarr_consolidated_format": 1

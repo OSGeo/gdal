@@ -48,6 +48,9 @@ the driver will use consolidated metadata by default when found.
 For Zarr V3, the dataset name recognized by the Open() method of the driver is
 a directory that contains a :file:`zarr.json` file (root of the dataset).
 
+For datasets on file systems where file listing is not reliable, as often with
+/vsicurl/, it is also possible to prefix the directory name with ``ZARR:``.
+
 Compression methods
 -------------------
 

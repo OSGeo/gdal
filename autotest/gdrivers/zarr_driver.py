@@ -781,9 +781,13 @@ def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata):
     assert dims[0].GetName() == 'lat'
     assert dims[0].GetIndexingVariable() is not None
     assert dims[0].GetIndexingVariable().GetName() == 'lat'
+    assert dims[0].GetType() == gdal.DIM_TYPE_HORIZONTAL_Y
+    assert dims[0].GetDirection() == 'NORTH'
     assert dims[1].GetName() == 'lon'
     assert dims[1].GetIndexingVariable() is not None
     assert dims[1].GetIndexingVariable().GetName() == 'lon'
+    assert dims[1].GetType() == gdal.DIM_TYPE_HORIZONTAL_X
+    assert dims[1].GetDirection() == 'EAST'
     assert len(rg.GetDimensions()) == 2
 
     ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER, open_options=[
@@ -797,6 +801,7 @@ def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata):
     assert dims[0].GetName() == 'lat'
     assert dims[0].GetIndexingVariable() is not None
     assert dims[0].GetIndexingVariable().GetName() == 'lat'
+    assert dims[0].GetType() == gdal.DIM_TYPE_HORIZONTAL_Y
     assert len(rg.GetDimensions()) == 2
 
     ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER, open_options=[
@@ -869,8 +874,13 @@ def test_zarr_read_classic():
     assert not ds.GetSubDatasets()
     assert ds.ReadRaster() == array.array('b', [1, 2])
 
+    ds = gdal.Open('ZARR:data/zarr/zlib.zarr')
+    assert ds
+    assert not ds.GetSubDatasets()
+    assert ds.ReadRaster() == array.array('b', [1, 2])
+
     with gdaltest.error_handler():
-        assert gdal.Open('ZARR:"data/zarr/zlib.zarr"') is None
+        assert gdal.Open('ZARR:"data/zarr/not_existing.zarr"') is None
         assert gdal.Open('ZARR:"data/zarr/zlib.zarr":/not_existing') is None
         assert gdal.Open('ZARR:"data/zarr/zlib.zarr":/zlib:0') is None
 

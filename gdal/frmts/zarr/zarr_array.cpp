@@ -2631,7 +2631,8 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
             {
                 if( arrayDims[i].GetType() == CPLJSONObject::Type::String )
                 {
-                    auto oIter = m_oMapDimensions.find(arrayDims[i].ToString());
+                    const auto osDimName = arrayDims[i].ToString();
+                    auto oIter = m_oMapDimensions.find(osDimName);
                     if( oIter != m_oMapDimensions.end() )
                     {
                         if( oIter->second->GetSize() == aoDims[i]->GetSize() )
@@ -2648,27 +2649,25 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                     }
                     else
                     {
-                        auto poDim = std::make_shared<GDALDimensionWeakIndexingVar>(
-                            GetFullName(), arrayDims[i].ToString(),
-                            std::string(), std::string(), aoDims[i]->GetSize());
-                        m_oMapDimensions[poDim->GetName()] = poDim;
-                        aoDims[i] = poDim;
-
                         // Try to load the indexing variable
-                        // If loading from zmetadata, we will eventually instantiate
-                        // the indexing array, so no need to be proactive.
-                        if( !bLoadedFromZMetadata && osArrayName != poDim->GetName() )
+                        // If loading from zmetadata, we should have normally
+                        // already loaded the dimension variables, so if they
+                        // are not in m_oMapMDArrays, they are supposed to be missing,
+                        // and thus the stat() is useless.
+                        if( !bLoadedFromZMetadata &&
+                            osArrayName != osDimName &&
+                            m_oMapMDArrays.find(osDimName) == m_oMapMDArrays.end() )
                         {
                             const std::string osArrayFilenameDim =
                                 isZarrV2 ?
                                     CPLFormFilename(
                                         CPLFormFilename(m_osDirectoryName.c_str(),
-                                                        poDim->GetName().c_str(),
+                                                        osDimName.c_str(),
                                                         nullptr),
                                         ".zarray", nullptr) :
                                     CPLFormFilename(
                                         CPLGetDirname(osZarrayFilename.c_str()),
-                                        (poDim->GetName() + ".array.json").c_str(),
+                                        (osDimName + ".array.json").c_str(),
                                         nullptr);
                             VSIStatBufL sStat;
                             if( VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0 )
@@ -2676,16 +2675,82 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                                 CPLJSONDocument oDoc;
                                 if( oDoc.Load(osArrayFilenameDim) )
                                 {
-                                    auto poDimArray = LoadArray(
-                                        poDim->GetName(),
+                                    LoadArray(
+                                        osDimName,
                                         osArrayFilenameDim,
                                         oDoc.GetRoot(),
                                         false,
                                         CPLJSONObject());
-                                    if( poDimArray )
-                                        poDim->SetIndexingVariable(poDimArray);
                                 }
                             }
+                        }
+
+                        oIter = m_oMapDimensions.find(osDimName);
+                        if( oIter != m_oMapDimensions.end() &&
+                            oIter->second->GetSize() == aoDims[i]->GetSize() )
+                        {
+                            aoDims[i] = oIter->second;
+                        }
+                        else
+                        {
+                            std::string osType;
+                            std::string osDirection;
+                            if( aoDims.size() == 1 && osArrayName == osDimName )
+                            {
+                                const auto oStdName = oAttributes[CF_STD_NAME];
+                                if( oStdName.GetType() == CPLJSONObject::Type::String )
+                                {
+                                    const auto osStdName = oStdName.ToString();
+                                    if( osStdName == CF_PROJ_X_COORD ||
+                                        osStdName == CF_LONGITUDE_STD_NAME )
+                                    {
+                                        osType = GDAL_DIM_TYPE_HORIZONTAL_X;
+                                        oAttributes.Delete(CF_STD_NAME);
+                                        if( osUnit == CF_DEGREES_EAST )
+                                        {
+                                            osDirection = "EAST";
+                                        }
+                                    }
+                                    else if( osStdName == CF_PROJ_Y_COORD ||
+                                        osStdName == CF_LATITUDE_STD_NAME )
+                                    {
+                                        osType = GDAL_DIM_TYPE_HORIZONTAL_Y;
+                                        oAttributes.Delete(CF_STD_NAME);
+                                        if( osUnit == CF_DEGREES_NORTH )
+                                        {
+                                            osDirection = "NORTH";
+                                        }
+                                    }
+                                    else if( osStdName == "time" )
+                                    {
+                                        osType = GDAL_DIM_TYPE_TEMPORAL;
+                                        oAttributes.Delete(CF_STD_NAME);
+                                    }
+                                }
+
+                                const auto osAxis = oAttributes[CF_AXIS].ToString();
+                                if( osAxis == "Z" )
+                                {
+                                    osType = GDAL_DIM_TYPE_VERTICAL;
+                                    const auto osPositive = oAttributes["positive"].ToString();
+                                    if( osPositive == "up" )
+                                    {
+                                        osDirection = "UP";
+                                        oAttributes.Delete("positive");
+                                    }
+                                    else if( osPositive == "down" )
+                                    {
+                                        osDirection = "DOWN";
+                                        oAttributes.Delete("positive");
+                                    }
+                                    oAttributes.Delete(CF_AXIS);
+                                }
+                            }
+                            auto poDim = std::make_shared<GDALDimensionWeakIndexingVar>(
+                                GetFullName(), osDimName,
+                                osType, osDirection, aoDims[i]->GetSize());
+                            m_oMapDimensions[osDimName] = poDim;
+                            aoDims[i] = poDim;
                         }
                     }
                 }
