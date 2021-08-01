@@ -500,7 +500,16 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
                     osArrayName, osZarrayFilename, oArray, true, oAttributes);
     };
 
-    // Second pass to read attributes and create arrays that have attributes
+    struct ArrayDesc
+    {
+        std::string osArrayFullname{};
+        const CPLJSONObject* poArray = nullptr;
+        const CPLJSONObject* poAttrs = nullptr;
+    };
+    std::vector<ArrayDesc> aoRegularArrays;
+
+    // Second pass to read attributes and create arrays that are indexing
+    // variable
     for( const auto& child: children )
     {
         const std::string osName(child.GetName());
@@ -520,15 +529,37 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
                 auto oIter = oMapArrays.find(osObjectFullnameNoLeadingSlash);
                 if( oIter != oMapArrays.end() )
                 {
-                    CreateArray(osObjectFullnameNoLeadingSlash,
-                                *(oIter->second), child);
-                    oMapArrays.erase(oIter);
+                    const auto nLastSlashPos = osObjectFullnameNoLeadingSlash.rfind('/');
+                    const auto osArrayName = osObjectFullnameNoLeadingSlash.substr(nLastSlashPos + 1);
+                    const auto arrayDimensions = child["_ARRAY_DIMENSIONS"].ToArray();
+                    if( arrayDimensions.IsValid() && arrayDimensions.Size() == 1 &&
+                        arrayDimensions[0].ToString() == osArrayName )
+                    {
+                        CreateArray(osObjectFullnameNoLeadingSlash,
+                                    *(oIter->second), child);
+                        oMapArrays.erase(oIter);
+                    }
+                    else
+                    {
+                        ArrayDesc desc;
+                        desc.osArrayFullname = osObjectFullnameNoLeadingSlash;
+                        desc.poArray = oIter->second;
+                        desc.poAttrs = &child;
+                        aoRegularArrays.emplace_back(std::move(desc));
+                    }
                 }
             }
         }
     }
 
-    // Third pass to create arrays without attributes
+    // Third pass to create non-indexing arrays with attributes
+    for( const auto& desc: aoRegularArrays )
+    {
+        CreateArray(desc.osArrayFullname, *(desc.poArray), *(desc.poAttrs));
+        oMapArrays.erase(desc.osArrayFullname);
+    }
+
+    // Fourth pass to create arrays without attributes
     for( const auto& kv: oMapArrays )
     {
         CreateArray(kv.first, *(kv.second), CPLJSONObject());
