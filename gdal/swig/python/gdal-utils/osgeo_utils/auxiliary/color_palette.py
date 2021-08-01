@@ -46,6 +46,7 @@ ColorPaletteOrPathOrStrings = Union['ColorPalette', PathOrStrings]
 
 class ColorPalette:
     __slots__ = ['pal', 'ndv', '_all_numeric']
+    ndv_keys = [None, 'nv', 'ndv']
 
     def __init__(self):
         self.pal = OrderedDict()
@@ -60,6 +61,26 @@ class ColorPalette:
 
     def is_numeric(self):
         return self._all_numeric
+
+    def get_color(self, key):
+        return self.ndv if key in self.ndv_keys else self.pal[key]
+
+    def set_color(self, key, color):
+        if key in self.ndv_keys:
+            self.ndv = color
+        else:
+            self.pal[key] = color
+
+    def get_txt_key(self, key):
+        if key in self.ndv_keys:
+            key = 'nv'
+        return key
+
+    def get_all_keys(self, with_ndv: bool = True):
+        keys = self.pal.keys()
+        if with_ndv and self.ndv is not None:
+            keys = ['nv', *keys]
+        return keys
 
     def replace_absolute_values_with_percent(self, ndv=True):
         new_pal = ColorPalette()
@@ -219,7 +240,7 @@ class ColorPalette:
             try:
                 key = base.num(key)
             except ValueError:
-                if key.lower() in ['nv', 'ndv']:
+                if key.lower() in self.ndv_keys:
                     self.ndv = color
                     continue
                 else:
@@ -227,23 +248,28 @@ class ColorPalette:
                     self._all_numeric = False
             self.pal[key] = color
 
-    def write_file(self, color_filename: Optional[PathLikeOrStr] = None):
+    def get_txt_color_entry(self, key):
+        color = self.get_color(key)
+        key = self.get_txt_key(key)
+        color_entry = self.color_to_color_entry(color)
+        color_entry = ' '.join(str(c) for c in color_entry)
+        s = '{} {}\n'.format(key, color_entry)
+        return s
+
+    def write_file(self, color_filename: Optional[PathLikeOrStr] = None, with_ndv: bool = True):
         if color_filename is None:
             color_filename = tempfile.mktemp(suffix='.txt')
         os.makedirs(os.path.dirname(color_filename), exist_ok=True)
         with open(color_filename, mode='w') as fp:
-            for key, color in self.pal.items():
-                color_entry = self.color_to_color_entry(color)
-                color_entry = ' '.join(str(c) for c in color_entry)
-                fp.write('{} {}\n'.format(key, color_entry))
+            for key in self.get_all_keys(with_ndv):
+                fp.write(self.get_txt_color_entry(key))
         return color_filename
 
-    def to_mem_buffer(self) -> str:
+    def to_mem_buffer(self, with_ndv: bool = True) -> str:
         s = ''
-        for key, color in self.pal.items():
-            cc = self.color_to_color_entry(color)
-            cc = ' '.join(str(c) for c in cc)
-            s = s + '{} {}\n'.format(key, cc)
+        for key in self.get_all_keys(with_ndv):
+            line = self.get_txt_color_entry(key)
+            s = s + line
         return s
 
     @staticmethod
