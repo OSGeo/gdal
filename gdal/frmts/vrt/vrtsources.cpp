@@ -182,6 +182,17 @@ void VRTSimpleSource::UnsetPreservedRelativeFilenames()
 /*                             SetSrcBand()                             */
 /************************************************************************/
 
+void VRTSimpleSource::SetSrcBand( const char* pszFilename, int nBand )
+
+{
+    m_nBand = nBand;
+    m_osSrcDSName = pszFilename;
+}
+
+/************************************************************************/
+/*                             SetSrcBand()                             */
+/************************************************************************/
+
 void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
 
 {
@@ -189,7 +200,10 @@ void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
     m_nBand = m_poRasterBand->GetBand();
     auto poDS = poNewSrcBand->GetDataset();
     if( poDS != nullptr )
+    {
         m_osSrcDSName = poDS->GetDescription();
+        m_aosOpenOptions = CSLDuplicate(poDS->GetOpenOptions());
+    }
 }
 
 /************************************************************************/
@@ -206,7 +220,10 @@ void VRTSimpleSource::SetSrcMaskBand( GDALRasterBand *poNewSrcBand )
     m_nBand = poNewSrcBand->GetBand();
     auto poDS = poNewSrcBand->GetDataset();
     if( poDS != nullptr )
+    {
         m_osSrcDSName = poDS->GetDescription();
+        m_aosOpenOptions = CSLDuplicate(poDS->GetOpenOptions());
+    }
     m_bGetMaskBand = true;
 }
 
@@ -285,26 +302,6 @@ static const char* const apszSpecialSyntax[] = {
 CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 
 {
-    auto l_band = GetRasterBand();
-    if( l_band == nullptr )
-        return nullptr;
-
-    GDALDataset *poDS = nullptr;
-
-    auto l_maskband = GetMaskBandMainBand();
-    if( l_maskband )
-    {
-        poDS = l_maskband->GetDataset();
-        if( poDS == nullptr || l_maskband->GetBand() < 1 )
-            return nullptr;
-    }
-    else
-    {
-        poDS = l_band->GetDataset();
-        if( poDS == nullptr || l_band->GetBand() < 1 )
-            return nullptr;
-    }
-
     CPLXMLNode * const psSrc =
         CPLCreateXMLNode( nullptr, CXT_Element, "SimpleSource" );
 
@@ -325,12 +322,12 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
         pszRelativePath = m_osSourceFileNameOri;
         bRelativeToVRT = m_bRelativeToVRTOri;
     }
-    else if( strstr(poDS->GetDescription(), "/vsicurl/http") != nullptr ||
-             strstr(poDS->GetDescription(), "/vsicurl/ftp") != nullptr )
+    else if( strstr(m_osSrcDSName, "/vsicurl/http") != nullptr ||
+             strstr(m_osSrcDSName, "/vsicurl/ftp") != nullptr )
     {
         // Testing the existence of remote resources can be excruciating
         // slow, so let's just suppose they exist.
-        pszRelativePath = poDS->GetDescription();
+        pszRelativePath = m_osSrcDSName;
         bRelativeToVRT = FALSE;
     }
     // If this isn't actually a file, don't even try to know if it is a
@@ -338,10 +335,10 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     // can only work with strings that are filenames To be clear
     // NITF_TOC_ENTRY:CADRG_JOG-A_250K_1_0:some_path isn't a relative file
     // path.
-    else if( VSIStatExL( poDS->GetDescription(), &sStat,
+    else if( VSIStatExL( m_osSrcDSName, &sStat,
                          VSI_STAT_EXISTS_FLAG ) != 0 )
     {
-        pszRelativePath = poDS->GetDescription();
+        pszRelativePath = m_osSrcDSName;
         bRelativeToVRT = FALSE;
         for( size_t i = 0;
              i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]);
@@ -400,7 +397,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     else
     {
         pszRelativePath =
-            CPLExtractRelativePath( pszVRTPath, poDS->GetDescription(),
+            CPLExtractRelativePath( pszVRTPath, m_osSrcDSName,
                                     &bRelativeToVRT );
     }
 
@@ -423,34 +420,38 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                               CXT_Text, "0" );
     }
 
-    char** papszOpenOptions = poDS->GetOpenOptions();
-    GDALSerializeOpenOptionsToXML(psSrc, papszOpenOptions);
+    GDALSerializeOpenOptionsToXML(psSrc, m_aosOpenOptions.List());
 
-    if( l_maskband )
+    if( m_bGetMaskBand )
         CPLSetXMLValue( psSrc, "SourceBand",
-                        CPLSPrintf("mask,%d",l_maskband->GetBand()) );
+                        CPLSPrintf("mask,%d",m_nBand) );
     else
         CPLSetXMLValue( psSrc, "SourceBand",
-                        CPLSPrintf("%d",l_band->GetBand()) );
+                        CPLSPrintf("%d",m_nBand) );
 
-    /* Write a few additional useful properties of the dataset */
-    /* so that we can use a proxy dataset when re-opening. See XMLInit() */
-    /* below */
-    CPLSetXMLValue( psSrc, "SourceProperties.#RasterXSize",
-                    CPLSPrintf("%d",l_band->GetXSize()) );
-    CPLSetXMLValue( psSrc, "SourceProperties.#RasterYSize",
-                    CPLSPrintf("%d",l_band->GetYSize()) );
-    CPLSetXMLValue( psSrc, "SourceProperties.#DataType",
-                GDALGetDataTypeName( l_band->GetRasterDataType() ) );
+    // TODO: in a later version, no longer emit SourceProperties, which
+    // is no longer used by GDAL 3.4
+    if( m_poRasterBand )
+    {
+        /* Write a few additional useful properties of the dataset */
+        /* so that we can use a proxy dataset when re-opening. See XMLInit() */
+        /* below */
+        CPLSetXMLValue( psSrc, "SourceProperties.#RasterXSize",
+                        CPLSPrintf("%d",m_poRasterBand->GetXSize()) );
+        CPLSetXMLValue( psSrc, "SourceProperties.#RasterYSize",
+                        CPLSPrintf("%d",m_poRasterBand->GetYSize()) );
+        CPLSetXMLValue( psSrc, "SourceProperties.#DataType",
+                    GDALGetDataTypeName( m_poRasterBand->GetRasterDataType() ) );
 
-    int nBlockXSize = 0;
-    int nBlockYSize = 0;
-    l_band->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        int nBlockXSize = 0;
+        int nBlockYSize = 0;
+        m_poRasterBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    CPLSetXMLValue( psSrc, "SourceProperties.#BlockXSize",
-                    CPLSPrintf("%d",nBlockXSize) );
-    CPLSetXMLValue( psSrc, "SourceProperties.#BlockYSize",
-                    CPLSPrintf("%d",nBlockYSize) );
+        CPLSetXMLValue( psSrc, "SourceProperties.#BlockXSize",
+                        CPLSPrintf("%d",nBlockXSize) );
+        CPLSetXMLValue( psSrc, "SourceProperties.#BlockYSize",
+                        CPLSPrintf("%d",nBlockYSize) );
+    }
 
     if( m_dfSrcXOff != -1
         || m_dfSrcYOff != -1
