@@ -293,11 +293,16 @@ filename should be interpreted as relative to the .vrt file (value is 1)
 or not relative to the .vrt file (value is 0).  The default is 0.
 
 Some characteristics of the source band can be specified in the optional
-SourceProperties tag to enable the VRT driver to defer the opening of the source
+``SourceProperties`` element to enable the VRT driver to defer the opening of the source
 dataset until it really needs to read data from it. This is particularly useful
 when building VRTs with a big number of source datasets. The needed parameters are the
 raster dimensions, the size of the blocks and the data type. If the SourceProperties
 tag is not present, the source dataset will be opened at the same time as the VRT itself.
+
+.. note::
+
+    Starting with GDAL 3.4, the ``SourceProperties`` element is no longer necessary
+    for defered opening of the source datasets.
 
 The content of the SourceBand subelement can refer to
 a mask band. For example mask,1 means the mask band of the first band of the source.

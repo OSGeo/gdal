@@ -64,12 +64,7 @@ CPL_CVSID("$Id$")
 /*                        VRTSourcedRasterBand()                        */
 /************************************************************************/
 
-VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn ) :
-    m_nRecursionCounter(0),
-    m_papszSourceList(nullptr),
-    nSources(0),
-    papoSources(nullptr),
-    bSkipBufferInitialization(FALSE)
+VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn )
 {
     VRTRasterBand::Initialize( poDSIn->GetRasterXSize(),
                                poDSIn->GetRasterYSize() );
@@ -83,12 +78,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn ) :
 /************************************************************************/
 
 VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataType eType,
-                                            int nXSize, int nYSize ) :
-    m_nRecursionCounter(0),
-    m_papszSourceList(nullptr),
-    nSources(0),
-    papoSources(nullptr),
-    bSkipBufferInitialization(FALSE)
+                                            int nXSize, int nYSize )
 {
     VRTRasterBand::Initialize( nXSize, nYSize );
 
@@ -113,12 +103,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
 VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
                                             GDALDataType eType,
                                             int nXSize, int nYSize,
-                                            int nBlockXSizeIn, int nBlockYSizeIn ) :
-    m_nRecursionCounter(0),
-    m_papszSourceList(nullptr),
-    nSources(0),
-    papoSources(nullptr),
-    bSkipBufferInitialization(FALSE)
+                                            int nBlockXSizeIn, int nBlockYSizeIn )
 {
     VRTRasterBand::Initialize( nXSize, nYSize );
 
@@ -242,17 +227,19 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 int nOutXSize = 0;
                 int nOutYSize = 0;
 
+                bool bError = false;
                 if( !poSource->GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize,
                                       nBufXSize, nBufYSize,
                                       &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                                       &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                                      &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
+                                      &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
+                                      bError ) )
                 {
                     continue;
                 }
                 int bSrcHasNoData = FALSE;
                 const double dfSrcNoData =
-                    poSource->GetBand()->GetNoDataValue(&bSrcHasNoData);
+                    poSource->GetRasterBand()->GetNoDataValue(&bSrcHasNoData);
                 if( !bSrcHasNoData || dfSrcNoData != m_dfNoDataValue )
                     bFallbackToBase = true;
             }
@@ -273,7 +260,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Initialize the buffer to some background value. Use the         */
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
-    if( bSkipBufferInitialization )
+    if( SkipBufferInitialization() )
     {
         // Do nothing
     }
@@ -400,10 +387,13 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
         double dfDstYOff = std::max(0.0, poSS->m_dfDstYOff);
         double dfDstXSize = poSS->m_dfDstXSize;
         double dfDstYSize = poSS->m_dfDstYSize;
+        auto l_poBand = poSS->GetRasterBand();
+        if( !l_poBand )
+            continue;
         if( dfDstXSize == -1 )
-            dfDstXSize = poSS->m_poRasterBand->GetXSize() - dfDstXOff;
+            dfDstXSize = l_poBand->GetXSize() - dfDstXOff;
         if( dfDstYSize == -1 )
-            dfDstYSize = poSS->m_poRasterBand->GetYSize() - dfDstYOff;
+            dfDstYSize = l_poBand->GetYSize() - dfDstYOff;
 
         if( nXOff >= dfDstXOff &&
             nYOff >= dfDstYOff &&
@@ -532,14 +522,7 @@ bool VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
             return false;
         VRTSimpleSource * const poSimpleSource
             = static_cast<VRTSimpleSource *>( papoSources[iSource] );
-        GDALRasterBand* poBand = poSimpleSource->GetBand();
-        if( poBand == nullptr )
-            return false;
-        if( poBand->GetDataset() == nullptr )
-            return false;
-        const char* pszFilename = poBand->GetDataset()->GetDescription();
-        if( pszFilename == nullptr )
-            return false;
+        const char* pszFilename = poSimpleSource->m_osSrcDSName.c_str();
         // /vsimem/ should be fast.
         if( STARTS_WITH(pszFilename, "/vsimem/") )
             continue;
@@ -771,13 +754,24 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                          void *pProgressData )
 
 {
+    const auto GetNoDataValueOfSingleSource = [this](int& bHasNoData)
+    {
+        auto poBand = cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetRasterBand();
+        if( !poBand )
+        {
+            bHasNoData = FALSE;
+            return 0.0;
+        }
+        return poBand->GetNoDataValue(&bHasNoData);
+    };
+
     int bHasNoData = FALSE;
     if( nSources != 1 ||
         (m_bNoDataValueSet && !(
             papoSources[0]->IsSimpleSource() &
             EQUAL(cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetType(),
                   "SimpleSource") &&
-            m_dfNoDataValue == cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetBand()->GetNoDataValue(&bHasNoData) &&
+            m_dfNoDataValue == GetNoDataValueOfSingleSource(bHasNoData) &&
             bHasNoData)) )
     {
         return GDALRasterBand::ComputeStatistics(  bApproxOK,
@@ -962,8 +956,6 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
                 poSS->SetMaxValue( static_cast<int>((1U << nBits) -1) );
             }
         }
-
-        CheckSource( poSS );
     }
 
     return CE_None;
@@ -996,13 +988,11 @@ CPLErr CPL_STDCALL VRTAddSource( VRTSourcedRasterBandH hVRTBand,
 
 CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
                                       const char *pszVRTPath,
-                                      void* pUniqueHandle,
                                       std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     {
         const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath,
-                                                    pUniqueHandle,
                                                     oMapSharedSources );
         if( eErr != CE_None )
             return eErr;
@@ -1023,7 +1013,7 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 
         CPLErrorReset();
         VRTSource * const poSource =
-            poDriver->ParseSource( psChild, pszVRTPath, pUniqueHandle,
+            poDriver->ParseSource( psChild, pszVRTPath,
                                    oMapSharedSources );
         if( poSource != nullptr )
             AddSource( poSource );
@@ -1077,28 +1067,41 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML( const char *pszVRTPath )
 }
 
 /************************************************************************/
-/*                            CheckSource()                             */
+/*                     SkipBufferInitialization()                       */
 /************************************************************************/
 
-void VRTSourcedRasterBand::CheckSource( VRTSimpleSource *poSS )
+bool VRTSourcedRasterBand::SkipBufferInitialization()
 {
+    if( m_nSkipBufferInitialization >= 0 )
+        return m_nSkipBufferInitialization != 0;
 /* -------------------------------------------------------------------- */
 /*      Check if we can avoid buffer initialization.                    */
 /* -------------------------------------------------------------------- */
 
     // Note: if one day we do alpha compositing, we will need to check that.
-    if( strcmp(poSS->GetType(), "SimpleSource") == 0 &&
-        poSS->m_dfSrcXOff >= 0.0 &&
-        poSS->m_dfSrcYOff >= 0.0 &&
-        poSS->m_dfSrcXOff + poSS->m_dfSrcXSize <= poSS->m_poRasterBand->GetXSize() &&
-        poSS->m_dfSrcYOff + poSS->m_dfSrcYSize <= poSS->m_poRasterBand->GetYSize() &&
-        poSS->m_dfDstXOff <= 0.0 &&
-        poSS->m_dfDstYOff <= 0.0 &&
-        poSS->m_dfDstXOff + poSS->m_dfDstXSize >= nRasterXSize &&
-        poSS->m_dfDstYOff + poSS->m_dfDstYSize >= nRasterYSize )
+    m_nSkipBufferInitialization = FALSE;
+    if( nSources != 1 || !papoSources[0]->IsSimpleSource() )
     {
-        bSkipBufferInitialization = TRUE;
+        return false;
     }
+    VRTSimpleSource* poSS = static_cast<VRTSimpleSource*>(papoSources[0]);
+    if( strcmp(poSS->GetType(), "SimpleSource") == 0 )
+    {
+        auto l_poBand = poSS->GetRasterBand();
+        if( l_poBand != nullptr &&
+            poSS->m_dfSrcXOff >= 0.0 &&
+            poSS->m_dfSrcYOff >= 0.0 &&
+            poSS->m_dfSrcXOff + poSS->m_dfSrcXSize <= l_poBand->GetXSize() &&
+            poSS->m_dfSrcYOff + poSS->m_dfSrcYSize <= l_poBand->GetYSize() &&
+            poSS->m_dfDstXOff <= 0.0 &&
+            poSS->m_dfDstYOff <= 0.0 &&
+            poSS->m_dfDstXOff + poSS->m_dfDstXSize >= nRasterXSize &&
+            poSS->m_dfDstYOff + poSS->m_dfDstYSize >= nRasterYSize )
+        {
+            m_nSkipBufferInitialization = TRUE;
+        }
+    }
+    return m_nSkipBufferInitialization != 0;
 }
 
 /************************************************************************/
@@ -1142,8 +1145,6 @@ void VRTSourcedRasterBand::ConfigureSource( VRTSimpleSource *poSimpleSource,
                                   dfSrcXSize, dfSrcYSize );
     poSimpleSource->SetDstWindow( dfDstXOff, dfDstYOff,
                                   dfDstXSize, dfDstYSize );
-
-    CheckSource( poSimpleSource );
 
 /* -------------------------------------------------------------------- */
 /*      If we can get the associated GDALDataset, add a reference to it.*/
@@ -1516,14 +1517,24 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
             int nOutXSize = 0;
             int nOutYSize = 0;
 
+            bool bError = false;
             if( !poSrc->GetSrcDstWindow( iPixel, iLine, 1, 1, 1, 1,
                                          &dfReqXOff, &dfReqYOff,
                                          &dfReqXSize, &dfReqYSize,
                                          &nReqXOff, &nReqYOff,
                                          &nReqXSize, &nReqYSize,
                                          &nOutXOff, &nOutYOff,
-                                         &nOutXSize, &nOutYSize ) )
+                                         &nOutXSize, &nOutYSize,
+                                         bError ) )
+            {
+                if( bError )
+                {
+                    CSLDestroy( papszFileList );
+                    CPLHashSetDestroy( hSetFiles );
+                    return nullptr;
+                }
                 continue;
+            }
 
             poSrc->GetFileList( &papszFileList, &nListSize, &nListMaxSize,
                                 hSetFiles );
@@ -1627,7 +1638,6 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
 
         auto l_poDS = cpl::down_cast<VRTDataset*>(GetDataset());
         VRTSource * const poSource = poDriver->ParseSource( psTree, nullptr,
-                                                            l_poDS,
                                                             l_poDS->m_oMapSharedSources );
         CPLDestroyXMLNode( psTree );
 
@@ -1660,7 +1670,6 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
 
         auto l_poDS = cpl::down_cast<VRTDataset*>(GetDataset());
         VRTSource * const poSource = poDriver->ParseSource( psTree, nullptr,
-                                                            l_poDS,
                                                             l_poDS->m_oMapSharedSources );
         CPLDestroyXMLNode( psTree );
 
@@ -1712,7 +1721,6 @@ CPLErr VRTSourcedRasterBand::SetMetadata( char **papszNewMD, const char *pszDoma
 
             auto l_poDS = cpl::down_cast<VRTDataset*>(GetDataset());
             VRTSource * const poSource = poDriver->ParseSource( psTree, nullptr,
-                                                                l_poDS,
                                                                 l_poDS->m_oMapSharedSources );
             CPLDestroyXMLNode( psTree );
 

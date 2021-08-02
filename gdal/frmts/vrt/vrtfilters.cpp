@@ -174,11 +174,15 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
     int nOutXSize = 0;
     int nOutYSize = 0;
 
+    bool bError = false;
     if( !GetSrcDstWindow( dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                        &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
-        return CE_None;
+                        &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
+                        bError ) )
+    {
+        return bError ? CE_Failure : CE_None;
+    }
 
     pData = reinterpret_cast<GByte *>( pData )
         + nPixelSpace * nOutXOff
@@ -195,9 +199,13 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
     if( IsTypeSupported( eBufType ) )
         eOperDataType = eBufType;
 
+    auto l_band = GetRasterBand();
+    if( !l_band )
+        return CE_Failure;
+
     if( eOperDataType == GDT_Unknown
-        && IsTypeSupported( m_poRasterBand->GetRasterDataType() ) )
-        eOperDataType = m_poRasterBand->GetRasterDataType();
+        && IsTypeSupported( l_band->GetRasterDataType() ) )
+        eOperDataType = l_band->GetRasterDataType();
 
     if( eOperDataType == GDT_Unknown )
     {
@@ -294,15 +302,15 @@ VRTFilteredSource::RasterIO( GDALDataType eBandDataType,
         nFileYSize -= nTopFill;
     }
 
-    if( nFileXOff + nFileXSize > m_poRasterBand->GetXSize() )
+    if( nFileXOff + nFileXSize > l_band->GetXSize() )
     {
-        nRightFill = nFileXOff + nFileXSize - m_poRasterBand->GetXSize();
+        nRightFill = nFileXOff + nFileXSize - l_band->GetXSize();
         nFileXSize -= nRightFill;
     }
 
-    if( nFileYOff + nFileYSize > m_poRasterBand->GetYSize() )
+    if( nFileYOff + nFileYSize > l_band->GetYSize() )
     {
-        nBottomFill = nFileYOff + nFileYSize - m_poRasterBand->GetYSize();
+        nBottomFill = nFileYOff + nFileYSize - l_band->GetYSize();
         nFileYSize -= nBottomFill;
     }
 
@@ -514,8 +522,11 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
         float *pafDstData = reinterpret_cast<float *>( pabyDstData );
 
         int bHasNoData = FALSE;
+        auto l_poBand = GetRasterBand();
+        if( !l_poBand )
+            return CE_Failure;
         const float fNoData =
-            static_cast<float>( m_poRasterBand->GetNoDataValue(&bHasNoData) );
+            static_cast<float>( l_poBand->GetNoDataValue(&bHasNoData) );
 
         const int nAxisCount = m_bSeparable ? 2 : 1;
 
@@ -589,13 +600,11 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
 
 CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
                                          const char *pszVRTPath,
-                                         void* pUniqueHandle,
                                          std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     {
         const CPLErr eErr = VRTFilteredSource::XMLInit( psTree, pszVRTPath,
-                                                        pUniqueHandle,
                                                         oMapSharedSources );
         if( eErr != CE_None )
             return eErr;
@@ -693,14 +702,13 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
 /************************************************************************/
 
 VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath,
-                                  void* pUniqueHandle,
                                   std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
     if( EQUAL(psChild->pszValue, "KernelFilteredSource") )
     {
         VRTSource *poSrc = new VRTKernelFilteredSource();
-        if( poSrc->XMLInit( psChild, pszVRTPath, pUniqueHandle, oMapSharedSources ) == CE_None )
+        if( poSrc->XMLInit( psChild, pszVRTPath, oMapSharedSources ) == CE_None )
             return poSrc;
 
         delete poSrc;

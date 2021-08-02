@@ -329,7 +329,6 @@ CPLErr VRTRasterBand::SetCategoryNames( char ** papszNewNames )
 
 CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
                                const char *pszVRTPath,
-                               void* pUniqueHandle,
                                std::map<CPLString, GDALDataset*>& oMapSharedSources )
 
 {
@@ -593,7 +592,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
             break;
         }
 
-        if( poBand->XMLInit( psNode, pszVRTPath, pUniqueHandle,
+        if( poBand->XMLInit( psNode, pszVRTPath,
                              oMapSharedSources ) == CE_None )
         {
             SetMaskBand(poBand);
