@@ -1064,6 +1064,7 @@ enable_driver_sentinel2
 enable_driver_sgi
 enable_driver_sigdem
 enable_driver_srtmhgt
+enable_driver_stacit
 enable_driver_stacta
 enable_driver_terragen
 enable_driver_tga
@@ -1969,6 +1970,7 @@ Optional Features:
   --disable-driver-sigdem disable sigdem driver support (enabled by default)
   --disable-driver-srtmhgt
                           disable srtmhgt driver support (enabled by default)
+  --disable-driver-stacit disable stacit driver support (enabled by default)
   --disable-driver-stacta disable stacta driver support (enabled by default)
   --disable-driver-terragen
                           disable terragen driver support (enabled by default)
@@ -27927,6 +27929,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED srtmhgt"
   INTERNAL_FORMAT_srtmhgt_ENABLED=no
+fi
+
+# Check whether --enable-driver-stacit was given.
+if test "${enable_driver_stacit+set}" = set; then :
+  enableval=$enable_driver_stacit;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_stacit
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED stacit"
+  INTERNAL_FORMAT_stacit_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED stacit"
+  INTERNAL_FORMAT_stacit_ENABLED=no
 fi
 
 # Check whether --enable-driver-stacta was given.

@@ -1,0 +1,15 @@
+
+OBJ	=	stacitdataset.obj
+
+GDAL_ROOT	=	..\..
+
+EXTRAFLAGS	= 	-I..\vrt
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

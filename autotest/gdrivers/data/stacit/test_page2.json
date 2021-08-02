@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "stac_version": "1.0.0-beta.2",
+  "stac_extensions": [],
+  "features": [
+    {
+      "type": "Feature",
+      "stac_version": "1.0.0-beta.2",
+      "stac_extensions": [
+        "eo",
+        "proj"
+      ],
+      "id": "int16",
+      "geometry": null,
+      "properties": {
+        "datetime": "2021-07-19T10:57:30Z",
+      },
+      "collection": "my_collection",
+      "assets": {
+        "B01": {
+          "title": "Band 1 (coastal)",
+          "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+          "roles": [
+            "data"
+          ],
+          "eo:bands": [
+            {
+              "name": "B01",
+              "common_name": "coastal",
+              "center_wavelength": 0.4439,
+              "full_width_half_max": 0.027
+            }
+          ],
+          "href": "data/int16.tif",
+          "proj:epsg": 26711,
+          "proj:shape": [
+            20,
+            20
+          ],
+          "proj:transform": [
+            60,
+            0,
+            441920,
+            0,
+            -60,
+            3751320,
+            0,
+            0,
+            1
+          ]
+        }
+      }
+    }
+  ]
+}
