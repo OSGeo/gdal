@@ -53,7 +53,7 @@ const double MSGDataset::rA[12] = {-1, -1, -1, 0.9959, 0.9963, 0.9991, 0.9996, 0
 const double MSGDataset::rB[12] = {-1, -1, -1, 3.471, 2.219, 0.485, 0.181, 0.060, 0.627, 0.397, 0.576, -1};
 const int MSGDataset::iCentralPixelVIS_IR = 1856; // center pixel VIS and IR
 const int MSGDataset::iCentralPixelHRV = 5566; // center pixel HRV
-int MSGDataset::iCurrentSatellite = 1; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
+int MSGDataset::iCurrentSatelliteHint = 1;     // satellite number hint 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
 const char *MSGDataset::metadataDomain = "msg"; // the metadata domain
 
 #define MAX_SATELLITES 4
@@ -151,34 +151,26 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     Prologue pp;
 
+    int iCurrentSatellite = iCurrentSatelliteHint; // Start with the hint. It is nice to have but don't rely on it...
+
     std::string sPrologueFileName = command.sPrologueFileName(iCurrentSatellite, 1);
     bool fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
 
-    // Make sure we're testing for MSG1,2,3 or 4 exactly once, start with the most recently used, and remember it in the static member for the next round.
-    if (!fPrologueExists)
+    // Make sure we're testing for MSG1,2,3 or 4 exactly once, start with the hint which is the most recently used.
+    int iTries = 1;
+    while (!fPrologueExists && (iTries < MAX_SATELLITES))
     {
       iCurrentSatellite = 1 + iCurrentSatellite % MAX_SATELLITES;
       sPrologueFileName = command.sPrologueFileName(iCurrentSatellite, 1);
       fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
-      int iTries = 2;
-      while (!fPrologueExists && (iTries < MAX_SATELLITES))
-      {
-        iCurrentSatellite = 1 + iCurrentSatellite % MAX_SATELLITES;
-        sPrologueFileName = command.sPrologueFileName(iCurrentSatellite, 1);
-        fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
-        ++iTries;
-      }
-      if (!fPrologueExists) // assume missing prologue file, keep original satellite number
-      {
-        iCurrentSatellite = 1 + iCurrentSatellite % MAX_SATELLITES;
-        sPrologueFileName = command.sPrologueFileName(iCurrentSatellite, 1);
-      }
+      ++iTries;
     }
 
     if (fPrologueExists)
     {
-      std::ifstream p_file(sPrologueFileName.c_str(), std::ios::in|std::ios::binary);
-      XRITHeaderParser xhp (p_file);
+      iCurrentSatelliteHint = iCurrentSatellite; // set the hint
+      std::ifstream p_file(sPrologueFileName.c_str(), std::ios::in | std::ios::binary);
+      XRITHeaderParser xhp(p_file);
       if (xhp.isValid() && xhp.isPrologue())
         pp.read(p_file);
       p_file.close();
@@ -200,9 +192,15 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     MSGDataset *poDS = new MSGDataset();
     poDS->command = command; // copy it
 
-/* -------------------------------------------------------------------- */
-/*      Capture raster size from MSG prologue and submit it to GDAL     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set the current satellite for this DS                           */
+    /* -------------------------------------------------------------------- */
+
+    poDS->iCurrentSatellite = iCurrentSatellite; // copy it
+
+    /* -------------------------------------------------------------------- */
+    /*      Capture raster size from MSG prologue and submit it to GDAL     */
+    /* -------------------------------------------------------------------- */
 
     if (command.channel[11] != 0) // the HRV band
     {
@@ -345,31 +343,22 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDSIn, int nBandIn )
     // Find if we're dealing with MSG1, MSG2, MSG3 or MSG4
     // Doing this per band is the only way to guarantee time-series when the satellite is changed
 
-    std::string sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
+    int iCurrentSatellite = poDSIn->iCurrentSatellite; // Start with the satellite selected by the dataset
+
+    std::string sPrologueFileName = poDSIn->command.sPrologueFileName(iCurrentSatellite, 1);
     bool fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
 
-    // Make sure we're testing for MSG1,2,3 or 4 exactly once, start with the most recently used, and remember it in the static member for the next round.
-    if (!fPrologueExists)
+    // Make sure we're testing for MSG1,2,3 or 4 exactly once, start with the one of the dataset
+    int iTries = 1;
+    while (!fPrologueExists && (iTries < MAX_SATELLITES))
     {
-      poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
-      sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
+      iCurrentSatellite = 1 + iCurrentSatellite % MAX_SATELLITES;
+      sPrologueFileName = poDSIn->command.sPrologueFileName(iCurrentSatellite, 1);
       fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
-      int iTries = 2;
-      while (!fPrologueExists && (iTries < MAX_SATELLITES))
-      {
-        poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
-        sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
-        fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
-        ++iTries;
-      }
-      if (!fPrologueExists) // assume missing prologue file, keep original satellite number
-      {
-        poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
-        sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
-      }
+      ++iTries;
     }
 
-    iSatellite = poDSIn->iCurrentSatellite; // From here on, the satellite that corresponds to this band is settled to the current satellite
+    iSatellite = iCurrentSatellite; // From here on, the satellite that corresponds to this band is settled to the current satellite
 
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = poDSIn->GetRasterYSize();
