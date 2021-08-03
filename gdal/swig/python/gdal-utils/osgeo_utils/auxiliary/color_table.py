@@ -52,8 +52,7 @@ def color_table_from_color_palette(pal: ColorPalette, color_table: gdal.ColorTab
                                    fill_missing_colors=True, min_key=0, max_key=255) -> bool:
     """ returns None if pal has no values, otherwise returns a gdal.ColorTable from the given ColorPalette"""
     if not pal.pal or not pal.is_numeric():
-        # palette has no values or not numeric
-        return False
+        raise Exception('palette has no values or not fully numeric')
     if fill_missing_colors:
         keys = sorted(list(pal.pal.keys()))
         if min_key is None:

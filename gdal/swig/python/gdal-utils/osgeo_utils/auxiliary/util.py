@@ -309,13 +309,11 @@ def get_raster_minimum(filename_or_ds: PathOrDS, bnd_index: Optional[int] = 1):
             return get_band_minimum(bnd)
 
 
-def get_raster_min_max(filename_or_ds: PathOrDS, bnd_index: int = 1):
+def get_raster_min_max(filename_or_ds: PathOrDS, bnd_index: int = 1, approx_ok: bool = True):
     with OpenDS(filename_or_ds) as ds:
         bnd = ds.GetRasterBand(bnd_index)
-        bnd.ComputeStatistics(0)
-        min_val = bnd.GetMinimum()
-        max_val = bnd.GetMaximum()
-        return min_val, max_val
+        min_max = bnd.ComputeRasterMinMax(approx_ok=int(approx_ok))
+        return min_max
 
 
 def get_nodatavalue(filename_or_ds: PathOrDS):
