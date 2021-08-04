@@ -504,7 +504,7 @@ OGRCurve* OGRCompoundCurve::stealCurve( int iCurve )
  * This method is the same as the C function OGR_G_AddGeometry().
  *
  * @param poCurve geometry to add to the container.
- * @param dfToleranceEps tolerance when checking that the first point of a
+ * @param dfToleranceEps relative tolerance when checking that the first point of a
  *                       segment matches then end point of the previous one.
  *                       Default value: 1e-14.
  *
@@ -536,7 +536,7 @@ OGRErr OGRCompoundCurve::addCurve( OGRCurve* poCurve, double dfToleranceEps )
  * This method is the same as the C function OGR_G_AddGeometryDirectly().
  *
  * @param poCurve geometry to add to the container.
- * @param dfToleranceEps tolerance when checking that the first point of a
+ * @param dfToleranceEps relative tolerance when checking that the first point of a
  *                       segment matches then end point of the previous one.
  *                       Default value: 1e-14.
  *
@@ -587,14 +587,14 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
         OGRPoint start;
         oCC.papoCurves[oCC.nCurveCount-1]->EndPoint(&oEnd);
         poCurve->StartPoint(&start);
-        if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps ||
-            fabs(oEnd.getY() - start.getY()) > dfToleranceEps ||
-            fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps )
+        if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps * fabs(start.getX()) ||
+            fabs(oEnd.getY() - start.getY()) > dfToleranceEps * fabs(start.getY()) ||
+            fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps * fabs(start.getZ()) )
         {
             poCurve->EndPoint(&start);
-            if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps ||
-                fabs(oEnd.getY() - start.getY()) > dfToleranceEps ||
-                fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps )
+            if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps * fabs(start.getX()) ||
+                fabs(oEnd.getY() - start.getY()) > dfToleranceEps * fabs(start.getY()) ||
+                fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps * fabs(start.getZ()) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Non contiguous curves");
                 return OGRERR_FAILURE;
