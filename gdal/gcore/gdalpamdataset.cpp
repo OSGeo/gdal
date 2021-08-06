@@ -687,6 +687,22 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Preserve Array information.                                     */
+/* -------------------------------------------------------------------- */
+    for( CPLXMLNode* psIter = psTree->psChild;
+                                            psIter; psIter = psIter->psNext )
+    {
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "Array") == 0 )
+        {
+            CPLXMLNode* psNextBackup = psIter->psNext;
+            psIter->psNext = nullptr;
+            psPam->m_apoOtherNodes.emplace_back(CPLXMLTreeCloser(CPLCloneXMLTree(psIter)));
+            psIter->psNext = psNextBackup;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Clear dirty flag.                                               */
 /* -------------------------------------------------------------------- */
     nPamFlags &= ~GPF_DIRTY;
@@ -1020,6 +1036,15 @@ CPLErr GDALPamDataset::TrySaveXML()
 
         CPLAddXMLChild( psSubTree, psTree );
         psTree = psOldTree;
+    }
+
+
+/* -------------------------------------------------------------------- */
+/*      Preserve other information.                                     */
+/* -------------------------------------------------------------------- */
+    for( const auto& poOtherNode: psPam->m_apoOtherNodes )
+    {
+        CPLAddXMLChild(psTree, CPLCloneXMLTree(poOtherNode.get()));
     }
 
 /* -------------------------------------------------------------------- */

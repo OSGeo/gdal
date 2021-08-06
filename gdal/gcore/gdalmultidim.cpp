@@ -35,6 +35,7 @@
 
 #include <ctype.h> // isalnum
 
+#include "cpl_error_internal.h"
 #include "gdal_priv.h"
 #include "gdal_pam.h"
 #include "gdal_utils.h"
@@ -10685,6 +10686,262 @@ bool GDALDimensionWeakIndexingVar::SetIndexingVariable(std::shared_ptr<GDALMDArr
 {
     m_poIndexingVariable = poIndexingVariable;
     return true;
+}
+
+/************************************************************************/
+/*                       GDALPamMultiDim::Private                       */
+/************************************************************************/
+
+struct GDALPamMultiDim::Private
+{
+    std::string m_osFilename{};
+    std::string m_osPamFilename{};
+    struct ArrayInfo
+    {
+        std::shared_ptr<OGRSpatialReference> poSRS{};
+    };
+    std::map<std::string, ArrayInfo> m_oMapArray{};
+    std::vector<CPLXMLTreeCloser> m_apoOtherNodes{};
+    bool m_bDirty = false;
+    bool m_bLoaded = false;
+};
+
+/************************************************************************/
+/*                          GDALPamMultiDim                             */
+/************************************************************************/
+
+GDALPamMultiDim::GDALPamMultiDim(const std::string& osFilename):
+    d(new Private())
+{
+    d->m_osFilename = osFilename;
+}
+
+/************************************************************************/
+/*                   GDALPamMultiDim::~GDALPamMultiDim()                */
+/************************************************************************/
+
+GDALPamMultiDim::~GDALPamMultiDim()
+{
+    if( d->m_bDirty )
+        Save();
+}
+
+/************************************************************************/
+/*                          GDALPamMultiDim::Load()                     */
+/************************************************************************/
+
+void GDALPamMultiDim::Load()
+{
+    if( d->m_bLoaded )
+        return;
+    d->m_bLoaded = true;
+
+    const char *pszProxyPam = PamGetProxy( d->m_osFilename.c_str() );
+    d->m_osPamFilename = pszProxyPam ?
+        std::string(pszProxyPam) : d->m_osFilename + ".aux.xml";
+    CPLXMLTreeCloser oTree(nullptr);
+    {
+        CPLErrorStateBackuper oStateBackuper;
+        CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
+        oTree.reset(CPLParseXMLFile(d->m_osPamFilename.c_str()));
+    }
+    if( !oTree )
+    {
+        return;
+    }
+    const auto poPAMMultiDim = CPLGetXMLNode( oTree.get(), "=PAMDataset");
+    if( !poPAMMultiDim )
+        return;
+    for( CPLXMLNode* psIter = poPAMMultiDim->psChild;
+                                            psIter; psIter = psIter->psNext )
+    {
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "Array") == 0 )
+        {
+            const char* pszName = CPLGetXMLValue(psIter, "name", nullptr);
+            if( !pszName )
+                continue;
+
+/* -------------------------------------------------------------------- */
+/*      Check for an SRS node.                                          */
+/* -------------------------------------------------------------------- */
+            const CPLXMLNode* psSRSNode = CPLGetXMLNode(psIter, "SRS");
+            if( psSRSNode )
+            {
+                std::shared_ptr<OGRSpatialReference> poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, "") );
+                const char* pszMapping =
+                    CPLGetXMLValue(psSRSNode, "dataAxisToSRSAxisMapping", nullptr);
+                if( pszMapping )
+                {
+                    char** papszTokens = CSLTokenizeStringComplex( pszMapping, ",", FALSE, FALSE);
+                    std::vector<int> anMapping;
+                    for( int i = 0; papszTokens && papszTokens[i]; i++ )
+                    {
+                        anMapping.push_back(atoi(papszTokens[i]));
+                    }
+                    CSLDestroy(papszTokens);
+                    poSRS->SetDataAxisToSRSAxisMapping(anMapping);
+                }
+                else
+                {
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                }
+
+                const char* pszCoordinateEpoch =
+                    CPLGetXMLValue(psSRSNode, "coordinateEpoch", nullptr);
+                if( pszCoordinateEpoch )
+                    poSRS->SetCoordinateEpoch(CPLAtof(pszCoordinateEpoch));
+
+                d->m_oMapArray[pszName].poSRS = poSRS;
+            }
+        }
+        else
+        {
+            CPLXMLNode* psNextBackup = psIter->psNext;
+            psIter->psNext = nullptr;
+            d->m_apoOtherNodes.emplace_back(CPLXMLTreeCloser(CPLCloneXMLTree(psIter)));
+            psIter->psNext = psNextBackup;
+        }
+    }
+}
+
+/************************************************************************/
+/*                          GDALPamMultiDim::Save()                     */
+/************************************************************************/
+
+void GDALPamMultiDim::Save()
+{
+    CPLXMLTreeCloser oTree(CPLCreateXMLNode(nullptr, CXT_Element, "PAMDataset"));
+    for( const auto& poOtherNode: d->m_apoOtherNodes )
+    {
+        CPLAddXMLChild(oTree.get(), CPLCloneXMLTree(poOtherNode.get()));
+    }
+    for( const auto& kv: d->m_oMapArray )
+    {
+        CPLXMLNode* psArrayNode = CPLCreateXMLNode( oTree.get(), CXT_Element, "Array" );
+        CPLAddXMLAttributeAndValue(psArrayNode, "name", kv.first.c_str());
+        if( kv.second.poSRS )
+        {
+            char* pszWKT = nullptr;
+            {
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                const char* const apszOptions[] = { "FORMAT=WKT2", nullptr };
+                kv.second.poSRS->exportToWkt(&pszWKT, apszOptions);
+            }
+            CPLXMLNode* psSRSNode = CPLCreateXMLElementAndValue( psArrayNode, "SRS", pszWKT );
+            CPLFree(pszWKT);
+            const auto& mapping = kv.second.poSRS->GetDataAxisToSRSAxisMapping();
+            CPLString osMapping;
+            for( size_t i = 0; i < mapping.size(); ++i )
+            {
+                if( !osMapping.empty() )
+                    osMapping += ",";
+                osMapping += CPLSPrintf("%d", mapping[i]);
+            }
+            CPLAddXMLAttributeAndValue(psSRSNode, "dataAxisToSRSAxisMapping",
+                                       osMapping.c_str());
+
+            const double dfCoordinateEpoch = kv.second.poSRS->GetCoordinateEpoch();
+            if( dfCoordinateEpoch > 0 )
+            {
+                std::string osCoordinateEpoch = CPLSPrintf("%f", dfCoordinateEpoch);
+                if( osCoordinateEpoch.find('.') != std::string::npos )
+                {
+                    while( osCoordinateEpoch.back() == '0' )
+                        osCoordinateEpoch.resize(osCoordinateEpoch.size()-1);
+                }
+                CPLAddXMLAttributeAndValue(psSRSNode, "coordinateEpoch",
+                                           osCoordinateEpoch.c_str());
+            }
+        }
+    }
+
+    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+    CPLInstallErrorHandlerAccumulator(aoErrors);
+    const int bSaved =
+        CPLSerializeXMLTreeToFile( oTree.get(), d->m_osPamFilename.c_str() );
+    CPLUninstallErrorHandlerAccumulator();
+
+    const char *pszNewPam = nullptr;
+    if( !bSaved &&
+        PamGetProxy(d->m_osFilename.c_str()) == nullptr &&
+        ((pszNewPam = PamAllocateProxy(d->m_osFilename.c_str())) != nullptr))
+    {
+        CPLErrorReset();
+        CPLSerializeXMLTreeToFile( oTree.get(), pszNewPam );
+    }
+    else
+    {
+        for( const auto& oError: aoErrors )
+        {
+            CPLError(oError.type, oError.no, "%s", oError.msg.c_str() );
+        }
+    }
+}
+
+/************************************************************************/
+/*                    GDALPamMultiDim::GetSpatialRef()                  */
+/************************************************************************/
+
+std::shared_ptr<OGRSpatialReference>
+GDALPamMultiDim::GetSpatialRef(const std::string& osArrayFullName)
+{
+    Load();
+    auto oIter = d->m_oMapArray.find(osArrayFullName);
+    if( oIter != d->m_oMapArray.end() )
+        return oIter->second.poSRS;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                    GDALPamMultiDim::SetSpatialRef()                  */
+/************************************************************************/
+
+void GDALPamMultiDim::SetSpatialRef(const std::string& osArrayFullName,
+                                    const OGRSpatialReference* poSRS)
+{
+    Load();
+    d->m_bDirty = true;
+    if( poSRS && !poSRS->IsEmpty() )
+        d->m_oMapArray[osArrayFullName].poSRS.reset(poSRS->Clone());
+    else
+        d->m_oMapArray[osArrayFullName].poSRS.reset();
+}
+
+/************************************************************************/
+/*                           GDALPamMDArray                             */
+/************************************************************************/
+
+GDALPamMDArray::GDALPamMDArray(const std::string& osParentName,
+                               const std::string& osName,
+                               const std::shared_ptr<GDALPamMultiDim>& poPam):
+#if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
+    GDALAbstractMDArray(osParentName, osName),
+#endif
+    GDALMDArray(osParentName, osName),
+    m_poPam(poPam)
+{
+}
+
+/************************************************************************/
+/*                    GDALPamMDArray::SetSpatialRef()                   */
+/************************************************************************/
+
+bool GDALPamMDArray::SetSpatialRef(const OGRSpatialReference* poSRS)
+{
+    m_poPam->SetSpatialRef(GetFullName(), poSRS);
+    return true;
+}
+
+/************************************************************************/
+/*                    GDALPamMDArray::GetSpatialRef()                   */
+/************************************************************************/
+
+std::shared_ptr<OGRSpatialReference> GDALPamMDArray::GetSpatialRef() const
+{
+    return m_poPam->GetSpatialRef(GetFullName());
 }
 
 //! @endcond
