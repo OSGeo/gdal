@@ -54,9 +54,10 @@ class netCDFSharedResources
     bool m_bDefineMode = false;
     std::map<int, int> m_oMapDimIdToGroupId{};
     bool m_bIsInIndexingVariable = false;
+    std::shared_ptr<GDALPamMultiDim> m_poPAM{};
 
 public:
-    netCDFSharedResources();
+    explicit netCDFSharedResources(const std::string& osFilename);
     ~netCDFSharedResources();
 
     inline int GetCDFId() const { return m_cdfid; }
@@ -69,13 +70,18 @@ public:
     bool GetIsInIndexingVariable() const { return m_bIsInIndexingVariable; }
 
     const std::string& GetFilename() const { return m_osFilename; }
+
+    const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
 };
 
 /************************************************************************/
 /*                       netCDFSharedResources()                        */
 /************************************************************************/
 
-netCDFSharedResources::netCDFSharedResources()
+netCDFSharedResources::netCDFSharedResources(const std::string& osFilename):
+    m_bImappIsInElements(false),
+    m_osFilename(osFilename),
+    m_poPAM(std::make_shared<GDALPamMultiDim>(osFilename))
 {
     // netcdf >= 4.4 uses imapp argument of nc_get/put_varm as a stride in
     // elements, whereas earlier versions use bytes.
@@ -205,6 +211,8 @@ public:
         CSLConstList papszOptions) override;
 
     CSLConstList GetStructuralInfo() const override;
+
+    void ClearStatistics() override;
 };
 
 /************************************************************************/
@@ -322,7 +330,7 @@ public:
 /*                         netCDFVariable                               */
 /************************************************************************/
 
-class netCDFVariable final: public GDALMDArray
+class netCDFVariable final: public GDALPamMDArray
 {
     std::shared_ptr<netCDFSharedResources> m_poShared;
     int m_gid = 0;
@@ -1242,6 +1250,15 @@ CSLConstList netCDFGroup::GetStructuralInfo() const
 }
 
 /************************************************************************/
+/*                          ClearStatistics()                           */
+/************************************************************************/
+
+void netCDFGroup::ClearStatistics()
+{
+    m_poShared->GetPAM()->ClearStatistics();
+}
+
+/************************************************************************/
 /*                   netCDFVirtualGroupBySameDimension()                */
 /************************************************************************/
 
@@ -1503,7 +1520,7 @@ netCDFVariable::netCDFVariable(const std::shared_ptr<netCDFSharedResources>& poS
                                const std::vector<std::shared_ptr<GDALDimension>>& dims,
                                CSLConstList papszOptions):
     GDALAbstractMDArray(NCDFGetGroupFullName(gid), retrieveName(gid, varid)),
-    GDALMDArray(NCDFGetGroupFullName(gid), retrieveName(gid, varid)),
+    GDALPamMDArray(NCDFGetGroupFullName(gid), retrieveName(gid, varid), poShared->GetPAM()),
     m_poShared(poShared),
     m_gid(gid),
     m_varid(varid),
@@ -3788,27 +3805,28 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     netCDFDataset *poDS = new netCDFDataset();
     CPLAcquireMutex(hNCMutex, 1000.0);
 
-    auto poSharedResources(std::make_shared<netCDFSharedResources>());
+    std::string osFilename;
 
     // For example to open DAP datasets
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
     {
-        poSharedResources->m_osFilename = poOpenInfo->pszFilename + strlen("NETCDF:");
-        if( !poSharedResources->m_osFilename.empty() &&
-            poSharedResources->m_osFilename[0] == '"' &&
-            poSharedResources->m_osFilename.back() == '"' )
+        osFilename = poOpenInfo->pszFilename + strlen("NETCDF:");
+        if( !osFilename.empty() &&
+            osFilename[0] == '"' &&
+            osFilename.back() == '"' )
         {
-            poSharedResources->m_osFilename = poSharedResources->m_osFilename.
-                substr(1, poSharedResources->m_osFilename.size() - 2);
+            osFilename = osFilename.
+                substr(1, osFilename.size() - 2);
         }
     }
     else
-        poSharedResources->m_osFilename = poOpenInfo->pszFilename;
+        osFilename = poOpenInfo->pszFilename;
 
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
 
 #ifdef ENABLE_NCDUMP
+    bool bFileToDestroyAtClosing = false;
     const char* pszHeader =
                 reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
     if( poOpenInfo->fpL != nullptr &&
@@ -3819,14 +3837,14 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         // By default create a temporary file that will be destroyed,
         // unless NETCDF_TMP_FILE is defined. Can be useful to see which
         // netCDF file has been generated from a potential fuzzed input.
-        poSharedResources->m_osFilename = CPLGetConfigOption("NETCDF_TMP_FILE", "");
-        if( poSharedResources->m_osFilename.empty() )
+        osFilename = CPLGetConfigOption("NETCDF_TMP_FILE", "");
+        if( osFilename.empty() )
         {
-            poSharedResources->m_bFileToDestroyAtClosing = true;
-            poSharedResources->m_osFilename = CPLGenerateTempFilename("netcdf_tmp");
+            bFileToDestroyAtClosing = true;
+            osFilename = CPLGenerateTempFilename("netcdf_tmp");
         }
         if( !netCDFDatasetCreateTempFile( NCDF_FORMAT_NC4,
-                                          poSharedResources->m_osFilename,
+                                          osFilename.c_str(),
                                           poOpenInfo->fpL ) )
         {
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
@@ -3841,13 +3859,13 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 
     // Try opening the dataset.
 #if defined(NCDF_DEBUG) && defined(ENABLE_UFFD)
-    CPLDebug("GDAL_netCDF", "calling nc_open_mem(%s)", poSharedResources->m_osFilename.c_str());
+    CPLDebug("GDAL_netCDF", "calling nc_open_mem(%s)", osFilename.c_str());
 #elseif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
-    CPLDebug("GDAL_netCDF", "calling nc_open(%s)", poSharedResources->m_osFilename.c_str());
+    CPLDebug("GDAL_netCDF", "calling nc_open(%s)", osFilename.c_str());
 #endif
     int cdfid = -1;
     const int nMode = (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0 ? NC_WRITE : NC_NOWRITE;
-    CPLString osFilenameForNCOpen(poSharedResources->m_osFilename);
+    CPLString osFilenameForNCOpen(osFilename);
 #ifdef WIN32
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
@@ -3857,6 +3875,11 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     }
 #endif
     int status2;
+
+    auto poSharedResources(std::make_shared<netCDFSharedResources>(osFilename));
+#ifdef ENABLE_NCDUMP
+    poSharedResources->m_bFileToDestroyAtClosing = bFileToDestroyAtClosing;
+#endif
 
 #ifdef ENABLE_UFFD
     bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
@@ -3984,8 +4007,7 @@ GDALDataset* netCDFDataset::CreateMultiDimensional( const char * pszFilename,
         return nullptr;
     }
 
-    auto poSharedResources(std::make_shared<netCDFSharedResources>());
-    poSharedResources->m_osFilename = pszFilename;
+    auto poSharedResources(std::make_shared<netCDFSharedResources>(pszFilename));
     poSharedResources->m_cdfid = cdfid;
     poSharedResources->m_bReadOnly = false;
     poSharedResources->m_bDefineMode = true;

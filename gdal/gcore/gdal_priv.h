@@ -2056,6 +2056,8 @@ public:
     std::shared_ptr<GDALDimension> OpenDimensionFromFullname(
                                         const std::string& osFullName) const;
 
+    virtual void ClearStatistics();
+
 //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
 //! @endcond
@@ -2383,12 +2385,6 @@ class CPL_DLL GDALMDArray: virtual public GDALAbstractMDArray, public GDALIHasAt
         return atInternal(indices, tail...);
     }
 
-    bool SetStatistics( GDALDataset* poDS,
-                        bool bApproxStats,
-                        double dfMin, double dfMax,
-                        double dfMean, double dfStdDev,
-                        GUInt64 nValidCount );
-
     mutable bool m_bHasTriedCachedArray = false;
     mutable std::shared_ptr<GDALMDArray> m_poCachedArray{};
 
@@ -2400,6 +2396,12 @@ protected:
                              const size_t* count) const;
 
     virtual bool IsCacheable() const { return true; }
+
+    virtual bool SetStatistics( bool bApproxStats,
+                                double dfMin, double dfMax,
+                                double dfMean, double dfStdDev,
+                                GUInt64 nValidCount );
+
 //! @endcond
 
 public:
@@ -2492,19 +2494,19 @@ public:
 
     virtual GDALDataset* AsClassicDataset(size_t iXDim, size_t iYDim) const;
 
-    virtual CPLErr GetStatistics( GDALDataset* poDS,
-                                  bool bApproxOK, bool bForce,
+    virtual CPLErr GetStatistics( bool bApproxOK, bool bForce,
                                   double *pdfMin, double *pdfMax,
                                   double *pdfMean, double *padfStdDev,
                                   GUInt64* pnValidCount,
                                   GDALProgressFunc pfnProgress, void *pProgressData );
 
-    virtual bool ComputeStatistics( GDALDataset* poDS,
-                                    bool bApproxOK,
+    virtual bool ComputeStatistics( bool bApproxOK,
                                     double *pdfMin, double *pdfMax,
                                     double *pdfMean, double *pdfStdDev,
                                     GUInt64* pnValidCount,
                                     GDALProgressFunc, void *pProgressData );
+
+    virtual void ClearStatistics();
 
     virtual std::vector<std::shared_ptr<GDALMDArray>> GetCoordinateVariables() const;
 

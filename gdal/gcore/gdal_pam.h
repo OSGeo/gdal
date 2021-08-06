@@ -108,17 +108,6 @@ public:
     CPLString   osAuxFilename{};
 
     int         bHasMetadata = false;
-
-    struct Statistics
-    {
-        bool bApproxStats;
-        double dfMin;
-        double dfMax;
-        double dfMean;
-        double dfStdDev;
-        GUInt64 nValidCount;
-    };
-    std::map<CPLString, Statistics> oMapMDArrayStatistics{};
 };
 //! @endcond
 
@@ -155,8 +144,6 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     CPLErr  TryLoadAux(char **papszSiblingFiles = nullptr);
     CPLErr  TrySaveAux();
-
-    void SerializeMDArrayStatistics(CPLXMLNode* psDSTree);
 
     virtual const char *BuildPamFilename();
 
@@ -208,18 +195,6 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                             int nListBands, int *panBandList,
                             GDALProgressFunc pfnProgress,
                             void * pProgressData ) override;
-
-    bool GetMDArrayStatistics( const char* pszMDArrayId,
-                               bool *pbApprox,
-                               double *pdfMin, double *pdfMax,
-                               double *pdfMean, double *pdfStdDev,
-                               GUInt64 *pnValidCount );
-
-    void StoreMDArrayStatistics( const char* pszMDArrayId,
-                                 bool bApprox,
-                                 double dfMin, double dfMax,
-                                 double dfMean, double dfStdDev,
-                                 GUInt64 nValidCount );
 
     // "semi private" methods.
     void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }
@@ -381,6 +356,22 @@ public:
 
     void SetSpatialRef(const std::string& osArrayFullName,
                        const OGRSpatialReference* poSRS);
+
+    CPLErr GetStatistics( const std::string& osArrayFullName,
+                          bool bApproxOK,
+                          double *pdfMin, double *pdfMax,
+                          double *pdfMean, double *pdfStdDev,
+                          GUInt64* pnValidCount);
+
+    void SetStatistics( const std::string& osArrayFullName,
+                        bool bApproxStats,
+                        double dfMin, double dfMax,
+                        double dfMean, double dfStdDev,
+                        GUInt64 nValidCount );
+
+    void ClearStatistics();
+
+    void ClearStatistics( const std::string& osArrayFullName );
 };
 
 /* ******************************************************************** */
@@ -397,7 +388,22 @@ protected:
                    const std::string& osName,
                    const std::shared_ptr<GDALPamMultiDim>& poPam);
 
+    bool SetStatistics( bool bApproxStats,
+                                double dfMin, double dfMax,
+                                double dfMean, double dfStdDev,
+                                GUInt64 nValidCount ) override;
+
 public:
+    const std::shared_ptr<GDALPamMultiDim>& GetPAM() const { return m_poPam; }
+
+    CPLErr GetStatistics( bool bApproxOK, bool bForce,
+                                  double *pdfMin, double *pdfMax,
+                                  double *pdfMean, double *padfStdDev,
+                                  GUInt64* pnValidCount,
+                                  GDALProgressFunc pfnProgress, void *pProgressData ) override;
+
+    void ClearStatistics() override;
+
     bool SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;

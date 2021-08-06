@@ -105,14 +105,18 @@ class HDF5SharedResources
     bool m_bReadOnly = true;
     hid_t            m_hHDF5 = 0;
     CPLString        m_osFilename{};
+    std::shared_ptr<GDALPamMultiDim> m_poPAM{};
+
 public:
-    HDF5SharedResources() = default;
+    explicit HDF5SharedResources(const std::string& osFilename);
     ~HDF5SharedResources();
 
     const std::string& GetFilename() const { return m_osFilename; }
 
     inline hid_t GetHDF5() const { return m_hHDF5; }
     inline bool IsReadOnly() const { return m_bReadOnly; }
+
+    const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
 };
 
 } // namespace GDAL

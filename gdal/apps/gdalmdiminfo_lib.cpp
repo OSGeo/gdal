@@ -704,8 +704,7 @@ static void DumpStructuralInfo(CSLConstList papszStructuralInfo,
 /*                             DumpArray()                              */
 /************************************************************************/
 
-static void DumpArray(GDALDataset* poDS,
-                      std::shared_ptr<GDALMDArray> array,
+static void DumpArray(std::shared_ptr<GDALMDArray> array,
                      CPLJSonStreamingWriter& serializer,
                      const GDALMultiDimInfoOptions *psOptions,
                      std::set<std::string>& alreadyDumpedDimensions,
@@ -830,7 +829,7 @@ static void DumpArray(GDALDataset* poDS,
         double dfMean = 0.0;
         double dfStdDev = 0.0;
         GUInt64 nValidCount = 0;
-        if( array->GetStatistics( poDS, false, true,
+        if( array->GetStatistics( false, true,
                               &dfMin, &dfMax, &dfMean, &dfStdDev,
                               &nValidCount,
                               nullptr, nullptr ) == CE_None )
@@ -862,8 +861,7 @@ static void DumpArray(GDALDataset* poDS,
 /*                            DumpArrays()                              */
 /************************************************************************/
 
-static void DumpArrays(GDALDataset* poDS,
-                       std::shared_ptr<GDALGroup> group,
+static void DumpArrays(std::shared_ptr<GDALGroup> group,
                        const std::vector<std::string>& arrayNames,
                        CPLJSonStreamingWriter& serializer,
                        const GDALMultiDimInfoOptions *psOptions,
@@ -880,7 +878,7 @@ static void DumpArrays(GDALDataset* poDS,
         if( array )
         {
             serializer.AddObjKey(array->GetName());
-            DumpArray( poDS, array, serializer, psOptions,
+            DumpArray( array, serializer, psOptions,
                        alreadyDumpedDimensions, false, false );
         }
     }
@@ -890,8 +888,7 @@ static void DumpArrays(GDALDataset* poDS,
 /*                             DumpGroup()                              */
 /************************************************************************/
 
-static void DumpGroup(GDALDataset* poDS,
-                      std::shared_ptr<GDALGroup> group,
+static void DumpGroup(std::shared_ptr<GDALGroup> group,
                       const char* pszDriverName,
                       CPLJSonStreamingWriter& serializer,
                       const GDALMultiDimInfoOptions *psOptions,
@@ -939,7 +936,7 @@ static void DumpGroup(GDALDataset* poDS,
     if( !arrayNames.empty() )
     {
         serializer.AddObjKey("arrays");
-        DumpArrays(poDS, group, arrayNames, serializer, psOptions,
+        DumpArrays(group, arrayNames, serializer, psOptions,
                    alreadyDumpedDimensions);
     }
 
@@ -963,7 +960,7 @@ static void DumpGroup(GDALDataset* poDS,
                 if( subgroup )
                 {
                     serializer.AddObjKey(subgroupName);
-                    DumpGroup( poDS, subgroup, nullptr, serializer, psOptions,
+                    DumpGroup(  subgroup, nullptr, serializer, psOptions,
                                alreadyDumpedDimensions, false, false );
                 }
             }
@@ -976,7 +973,7 @@ static void DumpGroup(GDALDataset* poDS,
                 auto subgroup = group->OpenGroup(subgroupName);
                 if( subgroup )
                 {
-                    DumpGroup( poDS, subgroup, nullptr, serializer, psOptions,
+                    DumpGroup( subgroup, nullptr, serializer, psOptions,
                                alreadyDumpedDimensions, false, true );
                 }
             }
@@ -1038,7 +1035,7 @@ char *GDALMultiDimInfo( GDALDatasetH hDataset,
             auto poDriver = poDS->GetDriver();
             if( poDriver )
                 pszDriverName = poDriver->GetDescription();
-            DumpGroup(poDS, group, pszDriverName, serializer, psOptions,
+            DumpGroup(group, pszDriverName, serializer, psOptions,
                       alreadyDumpedDimensions, true, true);
         }
         else
@@ -1064,7 +1061,7 @@ char *GDALMultiDimInfo( GDALDatasetH hDataset,
                          "Cannot find array %s", pszArrayName);
                 return nullptr;
             }
-            DumpArray(poDS, array, serializer, psOptions,
+            DumpArray(array, serializer, psOptions,
                       alreadyDumpedDimensions, true, true);
         }
     }

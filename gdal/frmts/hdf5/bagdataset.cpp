@@ -2076,7 +2076,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     }
     H5Aclose(hVersion);
 
-    auto poSharedResources = std::make_shared<GDAL::HDF5SharedResources>();
+    auto poSharedResources = std::make_shared<GDAL::HDF5SharedResources>(osFilename);
     poSharedResources->m_hHDF5 = hHDF5;
 
     auto poRootGroup = HDF5Dataset::OpenGroup(poSharedResources);
@@ -2956,7 +2956,7 @@ GDALDataset *BAGDataset::OpenForCreate( GDALOpenInfo *poOpenInfo,
     if( hHDF5 < 0 )
         return nullptr;
 
-    auto poSharedResources = std::make_shared<GDAL::HDF5SharedResources>();
+    auto poSharedResources = std::make_shared<GDAL::HDF5SharedResources>(osFilename);
     poSharedResources->m_hHDF5 = hHDF5;
 
     auto poRootGroup = HDF5Dataset::OpenGroup(poSharedResources);

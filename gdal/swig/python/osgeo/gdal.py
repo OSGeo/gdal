@@ -3082,12 +3082,12 @@ class MDArray(_object):
 
 
     def GetStatistics(self, *args, **kwargs):
-        """GetStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, bool force=True, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
+        """GetStatistics(MDArray self, bool approx_ok=False, bool force=True, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
         return _gdal.MDArray_GetStatistics(self, *args, **kwargs)
 
 
     def ComputeStatistics(self, *args, **kwargs):
-        """ComputeStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
+        """ComputeStatistics(MDArray self, bool approx_ok=False, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
         return _gdal.MDArray_ComputeStatistics(self, *args, **kwargs)
 
 
