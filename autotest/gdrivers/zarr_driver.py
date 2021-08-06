@@ -2067,3 +2067,125 @@ def test_zarr_create_with_filter():
         return ret
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_pam_spatial_ref():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim1 = rg.CreateDimension("dim1", None, None, 2)
+            rg.CreateMDArray("test", [dim0, dim1],
+                    gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+        create()
+
+        assert gdal.VSIStatL('/vsimem/test.zarr/pam.aux.xml') is None
+
+        def check_crs_before():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            crs = ar.GetSpatialRef()
+            assert crs is None
+
+        check_crs_before()
+
+        assert gdal.VSIStatL('/vsimem/test.zarr/pam.aux.xml') is None
+
+        def set_crs():
+            # Open in read-only
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            crs = osr.SpatialReference()
+            crs.ImportFromEPSG(4326)
+            crs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            crs.SetCoordinateEpoch(2021.2)
+            assert ar.SetSpatialRef(crs) == gdal.CE_None
+
+        set_crs()
+
+        assert gdal.VSIStatL('/vsimem/test.zarr/pam.aux.xml') is not None
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/pam.aux.xml', 'rb+')
+        assert f
+        data = gdal.VSIFReadL(1, 1000, f).decode('utf-8')
+        assert data.endswith('</PAMDataset>\n')
+        data = data[0:-len('</PAMDataset>\n')] + '<Other/>' + '</PAMDataset>\n'
+        gdal.VSIFSeekL(f, 0, 0)
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+
+        def check_crs():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            crs = ar.GetSpatialRef()
+            assert crs is not None
+            assert crs.GetAuthorityCode(None) == '4326'
+            assert crs.GetDataAxisToSRSAxisMapping() == [2, 1]
+            assert crs.GetCoordinateEpoch() == 2021.2
+
+        check_crs()
+
+        def check_crs_classic_dataset():
+            ds = gdal.Open('/vsimem/test.zarr')
+            crs = ds.GetSpatialRef()
+            assert crs is not None
+
+        check_crs_classic_dataset()
+
+        def unset_crs():
+            # Open in read-only
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            assert ar.SetSpatialRef(None) == gdal.CE_None
+
+        unset_crs()
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/pam.aux.xml', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 1000, f).decode('utf-8')
+        gdal.VSIFCloseL(f)
+        assert '<Other />' in data
+
+        def check_unset_crs():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            crs = ar.GetSpatialRef()
+            assert crs is None
+
+        check_unset_crs()
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+

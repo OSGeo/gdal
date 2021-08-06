@@ -1591,10 +1591,18 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
 /*              ZarrSharedResource::ZarrSharedResource()                */
 /************************************************************************/
 
-ZarrSharedResource::ZarrSharedResource()
+ZarrSharedResource::ZarrSharedResource(const std::string& osRootDirectoryName)
 {
     m_oObj.Add("zarr_consolidated_format", 1);
     m_oObj.Add("metadata", CPLJSONObject());
+
+    m_osRootDirectoryName = osRootDirectoryName;
+    if( !m_osRootDirectoryName.empty() && m_osRootDirectoryName.back() == '/' )
+    {
+        m_osRootDirectoryName.resize(m_osRootDirectoryName.size() - 1);
+    }
+    m_poPAM = std::make_shared<GDALPamMultiDim>(
+        CPLFormFilename(m_osRootDirectoryName.c_str(), "pam", nullptr));
 }
 
 /************************************************************************/
@@ -1603,7 +1611,7 @@ ZarrSharedResource::ZarrSharedResource()
 
 ZarrSharedResource::~ZarrSharedResource()
 {
-    if( m_bZMetadataModified && !m_osRootDirectoryName.empty() )
+    if( m_bZMetadataModified )
     {
         CPLJSONDocument oDoc;
         oDoc.SetRoot(m_oObj);
@@ -1619,7 +1627,7 @@ ZarrSharedResource::~ZarrSharedResource()
 void ZarrSharedResource::SetZMetadataItem(const std::string& osFilename,
                                               const CPLJSONObject& obj)
 {
-    if( !m_osRootDirectoryName.empty() )
+    if( m_bZMetadataEnabled )
     {
         CPLAssert( STARTS_WITH(osFilename.c_str(),
                                (m_osRootDirectoryName + '/').c_str()) );
@@ -1627,18 +1635,5 @@ void ZarrSharedResource::SetZMetadataItem(const std::string& osFilename,
         const char* pszKey = osFilename.c_str() + m_osRootDirectoryName.size() + 1;
         m_oObj["metadata"].DeleteNoSplitName(pszKey);
         m_oObj["metadata"].AddNoSplitName(pszKey, obj);
-    }
-}
-
-/************************************************************************/
-/*             ZarrSharedResource::SetRootDirectoryName()               */
-/************************************************************************/
-
-void ZarrSharedResource::SetRootDirectoryName(const std::string& osRootDirectoryName)
-{
-    m_osRootDirectoryName = osRootDirectoryName;
-    if( !m_osRootDirectoryName.empty() && m_osRootDirectoryName.back() == '/' )
-    {
-        m_osRootDirectoryName.resize(m_osRootDirectoryName.size() - 1);
     }
 }
