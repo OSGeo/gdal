@@ -41,6 +41,7 @@
 #include "cpl_port.h"
 #include "ogr_api.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
@@ -1824,11 +1825,16 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(nullptr) -
                                             CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
                 }
+                else if( oSRS.IsProjected() )
+                {
+                    bInvertedAxisOrder =
+                        CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
+                }
             }
         }
 
-        const double dfCenterX = p.getX();
-        const double dfCenterY = p.getY();
+        double dfCenterX = p.getX();
+        double dfCenterY = p.getY();
 
         double dfDistance;
         if( bSRSUnitIsDegree && pszUnits != nullptr &&
@@ -1891,6 +1897,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return poLS;
         }
 
+        if( bInvertedAxisOrder )
+            std::swap( dfCenterX, dfCenterY );
+
         OGRCircularString *poCC = new OGRCircularString();
         p.setX(dfCenterX + dfRadius * cos(dfStartAngle * kdfD2R));
         p.setY(dfCenterY + dfRadius * sin(dfStartAngle * kdfD2R));
@@ -1902,6 +1911,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         p.setX(dfCenterX + dfRadius * cos(dfEndAngle * kdfD2R));
         p.setY(dfCenterY + dfRadius * sin(dfEndAngle * kdfD2R));
         poCC->addPoint(&p);
+
+        if( bInvertedAxisOrder )
+            poCC->swapXY();
+
         return poCC;
     }
 
@@ -1943,11 +1956,16 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(nullptr) -
                                             CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
                 }
+                else if( oSRS.IsProjected() )
+                {
+                    bInvertedAxisOrder =
+                        CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
+                }
             }
         }
 
-        const double dfCenterX = p.getX();
-        const double dfCenterY = p.getY();
+        double dfCenterX = p.getX();
+        double dfCenterY = p.getY();
 
         double dfDistance;
         if( bSRSUnitIsDegree && pszUnits != nullptr &&
@@ -1983,6 +2001,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return poLS;
         }
 
+        if( bInvertedAxisOrder )
+            std::swap( dfCenterX, dfCenterY );
+
         OGRCircularString *poCC = new OGRCircularString();
         p.setX( dfCenterX - dfRadius );
         p.setY( dfCenterY );
@@ -1993,6 +2014,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         p.setX( dfCenterX - dfRadius );
         p.setY( dfCenterY );
         poCC->addPoint(&p);
+
+        if( bInvertedAxisOrder )
+            poCC->swapXY();
+
         return poCC;
     }
 
