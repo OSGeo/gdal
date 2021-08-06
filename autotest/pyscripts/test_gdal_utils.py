@@ -129,6 +129,12 @@ def test_utils_py_1():
     ds_list = None
 
 
+def test_min_max():
+    ds = util.open_ds(test_py_scripts.get_data_path('gcore') + 'byte.tif')
+    min_max = util.get_raster_min_max(ds)
+    assert min_max == (74, 255)
+
+
 def test_utils_arrays():
     scalars = [7, 5.2]
 
