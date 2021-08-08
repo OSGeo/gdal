@@ -2587,7 +2587,7 @@ namespace tut
             AutoCloseTest() {
                 counter += 222;
             }
-            virtual ~AutoCloseTest() { 
+            virtual ~AutoCloseTest() {
                 counter -= 22;
             }
             static AutoCloseTest* Create() {
@@ -2895,7 +2895,7 @@ namespace tut
     template<>
     void object::test<41>()
     {
-#ifdef HAVE_CURL        
+#ifdef HAVE_CURL
         CPLStringList oOptions;
         oOptions.AddNameVlue("FORM_ITEM_COUNT", "5");
         oOptions.AddNameVlue("FORM_KEY_0", "qqq");
@@ -2911,8 +2911,8 @@ namespace tut
         ensure_equals(pResult->nStatus, 34);
         CPLHTTPDestroyResult(pResult);
 
-#endif // HAVE_CURL        
-    }    
+#endif // HAVE_CURL
+    }
 
     // Test CPLHTTPPushFetchCallback
     template<>
@@ -3089,4 +3089,21 @@ namespace tut
         VSIUnlink("/vsimem/.gdal/gdalrc");
     }
 
+    // Test bUnlinkAndSize on VSIGetMemFileBuffer
+    template<>
+    template<>
+    void object::test<50>()
+    {
+        VSILFILE *fp = VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "wb");
+        VSIFWriteL("test", 5, 1, fp);
+        GByte *pRawData = VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, true);
+        ensure(EQUAL(reinterpret_cast<const char *>(pRawData), "test"));
+        ensure(VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, false) == nullptr);
+        ensure(VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "r") == nullptr);
+        ensure(VSIFReadL(pRawData, 5, 1, fp) == 0);
+        ensure(VSIFWriteL(pRawData, 5, 1, fp) == 0);
+        ensure(VSIFSeekL(fp, 0, SEEK_END) == 0);
+        CPLFree(pRawData);
+        VSIFCloseL(fp);
+    }
 } // namespace tut
