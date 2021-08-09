@@ -262,7 +262,7 @@ def test_zarr_string(fill_value, expected_read_data):
 # Check that all required elements are present in .zarray
 @pytest.mark.parametrize("member",
                          [None, 'zarr_format', 'chunks', 'compressor', 'dtype',
-                          'filters', 'order', 'shape'])
+                          'filters', 'order', 'shape', 'fill_value'])
 def test_zarr_invalid_json_remove_member(member):
 
     j = {
@@ -290,7 +290,10 @@ def test_zarr_invalid_json_remove_member(member):
         gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
         with gdaltest.error_handler():
             ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
-        if member is None:
+        if member == 'fill_value':
+            assert ds is not None
+            assert gdal.GetLastErrorMsg() != ''
+        elif member is None:
             assert ds
         else:
             assert ds is None

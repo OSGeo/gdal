@@ -2865,12 +2865,6 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
             osDimSeparator = "/";
     }
 
-    auto oFillValue = oRoot["fill_value"];
-    if( !oFillValue.IsValid() )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "fill_value missing");
-        return nullptr;
-    }
     std::vector<GByte> abyNoData;
 
     struct NoDataFreer
@@ -2890,6 +2884,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     };
     NoDataFreer NoDataFreer(abyNoData, oType);
 
+    auto oFillValue = oRoot["fill_value"];
     auto eFillValueType = oFillValue.GetType();
 
     // Normally arrays are not supported, but that's what NCZarr 4.8.0 outputs
@@ -2900,7 +2895,13 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         eFillValueType = oFillValue.GetType();
     }
 
-    if( eFillValueType == CPLJSONObject::Type::Null )
+    if( !oFillValue.IsValid() )
+    {
+        // fill_value is normally required but some implementations
+        // are lacking it: https://github.com/Unidata/netcdf-c/issues/2059
+        CPLError(CE_Warning, CPLE_AppDefined, "fill_value missing");
+    }
+    else if( eFillValueType == CPLJSONObject::Type::Null )
     {
         // Nothing to do
     }
