@@ -227,6 +227,7 @@ protected:
     // For ZarrV3, this is the root directory of the dataset
     std::shared_ptr<ZarrSharedResource> m_poSharedResource;
     std::string m_osDirectoryName{};
+    std::weak_ptr<ZarrGroupBase> m_poParent{};
     mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     mutable std::map<CPLString, std::shared_ptr<ZarrArray>> m_oMapMDArrays{};
     mutable std::map<CPLString, std::shared_ptr<GDALDimensionWeakIndexingVar>> m_oMapDimensions{};
@@ -238,7 +239,7 @@ protected:
     bool                                              m_bReadFromZMetadata = false;
     mutable bool                                      m_bDimensionsInstantiated = false;
     bool                                              m_bUpdatable = false;
-    std::weak_ptr<GDALGroup> m_pSelf{};
+    std::weak_ptr<ZarrGroupBase> m_pSelf{};
 
     virtual void ExploreDirectory() const = 0;
     virtual void LoadAttributes() const = 0;
@@ -253,7 +254,7 @@ public:
 
     ~ZarrGroupBase() override;
 
-    void SetSelf(std::weak_ptr<GDALGroup> self) { m_pSelf = self; }
+    void SetSelf(std::weak_ptr<ZarrGroupBase> self) { m_pSelf = self; }
 
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
         { LoadAttributes(); return m_oAttrGroup.GetAttribute(osName); }

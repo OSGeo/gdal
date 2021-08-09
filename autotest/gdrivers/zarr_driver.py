@@ -262,7 +262,7 @@ def test_zarr_string(fill_value, expected_read_data):
 # Check that all required elements are present in .zarray
 @pytest.mark.parametrize("member",
                          [None, 'zarr_format', 'chunks', 'compressor', 'dtype',
-                          'filters', 'order', 'shape'])
+                          'filters', 'order', 'shape', 'fill_value'])
 def test_zarr_invalid_json_remove_member(member):
 
     j = {
@@ -290,7 +290,10 @@ def test_zarr_invalid_json_remove_member(member):
         gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
         with gdaltest.error_handler():
             ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
-        if member is None:
+        if member == 'fill_value':
+            assert ds is not None
+            assert gdal.GetLastErrorMsg() != ''
+        elif member is None:
             assert ds
         else:
             assert ds is None
@@ -765,16 +768,22 @@ def test_zarr_read_group_with_zmetadata():
     assert subsubgroup.OpenMDArray('not_existing') is None
 
 
-@pytest.mark.parametrize("use_zmetadata", [True, False])
-def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata):
-
-    filename = 'data/zarr/array_dimensions.zarr'
+@pytest.mark.parametrize("use_zmetadata, filename",
+                         [(True, 'data/zarr/array_dimensions.zarr'),
+                          (False, 'data/zarr/array_dimensions.zarr'),
+                          (True, 'data/zarr/array_dimensions_upper_level.zarr'),
+                          (False, 'data/zarr/array_dimensions_upper_level.zarr'),
+                          (False, 'data/zarr/array_dimensions_upper_level.zarr/subgroup/var')])
+def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata, filename):
 
     ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER, open_options=[
                      'USE_ZMETADATA=' + str(use_zmetadata)])
     assert ds is not None
     rg = ds.GetRootGroup()
-    ar = rg.OpenMDArray('var')
+    if filename != 'data/zarr/array_dimensions_upper_level.zarr':
+        ar = rg.OpenMDArray('var')
+    else:
+        ar = rg.OpenGroup('subgroup').OpenMDArray('var')
     assert ar
     dims = ar.GetDimensions()
     assert len(dims) == 2
