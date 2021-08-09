@@ -765,16 +765,22 @@ def test_zarr_read_group_with_zmetadata():
     assert subsubgroup.OpenMDArray('not_existing') is None
 
 
-@pytest.mark.parametrize("use_zmetadata", [True, False])
-def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata):
-
-    filename = 'data/zarr/array_dimensions.zarr'
+@pytest.mark.parametrize("use_zmetadata, filename",
+                         [(True, 'data/zarr/array_dimensions.zarr'),
+                          (False, 'data/zarr/array_dimensions.zarr'),
+                          (True, 'data/zarr/array_dimensions_upper_level.zarr'),
+                          (False, 'data/zarr/array_dimensions_upper_level.zarr'),
+                          (False, 'data/zarr/array_dimensions_upper_level.zarr/subgroup/var')])
+def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata, filename):
 
     ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER, open_options=[
                      'USE_ZMETADATA=' + str(use_zmetadata)])
     assert ds is not None
     rg = ds.GetRootGroup()
-    ar = rg.OpenMDArray('var')
+    if filename != 'data/zarr/array_dimensions_upper_level.zarr':
+        ar = rg.OpenMDArray('var')
+    else:
+        ar = rg.OpenGroup('subgroup').OpenMDArray('var')
     assert ar
     dims = ar.GetDimensions()
     assert len(dims) == 2

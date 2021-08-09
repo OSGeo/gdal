@@ -93,6 +93,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
     auto poRG = ZarrGroupV2::Create(poSharedResource, std::string(), "/");
     poRG->SetUpdatable(bUpdateMode);
     poDS->m_poRootGroup = poRG;
+    poRG->SetDirectoryName(osFilename);
 
     const std::string osZarrayFilename(
                 CPLFormFilename(pszFilename, ".zarray", nullptr));
@@ -110,8 +111,6 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
 
         return poDS.release();
     }
-
-    poRG->SetDirectoryName(osFilename);
 
     const std::string osZmetadataFilename(
             CPLFormFilename(pszFilename, ".zmetadata", nullptr));
