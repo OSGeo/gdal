@@ -46,6 +46,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <memory>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
@@ -481,10 +482,7 @@ int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
 VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 
 {
-    for( const auto &iter : oFileList )
-    {
-        delete iter.second;
-    }
+    oFileList.clear();
 
     if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
