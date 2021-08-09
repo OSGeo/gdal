@@ -1034,8 +1034,11 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
         CPLDebug("VSIMEM", "VSIGetMemFileBuffer() %s: ref_count=%d (before)",
                  poFile->osFilename.c_str(), poFile->nRefCount);
 #endif
-        CPLAtomicDec(&(poFile->nRefCount));
-        delete poFile;
+        poFile->pabyData = nullptr;
+        poFile->nLength = 0;
+        poFile->nAllocLength = 0;
+        if (CPLAtomicDec(&(poFile->nRefCount)) == 0)
+            delete poFile;
     }
 
     return pabyData;
