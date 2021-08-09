@@ -654,8 +654,8 @@ int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
         return -1;
     }
 
-    std::shared_ptr<VSIMemFile> poFile = oFileList[osFilename];
 #ifdef DEBUG_VERBOSE
+    std::shared_ptr<VSIMemFile> poFile = oFileList[osFilename];
     CPLDebug("VSIMEM", "Unlink %s: ref_count=%d (before)", pszFilename, poFile.use_count());
 #endif
     oFileList.erase( oFileList.find(osFilename) );
