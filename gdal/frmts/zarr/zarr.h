@@ -32,6 +32,7 @@
 #include "cpl_compressor.h"
 #include "cpl_json.h"
 #include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "memmultidim.h"
 
 #include <array>
@@ -194,19 +195,23 @@ public:
 class ZarrSharedResource
 {
     std::string m_osRootDirectoryName{};
+    bool m_bZMetadataEnabled = false;
     CPLJSONObject m_oObj{}; // For .zmetadata
     bool m_bZMetadataModified = false;
+    std::shared_ptr<GDALPamMultiDim> m_poPAM{};
 
 public:
-    ZarrSharedResource();
+    explicit ZarrSharedResource(const std::string& osRootDirectoryName);
 
     ~ZarrSharedResource();
 
-    void SetRootDirectoryName(const std::string& osRootDirectoryName);
+    void EnableZMetadata() { m_bZMetadataEnabled = true; }
 
     void InitFromZMetadata(const CPLJSONObject& obj) { m_oObj = obj; }
 
     void SetZMetadataItem(const std::string& osFilename, const CPLJSONObject& obj);
+
+    const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
 };
 
 /************************************************************************/
@@ -406,7 +411,7 @@ struct DtypeElt
 /*                             ZarrArray                                */
 /************************************************************************/
 
-class ZarrArray final: public GDALMDArray
+class ZarrArray final: public GDALPamMDArray
 {
     std::shared_ptr<ZarrSharedResource>               m_poSharedResource;
     const std::vector<std::shared_ptr<GDALDimension>> m_aoDims;

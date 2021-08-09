@@ -8280,6 +8280,9 @@ bool GDALDataset::GetRawBinaryLayout(RawBinaryLayout& sLayout)
 
 void GDALDataset::ClearStatistics()
 {
+    auto poRootGroup = GetRootGroup();
+    if( poRootGroup )
+        poRootGroup->ClearStatistics();
 }
 
 /************************************************************************/

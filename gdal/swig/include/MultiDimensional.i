@@ -957,15 +957,14 @@ public:
 #ifndef SWIGCSHARP
 %newobject Statistics;
 %feature ("kwargs") GetStatistics;
-  Statistics* GetStatistics( GDALDatasetShadow* ds = NULL,
-                             bool approx_ok = FALSE,
+  Statistics* GetStatistics( bool approx_ok = FALSE,
                              bool force = TRUE,
                              GDALProgressFunc callback = NULL,
                              void* callback_data=NULL)
   {
         GUInt64 nValidCount = 0;
         Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
-        CPLErr eErr = GDALMDArrayGetStatistics(self, ds, approx_ok, force,
+        CPLErr eErr = GDALMDArrayGetStatistics(self, NULL, approx_ok, force,
                                  &(psStatisticsOut->min),
                                  &(psStatisticsOut->max),
                                  &(psStatisticsOut->mean),
@@ -981,14 +980,13 @@ public:
 
 %newobject Statistics;
 %feature ("kwargs") ComputeStatistics;
-  Statistics* ComputeStatistics( GDALDatasetShadow* ds = NULL,
-                                 bool approx_ok = FALSE,
+  Statistics* ComputeStatistics( bool approx_ok = FALSE,
                                  GDALProgressFunc callback = NULL,
                                  void* callback_data=NULL)
   {
         GUInt64 nValidCount = 0;
         Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
-        int nSuccess = GDALMDArrayComputeStatistics(self, ds, approx_ok,
+        int nSuccess = GDALMDArrayComputeStatistics(self, NULL, approx_ok,
                                  &(psStatisticsOut->min),
                                  &(psStatisticsOut->max),
                                  &(psStatisticsOut->mean),

@@ -32,8 +32,10 @@
 
 //! @cond Doxygen_Suppress
 
+#include "cpl_minixml.h"
 #include "gdal_priv.h"
 #include <map>
+#include <vector>
 
 class GDALPamRasterBand;
 
@@ -90,6 +92,8 @@ class GDALDatasetPamInfo
 public:
     char        *pszPamFilename = nullptr;
 
+    std::vector<CPLXMLTreeCloser> m_apoOtherNodes{};
+
     OGRSpatialReference* poSRS = nullptr;
 
     int         bHaveGeoTransform = false;
@@ -104,17 +108,6 @@ public:
     CPLString   osAuxFilename{};
 
     int         bHasMetadata = false;
-
-    struct Statistics
-    {
-        bool bApproxStats;
-        double dfMin;
-        double dfMax;
-        double dfMean;
-        double dfStdDev;
-        GUInt64 nValidCount;
-    };
-    std::map<CPLString, Statistics> oMapMDArrayStatistics{};
 };
 //! @endcond
 
@@ -151,8 +144,6 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     CPLErr  TryLoadAux(char **papszSiblingFiles = nullptr);
     CPLErr  TrySaveAux();
-
-    void SerializeMDArrayStatistics(CPLXMLNode* psDSTree);
 
     virtual const char *BuildPamFilename();
 
@@ -204,18 +195,6 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                             int nListBands, int *panBandList,
                             GDALProgressFunc pfnProgress,
                             void * pProgressData ) override;
-
-    bool GetMDArrayStatistics( const char* pszMDArrayId,
-                               bool *pbApprox,
-                               double *pdfMin, double *pdfMax,
-                               double *pdfMean, double *pdfStdDev,
-                               GUInt64 *pnValidCount );
-
-    void StoreMDArrayStatistics( const char* pszMDArrayId,
-                                 bool bApprox,
-                                 double dfMin, double dfMax,
-                                 double dfMean, double dfStdDev,
-                                 GUInt64 nValidCount );
 
     // "semi private" methods.
     void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }
@@ -353,6 +332,83 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 };
 
 //! @cond Doxygen_Suppress
+
+/* ******************************************************************** */
+/*                          GDALPamMultiDim                             */
+/* ******************************************************************** */
+
+/** Class that serializes/deserializes metadata on multidimensional objects.
+ * Currently SRS on GDALMDArray.
+ */
+class CPL_DLL GDALPamMultiDim
+{
+    struct Private;
+    std::unique_ptr<Private> d;
+
+    void Load();
+    void Save();
+
+public:
+    explicit GDALPamMultiDim(const std::string& osFilename);
+    virtual ~GDALPamMultiDim();
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef(const std::string& osArrayFullName);
+
+    void SetSpatialRef(const std::string& osArrayFullName,
+                       const OGRSpatialReference* poSRS);
+
+    CPLErr GetStatistics( const std::string& osArrayFullName,
+                          bool bApproxOK,
+                          double *pdfMin, double *pdfMax,
+                          double *pdfMean, double *pdfStdDev,
+                          GUInt64* pnValidCount);
+
+    void SetStatistics( const std::string& osArrayFullName,
+                        bool bApproxStats,
+                        double dfMin, double dfMax,
+                        double dfMean, double dfStdDev,
+                        GUInt64 nValidCount );
+
+    void ClearStatistics();
+
+    void ClearStatistics( const std::string& osArrayFullName );
+};
+
+/* ******************************************************************** */
+/*                          GDALPamMDArray                              */
+/* ******************************************************************** */
+
+/** Class that relies on GDALPamMultiDim to serializes/deserializes metadata. */
+class CPL_DLL GDALPamMDArray: public GDALMDArray
+{
+    std::shared_ptr<GDALPamMultiDim> m_poPam;
+
+protected:
+    GDALPamMDArray(const std::string& osParentName,
+                   const std::string& osName,
+                   const std::shared_ptr<GDALPamMultiDim>& poPam);
+
+    bool SetStatistics( bool bApproxStats,
+                                double dfMin, double dfMax,
+                                double dfMean, double dfStdDev,
+                                GUInt64 nValidCount ) override;
+
+public:
+    const std::shared_ptr<GDALPamMultiDim>& GetPAM() const { return m_poPam; }
+
+    CPLErr GetStatistics( bool bApproxOK, bool bForce,
+                                  double *pdfMin, double *pdfMax,
+                                  double *pdfMean, double *padfStdDev,
+                                  GUInt64* pnValidCount,
+                                  GDALProgressFunc pfnProgress, void *pProgressData ) override;
+
+    void ClearStatistics() override;
+
+    bool SetSpatialRef(const OGRSpatialReference* poSRS) override;
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
+};
+
 // These are mainly helper functions for internal use.
 int CPL_DLL PamParseHistogram( CPLXMLNode *psHistItem,
                                double *pdfMin, double *pdfMax,

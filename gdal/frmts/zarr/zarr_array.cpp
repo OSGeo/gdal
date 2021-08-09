@@ -51,7 +51,7 @@ ZarrArray::ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource
                      const std::vector<GUInt64>& anBlockSize,
                      bool bFortranOrder):
     GDALAbstractMDArray(osParentName, osName),
-    GDALMDArray(osParentName, osName),
+    GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
     m_poSharedResource(poSharedResource),
     m_aoDims(aoDims),
     m_oType(oType),
@@ -704,7 +704,9 @@ bool ZarrArray::AllocateWorkingBuffers() const
 
 std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
 {
-    return m_poSRS;
+    if( m_poSRS )
+        return m_poSRS;
+    return GDALPamMDArray::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -3153,9 +3155,7 @@ bool ZarrArray::SetSpatialRef(const OGRSpatialReference* poSRS)
 {
     if( !m_bUpdatable )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Dataset not open in update mode");
-        return false;
+        return GDALPamMDArray::SetSpatialRef(poSRS);
     }
     m_poSRS.reset();
     if( poSRS )

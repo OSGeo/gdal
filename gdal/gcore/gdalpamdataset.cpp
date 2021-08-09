@@ -308,11 +308,6 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Save MDArray statistics                                         */
-/* -------------------------------------------------------------------- */
-    SerializeMDArrayStatistics(psDSTree);
-
-/* -------------------------------------------------------------------- */
 /*      We don't want to return anything if we had no metadata to       */
 /*      attach.                                                         */
 /* -------------------------------------------------------------------- */
@@ -323,44 +318,6 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
     }
 
     return psDSTree;
-}
-
-/************************************************************************/
-/*                       SerializeMDArrayStatistics()                   */
-/************************************************************************/
-
-void GDALPamDataset::SerializeMDArrayStatistics(CPLXMLNode* psDSTree)
-
-{
-    if( !psPam->oMapMDArrayStatistics.empty() )
-    {
-        CPLXMLNode* psMDArrayStats = CPLCreateXMLNode(
-            psDSTree, CXT_Element, "MDArrayStatistics" );
-        for( const auto& kv: psPam->oMapMDArrayStatistics )
-        {
-            CPLXMLNode* psMDArray = CPLCreateXMLNode(
-                psMDArrayStats, CXT_Element, "MDArray" );
-            CPLAddXMLAttributeAndValue(psMDArray, "id", kv.first.c_str());
-            CPLCreateXMLElementAndValue(psMDArray,
-                                        "ApproxStats",
-                                        kv.second.bApproxStats ? "1" : "0");
-            CPLCreateXMLElementAndValue(psMDArray,
-                                        "Minimum",
-                                        CPLSPrintf("%.18g", kv.second.dfMin));
-            CPLCreateXMLElementAndValue(psMDArray,
-                                        "Maximum",
-                                        CPLSPrintf("%.18g", kv.second.dfMax));
-            CPLCreateXMLElementAndValue(psMDArray,
-                                        "Mean",
-                                        CPLSPrintf("%.18g", kv.second.dfMean));
-            CPLCreateXMLElementAndValue(psMDArray,
-                                        "StdDev",
-                                        CPLSPrintf("%.18g", kv.second.dfStdDev));
-            CPLCreateXMLElementAndValue(psMDArray,
-                                        "ValidSampleCount",
-                                        CPLSPrintf(CPL_FRMT_GUIB, kv.second.nValidCount));
-        }
-    }
 }
 
 /************************************************************************/
@@ -652,37 +609,18 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Load MDArray statistics                                         */
+/*      Preserve Array information.                                     */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode* psMDArrayStats = CPLGetXMLNode(psTree, "MDArrayStatistics" );
-    if( psMDArrayStats )
+    for( CPLXMLNode* psIter = psTree->psChild;
+                                            psIter; psIter = psIter->psNext )
     {
-        for( CPLXMLNode *psIter = psMDArrayStats->psChild;
-            psIter != nullptr;
-            psIter = psIter->psNext )
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "Array") == 0 )
         {
-            if( psIter->eType != CXT_Element
-                || !EQUAL(psIter->pszValue,"MDArray") )
-                continue;
-
-            const char* pszId = CPLGetXMLValue(psIter, "id", nullptr);
-            if( pszId == nullptr )
-                continue;
-
-            GDALDatasetPamInfo::Statistics sStats;
-            sStats.bApproxStats = CPLTestBool(
-                CPLGetXMLValue(psIter, "ApproxStats", "false"));
-            sStats.dfMin = CPLAtofM(
-                CPLGetXMLValue(psIter, "Minimum", "0"));
-            sStats.dfMax = CPLAtofM(
-                CPLGetXMLValue(psIter, "Maximum", "0"));
-            sStats.dfMean = CPLAtofM(
-                CPLGetXMLValue(psIter, "Mean", "0"));
-            sStats.dfStdDev = CPLAtofM(
-                CPLGetXMLValue(psIter, "StdDev", "0"));
-            sStats.nValidCount = static_cast<GUInt64>(CPLAtoGIntBig(
-                CPLGetXMLValue(psIter, "ValidSampleCount", "0")));
-            psPam->oMapMDArrayStatistics[pszId] = sStats;
+            CPLXMLNode* psNextBackup = psIter->psNext;
+            psIter->psNext = nullptr;
+            psPam->m_apoOtherNodes.emplace_back(CPLXMLTreeCloser(CPLCloneXMLTree(psIter)));
+            psIter->psNext = psNextBackup;
         }
     }
 
@@ -1020,6 +958,15 @@ CPLErr GDALPamDataset::TrySaveXML()
 
         CPLAddXMLChild( psSubTree, psTree );
         psTree = psOldTree;
+    }
+
+
+/* -------------------------------------------------------------------- */
+/*      Preserve other information.                                     */
+/* -------------------------------------------------------------------- */
+    for( const auto& poOtherNode: psPam->m_apoOtherNodes )
+    {
+        CPLAddXMLChild(psTree, CPLCloneXMLTree(poOtherNode.get()));
     }
 
 /* -------------------------------------------------------------------- */
@@ -1819,71 +1766,5 @@ void GDALPamDataset::ClearStatistics()
         CSLDestroy(papszNewMD);
     }
 
-    if( !psPam->oMapMDArrayStatistics.empty() )
-    {
-        MarkPamDirty();
-        psPam->oMapMDArrayStatistics.clear();
-    }
+    GDALDataset::ClearStatistics();
 }
-
-/************************************************************************/
-/*                       GetMDArrayStatistics()                         */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-bool GDALPamDataset::GetMDArrayStatistics( const char* pszMDArrayId,
-                                           bool *pbApprox,
-                                           double *pdfMin, double *pdfMax,
-                                           double *pdfMean, double *pdfStdDev,
-                                           GUInt64 *pnValidCount )
-{
-    PamInitialize();
-    if( !psPam )
-    {
-        return false;
-    }
-    auto oIter = psPam->oMapMDArrayStatistics.find(pszMDArrayId);
-    if( oIter == psPam->oMapMDArrayStatistics.end() )
-    {
-        return false;
-    }
-    if( pbApprox )
-        *pbApprox = oIter->second.bApproxStats;
-    if( pdfMin )
-        *pdfMin = oIter->second.dfMin;
-    if( pdfMax )
-        *pdfMax = oIter->second.dfMax;
-    if( pdfMean )
-        *pdfMean = oIter->second.dfMean;
-    if( pdfStdDev )
-        *pdfStdDev = oIter->second.dfStdDev;
-    if( pnValidCount )
-        *pnValidCount = oIter->second.nValidCount;
-    return true;
-}
-
-/************************************************************************/
-/*                      StoreMDArrayStatistics()                        */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-void GDALPamDataset::StoreMDArrayStatistics( const char* pszMDArrayId,
-                                 bool bApproxStats,
-                                 double dfMin, double dfMax,
-                                 double dfMean, double dfStdDev,
-                                 GUInt64 nValidCount )
-{
-    PamInitialize();
-    if( !psPam )
-        return;
-    MarkPamDirty();
-    GDALDatasetPamInfo::Statistics sStats;
-    sStats.bApproxStats = bApproxStats;
-    sStats.dfMin = dfMin;
-    sStats.dfMax = dfMax;
-    sStats.dfMean = dfMean;
-    sStats.dfStdDev = dfStdDev;
-    sStats.nValidCount = nValidCount;
-    psPam->oMapMDArrayStatistics[pszMDArrayId] = sStats;
-}
-//! @endcond
