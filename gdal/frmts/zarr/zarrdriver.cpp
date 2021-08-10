@@ -150,9 +150,16 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
 /*                            ExploreGroup()                            */
 /************************************************************************/
 
-static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
-                         std::vector<std::string>& aosArrays)
+static bool ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
+                         std::vector<std::string>& aosArrays,
+                         int nRecCount)
 {
+    if( nRecCount == 32 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too deep recursion level in ExploreGroup()");
+        return false;
+    }
     const auto aosGroupArrayNames = poGroup->GetMDArrayNames();
     for( const auto& osArrayName: aosGroupArrayNames )
     {
@@ -164,6 +171,12 @@ static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
             osArrayFullname += osArrayName;
         }
         aosArrays.emplace_back(std::move(osArrayFullname));
+        if( aosArrays.size() == 10000 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too many arrays found by ExploreGroup()");
+            return false;
+        }
     }
 
     const auto aosSubGroups = poGroup->GetGroupNames();
@@ -171,8 +184,12 @@ static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
     {
         const auto poSubGroup = poGroup->OpenGroup(osSubGroup);
         if( poSubGroup )
-            ExploreGroup(poSubGroup, aosArrays);
+        {
+            if( !ExploreGroup(poSubGroup, aosArrays, nRecCount + 1) )
+                return false;
+        }
     }
+    return true;
 }
 
 /************************************************************************/
@@ -295,7 +312,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     else
     {
         std::vector<std::string> aosArrays;
-        ExploreGroup(poRG, aosArrays);
+        ExploreGroup(poRG, aosArrays, 0);
         if( aosArrays.empty() )
             return nullptr;
 
