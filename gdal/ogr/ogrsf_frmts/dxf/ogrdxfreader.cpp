@@ -177,6 +177,7 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
            && achSrcBuffer[iEOL] != '\0' )
         iEOL++;
 
+    bool bLongLine = false;
     while( achSrcBuffer[iEOL] == '\0' )
     {
         // The line is longer than the buffer. Let's copy what we have so
@@ -198,6 +199,7 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
         iSrcBufferOffset = iEOL;
         LoadDiskChunk();
         iEOL = iSrcBufferOffset;
+        bLongLine = true;
 
         // Proceed to newline again
         while( achSrcBuffer[iEOL] != '\n'
@@ -263,7 +265,13 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
 /* -------------------------------------------------------------------- */
 /*      Record how big this value was, so it can be unread safely.      */
 /* -------------------------------------------------------------------- */
-    nLastValueSize = iSrcBufferOffset - iStartSrcBufferOffset;
+    if( bLongLine )
+        nLastValueSize = 0;
+    else
+    {
+        nLastValueSize = iSrcBufferOffset - iStartSrcBufferOffset;
+        CPLAssert( nLastValueSize > 0 );
+    }
 
     return nValueCode;
 }
@@ -294,6 +302,12 @@ int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
 void OGRDXFReader::UnreadValue()
 
 {
+    if( nLastValueSize == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot UnreadValue(), likely due to a previous long line");
+        return;
+    }
     CPLAssert( iSrcBufferOffset >= nLastValueSize );
     CPLAssert( nLastValueSize > 0 );
 
