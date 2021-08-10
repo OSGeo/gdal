@@ -36,7 +36,10 @@ AC_INIT(GDALmake.opt.in)
 AC_SUBST(PACKAGE, gdal)
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_HEADERS([port/cpl_config.h:port/cpl_config.h.in])
+AH_TOP([#ifndef CPL_CONFIG_H])
+AH_TOP([#define CPL_CONFIG_H])
 AH_BOTTOM([#include "cpl_config_extras.h"])
+AH_BOTTOM([#endif])
 
 dnl We require autoconf 2.52+ for libtool support on cygwin/mingw hosts
 AC_PREREQ(2.52)
