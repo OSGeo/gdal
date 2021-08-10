@@ -2095,7 +2095,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
     double adfX[4] = {0};
     double adfY[4] = {0};
     OGRSpatialReference oSRS;
-    oSRS.SetFromUserInput(pszWKT);
+    oSRS.SetFromUserInput(pszWKT, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
     CPLString osPrefix;
     const char* pszColon = strchr(psCart->pszValue, ':');
     if( pszColon )
@@ -4353,7 +4353,7 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
             CPLString osExistingProj4;
             if( pszExistingSRS && pszExistingSRS[0] )
             {
-                oExistingSRS.SetFromUserInput(pszExistingSRS);
+                oExistingSRS.SetFromUserInput(pszExistingSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
                 char* pszExistingProj4 = nullptr;
                 oExistingSRS.exportToProj4(&pszExistingProj4);
                 if( pszExistingProj4 )
@@ -4363,7 +4363,7 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
             CPLString osSrcProj4;
             if( pszSrcSRS && pszSrcSRS[0] )
             {
-                oSrcSRS.SetFromUserInput(pszSrcSRS);
+                oSrcSRS.SetFromUserInput(pszSrcSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
                 char* pszSrcProj4 = nullptr;
                 oSrcSRS.exportToProj4(&pszSrcProj4);
                 if( pszSrcProj4 )

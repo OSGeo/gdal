@@ -5186,7 +5186,7 @@ CPLErr HFADataset::ReadProjection()
         pszPE_COORDSYS = HFAGetPEString(hHFA);
     if( pszPE_COORDSYS != nullptr
         && strlen(pszPE_COORDSYS) > 0
-        && oSRS.SetFromUserInput(pszPE_COORDSYS) == OGRERR_NONE )
+        && oSRS.SetFromUserInput(pszPE_COORDSYS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
     {
         CPLFree(pszPE_COORDSYS);
 

@@ -109,7 +109,7 @@ bool GML_IsSRSLatLongOrder(const char *pszSRSName)
     else if( !EQUALN(pszSRSName, "EPSG:", 5) )
     {
         OGRSpatialReference oSRS;
-        if(oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
+        if(oSRS.SetFromUserInput(pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE)
         {
             if(oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
                 return true;
@@ -166,7 +166,7 @@ class SRSCache
         oLastDesc.bAxisInvert = GML_IsSRSLatLongOrder(osSRSName.c_str());
         oLastDesc.poSRS = new OGRSpatialReference();
         oLastDesc.poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if( oLastDesc.poSRS->SetFromUserInput(osSRSName.c_str()) !=
+        if( oLastDesc.poSRS->SetFromUserInput(osSRSName.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) !=
             OGRERR_NONE )
         {
             delete oLastDesc.poSRS;
@@ -248,7 +248,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(
                                 wkbMultiPolygon)
                     {
                         OGRMultiPolygon *poGeomColl = poGeom->toMultiPolygon();
-                        for( auto&& poMember: poSubGeom->toMultiPolygon() ) 
+                        for( auto&& poMember: poSubGeom->toMultiPolygon() )
                         {
                             poGeomColl->addGeometry(poMember);
                         }

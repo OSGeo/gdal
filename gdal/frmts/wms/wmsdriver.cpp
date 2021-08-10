@@ -91,7 +91,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0") )
     {
         OGRSpatialReference oSRS;
-        oSRS.SetFromUserInput(osCRS);
+        oSRS.SetFromUserInput(osCRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
         oSRS.AutoIdentifyEPSG();
         if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
         {
@@ -611,7 +611,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     if( nWKID < 0 && !osWKT.empty() )
     {
         OGRSpatialReference oSRS;
-        oSRS.SetFromUserInput(osWKT);
+        oSRS.importFromWkt(osWKT);
         oSRS.morphFromESRI();
 
         int nEntries = 0;

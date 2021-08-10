@@ -262,7 +262,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
                 }
             }
 
-            if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
+            if (poSRS->SetFromUserInput(pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE)
             {
                 CPLDebug( "NAS", "Failed to translate srsName='%s'",
                         pszSRSName );

@@ -822,7 +822,7 @@ bool CRS2Projection(const CPLString &crs, OGRSpatialReference *sr, char **projec
     }
     OGRSpatialReference local_sr;
     OGRSpatialReference *sr_pointer = sr != nullptr ? sr : &local_sr;
-    if (sr_pointer->SetFromUserInput(crs2) == OGRERR_NONE) {
+    if (sr_pointer->SetFromUserInput(crs2, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE) {
         sr_pointer->exportToWkt(projection);
         return true;
     }

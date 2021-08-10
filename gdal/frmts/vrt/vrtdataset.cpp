@@ -483,7 +483,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         if( m_poSRS )
             m_poSRS->Release();
         m_poSRS = new OGRSpatialReference();
-        m_poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, "") );
+        m_poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, ""), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
         const char* pszMapping =
             CPLGetXMLValue(psSRSNode, "dataAxisToSRSAxisMapping", nullptr);
         if( pszMapping )
