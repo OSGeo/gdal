@@ -69,7 +69,7 @@ def test_ogr_dxf_1():
     fc = layer.GetFeatureCount()
     assert fc == 22, ('did not get expected feature count, got %d' % fc)
 
-    
+
 ###############################################################################
 # Read the first feature, an ellipse and see if it generally meets expectations.
 
@@ -1694,7 +1694,7 @@ def test_ogr_dxf_31():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # OCS2WCS transformations 2. Also test RawCodeValues
 
@@ -2266,7 +2266,7 @@ def test_ogr_dxf_32():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test 3D entities (polyface mesh, cylinder, 3D solid)
 
@@ -2354,7 +2354,7 @@ def test_ogr_dxf_33():
         feat.DumpReadable()
         pytest.fail('wrong ASMTransform on third 3DSOLID')
 
-    
+
 ###############################################################################
 # Writing Triangle geometry and checking if it is written properly
 
@@ -2652,7 +2652,7 @@ def test_ogr_dxf_38():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test correct reordering of vertices in SOLID (#7038, #7089)
 
@@ -2672,7 +2672,7 @@ def test_ogr_dxf_39():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test handing of OCS vs WCS for MTEXT (#7049)
 
@@ -2686,7 +2686,7 @@ def test_ogr_dxf_40():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test handing of OCS vs WCS for SOLID, HATCH and INSERT (#7077, #7098)
 
@@ -2779,7 +2779,7 @@ def test_ogr_dxf_41():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test insertion of blocks within blocks (#7106)
 
@@ -3067,7 +3067,7 @@ def test_ogr_dxf_44():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test linetype scaling (#7129) and parsing of complex linetypes (#7134)
 
@@ -3149,7 +3149,7 @@ def test_ogr_dxf_46():
         f.DumpReadable()
         pytest.fail('Wrong style string on DIMENSION text from block')
 
-    
+
 ###############################################################################
 # Test handling of DIMENSION fallback when there is no anonymous block (#7120)
 
@@ -3240,7 +3240,7 @@ def test_ogr_dxf_47():
         f.DumpReadable()
         pytest.fail('Wrong style string on third DIMENSION text')
 
-    
+
 ###############################################################################
 # Test ByLayer and ByBlock color values (#7130)
 
@@ -3352,7 +3352,7 @@ def test_ogr_dxf_48():
         f.DumpReadable()
         pytest.fail('Wrong style string on feature 18')
 
-    
+
 ###############################################################################
 # Test block attributes (ATTRIB entities) (#7139)
 
@@ -3411,7 +3411,7 @@ def test_ogr_dxf_49():
         f.DumpReadable()
         pytest.fail('Wrong AttributeTag value on second ATTDEF')
 
-    
+
 ###############################################################################
 # Test extended text styling (#7151) and additional ByBlock/ByLayer tests (#7130)
 
@@ -3463,7 +3463,7 @@ def test_ogr_dxf_50():
         f.DumpReadable()
         pytest.fail('Wrong style string on feature 5')
 
-    
+
 ###############################################################################
 # Test transformation of text inside blocks (ACAdjustText function)
 
@@ -3488,7 +3488,7 @@ def test_ogr_dxf_51():
             f.DumpReadable()
             pytest.fail('Wrong style string on feature %d' % x)
 
-    
+
 ###############################################################################
 # Test HELIX, TRACE, HATCH with spline boundary, MLINE, and INSERT with rows/columns
 
@@ -3590,7 +3590,7 @@ def test_ogr_dxf_52():
         f.DumpReadable()
         pytest.fail('Wrong geometry on SPLINE')
 
-    
+
 ###############################################################################
 # Test block base points
 
@@ -3605,7 +3605,7 @@ def test_ogr_dxf_53():
         f.DumpReadable()
         pytest.fail('Wrong feature geometry')
 
-    
+
 ###############################################################################
 # Test frozen and off layers
 
@@ -3651,7 +3651,7 @@ def test_ogr_dxf_insert_too_many_errors():
     with gdaltest.error_handler():
         ogr.Open('data/dxf/insert-too-many-errors.dxf')
 
-    
+
 
 ###############################################################################
 
@@ -3706,3 +3706,27 @@ def test_ogr_dxf_polygon_3D():
     got_g = f.GetGeometryRef()
     assert got_g.Equals(g)
     gdal.Unlink(tmpfile)
+
+###############################################################################
+
+
+def test_ogr_dxf_read_broken_file_1():
+    """ Test that we don't crash """
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/dxf/clusterfuzz-testcase-minimized-dxf_fuzzer-5400376672124928.dxf')
+        lyr = ds.GetLayer(0)
+        for f in lyr:
+            pass
+
+###############################################################################
+
+
+def test_ogr_dxf_read_broken_file_2():
+    """ Test that we don't crash """
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/dxf/clusterfuzz-testcase-minimized-shape_fuzzer-6126814756995072.dxf')
+        lyr = ds.GetLayer(0)
+        for f in lyr:
+            pass
