@@ -56,10 +56,10 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 static void
-GDALFilterLine( float *pafLastLine, float *pafThisLine, float *pafNextLine,
+GDALFilterLine( const float *pafLastLine, const float *pafThisLine, const float *pafNextLine,
                 float *pafOutLine,
-                GByte *pabyLastTMask, GByte *pabyThisTMask, GByte*pabyNextTMask,
-                GByte *pabyThisFMask, int nXSize )
+                const GByte *pabyLastTMask, const GByte *pabyThisTMask, const GByte *pabyNextTMask,
+                const GByte *pabyThisFMask, int nXSize )
 
 {
     for( int iX = 0; iX < nXSize; iX++ )
