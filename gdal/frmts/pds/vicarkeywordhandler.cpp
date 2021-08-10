@@ -34,6 +34,7 @@
 #include "vicardataset.h"
 
 #include <algorithm>
+#include <limits>
 
 CPL_CVSID("$Id$")
 
@@ -141,6 +142,12 @@ bool VICARKeywordHandler::Ingest( VSILFILE *fp, const GByte *pabyHeader )
     const vsi_l_offset nEOCI2 = static_cast<vsi_l_offset>(
         CPLAtoGIntBig(CSLFetchNameValueDef(papszKeywordList, "EOCI2", "0")));
     const vsi_l_offset nEOCI = (nEOCI2 << 32) | nEOCI1;
+
+    if( nImageOffsetWithoutNBB > std::numeric_limits<GUInt64>::max() - nImageSize )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid label values");
+        return false;
+    }
 
     const vsi_l_offset nStartEOL = nEOCI ? nEOCI :
                                         nImageOffsetWithoutNBB + nImageSize;
