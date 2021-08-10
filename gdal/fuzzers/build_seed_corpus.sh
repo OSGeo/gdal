@@ -322,8 +322,8 @@ for dirname in *.zarr v3/*.zr3; do
     cd $dirname
     {
         filelist=$(find . -type f)
+        printf "FUZZER_FRIENDLY_ARCHIVE\\n"
         for f in $filelist; do
-          printf "FUZZER_FRIENDLY_ARCHIVE\\n"
           printf "***NEWFILE***:%s\\n" "$f"
           cat $f
         done
