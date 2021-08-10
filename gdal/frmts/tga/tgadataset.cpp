@@ -293,10 +293,10 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
         int x = 0;
         std::vector<GByte> abyData;
         const int nBytesPerPixel =
-            (nBands == 1) ? nDTSize : poGDS->m_sImageHeader.nPixelDepth / 8;
+            (nBands == 1) ? nDTSize : (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
         while( x < nRasterXSize )
         {
-            GByte nRepeatCount;
+            GByte nRepeatCount = 0;
             VSIFReadL(&nRepeatCount, 1, 1, poGDS->m_fpImage);
             const int nPixelsToFill = std::min(nRasterXSize - x,
                                                (nRepeatCount & 0x7f) + 1);
@@ -436,7 +436,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff, void*
     }
     else
     {
-        const int nBytesPerPixel = poGDS->m_sImageHeader.nPixelDepth / 8;
+        const int nBytesPerPixel = (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
         std::vector<GByte> abyData;
         abyData.resize( nBytesPerPixel * nRasterXSize );
         vsi_l_offset nOffset = poGDS->m_nImageDataOffset +
