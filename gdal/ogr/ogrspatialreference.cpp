@@ -3471,7 +3471,66 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  */
 
 OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
+{
+    return SetFromUserInput(pszDefinition, nullptr);
+}
 
+/** Limitations for OGRSpatialReference::SetFromUserInput().
+ *
+ * Currently ALLOW_NETWORK_ACCESS=NO and ALLOW_FILE_ACCESS=NO.
+ */
+const char* const OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS[] = {
+    "ALLOW_NETWORK_ACCESS=NO", "ALLOW_FILE_ACCESS=NO", nullptr };
+
+/**
+ * \brief Set spatial reference from various text formats.
+ *
+ * This method will examine the provided input, and try to deduce the
+ * format, and then use it to initialize the spatial reference system.  It
+ * may take the following forms:
+ *
+ * <ol>
+ * <li> Well Known Text definition - passed on to importFromWkt().
+ * <li> "EPSG:n" - number passed on to importFromEPSG().
+ * <li> "EPSGA:n" - number passed on to importFromEPSGA().
+ * <li> "AUTO:proj_id,unit_id,lon0,lat0" - WMS auto projections.
+ * <li> "urn:ogc:def:crs:EPSG::n" - ogc urns
+ * <li> PROJ.4 definitions - passed on to importFromProj4().
+ * <li> filename - file read for WKT, XML or PROJ.4 definition.
+ * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
+ * WGS84 or WGS72.
+ * <li> "IGNF:xxxx", "ESRI:xxxx", etc. from definitions from the PROJ database;
+ * <li> PROJJSON (PROJ &gt;= 6.2)
+ * </ol>
+ *
+ * It is expected that this method will be extended in the future to support
+ * XML and perhaps a simplified "minilanguage" for indicating common UTM and
+ * State Plane definitions.
+ *
+ * This method is intended to be flexible, but by its nature it is
+ * imprecise as it must guess information about the format intended.  When
+ * possible applications should call the specific method appropriate if the
+ * input is known to be in a particular format.
+ *
+ * This method does the same thing as the OSRSetFromUserInput() function.
+ *
+ * @param pszDefinition text definition to try to deduce SRS from.
+ *
+ * @param papszOptions NULL terminated list of options, or NULL.
+ * <ol>
+ * <li> ALLOW_NETWORK_ACCESS=YES/NO.
+ *      Whether http:// or https:// access is allowed. Defaults to YES.
+ * <li> ALLOW_FILE_ACCESS=YES/NO.
+ *      Whether reading a file using the Virtual File System layer is allowed (can also involve network access). Defaults to YES.
+ * </ol>
+ *
+ * @return OGRERR_NONE on success, or an error code if the name isn't
+ * recognised, the definition is corrupt, or an EPSG value can't be
+ * successfully looked up.
+ */
+
+OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
+                                              CSLConstList papszOptions )
 {
     if( STARTS_WITH_CI(pszDefinition, "ESRI::") )
     {
@@ -3613,7 +3672,13 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
     if( STARTS_WITH_CI(pszDefinition, "http://") || STARTS_WITH_CI(pszDefinition, "https://") )
     {
-        return importFromUrl (pszDefinition);
+        if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "ALLOW_NETWORK_ACCESS", "YES")) )
+            return importFromUrl (pszDefinition);
+
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot import %s due to ALLOW_NETWORK_ACCESS=NO",
+                 pszDefinition);
+        return OGRERR_FAILURE;
     }
 
     if( EQUAL(pszDefinition, "osgb:BNG") )
@@ -3654,6 +3719,14 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /* -------------------------------------------------------------------- */
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
+    if( !CPLTestBool(CSLFetchNameValueDef(papszOptions, "ALLOW_FILE_ACCESS", "YES")) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot import %s due to ALLOW_FILE_ACCESS=NO",
+                 pszDefinition);
+        return OGRERR_FAILURE;
+    }
+
     CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
     VSILFILE * const fp = VSIFOpenL( pszDefinition, "rt" );
     if( fp == nullptr )
