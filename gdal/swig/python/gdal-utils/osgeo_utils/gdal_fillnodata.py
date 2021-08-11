@@ -106,7 +106,6 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
             dst_ds.SetGeoTransform(gt)
 
         dstband = dst_ds.GetRasterBand(1)
-        CopyBand(srcband, dstband)
         ndv = srcband.GetNoDataValue()
         if ndv is not None:
             dstband.SetNoDataValue(ndv)
@@ -116,6 +115,8 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
         if color_interp == gdal.GCI_PaletteIndex:
             color_table = srcband.GetColorTable()
             dstband.SetColorTable(color_table)
+
+        CopyBand(srcband, dstband)
 
     else:
         dstband = srcband
