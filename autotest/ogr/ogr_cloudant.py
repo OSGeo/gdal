@@ -39,7 +39,9 @@ from osgeo import ogr
 import pytest
 
 
-pytestmark = pytest.mark.require_driver('Cloudant')
+pytestmark = [pytest.mark.require_driver('Cloudant'),
+              pytest.mark.skipif('GDAL_ENABLE_DEPRECATED_DRIVER_CLOUDANT' not in os.environ,
+                                 reason='GDAL_ENABLE_DEPRECATED_DRIVER_CLOUDANT not set')]
 
 
 ###############################################################################
@@ -92,7 +94,7 @@ def test_ogr_cloudant_GetNextFeature():
         feat.DumpReadable()
         pytest.fail('did not get expected feature')
 
-    
+
 ###############################################################################
 # Test GetSpatialRef()
 
@@ -110,7 +112,7 @@ def test_ogr_cloudant_GetSpatialRef():
     if sr is None:
         return
 
-    
+
 ###############################################################################
 # Test GetExtent()
 
@@ -152,6 +154,6 @@ def test_ogr_cloudant_SetSpatialFilter():
         feat.DumpReadable()
         pytest.fail('did not get expected feature')
 
-    
+
 
 
