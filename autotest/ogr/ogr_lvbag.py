@@ -141,7 +141,7 @@ def test_ogr_lvbag_dataset_num():
     assert lyr.GetSpatialRef() is None, 'bad spatial ref'
     assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
-    assert lyr.GetLayerDefn().GetFieldCount() == 21
+    assert lyr.GetLayerDefn().GetFieldCount() == 22
 
     feat = lyr.GetNextFeature()
     if feat.GetField('identificatie') != 'NL.IMBAG.Nummeraanduiding.0106200000002798' or \
@@ -153,14 +153,33 @@ def test_ogr_lvbag_dataset_num():
        feat.GetFieldAsInteger('geconstateerd') != 0 or \
        feat.GetFieldAsString('documentdatum') != '2009/09/14' or \
        feat.GetFieldAsString('documentnummer') != '2009-BB01570' or \
+       feat.GetField('woonplaatsRef') != None or \
        feat.GetFieldAsInteger('voorkomenidentificatie') != 1 or \
        feat.GetField('beginGeldigheid') != '2009/09/24' or \
        feat.GetField('tijdstipRegistratie') != '2009/11/06 12:21:37' or \
        feat.GetField('tijdstipRegistratieLV') != '2009/11/06 12:38:46.603':
         feat.DumpReadable()
         pytest.fail()
-
+        
+    # Test for 'woonplaatsRef'
     feat = lyr.GetNextFeature()
+    if feat.GetField('identificatie') != 'NL.IMBAG.Nummeraanduiding.0106200000002799' or \
+       feat.GetFieldAsInteger('huisnummer') != 24 or \
+       feat.GetField('postcode') != '9403KD' or \
+       feat.GetField('typeAdresseerbaarObject') != 'Verblijfsobject' or \
+       feat.GetField('openbareruimteRef') != 'NL.IMBAG.Openbareruimte.0106300000002560' or \
+       feat.GetField('status') != 'Naamgeving uitgegeven' or \
+       feat.GetFieldAsInteger('geconstateerd') != 0 or \
+       feat.GetFieldAsString('documentdatum') != '2009/09/14' or \
+       feat.GetFieldAsString('documentnummer') != '2009-BB01570' or \
+       feat.GetField('woonplaatsRef') != 'NL.IMBAG.Woonplaats.1050' or \
+       feat.GetFieldAsInteger('voorkomenidentificatie') != 1 or \
+       feat.GetField('beginGeldigheid') != '2009/09/24' or \
+       feat.GetField('tijdstipRegistratie') != '2009/11/06 12:21:38' or \
+       feat.GetField('tijdstipRegistratieLV') != '2009/11/06 12:38:46.748':
+        feat.DumpReadable()
+        pytest.fail()
+
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
     assert feat is None
