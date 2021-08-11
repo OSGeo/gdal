@@ -28,6 +28,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
+
 import gdaltest
 import pytest
 
@@ -436,6 +438,25 @@ def test_pixfun_inv_r():
     assert numpy.alltrue(data == 1. / refdata)
 
 
+def test_pixfun_inv_r_zero():
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Inverse</Description>
+    <PixelFunctionType>inv</PixelFunctionType>
+    <SourceTransferType>Float64</SourceTransferType>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/float32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <ScaleOffset>0</ScaleOffset>
+      <ScaleRatio>0</ScaleRatio>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    data = ds.GetRasterBand(1).ReadAsArray()
+    assert math.isinf(data[0][0])
+
+
 ###############################################################################
 # Verify computation of the inverse of a complex datasets.
 
@@ -455,6 +476,26 @@ def test_pixfun_inv_c():
 
     assert numpy.alltrue(abs(delta.real) < 1e-13)
     assert numpy.alltrue(abs(delta.imag) < 1e-13)
+
+
+def test_pixfun_inv_c_zero():
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="CFloat64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Inverse</Description>
+    <PixelFunctionType>inv</PixelFunctionType>
+    <SourceTransferType>CFloat64</SourceTransferType>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/float32.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <ScaleOffset>0</ScaleOffset>
+      <ScaleRatio>0</ScaleRatio>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    data = ds.GetRasterBand(1).ReadAsArray()
+    assert math.isinf(data[0][0].real)
+    assert math.isinf(data[0][0].imag)
 
 
 ###############################################################################

@@ -31,6 +31,8 @@
 #include "gdal.h"
 #include "vrtdataset.h"
 
+#include <limits>
+
 CPL_CVSID("$Id$")
 
 static CPLErr RealPixelFunc( void **papoSources, int nSources, void *pData,
@@ -658,7 +660,9 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
                 const double dfReal = SRCVAL(pReal, eSrcType, ii);
                 const double dfImag = SRCVAL(pImag, eSrcType, ii);
                 const double dfAux = dfReal * dfReal + dfImag * dfImag;
-                const double adfPixVal[2] = { dfReal / dfAux, -dfImag / dfAux };
+                const double adfPixVal[2] = {
+                    dfAux == 0 ? std::numeric_limits<double>::infinity() : dfReal / dfAux,
+                    dfAux == 0 ? std::numeric_limits<double>::infinity() : -dfImag / dfAux };
 
                 GDALCopyWords(
                     adfPixVal, GDT_CFloat64, 0,
@@ -674,8 +678,10 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with SRCVAL macro.
                 // Not complex.
+                const double dfVal = SRCVAL(papoSources[0], eSrcType, ii);
                 const double dfPixVal =
-                    1.0 / SRCVAL(papoSources[0], eSrcType, ii);
+                    dfVal == 0 ? std::numeric_limits<double>::infinity() :
+                    1.0 / dfVal;
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
