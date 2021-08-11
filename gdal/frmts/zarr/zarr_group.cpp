@@ -1639,10 +1639,12 @@ void ZarrSharedResource::SetZMetadataItem(const std::string& osFilename,
 {
     if( m_bZMetadataEnabled )
     {
-        CPLAssert( STARTS_WITH(osFilename.c_str(),
+        const std::string osNormalizedFilename =
+                                CPLString(osFilename).replaceAll('\\', '/');
+        CPLAssert( STARTS_WITH(osNormalizedFilename.c_str(),
                                (m_osRootDirectoryName + '/').c_str()) );
         m_bZMetadataModified = true;
-        const char* pszKey = osFilename.c_str() + m_osRootDirectoryName.size() + 1;
+        const char* pszKey = osNormalizedFilename.c_str() + m_osRootDirectoryName.size() + 1;
         m_oObj["metadata"].DeleteNoSplitName(pszKey);
         m_oObj["metadata"].AddNoSplitName(pszKey, obj);
     }
