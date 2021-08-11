@@ -1034,13 +1034,16 @@ def test_zarr_read_BLOSC_COMPRESSORS():
         'Zarr').GetMetadataItem('BLOSC_COMPRESSORS')
 
 
-@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
-def test_zarr_create_group(format):
+@pytest.mark.parametrize("format,create_z_metadata", [('ZARR_V2', 'YES'),
+                                                     ('ZARR_V2', 'NO'),
+                                                     ('ZARR_V3', 'NO')])
+def test_zarr_create_group(format,create_z_metadata):
 
+    filename = 'tmp/test.zarr'
     try:
         def create():
             ds = gdal.GetDriverByName(
-                'ZARR').CreateMultiDimensional('/vsimem/test.zarr', options=['FORMAT='+format])
+                'ZARR').CreateMultiDimensional(filename, options=['FORMAT='+format, 'CREATE_ZMETADATA='+create_z_metadata])
             assert ds is not None
             rg = ds.GetRootGroup()
             assert rg
@@ -1097,8 +1100,16 @@ def test_zarr_create_group(format):
 
         create()
 
+        if create_z_metadata == 'YES':
+            f = gdal.VSIFOpenL(filename + '/.zmetadata', 'rb')
+            assert f
+            data = gdal.VSIFReadL(1, 10000, f)
+            gdal.VSIFCloseL(f)
+            j = json.loads(data)
+            assert 'foo/.zgroup' in j['metadata']
+
         def update():
-            ds = gdal.OpenEx('/vsimem/test.zarr',
+            ds = gdal.OpenEx(filename,
                              gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
             assert ds
             rg = ds.GetRootGroup()
@@ -1123,7 +1134,7 @@ def test_zarr_create_group(format):
 
         update()
 
-        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
         assert ds
         rg = ds.GetRootGroup()
         assert rg
@@ -1173,7 +1184,7 @@ def test_zarr_create_group(format):
         ds = None
 
     finally:
-        gdal.RmdirRecursive('/vsimem/test.zarr')
+        gdal.RmdirRecursive(filename)
 
 
 @pytest.mark.parametrize("group_name", ["foo",  # already existing
