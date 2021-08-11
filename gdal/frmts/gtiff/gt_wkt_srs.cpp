@@ -1366,7 +1366,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      Set the vertical units.                                         */
 /* -------------------------------------------------------------------- */
-        if( verticalUnits > 0 && verticalUnits != KvUserDefined
+        if( verticalUnits > 0 && verticalUnits < KvUserDefined
             && verticalUnits != 9001 )
         {
             char szCode[12];
