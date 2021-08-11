@@ -184,7 +184,7 @@ GRIB2Section3Writer::GRIB2Section3Writer( VSILFILE* fpIn,
     poSrcDS(poSrcDSIn)
 {
     oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    oSRS.SetFromUserInput( poSrcDS->GetProjectionRef() );
+    oSRS.importFromWkt( poSrcDS->GetProjectionRef() );
     pszProjection = oSRS.GetAttrValue("PROJECTION");
 
     poSrcDS->GetGeoTransform(adfGeoTransform);
@@ -2453,7 +2453,7 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     OGRSpatialReference oSRS;
-    oSRS.SetFromUserInput(poSrcDS->GetProjectionRef());
+    oSRS.importFromWkt(poSrcDS->GetProjectionRef());
     if( oSRS.IsProjected() )
     {
         const char *pszProjection = oSRS.GetAttrValue("PROJECTION");

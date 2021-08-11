@@ -2019,7 +2019,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
                         break;
                     }
                     OGRSpatialReference oSRS_FromESRI;
-                    if( oSRS_FromESRI.SetFromUserInput(pszESRI_WKT) == OGRERR_NONE &&
+                    if( oSRS_FromESRI.importFromWkt(pszESRI_WKT) == OGRERR_NONE &&
                         poSRSClone->IsSame(&oSRS_FromESRI) )
                     {
                         /* Potential match found */

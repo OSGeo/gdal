@@ -922,7 +922,7 @@ std::shared_ptr<VRTMDArray> VRTMDArray::Create(const std::shared_ptr<VRTGroup>& 
     if( psSRSNode )
     {
         poSRS = std::unique_ptr<OGRSpatialReference>(new OGRSpatialReference());
-        poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, "") );
+        poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, ""), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
         const char* pszMapping =
             CPLGetXMLValue(psSRSNode, "dataAxisToSRSAxisMapping", nullptr);
         if( pszMapping )

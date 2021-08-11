@@ -269,7 +269,7 @@ bool WCSDataset100::ExtractGridInfo()
     {
         OGRSpatialReference oSRS;
 
-        if( oSRS.SetFromUserInput( pszNativeCRSs ) == OGRERR_NONE )
+        if( oSRS.SetFromUserInput( pszNativeCRSs, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) == OGRERR_NONE )
         {
             CPLFree( pszProjection );
             oSRS.exportToWkt( &pszProjection );
@@ -305,7 +305,7 @@ bool WCSDataset100::ExtractGridInfo()
     {
         OGRSpatialReference oSRS;
 
-        if( oSRS.SetFromUserInput( pszProjOverride ) != OGRERR_NONE )
+        if( oSRS.SetFromUserInput( pszProjOverride, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "<SRS> element contents not parsable:\n%s",
@@ -331,7 +331,7 @@ bool WCSDataset100::ExtractGridInfo()
 
     if( pszProjection && strlen(pszProjection) > 0 && osCRS == "" )
     {
-        oSRS.SetFromUserInput( pszProjection );
+        oSRS.SetFromUserInput( pszProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
         const char *pszAuth = oSRS.GetAuthorityName(nullptr);
 
         if( pszAuth != nullptr && EQUAL(pszAuth,"EPSG") )

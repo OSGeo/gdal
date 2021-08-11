@@ -14932,7 +14932,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 /* -------------------------------------------------------------------- */
         if( pszTabWKT != nullptr && m_oSRS.IsEmpty() )
         {
-            m_oSRS.SetFromUserInput(pszTabWKT);
+            m_oSRS.importFromWkt(pszTabWKT);
             m_bLookedForProjection = true;
         }
 
