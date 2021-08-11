@@ -1417,11 +1417,7 @@ OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double*
                       *pdfLongitude);
         }
 
-        if (*pdfLongitude > 180)
-            *pdfLongitude -= (static_cast<int> ((*pdfLongitude+180)/360)*360);
-        else if (*pdfLongitude < -180)
-            *pdfLongitude += (static_cast<int> (180 - *pdfLongitude)/360)*360;
-
+        *pdfLongitude = fmod(*pdfLongitude + 180.0, 360.0) - 180.0;
         return OGRERR_NONE;
     }
 
