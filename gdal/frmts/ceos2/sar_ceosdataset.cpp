@@ -685,8 +685,8 @@ SAR_CEOSDataset::~SAR_CEOSDataset()
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
     }
+    CPLFree( pasGCPList );
 
     if( sVolume.RecordList )
     {
