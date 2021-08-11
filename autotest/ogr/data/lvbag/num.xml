@@ -67,6 +67,9 @@
                     <Objecten:geconstateerd>N</Objecten:geconstateerd>
                     <Objecten:documentdatum>2009-09-14</Objecten:documentdatum>
                     <Objecten:documentnummer>2009-BB01570</Objecten:documentnummer>
+                    <Objecten:ligtIn>
+                        <Objecten-ref:WoonplaatsRef domein="NL.IMBAG.Woonplaats">1050</Objecten-ref:WoonplaatsRef>
+                    </Objecten:ligtIn>
                     <Objecten:voorkomen>
                         <Historie:Voorkomen>
                             <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
