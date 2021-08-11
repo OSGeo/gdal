@@ -81,14 +81,6 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
 
     srcband = src_ds.GetRasterBand(band_number)
 
-    if mask == 'default':
-        maskband = srcband.GetMaskBand()
-    elif mask == 'none':
-        maskband = None
-    else:
-        mask_ds = gdal.Open(mask)
-        maskband = mask_ds.GetRasterBand(1)
-
     # =============================================================================
     #       Create output file if one is specified.
     # =============================================================================
@@ -129,6 +121,14 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
         prog_func = None
     else:
         prog_func = gdal.TermProgress_nocb
+
+    if mask == 'default':
+        maskband = dstband.GetMaskBand()
+    elif mask == 'none':
+        maskband = None
+    else:
+        mask_ds = gdal.Open(mask)
+        maskband = mask_ds.GetRasterBand(1)
 
     result = gdal.FillNodata(dstband, maskband,
                              max_distance, smoothing_iterations, options,
