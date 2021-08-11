@@ -1549,7 +1549,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         poSRS = new OGRSpatialReference();
         poSRS->SetAxisMappingStrategy(
             m_bInvertAxisOrderIfLatLong ? OAMS_TRADITIONAL_GIS_ORDER : OAMS_AUTHORITY_COMPLIANT);
-        if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
+        if (poSRS->SetFromUserInput(pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE)
         {
             delete poSRS;
             poSRS = nullptr;
@@ -1564,7 +1564,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             poSRS = new OGRSpatialReference();
             poSRS->SetAxisMappingStrategy(
                 m_bInvertAxisOrderIfLatLong ? OAMS_TRADITIONAL_GIS_ORDER : OAMS_AUTHORITY_COMPLIANT);
-            if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
+            if (poSRS->SetFromUserInput(pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE)
             {
                 delete poSRS;
                 poSRS = nullptr;
@@ -1640,7 +1640,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             OGRSpatialReference* poSRS2 = new OGRSpatialReference();
             poSRS2->SetAxisMappingStrategy(
                 m_bInvertAxisOrderIfLatLong ? OAMS_TRADITIONAL_GIS_ORDER : OAMS_AUTHORITY_COMPLIANT);
-            if( poSRS2->SetFromUserInput(osSRSName.c_str()) == OGRERR_NONE )
+            if( poSRS2->SetFromUserInput(osSRSName.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
             {
                 oField.SetSpatialRef(poSRS2);
             }
@@ -2896,7 +2896,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
                                 const char* pszSRSName = CPLGetXMLValue(psCur, "srsName", nullptr);
                                 if( pszSRSName )
                                 {
-                                    m_oStandaloneGeomSRS.SetFromUserInput(pszSRSName);
+                                    m_oStandaloneGeomSRS.SetFromUserInput(pszSRSName, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
                                     m_oStandaloneGeomSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                                     if( GML_IsSRSLatLongOrder(pszSRSName) )
                                         m_poStandaloneGeom->swapXY();

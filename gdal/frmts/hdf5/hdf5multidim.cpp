@@ -453,6 +453,16 @@ public:
 };
 
 /************************************************************************/
+/*                        HDF5SharedResources()                         */
+/************************************************************************/
+
+HDF5SharedResources::HDF5SharedResources(const std::string& osFilename):
+    m_osFilename(osFilename),
+    m_poPAM(std::make_shared<GDALPamMultiDim>(osFilename))
+{
+}
+
+/************************************************************************/
 /*                        ~HDF5SharedResources()                        */
 /************************************************************************/
 
@@ -2119,7 +2129,7 @@ GDALDataset *HDF5Dataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
-    auto poSharedResources = std::make_shared<GDAL::HDF5SharedResources>();
+    auto poSharedResources = std::make_shared<GDAL::HDF5SharedResources>(pszFilename);
     poSharedResources->m_hHDF5 = hHDF5;
 
     auto poGroup(OpenGroup(poSharedResources));

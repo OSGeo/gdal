@@ -314,6 +314,25 @@ cd $CUR_DIR
 zip -r $OUT/ers_fuzzer_seed_corpus.zip srtm.tar ers_dem.tar >/dev/null
 rm srtm.tar ers_dem.tar
 
+echo "Building zarr_fuzzer_seed_corups.zip"
+rm -f $OUT/zarr_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/gdrivers/data/zarr
+for dirname in *.zarr v3/*.zr3; do
+    cd $dirname
+    {
+        filelist=$(find . -type f)
+        printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+        for f in $filelist; do
+          printf "***NEWFILE***:%s\\n" "$f"
+          cat $f
+        done
+    } > $CUR_DIR/$(basename $dirname).tar
+    cd ..
+done
+cd $CUR_DIR
+zip -r $OUT/zarr_fuzzer_seed_corpus.zip ./*.zarr.tar ./*.zr3.tar >/dev/null
+rm ./*.zarr.tar ./*.zr3.tar
 
 echo "Building ogr_sdts_fuzzer_seed_corpus.zip"
 rm -f $OUT/ogr_sdts_fuzzer_seed_corpus.zip

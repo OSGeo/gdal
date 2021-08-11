@@ -63,7 +63,7 @@ def test_gdal_fillnodata_2():
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', test_py_scripts.get_data_path('gcore') + 'nodata_byte.tif tmp/test_gdal_fillnodata_2.tif')
+    test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '-si 0 ' + test_py_scripts.get_data_path('gcore') + 'nodata_byte.tif tmp/test_gdal_fillnodata_2.tif')
 
     ds = gdal.Open('tmp/test_gdal_fillnodata_2.tif')
     assert ds.GetRasterBand(1).GetNoDataValue() == 0, \

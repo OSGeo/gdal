@@ -2428,8 +2428,6 @@ CPLXMLNode *netCDFDataset::SerializeToXML( const char *pszUnused )
             CPLAddXMLChild(psDSTree, psBandTree);
     }
 
-    SerializeMDArrayStatistics(psDSTree);
-
     // We don't want to return anything if we had no metadata to attach.
     if( psDSTree->psChild == nullptr )
     {

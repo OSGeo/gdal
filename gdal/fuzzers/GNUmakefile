@@ -27,6 +27,7 @@ clean:
 	$(RM) ogr_fuzzer$(EXE)
 	$(RM) ogr_sdts_fuzzer$(EXE)
 	$(RM) mitab_tab_fuzzer$(EXE)
+	$(RM) osr_set_from_user_input_fuzzer$(EXE)
 
 gdal_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
@@ -57,6 +58,9 @@ gtiff_mmap_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 
 gml_geom_import_fuzzer$(EXE): gml_geom_import_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gml_geom_import_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+osr_set_from_user_input_fuzzer$(EXE): osr_set_from_user_input_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) osr_set_from_user_input_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 dummyfuzzers: fuzzingengine.o
 	$(AR) r libFuzzingEngine.a fuzzingengine.o

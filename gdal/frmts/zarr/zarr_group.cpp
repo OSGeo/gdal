@@ -210,11 +210,17 @@ void ZarrGroupV2::ExploreDirectory() const
     m_bDirectoryExplored = true;
 
     const CPLStringList aosFiles(VSIReadDir(m_osDirectoryName.c_str()));
+    // If the directory contains a .zarray, no need to recurse.
+    for( int i = 0; i < aosFiles.size(); ++i )
+    {
+        if( strcmp(aosFiles[i], ".zarray") == 0 )
+            return;
+    }
+
     for( int i = 0; i < aosFiles.size(); ++i )
     {
         if( strcmp(aosFiles[i], ".") != 0 &&
             strcmp(aosFiles[i], "..") != 0 &&
-            strcmp(aosFiles[i], ".zarray") != 0 &&
             strcmp(aosFiles[i], ".zgroup") != 0 &&
             strcmp(aosFiles[i], ".zattrs") != 0 )
         {
@@ -293,6 +299,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::OpenGroup(const std::string& osName,
 
             auto poSubGroup = ZarrGroupV2::Create(m_poSharedResource,
                                                   GetFullName(), osName);
+            poSubGroup->m_poParent = m_pSelf;
             poSubGroup->SetUpdatable(m_bUpdatable);
             poSubGroup->SetDirectoryName(osSubDir);
             m_oMapGroups[osName] = poSubGroup;
@@ -426,6 +433,7 @@ std::shared_ptr<ZarrGroupV2> ZarrGroupV2::GetOrCreateSubGroup(
             m_poSharedResource,
             poBelongingGroup->GetFullName(),
             osSubGroupFullname.substr(nLastSlashPos + 1));
+    poSubGroup->m_poParent = poBelongingGroup->m_pSelf;
     poSubGroup->SetDirectoryName(CPLFormFilename(
         poBelongingGroup->m_osDirectoryName.c_str(),
         poSubGroup->GetName().c_str(), nullptr));
@@ -1284,6 +1292,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     {
         auto poSubGroup = ZarrGroupV3::Create(
             m_poSharedResource, GetFullName(), osName, m_osDirectoryName);
+        poSubGroup->m_poParent = m_pSelf;
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
@@ -1295,6 +1304,7 @@ std::shared_ptr<GDALGroup> ZarrGroupV3::OpenGroup(const std::string& osName,
     {
         auto poSubGroup = ZarrGroupV3::Create(
             m_poSharedResource, GetFullName(), osName, m_osDirectoryName);
+        poSubGroup->m_poParent = m_pSelf;
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
@@ -1591,10 +1601,18 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
 /*              ZarrSharedResource::ZarrSharedResource()                */
 /************************************************************************/
 
-ZarrSharedResource::ZarrSharedResource()
+ZarrSharedResource::ZarrSharedResource(const std::string& osRootDirectoryName)
 {
     m_oObj.Add("zarr_consolidated_format", 1);
     m_oObj.Add("metadata", CPLJSONObject());
+
+    m_osRootDirectoryName = osRootDirectoryName;
+    if( !m_osRootDirectoryName.empty() && m_osRootDirectoryName.back() == '/' )
+    {
+        m_osRootDirectoryName.resize(m_osRootDirectoryName.size() - 1);
+    }
+    m_poPAM = std::make_shared<GDALPamMultiDim>(
+        CPLFormFilename(m_osRootDirectoryName.c_str(), "pam", nullptr));
 }
 
 /************************************************************************/
@@ -1603,7 +1621,7 @@ ZarrSharedResource::ZarrSharedResource()
 
 ZarrSharedResource::~ZarrSharedResource()
 {
-    if( m_bZMetadataModified && !m_osRootDirectoryName.empty() )
+    if( m_bZMetadataModified )
     {
         CPLJSONDocument oDoc;
         oDoc.SetRoot(m_oObj);
@@ -1619,7 +1637,7 @@ ZarrSharedResource::~ZarrSharedResource()
 void ZarrSharedResource::SetZMetadataItem(const std::string& osFilename,
                                               const CPLJSONObject& obj)
 {
-    if( !m_osRootDirectoryName.empty() )
+    if( m_bZMetadataEnabled )
     {
         CPLAssert( STARTS_WITH(osFilename.c_str(),
                                (m_osRootDirectoryName + '/').c_str()) );
@@ -1627,18 +1645,5 @@ void ZarrSharedResource::SetZMetadataItem(const std::string& osFilename,
         const char* pszKey = osFilename.c_str() + m_osRootDirectoryName.size() + 1;
         m_oObj["metadata"].DeleteNoSplitName(pszKey);
         m_oObj["metadata"].AddNoSplitName(pszKey, obj);
-    }
-}
-
-/************************************************************************/
-/*             ZarrSharedResource::SetRootDirectoryName()               */
-/************************************************************************/
-
-void ZarrSharedResource::SetRootDirectoryName(const std::string& osRootDirectoryName)
-{
-    m_osRootDirectoryName = osRootDirectoryName;
-    if( !m_osRootDirectoryName.empty() && m_osRootDirectoryName.back() == '/' )
-    {
-        m_osRootDirectoryName.resize(m_osRootDirectoryName.size() - 1);
     }
 }

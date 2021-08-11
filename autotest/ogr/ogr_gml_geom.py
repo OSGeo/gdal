@@ -69,7 +69,7 @@ def test_gml_geom(filename):
         gml_wkt = geom_gml.ExportToWkt()
         pytest.fail('WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml))
 
-    
+
 ###############################################################################
 # Test geometries with extra spaces at the end, as sometimes are generated
 # by ESRI WFS software.
@@ -720,7 +720,7 @@ def test_gml_Triangle():
         print(geom.ExportToWkt())
         pytest.fail('incorrect conversion from OGR -> GML for OGRTriangle')
 
-    
+
 ###############################################################################
 # Test GML Rectangle
 
@@ -995,7 +995,7 @@ def test_gml_Tin():
         print(geom.ExportToWkt())
         pytest.fail('OGRGeometry::TriangulatedSurface incorrectly converted')
 
-    
+
 ###############################################################################
 # Test concatenated sections (#4451)
 
@@ -1225,7 +1225,7 @@ def test_gml_invalid_geoms():
                 assert wkt == expected_wkt, \
                     ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
-    
+
 ###############################################################################
 # Test write support for GML3
 
@@ -1254,7 +1254,7 @@ def test_gml_write_gml3_geometries():
             gml_out = geom.ExportToGML(['FORMAT=GML3'])
         assert gml_out == gml_in, ('got %s, instead of %s' % (gml_out, gml_in))
 
-    
+
 ###############################################################################
 # Test write support for GML3 SRS
 
@@ -1567,7 +1567,7 @@ def test_gml_Coordinates_ts_cs_decimal():
             assert wkt == expected_wkt, \
                 ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
-    
+
 ###############################################################################
 # Test gml with XML header and comments
 
@@ -1608,7 +1608,7 @@ def test_gml_with_xml_header_and_comments():
             assert wkt == expected_wkt, \
                 ('did not get expected result for %s. Got %s instead of %s' % (gml, wkt, expected_wkt))
 
-    
+
 ###############################################################################
 # Test srsDimension attribute on top-level geometry and not on posList (#5606)
 
@@ -2182,3 +2182,39 @@ def test_gml_write_gml_ns():
     gml = geom.ExportToGML(options=['FORMAT=GML32', 'GMLID=foo', 'NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml/3.2" gml:id="foo"><gml:pos>500000 4500000</gml:pos></gml:Point>'
     assert gml == expected_gml, ('got %s, instead of %s' % (gml, expected_gml))
+
+###############################################################################
+# Test reading geometry from https://github.com/OSGeo/gdal/issues/4155
+
+
+def test_gml_read_gml_ArcByCenterPoint_projected_crs_northing_easting():
+
+    g = ogr.CreateGeometryFromGML("""<gml:Surface srsName="EPSG:2326" srsDimension="2">
+    <gml:patches>
+    <gml:PolygonPatch>
+    <gml:exterior>
+    <gml:Ring>
+    <gml:curveMember>
+    <gml:Curve>
+    <gml:segments>
+    <gml:LineStringSegment>
+    <gml:posList>821502.753690919 838825.332031005 821194.727830006 839043.611480001</gml:posList>
+    </gml:LineStringSegment>
+    <gml:ArcByCenterPoint numArc="1">
+    <gml:posList>821194.396688321 839052.616490606</gml:posList>
+    <gml:radius uom="EPSG:2326">9.01109709191771</gml:radius>
+    <gml:startAngle uom="degree">177.894008505116</gml:startAngle>
+    <gml:endAngle uom="degree">250.98396509322</gml:endAngle>
+    </gml:ArcByCenterPoint>
+    <gml:LineStringSegment>
+    <gml:posList>821185.877350006 839049.680380003 821502.753690919 838825.332031005</gml:posList>
+    </gml:LineStringSegment>
+    </gml:segments>
+    </gml:Curve>
+    </gml:curveMember>
+    </gml:Ring>
+    </gml:exterior>
+    </gml:PolygonPatch>
+    </gml:patches>
+    </gml:Surface>""")
+    assert g is not None

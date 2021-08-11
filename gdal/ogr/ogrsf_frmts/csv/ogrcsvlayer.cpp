@@ -962,7 +962,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
             {
                 OGRSpatialReference *poSRS = new OGRSpatialReference();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if( poSRS->SetFromUserInput((const char *)pabyRet) ==
+                if( poSRS->SetFromUserInput((const char *)pabyRet, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) ==
                     OGRERR_NONE )
                 {
                     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);

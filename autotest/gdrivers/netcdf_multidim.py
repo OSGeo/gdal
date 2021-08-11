@@ -1399,10 +1399,10 @@ def test_netcdf_multidim_stats(netcdf_setup):  # noqa
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray('myarray')
 
-        stats = ar.GetStatistics(ds, False, force=False)
+        stats = ar.GetStatistics(False, force=False)
         assert stats is None
 
-        stats = ar.GetStatistics(ds, False, force=True)
+        stats = ar.GetStatistics(False, force=True)
         assert stats is not None
         assert stats.min == 1.0
         assert stats.max == 5.0
@@ -1411,10 +1411,10 @@ def test_netcdf_multidim_stats(netcdf_setup):  # noqa
         assert stats.valid_count == 5
 
         view = ar.GetView("[0,0]")
-        stats = view.GetStatistics(ds, False, force=False)
+        stats = view.GetStatistics(False, force=False)
         assert stats is None
 
-        stats = view.GetStatistics(ds, False, force=True)
+        stats = view.GetStatistics(False, force=True)
         assert stats is not None
         assert stats.min == 1.0
         assert stats.max == 1.0
@@ -1427,7 +1427,7 @@ def test_netcdf_multidim_stats(netcdf_setup):  # noqa
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray('myarray')
 
-        stats = ar.GetStatistics(ds, False, force=False)
+        stats = ar.GetStatistics(False, force=False)
         assert stats is not None
         assert stats.min == 1.0
         assert stats.max == 5.0
@@ -1436,7 +1436,7 @@ def test_netcdf_multidim_stats(netcdf_setup):  # noqa
         assert stats.valid_count == 5
 
         view = ar.GetView("[0,0]")
-        stats = view.GetStatistics(ds, False, force=False)
+        stats = view.GetStatistics(False, force=False)
         assert stats is not None
         assert stats.min == 1.0
         assert stats.max == 1.0
@@ -1448,14 +1448,14 @@ def test_netcdf_multidim_stats(netcdf_setup):  # noqa
         ds.ClearStatistics()
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray('myarray')
-        stats = ar.GetStatistics(ds, False, force=False)
+        stats = ar.GetStatistics(False, force=False)
         assert stats is None
         ds = None
 
         ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray('myarray')
-        stats = ar.GetStatistics(ds, False, force=False)
+        stats = ar.GetStatistics(False, force=False)
         assert stats is None
 
     try:

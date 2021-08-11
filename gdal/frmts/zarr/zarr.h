@@ -32,6 +32,7 @@
 #include "cpl_compressor.h"
 #include "cpl_json.h"
 #include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "memmultidim.h"
 
 #include <array>
@@ -194,19 +195,23 @@ public:
 class ZarrSharedResource
 {
     std::string m_osRootDirectoryName{};
+    bool m_bZMetadataEnabled = false;
     CPLJSONObject m_oObj{}; // For .zmetadata
     bool m_bZMetadataModified = false;
+    std::shared_ptr<GDALPamMultiDim> m_poPAM{};
 
 public:
-    ZarrSharedResource();
+    explicit ZarrSharedResource(const std::string& osRootDirectoryName);
 
     ~ZarrSharedResource();
 
-    void SetRootDirectoryName(const std::string& osRootDirectoryName);
+    void EnableZMetadata() { m_bZMetadataEnabled = true; }
 
     void InitFromZMetadata(const CPLJSONObject& obj) { m_oObj = obj; }
 
     void SetZMetadataItem(const std::string& osFilename, const CPLJSONObject& obj);
+
+    const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
 };
 
 /************************************************************************/
@@ -222,6 +227,7 @@ protected:
     // For ZarrV3, this is the root directory of the dataset
     std::shared_ptr<ZarrSharedResource> m_poSharedResource;
     std::string m_osDirectoryName{};
+    std::weak_ptr<ZarrGroupBase> m_poParent{};
     mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     mutable std::map<CPLString, std::shared_ptr<ZarrArray>> m_oMapMDArrays{};
     mutable std::map<CPLString, std::shared_ptr<GDALDimensionWeakIndexingVar>> m_oMapDimensions{};
@@ -233,7 +239,7 @@ protected:
     bool                                              m_bReadFromZMetadata = false;
     mutable bool                                      m_bDimensionsInstantiated = false;
     bool                                              m_bUpdatable = false;
-    std::weak_ptr<GDALGroup> m_pSelf{};
+    std::weak_ptr<ZarrGroupBase> m_pSelf{};
 
     virtual void ExploreDirectory() const = 0;
     virtual void LoadAttributes() const = 0;
@@ -248,7 +254,7 @@ public:
 
     ~ZarrGroupBase() override;
 
-    void SetSelf(std::weak_ptr<GDALGroup> self) { m_pSelf = self; }
+    void SetSelf(std::weak_ptr<ZarrGroupBase> self) { m_pSelf = self; }
 
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
         { LoadAttributes(); return m_oAttrGroup.GetAttribute(osName); }
@@ -406,7 +412,7 @@ struct DtypeElt
 /*                             ZarrArray                                */
 /************************************************************************/
 
-class ZarrArray final: public GDALMDArray
+class ZarrArray final: public GDALPamMDArray
 {
     std::shared_ptr<ZarrSharedResource>               m_poSharedResource;
     const std::vector<std::shared_ptr<GDALDimension>> m_aoDims;

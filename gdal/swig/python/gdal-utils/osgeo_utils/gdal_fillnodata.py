@@ -161,7 +161,7 @@ class GDALFillNoData(GDALScript):
                                  "that the algorithm will search out for values to interpolate. "
                                  "The default is 100 pixels.")
 
-        parser.add_argument("-si", dest="smoothing_iterations", type=float, default=0, metavar='smoothing_iterations',
+        parser.add_argument("-si", dest="smoothing_iterations", type=int, default=0, metavar='smoothing_iterations',
                             help="The number of 3x3 average filter smoothing iterations to run after the interpolation "
                                  "to dampen artifacts. The default is zero smoothing iterations.")
 

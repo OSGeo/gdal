@@ -1,0 +1,66 @@
+{
+    "metadata": {
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "subgroup/.zgroup": {
+            "zarr_format": 2
+        },
+        "subgroup/var/.zarray": {
+            "chunks": [
+                20, 40
+            ],
+            "compressor": null,
+            "dtype": "<f8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20, 40
+            ],
+            "zarr_format": 2
+        },
+        "subgroup/var/.zattrs": {
+            "_ARRAY_DIMENSIONS": [ "lat", "lon" ]
+        },
+        "lat/.zarray": {
+            "chunks": [
+                20
+            ],
+            "compressor": null,
+            "dtype": "<f8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20
+            ],
+            "zarr_format": 2
+        },
+        "lat/.zattrs": {
+            "_ARRAY_DIMENSIONS": [ "lat" ],
+            "standard_name": "latitude",
+            "units": "degrees_north"
+        },
+        "lon/.zarray": {
+            "chunks": [
+                40
+            ],
+            "compressor": null,
+            "dtype": "<f8",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                40
+            ],
+            "zarr_format": 2
+        },
+        "lon/.zattrs": {
+            "_ARRAY_DIMENSIONS": [ "lon" ],
+            "standard_name": "longitude",
+            "units": "degrees_east"
+        }
+    },
+    "zarr_consolidated_format": 1
+}

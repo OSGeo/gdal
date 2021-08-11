@@ -6161,10 +6161,10 @@ SWIGINTERN GDALMDArrayHS *GDALMDArrayHS_GetMask(GDALMDArrayHS *self,char **optio
 SWIGINTERN GDALDatasetShadow *GDALMDArrayHS_AsClassicDataset(GDALMDArrayHS *self,size_t iXDim,size_t iYDim){
     return (GDALDatasetShadow*)GDALMDArrayAsClassicDataset(self, iXDim, iYDim);
   }
-SWIGINTERN Statistics *GDALMDArrayHS_GetStatistics(GDALMDArrayHS *self,GDALDatasetShadow *ds=NULL,bool approx_ok=FALSE,bool force=TRUE,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN Statistics *GDALMDArrayHS_GetStatistics(GDALMDArrayHS *self,bool approx_ok=FALSE,bool force=TRUE,GDALProgressFunc callback=NULL,void *callback_data=NULL){
         GUInt64 nValidCount = 0;
         Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
-        CPLErr eErr = GDALMDArrayGetStatistics(self, ds, approx_ok, force,
+        CPLErr eErr = GDALMDArrayGetStatistics(self, NULL, approx_ok, force,
                                  &(psStatisticsOut->min),
                                  &(psStatisticsOut->max),
                                  &(psStatisticsOut->mean),
@@ -6177,10 +6177,10 @@ SWIGINTERN Statistics *GDALMDArrayHS_GetStatistics(GDALMDArrayHS *self,GDALDatas
         CPLFree(psStatisticsOut);
         return NULL;
   }
-SWIGINTERN Statistics *GDALMDArrayHS_ComputeStatistics(GDALMDArrayHS *self,GDALDatasetShadow *ds=NULL,bool approx_ok=FALSE,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN Statistics *GDALMDArrayHS_ComputeStatistics(GDALMDArrayHS *self,bool approx_ok=FALSE,GDALProgressFunc callback=NULL,void *callback_data=NULL){
         GUInt64 nValidCount = 0;
         Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
-        int nSuccess = GDALMDArrayComputeStatistics(self, ds, approx_ok,
+        int nSuccess = GDALMDArrayComputeStatistics(self, NULL, approx_ok,
                                  &(psStatisticsOut->min),
                                  &(psStatisticsOut->max),
                                  &(psStatisticsOut->mean),
@@ -26155,157 +26155,14 @@ fail:
 SWIGINTERN PyObject *_wrap_MDArray_GetStatistics(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALMDArrayHS *arg1 = (GDALMDArrayHS *) 0 ;
-  GDALDatasetShadow *arg2 = (GDALDatasetShadow *) NULL ;
-  bool arg3 = (bool) FALSE ;
-  bool arg4 = (bool) TRUE ;
-  GDALProgressFunc arg5 = (GDALProgressFunc) NULL ;
-  void *arg6 = (void *) NULL ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  bool val3 ;
-  int ecode3 = 0 ;
-  bool val4 ;
-  int ecode4 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
-  PyObject * obj4 = 0 ;
-  PyObject * obj5 = 0 ;
-  char *  kwnames[] = {
-    (char *) "self",(char *) "ds",(char *) "approx_ok",(char *) "force",(char *) "callback",(char *) "callback_data", NULL 
-  };
-  Statistics *result = 0 ;
-  
-  /* %typemap(arginit) ( const char* callback_data=NULL)  */
-  PyProgressData *psProgressInfo;
-  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
-  psProgressInfo->nLastReported = -1;
-  psProgressInfo->psPyCallback = NULL;
-  psProgressInfo->psPyCallbackData = NULL;
-  arg6 = psProgressInfo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOOO:MDArray_GetStatistics",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MDArray_GetStatistics" "', argument " "1"" of type '" "GDALMDArrayHS *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMDArrayHS * >(argp1);
-  if (obj1) {
-    res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MDArray_GetStatistics" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
-    }
-    arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
-  }
-  if (obj2) {
-    ecode3 = SWIG_AsVal_bool(obj2, &val3);
-    if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "MDArray_GetStatistics" "', argument " "3"" of type '" "bool""'");
-    } 
-    arg3 = static_cast< bool >(val3);
-  }
-  if (obj3) {
-    ecode4 = SWIG_AsVal_bool(obj3, &val4);
-    if (!SWIG_IsOK(ecode4)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "MDArray_GetStatistics" "', argument " "4"" of type '" "bool""'");
-    } 
-    arg4 = static_cast< bool >(val4);
-  }
-  if (obj4) {
-    {
-      /* %typemap(in) (GDALProgressFunc callback = NULL) */
-      /* callback_func typemap */
-      
-      /* In some cases 0 is passed instead of None. */
-      /* See https://github.com/OSGeo/gdal/pull/219 */
-      if ( PyLong_Check(obj4) || PyInt_Check(obj4) )
-      {
-        if( PyLong_AsLong(obj4) == 0 )
-        {
-          obj4 = Py_None;
-        }
-      }
-      
-      if (obj4 && obj4 != Py_None ) {
-        void* cbfunction = NULL;
-        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
-            (void**)&cbfunction,
-            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
-            SWIG_POINTER_EXCEPTION | 0 ));
-        
-        if ( cbfunction == GDALTermProgress ) {
-          arg5 = GDALTermProgress;
-        } else {
-          if (!PyCallable_Check(obj4)) {
-            PyErr_SetString( PyExc_RuntimeError,
-              "Object given is not a Python function" );
-            SWIG_fail;
-          }
-          psProgressInfo->psPyCallback = obj4;
-          arg5 = PyProgressProxy;
-        }
-        
-      }
-      
-    }
-  }
-  if (obj5) {
-    {
-      /* %typemap(in) ( void* callback_data=NULL)  */
-      psProgressInfo->psPyCallbackData = obj5 ;
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      ClearErrorState();
-    }
-    {
-      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (Statistics *)GDALMDArrayHS_GetStatistics(arg1,arg2,arg3,arg4,arg5,arg6);
-      SWIG_PYTHON_THREAD_END_ALLOW;
-    }
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Statistics, 0 |  0 );
-  {
-    /* %typemap(freearg) ( void* callback_data=NULL)  */
-    
-    CPLFree(psProgressInfo);
-    
-  }
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  {
-    /* %typemap(freearg) ( void* callback_data=NULL)  */
-    
-    CPLFree(psProgressInfo);
-    
-  }
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MDArray_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALMDArrayHS *arg1 = (GDALMDArrayHS *) 0 ;
-  GDALDatasetShadow *arg2 = (GDALDatasetShadow *) NULL ;
-  bool arg3 = (bool) FALSE ;
+  bool arg2 = (bool) FALSE ;
+  bool arg3 = (bool) TRUE ;
   GDALProgressFunc arg4 = (GDALProgressFunc) NULL ;
   void *arg5 = (void *) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
+  bool val2 ;
+  int ecode2 = 0 ;
   bool val3 ;
   int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
@@ -26314,7 +26171,7 @@ SWIGINTERN PyObject *_wrap_MDArray_ComputeStatistics(PyObject *SWIGUNUSEDPARM(se
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "ds",(char *) "approx_ok",(char *) "callback",(char *) "callback_data", NULL 
+    (char *) "self",(char *) "approx_ok",(char *) "force",(char *) "callback",(char *) "callback_data", NULL 
   };
   Statistics *result = 0 ;
   
@@ -26325,23 +26182,23 @@ SWIGINTERN PyObject *_wrap_MDArray_ComputeStatistics(PyObject *SWIGUNUSEDPARM(se
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg5 = psProgressInfo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOO:MDArray_ComputeStatistics",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOOO:MDArray_GetStatistics",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MDArray_ComputeStatistics" "', argument " "1"" of type '" "GDALMDArrayHS *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MDArray_GetStatistics" "', argument " "1"" of type '" "GDALMDArrayHS *""'"); 
   }
   arg1 = reinterpret_cast< GDALMDArrayHS * >(argp1);
   if (obj1) {
-    res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MDArray_ComputeStatistics" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
-    }
-    arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
+    ecode2 = SWIG_AsVal_bool(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "MDArray_GetStatistics" "', argument " "2"" of type '" "bool""'");
+    } 
+    arg2 = static_cast< bool >(val2);
   }
   if (obj2) {
     ecode3 = SWIG_AsVal_bool(obj2, &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "MDArray_ComputeStatistics" "', argument " "3"" of type '" "bool""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "MDArray_GetStatistics" "', argument " "3"" of type '" "bool""'");
     } 
     arg3 = static_cast< bool >(val3);
   }
@@ -26395,7 +26252,128 @@ SWIGINTERN PyObject *_wrap_MDArray_ComputeStatistics(PyObject *SWIGUNUSEDPARM(se
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (Statistics *)GDALMDArrayHS_ComputeStatistics(arg1,arg2,arg3,arg4,arg5);
+      result = (Statistics *)GDALMDArrayHS_GetStatistics(arg1,arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_Statistics, 0 |  0 );
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_MDArray_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALMDArrayHS *arg1 = (GDALMDArrayHS *) 0 ;
+  bool arg2 = (bool) FALSE ;
+  GDALProgressFunc arg3 = (GDALProgressFunc) NULL ;
+  void *arg4 = (void *) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "approx_ok",(char *) "callback",(char *) "callback_data", NULL 
+  };
+  Statistics *result = 0 ;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg4 = psProgressInfo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OOO:MDArray_ComputeStatistics",kwnames,&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MDArray_ComputeStatistics" "', argument " "1"" of type '" "GDALMDArrayHS *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALMDArrayHS * >(argp1);
+  if (obj1) {
+    ecode2 = SWIG_AsVal_bool(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "MDArray_ComputeStatistics" "', argument " "2"" of type '" "bool""'");
+    } 
+    arg2 = static_cast< bool >(val2);
+  }
+  if (obj2) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj2) || PyInt_Check(obj2) )
+      {
+        if( PyLong_AsLong(obj2) == 0 )
+        {
+          obj2 = Py_None;
+        }
+      }
+      
+      if (obj2 && obj2 != Py_None ) {
+        void* cbfunction = NULL;
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj2,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg3 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj2)) {
+            PyErr_SetString( PyExc_RuntimeError,
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj2;
+          arg3 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj3) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj3 ;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (Statistics *)GDALMDArrayHS_ComputeStatistics(arg1,arg2,arg3,arg4);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -43885,8 +43863,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"MDArray_GetUnscaled", _wrap_MDArray_GetUnscaled, METH_VARARGS, (char *)"MDArray_GetUnscaled(MDArray self) -> MDArray"},
 	 { (char *)"MDArray_GetMask", _wrap_MDArray_GetMask, METH_VARARGS, (char *)"MDArray_GetMask(MDArray self, char ** options=None) -> MDArray"},
 	 { (char *)"MDArray_AsClassicDataset", _wrap_MDArray_AsClassicDataset, METH_VARARGS, (char *)"MDArray_AsClassicDataset(MDArray self, size_t iXDim, size_t iYDim) -> Dataset"},
-	 { (char *)"MDArray_GetStatistics", (PyCFunction) _wrap_MDArray_GetStatistics, METH_VARARGS | METH_KEYWORDS, (char *)"MDArray_GetStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, bool force=True, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"},
-	 { (char *)"MDArray_ComputeStatistics", (PyCFunction) _wrap_MDArray_ComputeStatistics, METH_VARARGS | METH_KEYWORDS, (char *)"MDArray_ComputeStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"},
+	 { (char *)"MDArray_GetStatistics", (PyCFunction) _wrap_MDArray_GetStatistics, METH_VARARGS | METH_KEYWORDS, (char *)"MDArray_GetStatistics(MDArray self, bool approx_ok=False, bool force=True, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"},
+	 { (char *)"MDArray_ComputeStatistics", (PyCFunction) _wrap_MDArray_ComputeStatistics, METH_VARARGS | METH_KEYWORDS, (char *)"MDArray_ComputeStatistics(MDArray self, bool approx_ok=False, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"},
 	 { (char *)"MDArray_GetResampled", _wrap_MDArray_GetResampled, METH_VARARGS, (char *)"MDArray_GetResampled(MDArray self, int nDimensions, GDALRIOResampleAlg resample_alg, OSRSpatialReferenceShadow ** srs, char ** options=None) -> MDArray"},
 	 { (char *)"MDArray_Cache", _wrap_MDArray_Cache, METH_VARARGS, (char *)"MDArray_Cache(MDArray self, char ** options=None) -> bool"},
 	 { (char *)"MDArray_swigregister", MDArray_swigregister, METH_VARARGS, NULL},

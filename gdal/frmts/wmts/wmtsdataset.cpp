@@ -650,7 +650,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             return FALSE;
         }
         oTMS.osSRS = pszSupportedCRS;
-        if( oTMS.oSRS.SetFromUserInput(FixCRSName(pszSupportedCRS)) != OGRERR_NONE )
+        if( oTMS.oSRS.SetFromUserInput(FixCRSName(pszSupportedCRS), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse CRS '%s'",
                      pszSupportedCRS);
@@ -1544,7 +1544,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 for(; oIter != aoMapBoundingBox.end(); ++oIter )
                 {
                     OGRSpatialReference oSRS;
-                    if( oSRS.SetFromUserInput(FixCRSName(oIter->first)) == OGRERR_NONE )
+                    if( oSRS.SetFromUserInput(FixCRSName(oIter->first), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
                     {
                         OGRSpatialReference oWGS84;
                         oWGS84.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
@@ -1611,7 +1611,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             {
                 OGRSpatialReference oSRS;
                 oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if( oSRS.SetFromUserInput(FixCRSName(oIter->first)) == OGRERR_NONE )
+                if( oSRS.SetFromUserInput(FixCRSName(oIter->first), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
                 {
                     // Check if this doesn't match the most precise tile matrix
                     // by densifying its contour
@@ -1848,7 +1848,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         if( !osProjection.empty() )
         {
             OGRSpatialReference oSRS;
-            if( oSRS.SetFromUserInput(osProjection) == OGRERR_NONE )
+            if( oSRS.SetFromUserInput(osProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
             {
                 char* pszWKT = nullptr;
                 oSRS.exportToWkt(&pszWKT);

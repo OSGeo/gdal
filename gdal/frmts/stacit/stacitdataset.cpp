@@ -484,7 +484,7 @@ bool STACITDataset::SetupDataset(GDALOpenInfo* poOpenInfo,
 
     // Set SRS
     OGRSpatialReference oSRS;
-    if( oSRS.SetFromUserInput(assetByProj.osProjUserString.c_str()) == OGRERR_NONE )
+    if( oSRS.SetFromUserInput(assetByProj.osProjUserString.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) == OGRERR_NONE )
     {
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         SetSpatialRef(&oSRS);

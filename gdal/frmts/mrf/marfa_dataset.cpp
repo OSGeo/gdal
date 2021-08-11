@@ -1245,7 +1245,7 @@ CPLErr MRFDataset::Initialize(CPLXMLNode* config)
 
     OGRSpatialReference oSRS;
     const char* pszRawProjFromXML = CPLGetXMLValue(config, "GeoTags.Projection", "");
-    if (strlen(pszRawProjFromXML) == 0 || oSRS.SetFromUserInput(pszRawProjFromXML) != OGRERR_NONE)
+    if (strlen(pszRawProjFromXML) == 0 || oSRS.SetFromUserInput(pszRawProjFromXML, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE)
         SetProjection("");
     else {
         char* pszRawProj = nullptr;

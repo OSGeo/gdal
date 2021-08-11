@@ -1242,17 +1242,30 @@ struct GRIBSharedResource
     vsi_l_offset m_nOffsetCurData = static_cast<vsi_l_offset>(-1);
     std::vector<double> m_adfCurData{};
     std::string m_osFilename;
+    std::shared_ptr<GDALPamMultiDim> m_poPAM{};
 
-    explicit GRIBSharedResource(VSILFILE* fp) : m_fp(fp) {}
-
-    ~GRIBSharedResource()
-    {
-        if( m_fp )
-            VSIFCloseL(m_fp);
-    }
+    GRIBSharedResource(const std::string& osFilename,
+                       VSILFILE* fp);
+    ~GRIBSharedResource();
 
     const std::vector<double>& LoadData(vsi_l_offset nOffset, int subgNum);
+
+    const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
 };
+
+GRIBSharedResource::GRIBSharedResource(const std::string& osFilename,
+                                       VSILFILE* fp) :
+   m_fp(fp),
+   m_osFilename(osFilename),
+   m_poPAM(std::make_shared<GDALPamMultiDim>(osFilename))
+{
+}
+
+GRIBSharedResource::~GRIBSharedResource()
+{
+    if( m_fp )
+        VSIFCloseL(m_fp);
+}
 
 /************************************************************************/
 /*                                GRIBGroup                             */
@@ -1296,7 +1309,7 @@ public:
 /*                                GRIBArray                             */
 /************************************************************************/
 
-class GRIBArray final: public GDALMDArray
+class GRIBArray final: public GDALPamMDArray
 {
     std::shared_ptr<GRIBSharedResource> m_poShared;
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
@@ -1389,7 +1402,7 @@ std::shared_ptr<GDALMDArray> GRIBGroup::OpenMDArray(const std::string& osName,
 GRIBArray::GRIBArray(const std::string& osName,
               const std::shared_ptr<GRIBSharedResource>& poShared):
     GDALAbstractMDArray("/", osName),
-    GDALMDArray("/", osName),
+    GDALPamMDArray("/", osName, poShared->GetPAM()),
     m_poShared(poShared)
 {
 }
@@ -1866,8 +1879,8 @@ bool GRIBArray::IRead(const GUInt64* arrayStartIdx,
 GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 
 {
-    auto poShared = std::make_shared<GRIBSharedResource>(poOpenInfo->fpL);
-    poShared->m_osFilename = poOpenInfo->pszFilename;
+    auto poShared = std::make_shared<GRIBSharedResource>(poOpenInfo->pszFilename,
+                                                         poOpenInfo->fpL);
     auto poRootGroup = std::make_shared<GRIBGroup>(poShared);
     poOpenInfo->fpL = nullptr;
 

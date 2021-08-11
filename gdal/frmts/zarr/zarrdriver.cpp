@@ -89,10 +89,11 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         osFilename.resize(osFilename.size() - 1);
 
     auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
-    auto poSharedResource = std::make_shared<ZarrSharedResource>();
+    auto poSharedResource = std::make_shared<ZarrSharedResource>(osFilename);
     auto poRG = ZarrGroupV2::Create(poSharedResource, std::string(), "/");
     poRG->SetUpdatable(bUpdateMode);
     poDS->m_poRootGroup = poRG;
+    poRG->SetDirectoryName(osFilename);
 
     const std::string osZarrayFilename(
                 CPLFormFilename(pszFilename, ".zarray", nullptr));
@@ -111,8 +112,6 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         return poDS.release();
     }
 
-    poRG->SetDirectoryName(osFilename);
-
     const std::string osZmetadataFilename(
             CPLFormFilename(pszFilename, ".zmetadata", nullptr));
     if( CPLTestBool(CSLFetchNameValueDef(
@@ -124,7 +123,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
             return nullptr;
 
         poRG->InitFromZMetadata(oDoc.GetRoot());
-        poSharedResource->SetRootDirectoryName(osFilename);
+        poSharedResource->EnableZMetadata();
         poSharedResource->InitFromZMetadata(oDoc.GetRoot());
         return poDS.release();
     }
@@ -151,9 +150,16 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
 /*                            ExploreGroup()                            */
 /************************************************************************/
 
-static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
-                         std::vector<std::string>& aosArrays)
+static bool ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
+                         std::vector<std::string>& aosArrays,
+                         int nRecCount)
 {
+    if( nRecCount == 32 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too deep recursion level in ExploreGroup()");
+        return false;
+    }
     const auto aosGroupArrayNames = poGroup->GetMDArrayNames();
     for( const auto& osArrayName: aosGroupArrayNames )
     {
@@ -165,6 +171,12 @@ static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
             osArrayFullname += osArrayName;
         }
         aosArrays.emplace_back(std::move(osArrayFullname));
+        if( aosArrays.size() == 10000 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too many arrays found by ExploreGroup()");
+            return false;
+        }
     }
 
     const auto aosSubGroups = poGroup->GetGroupNames();
@@ -172,8 +184,12 @@ static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup,
     {
         const auto poSubGroup = poGroup->OpenGroup(osSubGroup);
         if( poSubGroup )
-            ExploreGroup(poSubGroup, aosArrays);
+        {
+            if( !ExploreGroup(poSubGroup, aosArrays, nRecCount + 1) )
+                return false;
+        }
     }
+    return true;
 }
 
 /************************************************************************/
@@ -296,7 +312,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
     else
     {
         std::vector<std::string> aosArrays;
-        ExploreGroup(poRG, aosArrays);
+        ExploreGroup(poRG, aosArrays, 0);
         if( aosArrays.empty() )
             return nullptr;
 
@@ -693,7 +709,7 @@ GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
 {
     const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
     std::shared_ptr<GDALGroup> poRG;
-    auto poSharedResource = std::make_shared<ZarrSharedResource>();
+    auto poSharedResource = std::make_shared<ZarrSharedResource>(pszFilename);
     if( EQUAL(pszFormat, "ZARR_V3") )
     {
         poRG = ZarrGroupV3::CreateOnDisk(poSharedResource,
@@ -705,7 +721,7 @@ GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
             CSLFetchNameValueDef(papszOptions, "CREATE_ZMETADATA", "YES"));
         if( bCreateZMetadata )
         {
-            poSharedResource->SetRootDirectoryName(pszFilename);
+            poSharedResource->EnableZMetadata();
         }
         poRG = ZarrGroupV2::CreateOnDisk(poSharedResource,
                                          std::string(), "/", pszFilename);
@@ -760,7 +776,7 @@ GDALDataset * ZarrDataset::Create( const char * pszName,
     else
     {
         const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
-        auto poSharedResource = std::make_shared<ZarrSharedResource>();
+        auto poSharedResource = std::make_shared<ZarrSharedResource>(pszName);
         if( EQUAL(pszFormat, "ZARR_V3") )
         {
             poRG = ZarrGroupV3::CreateOnDisk(poSharedResource,
@@ -772,7 +788,7 @@ GDALDataset * ZarrDataset::Create( const char * pszName,
                 CSLFetchNameValueDef(papszOptions, "CREATE_ZMETADATA", "YES"));
             if( bCreateZMetadata )
             {
-                poSharedResource->SetRootDirectoryName(pszName);
+                poSharedResource->EnableZMetadata();
             }
             poRG = ZarrGroupV2::CreateOnDisk(poSharedResource,
                                              std::string(), "/", pszName);

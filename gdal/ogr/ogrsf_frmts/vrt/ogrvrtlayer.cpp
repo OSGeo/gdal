@@ -248,7 +248,7 @@ bool OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn,
             OGRSpatialReference oSRS;
             oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-            if( oSRS.SetFromUserInput(pszLayerSRS) != OGRERR_NONE )
+            if( oSRS.SetFromUserInput(pszLayerSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to import LayerSRS `%s'.", pszLayerSRS);
@@ -474,7 +474,7 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
             OGRSpatialReference oSRS;
             oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-            if( oSRS.SetFromUserInput(pszSRS) != OGRERR_NONE )
+            if( oSRS.SetFromUserInput(pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS) != OGRERR_NONE )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to import SRS `%s'.", pszSRS);

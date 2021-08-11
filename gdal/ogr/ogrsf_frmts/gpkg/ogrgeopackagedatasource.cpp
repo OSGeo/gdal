@@ -425,7 +425,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
           atoi(pszOrganizationCoordsysID) == iSrsId &&
           GDALGPKGImportFromEPSG(poSpatialRef, atoi(pszOrganizationCoordsysID))
           == OGRERR_NONE) &&
-        poSpatialRef->SetFromUserInput(pszWkt) != OGRERR_NONE )
+        poSpatialRef->importFromWkt(pszWkt) != OGRERR_NONE )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to parse srs_id '%d' well-known text '%s'",

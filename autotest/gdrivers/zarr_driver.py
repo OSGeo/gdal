@@ -262,7 +262,7 @@ def test_zarr_string(fill_value, expected_read_data):
 # Check that all required elements are present in .zarray
 @pytest.mark.parametrize("member",
                          [None, 'zarr_format', 'chunks', 'compressor', 'dtype',
-                          'filters', 'order', 'shape'])
+                          'filters', 'order', 'shape', 'fill_value'])
 def test_zarr_invalid_json_remove_member(member):
 
     j = {
@@ -290,7 +290,10 @@ def test_zarr_invalid_json_remove_member(member):
         gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
         with gdaltest.error_handler():
             ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
-        if member is None:
+        if member == 'fill_value':
+            assert ds is not None
+            assert gdal.GetLastErrorMsg() != ''
+        elif member is None:
             assert ds
         else:
             assert ds is None
@@ -765,16 +768,22 @@ def test_zarr_read_group_with_zmetadata():
     assert subsubgroup.OpenMDArray('not_existing') is None
 
 
-@pytest.mark.parametrize("use_zmetadata", [True, False])
-def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata):
-
-    filename = 'data/zarr/array_dimensions.zarr'
+@pytest.mark.parametrize("use_zmetadata, filename",
+                         [(True, 'data/zarr/array_dimensions.zarr'),
+                          (False, 'data/zarr/array_dimensions.zarr'),
+                          (True, 'data/zarr/array_dimensions_upper_level.zarr'),
+                          (False, 'data/zarr/array_dimensions_upper_level.zarr'),
+                          (False, 'data/zarr/array_dimensions_upper_level.zarr/subgroup/var')])
+def test_zarr_read_ARRAY_DIMENSIONS(use_zmetadata, filename):
 
     ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER, open_options=[
                      'USE_ZMETADATA=' + str(use_zmetadata)])
     assert ds is not None
     rg = ds.GetRootGroup()
-    ar = rg.OpenMDArray('var')
+    if filename != 'data/zarr/array_dimensions_upper_level.zarr':
+        ar = rg.OpenMDArray('var')
+    else:
+        ar = rg.OpenGroup('subgroup').OpenMDArray('var')
     assert ar
     dims = ar.GetDimensions()
     assert len(dims) == 2
@@ -2067,3 +2076,125 @@ def test_zarr_create_with_filter():
         return ret
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_pam_spatial_ref():
+
+    try:
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional('/vsimem/test.zarr')
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim1 = rg.CreateDimension("dim1", None, None, 2)
+            rg.CreateMDArray("test", [dim0, dim1],
+                    gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+        create()
+
+        assert gdal.VSIStatL('/vsimem/test.zarr/pam.aux.xml') is None
+
+        def check_crs_before():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            crs = ar.GetSpatialRef()
+            assert crs is None
+
+        check_crs_before()
+
+        assert gdal.VSIStatL('/vsimem/test.zarr/pam.aux.xml') is None
+
+        def set_crs():
+            # Open in read-only
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            crs = osr.SpatialReference()
+            crs.ImportFromEPSG(4326)
+            crs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            crs.SetCoordinateEpoch(2021.2)
+            assert ar.SetSpatialRef(crs) == gdal.CE_None
+
+        set_crs()
+
+        assert gdal.VSIStatL('/vsimem/test.zarr/pam.aux.xml') is not None
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/pam.aux.xml', 'rb+')
+        assert f
+        data = gdal.VSIFReadL(1, 1000, f).decode('utf-8')
+        assert data.endswith('</PAMDataset>\n')
+        data = data[0:-len('</PAMDataset>\n')] + '<Other/>' + '</PAMDataset>\n'
+        gdal.VSIFSeekL(f, 0, 0)
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+
+        def check_crs():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            crs = ar.GetSpatialRef()
+            assert crs is not None
+            assert crs.GetAuthorityCode(None) == '4326'
+            assert crs.GetDataAxisToSRSAxisMapping() == [2, 1]
+            assert crs.GetCoordinateEpoch() == 2021.2
+
+        check_crs()
+
+        def check_crs_classic_dataset():
+            ds = gdal.Open('/vsimem/test.zarr')
+            crs = ds.GetSpatialRef()
+            assert crs is not None
+
+        check_crs_classic_dataset()
+
+        def unset_crs():
+            # Open in read-only
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            assert ar.SetSpatialRef(None) == gdal.CE_None
+
+        unset_crs()
+
+        f = gdal.VSIFOpenL('/vsimem/test.zarr/pam.aux.xml', 'rb')
+        assert f
+        data = gdal.VSIFReadL(1, 1000, f).decode('utf-8')
+        gdal.VSIFCloseL(f)
+        assert '<Other />' in data
+
+        def check_unset_crs():
+            ds = gdal.OpenEx('/vsimem/test.zarr',
+                             gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+            assert ar
+            crs = ar.GetSpatialRef()
+            assert crs is None
+
+        check_unset_crs()
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+

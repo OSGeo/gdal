@@ -17,7 +17,7 @@ level utilities.
 It is strongly inspired from the netCDF and HDF5 API and data models.
 See `HDF5 format and data model <https://portal.opengeospatial.org/files/81716>`_.
 
-A :cpp:class:`GDALDataset` with mulidimensional content contains a root
+A :cpp:class:`GDALDataset` with multidimensional content contains a root
 :cpp:class:`GDALGroup`.
 
 Group
@@ -76,7 +76,7 @@ It has the following properties:
   - a size, that is the number of values that can be indexed along
     the dimension
   - a type, which is a string giving the nature of the dimension.
-    Predeined values are: HORIZONTAL_X, HORIZONTAL_Y, VERTICAL, TEMPORAL, PARAMETRIC
+    Predefined values are: HORIZONTAL_X, HORIZONTAL_Y, VERTICAL, TEMPORAL, PARAMETRIC
     Other values might be used. Empty value means unknown.
   - a direction. Predefined values are:
     EAST, WEST, SOUTH, NORTH, UP, DOWN, FUTURE, PAST
