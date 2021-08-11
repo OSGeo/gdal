@@ -235,6 +235,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         OGRFieldDefn oField3("postcode", OFTString);
         OGRFieldDefn oField4("typeAdresseerbaarObject", OFTString);
         OGRFieldDefn oField5("openbareruimteRef", OFTString);
+        OGRFieldDefn oField6("woonplaatsRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
@@ -242,6 +243,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         poFeatureDefn->AddFieldDefn(&oField3);
         poFeatureDefn->AddFieldDefn(&oField4);
         poFeatureDefn->AddFieldDefn(&oField5);
+        poFeatureDefn->AddFieldDefn(&oField6);
 
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
