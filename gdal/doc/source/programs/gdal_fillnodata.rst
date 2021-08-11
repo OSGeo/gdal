@@ -56,11 +56,6 @@ Additional details on the algorithm are available in the
     The source raster file used to identify target pixels.
     Only one band is used.
 
-.. option:: -nomask
-
-    Do not use the default validity mask for the input band (such as nodata,
-    or alpha masks).
-
 .. option:: -mask filename
 
     Use the first band of the specified file as a validity mask (zero is

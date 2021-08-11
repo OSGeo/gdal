@@ -124,8 +124,6 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
 
     if mask == 'default':
         maskband = dstband.GetMaskBand()
-    elif mask == 'none':
-        maskband = None
     else:
         mask_ds = gdal.Open(mask)
         maskband = mask_ds.GetRasterBand(1)
@@ -172,10 +170,6 @@ class GDALFillNoData(GDALScript):
         parser.add_argument("-mask", dest="mask", type=str, metavar='filename', default='default',
                             help="Use the first band of the specified file as a validity mask "
                                  "(zero is invalid, non-zero is valid).")
-
-        parser.add_argument("-nomask", dest="mask", action="store_const", const='none', default='default',
-                            help="Do not use the default validity mask for the input band "
-                                 "(such as nodata, or alpha masks).")
 
         parser.add_argument("-b", "-band", dest="band_number", metavar="band", type=int, default=1,
                             help="The band to operate on, defaults to 1.")
