@@ -87,9 +87,9 @@ int EnvisatFile_GetDatasetIndex( EnvisatFile *self, const char *ds_name );
 
 int EnvisatFile_GetDatasetInfo( EnvisatFile *self,
                                 int ds_index,
-                                char **ds_name,
-                                char **ds_type,
-                                char **filename,
+                                const char **ds_name,
+                                const char **ds_type,
+                                const char **filename,
                                 int  *ds_offset,
                                 int  *ds_size,
                                 int  *num_dsr,

@@ -443,7 +443,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 
     for( ; true; nMDSIndex++ )
     {
-        char *pszDSType = nullptr;
+        const char *pszDSType = nullptr;
         if( EnvisatFile_GetDatasetInfo( hEnvisatFile, nMDSIndex,
             nullptr, &pszDSType, nullptr, nullptr, nullptr, nullptr, nullptr ) == FAILURE )
         {
@@ -669,7 +669,8 @@ char **EnvisatDataset::GetMetadata( const char * pszDomain )
 void EnvisatDataset::CollectDSDMetadata()
 
 {
-    char *pszDSName, *pszFilename;
+    const char *pszDSName;
+    const char *pszFilename;
 
     for( int iDSD = 0;
          EnvisatFile_GetDatasetInfo( hEnvisatFile, iDSD, &pszDSName, nullptr,
@@ -720,7 +721,9 @@ void EnvisatDataset::CollectDSDMetadata()
 void EnvisatDataset::CollectADSMetadata()
 {
     int nNumDsr, nDSRSize;
-    const char *pszDSName, *pszDSType, *pszDSFilename;
+    const char *pszDSName;
+    const char *pszDSType;
+    const char *pszDSFilename;
 
     const char *pszProduct
         = EnvisatFile_GetKeyValueAsString( hEnvisatFile, MPH,
@@ -728,9 +731,9 @@ void EnvisatDataset::CollectADSMetadata()
 
     for( int nDSIndex = 0;
          EnvisatFile_GetDatasetInfo( hEnvisatFile, nDSIndex,
-                                     (char **) &pszDSName,
-                                     (char **) &pszDSType,
-                                     (char **) &pszDSFilename,
+                                     &pszDSName,
+                                     &pszDSType,
+                                     &pszDSFilename,
                                      nullptr, nullptr,
                                      &nNumDsr, &nDSRSize ) == SUCCESS;
          ++nDSIndex )
@@ -866,7 +869,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      raster band.                                                    */
 /* -------------------------------------------------------------------- */
     int         dsr_size, num_dsr, ds_offset;
-    char        *pszDSType = nullptr;
+    const char *pszDSType = nullptr;
 
     int ds_index = 0;
     for( ; true; ds_index++ )
@@ -1001,7 +1004,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( ds_index = 0;
          EnvisatFile_GetDatasetInfo( hEnvisatFile, ds_index,
-                                     (char **) &pszDSName, nullptr, nullptr,
+                                     &pszDSName, nullptr, nullptr,
                                      &ds_offset, nullptr,
                                      &num_dsr2, &dsr_size2 ) == SUCCESS;
          ds_index++ )
