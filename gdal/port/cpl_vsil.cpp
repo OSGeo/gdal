@@ -158,7 +158,6 @@ char **VSISiblingFiles( const char *pszFilename)
 typedef struct
 {
     char **papszFiles;
-    int nCount;
     int i;
     char* pszPath;
     char* pszDisplayedPath;
@@ -194,7 +193,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
     CPLString osTemp1;
     CPLString osTemp2;
     int i = 0;
-    int nCount = -1;
+    bool bReadDir = true;
 
     std::vector<VSIReadDirRecursiveTask> aoStack;
     char* pszPath = CPLStrdup(pszPathIn);
@@ -202,17 +201,16 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
     while( true )
     {
-        if( nCount < 0 )
+        if( bReadDir )
         {
             // Get listing.
             papszFiles = VSIReadDir( pszPath );
 
-            // Get files and directories inside listing.
-            nCount = papszFiles ? CSLCount( papszFiles ) : 0;
+            bReadDir = false;
             i = 0;
         }
 
-        for( ; i < nCount; i++ )
+        for( ; papszFiles != nullptr && papszFiles[i] != nullptr; i++ )
         {
             // Do not recurse up the tree.
             if( EQUAL(".", papszFiles[i]) || EQUAL("..", papszFiles[i]) )
@@ -259,7 +257,6 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
                 VSIReadDirRecursiveTask sTask;
                 sTask.papszFiles = papszFiles;
-                sTask.nCount = nCount;
                 sTask.i = i;
                 sTask.pszPath = CPLStrdup(pszPath);
                 sTask.pszDisplayedPath =
@@ -286,13 +283,13 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
                 i = 0;
                 papszFiles = nullptr;
-                nCount = -1;
+                bReadDir = true;
 
                 break;
             }
         }
 
-        if( nCount >= 0 )
+        if( !bReadDir )
         {
             CSLDestroy( papszFiles );
 
@@ -301,7 +298,6 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                 const int iLast = static_cast<int>(aoStack.size()) - 1;
                 CPLFree(pszPath);
                 CPLFree(pszDisplayedPath);
-                nCount = aoStack[iLast].nCount;
                 papszFiles = aoStack[iLast].papszFiles;
                 i = aoStack[iLast].i + 1;
                 pszPath = aoStack[iLast].pszPath;
