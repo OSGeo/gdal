@@ -34,6 +34,7 @@
 #include "aaigriddataset.h"
 #include "gdal_frmts.h"
 
+#include <cassert>
 #include <cctype>
 #include <climits>
 #include <cmath>
@@ -1317,8 +1318,8 @@ GDALDataset * AAIGDataset::CreateCopy(
         CPLString osBuf;
         eErr = poBand->RasterIO(
             GF_Read, 0, iLine, nXSize, 1,
-            bReadAsInt ? reinterpret_cast<void *>(panScanline) :
-            reinterpret_cast<void *>(padfScanline),
+            bReadAsInt ? static_cast<void *>(panScanline) :
+                         static_cast<void *>(padfScanline),
             nXSize, 1, bReadAsInt ? GDT_Int32 : GDT_Float64,
             0, 0, nullptr);
 
@@ -1345,6 +1346,8 @@ GDALDataset * AAIGDataset::CreateCopy(
         }
         else
         {
+            assert(padfScanline);
+
             for ( int iPixel = 0; iPixel < nXSize; iPixel++ )
             {
                 CPLsnprintf(szHeader, sizeof(szHeader),
