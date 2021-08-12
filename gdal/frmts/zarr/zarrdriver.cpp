@@ -323,17 +323,17 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
             if( poMainArray )
                 osMainArray = poMainArray->GetFullName();
         }
-        else if( aosArrays.size() >= 2 )
+        else // at least 2 arrays
         {
-            for( size_t i = 0; i < aosArrays.size(); ++i )
+            for( const auto& osArrayName: aosArrays )
             {
-                auto poArray = poRG->OpenMDArrayFromFullname(aosArrays[i]);
+                auto poArray = poRG->OpenMDArrayFromFullname(osArrayName);
                 if( poArray && poArray->GetDimensionCount() >= 2 )
                 {
                     if( osMainArray.empty() )
                     {
                         poMainArray = poArray;
-                        osMainArray = aosArrays[i];
+                        osMainArray = osArrayName;
                     }
                     else
                     {
