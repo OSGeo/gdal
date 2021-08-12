@@ -1029,7 +1029,7 @@ static CPLString SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec )
     CPLString      osMetadata;
     GUInt32        k = 0;
 
-    for ( GUInt32 i = 0; i < iNumDims; i++ )
+    for ( GUInt32 i = 0; paiDims != nullptr && i < iNumDims; i++ )
     {
         // stops on large binary data
         if ( poMetadataRec->getDataType() == LTI_METADATA_DATATYPE_UINT8
