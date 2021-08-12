@@ -485,7 +485,9 @@ void OGRLIBKMLDataSource::WriteKmz()
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
         if( iLayer == 0 && CPLTestBool( pszUseDocKml ) )
-            CPLCreateFileInZip( hZIP, "layers/", nullptr );
+        {
+            CPL_IGNORE_RET_VAL(CPLCreateFileInZip( hZIP, "layers/", nullptr ));
+        }
 
         const char* pszLayerFileName = nullptr;
         if( CPLTestBool( pszUseDocKml ) )
