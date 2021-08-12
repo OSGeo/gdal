@@ -2147,6 +2147,12 @@ namespace tut
             CPLJSONDocument oDocument;
             ensure( !oDocument.LoadMemory(nullptr, 0) );
             ensure( !oDocument.LoadMemory(CPLString()) );
+            ensure( oDocument.LoadMemory(std::string("true")) );
+            ensure( oDocument.GetRoot().GetType() == CPLJSONObject::Type::Boolean );
+            ensure( oDocument.GetRoot().ToBool() );
+            ensure( oDocument.LoadMemory(std::string("false")) );
+            ensure( oDocument.GetRoot().GetType() == CPLJSONObject::Type::Boolean );
+            ensure( !oDocument.GetRoot().ToBool() );
         }
         {
             // Copy constructor

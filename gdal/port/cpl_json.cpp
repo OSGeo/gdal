@@ -219,6 +219,18 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
     if( m_poRootJsonObject )
         json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
 
+    if( nLength == 4 && memcmp(reinterpret_cast<const char*>(pabyData), "true", nLength) == 0 )
+    {
+        m_poRootJsonObject = json_object_new_boolean(true);
+        return true;
+    }
+
+    if( nLength == 5 && memcmp(reinterpret_cast<const char*>(pabyData), "false", nLength) == 0 )
+    {
+        m_poRootJsonObject = json_object_new_boolean(false);
+        return true;
+    }
+
     json_tokener *jstok = json_tokener_new();
     m_poRootJsonObject = json_tokener_parse_ex( jstok,
                                                 reinterpret_cast<const char*>(pabyData),
