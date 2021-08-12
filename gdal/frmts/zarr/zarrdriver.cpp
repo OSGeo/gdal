@@ -39,6 +39,15 @@
 #endif
 
 /************************************************************************/
+/*                            ZarrDataset()                             */
+/************************************************************************/
+
+ZarrDataset::ZarrDataset(const std::shared_ptr<GDALGroup>& poRootGroup):
+    m_poRootGroup(poRootGroup)
+{
+}
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -88,11 +97,9 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
     if( osFilename.back() == '/' )
         osFilename.resize(osFilename.size() - 1);
 
-    auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
     auto poSharedResource = std::make_shared<ZarrSharedResource>(osFilename);
     auto poRG = ZarrGroupV2::Create(poSharedResource, std::string(), "/");
     poRG->SetUpdatable(bUpdateMode);
-    poDS->m_poRootGroup = poRG;
     poRG->SetDirectoryName(osFilename);
 
     const std::string osZarrayFilename(
@@ -109,7 +116,7 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
                              false, CPLJSONObject()) )
             return nullptr;
 
-        return poDS.release();
+        return new ZarrDataset(poRG);
     }
 
     const std::string osZmetadataFilename(
@@ -125,7 +132,8 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         poRG->InitFromZMetadata(oDoc.GetRoot());
         poSharedResource->EnableZMetadata();
         poSharedResource->InitFromZMetadata(oDoc.GetRoot());
-        return poDS.release();
+
+        return new ZarrDataset(poRG);
     }
 
     const std::string osGroupFilename(
@@ -135,15 +143,15 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         CPLJSONDocument oDoc;
         if( !oDoc.Load(osGroupFilename) )
             return nullptr;
-        return poDS.release();
+
+        return new ZarrDataset(poRG);
     }
 
     // Zarr v3
     auto poRG_V3 = ZarrGroupV3::Create(poSharedResource,
                                        std::string(), "/", osFilename);
     poRG_V3->SetUpdatable(bUpdateMode);
-    poDS->m_poRootGroup = poRG_V3;
-    return poDS.release();
+    return new ZarrDataset(poRG_V3);
 }
 
 /************************************************************************/
@@ -263,7 +271,7 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
 
     auto poRG = poDSMultiDim->GetRootGroup();
 
-    std::unique_ptr<ZarrDataset> poDS(new ZarrDataset());
+    std::unique_ptr<ZarrDataset> poDS(new ZarrDataset(nullptr));
     std::shared_ptr<GDALMDArray> poMainArray;
     if( !osArrayOfInterest.empty() )
     {
@@ -729,10 +737,9 @@ GDALDataset * ZarrDataset::CreateMultiDimensional( const char * pszFilename,
     if( !poRG )
         return nullptr;
 
-    auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
+    auto poDS = new ZarrDataset(poRG);
     poDS->SetDescription(pszFilename);
-    poDS->m_poRootGroup = poRG;
-    return poDS.release();
+    return poDS;
 }
 
 /************************************************************************/
@@ -797,9 +804,8 @@ GDALDataset * ZarrDataset::Create( const char * pszName,
     if( !poRG )
         return nullptr;
 
-    auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset());
+    auto poDS = std::unique_ptr<ZarrDataset>(new ZarrDataset(poRG));
     poDS->SetDescription(pszName);
-    poDS->m_poRootGroup = poRG;
     poDS->nRasterYSize = nYSize;
     poDS->nRasterXSize = nXSize;
     poDS->eAccess = GA_Update;
