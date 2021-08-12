@@ -1057,7 +1057,7 @@ def test_zarr_create_group(format,create_z_metadata):
             attr = rg.CreateAttribute(
                 'json_attr', [], gdal.ExtendedDataType.CreateString(0, gdal.GEDTST_JSON))
             assert attr
-            assert attr.Write('{"foo":"bar"}') == gdal.CE_None
+            assert attr.Write({"foo":"bar"}) == gdal.CE_None
 
             attr = rg.CreateAttribute(
                 'str_array_attr', [2], gdal.ExtendedDataType.CreateString())
@@ -1151,7 +1151,7 @@ def test_zarr_create_group(format,create_z_metadata):
         attr = rg.GetAttribute('json_attr')
         assert attr
         assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
-        assert attr.Read() == '{ "foo": "bar" }'
+        assert attr.Read() == { "foo": "bar" }
 
         attr = rg.GetAttribute('str_array_attr')
         assert attr

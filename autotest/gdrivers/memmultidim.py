@@ -832,8 +832,8 @@ def test_mem_md_group_attribute_string_json():
     assert attr
     assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
     assert attr.Read() is None
-    assert attr.Write('{"foo":"bar"}') == gdal.CE_None
-    assert attr.Read() == '{"foo":"bar"}'
+    assert attr.Write({"foo":"bar"}) == gdal.CE_None
+    assert attr.Read() == {"foo" : "bar"}
 
 
 def test_mem_md_group_attribute_multiple_string():
