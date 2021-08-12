@@ -379,15 +379,7 @@ static char **ExtractEsriMD( char **papszMD )
 
 static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBand )
 {
-    if(psImage == nullptr || poBand == nullptr || nBand <= 0)
-    {
-        return;
-    }
-    NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
-    if(psBandInfo == nullptr)
-    {
-        return;
-    }
+    const NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
 
     /* The ISUBCAT is particularly valuable for interpreting SAR bands */
     if( strlen(psBandInfo->szISUBCAT) > 0 )
