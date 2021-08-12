@@ -400,7 +400,8 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
         if( psPam->poSRS )
             psPam->poSRS->Release();
         psPam->poSRS = new OGRSpatialReference();
-        psPam->poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, "") );
+        psPam->poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, ""),
+                                        OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
         const char* pszMapping =
             CPLGetXMLValue(psSRSNode, "dataAxisToSRSAxisMapping", nullptr);
         if( pszMapping )
