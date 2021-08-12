@@ -804,11 +804,10 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             {
                 if( adfQuadDist[iQuad] <= dfMaxSearchDist )
                 {
-                    const double dfWeight = 1.0 / adfQuadDist[iQuad];
-
-                    bHasSrcValues = dfWeight != 0;
+                    bHasSrcValues = true;
                     if( !bHasNoData || fQuadValue[iQuad] != fNoData )
                     {
+                        const double dfWeight = 1.0 / adfQuadDist[iQuad];
                         dfWeightSum += dfWeight;
                         dfValueSum += fQuadValue[iQuad] * dfWeight;
                     }
@@ -817,7 +816,6 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
             if( bHasSrcValues )
             {
-                pabyMask[iX] = 255;
                 pabyFiltMask[iX] = 255;
                 if( dfWeightSum > 0.0 )
                     pafScanline[iX] = static_cast<float>(dfValueSum / dfWeightSum);

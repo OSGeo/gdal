@@ -81,14 +81,6 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
 
     srcband = src_ds.GetRasterBand(band_number)
 
-    if mask == 'default':
-        maskband = srcband.GetMaskBand()
-    elif mask == 'none':
-        maskband = None
-    else:
-        mask_ds = gdal.Open(mask)
-        maskband = mask_ds.GetRasterBand(1)
-
     # =============================================================================
     #       Create output file if one is specified.
     # =============================================================================
@@ -106,7 +98,6 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
             dst_ds.SetGeoTransform(gt)
 
         dstband = dst_ds.GetRasterBand(1)
-        CopyBand(srcband, dstband)
         ndv = srcband.GetNoDataValue()
         if ndv is not None:
             dstband.SetNoDataValue(ndv)
@@ -116,6 +107,8 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
         if color_interp == gdal.GCI_PaletteIndex:
             color_table = srcband.GetColorTable()
             dstband.SetColorTable(color_table)
+
+        CopyBand(srcband, dstband)
 
     else:
         dstband = srcband
@@ -128,6 +121,14 @@ def gdal_fillnodata(src_filename: Optional[str] = None, band_number: int = 1,
         prog_func = None
     else:
         prog_func = gdal.TermProgress_nocb
+
+    if mask == 'default':
+        maskband = dstband.GetMaskBand()
+    elif mask == 'none':
+        maskband = None
+    else:
+        mask_ds = gdal.Open(mask)
+        maskband = mask_ds.GetRasterBand(1)
 
     result = gdal.FillNodata(dstband, maskband,
                              max_distance, smoothing_iterations, options,
