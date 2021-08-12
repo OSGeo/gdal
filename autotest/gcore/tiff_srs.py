@@ -840,3 +840,11 @@ def test_tiff_srs_read_getspatialref_getgcpspatialref():
     assert ds.GetGCPSpatialRef() is not None
     assert ds.GetSpatialRef() is None
     assert ds.GetSpatialRef() is None
+
+
+def test_tiff_srs_read_VerticalUnitsGeoKey_private_range():
+    ds = gdal.Open('data/gtiff/VerticalUnitsGeoKey_private_range.tif')
+    with gdaltest.error_handler():
+        sr = ds.GetSpatialRef()
+    assert sr.GetName() == "NAD83 / UTM zone 16N"
+    assert gdal.GetLastErrorMsg() != ''
