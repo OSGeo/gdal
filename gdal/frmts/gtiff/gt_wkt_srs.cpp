@@ -1247,6 +1247,21 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 /* ==================================================================== */
     bool bNeedManualVertCS = false;
     char citation[2048] = { '\0' };
+
+    // See https://github.com/OSGeo/gdal/pull/4197
+    if( verticalCSType > KvUserDefined ||
+        verticalDatum > KvUserDefined ||
+        verticalUnits > KvUserDefined )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "At least one of VerticalCSTypeGeoKey, VerticalDatumGeoKey or "
+                 "VerticalUnitsGeoKey has a value in the private user range. "
+                 "Ignoring vertical information.");
+        verticalCSType = 0;
+        verticalDatum = 0;
+        verticalUnits = 0;
+    }
+
     if( (verticalCSType != 0 || verticalDatum != 0 || verticalUnits != 0)
         && (oSRS.IsGeographic() || oSRS.IsProjected() || oSRS.IsLocal()) )
     {
