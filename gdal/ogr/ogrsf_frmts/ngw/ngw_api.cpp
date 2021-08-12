@@ -61,7 +61,7 @@ std::string GetTMS(const std::string &osUrl, const std::string &osResourceId)
 
 std::string GetFeaturePage(const std::string &osUrl, const std::string &osResourceId,
     GIntBig nStart, int nCount, const std::string &osFields,
-    const std::string &osWhere, const std::string &osSpatialWhere, 
+    const std::string &osWhere, const std::string &osSpatialWhere,
     const std::string &osExtensions, bool IsGeometryIgnored)
 {
     std::string osFeatureUrl = GetFeature(osUrl, osResourceId);
@@ -121,17 +121,11 @@ std::string GetFeaturePage(const std::string &osUrl, const std::string &osResour
         osFeatureUrl += "?extensions=" + osExtensions;
         bParamAdd = true;
     }
+    CPL_IGNORE_RET_VAL(bParamAdd);
 
     if (IsGeometryIgnored)
     {
-        if (bParamAdd)
-        {
-            osFeatureUrl += "&geom=no";
-        }
-        else
-        {
-            osFeatureUrl += "?geom=no";
-        }
+        osFeatureUrl += "&geom=no";
     }
 
     return osFeatureUrl;

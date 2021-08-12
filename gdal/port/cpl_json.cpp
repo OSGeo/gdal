@@ -72,6 +72,26 @@ CPLJSONDocument& CPLJSONDocument::operator=(const CPLJSONDocument& other)
 
     return *this;
 }
+
+CPLJSONDocument::CPLJSONDocument(CPLJSONDocument&& other):
+    m_poRootJsonObject(other.m_poRootJsonObject)
+{
+    other.m_poRootJsonObject = nullptr;
+}
+
+CPLJSONDocument& CPLJSONDocument::operator=(CPLJSONDocument&& other)
+{
+    if( this == &other )
+        return *this;
+
+    if( m_poRootJsonObject )
+        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+    m_poRootJsonObject = other.m_poRootJsonObject;
+    other.m_poRootJsonObject = nullptr;
+
+    return *this;
+}
+
 /*! @endcond */
 
 /**

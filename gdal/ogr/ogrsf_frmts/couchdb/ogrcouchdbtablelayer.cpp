@@ -216,6 +216,7 @@ bool OGRCouchDBTableLayer::RunSpatialFilterQueryIfNecessary()
         pszSpatialFilter = "_design/ogr_spatial/_spatial/spatial";
     else if( bHasGeocouchUtilsMinimalSpatialView )
         pszSpatialFilter = "_design/geo/_spatial/minimal";
+    CPLAssert(pszSpatialFilter);
 
     CPLString osURI("/");
     osURI += osEscapedName;

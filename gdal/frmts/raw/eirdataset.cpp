@@ -398,7 +398,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      this never having been considered to be a match. This isn't     */
 /*      an error!                                                       */
 /* -------------------------------------------------------------------- */
-    if( nRows == -1 || nCols == -1 )
+    if( nRows <= 0 || nCols <= 0 || nBands <= 0 )
     {
         CSLDestroy( papszHDR );
         return nullptr;

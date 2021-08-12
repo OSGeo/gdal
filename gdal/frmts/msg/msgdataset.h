@@ -88,13 +88,13 @@ class MSGDataset final: public GDALDataset
   private:
     MSGCommand command;
     double adfGeoTransform[6]; // Calculate and store once as GetGeoTransform may be called multiple times
-    char   *pszProjection;
+    char   *pszProjection = nullptr;
     OGRSpatialReference oSRS;
     OGRSpatialReference oLL;
-    OGRCoordinateTransformation *poTransform;
+    OGRCoordinateTransformation *poTransform = nullptr;
     double rCalibrationOffset[12];
     double rCalibrationSlope[12];
-    int iCurrentSatellite;            // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
+    int iCurrentSatellite = 0;            // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
     static int iCurrentSatelliteHint; // hint for satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
     static const double rCentralWvl[12];
     static const double rVc[12];

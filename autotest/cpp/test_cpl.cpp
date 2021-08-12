@@ -2151,6 +2151,7 @@ namespace tut
         {
             // Copy constructor
             CPLJSONDocument oDocument;
+            oDocument.GetRoot();
             CPLJSONDocument oDocument2(oDocument);
             CPLJSONObject oObj;
             CPLJSONObject oObj2(oObj);
@@ -2161,6 +2162,19 @@ namespace tut
             oObj2 = oObj;
             auto& oObj2Ref(oObj2);
             oObj2 = oObj2Ref;
+        }
+        {
+            // Move constructor
+            CPLJSONDocument oDocument;
+            oDocument.GetRoot();
+            CPLJSONDocument oDocument2(std::move(oDocument));
+        }
+        {
+            // Move assignment
+            CPLJSONDocument oDocument;
+            oDocument.GetRoot();
+            CPLJSONDocument oDocument2;
+            oDocument2 = std::move(oDocument);
         }
         {
             // Save

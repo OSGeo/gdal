@@ -773,7 +773,7 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptionsIn )
 /* -------------------------------------------------------------------- */
     if( VSIStatL( pszNameIn, &stat ) != 0 )
     {
-        VSIMkdir( pszNameIn, 0755 );
+        CPL_IGNORE_RET_VAL(VSIMkdir( pszNameIn, 0755 ));
     }
 
     if( VSIStatL( pszNameIn, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )

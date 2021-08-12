@@ -2484,7 +2484,7 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 /* -------------------------------------------------------------------- */
     SHPDestroyTree( psTree );
 
-    CheckForQIX();
+    CPL_IGNORE_RET_VAL(CheckForQIX());
 
     return OGRERR_NONE;
 }

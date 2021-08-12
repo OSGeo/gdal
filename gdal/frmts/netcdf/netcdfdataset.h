@@ -830,7 +830,7 @@ class netCDFDataset final: public GDALPamDataset
                                 const char *pszParam, double dfDefault,
                                 bool *pbFound=nullptr );
 
-    char **      FetchStandardParallels( const char *pszGridMappingValue );
+    std::vector<std::string> FetchStandardParallels( const char *pszGridMappingValue );
 
     const char *FetchAttr( const char *pszVarFullName, const char *pszAttr );
     const char *FetchAttr( int nGroupId, int nVarId, const char *pszAttr );

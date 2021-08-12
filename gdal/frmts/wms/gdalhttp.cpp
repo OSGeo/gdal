@@ -99,8 +99,8 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
 
     psRequest->m_curl_handle = curl_easy_init();
     if (psRequest->m_curl_handle == nullptr) {
-        CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
-        // This should return somehow?
+        CPLError(CE_Failure, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
+        return;
     }
 
     if (!psRequest->Range.empty())

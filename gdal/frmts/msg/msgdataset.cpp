@@ -65,7 +65,6 @@ const char *MSGDataset::metadataDomain = "msg"; // the metadata domain
 MSGDataset::MSGDataset()
 
 {
-  poTransform = nullptr;
   pszProjection = CPLStrdup("");
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
@@ -82,8 +81,7 @@ MSGDataset::MSGDataset()
 MSGDataset::~MSGDataset()
 
 {
-  if( poTransform != nullptr )
-    delete poTransform;
+  delete poTransform;
 
   CPLFree( pszProjection );
 }

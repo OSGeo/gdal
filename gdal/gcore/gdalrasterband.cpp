@@ -4543,13 +4543,9 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
     }
     else if( !bHasNoData && nXCheck == nBlockXSize && nBlockPixels >= 32 )
     {
-        const GUInt32 nMinThreshold =
-                        (bHasNoData && nNoDataValue == 0) ? 1 : 0;
-        const GUInt32 nMaxThreshold =
-                        (bHasNoData && nNoDataValue == 255) ? 254 : 255;
-        if( nMin > nMinThreshold )
+        if( nMin > 0 )
         {
-            if( nMax < nMaxThreshold )
+            if( nMax < 255 )
             {
                 ComputeStatisticsByteNoNodata<true, true>(
                     nBlockPixels, pData,
@@ -4566,7 +4562,7 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
         }
         else
         {
-            if( nMax < nMaxThreshold )
+            if( nMax < 255 )
             {
                 ComputeStatisticsByteNoNodata<false, true>(
                     nBlockPixels, pData,
@@ -4637,11 +4633,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
         if( (nBlockPixels % nMaxIterationsPerInnerLoop) != 0 )
             nOuterLoops ++;
 
-        const GUInt32 nMinThreshold =
-                        (bHasNoData && nNoDataValue == 0) ? 1 : 0;
-        const GUInt32 nMaxThreshold =
-                        (bHasNoData && nNoDataValue == 65535) ? 65534 : 65535;
-        const bool bComputeMinMax = nMin > nMinThreshold || nMax < nMaxThreshold;
+        const bool bComputeMinMax = nMin > 0 || nMax < 65535;
         const auto ymm_mask_16bits = GDALmm256_set1_epi32(0xFFFF);
         const auto ymm_mask_32bits = GDALmm256_set1_epi64x(0xFFFFFFFF);
 
