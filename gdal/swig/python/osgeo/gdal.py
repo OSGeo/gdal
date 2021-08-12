@@ -3526,7 +3526,7 @@ class ExtendedDataType(_object):
     Create = staticmethod(Create)
 
     def CreateString(*args):
-        """CreateString(size_t nMaxStringLength=0) -> ExtendedDataType"""
+        """CreateString(size_t nMaxStringLength=0, GDALExtendedDataTypeSubType eSubType=GEDTST_NONE) -> ExtendedDataType"""
         return _gdal.ExtendedDataType_CreateString(*args)
 
     CreateString = staticmethod(CreateString)
@@ -3597,7 +3597,7 @@ def ExtendedDataType_Create(*args):
     return _gdal.ExtendedDataType_Create(*args)
 
 def ExtendedDataType_CreateString(*args):
-    """ExtendedDataType_CreateString(size_t nMaxStringLength=0) -> ExtendedDataType"""
+    """ExtendedDataType_CreateString(size_t nMaxStringLength=0, GDALExtendedDataTypeSubType eSubType=GEDTST_NONE) -> ExtendedDataType"""
     return _gdal.ExtendedDataType_CreateString(*args)
 
 def ExtendedDataType_CreateCompound(*args):

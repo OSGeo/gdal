@@ -1292,9 +1292,10 @@ public:
   }
 
 %newobject CreateString;
-  static GDALExtendedDataTypeHS* CreateString(size_t nMaxStringLength = 0)
+  static GDALExtendedDataTypeHS* CreateString(size_t nMaxStringLength = 0,
+                                              GDALExtendedDataTypeSubType eSubType = GEDTST_NONE)
   {
-    return GDALExtendedDataTypeCreateString(nMaxStringLength);
+    return GDALExtendedDataTypeCreateStringEx(nMaxStringLength, eSubType);
   }
 
 #if defined(SWIGPYTHON)

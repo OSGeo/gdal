@@ -8038,6 +8038,27 @@ GDALExtendedDataTypeH GDALExtendedDataTypeCreateString(size_t nMaxStringLength)
 }
 
 /************************************************************************/
+/*                   GDALExtendedDataTypeCreateStringEx()               */
+/************************************************************************/
+
+/** Return a new GDALExtendedDataType of class GEDTC_STRING.
+ *
+ * This is the same as the C++ method GDALExtendedDataType::CreateString()
+ *
+ * The returned handle should be freed with GDALExtendedDataTypeRelease().
+ *
+ * @return a new GDALExtendedDataTypeH handle, or nullptr.
+ * @since GDAL 3.4
+ */
+GDALExtendedDataTypeH GDALExtendedDataTypeCreateStringEx(size_t nMaxStringLength,
+                                                         GDALExtendedDataTypeSubType eSubType)
+{
+    return new GDALExtendedDataTypeHS(
+        new GDALExtendedDataType(
+            GDALExtendedDataType::CreateString(nMaxStringLength, eSubType)));
+}
+
+/************************************************************************/
 /*                   GDALExtendedDataTypeCreateCompound()               */
 /************************************************************************/
 

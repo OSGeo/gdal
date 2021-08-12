@@ -6336,8 +6336,8 @@ SWIGINTERN void delete_GDALExtendedDataTypeHS(GDALExtendedDataTypeHS *self){
 SWIGINTERN GDALExtendedDataTypeHS *GDALExtendedDataTypeHS_Create(GDALDataType dt){
     return GDALExtendedDataTypeCreate(dt);
   }
-SWIGINTERN GDALExtendedDataTypeHS *GDALExtendedDataTypeHS_CreateString(size_t nMaxStringLength=0){
-    return GDALExtendedDataTypeCreateString(nMaxStringLength);
+SWIGINTERN GDALExtendedDataTypeHS *GDALExtendedDataTypeHS_CreateString(size_t nMaxStringLength=0,GDALExtendedDataTypeSubType eSubType=GEDTST_NONE){
+    return GDALExtendedDataTypeCreateStringEx(nMaxStringLength, eSubType);
   }
 SWIGINTERN GDALExtendedDataTypeHS *GDALExtendedDataTypeHS_CreateCompound(char const *name,size_t nTotalSize,int nComps,GDALEDTComponentHS **comps){
     return GDALExtendedDataTypeCreateCompound(name, nTotalSize, nComps, comps);
@@ -28104,12 +28104,16 @@ fail:
 SWIGINTERN PyObject *_wrap_ExtendedDataType_CreateString(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   size_t arg1 = (size_t) 0 ;
+  GDALExtendedDataTypeSubType arg2 = (GDALExtendedDataTypeSubType) GEDTST_NONE ;
   size_t val1 ;
   int ecode1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
   GDALExtendedDataTypeHS *result = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"|O:ExtendedDataType_CreateString",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"|OO:ExtendedDataType_CreateString",&obj0,&obj1)) SWIG_fail;
   if (obj0) {
     ecode1 = SWIG_AsVal_size_t(obj0, &val1);
     if (!SWIG_IsOK(ecode1)) {
@@ -28117,13 +28121,20 @@ SWIGINTERN PyObject *_wrap_ExtendedDataType_CreateString(PyObject *SWIGUNUSEDPAR
     } 
     arg1 = static_cast< size_t >(val1);
   }
+  if (obj1) {
+    ecode2 = SWIG_AsVal_int(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "ExtendedDataType_CreateString" "', argument " "2"" of type '" "GDALExtendedDataTypeSubType""'");
+    } 
+    arg2 = static_cast< GDALExtendedDataTypeSubType >(val2);
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (GDALExtendedDataTypeHS *)GDALExtendedDataTypeHS_CreateString(arg1);
+      result = (GDALExtendedDataTypeHS *)GDALExtendedDataTypeHS_CreateString(arg1,arg2);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -43900,7 +43911,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Dimension_swigregister", Dimension_swigregister, METH_VARARGS, NULL},
 	 { (char *)"delete_ExtendedDataType", _wrap_delete_ExtendedDataType, METH_VARARGS, (char *)"delete_ExtendedDataType(ExtendedDataType self)"},
 	 { (char *)"ExtendedDataType_Create", _wrap_ExtendedDataType_Create, METH_VARARGS, (char *)"ExtendedDataType_Create(GDALDataType dt) -> ExtendedDataType"},
-	 { (char *)"ExtendedDataType_CreateString", _wrap_ExtendedDataType_CreateString, METH_VARARGS, (char *)"ExtendedDataType_CreateString(size_t nMaxStringLength=0) -> ExtendedDataType"},
+	 { (char *)"ExtendedDataType_CreateString", _wrap_ExtendedDataType_CreateString, METH_VARARGS, (char *)"ExtendedDataType_CreateString(size_t nMaxStringLength=0, GDALExtendedDataTypeSubType eSubType=GEDTST_NONE) -> ExtendedDataType"},
 	 { (char *)"ExtendedDataType_CreateCompound", _wrap_ExtendedDataType_CreateCompound, METH_VARARGS, (char *)"ExtendedDataType_CreateCompound(char const * name, size_t nTotalSize, int nComps) -> ExtendedDataType"},
 	 { (char *)"ExtendedDataType_GetName", _wrap_ExtendedDataType_GetName, METH_VARARGS, (char *)"ExtendedDataType_GetName(ExtendedDataType self) -> char const *"},
 	 { (char *)"ExtendedDataType_GetClass", _wrap_ExtendedDataType_GetClass, METH_VARARGS, (char *)"ExtendedDataType_GetClass(ExtendedDataType self) -> GDALExtendedDataTypeClass"},
