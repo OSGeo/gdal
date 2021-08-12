@@ -93,7 +93,7 @@ public:
             }
 
             // special case for before first.
-            if( !offsets.empty() && offset < offsets[0] )
+            if( offset < offsets[0] )
             {
                 if( offset+size > offsets[0] )
                     return true;
