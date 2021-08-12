@@ -381,39 +381,34 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
     poFeature->SetField( "GEOM_ID", papoGroup[1]->GetField(3,8) );
 
     // NUM_LINKS
-    int         nLinkCount=0;
-    int         *panLinks = nullptr;
-
+    int nLinkCount = 0;
     if( papoGroup[0]->GetLength() > 18 )
     {
         nLinkCount = atoi(papoGroup[0]->GetField(15,18));
         if( nLinkCount > 0 )
         {
-            panLinks = static_cast<int *>(CPLCalloc(sizeof(int), nLinkCount));
+            std::vector<int> anLinks(nLinkCount);
+
+            // GEOM_ID_OF_LINK
+            for( int iLink = 0; iLink < nLinkCount; iLink++ )
+                anLinks[iLink] = atoi(papoGroup[0]->GetField(20+iLink*12,
+                                                              25+iLink*12));
+
+            poFeature->SetField( "GEOM_ID_OF_LINK", nLinkCount, anLinks.data() );
+
+            // DIR
+            for( int iLink = 0; iLink < nLinkCount; iLink++ )
+                anLinks[iLink] = atoi(papoGroup[0]->GetField(19+iLink*12,
+                                                              19+iLink*12));
+
+            poFeature->SetField( "DIR", nLinkCount, anLinks.data() );
+
         }
     }
 
     poFeature->SetField( "NUM_LINKS", nLinkCount );
 
-    // GEOM_ID_OF_LINK
-    for( int iLink = 0; iLink < nLinkCount; iLink++ )
-        panLinks[iLink] = atoi(papoGroup[0]->GetField(20+iLink*12,
-                                                      25+iLink*12));
-
-    if( panLinks != nullptr )
-        poFeature->SetField( "GEOM_ID_OF_LINK", nLinkCount, panLinks );
-
-    // DIR
-    for( int iLink = 0; iLink < nLinkCount; iLink++ )
-        panLinks[iLink] = atoi(papoGroup[0]->GetField(19+iLink*12,
-                                                      19+iLink*12));
-
-    if( panLinks != nullptr )
-        poFeature->SetField( "DIR", nLinkCount, panLinks );
-
     // should we add LEVEL and/or ORIENT?
-
-    CPLFree( panLinks );
 
     return poFeature;
 }
@@ -438,7 +433,6 @@ static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
 
     // NUM_PARTS
     int         nPartCount=0;
-    int         *panParts = nullptr;
 
     if( papoGroup[0]->GetLength() >= 20 )
     {
@@ -446,7 +440,22 @@ static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
         if( nPartCount > 0 &&
             nPartCount-1 <= (papoGroup[0]->GetLength() - 20) / 8 )
         {
-            panParts = static_cast<int *>(CPLCalloc(sizeof(int), nPartCount));
+            std::vector<int> anParts(nPartCount);
+
+            // TYPE
+            for( int iPart = 0; iPart < nPartCount; iPart++ )
+                anParts[iPart] = atoi(papoGroup[0]->GetField(13+iPart*8,
+                                                              14+iPart*8));
+
+            poFeature->SetField( "TYPE", nPartCount, anParts.data() );
+
+            // ID
+            for( int iPart = 0; iPart < nPartCount; iPart++ )
+                anParts[iPart] = atoi(papoGroup[0]->GetField(15+iPart*8,
+                                                              20+iPart*8));
+
+            poFeature->SetField( "ID", nPartCount, anParts.data() );
+
         }
         else
         {
@@ -455,24 +464,6 @@ static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
     }
 
     poFeature->SetField( "NUM_PARTS", nPartCount );
-
-    // TYPE
-    for( int iPart = 0; iPart < nPartCount; iPart++ )
-        panParts[iPart] = atoi(papoGroup[0]->GetField(13+iPart*8,
-                                                      14+iPart*8));
-
-    if( panParts != nullptr )
-        poFeature->SetField( "TYPE", nPartCount, panParts );
-
-    // ID
-    for( int iPart = 0; iPart < nPartCount; iPart++ )
-        panParts[iPart] = atoi(papoGroup[0]->GetField(15+iPart*8,
-                                                      20+iPart*8));
-
-    if( panParts != nullptr )
-        poFeature->SetField( "ID", nPartCount, panParts );
-
-    CPLFree( panParts );
 
     // ATTREC Attributes
     AddGenericAttributes( poReader, papoGroup, poFeature );
