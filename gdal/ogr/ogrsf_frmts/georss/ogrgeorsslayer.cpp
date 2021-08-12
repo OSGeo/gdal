@@ -2228,8 +2228,7 @@ void OGRGeoRSSLayer::endElementLoadSchemaCbk( const char *pszName )
     {
         bInFeature = false;
     }
-    else if( bInFeature &&
-             eFormat == GEORSS_ATOM &&
+    else if( eFormat == GEORSS_ATOM &&
              currentDepth == 2 &&
              OGRGeoRSSLayerATOMTagHasSubElement(pszNoNSName) )
     {
