@@ -390,8 +390,8 @@ bool OGRPGeoDataSource::CountStarWorking() const
             if( old_stderr != -1 )
             {
                 dup2(new_fd, fileno(stderr));
-                close(new_fd);
             }
+            close(new_fd);
         }
 #endif
 
