@@ -91,6 +91,7 @@ bool DownsamplingIntegerXFactor(GDALRasterBand* poBand,
 
     if( iSrcX < nEndBlockX )
     {
+        CPLAssert(poBlock);
         goto no_reload_block;
     }
     goto reload_block;
