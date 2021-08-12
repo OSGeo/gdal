@@ -682,31 +682,32 @@ void EnvisatDataset::CollectDSDMetadata()
             || STARTS_WITH_CI(pszFilename, "        "))
             continue;
 
-        const int max_len = 128;
-        char szKey[max_len];
-
-        strcpy( szKey, "DS_");
-        strncat( szKey, pszDSName, max_len - strlen(szKey) - 1 );
-
+        std::string osKey("DS_");
+        osKey += pszDSName;
         // strip trailing spaces.
-        for( int i = static_cast<int>(strlen(szKey))-1; i && szKey[i] == ' '; i-- )
-            szKey[i] = '\0';
-
-        // convert spaces into underscores.
-        for( int i = 0; szKey[i] != '\0'; i++ )
         {
-            if( szKey[i] == ' ' )
-                szKey[i] = '_';
+            const auto nPos = osKey.rfind(' ');
+            if( nPos != std::string::npos )
+                osKey.resize(nPos);
         }
 
-        strcat( szKey, "_NAME" );
+        // convert spaces into underscores.
+        for( char& ch: osKey )
+        {
+            if( ch == ' ' )
+                ch = '_';
+        }
 
-        char szTrimmedName[max_len];
-        strcpy( szTrimmedName, pszFilename );
-        for( int i = static_cast<int>(strlen(szTrimmedName))-1; i && szTrimmedName[i] == ' '; i--)
-            szTrimmedName[i] = '\0';
+        osKey += "_NAME";
 
-        SetMetadataItem( szKey, szTrimmedName );
+        std::string osTrimmedName(pszFilename);
+        {
+            const auto nPos = osTrimmedName.rfind(' ');
+            if( nPos != std::string::npos )
+                osTrimmedName.resize(nPos);
+        }
+
+        SetMetadataItem( osKey.c_str(), osTrimmedName.c_str() );
     }
 }
 
