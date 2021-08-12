@@ -2669,10 +2669,64 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
             std::string(), std::string(), nSize));
     }
 
+    const auto GetDimensionTypeDirection = [&oAttributes, &osUnit](
+                                            std::string& osType,
+                                            std::string& osDirection)
+    {
+        const auto oStdName = oAttributes[CF_STD_NAME];
+        if( oStdName.GetType() == CPLJSONObject::Type::String )
+        {
+            const auto osStdName = oStdName.ToString();
+            if( osStdName == CF_PROJ_X_COORD ||
+                osStdName == CF_LONGITUDE_STD_NAME )
+            {
+                osType = GDAL_DIM_TYPE_HORIZONTAL_X;
+                oAttributes.Delete(CF_STD_NAME);
+                if( osUnit == CF_DEGREES_EAST )
+                {
+                    osDirection = "EAST";
+                }
+            }
+            else if( osStdName == CF_PROJ_Y_COORD ||
+                osStdName == CF_LATITUDE_STD_NAME )
+            {
+                osType = GDAL_DIM_TYPE_HORIZONTAL_Y;
+                oAttributes.Delete(CF_STD_NAME);
+                if( osUnit == CF_DEGREES_NORTH )
+                {
+                    osDirection = "NORTH";
+                }
+            }
+            else if( osStdName == "time" )
+            {
+                osType = GDAL_DIM_TYPE_TEMPORAL;
+                oAttributes.Delete(CF_STD_NAME);
+            }
+        }
+
+        const auto osAxis = oAttributes[CF_AXIS].ToString();
+        if( osAxis == "Z" )
+        {
+            osType = GDAL_DIM_TYPE_VERTICAL;
+            const auto osPositive = oAttributes["positive"].ToString();
+            if( osPositive == "up" )
+            {
+                osDirection = "UP";
+                oAttributes.Delete("positive");
+            }
+            else if( osPositive == "down" )
+            {
+                osDirection = "DOWN";
+                oAttributes.Delete("positive");
+            }
+            oAttributes.Delete(CF_AXIS);
+        }
+    };
+
     // XArray extension
     const auto arrayDimensionsObj = oAttributes["_ARRAY_DIMENSIONS"];
 
-    const auto FindDimension = [this, &aoDims, &oAttributes, &osUnit,
+    const auto FindDimension = [this, &aoDims, &GetDimensionTypeDirection,
                                 bLoadedFromZMetadata, &osArrayName,
                                 &osZarrayFilename, &oSetFilenamesInLoading,
                                 isZarrV2](
@@ -2781,54 +2835,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         std::string osDirection;
         if( aoDims.size() == 1 && osArrayName == osDimName )
         {
-            const auto oStdName = oAttributes[CF_STD_NAME];
-            if( oStdName.GetType() == CPLJSONObject::Type::String )
-            {
-                const auto osStdName = oStdName.ToString();
-                if( osStdName == CF_PROJ_X_COORD ||
-                    osStdName == CF_LONGITUDE_STD_NAME )
-                {
-                    osType = GDAL_DIM_TYPE_HORIZONTAL_X;
-                    oAttributes.Delete(CF_STD_NAME);
-                    if( osUnit == CF_DEGREES_EAST )
-                    {
-                        osDirection = "EAST";
-                    }
-                }
-                else if( osStdName == CF_PROJ_Y_COORD ||
-                    osStdName == CF_LATITUDE_STD_NAME )
-                {
-                    osType = GDAL_DIM_TYPE_HORIZONTAL_Y;
-                    oAttributes.Delete(CF_STD_NAME);
-                    if( osUnit == CF_DEGREES_NORTH )
-                    {
-                        osDirection = "NORTH";
-                    }
-                }
-                else if( osStdName == "time" )
-                {
-                    osType = GDAL_DIM_TYPE_TEMPORAL;
-                    oAttributes.Delete(CF_STD_NAME);
-                }
-            }
-
-            const auto osAxis = oAttributes[CF_AXIS].ToString();
-            if( osAxis == "Z" )
-            {
-                osType = GDAL_DIM_TYPE_VERTICAL;
-                const auto osPositive = oAttributes["positive"].ToString();
-                if( osPositive == "up" )
-                {
-                    osDirection = "UP";
-                    oAttributes.Delete("positive");
-                }
-                else if( osPositive == "down" )
-                {
-                    osDirection = "DOWN";
-                    oAttributes.Delete("positive");
-                }
-                oAttributes.Delete(CF_AXIS);
-            }
+            GetDimensionTypeDirection(osType, osDirection);
         }
 
         auto poDimLocal = std::make_shared<GDALDimensionWeakIndexingVar>(
@@ -2862,6 +2869,75 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Size of _ARRAY_DIMENSIONS different from the one of shape");
+        }
+    }
+
+    // _NCZARR_ARRAY extension
+    const auto nczarrArrayDimrefs = oRoot["_NCZARR_ARRAY"]["dimrefs"].ToArray();
+    if( nczarrArrayDimrefs.IsValid() )
+    {
+        const auto arrayDims = nczarrArrayDimrefs.ToArray();
+        if( arrayDims.Size() == oShape.Size() )
+        {
+            auto poRG = m_pSelf.lock();
+            CPLAssert( poRG != nullptr );
+            while(true)
+            {
+                auto poNewRG = poRG->m_poParent.lock();
+                if( poNewRG == nullptr )
+                    break;
+                poRG = poNewRG;
+            }
+
+            for( int i = 0; i < oShape.Size(); ++i )
+            {
+                if( arrayDims[i].GetType() == CPLJSONObject::Type::String )
+                {
+                    const auto osDimFullpath = arrayDims[i].ToString();
+                    auto poDim = poRG->OpenDimensionFromFullname(osDimFullpath);
+                    if( poDim )
+                    {
+                        aoDims[i] = poDim;
+
+                        // If this is an indexing variable, then fetch the
+                        // dimension type and direction, and patch the dimension
+                        const std::string osArrayFullname =
+                            (GetFullName() != "/" ? GetFullName(): std::string()) + '/' + osArrayName;
+                        if( aoDims.size() == 1 && osArrayFullname == poDim->GetFullName() )
+                        {
+                            std::string osType;
+                            std::string osDirection;
+                            GetDimensionTypeDirection(osType, osDirection);
+
+                            std::string osDimParent = osDimFullpath;
+                            const auto nPos = osDimParent.rfind('/');
+                            if( nPos != std::string::npos )
+                            {
+                                if( nPos == 0 )
+                                    osDimParent = '/';
+                                else
+                                    osDimParent.resize(nPos);
+                                auto poDimParentGroup = dynamic_cast<ZarrGroupBase*>(
+                                    poRG->OpenGroupFromFullname(osDimParent).get());
+                                if( poDimParentGroup )
+                                {
+                                    auto poDimLocal = std::make_shared<GDALDimensionWeakIndexingVar>(
+                                        poDimParentGroup->GetFullName(), poDim->GetName(),
+                                        osType, osDirection, poDim->GetSize());
+                                    aoDims[i] = poDimLocal;
+
+                                    poDimParentGroup->m_oMapDimensions[poDim->GetName()] = poDimLocal;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Size of _NCZARR_ARRAY.dimrefs different from the one of shape");
         }
     }
 

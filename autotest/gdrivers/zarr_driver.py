@@ -2320,3 +2320,51 @@ def test_zarr_read_too_deep_array_loading():
             assert gdal.GetLastErrorMsg() == 'Too deep call stack in LoadArray()'
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("filename,path",
+                         [('data/zarr/nczarr_v2.zarr', '/MyGroup/Group_A'),
+                          ('data/zarr/nczarr_v2.zarr/MyGroup', '/Group_A'),
+                          ('data/zarr/nczarr_v2.zarr/MyGroup/Group_A', ''),
+                          ('data/zarr/nczarr_v2.zarr/MyGroup/Group_A/dset2', None)])
+def test_zarr_read_nczarr_v2(filename,path):
+
+    with gdaltest.error_handler():
+        assert gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE) is None
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+
+    ar = rg.OpenMDArrayFromFullname((path if path else '') + '/dset2')
+    assert ar
+    dims = ar.GetDimensions()
+    assert len(dims) == 2
+    assert dims[0].GetSize() == 3
+    assert dims[0].GetName() == 'lat'
+    assert dims[0].GetFullName() == '/MyGroup/lat'
+    assert dims[0].GetIndexingVariable() is not None
+    assert dims[0].GetIndexingVariable().GetName() == 'lat'
+    assert dims[0].GetType() == gdal.DIM_TYPE_HORIZONTAL_Y
+    assert dims[0].GetDirection() == 'NORTH'
+
+    assert dims[1].GetSize() == 3
+    assert dims[1].GetName() == 'lon'
+    assert dims[1].GetFullName() == '/MyGroup/lon'
+    assert dims[1].GetIndexingVariable() is not None
+    assert dims[1].GetIndexingVariable().GetName() == 'lon'
+    assert dims[1].GetType() == gdal.DIM_TYPE_HORIZONTAL_X
+    assert dims[1].GetDirection() == 'EAST'
+
+    if path:
+        ar = rg.OpenMDArrayFromFullname(path + '/dset3')
+        assert ar
+        dims = ar.GetDimensions()
+        assert len(dims) == 2
+        assert dims[0].GetSize() == 2
+        assert dims[0].GetName() == 'lat'
+        assert dims[0].GetFullName() == '/MyGroup/Group_A/lat'
+
+        assert dims[1].GetSize() == 2
+        assert dims[1].GetName() == 'lon'
+        assert dims[1].GetFullName() == '/MyGroup/Group_A/lon'

@@ -111,6 +111,22 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         if( !oDoc.Load(osZarrayFilename) )
             return nullptr;
         const auto oRoot = oDoc.GetRoot();
+        if( oRoot["_NCZARR_ARRAY"].IsValid() )
+        {
+            // If opening a NCZarr array, initialize its group from NCZarr
+            // metadata.
+            const std::string osGroupFilename(
+                    CPLFormFilename(CPLGetDirname(osFilename.c_str()), ".zgroup", nullptr));
+            if( VSIStatL( osGroupFilename.c_str(), &sStat ) == 0 )
+            {
+                CPLJSONDocument oDocGroup;
+                if( oDocGroup.Load(osGroupFilename) )
+                {
+                    if( !poRG->InitFromZGroup(oDocGroup.GetRoot()) )
+                        return nullptr;
+                }
+            }
+        }
         const std::string osArrayName(CPLGetBasename(osFilename.c_str()));
         std::set<std::string> oSetFilenamesInLoading;
         if( !poRG->LoadArray(osArrayName, osZarrayFilename, oRoot,
@@ -145,6 +161,8 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         if( !oDoc.Load(osGroupFilename) )
             return nullptr;
 
+        if( !poRG->InitFromZGroup(oDoc.GetRoot()) )
+            return nullptr;
         return new ZarrDataset(poRG);
     }
 

@@ -910,6 +910,13 @@ static void DumpGroup(std::shared_ptr<GDALGroup> group,
     {
         serializer.AddObjKey("name");
         serializer.Add(group->GetName());
+
+        // If the root group is not actually the root, print its full path
+        if( pszDriverName != nullptr && group->GetName() != "/" )
+        {
+            serializer.AddObjKey("full_name");
+            serializer.Add(group->GetFullName());
+        }
     }
 
     CPLStringList aosOptionsGetAttr;
