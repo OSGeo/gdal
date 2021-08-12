@@ -497,7 +497,9 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
         auto poBelongingGroup =
             (nLastSlashPos == std::string::npos) ? this:
             GetOrCreateSubGroup("/" + osArrayFullname.substr(0, nLastSlashPos)).get();
-        const auto osArrayName = osArrayFullname.substr(nLastSlashPos + 1);
+        const auto osArrayName = nLastSlashPos == std::string::npos ?
+            osArrayFullname :
+            osArrayFullname.substr(nLastSlashPos + 1);
         const std::string osZarrayFilename =
             CPLFormFilename(
                 CPLFormFilename(poBelongingGroup->m_osDirectoryName.c_str(),
