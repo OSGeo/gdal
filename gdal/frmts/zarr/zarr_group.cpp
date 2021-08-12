@@ -266,7 +266,9 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::OpenMDArray(const std::string& osName,
             if( !oDoc.Load(osZarrayFilename) )
                 return nullptr;
             const auto oRoot = oDoc.GetRoot();
-            return LoadArray(osName, osZarrayFilename, oRoot, false, CPLJSONObject());
+            std::set<std::string> oSetFilenamesInLoading;
+            return LoadArray(osName, osZarrayFilename, oRoot, false,
+                             CPLJSONObject(), oSetFilenamesInLoading);
         }
     }
 
@@ -378,7 +380,9 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::OpenMDArray(const std::string& osName,
         if( !oDoc.Load(osFilename) )
             return nullptr;
         const auto oRoot = oDoc.GetRoot();
-        return LoadArray(osName, osFilename, oRoot, false, CPLJSONObject());
+        std::set<std::string> oSetFilenamesInLoading;
+        return LoadArray(osName, osFilename, oRoot, false,
+                         CPLJSONObject(), oSetFilenamesInLoading);
     }
 
     return nullptr;
@@ -506,8 +510,10 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
                                 osArrayName.c_str(), nullptr),
                 ".zarray",
                 nullptr);
+        std::set<std::string> oSetFilenamesInLoading;
         poBelongingGroup->LoadArray(
-                    osArrayName, osZarrayFilename, oArray, true, oAttributes);
+                    osArrayName, osZarrayFilename, oArray, true,
+                    oAttributes, oSetFilenamesInLoading);
     };
 
     struct ArrayDesc
