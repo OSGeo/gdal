@@ -6054,9 +6054,9 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
                 const GUIntBig nCurPos = VSIFTellL(fp);
                 bOK &= VSIFSeekL( fp, nStartOffset + BLOCKMAP_HEADER_SIZE + 4 * (nBlockYOff * nNBPR + nBlockXOff), SEEK_SET ) == 0;
                 const GUIntBig nBlockOffset = nCurPos - nStartOffset - nIMDATOFF;
-                GUInt32 nBlockOffset32 = (GUInt32)nBlockOffset;
-                if (nBlockOffset == (GUIntBig)nBlockOffset32)
+                if (nBlockOffset <= UINT_MAX)
                 {
+                    GUInt32 nBlockOffset32 = (GUInt32)nBlockOffset;
                     CPL_MSBPTR32( &nBlockOffset32 );
                     bOK &= VSIFWriteL( &nBlockOffset32, 4, 1, fp ) == 1;
                 }
@@ -6066,7 +6066,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
                             "Offset for block (%d, %d) = " CPL_FRMT_GUIB ". Cannot fit into 32 bits...",
                             nBlockXOff, nBlockYOff, nBlockOffset);
 
-                    nBlockOffset32 = UINT_MAX;
+                    GUInt32 nBlockOffset32 = UINT_MAX;
                     for( int i = nBlockYOff * nNBPR + nBlockXOff;
                          bOK && i < nNBPC * nNBPR;
                          i++ )
