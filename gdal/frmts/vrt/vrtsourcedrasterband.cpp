@@ -240,10 +240,18 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     continue;
                 }
                 int bSrcHasNoData = FALSE;
-                const double dfSrcNoData =
-                    poSource->GetRasterBand()->GetNoDataValue(&bSrcHasNoData);
-                if( !bSrcHasNoData || dfSrcNoData != m_dfNoDataValue )
+                auto poBand = poSource->GetRasterBand();
+                if( poBand == nullptr )
+                {
                     bFallbackToBase = true;
+                }
+                else
+                {
+                    const double dfSrcNoData =
+                        poBand->GetNoDataValue(&bSrcHasNoData);
+                    if( !bSrcHasNoData || dfSrcNoData != m_dfNoDataValue )
+                        bFallbackToBase = true;
+                }
             }
             if( bFallbackToBase )
             {
