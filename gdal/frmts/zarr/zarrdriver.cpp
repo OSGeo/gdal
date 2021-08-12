@@ -105,8 +105,9 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
             return nullptr;
         const auto oRoot = oDoc.GetRoot();
         const std::string osArrayName(CPLGetBasename(osFilename.c_str()));
+        std::set<std::string> oSetFilenamesInLoading;
         if( !poRG->LoadArray(osArrayName, osZarrayFilename, oRoot,
-                             false, CPLJSONObject()) )
+                             false, CPLJSONObject(), oSetFilenamesInLoading) )
             return nullptr;
 
         return poDS.release();

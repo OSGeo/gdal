@@ -2482,8 +2482,46 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                                                 const std::string& osZarrayFilename,
                                                 const CPLJSONObject& oRoot,
                                                 bool bLoadedFromZMetadata,
-                                                const CPLJSONObject& oAttributesIn) const
+                                                const CPLJSONObject& oAttributesIn,
+                                                std::set<std::string>& oSetFilenamesInLoading) const
 {
+    // Prevent too deep or recursive array loading
+    if( oSetFilenamesInLoading.find(osZarrayFilename) != oSetFilenamesInLoading.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attempt at recursively loading %s", osZarrayFilename.c_str());
+        return nullptr;
+    }
+    if( oSetFilenamesInLoading.size() == 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too deep call stack in LoadArray()");
+        return nullptr;
+    }
+
+    struct SetFilenameAdder
+    {
+        std::set<std::string>& m_oSetFilenames;
+        std::string m_osFilename;
+
+        SetFilenameAdder(std::set<std::string>& oSetFilenamesIn,
+                         const std::string& osFilename):
+             m_oSetFilenames(oSetFilenamesIn),
+             m_osFilename(osFilename)
+        {
+            m_oSetFilenames.insert(osFilename);
+        }
+
+        ~SetFilenameAdder()
+        {
+            m_oSetFilenames.erase(m_osFilename);
+        }
+    };
+
+    // Add osZarrayFilename to oSetFilenamesInLoading during the scope
+    // of this function call.
+    SetFilenameAdder filenameAdder(oSetFilenamesInLoading, osZarrayFilename);
+
     const bool isZarrV2 = dynamic_cast<const ZarrGroupV2*>(this) != nullptr;
 
     if( isZarrV2 )
@@ -2636,7 +2674,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
 
     const auto FindDimension = [this, &aoDims, &oAttributes, &osUnit,
                                 bLoadedFromZMetadata, &osArrayName,
-                                &osZarrayFilename,
+                                &osZarrayFilename, &oSetFilenamesInLoading,
                                 isZarrV2](
                                         const std::string& osDimName,
                                         std::shared_ptr<GDALDimension>& poDim,
@@ -2712,7 +2750,8 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                             osArrayFilenameDim,
                             oDoc.GetRoot(),
                             false,
-                            CPLJSONObject());
+                            CPLJSONObject(),
+                            oSetFilenamesInLoading);
                     }
                 }
                 else

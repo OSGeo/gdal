@@ -36,6 +36,8 @@
 #include "memmultidim.h"
 
 #include <array>
+#include <map>
+#include <set>
 
 /************************************************************************/
 /*                            ZarrDataset                               */
@@ -286,7 +288,8 @@ public:
                                          const std::string& osZarrayFilename,
                                          const CPLJSONObject& oRoot,
                                          bool bLoadedFromZMetadata,
-                                         const CPLJSONObject& oAttributes) const;
+                                         const CPLJSONObject& oAttributes,
+                                         std::set<std::string>& oSetFilenamesInLoading) const;
     void RegisterArray(const std::shared_ptr<ZarrArray>& array) const;
 
     void SetUpdatable(bool bUpdatable) { m_bUpdatable = bUpdatable; }

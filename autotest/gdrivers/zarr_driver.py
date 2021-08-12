@@ -2239,3 +2239,74 @@ def test_zarr_read_too_large_tile_size():
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
 
+
+def test_zarr_read_recursive_array_loading():
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+
+        j = { "zarr_format": 2 }
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zgroup', json.dumps(j))
+
+        j = { "chunks": [1],
+              "compressor": None,
+              "dtype": '!b1',
+              "fill_value": None,
+              "filters": None,
+              "order": "C",
+              "shape": [ 1 ],
+              "zarr_format": 2
+        }
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/a/.zarray', json.dumps(j))
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/b/.zarray', json.dumps(j))
+
+        j = { "_ARRAY_DIMENSIONS": ["b"] }
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/a/.zattrs', json.dumps(j))
+
+        j = { "_ARRAY_DIMENSIONS": ["a"] }
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/b/.zattrs', json.dumps(j))
+
+        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        assert ds is not None
+        with gdaltest.error_handler():
+            ar = ds.GetRootGroup().OpenMDArray('a')
+            assert ar
+            assert gdal.GetLastErrorMsg() == 'Attempt at recursively loading /vsimem/test.zarr/a/.zarray'
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+def test_zarr_read_too_deep_array_loading():
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+
+        j = { "zarr_format": 2 }
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zgroup', json.dumps(j))
+
+        j = { "chunks": [1],
+              "compressor": None,
+              "dtype": '!b1',
+              "fill_value": None,
+              "filters": None,
+              "order": "C",
+              "shape": [ 1 ],
+              "zarr_format": 2
+        }
+
+        N = 33
+        for i in range(N):
+            gdal.FileFromMemBuffer('/vsimem/test.zarr/%d/.zarray' % i, json.dumps(j))
+
+        for i in range(N-1):
+            j = { "_ARRAY_DIMENSIONS": ["%d" % (i+1)] }
+            gdal.FileFromMemBuffer('/vsimem/test.zarr/%d/.zattrs' % i, json.dumps(j))
+
+        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        assert ds is not None
+        with gdaltest.error_handler():
+            ar = ds.GetRootGroup().OpenMDArray('0')
+            assert ar
+            assert gdal.GetLastErrorMsg() == 'Too deep call stack in LoadArray()'
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
