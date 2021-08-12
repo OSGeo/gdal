@@ -2209,3 +2209,33 @@ def test_zarr_pam_spatial_ref():
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
 
+
+def test_zarr_read_too_large_tile_size():
+
+    j = {
+        "chunks": [
+            1000000,
+            2000
+        ],
+        "compressor": None,
+        "dtype": '!b1',
+        "fill_value": None,
+        "filters": None,
+        "order": "C",
+        "shape": [
+            5,
+            4
+        ],
+        "zarr_format": 2
+    }
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
+        ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+        assert ds is not None
+        with gdaltest.error_handler():
+            assert ds.GetRootGroup().OpenMDArray('test').Read() is None
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
+

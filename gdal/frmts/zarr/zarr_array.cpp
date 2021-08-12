@@ -647,6 +647,16 @@ bool ZarrArray::AllocateWorkingBuffers() const
     {
         nTileSize *= static_cast<size_t>(nBlockSize);
     }
+    if( nTileSize > 1024 * 1024 * 1024 &&
+        !CPLTestBool(CPLGetConfigOption("ZARR_ALLOW_BIG_TILE_SIZE", "NO")) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Zarr tile allocation would require " CPL_FRMT_GUIB " bytes. "
+                 "By default the driver limits to 1 GB. To allow that memory "
+                 "allocation, set the ZARR_ALLOW_BIG_TILE_SIZE configuration "
+                 "option to YES.", static_cast<GUIntBig>(nTileSize));
+        return false;
+    }
     try
     {
         m_abyRawTileData.resize( nTileSize );
