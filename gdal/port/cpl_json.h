@@ -217,6 +217,8 @@ public:
     ~CPLJSONDocument();
     CPLJSONDocument(const CPLJSONDocument &other);
     CPLJSONDocument& operator=(const CPLJSONDocument &other);
+    CPLJSONDocument(CPLJSONDocument &&other);
+    CPLJSONDocument& operator=(CPLJSONDocument &&other);
 /*! @endcond */
 
     bool Save(const std::string &osPath) const;
