@@ -165,8 +165,9 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
       {
           char szLineBuf[257];
           // Eat the rest of this entity
-          while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 &&
-              nCode > 0 );
+          while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+          {
+          }
 
           if( nCode < 0 )
           {
@@ -174,8 +175,8 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
               return;
           }
 
-          if( nCode == 0 )
-              poDS->UnreadValue();
+          CPLAssert( nCode == 0 );
+          poDS->UnreadValue();
       }
       break;
 
