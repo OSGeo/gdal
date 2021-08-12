@@ -775,7 +775,7 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
         }
     }
 
-    return m_poSpIndexLeaf != nullptr;
+    return false;
 }
 
 /************************************************************************/
