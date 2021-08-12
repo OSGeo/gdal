@@ -232,7 +232,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                             GDALGeoPackageDataset();
                             virtual ~GDALGeoPackageDataset();
 
-        virtual char **     GetMetadata( const char *pszDomain = nullptr ) override;
+        virtual char **     GetMetadata( const char *pszDomain = "" ) override;
         virtual const char *GetMetadataItem( const char * pszName,
                                              const char * pszDomain = "" ) override;
         virtual char **     GetMetadataDomainList() override;
@@ -556,7 +556,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     CPLString           ReturnSQLCreateSpatialIndexTriggers(const char* pszTableName);
     CPLString           ReturnSQLDropSpatialIndexTriggers();
 
-    virtual char **     GetMetadata( const char *pszDomain = nullptr ) override;
+    virtual char **     GetMetadata( const char *pszDomain = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
                                              const char * pszDomain = "" ) override;
     virtual char **     GetMetadataDomainList() override;
