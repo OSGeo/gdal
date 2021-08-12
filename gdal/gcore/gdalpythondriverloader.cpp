@@ -1309,7 +1309,8 @@ void PythonPluginLayer::GetGeomFields()
         {
             OGRSpatialReference* poSRS = new OGRSpatialReference();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            poSRS->SetFromUserInput(osSRS);
+            poSRS->SetFromUserInput(osSRS,
+                                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
             oFieldDefn.SetSpatialRef(poSRS);
             poSRS->Release();
         }

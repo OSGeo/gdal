@@ -10793,7 +10793,8 @@ void GDALPamMultiDim::Load()
             if( psSRSNode )
             {
                 std::shared_ptr<OGRSpatialReference> poSRS = std::make_shared<OGRSpatialReference>();
-                poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, "") );
+                poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, ""),
+                                         OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
                 const char* pszMapping =
                     CPLGetXMLValue(psSRSNode, "dataAxisToSRSAxisMapping", nullptr);
                 if( pszMapping )

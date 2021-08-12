@@ -3857,7 +3857,7 @@ void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
         if( pszRawProj && pszRawProj[0] )
         {
             *ppoGCP_SRS = new OGRSpatialReference();
-            (*ppoGCP_SRS)->SetFromUserInput( pszRawProj );
+            (*ppoGCP_SRS)->SetFromUserInput( pszRawProj, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
 
             const char* pszMapping =
                 CPLGetXMLValue(psGCPList, "dataAxisToSRSAxisMapping", nullptr);
