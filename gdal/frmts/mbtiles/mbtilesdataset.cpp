@@ -1912,8 +1912,8 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY,
         {
             auto pszJson = OGR_F_GetFieldAsString(hFeat, 0);
             oDoc.GetRoot().Add( "json", pszJson );
-            oJsonDoc.LoadMemory(
-                    reinterpret_cast<const GByte*>(pszJson));
+            CPL_IGNORE_RET_VAL(oJsonDoc.LoadMemory(
+                    reinterpret_cast<const GByte*>(pszJson)));
             OGR_F_Destroy(hFeat);
         }
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
