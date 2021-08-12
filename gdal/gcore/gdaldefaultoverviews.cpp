@@ -1176,25 +1176,27 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
     if( poBaseDS != nullptr && poBaseDS->oOvManager.HaveMaskFile() )
     {
         GDALRasterBand * const poBaseBand = poBaseDS->GetRasterBand(1);
-        GDALRasterBand * poBaseMask = poBaseBand != nullptr ?
-            poBaseBand->GetMaskBand() : nullptr;
-
-        const int nOverviewCount = poBaseMask != nullptr ?
-            poBaseMask->GetOverviewCount() : 0;
-
         GDALDataset* poMaskDSTemp = nullptr;
-        for( int iOver = 0; iOver < nOverviewCount; iOver++ )
+        if( poBaseBand != nullptr )
         {
-            GDALRasterBand * const poOverBand =
-                poBaseMask->GetOverview( iOver );
-            if( poOverBand == nullptr )
-                continue;
-
-            if( poOverBand->GetXSize() == poDS->GetRasterXSize()
-                && poOverBand->GetYSize() == poDS->GetRasterYSize() )
+            GDALRasterBand * poBaseMask = poBaseBand->GetMaskBand();
+            if( poBaseMask != nullptr )
             {
-                poMaskDSTemp = poOverBand->GetDataset();
-                break;
+                const int nOverviewCount = poBaseMask->GetOverviewCount();
+                for( int iOver = 0; iOver < nOverviewCount; iOver++ )
+                {
+                    GDALRasterBand * const poOverBand =
+                        poBaseMask->GetOverview( iOver );
+                    if( poOverBand == nullptr )
+                        continue;
+
+                    if( poOverBand->GetXSize() == poDS->GetRasterXSize()
+                        && poOverBand->GetYSize() == poDS->GetRasterYSize() )
+                    {
+                        poMaskDSTemp = poOverBand->GetDataset();
+                        break;
+                    }
+                }
             }
         }
 
