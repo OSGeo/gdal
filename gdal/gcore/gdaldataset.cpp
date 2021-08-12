@@ -2457,6 +2457,14 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     if( psExtraArg == nullptr )
     {
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
+        // 4 below inits are not strictly needed but make Coverity Scan
+        // happy
+        sExtraArg.dfXOff = nXOff;
+        sExtraArg.dfYOff = nYOff;
+        sExtraArg.dfXSize = nXSize;
+        sExtraArg.dfYSize = nYSize;
+
         psExtraArg = &sExtraArg;
     }
     else if( psExtraArg->nVersion != RASTERIO_EXTRA_ARG_CURRENT_VERSION )
