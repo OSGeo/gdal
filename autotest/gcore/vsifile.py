@@ -881,3 +881,16 @@ def test_vsifile_rmdirrecursive():
     open('tmp/rmdirrecursive/subdir/bar.bin', 'wb').close()
     assert gdal.RmdirRecursive('tmp/rmdirrecursive') == 0
     assert not os.path.exists('tmp/rmdirrecursive')
+
+###############################################################################
+
+def test_vsifile_vsizip_error():
+
+    for i in range(128):
+        filename = '/vsimem/tmp||maxlength=%d.zip' % i
+        with gdaltest.error_handler():
+            f = gdal.VSIFOpenL('/vsizip/%s/out.bin' % filename, 'wb')
+            if f is not None:
+                assert gdal.VSIFCloseL(f) < 0
+        gdal.Unlink(filename)
+
