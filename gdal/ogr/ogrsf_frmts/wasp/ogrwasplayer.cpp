@@ -158,7 +158,7 @@ OGRWAsPLayer::~OGRWAsPLayer()
                     startNeighbors[i] = j;
                 }
             }
-            if ( isEqual( p.dfRight, q.dfLeft) && isEqual( p.dfRight, q.dfLeft ) )
+            if ( isEqual( p.dfRight, q.dfLeft) && isEqual( p.dfLeft, q.dfRight ) )
             {
                 if ( startP.Equals( &startQ ) )
                 {
