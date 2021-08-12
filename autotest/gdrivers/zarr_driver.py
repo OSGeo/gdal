@@ -549,7 +549,7 @@ def test_zarr_read_array_attributes():
 
     j = gdal.MultiDimInfo(ds)
     assert j['arrays']['array_attrs']['attributes'] == {
-        "bool": "true",
+        "bool": True,
         "double": 1.5,
         "doublearray": [1.5, 2.5],
         "int": 1,
@@ -557,9 +557,9 @@ def test_zarr_read_array_attributes():
         "int64array": [1234567890123, -1234567890123],
         "intarray": [1, 2],
         "intdoublearray": [1, 2.5],
-        "mixedstrintarray": "[ \"foo\", 1 ]",
+        "mixedstrintarray": ["foo", 1],
         "null": "",
-        "obj": "{ }",
+        "obj": {},
         "str": "foo",
         "strarray": ["foo", "bar"]
     }
@@ -1055,6 +1055,11 @@ def test_zarr_create_group(format,create_z_metadata):
             assert attr.Write('my_string') == gdal.CE_None
 
             attr = rg.CreateAttribute(
+                'json_attr', [], gdal.ExtendedDataType.CreateString(0, gdal.GEDTST_JSON))
+            assert attr
+            assert attr.Write('{"foo":"bar"}') == gdal.CE_None
+
+            attr = rg.CreateAttribute(
                 'str_array_attr', [2], gdal.ExtendedDataType.CreateString())
             assert attr
             assert attr.Write(
@@ -1142,6 +1147,11 @@ def test_zarr_create_group(format,create_z_metadata):
         attr = rg.GetAttribute('str_attr')
         assert attr
         assert attr.Read() == 'my_string_modified'
+
+        attr = rg.GetAttribute('json_attr')
+        assert attr
+        assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
+        assert attr.Read() == '{ "foo": "bar" }'
 
         attr = rg.GetAttribute('str_array_attr')
         assert attr

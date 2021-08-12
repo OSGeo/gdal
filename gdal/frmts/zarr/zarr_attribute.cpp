@@ -207,8 +207,10 @@ void ZarrAttributeGroup::Init(const CPLJSONObject& obj, bool bUpdatable)
 
         if( !bDone )
         {
+            constexpr size_t nMaxStringLength = 0;
+            const auto eDT = GDALExtendedDataType::CreateString(nMaxStringLength, GEDTST_JSON);
             poAttr = m_oGroup.CreateAttribute(
-                item.GetName(), {}, GDALExtendedDataType::CreateString(), nullptr);
+                item.GetName(), {}, eDT, nullptr);
             if( poAttr )
             {
                 const GUInt64 arrayStartIdx = 0;
@@ -249,7 +251,16 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
             const auto anDims = attr->GetDimensionsSize();
             if( anDims.size() == 0 )
             {
-                o.Add(attr->GetName(), attr->ReadAsString());
+                const auto osStr = attr->ReadAsString();
+                CPLJSONDocument oDoc;
+                if( oType.GetSubType() == GEDTST_JSON && oDoc.LoadMemory(osStr) )
+                {
+                    o.Add(attr->GetName(), oDoc.GetRoot());
+                }
+                else
+                {
+                    o.Add(attr->GetName(), osStr);
+                }
             }
             else if ( anDims.size() == 1 )
             {
