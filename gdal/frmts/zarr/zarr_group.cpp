@@ -552,7 +552,9 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
                 if( oIter != oMapArrays.end() )
                 {
                     const auto nLastSlashPos = osObjectFullnameNoLeadingSlash.rfind('/');
-                    const auto osArrayName = osObjectFullnameNoLeadingSlash.substr(nLastSlashPos + 1);
+                    const auto osArrayName = (nLastSlashPos == std::string::npos) ?
+                        osObjectFullnameNoLeadingSlash :
+                        osObjectFullnameNoLeadingSlash.substr(nLastSlashPos + 1);
                     const auto arrayDimensions = child["_ARRAY_DIMENSIONS"].ToArray();
                     if( arrayDimensions.IsValid() && arrayDimensions.Size() == 1 &&
                         arrayDimensions[0].ToString() == osArrayName )
