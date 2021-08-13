@@ -1972,6 +1972,8 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
             }
         }
     } else {
+        assert(dstImag);
+
         //Copy, deinterleave, & space interleaved data
         for( iSrcY = 0; iSrcY < height; iSrcY++ )
         {
