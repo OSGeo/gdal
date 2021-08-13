@@ -5942,7 +5942,12 @@ CPL_UNUSED
                   EQUAL(pszExtension, "nc2") || EQUAL(pszExtension, "nc4") ||
                   EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd") ||
                   EQUAL(pszExtension, "gmac") ) )
-                return NCDF_FORMAT_HDF5;
+            {
+                if( GDALGetDriverByName("HDF5") != nullptr )
+                {
+                    return NCDF_FORMAT_HDF5;
+                }
+            }
         }
 #endif
 
@@ -5962,7 +5967,7 @@ CPL_UNUSED
 
         // Check for HDF4 support in GDAL.
 #ifdef HAVE_HDF4
-        if( bCheckExt )
+        if( bCheckExt && GDALGetDriverByName("HDF4") != nullptr )
         {
             // Check by default.
             // Always treat as HDF4 file.
