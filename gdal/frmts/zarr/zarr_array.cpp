@@ -2432,6 +2432,7 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
                 const std::string osName = oEltArray[0].ToString();
                 // Add padding for alignment
                 const size_t alignmentSub = GetAlignment(oEltArray[1]);
+                assert(alignmentSub);
                 alignmentMax = std::max(alignmentMax, alignmentSub);
                 offset = AlignOffsetOn(offset, alignmentSub);
                 comps.emplace_back(std::unique_ptr<GDALEDTComponent>(
