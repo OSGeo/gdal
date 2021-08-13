@@ -30,6 +30,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
+
 from osgeo import gdal
 from osgeo import ogr
 
@@ -129,7 +131,7 @@ def test_pcidsk_5():
         print(mdalt)
         gdaltest.post_reason('file alt domain metadata broken. ')
 
-    
+
 ###############################################################################
 # Test writing metadata to a band.
 
@@ -171,7 +173,7 @@ def test_pcidsk_6():
         print(mdalt)
         gdaltest.post_reason('channel alt domain metadata broken. ')
 
-    
+
 ###############################################################################
 # Test creating a color table and reading it back.
 
@@ -569,6 +571,26 @@ def test_pcidsk_tile_v2_overview():
 
     cs = band.GetOverview(0).Checksum()
     assert cs == 12003, ('wrong overview checksum (%d)' % cs)
+
+###############################################################################
+# Test RPC
+
+
+def test_pcidsk_online_rpc():
+
+    if not gdaltest.download_file('https://github.com/OSGeo/gdal/files/6822835/pix-test.zip', 'pix-test.zip'):
+        pytest.skip()
+
+    try:
+        os.stat('tmp/cache/demo.PIX')
+    except OSError:
+        try:
+            gdaltest.unzip('tmp/cache', 'tmp/cache/pix-test.zip')
+        except:
+            pytest.skip()
+
+    ds = gdal.Open('tmp/cache/demo.PIX')
+    assert ds.GetMetadata("RPC") is not None
 
 ###############################################################################
 # Cleanup.
