@@ -305,6 +305,12 @@ std::shared_ptr<GDALGroup> ZarrGroupV2::OpenGroup(const std::string& osName,
             poSubGroup->SetUpdatable(m_bUpdatable);
             poSubGroup->SetDirectoryName(osSubDir);
             m_oMapGroups[osName] = poSubGroup;
+
+            // Must be done after setting m_oMapGroups, to avoid infinite
+            // recursion when opening NCZarr datasets with indexing variables
+            // of dimensions
+            poSubGroup->InitFromZGroup(oDoc.GetRoot());
+
             return poSubGroup;
         }
     }
@@ -580,6 +586,113 @@ void ZarrGroupV2::InitFromZMetadata(const CPLJSONObject& obj)
     {
         CreateArray(kv.first, *(kv.second), CPLJSONObject());
     }
+}
+
+/************************************************************************/
+/*                   ZarrGroupV2::InitFromZGroup()                      */
+/************************************************************************/
+
+bool ZarrGroupV2::InitFromZGroup(const CPLJSONObject& obj)
+{
+    // Parse potential NCZarr (V2) extensions:
+    // https://www.unidata.ucar.edu/software/netcdf/documentation/NUG/nczarr_head.html
+    const auto nczarrGroup = obj["_NCZARR_GROUP"];
+    if( nczarrGroup.GetType() == CPLJSONObject::Type::Object )
+    {
+        if( m_bUpdatable )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Update of NCZarr datasets is not supported");
+            return false;
+        }
+        m_bDirectoryExplored = true;
+
+        // If not opening from the root of the dataset, walk up to it
+        if( !obj["_NCZARR_SUPERBLOCK"].IsValid() &&
+            m_poParent.lock() == nullptr )
+        {
+            const std::string osParentGroupFilename(
+                    CPLFormFilename(CPLGetPath(m_osDirectoryName.c_str()),
+                                    ".zgroup", nullptr));
+            VSIStatBufL sStat;
+            if( VSIStatL( osParentGroupFilename.c_str(), &sStat ) == 0 )
+            {
+                CPLJSONDocument oDoc;
+                if( oDoc.Load(osParentGroupFilename) )
+                {
+                    auto poParent = ZarrGroupV2::Create(
+                        m_poSharedResource, std::string(), std::string());
+                    poParent->m_bDirectoryExplored = true;
+                    poParent->SetDirectoryName(CPLGetPath(m_osDirectoryName.c_str()));
+                    poParent->InitFromZGroup(oDoc.GetRoot());
+                    m_poParentStrongRef = poParent;
+                    m_poParent = poParent;
+
+                    // Patch our name and fullname
+                    m_osName = CPLGetFilename(m_osDirectoryName.c_str());
+                    m_osFullName = poParent->GetFullName() == "/" ? m_osName :
+                        poParent->GetFullName() + "/" + m_osName;
+                }
+            }
+        }
+
+        // Create dimensions first, as they will be potentially patched
+        // by the OpenMDArray() later
+        const auto dims = nczarrGroup["dims"];
+        for( const auto& jDim: dims.GetChildren() )
+        {
+            const GUInt64 nSize = jDim.ToLong();
+            CreateDimension(jDim.GetName(),
+                            std::string(), // type
+                            std::string(), // direction,
+                            nSize, nullptr);
+        }
+
+        const auto IsValidName = [](const std::string& s)
+        {
+            return !s.empty() &&
+                   s != "." &&
+                   s != ".." &&
+                   s.find("/") == std::string::npos &&
+                   s.find("\\") == std::string::npos;
+        };
+
+        const auto vars = nczarrGroup["vars"].ToArray();
+        // open first indexing variables
+        for( const auto& var: vars )
+        {
+            const auto osVarName = var.ToString();
+            if( IsValidName(osVarName) &&
+                m_oMapDimensions.find(osVarName) != m_oMapDimensions.end() )
+            {
+                m_aosArrays.emplace_back(osVarName);
+                OpenMDArray(osVarName);
+            }
+        }
+
+        // add regular arrays
+        for( const auto& var: vars )
+        {
+            const auto osVarName = var.ToString();
+            if( IsValidName(osVarName) &&
+                m_oMapDimensions.find(osVarName) == m_oMapDimensions.end() )
+            {
+                m_aosArrays.emplace_back(osVarName);
+            }
+        }
+
+        // Finally list groups
+        const auto groups = nczarrGroup["groups"].ToArray();
+        for( const auto& group: groups )
+        {
+            const auto osGroupName = group.ToString();
+            if( IsValidName(osGroupName) )
+            {
+                m_aosGroups.emplace_back(osGroupName);
+            }
+        }
+    }
+    return true;
 }
 
 /************************************************************************/

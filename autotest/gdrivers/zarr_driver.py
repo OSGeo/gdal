@@ -549,7 +549,7 @@ def test_zarr_read_array_attributes():
 
     j = gdal.MultiDimInfo(ds)
     assert j['arrays']['array_attrs']['attributes'] == {
-        "bool": "true",
+        "bool": True,
         "double": 1.5,
         "doublearray": [1.5, 2.5],
         "int": 1,
@@ -557,9 +557,9 @@ def test_zarr_read_array_attributes():
         "int64array": [1234567890123, -1234567890123],
         "intarray": [1, 2],
         "intdoublearray": [1, 2.5],
-        "mixedstrintarray": "[ \"foo\", 1 ]",
+        "mixedstrintarray": ["foo", 1],
         "null": "",
-        "obj": "{ }",
+        "obj": {},
         "str": "foo",
         "strarray": ["foo", "bar"]
     }
@@ -1055,6 +1055,11 @@ def test_zarr_create_group(format,create_z_metadata):
             assert attr.Write('my_string') == gdal.CE_None
 
             attr = rg.CreateAttribute(
+                'json_attr', [], gdal.ExtendedDataType.CreateString(0, gdal.GEDTST_JSON))
+            assert attr
+            assert attr.Write({"foo":"bar"}) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
                 'str_array_attr', [2], gdal.ExtendedDataType.CreateString())
             assert attr
             assert attr.Write(
@@ -1142,6 +1147,11 @@ def test_zarr_create_group(format,create_z_metadata):
         attr = rg.GetAttribute('str_attr')
         assert attr
         assert attr.Read() == 'my_string_modified'
+
+        attr = rg.GetAttribute('json_attr')
+        assert attr
+        assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
+        assert attr.Read() == { "foo": "bar" }
 
         attr = rg.GetAttribute('str_array_attr')
         assert attr
@@ -2310,3 +2320,51 @@ def test_zarr_read_too_deep_array_loading():
             assert gdal.GetLastErrorMsg() == 'Too deep call stack in LoadArray()'
     finally:
         gdal.RmdirRecursive('/vsimem/test.zarr')
+
+
+@pytest.mark.parametrize("filename,path",
+                         [('data/zarr/nczarr_v2.zarr', '/MyGroup/Group_A'),
+                          ('data/zarr/nczarr_v2.zarr/MyGroup', '/Group_A'),
+                          ('data/zarr/nczarr_v2.zarr/MyGroup/Group_A', ''),
+                          ('data/zarr/nczarr_v2.zarr/MyGroup/Group_A/dset2', None)])
+def test_zarr_read_nczarr_v2(filename,path):
+
+    with gdaltest.error_handler():
+        assert gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE) is None
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+
+    ar = rg.OpenMDArrayFromFullname((path if path else '') + '/dset2')
+    assert ar
+    dims = ar.GetDimensions()
+    assert len(dims) == 2
+    assert dims[0].GetSize() == 3
+    assert dims[0].GetName() == 'lat'
+    assert dims[0].GetFullName() == '/MyGroup/lat'
+    assert dims[0].GetIndexingVariable() is not None
+    assert dims[0].GetIndexingVariable().GetName() == 'lat'
+    assert dims[0].GetType() == gdal.DIM_TYPE_HORIZONTAL_Y
+    assert dims[0].GetDirection() == 'NORTH'
+
+    assert dims[1].GetSize() == 3
+    assert dims[1].GetName() == 'lon'
+    assert dims[1].GetFullName() == '/MyGroup/lon'
+    assert dims[1].GetIndexingVariable() is not None
+    assert dims[1].GetIndexingVariable().GetName() == 'lon'
+    assert dims[1].GetType() == gdal.DIM_TYPE_HORIZONTAL_X
+    assert dims[1].GetDirection() == 'EAST'
+
+    if path:
+        ar = rg.OpenMDArrayFromFullname(path + '/dset3')
+        assert ar
+        dims = ar.GetDimensions()
+        assert len(dims) == 2
+        assert dims[0].GetSize() == 2
+        assert dims[0].GetName() == 'lat'
+        assert dims[0].GetFullName() == '/MyGroup/Group_A/lat'
+
+        assert dims[1].GetSize() == 2
+        assert dims[1].GetName() == 'lon'
+        assert dims[1].GetFullName() == '/MyGroup/Group_A/lon'

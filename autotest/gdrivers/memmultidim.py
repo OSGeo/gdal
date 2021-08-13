@@ -822,6 +822,20 @@ def test_mem_md_group_attribute_single_string():
     assert attr.Read() == 'bar'
 
 
+def test_mem_md_group_attribute_string_json():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+
+    attr = rg.CreateAttribute('attr', [], gdal.ExtendedDataType.CreateString(0, gdal.GEDTST_JSON))
+    assert attr
+    assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
+    assert attr.Read() is None
+    assert attr.Write({"foo":"bar"}) == gdal.CE_None
+    assert attr.Read() == {"foo" : "bar"}
+
+
 def test_mem_md_group_attribute_multiple_string():
 
     drv = gdal.GetDriverByName('MEM')

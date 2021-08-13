@@ -3407,13 +3407,21 @@ class Attribute(_object):
 
     def Read(self):
       """ Read an attribute and return it with the most appropriate type """
-      dt_class = self.GetDataType().GetClass()
+      dt = self.GetDataType()
+      dt_class = dt.GetClass()
       if dt_class == GEDTC_STRING:
           if self.GetTotalElementsCount() == 1:
-              return self.ReadAsString()
+              s = self.ReadAsString()
+              if dt.GetSubType() == GEDTST_JSON:
+                  try:
+                      import json
+                      return json.loads(s)
+                  except:
+                      pass
+              return s
           return self.ReadAsStringArray()
       if dt_class == GEDTC_NUMERIC:
-          if self.GetDataType().GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
+          if dt.GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
               if self.GetTotalElementsCount() == 1:
                   return self.ReadAsInt()
               else:
@@ -3445,6 +3453,9 @@ class Attribute(_object):
           return self.WriteDoubleArray(val)
         if isinstance(val[0], str):
           return self.WriteStringArray(val)
+      if isinstance(val, dict) and self.GetDataType().GetSubType() == GEDTST_JSON:
+          import json
+          return self.WriteString(json.dumps(val))
       return self.WriteRaw(val)
 
 
@@ -3526,7 +3537,7 @@ class ExtendedDataType(_object):
     Create = staticmethod(Create)
 
     def CreateString(*args):
-        """CreateString(size_t nMaxStringLength=0) -> ExtendedDataType"""
+        """CreateString(size_t nMaxStringLength=0, GDALExtendedDataTypeSubType eSubType=GEDTST_NONE) -> ExtendedDataType"""
         return _gdal.ExtendedDataType_CreateString(*args)
 
     CreateString = staticmethod(CreateString)
@@ -3597,7 +3608,7 @@ def ExtendedDataType_Create(*args):
     return _gdal.ExtendedDataType_Create(*args)
 
 def ExtendedDataType_CreateString(*args):
-    """ExtendedDataType_CreateString(size_t nMaxStringLength=0) -> ExtendedDataType"""
+    """ExtendedDataType_CreateString(size_t nMaxStringLength=0, GDALExtendedDataTypeSubType eSubType=GEDTST_NONE) -> ExtendedDataType"""
     return _gdal.ExtendedDataType_CreateString(*args)
 
 def ExtendedDataType_CreateCompound(*args):

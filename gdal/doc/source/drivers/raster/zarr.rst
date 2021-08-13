@@ -75,9 +75,16 @@ and decompressors with :cpp:func:`CPLRegisterCompressor` and :cpp:func:`CPLRegis
 XArray _ARRAY_DIMENSIONS
 ------------------------
 
-The driver support the ``_ARRAY_DIMENSIONS`` specifial attribute used by
+The driver support the ``_ARRAY_DIMENSIONS`` special attribute used by
 `XArray <http://xarray.pydata.org/en/stable/generated/xarray.open_zarr.html>`__
 to store the dimension names of an array.
+
+NCZarr extensions
+-----------------
+
+The driver support the
+`NCZarr v2 <https://www.unidata.ucar.edu/software/netcdf/documentation/NUG/nczarr_head.html>`__
+extensions of storing the dimension names of an array (read-only)
 
 SRS encoding
 ------------

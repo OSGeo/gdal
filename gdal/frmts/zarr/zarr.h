@@ -232,7 +232,8 @@ protected:
     // For ZarrV3, this is the root directory of the dataset
     std::shared_ptr<ZarrSharedResource> m_poSharedResource;
     std::string m_osDirectoryName{};
-    std::weak_ptr<ZarrGroupBase> m_poParent{};
+    std::weak_ptr<ZarrGroupBase> m_poParent{}; // weak reference to owning parent
+    std::shared_ptr<ZarrGroupBase> m_poParentStrongRef{}; // strong reference, used only when opening from a subgroup
     mutable std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     mutable std::map<CPLString, std::shared_ptr<ZarrArray>> m_oMapMDArrays{};
     mutable std::map<CPLString, std::shared_ptr<GDALDimensionWeakIndexingVar>> m_oMapDimensions{};
@@ -341,6 +342,7 @@ public:
                                                CSLConstList papszOptions = nullptr) override;
 
     void InitFromZMetadata(const CPLJSONObject& oRoot);
+    bool InitFromZGroup(const CPLJSONObject& oRoot);
 };
 
 /************************************************************************/

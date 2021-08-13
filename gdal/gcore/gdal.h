@@ -1529,6 +1529,7 @@ GDALDatasetH CPL_DLL GDALCreateMultiDimensional( GDALDriverH hDriver,
 
 GDALExtendedDataTypeH CPL_DLL GDALExtendedDataTypeCreate(GDALDataType eType) CPL_WARN_UNUSED_RESULT;
 GDALExtendedDataTypeH CPL_DLL GDALExtendedDataTypeCreateString(size_t nMaxStringLength) CPL_WARN_UNUSED_RESULT;
+GDALExtendedDataTypeH CPL_DLL GDALExtendedDataTypeCreateStringEx(size_t nMaxStringLength, GDALExtendedDataTypeSubType eSubType) CPL_WARN_UNUSED_RESULT;
 GDALExtendedDataTypeH CPL_DLL GDALExtendedDataTypeCreateCompound(
     const char* pszName, size_t nTotalSize,
     size_t nComponents, const GDALEDTComponentH* comps) CPL_WARN_UNUSED_RESULT;
