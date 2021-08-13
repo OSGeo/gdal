@@ -106,11 +106,7 @@ std::unique_ptr<SQLResult> SQLQuery(sqlite3 * poDb, const char * pszSQL)
         return nullptr;
     }
 
-    std::unique_ptr<SQLResult> poResult(new SQLResult(
-        papszResult, nRowCount, nColCount
-    ));
-
-    return poResult;
+    return cpl::make_unique<SQLResult>(papszResult, nRowCount, nColCount);
 }
 
 const char* SQLResult::GetValue(int iColNum, int iRowNum) const

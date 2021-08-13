@@ -1429,9 +1429,9 @@ static bool ParseXMLSchema(
             const OGRFieldType eFType = GML_GetOGRFieldType(poProperty->GetType(), eSubType);
 
             const char* pszName = poProperty->GetName();
-            std::unique_ptr<OGRFieldDefn> oField(new OGRFieldDefn( pszName, eFType ));
-            oField->SetSubType(eSubType);
-            apoFields.emplace_back(std::move(oField));
+            auto poField = cpl::make_unique<OGRFieldDefn>( pszName, eFType );
+            poField->SetSubType(eSubType);
+            apoFields.emplace_back(std::move(poField));
         }
         delete poGMLFeatureClass;
         return true;
@@ -2544,7 +2544,7 @@ GDALDataset* OGCAPIDataset::Open(GDALOpenInfo* poOpenInfo)
 {
     if( !Identify(poOpenInfo) )
         return nullptr;
-    auto poDS = std::unique_ptr<OGCAPIDataset>(new OGCAPIDataset());
+    auto poDS = cpl::make_unique<OGCAPIDataset>();
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:") )
     {
         if( !poDS->InitFromURL(poOpenInfo) )

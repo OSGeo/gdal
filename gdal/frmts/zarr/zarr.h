@@ -52,13 +52,14 @@ class ZarrDataset final: public GDALDataset
     std::shared_ptr<GDALDimension> m_poDimX{};
     std::shared_ptr<GDALDimension> m_poDimY{};
 
-    explicit ZarrDataset(const std::shared_ptr<GDALGroup>& poRootGroup);
-
     static GDALDataset* OpenMultidim(const char* pszFilename,
                                      bool bUpdateMode,
                                      CSLConstList papszOpenOptions);
 
 public:
+
+    explicit ZarrDataset(const std::shared_ptr<GDALGroup>& poRootGroup);
+
     static int Identify( GDALOpenInfo *poOpenInfo );
     static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
     static GDALDataset* CreateMultiDimensional( const char * pszFilename,

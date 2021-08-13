@@ -283,7 +283,7 @@ bool GDALPDFComposerWriter::CreateLayerTree(const CPLXMLNode* psNode,
             auto nThisObjId = WriteOCG( pszName, nParentId );
             m_oMapLayerIdToOCG[pszId] = nThisObjId;
 
-            std::unique_ptr<TreeOfOCG> newTreeOfOCG(new TreeOfOCG());
+            auto newTreeOfOCG = cpl::make_unique<TreeOfOCG>();
             newTreeOfOCG->m_nNum = nThisObjId;
             newTreeOfOCG->m_bInitiallyVisible = bInitiallyVisible;
             parent->m_children.emplace_back(std::move(newTreeOfOCG));
@@ -319,7 +319,7 @@ bool GDALPDFComposerWriter::ParseActions(const CPLXMLNode* psNode,
         if( psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "GotoPageAction") == 0 )
         {
-            std::unique_ptr<GotoPageAction> poAction(new GotoPageAction());
+            auto poAction = cpl::make_unique<GotoPageAction>();
             const char* pszPageId = CPLGetXMLValue(psIter, "pageId", nullptr);
             if( !pszPageId )
             {
@@ -396,7 +396,7 @@ bool GDALPDFComposerWriter::ParseActions(const CPLXMLNode* psNode,
         else if( psIter->eType == CXT_Element &&
                  strcmp(psIter->pszValue, "JavascriptAction") == 0 )
         {
-            std::unique_ptr<JavascriptAction> poAction(new JavascriptAction());
+            auto poAction = cpl::make_unique<JavascriptAction>();
             poAction->m_osScript = CPLGetXMLValue(psIter, nullptr, "");
             actions.push_back(std::move(poAction));
         }
@@ -404,7 +404,7 @@ bool GDALPDFComposerWriter::ParseActions(const CPLXMLNode* psNode,
 
     if( !anONLayers.empty() || !anOFFLayers.empty() )
     {
-        std::unique_ptr<SetLayerStateAction> poAction(new SetLayerStateAction());
+        auto poAction = cpl::make_unique<SetLayerStateAction>();
         poAction->m_anONLayers = std::move(anONLayers);
         poAction->m_anOFFLayers = std::move(anOFFLayers);
         actions.push_back(std::move(poAction));
@@ -425,7 +425,7 @@ bool GDALPDFComposerWriter::CreateOutlineFirstPass(const CPLXMLNode* psNode,
         if( psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "OutlineItem") == 0 )
         {
-            std::unique_ptr<OutlineItem> newItem(new OutlineItem());
+            auto newItem = cpl::make_unique<OutlineItem>();
             const char* pszName = CPLGetXMLValue(psIter, "name", nullptr);
             if( !pszName )
             {
@@ -695,7 +695,7 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(const CPLXMLNode* psGeorefere
         return false;
     }
 
-    const char* pszBoundingPolygon = 
+    const char* pszBoundingPolygon =
         CPLGetXMLValue(psGeoreferencing, "BoundingPolygon", nullptr);
     std::vector<xyPair> aBoundingPolygon;
     if( pszBoundingPolygon )
@@ -734,7 +734,7 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(const CPLXMLNode* psGeorefere
                  "Missing SRS");
         return false;
     }
-    std::unique_ptr<OGRSpatialReference> poSRS(new OGRSpatialReference());
+    auto poSRS = cpl::make_unique<OGRSpatialReference>();
     if( poSRS->SetFromUserInput(pszSRS) != OGRERR_NONE )
     {
         return false;
@@ -1040,7 +1040,7 @@ bool GDALPDFComposerWriter::GeneratePage(const CPLXMLNode* psPage)
                 anLGIDictIds.emplace_back(nLGIDictId);
             if( !georeferencing.m_osID.empty() )
             {
-                oPageContext.m_oMapGeoreferencedId[georeferencing.m_osID] = 
+                oPageContext.m_oMapGeoreferencedId[georeferencing.m_osID] =
                     georeferencing;
             }
         }
@@ -2073,7 +2073,7 @@ bool GDALPDFComposerWriter::WriteVectorLabel(const CPLXMLNode* psNode,
                                         0,0,
                                         oPageContext.m_dfWidthInUserUnit,
                                         oPageContext.m_dfHeightInUserUnit);
-            oPageContext.m_osDrawingStream += 
+            oPageContext.m_osDrawingStream +=
                 CPLOPrintf("/Label%d Do\n", nObjectId.toInt());
             oPageContext.m_oXObjects[
                     CPLOPrintf("Label%d", nObjectId.toInt())] = nObjectId;
@@ -2339,7 +2339,7 @@ bool GDALPDFComposerWriter::WritePDF(const CPLXMLNode* psNode,
     double dfIgnoredOpacity;
     StartBlending(psNode, oPageContext, dfIgnoredOpacity);
 
-    oPageContext.m_osDrawingStream += 
+    oPageContext.m_osDrawingStream +=
                 CPLOPrintf("/Form%d Do\n", nFormId.toInt());
     oPageContext.m_oXObjects[
             CPLOPrintf("Form%d", nFormId.toInt())] = nFormId;

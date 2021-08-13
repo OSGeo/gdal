@@ -1595,8 +1595,7 @@ GDALDataset* GDALRDADataset::OpenStatic( GDALOpenInfo* poOpenInfo )
     if( !Identify(poOpenInfo) )
         return nullptr;
 
-    std::unique_ptr<GDALRDADataset> poDS =
-        std::unique_ptr<GDALRDADataset>(new GDALRDADataset());
+    auto poDS = cpl::make_unique<GDALRDADataset>();
 
     if( !poDS->Open(poOpenInfo) )
         return nullptr;

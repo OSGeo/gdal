@@ -88,8 +88,6 @@ class FITSDataset final : public GDALPamDataset {
 
   std::vector<std::unique_ptr<FITSLayer>> m_apoLayers{};
 
-  FITSDataset();     // Others should not call this constructor explicitly
-
   CPLErr Init(fitsfile* hFITS, bool isExistingFile, int hduNum);
 
   void        LoadGeoreferencing();
@@ -98,6 +96,8 @@ class FITSDataset final : public GDALPamDataset {
   void        LoadMetadata(GDALMajorObject* poTarget);
 
 public:
+
+  FITSDataset();     // Others should not call this constructor explicitly
   ~FITSDataset();
 
   static GDALDataset* Open( GDALOpenInfo* );
@@ -2388,7 +2388,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
         return nullptr;
     }
     // Create a FITSDataset object
-    auto dataset = std::unique_ptr<FITSDataset>(new FITSDataset());
+    auto dataset = cpl::make_unique<FITSDataset>();
     dataset->m_isExistingFile = true;
     dataset->m_hFITS = hFITS;
     dataset->eAccess = poOpenInfo->eAccess;

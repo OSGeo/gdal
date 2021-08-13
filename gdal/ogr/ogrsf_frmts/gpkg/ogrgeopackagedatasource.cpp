@@ -137,7 +137,7 @@ static std::unique_ptr<TilingSchemeDefinition> GetTilingScheme(const char* pszNa
                  "Unsupported tiling scheme: some levels have variable matrix width");
         return nullptr;
     }
-    std::unique_ptr<TilingSchemeDefinition> poTilingScheme(new TilingSchemeDefinition);
+    auto poTilingScheme = cpl::make_unique<TilingSchemeDefinition>();
     poTilingScheme->pszName = pszName;
 
     OGRSpatialReference oSRS;

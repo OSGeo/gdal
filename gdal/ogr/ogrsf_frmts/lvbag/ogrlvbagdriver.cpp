@@ -41,7 +41,7 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
         return -1;  // Check later
     if( poOpenInfo->fpL == nullptr )
         return FALSE;
- 
+
     auto pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
     if( poOpenInfo->nHeaderBytes == 0 || pszPtr[0] != '<' )
         return FALSE;
@@ -124,7 +124,7 @@ void RegisterOGRLVBAG()
     if( GDALGetDriverByName( "LVBAG" ) != nullptr )
         return;
 
-    std::unique_ptr<GDALDriver> poDriver = std::unique_ptr<GDALDriver>{ new GDALDriver };
+    auto poDriver = cpl::make_unique<GDALDriver>();
 
     poDriver->SetDescription( "LVBAG" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );

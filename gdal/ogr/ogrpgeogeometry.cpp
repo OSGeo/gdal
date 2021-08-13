@@ -1755,7 +1755,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                                               /* const */ double* padfM,
                                               int* pnLastCurveIdx )
 {
-    auto poCC = std::unique_ptr<OGRCompoundCurve>(new OGRCompoundCurve());
+    auto poCC = cpl::make_unique<OGRCompoundCurve>();
     int nLastPointIdx = nPartStartIdx;
     bool bHasCircularArcs = false;
     int i = nFirstCurveIdx;  // Used after for.
