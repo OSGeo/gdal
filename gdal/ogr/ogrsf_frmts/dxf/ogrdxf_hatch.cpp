@@ -521,7 +521,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
             if( nCode > 0 )
                 poDS->UnreadValue();
 
-            OGRLineString *poLS = InsertSplineWithChecks( nDegree,
+            auto poLS = InsertSplineWithChecks( nDegree,
                 adfControlPoints, nControlPoints, adfKnots, nKnots,
                 adfWeights );
 
@@ -531,7 +531,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
                 return OGRERR_FAILURE;
             }
 
-            poGC->addGeometryDirectly( poLS );
+            poGC->addGeometryDirectly( poLS.release() );
         }
 
         else

@@ -2144,8 +2144,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
 /*      Use the helper function to check the input data and insert      */
 /*      the spline.                                                     */
 /* -------------------------------------------------------------------- */
-    auto poLS = std::unique_ptr<OGRLineString>(InsertSplineWithChecks( nDegree,
-        adfControlPoints, nControlPoints, adfKnots, nKnots, adfWeights ));
+    auto poLS = InsertSplineWithChecks( nDegree,
+        adfControlPoints, nControlPoints, adfKnots, nKnots, adfWeights );
 
     if( !poLS )
     {
@@ -2167,7 +2167,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
 /*     one-based.                                                       */
 /************************************************************************/
 
-OGRLineString *OGRDXFLayer::InsertSplineWithChecks( const int nDegree,
+std::unique_ptr<OGRLineString> OGRDXFLayer::InsertSplineWithChecks( const int nDegree,
     std::vector<double>& adfControlPoints, int nControlPoints,
     std::vector<double>& adfKnots, int nKnots,
     std::vector<double>& adfWeights )
@@ -2253,7 +2253,7 @@ OGRLineString *OGRDXFLayer::InsertSplineWithChecks( const int nDegree,
 /* -------------------------------------------------------------------- */
 /*      Turn into OGR geometry.                                         */
 /* -------------------------------------------------------------------- */
-    OGRLineString *poLS = new OGRLineString();
+    auto poLS = std::unique_ptr<OGRLineString>(new OGRLineString());
 
     poLS->setNumPoints( p1 );
     for( int i = 0; i < p1; i++ )
