@@ -2423,7 +2423,28 @@ int OGRProjCT::TransformWithErrorCodes(
             if( t )
                 t[i] = coord.xyzt.t;
             int err = 0;
-            if( coord.xyzt.x == HUGE_VAL )
+            if( std::isnan(coord.xyzt.x) )
+            {
+                // This shouldn't normally happen if PROJ projections behave
+                // correctly, but e.g inverse laea before PROJ 8.1.1 could
+                // do that for points out of domain.
+                // See https://github.com/OSGeo/PROJ/pull/2800
+                x[i] = HUGE_VAL;
+                y[i] = HUGE_VAL;
+                err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
+                static bool bHasWarned = false;
+                if( !bHasWarned )
+                {
+#ifdef DEBUG
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "PROJ returned a NaN value. It should be fixed");
+#else
+                    CPLDebug("OGR_CT", "PROJ returned a NaN value. It should be fixed");
+#endif
+                    bHasWarned = true;
+                }
+            }
+            else if( coord.xyzt.x == HUGE_VAL )
             {
                 err = proj_errno(pj);
                 // PROJ should normally emit an error, but in case it does not

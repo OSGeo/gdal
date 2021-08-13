@@ -2775,7 +2775,10 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
             static bool bNanCoordFound = false;
             if( !bNanCoordFound )
             {
-                CPLDebug("WARP", "NaN coordinate found.");
+                CPLDebug("WARP",
+                         "ComputeSourceWindow(): "
+                         "NaN coordinate found on point %d.",
+                         i);
                 bNanCoordFound = true;
             }
             nFailedCount++;
