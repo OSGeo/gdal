@@ -240,7 +240,7 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
 
     // Color space exposed by GDAL.  Not necessarily the in_color_space nor
     // the out_color_space of JPEG library.
-    J_COLOR_SPACE eGDALColorSpace;
+    /*J_COLOR_SPACE*/ int eGDALColorSpace;
 
     bool   bIsSubfile;
     bool   bHasTriedLoadWorldFileOrTab;
