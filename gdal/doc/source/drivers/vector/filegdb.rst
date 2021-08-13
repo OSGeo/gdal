@@ -202,6 +202,11 @@ Known Issues
 -  Reading data compressed in CDF format (Compressed Data Format)
    requires ESRI SDK 1.4 or later.
 
+Other limitations
+-----------------
+
+- The FileGeodatabase format (and thus the driver) does not support 64-bit integers.
+
 Links
 -----
 
