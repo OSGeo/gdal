@@ -36,6 +36,7 @@
 #define GDALJPEGErrorStruct     GDALJPEGErrorStruct12
 #define jpeg_vsiio_src    jpeg_vsiio_src_12
 #define jpeg_vsiio_dest   jpeg_vsiio_dest_12
+#define GDALJPEGUserData  GDALJPEGUserData12
 
 #include "jpgdataset.cpp"
 
