@@ -4723,7 +4723,10 @@ static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(
         static bool bNanCoordFound = false;
         if( !bNanCoordFound )
         {
-            CPLDebug("WARP", "NaN coordinate found.");
+            CPLDebug("WARP",
+                     "GWKCheckAndComputeSrcOffsets(): "
+                     "NaN coordinate found on point %d.",
+                     _iDstX);
             bNanCoordFound = true;
         }
         return false;
