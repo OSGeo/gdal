@@ -3807,6 +3807,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray* poArray,
             if (poName != nullptr && poName->GetType() == PDFObjectType_String)
             {
                 CPLString osName = PDFSanitizeLayerName(poName->GetString().c_str());
+                // coverity[copy_paste_error]
                 if (!osTopLayer.empty() )
                     osCurLayer = osTopLayer + "." + osName;
                 else
