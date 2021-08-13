@@ -163,7 +163,7 @@ def test_minixml_5():
 
         assert tree is not None, ('Tree is None: "%s"' % tree)
 
-    
+
 ###############################################################################
 # Parse malformed XML.
 
@@ -196,7 +196,7 @@ def test_minixml_6():
 
         assert tree is None, ('Tree is not None: "%s"' % tree)
 
-    
+
 ###############################################################################
 # Parse malformed XML.  Pass without warning, but should not pass.
 
@@ -219,7 +219,7 @@ def test_minixml_7():
 
         assert tree is not None, ('Tree is None: "%s"' % tree)
 
-    
+
 ###############################################################################
 # Parse XML with too many nesting
 
@@ -235,6 +235,16 @@ def test_minixml_8():
     assert tree is None, 'expected None tree'
     assert gdal.GetLastErrorMsg() != '', 'expected error message'
 
+
+###############################################################################
+# Parse and serialize an XML Tree with a <?a b c d ?> processing instruction
+
+
+def test_minixml_processing_instruction():
+
+    xml = """<?a b c d?>\n<foo />\n"""
+    got_xml = gdal.SerializeXMLTree(gdal.ParseXMLString(xml))
+    assert xml == got_xml, 'serialize xml tree failed.'
 
 ###############################################################################
 # Cleanup
