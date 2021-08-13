@@ -48,6 +48,7 @@
 #include "segment/cpcidskvectorsegment.h"
 #include "segment/metadatasegment.h"
 #include "segment/systiledir.h"
+#include "segment/cpcidskrpcmodel.h"
 #include "segment/cpcidskgcp2segment.h"
 #include "segment/cpcidskbitmap.h"
 #include "segment/cpcidsk_tex.h"
@@ -355,7 +356,7 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
       case SEG_BIN:
         if (STARTS_WITH(segment_pointer + 4, "RFMODEL "))
         {
-            segobj = new CPCIDSKBinarySegment( this, segment, segment_pointer );
+            segobj = new CPCIDSKRPCModelSegment( this, segment, segment_pointer );
         }
         else if (STARTS_WITH(segment_pointer + 4, "APMODEL "))
         {
