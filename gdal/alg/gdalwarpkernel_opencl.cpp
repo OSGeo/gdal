@@ -2163,9 +2163,11 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
         sz = warper->numBands * ((31 + warper->srcWidth * warper->srcHeight) >> 5);
 
         //Allocate some space for the validity of the validity mask
+        void* useBandSrcValidTab[1];
         err = alloc_pinned_mem(warper, 0, warper->numBands*sizeof(char),
-                               reinterpret_cast<void **>(&(warper->useBandSrcValid)),
+                               useBandSrcValidTab,
                                &(warper->useBandSrcValidCL));
+        warper->useBandSrcValid = static_cast<char*>(useBandSrcValidTab[0]);
         handleErrGoto(err, error_label);
 
         for (i = 0; i < warper->numBands; ++i)
@@ -2173,17 +2175,21 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
         // Allocate one array for all the band validity masks.
         // Remember that the masks don't use much memory (they're bitwise).
+        void* nBandSrcValidTab[1];
         err = alloc_pinned_mem(warper, 0, sz * sizeof(int),
-                               reinterpret_cast<void **>(&(warper->nBandSrcValid)),
+                               nBandSrcValidTab,
                                &(warper->nBandSrcValidCL));
+        warper->nBandSrcValid = static_cast<float*>(nBandSrcValidTab[0]);
         handleErrGoto(err, error_label);
     }
 
     //Make space for the per-band
     if (dfDstNoDataReal != nullptr) {
+        void* fDstNoDataRealTab[1];
         alloc_pinned_mem(warper, 0, warper->numBands,
-                         reinterpret_cast<void **>(&(warper->fDstNoDataReal)),
+                         fDstNoDataRealTab,
                          &(warper->fDstNoDataRealCL));
+        warper->fDstNoDataReal = static_cast<float*>(fDstNoDataRealTab[0]);
 
         //Copy over values
         for (i = 0; i < warper->numBands; ++i)
@@ -2223,8 +2229,9 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
     //Alloc coord memory
     sz = sizeof(float) * warper->xyChSize * warper->xyWidth * warper->xyHeight;
-    err = alloc_pinned_mem(warper, 0, sz, reinterpret_cast<void **>(&(warper->xyWork)),
-                           &(warper->xyWorkCL));
+    void* xyWorkTab[1];
+    err = alloc_pinned_mem(warper, 0, sz, xyWorkTab, &(warper->xyWorkCL));
+    warper->xyWork = static_cast<float*>(xyWorkTab[0]);
     handleErrGoto(err, error_label);
 
     //Ensure everything is finished allocating, copying, & mapping
