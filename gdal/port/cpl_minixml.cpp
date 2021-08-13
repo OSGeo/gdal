@@ -1574,12 +1574,14 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
 
     // Slight optimization: avoid using CSLTokenizeStringComplex that
     // does memory allocations when it is not really necessary.
+    bool bFreeTokens = false;
     char **papszTokensToFree = nullptr;
     const char* const* papszTokens;
     if( strchr(pszPath, '.') )
     {
         papszTokensToFree = CSLTokenizeStringComplex( pszPath, ".", FALSE, FALSE );
         papszTokens = papszTokensToFree;
+        bFreeTokens = true;
     }
     else
     {
@@ -1616,7 +1618,7 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
         iToken++;
     }
 
-    if( papszTokensToFree )
+    if( bFreeTokens )
         CSLDestroy( papszTokensToFree );
     return psRoot;
 }

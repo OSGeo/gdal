@@ -670,9 +670,18 @@ static bool CPLLZ4Decompressor  (const void* input_data,
         if( bHeader )
         {
             int nSize = CPL_LSBSINT32PTR(input_data);
-            if( nSize < 0 )
+            if( nSize <= 0 )
             {
                 *output_size = 0;
+                return false;
+            }
+            if( nSize / 10000 > static_cast<int>(input_size) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Stored uncompressed size (%d) is much larger "
+                         "than compressed size (%d)",
+                         nSize, static_cast<int>(input_size));
+                *output_size = nSize;
                 return false;
             }
             *output_data = VSI_MALLOC_VERBOSE(nSize);
@@ -1234,12 +1243,11 @@ static void CPLAddBuiltinCompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "zlib";
-        const char* const apszMetadata[] = {
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='LEVEL' type='int' description='Compression level' min='1' max='9' default='6' />"
-            "</Options>",
-            nullptr
-        };
+            "</Options>";
+        const char* const apszMetadata[] = { pszOptions, nullptr };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLZlibCompressor;
         sComp.user_data = const_cast<char*>("zlib");
@@ -1250,12 +1258,11 @@ static void CPLAddBuiltinCompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "gzip";
-        const char* const apszMetadata[] = {
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='LEVEL' type='int' description='Compression level' min='1' max='9' default='6' />"
-            "</Options>",
-            nullptr
-        };
+            "</Options>";
+        const char* const apszMetadata[] = { pszOptions, nullptr };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLZlibCompressor;
         sComp.user_data = const_cast<char*>("gzip");
@@ -1267,13 +1274,12 @@ static void CPLAddBuiltinCompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "lzma";
-        const char* const apszMetadata[] = {
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='PRESET' type='int' description='Compression level' min='0' max='9' default='6' />"
             "  <Option name='DELTA' type='int' description='Delta distance in byte' default='1' />"
-            "</Options>",
-            nullptr
-        };
+            "</Options>";
+        const char* const apszMetadata[] = { pszOptions, nullptr };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLLZMACompressor;
         sComp.user_data = nullptr;
@@ -1286,12 +1292,11 @@ static void CPLAddBuiltinCompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "zstd";
-        const char* const apszMetadata[] = {
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='LEVEL' type='int' description='Compression level' min='1' max='22' default='13' />"
-            "</Options>",
-            nullptr
-        };
+            "</Options>";
+        const char* const apszMetadata[] = { pszOptions, nullptr };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLZSTDCompressor;
         sComp.user_data = nullptr;
@@ -1304,13 +1309,12 @@ static void CPLAddBuiltinCompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "lz4";
-        const char* const apszMetadata[] = {
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='ACCELERATION' type='int' description='Acceleration factor. The higher, the less compressed' min='1' default='1' />"
             "  <Option name='HEADER' type='boolean' description='Whether a header with the uncompressed size should be included (as used by Zarr)' default='YES' />"
-            "</Options>",
-            nullptr
-        };
+            "</Options>";
+        const char* const apszMetadata[] = { pszOptions, nullptr };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLLZ4Compressor;
         sComp.user_data = nullptr;
@@ -1322,12 +1326,11 @@ static void CPLAddBuiltinCompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_FILTER;
         sComp.pszId = "delta";
-        const char* const apszMetadata[] = {
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='DTYPE' type='string' description='Data type following NumPy array protocol type string (typestr) format'/>"
-            "</Options>",
-            nullptr
-        };
+            "</Options>";
+        const char* const apszMetadata[] = { pszOptions, nullptr };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLDeltaCompressor;
         sComp.user_data = nullptr;
@@ -1641,12 +1644,14 @@ static void CPLAddBuiltinDecompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "blosc";
-        const char* const apszMetadata[] = {
-            "BLOSC_VERSION=" BLOSC_VERSION_STRING,
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='NUM_THREADS' type='string' "
             "description='Number of worker threads for decompression. Can be set to ALL_CPUS' default='1' />"
-            "</Options>",
+            "</Options>";
+        const char* const apszMetadata[] = {
+            "BLOSC_VERSION=" BLOSC_VERSION_STRING,
+            pszOptions,
             nullptr
         };
         sComp.papszMetadata = apszMetadata;
@@ -1705,12 +1710,11 @@ static void CPLAddBuiltinDecompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_COMPRESSOR;
         sComp.pszId = "lz4";
-        const char* const apszMetadata[] = {
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='HEADER' type='boolean' description='Whether a header with the uncompressed size should be included (as used by Zarr)' default='YES' />"
-            "</Options>",
-            nullptr
-        };
+            "</Options>";
+        const char* const apszMetadata[] = { pszOptions, nullptr };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLLZ4Decompressor;
         sComp.user_data = nullptr;
@@ -1722,12 +1726,11 @@ static void CPLAddBuiltinDecompressors()
         sComp.nStructVersion = 1;
         sComp.eType = CCT_FILTER;
         sComp.pszId = "delta";
-        const char* const apszMetadata[] = {
+        const char* pszOptions =
             "OPTIONS=<Options>"
             "  <Option name='DTYPE' type='string' description='Data type following NumPy array protocol type string (typestr) format'/>"
-            "</Options>",
-            nullptr
-        };
+            "</Options>";
+        const char* const apszMetadata[] = { pszOptions, nullptr };
         sComp.papszMetadata = apszMetadata;
         sComp.pfnFunc = CPLDeltaDecompressor;
         sComp.user_data = nullptr;

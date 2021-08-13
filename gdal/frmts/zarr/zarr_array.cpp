@@ -2432,6 +2432,7 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
                 const std::string osName = oEltArray[0].ToString();
                 // Add padding for alignment
                 const size_t alignmentSub = GetAlignment(oEltArray[1]);
+                assert(alignmentSub);
                 alignmentMax = std::max(alignmentMax, alignmentSub);
                 offset = AlignOffsetOn(offset, alignmentSub);
                 comps.emplace_back(std::unique_ptr<GDALEDTComponent>(
@@ -2596,7 +2597,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     {
         CPLJSONDocument oTmpDoc;
         oTmpDoc.SetRoot(oAttributes);
-        oTmpDoc.LoadMemory(oTmpDoc.SaveAsString());
+        CPL_IGNORE_RET_VAL(oTmpDoc.LoadMemory(oTmpDoc.SaveAsString()));
         oAttributes = oTmpDoc.GetRoot();
     }
 

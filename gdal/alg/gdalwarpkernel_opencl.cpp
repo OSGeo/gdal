@@ -45,22 +45,22 @@
 
 CPL_CVSID("$Id$")
 
-#define handleErr(err) if((err) != CL_SUCCESS) { \
+#define handleErr(err) do { if((err) != CL_SUCCESS) { \
     CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
     return err; \
-}
+} } while(0)
 
-#define handleErrRetNULL(err) if((err) != CL_SUCCESS) { \
+#define handleErrRetNULL(err) do { if((err) != CL_SUCCESS) { \
     (*clErr) = err; \
     CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
     return nullptr; \
-}
+} } while(0)
 
-#define handleErrGoto(err, goto_label) if((err) != CL_SUCCESS) { \
+#define handleErrGoto(err, goto_label) do { if((err) != CL_SUCCESS) { \
     (*clErr) = err; \
     CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
     goto goto_label; \
-}
+} } while(0)
 
 #define freeCLMem(clMem, fallBackMem)  do { \
     if ((clMem) != nullptr) { \
@@ -623,7 +623,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     char *progBuf = static_cast<char *>(CPLCalloc(PROGBUF_SIZE, sizeof(char)));
     float dstMinVal = 0.f, dstMaxVal = 0.0;
 
-    const char *outType;
+    const char *outType = "";
     const char *dUseVec = "";
     const char *dVecf = "float";
     const char *kernGenFuncs = R""""(
@@ -1312,6 +1312,11 @@ __kernel void resamp(__read_only image2d_t srcCoords,
             dstMaxVal = 65535.0;
             outType = "ushort";
             break;
+        default:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unhandled imageFormat = %d",
+                     warper->imageFormat);
+            return nullptr;
     }
 
     //Use vector format?
@@ -1967,6 +1972,8 @@ cl_int set_img_data(struct oclWarper *warper, void *srcImgData,
             }
         }
     } else {
+        assert(dstImag);
+
         //Copy, deinterleave, & space interleaved data
         for( iSrcY = 0; iSrcY < height; iSrcY++ )
         {
@@ -2163,9 +2170,12 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
         sz = warper->numBands * ((31 + warper->srcWidth * warper->srcHeight) >> 5);
 
         //Allocate some space for the validity of the validity mask
+        void* useBandSrcValidTab[1];
+        cl_mem useBandSrcValidCLTab[1];
         err = alloc_pinned_mem(warper, 0, warper->numBands*sizeof(char),
-                               reinterpret_cast<void **>(&(warper->useBandSrcValid)),
-                               &(warper->useBandSrcValidCL));
+                               useBandSrcValidTab, useBandSrcValidCLTab);
+        warper->useBandSrcValid = static_cast<char*>(useBandSrcValidTab[0]);
+        warper->useBandSrcValidCL = useBandSrcValidCLTab[0];
         handleErrGoto(err, error_label);
 
         for (i = 0; i < warper->numBands; ++i)
@@ -2173,17 +2183,23 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
         // Allocate one array for all the band validity masks.
         // Remember that the masks don't use much memory (they're bitwise).
+        void* nBandSrcValidTab[1];
+        cl_mem nBandSrcValidCLTab[1];
         err = alloc_pinned_mem(warper, 0, sz * sizeof(int),
-                               reinterpret_cast<void **>(&(warper->nBandSrcValid)),
-                               &(warper->nBandSrcValidCL));
+                               nBandSrcValidTab, nBandSrcValidCLTab);
+        warper->nBandSrcValid = static_cast<float*>(nBandSrcValidTab[0]);
+        warper->nBandSrcValidCL = nBandSrcValidCLTab[0];
         handleErrGoto(err, error_label);
     }
 
     //Make space for the per-band
     if (dfDstNoDataReal != nullptr) {
+        void* fDstNoDataRealTab[1];
+        cl_mem fDstNoDataRealCLTab[1];
         alloc_pinned_mem(warper, 0, warper->numBands,
-                         reinterpret_cast<void **>(&(warper->fDstNoDataReal)),
-                         &(warper->fDstNoDataRealCL));
+                         fDstNoDataRealTab, fDstNoDataRealCLTab);
+        warper->fDstNoDataReal = static_cast<float*>(fDstNoDataRealTab[0]);
+        warper->fDstNoDataRealCL = fDstNoDataRealCLTab[0];
 
         //Copy over values
         for (i = 0; i < warper->numBands; ++i)
@@ -2223,8 +2239,11 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
     //Alloc coord memory
     sz = sizeof(float) * warper->xyChSize * warper->xyWidth * warper->xyHeight;
-    err = alloc_pinned_mem(warper, 0, sz, reinterpret_cast<void **>(&(warper->xyWork)),
-                           &(warper->xyWorkCL));
+    void* xyWorkTab[1];
+    cl_mem xyWorkCLTab[1];
+    err = alloc_pinned_mem(warper, 0, sz, xyWorkTab, xyWorkCLTab);
+    warper->xyWork = static_cast<float*>(xyWorkTab[0]);
+    warper->xyWorkCL = xyWorkCLTab[0];
     handleErrGoto(err, error_label);
 
     //Ensure everything is finished allocating, copying, & mapping
