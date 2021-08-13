@@ -2017,7 +2017,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     /*-----------------------------------------------------------------
      * Create new obj and coord block
      *----------------------------------------------------------------*/
-    auto poNewObjBlock = std::unique_ptr<TABMAPObjectBlock>(new TABMAPObjectBlock(m_eAccessMode));
+    auto poNewObjBlock = cpl::make_unique<TABMAPObjectBlock>(m_eAccessMode);
     poNewObjBlock->InitNewBlock(m_fp, m_poHeader->m_nRegularBlockSize, m_oBlockManager.AllocNewBlock("OBJECT"));
 
     /* Use existing center of other block in case we have compressed objects

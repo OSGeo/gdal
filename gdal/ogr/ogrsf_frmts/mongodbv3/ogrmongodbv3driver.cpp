@@ -1153,7 +1153,7 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature* poFeature,
 std::unique_ptr<OGRFeature> OGRMongoDBv3Layer::Translate(
                                             const bsoncxx::document::view& doc)
 {
-    std::unique_ptr<OGRFeature> poFeature(new OGRFeature(m_poFeatureDefn));
+    auto poFeature = cpl::make_unique<OGRFeature>(m_poFeatureDefn);
     for (auto&& field : doc)
     {
         std::string fieldName(field.key());

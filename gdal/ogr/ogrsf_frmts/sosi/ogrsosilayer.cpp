@@ -217,7 +217,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         }
         case L_FLATE: {  /* Area */
             oGType = wkbPolygon;
-            std::unique_ptr<OGRLinearRing> poOuter(new OGRLinearRing());  /* Initialize a new closed polygon */
+            auto poOuter = cpl::make_unique<OGRLinearRing>();  /* Initialize a new closed polygon */
             long nRefNr;
             unsigned char nRefStatus;
             long nRefCount;
@@ -253,7 +253,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
             }
 
             if (correct) {
-              std::unique_ptr<OGRPolygon> poLy(new OGRPolygon());
+              auto poLy = cpl::make_unique<OGRPolygon>();
               poOuter->closeRings();
               poLy->addRingDirectly(poOuter.release());
 
