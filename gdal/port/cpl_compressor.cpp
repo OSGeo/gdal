@@ -670,9 +670,18 @@ static bool CPLLZ4Decompressor  (const void* input_data,
         if( bHeader )
         {
             int nSize = CPL_LSBSINT32PTR(input_data);
-            if( nSize < 0 )
+            if( nSize <= 0 )
             {
                 *output_size = 0;
+                return false;
+            }
+            if( nSize / 10000 > static_cast<int>(input_size) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Stored uncompressed size (%d) is much larger "
+                         "than compressed size (%d)",
+                         nSize, static_cast<int>(input_size));
+                *output_size = nSize;
                 return false;
             }
             *output_data = VSI_MALLOC_VERBOSE(nSize);
