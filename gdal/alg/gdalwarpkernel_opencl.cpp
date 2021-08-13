@@ -45,22 +45,22 @@
 
 CPL_CVSID("$Id$")
 
-#define handleErr(err) if((err) != CL_SUCCESS) { \
+#define handleErr(err) do { if((err) != CL_SUCCESS) { \
     CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
     return err; \
-}
+} } while(0)
 
-#define handleErrRetNULL(err) if((err) != CL_SUCCESS) { \
+#define handleErrRetNULL(err) do { if((err) != CL_SUCCESS) { \
     (*clErr) = err; \
     CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
     return nullptr; \
-}
+} } while(0)
 
-#define handleErrGoto(err, goto_label) if((err) != CL_SUCCESS) { \
+#define handleErrGoto(err, goto_label) do { if((err) != CL_SUCCESS) { \
     (*clErr) = err; \
     CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
     goto goto_label; \
-}
+} } while(0)
 
 #define freeCLMem(clMem, fallBackMem)  do { \
     if ((clMem) != nullptr) { \
