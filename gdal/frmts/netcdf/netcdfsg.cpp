@@ -64,12 +64,12 @@ namespace nccfdriver
     }
 
 
-    /* SGeometry_Reader 
+    /* SGeometry_Reader
      * (implementations)
      *
      */
     SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
-        : gc_varId(geoVarId), touple_order(0) 
+        : gc_varId(geoVarId), touple_order(0)
     {
 
         char container_name[NC_MAX_NAME + 1];
@@ -78,14 +78,14 @@ namespace nccfdriver
         // Get geometry container name
         if(nc_inq_varname(ncId, geoVarId, container_name) != NC_NOERR)
         {
-            throw SG_Exception_Existential("new geometry container", "the variable of the given ID");     
+            throw SG_Exception_Existential("new geometry container", "the variable of the given ID");
         }
 
         // Establish string version of container_name
         container_name_s = std::string(container_name);
 
         // Find geometry type
-        this->type = nccfdriver::getGeometryType(ncId, geoVarId); 
+        this->type = nccfdriver::getGeometryType(ncId, geoVarId);
 
         if(this->type == NONE)
         {
@@ -100,14 +100,14 @@ namespace nccfdriver
             int gmVID;
             if(nc_inq_varid(ncId, gm_name, &gmVID) == NC_NOERR)
             {
-                this->gm_varId = gmVID;    
+                this->gm_varId = gmVID;
             }
-        }    
-        
+        }
+
         // Find a list of node counts and part node count
         std::string nc_name_s;
-        std::string pnc_name_s; 
-        std::string ir_name_s;    
+        std::string pnc_name_s;
+        std::string ir_name_s;
         int pnc_vid = INVALID_VAR_ID;
         int nc_vid = INVALID_VAR_ID;
         int ir_vid = INVALID_VAR_ID;
@@ -129,10 +129,10 @@ namespace nccfdriver
 
                 this->node_counts.push_back(buf);
                 total_node_count += buf;
-                bound++;    
-            }    
+                bound++;
+            }
 
-        }    
+        }
 
         if(attrf(ncId, geoVarId, CF_SG_PART_NODE_COUNT, pnc_name_s) != "")
         {
@@ -149,10 +149,10 @@ namespace nccfdriver
 
                 this->pnode_counts.push_back(buf);
                 total_part_node_count += buf;
-                bound++;    
-            }    
-        }    
-    
+                bound++;
+            }
+        }
+
         if(attrf(ncId, geoVarId, CF_SG_INTERIOR_RING, ir_name_s) != "")
         {
             const char * ir_name = ir_name_s.c_str();
@@ -188,16 +188,16 @@ namespace nccfdriver
         // part node counts and node counts don't match up in count
         if(pnc_vid != INVALID_VAR_ID && total_node_count != total_part_node_count)
         {
-            throw SG_Exception_BadSum(static_cast<const char*>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_PART_NODE_COUNT); 
+            throw SG_Exception_BadSum(static_cast<const char*>(container_name), CF_SG_PART_NODE_COUNT, CF_SG_PART_NODE_COUNT);
         }
 
         // interior rings only exist when part node counts exist
         if(int_rings.size() > 0 && pnode_counts.size() == 0)
         {
             throw SG_Exception_Dep(static_cast<const char *>(container_name), CF_SG_INTERIOR_RING, CF_SG_PART_NODE_COUNT);
-        }    
+        }
 
-    
+
         // cardinality of part_node_counts == cardinality of interior_ring (if interior ring > 0)
         if(int_rings.size() > 0)
         {
@@ -228,7 +228,7 @@ namespace nccfdriver
             for(size_t i = 0; i < node_counts.size() - 1; i++)
             {
                 rc = rc + node_counts[i];
-                bound_list.push_back(rc);    
+                bound_list.push_back(rc);
             }
         }
 
@@ -238,9 +238,9 @@ namespace nccfdriver
         if(attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES, cart_s) == "")
         {
             throw SG_Exception_Existential(container_name, CF_SG_NODE_COORDINATES);
-        }    
+        }
 
-        // Create parts count list and an offset list for parts indexing    
+        // Create parts count list and an offset list for parts indexing
         if(this->node_counts.size() > 0)
         {
             int ind = 0;
@@ -266,12 +266,12 @@ namespace nccfdriver
                         this->poly_count.push_back(c);
                     c = 0;
                     prog = 0; parts = 0;
-                }    
+                }
                 else if(prog > node_counts[ind])
                 {
                     throw SG_Exception_BadSum(container_name, CF_SG_PART_NODE_COUNT, CF_SG_NODE_COUNT);
                 }
-            } 
+            }
         }
 
         // (1) the tuple order for a single point
@@ -286,7 +286,7 @@ namespace nccfdriver
 
         char * dim = strtok(cart,  " ");
         int axis_id = 0;
-        
+
         while(dim != nullptr)
         {
             if(nc_inq_varid(ncId, dim, &axis_id) == NC_NOERR)
@@ -294,8 +294,8 @@ namespace nccfdriver
 
                 // Check axis signature
                 std::string a_sig;
-                attrf(ncId, axis_id, CF_AXIS, a_sig); 
-                
+                attrf(ncId, axis_id, CF_AXIS, a_sig);
+
                 // If valid signify axis correctly
                 if(a_sig == "X")
                 {
@@ -318,10 +318,10 @@ namespace nccfdriver
             }
             else
             {
-                throw SG_Exception_Existential(container_name, dim);    
+                throw SG_Exception_Existential(container_name, dim);
             }
 
-            dim = strtok(nullptr, " "); 
+            dim = strtok(nullptr, " ");
         }
 
         // Write axis in X, Y, Z order
@@ -330,13 +330,13 @@ namespace nccfdriver
             this->nodec_varIds.push_back(X);
         else
         {
-            throw SG_Exception_Existential(container_name, "node_coordinates: X-axis");    
+            throw SG_Exception_Existential(container_name, "node_coordinates: X-axis");
         }
         if(Y != INVALID_VAR_ID)
             this->nodec_varIds.push_back(Y);
         else
         {
-            throw SG_Exception_Existential(container_name, "node_coordinates: Y-axis");    
+            throw SG_Exception_Existential(container_name, "node_coordinates: Y-axis");
         }
         if(Z != INVALID_VAR_ID)
             this->nodec_varIds.push_back(Z);
@@ -366,41 +366,41 @@ namespace nccfdriver
             {
                 throw SG_Exception_Existential(container_name, "one or more node_coordinate dimensions");
             }
-            
+
             if(!dim_set)
             {
                 all_dim = inter_dim[0];
                 dim_set = true;
-            }    
+            }
 
             else
             {
                 if (inter_dim[0] != all_dim)
                     throw SG_Exception_Dim_MM(container_name, "X, Y", "in general all node coordinate axes");
-            } 
+            }
         }
-        
+
         // (2) check equality one
         if(node_counts.size() > 0)
         {
             size_t diml = 0;
             nc_inq_dimlen(ncId, all_dim, &diml);
-        
+
             if(diml != total_node_count)
                 throw SG_Exception_BadSum(container_name, "node_count", "node coordinate dimension length");
         }
-    
+
 
         // (3) check tuple order
         if(this->touple_order < 2)
         {
-            throw SG_Exception_Existential(container_name, "insufficient node coordinates must have at least two axis");    
+            throw SG_Exception_Existential(container_name, "insufficient node coordinates must have at least two axis");
         }
 
-       /* Investigate for instance dimension 
+       /* Investigate for instance dimension
         * The procedure is as follows
         *
-        * (1) if there's node_count, use the dimension used to index node count 
+        * (1) if there's node_count, use the dimension used to index node count
         * (2) otherwise it's point (singleton) data, in this case use the node coordinate dimension
         */
         size_t instance_dim_len = 0;
@@ -408,23 +408,23 @@ namespace nccfdriver
         if(node_counts.size() >= 1)
         {
             int nc_dims = 0;
-            nc_inq_varndims(ncId, nc_vid, &nc_dims); 
+            nc_inq_varndims(ncId, nc_vid, &nc_dims);
 
-            if(nc_dims != 1) throw SG_Exception_Not1D(); 
+            if(nc_dims != 1) throw SG_Exception_Not1D();
 
             int nc_dim_id[1];
 
             if(nc_inq_vardimid(ncId, nc_vid, nc_dim_id) != NC_NOERR)
             {
                 throw SG_Exception_Existential(container_name, "node_count dimension");
-            }    
+            }
 
             this->inst_dimId = nc_dim_id[0];
         }
 
         else
         {
-            this->inst_dimId = all_dim;   
+            this->inst_dimId = all_dim;
         }
 
         nc_inq_dimlen(ncId, this->inst_dimId, &instance_dim_len);
@@ -434,8 +434,8 @@ namespace nccfdriver
 
         // Set values accordingly
         this->inst_dimLen = instance_dim_len;
-        this->pt_buffer = std::unique_ptr<Point>(new Point(this->touple_order));
-        this->gc_varId = geoVarId; 
+        this->pt_buffer = cpl::make_unique<Point>(this->touple_order);
+        this->gc_varId = geoVarId;
         this->ncid = ncId;
     }
 
@@ -456,7 +456,7 @@ namespace nccfdriver
             }
 
             pt[order] = data;
-        }    
+        }
 
         return *(this->pt_buffer);
     }
@@ -471,7 +471,7 @@ namespace nccfdriver
             int dims;
             if(nc_inq_varndims(this->ncid, nodec_varIds[0], &dims) != NC_NOERR) return 0;
             if(dims != 1) return 0;
-            
+
             // Find which dimension is used for x
             int index;
             if(nc_inq_vardimid(this->ncid, nodec_varIds[0], &index) != NC_NOERR)
@@ -485,7 +485,7 @@ namespace nccfdriver
             {
                 return 0;
             }
-            return len;    
+            return len;
         }
 
         else return this->node_counts.size();
@@ -518,7 +518,7 @@ namespace nccfdriver
      * and returns a buffer that MUST be free'd
      */
     std::vector<unsigned char> SGeometry_Reader::serializeToWKB(size_t featureInd)
-    {        
+    {
         std::vector<unsigned char> ret;
         int nc = 0; size_t sb = 0;
 
@@ -586,14 +586,14 @@ namespace nccfdriver
                     if(t == wkbNone) throw SG_Exception_BadFeature();
                     int32_t lc = parts_count[featureInd];
                     size_t seek_begin = sb;
-                    size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous    
+                    size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous
                     std::vector<int> pnc;
 
                     // Build sub vector for part_node_counts
                     // + Calculate wkbSize
                     for(int itr = 0; itr < lc; itr++)
                     {
-                        pnc.push_back(pnode_counts[pc_begin + itr]);    
+                        pnc.push_back(pnode_counts[pc_begin + itr]);
                     }
 
                     size_t cur_point = seek_begin;
@@ -623,13 +623,13 @@ namespace nccfdriver
                     bool noInteriors = this->int_rings.size() == 0 ? true : false;
                     int32_t rc = parts_count[featureInd];
                     size_t seek_begin = sb;
-                    size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous        
+                    size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous
                     std::vector<int> pnc;
 
                     // Build sub vector for part_node_counts
                     for(int itr = 0; itr < rc; itr++)
                     {
-                        pnc.push_back(pnode_counts[pc_begin + itr]);    
+                        pnc.push_back(pnode_counts[pc_begin + itr]);
                     }
 
                     // Create Multipolygon headers
@@ -653,21 +653,21 @@ namespace nccfdriver
                     {
                         int32_t polys = poly_count[featureInd];
                         add_to_buffer(ret, static_cast<uint32_t>(polys));
-    
+
                         size_t base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
                         size_t seek = seek_begin; // beginning of node range for this multigeometry
                         size_t ir_base = base + 1;
 
                         // has interior rings,
                         for(int32_t itr = 0; itr < polys; itr++)
-                        {    
+                        {
                             int rc_m = 1;
 
-                            // count how many parts belong to each Polygon        
+                            // count how many parts belong to each Polygon
                             while(ir_base < int_rings.size() && int_rings[ir_base])
                             {
                                 rc_m++;
-                                ir_base++;    
+                                ir_base++;
                             }
 
                             if(rc_m == 1)
@@ -694,12 +694,12 @@ namespace nccfdriver
                             ir_base = base + 1;
                         }
                     }
-                }    
+                }
                 break;
 
                 default:
 
-                    throw SG_Exception_BadFeature();    
+                    throw SG_Exception_BadFeature();
                     break;
         }
 
@@ -734,7 +734,7 @@ namespace nccfdriver
         for(int curr = 0; curr < varCount; curr++)
         {
             size_t contname2_len = 0;
-            
+
             // First find container length, and make buf that size in chars
             if(nc_inq_attlen(this->nc, curr, CF_SG_GEOMETRY, &contname2_len) != NC_NOERR)
             {
@@ -768,7 +768,7 @@ namespace nccfdriver
                         throw SG_Exception_General_Malformed(contname);
                     }
                 }
-                
+
                 std::string n(property_name);
                 v_ids.push_back(curr);
                 v_headers.push_back(n);
@@ -812,7 +812,7 @@ namespace nccfdriver
                 + arg2_s
                 + " existing.";
     }
-    
+
     SG_Exception_BadSum::SG_Exception_BadSum(const char* container_name, const char* arg1, const char* arg2)
     {
         std::string cn_s(container_name);
@@ -869,14 +869,14 @@ namespace nccfdriver
         {
             return NONE;
         }
-        
-        // Points    
+
+        // Points
         if(!strcmp(gt_name, CF_SG_TYPE_POINT))
         {
             // Node Count not present? Assume that it is a multipoint.
             if(nc_inq_att(ncid, varid, CF_SG_NODE_COUNT, nullptr, nullptr) == NC_ENOTATT)
             {
-                ret = POINT;    
+                ret = POINT;
             }
             else ret = MULTIPOINT;
         }
@@ -943,7 +943,7 @@ namespace nccfdriver
 
         if(t == wkbNone) throw SG_Exception_BadFeature();
         uint32_t nc = (uint32_t) node_count;
-        
+
         add_to_buffer(buffer, order);
         add_to_buffer(buffer, t);
         add_to_buffer(buffer, nc);
@@ -954,7 +954,7 @@ namespace nccfdriver
             Point & p = (*ge)[seek_begin + ind];
             add_to_buffer(buffer, p[0]);
             add_to_buffer(buffer, p[1]);
-            
+
             if(ge->get_axisCount() >= 3)
             {
                 add_to_buffer(buffer, p[2]);
@@ -963,7 +963,7 @@ namespace nccfdriver
     }
 
     void inPlaceSerialize_PolygonExtOnly(SGeometry_Reader * ge, int node_count, size_t seek_begin, std::vector<unsigned char>& buffer)
-    {    
+    {
         uint8_t order = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbPolygon:
                      ge->get_axisCount() == 3 ? wkbPolygon25D: wkbNone;
@@ -1054,7 +1054,7 @@ namespace nccfdriver
             // Now have variable ID. See if vector contains it, and if not
             // insert
             r_ids.insert(varID); // It's a set. No big deal sets don't allow duplicates anyways
-        }    
+        }
 
         return 0 ;
     }

@@ -1202,7 +1202,7 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         if( !Identify( poOpenInfo ) )
             return nullptr;
 
-        std::unique_ptr<TileDBDataset> poDS(new TileDBDataset());
+        auto poDS = cpl::make_unique<TileDBDataset>();
 
         const char* pszConfig = CSLFetchNameValue(
                                     poOpenInfo->papszOpenOptions,
@@ -1773,7 +1773,7 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
             return nullptr;
         }
 
-        std::unique_ptr<TileDBDataset> poDS(new TileDBDataset());
+        auto poDS = cpl::make_unique<TileDBDataset>();
         poDS->nRasterXSize = nXSize;
         poDS->nRasterYSize = nYSize;
         poDS->eDataType = eType;

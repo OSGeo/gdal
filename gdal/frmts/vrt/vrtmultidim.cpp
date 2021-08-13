@@ -921,7 +921,7 @@ std::shared_ptr<VRTMDArray> VRTMDArray::Create(const std::shared_ptr<VRTGroup>& 
     std::unique_ptr<OGRSpatialReference> poSRS;
     if( psSRSNode )
     {
-        poSRS = std::unique_ptr<OGRSpatialReference>(new OGRSpatialReference());
+        poSRS = cpl::make_unique<OGRSpatialReference>();
         poSRS->SetFromUserInput( CPLGetXMLValue(psSRSNode, nullptr, ""), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS );
         const char* pszMapping =
             CPLGetXMLValue(psSRSNode, "dataAxisToSRSAxisMapping", nullptr);
@@ -1277,12 +1277,12 @@ std::unique_ptr<VRTMDArraySourceInlinedValues> VRTMDArraySourceInlinedValues::Cr
         pabyPtr += nDTSize;
     }
 
-    return std::unique_ptr<VRTMDArraySourceInlinedValues>(new
-        VRTMDArraySourceInlinedValues(array,
-                                      bIsConstantValue,
-                                      std::move(anOffset),
-                                      std::move(anCount),
-                                      std::move(abyValues)));
+    return cpl::make_unique<VRTMDArraySourceInlinedValues>(
+                                       array,
+                                       bIsConstantValue,
+                                       std::move(anOffset),
+                                       std::move(anCount),
+                                       std::move(abyValues));
 }
 
 /************************************************************************/
@@ -1655,19 +1655,19 @@ std::unique_ptr<VRTMDArraySourceFromArray> VRTMDArraySourceFromArray::Create(
         }
     }
 
-    return std::unique_ptr<VRTMDArraySourceFromArray>(new
-        VRTMDArraySourceFromArray(poDstArray,
-                                  bRelativeToVRTSet,
-                                  bRelativeToVRT,
-                                  pszFilename,
-                                  pszArray,
-                                  pszSourceBand,
-                                  std::move(anTransposedAxis),
-                                  pszView,
-                                  std::move(anSrcOffset),
-                                  std::move(anCount),
-                                  std::move(anStep),
-                                  std::move(anDstOffset)));
+    return cpl::make_unique<VRTMDArraySourceFromArray>(
+                                              poDstArray,
+                                              bRelativeToVRTSet,
+                                              bRelativeToVRT,
+                                              pszFilename,
+                                              pszArray,
+                                              pszSourceBand,
+                                              std::move(anTransposedAxis),
+                                              pszView,
+                                              std::move(anSrcOffset),
+                                              std::move(anCount),
+                                              std::move(anStep),
+                                              std::move(anDstOffset));
 }
 
 /************************************************************************/

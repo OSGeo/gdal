@@ -133,8 +133,6 @@ class GDALDAASDataset final: public GDALDataset
         char    **m_papszOpenOptions = nullptr;
 
         // Methods
-        GDALDAASDataset(GDALDAASDataset* poParentDS, int iOvrLevel);
-
         bool      Open( GDALOpenInfo* poOpenInfo );
         bool      GetAuthorization();
         bool      GetImageMetadata();
@@ -146,6 +144,7 @@ class GDALDAASDataset final: public GDALDataset
 
     public:
         GDALDAASDataset();
+        GDALDAASDataset(GDALDAASDataset* poParentDS, int iOvrLevel);
         ~GDALDAASDataset();
 
         static int Identify( GDALOpenInfo* poOpenInfo );
@@ -1376,7 +1375,7 @@ bool GDALDAASDataset::Open( GDALOpenInfo* poOpenInfo )
             break;
         }
         m_apoOverviewDS.push_back(
-            std::unique_ptr<GDALDAASDataset>(new GDALDAASDataset(this, iOvr)));
+            cpl::make_unique<GDALDAASDataset>(this, iOvr));
     }
 
     return true;
@@ -1387,8 +1386,7 @@ GDALDataset* GDALDAASDataset::OpenStatic( GDALOpenInfo* poOpenInfo )
     if( !Identify(poOpenInfo) )
         return nullptr;
 
-    std::unique_ptr<GDALDAASDataset> poDS =
-        std::unique_ptr<GDALDAASDataset>(new GDALDAASDataset());
+    auto poDS = cpl::make_unique<GDALDAASDataset>();
     if( !poDS->Open(poOpenInfo) )
         return nullptr;
     return poDS.release();
