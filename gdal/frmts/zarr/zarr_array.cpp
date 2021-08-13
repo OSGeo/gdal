@@ -2597,7 +2597,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     {
         CPLJSONDocument oTmpDoc;
         oTmpDoc.SetRoot(oAttributes);
-        oTmpDoc.LoadMemory(oTmpDoc.SaveAsString());
+        CPL_IGNORE_RET_VAL(oTmpDoc.LoadMemory(oTmpDoc.SaveAsString()));
         oAttributes = oTmpDoc.GetRoot();
     }
 
