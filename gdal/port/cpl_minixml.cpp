@@ -675,6 +675,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /* ==================================================================== */
     while( ReadToken( &sContext, eLastErrorType ) != TNone )
     {
+loop_beginning:
 /* -------------------------------------------------------------------- */
 /*      Create a new element.                                           */
 /* -------------------------------------------------------------------- */
@@ -784,36 +785,19 @@ end_processing_close:
             if( !psAttr ) break;
             AttachNode( &sContext, psAttr );
 
-            if( ReadToken(&sContext, eLastErrorType) != TEqual )
+            XMLTokenType nextToken = ReadToken(&sContext, eLastErrorType);
+            if( nextToken != TEqual )
             {
                 // Parse stuff like <?valbuddy_schematron
                 // ../wmtsSimpleGetCapabilities.sch?>
                 if( sContext.nStackSize > 0 &&
                       sContext.papsStack[sContext.nStackSize - 1]
-                              .psFirstNode->pszValue[0] == '?' &&
-                      sContext.papsStack[sContext.nStackSize - 1]
-                              .psFirstNode->psChild == psAttr )
+                              .psFirstNode->pszValue[0] == '?' )
                 {
-                    CPLDestroyXMLNode(psAttr);
-                    sContext.papsStack[sContext.nStackSize - 1]
-                        .psFirstNode->psChild = nullptr;
-                    sContext.papsStack[sContext.nStackSize - 1].psLastChild =
-                        nullptr;
-
-                    sContext.papsStack[sContext.nStackSize - 1]
-                        .psFirstNode->pszValue = static_cast<char *>(CPLRealloc(
-                        sContext.papsStack[sContext.nStackSize - 1]
-                            .psFirstNode->pszValue,
-                        strlen(sContext.papsStack[sContext.nStackSize - 1]
-                                   .psFirstNode->pszValue) +
-                            1 + strlen(sContext.pszToken) + 1));
-                    strcat(sContext.papsStack[sContext.nStackSize - 1]
-                               .psFirstNode->pszValue,
-                           " ");
-                    strcat(sContext.papsStack[sContext.nStackSize - 1]
-                               .psFirstNode->pszValue,
-                           sContext.pszToken);
-                    continue;
+                    psAttr->eType = CXT_Text;
+                    if( nextToken == TNone )
+                        break;
+                    goto loop_beginning;
                 }
 
                 eLastErrorType = CE_Failure;
@@ -1144,8 +1128,6 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Element )
     {
-        bool bHasNonAttributeChildren = false;
-
         if( nIndent )
             memset( *ppszText + *pnLength, ' ', nIndent );
         *pnLength += nIndent;
@@ -1154,78 +1136,104 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
         snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
                   "<%s", psNode->pszValue );
 
-        // Serialize *all* the attribute children, regardless of order
-        CPLXMLNode *psChild = nullptr;
-        for( psChild = psNode->psChild;
-             psChild != nullptr;
-             psChild = psChild->psNext )
+        if( psNode->pszValue[0] == '?' )
         {
-            if( psChild->eType == CXT_Attribute )
+            for( const CPLXMLNode* psChild = psNode->psChild;
+                 psChild != nullptr;
+                 psChild = psChild->psNext )
             {
+                if( psChild->eType == CXT_Text )
+                {
+                    *pnLength += strlen(*ppszText + *pnLength);
+                    if( !_GrowBuffer( 1 + *pnLength, ppszText, pnMaxLength ) )
+                        return false;
+                    strcat( *ppszText + *pnLength, " " );
+                }
+
                 if( !CPLSerializeXMLNode( psChild, 0, ppszText, pnLength,
                                           pnMaxLength ) )
+                {
                     return false;
+                }
             }
-            else
-                bHasNonAttributeChildren = true;
-        }
-
-        if( !bHasNonAttributeChildren )
-        {
             if( !_GrowBuffer( *pnLength + 40,
                               ppszText, pnMaxLength ) )
                 return false;
 
-            if( psNode->pszValue[0] == '?' )
-                strcat( *ppszText + *pnLength, "?>\n" );
-            else
-                strcat( *ppszText + *pnLength, " />\n" );
+            strcat( *ppszText + *pnLength, "?>\n" );
         }
         else
         {
-            bool bJustText = true;
-
-            strcat( *ppszText + *pnLength, ">" );
-
-            for( psChild = psNode->psChild;
+            bool bHasNonAttributeChildren = false;
+            // Serialize *all* the attribute children, regardless of order
+            for( const CPLXMLNode* psChild = psNode->psChild;
                  psChild != nullptr;
                  psChild = psChild->psNext )
             {
                 if( psChild->eType == CXT_Attribute )
-                    continue;
-
-                if( psChild->eType != CXT_Text && bJustText )
                 {
-                    bJustText = false;
-                    *pnLength += strlen(*ppszText + *pnLength);
-                    if( !_GrowBuffer( 1 + *pnLength, ppszText, pnMaxLength ) )
+                    if( !CPLSerializeXMLNode( psChild, 0, ppszText, pnLength,
+                                              pnMaxLength ) )
                         return false;
-                    strcat( *ppszText + *pnLength, "\n" );
+                }
+                else
+                    bHasNonAttributeChildren = true;
+            }
+
+            if( !bHasNonAttributeChildren )
+            {
+                if( !_GrowBuffer( *pnLength + 40,
+                                  ppszText, pnMaxLength ) )
+                    return false;
+
+                strcat( *ppszText + *pnLength, " />\n" );
+            }
+            else
+            {
+                bool bJustText = true;
+
+                strcat( *ppszText + *pnLength, ">" );
+
+                for( const CPLXMLNode* psChild = psNode->psChild;
+                     psChild != nullptr;
+                     psChild = psChild->psNext )
+                {
+                    if( psChild->eType == CXT_Attribute )
+                        continue;
+
+                    if( psChild->eType != CXT_Text && bJustText )
+                    {
+                        bJustText = false;
+                        *pnLength += strlen(*ppszText + *pnLength);
+                        if( !_GrowBuffer( 1 + *pnLength, ppszText, pnMaxLength ) )
+                            return false;
+                        strcat( *ppszText + *pnLength, "\n" );
+                    }
+
+                    if( !CPLSerializeXMLNode( psChild, nIndent + 2,
+                                              ppszText, pnLength,
+                                              pnMaxLength ) )
+                        return false;
                 }
 
-                if( !CPLSerializeXMLNode( psChild, nIndent + 2,
-                                          ppszText, pnLength,
-                                          pnMaxLength ) )
+                *pnLength += strlen(*ppszText + *pnLength);
+                if( !_GrowBuffer( strlen(psNode->pszValue) +
+                                  *pnLength + 40 + nIndent,
+                                  ppszText, pnMaxLength ) )
                     return false;
+
+                if( !bJustText )
+                {
+                    if( nIndent )
+                        memset( *ppszText + *pnLength, ' ', nIndent );
+                    *pnLength += nIndent;
+                    (*ppszText)[*pnLength] = '\0';
+                }
+
+                *pnLength += strlen(*ppszText + *pnLength);
+                snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
+                          "</%s>\n", psNode->pszValue );
             }
-
-            *pnLength += strlen(*ppszText + *pnLength);
-            if( !_GrowBuffer( strlen(psNode->pszValue) +
-                              *pnLength + 40 + nIndent,
-                              ppszText, pnMaxLength ) )
-                return false;
-
-            if( !bJustText )
-            {
-                if( nIndent )
-                    memset( *ppszText + *pnLength, ' ', nIndent );
-                *pnLength += nIndent;
-                (*ppszText)[*pnLength] = '\0';
-            }
-
-            *pnLength += strlen(*ppszText + *pnLength);
-            snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
-                      "</%s>\n", psNode->pszValue );
         }
     }
 
