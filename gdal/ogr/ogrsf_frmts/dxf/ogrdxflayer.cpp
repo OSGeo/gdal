@@ -1707,7 +1707,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
 
         // Add the bottom base as a polygon
         OGRLinearRing *poRing1 = new OGRLinearRing();
-        poRing1->addSubLineString( poCircle.release() );
+        poRing1->addSubLineString( poCircle.get() );
 
         OGRPolygon *poBase1 = new OGRPolygon();
         poBase1->addRingDirectly( poRing1 );
