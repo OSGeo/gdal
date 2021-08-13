@@ -1552,25 +1552,28 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             }
         }
 
-        const int n = (line) ? line->getNumPoints() : 0;
         poDS->PrintLine("<rte>");
         WriteFeatureAttributes(poFeatureIn);
-        for( int i = 0; i < n; i++ )
+        if( line )
         {
-            double lat = line->getY(i);
-            double lon = line->getX(i);
-            CheckAndFixCoordinatesValidity(&lat, &lon);
-            poDS->AddCoord(lon, lat);
-            OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
-            OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
-            poDS->PrintLine("  <rtept lat=\"%s\" lon=\"%s\">", szLat, szLon);
-            if (poGeom->getGeometryType() == wkbLineString25D ||
-                poGeom->getGeometryType() == wkbMultiLineString25D)
+            const int n = line->getNumPoints();
+            for( int i = 0; i < n; i++ )
             {
-                OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
-                poDS->PrintLine("    <ele>%s</ele>", szAlt);
+                double lat = line->getY(i);
+                double lon = line->getX(i);
+                CheckAndFixCoordinatesValidity(&lat, &lon);
+                poDS->AddCoord(lon, lat);
+                OGRFormatDouble(szLat, sizeof(szLat), lat, '.');
+                OGRFormatDouble(szLon, sizeof(szLon), lon, '.');
+                poDS->PrintLine("  <rtept lat=\"%s\" lon=\"%s\">", szLat, szLon);
+                if (poGeom->getGeometryType() == wkbLineString25D ||
+                    poGeom->getGeometryType() == wkbMultiLineString25D)
+                {
+                    OGRFormatDouble(szAlt, sizeof(szAlt), line->getZ(i), '.');
+                    poDS->PrintLine("    <ele>%s</ele>", szAlt);
+                }
+                poDS->PrintLine("  </rtept>");
             }
-            poDS->PrintLine("  </rtept>");
         }
         poDS->PrintLine("</rte>");
     }

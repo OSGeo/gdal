@@ -1648,7 +1648,7 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
 /*      Format into XML.                                                */
 /* -------------------------------------------------------------------- */
         m_osLastLocationInfo = "<LocationInfo>";
-        for( int i = 0; i < nListSize; i++ )
+        for( int i = 0; i < nListSize && papszFileList[i] != nullptr; i++ )
         {
             m_osLastLocationInfo += "<File>";
             char * const pszXMLEscaped = CPLEscapeString( papszFileList[i], -1,

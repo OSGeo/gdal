@@ -1297,8 +1297,7 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
     if( m_poFilterGeom == nullptr )
         return TRUE;
 
-    if( m_poFilterGeom != nullptr )
-        m_poFilterGeom->getEnvelope( &m_sFilterEnvelope );
+    m_poFilterGeom->getEnvelope( &m_sFilterEnvelope );
 
     /* Compile geometry filter as a prepared geometry */
     m_pPreparedFilterGeom = OGRCreatePreparedGeometry(OGRGeometry::ToHandle(m_poFilterGeom));

@@ -2558,18 +2558,16 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 #endif
             char **papszParams = pszParams ?
                 CSLTokenizeString2( pszParams, ",", CSLT_HONOURSTRINGS ) : nullptr;
-            int nParams = CSLCount(papszParams);
-            if( nParams >= 15 )
-                nParams = 15;
-            double adfProjParams[15] = {};
-            for( int i = 0; i < nParams; i++)
-                adfProjParams[i] = CPLAtof( papszParams[i] );
-            for ( int i = nParams; i < 15; i++)
-                adfProjParams[i] = 0.0;
+            std::vector<double> adfProjParams(15);
+            if( papszParams )
+            {
+                for( int i = 0; i < 15 && papszParams[i] != nullptr ; i++)
+                    adfProjParams[i] = CPLAtof( papszParams[i] );
+            }
 
             // Create projection definition
             oSRS.importFromUSGS( iProjSys, iZone,
-                                 adfProjParams, iEllipsoid );
+                                 adfProjParams.data(), iEllipsoid );
             oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
             oSRS.exportToWkt( &pszGCPProjection );
 

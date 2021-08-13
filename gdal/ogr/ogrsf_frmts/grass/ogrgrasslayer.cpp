@@ -486,8 +486,10 @@ bool OGRGRASSLayer::SetQueryMatch()
 
         // Go through category index until first record of current category
         // is found or a category > current is found
-        int cidxcat, type, id;
+        int id = -1;
         while ( cidx < ncats ) {
+            int cidxcat = 0;
+            int type = 0;
             Vect_cidx_get_cat_by_index ( poMap, iLayerIndex, cidx,
                                          &cidxcat, &type, &id );
 

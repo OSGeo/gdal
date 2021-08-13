@@ -123,12 +123,9 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
         return poFeatureDefn;
     }
 
-    if( poFeatureDefn == nullptr )
-    {
-        osBaseSQL.Printf("SELECT * FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
-        EstablishLayerDefn(osTableName, nullptr);
-        osBaseSQL = "";
-    }
+    osBaseSQL.Printf("SELECT * FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
+    EstablishLayerDefn(osTableName, nullptr);
+    osBaseSQL = "";
 
     if( !osFIDColName.empty() )
     {
