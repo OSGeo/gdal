@@ -623,7 +623,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     char *progBuf = static_cast<char *>(CPLCalloc(PROGBUF_SIZE, sizeof(char)));
     float dstMinVal = 0.f, dstMaxVal = 0.0;
 
-    const char *outType;
+    const char *outType = "";
     const char *dUseVec = "";
     const char *dVecf = "float";
     const char *kernGenFuncs = R""""(
@@ -1312,6 +1312,11 @@ __kernel void resamp(__read_only image2d_t srcCoords,
             dstMaxVal = 65535.0;
             outType = "ushort";
             break;
+        default:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unhandled imageFormat = %d",
+                     warper->imageFormat);
+            return nullptr;
     }
 
     //Use vector format?
