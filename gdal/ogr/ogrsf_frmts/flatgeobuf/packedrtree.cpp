@@ -172,14 +172,14 @@ void hilbertSort(std::vector<NodeItem> &items)
 
 NodeItem calcExtent(const std::vector<std::shared_ptr<Item>> &items)
 {
-    return std::accumulate(items.begin(), items.end(), NodeItem::create(0), [] (NodeItem &a, std::shared_ptr<Item> b) {
+    return std::accumulate(items.begin(), items.end(), NodeItem::create(0), [] (NodeItem a, const std::shared_ptr<Item>& b) {
         return a.expand(b->nodeItem);
     });
 }
 
 NodeItem calcExtent(const std::vector<NodeItem> &nodes)
 {
-    return std::accumulate(nodes.begin(), nodes.end(), NodeItem::create(0), [] (NodeItem &a, const NodeItem &b) {
+    return std::accumulate(nodes.begin(), nodes.end(), NodeItem::create(0), [] (NodeItem a, const NodeItem &b) {
         return a.expand(b);
     });
 }
