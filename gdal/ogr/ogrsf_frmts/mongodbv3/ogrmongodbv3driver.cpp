@@ -862,7 +862,11 @@ GIntBig OGRMongoDBv3Layer::GetFeatureCount(int bForce)
 /*                             Stringify()                              */
 /************************************************************************/
 
+#if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 6
+static CPLString Stringify(const bsoncxx::types::bson_value::view& val)
+#else
 static CPLString Stringify(const bsoncxx::types::value& val)
+#endif
 {
     const auto eBSONType = val.type();
     if( eBSONType == bsoncxx::type::k_utf8 )
@@ -2178,17 +2182,25 @@ bool OGRMongoDBv3Dataset::Open(GDALOpenInfo* poOpenInfo)
             !osCAFile.empty() || !osCRLFile.empty() ||
             bAllowInvalidCertificates )
         {
-            mongocxx::options::ssl ssl_options;
+#if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 6
+            mongocxx::options::tls tls_options;
+#else
+            mongocxx::options::ssl tls_options;
+#endif
             if( !osPEMKeyFile.empty() )
-                ssl_options.pem_file(osPEMKeyFile);
+                tls_options.pem_file(osPEMKeyFile);
             if( !osPEMKeyPassword.empty() )
-                ssl_options.pem_password(osPEMKeyPassword);
+                tls_options.pem_password(osPEMKeyPassword);
             if( !osCAFile.empty() )
-                ssl_options.ca_file(osCAFile);
+                tls_options.ca_file(osCAFile);
             if( !osCRLFile.empty() )
-                ssl_options.crl_file(osCRLFile);
-            ssl_options.allow_invalid_certificates(bAllowInvalidCertificates);
-            client_options.ssl_opts(ssl_options);
+                tls_options.crl_file(osCRLFile);
+            tls_options.allow_invalid_certificates(bAllowInvalidCertificates);
+#if BSONCXX_VERSION_MAJOR > 3 || BSONCXX_VERSION_MINOR >= 6
+            client_options.tls_opts(tls_options);
+#else
+            client_options.ssl_opts(tls_options);
+#endif
         }
 
         m_oConn = mongocxx::client(uri, client_options);
