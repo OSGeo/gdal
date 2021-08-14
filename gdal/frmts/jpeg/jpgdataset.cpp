@@ -30,8 +30,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#undef ENABLE_LIBJPEG_NO_RETURN
-
 #include "cpl_port.h"
 #include "jpgdataset.h"
 
