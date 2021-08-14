@@ -18,22 +18,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Get Architecture
-        id: get-arch
-        run: |
-          export ARCH=$(cc -march=native -### -E - < /dev/null 2>&1 | sed -ne 's/.*cc1 .*-march=\([^ "]*\)[ "].*/\1/p')
-          echo "Architecture: $ARCH"
-          echo "::set-output name=arch::$ARCH"
-
-      - name: Cache
+      - name: Cache deps
         uses: actions/cache@v2
-        id: cache
+        id: cache-deps
         with:
-          path: |
-                /tmp/docker
-                ${{ github.workspace }}/ccache.tar.gz
-          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
-          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
+          path: /tmp/docker
+          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
 
       - name: Build or restore dependencies
         run: |
@@ -45,6 +36,21 @@ jobs:
                 mkdir -p /tmp/docker
                 docker image save -o /tmp/docker/gdal-deps-ubuntu-20.04.tar gdal-deps-ubuntu-20.04
             fi
+
+      - name: Get Architecture
+        id: get-arch
+        run: |
+          export ARCH=$(cc -march=native -### -E - < /dev/null 2>&1 | sed -ne 's/.*cc1 .*-march=\([^ "]*\)[ "].*/\1/p')
+          echo "Architecture: $ARCH"
+          echo "::set-output name=arch::$ARCH"
+
+      - name: Cache build
+        uses: actions/cache@v2
+        id: cache-build
+        with:
+          path: ${{ github.workspace }}/ccache.tar.gz
+          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ steps.get-arch.outputs.arch }}-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
 
       - name: gcc compilation flags
         run: docker run --rm gdal-deps-ubuntu-20.04 sh -c "g++ -march=native -dM -E -x c++ - < /dev/null | grep -E 'SSE|AVX'"
