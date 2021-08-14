@@ -13,9 +13,9 @@ if test "${COVERITY_SCAN_TOKEN:-}" = ""; then
 
   export CC="ccache gcc"
   export CXX="ccache g++"
-  export CXXFLAGS="-std=c++17 -march=native -O2"
+  export CXXFLAGS="-std=c++17 -march=native -O2 -Wodr -flto-odr-type-merging"
   export CFLAGS="-O2 -march=native"
-  export OTHER_SWITCHES=""
+  export OTHER_SWITCHES="--enable-lto "
 else
   wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$COVERITY_SCAN_TOKEN&project=GDAL" -O cov-analysis-linux64.tar.gz
   mkdir /tmp/cov-analysis-linux64
