@@ -644,7 +644,7 @@ OGRErr OGRSpatialReference::Private::replaceConversionAndUnref(PJ* conv)
 /*                           ToPointer()                                */
 /************************************************************************/
 
-inline OGRSpatialReference* ToPointer(OGRSpatialReferenceH hSRS)
+static inline OGRSpatialReference* ToPointer(OGRSpatialReferenceH hSRS)
 {
     return OGRSpatialReference::FromHandle(hSRS);
 }
@@ -653,7 +653,7 @@ inline OGRSpatialReference* ToPointer(OGRSpatialReferenceH hSRS)
 /*                           ToHandle()                                 */
 /************************************************************************/
 
-inline OGRSpatialReferenceH ToHandle(OGRSpatialReference* poSRS)
+static inline OGRSpatialReferenceH ToHandle(OGRSpatialReference* poSRS)
 {
     return OGRSpatialReference::ToHandle(poSRS);
 }
