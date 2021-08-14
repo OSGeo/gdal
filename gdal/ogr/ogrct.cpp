@@ -1591,7 +1591,7 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
         return false;
     }
 
-    const auto addTransformation = [=](PJ* op,
+    const auto addTransformation = [this, &pjGeogToSrc, &ctx](PJ* op,
                                        double west_lon, double south_lat,
                                        double east_lon, double north_lat) {
         double minx = -std::numeric_limits<double>::max();
