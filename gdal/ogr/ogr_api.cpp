@@ -81,7 +81,7 @@ bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch) {
 /*                           ToPointer()                                */
 /************************************************************************/
 
-inline OGRGeometry* ToPointer(OGRGeometryH hGeom)
+static inline OGRGeometry* ToPointer(OGRGeometryH hGeom)
 {
     return reinterpret_cast<OGRGeometry *>(hGeom);
 }
@@ -90,7 +90,7 @@ inline OGRGeometry* ToPointer(OGRGeometryH hGeom)
 /*                           ToHandle()                                 */
 /************************************************************************/
 
-inline OGRGeometryH ToHandle(OGRGeometry* poGeom)
+static inline OGRGeometryH ToHandle(OGRGeometry* poGeom)
 {
     return reinterpret_cast<OGRGeometryH>(poGeom);
 }
