@@ -251,15 +251,22 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
             const auto anDims = attr->GetDimensionsSize();
             if( anDims.size() == 0 )
             {
-                const auto osStr = attr->ReadAsString();
-                CPLJSONDocument oDoc;
-                if( oType.GetSubType() == GEDTST_JSON && oDoc.LoadMemory(osStr) )
+                const char* pszStr = attr->ReadAsString();
+                if( pszStr )
                 {
-                    o.Add(attr->GetName(), oDoc.GetRoot());
+                    CPLJSONDocument oDoc;
+                    if(  oType.GetSubType() == GEDTST_JSON && oDoc.LoadMemory(pszStr) )
+                    {
+                        o.Add(attr->GetName(), oDoc.GetRoot());
+                    }
+                    else
+                    {
+                        o.Add(attr->GetName(), pszStr);
+                    }
                 }
                 else
                 {
-                    o.Add(attr->GetName(), osStr);
+                    o.AddNull(attr->GetName());
                 }
             }
             else if ( anDims.size() == 1 )
