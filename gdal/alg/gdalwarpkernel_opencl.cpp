@@ -618,9 +618,11 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     cl_program program;
     cl_kernel kernel;
     cl_int err = CL_SUCCESS;
-#define PROGBUF_SIZE 128000
-    char *buffer = static_cast<char *>(CPLCalloc(PROGBUF_SIZE, sizeof(char)));
-    char *progBuf = static_cast<char *>(CPLCalloc(PROGBUF_SIZE, sizeof(char)));
+    constexpr int PROGBUF_SIZE = 128000;
+    std::string buffer;
+    buffer.resize(PROGBUF_SIZE);
+    std::string progBuf;
+    progBuf.resize(PROGBUF_SIZE);
     float dstMinVal = 0.f, dstMaxVal = 0.0;
 
     const char *outType = "";
@@ -1328,21 +1330,21 @@ __kernel void resamp(__read_only image2d_t srcCoords,
     //Assemble the kernel from parts. The compiler is unable to handle multiple
     //kernels in one string with more than a few __constant modifiers each.
     if (warper->resampAlg == OCL_Bilinear)
-        snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernBilinear);
+        snprintf(&progBuf[0], PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernBilinear);
     else if (warper->resampAlg == OCL_Cubic)
-        snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernCubic);
+        snprintf(&progBuf[0], PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernCubic);
     else
-        snprintf(progBuf, PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernResampler);
+        snprintf(&progBuf[0], PROGBUF_SIZE, "%s\n%s", kernGenFuncs, kernResampler);
 
     //Actually make the program from assembled source
-    const char* pszProgBuf = progBuf;
+    const char* pszProgBuf = progBuf.c_str();
     program = clCreateProgramWithSource(warper->context, 1,
                                         &pszProgBuf,
                                         nullptr, &err);
     handleErrGoto(err, error_final);
 
     //Assemble the compiler arg string for speed. All invariants should be defined here.
-    snprintf(buffer, PROGBUF_SIZE,
+    snprintf(&buffer[0], PROGBUF_SIZE,
              "-cl-fast-relaxed-math -Werror -D FALSE=0 -D TRUE=1 "
             "%s"
             "-D iSrcWidth=%d -D iSrcHeight=%d -D iDstWidth=%d -D iDstHeight=%d "
@@ -1363,20 +1365,22 @@ __kernel void resamp(__read_only image2d_t srcCoords,
             dVecf, dUseVec, warper->resampAlg == OCL_CubicSpline,
             warper->nBandSrcValidCL != nullptr, warper->coordMult);
 
-    (*clErr) = err = clBuildProgram(program, 1, &(warper->dev), buffer, nullptr, nullptr);
+    (*clErr) = err = clBuildProgram(program, 1, &(warper->dev), buffer.data(), nullptr, nullptr);
 
     //Detailed debugging info
     if (err != CL_SUCCESS)
     {
         const char* pszStatus = "unknown_status";
         err = clGetProgramBuildInfo(program, warper->dev, CL_PROGRAM_BUILD_LOG,
-                                    128000*sizeof(char), buffer, nullptr);
+                                    PROGBUF_SIZE, &buffer[0], nullptr);
         handleErrGoto(err, error_free_program);
 
-        CPLError(CE_Failure, CPLE_AppDefined, "Error: Failed to build program executable!\nBuild Log:\n%s", buffer);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Error: Failed to build program executable!\nBuild Log:\n%s",
+                 buffer.c_str());
 
         err = clGetProgramBuildInfo(program, warper->dev, CL_PROGRAM_BUILD_STATUS,
-                                    128000*sizeof(char), buffer, nullptr);
+                                    PROGBUF_SIZE, &buffer[0], nullptr);
         handleErrGoto(err, error_free_program);
 
         if(buffer[0] == CL_BUILD_NONE)
@@ -1388,7 +1392,7 @@ __kernel void resamp(__read_only image2d_t srcCoords,
         else if(buffer[0] == CL_BUILD_IN_PROGRESS)
             pszStatus = "CL_BUILD_IN_PROGRESS";
 
-        CPLDebug("OpenCL", "Build Status: %s\nProgram Source:\n%s", pszStatus, progBuf);
+        CPLDebug("OpenCL", "Build Status: %s\nProgram Source:\n%s", pszStatus, progBuf.c_str());
         goto error_free_program;
     }
 
@@ -1398,16 +1402,12 @@ __kernel void resamp(__read_only image2d_t srcCoords,
     err = clReleaseProgram(program);
     handleErrGoto(err, error_final);
 
-    CPLFree(buffer);
-    CPLFree(progBuf);
     return kernel;
 
 error_free_program:
     err = clReleaseProgram(program);
 
 error_final:
-    CPLFree(buffer);
-    CPLFree(progBuf);
     return nullptr;
 }
 

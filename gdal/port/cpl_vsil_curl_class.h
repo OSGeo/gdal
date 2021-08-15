@@ -706,6 +706,8 @@ class NetworkStatisticsLogger
         void AsJSON(CPLJSONObject& oJSON) const;
     };
 
+    // Workaround bug in Coverity Scan
+    // coverity[generated_default_constructor_used_in_field_initializer]
     Stats m_stats{};
     std::map<GIntBig, std::vector<ContextPathItem>> m_mapThreadIdToContextPath{};
 

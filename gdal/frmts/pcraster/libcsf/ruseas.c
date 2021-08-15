@@ -244,9 +244,12 @@ static void ConvertToREAL4( size_t nrCells, void *buf, CSF_CR src)
 				i--;
 				if ( ((UINT4 *)buf)[i] == MV_UINT4 )
 					((UINT4 *)buf)[i] = MV_UINT4;
-				else
-					((REAL4 *)buf)[i] = (REAL4)((UINT4 *)buf)[i];
-			    }
+				else {
+					UINT4 u = ((UINT4 *)buf)[i];
+					REAL4 f = (REAL4)u;
+					memcpy(&((REAL4 *)buf)[i], &f, sizeof(f));
+				}
+			}
 			while(i != 0);
 		}
 	}

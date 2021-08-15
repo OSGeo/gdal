@@ -675,7 +675,8 @@ static bool CPLLZ4Decompressor  (const void* input_data,
                 *output_size = 0;
                 return false;
             }
-            if( nSize / 10000 > static_cast<int>(input_size) )
+            if( nSize > INT_MAX - 1 || /* to make Coverity scan happy */
+                nSize / 10000 > static_cast<int>(input_size) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Stored uncompressed size (%d) is much larger "
