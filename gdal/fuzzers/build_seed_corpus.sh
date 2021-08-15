@@ -521,8 +521,18 @@ rm -f $OUT/gml_fuzzer_seed_corpus.zip
     printf "***NEWFILE***:test.xsd\\n"
     cat $(dirname $0)/../../autotest/ogr/data/gml/archsites.xsd
 } > $CUR_DIR/archsites_gml.tar
-zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar >/dev/null
-rm archsites_gml.tar
+{
+    printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+    printf "***NEWFILE***:test.gml\\n"
+    sed "s/expected_gml_gml32/test/" < $(dirname $0)/../../autotest/ogr/data/gml/expected_gml_gml32.gml
+    printf "***NEWFILE***:test.xsd\\n"
+    cat $(dirname $0)/../../autotest/ogr/data/gml/expected_gml_gml32.xsd
+} > $CUR_DIR/expected_gml_gml32.tar
+zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar expected_gml_gml32.tar >/dev/null
+rm archsites_gml.tar expected_gml_gml32.tar
+
+echo "Building gmlas_fuzzer_seed_corpus.zip"
+cp $OUT/gml_fuzzer_seed_corpus.zip $OUT/gmlas_fuzzer_seed_corpus.zip
 
 echo "Building fgb_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data/testfgb
