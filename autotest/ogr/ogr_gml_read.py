@@ -3861,3 +3861,28 @@ def test_ogr_gml_srs_name_in_xsd(gml_format):
 
     gdal.Unlink(filename)
     gdal.Unlink(xsdfilename)
+
+
+###############################################################################
+
+
+def test_ogr_gml_too_nested():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('data/gml/too_nested.gfs')
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/gml/too_nested.gml')
+        lyr = ds.GetLayer(0)
+        assert lyr.GetNextFeature() is None
+
+    gdal.Unlink('data/gml/too_nested.gfs')
+
+    with gdaltest.config_option('OGR_GML_NESTING_LEVEL', 'UNLIMITED'):
+        ds = ogr.Open('data/gml/too_nested.gml')
+        lyr = ds.GetLayer(0)
+        assert lyr.GetNextFeature() is not None
+
+    gdal.Unlink('data/gml/too_nested.gfs')

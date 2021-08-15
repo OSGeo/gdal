@@ -68,6 +68,22 @@ GMLXercesHandler::GMLXercesHandler( GMLReader *poReader ) :
 {}
 
 /************************************************************************/
+/*                    GMLXercesHandlerDealWithError()                   */
+/************************************************************************/
+
+static void GMLXercesHandlerDealWithError(OGRErr eErr)
+{
+    if( eErr == OGRERR_NOT_ENOUGH_MEMORY )
+    {
+        throw SAXNotSupportedException("Out of memory");
+    }
+    else if( eErr != OGRERR_NONE )
+    {
+        throw SAXNotSupportedException("Other error during parsing");
+    }
+}
+
+/************************************************************************/
 /*                            startElement()                            */
 /************************************************************************/
 
@@ -80,13 +96,10 @@ void GMLXercesHandler::startElement( const XMLCh* const /*uri*/,
 
     transcode(localname, m_osElement);
 
-    if( GMLHandler::startElement(
+    GMLXercesHandlerDealWithError(GMLHandler::startElement(
             m_osElement.c_str(),
             static_cast<int>(m_osElement.size()),
-            const_cast<Attributes *>(&attrs)) == OGRERR_NOT_ENOUGH_MEMORY )
-    {
-        throw SAXNotSupportedException("Out of memory");
-    }
+            const_cast<Attributes *>(&attrs)));
 }
 
 /************************************************************************/
@@ -98,10 +111,7 @@ void GMLXercesHandler::endElement(const XMLCh* const /*uri*/,
 {
     m_nEntityCounter = 0;
 
-    if (GMLHandler::endElement() == OGRERR_NOT_ENOUGH_MEMORY)
-    {
-        throw SAXNotSupportedException("Out of memory");
-    }
+    GMLXercesHandlerDealWithError(GMLHandler::endElement());
 }
 
 /************************************************************************/
@@ -113,12 +123,8 @@ void GMLXercesHandler::characters(const XMLCh* const chars_in,
 
 {
     transcode( chars_in, m_osCharacters, static_cast<int>(length) );
-    OGRErr eErr = GMLHandler::dataHandler(m_osCharacters.c_str(),
-                                    static_cast<int>(m_osCharacters.size()));
-    if (eErr == OGRERR_NOT_ENOUGH_MEMORY)
-    {
-        throw SAXNotSupportedException("Out of memory");
-    }
+    GMLXercesHandlerDealWithError(GMLHandler::dataHandler(m_osCharacters.c_str(),
+                                    static_cast<int>(m_osCharacters.size())));
 }
 
 /************************************************************************/
@@ -265,6 +271,21 @@ GMLExpatHandler::GMLExpatHandler( GMLReader *poReader, XML_Parser oParser ) :
 {}
 
 /************************************************************************/
+/*                  GMLExpatHandler::DealWithError()                    */
+/************************************************************************/
+
+void GMLExpatHandler::DealWithError(OGRErr eErr)
+{
+    if( eErr != OGRERR_NONE )
+    {
+        m_bStopParsing = true;
+        XML_StopParser(m_oParser, XML_FALSE);
+        if( eErr == OGRERR_NOT_ENOUGH_MEMORY )
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+    }
+}
+
+/************************************************************************/
 /*                           startElementCbk()                          */
 /************************************************************************/
 
@@ -286,14 +307,9 @@ void XMLCALL GMLExpatHandler::startElementCbk( void *pUserData,
         pszIter ++;
     }
 
-    if( pThis->GMLHandler::startElement(pszName,
+    pThis->DealWithError( pThis->GMLHandler::startElement(pszName,
                                         static_cast<int>(pszIter - pszName),
-                                        ppszAttr) == OGRERR_NOT_ENOUGH_MEMORY )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-        pThis->m_bStopParsing = true;
-        XML_StopParser(pThis->m_oParser, XML_FALSE);
-    }
+                                        ppszAttr) );
 }
 
 /************************************************************************/
@@ -306,12 +322,7 @@ void XMLCALL GMLExpatHandler::endElementCbk( void *pUserData,
     if( pThis->m_bStopParsing )
         return;
 
-    if( pThis->GMLHandler::endElement() == OGRERR_NOT_ENOUGH_MEMORY )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-        pThis->m_bStopParsing = true;
-        XML_StopParser(pThis->m_oParser, XML_FALSE);
-    }
+    pThis->DealWithError( pThis->GMLHandler::endElement() );
 }
 
 /************************************************************************/
@@ -343,12 +354,7 @@ GMLExpatHandler::dataHandlerCbk(void *pUserData, const char *data, int nLen)
         return;
     }
 
-    if( pThis->GMLHandler::dataHandler(data, nLen) == OGRERR_NOT_ENOUGH_MEMORY )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-        pThis->m_bStopParsing = true;
-        XML_StopParser(pThis->m_oParser, XML_FALSE);
-    }
+    pThis->DealWithError( pThis->GMLHandler::dataHandler(data, nLen) );
 }
 
 /************************************************************************/
@@ -592,6 +598,25 @@ OGRErr GMLHandler::startElement(const char *pszName, int nLenName, void* attr)
         default:                        eRet = OGRERR_NONE; break;
     }
     m_nDepth++;
+    if( m_nDepth == 64 )
+    {
+        // Avoid performance issues on files like
+        // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=21737
+        if( m_nUnlimitedDepth < 0 )
+        {
+            m_nUnlimitedDepth =
+                EQUAL(CPLGetConfigOption("OGR_GML_NESTING_LEVEL", ""), "UNLIMITED");
+        }
+        if( !m_nUnlimitedDepth )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too deep XML nesting level (%d). "
+                     "Set the OGR_GML_NESTING_LEVEL configuration option to "
+                     "UNLIMITED to remove that limitation.",
+                     m_nDepth);
+            eRet = OGRERR_FAILURE;
+        }
+    }
     return eRet;
 }
 
