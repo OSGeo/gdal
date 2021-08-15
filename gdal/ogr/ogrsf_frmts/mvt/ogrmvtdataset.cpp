@@ -61,8 +61,7 @@ constexpr int knMAX_FILES_PER_DIR = 10000;
 #include <sqlite3.h>
 #include "../sqlite/ogrsqliteutility.h"
 
-#define DO_NOT_INCLUDE_SQLITE_CLASSES
-#include "../sqlite/ogr_sqlite.h"
+#include "../sqlite/ogrsqlitevfs.h"
 
 #include "cpl_worker_thread_pool.h"
 
