@@ -318,6 +318,8 @@ def test_zarr_invalid_json_remove_member(member):
                                          {"dtype": "!"},
                                          {"dtype": "!b"},
                                          {"dtype": "<u16"},
+                                         {"dtype": "<u0"},
+                                         {"dtype": "<u10000"},
                                          {"fill_value": []},
                                          {"fill_value": "x"},
                                          {"fill_value": "NaN"},

@@ -2304,6 +2304,8 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
                     nBytes = atoi(str.c_str() + 2);
                 }
             }
+            if( nBytes <= 0 || nBytes >= 1000 )
+                break;
 
             if( chEndianness == '<' )
                 elt.needByteSwapping = (CPL_IS_LSB == 0);
@@ -2450,7 +2452,8 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
     }
     while(false);
     CPLError(CE_Failure, CPLE_AppDefined,
-             "Invalid or unsupported format for dtype");
+             "Invalid or unsupported format for dtype: %s",
+             obj.ToString().c_str());
     return GDALExtendedDataType::Create(GDT_Unknown);
 }
 
