@@ -87,6 +87,7 @@ build_ogr_specialized_fuzzer lvbag RegisterOGRLVBAG "/vsimem/test.xml" "/vsimem/
 build_ogr_specialized_fuzzer avce00 RegisterOGRAVCE00 "/vsimem/test.e00" "/vsimem/test.e00"
 build_ogr_specialized_fuzzer avcbin RegisterOGRAVCBin "/vsimem/test.tar" "/vsitar/{/vsimem/test.tar}/testavc"
 build_ogr_specialized_fuzzer gml RegisterOGRGML "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.gml"
+build_ogr_specialized_fuzzer gmlas RegisterOGRGMLAS "/vsimem/test.tar" "GMLAS:/vsitar//vsimem/test.tar/test.gml"
 build_ogr_specialized_fuzzer fgb RegisterOGRFlatGeobuf "/vsimem/test.fgb" "/vsimem/test.fgb"
 build_fuzzer cad_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRCAD
 build_fuzzer rec_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRREC -DUSE_FILESYSTEM -DEXTENSION="\"rec\""
