@@ -134,7 +134,6 @@ fi
 cd gdal
 export LDFLAGS=${CXXFLAGS}
 PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3 --with-xerces --with-webp --with-netcdf=$SRC/install --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-jpeg=internal --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
-sed -i "s/POPPLER_MINOR_VERSION = 84/POPPLER_MINOR_VERSION = 85/" GDALmake.opt # temporary hack until poppler 0.85 is released
 make clean -s
 make -j$(nproc) -s static-lib
 
