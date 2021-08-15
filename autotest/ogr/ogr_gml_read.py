@@ -796,8 +796,12 @@ def test_ogr_gml_20():
 # Test writing GML3
 
 
-@pytest.mark.parametrize('frmt', ['GML3', 'GML3Deegree', 'GML3.2'])
-def test_ogr_gml_21(frmt):
+@pytest.mark.parametrize('frmt,base_filename',
+                         [('GML3', 'expected_gml_gml3'),
+                          ('GML3Deegree', 'expected_gml_gml3degree'),
+                          ('GML3.2', 'expected_gml_gml32')
+                         ])
+def test_ogr_gml_21(frmt,base_filename):
 
     if not gdaltest.have_gml_reader:
         pytest.skip()
@@ -806,13 +810,11 @@ def test_ogr_gml_21(frmt):
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    for filename in ['tmp/gml_21.gml', 'tmp/gml_21.xsd', 'tmp/gml_21.gfs']:
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
+    for ext in ('gml', 'gfs', 'xsd'):
+        gdal.Unlink('tmp/' + base_filename + '.' + ext)
 
-    ds = ogr.GetDriverByName('GML').CreateDataSource('tmp/gml_21.gml', options=['FORMAT=' + frmt])
+    filename = 'tmp/' + base_filename + '.gml'
+    ds = ogr.GetDriverByName('GML').CreateDataSource(filename, options=['FORMAT=' + frmt])
     lyr = ds.CreateLayer('firstlayer', srs=sr)
     lyr.CreateField(ogr.FieldDefn('string_field', ogr.OFTString))
 
@@ -830,7 +832,7 @@ def test_ogr_gml_21(frmt):
     ds = None
 
     # Reopen the file
-    ds = ogr.Open('tmp/gml_21.gml')
+    ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     assert feat.GetGeometryRef().ExportToWkt() == 'POINT (2 49)', \
@@ -838,43 +840,39 @@ def test_ogr_gml_21(frmt):
     ds = None
 
     # Test that .gml and .xsd are identical to what is expected
-    f1 = open('tmp/gml_21.gml', 'rt')
-    if frmt == 'GML3.2':
-        f2 = open('data/gml/expected_gml_gml32.gml', 'rt')
-    else:
-        f2 = open('data/gml/expected_gml_21.gml', 'rt')
+    f1 = open(filename, 'rt')
+    f2 = open('data/gml/' + base_filename + '.gml', 'rt')
     line1 = f1.readline()
     line2 = f2.readline()
     while line1 != '':
         line1 = line1.strip()
         line2 = line2.strip()
         if line1 != line2:
-            print(open('tmp/gml_21.gml', 'rt').read())
+            print(open(filename, 'rt').read())
             pytest.fail('.gml file not identical to expected')
         line1 = f1.readline()
         line2 = f2.readline()
     f1.close()
     f2.close()
 
-    f1 = open('tmp/gml_21.xsd', 'rt')
-    if frmt == 'GML3':
-        f2 = open('data/gml/expected_gml_21.xsd', 'rt')
-    elif frmt == 'GML3.2':
-        f2 = open('data/gml/expected_gml_gml32.xsd', 'rt')
-    else:
-        f2 = open('data/gml/expected_gml_21_deegree3.xsd', 'rt')
+    xsd_filename = filename[0:-3] + 'xsd'
+    f1 = open(xsd_filename, 'rt')
+    f2 = open('tmp/' + base_filename + '.xsd', 'rt')
     line1 = f1.readline()
     line2 = f2.readline()
     while line1 != '':
         line1 = line1.strip()
         line2 = line2.strip()
         if line1 != line2:
-            print(open('tmp/gml_21.xsd', 'rt').read())
+            print(open(xsd_filename, 'rt').read())
             pytest.fail('.xsd file not identical to expected')
         line1 = f1.readline()
         line2 = f2.readline()
     f1.close()
     f2.close()
+
+    for ext in ('gml', 'gfs', 'xsd'):
+        gdal.Unlink('tmp/' + base_filename + '.' + ext)
 
 ###############################################################################
 # Read a OpenLS DetermineRouteResponse document
@@ -1489,7 +1487,7 @@ def test_ogr_gml_41():
     if not gdaltest.download_file('http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip', 'SCHEMAS_OPENGIS_NET.zip'):
         pytest.skip()
 
-    ds = ogr.Open('data/gml/expected_gml_21.gml')
+    ds = ogr.Open('data/gml/expected_gml_gml3.gml')
 
     gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', '/vsizip/./tmp/cache/SCHEMAS_OPENGIS_NET.zip')
     lyr = ds.ExecuteSQL('SELECT ValidateSchema()')

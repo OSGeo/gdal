@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ogr:FeatureCollection
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://ogr.maptools.org/ gml_21.xsd"
+     xsi:schemaLocation="http://ogr.maptools.org/ expected_gml_gml3.xsd"
      xmlns:ogr="http://ogr.maptools.org/"
      xmlns:gml="http://www.opengis.net/gml">
    <gml:boundedBy><gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326"><gml:lowerCorner>48 2</gml:lowerCorner><gml:upperCorner>49 3</gml:upperCorner></gml:Envelope></gml:boundedBy>
