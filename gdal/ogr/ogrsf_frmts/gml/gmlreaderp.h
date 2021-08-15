@@ -135,6 +135,7 @@ class GMLHandler
 
     int        m_nDepth;
     int        m_nDepthFeature;
+    int        m_nUnlimitedDepth = -1; // -1 unknown, 0=false, 1=true
 
     int        m_inBoundedByDepth;
 
@@ -264,6 +265,8 @@ class GMLExpatHandler final: public GMLHandler
     XML_Parser m_oParser;
     bool       m_bStopParsing;
     int        m_nDataHandlerCounter;
+
+    void       DealWithError(OGRErr eErr);
 
 public:
     GMLExpatHandler( GMLReader *poReader, XML_Parser oParser );
