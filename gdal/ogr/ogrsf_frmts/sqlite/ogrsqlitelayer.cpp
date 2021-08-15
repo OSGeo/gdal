@@ -3499,3 +3499,64 @@ CPLString OGRSQLiteLayer::FormatSpatialFilterFromMBR(OGRGeometry* poFilterGeom,
 
     return osSpatialWHERE;
 }
+
+/************************************************************************/
+/*                 OGRSQLiteGetSpatialiteGeometryHeader()               */
+/************************************************************************/
+
+OGRErr       OGRSQLiteGetSpatialiteGeometryHeader( const GByte *pabyData,
+                                                    int nBytes,
+                                                    int* pnSRID,
+                                                    OGRwkbGeometryType* peType,
+                                                    bool* pbIsEmpty,
+                                                    double* pdfMinX,
+                                                    double* pdfMinY,
+                                                    double* pdfMaxX,
+                                                    double* pdfMaxY )
+{
+    return OGRSQLiteLayer::GetSpatialiteGeometryHeader( pabyData,
+                                                        nBytes,
+                                                        pnSRID,
+                                                        peType,
+                                                        pbIsEmpty,
+                                                        pdfMinX,
+                                                        pdfMinY,
+                                                        pdfMaxX,
+                                                        pdfMaxY );
+}
+
+/************************************************************************/
+/*                   OGRSQLiteImportSpatiaLiteGeometry()                */
+/************************************************************************/
+
+OGRErr       OGRSQLiteImportSpatiaLiteGeometry( const GByte *pabyData,
+                                                int nBytes,
+                                                OGRGeometry **ppoGeometry,
+                                                int* pnSRID )
+{
+    return OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyData,
+                                                     nBytes,
+                                                     ppoGeometry,
+                                                     pnSRID );
+}
+
+/************************************************************************/
+/*                   OGRSQLiteExportSpatiaLiteGeometry()                */
+/************************************************************************/
+
+OGRErr       OGRSQLiteExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
+                                                 GInt32 nSRID,
+                                                 OGRwkbByteOrder eByteOrder,
+                                                 int bSpatialite2D,
+                                                 int bUseComprGeom,
+                                                 GByte **ppabyData,
+                                                 int *pnDataLength )
+{
+    return OGRSQLiteLayer::ExportSpatiaLiteGeometry( poGeometry,
+                                                     nSRID,
+                                                     eByteOrder,
+                                                     bSpatialite2D,
+                                                     bUseComprGeom,
+                                                     ppabyData,
+                                                     pnDataLength );
+}

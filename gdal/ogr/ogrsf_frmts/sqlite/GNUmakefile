@@ -40,7 +40,7 @@ all: default test_load_virtual_ogr$(EXE)
 clean:
 	rm -f *.o $(O_OBJ) test_load_virtual_ogr$(EXE)
 
-$(O_OBJ):	ogr_sqlite.h ogrsqlitevirtualogr.h ogrsqliteexecutesql.h ogrsqliteregexp.h ogrsqlitesqlfunctions.h ogrsqliteregexp.cpp ogrsqlitesqlfunctions.cpp
+$(O_OBJ):	ogr_sqlite.h ogrsqlitebase.h ogrsqlitevirtualogr.h ogrsqliteexecutesql.h ogrsqliteregexp.h ogrsqlitesqlfunctions.h ogrsqliteregexp.cpp ogrsqlitesqlfunctions.cpp
 
 test_load_virtual_ogr$(EXE):	test_load_virtual_ogr.$(OBJ_EXT)
 	$(LD) $(LDFLAGS) test_load_virtual_ogr.$(OBJ_EXT) -lsqlite3 -o test_load_virtual_ogr$(EXE)

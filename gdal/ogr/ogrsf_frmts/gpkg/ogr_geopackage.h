@@ -31,7 +31,7 @@
 #define OGR_GEOPACKAGE_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "ogr_sqlite.h"
+#include "ogrsqlitebase.h"
 #include "gpkgmbtilescommon.h"
 #include "ogrsqliteutility.h"
 

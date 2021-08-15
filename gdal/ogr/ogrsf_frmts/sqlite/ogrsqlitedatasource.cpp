@@ -38,6 +38,7 @@
 #include "ogr_sqlite.h"
 #include "ogrsqlitevirtualogr.h"
 #include "ogrsqliteutility.h"
+#include "ogrsqlitevfs.h"
 
 #include <cctype>
 #include <cstddef>
@@ -124,6 +125,24 @@ static int OGRSQLiteInitOldSpatialite()
     }
 #endif
     return bSpatialiteGlobalLoaded;
+}
+
+/************************************************************************/
+/*                          InitNewSpatialite()                         */
+/************************************************************************/
+
+bool OGRSQLiteBaseDataSource::InitNewSpatialite()
+{
+    (void)hSpatialiteCtxt;
+    return true;
+}
+
+/************************************************************************/
+/*                         FinishNewSpatialite()                        */
+/************************************************************************/
+
+void OGRSQLiteBaseDataSource::FinishNewSpatialite()
+{
 }
 
 /************************************************************************/
@@ -259,39 +278,6 @@ void OGRSQLiteBaseDataSource::FinishNewSpatialite()
 
 #endif // defined(SPATIALITE_412_OR_LATER)
 
-#ifdef HAVE_RASTERLITE2
-
-/************************************************************************/
-/*                          InitRasterLite2()                           */
-/************************************************************************/
-
-bool OGRSQLiteBaseDataSource::InitRasterLite2()
-{
-    CPLAssert(m_hRL2Ctxt == nullptr);
-    m_hRL2Ctxt = rl2_alloc_private();
-    if( m_hRL2Ctxt != nullptr )
-    {
-        rl2_init (hDB, m_hRL2Ctxt, 0);
-    }
-    return m_hRL2Ctxt != nullptr;
-}
-
-/************************************************************************/
-/*                         FinishRasterLite2()                          */
-/************************************************************************/
-
-void OGRSQLiteBaseDataSource::FinishRasterLite2()
-{
-    if( m_hRL2Ctxt != nullptr )
-    {
-        rl2_cleanup_private(m_hRL2Ctxt);
-        m_hRL2Ctxt = nullptr;
-    }
-}
-
-#endif // HAVE_RASTERLITE2
-
-
 /************************************************************************/
 /*                          IsSpatialiteLoaded()                        */
 /************************************************************************/
@@ -325,20 +311,7 @@ int OGRSQLiteDataSource::GetSpatialiteVersionNumber()
 /*                       OGRSQLiteBaseDataSource()                      */
 /************************************************************************/
 
-OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource() :
-    m_pszFilename(nullptr),
-    hDB(nullptr),
-    pMyVFS(nullptr),
-    fpMainFile(nullptr),  // Do not close. The VFS layer will do it for us.
-#ifdef SPATIALITE_412_OR_LATER
-    hSpatialiteCtxt(nullptr),
-#endif
-#ifdef HAVE_RASTERLITE2
-    m_hRL2Ctxt(nullptr),
-#endif
-    bUserTransactionActive(FALSE),
-    nSoftTransactionLevel(0)
-{}
+OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource() = default;
 
 /************************************************************************/
 /*                      ~OGRSQLiteBaseDataSource()                      */
@@ -348,12 +321,8 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 
 {
     CloseDB();
-#ifdef SPATIALITE_412_OR_LATER
+
     FinishNewSpatialite();
-#endif
-#ifdef HAVE_RASTERLITE2
-    FinishRasterLite2();
-#endif
 
     if( m_bCallUndeclareFileNotToOpen )
     {
@@ -510,7 +479,44 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
+
+    CloseDB();
+#ifdef HAVE_RASTERLITE2
+    FinishRasterLite2();
+#endif
 }
+
+#ifdef HAVE_RASTERLITE2
+
+/************************************************************************/
+/*                          InitRasterLite2()                           */
+/************************************************************************/
+
+bool OGRSQLiteDataSource::InitRasterLite2()
+{
+    CPLAssert(m_hRL2Ctxt == nullptr);
+    m_hRL2Ctxt = rl2_alloc_private();
+    if( m_hRL2Ctxt != nullptr )
+    {
+        rl2_init (hDB, m_hRL2Ctxt, 0);
+    }
+    return m_hRL2Ctxt != nullptr;
+}
+
+/************************************************************************/
+/*                         FinishRasterLite2()                          */
+/************************************************************************/
+
+void OGRSQLiteDataSource::FinishRasterLite2()
+{
+    if( m_hRL2Ctxt != nullptr )
+    {
+        rl2_cleanup_private(m_hRL2Ctxt);
+        m_hRL2Ctxt = nullptr;
+    }
+}
+
+#endif // HAVE_RASTERLITE2
 
 /************************************************************************/
 /*                              SaveStatistics()                        */
@@ -991,14 +997,12 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
 /* -------------------------------------------------------------------- */
     if ( bSpatialite )
     {
-#ifdef SPATIALITE_412_OR_LATER
         if (!InitNewSpatialite())
         {
             CPLError( CE_Failure, CPLE_NotSupported,
                     "Creating a Spatialite database, but Spatialite extensions are not loaded." );
             return FALSE;
         }
-#endif
 #ifdef HAVE_RASTERLITE2
         InitRasterLite2();
 #endif
@@ -1408,10 +1412,8 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                 return FALSE;
             }
 
-#ifdef SPATIALITE_412_OR_LATER
             // We need it here for ST_MinX() and the like
             InitNewSpatialite();
-#endif
 
             // Ingest the lines of the dump
             VSIFSeekL( oOpenInfo.fpL, 0, SEEK_SET );
@@ -1518,9 +1520,8 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
             }
         }
 
-#ifdef SPATIALITE_412_OR_LATER
         InitNewSpatialite();
-#endif
+
 #ifdef HAVE_RASTERLITE2
         InitRasterLite2();
 #endif

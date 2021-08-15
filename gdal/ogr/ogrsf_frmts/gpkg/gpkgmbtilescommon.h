@@ -32,7 +32,7 @@
 
 #include "cpl_string.h"
 #include "gdal_pam.h"
-#include "ogr_sqlite.h" // for sqlite3*
+#include <sqlite3.h>
 
 typedef struct
 {

@@ -220,9 +220,8 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 #else
     CPLAssert( m_pszFilename != NULL );
 
-#ifdef SPATIALITE_412_OR_LATER
     FinishNewSpatialite();
-#endif
+
     /* Have to flush the file before f***ing with the header */
     CloseDB();
 
@@ -264,9 +263,8 @@ bool GDALGeoPackageDataset::ReOpenDB()
     CPLAssert( hDB != nullptr );
     CPLAssert( m_pszFilename != nullptr );
 
-#ifdef SPATIALITE_412_OR_LATER
     FinishNewSpatialite();
-#endif
+
     CloseDB();
 
     /* And re-open the file */
@@ -6343,7 +6341,7 @@ static bool OGRGeoPackageGetHeader( sqlite3_context* pContext,
     {
         bool bEmpty = false;
         memset( psHeader, 0, sizeof(*psHeader) );
-        if( OGRSQLiteLayer::GetSpatialiteGeometryHeader(
+        if( OGRSQLiteGetSpatialiteGeometryHeader(
                                         pabyBLOB, nBLOBLen,
                                         &(psHeader->iSrsId),
                                         nullptr,
@@ -6474,7 +6472,7 @@ void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
     if( nBLOBLen < 8 ||
         GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) != OGRERR_NONE )
     {
-        if( OGRSQLiteLayer::GetSpatialiteGeometryHeader(
+        if( OGRSQLiteGetSpatialiteGeometryHeader(
                                         pabyBLOB, nBLOBLen,
                                         nullptr,
                                         &eGeometryType,
@@ -6601,7 +6599,7 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
     if( poGeom == nullptr )
     {
         // Try also spatialite geometry blobs
-        if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyBLOB, nBLOBLen,
+        if( OGRSQLiteImportSpatiaLiteGeometry( pabyBLOB, nBLOBLen,
                                                     &poGeom ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
@@ -6954,7 +6952,6 @@ void GPKG_GDAL_HasColorTable(sqlite3_context* pContext,
 
 void GDALGeoPackageDataset::InstallSQLFunctions()
 {
-#ifdef SPATIALITE_412_OR_LATER
     InitNewSpatialite();
 
     // Enable SpatiaLite 4.3 "amphibious" mode, i.e. that SpatiaLite functions
@@ -6963,7 +6960,6 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
     // Use sqlite3_exec() instead of SQLCommand() since we don't want verbose
     // error.
     sqlite3_exec(hDB, "SELECT EnableGpkgAmphibiousMode()", nullptr, nullptr, nullptr);
-#endif
 
     /* Used by RTree Spatial Index Extension */
     sqlite3_create_function(hDB, "ST_MinX", 1,
