@@ -60,7 +60,6 @@
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include "ogr_sqlite.h"
 #include "ogrlayerdecorator.h"
 #include "ogrsf_frmts.h"
 #include "ogrsqliteexecutesql.h"

@@ -29,6 +29,7 @@
 #include "ogr_geopackage.h"
 #include "memdataset.h"
 #include "gdal_alg_priv.h"
+#include "ogrsqlitevfs.h"
 
 #include <algorithm>
 #include <cassert>

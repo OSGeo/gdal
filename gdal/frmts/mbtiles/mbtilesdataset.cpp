@@ -40,6 +40,7 @@
 #include "gdal_utils.h"
 #include "gdalwarper.h"
 #include "mvtutils.h"
+#include "ogrsqlitevfs.h"
 
 #include "zlib.h"
 #include "ogrgeojsonreader.h"
