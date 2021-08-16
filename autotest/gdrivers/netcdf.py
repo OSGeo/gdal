@@ -4698,6 +4698,39 @@ def test_netcdf_modis_array():
     assert ds.GetSpatialRef() is not None
 
 
+###############################################################################
+# Test import/export of Polar Stereographic Variant A (with scale factor)
+
+
+def test_netcdf_polar_stereographic_variant_a():
+
+    ds = gdal.Open('data/netcdf/polar_stero_variant_a.nc')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=stere +lat_0=90 +lon_0=-100 +k=0.93301243 +x_0=4245000 +y_0=5295000 +R=6371229 +units=m +no_defs'
+
+    gdal.Translate('tmp/out.nc', ds, format='netCDF')
+    ds = gdal.Open('tmp/out.nc')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=stere +lat_0=90 +lon_0=-100 +k=0.93301243 +x_0=4245000 +y_0=5295000 +R=6371229 +units=m +no_defs'
+    ds = None
+
+    gdal.Unlink('tmp/out.nc')
+
+
+###############################################################################
+# Test import/export of Polar Stereographic Variant B (with latitude of true scale)
+
+
+def test_netcdf_polar_stereographic_variant_b():
+
+    ds = gdal.Open('data/netcdf/polar_stero_variant_b.nc')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=stere +lat_0=90 +lat_ts=59.9999376869521 +lon_0=-100 +x_0=4245000 +y_0=5295000 +R=6371229 +units=m +no_defs'
+
+    gdal.Translate('tmp/out.nc', ds, format='netCDF')
+    ds = gdal.Open('tmp/out.nc')
+    assert ds.GetSpatialRef().ExportToProj4() == '+proj=stere +lat_0=90 +lat_ts=59.9999376869521 +lon_0=-100 +x_0=4245000 +y_0=5295000 +R=6371229 +units=m +no_defs'
+    ds = None
+
+    gdal.Unlink('tmp/out.nc')
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
