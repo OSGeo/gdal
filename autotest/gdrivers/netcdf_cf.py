@@ -134,7 +134,7 @@ def netcdf_cf_setup():
     if gdaltest.netcdf_cf_method is None:
         print('NOTICE: skipping netcdf CF compliance checks')
 
-    
+
 ###############################################################################
 # build a command used to check ifile
 
@@ -637,28 +637,7 @@ def test_netcdf_cf_4():
     return result
 
 ###############################################################################
-# test support for PS variants (bug #2893)
-
-
-def test_netcdf_cf_5():
-
-    if gdaltest.netcdf_drv is None:
-        pytest.skip()
-
-    ifiles = ['NETCDF:data/netcdf/orog_CRCM1.nc:orog', 'NETCDF:data/netcdf/orog_CRCM2.nc:orog']
-    for ifile in ifiles:
-        ds = gdal.Open(ifile)
-        prj = ds.GetProjection()
-        sr = osr.SpatialReference()
-        sr.ImportFromWkt(prj)
-        lat_origin = sr.GetProjParm('latitude_of_origin')
-
-        assert lat_origin == 60, ('Latitude of origin in %s does not match expected: %f'
-                                 % (ifile, lat_origin))
-
-    
-###############################################################################
-# test CF support for dims and variables in different groups 
+# test CF support for dims and variables in different groups
 
 def test_netcdf_cf_6():
 

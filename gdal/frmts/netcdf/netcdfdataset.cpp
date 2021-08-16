@@ -2459,24 +2459,29 @@ double netCDFDataset::FetchCopyParam( const char *pszGridMappingValue,
 /*                           FetchStandardParallels()                   */
 /************************************************************************/
 
-char **netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
+std::vector<std::string> netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
 {
     // cf-1.0 tags
     const char *pszValue = FetchAttr(pszGridMappingValue, CF_PP_STD_PARALLEL);
 
-    char **papszValues = nullptr;
+    std::vector<std::string> ret;
     if( pszValue != nullptr )
     {
+        CPLStringList aosValues;
         if( pszValue[0] != '{' && CPLString(pszValue).Trim().find(' ') != std::string::npos )
         {
             // Some files like ftp://data.knmi.nl/download/KNW-NetCDF-3D/1.0/noversion/2013/11/14/KNW-1.0_H37-ERA_NL_20131114.nc
             // do not use standard formatting for arrays, but just space
             // separated syntax
-            papszValues = CSLTokenizeString2(pszValue, " ", 0);
+            aosValues = CSLTokenizeString2(pszValue, " ", 0);
         }
         else
         {
-            papszValues = NCDFTokenizeArray(pszValue);
+            aosValues = NCDFTokenizeArray(pszValue);
+        }
+        for( int i = 0; i < aosValues.size(); i++ )
+        {
+            ret.push_back(aosValues[i]);
         }
     }
     // Try gdal tags.
@@ -2485,15 +2490,15 @@ char **netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
         pszValue = FetchAttr(pszGridMappingValue, CF_PP_STD_PARALLEL_1);
 
         if( pszValue != nullptr )
-            papszValues = CSLAddString(papszValues, pszValue);
+            ret.push_back(pszValue);
 
         pszValue = FetchAttr(pszGridMappingValue, CF_PP_STD_PARALLEL_2);
 
         if( pszValue != nullptr )
-            papszValues = CSLAddString(papszValues, pszValue);
+            ret.push_back(pszValue);
     }
 
-    return papszValues;
+    return ret;
 }
 
 /************************************************************************/
@@ -2847,30 +2852,27 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     poDS->FetchCopyParam(pszGridMappingValue,
                                          CF_PP_FALSE_NORTHING, 0.0);
 
-                char** papszStdParallels =
+                const auto aosStdParallels =
                     FetchStandardParallels(pszGridMappingValue);
 
                 double dfStdP1 = 0;
                 double dfStdP2 = 0;
-                if( papszStdParallels != nullptr )
+                if( aosStdParallels.size() == 1 )
                 {
-                    if( CSLCount(papszStdParallels) == 1 )
-                    {
-                        // TODO CF-1 standard says it allows AEA to be encoded
-                        // with only 1 standard parallel.  How should this
-                        // actually map to a 2StdP OGC WKT version?
-                        CPLError(
-                            CE_Warning, CPLE_NotSupported,
-                            "NetCDF driver import of AEA-1SP is not tested, "
-                            "using identical std. parallels.");
-                        dfStdP1 = CPLAtofM(papszStdParallels[0]);
-                        dfStdP2 = dfStdP1;
-                    }
-                    else if( CSLCount(papszStdParallels) == 2 )
-                    {
-                        dfStdP1 = CPLAtofM(papszStdParallels[0]);
-                        dfStdP2 = CPLAtofM(papszStdParallels[1]);
-                    }
+                    // TODO CF-1 standard says it allows AEA to be encoded
+                    // with only 1 standard parallel.  How should this
+                    // actually map to a 2StdP OGC WKT version?
+                    CPLError(
+                        CE_Warning, CPLE_NotSupported,
+                        "NetCDF driver import of AEA-1SP is not tested, "
+                        "using identical std. parallels.");
+                    dfStdP1 = CPLAtofM(aosStdParallels[0].c_str());
+                    dfStdP2 = dfStdP1;
+                }
+                else if( aosStdParallels.size() == 2 )
+                {
+                    dfStdP1 = CPLAtofM(aosStdParallels[0].c_str());
+                    dfStdP2 = CPLAtofM(aosStdParallels[1].c_str());
                 }
                 // Old default.
                 else
@@ -2894,20 +2896,18 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS("WGS84");
-
-                CSLDestroy(papszStdParallels);
             }
 
             // Cylindrical Equal Area
             else if( EQUAL(pszValue, CF_PT_CEA) || EQUAL(pszValue, CF_PT_LCEA) )
             {
-                char **papszStdParallels =
+                const auto aosStdParallels =
                     FetchStandardParallels(pszGridMappingValue);
 
                 double dfStdP1 = 0;
-                if( papszStdParallels != nullptr )
+                if( !aosStdParallels.empty() )
                 {
-                    dfStdP1 = CPLAtofM(papszStdParallels[0]);
+                    dfStdP1 = CPLAtofM(aosStdParallels[0].c_str());
                 }
                 else
                 {
@@ -2935,8 +2935,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS("WGS84");
-
-                CSLDestroy(papszStdParallels);
             }
 
             // lambert_azimuthal_equal_area.
@@ -3006,13 +3004,13 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 const double dfFalseNorthing = poDS->FetchCopyParam(
                     pszGridMappingValue, CF_PP_FALSE_NORTHING, 0.0);
 
-                char** papszStdParallels = FetchStandardParallels(pszGridMappingValue);
+                const auto aosStdParallels = FetchStandardParallels(pszGridMappingValue);
 
                 // 2SP variant.
-                if( CSLCount(papszStdParallels) == 2 )
+                if( aosStdParallels.size() == 2 )
                 {
-                    const double dfStdP1 = CPLAtofM(papszStdParallels[0]);
-                    const double dfStdP2 = CPLAtofM(papszStdParallels[1]);
+                    const double dfStdP1 = CPLAtofM(aosStdParallels[0].c_str());
+                    const double dfStdP2 = CPLAtofM(aosStdParallels[1].c_str());
                     oSRS.SetLCC(dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
                                 dfFalseEasting, dfFalseNorthing);
                 }
@@ -3028,8 +3026,8 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     {
                         double dfStdP1;
                         // With standard_parallel.
-                        if( CSLCount(papszStdParallels) == 1 )
-                            dfStdP1 = CPLAtofM(papszStdParallels[0]);
+                        if( aosStdParallels.size() == 1 )
+                            dfStdP1 = CPLAtofM(aosStdParallels[0].c_str());
                         // With center lon instead.
                         else
                             dfStdP1 = dfCenterLat;
@@ -3081,8 +3079,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 bGotCfSRS = true;
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS("WGS84");
-
-                CSLDestroy(papszStdParallels);
             }
 
             // Is this Latitude/Longitude Grid explicitly?
@@ -3099,12 +3095,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             {
 
                 // If there is a standard_parallel, know it is Mercator 2SP.
-                char** papszStdParallels = FetchStandardParallels(pszGridMappingValue);
+                const auto aosStdParallels = FetchStandardParallels(pszGridMappingValue);
 
-                if(nullptr != papszStdParallels)
+                if( !aosStdParallels.empty() )
                 {
                     // CF-1 Mercator 2SP always has lat centered at equator.
-                    const double dfStdP1 = CPLAtofM(papszStdParallels[0]);
+                    const double dfStdP1 = CPLAtofM(aosStdParallels[0].c_str());
 
                     const double dfCenterLat = 0.0;
 
@@ -3145,8 +3141,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS("WGS84");
-
-                CSLDestroy(papszStdParallels);
             }
 
             // Orthographic.
@@ -3176,61 +3170,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             // Polar Stereographic.
             else if( EQUAL(pszValue, CF_PT_POLAR_STEREO) )
             {
-                double dfScale = poDS->FetchCopyParam(pszGridMappingValue,
-                                              CF_PP_SCALE_FACTOR_ORIGIN, -1.0);
-
-                char** papszStdParallels = FetchStandardParallels(pszGridMappingValue);
-
-                // CF allows the use of standard_parallel (lat_ts) OR
-                // scale_factor (k0), make sure we have standard_parallel, using
-                // Snyder eq. 22-7 with k=1 and lat=standard_parallel.
-                double dfStdP1 = 0.0;
-                if( papszStdParallels != nullptr )
-                {
-                    dfStdP1 = CPLAtofM(papszStdParallels[0]);
-                    // Compute scale_factor from standard_parallel.
-                    // This creates WKT that is inconsistent, don't write for
-                    // now.  Also, proj4 does not seem to use this parameter.
-                    // dfScale =
-                    //     (1.0 + fabs(sin(dfStdP1 * M_PI / 180.0))) / 2.0;
-                }
-                else
-                {
-                    if( !CPLIsEqual(dfScale, -1.0) )
-                    {
-                        // Compute standard_parallel from scale_factor.
-                        dfStdP1 = asin(2 * dfScale - 1) * 180.0 / M_PI;
-
-                        // Fetch latitude_of_projection_origin (+90/-90).
-                        // Used here for the sign of standard_parallel.
-                        double dfLatProjOrigin = poDS->FetchCopyParam(
-                            pszGridMappingValue, CF_PP_LAT_PROJ_ORIGIN, 0.0);
-                        if( !CPLIsEqual(dfLatProjOrigin, 90.0) &&
-                            !CPLIsEqual(dfLatProjOrigin, -90.0) )
-                        {
-                            CPLError(CE_Failure, CPLE_NotSupported,
-                                     "Polar Stereographic must have a %s "
-                                     "parameter equal to +90 or -90.",
-                                     CF_PP_LAT_PROJ_ORIGIN);
-                            dfLatProjOrigin = 90.0;
-                        }
-                        if( CPLIsEqual(dfLatProjOrigin, -90.0) )
-                            dfStdP1 = -dfStdP1;
-                    }
-                    else
-                    {
-                        CPLError(
-                            CE_Failure, CPLE_NotSupported,
-                            "The NetCDF driver does not support import "
-                            "of CF-1 Polar stereographic "
-                            "without standard_parallel and "
-                            "scale_factor_at_projection_origin parameters.");
-                    }
-                }
-
-                // Set scale to default value 1.0 if it was not set.
-                if( CPLIsEqual(dfScale, -1.0) )
-                    dfScale = 1.0;
+                const auto aosStdParallels = FetchStandardParallels(pszGridMappingValue);
 
                 const double dfCenterLon = poDS->FetchCopyParam(
                     pszGridMappingValue, CF_PP_VERT_LONG_FROM_POLE, 0.0);
@@ -3241,15 +3181,45 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 const double dfFalseNorthing = poDS->FetchCopyParam(
                     pszGridMappingValue, CF_PP_FALSE_NORTHING, 0.0);
 
+                // CF allows the use of standard_parallel (lat_ts) OR
+                // scale_factor (k0), make sure we have standard_parallel, using
+                // Snyder eq. 22-7 with k=1 and lat=standard_parallel.
+                if( !aosStdParallels.empty() )
+                {
+                    const double dfStdP1 = CPLAtofM(aosStdParallels[0].c_str());
+
+                    // Polar Stereographic Variant B with latitude of standard parallel
+                    oSRS.SetPS(dfStdP1, dfCenterLon, 1.0,
+                                dfFalseEasting, dfFalseNorthing);
+                }
+                else
+                {
+                    // Fetch latitude_of_projection_origin (+90/-90).
+                    double dfLatProjOrigin = poDS->FetchCopyParam(
+                        pszGridMappingValue, CF_PP_LAT_PROJ_ORIGIN, 0.0);
+                    if( !CPLIsEqual(dfLatProjOrigin, 90.0) &&
+                        !CPLIsEqual(dfLatProjOrigin, -90.0) )
+                    {
+                        CPLError(CE_Failure, CPLE_NotSupported,
+                                 "Polar Stereographic must have a %s "
+                                 "parameter equal to +90 or -90.",
+                                 CF_PP_LAT_PROJ_ORIGIN);
+                        dfLatProjOrigin = 90.0;
+                    }
+
+                    const double dfScale = poDS->FetchCopyParam(pszGridMappingValue,
+                                              CF_PP_SCALE_FACTOR_ORIGIN, 1.0);
+
+                    // Polar Stereographic Variant A with scale factor at natural
+                    // origin and latitude of origin = +/- 90
+                    oSRS.SetPS(dfLatProjOrigin, dfCenterLon, dfScale,
+                                dfFalseEasting, dfFalseNorthing);
+                }
+
                 bGotCfSRS = true;
-                // Map CF CF_PP_STD_PARALLEL_1 to WKT SRS_PP_LATITUDE_OF_ORIGIN.
-                oSRS.SetPS(dfStdP1, dfCenterLon, dfScale,
-                            dfFalseEasting, dfFalseNorthing);
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS("WGS84");
-
-                CSLDestroy(papszStdParallels);
             }
 
             // Stereographic.
@@ -9678,6 +9648,33 @@ static std::vector<std::pair<std::string, double> >
     // Lookup mappings and fill output vector.
     if(poMap != poGenericMappings)
     {
+        // special case for PS (Polar Stereographic) grid.
+        if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
+        {
+            const double dfLat = oValMap[SRS_PP_LATITUDE_OF_ORIGIN];
+
+            auto oScaleFactorIter = oValMap.find(SRS_PP_SCALE_FACTOR);
+            if( oScaleFactorIter != oValMap.end() )
+            {
+                // Polar Stereographic (variant A)
+                const double dfScaleFactor = oScaleFactorIter->second;
+                // dfLat should be +/- 90
+                oOutList.push_back(std::make_pair(
+                    std::string(CF_PP_LAT_PROJ_ORIGIN), dfLat));
+                oOutList.push_back(std::make_pair(
+                    std::string(CF_PP_SCALE_FACTOR_ORIGIN), dfScaleFactor));
+            }
+            else
+            {
+                // Polar Stereographic (variant B)
+                const double dfLatPole = (dfLat > 0) ? 90.0 : -90.0;
+                oOutList.push_back(std::make_pair(
+                    std::string(CF_PP_LAT_PROJ_ORIGIN), dfLatPole));
+                oOutList.push_back(std::make_pair(
+                    std::string(CF_PP_STD_PARALLEL), dfLat));
+            }
+        }
+
         // Specific mapping, loop over mapping values.
         for( oAttIter = oAttMap.begin(); oAttIter != oAttMap.end(); ++oAttIter )
         {
@@ -9690,21 +9687,9 @@ static std::vector<std::pair<std::string, double> >
                 double dfValue = oValIter->second;
                 bool bWriteVal = true;
 
-                // special case for PS (Polar Stereographic) grid.
-                // See comments in netcdfdataset.h for this projection.
-                if( EQUAL(SRS_PP_LATITUDE_OF_ORIGIN, posGDALAtt->c_str()) &&
-                    EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
-                {
-                    double dfLatPole = 0.0;
-                    if( dfValue > 0.0 ) dfLatPole = 90.0;
-                    else dfLatPole = -90.0;
-                    oOutList.push_back(std::make_pair(
-                        std::string(CF_PP_LAT_PROJ_ORIGIN), dfLatPole));
-                }
-
                 // special case for LCC-1SP
                 //   See comments in netcdfdataset.h for this projection.
-                else if( EQUAL(SRS_PP_SCALE_FACTOR, posGDALAtt->c_str()) &&
+                if( EQUAL(SRS_PP_SCALE_FACTOR, posGDALAtt->c_str()) &&
                          EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
                 {
                     // Default is to not write as it is not CF-1.
