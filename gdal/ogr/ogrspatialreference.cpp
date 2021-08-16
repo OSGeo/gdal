@@ -3428,6 +3428,25 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                   SET_FROM_USER_INPUT_LIMITATIONS_get()              */
+/************************************************************************/
+
+/** Limitations for OGRSpatialReference::SetFromUserInput().
+ *
+ * Currently ALLOW_NETWORK_ACCESS=NO and ALLOW_FILE_ACCESS=NO.
+ */
+const char* const OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS[] = {
+    "ALLOW_NETWORK_ACCESS=NO", "ALLOW_FILE_ACCESS=NO", nullptr };
+
+/**
+ * \brief Return OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS
+ */
+CSLConstList OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()
+{
+    return SET_FROM_USER_INPUT_LIMITATIONS;
+}
+
+/************************************************************************/
 /*                          SetFromUserInput()                          */
 /************************************************************************/
 
@@ -3474,13 +3493,6 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 {
     return SetFromUserInput(pszDefinition, nullptr);
 }
-
-/** Limitations for OGRSpatialReference::SetFromUserInput().
- *
- * Currently ALLOW_NETWORK_ACCESS=NO and ALLOW_FILE_ACCESS=NO.
- */
-const char* const OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS[] = {
-    "ALLOW_NETWORK_ACCESS=NO", "ALLOW_FILE_ACCESS=NO", nullptr };
 
 /**
  * \brief Set spatial reference from various text formats.

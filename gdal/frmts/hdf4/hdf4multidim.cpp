@@ -2757,7 +2757,7 @@ std::shared_ptr<OGRSpatialReference> HDF4SDSArray::GetSpatialRef() const
         if( !osProjection.empty() )
         {
             auto poSRS(std::make_shared<OGRSpatialReference>());
-            poSRS->SetFromUserInput(osProjection.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS);
+            poSRS->SetFromUserInput(osProjection.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if( poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{ 2, 1 } )
                 poSRS->SetDataAxisToSRSAxisMapping({ 1, 2 });

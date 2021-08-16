@@ -391,6 +391,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetFromUserInput( const char * );
 
     static const char* const SET_FROM_USER_INPUT_LIMITATIONS[];
+    static CSLConstList SET_FROM_USER_INPUT_LIMITATIONS_get();
+
     OGRErr      SetFromUserInput( const char *, CSLConstList papszOptions );
 
     OGRErr      SetTOWGS84( double, double, double,
