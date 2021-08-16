@@ -7017,6 +7017,15 @@ OGRErr OSRSetPolyconic( OGRSpatialReferenceH hSRS,
 /*                               SetPS()                                */
 /************************************************************************/
 
+/** Sets a Polar Stereographic projection.
+ *
+ * Two variants are possible:
+ * - Polar Stereographic Variant A: dfCenterLat must be +/- 90° and is
+ *   interpretated as the latitude of origin, combined with the scale factor
+ * - Polar Stereographic Variant B: dfCenterLat is different from +/- 90° and
+ *   is interpretated as the latitude of true scale. In that situation, dfScale
+ *   must be set to 1 (it is ignored in the projection parameters)
+ */
 OGRErr OGRSpatialReference::SetPS(
                                 double dfCenterLat, double dfCenterLong,
                                 double dfScale,
