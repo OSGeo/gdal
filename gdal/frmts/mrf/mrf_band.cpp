@@ -705,7 +705,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
     }
 
 #if defined(ZSTD_SUPPORT)
-    if (dozstd) {
+    else if (dozstd) {
         size_t ranks = 0; // Assume no need for byte rank sort
         if (img.comp == IL_NONE || img.comp == IL_ZSTD)
             ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt)) * cstride;
@@ -940,7 +940,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
 
 #if defined(ZSTD_SUPPORT)
     // undo ZSTD
-    if (dozstd) {
+    else if (dozstd) {
         auto ctx = poDS->getzsd();
         if (!ctx) {
             CPLFree(data);
@@ -1074,7 +1074,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         }
 
 # if defined(ZSTD_SUPPORT)
-        if (dozstd) {
+        else if (dozstd) {
             size_t ranks = 0; // Assume no need for byte rank sort
             if (img.comp == IL_NONE || img.comp == IL_ZSTD)
                 ranks = static_cast<size_t>(GDALGetDataTypeSizeBytes(img.dt));
@@ -1208,7 +1208,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     }
 
 #if defined(ZSTD_SUPPORT)
-    if (dozstd) {
+    else if (dozstd) {
         memcpy(tbuffer, outbuff, dst.size);
         dst.buffer = static_cast<char*>(tbuffer);
         size_t ranks = 0; // Assume no need for byte rank sort
@@ -1252,7 +1252,7 @@ bool MRFRasterBand::TestBlock(int xblk, int yblk)
     ILIdx tinfo;
     GInt32 cstride = img.pagesize.c;
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
-    
+
     if (CE_None != poDS->ReadTileIdx(tinfo, req, img))
         // Got an error reading the tile index
         return !poDS->no_errors;
