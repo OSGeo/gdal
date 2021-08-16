@@ -481,25 +481,8 @@ static const oNetcdfSRS_PP poOrthoMappings[] = {
 //    * false_easting
 //    * false_northing
 
-/*
-   (http://www.remotesensing.org/geotiff/proj_list/polar_stereographic.html)
-
-   Note: Projection parameters for this projection are quite different in CF-1 from
-     OGC WKT/GeoTiff (for the latter, see above).
-   From our best understanding, this projection requires more than a straight mapping:
-     - As defined below, 'latitude_of_origin' (WKT) -> 'standard_parallel' (CF-1)
-       and 'central_meridian' (WKT) -> 'straight_vertical_longitude_from_pole' (CF-1)
-     - Then the 'latitude_of_projection_origin' in CF-1 must be set to either +90 or -90,
-       depending on the sign of 'latitude_of_origin' in WKT.
-   CF allows the use of standard_parallel (lat_ts in proj4) OR scale_factor (k0 in proj4).
-   This is analogous to the B and A variants (resp.) in EPSG guidelines.
-   When importing a CF file with scale_factor, we compute standard_parallel using
-     Snyder eq. 22-7 with k=1 and lat=standard_parallel.
-   Currently OGR does NOT relate the scale factor with the standard parallel, so we
-   use the default. It seems that proj4 uses lat_ts (standard_parallel) and not k0.
-*/
 static const oNetcdfSRS_PP poPSmappings[] = {
-    {CF_PP_STD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN},
+    /* {CF_PP_STD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN}, */
     /* {CF_PP_SCALE_FACTOR_ORIGIN, SRS_PP_SCALE_FACTOR},   */
     {CF_PP_VERT_LONG_FROM_POLE, SRS_PP_CENTRAL_MERIDIAN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
