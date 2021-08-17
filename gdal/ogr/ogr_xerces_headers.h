@@ -37,8 +37,6 @@
 #include <sax/InputSource.hpp>
 #include <util/BinInputStream.hpp>
 
-#ifdef XERCES_CPP_NAMESPACE_USE
-XERCES_CPP_NAMESPACE_USE
-#endif
+using namespace XERCES_CPP_NAMESPACE;
 
 #endif /* OGR_XERCES_HEADERS_H */
