@@ -73,6 +73,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     // To avoid timeouts. See https://github.com/OSGeo/gdal/issues/502
     CPLSetConfigOption("DXF_MAX_BSPLINE_CONTROL_POINTS", "100");
     CPLSetConfigOption("NAS_INDICATOR","NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite");
+    CPLSetConfigOption("USERNAME", "unknown"); // see GMLASConfiguration::GetBaseCacheDirectory()
     return 0;
 }
 
