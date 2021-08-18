@@ -59,12 +59,11 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 #. Install `unixODBC <http://www.unixodbc.org>`__ >= 2.2.11
-#. Install MDB Tools. While the official upstream of MDB Tools is abandoned and
-   contains many bugs which prevent correct parsing of Personal Geodatabase geometry
-   data, the maintained fork at `https://github.com/evanmiller/mdbtools <https://github.com/evanmiller/mdbtools>`__
-   contains all required fixes to allow GDAL to successfully read Personal Geodatabases.
+#. Install MDB Tools. The official upstream of MDB Tools is maintained
+   at `https://github.com/mdbtools/mdbtools <https://github.com/mdbtools/mdbtools>`__
+   Version 0.9.4 or later is recommended for best compatibility with the PGeo driver.
 
-(On Ubuntu 8.04 : sudo apt-get install unixodbc libmdbodbc)
+(On Ubuntu : sudo apt-get install unixodbc libmdbodbc)
 
 Configuration
 ~~~~~~~~~~~~~
@@ -206,7 +205,7 @@ Resources
 
 -  `About ESRI
    Geodatabase <http://www.esri.com/software/arcgis/geodatabase/index.html>`__
--  `evanmiller's maintained fork of MDB Tools <https://github.com/evanmiller/mdbtools>`__
+-  `MDB Tools project home <https://github.com/mdbtools/mdbtools>`__
 
 See also
 --------
