@@ -527,9 +527,21 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
 
     GMLASInputSource oSource(osResolvedFilename, fpXSD, false);
     const bool bCacheGrammar = true;
-    Grammar* poGrammar = poParser->loadGrammar(oSource,
+    Grammar* poGrammar = nullptr;
+    std::string osLoadGrammarErrorMsg("loadGrammar failed");
+    try
+    {
+        poGrammar = poParser->loadGrammar(oSource,
                                             Grammar::SchemaGrammarType,
                                             bCacheGrammar);
+    }
+    catch( const DOMException& e )
+    {
+        // Not sure if this exception is supposed to leak here in theory, but
+        // in practice it might with a .xsd that has a bad <?xml version="
+        // declaration.
+        osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
+    }
 
     // Restore previous handlers
     poParser->setEntityResolver( poOldEntityResolver );
@@ -538,7 +550,8 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
 
     if( poGrammar == nullptr )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "loadGrammar failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 osLoadGrammarErrorMsg.c_str());
         return false;
     }
     if( oErrorHandler.hasFailed() )

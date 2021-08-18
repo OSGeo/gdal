@@ -58,6 +58,7 @@
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/PSVIUni.hpp>
+#include <xercesc/dom/DOMException.hpp>
 
 #ifdef XERCES_CPP_NAMESPACE_USE
 XERCES_CPP_NAMESPACE_USE
