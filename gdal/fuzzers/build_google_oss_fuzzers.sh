@@ -25,6 +25,10 @@ fi
 
 SRC_DIR=$(dirname $0)/..
 
+if [ "$LIBGDAL" = "" ]; then
+  LIBGDAL="$SRC_DIR/libgdal.a"
+fi
+
 build_fuzzer()
 {
     fuzzerName=$1
@@ -35,11 +39,11 @@ build_fuzzer()
     if test -d $SRC/install/lib; then
         $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
             $sourceFilename "$@" -o $OUT/$fuzzerName \
-            $LIB_FUZZING_ENGINE $SRC_DIR/libgdal.a $EXTRA_LIBS $SRC/install/lib/*.a
+            $LIB_FUZZING_ENGINE $LIBGDAL $EXTRA_LIBS $SRC/install/lib/*.a
     else
         $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts -I$SRC_DIR/ogr/ogrsf_frmts/sqlite \
             $sourceFilename "$@" -o $OUT/$fuzzerName \
-            $LIB_FUZZING_ENGINE $SRC_DIR/libgdal.a $EXTRA_LIBS
+            $LIB_FUZZING_ENGINE $LIBGDAL $EXTRA_LIBS
     fi
 }
 
