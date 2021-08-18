@@ -1112,12 +1112,50 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * situations. Starting with GDAL 2.4, gdalwarp will automatically enable this
  * option when it is assumed to be safe to do so.</li>
  *
- * <li>UNIFIED_SRC_NODATA=YES/NO: By default nodata masking values considered
- * independently for each band.  However, sometimes it is desired to treat all
- * bands as nodata if and only if, all bands match the corresponding nodata
- * values. To get this behavior set this option to YES.
- * Note: UNIFIED_SRC_NODATA=YES is set by default, when called from gdalwarp /
- * GDALWarp()</li>
+ * <li>UNIFIED_SRC_NODATA=YES/NO/PARTIAL: This setting determines
+ * how to take into account nodata values when there are several input bands.
+ * <ul>
+ * <li>When YES, all bands are considered as nodata if and only if, all bands
+ *     match the corresponding nodata values.
+ *     Note: UNIFIED_SRC_NODATA=YES is set by default, when called from gdalwarp /
+ *     GDALWarp() with an explicit -srcnodata setting.
+ *
+ *     Example with nodata values at (1, 2, 3) and target alpha band requested.
+ *     <ul>
+ *     <li>input pixel = (1, 2, 3) ==> output pixel = (0, 0, 0, 0)</li>
+ *     <li>input pixel = (1, 2, 127) ==> output pixel = (1, 2, 127, 255)</li>
+ *     </ul>
+ * </li>
+ * <li>When NO, nodata masking values is considered independently for each band.
+ *     A potential target alpha band will always be valid if there are multiple
+ *     bands.
+ *
+ *     Example with nodata values at (1, 2, 3) and target alpha band requested.
+ *     <ul>
+ *     <li>input pixel = (1, 2, 3) ==> output pixel = (0, 0, 0, 255)</li>
+ *     <li>input pixel = (1, 2, 127) ==> output pixel = (0, 0, 127, 255)</li>
+ *     </ul>
+ *
+ *     Note: NO was the default behaviour before GDAL 3.3.2
+ * </li>
+ * <li>When PARTIAL, or not specified at all (default behavior),
+ *     nodata masking values is considered independently for each band.
+ *     But, and this is the difference with NO, if for a given pixel, it
+ *     evaluates to the nodata value of each band, the target pixel is
+ *     considered as globally invalid, which impacts the value of a potential
+ *     target alpha band.
+ *
+ *     Note: PARTIAL is new to GDAL 3.3.2 and should not be used with
+ *     earlier versions. The default behavior of GDAL < 3.3.2 was NO.
+ *
+ *     Example with nodata values at (1, 2, 3) and target alpha band requested.
+ *     <ul>
+ *     <li>input pixel = (1, 2, 3) ==> output pixel = (0, 0, 0, 0)</li>
+ *     <li>input pixel = (1, 2, 127) ==> output pixel = (0, 0, 127, 255)</li>
+ *     </ul>
+ * </li>
+ * </ul>
+ * </li>
  *
  * <li>CUTLINE: This may contain the WKT geometry for a cutline.  It will
  * be converted into a geometry by GDALWarpOperation::Initialize() and assigned

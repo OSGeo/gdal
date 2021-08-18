@@ -229,11 +229,19 @@ with control information.
 
 .. option:: -srcnodata <value [value...]>
 
-    Set nodata masking
-    values for input bands (different values can be supplied for each band).  If
-    more than one value is supplied all values should be quoted to keep them
-    together as a single operating system argument.  Masked values will not be
-    used in interpolation.  Use a value of ``None`` to ignore intrinsic nodata settings on the source dataset.
+    Set nodata masking values for input bands (different values can be supplied
+    for each band). If more than one value is supplied all values should be quoted
+    to keep them together as a single operating system argument.
+    Masked values will not be used in interpolation.
+    Use a value of ``None`` to ignore intrinsic nodata settings on the source dataset.
+
+    When this option is set to a non-``None`` value, it causes the ``UNIFIED_SRC_NODATA``
+    warping option (see :cpp:member:`GDALWarpOptions::papszWarpOptions`) to be
+    set to ``YES``, if it is not explicitly set.
+
+    If ``-srcnodata`` is not explicitly set, but the source dataset has nodata values,
+    they will be taken into account, with ``UNIFIED_SRC_NODATA`` at ``PARTIAL``
+    by default.
 
 .. option:: -dstnodata <value [value...]>
 
