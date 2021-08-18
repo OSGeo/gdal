@@ -33,6 +33,15 @@ Currently the OGR Personal Geodatabase driver does not take advantage of
 spatial indexes for fast spatial queries, though that may be added in
 the future.
 
+The Personal GeoDatabase format does not strictly differentiate between
+multi and single geometry types for polygon or line layers, and it is
+possible for a polygon or line layer to contain a mix of both single
+and multi type geometries. Accordingly, in order to provide predictable
+geometry types, the GDAL driver will always report the type of a line
+layer as wkbMultiLineString, and a polygon layer as wkbMultiPolygon.
+Single-part line or polygon features in the database will be promoted
+to multilinestrings or multipolygons during reading.
+
 By default, SQL statements are passed directly to the MDB database
 engine. It's also possible to request the driver to handle SQL commands
 with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"**
