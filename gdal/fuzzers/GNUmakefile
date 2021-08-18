@@ -24,11 +24,14 @@ clean:
 	$(RM) gdal_translate_fuzzer$(EXE)
 	$(RM) gdal_vector_translate_fuzzer$(EXE)
 	$(RM) aig_fuzzer$(EXE)
+	$(RM) gdal_vrt_fuzzer$(EXE)
 	$(RM) ogr_fuzzer$(EXE)
 	$(RM) ogr_sdts_fuzzer$(EXE)
 	$(RM) mitab_tab_fuzzer$(EXE)
-	$(RM) osr_set_from_user_input_fuzzer$(EXE)
+	$(RM) gtiff_mmap_fuzzer$(EXE)
+	$(RM) gml_geom_import_fuzzer$(EXE)
 	$(RM) spatialite_geom_import_fuzzer$(EXE)
+	$(RM) osr_set_from_user_input_fuzzer$(EXE)
 
 gdal_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
@@ -65,6 +68,11 @@ spatialite_geom_import_fuzzer$(EXE): spatialite_geom_import_fuzzer.$(OBJ_EXT) $(
 
 osr_set_from_user_input_fuzzer$(EXE): osr_set_from_user_input_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) osr_set_from_user_input_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+dummyfuzzers_dynamic: fuzzingengine.o
+	$(AR) r libFuzzingEngine.a fuzzingengine.o
+	CXX="${CXX}" CXXFLAGS="${CXXFLAGS} -L." EXTRA_LIBS="${LIBS}" LIBGDAL="-L.. -L../.libs -lgdal" SRC=/tmp OUT=/tmp ./build_google_oss_fuzzers.sh
+	OUT=/tmp ./build_seed_corpus.sh
 
 dummyfuzzers: fuzzingengine.o
 	$(AR) r libFuzzingEngine.a fuzzingengine.o

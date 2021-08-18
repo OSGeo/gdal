@@ -5,7 +5,7 @@ set -eu
 apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
     software-properties-common build-essential ca-certificates \
-    git make cmake wget unzip libtool automake \
+    git make cmake wget zip unzip libtool automake \
     zlib1g-dev libsqlite3-dev pkg-config libcurl4-gnutls-dev \
     libproj-dev libtiff5-dev \
     libcharls-dev libopenjp2-7-dev libcairo2-dev \
