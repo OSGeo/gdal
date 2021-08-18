@@ -96,7 +96,7 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
         os.system('diff -u ' + reffile + ' ' + tmpfilename)
         # os.unlink(tmpfilename)
         pytest.fail('Got:')
-    
+
 ###############################################################################
 # Basic test
 
@@ -282,7 +282,7 @@ def test_ogr_gmlas_gml_Reference():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test that we fix ambiguities in class names
 
@@ -471,7 +471,7 @@ def test_ogr_gmlas_geometryproperty():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test reading geometries referenced by a AbstractGeometry element
 
@@ -500,7 +500,7 @@ def test_ogr_gmlas_abstractgeometry():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test validation against schema
 
@@ -597,7 +597,7 @@ def test_ogr_gmlas_test_ns_prefix():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test parsing documents without namespace
 
@@ -611,7 +611,7 @@ def test_ogr_gmlas_no_namespace():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test CONFIG_FILE
 
@@ -972,7 +972,7 @@ def test_ogr_gmlas_link_nested_independant_child():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test some pattern found in geosciml schemas
 
@@ -1001,7 +1001,7 @@ def test_ogr_gmlas_composition_compositionPart():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test that when importing GML we expose by default only elements deriving
 # from _Feature/AbstractFeature
@@ -1036,7 +1036,7 @@ def test_ogr_gmlas_timestamp_ignored_for_hash():
         f.DumpReadable()
         pytest.fail(pkid)
 
-    
+
 ###############################################################################
 # Test dataset GetNextFeature()
 
@@ -1233,7 +1233,7 @@ def test_ogr_gmlas_remove_unused_layers_and_fields():
             f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 #  Test xlink resolution
 
@@ -1700,7 +1700,7 @@ def test_ogr_gmlas_recoding():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test schema without namespace prefix
 
@@ -1737,7 +1737,7 @@ def test_ogr_gmlas_schema_without_namespace_prefix():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test parsing truncated XML
 
@@ -1752,7 +1752,7 @@ def test_ogr_gmlas_truncated_xml():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test identifier truncation
 
@@ -1872,7 +1872,7 @@ def test_ogr_gmlas_writer_check_xml_xsd():
         os.system('diff -u data/gmlas/gmlas_test1_generated.xsd tmp/gmlas_test1_generated.xsd')
         pytest.fail('Got:')
 
-    
+
 ###############################################################################
 # Check that the .xml read back by the GMLAS driver has the same content
 # as the original one.
@@ -2504,7 +2504,7 @@ def test_ogr_gmlas_any_field_at_end_of_declaration():
     if f.GetField('value') != '<something>baz</something>':
         print('Expected fail: value != <something>baz</something>')
 
-    
+
 ###############################################################################
 #  Test auxiliary schema without namespace prefix
 
@@ -2518,7 +2518,7 @@ def test_ogr_gmlas_aux_schema_without_namespace_prefix():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test importing a GML geometry that is in an element that is a substitutionGroup
 # of another one (#6990)
@@ -2568,7 +2568,7 @@ def test_ogr_gmlas_no_element_in_first_choice_schema():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 
 ###############################################################################
 # Test cross-layer links with xlink:href="#my_id"
@@ -2702,3 +2702,13 @@ def test_ogr_gmlas_internal_xlink_href():
        f['child_pkid'] != 'ogr_pkid':
         f.DumpReadable()
         pytest.fail()
+
+###############################################################################
+# Test opening a file whose .xsd has a bad version attribute in the <?xml processing instruction
+
+
+def test_ogr_gmlas_invalid_version_xsd():
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_invalid_version_xsd.xml')
+    assert ds is None
