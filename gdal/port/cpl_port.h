@@ -1047,10 +1047,15 @@ CPL_C_END
 #endif
 
 #if defined(__cplusplus)
+#ifndef CPPCHECK
 /** Returns the size of C style arrays. */
 #define CPL_ARRAYSIZE(array) \
   ((sizeof(array) / sizeof(*(array))) / \
   static_cast<size_t>(!(sizeof(array) % sizeof(*(array)))))
+#else
+/* simplified version for cppcheck */
+#define CPL_ARRAYSIZE(array) (sizeof(array) / sizeof(array[0]))
+#endif
 
 extern "C++" {
 template<class T> static void CPL_IGNORE_RET_VAL(const T&) {}

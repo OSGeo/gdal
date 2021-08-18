@@ -935,12 +935,11 @@ OCTNewCoordinateTransformationEx(
     OGRCoordinateTransformationOptionsH hOptions)
 
 {
-    OGRCoordinateTransformationOptions defaultOptions;
     return reinterpret_cast<OGRCoordinateTransformationH>(
         OGRCreateCoordinateTransformation(
             reinterpret_cast<OGRSpatialReference *>(hSourceSRS),
             reinterpret_cast<OGRSpatialReference *>(hTargetSRS),
-            hOptions ? *hOptions : defaultOptions));
+            hOptions ? *hOptions : OGRCoordinateTransformationOptions()));
 }
 
 /************************************************************************/

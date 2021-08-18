@@ -549,8 +549,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /*      ourselves allow the creation to be 50% faster.                  */
 /* -------------------------------------------------------------------- */
         size_t nBufSize = 524288; // Number of 512 blocks for 256MB
-        char* puBuf = new char[nBufSize*512];
-        std::unique_ptr<char[]> oZeroAutoPtr(puBuf);
+        std::unique_ptr<char[]> oZeroAutoPtr(new char[nBufSize*512]);
+        char* puBuf = oZeroAutoPtr.get();
         std::memset(puBuf,0,nBufSize*512); //prezero
 
         uint64 nBlocksRest = image_data_size;
