@@ -35936,9 +35936,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 #include <xercesc/util/XercesDefs.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
-#if (_XERCES_VERSION >= 20200)
-XERCES_CPP_NAMESPACE_USE
-#endif
+using namespace XERCES_CPP_NAMESPACE;
 
 int
 main ()

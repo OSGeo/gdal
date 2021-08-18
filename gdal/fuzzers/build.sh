@@ -37,45 +37,60 @@ curl https://src.fedoraproject.org/lookaside/pkgs/netcdf/netcdf-4.4.1.1.tar.gz/9
 rm -rf poppler
 git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
 
+# Build xerces-c from source to avoid upstream bugs
+rm -rf xerces-c
+git clone --depth 1 https://gitbox.apache.org/repos/asf/xerces-c.git
 
-I386_PACKAGES="zlib1g-dev:i386 libexpat-dev:i386 liblzma-dev:i386 \
-              libxerces-c-dev:i386 libpng12-dev:i386 libgif-dev:i386 \
-              libwebp-dev:i386 libicu-dev:i386 libnetcdf-dev:i386 \
-              libssl-dev:i386 libsqlite3-dev:i386 \
-              libfreetype6-dev:i386 libfontconfig1-dev:i386 libtiff5-dev:i386 libboost-dev:i386"
-X64_PACKAGES="zlib1g-dev libexpat-dev liblzma-dev \
-              libxerces-c-dev libpng12-dev libgif-dev \
-              libwebp-dev libicu-dev libnetcdf-dev \
-              libssl-dev libsqlite3-dev \
-              libfreetype6-dev libfontconfig1-dev libtiff5-dev libboost-dev"
+# Build sqlite from source to avoid upstream bugs
+rm -rf sqlite
+git clone --depth 1 https://github.com/sqlite/sqlite sqlite
 
 if [ "$ARCHITECTURE" = "i386" ]; then
-    apt-get install -y $I386_PACKAGES
+    ARCH_SUFFIX=":i386"
 else
-    apt-get install -y $X64_PACKAGES
+    ARCH_SUFFIX=""
 fi
+
+# libxerces-c-dev${ARCH_SUFFIX}
+# libsqlite3-dev${ARCH_SUFFIX}
+PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
+          libpng12-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
+          libwebp-dev${ARCH_SUFFIX} libicu-dev${ARCH_SUFFIX} libnetcdf-dev${ARCH_SUFFIX} \
+          libssl-dev${ARCH_SUFFIX} \
+          libfreetype6-dev ${ARCH_SUFFIX}libfontconfig1-dev${ARCH_SUFFIX} libtiff5-dev${ARCH_SUFFIX} libboost-dev${ARCH_SUFFIX}"
+
+apt-get install -y $PACKAGES tcl
+
+NON_FUZZING_CFLAGS="$CFLAGS"
+NON_FUZZING_CXXFLAGS="$CXXFLAGS"
+# we do not really want to deal with Poppler undefined behavior bugs, such
+# as integer overflows
+if [ "$SANITIZER" = "undefined" ]; then
+    if [ "$ARCHITECTURE" = "i386" ]; then
+        NON_FUZZING_CFLAGS="-m32 -O1 -fno-omit-frame-pointer -gline-tables-only -stdlib=libc++"
+    else
+        NON_FUZZING_CFLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only -stdlib=libc++"
+    fi
+    NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS"
+fi
+
+# build sqlite
+cd sqlite
+CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --disable-tcl
+make clean -s
+make -j$(nproc) -s
+make install
+cd ..
 
 # build poppler
 cd poppler
 mkdir -p build
 cd build
-POPPLER_CFLAGS="$CFLAGS"
-POPPLER_CXXFLAGS="$CXXFLAGS"
-# we do not really want to deal with Poppler undefined behavior bugs, such
-# as integer overflows
-if [ "$SANITIZER" = "undefined" ]; then
-    if [ "$ARCHITECTURE" = "i386" ]; then
-        POPPLER_CFLAGS="-m32 -O1 -fno-omit-frame-pointer -gline-tables-only -stdlib=libc++"
-    else
-        POPPLER_CFLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only -stdlib=libc++"
-    fi
-    POPPLER_CXXFLAGS="$POPPLER_CFLAGS"
-fi
 cmake .. \
   -DCMAKE_INSTALL_PREFIX=$SRC/install \
   -DCMAKE_BUILD_TYPE=debug \
-  -DCMAKE_C_FLAGS="$POPPLER_CFLAGS" \
-  -DCMAKE_CXX_FLAGS="$POPPLER_CXXFLAGS" \
+  -DCMAKE_C_FLAGS="$NON_FUZZING_CFLAGS" \
+  -DCMAKE_CXX_FLAGS="$NON_FUZZING_CXXFLAGS" \
   -DENABLE_UNSTABLE_API_ABI_HEADERS=ON \
   -DBUILD_SHARED_LIBS=OFF \
   -DFONT_CONFIGURATION=generic \
@@ -105,10 +120,19 @@ make -j$(nproc) -s
 make install
 cd ..
 
+# build Xerces-c
+cd xerces-c
+./reconf
+CFLAGS=$NON_FUZZING_CFLAGS CXXFLAGS=$NON_FUZZING_CXXFLAGS ./configure --prefix=$SRC/install --with-curl=$SRC/install
+make clean -s
+make -j$(nproc) -s
+make install
+cd ..
+
 # build libproj.a (proj master required)
 cd proj
 ./autogen.sh
-SQLITE3_CFLAGS=-I/usr/include SQLITE3_LIBS=-lsqlite3 TIFF_CFLAGS=-I/usr/include TIFF_LIBS=-ltiff ./configure --disable-shared --prefix=$SRC/install --with-curl=$SRC/install/bin/curl-config
+SQLITE3_CFLAGS="-I$SRC/install/include" SQLITE3_LIBS="-L$SRC/install/lib -lsqlite3" TIFF_CFLAGS=-I/usr/include TIFF_LIBS=-ltiff ./configure --disable-shared --prefix=$SRC/install --with-curl=$SRC/install/bin/curl-config
 make clean -s
 make -j$(nproc) -s
 make install
@@ -132,8 +156,8 @@ if [ "$SANITIZER" = "undefined" ]; then
 fi
 
 cd gdal
-export LDFLAGS=${CXXFLAGS}
-PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3 --with-xerces --with-webp --with-netcdf=$SRC/install --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-jpeg=internal --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
+export LDFLAGS="${CXXFLAGS} -licuuc -licudata"
+PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3=$SRC/install --with-xerces=$SRC/install --with-webp --with-netcdf=$SRC/install --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-jpeg=internal --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
 make clean -s
 make -j$(nproc) -s static-lib
 
@@ -142,13 +166,17 @@ export EXTRA_LIBS="-Wl,-Bstatic "
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz"
 # PROJ
 export EXTRA_LIBS="$EXTRA_LIBS -ltiff -lproj "
-export EXTRA_LIBS="$EXTRA_LIBS -lwebp -llzma -lexpat -lsqlite3 -lgif -lpng12 -lz"
+export EXTRA_LIBS="$EXTRA_LIBS -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -lpng12 -lz"
 # Xerces-C related
-export EXTRA_LIBS="$EXTRA_LIBS -lxerces-c -licuuc -licudata"
+export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lxerces-c -licuuc -licudata"
 # netCDF related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lnetcdf -lhdf5_serial_hl -lhdf5_serial -lsz -laec -lz"
 # poppler related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lpoppler -lfreetype -lfontconfig"
 export EXTRA_LIBS="$EXTRA_LIBS -Wl,-Bdynamic -ldl -lpthread"
+
+# to find sqlite3.h
+export CXXFLAGS="$CXXFLAGS -I$SRC/install/include"
+
 ./fuzzers/build_google_oss_fuzzers.sh
 ./fuzzers/build_seed_corpus.sh

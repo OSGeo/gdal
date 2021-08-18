@@ -278,7 +278,8 @@ OGRErr       OGRSQLiteGetSpatialiteGeometryHeader( const GByte *pabyData,
                                                     double* pdfMinY,
                                                     double* pdfMaxX,
                                                     double* pdfMaxY );
-OGRErr       OGRSQLiteImportSpatiaLiteGeometry( const GByte *, int,
+// CPL_DLL just for spatialite_geom_import_fuzzer
+OGRErr CPL_DLL OGRSQLiteImportSpatiaLiteGeometry( const GByte *, int,
                                                 OGRGeometry **,
                                                 int *pnSRID = nullptr);
 OGRErr       OGRSQLiteExportSpatiaLiteGeometry( const OGRGeometry *,
