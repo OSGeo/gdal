@@ -1,0 +1,5 @@
+<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns gmlas_invalid_version_xsd.xsd">
+    <myns:foo>bar</myns:foo>
+</myns:main_elt>
