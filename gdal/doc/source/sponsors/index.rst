@@ -18,6 +18,15 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        .. note: Given the square shape of th AWS logo compared to the other ones, we have to reduce its width a bit so it doesn't look bigger overall
+
+        .. image:: ../../images/sponsors/logo-aws.png
+           :class: img-logos
+           :width: 225 px
+           :target: https://aws.amazon.com
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-maxar.png
            :class: img-logos
            :width: 250 px

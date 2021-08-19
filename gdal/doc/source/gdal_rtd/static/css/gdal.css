@@ -328,8 +328,8 @@ div.service-provider-description {
 div.horizontal-logo {
     display: inline-block;
     vertical-align: middle;
-    margin-right: 10px;
-    margin-bottom: 10px;
+    margin-right: 30px;
+    margin-bottom: 30px;
 }
 
 /* Suppress special symbol for external links in supporters section */
