@@ -50,6 +50,7 @@
 #include <xercesc/framework/psvi/XSTypeDefinition.hpp>
 #include <xercesc/framework/psvi/XSWildcard.hpp>
 #include <xercesc/sax/InputSource.hpp>
+#include <xercesc/sax/SAXException.hpp>
 #include <xercesc/sax2/Attributes.hpp>
 #include <xercesc/sax2/DefaultHandler.hpp>
 #include <xercesc/sax2/ContentHandler.hpp>
@@ -58,6 +59,7 @@
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/PSVIUni.hpp>
+#include <xercesc/util/XMLException.hpp>
 #include <xercesc/dom/DOMException.hpp>
 
 using namespace XERCES_CPP_NAMESPACE;
