@@ -31,8 +31,8 @@
 -->
 
 <!-- This file should validate against nitf_spec.xsd -->
-
-<tres>
+<root>
+  <tres>
     <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.2, Table P-11 -->
     <tre name="ACCHZB" md_prefix="NITF_ACCHZB_" minlength="11" maxlength="99985" location="image">
         <field name="NUM_ACHZ" length="2" type="integer" minval="1" maxval="99"/>
@@ -2597,4 +2597,115 @@
         <field name="SUN_AZ" length="5"/>
     </tre>
 
-</tres>
+  </tres>
+
+  <!--- -->
+  <!-- Data Extension Segments definitions -->
+  <!--- -->
+  <des_list>
+    <!-- Defined in STDI-0002_ver_21.1/Vol-2-App C - CSATTA.pdf -->
+    <des name="CSATTA DES">
+      <subheader_fields length="52">
+        <field name="ATT_TYPE" length="12" type="string"/>
+        <field name="DT_ATT" length="14" type="string"/>
+        <field name="DATE_ATT" length="8" type="string"/>
+        <field name="T0_ATT" length="13" type="string"/>
+        <field name="NUM_ATT" length="5" type="integer"/>
+      </subheader_fields>
+    </des>
+
+    <!-- Defined in STDI-0002_ver_21.1/Vol-2-App D - CSSHPA-CSSHPB.pdf -->
+    <des name="CSSHPA DES">
+      <subheader_fields minlength="62" maxlength="80">
+        <field name="SHAPE_USE" length="25" type="string"/>
+        <field name="SHAPE_CLASS" length="10" type="string"/>
+        <if cond="SHAPE_USE=CLOUD_SHAPES">
+            <field name="CC_SOURCE" length="18" type="string"/>
+        </if>
+        <field name="SHAPE1_NAME" length="3" type="string"/>
+        <field name="SHAPE1_START" length="6" type="integer"/>
+        <field name="SHAPE2_NAME" length="3" type="string"/>
+        <field name="SHAPE2_START" length="6" type="integer"/>
+        <field name="SHAPE3_NAME" length="3" type="string"/>
+        <field name="SHAPE3_START" length="6" type="integer"/>
+      </subheader_fields>
+    </des>
+
+    <!-- Defined in STDI-0002_ver_21.1/Vol-2-App D - CSSHPA-CSSHPB.pdf -->
+    <des name="CSSHPB DES">
+      <subheader_fields minlength="222">
+        <field name="SHAPEFILE_ID" length="36" type="string"/>
+        <field name="SHAPES_ID" length="36" type="string"/>
+        <field name="NUMAIS" length="3" type="integer"/>
+        <if cond="NUMAIS!=ALL">
+            <if cond="NUMAIS!=000">
+                <loop counter="NUMAIS">
+                    <field name="AISDLVL" length="3" type="integer"/>
+                </loop>
+            </if>
+        </if>
+        <field name="TIMESTAMP" length="24" type="string"/>
+        <field name="NUM_ASSOC_ELEM" length="3" type="integer"/>
+        <if cond="NUM_ASSOC_ELEM!=000">
+            <loop counter="NUM_ASSOC_ELEM">
+                <field name="ASSOC_ELEM_ID" length="36" type="string"/>
+            </loop>
+        </if>
+        <field name="SHAPE_USE" length="25" type="string"/>
+        <field name="NUM_SHAPE_USE_ATTR" length="3" type="integer"/>
+        <loop counter="NUM_SHAPE_USE_ATTR" name="SHAPE_USE_ATTR">
+            <field name="NAME" length="15" type="string"/>
+            <field name="VAL" length="10" type="string"/>
+        </loop>
+        <field name="SHAPE_CLASS" length="11" type="string"/>
+        <field name="SHAPE_COORD" length="10" type="string"/>
+        <field name="SHAPE_VERSION" length="11" type="string"/>
+        <field name="SHAPE_PART" length="3" type="integer" minval="1"/>
+        <field name="SHAPE_NUM_PARTS" length="3" type="integer" minval="1"/>
+        <field name="SOURCE" length="18" type="string"/>
+        <field name="SHAPE1_NAME" length="3" type="string"/>
+        <field name="SHAPE1_START" length="9" type="integer"/>
+        <field name="SHAPE2_NAME" length="3" type="string"/>
+        <field name="SHAPE2_START" length="9" type="integer"/>
+        <field name="SHAPE3_NAME" length="3" type="string"/>
+        <field name="SHAPE3_START" length="9" type="integer"/>
+        <if cond="DESVER=01">
+            <field name="NUM_SUPPORTING_FILES" length="2" type="integer"/>
+            <loop counter="NUM_SUPPORTING_FILES" name="SUPPORTING">
+                <field name="NAME_LEN" length="2" type="integer" minval="1"/>
+                <field name="NAME" length_var="NAME_LEN" type="string"/>
+                <field name="START" length="9" type="integer"/>
+                <field name="SIZE" length="9" type="integer"/>
+            </loop>
+        </if>
+      </subheader_fields>
+     </des>
+
+    <!-- Defined in STDI-0002_ver_21.1/Vol-2-App F - XML.pdf -->
+    <des name="XML_DATA_CONTENT">
+      <subheader_fields>
+          <if cond="DESSHL>=0005">
+              <field name="DESCRC" length="5" type="string"/>
+          </if>
+          <if cond="DESSHL>=0283">
+              <field name="DESSHFT" length="8" type="string"/>
+              <field name="DESSHDT" length="20" type="string"/>
+              <field name="DESSHRP" length="40" type="string"/>
+              <field name="DESSHSI" length="60" type="string"/>
+              <field name="DESSHSV" length="10" type="string"/>
+              <field name="DESSHSD" length="20" type="string"/>
+              <field name="DESSHTN" length="120" type="string"/>
+          </if>
+          <if cond="DESSHL>=0773">
+              <field name="DESSHLPG" length="125" type="string"/>
+              <field name="DESSHLPT" length="25" type="string"/>
+              <field name="DESSHLI" length="20" type="string"/>
+              <field name="DESSHLIN" length="120" type="string"/>
+              <field name="DESSHABS" length="200" type="string"/>
+          </if>
+      </subheader_fields>
+    </des>
+
+  </des_list>
+
+</root>

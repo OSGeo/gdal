@@ -40,8 +40,6 @@ CPL_CVSID("$Id$")
 static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC );
 static void DumpMetadata( const char *, const char *, char ** );
 
-#ifdef WIN32
-
 /* Below a few internal functions from nitffile.c and nitfimage.c */
 /* To be used by nitfdump.c, they should be CPL_DLL exported, but */
 /* they are mostly internal beasts so we copy&paste them here... */
@@ -94,12 +92,10 @@ static GUInt32 NITFReadMSBGUInt32(VSILFILE* fp, int* pbSuccess)
 
 NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
 {
-    GUInt16 nLocSectionLength;
     GUInt32 nLocSectionOffset;
     GUInt16 iLoc;
     GUInt16 nLocCount;
     GUInt16 nLocRecordLength;
-    GUInt32 nLocComponentAggregateLength;
     NITFLocation* pasLocations = NULL;
     int bSuccess;
     GUIntBig nCurOffset;
@@ -112,7 +108,7 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
     nCurOffset = VSIFTellL(fp);
 
     bSuccess = TRUE;
-    nLocSectionLength = NITFReadMSBGUInt16(fp, &bSuccess);
+    /*nLocSectionLength = */ NITFReadMSBGUInt16(fp, &bSuccess);
     nLocSectionOffset = NITFReadMSBGUInt32(fp, &bSuccess);
     if (nLocSectionOffset != 14)
     {
@@ -134,7 +130,7 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
         return NULL;
     }
 
-    nLocComponentAggregateLength = NITFReadMSBGUInt32(fp, &bSuccess);
+    /*nLocComponentAggregateLength = */ NITFReadMSBGUInt32(fp, &bSuccess);
 
     VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET);
 
@@ -163,8 +159,6 @@ NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
     *pnLocCount = nLocCount;
     return pasLocations;
 }
-
-#endif
 
 typedef struct
 {
@@ -696,7 +690,7 @@ int main( int nArgc, char ** papszArgv )
 
             DumpMetadata( "  DES Metadata:", "    ", psDES->papszMetadata );
 
-            if ( bExtractSHP && CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE_USE") != NULL )
+            if ( bExtractSHP && EQUAL(CSLFetchNameValueDef(psDES->papszMetadata, "DESID", ""), "CSSHPA DES") )
             {
                 char szFilename[32];
                 char szRadix[32];

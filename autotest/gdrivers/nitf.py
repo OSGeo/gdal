@@ -36,6 +36,7 @@ import array
 import struct
 import shutil
 from osgeo import gdal
+from osgeo import ogr
 from osgeo import osr
 
 
@@ -3743,51 +3744,131 @@ def test_nitf_des():
 
     expected_data = """<des_list>
   <des name="DES1">
-    <field name="NITF_DESVER" value="02" />
-    <field name="NITF_DECLAS" value="U" />
-    <field name="NITF_DESCLSY" value="" />
-    <field name="NITF_DESCODE" value="" />
-    <field name="NITF_DESCTLH" value="" />
-    <field name="NITF_DESREL" value="" />
-    <field name="NITF_DESDCTP" value="" />
-    <field name="NITF_DESDCDT" value="" />
-    <field name="NITF_DESDCXM" value="" />
-    <field name="NITF_DESDG" value="" />
-    <field name="NITF_DESDGDT" value="" />
-    <field name="NITF_DESCLTX" value="" />
-    <field name="NITF_DESCATP" value="" />
-    <field name="NITF_DESCAUT" value="" />
-    <field name="NITF_DESCRSN" value="" />
-    <field name="NITF_DESSRDT" value="" />
-    <field name="NITF_DESCTLN" value="" />
-    <field name="NITF_DESSHL" value="0004" />
-    <field name="NITF_DESSHF" value="ABCD" />
-    <field name="NITF_DESDATA" value="MTIzNDU2NwA4OTA=" />
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0004" />
+    <field name="DESSHF" value="ABCD" />
+    <field name="DESDATA" value="MTIzNDU2NwA4OTA=" />
   </des>
   <des name="DES2">
-    <field name="NITF_DESVER" value="02" />
-    <field name="NITF_DECLAS" value="U" />
-    <field name="NITF_DESCLSY" value="" />
-    <field name="NITF_DESCODE" value="" />
-    <field name="NITF_DESCTLH" value="" />
-    <field name="NITF_DESREL" value="" />
-    <field name="NITF_DESDCTP" value="" />
-    <field name="NITF_DESDCDT" value="" />
-    <field name="NITF_DESDCXM" value="" />
-    <field name="NITF_DESDG" value="" />
-    <field name="NITF_DESDGDT" value="" />
-    <field name="NITF_DESCLTX" value="" />
-    <field name="NITF_DESCATP" value="" />
-    <field name="NITF_DESCAUT" value="" />
-    <field name="NITF_DESCRSN" value="" />
-    <field name="NITF_DESSRDT" value="" />
-    <field name="NITF_DESCTLN" value="" />
-    <field name="NITF_DESSHL" value="0004" />
-    <field name="NITF_DESSHF" value="ABCD" />
-    <field name="NITF_DESDATA" value="MTIzNDU2NwA4OTA=" />
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0004" />
+    <field name="DESSHF" value="ABCD" />
+    <field name="DESDATA" value="MTIzNDU2NwA4OTA=" />
   </des>
 </des_list>
 """
+
+    assert data == expected_data
+
+###############################################################################
+# Test creation and reading of Data Extension Segments (DES)
+
+def test_nitf_des_CSSHPA():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/tmp.shp')
+    lyr = ds.CreateLayer('tmp', geom_type = ogr.wkbPolygon, options = ['DBF_DATE_LAST_UPDATE=2021-01-01'])
+    lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("ID", 1)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((2 49,2 50,3 50,3 49,2 49))'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    files = {}
+    for ext in ('shp', 'shx', 'dbf'):
+        f = gdal.VSIFOpenL('/vsimem/tmp.' + ext, 'rb')
+        files[ext] = gdal.VSIFReadL(1, 1000000, f)
+        gdal.VSIFCloseL(f)
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp.shp')
+
+    shp_offset = 0
+    shx_offset = shp_offset + len(files['shp'])
+    dbf_offset = shx_offset + len(files['shx'])
+    shp_shx_dbf = files['shp'] + files['shx'] + files['dbf']
+
+    des_data = b"02U" + b" "*166 + ('0080CLOUD_SHAPES             POLYGON   SOURCE123456789ABCSHP%06dSHX%06dDBF%06d' % (shp_offset, shx_offset, dbf_offset)).encode('ascii') + shp_shx_dbf
+
+    escaped_data = gdal.EscapeString(des_data, gdal.CPLES_BackslashQuotable)
+
+    ds = gdal.GetDriverByName("NITF").Create("/vsimem/nitf_DES.ntf", 1, 1, options=[b"DES=CSSHPA DES=" + escaped_data])
+    ds = None
+
+    ds = gdal.Open("/vsimem/nitf_DES.ntf")
+    data = ds.GetMetadata("xml:DES")[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_DES.ntf')
+
+    import base64
+    expected_data = """<des_list>
+  <des name="CSSHPA DES">
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0080" />
+    <field name="DESSHF" value="CLOUD_SHAPES             POLYGON   SOURCE123456789ABCSHP000000SHX000236DBF000344">
+      <user_defined_fields>
+        <field name="SHAPE_USE" value="CLOUD_SHAPES" />
+        <field name="SHAPE_CLASS" value="POLYGON" />
+        <field name="CC_SOURCE" value="SOURCE123456789ABC" />
+        <field name="SHAPE1_NAME" value="SHP" />
+        <field name="SHAPE1_START" value="000000" />
+        <field name="SHAPE2_NAME" value="SHX" />
+        <field name="SHAPE2_START" value="000236" />
+        <field name="SHAPE3_NAME" value="DBF" />
+        <field name="SHAPE3_START" value="000344" />
+      </user_defined_fields>
+    </field>
+    <field name="DESDATA" value="%s" />
+  </des>
+</des_list>
+""" % base64.b64encode(shp_shx_dbf).decode('ascii')
 
     assert data == expected_data
 

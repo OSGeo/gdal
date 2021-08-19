@@ -2817,12 +2817,23 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 char* pszCondVar = (char*)CPLMalloc(pszOperator - pszCond + 1);
                 const char* pszCondExpectedVal = pszOperator + 1;
                 const char* pszCondVal;
-                int bTestEqual = TRUE;
+                int bTestEqual = FALSE;
+                int bTestNotEqual = FALSE;
+                int bTestGreaterOrEqual = FALSE;
                 memcpy(pszCondVar, pszCond, pszOperator - pszCond);
                 if (pszOperator - pszCond > 1 && pszCondVar[pszOperator - pszCond - 1] == '!')
                 {
-                    bTestEqual = FALSE;
+                    bTestNotEqual = TRUE;
                     pszCondVar[pszOperator - pszCond - 1] = '\0';
+                }
+                else if (pszOperator - pszCond > 1 && pszCondVar[pszOperator - pszCond - 1] == '>')
+                {
+                    bTestGreaterOrEqual = TRUE;
+                    pszCondVar[pszOperator - pszCond - 1] = '\0';
+                }
+                else
+                {
+                    bTestEqual = TRUE;
                 }
                 pszCondVar[pszOperator - pszCond] = '\0';
                 pszCondVal = NITFFindValRecursive(papszMD, *pnMDSize, pszMDPrefix, pszCondVar);
@@ -2832,7 +2843,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                             pszCondVar);
                 }
                 else if ((bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) == 0) ||
-                         (!bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0))
+                         (bTestNotEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0) ||
+                         (bTestGreaterOrEqual && strcmp(pszCondVal, pszCondExpectedVal) >= 0))
                 {
                     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
                                                                  pnMDSize,
@@ -3015,10 +3027,10 @@ static CPLXMLNode* NITFFindTREXMLDescFromName(NITFFile* psFile,
     if (psTreeNode == NULL)
         return NULL;
 
-    psTresNode = CPLGetXMLNode(psTreeNode, "=tres");
+    psTresNode = CPLGetXMLNode(psTreeNode, "=root.tres");
     if (psTresNode == NULL)
     {
-        CPLDebug("NITF", "Cannot find <tres> root element");
+        CPLDebug("NITF", "Cannot find <root><tres> root element");
         return NULL;
     }
 
@@ -3110,6 +3122,102 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
 }
 
 /************************************************************************/
+/*                      NITFFindTREXMLDescFromName()                    */
+/************************************************************************/
+
+static CPLXMLNode* NITFFindDESXMLDescFromName(NITFFile* psFile,
+                                              const char* pszDESName)
+{
+    CPLXMLNode* psTreeNode;
+    CPLXMLNode* psTresNode;
+    CPLXMLNode* psIter;
+
+    psTreeNode = NITFLoadXMLSpec(psFile);
+    if (psTreeNode == NULL)
+        return NULL;
+
+    psTresNode = CPLGetXMLNode(psTreeNode, "=root.des_list");
+    if (psTresNode == NULL)
+    {
+        CPLDebug("NITF", "Cannot find <root><des_list> root element");
+        return NULL;
+    }
+
+    for(psIter = psTresNode->psChild;psIter != NULL;psIter = psIter->psNext)
+    {
+        if (psIter->eType == CXT_Element &&
+            psIter->pszValue != NULL &&
+            strcmp(psIter->pszValue, "des") == 0)
+        {
+            const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
+            if (pszName != NULL && strcmp(pszName, pszDESName) == 0)
+            {
+                return psIter;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                 NITFCreateXMLDesUserDefinedSubHeader()               */
+/************************************************************************/
+
+CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
+                                                const NITFDES* psDES)
+{
+    const char* pszDESID = CSLFetchNameValue(psDES->papszMetadata, "DESID");
+    CPLXMLNode* psDESDef = NITFFindDESXMLDescFromName(psFile, pszDESID);
+    if( psDESDef == NULL )
+    {
+        CPLDebug("NITF", "Cannot find definition of DES %s in %s",
+                 pszDESID, NITF_SPEC_FILE);
+        return NULL;
+    }
+    CPLXMLNode* psUserDefinedFields = CPLGetXMLNode(psDESDef, "subheader_fields");
+    if( psUserDefinedFields == NULL )
+    {
+        return NULL;
+    }
+
+    CPLXMLNode* psOutXMLNode = CPLCreateXMLNode(NULL, CXT_Element, "user_defined_fields");
+
+    int bError = FALSE;
+    int nOffset = 200;
+    char** papszMD = NULL;
+    for( char** papszIter = psDES->papszMetadata; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = NULL;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            papszMD = CSLSetNameValue(papszMD, pszKey, pszValue);
+        }
+        CPLFree(pszKey);
+    }
+    int nMDSize = CSLCount(papszMD);
+    int nMDAlloc = nMDSize;
+    const int nDESSize = psFile->pasSegmentInfo[psDES->iSegment].nSegmentHeaderSize;
+    CSLDestroy(NITFGenericMetadataReadTREInternal(papszMD,
+                                                  &nMDSize,
+                                                  &nMDAlloc,
+                                                  psOutXMLNode,
+                                                  pszDESID,
+                                                  psDES->pachHeader,
+                                                  nDESSize,
+                                                  psUserDefinedFields,
+                                                  &nOffset,
+                                                  "", /* pszMDPrefix, */
+                                                  &bError));
+    if (nOffset < atoi(CSLFetchNameValueDef(psDES->papszMetadata, "DESSHL", "0")))
+        CPLDebug("NITF", "%d remaining bytes at end of %s DES user defined subheader fields",
+                 nDESSize -nOffset, pszDESID);
+
+    return psOutXMLNode;
+}
+
+/************************************************************************/
 /*                        NITFGenericMetadataRead()                     */
 /*                                                                      */
 /* Add metadata from TREs of file and image objects in the papszMD list */
@@ -3139,10 +3247,10 @@ char **NITFGenericMetadataRead( char **papszMD,
     if (psTreeNode == NULL)
         return papszMD;
 
-    psTresNode = CPLGetXMLNode(psTreeNode, "=tres");
+    psTresNode = CPLGetXMLNode(psTreeNode, "=root.tres");
     if (psTresNode == NULL)
     {
-        CPLDebug("NITF", "Cannot find <tres> root element");
+        CPLDebug("NITF", "Cannot find <root><tres> root element");
         return papszMD;
     }
 

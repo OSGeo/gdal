@@ -30,10 +30,23 @@
  ****************************************************************************/
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-    <xs:element name="tres">
+    <xs:element name="root">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="tre" type="treType" minOccurs="0" maxOccurs="unbounded"/>
+                <xs:element name="tres" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="tre" type="treType" minOccurs="0" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="des_list" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="des" type="desType" minOccurs="0" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -46,6 +59,22 @@
         <xs:attribute name="minlength" type="xs:integer" use="optional"/>
         <xs:attribute name="maxlength" type="xs:integer" use="optional"/>
         <xs:attribute name="location" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="desType">
+        <xs:sequence>
+            <!-- definition of user-defined subheader fields of DES -->
+            <xs:element name="subheader_fields" minOccurs="0">
+                <xs:complexType>
+                    <xs:group ref="itemType"/>
+                    <xs:attribute name="name" type="xs:string"/>
+                    <xs:attribute name="length" type="positiveInteger" use="optional"/>
+                    <xs:attribute name="minlength" type="xs:integer" use="optional"/>
+                    <xs:attribute name="maxlength" type="xs:integer" use="optional"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string"/>
     </xs:complexType>
 
     <xs:group name="itemType">

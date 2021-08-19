@@ -2919,7 +2919,7 @@ void NITFDataset::InitializeTREMetadata()
             CPLXMLNode* psTreNode = NITFCreateXMLTre(psFile, szTREName, pabyTREData,nThisTRESize);
             if (psTreNode)
             {
-                const char* pszDESID = CSLFetchNameValue(psDES->papszMetadata, "NITF_DESID");
+                const char* pszDESID = CSLFetchNameValue(psDES->papszMetadata, "DESID");
                 CPLCreateXMLNode(CPLCreateXMLNode(psTreNode, CXT_Attribute, "location"),
                                  CXT_Text, pszDESID ? CPLSPrintf("des %s", pszDESID) : "des");
                 CPLAddXMLChild(psTresNode, psTreNode);

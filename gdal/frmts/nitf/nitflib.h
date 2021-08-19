@@ -278,6 +278,9 @@ void      CPL_DLL  NITFDESFreeTREData( char* pabyTREData );
 
 int       CPL_DLL  NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName);
 
+CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
+                                                 const NITFDES* psDES);
+
 CPLXMLNode CPL_DLL *NITFDESGetXml(NITFFile*, int iSegment);
 
 /* -------------------------------------------------------------------- */
