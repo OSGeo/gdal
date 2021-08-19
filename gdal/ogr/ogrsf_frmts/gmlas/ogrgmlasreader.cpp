@@ -535,10 +535,17 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
                                             Grammar::SchemaGrammarType,
                                             bCacheGrammar);
     }
+    catch( const SAXException& e )
+    {
+        osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
+    }
+    catch( const XMLException& e )
+    {
+        osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
+    }
     catch( const DOMException& e )
     {
-        // Not sure if this exception is supposed to leak here in theory, but
-        // in practice it might with a .xsd that has a bad <?xml version="
+        // Can happen with a .xsd that has a bad <?xml version="
         // declaration.
         osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
     }
