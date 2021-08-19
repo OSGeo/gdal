@@ -305,11 +305,6 @@ def test_ogr_pgeo_9():
     polygon_layer = pgeo_ds.GetLayerByName('polygons')
     assert polygon_layer.GetGeomType() == ogr.wkbMultiPolygon
 
-    feat = polygon_layer.GetNextFeature()
-    if feat.GetField('pk') != 1:
-        feat.DumpReadable()
-        pytest.fail('did not get expected attributes')
-
     # The PGeo format has a similar approach to multi-part handling as Shapefiles,
     # where polygon and multipolygon geometries or line and multiline geometries will
     # co-exist in a layer reported as just polygon or line type respectively.
@@ -317,6 +312,7 @@ def test_ogr_pgeo_9():
     # types to multitypes, and correspondingly ALWAYS return multi polygon/line geometry
     # objects for features (even if strictly speaking the original feature had a polygon/line
     # geometry object)
+    feat = polygon_layer.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,
                                       'MULTIPOLYGON (((-11315979.9947 6171775.831,-10597634.808 6140025.7675,-11331855.0265 5477243.192,-11315979.9947 6171775.831)))',
                                       max_error=0.0000001) != 0:
@@ -324,10 +320,6 @@ def test_ogr_pgeo_9():
         pytest.fail('did not get expected geometry')
 
     feat = polygon_layer.GetNextFeature()
-    if feat.GetField('pk') != 2:
-        feat.DumpReadable()
-        pytest.fail('did not get expected attributes')
-
     if ogrtest.check_feature_geometry(feat,
                                       'MULTIPOLYGON (((-9855477.0737 5596305.9301,-9581632.776 5258961.5054,-9863414.5896 5258961.5054,-9855477.0737 5596305.9301)),((-10101540.0658 6092400.6723,-9470507.5538 6112244.462,-9490351.3435 5350242.938,-10101540.0658 6092400.6723)))',
                                       max_error=0.0000001) != 0:
@@ -353,11 +345,6 @@ def test_ogr_pgeo_10():
     polygon_layer = pgeo_ds.GetLayerByName('lines')
     assert polygon_layer.GetGeomType() == ogr.wkbMultiLineString
 
-    feat = polygon_layer.GetNextFeature()
-    if feat.GetField('pk') != 1:
-        feat.DumpReadable()
-        pytest.fail('did not get expected attributes')
-
     # The PGeo format has a similar approach to multi-part handling as Shapefiles,
     # where polygon and multipolygon geometries or line and multiline geometries will
     # co-exist in a layer reported as just polygon or line type respectively.
@@ -365,6 +352,7 @@ def test_ogr_pgeo_10():
     # types to multitypes, and correspondingly ALWAYS return multi polygon/line geometry
     # objects for features (even if strictly speaking the original feature had a polygon/line
     # geometry object)
+    feat = polygon_layer.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,
                                       'MULTILINESTRING ((-10938947.9907 6608339.2042,-10244415.3516 6608339.2042))',
                                       max_error=0.0000001) != 0:
@@ -372,10 +360,6 @@ def test_ogr_pgeo_10():
         pytest.fail('did not get expected geometry')
 
     feat = polygon_layer.GetNextFeature()
-    if feat.GetField('pk') != 2:
-        feat.DumpReadable()
-        pytest.fail('did not get expected attributes')
-
     if ogrtest.check_feature_geometry(feat,
                                       'MULTILINESTRING ((-10383321.8794 6457526.4025,-10391259.3953 5786806.3111),(-10252352.8675 6465463.9184,-9625289.1133 6469432.6764))',
                                       max_error=0.0000001) != 0:
