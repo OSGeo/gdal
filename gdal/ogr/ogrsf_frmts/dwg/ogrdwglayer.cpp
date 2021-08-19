@@ -725,7 +725,7 @@ OGRFeature *OGRDWGLayer::Translate2DPOLYLINE( OdDbEntityPtr poEntity )
         poIter->step();
     }
 
-    if (poPL->isClosed())
+    if (poPL->isClosed() && !poLS->IsEmpty())
     {
         poLS->addPoint(poLS->getX(0), poLS->getY(0), poLS->getZ(0));
     }
