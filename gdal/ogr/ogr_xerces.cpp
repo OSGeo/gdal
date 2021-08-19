@@ -179,9 +179,6 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet,
 }
 
 
-
-#define WORKAROUND_XERCESC_2094
-
 /************************************************************************/
 /*                      OGRXercesBinInputStream                         */
 /************************************************************************/
@@ -191,9 +188,6 @@ class OGRXercesBinInputStream : public BinInputStream
 
     VSILFILE* fp;
     XMLCh emptyString;
-#ifdef WORKAROUND_XERCESC_2094
-    bool bFirstCallToReadBytes;
-#endif
 
   public:
     explicit OGRXercesBinInputStream( VSILFILE* fp );
@@ -233,9 +227,6 @@ class OGRXercesInputSource : public InputSource
 OGRXercesBinInputStream::OGRXercesBinInputStream(VSILFILE *fpIn) :
     fp(fpIn),
     emptyString(0)
-#ifdef WORKAROUND_XERCESC_2094
-    ,bFirstCallToReadBytes(true)
-#endif
 {}
 
 /************************************************************************/
@@ -260,33 +251,7 @@ XMLFilePos OGRXercesBinInputStream::curPos() const
 XMLSize_t OGRXercesBinInputStream::readBytes(XMLByte* const toFill,
                                              const XMLSize_t maxToRead)
 {
-    XMLSize_t nRead = static_cast<XMLSize_t>(VSIFReadL(toFill, 1, maxToRead, fp));
-#ifdef WORKAROUND_XERCESC_2094
-    if( bFirstCallToReadBytes && nRead > 10 )
-    {
-        // Workaround leak in Xerces-C when parsing an invalid encoding
-        // attribute and there are newline or tab characters between <?xml and
-        // version="1.0". So replace those newlines by equivalent spaces....
-        // See https://issues.apache.org/jira/browse/XERCESC-2094
-        XMLSize_t nToSkip = 0;
-        if( memcmp(toFill, "<?xml", 5) == 0 )
-            nToSkip = 5;
-        else if( memcmp(toFill, "\xEF\xBB\xBF<?xml", 8) == 0 )
-            nToSkip = 8;
-        if( nToSkip > 0 )
-        {
-            for( XMLSize_t i = nToSkip; i < nRead; i++ )
-            {
-                if( toFill[i] == 0xD || toFill[i] == 0xA || toFill[i] == 0x9 )
-                    toFill[i] = ' ';
-                else
-                    break;
-            }
-        }
-        bFirstCallToReadBytes = false;
-    }
-#endif
-    return nRead;
+    return static_cast<XMLSize_t>(VSIFReadL(toFill, 1, maxToRead, fp));
 }
 
 /************************************************************************/
