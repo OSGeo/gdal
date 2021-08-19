@@ -291,10 +291,10 @@ def test_ogr_pgeo_8():
 
 
 def test_ogr_pgeo_9():
-    if pgeo_ds is None:
+    if ogrtest.pgeo_ds is None:
         pytest.skip()
 
-    if active_driver.GetName() != 'PGeo':
+    if ogrtest.active_driver.GetName() != 'PGeo':
         # MDB driver doesn't report non-spatial tables
         pytest.skip()
 
@@ -331,7 +331,7 @@ def test_ogr_pgeo_9():
 
 
 def test_ogr_pgeo_10():
-    if pgeo_ds is None:
+    if ogrtest.pgeo_ds is None:
         pytest.skip()
 
     if ogrtest.active_driver.GetName() != 'PGeo':
