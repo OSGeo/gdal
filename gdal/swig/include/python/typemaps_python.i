@@ -500,7 +500,13 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(argout) (size_t *nLen, char **pBuf ) */
   Py_XDECREF($result);
-  $result = PyByteArray_FromStringAndSize( *$2, *$1 );
+  if( *$2 ) {
+      $result = PyByteArray_FromStringAndSize( *$2, *$1 );
+  }
+  else {
+      $result = Py_None;
+      Py_INCREF(Py_None);
+  }
 }
 %typemap(freearg) (size_t *nLen, char **pBuf )
 {
