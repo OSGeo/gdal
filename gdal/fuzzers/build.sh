@@ -57,7 +57,7 @@ PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_
           libpng12-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
           libwebp-dev${ARCH_SUFFIX} libicu-dev${ARCH_SUFFIX} libnetcdf-dev${ARCH_SUFFIX} \
           libssl-dev${ARCH_SUFFIX} \
-          libfreetype6-dev ${ARCH_SUFFIX}libfontconfig1-dev${ARCH_SUFFIX} libtiff5-dev${ARCH_SUFFIX} libboost-dev${ARCH_SUFFIX}"
+          libfreetype6-dev${ARCH_SUFFIX} libfontconfig1-dev${ARCH_SUFFIX} libtiff5-dev${ARCH_SUFFIX} libboost-dev${ARCH_SUFFIX}"
 
 apt-get install -y $PACKAGES tcl
 
