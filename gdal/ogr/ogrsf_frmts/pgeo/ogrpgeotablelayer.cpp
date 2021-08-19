@@ -93,9 +93,15 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
     if ( pszGeomCol )
         LookupSRID( nSRID );
 
-/* -------------------------------------------------------------------- */
-/*      Setup geometry type.                                            */
-/* -------------------------------------------------------------------- */
+    // Setup geometry type.
+
+    // The PGeo format has a similar approach to multi-part handling as Shapefiles,
+    // where polygon and multipolygon geometries or line and multiline geometries will
+    // co-exist in a layer reported as just polygon or line type respectively.
+    // To handle this in a predictable way for clients we always promote the polygon/line
+    // types to multitypes, and correspondingly ALWAYS return multi polygon/line geometry
+    // objects for features (even if strictly speaking the original feature had a polygon/line
+    // geometry object)
     OGRwkbGeometryType  eOGRType;
 
     switch( nShapeType )
@@ -113,12 +119,12 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
             break;
 
         case ESRI_LAYERGEOMTYPE_POLYLINE:
-            eOGRType = wkbLineString;
+            eOGRType = wkbMultiLineString;  // see comment above
             break;
 
         case ESRI_LAYERGEOMTYPE_POLYGON:
         case ESRI_LAYERGEOMTYPE_MULTIPATCH:
-            eOGRType = wkbPolygon;
+            eOGRType = wkbMultiPolygon; // see comment above
             break;
 
         default:
@@ -181,19 +187,7 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set geometry type.                                              */
-/*                                                                      */
-/*      NOTE: per reports from Craig Miller, it seems we cannot really  */
-/*      trust the ShapeType value.  At the very least "line" tables     */
-/*      sometimes have multilinestrings.  So for now we just always     */
-/*      return wkbUnknown.                                              */
-/*                                                                      */
-/*      TODO - mloskot: Similar issue has been reported in Ticket #1484 */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
     poFeatureDefn->SetGeomType( eOGRType );
-#endif
 
     return CE_None;
 }

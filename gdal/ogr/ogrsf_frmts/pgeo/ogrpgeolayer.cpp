@@ -296,6 +296,13 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
 
         if( poGeom != nullptr && OGRERR_NONE == err )
         {
+            // always promote polygon/linestring geometries to multipolygon/multilinestring,
+            // so that the geometry types returned for the layer are predictable and match
+            // the advertised layer geometry type. See more details in OGRPGeoTableLayer::Initialize
+            const OGRwkbGeometryType eFlattenType = wkbFlatten(poGeom->getGeometryType());
+            if( eFlattenType == wkbPolygon || eFlattenType == wkbLineString )
+                poGeom = OGRGeometryFactory::forceTo(poGeom, OGR_GT_GetCollection(poGeom->getGeometryType()));
+
             poGeom->assignSpatialReference( poSRS );
             poFeature->SetGeometryDirectly( poGeom );
         }
