@@ -1070,7 +1070,7 @@ def test_nitf_38():
     data = ds.GetRasterBand(1).ReadRaster(0, 0, nXSize, nYSize)
     expected_cs = ds.GetRasterBand(1).Checksum()
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf38.ntf', nXSize, nYSize, 1, options=['NUMI=999'])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf38.ntf', nXSize, nYSize, 1, options=['NUMI=999', 'WRITE_ALL_IMAGES=YES'])
     ds = None
 
     ds = gdal.Open('NITF_IM:998:tmp/nitf38.ntf', gdal.GA_Update)
@@ -3977,10 +3977,108 @@ def test_nitf_create_too_large_file():
     # Test 1e12 byte limit for while file
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        gdal.GetDriverByName('NITF').Create('/vsimem/out.ntf', int(1e5), int(1e5) // 2, options = ['NUMI=200'])
+        gdal.GetDriverByName('NITF').Create('/vsimem/out.ntf', int(1e5), int(1e5) // 2,
+                                            options = ['NUMI=200', 'WRITE_ALL_IMAGES=YES'])
     assert gdal.GetLastErrorMsg() != ''
 
     gdal.Unlink('/vsimem/out.ntf')
+
+
+###############################################################################
+# Test creating file with multiple image segments
+
+def test_nitf_create_two_images_final_with_C3_compression():
+
+    gdal.Unlink('/vsimem/out.ntf')
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+
+    # Write first image segment, reserve space for a second one and a DES
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['NUMI=2',
+                                                          'NUMDES=1'])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    # Write second and final image segment and DES
+    des_data = "02U" + " "*166 + r'0004ABCD1234567\0890'
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['APPEND_SUBDATASET=YES',
+                                                          'IC=C3',
+                                                          'IDLVL=2',
+                                                          "DES=DES1=" + des_data])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    ds = gdal.Open('/vsimem/out.ntf')
+    assert ds.GetMetadata("xml:DES") is not None
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.Open('NITF_IM:1:/vsimem/out.ntf')
+    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
+    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+
+    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(stddev, abs=0.1), \
+        'did not get expected mean or standard dev.'
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/out.ntf')
+
+
+###############################################################################
+# Test creating file with multiple image segments
+
+def test_nitf_create_three_images_final_uncompressed():
+
+    gdal.Unlink('/vsimem/out.ntf')
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+
+    # Write first image segment, reserve space for two other ones and a DES
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['NUMI=3',
+                                                          'NUMDES=1'])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    # Write second image segment
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['APPEND_SUBDATASET=YES',
+                                                          'IC=C3',
+                                                          'IDLVL=2'])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    # Write third and final image segment and DES
+    des_data = "02U" + " "*166 + r'0004ABCD1234567\0890'
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['APPEND_SUBDATASET=YES',
+                                                          'IDLVL=3',
+                                                          "DES=DES1=" + des_data])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    ds = gdal.Open('/vsimem/out.ntf')
+    assert ds.GetMetadata("xml:DES") is not None
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.Open('NITF_IM:1:/vsimem/out.ntf')
+    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
+    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+
+    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(stddev, abs=0.1), \
+        'did not get expected mean or standard dev.'
+
+    ds = gdal.Open('NITF_IM:2:/vsimem/out.ntf')
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/out.ntf')
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
