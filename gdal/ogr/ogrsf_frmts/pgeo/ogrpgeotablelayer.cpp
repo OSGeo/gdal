@@ -187,13 +187,18 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 /*      NOTE: per reports from Craig Miller, it seems we cannot really  */
 /*      trust the ShapeType value.  At the very least "line" tables     */
 /*      sometimes have multilinestrings.  So for now we just always     */
-/*      return wkbUnknown.                                              */
+/*      return wkbUnknown (unless it's a non-spatial table!)            */
 /*                                                                      */
 /*      TODO - mloskot: Similar issue has been reported in Ticket #1484 */
 /* -------------------------------------------------------------------- */
+    if( eOGRType == wkbNone )
+        poFeatureDefn->SetGeomType( eOGRType );
+    else
+    {
 #ifdef notdef
-    poFeatureDefn->SetGeomType( eOGRType );
+        poFeatureDefn->SetGeomType( eOGRType );
 #endif
+    }
 
     return CE_None;
 }

@@ -218,7 +218,7 @@ def test_ogr_pgeo_5():
         feat.DumpReadable()
         pytest.fail('did not get expected attributes')
 
-    
+
 ###############################################################################
 # Run test_ogrsf
 
@@ -273,6 +273,7 @@ def test_ogr_pgeo_8():
     assert set(layer_names) == {'lines', 'polys', 'points', 'non_spatial'}, 'did not get expected layer names'
 
     non_spatial_layer = ogrtest.pgeo_ds.GetLayerByName('non_spatial')
+    assert non_spatial_layer.GetGeomType() == ogr.wkbNone
     feat = non_spatial_layer.GetNextFeature()
     if feat.GetField('text_field') != 'Record 1' or \
        feat.GetField('int_field') != 13 or \
