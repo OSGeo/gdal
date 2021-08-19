@@ -2128,6 +2128,71 @@ def test_gdalwarp_lib_automatic_grid_sampling():
     assert ds.GetRasterBand(1).Checksum() == 46790
 
 ###############################################################################
+# Test source nodata with destination alpha
+
+
+def test_gdalwarp_lib_src_nodata_with_dstalpha():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 3, 1, 3)
+    src_ds.SetGeoTransform([2,1,0,49,0,-1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32615)
+    src_ds.SetSpatialRef(srs)
+    src_ds.GetRasterBand(1).SetNoDataValue(1)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, struct.pack('B' * 3, 10, 1, 1))
+    src_ds.GetRasterBand(2).SetNoDataValue(2)
+    src_ds.GetRasterBand(2).WriteRaster(0, 0, 3, 1, struct.pack('B' * 3, 20, 2, 2))
+    src_ds.GetRasterBand(3).SetNoDataValue(3)
+    src_ds.GetRasterBand(3).WriteRaster(0, 0, 3, 1, struct.pack('B' * 3, 30, 3, 127))
+
+    # By default, a target pixel is invalid if all source pixels are invalid,
+    # but when warping each band, its individual nodata status is taken into
+    # account
+    ds = gdal.Warp('', src_ds, format='MEM', dstAlpha=True)
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).ReadRaster()) == (10,  0, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(2).ReadRaster()) == (20,  0, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(3).ReadRaster()) == (30,  0, 127)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(4).ReadRaster()) == (255, 0, 255)
+
+    # Same as above
+    ds = gdal.Warp('', src_ds, format='MEM', dstAlpha=True,
+                   warpOptions=['UNIFIED_SRC_NODATA=PARTIAL'])
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).ReadRaster()) == (10,  0, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(2).ReadRaster()) == (20,  0, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(3).ReadRaster()) == (30,  0, 127)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(4).ReadRaster()) == (255, 0, 255)
+
+    # In UNIFIED_SRC_NODATA=NO, target pixels will always be valid
+    ds = gdal.Warp('', src_ds, format='MEM', dstAlpha=True,
+                   warpOptions=['UNIFIED_SRC_NODATA=NO'])
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).ReadRaster()) == (10,  0, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(2).ReadRaster()) == (20,  0, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(3).ReadRaster()) == (30,  0, 127)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(4).ReadRaster()) == (255, 255, 255)
+
+    # In UNIFIED_SRC_NODATA=YES, a target pixel is invalid if all source pixels are invalid,
+    # and the validty status of each band is determined by this unified validity
+    ds = gdal.Warp('', src_ds, format='MEM', dstAlpha=True,
+                   warpOptions=['UNIFIED_SRC_NODATA=YES'])
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).ReadRaster()) == (10,  0, 1)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(2).ReadRaster()) == (20,  0, 2)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(3).ReadRaster()) == (30,  0, 127)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(4).ReadRaster()) == (255, 0, 255)
+
+    # Specifying srcNoData implies UNIFIED_SRC_NODATA=YES
+    ds = gdal.Warp('', src_ds, format='MEM', srcNodata="1 2 3", dstAlpha=True)
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).ReadRaster()) == (10,  0, 1)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(2).ReadRaster()) == (20,  0, 2)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(3).ReadRaster()) == (30,  0, 127)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(4).ReadRaster()) == (255, 0, 255)
+
+
+###############################################################################
 # Cleanup
 
 
