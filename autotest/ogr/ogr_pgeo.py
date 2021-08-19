@@ -263,16 +263,16 @@ def test_ogr_pgeo_8():
         # MDB driver doesn't report non-spatial tables
         pytest.skip()
 
-    ogrtest.pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
-    if ogrtest.pgeo_ds is None:
+    pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
+    if pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
 
-    assert ogrtest.pgeo_ds.GetLayerCount() == 4, 'did not get expected layer count'
+    assert pgeo_ds.GetLayerCount() == 4, 'did not get expected layer count'
 
-    layer_names = [ogrtest.pgeo_ds.GetLayer(n).GetName() for n in range(4)]
+    layer_names = [pgeo_ds.GetLayer(n).GetName() for n in range(4)]
     assert set(layer_names) == {'lines', 'polys', 'points', 'non_spatial'}, 'did not get expected layer names'
 
-    non_spatial_layer = ogrtest.pgeo_ds.GetLayerByName('non_spatial')
+    non_spatial_layer = pgeo_ds.GetLayerByName('non_spatial')
     feat = non_spatial_layer.GetNextFeature()
     if feat.GetField('text_field') != 'Record 1' or \
        feat.GetField('int_field') != 13 or \
@@ -291,18 +291,18 @@ def test_ogr_pgeo_8():
 
 
 def test_ogr_pgeo_9():
-    if ogrtest.pgeo_ds is None:
+    if pgeo_ds is None:
         pytest.skip()
 
-    if ogrtest.active_driver.GetName() != 'PGeo':
+    if active_driver.GetName() != 'PGeo':
         # MDB driver doesn't report non-spatial tables
         pytest.skip()
 
-    ogrtest.pgeo_ds = ogr.Open('data/pgeo/mixed_types.mdb')
-    if ogrtest.pgeo_ds is None:
+    pgeo_ds = ogr.Open('data/pgeo/mixed_types.mdb')
+    if pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
 
-    polygon_layer = ogrtest.pgeo_ds.GetLayerByName('polygons')
+    polygon_layer = pgeo_ds.GetLayerByName('polygons')
     assert polygon_layer.GetGeomType() == ogr.wkbMultiPolygon
 
     feat = polygon_layer.GetNextFeature()
@@ -339,18 +339,18 @@ def test_ogr_pgeo_9():
 
 
 def test_ogr_pgeo_10():
-    if ogrtest.pgeo_ds is None:
+    if pgeo_ds is None:
         pytest.skip()
 
     if ogrtest.active_driver.GetName() != 'PGeo':
         # MDB driver doesn't report non-spatial tables
         pytest.skip()
 
-    ogrtest.pgeo_ds = ogr.Open('data/pgeo/mixed_types.mdb')
-    if ogrtest.pgeo_ds is None:
+    pgeo_ds = ogr.Open('data/pgeo/mixed_types.mdb')
+    if pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
 
-    polygon_layer = ogrtest.pgeo_ds.GetLayerByName('lines')
+    polygon_layer = pgeo_ds.GetLayerByName('lines')
     assert polygon_layer.GetGeomType() == ogr.wkbMultiLineString
 
     feat = polygon_layer.GetNextFeature()
