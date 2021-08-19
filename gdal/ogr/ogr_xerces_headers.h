@@ -33,9 +33,12 @@
 #pragma GCC system_header
 #endif
 
-#include <util/PlatformUtils.hpp>
-#include <sax/InputSource.hpp>
-#include <util/BinInputStream.hpp>
+#include <xercesc/sax/InputSource.hpp>
+#include <xercesc/util/BinInputStream.hpp>
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/util/XMLNetAccessor.hpp>
+#include <xercesc/util/XMLUniDefs.hpp>
+#include <xercesc/util/XMLURL.hpp>
 
 using namespace XERCES_CPP_NAMESPACE;
 
