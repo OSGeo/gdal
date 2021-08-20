@@ -935,12 +935,12 @@ bool GDALIsDriverDeprecatedForGDAL35StillEnabled(const char* pszDriverName, cons
     }
     CPLError(CE_Failure, CPLE_AppDefined,
         "Driver %s is considered for removal in GDAL 3.5.%s You are invited "
-        "to convert any dataset in that format to another more common one ."
+        "to convert any dataset in that format to another more common one. "
         "If you need this driver in future GDAL versions, create a ticket at "
         "https://github.com/OSGeo/gdal (look first for an existing one first) to "
         "explain how critical it is for you (but the GDAL project may still "
         "remove it), and to enable it now, set the %s "
-        "configuration option / environment variable to YES",
+        "configuration option / environment variable to YES.",
         pszDriverName, pszExtraMsg, osConfigOption.c_str());
     return false;
 }
