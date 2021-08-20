@@ -113,7 +113,8 @@ class OGRPGeoTableLayer final: public OGRPGeoLayer
                                     double dfExtentBottom,
                                     double dfExtentTop,
                                     int nSRID,
-                                    int bHasZ );
+                                    int bHasZ,
+                                    int nHasM );
 
     virtual void        ResetReading() override;
     virtual GIntBig     GetFeatureCount( int ) override;

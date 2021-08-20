@@ -367,6 +367,73 @@ def test_ogr_pgeo_10():
         pytest.fail('did not get expected geometry')
 
 
+##################################################################################
+# Open mdb with layers with z/m and check that they are handled correctly
+
+
+def test_ogr_pgeo_11():
+    if ogrtest.pgeo_ds is None:
+        pytest.skip()
+
+    if ogrtest.active_driver.GetName() != 'PGeo':
+        # MDB driver doesn't report non-spatial tables
+        pytest.skip()
+
+    pgeo_ds = ogr.Open('data/pgeo/geometry_types.mdb')
+    if pgeo_ds is None:
+        pytest.skip('could not open DB. Driver probably misconfigured')
+
+    point_z_layer = pgeo_ds.GetLayerByName('point_z')
+    assert point_z_layer.GetGeomType() == ogr.wkbPoint25D
+
+    feat = point_z_layer.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat,
+                                      'POINT Z (-2 -1.0 4)',
+                                      max_error=0.0000001) != 0:
+        feat.DumpReadable()
+        pytest.fail('did not get expected geometry')
+
+    feat = point_z_layer.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat,
+                                      'POINT Z (1 2 3)',
+                                      max_error=0.0000001) != 0:
+        feat.DumpReadable()
+        pytest.fail('did not get expected geometry')
+
+    point_m_layer = pgeo_ds.GetLayerByName('point_m')
+    assert point_m_layer.GetGeomType() == ogr.wkbPointM
+
+    feat = point_m_layer.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat,
+                                      'POINT M (1 2 11)',
+                                      max_error=0.0001) != 0:
+        feat.DumpReadable()
+        pytest.fail('did not get expected geometry')
+
+    feat = point_m_layer.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat,
+                                      'POINT M (-2 -1 13)',
+                                      max_error=0.0001) != 0:
+        feat.DumpReadable()
+        pytest.fail('did not get expected geometry')
+
+    point_zm_layer = pgeo_ds.GetLayerByName('point_zm')
+    assert point_zm_layer.GetGeomType() == ogr.wkbPointZM
+
+    feat = point_zm_layer.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat,
+                                      'POINT ZM (-2 -1.0 4 13)',
+                                      max_error=0.0001) != 0:
+        feat.DumpReadable()
+        pytest.fail('did not get expected geometry')
+
+    feat = point_zm_layer.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat,
+                                      'POINT ZM (1 2 3 11)',
+                                      max_error=0.0001) != 0:
+        feat.DumpReadable()
+        pytest.fail('did not get expected geometry')
+
 ###############################################################################
 
 def test_ogr_pgeo_cleanup():

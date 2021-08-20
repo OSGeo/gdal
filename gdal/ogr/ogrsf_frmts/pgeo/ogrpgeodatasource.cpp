@@ -151,7 +151,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     std::vector<char **> apapszGeomColumns;
     CPLODBCStatement oStmt( &oSession );
 
-    oStmt.Append( "SELECT TableName, FieldName, ShapeType, ExtentLeft, ExtentRight, ExtentBottom, ExtentTop, SRID, HasZ FROM GDB_GeomColumns" );
+    oStmt.Append( "SELECT TableName, FieldName, ShapeType, ExtentLeft, ExtentRight, ExtentBottom, ExtentTop, SRID, HasZ, HasM FROM GDB_GeomColumns" );
 
     if( !oStmt.ExecuteSQL() )
     {
@@ -165,7 +165,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     {
         int i, iNew = static_cast<int>(apapszGeomColumns.size());
         char **papszRecord = nullptr;
-        for( i = 0; i < 9; i++ )
+        for( i = 0; i < 10; i++ )
             papszRecord = CSLAddString( papszRecord,
                                         oStmt.GetColData(i) );
         apapszGeomColumns.resize(iNew+1);
@@ -199,7 +199,8 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
                                  CPLAtof(papszRecord[5]),   // ExtentBottom
                                  CPLAtof(papszRecord[6]),   // ExtentTop
                                  atoi(papszRecord[7]),   // SRID
-                                 atoi(papszRecord[8]))  // HasZ
+                                 atoi(papszRecord[8]),  // HasZ
+                                 atoi(papszRecord[9]))  // HasM
             != CE_None )
         {
             delete poLayer;
@@ -261,7 +262,8 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
                                              0,   // ExtentBottom
                                              0,   // ExtentTop
                                              0,   // SRID
-                                             0)  // HasZ
+                                             0,   // HasZ
+                                             0)   // HasM
                         != CE_None )
                     {
                         delete poLayer;
