@@ -69,7 +69,8 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                                       double dfExtentBottom,
                                       double dfExtentTop,
                                       int nSRID,
-                                      int bHasZ )
+                                      int bHasZ,
+                                      int bHasM )
 
 {
     CPLODBCSession *poSession = poDS->GetSession();
@@ -133,8 +134,13 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
             break;
     }
 
-    if( eOGRType != wkbUnknown && eOGRType != wkbNone && bHasZ )
-        eOGRType = wkbSetZ(eOGRType);
+    if( eOGRType != wkbUnknown && eOGRType != wkbNone )
+    {
+        if ( bHasZ )
+          eOGRType = wkbSetZ(eOGRType);
+        if ( bHasM )
+          eOGRType = wkbSetM(eOGRType);
+    }
     CPL_IGNORE_RET_VAL(eOGRType);
 
 /* -------------------------------------------------------------------- */
