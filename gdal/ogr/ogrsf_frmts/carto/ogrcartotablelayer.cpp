@@ -78,7 +78,7 @@ CPLString OGRCARTOEscapeLiteralCopy(const char* pszStr)
             osStr += "\\r";
         else if (ch == '\\') // escape character
             osStr += "\\\\";
-        else 
+        else
             osStr.append(1, ch);
     }
 
@@ -109,7 +109,7 @@ CPLString OGRCARTOEscapeLiteral(const char* pszStr)
 /*                    OGRCARTOEscapeLiteral( )                          */
 /************************************************************************/
 
-char * 
+char *
 OGRCARTOTableLayer::OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i )
 {
     OGRCartoGeomFieldDefn* poGeomFieldDefn =
@@ -133,8 +133,8 @@ OGRCARTOTableLayer::OGRCARTOGetHexGeometry( OGRGeometry* poGeom, int i )
                                        poDS->GetPostGISMajor(),
                                        poDS->GetPostGISMinor());
     return pszEWKB;
-}                                   
-                                   
+}
+
 /************************************************************************/
 /*                        OGRCARTOTableLayer()                          */
 /************************************************************************/
@@ -289,14 +289,13 @@ OGRFeatureDefn * OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object
                         OGRwkbGeometryType eType = OGRFromOGCGeomType(pszGeomType);
                         if( nDim == 3 )
                             eType = wkbSetZ(eType);
-                        OGRCartoGeomFieldDefn *poFieldDefn =
-                            new OGRCartoGeomFieldDefn(pszAttname, eType);
+                        auto poFieldDefn =
+                            cpl::make_unique<OGRCartoGeomFieldDefn>(pszAttname, eType);
                         if( bNotNull )
                             poFieldDefn->SetNullable(FALSE);
-                        OGRSpatialReference* l_poSRS = nullptr;
                         if( pszSRText != nullptr )
                         {
-                            l_poSRS = new OGRSpatialReference();
+                            auto l_poSRS = new OGRSpatialReference();
                             l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
                             if( l_poSRS->importFromWkt(pszSRText) != OGRERR_NONE )
@@ -311,7 +310,7 @@ OGRFeatureDefn * OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object
                             }
                         }
                         poFieldDefn->nSRID = nSRID;
-                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
+                        poFeatureDefn->AddGeomFieldDefn(std::move(poFieldDefn));
                     }
                     else
                     {
@@ -492,7 +491,7 @@ static CPLString OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField)
     OGRwkbGeometryType eType = poGeomField->GetType();
     const char *pszGeometryType = OGRToOGCGeomType(eType);
     const char *suffix = "";
-    
+
     if( OGR_GT_HasM(eType) && OGR_GT_HasZ(eType) )
     {
         suffix = "ZM";
@@ -512,11 +511,11 @@ static CPLString OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField)
         suffix,
         poGeomField->nSRID
         );
-        
+
     return osSQL;
 }
-    
-    
+
+
 /************************************************************************/
 /*                         FlushDeferredBuffer()                        */
 /************************************************************************/
@@ -578,7 +577,7 @@ OGRErr OGRCARTOTableLayer::FlushDeferredCopy(bool bReset)
     {
         /* And end-of-file marker to data buffer */
         osDeferredBuffer += "\\.\n";
-        
+
         json_object* poObj = poDS->RunCopyFrom(osCopySQL, osDeferredBuffer);
         if( poObj != nullptr )
         {
@@ -613,7 +612,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                  "Operation not available in read-only mode");
         return OGRERR_FAILURE;
     }
-    
+
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if( eType == wkbNone )
     {
@@ -621,10 +620,10 @@ OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                  "Cannot create geometry field of type wkbNone");
         return OGRERR_FAILURE;
     }
-    
+
     const char *pszNameIn = poGeomFieldIn->GetNameRef();
     if( pszNameIn == nullptr || EQUAL(pszNameIn, "") )
-    {        
+    {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot add un-named geometry field");
         return OGRERR_FAILURE;
@@ -637,7 +636,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
             return OGRERR_FAILURE;
     }
 
-    OGRCartoGeomFieldDefn *poGeomField = new OGRCartoGeomFieldDefn(pszNameIn, eType);
+    auto poGeomField = cpl::make_unique<OGRCartoGeomFieldDefn>(pszNameIn, eType);
     if( EQUAL(poGeomField->GetNameRef(), "") )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
@@ -658,27 +657,27 @@ OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
         poGeomField->SetName( pszSafeName );
         CPLFree( pszSafeName );
     }
-    
+
     OGRSpatialReference* poSRS = poGeomField->GetSpatialRef();
     int nSRID = 0;
     if( poSRS != nullptr )
         nSRID = poDS->FetchSRSId( poSRS );
-    
+
     poGeomField->SetType(eType);
     poGeomField->SetNullable(poGeomFieldIn->IsNullable());
     poGeomField->nSRID = nSRID;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
-    
+
     if( !bDeferredCreation )
     {
         CPLString osSQL;
         osSQL.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                     OGRCARTOEscapeIdentifier(osName).c_str(),
                     OGRCARTOEscapeIdentifier(poGeomField->GetNameRef()).c_str(),
-                    OGRCARTOGeometryType(poGeomField).c_str()
+                    OGRCARTOGeometryType(poGeomField.get()).c_str()
                     );
         if( !poGeomField->IsNullable() )
             osSQL += " NOT NULL";
@@ -689,7 +688,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
         json_object_put(poObj);
     }
 
-    poFeatureDefn->AddGeomFieldDefn( poGeomField, FALSE );
+    poFeatureDefn->AddGeomFieldDefn(std::move(poGeomField));
     return OGRERR_NONE;
 }
 
@@ -866,7 +865,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
                 json_object_put(poObj);
         }
     }
-    
+
     if (bCopyMode)
         return ICreateFeatureCopy(poFeature, bHasUserFieldMatchingFID, bHasJustGotNextFID);
     else
@@ -877,7 +876,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 /*                           ICreateFeatureCopy()                       */
 /************************************************************************/
 
-OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature, 
+OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
     bool bHasUserFieldMatchingFID, bool bHasJustGotNextFID )
 {
     CPLString osCopyFile;
@@ -970,10 +969,10 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
             return OGRERR_FAILURE;
         else
             osCopySQL += ")";
-    
+
         osCopySQL += " FROM STDIN WITH (FORMAT text, ENCODING UTF8)";
         CPLDebug( "CARTO", "ICreateFeatureCopy(%s)", osCopySQL.c_str() );
-        
+
         eDeferredInsertState = INSERT_MULTIPLE_FEATURE;
     }
 
@@ -1048,11 +1047,11 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
             osCopyFile += CPLSPrintf(CPL_FRMT_GIB, m_nNextFIDWrite);
         }
     }
-    
+
     /* If we do have access to the FID (because we're incrementing it */
     /* ourselves) set it onto the incoming feature so it knows what */
     /* FID was supplied by the back-end. */
-    if( !bHasUserFieldMatchingFID && !osFIDColName.empty() && 
+    if( !bHasUserFieldMatchingFID && !osFIDColName.empty() &&
         m_nNextFIDWrite >= 0 && poFeature->GetFID() == OGRNullFID )
     {
         poFeature->SetFID(m_nNextFIDWrite);
@@ -1076,7 +1075,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy( OGRFeature *poFeature,
 /*                           ICreateFeatureInsert()                      */
 /************************************************************************/
 
-OGRErr OGRCARTOTableLayer::ICreateFeatureInsert( OGRFeature *poFeature, 
+OGRErr OGRCARTOTableLayer::ICreateFeatureInsert( OGRFeature *poFeature,
     bool bHasUserFieldMatchingFID, bool bHasJustGotNextFID )
 {
     CPLString osSQL;
@@ -1244,9 +1243,9 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureInsert( OGRFeature *poFeature,
                 osSQL += ", ";
             else
                 bMustComma = true;
-            
+
             char *pszEWKB = OGRCARTOGetHexGeometry(poGeom, i);
-            
+
             osSQL += "'";
             osSQL += pszEWKB;
             osSQL += "'";
@@ -1847,16 +1846,15 @@ void OGRCARTOTableLayer::SetDeferredCreation( OGRwkbGeometryType eGType,
         eGType = wkbMultiPolygon25D;
     if( eGType != wkbNone )
     {
-        OGRCartoGeomFieldDefn *poFieldDefn =
-            new OGRCartoGeomFieldDefn("the_geom", eGType);
+        auto poFieldDefn =
+            cpl::make_unique<OGRCartoGeomFieldDefn>("the_geom", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
-        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
         if( poSRSIn != nullptr )
         {
             poFieldDefn->nSRID = poDS->FetchSRSId( poSRSIn );
-            poFeatureDefn->GetGeomFieldDefn(
-                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRSIn);
+            poFieldDefn->SetSpatialRef(poSRSIn);
         }
+        poFeatureDefn->AddGeomFieldDefn(std::move(poFieldDefn));
     }
     osFIDColName = "cartodb_id";
     osBaseSQL.Printf("SELECT * FROM %s",
@@ -1897,7 +1895,7 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
             pszFieldName = poFieldDefn->GetNameRef();
 
         if( pszFieldName == nullptr || strlen(pszFieldName) == 0 )
-            return OGRERR_FAILURE;            
+            return OGRERR_FAILURE;
 
         osSQL += CPLSPrintf("%s %s%s,",
                     pszFieldName,
@@ -1905,7 +1903,7 @@ OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()
                     (!poFieldDefn->IsNullable()) ? " NOT NULL" : ""
                     );
     }
-    
+
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);

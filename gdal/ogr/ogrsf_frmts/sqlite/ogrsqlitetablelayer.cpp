@@ -249,13 +249,13 @@ void OGRSQLiteTableLayer::SetCreationParameters( const char *pszFIDColumnName,
         if( nSRSId == UNINITIALIZED_SRID )
             nSRSId = poDS->GetUndefinedSRID();
         OGRSQLiteGeomFormat eGeomFormat = GetGeomFormat(pszGeomFormat);
-        OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-            new OGRSQLiteGeomFieldDefn(pszGeometryName, -1);
+        auto poGeomFieldDefn =
+            cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszGeometryName, -1);
         poGeomFieldDefn->SetType(eGeomType);
         poGeomFieldDefn->nSRSId = nSRSId;
         poGeomFieldDefn->eGeomFormat = eGeomFormat;
         poGeomFieldDefn->SetSpatialRef(poSRS);
-        poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
+        poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
 }
 
@@ -1461,8 +1461,8 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
         }
     }
 
-    OGRSQLiteGeomFieldDefn *poGeomField =
-        new OGRSQLiteGeomFieldDefn( poGeomFieldIn->GetNameRef(), -1 );
+    auto poGeomField =
+        cpl::make_unique<OGRSQLiteGeomFieldDefn>( poGeomFieldIn->GetNameRef(), -1 );
     if( EQUAL(poGeomField->GetNameRef(), "") )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
@@ -1512,15 +1512,13 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 /* -------------------------------------------------------------------- */
     if( !bDeferredCreation )
     {
-        if( RunAddGeometryColumn(poGeomField, TRUE) != OGRERR_NONE )
+        if( RunAddGeometryColumn(poGeomField.get(), TRUE) != OGRERR_NONE )
         {
-            delete poGeomField;
-
             return OGRERR_FAILURE;
         }
     }
 
-    poFeatureDefn->AddGeomFieldDefn( poGeomField, FALSE );
+    poFeatureDefn->AddGeomFieldDefn( std::move(poGeomField) );
 
     if( !bDeferredCreation )
         RecomputeOrdinals();
@@ -1532,7 +1530,7 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 /*                        RunAddGeometryColumn()                        */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeomFieldDefn,
+OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( const OGRSQLiteGeomFieldDefn *poGeomFieldDefn,
                                                   int bAddColumnsForNonSpatialite )
 {
     OGRwkbGeometryType eType = poGeomFieldDefn->GetType();

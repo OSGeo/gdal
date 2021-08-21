@@ -145,10 +145,10 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     m_poFeatureDefn = new OGRFeatureDefn(pszName);
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(wkbNone);
-    OGRGeomFieldDefn *poGeomFieldDefn = new OGRGeomFieldDefn(nullptr, m_eGType);
+    auto poGeomFieldDefn = cpl::make_unique<OGRGeomFieldDefn>(nullptr, m_eGType);
     if (m_poSRS != nullptr)
         poGeomFieldDefn->SetSpatialRef(m_poSRS);
-    m_poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, false);
+    m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     readColumns();
     m_poFeatureDefn->Reference();
 }

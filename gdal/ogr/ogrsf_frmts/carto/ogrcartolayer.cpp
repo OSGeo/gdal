@@ -378,16 +378,15 @@ void OGRCARTOLayer::EstablishLayerDefn(const char* pszLayerName,
                 {
                     if( !EQUAL(pszColName, "the_geom_webmercator") )
                     {
-                        OGRCartoGeomFieldDefn *poFieldDefn =
-                            new OGRCartoGeomFieldDefn(pszColName, wkbUnknown);
-                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
+                        auto poFieldDefn =
+                            cpl::make_unique<OGRCartoGeomFieldDefn>(pszColName, wkbUnknown);
                         OGRSpatialReference* l_poSRS = GetSRS(pszColName, &poFieldDefn->nSRID);
                         if( l_poSRS != nullptr )
                         {
-                            poFeatureDefn->GetGeomFieldDefn(
-                                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(l_poSRS);
+                            poFieldDefn->SetSpatialRef(l_poSRS);
                             l_poSRS->Release();
                         }
+                        poFeatureDefn->AddGeomFieldDefn(std::move(poFieldDefn));
                     }
                 }
                 else if( EQUAL(pszType, "boolean") )
@@ -406,16 +405,15 @@ void OGRCARTOLayer::EstablishLayerDefn(const char* pszLayerName,
             else if( poType != nullptr && json_object_get_type(poType) == json_type_int )
             {
                 /* FIXME? manual creations of geometry columns return integer types */
-                OGRCartoGeomFieldDefn *poFieldDefn =
-                    new OGRCartoGeomFieldDefn(pszColName, wkbUnknown);
-                poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
+                auto poFieldDefn =
+                    cpl::make_unique<OGRCartoGeomFieldDefn>(pszColName, wkbUnknown);
                 OGRSpatialReference* l_poSRS = GetSRS(pszColName, &poFieldDefn->nSRID);
                 if( l_poSRS != nullptr )
                 {
-                    poFeatureDefn->GetGeomFieldDefn(
-                        poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(l_poSRS);
+                    poFieldDefn->SetSpatialRef(l_poSRS);
                     l_poSRS->Release();
                 }
+                poFeatureDefn->AddGeomFieldDefn(std::move(poFieldDefn));
             }
         }
     }

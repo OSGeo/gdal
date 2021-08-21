@@ -1,3 +1,13 @@
+MIGRATION GUIDE FROM GDAL 3.3 to GDAL 3.4
+-----------------------------------------
+
+- Out-of-tree vector drivers:
+    * OGRFeatureDefn protected member variables have been changed.
+        - (nFieldCount, papoFieldDefn)        ==> std::vector<std::unique_ptr<OGRFieldDefn>> apoFieldDefn{};
+        - (nGeomFieldCount, paoGeomFieldDefn) ==> std::vector<std::unique_ptr<OGRGeomFieldDefn>> apoGeomFieldDefn{};
+    * OGRFeatureDefn::AddGeomFieldDefn( OGRGeomFieldDefn *, bCopy = FALSE ) is
+      replaced by AddGeomFieldDefn( std::unique_ptr<OGRGeomFieldDefn>&& )
+
 MIGRATION GUIDE FROM GDAL 3.2 to GDAL 3.3
 -----------------------------------------
 
