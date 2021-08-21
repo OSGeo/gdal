@@ -76,6 +76,7 @@ class GDALPDFObjectNum
     public:
         explicit GDALPDFObjectNum(int nId = 0): m_nId(nId) {}
         GDALPDFObjectNum(const GDALPDFObjectNum& other) = default;
+        GDALPDFObjectNum& operator=(const GDALPDFObjectNum&) = default;
         GDALPDFObjectNum& operator=(int nId) { m_nId = nId; return *this; }
 
         int toInt() const { return m_nId; }
