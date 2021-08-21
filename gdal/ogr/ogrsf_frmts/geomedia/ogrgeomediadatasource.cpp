@@ -140,6 +140,27 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
         }
     }
 
+    // check for GAliasTable table
+    {
+        bool bFoundGAliasTable = false;
+        CPLODBCStatement oTableList( &oSession );
+        if( oTableList.GetTables() )
+        {
+            while( oTableList.Fetch() )
+            {
+                const CPLString osTableName = CPLString( oTableList.GetColData(2, "") );
+                const CPLString osLCTableName(CPLString(osTableName).tolower());
+                if( osLCTableName == "galiastable" )
+                {
+                    bFoundGAliasTable = true;
+                    break;
+                }
+            }
+        }
+        if (!bFoundGAliasTable )
+            return FALSE;
+    }
+
     pszName = CPLStrdup( pszNewName );
 
     bDSUpdate = bUpdate;
