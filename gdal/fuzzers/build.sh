@@ -61,18 +61,13 @@ PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_
 
 apt-get install -y $PACKAGES tcl
 
-NON_FUZZING_CFLAGS="$CFLAGS"
-NON_FUZZING_CXXFLAGS="$CXXFLAGS"
-# we do not really want to deal with Poppler undefined behavior bugs, such
+# we do not really want to deal with undefined behavior bugs in external libs, such
 # as integer overflows
-if [ "$SANITIZER" = "undefined" ]; then
-    if [ "$ARCHITECTURE" = "i386" ]; then
-        NON_FUZZING_CFLAGS="-m32 -O1 -fno-omit-frame-pointer -gline-tables-only -stdlib=libc++"
-    else
-        NON_FUZZING_CFLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only -stdlib=libc++"
-    fi
-    NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS"
+NON_FUZZING_CFLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only"
+if [ "$ARCHITECTURE" = "i386" ]; then
+    NON_FUZZING_CFLAGS="-m32 ${NON_FUZZING_CFLAGS}"
 fi
+NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS -stdlib=libc++"
 
 # build sqlite
 cd sqlite
