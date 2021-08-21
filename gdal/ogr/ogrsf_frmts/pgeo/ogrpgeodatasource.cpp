@@ -228,28 +228,10 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
                 const CPLString osLCTableName(CPLString(osTableName).tolower());
                 // a bunch of internal tables we don't want to expose...
                 if( !osTableName.empty()
-                        && osLCTableName != "msysobjects"
-                        && osLCTableName != "msysaces"
-                        && osLCTableName != "msysqueries"
-                        && osLCTableName != "msysrelationships"
-                        && osLCTableName != "gdb_columninfo"
-                        && osLCTableName != "gdb_databaselocks"
-                        && osLCTableName != "gdb_geomcolumns"
-                        && osLCTableName != "gdb_itemrelationships"
-                        && osLCTableName != "gdb_itemrelationshiptypes"
-                        && osLCTableName != "gdb_items"
-                        && osLCTableName != "gdb_items_shape_index"
-                        && osLCTableName != "gdb_itemtypes"
-                        && osLCTableName != "gdb_rastercolumns"
-                        && osLCTableName != "gdb_replicalog"
-                        && osLCTableName != "gdb_spatialrefs"
-                        && osLCTableName != "msysaccessstorage"
-                        && osLCTableName != "msysnavpanegroupcategories"
-                        && osLCTableName != "msysnavpanegroups"
-                        && osLCTableName != "msysnavpanegrouptoobjects"
-                        && osLCTableName != "msysnavpaneobjectids"
-                        && oSetSpatialTableNames.find( osTableName ) == oSetSpatialTableNames.end()
-                        && !osLCTableName.endsWith( "_shape_index")
+                        && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
+                        && oSetSpatialTableNames.find( osTableName ) == oSetSpatialTableNames.end() // spatial tables, already handled above
+                        && !osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
+                        && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
                         )
                 {
                     OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this );
