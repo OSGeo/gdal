@@ -182,6 +182,8 @@ CPLErr OGRPGeoLayer::BuildFeatureDefn( const char *pszLayerName,
 
     if( pszGeomColumn != nullptr )
         poFeatureDefn->GetGeomFieldDefn(0)->SetName(pszGeomColumn);
+    else
+        poFeatureDefn->SetGeomType( wkbNone );
 
     return CE_None;
 }
