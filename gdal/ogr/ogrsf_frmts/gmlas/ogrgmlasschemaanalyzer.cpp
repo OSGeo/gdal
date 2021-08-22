@@ -631,17 +631,35 @@ XSElementDeclaration* GMLASSchemaAnalyzer::GetTopElementDeclarationFromXPath(
                 break;
             }
         }
-        XMLCh* xmlNS = XMLString::transcode(osNSURI);
-        XMLCh* xmlName = XMLString::transcode(osName);
-        poEltDecl = poModel->getElementDeclaration(xmlName, xmlNS);
+        XMLCh* xmlNS = nullptr;
+        XMLCh* xmlName = nullptr;
+        try
+        {
+            xmlNS = XMLString::transcode(osNSURI);
+            xmlName = XMLString::transcode(osName);
+            poEltDecl = poModel->getElementDeclaration(xmlName, xmlNS);
+        }
+        catch( const TranscodingException& e )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "TranscodingException: %s",
+                     transcode(e.getMessage()).c_str());
+        }
         XMLString::release( &xmlNS );
         XMLString::release( &xmlName );
     }
     else
     {
-        XMLCh* xmlName = XMLString::transcode(pszTypename);
-        poEltDecl = poModel->getElementDeclaration(xmlName, nullptr);
-        XMLString::release( &xmlName );
+        try
+        {
+            XMLCh* xmlName = XMLString::transcode(pszTypename);
+            poEltDecl = poModel->getElementDeclaration(xmlName, nullptr);
+            XMLString::release( &xmlName );
+        }
+        catch( const TranscodingException& e )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "TranscodingException: %s",
+                     transcode(e.getMessage()).c_str());
+        }
     }
     return poEltDecl;
 }
@@ -833,7 +851,17 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
             continue;
         }
 
-        XMLCh* xmlNamespace = XMLString::transcode(osNSURI.c_str());
+        XMLCh* xmlNamespace = nullptr;
+        try
+        {
+            xmlNamespace = XMLString::transcode(osNSURI.c_str());
+        }
+        catch( const TranscodingException& e )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "TranscodingException: %s",
+                     transcode(e.getMessage()).c_str());
+            return false;
+        }
 
         XSNamedMap<XSObject>* poMapModelGroupDefinition =
             poModel->getComponentsByNamespace(XSConstants::MODEL_GROUP_DEFINITION,
@@ -906,11 +934,21 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     for( size_t iNS = 0; !bFoundElementsInFirstChoiceNamespaces &&
                          iNS < aoNamespaces.size(); iNS++ )
     {
-        XMLCh* xmlNamespace = XMLString::transcode(aoNamespaces[iNS].c_str());
+        XMLCh* xmlNamespace = nullptr;
+        try
+        {
+            xmlNamespace = XMLString::transcode(aoNamespaces[iNS].c_str());
+        }
+        catch( const TranscodingException& e )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "TranscodingException: %s",
+                     transcode(e.getMessage()).c_str());
+            return false;
+        }
 
         XSNamedMap<XSObject>* poMapElements = poModel->getComponentsByNamespace(
             XSConstants::ELEMENT_DECLARATION, xmlNamespace);
-        bFoundElementsInFirstChoiceNamespaces = 
+        bFoundElementsInFirstChoiceNamespaces =
             poMapElements != nullptr && poMapElements->getLength() > 0;
         XMLString::release(&xmlNamespace);
     }
@@ -955,7 +993,17 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     {
         for( size_t iNS = 0; iNS < aoNamespaces.size(); iNS++ )
         {
-            XMLCh* xmlNamespace = XMLString::transcode(aoNamespaces[iNS].c_str());
+            XMLCh* xmlNamespace = nullptr;
+            try
+            {
+                xmlNamespace = XMLString::transcode(aoNamespaces[iNS].c_str());
+            }
+            catch( const TranscodingException& e )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "TranscodingException: %s",
+                         transcode(e.getMessage()).c_str());
+                return false;
+            }
 
             XSNamedMap<XSObject>* poMapElements = poModel->getComponentsByNamespace(
                 XSConstants::ELEMENT_DECLARATION, xmlNamespace);
@@ -3219,7 +3267,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         for(size_t j = 0; j < osNestedClassFields.size(); j++ )
                         {
                             GMLASField oField(osNestedClassFields[j]);
-                            oField.SetName( 
+                            oField.SetName(
                                 osPrefixedEltName + "_" + oField.GetName() );
                             if( nMinOccurs == 0 ||
                                 (poEltCT->getParticle() != nullptr &&
