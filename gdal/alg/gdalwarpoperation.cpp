@@ -1937,7 +1937,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         CPLAssert( oWK.pafUnifiedSrcDensity == nullptr );
 
-        eErr = CreateKernelMask( &oWK, -1, "UnifiedSrcDensity" );
+        eErr = CreateKernelMask( &oWK, 0 /* not used */, "UnifiedSrcDensity" );
 
         if( eErr == CE_None )
         {
@@ -1972,7 +1972,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         if( oWK.pafUnifiedSrcDensity == nullptr )
         {
-            eErr = CreateKernelMask( &oWK, -1, "UnifiedSrcDensity" );
+            eErr = CreateKernelMask( &oWK, 0 /* not used */, "UnifiedSrcDensity" );
 
             if( eErr == CE_None )
             {
@@ -2000,7 +2000,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         CPLAssert( oWK.pafDstDensity == nullptr );
 
-        eErr = CreateKernelMask( &oWK, -1, "DstDensity" );
+        eErr = CreateKernelMask( &oWK, 0 /* not used */, "DstDensity" );
 
         if( eErr == CE_None )
             eErr =
@@ -2100,7 +2100,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                     static_cast<GPtrDiff_t>(oWK.nSrcXSize) * oWK.nSrcYSize + 31) / 8;
                 const GPtrDiff_t nIters = nBytesInMask / 4;
 
-                eErr = CreateKernelMask( &oWK, -1, "UnifiedSrcValid" );
+                eErr = CreateKernelMask( &oWK, 0 /* not used */, "UnifiedSrcValid" );
 
                 if( eErr == CE_None )
                 {
@@ -2156,7 +2156,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         && nSrcXSize > 0 && nSrcYSize > 0 )
 
     {
-        eErr = CreateKernelMask( &oWK, -1, "UnifiedSrcValid" );
+        eErr = CreateKernelMask( &oWK, 0 /* not used */, "UnifiedSrcValid" );
 
         if( eErr == CE_None )
             eErr =
@@ -2184,7 +2184,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
         const GPtrDiff_t nMaskWords = (static_cast<GPtrDiff_t>(oWK.nDstXSize) * oWK.nDstYSize + 31)/32;
 
-        eErr = CreateKernelMask( &oWK, -1, "DstValid" );
+        eErr = CreateKernelMask( &oWK, 0 /* not used */, "DstValid" );
         GUInt32 *panBandMask =
             eErr == CE_None
             ? static_cast<GUInt32 *>(CPLMalloc(nMaskWords * 4))
