@@ -59,6 +59,7 @@
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/PSVIUni.hpp>
+#include <xercesc/util/TranscodingException.hpp>
 #include <xercesc/util/XMLException.hpp>
 #include <xercesc/dom/DOMException.hpp>
 
