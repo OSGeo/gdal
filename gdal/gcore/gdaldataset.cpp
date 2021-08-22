@@ -2953,6 +2953,13 @@ char **GDALDataset::GetFileList()
     CPLString osMainFilename = GetDescription();
     VSIStatBufL sStat;
 
+    AntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
+    const AntiRecursionStruct::DatasetContext datasetCtxt(
+        osMainFilename, 0, 0);
+    auto& aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
+    if( aosDatasetList.find(datasetCtxt) != aosDatasetList.end() )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      Is the main filename even a real filesystem object?             */
 /* -------------------------------------------------------------------- */
@@ -2967,7 +2974,6 @@ char **GDALDataset::GetFileList()
     if( bMainFileReal )
         papszList = CSLAddString(papszList, osMainFilename);
 
-    AntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
     if( sAntiRecursion.nRecLevel == 100 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2981,9 +2987,11 @@ char **GDALDataset::GetFileList()
 /* -------------------------------------------------------------------- */
     if(oOvManager.IsInitialized() && oOvManager.poODS != nullptr)
     {
+        auto iter = aosDatasetList.insert(datasetCtxt).first;
         char **papszOvrList = oOvManager.poODS->GetFileList();
         papszList = CSLInsertStrings(papszList, -1, papszOvrList);
         CSLDestroy(papszOvrList);
+        aosDatasetList.erase(iter);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2991,6 +2999,7 @@ char **GDALDataset::GetFileList()
 /* -------------------------------------------------------------------- */
     if( oOvManager.HaveMaskFile() )
     {
+        auto iter = aosDatasetList.insert(datasetCtxt).first;
         char **papszMskList = oOvManager.poMaskDS->GetFileList();
         char **papszIter = papszMskList;
         while( papszIter && *papszIter )
@@ -3000,6 +3009,7 @@ char **GDALDataset::GetFileList()
             ++papszIter;
         }
         CSLDestroy(papszMskList);
+        aosDatasetList.erase(iter);
     }
 
     --sAntiRecursion.nRecLevel;
