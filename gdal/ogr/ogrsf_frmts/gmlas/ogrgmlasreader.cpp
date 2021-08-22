@@ -2654,6 +2654,9 @@ static size_t SkipSpace( const char* pszValues, size_t i )
 
 void GMLASReader::ProcessSWEDataArray(CPLXMLNode* psRoot)
 {
+    if( m_oCurCtxt.m_poLayer == nullptr )
+        return;
+
     CPLStripXMLNamespace( psRoot, "swe", true );
     CPLXMLNode* psElementType = CPLGetXMLNode(psRoot, "elementType");
     if( psElementType == nullptr )
