@@ -176,12 +176,12 @@ CPLErr OGRPGeoLayer::BuildFeatureDefn( const char *pszLayerName,
             /* leave it as OFTString */;
         }
 
-        if( pszGeomColumn != nullptr )
-            poFeatureDefn->GetGeomFieldDefn(0)->SetName(pszGeomColumn);
-
         poFeatureDefn->AddFieldDefn( &oField );
         panFieldOrdinals[poFeatureDefn->GetFieldCount() - 1] = iCol+1;
     }
+
+    if( pszGeomColumn != nullptr )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetName(pszGeomColumn);
 
     return CE_None;
 }
