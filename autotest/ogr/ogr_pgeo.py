@@ -38,57 +38,30 @@ import ogrtest
 import pytest
 
 
-@pytest.fixture(
-    params=['PGeo', 'MDB'],
-    autouse=True,
-)
-def drv(request):
-    """
-    Run all tests against both PGeo and MDB drivers
-    """
-    if request.param == 'PGeo':
-        switch_driver('PGeo', 'MDB')
+@pytest.fixture(scope="module", autouse=True)
+def setup_driver():
+    driver = ogr.GetDriverByName('PGeo')
+    if driver is not None:
+        driver.Register()
     else:
-        switch_driver('MDB', 'PGeo')
+        pytest.skip("PGeo driver not available", allow_module_level=True)
+
+    # remove mdb driver
+    mdb_driver = ogr.GetDriverByName('MDB')
+    if mdb_driver is not None:
+        mdb_driver.Deregister()
+
+    yield
+
+    if mdb_driver is not None:
+        print('Reregistering MDB driver')
+        mdb_driver.Register()
 
 
-###############################################################################
-# Basic testing
-
-
-def switch_driver(tested_driver_name='PGeo', other_driver_name='MDB'):
-    ogrtest.pgeo_ds = None
-
-    if not hasattr(ogrtest, 'drivers'):
-        # store both drivers on first run
-        ogrtest.drivers = {'PGeo': ogr.GetDriverByName('PGeo'),
-                           'MDB': ogr.GetDriverByName('MDB')}
-
-    ogrtest.active_driver = ogrtest.drivers[tested_driver_name]
-    ogrtest.other_driver = ogrtest.drivers[other_driver_name]
-
-    if ogrtest.active_driver:
-        ogrtest.active_driver.Register()
-
-    if ogrtest.other_driver is not None:
-        print('Unregistering %s driver' % ogrtest.other_driver.GetName())
-        ogrtest.other_driver.Deregister()
-        if other_driver_name == 'PGeo':
-            # Re-register Geomedia and WALK at the end, *after* MDB
-            geomedia_driver = ogr.GetDriverByName('Geomedia')
-            if geomedia_driver is not None:
-                geomedia_driver.Deregister()
-                geomedia_driver.Register()
-            walk_driver = ogr.GetDriverByName('WALK')
-            if walk_driver is not None:
-                walk_driver.Deregister()
-                walk_driver.Register()
-
-    if ogrtest.active_driver is None:
-        pytest.skip("Driver not available: %s" % tested_driver_name)
-
+@pytest.fixture()
+def download_test_data():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip', 'PGeoTest.zip'):
-        pytest.skip()
+        pytest.skip("Test data could not be downloaded")
 
     try:
         os.stat('tmp/cache/Autodesk Test.mdb')
@@ -102,14 +75,20 @@ def switch_driver(tested_driver_name='PGeo', other_driver_name='MDB'):
         except:
             pytest.skip()
 
-    ogrtest.pgeo_ds = ogr.Open('tmp/cache/Autodesk Test.mdb')
-    if ogrtest.pgeo_ds is None:
+    pgeo_ds = ogr.Open('tmp/cache/Autodesk Test.mdb')
+    if pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
 
-    # PGEO driver reports non spatial tables, MDB driver doesn't
-    assert ogrtest.pgeo_ds.GetLayerCount() == 3 if tested_driver_name =='MDB' else 34, 'did not get expected layer count'
+    return pgeo_ds
 
-    lyr = ogrtest.pgeo_ds.GetLayer(0)
+###############################################################################
+# Basic testing
+
+
+def test_ogr_pgeo_1(download_test_data):
+    assert download_test_data.GetLayerCount() == 3, 'did not get expected layer count'
+
+    lyr = download_test_data.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
        feat.GetField('IDNUM') != 9424 or \
@@ -129,11 +108,8 @@ def switch_driver(tested_driver_name='PGeo', other_driver_name='MDB'):
 # Test spatial filter
 
 
-def test_ogr_pgeo_2():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    lyr = ogrtest.pgeo_ds.GetLayer(0)
+def test_ogr_pgeo_2(download_test_data):
+    lyr = download_test_data.GetLayer(0)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -160,11 +136,8 @@ def test_ogr_pgeo_2():
 # Test attribute filter
 
 
-def test_ogr_pgeo_3():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    lyr = ogrtest.pgeo_ds.GetLayer(0)
+def test_ogr_pgeo_3(download_test_data):
+    lyr = download_test_data.GetLayer(0)
     lyr.SetAttributeFilter('OBJECTID=1')
 
     feat_count = lyr.GetFeatureCount()
@@ -186,11 +159,8 @@ def test_ogr_pgeo_3():
 # Test ExecuteSQL()
 
 
-def test_ogr_pgeo_4():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    sql_lyr = ogrtest.pgeo_ds.ExecuteSQL('SELECT * FROM SDPipes WHERE OBJECTID = 1')
+def test_ogr_pgeo_4(download_test_data):
+    sql_lyr = download_test_data.ExecuteSQL('SELECT * FROM SDPipes WHERE OBJECTID = 1')
 
     feat_count = sql_lyr.GetFeatureCount()
     assert feat_count == 1, 'did not get expected feature count'
@@ -202,17 +172,14 @@ def test_ogr_pgeo_4():
         feat.DumpReadable()
         pytest.fail('did not get expected attributes')
 
-    ogrtest.pgeo_ds.ReleaseResultSet(sql_lyr)
+    download_test_data.ReleaseResultSet(sql_lyr)
 
 ###############################################################################
 # Test GetFeature()
 
 
-def test_ogr_pgeo_5():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    lyr = ogrtest.pgeo_ds.GetLayer(0)
+def test_ogr_pgeo_5(download_test_data):
+    lyr = download_test_data.GetLayer(0)
     feat = lyr.GetFeature(9418)
     if feat.GetField('OBJECTID') != 9418:
         feat.DumpReadable()
@@ -223,10 +190,7 @@ def test_ogr_pgeo_5():
 # Run test_ogrsf
 
 
-def test_ogr_pgeo_6():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
+def test_ogr_pgeo_6(download_test_data):
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -239,10 +203,7 @@ def test_ogr_pgeo_6():
 # Run test_ogrsf with -sql
 
 
-def test_ogr_pgeo_7():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
+def test_ogr_pgeo_7(download_test_data):
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -256,13 +217,6 @@ def test_ogr_pgeo_7():
 
 
 def test_ogr_pgeo_8():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    if ogrtest.active_driver.GetName() != 'PGeo':
-        # MDB driver doesn't report non-spatial tables
-        pytest.skip()
-
     pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
     if pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
@@ -291,13 +245,6 @@ def test_ogr_pgeo_8():
 
 
 def test_ogr_pgeo_9():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    if ogrtest.active_driver.GetName() != 'PGeo':
-        # MDB driver doesn't report non-spatial tables
-        pytest.skip()
-
     pgeo_ds = ogr.Open('data/pgeo/mixed_types.mdb')
     if pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
@@ -331,13 +278,6 @@ def test_ogr_pgeo_9():
 
 
 def test_ogr_pgeo_10():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    if ogrtest.active_driver.GetName() != 'PGeo':
-        # MDB driver doesn't report non-spatial tables
-        pytest.skip()
-
     pgeo_ds = ogr.Open('data/pgeo/mixed_types.mdb')
     if pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
@@ -372,13 +312,6 @@ def test_ogr_pgeo_10():
 
 
 def test_ogr_pgeo_11():
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    if ogrtest.active_driver.GetName() != 'PGeo':
-        # MDB driver doesn't report non-spatial tables
-        pytest.skip()
-
     pgeo_ds = ogr.Open('data/pgeo/geometry_types.mdb')
     if pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
@@ -433,16 +366,3 @@ def test_ogr_pgeo_11():
                                       max_error=0.0001) != 0:
         feat.DumpReadable()
         pytest.fail('did not get expected geometry')
-
-###############################################################################
-
-def test_ogr_pgeo_cleanup():
-
-    if ogrtest.other_driver is not None:
-        print('Reregistering %s driver' % ogrtest.other_driver.GetName())
-        ogrtest.other_driver.Register()
-
-    if ogrtest.pgeo_ds is None:
-        pytest.skip()
-
-    ogrtest.pgeo_ds = None
