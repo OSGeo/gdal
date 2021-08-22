@@ -268,11 +268,11 @@ void ZarrArray::DeallocateDecodedTileData()
         const size_t nDTSize = m_oType.GetSize();
         GByte* pDst = &m_abyDecodedTileData[0];
         const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
-        for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
+        for( auto& elt: m_aoDtypeElts )
         {
-            for( auto& elt: m_aoDtypeElts )
+            if( elt.nativeType == DtypeElt::NativeType::STRING )
             {
-                if( elt.nativeType == DtypeElt::NativeType::STRING )
+                for( size_t i = 0; i < nValues; i++, pDst += nDTSize )
                 {
                     char* ptr;
                     char** pptr = reinterpret_cast<char**>(pDst + elt.gdalOffset);
