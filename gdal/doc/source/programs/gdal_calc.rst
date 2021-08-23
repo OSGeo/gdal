@@ -68,7 +68,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --hideNoData
 
-    ..versionadded:: 3.3
+    .. versionadded:: 3.3
 
     Ignores the input bands NoDataValue.
     By default, the input bands NoDataValue are not participating in the calculation.
@@ -95,7 +95,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --extent=<option>
 
-    ..versionadded:: 3.3
+    .. versionadded:: 3.3
 
     this option determines how to handle rasters with different extents.
     this option is mutually exclusive with the `projwin` option, which is used for providing a custom extent.
@@ -107,13 +107,13 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --projwin <ulx> <uly> <lrx> <lry>
 
-    ..versionadded:: 3.3
+    .. versionadded:: 3.3
 
     this option provides a custom extent for the output, it is mutually exclusive with the `extent` option.
 
 .. option:: --projectionCheck
 
-    ..versionadded:: 3.3
+    .. versionadded:: 3.3
 
     By default, no projection checking will be performed.
     By setting this option, if the projection is not the same for all bands then the operation will fail.
@@ -197,7 +197,7 @@ Add three files together (two options with the same result):
 
     gdal_calc.py -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="A+B+C"
 
-..versionadded:: 3.3
+.. versionadded:: 3.3
 
 .. code-block::
 
@@ -209,7 +209,7 @@ Average of three layers (two options with the same result):
 
     gdal_calc.py -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="(A+B+C)/3"
 
-..versionadded:: 3.3
+.. versionadded:: 3.3
 
 .. code-block::
 
@@ -221,7 +221,7 @@ Maximum of three layers  (two options with the same result):
 
     gdal_calc.py -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="numpy.max((A,B,C),axis=0)"
 
-..versionadded:: 3.3
+.. versionadded:: 3.3
 
 .. code-block::
 
