@@ -35,6 +35,10 @@ jobs:
           set -e
           cd gdal/doc
           if find . -name '*.rst' | xargs grep -P '\t'; then echo 'Tabs are bad, please use four spaces in .rst files.'; false; fi
+          if find . -name '*.rst' | xargs grep "\.\.versionadded"; then echo 'Wrong annotation. Should be .. versionadded'; false; fi
+          if find . -name '*.rst' | xargs grep "\.\.note"; then echo 'Wrong annotation. Should be .. note'; false; fi
+          if find . -name '*.rst' | xargs grep "\.\.warning"; then echo 'Wrong annotation. Should be .. warning'; false; fi
+          if find . -name '*.rst' | xargs grep "\.\.codeblock"; then echo 'Wrong annotation. Should be .. codeblock'; false; fi
         displayName: 'Lint .rst files'
       - script: |
           set -e
