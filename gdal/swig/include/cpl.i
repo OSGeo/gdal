@@ -243,7 +243,30 @@ retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme) {
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
 }
-#elif defined(SWIGPYTHON) || defined(SWIGPERL)
+#elif defined(SWIGPYTHON)
+
+%feature( "kwargs" ) wrapper_EscapeString;
+%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
+%inline %{
+retStringAndCPLFree* wrapper_EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
+    return CPLEscapeString(bin_string, len, scheme);
+}
+%}
+%clear (int len, char *bin_string);
+
+%feature( "kwargs" ) EscapeBinary;
+%apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
+%apply (size_t *nLen, char **pBuf) { (size_t *pnLenOut, char** pOut) };
+%inline %{
+void EscapeBinary(int len, char *bin_string, size_t *pnLenOut, char** pOut, int scheme=CPLES_SQL) {
+    *pOut = CPLEscapeString(bin_string, len, scheme);
+    *pnLenOut = *pOut ? strlen(*pOut) : 0;
+}
+%}
+%clear (int len, char *bin_string);
+%clean  (size_t *pnLenOut, char* pOut);
+
+#elif defined(SWIGPERL)
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 %inline %{
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {

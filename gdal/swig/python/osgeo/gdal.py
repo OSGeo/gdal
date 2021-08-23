@@ -1498,6 +1498,14 @@ def ConfigurePythonLogging(logger_name='gdal', enable_debug=False):
     SetErrorHandler(_pylog_handler)
 
 
+def EscapeString(*args, **kwargs):
+    """EscapeString(string_or_bytes, scheme = gdal.CPLES_SQL)"""
+    if isinstance(args[0], bytes):
+        return _gdal.EscapeBinary(*args, **kwargs)
+    else:
+        return _gdal.wrapper_EscapeString(*args, **kwargs)
+
+
 
 def Debug(*args):
     """Debug(char const * msg_class, char const * message)"""
@@ -1539,9 +1547,13 @@ def ErrorReset(*args):
     """ErrorReset()"""
     return _gdal.ErrorReset(*args)
 
-def EscapeString(*args, **kwargs):
-    """EscapeString(int len, int scheme) -> retStringAndCPLFree *"""
-    return _gdal.EscapeString(*args, **kwargs)
+def wrapper_EscapeString(*args, **kwargs):
+    """wrapper_EscapeString(int len, int scheme) -> retStringAndCPLFree *"""
+    return _gdal.wrapper_EscapeString(*args, **kwargs)
+
+def EscapeBinary(*args, **kwargs):
+    """EscapeBinary(int len, int scheme)"""
+    return _gdal.EscapeBinary(*args, **kwargs)
 
 def GetLastErrorNo(*args):
     """GetLastErrorNo() -> int"""
