@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include <vector>
 #include <unordered_set>
+#include "filegdb_fielddomain.h"
 
 #ifdef __linux
 #include <sys/types.h>
@@ -219,13 +220,20 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     /*      Add non-spatial tables.                       */
     /* -------------------------------------------------------------------- */
         CPLODBCStatement oTableList( &oSession );
-
+        bool bFoundGdbItemsTable = false;
         if( oTableList.GetTables() )
         {
             while( oTableList.Fetch() )
             {
                 const CPLString osTableName = CPLString( oTableList.GetColData(2) );
                 const CPLString osLCTableName(CPLString(osTableName).tolower());
+
+                if( osLCTableName == "gdb_items" )
+                {
+                    bFoundGdbItemsTable = true;
+                    continue;
+                }
+
                 // a bunch of internal tables we don't want to expose...
                 if( !osTableName.empty()
                         && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
@@ -257,9 +265,30 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
                     }
                 }
             }
-
-            return TRUE;
         }
+
+    // collect domains
+    if ( bFoundGdbItemsTable )
+    {
+        CPLODBCStatement oItemsStmt( &oSession );
+        oItemsStmt.Append( "SELECT Definition FROM GDB_Items" );
+        if( oItemsStmt.ExecuteSQL() )
+        {
+            while( oItemsStmt.Fetch() )
+            {
+                const CPLString osDefinition = CPLString( oItemsStmt.GetColData(0, "") );
+                if( strstr(osDefinition, "GPCodedValueDomain2") != nullptr ||
+                    strstr(osDefinition, "GPRangeDomain2") != nullptr )
+                {
+                    if( auto poDomain = ParseXMLFieldDomainDef(osDefinition) )
+                    {
+                        const auto domainName = poDomain->GetName();
+                        m_oMapFieldDomains[domainName] = std::move(poDomain);
+                    }
+                }
+            }
+        }
+    }
 
     return TRUE;
 }
