@@ -412,12 +412,20 @@ def test_basic_test_14():
     ds.SetMetadata(['foo=bar'])
     assert ds.GetMetadata_List() == ['foo=bar']
 
-    with pytest.raises(Exception):
-        ds.SetMetadata([5])
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            ds.SetMetadata([5])
 
 
     ds.SetMetadata({'foo': 'baz'})
     assert ds.GetMetadata_List() == ['foo=baz']
+
+    ds.SetMetadata({'foo': b'baz'})
+    assert ds.GetMetadata_List() == ['foo=baz']
+
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            ds.SetMetadata({'foo': b'zero_byte_in_string\0'})
 
     ds.SetMetadata({'foo': 5})
     assert ds.GetMetadata_List() == ['foo=5']
