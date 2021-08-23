@@ -150,7 +150,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 Python options
 --------------
 
-..versionadded:: 3.3
+.. versionadded:: 3.3
 
 The following options are available by using function the python interface of gdal_calc.
 They are not available using the command prompt.
