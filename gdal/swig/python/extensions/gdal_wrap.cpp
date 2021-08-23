@@ -3555,9 +3555,29 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       *pbToFree = 1;
       return pszNewStr;
   }
+  else if( PyBytes_Check(pyObject) )
+  {
+      char* ret = PyBytes_AsString(pyObject);
+
+      // Check if there are \0 bytes inside the string
+      const Py_ssize_t size = PyBytes_Size(pyObject);
+      for( Py_ssize_t i = 0; i < size; i++ )
+      {
+          if( ret[i] == 0 )
+          {
+              CPLError(CE_Failure, CPLE_AppDefined,
+                       "bytes object cast as string contains a zero-byte.");
+              return NULL;
+          }
+      }
+
+      return ret;
+  }
   else
   {
-      return PyBytes_AsString(pyObject);
+      CPLError(CE_Failure, CPLE_AppDefined,
+               "Passed object is neither of type string nor bytes");
+      return NULL;
   }
 }
 
@@ -12203,13 +12223,22 @@ SWIGINTERN PyObject *_wrap_SetFileMetadata(PyObject *SWIGUNUSEDPARM(self), PyObj
             SWIG_fail;
           }
           
-          PyObject* vStr = PyObject_Str(v);
-          if( PyErr_Occurred() )
+          PyObject* vStr;
+          if( PyBytes_Check(v) )
           {
-            Py_DECREF(it);
-            Py_DECREF(kStr);
-            Py_DECREF(item_list);
-            SWIG_fail;
+            vStr = v;
+            Py_INCREF(vStr);
+          }
+          else
+          {
+            vStr = PyObject_Str(v);
+            if( PyErr_Occurred() )
+            {
+              Py_DECREF(it);
+              Py_DECREF(kStr);
+              Py_DECREF(item_list);
+              SWIG_fail;
+            }
           }
           
           int bFreeK, bFreeV;
@@ -13673,13 +13702,22 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
             SWIG_fail;
           }
           
-          PyObject* vStr = PyObject_Str(v);
-          if( PyErr_Occurred() )
+          PyObject* vStr;
+          if( PyBytes_Check(v) )
           {
-            Py_DECREF(it);
-            Py_DECREF(kStr);
-            Py_DECREF(item_list);
-            SWIG_fail;
+            vStr = v;
+            Py_INCREF(vStr);
+          }
+          else
+          {
+            vStr = PyObject_Str(v);
+            if( PyErr_Occurred() )
+            {
+              Py_DECREF(it);
+              Py_DECREF(kStr);
+              Py_DECREF(item_list);
+              SWIG_fail;
+            }
           }
           
           int bFreeK, bFreeV;

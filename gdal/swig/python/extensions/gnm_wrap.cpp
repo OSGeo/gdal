@@ -3360,9 +3360,29 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       *pbToFree = 1;
       return pszNewStr;
   }
+  else if( PyBytes_Check(pyObject) )
+  {
+      char* ret = PyBytes_AsString(pyObject);
+
+      // Check if there are \0 bytes inside the string
+      const Py_ssize_t size = PyBytes_Size(pyObject);
+      for( Py_ssize_t i = 0; i < size; i++ )
+      {
+          if( ret[i] == 0 )
+          {
+              CPLError(CE_Failure, CPLE_AppDefined,
+                       "bytes object cast as string contains a zero-byte.");
+              return NULL;
+          }
+      }
+
+      return ret;
+  }
   else
   {
-      return PyBytes_AsString(pyObject);
+      CPLError(CE_Failure, CPLE_AppDefined,
+               "Passed object is neither of type string nor bytes");
+      return NULL;
   }
 }
 
