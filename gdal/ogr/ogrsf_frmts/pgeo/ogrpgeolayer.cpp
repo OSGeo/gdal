@@ -194,6 +194,7 @@ void OGRPGeoLayer::ResetReading()
 
 {
     iNextShapeId = 0;
+    m_bEOF = false;
 }
 
 /************************************************************************/
@@ -228,7 +229,7 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
 {
     OGRErr err = OGRERR_NONE;
 
-    if( GetStatement() == nullptr )
+    if( m_bEOF || GetStatement() == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -238,6 +239,7 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
     {
         delete poStmt;
         poStmt = nullptr;
+        m_bEOF = true;
         return nullptr;
     }
 

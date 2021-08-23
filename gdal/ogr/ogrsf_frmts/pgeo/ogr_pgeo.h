@@ -61,6 +61,8 @@ class OGRPGeoLayer CPL_NON_FINAL: public OGRLayer
 
     int                *panFieldOrdinals;
 
+    bool                m_bEOF = false;
+
     CPLErr              BuildFeatureDefn( const char *pszLayerName,
                                           CPLODBCStatement *poStmt );
 
