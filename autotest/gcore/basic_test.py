@@ -454,6 +454,8 @@ def test_basic_test_14():
     with pytest.raises(Exception):
         ds.SetMetadata({ClassWithoutStrRepr(): 'a'})
 
+    ds.SetMetadata([b'foo=\xE8\x03'])
+    assert ds.GetMetadata_List() == [b'foo=\xe8\x03']
 
 ###############################################################################
 # Test errors with progress callback
