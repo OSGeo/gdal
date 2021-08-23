@@ -64,13 +64,16 @@
 CPL_CVSID("$Id$")
 
 static bool NITFPatchImageLength( const char *pszFilename,
+                                  int nIMIndex,
                                   GUIntBig nImageOffset,
                                   GIntBig nPixelCount,
                                   const char *pszIC,
-                                  int nICOffset,
+                                  vsi_l_offset nICOffset,
                                   CSLConstList papszCreationOptions );
-static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList );
-static bool NITFWriteTextSegments( const char *pszFilename, char **papszList );
+static bool NITFWriteExtraSegments( const char *pszFilename,
+                                    CSLConstList papszCgmMD,
+                                    CSLConstList papszTextMD,
+                                    CSLConstList papszOptions );
 
 #ifdef JPEG_SUPPORTED
 static bool NITFWriteJPEGImage( GDALDataset *, VSILFILE *, vsi_l_offset, char **,
@@ -171,12 +174,8 @@ int NITFDataset::CloseDependentDatasets()
 /* -------------------------------------------------------------------- */
 /*      Close the underlying NITF file.                                 */
 /* -------------------------------------------------------------------- */
-    GUIntBig nImageStart = 0;
     if( psFile != nullptr )
     {
-        if (psFile->nSegmentCount > 0)
-            nImageStart = psFile->pasSegmentInfo[0].nSegmentStart;
-
         NITFClose( psFile );
         psFile = nullptr;
     }
@@ -202,7 +201,7 @@ int NITFDataset::CloseDependentDatasets()
             nBands;
 
         CPL_IGNORE_RET_VAL(
-            NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount,
+            NITFPatchImageLength( GetDescription(), m_nIMIndex, m_nImageOffset, nPixelCount,
                                   "C8", m_nICOffset, nullptr ));
     }
 
@@ -223,8 +222,13 @@ int NITFDataset::CloseDependentDatasets()
 /*      If the dataset was opened by Create(), we may need to write     */
 /*      the CGM and TEXT segments                                       */
 /* -------------------------------------------------------------------- */
-    CPL_IGNORE_RET_VAL(NITFWriteCGMSegments( GetDescription(), papszCgmMDToWrite ));
-    CPL_IGNORE_RET_VAL(NITFWriteTextSegments( GetDescription(), papszTextMDToWrite ));
+    if( m_nIMIndex + 1 == m_nImageCount )
+    {
+        CPL_IGNORE_RET_VAL(NITFWriteExtraSegments( GetDescription(),
+                                                   papszCgmMDToWrite,
+                                                   papszTextMDToWrite,
+                                                   aosCreationOptions.List() ));
+    }
 
     CSLDestroy(papszTextMDToWrite);
     papszTextMDToWrite = nullptr;
@@ -443,18 +447,18 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    return OpenInternal(poOpenInfo, nullptr, FALSE);
+    return OpenInternal(poOpenInfo, nullptr, false, -1);
 }
 
-GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
-                                GDALDataset *poWritableJ2KDataset,
-                                int bOpenForCreate)
+NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
+                                        GDALDataset *poWritableJ2KDataset,
+                                        bool bOpenForCreate,
+                                        int nIMIndex )
 
 {
     if( !Identify( poOpenInfo ) )
         return nullptr;
 
-    int nIMIndex = -1;
     const char *pszFilename = poOpenInfo->pszFilename;
 
 /* -------------------------------------------------------------------- */
@@ -2915,7 +2919,7 @@ void NITFDataset::InitializeTREMetadata()
             CPLXMLNode* psTreNode = NITFCreateXMLTre(psFile, szTREName, pabyTREData,nThisTRESize);
             if (psTreNode)
             {
-                const char* pszDESID = CSLFetchNameValue(psDES->papszMetadata, "NITF_DESID");
+                const char* pszDESID = CSLFetchNameValue(psDES->papszMetadata, "DESID");
                 CPLCreateXMLNode(CPLCreateXMLNode(psTreNode, CXT_Attribute, "location"),
                                  CXT_Text, pszDESID ? CPLSPrintf("des %s", pszDESID) : "des");
                 CPLAddXMLChild(psTresNode, psTreNode);
@@ -4103,10 +4107,14 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
 
-    int nICOffset = 0;
+    int nIMIndex = 0;
+    int nImageCount = 0;
+    vsi_l_offset nImageOffset = 0;
+    vsi_l_offset nICOffset = 0;
     if( !NITFCreateEx( pszFilename, nXSize, nYSize, nBands,
                        GDALGetDataTypeSize( eType ), pszPVType,
-                       papszFullOptions, &nICOffset ) )
+                       papszFullOptions,
+                       &nIMIndex, &nImageCount, &nImageOffset, &nICOffset ) )
     {
         CSLDestroy(papszTextMD);
         CSLDestroy(papszCgmMD);
@@ -4120,20 +4128,10 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
     GDALDataset* poWritableJ2KDataset = nullptr;
     if( poJ2KDriver )
     {
-        NITFFile *psFile = NITFOpen( pszFilename, TRUE );
-        if (psFile == nullptr)
-        {
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszCgmMD);
-            return nullptr;
-        }
-        GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
-
         CPLString osDSName;
 
-        osDSName.Printf("/vsisubfile/" CPL_FRMT_GUIB "_%d,%s", nImageOffset, -1, pszFilename);
-
-        NITFClose( psFile );
+        osDSName.Printf("/vsisubfile/" CPL_FRMT_GUIB "_%d,%s",
+                        static_cast<GUIntBig>(nImageOffset), -1, pszFilename);
 
         char** papszJP2Options = NITFJP2ECWOptions(papszFullOptions);
         poWritableJ2KDataset =
@@ -4154,13 +4152,17 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 /*      Open the dataset in update mode.                                */
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
-    NITFDataset* poDS = reinterpret_cast<NITFDataset *>(
-        NITFDataset::OpenInternal(&oOpenInfo, poWritableJ2KDataset, TRUE) );
+    NITFDataset* poDS =
+        NITFDataset::OpenInternal(&oOpenInfo, poWritableJ2KDataset, true, nIMIndex);
     if (poDS)
     {
+        poDS->m_nImageOffset = nImageOffset;
+        poDS->m_nIMIndex = nIMIndex;
+        poDS->m_nImageCount = nImageCount;
         poDS->m_nICOffset = nICOffset;
         poDS->papszTextMDToWrite = papszTextMD;
         poDS->papszCgmMDToWrite = papszCgmMD;
+        poDS->aosCreationOptions.Assign(CSLDuplicate(papszOptions), true);
     }
     else
     {
@@ -4831,10 +4833,14 @@ NITFDataset::NITFCreateCopy(
         }
     }
 
-    int nICOffset = 0;
+    int nIMIndex = 0;
+    int nImageCount = 0;
+    vsi_l_offset nImageOffset = 0;
+    vsi_l_offset nICOffset = 0;
     if (!NITFCreateEx( pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
                 GDALGetDataTypeSize( eType ), pszPVType,
-                papszFullOptions, &nICOffset ))
+                papszFullOptions,
+                &nIMIndex, &nImageCount, &nImageOffset, &nICOffset ) )
     {
         CSLDestroy( papszFullOptions );
         CSLDestroy(papszCgmMD);
@@ -4850,22 +4856,9 @@ NITFDataset::NITFCreateCopy(
 
     if( bJPEG2000 )
     {
-        NITFFile *psFile = NITFOpen( pszFilename, TRUE );
-        if (psFile == nullptr)
-        {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy( papszFullOptions );
-            return nullptr;
-        }
-
-        GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
-
-        NITFClose( psFile );
-
         CPLString osDSName;
         osDSName.Printf( "/vsisubfile/" CPL_FRMT_GUIB "_%d,%s",
-                         nImageOffset, -1,
+                         static_cast<GUIntBig>(nImageOffset), -1,
                          pszFilename );
 
         GDALDataset *poJ2KDataset = nullptr;
@@ -4921,10 +4914,17 @@ NITFDataset::NITFCreateCopy(
         GIntBig nPixelCount = nXSize * ((GIntBig) nYSize) *
             poSrcDS->GetRasterCount();
 
-        bool bOK = NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount,
+        bool bOK = NITFPatchImageLength( pszFilename,
+                                         nIMIndex,
+                                         nImageOffset, nPixelCount,
                                          "C8", nICOffset, papszFullOptions );
-        bOK &= NITFWriteCGMSegments( pszFilename, papszCgmMD );
-        bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
+        if( nIMIndex + 1 == nImageCount )
+        {
+            bOK &= NITFWriteExtraSegments( pszFilename,
+                                           papszCgmMD,
+                                           papszTextMD,
+                                           papszFullOptions );
+        }
         if( !bOK )
         {
             CSLDestroy(papszCgmMD);
@@ -4934,7 +4934,7 @@ NITFDataset::NITFCreateCopy(
         }
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
-        poDstDS = reinterpret_cast<NITFDataset *>( Open( &oOpenInfo ) );
+        poDstDS = OpenInternal( &oOpenInfo, nullptr, true, nIMIndex );
 
         if( poDstDS == nullptr )
         {
@@ -4959,7 +4959,6 @@ NITFDataset::NITFCreateCopy(
             CSLDestroy( papszFullOptions );
             return nullptr;
         }
-        GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
 
         const bool bSuccess =
             NITFWriteJPEGImage( poSrcDS, psFile->fp, nImageOffset,
@@ -4982,11 +4981,17 @@ NITFDataset::NITFCreateCopy(
 
         NITFClose( psFile );
 
-        bool bOK = NITFPatchImageLength( pszFilename, nImageOffset,
-                              nPixelCount, pszIC, nICOffset, papszFullOptions );
-
-        bOK &= NITFWriteCGMSegments( pszFilename, papszCgmMD );
-        bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
+        bool bOK = NITFPatchImageLength( pszFilename,
+                                         nIMIndex,
+                                         nImageOffset,
+                                         nPixelCount, pszIC, nICOffset, papszFullOptions );
+        if( nIMIndex + 1 == nImageCount )
+        {
+            bOK &= NITFWriteExtraSegments( pszFilename,
+                                           papszCgmMD,
+                                           papszTextMD,
+                                           papszFullOptions );
+        }
         if( !bOK )
         {
             CSLDestroy(papszCgmMD);
@@ -4996,7 +5001,7 @@ NITFDataset::NITFCreateCopy(
         }
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
-        poDstDS = reinterpret_cast<NITFDataset *>( Open( &oOpenInfo ) );
+        poDstDS = OpenInternal( &oOpenInfo, nullptr, true, nIMIndex );
 
         if( poDstDS == nullptr )
         {
@@ -5013,14 +5018,19 @@ NITFDataset::NITFCreateCopy(
 /* ==================================================================== */
     else
     {
-        bool bOK = NITFWriteCGMSegments( pszFilename, papszCgmMD );
-        bOK &= NITFWriteTextSegments( pszFilename, papszTextMD );
-        if( !bOK )
+        if( nIMIndex + 1 == nImageCount )
         {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy( papszFullOptions );
-            return nullptr;
+            bool bOK = NITFWriteExtraSegments( pszFilename,
+                                           papszCgmMD,
+                                           papszTextMD,
+                                           papszFullOptions );
+            if( !bOK )
+            {
+                CSLDestroy(papszCgmMD);
+                CSLDestroy(papszTextMD);
+                CSLDestroy( papszFullOptions );
+                return nullptr;
+            }
         }
 
         // Save error state to restore it afterwards since some operations
@@ -5030,7 +5040,7 @@ NITFDataset::NITFCreateCopy(
         CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
         GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
-        poDstDS = reinterpret_cast<NITFDataset *>( Open( &oOpenInfo ) );
+        poDstDS = OpenInternal( &oOpenInfo, nullptr, true, nIMIndex );
 
         if( CPLGetLastErrorType() == CE_None && eLastErr != CE_None )
             CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );
@@ -5173,10 +5183,11 @@ NITFDataset::NITFCreateCopy(
 /************************************************************************/
 
 static bool NITFPatchImageLength( const char *pszFilename,
+                                  int nIMIndex,
                                   GUIntBig nImageOffset,
                                   GIntBig nPixelCount,
                                   const char *pszIC,
-                                  int nICOffset,
+                                  vsi_l_offset nICOffset,
                                   CSLConstList papszCreationOptions )
 
 {
@@ -5219,7 +5230,7 @@ static bool NITFPatchImageLength( const char *pszFilename,
         nImageSize = 9999999998ULL;
     }
     osLen = CPLString().Printf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",nImageSize);
-    if( VSIFSeekL( fpVSIL, 369, SEEK_SET ) != 0 ||
+    if( VSIFSeekL( fpVSIL, 369 + 16 * nIMIndex, SEEK_SET ) != 0 ||
         VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
                 10, 1, fpVSIL ) != 1 )
     {
@@ -5300,10 +5311,12 @@ static bool NITFPatchImageLength( const char *pszFilename,
     return bOK;
 }
 
+
 /************************************************************************/
 /*                       NITFWriteCGMSegments()                        */
 /************************************************************************/
-static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
+static bool NITFWriteCGMSegments( const char* pszFilename,
+                                  VSILFILE*& fpVSIL, CSLConstList papszList )
 {
     char errorMessage[255] = "";
 
@@ -5320,12 +5333,12 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         nNUMS = atoi(pszNUMS);
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Open the target file.                                           */
-    /* -------------------------------------------------------------------- */
-    VSILFILE *fpVSIL = VSIFOpenL(pszFilename, "r+b");
-
-    if (fpVSIL == nullptr)
+/* -------------------------------------------------------------------- */
+/*      Open the target file if not already done.                       */
+/* -------------------------------------------------------------------- */
+    if( fpVSIL == nullptr )
+        fpVSIL = VSIFOpenL( pszFilename, "r+b" );
+    if( fpVSIL == nullptr )
         return false;
 
     // Calculates the offset for NUMS so we can update header data
@@ -5361,7 +5374,6 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
                   "segments on an NITF file with existing segments.  This\n"
                   "is not currently supported by the GDAL NITF driver." );
 
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         return false;
     }
 
@@ -5488,50 +5500,23 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
     bOK &= static_cast<int>(VSIFWriteL(pachLS, 1, nNUMS * nCgmHdrEntrySz, fpVSIL))
                 == nNUMS * nCgmHdrEntrySz;
 
-    /* -------------------------------------------------------------------- */
-    /*      Update total file length.                                       */
-    /* -------------------------------------------------------------------- */
-    bOK &= VSIFSeekL(fpVSIL, 0, SEEK_END ) == 0;
-    GUIntBig nFileLen = VSIFTellL(fpVSIL);
-    // Offset to file length entry
-    bOK &= VSIFSeekL(fpVSIL, 342, SEEK_SET ) == 0;
-    if (nFileLen >= NITF_MAX_FILE_SIZE)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too big file : " CPL_FRMT_GUIB ". Truncating to " CPL_FRMT_GUIB,
-                 nFileLen, NITF_MAX_FILE_SIZE - 1);
-        nFileLen = NITF_MAX_FILE_SIZE - 1;
-    }
-    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",
-                    nFileLen);
-    bOK &= VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ), 12, 1, fpVSIL) == 1;
-
-    if( VSIFCloseL(fpVSIL) != 0 )
-        bOK = false;
-
     CPLFree(pachLS);
-
-    if( !bOK )
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "I/O error");
-        return false;
-    }
 
     if (strlen(errorMessage) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", errorMessage);
-        return false;
+        bOK = false;
     }
 
-    return true;
+    return bOK;
 }
 
 /************************************************************************/
 /*                       NITFWriteTextSegments()                        */
 /************************************************************************/
 
-static bool NITFWriteTextSegments( const char *pszFilename,
-                                   char **papszList )
+static bool NITFWriteTextSegments( const char* pszFilename,
+                                   VSILFILE*& fpVSIL, CSLConstList papszList )
 
 {
 /* -------------------------------------------------------------------- */
@@ -5550,10 +5535,10 @@ static bool NITFWriteTextSegments( const char *pszFilename,
         return true;
 
 /* -------------------------------------------------------------------- */
-/*      Open the target file.                                           */
+/*      Open the target file if not already done.                       */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fpVSIL = VSIFOpenL( pszFilename, "r+b" );
-
+    if( fpVSIL == nullptr )
+        fpVSIL = VSIFOpenL( pszFilename, "r+b" );
     if( fpVSIL == nullptr )
         return false;
 
@@ -5603,7 +5588,6 @@ static bool NITFWriteTextSegments( const char *pszFilename,
                   "segments on an NITF file with existing segments.  This\n"
                   "is not currently supported by the GDAL NITF driver." );
 
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         CPLFree( pachLT );
         return false;
     }
@@ -5612,7 +5596,6 @@ static bool NITFWriteTextSegments( const char *pszFilename,
     {
         CPLFree( pachLT );
         // presumably the text segments are already written, do nothing.
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         return true;
     }
 
@@ -5771,13 +5754,204 @@ static bool NITFWriteTextSegments( const char *pszFilename,
     bOK &= VSIFSeekL( fpVSIL, nNumTOffset + 3, SEEK_SET ) == 0;
     bOK &= static_cast<int>(VSIFWriteL( pachLT, 1, nNUMT * 9, fpVSIL )) == nNUMT * 9;
 
-/* -------------------------------------------------------------------- */
-/*      Update total file length.                                       */
-/* -------------------------------------------------------------------- */
-    bOK &= VSIFSeekL( fpVSIL, 0, SEEK_END ) == 0;
-    GUIntBig nFileLen = VSIFTellL( fpVSIL );
+    CPLFree( pachLT );
 
-    bOK &= VSIFSeekL( fpVSIL, 342, SEEK_SET ) == 0;
+    return bOK;
+}
+
+/************************************************************************/
+/*                            NITFWriteDES()                            */
+/************************************************************************/
+
+static bool NITFWriteDES( VSILFILE* fp, vsi_l_offset nOffsetLDSH,
+                         int  iDES, const char *pszDESName,
+                         const GByte* pabyDESData, int nArrayLen)
+{
+    const int nTotalLen = nArrayLen + 27;  // DE(2) + DESID(25) + other data
+
+    if (nTotalLen < 200)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "DES does not contain enough data");
+        return false;
+    }
+
+    if (strcmp(pszDESName, "TRE_OVERFLOW") == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "TRE_OVERFLOW DES not supported");
+        return false;
+    }
+
+    char pszTemp[5];
+    memcpy(pszTemp, pabyDESData + 169, 4);
+    pszTemp[4] = '\0';
+    const int nSubHeadLen = atoi(pszTemp) + 200;
+    const int nDataLen = nTotalLen - nSubHeadLen;     // Length of DESDATA field only
+
+    if (nSubHeadLen > 9998 || nDataLen > 999999998)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "DES is too big to be written");
+        return false;
+    }
+
+    bool bOK = VSIFSeekL(fp, 0, SEEK_END) == 0;
+    bOK &= VSIFWriteL("DE", 1, 2, fp) == 2;
+    bOK &= VSIFWriteL(CPLSPrintf("%-25s", pszDESName), 1, 25, fp) == 25;
+    bOK &= (int)VSIFWriteL(pabyDESData, 1, nArrayLen, fp) == nArrayLen;
+
+    // Update LDSH and LD in the NITF Header
+    bOK &= VSIFSeekL(fp, nOffsetLDSH + iDES * 13, SEEK_SET) == 0;
+    bOK &= VSIFWriteL(CPLSPrintf("%04d", nSubHeadLen), 1, 4, fp) == 4;
+    bOK &= VSIFWriteL(CPLSPrintf("%09d", nDataLen), 1, 9, fp) == 9;
+
+    return bOK;
+}
+
+/************************************************************************/
+/*                          NITFWriteDESs()                             */
+/************************************************************************/
+
+static bool NITFWriteDES(const char* pszFilename,
+                         VSILFILE*& fpVSIL, CSLConstList papszOptions)
+{
+    if( papszOptions == nullptr )
+    {
+        return true;
+    }
+
+    int nDESFound = 0;
+    for( int iOption = 0; papszOptions[iOption] != nullptr; iOption++ )
+    {
+        if(EQUALN(papszOptions[iOption], "DES=", 4))
+        {
+            nDESFound ++;
+        }
+    }
+    if( nDESFound == 0 )
+    {
+        return true;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Open the target file if not already done.                       */
+/* -------------------------------------------------------------------- */
+    if( fpVSIL == nullptr )
+        fpVSIL = VSIFOpenL( pszFilename, "r+b" );
+    if( fpVSIL == nullptr )
+        return false;
+
+    char achNUMI[4]; // 3 digits plus null character
+    achNUMI[3] = '\0';
+    // NUMI offset is at a fixed offset 363
+    int nNumIOffset = 360;
+    bool bOK = VSIFSeekL( fpVSIL, nNumIOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUMI, 3, 1, fpVSIL ) == 1;
+    int nIM = atoi(achNUMI);
+
+    char achNUMG[4]; // 3 digits plus null character
+    achNUMG[3] = '\0';
+
+    // 3 for size of NUMI.  6 and 10 are the field size for LISH and LI
+    const int nNumGOffset = nNumIOffset + 3 + nIM * (6 + 10);
+    bOK &= VSIFSeekL( fpVSIL, nNumGOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUMG, 3, 1, fpVSIL ) == 1;
+    const int nGS = atoi(achNUMG);
+
+    // NUMT offset
+    // 3 for size of NUMG.  4 and 6 are the field size of LSSH and LS.
+    // the last + 3 is for NUMX field, which is not used
+    const int nNumTOffset = nNumGOffset + 3 + nGS * (4 + 6) + 3;
+    char achNUMT[4];
+    bOK &= VSIFSeekL( fpVSIL, nNumTOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUMT, 3, 1, fpVSIL ) == 1;
+    achNUMT[3] = '\0';
+    const int nNUMT = atoi(achNUMT);
+
+    // NUMDES offset
+    // 3 for size of NUMT. 4 and 5 are the field size of LTSH and LT.
+    const int nNumDESOffset = nNumTOffset + 3 + (4+5) * nNUMT;
+    char achNUMDES[4];
+    bOK &= VSIFSeekL( fpVSIL, nNumDESOffset, SEEK_SET ) == 0;
+    bOK &= VSIFReadL( achNUMDES, 3, 1, fpVSIL ) == 1;
+    achNUMDES[3] = '\0';
+
+    if( !bOK || atoi(achNUMDES) != nDESFound )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "It appears an attempt was made to add or update DE\n"
+                  "segments on an NITF file with existing segments.  This\n"
+                  "is not currently supported by the GDAL NITF driver." );
+        return false;
+    }
+
+    int iDES = 0;
+    for( int iOption = 0; papszOptions[iOption] != nullptr; iOption++ )
+    {
+        if(!EQUALN(papszOptions[iOption], "DES=", 4))
+        {
+            continue;
+        }
+
+        /* We don't use CPLParseNameValue() as it removes leading spaces */
+        /* from the value (see #3088) */
+        const char* pszDelim = strchr(papszOptions[iOption] + 4, '=');
+        if (pszDelim == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not parse creation options %s", papszOptions[iOption] + 4);
+            return false;
+        }
+
+        const size_t nNameLength =  strlen(papszOptions[iOption] + 4) - strlen(pszDelim);
+        if (nNameLength > 25)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Specified DESID is too long %s", papszOptions[iOption] + 4);
+            return false;
+        }
+
+        char* pszDESName = (char *)CPLMalloc(nNameLength+1);
+        memcpy(pszDESName, papszOptions[iOption] + 4, nNameLength);
+        pszDESName[nNameLength] = '\0';
+
+        const char* pszEscapedContents = pszDelim + 1;
+
+        int  nContentLength = 0;
+        GByte* pabyUnescapedContents =
+            (GByte*)CPLUnescapeString( pszEscapedContents, &nContentLength,
+                                       CPLES_BackslashQuotable );
+
+        if(!NITFWriteDES(fpVSIL, nNumDESOffset + 3, iDES, pszDESName,
+                         pabyUnescapedContents, nContentLength))
+        {
+            CPLFree( pszDESName );
+            CPLFree( pabyUnescapedContents );
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not write DES %d", iDES);
+            return false;
+        }
+
+        CPLFree( pszDESName );
+        CPLFree( pabyUnescapedContents );
+
+        iDES++;
+    }
+
+    return bOK;
+}
+
+/************************************************************************/
+/*                         UpdateFileLength()                           */
+/************************************************************************/
+
+static bool UpdateFileLength(VSILFILE* fp)
+{
+
+    /* -------------------------------------------------------------------- */
+    /*      Update total file length.                                       */
+    /* -------------------------------------------------------------------- */
+    bool bOK = VSIFSeekL(fp, 0, SEEK_END ) == 0;
+    GUIntBig nFileLen = VSIFTellL(fp);
+    // Offset to file length entry
+    bOK &= VSIFSeekL(fp, 342, SEEK_SET ) == 0;
     if (nFileLen >= NITF_MAX_FILE_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5785,20 +5959,37 @@ static bool NITFWriteTextSegments( const char *pszFilename,
                  nFileLen, NITF_MAX_FILE_SIZE - 1);
         nFileLen = NITF_MAX_FILE_SIZE - 1;
     }
-    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",nFileLen);
-    bOK &= VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ),
-                12, 1, fpVSIL ) == 1;
+    CPLString osLen = CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u",
+                    nFileLen);
+    bOK &= VSIFWriteL( reinterpret_cast<const void *>( osLen.c_str() ), 12, 1, fp) == 1;
+    return bOK;
+}
 
-    if( VSIFCloseL( fpVSIL ) != 0 )
-        bOK = false;
-    CPLFree( pachLT );
+/************************************************************************/
+/*                       NITFWriteExtraSegments()                       */
+/************************************************************************/
 
-    if( !bOK )
+static bool NITFWriteExtraSegments( const char *pszFilename,
+                                    CSLConstList papszCgmMD,
+                                    CSLConstList papszTextMD,
+                                    CSLConstList papszOptions )
+{
+    VSILFILE* fp = nullptr;
+    bool bOK = NITFWriteCGMSegments( pszFilename, fp, papszCgmMD );
+    bOK &= NITFWriteTextSegments( pszFilename, fp, papszTextMD );
+    bOK &= NITFWriteDES( pszFilename, fp, papszOptions );
+    if( fp )
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "I/O error");
-    }
+        bOK &= UpdateFileLength(fp);
 
+        if( VSIFCloseL( fp ) != 0 )
+            bOK = false;
+
+        if( !bOK )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+        }
+    }
     return bOK;
 }
 
@@ -6168,6 +6359,10 @@ static const NITFFieldDescription asFieldDescription [] =
     {  2, "ABPP", "Actual Bits-Per-Pixel Per Band" } ,
     {  1, "PJUST", "Pixel Justification" } ,
     {780, "ICOM", "Image Comments (up to 9x80 characters)" } ,
+    {  3, "IDLVL", "Image Display Level" },
+    {  3, "IALVL", "Image Attachment Level" },
+    {  5, "ILOCROW", "Image Location Row" },
+    {  5, "ILOCCOL", "Image Location Column" },
 };
 
 /* Keep in sync with NITFWriteBLOCKA */
@@ -6256,7 +6451,8 @@ void NITFDriver::InitCreationOptionList()
 "   <Option name='PROGRESSIVE' type='boolean' description='JPEG progressive mode'/>"
 "   <Option name='RESTART_INTERVAL' type='int' description='Restart interval (in MCUs). -1 for auto, 0 for none, > 0 for user specified' default='-1'/>"
 #endif
-"   <Option name='NUMI' type='int' default='1' description='Number of images to create (1-999). Only works with IC=NC'/>";
+"   <Option name='NUMI' type='int' default='1' description='Number of images to create (1-999). Only works with IC=NC if WRITE_ONLY_FIRST_IMAGE=NO'/>"
+"   <Option name='WRITE_ONLY_FIRST_IMAGE' type='boolean' default='NO' description='To be used with NUMI. If YES, only write first image. Subsequent one must be written with APPEND_SUBDATASET=YES'/>";
 
     if( bHasJPEG2000Drivers)
     {
@@ -6328,8 +6524,8 @@ void NITFDriver::InitCreationOptionList()
 "   <Option name='TRE' type='string' description='Under the format TRE=tre-name,tre-contents'/>"
 "   <Option name='FILE_TRE' type='string' description='Under the format FILE_TRE=tre-name,tre-contents'/>"
 "   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>"
-"   <Option name='DES' type='string' description='Under the format DES=des-name=des-contents'/>";
-
+"   <Option name='DES' type='string' description='Under the format DES=des-name=des-contents'/>"
+"   <Option name='NUMDES' type='int' default='0' description='Number of DES segments. Only to be used on first image segment'/>";
     for( unsigned int i=0; apszFieldsBLOCKA[i] != nullptr; i+=3 )
     {
         char szFieldDescription[128];

@@ -36,6 +36,7 @@ import array
 import struct
 import shutil
 from osgeo import gdal
+from osgeo import ogr
 from osgeo import osr
 
 
@@ -1070,7 +1071,7 @@ def test_nitf_38():
     data = ds.GetRasterBand(1).ReadRaster(0, 0, nXSize, nYSize)
     expected_cs = ds.GetRasterBand(1).Checksum()
 
-    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf38.ntf', nXSize, nYSize, 1, options=['NUMI=999'])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf38.ntf', nXSize, nYSize, 1, options=['NUMI=999', 'WRITE_ALL_IMAGES=YES'])
     ds = None
 
     ds = gdal.Open('NITF_IM:998:tmp/nitf38.ntf', gdal.GA_Update)
@@ -3743,51 +3744,131 @@ def test_nitf_des():
 
     expected_data = """<des_list>
   <des name="DES1">
-    <field name="NITF_DESVER" value="02" />
-    <field name="NITF_DECLAS" value="U" />
-    <field name="NITF_DESCLSY" value="" />
-    <field name="NITF_DESCODE" value="" />
-    <field name="NITF_DESCTLH" value="" />
-    <field name="NITF_DESREL" value="" />
-    <field name="NITF_DESDCTP" value="" />
-    <field name="NITF_DESDCDT" value="" />
-    <field name="NITF_DESDCXM" value="" />
-    <field name="NITF_DESDG" value="" />
-    <field name="NITF_DESDGDT" value="" />
-    <field name="NITF_DESCLTX" value="" />
-    <field name="NITF_DESCATP" value="" />
-    <field name="NITF_DESCAUT" value="" />
-    <field name="NITF_DESCRSN" value="" />
-    <field name="NITF_DESSRDT" value="" />
-    <field name="NITF_DESCTLN" value="" />
-    <field name="NITF_DESSHL" value="0004" />
-    <field name="NITF_DESSHF" value="ABCD" />
-    <field name="NITF_DESDATA" value="MTIzNDU2NwA4OTA=" />
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0004" />
+    <field name="DESSHF" value="ABCD" />
+    <field name="DESDATA" value="MTIzNDU2NwA4OTA=" />
   </des>
   <des name="DES2">
-    <field name="NITF_DESVER" value="02" />
-    <field name="NITF_DECLAS" value="U" />
-    <field name="NITF_DESCLSY" value="" />
-    <field name="NITF_DESCODE" value="" />
-    <field name="NITF_DESCTLH" value="" />
-    <field name="NITF_DESREL" value="" />
-    <field name="NITF_DESDCTP" value="" />
-    <field name="NITF_DESDCDT" value="" />
-    <field name="NITF_DESDCXM" value="" />
-    <field name="NITF_DESDG" value="" />
-    <field name="NITF_DESDGDT" value="" />
-    <field name="NITF_DESCLTX" value="" />
-    <field name="NITF_DESCATP" value="" />
-    <field name="NITF_DESCAUT" value="" />
-    <field name="NITF_DESCRSN" value="" />
-    <field name="NITF_DESSRDT" value="" />
-    <field name="NITF_DESCTLN" value="" />
-    <field name="NITF_DESSHL" value="0004" />
-    <field name="NITF_DESSHF" value="ABCD" />
-    <field name="NITF_DESDATA" value="MTIzNDU2NwA4OTA=" />
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0004" />
+    <field name="DESSHF" value="ABCD" />
+    <field name="DESDATA" value="MTIzNDU2NwA4OTA=" />
   </des>
 </des_list>
 """
+
+    assert data == expected_data
+
+###############################################################################
+# Test creation and reading of Data Extension Segments (DES)
+
+def test_nitf_des_CSSHPA():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/tmp.shp')
+    lyr = ds.CreateLayer('tmp', geom_type = ogr.wkbPolygon, options = ['DBF_DATE_LAST_UPDATE=2021-01-01'])
+    lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("ID", 1)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((2 49,2 50,3 50,3 49,2 49))'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    files = {}
+    for ext in ('shp', 'shx', 'dbf'):
+        f = gdal.VSIFOpenL('/vsimem/tmp.' + ext, 'rb')
+        files[ext] = gdal.VSIFReadL(1, 1000000, f)
+        gdal.VSIFCloseL(f)
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/tmp.shp')
+
+    shp_offset = 0
+    shx_offset = shp_offset + len(files['shp'])
+    dbf_offset = shx_offset + len(files['shx'])
+    shp_shx_dbf = files['shp'] + files['shx'] + files['dbf']
+
+    des_data = b"02U" + b" "*166 + ('0080CLOUD_SHAPES             POLYGON   SOURCE123456789ABCSHP%06dSHX%06dDBF%06d' % (shp_offset, shx_offset, dbf_offset)).encode('ascii') + shp_shx_dbf
+
+    escaped_data = gdal.EscapeString(des_data, gdal.CPLES_BackslashQuotable)
+
+    ds = gdal.GetDriverByName("NITF").Create("/vsimem/nitf_DES.ntf", 1, 1, options=[b"DES=CSSHPA DES=" + escaped_data])
+    ds = None
+
+    ds = gdal.Open("/vsimem/nitf_DES.ntf")
+    data = ds.GetMetadata("xml:DES")[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_DES.ntf')
+
+    import base64
+    expected_data = """<des_list>
+  <des name="CSSHPA DES">
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0080" />
+    <field name="DESSHF" value="CLOUD_SHAPES             POLYGON   SOURCE123456789ABCSHP000000SHX000236DBF000344">
+      <user_defined_fields>
+        <field name="SHAPE_USE" value="CLOUD_SHAPES" />
+        <field name="SHAPE_CLASS" value="POLYGON" />
+        <field name="CC_SOURCE" value="SOURCE123456789ABC" />
+        <field name="SHAPE1_NAME" value="SHP" />
+        <field name="SHAPE1_START" value="000000" />
+        <field name="SHAPE2_NAME" value="SHX" />
+        <field name="SHAPE2_START" value="000236" />
+        <field name="SHAPE3_NAME" value="DBF" />
+        <field name="SHAPE3_START" value="000344" />
+      </user_defined_fields>
+    </field>
+    <field name="DESDATA" value="%s" />
+  </des>
+</des_list>
+""" % base64.b64encode(shp_shx_dbf).decode('ascii')
 
     assert data == expected_data
 
@@ -3977,10 +4058,108 @@ def test_nitf_create_too_large_file():
     # Test 1e12 byte limit for while file
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        gdal.GetDriverByName('NITF').Create('/vsimem/out.ntf', int(1e5), int(1e5) // 2, options = ['NUMI=200'])
+        gdal.GetDriverByName('NITF').Create('/vsimem/out.ntf', int(1e5), int(1e5) // 2,
+                                            options = ['NUMI=200', 'WRITE_ALL_IMAGES=YES'])
     assert gdal.GetLastErrorMsg() != ''
 
     gdal.Unlink('/vsimem/out.ntf')
+
+
+###############################################################################
+# Test creating file with multiple image segments
+
+def test_nitf_create_two_images_final_with_C3_compression():
+
+    gdal.Unlink('/vsimem/out.ntf')
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+
+    # Write first image segment, reserve space for a second one and a DES
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['NUMI=2',
+                                                          'NUMDES=1'])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    # Write second and final image segment and DES
+    des_data = "02U" + " "*166 + r'0004ABCD1234567\0890'
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['APPEND_SUBDATASET=YES',
+                                                          'IC=C3',
+                                                          'IDLVL=2',
+                                                          "DES=DES1=" + des_data])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    ds = gdal.Open('/vsimem/out.ntf')
+    assert ds.GetMetadata("xml:DES") is not None
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.Open('NITF_IM:1:/vsimem/out.ntf')
+    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
+    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+
+    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(stddev, abs=0.1), \
+        'did not get expected mean or standard dev.'
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/out.ntf')
+
+
+###############################################################################
+# Test creating file with multiple image segments
+
+def test_nitf_create_three_images_final_uncompressed():
+
+    gdal.Unlink('/vsimem/out.ntf')
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+
+    # Write first image segment, reserve space for two other ones and a DES
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['NUMI=3',
+                                                          'NUMDES=1'])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    # Write second image segment
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['APPEND_SUBDATASET=YES',
+                                                          'IC=C3',
+                                                          'IDLVL=2'])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    # Write third and final image segment and DES
+    des_data = "02U" + " "*166 + r'0004ABCD1234567\0890'
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/out.ntf', src_ds,
+                                                 options=['APPEND_SUBDATASET=YES',
+                                                          'IDLVL=3',
+                                                          "DES=DES1=" + des_data])
+    assert ds is not None
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+
+    ds = gdal.Open('/vsimem/out.ntf')
+    assert ds.GetMetadata("xml:DES") is not None
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.Open('NITF_IM:1:/vsimem/out.ntf')
+    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
+    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+
+    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(stddev, abs=0.1), \
+        'did not get expected mean or standard dev.'
+
+    ds = gdal.Open('NITF_IM:2:/vsimem/out.ntf')
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/out.ntf')
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714

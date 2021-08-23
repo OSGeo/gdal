@@ -104,7 +104,7 @@ def _GetGeomType(src_geom_type_name):
 
 
 def _Esc(x):
-    return gdal.EscapeString(x, gdal.CPLES_XML)
+    return gdal.EscapeString(x, gdal.CPLES_XML).decode('UTF-8')
 
 
 class XMLWriter(object):

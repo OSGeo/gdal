@@ -132,7 +132,7 @@ retry:
 #define GetMD( length, name )              \
     do { NITFExtractMetadata( &(psDES->papszMetadata), pachHeader,    \
                          nOffset, length,                        \
-                         "NITF_" #name ); \
+                         #name ); \
     nOffset += length; } while(0)
 
     nOffset = 2;
@@ -189,7 +189,7 @@ retry:
     }
 
     GetMD( 4, DESSHL );
-    nDESSHL = atoi(CSLFetchNameValue( psDES->papszMetadata, "NITF_DESSHL" ) );
+    nDESSHL = atoi(CSLFetchNameValue( psDES->papszMetadata, "DESSHL" ) );
 
     if (nDESSHL < 0)
     {
@@ -206,63 +206,8 @@ retry:
         return NULL;
     }
 
-    if (STARTS_WITH_CI(szDESID, "CSSHPA DES"))
-    {
-        if ( nDESSHL != 62 && nDESSHL != 80)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid DESSHL for CSSHPA DES");
-            NITFDESDeaccess(psDES);
-            return NULL;
-        }
-
-        GetMD( 25, SHAPE_USE );
-        GetMD( 10, SHAPE_CLASS );
-        if (nDESSHL == 80)
-            GetMD( 18, CC_SOURCE );
-        GetMD(  3, SHAPE1_NAME );
-        GetMD(  6, SHAPE1_START );
-        GetMD(  3, SHAPE2_NAME );
-        GetMD(  6, SHAPE2_START );
-        GetMD(  3, SHAPE3_NAME );
-        GetMD(  6, SHAPE3_START );
-    }
-    else if (STARTS_WITH_CI(szDESID, "XML_DATA_CONTENT"))
-    {
-        /* TODO : handle nDESSHL = 0005 and 0283 */
-        if (nDESSHL >= 5)
-        {
-            GetMD( 5, DESCRC );
-            if (nDESSHL >= 283)
-            {
-                GetMD( 8, DESSHFT );
-                GetMD( 20, DESSHDT );
-                GetMD( 40, DESSHRP );
-                GetMD( 60, DESSHSI );
-                GetMD( 10, DESSHSV );
-                GetMD( 20, DESSHSD );
-                GetMD( 120, DESSHTN );
-                if (nDESSHL >= 773)
-                {
-                    GetMD( 125, DESSHLPG );
-                    GetMD( 25, DESSHLPT );
-                    GetMD( 20, DESSHLI );
-                    GetMD( 120, DESSHLIN );
-                    GetMD( 200, DESSHABS );
-                }
-            }
-        }
-    }
-    else if (STARTS_WITH_CI(szDESID, "CSATTA DES") && nDESSHL == 52)
-    {
-        GetMD( 12, ATT_TYPE );
-        GetMD( 14, DT_ATT );
-        GetMD( 8, DATE_ATT );
-        GetMD( 13, T0_ATT );
-        GetMD( 5, NUM_ATT );
-    }
-    else if (nDESSHL > 0)
-        GetMD(  nDESSHL, DESSHF );
+    if (nDESSHL > 0)
+        GetMD( nDESSHL, DESSHF );
 
     if ((int)psSegInfo->nSegmentHeaderSize > nOffset)
     {
@@ -271,7 +216,7 @@ retry:
                                  (int)psSegInfo->nSegmentHeaderSize - nOffset,
                                  CPLES_BackslashQuotable );
         psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
-                                                "NITF_DESDATA",
+                                                "DESDATA",
                                                 pszEscapedDESDATA );
         CPLFree(pszEscapedDESDATA);
     }
@@ -286,10 +231,10 @@ retry:
             const char* pszSize = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentSize);
 
             psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
-                                                    "NITF_DESDATA_OFFSET",
+                                                    "DESDATA_OFFSET",
                                                     pszOffset );
             psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
-                                                    "NITF_DESDATA_LENGTH",
+                                                    "DESDATA_LENGTH",
                                                     pszSize);
         }
         else
@@ -316,7 +261,7 @@ retry:
                                         (int)psSegInfo->nSegmentSize,
                                         CPLES_BackslashQuotable );
                 psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
-                                                        "NITF_DESDATA",
+                                                        "DESDATA",
                                                         pszEscapedDESDATA );
                 CPLFree(pszEscapedDESDATA);
             }
@@ -327,7 +272,7 @@ retry:
         /* Disabled because might generate a huge amount of elements */
         if (STARTS_WITH_CI(szDESID, "CSATTA DES"))
         {
-            int nNumAtt = atoi(CSLFetchNameValueDef(psDES->papszMetadata, "NITF_NUM_ATT", "0"));
+            int nNumAtt = atoi(CSLFetchNameValueDef(psDES->papszMetadata, "NUM_ATT", "0"));
             if (nNumAtt * 8 * 4 == psSegInfo->nSegmentSize)
             {
                 int nMDSize = CSLCount(psDES->papszMetadata);
@@ -347,7 +292,7 @@ retry:
                             memcpy(&dfVal, pachDataIter, 8);
                             CPL_MSBPTR64(&dfVal);
                             pachDataIter += 8;
-                            CPLsprintf(szAttrNameValue, "NITF_ATT_Q%d_%d=%.16g", j+1, i, dfVal);
+                            CPLsprintf(szAttrNameValue, "ATT_Q%d_%d=%.16g", j+1, i, dfVal);
                             papszMD[nMDSize + i * 4 + j] = CPLStrdup(szAttrNameValue);
                         }
                     }
@@ -419,7 +364,7 @@ int   NITFDESGetTRE( NITFDES* psDES,
     if (psDES == NULL)
         return FALSE;
 
-    if (CSLFetchNameValue(psDES->papszMetadata, "NITF_DESOFLW") == NULL)
+    if (CSLFetchNameValue(psDES->papszMetadata, "DESOFLW") == NULL)
         return FALSE;
 
     psSegInfo = psDES->psFile->pasSegmentInfo + psDES->iSegment;
@@ -514,36 +459,55 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
     int iShpFile;
     char* pszFilename;
     size_t nFilenameLen;
+    char* pachHeader = psDES->pachHeader;
 
-    if ( CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE_USE") == NULL )
+    int nDESSHL = atoi(CSLFetchNameValue( psDES->papszMetadata, "DESSHL" ) );
+    if ( nDESSHL != 62 && nDESSHL != 80)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid DESSHL for CSSHPA DES");
         return FALSE;
+    }
+
+    char** papszMetadataBackup = CSLDuplicate(psDES->papszMetadata);
+    psDES->papszMetadata = NULL;
+    int nOffset = 200 +25 + 10;
+    if (nDESSHL == 80)
+        nOffset += 18;
+    GetMD(  3, SHAPE1_NAME );
+    GetMD(  6, SHAPE1_START );
+    GetMD(  3, SHAPE2_NAME );
+    GetMD(  6, SHAPE2_START );
+    GetMD(  3, SHAPE3_NAME );
+    GetMD(  6, SHAPE3_START );
 
     psSegInfo = psDES->psFile->pasSegmentInfo + psDES->iSegment;
 
-    apszExt[0] = CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE1_NAME");
-    anOffset[0] = atoi(CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE1_START"));
-    apszExt[1] = CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE2_NAME");
-    anOffset[1] = atoi(CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE2_START"));
-    apszExt[2] = CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE3_NAME");
-    anOffset[2] = atoi(CSLFetchNameValue(psDES->papszMetadata, "NITF_SHAPE3_START"));
+    apszExt[0] = CSLFetchNameValue(psDES->papszMetadata, "SHAPE1_NAME");
+    anOffset[0] = atoi(CSLFetchNameValue(psDES->papszMetadata, "SHAPE1_START"));
+    apszExt[1] = CSLFetchNameValue(psDES->papszMetadata, "SHAPE2_NAME");
+    anOffset[1] = atoi(CSLFetchNameValue(psDES->papszMetadata, "SHAPE2_START"));
+    apszExt[2] = CSLFetchNameValue(psDES->papszMetadata, "SHAPE3_NAME");
+    anOffset[2] = atoi(CSLFetchNameValue(psDES->papszMetadata, "SHAPE3_START"));
     anOffset[3] = (int) psSegInfo->nSegmentSize;
 
+    int ret = FALSE;
     for(iShpFile = 0; iShpFile < 3; iShpFile ++)
     {
         if (!EQUAL(apszExt[iShpFile], "SHP") &&
             !EQUAL(apszExt[iShpFile], "SHX") &&
             !EQUAL(apszExt[iShpFile], "DBF"))
-            return FALSE;
+            goto end;
 
         if (anOffset[iShpFile] < 0 ||
             anOffset[iShpFile] >= anOffset[iShpFile+1])
-            return FALSE;
+            goto end;
     }
 
     nFilenameLen = strlen(pszRadixFileName) + 4 + 1;
     pszFilename = (char*) VSI_MALLOC_VERBOSE(nFilenameLen);
     if (pszFilename == NULL)
-        return FALSE;
+        goto end;
 
     for(iShpFile = 0; iShpFile < 3; iShpFile ++)
     {
@@ -555,7 +519,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
         if (pabyBuffer == NULL)
         {
             VSIFree(pszFilename);
-            return FALSE;
+            goto end;
         }
 
         if( VSIFSeekL(psDES->psFile->fp, psSegInfo->nSegmentStart + anOffset[iShpFile], SEEK_SET) != 0 ||
@@ -563,7 +527,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
         {
             VSIFree(pabyBuffer);
             VSIFree(pszFilename);
-            return FALSE;
+            goto end;
         }
 
         snprintf(pszFilename, nFilenameLen, "%s.%s", pszRadixFileName, apszExt[iShpFile]);
@@ -572,7 +536,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
         {
             VSIFree(pabyBuffer);
             VSIFree(pszFilename);
-            return FALSE;
+            goto end;
         }
 
         if( (int) VSIFWriteL(pabyBuffer, 1, nSize, fp) != nSize )
@@ -580,7 +544,7 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
             CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
             VSIFree(pabyBuffer);
             VSIFree(pszFilename);
-            return FALSE;
+            goto end;
         }
         CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         VSIFree(pabyBuffer);
@@ -588,7 +552,11 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
 
     VSIFree(pszFilename);
 
-    return TRUE;
+    ret = TRUE;
+end:
+    CSLDestroy(psDES->papszMetadata);
+    psDES->papszMetadata = papszMetadataBackup;
+    return ret;
 }
 
 /************************************************************************/
@@ -619,7 +587,6 @@ CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment)
     {
         CPLXMLNode* psFieldNode;
         CPLXMLNode* psNameNode;
-        CPLXMLNode* psValueNode;
 
         const char* pszMDval;
         const char* pszMDsep;
@@ -648,9 +615,17 @@ CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment)
             psFieldNode = CPLCreateXMLNode(psDesNode, CXT_Element, "field");
             psNameNode = CPLCreateXMLNode(psFieldNode, CXT_Attribute, "name");
             CPLCreateXMLNode(psNameNode, CXT_Text, pszMDname);
-            psValueNode = CPLCreateXMLNode(psFieldNode, CXT_Attribute, "value");
 
-            if (strcmp(pszMDname, "NITF_DESDATA") == 0)
+            if (strcmp(pszMDname, "DESSHF") == 0)
+            {
+                CPLAddXMLAttributeAndValue(psFieldNode, "value", pszMDval);
+                CPLXMLNode* psChild = NITFCreateXMLDesUserDefinedSubHeader(psFile, psDes);
+                if( psChild )
+                {
+                    CPLAddXMLChild(psFieldNode, psChild);
+                }
+            }
+            else if (strcmp(pszMDname, "DESDATA") == 0)
             {
                 int nLen;
                 char* pszUnescaped = CPLUnescapeString(pszMDval, &nLen, CPLES_BackslashQuotable);
@@ -667,13 +642,13 @@ CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment)
                     return NULL;
                 }
 
-                CPLCreateXMLNode(psValueNode, CXT_Text, pszBase64);
+                CPLAddXMLAttributeAndValue(psFieldNode, "value", pszBase64);
 
                 CPLFree(pszBase64);
             }
             else
             {
-                CPLCreateXMLNode(psValueNode, CXT_Text, pszMDval);
+                CPLAddXMLAttributeAndValue(psFieldNode, "value", pszMDval);
             }
 
             CPLFree(pszMDname);

@@ -2574,4 +2574,12 @@ def ConfigurePythonLogging(logger_name='gdal', enable_debug=False):
     # Install as the default GDAL log handler
     SetErrorHandler(_pylog_handler)
 
+
+def EscapeString(*args, **kwargs):
+    """EscapeString(string_or_bytes, scheme = gdal.CPLES_SQL)"""
+    if isinstance(args[0], bytes):
+        return _gdal.EscapeBinary(*args, **kwargs)
+    else:
+        return _gdal.wrapper_EscapeString(*args, **kwargs)
+
 %}

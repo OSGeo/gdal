@@ -23009,7 +23009,13 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(argout) (size_t *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
+    if( *arg3 ) {
+      resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
+    }
+    else {
+      resultobj = Py_None;
+      Py_INCREF(Py_None);
+    }
   }
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
@@ -23105,7 +23111,13 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(argout) (size_t *nLen, char **pBuf ) */
     Py_XDECREF(resultobj);
-    resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
+    if( *arg3 ) {
+      resultobj = PyByteArray_FromStringAndSize( *arg3, *arg2 );
+    }
+    else {
+      resultobj = Py_None;
+      Py_INCREF(Py_None);
+    }
   }
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
