@@ -960,13 +960,22 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
             SWIG_fail;
         }
 
-        PyObject* vStr = PyObject_Str(v);
-        if( PyErr_Occurred() )
+        PyObject* vStr;
+        if( PyBytes_Check(v) )
         {
-            Py_DECREF(it);
-            Py_DECREF(kStr);
-            Py_DECREF(item_list);
-            SWIG_fail;
+            vStr = v;
+            Py_INCREF(vStr);
+        }
+        else
+        {
+            vStr = PyObject_Str(v);
+            if( PyErr_Occurred() )
+            {
+                Py_DECREF(it);
+                Py_DECREF(kStr);
+                Py_DECREF(item_list);
+                SWIG_fail;
+            }
         }
 
         int bFreeK, bFreeV;
