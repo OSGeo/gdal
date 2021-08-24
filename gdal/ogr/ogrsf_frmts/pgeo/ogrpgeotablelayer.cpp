@@ -196,23 +196,7 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
     poFeatureDefn->SetGeomType( eOGRType );
 
     // try to associate domains with fields
-    CPLODBCStatement oTableList( poSession );
-    bool bFoundGdbItemsTable = false;
-    if( oTableList.GetTables() )
-    {
-        while( oTableList.Fetch() )
-        {
-            const CPLString osTableName = CPLString( oTableList.GetColData(2) );
-            const CPLString osLCTableName(CPLString(osTableName).tolower());
-            if( osLCTableName == "gdb_items" )
-            {
-                bFoundGdbItemsTable = true;
-                break;
-            }
-        }
-    }
-
-    if ( bFoundGdbItemsTable )
+    if ( poDS->HasGdbItemsTable() )
     {
         CPLODBCStatement oItemsStmt( poSession );
         oItemsStmt.Append( "SELECT Definition FROM GDB_Items WHERE Name='" );

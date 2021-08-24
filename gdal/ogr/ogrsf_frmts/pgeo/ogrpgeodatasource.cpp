@@ -173,9 +173,35 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         apapszGeomColumns[iNew] = papszRecord;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create a layer for each spatial table.                          */
-/* -------------------------------------------------------------------- */
+    // Collate a list of all tables in the data source, skipping over internal and system tables
+    CPLODBCStatement oTableList( &oSession );
+    std::vector< CPLString > aosTableNames;
+    if( oTableList.GetTables() )
+    {
+        while( oTableList.Fetch() )
+        {
+            const CPLString osTableName = CPLString( oTableList.GetColData(2) );
+            const CPLString osLCTableName(CPLString(osTableName).tolower());
+
+            if( osLCTableName == "gdb_items" )
+            {
+                m_bHasGdbItemsTable = true;
+                continue;
+            }
+
+            // a bunch of internal tables we don't want to expose...
+            if( !osTableName.empty()
+                    && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
+                    && !osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
+                    && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
+                    )
+            {
+                aosTableNames.emplace_back( osTableName );
+            }
+        }
+    }
+
+    // Create a layer for each spatial table.
     papoLayers = (OGRPGeoLayer **) CPLCalloc(apapszGeomColumns.size(),
                                              sizeof(void*));
 
@@ -216,59 +242,40 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
 
-    /* -------------------------------------------------------------------- */
-    /*      Add non-spatial tables.                       */
-    /* -------------------------------------------------------------------- */
-        CPLODBCStatement oTableList( &oSession );
-        bool bFoundGdbItemsTable = false;
-        if( oTableList.GetTables() )
+    // Add non-spatial tables.
+    for ( const CPLString &osTableName : aosTableNames )
+    {
+        if( oSetSpatialTableNames.find( osTableName ) != oSetSpatialTableNames.end() )
         {
-            while( oTableList.Fetch() )
-            {
-                const CPLString osTableName = CPLString( oTableList.GetColData(2) );
-                const CPLString osLCTableName(CPLString(osTableName).tolower());
-
-                if( osLCTableName == "gdb_items" )
-                {
-                    bFoundGdbItemsTable = true;
-                    continue;
-                }
-
-                // a bunch of internal tables we don't want to expose...
-                if( !osTableName.empty()
-                        && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
-                        && oSetSpatialTableNames.find( osTableName ) == oSetSpatialTableNames.end() // spatial tables, already handled above
-                        && !osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
-                        && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
-                        )
-                {
-                    OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this );
-
-                    if( poLayer->Initialize( osTableName.c_str(),         // TableName
-                                             nullptr,         // FieldName
-                                             0,   // ShapeType (ESRI_LAYERGEOMTYPE_NULL)
-                                             0,   // ExtentLeft
-                                             0,   // ExtentRight
-                                             0,   // ExtentBottom
-                                             0,   // ExtentTop
-                                             0,   // SRID
-                                             0,   // HasZ
-                                             0)   // HasM
-                        != CE_None )
-                    {
-                        delete poLayer;
-                    }
-                    else
-                    {
-                        papoLayers = static_cast< OGRPGeoLayer **>( CPLRealloc(papoLayers, sizeof(void*) * ( nLayers+1 ) ) );
-                        papoLayers[nLayers++] = poLayer;
-                    }
-                }
-            }
+            // a spatial table, already handled above
+            continue;
         }
 
+        OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this );
+
+        if( poLayer->Initialize( osTableName.c_str(),         // TableName
+                                 nullptr,         // FieldName
+                                 0,   // ShapeType (ESRI_LAYERGEOMTYPE_NULL)
+                                 0,   // ExtentLeft
+                                 0,   // ExtentRight
+                                 0,   // ExtentBottom
+                                 0,   // ExtentTop
+                                 0,   // SRID
+                                 0,   // HasZ
+                                 0)   // HasM
+            != CE_None )
+        {
+            delete poLayer;
+        }
+        else
+        {
+            papoLayers = static_cast< OGRPGeoLayer **>( CPLRealloc(papoLayers, sizeof(void*) * ( nLayers+1 ) ) );
+            papoLayers[nLayers++] = poLayer;
+        }
+    }
+
     // collect domains
-    if ( bFoundGdbItemsTable )
+    if ( m_bHasGdbItemsTable )
     {
         CPLODBCStatement oItemsStmt( &oSession );
         oItemsStmt.Append( "SELECT Definition FROM GDB_Items" );
