@@ -52,6 +52,14 @@ Driver capabilities
 
 .. supports_georeferencing::
 
+
+Field domains
+-------------
+
+.. versionadded:: 3.4
+
+Coded and range field domains are supported.
+
 How to use PGeo driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------
 

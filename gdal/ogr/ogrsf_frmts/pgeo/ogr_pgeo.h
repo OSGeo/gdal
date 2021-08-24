@@ -170,6 +170,9 @@ class OGRPGeoDataSource final: public OGRDataSource
 
     int                 bDSUpdate;
     mutable CPLODBCSession oSession;
+
+    bool                m_bHasGdbItemsTable = false;
+
 #ifndef _WIN32
     mutable bool        m_COUNT_STAR_state_known = false;
     mutable bool        m_COUNT_STAR_working = false;
@@ -198,6 +201,8 @@ class OGRPGeoDataSource final: public OGRDataSource
     CPLODBCSession     *GetSession() { return &oSession; }
 
     bool CountStarWorking() const;
+
+    bool HasGdbItemsTable() const { return m_bHasGdbItemsTable; }
 };
 
 /************************************************************************/

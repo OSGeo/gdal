@@ -195,6 +195,47 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
     poFeatureDefn->SetGeomType( eOGRType );
 
+    // try to associate domains with fields
+    if ( poDS->HasGdbItemsTable() )
+    {
+        CPLODBCStatement oItemsStmt( poSession );
+        oItemsStmt.Append( "SELECT Definition FROM GDB_Items WHERE Name='" );
+        oItemsStmt.Append( pszTableName );
+        oItemsStmt.Append( "'" );
+        if( oItemsStmt.ExecuteSQL() )
+        {
+            while( oItemsStmt.Fetch() )
+            {
+                const CPLString osDefinition = CPLString( oItemsStmt.GetColData(0, "") );
+                if( strstr(osDefinition, "DEFeatureClassInfo") != nullptr )
+                {
+                    CPLXMLTreeCloser oTree(CPLParseXMLString(osDefinition.c_str()));
+                    if( oTree.get() )
+                    {
+                        if ( const CPLXMLNode* psFieldInfoExs = CPLGetXMLNode(oTree.get(), "=DEFeatureClassInfo.GPFieldInfoExs") )
+                        {
+                            for( const CPLXMLNode *psFieldInfoEx =
+                                     CPLGetXMLNode( psFieldInfoExs, "GPFieldInfoEx" );
+                                 psFieldInfoEx != nullptr;
+                                 psFieldInfoEx = psFieldInfoEx->psNext )
+                            {
+                                const CPLString osName = CPLGetXMLValue(psFieldInfoEx, "Name", "");
+                                const CPLString osDomainName = CPLGetXMLValue(psFieldInfoEx, "DomainName", "");
+                                if ( !osDomainName.empty() )
+                                {
+                                    const int fieldIndex = poFeatureDefn->GetFieldIndex( osName );
+                                    if ( fieldIndex != -1 )
+                                        poFeatureDefn->GetFieldDefn( fieldIndex )->SetDomainName( osDomainName );
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     return CE_None;
 }
 

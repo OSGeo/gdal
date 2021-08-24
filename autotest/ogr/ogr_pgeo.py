@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+from osgeo import gdal
 from osgeo import ogr
 
 
@@ -366,3 +367,45 @@ def test_ogr_pgeo_11():
                                       max_error=0.0001) != 0:
         feat.DumpReadable()
         pytest.fail('did not get expected geometry')
+
+###############################################################################
+
+
+def test_ogr_pgeo_read_domains():
+    ds = gdal.OpenEx('data/pgeo/domains.mdb', gdal.OF_VECTOR)
+    if ds is None:
+        pytest.skip('could not open DB. Driver probably misconfigured')
+
+    with gdaltest.error_handler():
+        assert ds.GetFieldDomain('i_dont_exist') is None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'domains'
+    lyr_defn = lyr.GetLayerDefn()
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('domain_1'))
+    assert fld_defn.GetDomainName() == 'my coded domain'
+
+    domain = ds.GetFieldDomain('my coded domain')
+    assert domain is not None
+    assert domain.GetName() == 'my coded domain'
+    assert domain.GetDescription() == 'domain description'
+    assert domain.GetDomainType() == ogr.OFDT_CODED
+    assert domain.GetFieldType() == fld_defn.GetType()
+    assert domain.GetFieldSubType() == fld_defn.GetSubType()
+    assert domain.GetEnumeration() == {'code_a': 'Description A',
+                                       'code_b': 'Description B',
+                                       'code_c': 'Description C'}
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('domain_3'))
+    assert fld_defn.GetDomainName() == 'range_domain'
+
+    domain = ds.GetFieldDomain('range_domain')
+    assert domain is not None
+    assert domain.GetName() == 'range_domain'
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == fld_defn.GetType()
+    assert domain.GetFieldSubType() == fld_defn.GetSubType()
+    assert domain.GetMinAsDouble() == -5.0
+    assert domain.GetMaxAsDouble() == 50.0
+
+
