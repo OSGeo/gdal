@@ -372,8 +372,10 @@ def test_ogr_pgeo_11():
 
 
 def test_ogr_pgeo_read_domains():
-
     ds = gdal.OpenEx('data/pgeo/domains.mdb', gdal.OF_VECTOR)
+    if ds is None:
+        pytest.skip('could not open DB. Driver probably misconfigured')
+
     with gdaltest.error_handler():
         assert ds.GetFieldDomain('i_dont_exist') is None
     lyr = ds.GetLayer(0)
