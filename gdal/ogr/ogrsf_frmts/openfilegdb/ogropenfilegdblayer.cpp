@@ -670,7 +670,6 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 CPLAssert(false);
                 break;
             case FGFT_BINARY:
-            case FGFT_RASTER:
             {
                 /* Special case for v9 GDB_UserMetadata table */
                 if( m_iFieldToReadAsBinary < 0 &&
@@ -681,7 +680,18 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                     eType = OFTString;
                 }
                 else
+                {
                     eType = OFTBinary;
+                }
+                break;
+            }
+            case FGFT_RASTER:
+            {
+                const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(poGDBField);
+                if( rasterField->IsManaged() )
+                    eType = OFTInteger;
+                else
+                    eType = OFTString;
                 break;
             }
         }

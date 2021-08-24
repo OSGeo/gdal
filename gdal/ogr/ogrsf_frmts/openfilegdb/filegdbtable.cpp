@@ -398,8 +398,15 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                 break;
             }
 
-            /* Only 4 bytes ? */
-            case FGFT_RASTER: nRequiredLength += sizeof(GInt32); break;
+            case FGFT_RASTER:
+            {
+                const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(apoFields[i]);
+                if( rasterField->IsManaged() )
+                    nRequiredLength += sizeof(GInt32);
+                else
+                    nRequiredLength += 1; /* varuint32 so at least one byte */
+                break;
+            }
 
             case FGFT_INT16: nRequiredLength += sizeof(GInt16); break;
             case FGFT_INT32: nRequiredLength += sizeof(GInt32); break;
@@ -473,8 +480,25 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                     break;
                 }
 
-                /* Only 4 bytes ? */
-                case FGFT_RASTER: nRequiredLength += sizeof(GInt32); break;
+                case FGFT_RASTER:
+                {
+                    const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(apoFields[i]);
+                    if( rasterField->IsManaged() )
+                        nRequiredLength += sizeof(GInt32);
+                    else
+                    {
+                        GByte* pabyIter = pabyBuffer + nRequiredLength;
+                        GUInt32 nLength;
+                        if( !ReadVarUInt32Silent(pabyIter, pabyBuffer + nRowBlobLength, nLength) ||
+                            pabyIter - (pabyBuffer + nRequiredLength) > 5 )
+                            return FALSE;
+                        nRequiredLength = static_cast<GUInt32>(pabyIter - pabyBuffer);
+                        if( nLength > nRowBlobLength - nRequiredLength )
+                            return FALSE;
+                        nRequiredLength += nLength;
+                    }
+                    break;
+                }
 
                 case FGFT_INT16: nRequiredLength += sizeof(GInt16); break;
                 case FGFT_INT32: nRequiredLength += sizeof(GInt32); break;
@@ -1049,8 +1073,8 @@ int FileGDBTable::Open(const char* pszFilename,
 
             if( eType == FGFT_RASTER )
             {
-                /* Always one byte at end ? */
                 returnErrorIf(nRemaining < 1 );
+                poRasterField->m_bIsManaged = *pabyIter != 0;
                 pabyIter += 1;
                 nRemaining -= 1;
             }
@@ -1463,8 +1487,21 @@ OGRField* FileGDBTable::GetFieldValue(int iCol)
                 break;
             }
 
-            /* Only 4 bytes ? */
-            case FGFT_RASTER: nLength = sizeof(GInt32); break;
+            case FGFT_RASTER:
+            {
+                const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(apoFields[j]);
+                if( rasterField->IsManaged() )
+                    nLength = sizeof(GInt32);
+                else
+                {
+                    if( !ReadVarUInt32(pabyIterVals, pabyEnd, nLength) )
+                    {
+                        bError = TRUE;
+                        returnError();
+                    }
+                }
+                break;
+            }
 
             case FGFT_INT16: nLength = sizeof(GInt16); break;
             case FGFT_INT32: nLength = sizeof(GInt32); break;
@@ -1647,22 +1684,44 @@ OGRField* FileGDBTable::GetFieldValue(int iCol)
             break;
         }
 
-        /* Only 4 bytes ? */
         case FGFT_RASTER:
         {
-            if( pabyIterVals + sizeof(GInt32) > pabyEnd )
+            const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(apoFields[iCol]);
+            if( rasterField->IsManaged() )
             {
-                bError = TRUE;
-                returnError();
+                if( pabyIterVals + sizeof(GInt32) > pabyEnd )
+                {
+                    bError = TRUE;
+                    returnError();
+                }
+
+                const GInt32 nVal = GetInt32(pabyIterVals, 0);
+
+                /* eCurFieldType = OFTIntger; */
+                sCurField.Integer = nVal;
+
+                pabyIterVals += sizeof(GInt32);
             }
+            else
+            {
+                GUInt32 nLength;
+                if( !ReadVarUInt32(pabyIterVals, pabyEnd, nLength) )
+                {
+                    bError = TRUE;
+                    returnError();
+                }
+                if( nLength > (GUInt32)(pabyEnd - pabyIterVals) )
+                {
+                    bError = TRUE;
+                    returnError();
+                }
 
-            /* GInt32 nVal = GetInt32(pabyIterVals, 0); */
+                // coverity[tainted_data,tainted_data_argument]
+                m_osCacheRasterFieldPath = ReadUTF16String(pabyIterVals, nLength / 2);
+                pabyIterVals += nLength;
 
-            /* eCurFieldType = OFTBinary; */
-            OGR_RawField_SetUnset(&sCurField);
-
-            pabyIterVals += sizeof(GInt32);
-            /* CPLDebug("OpenFileGDB", "Field %d, row %d: %d", iCol, nCurRow, sCurField.Integer); */
+                sCurField.String = &m_osCacheRasterFieldPath[0];
+            }
             break;
         }
 
