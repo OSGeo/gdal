@@ -52,6 +52,12 @@ def setup_driver():
     if mdb_driver is not None:
         mdb_driver.Deregister()
 
+    # we may have the PGeo GDAL driver, but be missing an ODBC driver for MS Access on the test environment
+    # so open a test dataset and check to see if it's supported
+    pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
+    if pgeo_ds is None:
+        pytest.skip('could not open DB. MDB ODBC driver probably missing or misconfigured', allow_module_level=True)
+
     yield
 
     if mdb_driver is not None:
@@ -219,9 +225,6 @@ def test_ogr_pgeo_7(download_test_data):
 
 def test_ogr_pgeo_8():
     pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
-    if pgeo_ds is None:
-        pytest.skip('could not open DB. Driver probably misconfigured')
-
     assert pgeo_ds.GetLayerCount() == 4, 'did not get expected layer count'
 
     layer_names = [pgeo_ds.GetLayer(n).GetName() for n in range(4)]
@@ -247,8 +250,6 @@ def test_ogr_pgeo_8():
 
 def test_ogr_pgeo_9():
     pgeo_ds = ogr.Open('data/pgeo/mixed_types.mdb')
-    if pgeo_ds is None:
-        pytest.skip('could not open DB. Driver probably misconfigured')
 
     polygon_layer = pgeo_ds.GetLayerByName('polygons')
     assert polygon_layer.GetGeomType() == ogr.wkbMultiPolygon
@@ -280,8 +281,6 @@ def test_ogr_pgeo_9():
 
 def test_ogr_pgeo_10():
     pgeo_ds = ogr.Open('data/pgeo/mixed_types.mdb')
-    if pgeo_ds is None:
-        pytest.skip('could not open DB. Driver probably misconfigured')
 
     polygon_layer = pgeo_ds.GetLayerByName('lines')
     assert polygon_layer.GetGeomType() == ogr.wkbMultiLineString
@@ -314,8 +313,6 @@ def test_ogr_pgeo_10():
 
 def test_ogr_pgeo_11():
     pgeo_ds = ogr.Open('data/pgeo/geometry_types.mdb')
-    if pgeo_ds is None:
-        pytest.skip('could not open DB. Driver probably misconfigured')
 
     point_z_layer = pgeo_ds.GetLayerByName('point_z')
     assert point_z_layer.GetGeomType() == ogr.wkbPoint25D
@@ -373,8 +370,6 @@ def test_ogr_pgeo_11():
 
 def test_ogr_pgeo_read_domains():
     ds = gdal.OpenEx('data/pgeo/domains.mdb', gdal.OF_VECTOR)
-    if ds is None:
-        pytest.skip('could not open DB. Driver probably misconfigured')
 
     with gdaltest.error_handler():
         assert ds.GetFieldDomain('i_dont_exist') is None
@@ -414,8 +409,6 @@ def test_ogr_pgeo_read_domains():
 
 def test_ogr_pgeo_read_definition():
     ds = gdal.OpenEx('data/pgeo/metadata.mdb', gdal.OF_VECTOR)
-    if ds is None:
-        pytest.skip('could not open DB. Driver probably misconfigured')
 
     sql_lyr = ds.ExecuteSQL('GetLayerDefinition not a table')
     assert sql_lyr is None
@@ -436,8 +429,6 @@ def test_ogr_pgeo_read_definition():
 
 def test_ogr_pgeo_read_metadata():
     ds = gdal.OpenEx('data/pgeo/metadata.mdb', gdal.OF_VECTOR)
-    if ds is None:
-        pytest.skip('could not open DB. Driver probably misconfigured')
 
     sql_lyr = ds.ExecuteSQL('GetLayerMetadata not a table')
     assert sql_lyr is None
