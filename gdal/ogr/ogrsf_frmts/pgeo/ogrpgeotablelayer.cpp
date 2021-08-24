@@ -221,7 +221,7 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                             {
                                 const CPLString osName = CPLGetXMLValue(psFieldInfoEx, "Name", "");
                                 const CPLString osDomainName = CPLGetXMLValue(psFieldInfoEx, "DomainName", "");
-                                if ( osDomainName != "" )
+                                if ( !osDomainName.empty() )
                                 {
                                     const int fieldIndex = poFeatureDefn->GetFieldIndex( osName );
                                     if ( fieldIndex != -1 )
