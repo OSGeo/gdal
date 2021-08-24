@@ -242,19 +242,14 @@ def test_ogr_pgeo_spatial_filter():
 def test_ogr_pgeo_spatial_filter_v9(download_test_data):
     lyr = download_test_data.GetLayer(0)
     lyr.ResetReading()
-
-    feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    bbox = geom.GetEnvelope()
-
-    lyr.SetSpatialFilterRect(bbox[0], bbox[1], bbox[2], bbox[3])
+    lyr.SetSpatialFilterRect(1909982.7, 445835.6, 1911646.3, 446627.5)
 
     feat_count = lyr.GetFeatureCount()
-    assert feat_count == 6957, 'did not get expected feature count'
+    assert feat_count == 18, 'did not get expected feature count'
 
     feat = lyr.GetNextFeature()
-    if feat.GetField('OBJECTID') != 1 or \
-       feat.GetField('IDNUM') != 9424 or \
+    if feat.GetField('OBJECTID') != 6845 or \
+       feat.GetField('IDNUM') != 2574 or \
        feat.GetField('OWNER') != 'City':
         feat.DumpReadable()
         pytest.fail('did not get expected attributes')
