@@ -42,10 +42,12 @@ ColorTableLike = Union[gdal.ColorTable, ColorPaletteOrPathOrStrings]
 
 def get_color_table_from_raster(path_or_ds: PathOrDS) -> Optional[gdal.ColorTable]:
     ds = open_ds(path_or_ds, silent_fail=True)
-    if ds is not None:
-        ct = ds.GetRasterBand(1).GetRasterColorTable()
-        return ct.Clone()
-    return None
+    if ds is None:
+        return None
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+    if ct is None:
+        return None
+    return ct.Clone()
 
 
 def color_table_from_color_palette(pal: ColorPalette, color_table: gdal.ColorTable,
