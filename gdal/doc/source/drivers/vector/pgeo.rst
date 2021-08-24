@@ -26,7 +26,7 @@ construction of the DSN based on that information in a manner similar to
 the default (used for Windows access to the Microsoft Access Driver).
 
 OGR treats all feature tables as layers. Most geometry types should be
-supported, including 3D data. Measures information will be discarded.
+supported, including 3D data. Measure information (m value) is also supported.
 Coordinate system information should be properly associated with layers.
 
 Currently the OGR Personal Geodatabase driver does not take advantage of
