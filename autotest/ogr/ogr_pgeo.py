@@ -54,7 +54,7 @@ def setup_driver():
 
     # we may have the PGeo GDAL driver, but be missing an ODBC driver for MS Access on the test environment
     # so open a test dataset and check to see if it's supported
-    pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
+    pgeo_ds = ogr.Open('data/pgeo/xsample.mdb')
     if 'MDB_ODBC_DRIVER_INSTALLED' in os.environ:
         # if environment variable is set, then we know that the ODBC driver is installed and something
         # unexpected has happened (i.e. GDAL driver is broken!)
