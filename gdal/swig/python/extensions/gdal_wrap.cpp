@@ -3514,9 +3514,10 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
   {
     if (*pszIter > 127)
     {
-        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "ignore");
-        if (pyObj != NULL)
+        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, strlen(pszStr), "strict");
+        if (pyObj != NULL && !PyErr_Occurred())
             return pyObj;
+        PyErr_Clear();
         return PyBytes_FromString(pszStr);
     }
     pszIter ++;
