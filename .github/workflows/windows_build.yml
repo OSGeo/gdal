@@ -256,6 +256,7 @@ jobs:
             $env:PATH="$env:GITHUB_WORKSPACE\gdal;$env:GITHUB_WORKSPACE\gdal\apps;$env:SDK_PREFIX\dll;$env:SDK_PREFIX;$env:SDK_BIN;$env:GITHUB_WORKSPACE\not_a_real_path;$env:PATH"
             $env:GDAL_DATA="$env:GITHUB_WORKSPACE\gdal\data"
             $env:DO_NOT_FAIL_ON_RECODE_ERRORS="YES"
+            $env:MDB_ODBC_DRIVER_INSTALLED="YES"
             # The ca-bundle.crt file which we could point to is invalid in the current SDK
             # See https://github.com/gisinternals/buildsystem/issues/104
             $env:GDAL_HTTP_UNSAFESSL="YES"
