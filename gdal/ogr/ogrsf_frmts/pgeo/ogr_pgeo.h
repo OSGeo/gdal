@@ -102,6 +102,8 @@ class OGRPGeoTableLayer final: public OGRPGeoLayer
     virtual CPLODBCStatement *  GetStatement() override;
 
     OGREnvelope         sExtent;
+    std::string         m_osDefinition;
+    std::string         m_osDocumentation;
 
   public:
     explicit            OGRPGeoTableLayer( OGRPGeoDataSource * );
@@ -129,6 +131,8 @@ class OGRPGeoTableLayer final: public OGRPGeoLayer
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    const std::string&  GetXMLDefinition() { return m_osDefinition; }
+    const std::string&  GetXMLDocumentation() { return m_osDocumentation; }
 };
 
 /************************************************************************/

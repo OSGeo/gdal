@@ -195,11 +195,11 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
     poFeatureDefn->SetGeomType( eOGRType );
 
-    // try to associate domains with fields
+    // Where possible, retrieve useful metadata information from the GDB_Items table
     if ( poDS->HasGdbItemsTable() )
     {
         CPLODBCStatement oItemsStmt( poSession );
-        oItemsStmt.Append( "SELECT Definition FROM GDB_Items WHERE Name='" );
+        oItemsStmt.Append( "SELECT Definition, Documentation FROM GDB_Items WHERE Name='" );
         oItemsStmt.Append( pszTableName );
         oItemsStmt.Append( "'" );
         if( oItemsStmt.ExecuteSQL() )
@@ -209,6 +209,9 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                 const CPLString osDefinition = CPLString( oItemsStmt.GetColData(0, "") );
                 if( strstr(osDefinition, "DEFeatureClassInfo") != nullptr )
                 {
+                    m_osDefinition = osDefinition;
+
+                    // try to retrieve field domains
                     CPLXMLTreeCloser oTree(CPLParseXMLString(osDefinition.c_str()));
                     if( oTree.get() )
                     {
@@ -230,6 +233,9 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
                             }
                         }
                     }
+
+                    // try to retrieve layer medata
+                    m_osDocumentation = CPLString( oItemsStmt.GetColData(1, "") );
                     break;
                 }
             }

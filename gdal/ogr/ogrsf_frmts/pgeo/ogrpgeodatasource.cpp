@@ -33,6 +33,7 @@
 #include <vector>
 #include <unordered_set>
 #include "filegdb_fielddomain.h"
+#include "ogr_openfilegdb.h"
 
 #ifdef __linux
 #include <sys/types.h>
@@ -331,6 +332,41 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           const char *pszDialect )
 
 {
+
+/* -------------------------------------------------------------------- */
+/*      Special case GetLayerDefinition                                 */
+/* -------------------------------------------------------------------- */
+    if (STARTS_WITH_CI(pszSQLCommand, "GetLayerDefinition "))
+    {
+        OGRPGeoTableLayer* poLayer = cpl::down_cast<OGRPGeoTableLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition ")) );
+        if (poLayer)
+        {
+            OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
+                "LayerDefinition", poLayer->GetXMLDefinition().c_str() );
+            return poRet;
+        }
+
+        return nullptr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case GetLayerMetadata                                   */
+/* -------------------------------------------------------------------- */
+    if (STARTS_WITH_CI(pszSQLCommand, "GetLayerMetadata "))
+    {
+        OGRPGeoTableLayer* poLayer = cpl::down_cast<OGRPGeoTableLayer *>(
+            GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata ")) );
+        if (poLayer)
+        {
+            OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
+                "LayerMetadata", poLayer->GetXMLDocumentation().c_str() );
+            return poRet;
+        }
+
+        return nullptr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */

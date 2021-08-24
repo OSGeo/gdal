@@ -409,3 +409,46 @@ def test_ogr_pgeo_read_domains():
     assert domain.GetMaxAsDouble() == 50.0
 
 
+###############################################################################
+# Test retrieving layer definition
+
+def test_ogr_pgeo_read_definition():
+    ds = gdal.OpenEx('data/pgeo/metadata.mdb', gdal.OF_VECTOR)
+    if ds is None:
+        pytest.skip('could not open DB. Driver probably misconfigured')
+
+    sql_lyr = ds.ExecuteSQL('GetLayerDefinition not a table')
+    assert sql_lyr is None
+
+    sql_lyr = ds.ExecuteSQL('GetLayerDefinition metadata')
+    feat_count = sql_lyr.GetFeatureCount()
+    assert feat_count == 1, 'did not get expected feature count'
+
+    feat = sql_lyr.GetNextFeature()
+    assert feat is not None
+    assert feat.GetField(0).startswith('<DEFeatureClassInfo')
+
+    ds.ReleaseResultSet(sql_lyr)
+
+
+###############################################################################
+# Test retrieving layer metadata
+
+def test_ogr_pgeo_read_metadata():
+    ds = gdal.OpenEx('data/pgeo/metadata.mdb', gdal.OF_VECTOR)
+    if ds is None:
+        pytest.skip('could not open DB. Driver probably misconfigured')
+
+    sql_lyr = ds.ExecuteSQL('GetLayerMetadata not a table')
+    assert sql_lyr is None
+
+    sql_lyr = ds.ExecuteSQL('GetLayerMetadata metadata')
+    feat_count = sql_lyr.GetFeatureCount()
+    assert feat_count == 1, 'did not get expected feature count'
+
+    feat = sql_lyr.GetNextFeature()
+    assert feat is not None
+    assert feat.GetField(0).startswith('<metadata xml:lang="en"><Esri>')
+
+    ds.ReleaseResultSet(sql_lyr)
+

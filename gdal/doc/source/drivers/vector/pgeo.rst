@@ -47,6 +47,13 @@ engine. It's also possible to request the driver to handle SQL commands
 with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"**
 string to the ExecuteSQL() method, as name of the SQL dialect.
 
+Special SQL requests
+--------------------
+
+"GetLayerDefinition a_layer_name" and "GetLayerMetadata a_layer_name"
+can be used as special SQL requests to get respectively the definition
+and metadata of a Personal GeoDatabase table as XML content.
+
 Driver capabilities
 -------------------
 
