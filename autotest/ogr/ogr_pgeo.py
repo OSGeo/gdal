@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+from osgeo import gdal
 from osgeo import ogr
 
 
