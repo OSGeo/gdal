@@ -213,4 +213,26 @@ public:
 
 int OGROpenFileGDBIsComparisonOp(int op);
 
+/************************************************************************/
+/*                   OGROpenFileGDBSingleFeatureLayer                   */
+/************************************************************************/
+
+class OGROpenFileGDBSingleFeatureLayer final: public OGRLayer
+{
+  private:
+    char               *pszVal;
+    OGRFeatureDefn     *poFeatureDefn;
+    int                 iNextShapeId;
+
+  public:
+                        OGROpenFileGDBSingleFeatureLayer( const char* pszLayerName,
+                                                          const char *pszVal );
+               virtual ~OGROpenFileGDBSingleFeatureLayer();
+
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
+};
+
 #endif /* ndef OGR_OPENFILEGDB_H_INCLUDED */
