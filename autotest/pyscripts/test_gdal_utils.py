@@ -129,10 +129,12 @@ def test_utils_py_1():
     ds_list = None
 
 
-def test_min_max():
-    ds = util.open_ds(test_py_scripts.get_data_path('gcore') + 'byte.tif')
-    min_max = util.get_raster_min_max(ds)
-    assert min_max == (74, 255)
+@pytest.mark.parametrize("data,name,min,max,approx_ok",
+                         [('gcore', 'byte.tif', 74, 255, False)])
+def test_min_max(data, name, min, max, approx_ok):
+    ds = util.open_ds(test_py_scripts.get_data_path(data) + name)
+    min_max = util.get_raster_min_max(ds, approx_ok=approx_ok)
+    assert min_max == (min, max)
 
 
 def test_utils_arrays():
