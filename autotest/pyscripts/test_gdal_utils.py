@@ -44,7 +44,9 @@ pytest.importorskip('osgeo_utils')
 
 from osgeo_utils.auxiliary import util, raster_creation, base, array_util, color_table
 from osgeo_utils.auxiliary.color_palette import ColorPalette
+from osgeo_utils.auxiliary.color_table import get_color_table
 from osgeo_utils.auxiliary.extent_util import Extent
+import gdaltest
 
 temp_files = []
 
@@ -231,6 +233,37 @@ def test_utils_color_table_and_palette():
     max_k = max(color_entries.keys())
     for i in range(max_k, 256):
         assert color_entries[max_k] == ct256.GetColorEntry(i), 'fill remaining entries'
+
+
+def test_read_write_color_table_from_raster():
+    """ test color palettes with and without nv """
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    ds = gdaltest.tiff_drv.Create('tmp/ct8.tif', 1, 1, 1, gdal.GDT_Byte)
+    ct = get_color_table(ds)
+    assert ct is None
+
+    name = 'color_paletted_red_green_0-255.txt'
+    root = Path(test_py_scripts.get_data_path('utilities'))
+    path = root / name
+    cp1 = ColorPalette()
+    cp1.read_file(path)
+    ct = get_color_table(cp1)
+    assert ct is not None
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+
+    ct2 = get_color_table(ds)
+    assert ct2 is not None
+    assert ct.GetCount() == ct2.GetCount()
+    for k,v in cp1.pal.items():
+        assert ColorPalette.color_to_color_entry(v, with_alpha=True) == \
+               ct.GetColorEntry(k) == ct2.GetColorEntry(k)
+    # assert ct.GetColorEntry(0) == ct2.GetColorEntry(0)
+
+    ct = None
+    ct2 = None
+    ds = None
+
+    gdaltest.tiff_drv.Delete('tmp/ct8.tif')
 
 
 def test_utils_py_cleanup():
