@@ -2031,7 +2031,7 @@ lbl_next_depth:
             if( bWriteWholeTile )
             {
                 const bool bWholePartialTileThisDim =
-                    arrayStartIdx[i] + countInnerLoopInit[i] == m_aoDims[i]->GetSize();
+                    indicesOuterLoop[i] + countInnerLoopInit[i] == m_aoDims[i]->GetSize();
                 bWriteWholeTile = (countInnerLoopInit[i] == m_anBlockSize[i] ||
                                    bWholePartialTileThisDim);
                 if( bWholePartialTileThisDim )
