@@ -2372,3 +2372,101 @@ def test_zarr_read_nczarr_v2(filename,path):
         assert dims[1].GetSize() == 2
         assert dims[1].GetName() == 'lon'
         assert dims[1].GetFullName() == '/MyGroup/Group_A/lon'
+
+
+@pytest.mark.parametrize("format", ['ZARR_V2', 'ZARR_V3'])
+def test_zarr_cache_tile_presence(format):
+
+    if gdal.GetDriverByName('netCDF') is None:
+        pytest.skip('netCDF driver missing')
+
+    filename = 'tmp/test.zarr'
+    try:
+        # Create a Zarr array with sparse tiles
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional(filename, options=['FORMAT='+format])
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            dim1 = rg.CreateDimension("dim1", None, None, 5)
+            ar = rg.CreateMDArray("test", [dim0, dim1],
+                    gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                    ['BLOCKSIZE=1,2'])
+            assert ar
+            assert ar.Write(struct.pack('B' * 1, 10),
+                            array_start_idx=[0, 0],
+                            count=[1, 1]) == gdal.CE_None
+            assert ar.Write(struct.pack('B' * 1, 100),
+                            array_start_idx=[1, 3],
+                            count=[1, 1]) == gdal.CE_None
+
+        create()
+
+        # Create the tile presence cache
+        def open_with_cache_tile_presence_option():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER,
+                             open_options = ['CACHE_TILE_PRESENCE=YES'])
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg.OpenMDArray('test') is not None
+
+        open_with_cache_tile_presence_option()
+
+        # Check that the cache exists
+        if format == 'ZARR_V2':
+            cache_filename = filename + '/test/.zarray.gmac'
+        else:
+            cache_filename = filename + '/meta/root/test.array.json.gmac'
+        assert gdal.VSIStatL(cache_filename) is not None
+
+        # Read content of the array
+        def read_content():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray('test')
+            assert ar is not None
+            assert struct.unpack('B' * 2 * 5, ar.Read()) == (10, 0, 0, 0, 0,
+                                                             0,  0, 0, 100, 0)
+
+        read_content()
+
+        # again
+        open_with_cache_tile_presence_option()
+
+        read_content()
+
+        # Now alter the cache to mark a present tile as missing
+        def alter_cache():
+            ds = gdal.OpenEx(cache_filename,
+                             gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg.GetMDArrayNames() == [ '_test_tile_presence' ]
+            ar = rg.OpenMDArray('_test_tile_presence')
+            assert struct.unpack('B' * 2 * 3, ar.Read()) == (1, 0, 0,
+                                                             0, 1, 0)
+            assert ar.Write(struct.pack('B' * 1, 0),
+                            array_start_idx=[1, 1],
+                            count=[1, 1]) == gdal.CE_None
+
+
+        alter_cache()
+
+        # Check that reading the array reflects the above modification
+        def read_content_altered():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray('test')
+            assert ar is not None
+            assert struct.unpack('B' * 2 * 5, ar.Read()) == (10, 0, 0, 0, 0,
+                                                             0, 0, 0, 0, 0)
+
+        read_content_altered()
+
+    finally:
+        gdal.RmdirRecursive(filename)

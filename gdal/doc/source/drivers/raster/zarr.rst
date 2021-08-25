@@ -232,6 +232,26 @@ If the dataset contains more than one such single array, or arrays with 3 or
 more dimensions, the driver will list subdatasets to access each array and/or
 2D slices within arrays with 3 or more dimensions.
 
+Open options
+------------
+
+The following dataset open options are available:
+
+- **USE_ZMETADATA=YES/NO**: (defaults to YES)
+  Whether to use consolidated metadata from .zmetadata (Zarr V2 only).
+
+- **CACHE_TILE_PRESENCE=YES/NO**: (defaults to NO)
+  Whether to establish an initial listing of
+  present tiles. This cached listing will be stored in a .gmac file next to the
+  .zarray / .array.json.gmac file if they can be written. Otherwise the
+  :decl_configoption:`GDAL_PAM_PROXY_DIR` config option should be set to an
+  existing directory where those cached files will be stored. Once the cached
+  listing has been established, the open option no longer needs to be specified.
+  Note: the runtime of this option can be in minutes or more for large datasets
+  stored on remote file systems. And for network file systems, this will rarely
+  work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
+  /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
+
 Creation options
 ----------------
 

@@ -1071,6 +1071,34 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
     // as we don't need arbitrary seeking in the file
     osFilename = VSIFileManager::GetHandler( osFilename.c_str() )->GetStreamingFilename(osFilename);
 
+    // First if we have a tile presence cache, check tile presence from it
+    auto poTilePresenceArray = OpenTilePresenceCache(false);
+    if( poTilePresenceArray )
+    {
+        std::vector<GUInt64> anTileIdx(m_aoDims.size());
+        const std::vector<size_t> anCount(m_aoDims.size(), 1);
+        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+        const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+        for( size_t i = 0; i < tileIndices.size(); ++i )
+        {
+            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+        }
+        GByte byValue = 0;
+        if( poTilePresenceArray->Read(anTileIdx.data(),
+                                       anCount.data(),
+                                       anArrayStep.data(),
+                                       anBufferStride.data(),
+                                       eByteDT,
+                                       &byValue) &&
+            byValue == 0 )
+        {
+            CPLDebugOnly("Zarr", "Tile %s missing (=nodata)", osFilename.c_str());
+            bMissingTileOut = true;
+            return true;
+        }
+    }
+
     VSILFILE* fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation
     constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
@@ -3334,7 +3362,261 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
     }
 
+    if( CPLTestBool(m_poSharedResource->GetOpenOptions().FetchNameValueDef(
+                                                "CACHE_TILE_PRESENCE", "NO")) )
+    {
+        poArray->CacheTilePresence();
+    }
+
     return poArray;
+}
+
+/************************************************************************/
+/*                  ZarrArray::OpenTilePresenceCache()                  */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> ZarrArray::OpenTilePresenceCache(bool bCanCreate) const
+{
+    if( m_bHasTriedCacheTilePresenceArray )
+        return m_poCacheTilePresenceArray;
+    m_bHasTriedCacheTilePresenceArray = true;
+
+    if( m_nTotalTileCount == 1 )
+        return nullptr;
+
+    std::string osCacheFilename;
+    auto poRGCache = GetCacheRootGroup(bCanCreate, osCacheFilename);
+    if( !poRGCache )
+        return nullptr;
+
+    const std::string osTilePresenceArrayName(MassageName(GetFullName()) + "_tile_presence");
+    auto poTilePresenceArray = poRGCache->OpenMDArray(osTilePresenceArrayName);
+    const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+    if( poTilePresenceArray )
+    {
+        bool ok = true;
+        const auto apoDimsCache = poTilePresenceArray->GetDimensions();
+        if( poTilePresenceArray->GetDataType() != eByteDT ||
+            apoDimsCache.size() != m_aoDims.size() )
+        {
+            ok = false;
+        }
+        else
+        {
+            for( size_t i = 0; i < m_aoDims.size(); i++ )
+            {
+                const auto nExpectedDimSize =
+                    (m_aoDims[i]->GetSize() + m_anBlockSize[i]-1) / m_anBlockSize[i];
+                if( apoDimsCache[i]->GetSize() != nExpectedDimSize )
+                {
+                    ok = false;
+                    break;
+                }
+            }
+        }
+        if( !ok )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Array %s in %s has not expected characteristics",
+                     osTilePresenceArrayName.c_str(), osCacheFilename.c_str());
+            return nullptr;
+        }
+
+        if( !poTilePresenceArray->GetAttribute("filling_status") && !bCanCreate )
+        {
+            CPLDebug("ZARR",
+                     "Cache tile presence array for %s found, but filling not finished",
+                     GetFullName().c_str());
+            return nullptr;
+        }
+
+        CPLDebug("ZARR", "Using cache tile presence for %s", GetFullName().c_str());
+    }
+    else if( bCanCreate )
+    {
+        int idxDim = 0;
+        std::string osBlockSize;
+        std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
+        for( const auto& poDim: m_aoDims )
+        {
+            auto poNewDim = poRGCache->CreateDimension(
+                osTilePresenceArrayName + '_' + std::to_string(idxDim),
+                std::string(),
+                std::string(),
+                (poDim->GetSize() + m_anBlockSize[idxDim]-1) / m_anBlockSize[idxDim]);
+            if( !poNewDim )
+                return nullptr;
+            apoNewDims.emplace_back(poNewDim);
+
+            if( !osBlockSize.empty() )
+                osBlockSize += ',';
+            constexpr GUInt64 BLOCKSIZE = 256;
+            osBlockSize += std::to_string(
+                                std::min(poNewDim->GetSize(),BLOCKSIZE));
+
+            idxDim ++;
+        }
+
+        CPLStringList aosOptionsTilePresence;
+        aosOptionsTilePresence.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+        poTilePresenceArray = poRGCache->CreateMDArray(osTilePresenceArrayName,
+                                                       apoNewDims,
+                                                       eByteDT,
+                                                       aosOptionsTilePresence.List());
+        if( !poTilePresenceArray )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Cannot create %s in %s",
+                     osTilePresenceArrayName.c_str(), osCacheFilename.c_str());
+            return nullptr;
+        }
+        poTilePresenceArray->SetNoDataValue(0);
+    }
+    else
+    {
+        return nullptr;
+    }
+
+    m_poCacheTilePresenceArray = poTilePresenceArray;
+
+    return poTilePresenceArray;
+}
+
+/************************************************************************/
+/*                    ZarrArray::CacheTilePresence()                    */
+/************************************************************************/
+
+bool ZarrArray::CacheTilePresence()
+{
+    if( m_nTotalTileCount == 1 )
+        return true;
+
+    const std::string osDirectoryName = [this]()
+    {
+        if( m_nVersion == 2 )
+            return std::string(CPLGetDirname(m_osFilename.c_str()));
+
+        std::string osTmp = m_osRootDirectoryName + "/data/root";
+        if( GetFullName() != "/" )
+            osTmp += GetFullName();
+        return osTmp;
+    }
+    ();
+
+    struct DirCloser
+    {
+        DirCloser(const DirCloser&) = delete;
+        DirCloser& operator= (const DirCloser&) = delete;
+
+        VSIDIR* m_psDir;
+
+        explicit DirCloser(VSIDIR* psDir): m_psDir(psDir) {}
+        ~DirCloser() { VSICloseDir(m_psDir); }
+    };
+
+    auto psDir = VSIOpenDir(osDirectoryName.c_str(), -1, nullptr);
+    if( !psDir )
+        return false;
+    DirCloser dirCloser(psDir);
+
+    auto poTilePresenceArray = OpenTilePresenceCache(true);
+    if( !poTilePresenceArray )
+    {
+        return false;
+    }
+
+    if( poTilePresenceArray->GetAttribute("filling_status") )
+    {
+        CPLDebug("ZARR",
+                 "CacheTilePresence(): %s already filled. Nothing to do",
+                 poTilePresenceArray->GetName().c_str());
+        return true;
+    }
+
+    std::vector<GUInt64> anTileIdx(m_aoDims.size());
+    const std::vector<size_t> anCount(m_aoDims.size(), 1);
+    const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+    const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+    const auto apoDimsCache = poTilePresenceArray->GetDimensions();
+    const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+
+    CPLDebug("ZARR",
+             "CacheTilePresence(): Iterating over %s to find which tiles are present...",
+             osDirectoryName.c_str());
+    uint64_t nCounter = 0;
+    while( const VSIDIREntry* psEntry = VSIGetNextDirEntry(psDir) )
+    {
+        if( !VSI_ISDIR(psEntry->nMode) )
+        {
+            int nOff = 0;
+            if( m_nVersion == 3 )
+            {
+                if( psEntry->pszName[0] != 'c' )
+                    continue;
+                nOff = 1;
+            }
+            const CPLStringList aosTokens(
+                CSLTokenizeString2( psEntry->pszName + nOff, m_osDimSeparator.c_str(), 0 ));
+            if( aosTokens.size() == static_cast<int>(m_aoDims.size()) )
+            {
+                // Get tile indices from filename
+                bool unexpectedIndex = false;
+                for( int i = 0; i < aosTokens.size(); ++i )
+                {
+                    anTileIdx[i] = static_cast<GUInt64>(CPLAtoGIntBig(aosTokens[i]));
+                    if( anTileIdx[i] >= apoDimsCache[i]->GetSize() )
+                    {
+                        unexpectedIndex = true;
+                    }
+                }
+                if( unexpectedIndex )
+                {
+                    continue;
+                }
+
+                nCounter ++;
+                if( (nCounter % 1000) == 0 )
+                {
+                    CPLDebug("ZARR",
+                             "CacheTilePresence(): Listing in progress "
+                             "(last examined %s, at least %.02f %% completed)",
+                             psEntry->pszName,
+                             100.0 * double(nCounter) / double(m_nTotalTileCount));
+                }
+                constexpr GByte byOne = 1;
+                //CPLDebugOnly("ZARR", "Marking %s has present", psEntry->pszName);
+                if( !poTilePresenceArray->Write(anTileIdx.data(),
+                                                anCount.data(),
+                                                anArrayStep.data(),
+                                                anBufferStride.data(),
+                                                eByteDT,
+                                                &byOne) )
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    CPLDebug("ZARR", "CacheTilePresence(): finished");
+
+    // Write filling_status attribute
+    auto poAttr = poTilePresenceArray->CreateAttribute(
+        "filling_status", {}, GDALExtendedDataType::CreateString(), nullptr );
+    if( poAttr )
+    {
+        if( nCounter == 0 )
+            poAttr->Write("no_tile_present");
+        else if( nCounter == m_nTotalTileCount )
+            poAttr->Write("all_tiles_present");
+        else
+            poAttr->Write("some_tiles_missing");
+    }
+
+    // Force closing
+    m_poCacheTilePresenceArray = nullptr;
+    m_bHasTriedCacheTilePresenceArray = false;
+
+    return true;
 }
 
 /************************************************************************/

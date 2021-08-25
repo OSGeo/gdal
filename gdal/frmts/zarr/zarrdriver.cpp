@@ -98,6 +98,8 @@ GDALDataset* ZarrDataset::OpenMultidim(const char* pszFilename,
         osFilename.resize(osFilename.size() - 1);
 
     auto poSharedResource = std::make_shared<ZarrSharedResource>(osFilename);
+    poSharedResource->SetOpenOptions(papszOpenOptions);
+
     auto poRG = ZarrGroupV2::Create(poSharedResource, std::string(), "/");
     poRG->SetUpdatable(bUpdateMode);
     poRG->SetDirectoryName(osFilename);
@@ -1252,6 +1254,7 @@ void GDALRegister_Zarr()
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "   <Option name='USE_ZMETADATA' type='boolean' description='Whether to use consolidated metadata from .zmetadata' default='YES'/>"
+"   <Option name='CACHE_TILE_PRESENCE' type='boolean' description='Whether to establish an initial listing of present tiles' default='NO'/>"
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,

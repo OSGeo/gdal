@@ -204,6 +204,7 @@ class ZarrSharedResource
     CPLJSONObject m_oObj{}; // For .zmetadata
     bool m_bZMetadataModified = false;
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
+    CPLStringList m_aosOpenOptions{};
 
 public:
     explicit ZarrSharedResource(const std::string& osRootDirectoryName);
@@ -217,6 +218,10 @@ public:
     void SetZMetadataItem(const std::string& osFilename, const CPLJSONObject& obj);
 
     const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
+
+    const CPLStringList& GetOpenOptions() const { return m_aosOpenOptions; }
+
+    void SetOpenOptions(CSLConstList papszOpenOptions) { m_aosOpenOptions = papszOpenOptions; }
 };
 
 /************************************************************************/
@@ -465,6 +470,8 @@ class ZarrArray final: public GDALPamMDArray
     bool                                              m_bScaleModified = false;
     std::weak_ptr<GDALGroup>                          m_poGroupWeak{};
     uint64_t                                          m_nTotalTileCount = 0;
+    mutable bool                                      m_bHasTriedCacheTilePresenceArray = false;
+    mutable std::shared_ptr<GDALMDArray>              m_poCacheTilePresenceArray{};
 
     ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
               const std::string& osParentName,
@@ -490,6 +497,8 @@ class ZarrArray final: public GDALPamMDArray
     void DeallocateDecodedTileData();
 
     bool FlushDirtyTile() const;
+
+    std::shared_ptr<GDALMDArray> OpenTilePresenceCache(bool bCanCreate) const;
 
     // Disable copy constructor and assignment operator
     ZarrArray(const ZarrArray&) = delete;
@@ -611,6 +620,8 @@ public:
     void SetNew(bool bNew) { m_bNew = bNew; }
 
     void Flush();
+
+    bool CacheTilePresence();
 };
 
 #endif // ZARR_H
