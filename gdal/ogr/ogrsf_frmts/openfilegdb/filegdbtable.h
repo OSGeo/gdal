@@ -189,12 +189,14 @@ class FileGDBRasterField: public FileGDBGeomField
         friend class FileGDBTable;
 
         std::string       osRasterColumnName;
+        bool              m_bIsManaged = false;
 
     public:
         explicit          FileGDBRasterField(FileGDBTable* poParentIn) : FileGDBGeomField(poParentIn) {}
         virtual          ~FileGDBRasterField() {}
 
         const std::string& GetRasterColumnName() const { return osRasterColumnName; }
+        bool IsManaged() const { return m_bIsManaged; }
 };
 
 /************************************************************************/
@@ -271,6 +273,8 @@ class FileGDBTable
 
         GUInt32                     nBufferMaxSize;
         GByte*                      pabyBuffer;
+
+        std::string                 m_osCacheRasterFieldPath{};
 
         void                        Init();
 
