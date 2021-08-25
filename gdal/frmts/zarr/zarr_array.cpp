@@ -40,6 +40,8 @@
 #include <map>
 #include <set>
 
+#define ZARR_DEBUG_KEY "ZARR"
+
 /************************************************************************/
 /*                         ZarrArray::ZarrArray()                       */
 /************************************************************************/
@@ -1151,7 +1153,7 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
         {
             if( bUseMutex )
                 m_oMutex.unlock();
-            CPLDebugOnly("Zarr", "Tile %s missing (=nodata)", osFilename.c_str());
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)", osFilename.c_str());
             bMissingTileOut = true;
             return true;
         }
@@ -1178,7 +1180,7 @@ bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
     if( fp == nullptr )
     {
         // Missing files are OK and indicate nodata_value
-        CPLDebugOnly("Zarr", "Tile %s missing (=nodata)", osFilename.c_str());
+        CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)", osFilename.c_str());
         bMissingTileOut = true;
         return true;
     }
@@ -1362,7 +1364,7 @@ bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
                             (GDALGetCacheMax64() - GDALGetCacheUsed64())/2),
                          static_cast<uint64_t>(
                              std::numeric_limits<size_t>::max() / 2)));
-            CPLDebug("ZARR", "Using implicit CACHE_SIZE=" CPL_FRMT_GUIB,
+            CPLDebug(ZARR_DEBUG_KEY, "Using implicit CACHE_SIZE=" CPL_FRMT_GUIB,
                      static_cast<GUIntBig>(nCacheSizeTmp));
         }
         return nCacheSizeTmp;
@@ -1400,7 +1402,7 @@ bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
     }();
     if( nThreads <= 1 )
         return true;
-    CPLDebug("ZARR", "IAdviseRead(): Using %d threads", nThreads);
+    CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using %d threads", nThreads);
 
     m_oMapTileIndexToCachedTile.clear();
 
@@ -1737,7 +1739,7 @@ lbl_next_depth:
             }
             else
             {
-                CPLDebugOnly("ZARR", "Cache miss for tile " CPL_FRMT_GUIB,
+                CPLDebugOnly(ZARR_DEBUG_KEY, "Cache miss for tile " CPL_FRMT_GUIB,
                              static_cast<GUIntBig>(nTileIdx));
             }
         }
@@ -2146,7 +2148,7 @@ bool ZarrArray::FlushDirtyTile() const
         VSIStatBufL sStat;
         if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
         {
-            CPLDebugOnly("ZARR", "Deleting tile %s that has now empty content",
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Deleting tile %s that has now empty content",
                          osFilename.c_str());
             return VSIUnlink(osFilename.c_str()) == 0;
         }
@@ -3819,13 +3821,13 @@ std::shared_ptr<GDALMDArray> ZarrArray::OpenTilePresenceCache(bool bCanCreate) c
 
         if( !poTilePresenceArray->GetAttribute("filling_status") && !bCanCreate )
         {
-            CPLDebug("ZARR",
+            CPLDebug(ZARR_DEBUG_KEY,
                      "Cache tile presence array for %s found, but filling not finished",
                      GetFullName().c_str());
             return nullptr;
         }
 
-        CPLDebug("ZARR", "Using cache tile presence for %s", GetFullName().c_str());
+        CPLDebug(ZARR_DEBUG_KEY, "Using cache tile presence for %s", GetFullName().c_str());
     }
     else if( bCanCreate )
     {
@@ -3922,7 +3924,7 @@ bool ZarrArray::CacheTilePresence()
 
     if( poTilePresenceArray->GetAttribute("filling_status") )
     {
-        CPLDebug("ZARR",
+        CPLDebug(ZARR_DEBUG_KEY,
                  "CacheTilePresence(): %s already filled. Nothing to do",
                  poTilePresenceArray->GetName().c_str());
         return true;
@@ -3935,7 +3937,7 @@ bool ZarrArray::CacheTilePresence()
     const auto apoDimsCache = poTilePresenceArray->GetDimensions();
     const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
 
-    CPLDebug("ZARR",
+    CPLDebug(ZARR_DEBUG_KEY,
              "CacheTilePresence(): Iterating over %s to find which tiles are present...",
              osDirectoryName.c_str());
     uint64_t nCounter = 0;
@@ -3972,14 +3974,14 @@ bool ZarrArray::CacheTilePresence()
                 nCounter ++;
                 if( (nCounter % 1000) == 0 )
                 {
-                    CPLDebug("ZARR",
+                    CPLDebug(ZARR_DEBUG_KEY,
                              "CacheTilePresence(): Listing in progress "
                              "(last examined %s, at least %.02f %% completed)",
                              psEntry->pszName,
                              100.0 * double(nCounter) / double(m_nTotalTileCount));
                 }
                 constexpr GByte byOne = 1;
-                //CPLDebugOnly("ZARR", "Marking %s has present", psEntry->pszName);
+                //CPLDebugOnly(ZARR_DEBUG_KEY, "Marking %s has present", psEntry->pszName);
                 if( !poTilePresenceArray->Write(anTileIdx.data(),
                                                 anCount.data(),
                                                 anArrayStep.data(),
@@ -3992,7 +3994,7 @@ bool ZarrArray::CacheTilePresence()
             }
         }
     }
-    CPLDebug("ZARR", "CacheTilePresence(): finished");
+    CPLDebug(ZARR_DEBUG_KEY, "CacheTilePresence(): finished");
 
     // Write filling_status attribute
     auto poAttr = poTilePresenceArray->CreateAttribute(
