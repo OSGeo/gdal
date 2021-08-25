@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_vsi_virtual.h"
 #include "zarr.h"
 
 #include "tif_float.h"
@@ -1065,6 +1066,10 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
             osTmp += GetFullName();
         osFilename = osTmp + "/c" + osFilename;
     }
+
+    // For network file systems, get the streaming version of the filename,
+    // as we don't need arbitrary seeking in the file
+    osFilename = VSIFileManager::GetHandler( osFilename.c_str() )->GetStreamingFilename(osFilename);
 
     VSILFILE* fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation
