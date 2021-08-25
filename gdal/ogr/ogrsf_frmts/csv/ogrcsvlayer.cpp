@@ -178,51 +178,45 @@ char **OGRCSVReadParseLineL( VSILFILE *fp, char chDelimiter,
         return CSVSplitLine(pszLine, chDelimiter, bKeepLeadingAndClosingQuotes,
                             bMergeDelimiter);
 
-    // We must now count the quotes in our working string, and as
-    // long as it is odd, keep adding new lines.
-    char *pszWorkLine = CPLStrdup(pszLine);
-
-    int i = 0;
-    int nCount = 0;
-    size_t nWorkLineLength = strlen(pszWorkLine);
-
-    while( true )
+    try
     {
-        for( ; pszWorkLine[i] != '\0'; i++ )
+        // We must now count the quotes in our working string, and as
+        // long as it is odd, keep adding new lines.
+        std::string osWorkLine(pszLine);
+
+        size_t i = 0;
+        int nCount = 0;
+
+        while( true )
         {
-            if( pszWorkLine[i] == '\"' )
-                nCount++;
+            for( ; i < osWorkLine.size(); i++ )
+            {
+                if( osWorkLine[i] == '\"' )
+                    nCount++;
+            }
+
+            if( nCount % 2 == 0 )
+                break;
+
+            pszLine = CPLReadLineL(fp);
+            if( pszLine == nullptr )
+                break;
+
+            osWorkLine.append("\n");
+            osWorkLine.append(pszLine);
         }
 
-        if( nCount % 2 == 0 )
-            break;
+        char **papszReturn =
+            CSVSplitLine(osWorkLine.c_str(), chDelimiter, bKeepLeadingAndClosingQuotes,
+                         bMergeDelimiter);
 
-        pszLine = CPLReadLineL(fp);
-        if( pszLine == nullptr )
-            break;
-
-        const size_t nLineLen = strlen(pszLine);
-
-        char *pszWorkLineTmp = static_cast<char *>(
-            VSI_REALLOC_VERBOSE(pszWorkLine, nWorkLineLength + nLineLen + 2));
-        if( pszWorkLineTmp == nullptr )
-            break;
-        pszWorkLine = pszWorkLineTmp;
-
-        // The '\n' gets lost in CPLReadLine().
-        strcat(pszWorkLine + nWorkLineLength, "\n");
-        strcat(pszWorkLine + nWorkLineLength, pszLine);
-
-        nWorkLineLength += nLineLen + 1;
+        return papszReturn;
     }
-
-    char **papszReturn =
-        CSVSplitLine(pszWorkLine, chDelimiter, bKeepLeadingAndClosingQuotes,
-                     bMergeDelimiter);
-
-    CPLFree(pszWorkLine);
-
-    return papszReturn;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+        return nullptr;
+    }
 }
 
 /************************************************************************/
