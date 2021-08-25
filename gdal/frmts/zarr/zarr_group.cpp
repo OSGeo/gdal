@@ -1255,7 +1255,7 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
     poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetVersion(2);
     poArray->SetDtype(dtype);
-    poArray->SetCompressorDecompressor(psCompressor, psDecompressor);
+    poArray->SetCompressorDecompressor(pszCompressor, psCompressor, psDecompressor);
     if( oCompressor.IsValid() )
         poArray->SetCompressorJsonV2(oCompressor);
     poArray->SetFilters(oFilters);
@@ -1710,7 +1710,7 @@ std::shared_ptr<GDALMDArray> ZarrGroupV3::CreateMDArray(
     poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetVersion(3);
     poArray->SetDtype(dtype);
-    poArray->SetCompressorDecompressor(psCompressor, psDecompressor);
+    poArray->SetCompressorDecompressor(pszCompressor, psCompressor, psDecompressor);
     if( oCompressor.IsValid() )
         poArray->SetCompressorJsonV3(oCompressor);
     poArray->SetUpdatable(true);

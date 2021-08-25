@@ -2470,3 +2470,72 @@ def test_zarr_cache_tile_presence(format):
 
     finally:
         gdal.RmdirRecursive(filename)
+
+
+@pytest.mark.parametrize("compression", ["NONE", "ZLIB"])
+def test_zarr_advise_read(compression):
+
+    filename = 'tmp/test.zarr'
+    try:
+        dim0_size = 1230
+        dim1_size = 2570
+        dim0_blocksize = 20
+        dim1_blocksize = 30
+        data_ar = [(i % 256) for i in range(dim0_size * dim1_size)]
+
+        # Create empty block
+        y_offset = dim0_blocksize
+        x_offset = dim1_blocksize
+        for y in range(dim0_blocksize):
+            for x in range(dim1_blocksize):
+                data_ar[dim1_size * (y + y_offset) + x + x_offset] = 0
+
+        data = array.array('B', data_ar)
+
+        def create():
+            ds = gdal.GetDriverByName(
+                'ZARR').CreateMultiDimensional(filename)
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, dim0_size)
+            dim1 = rg.CreateDimension("dim1", None, None, dim1_size)
+            ar = rg.CreateMDArray("test", [dim0, dim1],
+                    gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                    ['COMPRESS=' + compression,
+                     'BLOCKSIZE=%d,%d' % (dim0_blocksize, dim1_blocksize)])
+            assert ar
+            ar.SetNoDataValueDouble(0)
+            assert ar.Write(data) == gdal.CE_None
+
+        create()
+
+        def read():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray('test')
+
+            with gdaltest.error_handler():
+                assert ar.AdviseRead(options = ['CACHE_SIZE=1']) == gdal.CE_Failure
+
+            got_data_before_advise_read = ar.Read(array_start_idx=[40, 51],
+                                                  count=[2 * dim0_blocksize, 2 * dim1_blocksize])
+
+            assert ar.AdviseRead() == gdal.CE_None
+            assert ar.Read() == data
+
+            assert ar.AdviseRead(array_start_idx=[40, 51],
+                                 count=[2 * dim0_blocksize, dim1_blocksize]) == gdal.CE_None
+            # Read more than AdviseRead() window
+            got_data = ar.Read(array_start_idx=[40, 51],
+                               count=[2 * dim0_blocksize, 2 * dim1_blocksize])
+            assert got_data == got_data_before_advise_read
+
+        read()
+
+
+    finally:
+        gdal.RmdirRecursive(filename)
+

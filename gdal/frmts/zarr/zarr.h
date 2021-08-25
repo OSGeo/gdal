@@ -37,6 +37,7 @@
 
 #include <array>
 #include <map>
+#include <mutex>
 #include <set>
 
 /************************************************************************/
@@ -436,6 +437,7 @@ class ZarrArray final: public GDALPamMDArray
     GByte                                            *m_pabyNoData = nullptr;
     std::string                                       m_osDimSeparator { "." };
     std::string                                       m_osFilename{};
+    size_t                                            m_nTileSize = 0;
     mutable std::vector<GByte>                        m_abyRawTileData{};
     mutable std::vector<GByte>                        m_abyDecodedTileData{};
     mutable std::vector<uint64_t>                     m_anCachedTiledIndices{};
@@ -445,6 +447,7 @@ class ZarrArray final: public GDALPamMDArray
     bool                                              m_bUseOptimizedCodePaths = true;
     bool                                              m_bFortranOrder = false;
     const CPLCompressor                              *m_psCompressor = nullptr;
+    std::string                                       m_osDecompressorId{};
     const CPLCompressor                              *m_psDecompressor = nullptr;
     CPLJSONObject                                     m_oCompressorJSonV2{};
     CPLJSONObject                                     m_oCompressorJSonV3{};
@@ -472,6 +475,12 @@ class ZarrArray final: public GDALPamMDArray
     uint64_t                                          m_nTotalTileCount = 0;
     mutable bool                                      m_bHasTriedCacheTilePresenceArray = false;
     mutable std::shared_ptr<GDALMDArray>              m_poCacheTilePresenceArray{};
+    mutable std::mutex                                m_oMutex{};
+    struct CachedTile
+    {
+        std::vector<GByte> abyDecoded{};
+    };
+    mutable std::map<uint64_t, CachedTile>            m_oMapTileIndexToCachedTile{};
 
     ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
               const std::string& osParentName,
@@ -482,11 +491,24 @@ class ZarrArray final: public GDALPamMDArray
               const std::vector<GUInt64>& anBlockSize,
               bool bFortranOrder);
 
-    bool LoadTileData(const std::vector<uint64_t>& tileIndices,
+    bool LoadTileData(const uint64_t* tileIndices,
                       bool& bMissingTileOut) const;
+
+    bool LoadTileData(const uint64_t* tileIndices,
+                      bool bUseMutex,
+                      const CPLCompressor* psDecompressor,
+                      std::vector<GByte>& abyRawTileData,
+                      std::vector<GByte>& abyTmpRawTileData,
+                      std::vector<GByte>& abyDecodedTileData,
+                      bool& bMissingTileOut) const;
+
     void BlockTranspose(const std::vector<GByte>& abySrc,
                         std::vector<GByte>& abyDst,
                         bool bDecode) const;
+
+    bool AllocateWorkingBuffers(std::vector<GByte>& abyRawTileData,
+                                std::vector<GByte>& abyTmpRawTileData,
+                                std::vector<GByte>& abyDecodedTileData) const;
 
     bool AllocateWorkingBuffers() const;
 
@@ -518,6 +540,10 @@ protected:
                       const GPtrDiff_t* bufferStride,
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
+
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count,
+                     CSLConstList papszOptions) const override;
 
 public:
     ~ZarrArray() override;
@@ -573,9 +599,11 @@ public:
 
     void SetDimSeparator(const std::string& osDimSeparator) { m_osDimSeparator = osDimSeparator; }
 
-    void SetCompressorDecompressor(const CPLCompressor* psComp,
+    void SetCompressorDecompressor(const std::string& osDecompressorId,
+                                   const CPLCompressor* psComp,
                                    const CPLCompressor* psDecomp) {
         m_psCompressor = psComp;
+        m_osDecompressorId = osDecompressorId;
         m_psDecompressor = psDecomp;
     }
 

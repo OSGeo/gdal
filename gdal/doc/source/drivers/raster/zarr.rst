@@ -252,6 +252,25 @@ The following dataset open options are available:
   work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
   /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
 
+Multi-threaded caching
+----------------------
+
+The driver implements the :cpp:func:`GDALMDArray::AdviseRead` method. This
+proceed to multi-threaded decoding of the tiles that intersect the area of
+interest specified. A sufficient cache size must be specified. The call is
+blocking.
+
+The options that can be passed to the methods are:
+
+- **CACHE_SIZE=value_in_byte**: Maximum RAM to use, expressed in number of bytes.
+  If not specified, half of the remaining GDAL block cache size will be used.
+  Note: the caching mechanism of Zarr array will not update this remaining block
+  cache size.
+
+- **NUM_THREADS=integer or ALL_CPUS**: Number of threads to use in parallel.
+  If not specified, the :decl_configoption:`GDAL_NUM_THREADS` configuration option
+  will be taken into account.
+
 Creation options
 ----------------
 
