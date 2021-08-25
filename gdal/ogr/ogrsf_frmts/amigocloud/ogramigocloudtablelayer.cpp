@@ -994,16 +994,15 @@ void OGRAmigoCloudTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
         eGType = wkbMultiPolygon25D;
     if( eGType != wkbNone )
     {
-        OGRAmigoCloudGeomFieldDefn *poFieldDefn =
-            new OGRAmigoCloudGeomFieldDefn("wkb_geometry", eGType);
+        auto poFieldDefn =
+            cpl::make_unique<OGRAmigoCloudGeomFieldDefn>("wkb_geometry", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
-        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
         if( poSRS != nullptr )
         {
             poFieldDefn->nSRID = poDS->FetchSRSId( poSRS );
-            poFeatureDefn->GetGeomFieldDefn(
-                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
+            poFieldDefn->SetSpatialRef(poSRS);
         }
+        poFeatureDefn->AddGeomFieldDefn(std::move(poFieldDefn));
     }
 
     osBaseSQL.Printf("SELECT * FROM %s",

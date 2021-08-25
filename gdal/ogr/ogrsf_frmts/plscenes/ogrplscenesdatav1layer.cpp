@@ -38,9 +38,9 @@ CPL_CVSID("$Id$")
 
 int OGRPLScenesDataV1FeatureDefn::GetFieldCount() const
 {
-    if( nFieldCount == 0 && m_poLayer != nullptr )
+    if( OGRFeatureDefn::GetFieldCount() == 0 && m_poLayer != nullptr )
         m_poLayer->EstablishLayerDefn();
-    return nFieldCount;
+    return OGRFeatureDefn::GetFieldCount();
 }
 
 /************************************************************************/

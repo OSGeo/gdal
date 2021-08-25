@@ -709,7 +709,7 @@ OGRErr OGRWAsPLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     {
         oFieldDefn.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
-    poLayerDefn->AddGeomFieldDefn( &oFieldDefn, FALSE );
+    poLayerDefn->AddGeomFieldDefn( &oFieldDefn );
 
     /* Update geom field index */
     if ( -1 == iGeomFieldIdx )

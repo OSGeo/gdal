@@ -243,12 +243,12 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         {
             poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
-        OGRShapeGeomFieldDefn* poGeomFieldDefn =
-            new OGRShapeGeomFieldDefn(pszFullName, eType, bSRSSetIn, poSRSClone);
+        auto poGeomFieldDefn =
+            cpl::make_unique<OGRShapeGeomFieldDefn>(pszFullName, eType, bSRSSetIn, poSRSClone);
         if( poSRSClone )
             poSRSClone->Release();
         poFeatureDefn->SetGeomType(wkbNone);
-        poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
+        poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
 
     SetDescription( poFeatureDefn->GetName() );

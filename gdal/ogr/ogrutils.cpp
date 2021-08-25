@@ -1563,7 +1563,7 @@ double OGRFastAtof(const char* pszStr)
  * @return OGRERR_NONE if panPermutation is a permutation of [0, nSize - 1].
  * @since OGR 1.9.0
  */
-OGRErr OGRCheckPermutation( int* panPermutation, int nSize )
+OGRErr OGRCheckPermutation( const int* panPermutation, int nSize )
 {
     OGRErr eErr = OGRERR_NONE;
     int* panCheck = static_cast<int *>(CPLCalloc(nSize, sizeof(int)));

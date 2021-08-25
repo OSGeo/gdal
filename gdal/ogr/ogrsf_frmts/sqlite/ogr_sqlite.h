@@ -330,7 +330,7 @@ class OGRSQLiteTableLayer final: public OGRSQLiteLayer
     CPLString           FieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn );
 
     int                 bDeferredCreation;
-    OGRErr              RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeomField,
+    OGRErr              RunAddGeometryColumn( const OGRSQLiteGeomFieldDefn *poGeomField,
                                               int bAddColumnsForNonSpatialite );
 
     char               *pszCreationGeomFormat;
