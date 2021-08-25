@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import shutil
 from osgeo import gdal
 
 
@@ -116,6 +117,29 @@ def test_aigrid_6():
     assert ds.GetRasterBand(1).GetMinimum() == 0.0, 'Wrong minimum'
 
     assert ds.GetRasterBand(1).GetMaximum() == 2.0, 'Wrong maximum'
+
+###############################################################################
+# Read twice a broken tile (https://github.com/OSGeo/gdal/issues/4316)
+
+
+def test_aigrid_broken():
+
+    shutil.copytree('data/aigrid/abc3x1', 'tmp/broken_aigrid')
+
+    # Write a bad offset for a block
+    f = gdal.VSIFOpenL('tmp/broken_aigrid/w001001x.adf', 'rb+')
+    gdal.VSIFSeekL(f, 100, 0)
+    gdal.VSIFWriteL(b'\xff' * 4, 1, 4, f)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open('tmp/broken_aigrid')
+    with gdaltest.error_handler():
+        assert ds.GetRasterBand(1).Checksum() == 0
+    with gdaltest.error_handler():
+        assert ds.GetRasterBand(1).Checksum() == 0
+    ds = None
+
+    shutil.rmtree('tmp/broken_aigrid')
 
 ###############################################################################
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
