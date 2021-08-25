@@ -17,6 +17,8 @@
         "type": { "type": "string", "enum": ["array"] },
         "datatype": { "$ref": "#/definitions/datatype" },
         "dimensions": { "$ref": "#/definitions/dimensions" },
+        "dimension_size": { "type": "array", "items": { "type": "number" } },
+        "block_size": { "type": "array", "items": { "type": "number" } },
         "attributes": { "$ref": "#/definitions/attributes" },
         "srs": { "$ref": "#/definitions/srs" },
         "nodata_value": { "$ref": "#/definitions/value" },
@@ -184,7 +186,7 @@
 
     "value": {
       "anyOf": [
-            {"type": "string"}, 
+            {"type": "string"},
             {"type": "number"},
             {"type": "object"},
             {"type": "array"}
