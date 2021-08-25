@@ -920,6 +920,22 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                         double dfY;
                         GetXY(nX, nY, dfX, dfY);
                         OGRPoint* poPoint = new OGRPoint(dfX, dfY);
+                        if( i == 0 && nCount == 2 &&
+                            m_pabyDataCur == pabyDataGeometryEnd )
+                        {
+                            // Current versions of Mapserver at time of writing
+                            // wrongly encode a point with nCount = 2
+                            static bool bWarned = false;
+                            if( !bWarned )
+                            {
+                                CPLDebug("MVT",
+                                         "Reading likely a broken point as "
+                                         "produced by some versions of Mapserver");
+                                bWarned = true;
+                            }
+                            delete poMultiPoint;
+                            return poPoint;
+                        }
                         poMultiPoint->addGeometryDirectly(poPoint);
                     }
                 }
