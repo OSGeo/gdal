@@ -19,9 +19,10 @@ Synopsis
 
     gdalmdimtranslate [--help-general] [-co "NAME=VALUE"]*
                       [-of format] [-array <array_spec>]*
-                      [-group <group_spec>]* 
-                      [-subset <subset_spec>]* 
-                      [-scaleaxes <scaleaxes_spec>]* 
+                      [-group <group_spec>]*
+                      [-subset <subset_spec>]*
+                      [-scaleaxes <scaleaxes_spec>]*
+                      [-oo NAME=VALUE]*
                       <src_filename> <dst_filename>
 
 
@@ -122,6 +123,12 @@ The following command line parameters can appear in any order.
     That is dim1_name(scale_factor)[,dim2_name(scale_factor)]*
 
     Using -scaleaxes is incompatible of specifying a *view* option in -array.
+
+.. option:: -oo <NAME=VALUE>
+
+    .. versionadded:: 3.4
+
+    Source dataset open option (format specific)
 
 .. option:: <src_dataset>
 

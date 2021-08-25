@@ -1863,6 +1863,13 @@ GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
             psOptions->aosCreateOptions.AddString( papszArgv[i] );
         }
 
+        else if( EQUAL(papszArgv[i], "-oo") && i+1 < argc )
+        {
+            if( psOptionsForBinary )
+                psOptionsForBinary->papszOpenOptions = CSLAddString(
+                                                psOptionsForBinary->papszOpenOptions,
+                                                papszArgv[++i] );
+        }
         else if( papszArgv[i][0] == '-' )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
