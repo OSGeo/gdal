@@ -2402,6 +2402,10 @@ protected:
                                 double dfMean, double dfStdDev,
                                 GUInt64 nValidCount );
 
+    static std::string MassageName(const std::string& inputName);
+
+    std::shared_ptr<GDALGroup> GetCacheRootGroup(bool bCanCreate,
+                                                 std::string& osCacheFilenameOut) const;
 //! @endcond
 
 public:

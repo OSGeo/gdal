@@ -37,6 +37,7 @@ import gdaltest
 import os
 import pytest
 import shutil
+import stat
 import struct
 import sys
 
@@ -1732,3 +1733,50 @@ def test_netcdf_multidim_cache(netcdf_setup):  # noqa
 
     gdal.Unlink(tmpfilename)
     gdal.Unlink(tmpfilename + ".gmac")
+
+
+def test_netcdf_multidim_cache_pamproxydb(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    def remove_dir():
+        try:
+            os.chmod('tmp/tmpdirreadonly', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+            shutil.rmtree('tmp/tmpdirreadonly')
+        except OSError:
+            pass
+        try:
+            shutil.rmtree('tmp/tmppamproxydir')
+        except OSError:
+            pass
+
+    # Create a read-only directory
+    remove_dir()
+    os.mkdir('tmp/tmpdirreadonly')
+    os.mkdir('tmp/tmppamproxydir')
+    shutil.copy('data/netcdf/byte_no_cf.nc', 'tmp/tmpdirreadonly/test.nc')
+
+    # FIXME: how do we create a read-only dir on windows ?
+    # The following has no effect
+    os.chmod('tmp/tmpdirreadonly', stat.S_IRUSR | stat.S_IXUSR)
+
+    # Test that the directory is really read-only
+    try:
+        f = open('tmp/tmpdirreadonly/test', 'w')
+        if f is not None:
+            f.close()
+            remove_dir()
+            pytest.skip()
+    except IOError:
+        pass
+
+    try:
+        # This must be run as an external process so we can override GDAL_PAM_PROXY_DIR
+        # at the beginning of the process
+        import test_py_scripts
+        ret = test_py_scripts.run_py_script_as_external_script('.', 'netcdf_multidim_pamproxydb', '-test_netcdf_multidim_cache_pamproxydb')
+        assert ret.find('success') != -1, ('netcdf_multidim_pamproxydb.py -test_netcdf_multidim_cache_pamproxydb failed %s' % ret)
+    finally:
+        remove_dir()
+

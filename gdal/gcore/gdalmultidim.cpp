@@ -3459,7 +3459,8 @@ bool GDALMDArray::IAdviseRead(const GUInt64*, const size_t*) const
 /*                            MassageName()                             */
 /************************************************************************/
 
-static std::string MassageName(const std::string& inputName)
+//! @cond Doxygen_Suppress
+/*static*/ std::string GDALMDArray::MassageName(const std::string& inputName)
 {
     std::string ret;
     for( const char ch: inputName )
@@ -3471,6 +3472,87 @@ static std::string MassageName(const std::string& inputName)
     }
     return ret;
 }
+//! @endcond
+
+/************************************************************************/
+/*                         GetCacheRootGroup()                          */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+std::shared_ptr<GDALGroup> GDALMDArray::GetCacheRootGroup(bool bCanCreate,
+                                                          std::string& osCacheFilenameOut) const
+{
+    const auto& osFilename = GetFilename();
+    if( osFilename.empty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot cache an array with an empty filename");
+        return nullptr;
+    }
+
+    osCacheFilenameOut = osFilename + ".gmac";
+    const char* pszProxy = PamGetProxy(osCacheFilenameOut.c_str());
+    if( pszProxy != nullptr )
+        osCacheFilenameOut = pszProxy;
+
+    std::unique_ptr<GDALDataset> poDS;
+    VSIStatBufL sStat;
+    if( VSIStatL(osCacheFilenameOut.c_str(), &sStat) == 0 )
+    {
+        poDS.reset(GDALDataset::Open(osCacheFilenameOut.c_str(),
+                                     GDAL_OF_MULTIDIM_RASTER | GDAL_OF_UPDATE,
+                                     nullptr, nullptr, nullptr));
+    }
+    if( poDS )
+    {
+        CPLDebug("GDAL", "Opening cache %s", osCacheFilenameOut.c_str());
+        return poDS->GetRootGroup();
+    }
+
+    if( bCanCreate )
+    {
+        const char* pszDrvName = "netCDF";
+        GDALDriver* poDrv = GetGDALDriverManager()->GetDriverByName(pszDrvName);
+        if( poDrv == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot get driver %s", pszDrvName);
+            return nullptr;
+        }
+        {
+            CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper;
+            poDS.reset(poDrv->CreateMultiDimensional(osCacheFilenameOut.c_str(),
+                                                     nullptr, nullptr));
+        }
+        if( !poDS )
+        {
+            pszProxy = PamAllocateProxy(osCacheFilenameOut.c_str());
+            if( pszProxy )
+            {
+                osCacheFilenameOut = pszProxy;
+                poDS.reset(poDrv->CreateMultiDimensional(osCacheFilenameOut.c_str(),
+                                                         nullptr, nullptr));
+            }
+        }
+        if( poDS )
+        {
+            CPLDebug("GDAL", "Creating cache %s", osCacheFilenameOut.c_str());
+            return poDS->GetRootGroup();
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create %s. Set the GDAL_PAM_PROXY_DIR "
+                     "configuration option to write the cache in "
+                     "another directory",
+                     osCacheFilenameOut.c_str());
+        }
+    }
+
+    return nullptr;
+}
+//! @endcond
 
 /************************************************************************/
 /*                              Cache()                                 */
@@ -3484,6 +3566,11 @@ static std::string MassageName(const std::string& inputName)
  * The array will be stored in a file whose name is the one of
  * GetFilename(), with an extra .gmac extension (stands for GDAL Multidimensional
  * Array Cache). The cache is a netCDF dataset.
+ *
+ * If the .gmac file cannot be written next to the dataset, the
+ * GDAL_PAM_PROXY_DIR will be used, if set, to write the cache file into that
+ * directory.
+ *
  * The GDALMDArray::Read() method will automatically use the cache when it exists.
  * There is no timestamp checks between the source array and the cached array.
  * If the source arrays changes, the cache must be manually deleted.
@@ -3499,38 +3586,10 @@ static std::string MassageName(const std::string& inputName)
  */
 bool GDALMDArray::Cache( CSLConstList papszOptions ) const
 {
-    const auto& osFilename = GetFilename();
-    if( osFilename.empty() )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot cache an array with an empty filename");
+    std::string osCacheFilename;
+    auto poRG = GetCacheRootGroup(true, osCacheFilename);
+    if( !poRG )
         return false;
-    }
-    const char* pszDrvName = "netCDF";
-    GDALDriver* poDrv = GetGDALDriverManager()->GetDriverByName(pszDrvName);
-    if( poDrv == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot get driver %s", pszDrvName);
-        return false;
-    }
-    const auto osCacheFilename = osFilename + ".gmac";
-    GDALOpenInfo oOpenInfo(osCacheFilename.c_str(),
-                           GDAL_OF_MULTIDIM_RASTER | GDAL_OF_UPDATE);
-    std::unique_ptr<GDALDataset> poDS(poDrv->pfnOpen( &oOpenInfo));
-    if( !poDS )
-    {
-        poDS.reset(poDrv->CreateMultiDimensional(osCacheFilename.c_str(),
-                                                 nullptr, nullptr));
-        if( !poDS )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot create %s", osCacheFilename.c_str());
-            return false;
-        }
-    }
-    auto poRG = poDS->GetRootGroup();
-    assert( poRG );
 
     const std::string osCachedArrayName(MassageName(GetFullName()));
     if( poRG->OpenMDArray(osCachedArrayName) )
@@ -3621,14 +3680,10 @@ bool GDALMDArray::Read(const GUInt64* arrayStartIdx,
             if( !osFilename.empty() &&
                 !EQUAL(CPLGetExtension(osFilename.c_str()), "gmac") )
             {
-                const auto osCacheFilename = osFilename + ".gmac";
-                std::unique_ptr<GDALDataset> poDS(GDALDataset::Open(
-                                osCacheFilename.c_str(), GDAL_OF_MULTIDIM_RASTER));
-                if( poDS )
+                std::string osCacheFilename;
+                auto poRG = GetCacheRootGroup(false, osCacheFilename);
+                if( poRG )
                 {
-                    auto poRG = poDS->GetRootGroup();
-                    assert( poRG );
-
                     const std::string osCachedArrayName(MassageName(GetFullName()));
                     m_poCachedArray = poRG->OpenMDArray(osCachedArrayName);
                     if( m_poCachedArray )
@@ -3643,7 +3698,13 @@ bool GDALMDArray::Read(const GUInt64* arrayStartIdx,
                         {
                             ok = dims[i]->GetSize() == cachedDims[i]->GetSize();
                         }
-                        if( !ok )
+                        if( ok )
+                        {
+                            CPLDebug("GDAL", "Cached array for %s found in %s",
+                                     osCachedArrayName.c_str(),
+                                     osCacheFilename.c_str());
+                        }
+                        else
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
                                      "Cached array %s in %s has incompatible "
