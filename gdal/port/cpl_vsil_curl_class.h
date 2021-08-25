@@ -152,9 +152,9 @@ struct PutData
 
 class VSICurlHandle;
 
-class VSICurlFilesystemHandler : public VSIFilesystemHandler
+class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 {
-    CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandler)
+    CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandlerBase)
 
     struct FilenameOffsetPair
     {
@@ -232,9 +232,10 @@ protected:
 
     static bool IsAllowedFilename( const char* pszFilename );
 
+    VSICurlFilesystemHandlerBase();
+
 public:
-    VSICurlFilesystemHandler();
-    ~VSICurlFilesystemHandler() override;
+    ~VSICurlFilesystemHandlerBase() override;
 
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
@@ -266,9 +267,9 @@ public:
                             bool* pbGotFileList );
     void InvalidateDirContent( const char *pszDirname );
 
-    virtual const char* GetDebugKey() const { return "VSICURL"; }
+    virtual const char* GetDebugKey() const = 0;
 
-    virtual CPLString GetFSPrefix() const { return "/vsicurl/"; }
+    virtual CPLString GetFSPrefix() const = 0;
     virtual bool      AllowCachedDataFor(const char* pszFilename);
 
     std::shared_ptr<std::string> GetRegion( const char* pszURL,
@@ -298,6 +299,23 @@ public:
     bool ExistsInCacheDirList( const CPLString& osDirname, bool *pbIsDir );
 
     virtual CPLString GetURLFromFilename( const CPLString& osFilename );
+
+    std::string GetStreamingFilename(const std::string& osFilename) const override = 0;
+};
+
+
+class VSICurlFilesystemHandler: public VSICurlFilesystemHandlerBase
+{
+    CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandler)
+
+public:
+    VSICurlFilesystemHandler() = default;
+
+    const char* GetDebugKey() const override { return "VSICURL"; }
+
+    CPLString GetFSPrefix() const override { return "/vsicurl/"; }
+
+    std::string GetStreamingFilename(const std::string& osFilename) const override;
 };
 
 /************************************************************************/
@@ -309,7 +327,7 @@ class VSICurlHandle : public VSIVirtualHandle
     CPL_DISALLOW_COPY_ASSIGN(VSICurlHandle)
 
   protected:
-    VSICurlFilesystemHandler* poFS = nullptr;
+    VSICurlFilesystemHandlerBase* poFS = nullptr;
 
     bool            m_bCached = true;
 
@@ -369,7 +387,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
   public:
 
-    VSICurlHandle( VSICurlFilesystemHandler* poFS,
+    VSICurlHandle( VSICurlFilesystemHandlerBase* poFS,
                    const char* pszFilename,
                    const char* pszURLIn = nullptr );
     ~VSICurlHandle() override;
@@ -406,7 +424,7 @@ class VSICurlHandle : public VSIVirtualHandle
 /*                        IVSIS3LikeFSHandler                           */
 /************************************************************************/
 
-class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
+class IVSIS3LikeFSHandler: public VSICurlFilesystemHandlerBase
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
 
@@ -445,8 +463,6 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper*) {}
     virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * ) {}
-
-    virtual CPLString GetStreamingPath( const char* pszFilename ) const;
 
     bool Sync( const char* pszSource, const char* pszTarget,
                 const char* const * papszOptions,
@@ -514,7 +530,7 @@ class IVSIS3LikeHandle:  public VSICurlHandle
         }
 
   public:
-    IVSIS3LikeHandle( VSICurlFilesystemHandler* poFSIn,
+    IVSIS3LikeHandle( VSICurlFilesystemHandlerBase* poFSIn,
                       const char* pszFilename,
                       const char* pszURLIn ) :
         VSICurlHandle(poFSIn, pszFilename, pszURLIn) {}
@@ -596,7 +612,7 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
 
     protected:
 
-    VSICurlFilesystemHandler* m_poFS = nullptr;
+    VSICurlFilesystemHandlerBase* m_poFS = nullptr;
     CPLString           m_osFSPrefix{};
     CPLString           m_osFilename{};
 
@@ -613,7 +629,7 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
     virtual bool        Send(bool bIsLastBlock) = 0;
 
     public:
-        VSIAppendWriteHandle( VSICurlFilesystemHandler* poFS,
+        VSIAppendWriteHandle( VSICurlFilesystemHandlerBase* poFS,
                               const char* pszFSPrefix,
                               const char* pszFilename,
                               int nChunkSize );
@@ -643,7 +659,7 @@ struct CurlRequestHelper
     ~CurlRequestHelper();
     long perform(CURL* hCurlHandle,
                  struct curl_slist* headers, // ownership transferred
-                 VSICurlFilesystemHandler *poFS,
+                 VSICurlFilesystemHandlerBase *poFS,
                  IVSIS3LikeHandleHelper *poS3HandleHelper);
 };
 

@@ -82,14 +82,14 @@ struct VSIDIRS3: public VSIDIR
 
     CPLString osBucket{};
     CPLString osObjectKey{};
-    VSICurlFilesystemHandler* poFS = nullptr;
+    VSICurlFilesystemHandlerBase* poFS = nullptr;
     IVSIS3LikeFSHandler* poS3FS = nullptr;
     IVSIS3LikeHandleHelper* poS3HandleHelper = nullptr;
     int nMaxFiles = 0;
     bool bCacheEntries = true;
 
     explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn), poS3FS(poFSIn) {}
-    explicit VSIDIRS3(VSICurlFilesystemHandler *poFSIn): poFS(poFSIn) {}
+    explicit VSIDIRS3(VSICurlFilesystemHandlerBase *poFSIn): poFS(poFSIn) {}
     ~VSIDIRS3()
     {
         delete poS3HandleHelper;
@@ -506,7 +506,7 @@ const VSIDIREntry* VSIDIRS3::NextDirEntry()
 /*                          AnalyseS3FileList()                         */
 /************************************************************************/
 
-bool VSICurlFilesystemHandler::AnalyseS3FileList(
+bool VSICurlFilesystemHandlerBase::AnalyseS3FileList(
     const CPLString& osBaseURL,
     const char* pszXML,
     CPLStringList& osFileList,
@@ -579,6 +579,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
                             CSLConstList papszOptions ) override;
 
     bool SupportsParallelMultipartUpload() const override { return true; }
+
+    std::string GetStreamingFilename(const std::string& osFilename) const override;
 };
 
 /************************************************************************/
@@ -1992,7 +1994,7 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
+        VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -2011,7 +2013,7 @@ VSIS3FSHandler::~VSIS3FSHandler()
 
 void VSIS3FSHandler::ClearCache()
 {
-    VSICurlFilesystemHandler::ClearCache();
+    VSICurlFilesystemHandlerBase::ClearCache();
 
     VSIS3UpdateParams::ClearCache();
 
@@ -2058,7 +2060,7 @@ const char* VSIS3FSHandler::GetOptions()
         "description='Size in MB for chunks of files that are uploaded. The"
         "default value of 50 MB allows for files up to 500 GB each' "
         "default='50' min='5' max='1000'/>" +
-        VSICurlFilesystemHandler::GetOptionsStatic() +
+        VSICurlFilesystemHandlerBase::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }
@@ -2395,7 +2397,7 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
 
     if( pszDomain == nullptr || !EQUAL(pszDomain, "TAGS") )
     {
-        return VSICurlFilesystemHandler::GetFileMetadata(
+        return VSICurlFilesystemHandlerBase::GetFileMetadata(
                     pszFilename, pszDomain, papszOptions);
     }
 
@@ -2681,6 +2683,17 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                      GetStreamingFilename()                          */
+/************************************************************************/
+
+std::string VSIS3FSHandler::GetStreamingFilename(const std::string& osFilename) const
+{
+    if( STARTS_WITH(osFilename.c_str(), GetFSPrefix().c_str()) )
+        return "/vsis3_streaming/" + osFilename.substr(GetFSPrefix().size());
+    return osFilename;
+}
+
+/************************************************************************/
 /*                               Mkdir()                                */
 /************************************************************************/
 
@@ -2853,7 +2866,7 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
         }
     }
 
-    if( VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags) == 0 )
+    if( VSICurlFilesystemHandlerBase::Stat(osFilename, pStatBuf, nFlags) == 0 )
     {
         return 0;
     }
@@ -3412,22 +3425,6 @@ static CPLString ComputeMD5OfLocalFile(VSILFILE* fp)
 }
 
 /************************************************************************/
-/*                         GetStreamingPath()                           */
-/************************************************************************/
-
-CPLString IVSIS3LikeFSHandler::GetStreamingPath( const char* pszFilename ) const
-{
-    const CPLString osPrefix(GetFSPrefix());
-    if( !STARTS_WITH_CI(pszFilename, osPrefix) )
-        return CPLString();
-
-    // Transform /vsis3/foo into /vsis3_streaming/foo
-    const size_t nPrefixLen = osPrefix.size();
-    return osPrefix.substr(0, nPrefixLen-1) + "_streaming/"  +
-                                                (pszFilename + nPrefixLen);
-}
-
-/************************************************************************/
 /*                           CopyFile()                                 */
 /************************************************************************/
 
@@ -3467,7 +3464,7 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE* fpIn,
             if( poSourceFSHandler )
             {
                 const CPLString osStreamingPath =
-                        poSourceFSHandler->GetStreamingPath(pszSource);
+                        poSourceFSHandler->GetStreamingFilename(pszSource);
                 if( !osStreamingPath.empty() )
                 {
                     fpIn = VSIFOpenExL(osStreamingPath, "rb", TRUE);

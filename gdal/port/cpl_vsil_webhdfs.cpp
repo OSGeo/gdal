@@ -71,7 +71,7 @@ namespace cpl {
 /*                         VSIWebHDFSFSHandler                          */
 /************************************************************************/
 
-class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandler
+class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBase
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIWebHDFSFSHandler)
 
@@ -99,9 +99,13 @@ public:
         int Rmdir( const char *pszFilename ) override;
         int Mkdir( const char *pszDirname, long nMode ) override;
 
+        const char* GetDebugKey() const override { return "VSIWEBHDFS"; }
+
         CPLString GetFSPrefix() const override { return "/vsiwebhdfs/"; }
 
         const char* GetOptions() override;
+
+        std::string GetStreamingFilename(const std::string& osFilename) const override { return osFilename; }
 };
 
 /************************************************************************/
@@ -539,7 +543,7 @@ VSIVirtualHandle* VSIWebHDFSFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
+        VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -563,7 +567,7 @@ const char* VSIWebHDFSFSHandler::GetOptions()
     "  <Option name='WEBHDFS_PERMISSION' type='integer' "
         "description='Permission mask (to provide as decimal number) when "
         "creating a file or directory'/>" +
-        VSICurlFilesystemHandler::GetOptionsStatic() +
+        VSICurlFilesystemHandlerBase::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }
