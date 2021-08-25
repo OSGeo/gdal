@@ -6009,7 +6009,7 @@ SWIGINTERN CPLErr GDALMDArrayHS_Write(GDALMDArrayHS *self,int nDims1,GUIntBig *a
                                    (size_t)buf_len ) ? CE_None : CE_Failure;
     return eErr;
   }
-SWIGINTERN CPLErr GDALMDArrayHS_AdviseRead(GDALMDArrayHS *self,int nDims1,GUIntBig *array_start_idx,int nDims2,GUIntBig *count){
+SWIGINTERN CPLErr GDALMDArrayHS_AdviseRead(GDALMDArrayHS *self,int nDims1,GUIntBig *array_start_idx,int nDims2,GUIntBig *count,char **options=0){
 
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
     if( nDims1 != nExpectedDims )
@@ -6036,7 +6036,7 @@ SWIGINTERN CPLErr GDALMDArrayHS_AdviseRead(GDALMDArrayHS *self,int nDims1,GUIntB
         }
     }
 
-    if( !(GDALMDArrayAdviseRead( self, array_start_idx, count_internal.data() )) )
+    if( !(GDALMDArrayAdviseReadEx( self, array_start_idx, count_internal.data(), options )) )
     {
         return CE_Failure;
     }
@@ -24723,14 +24723,16 @@ SWIGINTERN PyObject *_wrap_MDArray_AdviseRead(PyObject *SWIGUNUSEDPARM(self), Py
   GUIntBig *arg3 = (GUIntBig *) 0 ;
   int arg4 ;
   GUIntBig *arg5 = (GUIntBig *) 0 ;
+  char **arg6 = (char **) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
   CPLErr result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:MDArray_AdviseRead",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO|O:MDArray_AdviseRead",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MDArray_AdviseRead" "', argument " "1"" of type '" "GDALMDArrayHS *""'"); 
@@ -24788,13 +24790,24 @@ SWIGINTERN PyObject *_wrap_MDArray_AdviseRead(PyObject *SWIGUNUSEDPARM(self), Py
       Py_DECREF(o);
     }
   }
+  if (obj3) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg6 = CSLFromPySequence(obj3, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALMDArrayHS_AdviseRead(arg1,arg2,arg3,arg4,arg5));
+      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALMDArrayHS_AdviseRead(arg1,arg2,arg3,arg4,arg5,arg6));
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -24819,6 +24832,10 @@ SWIGINTERN PyObject *_wrap_MDArray_AdviseRead(PyObject *SWIGUNUSEDPARM(self), Py
       free((void*) arg5);
     }
   }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg6 );
+  }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -24833,6 +24850,10 @@ fail:
     if (arg5) {
       free((void*) arg5);
     }
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg6 );
   }
   return NULL;
 }
@@ -44041,7 +44062,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"MDArray_Read", _wrap_MDArray_Read, METH_VARARGS, (char *)"MDArray_Read(MDArray self, int nDims1, int nDims2, int nDims3, int nDims4, ExtendedDataType buffer_datatype) -> CPLErr"},
 	 { (char *)"MDArray_WriteStringArray", _wrap_MDArray_WriteStringArray, METH_VARARGS, (char *)"MDArray_WriteStringArray(MDArray self, int nDims1, int nDims2, int nDims3, ExtendedDataType buffer_datatype, char ** options) -> CPLErr"},
 	 { (char *)"MDArray_Write", _wrap_MDArray_Write, METH_VARARGS, (char *)"MDArray_Write(MDArray self, int nDims1, int nDims2, int nDims3, int nDims4, ExtendedDataType buffer_datatype, GIntBig buf_len) -> CPLErr"},
-	 { (char *)"MDArray_AdviseRead", _wrap_MDArray_AdviseRead, METH_VARARGS, (char *)"MDArray_AdviseRead(MDArray self, int nDims1, int nDims2) -> CPLErr"},
+	 { (char *)"MDArray_AdviseRead", _wrap_MDArray_AdviseRead, METH_VARARGS, (char *)"MDArray_AdviseRead(MDArray self, int nDims1, int nDims2, char ** options=None) -> CPLErr"},
 	 { (char *)"MDArray_GetAttribute", _wrap_MDArray_GetAttribute, METH_VARARGS, (char *)"MDArray_GetAttribute(MDArray self, char const * name) -> Attribute"},
 	 { (char *)"MDArray_GetAttributes", _wrap_MDArray_GetAttributes, METH_VARARGS, (char *)"MDArray_GetAttributes(MDArray self, char ** options=None)"},
 	 { (char *)"MDArray_CreateAttribute", _wrap_MDArray_CreateAttribute, METH_VARARGS, (char *)"MDArray_CreateAttribute(MDArray self, char const * name, int nDimensions, ExtendedDataType data_type, char ** options=None) -> Attribute"},

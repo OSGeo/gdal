@@ -1060,12 +1060,12 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
       from osgeo import gdal_array
       return gdal_array.MDArrayReadAsArray(self, array_start_idx, count, array_step, buffer_datatype, buf_obj)
 
-  def AdviseRead(self, array_start_idx = None, count = None):
+  def AdviseRead(self, array_start_idx = None, count = None, options = []):
       if not array_start_idx:
         array_start_idx = [0] * self.GetDimensionCount()
       if not count:
         count = [ (self.GetDimensions()[i].GetSize() - array_start_idx[i]) for i in range (self.GetDimensionCount()) ]
-      return _gdal.MDArray_AdviseRead(self, array_start_idx, count)
+      return _gdal.MDArray_AdviseRead(self, array_start_idx, count, options)
 
   def __getitem__(self, item):
 

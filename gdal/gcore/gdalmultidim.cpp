@@ -98,8 +98,9 @@ protected:
                       const void* pSrcBuffer) override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override
-        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+                     const size_t* count,
+                     CSLConstList papszOptions) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions); }
 
 public:
     static std::shared_ptr<GDALMDArrayUnscaled> Create(
@@ -3384,12 +3385,16 @@ CSLConstList GDALMDArray::GetStructuralInfo() const
  *                      Array of GetDimensionCount() values.
  *                      Can be nullptr as a synonymous for
  *                      [ aoDims[i].GetSize() - arrayStartIdx[i] for i in range(GetDimensionCount() ]
+ *
+ * @param papszOptions Driver specific options, or nullptr. Consult driver documentation.
+ *
  * @return true in case of success (ignoring the advice is a success)
  *
  * @since GDAL 3.2
  */
 bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
-                             const size_t* count) const
+                             const size_t* count,
+                             CSLConstList papszOptions) const
 {
     const auto nDimCount = GetDimensionCount();
     if( nDimCount == 0 )
@@ -3440,7 +3445,7 @@ bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
         return false;
     }
 
-    return IAdviseRead(arrayStartIdx, count);
+    return IAdviseRead(arrayStartIdx, count, papszOptions);
 }
 
 /************************************************************************/
@@ -3448,7 +3453,7 @@ bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-bool GDALMDArray::IAdviseRead(const GUInt64*, const size_t*) const
+bool GDALMDArray::IAdviseRead(const GUInt64*, const size_t*, CSLConstList /* papszOptions*/) const
 {
     return true;
 }
@@ -3805,7 +3810,8 @@ protected:
                       const void* pSrcBuffer) override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override;
+                     const size_t* count,
+                     CSLConstList papszOptions) const override;
 
 public:
     static std::shared_ptr<GDALSlicedMDArray> Create(
@@ -3989,11 +3995,13 @@ bool GDALSlicedMDArray::IWrite(const GUInt64* arrayStartIdx,
 /************************************************************************/
 
 bool GDALSlicedMDArray::IAdviseRead(const GUInt64* arrayStartIdx,
-                                    const size_t* count) const
+                                    const size_t* count,
+                                    CSLConstList papszOptions) const
 {
     PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
     return m_poParent->AdviseRead(m_parentStart.data(),
-                                  m_parentCount.data());
+                                  m_parentCount.data(),
+                                  papszOptions);
 }
 
 /************************************************************************/
@@ -4247,8 +4255,9 @@ protected:
                       void* pDstBuffer) const override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override
-        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+                     const size_t* count,
+                     CSLConstList papszOptions) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions); }
 
 public:
     static std::shared_ptr<GDALExtractFieldMDArray> Create(
@@ -4634,7 +4643,8 @@ protected:
                       const void* pSrcBuffer) override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override;
+                     const size_t* count,
+                     CSLConstList papszOptions) const override;
 
 public:
     static std::shared_ptr<GDALMDArrayTransposed> Create(
@@ -4812,11 +4822,13 @@ bool GDALMDArrayTransposed::IWrite(const GUInt64* arrayStartIdx,
 /************************************************************************/
 
 bool GDALMDArrayTransposed::IAdviseRead(const GUInt64* arrayStartIdx,
-                                        const size_t* count) const
+                                        const size_t* count,
+                                        CSLConstList papszOptions) const
 {
     PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
     return m_poParent->AdviseRead(m_parentStart.data(),
-                                  m_parentCount.data());
+                                  m_parentCount.data(),
+                                  papszOptions);
 }
 
 /************************************************************************/
@@ -5337,8 +5349,9 @@ protected:
                       void* pDstBuffer) const override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override
-        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+                     const size_t* count,
+                     CSLConstList papszOptions) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions); }
 
 public:
     static std::shared_ptr<GDALMDArrayMask> Create(
@@ -9153,9 +9166,29 @@ int GDALMDArrayAdviseRead(GDALMDArrayH hArray,
                           const GUInt64* arrayStartIdx,
                           const size_t* count)
 {
+    return GDALMDArrayAdviseReadEx(hArray, arrayStartIdx, count, nullptr);
+}
+
+/************************************************************************/
+/*                      GDALMDArrayAdviseReadEx()                       */
+/************************************************************************/
+
+/** Advise driver of upcoming read requests.
+ *
+ * This is the same as the C++ method GDALMDArray::AdviseRead()
+ *
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 3.4
+ */
+int GDALMDArrayAdviseReadEx(GDALMDArrayH hArray,
+                            const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            CSLConstList papszOptions)
+{
     VALIDATE_POINTER1( hArray, __func__, FALSE );
     // coverity[var_deref_model]
-    return hArray->m_poImpl->AdviseRead(arrayStartIdx, count);
+    return hArray->m_poImpl->AdviseRead(arrayStartIdx, count, papszOptions);
 }
 
 /************************************************************************/

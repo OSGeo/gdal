@@ -416,7 +416,8 @@ protected:
                       const void* pSrcBuffer) override;
 
     bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override;
+                     const size_t* count,
+                     CSLConstList papszOptions) const override;
 
 public:
     static std::shared_ptr<netCDFVariable> Create(
@@ -2825,7 +2826,8 @@ bool netCDFVariable::IRead(const GUInt64* arrayStartIdx,
 /************************************************************************/
 
 bool netCDFVariable::IAdviseRead(const GUInt64* arrayStartIdx,
-                                 const size_t* count) const
+                                 const size_t* count,
+                                 CSLConstList /* papszOptions */) const
 {
     const auto nDims = GetDimensionCount();
     if( nDims == 0 )

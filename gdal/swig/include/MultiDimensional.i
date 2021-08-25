@@ -712,7 +712,7 @@ public:
 %apply (int nList, GUIntBig* pList) {(int nDims1, GUIntBig *array_start_idx)};
 %apply (int nList, GUIntBig* pList) {(int nDims2, GUIntBig *count)};
   CPLErr AdviseRead( int nDims1, GUIntBig* array_start_idx,
-                     int nDims2, GUIntBig* count ) {
+                     int nDims2, GUIntBig* count, char** options = 0 ) {
 
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
     if( nDims1 != nExpectedDims )
@@ -739,7 +739,7 @@ public:
         }
     }
 
-    if( !(GDALMDArrayAdviseRead( self, array_start_idx, count_internal.data() )) )
+    if( !(GDALMDArrayAdviseReadEx( self, array_start_idx, count_internal.data(), options )) )
     {
         return CE_Failure;
     }
