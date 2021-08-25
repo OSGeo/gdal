@@ -500,9 +500,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     CPLXMLNode* psSourceFileNameNode = CPLGetXMLNode(psSrc,"SourceFilename");
     const char *pszFilename =
         psSourceFileNameNode ?
-        CPLGetXMLValue(psSourceFileNameNode, nullptr, nullptr) : nullptr;
+        CPLGetXMLValue(psSourceFileNameNode, nullptr, "") : "";
 
-    if( pszFilename == nullptr )
+    if( pszFilename[0] == '\0' )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Missing <SourceFilename> element in VRTRasterBand." );
