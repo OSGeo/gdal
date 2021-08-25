@@ -312,6 +312,8 @@ def test_zarr_invalid_json_remove_member(member):
                                          {"shape": [5, 0]},
                                          {"chunks": [1 << 40, 1 << 40],
                                           "shape": [1 << 40, 1 << 40]},
+                                         {"shape": [1 << 30, 1 << 30, 1 << 30],
+                                          "chunks": [1, 1, 1]},
                                          {"dtype": None},
                                          {"dtype": 1},
                                          {"dtype": ""},

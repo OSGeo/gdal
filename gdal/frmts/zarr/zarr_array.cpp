@@ -77,12 +77,28 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::shared_ptr<ZarrSharedRes
                                              const std::vector<GUInt64>& anBlockSize,
                                              bool bFortranOrder)
 {
+    uint64_t nTotalTileCount = 1;
+    for( size_t i = 0; i < aoDims.size(); ++i )
+    {
+        uint64_t nTileThisDim = (aoDims[i]->GetSize() / anBlockSize[i]) +
+                    (((aoDims[i]->GetSize() % anBlockSize[i]) != 0) ? 1 : 0);
+        if( nTotalTileCount > std::numeric_limits<uint64_t>::max() / nTileThisDim )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Array %s has more than 2^64 tiles. This is not supported.",
+                     osName.c_str());
+            return nullptr;
+        }
+        nTotalTileCount *= nTileThisDim;
+    }
+
     auto arr = std::shared_ptr<ZarrArray>(
         new ZarrArray(poSharedResource,
                       osParentName, osName, aoDims, oType, aoDtypeElts,
                       anBlockSize, bFortranOrder));
     arr->SetSelf(arr);
 
+    arr->m_nTotalTileCount = nTotalTileCount;
     arr->m_bUseOptimizedCodePaths = CPLTestBool(
         CPLGetConfigOption("GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", "YES"));
 
@@ -1050,7 +1066,22 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
         osFilename = osTmp + "/c" + osFilename;
     }
 
-    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
+    VSILFILE* fp = nullptr;
+    // This is the number of files returned in a S3 directory listing operation
+    constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
+    if( (m_osDimSeparator == "/" &&
+            m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
+        (m_osDimSeparator != "/" &&
+            m_nTotalTileCount > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) )
+    {
+        // Avoid issuing ReadDir() when a lot of files are expected
+        CPLConfigOptionSetter optionSetter("GDAL_DISABLE_READDIR_ON_OPEN", "YES", true);
+        fp = VSIFOpenL(osFilename.c_str(), "rb");
+    }
+    else
+    {
+        fp = VSIFOpenL(osFilename.c_str(), "rb");
+    }
     if( fp == nullptr )
     {
         // Missing files are OK and indicate nodata_value
@@ -3262,6 +3293,8 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                                      osArrayName,
                                      aoDims, oType, aoDtypeElts, anBlockSize,
                                      bFortranOrder);
+    if( !poArray )
+        return nullptr;
     poArray->SetUpdatable(m_bUpdatable); // must be set before SetAttributes()
     poArray->SetFilename(osZarrayFilename);
     poArray->SetDimSeparator(osDimSeparator);

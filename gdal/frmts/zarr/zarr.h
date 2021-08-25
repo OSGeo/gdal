@@ -464,6 +464,7 @@ class ZarrArray final: public GDALPamMDArray
     bool                                              m_bHasScale = false;
     bool                                              m_bScaleModified = false;
     std::weak_ptr<GDALGroup>                          m_poGroupWeak{};
+    uint64_t                                          m_nTotalTileCount = 0;
 
     ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
               const std::string& osParentName,
