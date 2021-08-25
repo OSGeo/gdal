@@ -133,6 +133,7 @@ struct VSIDIRADLS: public VSIDIR
     VSIADLSFSHandler* m_poFS = nullptr;
     int m_nMaxFiles = 0;
     bool m_bCacheEntries = true;
+    std::string m_osFilterPrefix{}; // client-side only. No server-side option in https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/list
 
     explicit VSIDIRADLS(VSIADLSFSHandler *poFSIn): m_poFS(poFSIn) {}
 
@@ -607,6 +608,11 @@ const VSIDIREntry* VSIDIRADLS::NextDirEntry()
                         return nullptr;
                     }
                 }
+            }
+            if( !m_osFilterPrefix.empty() &&
+                !STARTS_WITH(entry->pszName, m_osFilterPrefix.c_str()) )
+            {
+                continue;
             }
             return entry.get();
         }
@@ -2084,6 +2090,7 @@ VSIDIR* VSIADLSFSHandler::OpenDir( const char *pszPath,
     dir->m_nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
     dir->m_bCacheEntries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "YES"));
+    dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
     if( !dir->IssueListDir() )
     {
         delete dir;

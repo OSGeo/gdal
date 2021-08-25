@@ -916,6 +916,68 @@ def test_vsiaz_opendir():
 
     gdal.CloseDir(d)
 
+    # Prefix filtering on root of bucket
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/opendir?comp=list&prefix=my_prefix&restype=container', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>my_prefix</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>my_prefix_test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>40</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""")
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsiaz/opendir', -1, ['PREFIX=my_prefix'])
+    assert d is not None
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'my_prefix_test.txt'
+    assert entry.size == 40
+    assert entry.mode == 32768
+    assert entry.mtime == 1
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry is None
+
+    gdal.CloseDir(d)
+
+    # Prefix filtering on root of subdir
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/opendir?comp=list&prefix=some_dir%2Fmy_prefix&restype=container', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>some_dir/my_prefix</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>some_dir/my_prefix_test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>40</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""")
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsiaz/opendir/some_dir', -1, ['PREFIX=my_prefix'])
+    assert d is not None
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'my_prefix_test.txt'
+    assert entry.size == 40
+    assert entry.mode == 32768
+    assert entry.mtime == 1
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry is None
+
+    gdal.CloseDir(d)
+
 
 ###############################################################################
 # Test RmdirRecursive() with a fake server
