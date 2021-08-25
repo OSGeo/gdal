@@ -519,8 +519,6 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
 
-    bool IsCacheable() const override { return false; }
-
 public:
     ~ZarrArray() override;
 
