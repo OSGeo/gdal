@@ -287,13 +287,13 @@ class ColorPalette:
         return col if isinstance(col, str) else '#{:06X}'.format(col)
 
     @staticmethod
-    def color_to_color_entry(color):
+    def color_to_color_entry(color, with_alpha: Optional[bool]=None):
         b = base.get_byte(color, 0)
         g = base.get_byte(color, 1)
         r = base.get_byte(color, 2)
         a = base.get_byte(color, 3)
 
-        if a < 255:
+        if with_alpha or (with_alpha is None and (a < 255)):
             return r, g, b, a
         else:
             return r, g, b
