@@ -5830,25 +5830,58 @@ bool GDALMDArray::IsRegularlySpaced(double& dfStart, double& dfIncrement) const
     {
         return false;
     }
-    const GUInt64 anStart[1] = { 0 };
+
+    GUInt64 anStart[1] = { 0 };
     size_t anCount[1] = { nCount };
+
+    const auto IsRegularlySpacedInternal = [&dfStart, &dfIncrement, &anCount, &adfTmp]()
+    {
+        dfStart = adfTmp[0];
+        dfIncrement = (adfTmp[anCount[0]-1] - adfTmp[0]) / (anCount[0] - 1);
+        if( dfIncrement == 0 )
+        {
+            return false;
+        }
+        for(size_t i = 1; i < anCount[0]; i++ )
+        {
+            if( fabs((adfTmp[i] - adfTmp[i-1]) - dfIncrement) > 1e-3 * fabs(dfIncrement) )
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // First try with the first block. This can avoid excessive processing time,
+    // for example with Zarr datasets. https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37636
+    const auto nBlockSize = GetBlockSize()[0];
+    if( nBlockSize >= 3 && nBlockSize < nCount )
+    {
+        anCount[0] = static_cast<size_t>(nBlockSize);
+        if( !Read(anStart, anCount, nullptr, nullptr,
+                  GDALExtendedDataType::Create(GDT_Float64),
+                  &adfTmp[0]) )
+        {
+            return false;
+        }
+        if( !IsRegularlySpacedInternal() )
+        {
+            return false;
+        }
+
+        // Get next values
+        anStart[0] += nBlockSize;
+        anCount[0] -= static_cast<size_t>(nBlockSize);
+    }
+
     if( !Read(anStart, anCount, nullptr, nullptr,
               GDALExtendedDataType::Create(GDT_Float64),
-              &adfTmp[0]) )
+              &adfTmp[static_cast<size_t>(anStart[0])]) )
     {
         return false;
     }
 
-    dfStart = adfTmp[0];
-    dfIncrement = (adfTmp[nCount-1] - adfTmp[0]) / (nCount - 1);
-    for(size_t i = 1; i < nCount; i++ )
-    {
-        if( fabs((adfTmp[i] - adfTmp[i-1]) - dfIncrement) > 1e-3 * fabs(dfIncrement) )
-        {
-            return false;
-        }
-    }
-    return true;
+    return IsRegularlySpacedInternal();
 }
 
 /************************************************************************/
