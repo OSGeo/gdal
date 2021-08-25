@@ -5309,6 +5309,9 @@ OGRErrMessages( int rc ) {
 SWIGINTERN int GDALDatasetShadow_GetLayerCount(GDALDatasetShadow *self){
     return GDALDatasetGetLayerCount(self);
   }
+SWIGINTERN bool GDALDatasetShadow_IsLayerPrivate(GDALDatasetShadow *self,int index){
+    return GDALDatasetIsLayerPrivate(self, index);
+  }
 SWIGINTERN OGRLayerShadow *GDALDatasetShadow_GetLayerByIndex(GDALDatasetShadow *self,int index=0){
 
     OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayer(self, index);
@@ -20302,6 +20305,54 @@ SWIGINTERN PyObject *_wrap_Dataset_GetLayerCount(PyObject *SWIGUNUSEDPARM(self),
 #endif
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_IsLayerPrivate(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_IsLayerPrivate", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_IsLayerPrivate" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Dataset_IsLayerPrivate" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_IsLayerPrivate(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -43980,6 +44031,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Dataset_CopyLayer", (PyCFunction) _wrap_Dataset_CopyLayer, METH_VARARGS | METH_KEYWORDS, (char *)"Dataset_CopyLayer(Dataset self, Layer src_layer, char const * new_name, char ** options=None) -> Layer"},
 	 { (char *)"Dataset_DeleteLayer", _wrap_Dataset_DeleteLayer, METH_VARARGS, (char *)"Dataset_DeleteLayer(Dataset self, int index) -> OGRErr"},
 	 { (char *)"Dataset_GetLayerCount", _wrap_Dataset_GetLayerCount, METH_VARARGS, (char *)"Dataset_GetLayerCount(Dataset self) -> int"},
+	 { (char *)"Dataset_IsLayerPrivate", _wrap_Dataset_IsLayerPrivate, METH_VARARGS, (char *)"Dataset_IsLayerPrivate(Dataset self, int index) -> bool"},
 	 { (char *)"Dataset_GetLayerByIndex", _wrap_Dataset_GetLayerByIndex, METH_VARARGS, (char *)"Dataset_GetLayerByIndex(Dataset self, int index=0) -> Layer"},
 	 { (char *)"Dataset_GetLayerByName", _wrap_Dataset_GetLayerByName, METH_VARARGS, (char *)"Dataset_GetLayerByName(Dataset self, char const * layer_name) -> Layer"},
 	 { (char *)"Dataset_ResetReading", _wrap_Dataset_ResetReading, METH_VARARGS, (char *)"Dataset_ResetReading(Dataset self)"},

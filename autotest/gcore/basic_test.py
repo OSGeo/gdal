@@ -349,6 +349,7 @@ def test_basic_test_12():
     assert lyr is not None
     lyr = ds.GetLayer(0)
     assert lyr is not None
+    assert not ds.IsLayerPrivate(0)
     sql_lyr = ds.ExecuteSQL('SELECT * FROM foo')
     assert sql_lyr is not None
     ds.ReleaseResultSet(sql_lyr)

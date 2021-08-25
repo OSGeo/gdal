@@ -2423,6 +2423,11 @@ class Dataset(MajorObject):
         return _gdal.Dataset_GetLayerCount(self, *args)
 
 
+    def IsLayerPrivate(self, *args):
+        """IsLayerPrivate(Dataset self, int index) -> bool"""
+        return _gdal.Dataset_IsLayerPrivate(self, *args)
+
+
     def GetLayerByIndex(self, *args):
         """GetLayerByIndex(Dataset self, int index=0) -> Layer"""
         return _gdal.Dataset_GetLayerByIndex(self, *args)
