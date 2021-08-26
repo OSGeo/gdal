@@ -171,6 +171,9 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
         apapszGeomColumns[iNew] = papszRecord;
     }
 
+    const bool bListAllTables = CPLTestBool(CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "NO"));
+
     // Collate a list of all tables in the data source, skipping over internal and system tables
     CPLODBCStatement oTableList( &oSession );
     std::vector< CPLString > aosTableNames;
@@ -184,15 +187,15 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
             if( osLCTableName == "gdb_items" )
             {
                 m_bHasGdbItemsTable = true;
-                continue;
             }
 
             // a bunch of internal tables we don't want to expose...
-            if( !osTableName.empty()
-                    && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
-                    && !osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
-                    && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
-                    )
+            if( !osTableName.empty() &&
+                    ( bListAllTables ||
+                        ( !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
+                            && !osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
+                            && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
+                        ) ) )
             {
                 aosTableNames.emplace_back( osTableName );
             }
