@@ -4549,9 +4549,11 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     VSIFree( pabyChunkNodataMask );
 
     // Wait for all pending jobs to complete
-    while( eErr == CE_None && !jobList.empty() )
+    while( !jobList.empty() )
     {
-        eErr = WaitAndFinalizeOldestJob(jobList);
+        const auto l_eErr = WaitAndFinalizeOldestJob(jobList);
+        if( l_eErr != CE_None && eErr == CE_None )
+            eErr = l_eErr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -5202,9 +5204,11 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         }
 
         // Wait for all pending jobs to complete
-        while( eErr == CE_None && !jobList.empty() )
+        while( !jobList.empty() )
         {
-            eErr = WaitAndFinalizeOldestJob(jobList);
+            const auto l_eErr = WaitAndFinalizeOldestJob(jobList);
+            if( l_eErr != CE_None && eErr == CE_None )
+                eErr = l_eErr;
         }
 
         // Flush the data to overviews.
