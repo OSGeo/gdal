@@ -27,6 +27,13 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-esri.png
+           :class: img-logos
+           :width: 250 px
+           :target: https://www.esri.com
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-maxar.png
            :class: img-logos
            :width: 250 px
@@ -53,13 +60,6 @@ the health of the project:
   .. container:: horizontal-logos
 
     .. Note: they will appear in randomized order in HTML
-
-    .. container:: horizontal-logo
-
-        .. image:: ../../images/sponsors/logo-esri.png
-           :class: img-logos
-           :width: 200 px
-           :target: https://www.esri.com
 
     .. container:: horizontal-logo
 
