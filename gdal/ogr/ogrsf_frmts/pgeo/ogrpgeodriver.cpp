@@ -42,31 +42,20 @@ OGRPGeoDriver::~OGRPGeoDriver()
 }
 
 /************************************************************************/
-/*                              GetName()                               */
+/*                                OGRPGeoDriverOpen()                   */
 /************************************************************************/
 
-const char *OGRPGeoDriver::GetName()
+GDALDataset * OGRPGeoDriver::OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    return "PGeo";
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
-                                    int bUpdate )
-
-{
-    if( STARTS_WITH_CI(pszFilename, "WALK:") )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:") )
         return nullptr;
 
-    if( STARTS_WITH_CI(pszFilename, "GEOMEDIA:") )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOMEDIA:") )
         return nullptr;
 
-    if( !STARTS_WITH_CI(pszFilename, "PGEO:")
-        && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:")
+        && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"mdb") )
         return nullptr;
 
     // Disabling the attempt to guess if a MDB file is a PGeo database
@@ -118,7 +107,7 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
     //
     // See: http://www.unixodbc.org/internals.html
     //
-    if ( !InstallMdbDriver() )
+    if ( !InstallMdbDriver( "PGeo" ) )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
@@ -131,22 +120,13 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
     // Open data source
     OGRPGeoDataSource *poDS = new OGRPGeoDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( poOpenInfo ) )
     {
         delete poDS;
         return nullptr;
     }
     else
         return poDS;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRPGeoDriver::TestCapability( CPL_UNUSED const char * pszCap )
-{
-    return FALSE;
 }
 
 /*
@@ -158,16 +138,18 @@ int OGRPGeoDriver::TestCapability( CPL_UNUSED const char * pszCap )
 /*                           InstallMdbDriver()                         */
 /************************************************************************/
 
-bool OGRODBCMDBDriver::InstallMdbDriver()
+bool OGRODBCMDBDriver::InstallMdbDriver(const char *pszDriverName)
 {
-    if ( !FindDriverLib() )
+    CPLString osDriverFile;
+
+    if ( !FindDriverLib( pszDriverName, osDriverFile ) )
     {
         return false;
     }
     else
     {
         CPLAssert( !osDriverFile.empty() );
-        CPLDebug( GetName(), "MDB Tools driver: %s", osDriverFile.c_str() );
+        CPLDebug( pszDriverName, "MDB Tools driver: %s", osDriverFile.c_str() );
 
         CPLString driverName("Microsoft Access Driver (*.mdb)");
         CPLString driver(driverName);
@@ -197,7 +179,7 @@ bool OGRODBCMDBDriver::InstallMdbDriver()
 /*                           FindDriverLib()                            */
 /************************************************************************/
 
-bool OGRODBCMDBDriver::FindDriverLib()
+bool OGRODBCMDBDriver::FindDriverLib( const char * pszDriverName, CPLString &osDriverFile )
 {
     // Default name and path of driver library
     const char* aszDefaultLibName[] = {
@@ -256,7 +238,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
         }
     }
 
-    CPLError(CE_Failure, CPLE_AppDefined, "%s: MDB Tools driver not found!\n", GetName());
+    CPLError(CE_Failure, CPLE_AppDefined, "%s: MDB Tools driver not found!\n", pszDriverName);
     // Driver not found!
     return false;
 }
@@ -294,12 +276,26 @@ bool OGRODBCMDBDriver::LibraryExists(const char* pszLibPath)
 void RegisterOGRPGeo()
 
 {
-    OGRSFDriver* poDriver = new OGRPGeoDriver;
+    if( GDALGetDriverByName( "PGeo" ) != nullptr )
+        return;
 
+    OGRPGeoDriver* poDriver = new OGRPGeoDriver;
+
+    poDriver->SetDescription( "PGeo" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Personal GeoDatabase" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgeo.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as GDB_* tables) should be listed' default='NO'>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
+"</OpenOptionList>");
+
+    poDriver->pfnOpen = OGRPGeoDriver::OGRPGeoDriverOpen;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

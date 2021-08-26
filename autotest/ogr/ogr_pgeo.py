@@ -29,14 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-from osgeo import gdal
-from osgeo import ogr
-
-
 import gdaltest
 import ogrtest
+import os
 import pytest
+from osgeo import gdal
+from osgeo import ogr
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -189,6 +187,34 @@ def test_ogr_pgeo_basic_v9(download_test_data):
 
     feat_count = lyr.GetFeatureCount()
     assert feat_count == 9418, 'did not get expected feature count'
+
+
+###############################################################################
+# Test LIST_ALL_TABLES open option
+
+
+def test_ogr_pgeo_list_all_tables():
+    pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
+    assert pgeo_ds is not None
+
+    assert pgeo_ds.GetLayerCount() == 4, 'did not get expected layer count'
+
+    # Test LIST_ALL_TABLES=YES open option
+    pgeo_ds_all_table = gdal.OpenEx('data/pgeo/sample.mdb', gdal.OF_VECTOR,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+
+    # Depending on the actual ODBC driver used (i.e Microsoft driver vs mdbtools driver), a different
+    # set of system tables are exposed (18 vs 27). Mdbtools includes the various MSys* tables, while the
+    # Microsoft driver strips these out. Here we test only for the common subset of tables.
+    assert pgeo_ds_all_table.GetLayerCount() >= 18, 'did not get expected layer count'
+    layer_names = [pgeo_ds_all_table.GetLayer(i).GetName() for i in range(pgeo_ds_all_table.GetLayerCount())]
+
+    for name in ['lines', 'points', 'polys',
+                 'GDB_ColumnInfo', 'GDB_DatabaseLocks', 'GDB_GeomColumns', 'GDB_ItemRelationships',
+                 'GDB_ItemRelationshipTypes', 'GDB_Items', 'GDB_Items_Shape_Index', 'GDB_ItemTypes',
+                 'GDB_RasterColumns', 'GDB_ReplicaLog', 'GDB_SpatialRefs', 'lines_Shape_Index', 'non_spatial',
+                 'points_Shape_Index', 'polys_Shape_Index']:
+        assert name in layer_names
 
 
 ###############################################################################

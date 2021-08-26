@@ -54,6 +54,12 @@ Special SQL requests
 can be used as special SQL requests to get respectively the definition
 and metadata of a Personal GeoDatabase table as XML content.
 
+Dataset open options
+--------------------
+
+-  **LIST_ALL_TABLES**\ =YES/NO: This may be "YES" to force all tables,
+   including system and internal tables (such as the GDB_* tables) to be listed (since GDAL 3.4)
+
 Driver capabilities
 -------------------
 

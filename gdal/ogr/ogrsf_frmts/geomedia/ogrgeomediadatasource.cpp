@@ -44,8 +44,7 @@ OGRGeomediaDataSource::OGRGeomediaDataSource() :
     nLayers(0),
     papoLayersInvisible(nullptr),
     nLayersWithInvisible(0),
-    pszName(nullptr),
-    bDSUpdate(FALSE)
+    pszName(nullptr)
 {}
 
 /************************************************************************/
@@ -100,8 +99,7 @@ static int CheckDSNStringTemplate(const char* pszStr)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
-                                 CPL_UNUSED int bTestOpen )
+int OGRGeomediaDataSource::Open( const char * pszNewName )
 {
     CPLAssert( nLayers == 0 );
 
@@ -162,8 +160,6 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     pszName = CPLStrdup( pszNewName );
-
-    bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
 /*      Collect list of tables and their supporting info from           */

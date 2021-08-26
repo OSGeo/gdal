@@ -63,7 +63,7 @@ OGRWalkDataSource::~OGRWalkDataSource()
 /*                              Open()                                  */
 /************************************************************************/
 
-int OGRWalkDataSource::Open( const char * pszNewName, int /* bUpdate */ )
+int OGRWalkDataSource::Open(const char * pszNewName)
 {
 /* -------------------------------------------------------------------- */
 /*      If this is the name of an MDB file, then construct the          */
