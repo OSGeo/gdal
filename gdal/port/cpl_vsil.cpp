@@ -364,6 +364,10 @@ char **CPLReadDir( const char *pszPath )
  *     with the specified prefix. Implemented efficiently for /vsis3/, /vsigs/,
  *     and /vsiaz/ (but not /vsiadls/)
  * </li>
+ * <li>NAME_AND_TYPE_ONLY=YES/NO: (GDAL >= 3.4) Defaults to NO. If set to YES,
+ *     only the pszName and nMode members of VSIDIR are guaranteed to be set.
+ *     This is implemented efficiently for the Unix virtual file system.
+ * </li>
  * </ul>
  *
  * @return a handle, or NULL in case of error

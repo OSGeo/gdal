@@ -168,6 +168,9 @@ public:
     GIntBig GetDiskFreeSpace( const char* pszDirname ) override;
     int SupportsSparseFiles( const char* pszPath ) override;
 
+    VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
+                             const char* const *papszOptions) override;
+
 #ifdef VSI_COUNT_BYTES_READ
     void             AddToTotal(vsi_l_offset nBytes);
 #endif
@@ -861,6 +864,195 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
     }
     return FALSE;
 #endif
+}
+
+/************************************************************************/
+/*                            VSIDIRUnixStdio                           */
+/************************************************************************/
+
+struct VSIDIRUnixStdio final: public VSIDIR
+{
+    CPLString osRootPath{};
+    CPLString osBasePath{};
+    DIR* m_psDir = nullptr;
+    int nRecurseDepth = 0;
+    VSIDIREntry entry{};
+    std::vector<VSIDIRUnixStdio*> aoStackSubDir{};
+    VSIUnixStdioFilesystemHandler* poFS = nullptr;
+    std::string m_osFilterPrefix{};
+    bool m_bNameAndTypeOnly = false;
+
+    explicit VSIDIRUnixStdio(VSIUnixStdioFilesystemHandler* poFSIn): poFS(poFSIn) {}
+    ~VSIDIRUnixStdio();
+
+    const VSIDIREntry* NextDirEntry() override;
+
+    VSIDIRUnixStdio(const VSIDIRUnixStdio&) = delete;
+    VSIDIRUnixStdio& operator=(const VSIDIRUnixStdio&) = delete;
+};
+
+/************************************************************************/
+/*                        ~VSIDIRUnixStdio()                            */
+/************************************************************************/
+
+VSIDIRUnixStdio::~VSIDIRUnixStdio()
+{
+    while( !aoStackSubDir.empty() )
+    {
+        delete aoStackSubDir.back();
+        aoStackSubDir.pop_back();
+    }
+    closedir(m_psDir);
+}
+
+/************************************************************************/
+/*                            OpenDir()                                 */
+/************************************************************************/
+
+VSIDIR* VSIUnixStdioFilesystemHandler::OpenDir( const char *pszPath,
+                                       int nRecurseDepth,
+                                       const char* const * papszOptions)
+{
+    DIR* psDir = opendir(pszPath);
+    if( psDir == nullptr )
+    {
+        return nullptr;
+    }
+    VSIDIRUnixStdio* dir = new VSIDIRUnixStdio(this);
+    dir->osRootPath = pszPath;
+    dir->nRecurseDepth = nRecurseDepth;
+    dir->m_psDir = psDir;
+    dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
+    dir->m_bNameAndTypeOnly = CPLTestBool(CSLFetchNameValueDef(papszOptions, "NAME_AND_TYPE_ONLY", "NO"));
+    return dir;
+}
+
+/************************************************************************/
+/*                           NextDirEntry()                             */
+/************************************************************************/
+
+const VSIDIREntry* VSIDIRUnixStdio::NextDirEntry()
+{
+begin:
+    if( VSI_ISDIR(entry.nMode) && nRecurseDepth != 0 )
+    {
+        CPLString osCurFile(osRootPath);
+        if( !osCurFile.empty() )
+            osCurFile += '/';
+        osCurFile += entry.pszName;
+        auto subdir = static_cast<VSIDIRUnixStdio*>(
+            poFS->VSIUnixStdioFilesystemHandler::OpenDir(osCurFile,
+                nRecurseDepth - 1, nullptr));
+        if( subdir )
+        {
+            subdir->osRootPath = osRootPath;
+            subdir->osBasePath = entry.pszName;
+            subdir->m_osFilterPrefix = m_osFilterPrefix;
+            subdir->m_bNameAndTypeOnly = m_bNameAndTypeOnly;
+            aoStackSubDir.push_back(subdir);
+        }
+        entry.nMode = 0;
+    }
+
+    while( !aoStackSubDir.empty() )
+    {
+        auto l_entry = aoStackSubDir.back()->NextDirEntry();
+        if( l_entry )
+        {
+            return l_entry;
+        }
+        delete aoStackSubDir.back();
+        aoStackSubDir.pop_back();
+    }
+
+    while( true )
+    {
+        const auto* psEntry = readdir(m_psDir);
+        if( psEntry == nullptr )
+        {
+            return nullptr;
+        }
+        // Skip . and ..entries
+        if( psEntry->d_name[0] == '.' &&
+            (psEntry->d_name[1] == '\0' ||
+             (psEntry->d_name[1] == '.' &&
+              psEntry->d_name[2] == '\0')) )
+        {
+            // do nothing
+        }
+        else
+        {
+            CPLFree(entry.pszName);
+            CPLString osName(osBasePath);
+            if( !osName.empty() )
+                osName += '/';
+            osName += psEntry->d_name;
+
+            entry.pszName = CPLStrdup(osName);
+            entry.nMode = 0;
+            entry.nSize = 0;
+            entry.nMTime = 0;
+            entry.bModeKnown = false;
+            entry.bSizeKnown = false;
+            entry.bMTimeKnown = false;
+
+            CPLString osCurFile(osRootPath);
+            if( !osCurFile.empty() )
+                osCurFile += '/';
+            osCurFile += entry.pszName;
+
+            if( psEntry->d_type == DT_REG )
+                entry.nMode = S_IFREG;
+            else if( psEntry->d_type == DT_DIR )
+                entry.nMode = S_IFDIR;
+            else if( psEntry->d_type == DT_LNK )
+                entry.nMode = S_IFLNK;
+
+            const auto StatFile = [&osCurFile, this]()
+            {
+                VSIStatBufL sStatL;
+                if( VSIStatL(osCurFile, &sStatL) == 0 )
+                {
+                    entry.nMode = sStatL.st_mode;
+                    entry.nSize = sStatL.st_size;
+                    entry.nMTime = sStatL.st_mtime;
+                    entry.bModeKnown = true;
+                    entry.bSizeKnown = true;
+                    entry.bMTimeKnown = true;
+                }
+            };
+
+            if( !m_osFilterPrefix.empty() &&
+                m_osFilterPrefix.size() > osName.size() )
+            {
+                if( STARTS_WITH(m_osFilterPrefix.c_str(), osName.c_str()) &&
+                    m_osFilterPrefix[osName.size()] == '/' )
+                {
+                    if( psEntry->d_type == DT_UNKNOWN )
+                        StatFile();
+                    if( VSI_ISDIR(entry.nMode) )
+                    {
+                        goto begin;
+                    }
+                }
+                continue;
+            }
+            if( !m_osFilterPrefix.empty() &&
+                !STARTS_WITH(osName.c_str(), m_osFilterPrefix.c_str()) )
+            {
+                continue;
+            }
+
+            if( !m_bNameAndTypeOnly || psEntry->d_type == DT_UNKNOWN )
+            {
+                StatFile();
+            }
+
+            break;
+        }
+    }
+
+    return &(entry);
 }
 
 #ifdef VSI_COUNT_BYTES_READ
