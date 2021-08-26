@@ -286,6 +286,31 @@ def test_vsiadls_opendir():
 
     gdal.CloseDir(d)
 
+    # Prefix filtering on subdir
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/fs1?directory=sub_dir&recursive=true&resource=filesystem', 200,
+                {'Content-type': 'application/json;charset=utf-8'},
+                """
+                {"paths":[{"name":"foo.txt","contentLength":"123456","lastModified": "Mon, 01 Jan 1970 00:00:01"},
+                          {"name":"my_prefix_test.txt","contentLength":"40","lastModified": "Mon, 01 Jan 1970 00:00:01"}]}
+                """)
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsiadls/fs1/sub_dir', -1, ['PREFIX=my_prefix'])
+    assert d is not None
+
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'my_prefix_test.txt'
+    assert entry.size == 40
+    assert entry.mode == 32768
+    assert entry.mtime == 1
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry is None
+
+    gdal.CloseDir(d)
+
 ###############################################################################
 # Test write
 

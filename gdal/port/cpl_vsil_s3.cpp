@@ -87,6 +87,7 @@ struct VSIDIRS3: public VSIDIR
     IVSIS3LikeHandleHelper* poS3HandleHelper = nullptr;
     int nMaxFiles = 0;
     bool bCacheEntries = true;
+    std::string m_osFilterPrefix{};
 
     explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn), poS3FS(poFSIn) {}
     explicit VSIDIRS3(VSICurlFilesystemHandler *poFSIn): poFS(poFSIn) {}
@@ -154,6 +155,11 @@ bool VSIDIRS3::AnalyseS3FileList(
             // in the case of an empty bucket
             ret = true;
         }
+        if( osPrefix.endsWith(m_osFilterPrefix) )
+        {
+            osPrefix.resize(osPrefix.size() - m_osFilterPrefix.size());
+        }
+
         bIsTruncated = CPLTestBool(
             CPLGetXMLValue(psListBucketResult, "IsTruncated", "false"));
 
@@ -418,7 +424,9 @@ bool VSIDIRS3::IssueListDir()
             if( !osMaxKeys.empty() )
                 poS3HandleHelper->AddQueryParameter("max-keys", osMaxKeys);
             if( !osObjectKey.empty() )
-                poS3HandleHelper->AddQueryParameter("prefix", osObjectKey + "/");
+                poS3HandleHelper->AddQueryParameter("prefix", osObjectKey + "/" + m_osFilterPrefix);
+            else if( !m_osFilterPrefix.empty() )
+                poS3HandleHelper->AddQueryParameter("prefix", m_osFilterPrefix);
         }
 
         struct curl_slist* headers =
@@ -3363,6 +3371,7 @@ VSIDIR* IVSIS3LikeFSHandler::OpenDir( const char *pszPath,
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
     dir->bCacheEntries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "TRUE"));
+    dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
     if( !dir->IssueListDir() )
     {
         delete dir;

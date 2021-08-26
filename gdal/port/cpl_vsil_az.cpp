@@ -81,6 +81,7 @@ struct VSIDIRAz: public VSIDIR
     std::unique_ptr<IVSIS3LikeHandleHelper> poHandleHelper{};
     int nMaxFiles = 0;
     bool bCacheEntries = true;
+    std::string m_osFilterPrefix{};
 
     explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
 
@@ -127,6 +128,11 @@ bool VSIDIRAz::AnalyseAzureFileList(
     if( psEnumerationResults )
     {
         CPLString osPrefix = CPLGetXMLValue(psEnumerationResults, "Prefix", "");
+        if( osPrefix.endsWith(m_osFilterPrefix) )
+        {
+            osPrefix.resize(osPrefix.size() - m_osFilterPrefix.size());
+        }
+
         CPLXMLNode* psBlobs = CPLGetXMLNode(psEnumerationResults, "Blobs");
         if( psBlobs == nullptr )
         {
@@ -360,7 +366,9 @@ bool VSIDIRAz::IssueListDir()
         if( nRecurseDepth == 0 )
             poHandleHelper->AddQueryParameter("delimiter", "/");
         if( !osObjectKey.empty() )
-            poHandleHelper->AddQueryParameter("prefix", osObjectKey + "/");
+            poHandleHelper->AddQueryParameter("prefix", osObjectKey + "/" + m_osFilterPrefix);
+        else if( !m_osFilterPrefix.empty() )
+            poHandleHelper->AddQueryParameter("prefix", m_osFilterPrefix);
     }
 
     struct curl_slist* headers =
@@ -1902,6 +1910,7 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
     dir->bCacheEntries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "YES"));
+    dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
     if( !dir->IssueListDir() )
     {
         delete dir;

@@ -835,9 +835,41 @@ def test_vsifile_opendir():
     files = [l_entry.name for l_entry in gdal.listdir('/vsimem/vsifile_opendir', 1)]
     assert files == ['subdir', 'subdir/subdir2', 'test']
 
+    # Prefix filtering
+    d = gdal.OpenDir('/vsimem/vsifile_opendir', -1, ['PREFIX=t'])
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'test'
+    entry = gdal.GetNextDirEntry(d)
+    assert not entry
+    gdal.CloseDir(d)
+
+    d = gdal.OpenDir('/vsimem/vsifile_opendir', -1, ['PREFIX=testtoolong'])
+    entry = gdal.GetNextDirEntry(d)
+    assert not entry
+    gdal.CloseDir(d)
+
+    d = gdal.OpenDir('/vsimem/vsifile_opendir', -1, ['PREFIX=subd'])
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir'
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/subdir2'
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/subdir2/test2'
+    entry = gdal.GetNextDirEntry(d)
+    assert not entry
+    gdal.CloseDir(d)
+
+    d = gdal.OpenDir('/vsimem/vsifile_opendir', -1, ['PREFIX=subdir/sub'])
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/subdir2'
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/subdir2/test2'
+    entry = gdal.GetNextDirEntry(d)
+    assert not entry
+    gdal.CloseDir(d)
+
+    # Cleanup
     gdal.RmdirRecursive('/vsimem/vsifile_opendir')
-
-
 
 ###############################################################################
 # Test bugfix for https://github.com/OSGeo/gdal/issues/1559

@@ -357,7 +357,14 @@ char **CPLReadDir( const char *pszPath )
  * @param nRecurseDepth 0 means do not recurse in subdirectories, 1 means
  * recurse only in the first level of subdirectories, etc. -1 means unlimited
  * recursion level
- * @param papszOptions NULL terminated list of options, or NULL.
+ * @param papszOptions NULL terminated list of options, or NULL. The following
+ * options are implemented:
+ * <ul>
+ * <li>PREFIX=string: (GDAL >= 3.4) Filter to select filenames only starting
+ *     with the specified prefix. Implemented efficiently for /vsis3/, /vsigs/,
+ *     and /vsiaz/ (but not /vsiadls/)
+ * </li>
+ * </ul>
  *
  * @return a handle, or NULL in case of error
  * @since GDAL 2.4
@@ -1444,6 +1451,7 @@ struct VSIDIRGeneric: public VSIDIR
     VSIDIREntry entry{};
     std::vector<VSIDIRGeneric*> aoStackSubDir{};
     VSIFilesystemHandler* poFS = nullptr;
+    std::string m_osFilterPrefix{};
 
     explicit VSIDIRGeneric(VSIFilesystemHandler* poFSIn): poFS(poFSIn) {}
     ~VSIDIRGeneric();
@@ -1476,7 +1484,7 @@ VSIDIRGeneric::~VSIDIRGeneric()
 
 VSIDIR* VSIFilesystemHandler::OpenDir( const char *pszPath,
                                        int nRecurseDepth,
-                                       const char* const *)
+                                       const char* const * papszOptions)
 {
     char** papszContent = VSIReadDir(pszPath);
     VSIStatBufL sStatL;
@@ -1489,6 +1497,7 @@ VSIDIR* VSIFilesystemHandler::OpenDir( const char *pszPath,
     dir->osRootPath = pszPath;
     dir->nRecurseDepth = nRecurseDepth;
     dir->papszContent = papszContent;
+    dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
     return dir;
 }
 
@@ -1498,20 +1507,29 @@ VSIDIR* VSIFilesystemHandler::OpenDir( const char *pszPath,
 
 const VSIDIREntry* VSIDIRGeneric::NextDirEntry()
 {
+begin:
     if( VSI_ISDIR(entry.nMode) && nRecurseDepth != 0 )
     {
         CPLString osCurFile(osRootPath);
         if( !osCurFile.empty() )
             osCurFile += '/';
         osCurFile += entry.pszName;
-        auto subdir = static_cast<VSIDIRGeneric*>(
-            poFS->VSIFilesystemHandler::OpenDir(osCurFile,
-                nRecurseDepth - 1, nullptr));
-        if( subdir )
+        if( m_osFilterPrefix.empty() ||
+            (m_osFilterPrefix.size() >= strlen(entry.pszName) &&
+                STARTS_WITH(m_osFilterPrefix.c_str(), entry.pszName)) ||
+            (m_osFilterPrefix.size() < strlen(entry.pszName) &&
+                STARTS_WITH(entry.pszName, m_osFilterPrefix.c_str())) )
         {
-            subdir->osRootPath = osRootPath;
-            subdir->osBasePath = entry.pszName;
-            aoStackSubDir.push_back(subdir);
+            auto subdir = static_cast<VSIDIRGeneric*>(
+                poFS->VSIFilesystemHandler::OpenDir(osCurFile,
+                    nRecurseDepth - 1, nullptr));
+            if( subdir )
+            {
+                subdir->osRootPath = osRootPath;
+                subdir->osBasePath = entry.pszName;
+                subdir->m_osFilterPrefix = m_osFilterPrefix;
+                aoStackSubDir.push_back(subdir);
+            }
         }
         entry.nMode = 0;
     }
@@ -1548,40 +1566,67 @@ const VSIDIREntry* VSIDIRGeneric::NextDirEntry()
         }
         else
         {
+            CPLFree(entry.pszName);
+            CPLString osName(osBasePath);
+            if( !osName.empty() )
+                osName += '/';
+            osName += papszContent[nPos];
+            nPos ++;
+
+            entry.pszName = CPLStrdup(osName);
+            entry.nMode = 0;
+            CPLString osCurFile(osRootPath);
+            if( !osCurFile.empty() )
+                osCurFile += '/';
+            osCurFile += entry.pszName;
+
+            const auto StatFile = [&osCurFile, this]()
+            {
+                VSIStatBufL sStatL;
+                if( VSIStatL(osCurFile, &sStatL) == 0 )
+                {
+                    entry.nMode = sStatL.st_mode;
+                    entry.nSize = sStatL.st_size;
+                    entry.nMTime = sStatL.st_mtime;
+                    entry.bModeKnown = true;
+                    entry.bSizeKnown = true;
+                    entry.bMTimeKnown = true;
+                }
+                else
+                {
+                    entry.nMode = 0;
+                    entry.nSize = 0;
+                    entry.nMTime = 0;
+                    entry.bModeKnown = false;
+                    entry.bSizeKnown = false;
+                    entry.bMTimeKnown = false;
+                }
+            };
+
+            if( !m_osFilterPrefix.empty() &&
+                m_osFilterPrefix.size() > osName.size() )
+            {
+                if( STARTS_WITH(m_osFilterPrefix.c_str(), osName.c_str()) )
+                {
+                    StatFile();
+                    if( VSI_ISDIR(entry.nMode) )
+                    {
+                        goto begin;
+                    }
+                }
+                continue;
+            }
+            if( !m_osFilterPrefix.empty() &&
+                !STARTS_WITH(osName.c_str(), m_osFilterPrefix.c_str()) )
+            {
+                continue;
+            }
+
+            StatFile();
+
             break;
         }
     }
-
-    CPLFree(entry.pszName);
-    CPLString osName(osBasePath);
-    if( !osName.empty() )
-        osName += '/';
-    osName += papszContent[nPos];
-    entry.pszName = CPLStrdup(osName);
-    VSIStatBufL sStatL;
-    CPLString osCurFile(osRootPath);
-    if( !osCurFile.empty() )
-        osCurFile += '/';
-    osCurFile += entry.pszName;
-    if( VSIStatL(osCurFile, &sStatL) == 0 )
-    {
-        entry.nMode = sStatL.st_mode;
-        entry.nSize = sStatL.st_size;
-        entry.nMTime = sStatL.st_mtime;
-        entry.bModeKnown = true;
-        entry.bSizeKnown = true;
-        entry.bMTimeKnown = true;
-    }
-    else
-    {
-        entry.nMode = 0;
-        entry.nSize = 0;
-        entry.nMTime = 0;
-        entry.bModeKnown = false;
-        entry.bSizeKnown = false;
-        entry.bMTimeKnown = false;
-    }
-    nPos ++;
 
     return &(entry);
 }

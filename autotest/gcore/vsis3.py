@@ -1182,6 +1182,64 @@ def test_vsis3_opendir():
 
     gdal.CloseDir(d)
 
+    # Prefix filtering on root of bucket
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/vsis3_opendir/?prefix=my_prefix', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>my_prefix</Prefix>
+                <Marker/>
+                <Contents>
+                    <Key>my_prefix_test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsis3/vsis3_opendir', -1, ['PREFIX=my_prefix'])
+        assert d is not None
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'my_prefix_test.txt'
+    assert entry.size == 40
+    assert entry.mode == 32768
+    assert entry.mtime == 1
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry is None
+
+    gdal.CloseDir(d)
+
+    # Prefix filtering on subdir
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/vsis3_opendir/?prefix=some_dir%2Fmy_prefix', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>some_dir/my_prefix</Prefix>
+                <Marker/>
+                <Contents>
+                    <Key>some_dir/my_prefix_test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsis3/vsis3_opendir/some_dir', -1, ['PREFIX=my_prefix'])
+        assert d is not None
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'my_prefix_test.txt'
+    assert entry.size == 40
+    assert entry.mode == 32768
+    assert entry.mtime == 1
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry is None
+
+    gdal.CloseDir(d)
+
 ###############################################################################
 # Test simple PUT support with a fake AWS server
 
