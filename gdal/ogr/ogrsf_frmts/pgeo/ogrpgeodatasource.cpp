@@ -50,8 +50,7 @@ CPL_CVSID("$Id$")
 OGRPGeoDataSource::OGRPGeoDataSource() :
     papoLayers(nullptr),
     nLayers(0),
-    pszName(nullptr),
-    bDSUpdate(FALSE)
+    pszName(nullptr)
 {}
 
 /************************************************************************/
@@ -103,11 +102,11 @@ static int CheckDSNStringTemplate(const char* pszStr)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
-                             CPL_UNUSED int bTestOpen )
+int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
 {
     CPLAssert( nLayers == 0 );
 
+     const char * pszNewName = poOpenInfo->pszFilename;
 /* -------------------------------------------------------------------- */
 /*      If this is the name of an MDB file, then construct the          */
 /*      appropriate connection string.  Otherwise clip of PGEO: to      */
@@ -143,8 +142,6 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     pszName = CPLStrdup( pszNewName );
-
-    bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
 /*      Collect list of tables and their supporting info from           */

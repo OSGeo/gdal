@@ -172,7 +172,6 @@ class OGRPGeoDataSource final: public OGRDataSource
 
     char               *pszName;
 
-    int                 bDSUpdate;
     mutable CPLODBCSession oSession;
 
     bool                m_bHasGdbItemsTable = false;
@@ -185,7 +184,7 @@ class OGRPGeoDataSource final: public OGRDataSource
                         OGRPGeoDataSource();
                         virtual ~OGRPGeoDataSource();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( GDALOpenInfo* poOpenInfo );
     int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
@@ -213,18 +212,18 @@ class OGRPGeoDataSource final: public OGRDataSource
 /*                           OGRODBCMDBDriver                           */
 /************************************************************************/
 
-class OGRODBCMDBDriver CPL_NON_FINAL: public OGRSFDriver
+class OGRODBCMDBDriver CPL_NON_FINAL: public GDALDriver
 {
 #ifndef WIN32
     CPLString   osDriverFile;
     static bool        LibraryExists( const char* pszLibPath );
-    bool        FindDriverLib();
-    CPLString   FindDefaultLib(const char* pszLibName);
+    static bool        FindDriverLib( const char *pszDriverName, CPLString &osDriverFile );
+    CPLString   FindDefaultLib( const char* pszLibName );
 #endif
 
 protected:
 #ifndef WIN32
-    bool        InstallMdbDriver();
+    static bool        InstallMdbDriver( const char *pszDriverName );
 #endif
 };
 
@@ -237,10 +236,7 @@ class OGRPGeoDriver final: public OGRODBCMDBDriver
   public:
                 ~OGRPGeoDriver();
 
-    const char  *GetName() override;
-    OGRDataSource *Open( const char *, int ) override;
-
-    int          TestCapability( const char * ) override;
+    static GDALDataset * OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo );
 };
 
 #endif /* ndef _OGR_PGeo_H_INCLUDED */

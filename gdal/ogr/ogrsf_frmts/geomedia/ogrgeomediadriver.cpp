@@ -42,31 +42,20 @@ OGRGeomediaDriver::~OGRGeomediaDriver()
 }
 
 /************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRGeomediaDriver::GetName()
-
-{
-    return "Geomedia";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
-                                    int bUpdate )
+GDALDataset *OGRGeomediaDriver::OGRGeomediaDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( STARTS_WITH_CI(pszFilename, "WALK:") )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:") )
         return nullptr;
 
-    if( STARTS_WITH_CI(pszFilename, "PGEO:") )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:") )
         return nullptr;
 
-    if( !STARTS_WITH_CI(pszFilename, "GEOMEDIA:")
-        && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOMEDIA:")
+        && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"mdb") )
         return nullptr;
 
     /* Disabling the attempt to guess if a MDB file is a Geomedia database */
@@ -112,7 +101,7 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
     //
     // See: http://www.unixodbc.org/internals.html
     //
-    if ( !InstallMdbDriver() )
+    if ( !InstallMdbDriver( "Geomedia" ) )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
@@ -125,7 +114,7 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
     // Open data source
     OGRGeomediaDataSource *poDS = new OGRGeomediaDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
         return nullptr;
@@ -140,14 +129,6 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
     return poDS;
 }
 
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRGeomediaDriver::TestCapability( CPL_UNUSED const char * pszCap )
-{
-    return FALSE;
-}
 
 /************************************************************************/
 /*                           RegisterOGRODBC()                          */
@@ -156,9 +137,18 @@ int OGRGeomediaDriver::TestCapability( CPL_UNUSED const char * pszCap )
 void RegisterOGRGeomedia()
 
 {
-    OGRSFDriver* poDriver = new OGRGeomediaDriver;
+    if( GDALGetDriverByName( "Geomedia" ) != nullptr )
+        return;
+
+    OGRGeomediaDriver* poDriver = new OGRGeomediaDriver;
+
+    poDriver->SetDescription( "Geomedia" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Geomedia .mdb" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/geomedia.html" );
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+
+    poDriver->pfnOpen = OGRGeomediaDriver::OGRGeomediaDriverOpen;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
