@@ -132,53 +132,9 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 
     bDSUpdate = bUpdate;
 
-/* -------------------------------------------------------------------- */
-/*      Check if it is a PGeo MDB.                                      */
-/* -------------------------------------------------------------------- */
-    {
-        CPLODBCStatement oStmt( &oSession );
-
-        oStmt.Append( "SELECT TableName, FieldName, ShapeType, ExtentLeft, ExtentRight, ExtentBottom, ExtentTop, SRID, HasZ FROM GDB_GeomColumns" );
-
-        if( oStmt.ExecuteSQL() )
-        {
-            return FALSE;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Check if it is a Geomedia MDB.                                  */
-/* -------------------------------------------------------------------- */
-    {
-        CPLODBCStatement oStmt( &oSession );
-
-        oStmt.Append( "SELECT TableName FROM GAliasTable WHERE TableType = 'INGRFeatures'" );
-
-        if( oStmt.ExecuteSQL() )
-        {
-            return FALSE;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Check if it is a Walk MDB.                                      */
-/* -------------------------------------------------------------------- */
-    {
-        CPLODBCStatement oStmt( &oSession );
-
-        oStmt.Append( "SELECT LayerID, LayerName, minE, maxE, minN, maxN, Memo FROM WalkLayers" );
-
-        if( oStmt.ExecuteSQL() )
-        {
-            return FALSE;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Return all tables as  non-spatial tables.                       */
-/* -------------------------------------------------------------------- */
+    // Collate a list of all tables in the data source
     CPLODBCStatement oTableList( &oSession );
-
+    std::vector< CPLString > aosTableNames;
     if( oTableList.GetTables() )
     {
         while( oTableList.Fetch() )
@@ -196,15 +152,36 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
                 }
 
                 osLayerName += pszTableName;
-
-                OpenTable( osLayerName, nullptr, bUpdate );
+                aosTableNames.emplace_back( osLayerName );
             }
         }
-
-        return TRUE;
     }
     else
+    {
         return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check if it is a PGeo, Geomedia or Walk MDB.                    */
+/* -------------------------------------------------------------------- */
+    for ( const CPLString &osTableName : aosTableNames )
+    {
+        const CPLString osLCTableName(CPLString(osTableName).tolower());
+        if ( osLCTableName == "gdb_geomcolumns" // PGeo
+             || osLCTableName == "galiastable" // Geomedia
+             || osLCTableName == "walklayers" ) // Walk
+            return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return all tables as non-spatial tables.                       */
+/* -------------------------------------------------------------------- */
+    for ( const CPLString &osTableName : aosTableNames )
+    {
+        OpenTable( osTableName, nullptr, bUpdate );
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
