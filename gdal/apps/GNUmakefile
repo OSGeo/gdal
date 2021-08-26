@@ -194,7 +194,7 @@ gdal_create$(EXE):	gdal_create.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 clean:
-	$(RM) *.o $(BIN_LIST) core gdal-config gdal-config-inst
+	$(RM) *.o $(BIN_LIST) $(NON_DEFAULT_LIST) core gdal-config gdal-config-inst
 
 $(DEP_LIBS):
 
