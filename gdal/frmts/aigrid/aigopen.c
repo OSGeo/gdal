@@ -211,7 +211,10 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
     psTInfo = psInfo->pasTileInfo + iTileX + iTileY * psInfo->nTilesPerRow;
 
-    if( psTInfo->fpGrid != NULL || psTInfo->bTriedToLoad )
+    if( psTInfo->fpGrid != NULL )
+        return psTInfo->panBlockOffset != NULL ? CE_None : CE_Failure;
+
+    if( psTInfo->bTriedToLoad )
         return CE_None;
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
