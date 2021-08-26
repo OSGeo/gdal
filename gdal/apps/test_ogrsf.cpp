@@ -3774,6 +3774,16 @@ bye:
 
 static int TestVirtualIO( GDALDataset * poDS )
 {
+    const bool bVirtualIO = poDS->GetDriver() != nullptr &&
+        poDS->GetDriver()->GetMetadataItem(GDAL_DCAP_VIRTUALIO) != nullptr;
+    if( !bVirtualIO)
+    {
+        if( bVerbose )
+            printf("INFO: %s: TestVirtualIO skipped.\n",
+                   poDS->GetDriver()->GetDescription());
+        return TRUE;
+    }
+
     int bRet = TRUE;
 
     if( STARTS_WITH(poDS->GetDescription(), "/vsimem/") )
