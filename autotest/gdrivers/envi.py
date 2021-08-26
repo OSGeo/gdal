@@ -515,3 +515,45 @@ def test_envi_writing_interleaving_larger_file(interleaving):
     finally:
         gdal.Unlink(dstfilename)
         gdal.Unlink(dstfilename + '.hdr')
+
+
+###############################################################################
+# Test .hdr as an additional extension, not a replacement one
+
+
+def test_envi_add_hdr():
+
+    drv = gdal.GetDriverByName("ENVI")
+
+    ds = drv.Create(
+        "/vsimem/test.int",
+        xsize=10,
+        ysize=10,
+        bands=1,
+        eType=gdal.GDT_CFloat32,
+        options=["SUFFIX=ADD"],
+    )
+    ds = None
+
+    ds = gdal.Open("/vsimem/test.int")
+    assert ds.RasterCount == 1
+    ds = None
+
+    ds = drv.Create(
+        "/vsimem/test.int.mph",
+        xsize=10,
+        ysize=10,
+        bands=2,
+        eType=gdal.GDT_Float32,
+        options=["SUFFIX=ADD"],
+    )
+    # Will check that test.int.mph.hdr is used prioritarily over test.int.hdr
+    assert ds.RasterCount == 2
+    ds = None
+
+    ds = gdal.Open("/vsimem/test.int.mph")
+    assert ds.RasterCount == 2
+    ds = None
+
+    drv.Delete("/vsimem/test.int")
+    drv.Delete("/vsimem/test.int.mph")

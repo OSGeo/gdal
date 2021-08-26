@@ -2044,7 +2044,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
     return Open(poOpenInfo, true);
 }
 
-GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
+ENVIDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
 
 {
     // Assume the caller is pointing to the binary (i.e. .bil) file.
@@ -2066,21 +2066,10 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
     char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     if (papszSiblingFiles == nullptr)
     {
-        osHdrFilename = CPLResetExtension(poOpenInfo->pszFilename, "hdr");
+        // First try hdr as an extra extension
+        osHdrFilename =
+            CPLFormFilename(nullptr, poOpenInfo->pszFilename, "hdr");
         fpHeader = VSIFOpenL(osHdrFilename, pszMode);
-
-        if( fpHeader == nullptr && VSIIsCaseSensitiveFS(osHdrFilename) )
-        {
-            osHdrFilename = CPLResetExtension(poOpenInfo->pszFilename, "HDR");
-            fpHeader = VSIFOpenL(osHdrFilename, pszMode);
-        }
-
-        if( fpHeader == nullptr )
-        {
-            osHdrFilename =
-                CPLFormFilename(nullptr, poOpenInfo->pszFilename, "hdr");
-            fpHeader = VSIFOpenL(osHdrFilename, pszMode);
-        }
 
         if( fpHeader == nullptr && VSIIsCaseSensitiveFS(osHdrFilename) )
         {
@@ -2088,6 +2077,20 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
                 CPLFormFilename(nullptr, poOpenInfo->pszFilename, "HDR");
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
         }
+
+        // Otherwise, try .hdr as a replacement extension
+        if( fpHeader == nullptr )
+        {
+            osHdrFilename = CPLResetExtension(poOpenInfo->pszFilename, "hdr");
+            fpHeader = VSIFOpenL(osHdrFilename, pszMode);
+        }
+
+        if( fpHeader == nullptr && VSIIsCaseSensitiveFS(osHdrFilename) )
+        {
+            osHdrFilename = CPLResetExtension(poOpenInfo->pszFilename, "HDR");
+            fpHeader = VSIFOpenL(osHdrFilename, pszMode);
+        }
+
     }
     else
     {
@@ -2095,24 +2098,21 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
         CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
         CPLString osName = CPLGetFilename(poOpenInfo->pszFilename);
 
-        int iFile =
-            CSLFindString(papszSiblingFiles, CPLResetExtension(osName, "hdr"));
+        // First try hdr as an extra extension
+        int iFile = CSLFindString(papszSiblingFiles,
+                                  CPLFormFilename(nullptr, osName, "hdr"));
+        if( iFile < 0 )
+        {
+            // Otherwise, try .hdr as a replacement extension
+            iFile =
+                CSLFindString(papszSiblingFiles, CPLResetExtension(osName, "hdr"));
+        }
+
         if( iFile >= 0 )
         {
             osHdrFilename =
                 CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
             fpHeader = VSIFOpenL(osHdrFilename, pszMode);
-        }
-        else
-        {
-            iFile = CSLFindString(papszSiblingFiles,
-                                  CPLFormFilename(nullptr, osName, "hdr"));
-            if( iFile >= 0 )
-            {
-                osHdrFilename =
-                    CPLFormFilename(osPath, papszSiblingFiles[iFile], nullptr);
-                fpHeader = VSIFOpenL(osHdrFilename, pszMode);
-            }
         }
     }
 
@@ -2774,7 +2774,7 @@ GDALDataset *ENVIDataset::Create( const char *pszFilename,
         return nullptr;
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-    ENVIDataset *poDS = reinterpret_cast<ENVIDataset *>(Open(&oOpenInfo, false));
+    ENVIDataset *poDS = Open(&oOpenInfo, false);
     if( poDS )
     {
         poDS->SetFillFile();
