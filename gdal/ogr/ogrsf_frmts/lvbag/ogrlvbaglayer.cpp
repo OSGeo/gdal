@@ -291,10 +291,12 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         OGRFieldDefn oField0("naam", OFTString);
         OGRFieldDefn oField1("type", OFTString);
         OGRFieldDefn oField2("woonplaatsRef", OFTString);
+        OGRFieldDefn oField3("verkorteNaam", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
         poFeatureDefn->AddFieldDefn(&oField2);
+        poFeatureDefn->AddFieldDefn(&oField3);
 
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();

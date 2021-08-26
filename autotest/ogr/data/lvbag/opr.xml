@@ -107,5 +107,36 @@
                 </Objecten:OpenbareRuimte>
             </sl-bag-extract:bagObject>
         </sl:stand>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:OpenbareRuimte>
+                    <Objecten:identificatie domein="NL.IMBAG.Openbareruimte">0221300000311195</Objecten:identificatie>
+                    <Objecten:naam>Schout bij Nacht Doormansingel</Objecten:naam>
+                    <Objecten:type>Weg</Objecten:type>
+                    <Objecten:status>Naamgeving uitgegeven</Objecten:status>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2009-01-20</Objecten:documentdatum>
+                    <Objecten:documentnummer>BAG/OBR20080001</Objecten:documentnummer>
+                    <Objecten:ligtIn>
+                        <Objecten-ref:WoonplaatsRef domein="NL.IMBAG.Woonplaats">2142</Objecten-ref:WoonplaatsRef>
+                    </Objecten:ligtIn>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2009-01-20</Historie:beginGeldigheid>
+                            <Historie:tijdstipRegistratie>2010-12-15T10:57:31.000</Historie:tijdstipRegistratie>
+                            <Historie:BeschikbaarLV>
+                                <Historie:tijdstipRegistratieLV>2010-12-15T11:02:21.484</Historie:tijdstipRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                    <Objecten:verkorteNaam>
+                        <nen5825:VerkorteNaamOpenbareRuimte>
+                            <nen5825:verkorteNaam>Sbn Doormansingel</nen5825:verkorteNaam>
+                        </nen5825:VerkorteNaamOpenbareRuimte>
+                    </Objecten:verkorteNaam>
+                </Objecten:OpenbareRuimte>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
     </sl:standBestand>
 </sl-bag-extract:bagStand>
