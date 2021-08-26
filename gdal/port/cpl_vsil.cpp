@@ -1514,22 +1514,15 @@ begin:
         if( !osCurFile.empty() )
             osCurFile += '/';
         osCurFile += entry.pszName;
-        if( m_osFilterPrefix.empty() ||
-            (m_osFilterPrefix.size() >= strlen(entry.pszName) &&
-                STARTS_WITH(m_osFilterPrefix.c_str(), entry.pszName)) ||
-            (m_osFilterPrefix.size() < strlen(entry.pszName) &&
-                STARTS_WITH(entry.pszName, m_osFilterPrefix.c_str())) )
+        auto subdir = static_cast<VSIDIRGeneric*>(
+            poFS->VSIFilesystemHandler::OpenDir(osCurFile,
+                nRecurseDepth - 1, nullptr));
+        if( subdir )
         {
-            auto subdir = static_cast<VSIDIRGeneric*>(
-                poFS->VSIFilesystemHandler::OpenDir(osCurFile,
-                    nRecurseDepth - 1, nullptr));
-            if( subdir )
-            {
-                subdir->osRootPath = osRootPath;
-                subdir->osBasePath = entry.pszName;
-                subdir->m_osFilterPrefix = m_osFilterPrefix;
-                aoStackSubDir.push_back(subdir);
-            }
+            subdir->osRootPath = osRootPath;
+            subdir->osBasePath = entry.pszName;
+            subdir->m_osFilterPrefix = m_osFilterPrefix;
+            aoStackSubDir.push_back(subdir);
         }
         entry.nMode = 0;
     }
@@ -1606,7 +1599,8 @@ begin:
             if( !m_osFilterPrefix.empty() &&
                 m_osFilterPrefix.size() > osName.size() )
             {
-                if( STARTS_WITH(m_osFilterPrefix.c_str(), osName.c_str()) )
+                if( STARTS_WITH(m_osFilterPrefix.c_str(), osName.c_str()) &&
+                    m_osFilterPrefix[osName.size()] == '/' )
                 {
                     StatFile();
                     if( VSI_ISDIR(entry.nMode) )
