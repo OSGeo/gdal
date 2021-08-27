@@ -183,7 +183,7 @@ class OGRODBCDataSource final: public OGRDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
 
-    int                 OpenMDB( const char * );
+    int                 OpenMDB(GDALOpenInfo *poOpenInfo );
 
   public:
                         OGRODBCDataSource();

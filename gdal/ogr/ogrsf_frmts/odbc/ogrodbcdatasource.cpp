@@ -102,7 +102,7 @@ static int CheckDSNStringTemplate(const char* pszStr)
 /*                              OpenMDB()                               */
 /************************************************************************/
 
-int OGRODBCDataSource::OpenMDB( const char * pszNewName )
+int OGRODBCDataSource::OpenMDB( GDALOpenInfo* poOpenInfo )
 {
     const char* pszOptionName = "PGEO_DRIVER_TEMPLATE";
     const char* pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, nullptr );
@@ -122,6 +122,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName )
         return FALSE;
     }
 
+    const char * pszNewName = poOpenInfo->pszFilename;
     if ( !oSession.ConnectToMsAccess( pszNewName, pszDSNStringTemplate ) )
     {
         return FALSE;
@@ -170,12 +171,21 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName )
             return FALSE;
     }
 
+    const bool bListAllTables = CPLTestBool(CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "NO"));
+
 /* -------------------------------------------------------------------- */
 /*      Return all tables as non-spatial tables.                       */
 /* -------------------------------------------------------------------- */
     for ( const CPLString &osTableName : aosTableNames )
     {
-        OpenTable( osTableName, nullptr );
+        const CPLString osLCTableName(CPLString(osTableName).tolower());
+        if ( bListAllTables ||
+            !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
+            )
+        {
+            OpenTable( osTableName, nullptr );
+        }
     }
 
     return TRUE;
@@ -192,7 +202,7 @@ int OGRODBCDataSource::Open( GDALOpenInfo* poOpenInfo )
     const char * pszNewName = poOpenInfo->pszFilename;
 
     if( !STARTS_WITH_CI(pszNewName, "ODBC:") && IsSupportedMsAccessFileExtension(CPLGetExtension(pszNewName)))
-        return OpenMDB(pszNewName);
+        return OpenMDB(poOpenInfo);
 
 /* -------------------------------------------------------------------- */
 /*      Start parsing dataset name from the end of string, fetching     */

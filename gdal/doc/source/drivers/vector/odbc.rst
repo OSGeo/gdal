@@ -58,6 +58,16 @@ commands with the :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing
 **"OGRSQL"** string to the ExecuteSQL() method, as name of the SQL
 dialect.
 
+Dataset open options
+--------------------
+
+-  **LIST_ALL_TABLES**\ =YES/NO: This may be "YES" to force all tables,
+   including system and internal tables (such as the MSys* tables) to be listed (since GDAL 3.4).
+   Applies to Microsoft Access Databases only. Note that the Windows Microsoft
+   Access ODBC Driver always strips out MSys tables, and accordingly these
+   will not be returned on Windows platforms even if LIST_ALL_TABLES is
+   set to YES.
+
 Driver capabilities
 -------------------
 
@@ -76,7 +86,7 @@ is possible via installation of unixODBC and mdbtools. See
 :ref:`MDB <vector.pgeo>` for instructions on how to enable this.
 
 The driver supports either .mdb or .accdb extensions for
-Microsft Access databases. Additionally, it also supports
+Microsoft Access databases. Additionally, it also supports
 opening files with the ESRI .style database extension (which is just
 an alias for the .mdb file extension).
 
