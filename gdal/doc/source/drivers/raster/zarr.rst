@@ -232,6 +232,45 @@ If the dataset contains more than one such single array, or arrays with 3 or
 more dimensions, the driver will list subdatasets to access each array and/or
 2D slices within arrays with 3 or more dimensions.
 
+Open options
+------------
+
+The following dataset open options are available:
+
+- **USE_ZMETADATA=YES/NO**: (defaults to YES)
+  Whether to use consolidated metadata from .zmetadata (Zarr V2 only).
+
+- **CACHE_TILE_PRESENCE=YES/NO**: (defaults to NO)
+  Whether to establish an initial listing of
+  present tiles. This cached listing will be stored in a .gmac file next to the
+  .zarray / .array.json.gmac file if they can be written. Otherwise the
+  :decl_configoption:`GDAL_PAM_PROXY_DIR` config option should be set to an
+  existing directory where those cached files will be stored. Once the cached
+  listing has been established, the open option no longer needs to be specified.
+  Note: the runtime of this option can be in minutes or more for large datasets
+  stored on remote file systems. And for network file systems, this will rarely
+  work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
+  /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
+
+Multi-threaded caching
+----------------------
+
+The driver implements the :cpp:func:`GDALMDArray::AdviseRead` method. This
+proceed to multi-threaded decoding of the tiles that intersect the area of
+interest specified. A sufficient cache size must be specified. The call is
+blocking.
+
+The options that can be passed to the methods are:
+
+- **CACHE_SIZE=value_in_byte**: Maximum RAM to use, expressed in number of bytes.
+  If not specified, half of the remaining GDAL block cache size will be used.
+  Note: the caching mechanism of Zarr array will not update this remaining block
+  cache size.
+
+- **NUM_THREADS=integer or ALL_CPUS**: Number of threads to use in parallel.
+  If not specified, the :decl_configoption:`GDAL_NUM_THREADS` configuration option
+  will be taken into account.
+
 Creation options
 ----------------
 

@@ -276,10 +276,10 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                         int /* nMaxRetry */,
                         double /* dfRetryDelay */) override { return true; }
 
-    CPLString GetStreamingPath( const char* pszFilename ) const override;
-
     IVSIS3LikeHandleHelper* CreateHandleHelper(
         const char* pszURI, bool bAllowNoObject) override;
+
+    std::string GetStreamingFilename(const std::string& osFilename) const override;
 };
 
 /************************************************************************/
@@ -769,7 +769,7 @@ int VSIADLSFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
         return 0;
     }
 
-    return VSICurlFilesystemHandler::Stat(osFilenameWithoutSlash, pStatBuf, nFlags);
+    return VSICurlFilesystemHandlerBase::Stat(osFilenameWithoutSlash, pStatBuf, nFlags);
 }
 
 /************************************************************************/
@@ -785,7 +785,7 @@ char** VSIADLSFSHandler::GetFileMetadata( const char* pszFilename,
 
     if( pszDomain == nullptr || (!EQUAL(pszDomain, "STATUS") && !EQUAL(pszDomain, "ACL")) )
     {
-        return VSICurlFilesystemHandler::GetFileMetadata(
+        return VSICurlFilesystemHandlerBase::GetFileMetadata(
                     pszFilename, pszDomain, papszOptions);
     }
 
@@ -1209,7 +1209,7 @@ VSIVirtualHandle* VSIADLSFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
+        VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -2023,7 +2023,7 @@ const char* VSIADLSFSHandler::GetOptions()
     "  <Option name='VSIAZ_CHUNK_SIZE' type='int' "
         "description='Size in MB for chunks of files that are uploaded' "
         "default='4' min='1' max='4'/>" +
-        VSICurlFilesystemHandler::GetOptionsStatic() +
+        VSICurlFilesystemHandlerBase::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }
@@ -2101,18 +2101,14 @@ VSIDIR* VSIADLSFSHandler::OpenDir( const char *pszPath,
 }
 
 /************************************************************************/
-/*                         GetStreamingPath()                           */
+/*                      GetStreamingFilename()                          */
 /************************************************************************/
 
-CPLString VSIADLSFSHandler::GetStreamingPath( const char* pszFilename ) const
+std::string VSIADLSFSHandler::GetStreamingFilename(const std::string& osFilename) const
 {
-    const CPLString osPrefix(GetFSPrefix());
-    if( !STARTS_WITH_CI(pszFilename, osPrefix) )
-        return CPLString();
-
-    // Transform /vsiadls/foo into /vsiaz_streaming/foo
-    const size_t nPrefixLen = osPrefix.size();
-    return CPLString("/vsiaz_streaming/")  + (pszFilename + nPrefixLen);
+    if( STARTS_WITH(osFilename.c_str(), GetFSPrefix().c_str()) )
+        return "/vsiaz_streaming/" + osFilename.substr(GetFSPrefix().size());
+    return osFilename;
 }
 
 /************************************************************************/

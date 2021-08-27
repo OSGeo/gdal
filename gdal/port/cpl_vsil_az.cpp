@@ -552,6 +552,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
                         IVSIS3LikeHandleHelper * /*poS3HandleHelper */,
                         int /* nMaxRetry */,
                         double /* dfRetryDelay */) override { return true; }
+
+    std::string GetStreamingFilename(const std::string& osFilename) const override;
 };
 
 /************************************************************************/
@@ -630,7 +632,7 @@ int VSIAzureFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     {
         osFilename += "/";
     }
-    return VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags);
+    return VSICurlFilesystemHandlerBase::Stat(osFilename, pStatBuf, nFlags);
 }
 
 
@@ -648,7 +650,7 @@ char** VSIAzureFSHandler::GetFileMetadata( const char* pszFilename,
     if( pszDomain == nullptr ||
         (!EQUAL(pszDomain, "TAGS") && !EQUAL(pszDomain, "METADATA")) )
     {
-        return VSICurlFilesystemHandler::GetFileMetadata(
+        return VSICurlFilesystemHandlerBase::GetFileMetadata(
                     pszFilename, pszDomain, papszOptions);
     }
 
@@ -947,6 +949,17 @@ bool VSIAzureFSHandler::SetFileMetadata( const char * pszFilename,
     }
     while( bRetry );
     return bRet;
+}
+
+/************************************************************************/
+/*                      GetStreamingFilename()                          */
+/************************************************************************/
+
+std::string VSIAzureFSHandler::GetStreamingFilename(const std::string& osFilename) const
+{
+    if( STARTS_WITH(osFilename.c_str(), GetFSPrefix().c_str()) )
+        return "/vsiaz_streaming/" + osFilename.substr(GetFSPrefix().size());
+    return osFilename;
 }
 
 /************************************************************************/
@@ -1250,7 +1263,7 @@ VSIVirtualHandle* VSIAzureFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
+        VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -1830,7 +1843,7 @@ const char* VSIAzureFSHandler::GetOptions()
     "  <Option name='VSIAZ_CHUNK_SIZE' type='int' "
         "description='Size in MB for chunks of files that are uploaded' "
         "default='4' min='1' max='4'/>" +
-        VSICurlFilesystemHandler::GetOptionsStatic() +
+        VSICurlFilesystemHandlerBase::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }

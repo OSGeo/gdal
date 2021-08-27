@@ -731,6 +731,34 @@ static void DumpArray(std::shared_ptr<GDALMDArray> array,
     {
         serializer.AddObjKey("dimensions");
         DumpDimensions(dims, serializer, psOptions, alreadyDumpedDimensions);
+
+        serializer.AddObjKey("dimension_size");
+        auto arrayContext(serializer.MakeArrayContext());
+        for( const auto& poDim: dims )
+        {
+            serializer.Add(poDim->GetSize());
+        }
+    }
+
+
+    bool hasNonNullBlockSize = false;
+    const auto blockSize = array->GetBlockSize();
+    for( auto v: blockSize )
+    {
+        if( v != 0 )
+        {
+            hasNonNullBlockSize = true;
+            break;
+        }
+    }
+    if( hasNonNullBlockSize )
+    {
+        serializer.AddObjKey("block_size");
+        auto arrayContext(serializer.MakeArrayContext());
+        for( auto v: blockSize )
+        {
+            serializer.Add(v);
+        }
     }
 
     CPLStringList aosOptions;

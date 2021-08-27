@@ -26,7 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_vsi_virtual.h"
 #include "zarr.h"
+#include "gdal_thread_pool.h"
 
 #include "tif_float.h"
 
@@ -37,6 +39,8 @@
 #include <limits>
 #include <map>
 #include <set>
+
+#define ZARR_DEBUG_KEY "ZARR"
 
 /************************************************************************/
 /*                         ZarrArray::ZarrArray()                       */
@@ -62,6 +66,16 @@ ZarrArray::ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource
 {
     m_oCompressorJSonV2.Deinit();
     m_oCompressorJSonV3.Deinit();
+
+    // Compute individual tile size
+    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                               m_aoDtypeElts.back().nativeSize;
+    m_nTileSize = m_oType.GetClass() == GEDTC_STRING ?
+                                m_oType.GetMaxStringLength() : nSourceSize;
+    for( const auto& nBlockSize: m_anBlockSize )
+    {
+        m_nTileSize *= static_cast<size_t>(nBlockSize);
+    }
 }
 
 /************************************************************************/
@@ -77,12 +91,28 @@ std::shared_ptr<ZarrArray> ZarrArray::Create(const std::shared_ptr<ZarrSharedRes
                                              const std::vector<GUInt64>& anBlockSize,
                                              bool bFortranOrder)
 {
+    uint64_t nTotalTileCount = 1;
+    for( size_t i = 0; i < aoDims.size(); ++i )
+    {
+        uint64_t nTileThisDim = (aoDims[i]->GetSize() / anBlockSize[i]) +
+                    (((aoDims[i]->GetSize() % anBlockSize[i]) != 0) ? 1 : 0);
+        if( nTotalTileCount > std::numeric_limits<uint64_t>::max() / nTileThisDim )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Array %s has more than 2^64 tiles. This is not supported.",
+                     osName.c_str());
+            return nullptr;
+        }
+        nTotalTileCount *= nTileThisDim;
+    }
+
     auto arr = std::shared_ptr<ZarrArray>(
         new ZarrArray(poSharedResource,
                       osParentName, osName, aoDims, oType, aoDtypeElts,
                       anBlockSize, bFortranOrder));
     arr->SetSelf(arr);
 
+    arr->m_nTotalTileCount = nTotalTileCount;
     arr->m_bUseOptimizedCodePaths = CPLTestBool(
         CPLGetConfigOption("GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", "YES"));
 
@@ -639,29 +669,40 @@ bool ZarrArray::AllocateWorkingBuffers() const
     m_bAllocateWorkingBuffersDone = true;
 
     // Reserve a buffer for tile content
-    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
-                               m_aoDtypeElts.back().nativeSize;
-    size_t nTileSize = m_oType.GetClass() == GEDTC_STRING ?
-                                m_oType.GetMaxStringLength() : nSourceSize;
-    for( const auto& nBlockSize: m_anBlockSize )
-    {
-        nTileSize *= static_cast<size_t>(nBlockSize);
-    }
-    if( nTileSize > 1024 * 1024 * 1024 &&
+    if( m_nTileSize > 1024 * 1024 * 1024 &&
         !CPLTestBool(CPLGetConfigOption("ZARR_ALLOW_BIG_TILE_SIZE", "NO")) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Zarr tile allocation would require " CPL_FRMT_GUIB " bytes. "
                  "By default the driver limits to 1 GB. To allow that memory "
                  "allocation, set the ZARR_ALLOW_BIG_TILE_SIZE configuration "
-                 "option to YES.", static_cast<GUIntBig>(nTileSize));
+                 "option to YES.", static_cast<GUIntBig>(m_nTileSize));
         return false;
     }
+
+    m_bWorkingBuffersOK = AllocateWorkingBuffers(m_abyRawTileData,
+                                                 m_abyTmpRawTileData,
+                                                 m_abyDecodedTileData);
+    return m_bWorkingBuffersOK;
+}
+
+bool ZarrArray::AllocateWorkingBuffers(std::vector<GByte>& abyRawTileData,
+                                       std::vector<GByte>& abyTmpRawTileData,
+                                       std::vector<GByte>& abyDecodedTileData) const
+{
+    // This method should NOT modify any ZarrArray member, as it is going to
+    // be called concurrently from several threads.
+
+    // Set those #define to avoid accidental use of some global variables
+#define m_abyTmpRawTileData cannot_use_here
+#define m_abyRawTileData cannot_use_here
+#define m_abyDecodedTileData cannot_use_here
+
     try
     {
-        m_abyRawTileData.resize( nTileSize );
+        abyRawTileData.resize( m_nTileSize );
         if( m_bFortranOrder || m_oFiltersArray.Size() != 0 )
-            m_abyTmpRawTileData.resize( nTileSize );
+            abyTmpRawTileData.resize( m_nTileSize );
     }
     catch( const std::bad_alloc& e )
     {
@@ -670,6 +711,8 @@ bool ZarrArray::AllocateWorkingBuffers() const
     }
 
     bool bNeedDecodedBuffer = false;
+    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                               m_aoDtypeElts.back().nativeSize;
     if( m_oType.GetClass() == GEDTC_COMPOUND && nSourceSize != m_oType.GetSize() )
     {
         bNeedDecodedBuffer = true;
@@ -695,7 +738,7 @@ bool ZarrArray::AllocateWorkingBuffers() const
         }
         try
         {
-            m_abyDecodedTileData.resize( nDecodedBufferSize );
+            abyDecodedTileData.resize( nDecodedBufferSize );
         }
         catch( const std::bad_alloc& e )
         {
@@ -704,8 +747,10 @@ bool ZarrArray::AllocateWorkingBuffers() const
         }
     }
 
-    m_bWorkingBuffersOK = true;
     return true;
+#undef m_abyTmpRawTileData
+#undef m_abyRawTileData
+#undef m_abyDecodedTileData
 }
 
 /************************************************************************/
@@ -1019,21 +1064,49 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
 /*                        ZarrArray::LoadTileData()                     */
 /************************************************************************/
 
-bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
+bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
                              bool& bMissingTileOut) const
 {
+    return LoadTileData(tileIndices,
+                        false, // use mutex
+                        m_psDecompressor,
+                        m_abyRawTileData,
+                        m_abyTmpRawTileData,
+                        m_abyDecodedTileData,
+                        bMissingTileOut);
+}
+
+bool ZarrArray::LoadTileData(const uint64_t* tileIndices,
+                             bool bUseMutex,
+                             const CPLCompressor* psDecompressor,
+                             std::vector<GByte>& abyRawTileData,
+                             std::vector<GByte>& abyTmpRawTileData,
+                             std::vector<GByte>& abyDecodedTileData,
+                             bool& bMissingTileOut) const
+{
+    // This method should NOT modify any ZarrArray member, as it is going to
+    // be called concurrently from several threads.
+
+    // Set those #define to avoid accidental use of some global variables
+#define m_abyTmpRawTileData cannot_use_here
+#define m_abyRawTileData cannot_use_here
+#define m_abyDecodedTileData cannot_use_here
+#define m_psDecompressor cannot_use_here
+
+    bMissingTileOut = false;
+
     std::string osFilename;
-    if( tileIndices.empty() )
+    if( m_aoDims.empty() )
     {
         osFilename = "0";
     }
     else
     {
-        for( const auto index: tileIndices )
+        for( size_t i = 0; i < m_aoDims.size(); ++i )
         {
             if( !osFilename.empty() )
                 osFilename += m_osDimSeparator;
-            osFilename += std::to_string(index);
+            osFilename += std::to_string(tileIndices[i]);
         }
     }
 
@@ -1050,21 +1123,74 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
         osFilename = osTmp + "/c" + osFilename;
     }
 
-    VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
+    // For network file systems, get the streaming version of the filename,
+    // as we don't need arbitrary seeking in the file
+    osFilename = VSIFileManager::GetHandler( osFilename.c_str() )->GetStreamingFilename(osFilename);
+
+    // First if we have a tile presence cache, check tile presence from it
+    if( bUseMutex )
+        m_oMutex.lock();
+    auto poTilePresenceArray = OpenTilePresenceCache(false);
+    if( poTilePresenceArray )
+    {
+        std::vector<GUInt64> anTileIdx(m_aoDims.size());
+        const std::vector<size_t> anCount(m_aoDims.size(), 1);
+        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+        const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+        for( size_t i = 0; i < m_aoDims.size(); ++i )
+        {
+            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+        }
+        GByte byValue = 0;
+        if( poTilePresenceArray->Read(anTileIdx.data(),
+                                       anCount.data(),
+                                       anArrayStep.data(),
+                                       anBufferStride.data(),
+                                       eByteDT,
+                                       &byValue) &&
+            byValue == 0 )
+        {
+            if( bUseMutex )
+                m_oMutex.unlock();
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)", osFilename.c_str());
+            bMissingTileOut = true;
+            return true;
+        }
+    }
+    if( bUseMutex )
+        m_oMutex.unlock();
+
+    VSILFILE* fp = nullptr;
+    // This is the number of files returned in a S3 directory listing operation
+    constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
+    if( (m_osDimSeparator == "/" &&
+            m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
+        (m_osDimSeparator != "/" &&
+            m_nTotalTileCount > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) )
+    {
+        // Avoid issuing ReadDir() when a lot of files are expected
+        CPLConfigOptionSetter optionSetter("GDAL_DISABLE_READDIR_ON_OPEN", "YES", true);
+        fp = VSIFOpenL(osFilename.c_str(), "rb");
+    }
+    else
+    {
+        fp = VSIFOpenL(osFilename.c_str(), "rb");
+    }
     if( fp == nullptr )
     {
         // Missing files are OK and indicate nodata_value
-        CPLDebugOnly("Zarr", "Tile %s missing (=nodata)", osFilename.c_str());
+        CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)", osFilename.c_str());
         bMissingTileOut = true;
         return true;
     }
 
     bMissingTileOut = false;
     bool bRet = true;
-    size_t nRawDataSize = m_abyRawTileData.size();
-    if( m_psDecompressor == nullptr )
+    size_t nRawDataSize = abyRawTileData.size();
+    if( psDecompressor == nullptr )
     {
-        nRawDataSize = VSIFReadL(&m_abyRawTileData[0], 1, nRawDataSize, fp);
+        nRawDataSize = VSIFReadL(&abyRawTileData[0], 1, nRawDataSize, fp);
     }
     else
     {
@@ -1104,12 +1230,12 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
             }
             else
             {
-                void* out_buffer = &m_abyRawTileData[0];
-                if( !m_psDecompressor->pfnFunc(abyCompressedData.data(),
-                                               abyCompressedData.size(),
-                                               &out_buffer, &nRawDataSize,
-                                               nullptr,
-                                               m_psDecompressor->user_data ))
+                void* out_buffer = &abyRawTileData[0];
+                if( !psDecompressor->pfnFunc(abyCompressedData.data(),
+                                             abyCompressedData.size(),
+                                             &out_buffer, &nRawDataSize,
+                                             nullptr,
+                                             psDecompressor->user_data ))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Decompression of tile %s failed",
@@ -1135,9 +1261,9 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
             aosOptions.SetNameValue(obj.GetName().c_str(),
                                     obj.ToString().c_str());
         }
-        void* out_buffer = &m_abyTmpRawTileData[0];
-        size_t nOutSize = m_abyTmpRawTileData.size();
-        if( !psFilterDecompressor->pfnFunc(m_abyRawTileData.data(),
+        void* out_buffer = &abyTmpRawTileData[0];
+        size_t nOutSize = abyTmpRawTileData.size();
+        if( !psFilterDecompressor->pfnFunc(abyRawTileData.data(),
                                          nRawDataSize,
                                          &out_buffer,
                                          &nOutSize,
@@ -1151,9 +1277,9 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
         }
 
         nRawDataSize = nOutSize;
-        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
+        std::swap(abyRawTileData, abyTmpRawTileData);
     }
-    if( nRawDataSize != m_abyRawTileData.size() )
+    if( nRawDataSize != abyRawTileData.size() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Decompressed tile %s has not expected size after filters",
@@ -1163,18 +1289,18 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
 
     if( bRet && !bMissingTileOut && m_bFortranOrder )
     {
-        BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData, true);
-        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
+        BlockTranspose(abyRawTileData, abyTmpRawTileData, true);
+        std::swap(abyRawTileData, abyTmpRawTileData);
     }
 
-    if( bRet && !bMissingTileOut && !m_abyDecodedTileData.empty() )
+    if( bRet && !bMissingTileOut && !abyDecodedTileData.empty() )
     {
         const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
                                    m_aoDtypeElts.back().nativeSize;
         const auto nDTSize = m_oType.GetSize();
-        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
-        const GByte* pSrc = m_abyRawTileData.data();
-        GByte* pDst = &m_abyDecodedTileData[0];
+        const size_t nValues = abyDecodedTileData.size() / nDTSize;
+        const GByte* pSrc = abyRawTileData.data();
+        GByte* pDst = &abyDecodedTileData[0];
         for( size_t i = 0; i < nValues; i++, pSrc += nSourceSize, pDst += nDTSize )
         {
             DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
@@ -1182,6 +1308,300 @@ bool ZarrArray::LoadTileData(const std::vector<uint64_t>& tileIndices,
     }
 
     return bRet;
+
+#undef m_abyTmpRawTileData
+#undef m_abyRawTileData
+#undef m_abyDecodedTileData
+#undef m_psDecompressor
+}
+
+/************************************************************************/
+/*                      ZarrArray::IAdviseRead()                        */
+/************************************************************************/
+
+bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
+                            const size_t* count,
+                            CSLConstList papszOptions) const
+{
+    const size_t nDims = m_aoDims.size();
+    std::vector<uint64_t> anIndicesCur(nDims);
+    std::vector<uint64_t> anIndicesMin(nDims);
+    std::vector<uint64_t> anIndicesMax(nDims);
+
+    // Compute min and max tile indices in each dimension, and the total
+    // nomber of tiles this represents.
+    uint64_t nReqTiles = 1;
+    for( size_t i = 0; i < nDims; ++i )
+    {
+        anIndicesMin[i] = arrayStartIdx[i] / m_anBlockSize[i];
+        anIndicesMax[i] = (arrayStartIdx[i] + count[i] - 1) / m_anBlockSize[i];
+        // Overflow on number of tiles already checked in Create()
+        nReqTiles *= (anIndicesMax[i] - anIndicesMin[i] + 1);
+    }
+
+    // Find available cache size
+    const size_t nCacheSize = [papszOptions]()
+    {
+        size_t nCacheSizeTmp;
+        const char* pszCacheSize = CSLFetchNameValue(papszOptions, "CACHE_SIZE");
+        if( pszCacheSize )
+        {
+            const auto nCacheSizeBig = CPLAtoGIntBig(pszCacheSize);
+            if( nCacheSizeBig < 0 ||
+                static_cast<uint64_t>(nCacheSizeBig) >
+                        std::numeric_limits<size_t>::max() / 2 )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Too big CACHE_SIZE");
+                return std::numeric_limits<size_t>::max();
+            }
+            nCacheSizeTmp = static_cast<size_t>(nCacheSizeBig);
+        }
+        else
+        {
+            // Arbitrarily take half of remaining cache size
+            nCacheSizeTmp = static_cast<size_t>(
+                std::min(static_cast<uint64_t>(
+                            (GDALGetCacheMax64() - GDALGetCacheUsed64())/2),
+                         static_cast<uint64_t>(
+                             std::numeric_limits<size_t>::max() / 2)));
+            CPLDebug(ZARR_DEBUG_KEY, "Using implicit CACHE_SIZE=" CPL_FRMT_GUIB,
+                     static_cast<GUIntBig>(nCacheSizeTmp));
+        }
+        return nCacheSizeTmp;
+    }();
+    if( nCacheSize == std::numeric_limits<size_t>::max() )
+        return false;
+
+    // Check that cache size is sufficient to hold all needed tiles.
+    // Also check that anReqTilesIndices size computation won't overflow.
+    if( nReqTiles > nCacheSize / std::max(m_nTileSize, nDims) )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "CACHE_SIZE=" CPL_FRMT_GUIB " is not big enough to cache "
+                 "all needed tiles. "
+                 "At least " CPL_FRMT_GUIB " bytes would be needed",
+                 static_cast<GUIntBig>(nCacheSize),
+                 static_cast<GUIntBig>(nReqTiles * std::max(m_nTileSize, nDims)));
+        return false;
+    }
+
+    const int nThreads = [papszOptions, nReqTiles]()
+    {
+        int nThreadsTmp;
+        const char* pszNumThreads = CSLFetchNameValueDef(
+            papszOptions, "NUM_THREADS",
+            CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
+        if( EQUAL(pszNumThreads, "ALL_CPUS") )
+            nThreadsTmp = CPLGetNumCPUs();
+        else
+            nThreadsTmp = std::max(1, atoi(pszNumThreads));
+        nThreadsTmp = static_cast<int>(
+                        std::min(static_cast<uint64_t>(nThreadsTmp), nReqTiles));
+        nThreadsTmp = std::min(nThreadsTmp, 10 * CPLGetNumCPUs());
+        return nThreadsTmp;
+    }();
+    if( nThreads <= 1 )
+        return true;
+    CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using %d threads", nThreads);
+
+    m_oMapTileIndexToCachedTile.clear();
+
+    std::vector<uint64_t> anReqTilesIndices;
+    // Overflow checked above
+    try
+    {
+        anReqTilesIndices.resize( static_cast<size_t>(nDims * nReqTiles) );
+    }
+    catch( const std::bad_alloc& e )
+    {
+         CPLError(CE_Failure, CPLE_OutOfMemory,
+                  "Cannot allocate anReqTilesIndices: %s", e.what());
+         return false;
+    }
+
+    size_t dimIdx = 0;
+    size_t nTileIter = 0;
+lbl_next_depth:
+    if( dimIdx == nDims )
+    {
+        if( nDims == 2 )
+        {
+            // optimize in common case
+            memcpy( &anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
+                    sizeof(uint64_t) * 2 );
+        }
+        else if( nDims == 3 )
+        {
+            // optimize in common case
+            memcpy( &anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
+                    sizeof(uint64_t) * 3 );
+        }
+        else
+        {
+            memcpy( &anReqTilesIndices[nTileIter * nDims], anIndicesCur.data(),
+                    sizeof(uint64_t) * nDims );
+        }
+        nTileIter ++;
+    }
+    else
+    {
+        // This level of loop loops over blocks
+        anIndicesCur[dimIdx] = anIndicesMin[dimIdx];
+        while(true)
+        {
+            dimIdx ++;
+            goto lbl_next_depth;
+lbl_return_to_caller:
+            dimIdx --;
+            if( anIndicesCur[dimIdx] == anIndicesMax[dimIdx] )
+                break;
+            ++ anIndicesCur[dimIdx];
+        }
+    }
+    if( dimIdx > 0 )
+        goto lbl_return_to_caller;
+    assert( nTileIter == nReqTiles );
+
+    CPLWorkerThreadPool* wtp = GDALGetGlobalThreadPool(nThreads);
+    if( wtp == nullptr )
+        return false;
+
+    struct JobStruct
+    {
+        JobStruct() = default;
+
+        JobStruct(const JobStruct&) = delete;
+        JobStruct& operator= (const JobStruct&) = delete;
+
+        JobStruct(JobStruct&&) = default;
+        JobStruct& operator= (JobStruct&&) = default;
+
+        const ZarrArray* poArray = nullptr;
+        bool* pbGlobalStatus = nullptr;
+        int* pnRemainingThreads = nullptr;
+        const std::vector<uint64_t>* panReqTilesIndices = nullptr;
+        size_t nFirstIdx = 0;
+        size_t nLastIdxNotIncluded = 0;
+    };
+    std::vector<JobStruct> asJobStructs;
+
+    bool bGlobalStatus = true;
+    int nRemainingThreads = nThreads;
+    // Check for very highly overflow in below loop
+    assert( static_cast<size_t>(nThreads) <
+                    std::numeric_limits<size_t>::max() / nReqTiles );
+
+    // Setup jobs
+    for( int i = 0; i < nThreads; i++ )
+    {
+        JobStruct jobStruct;
+        jobStruct.poArray = this;
+        jobStruct.pbGlobalStatus = &bGlobalStatus;
+        jobStruct.pnRemainingThreads = &nRemainingThreads;
+        jobStruct.panReqTilesIndices = &anReqTilesIndices;
+        jobStruct.nFirstIdx = static_cast<size_t>(i * nReqTiles / nThreads);
+        jobStruct.nLastIdxNotIncluded = std::min(
+            static_cast<size_t>((i + 1) * nReqTiles / nThreads), nTileIter);
+        asJobStructs.emplace_back(std::move(jobStruct));
+    }
+
+    const auto JobFunc = [](void* pThreadData)
+    {
+        const JobStruct* jobStruct = static_cast<const JobStruct*>(pThreadData);
+
+        const auto poArray = jobStruct->poArray;
+        const auto& aoDims = poArray->m_aoDims;
+        const size_t l_nDims = poArray->GetDimensionCount();
+        std::vector<GByte> abyRawTileData;
+        std::vector<GByte> abyDecodedTileData;
+        std::vector<GByte> abyTmpRawTileData;
+        const CPLCompressor* psDecompressor =
+            CPLGetDecompressor(poArray->m_osDecompressorId.c_str());
+
+        for( size_t iReq = jobStruct->nFirstIdx; iReq < jobStruct->nLastIdxNotIncluded; ++iReq )
+        {
+            // Check if we must early exit
+            {
+                std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
+                if( !(*jobStruct->pbGlobalStatus) )
+                    return;
+            }
+
+            const uint64_t* tileIndices =
+                jobStruct->panReqTilesIndices->data() + iReq * l_nDims;
+
+            uint64_t nTileIdx = 0;
+            for( size_t j = 0; j < l_nDims; ++j )
+            {
+                if( j > 0 )
+                    nTileIdx *= aoDims[j-1]->GetSize();
+                nTileIdx += tileIndices[j];
+            }
+
+            if( !poArray->AllocateWorkingBuffers(abyRawTileData,
+                                                 abyTmpRawTileData,
+                                                 abyDecodedTileData) )
+            {
+                std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
+                *jobStruct->pbGlobalStatus = false;
+                break;
+            }
+
+            bool bIsEmpty = false;
+            bool success = poArray->LoadTileData(tileIndices,
+                                                 true, // use mutex
+                                                 psDecompressor,
+                                                 abyRawTileData,
+                                                 abyTmpRawTileData,
+                                                 abyDecodedTileData,
+                                                 bIsEmpty);
+
+            std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
+            if( !success )
+            {
+                *jobStruct->pbGlobalStatus = false;
+                break;
+            }
+
+            CachedTile cachedTile;
+            if( !bIsEmpty )
+            {
+                if( !abyDecodedTileData.empty() )
+                    std::swap(cachedTile.abyDecoded, abyDecodedTileData);
+                else
+                    std::swap(cachedTile.abyDecoded, abyRawTileData);
+            }
+            poArray->m_oMapTileIndexToCachedTile[nTileIdx] = std::move(cachedTile);
+        }
+
+        std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
+        (*jobStruct->pnRemainingThreads) --;
+    };
+
+    // Start jobs
+    for( int i = 0; i < nThreads; i++ )
+    {
+        if( !wtp->SubmitJob(JobFunc, &asJobStructs[i]) )
+        {
+            std::lock_guard<std::mutex> oLock(m_oMutex);
+            bGlobalStatus = false;
+            nRemainingThreads = i;
+            break;
+        }
+    }
+
+    // Wait for all jobs to be finished
+    while( true )
+    {
+        {
+            std::lock_guard<std::mutex> oLock(m_oMutex);
+            if( nRemainingThreads == 0 )
+                break;
+        }
+        wtp->WaitEvent();
+    }
+
+    return bGlobalStatus;
 }
 
 /************************************************************************/
@@ -1289,28 +1709,66 @@ lbl_next_depth:
         size_t dimIdxSubLoop = 0;
         dstPtrStackInnerLoop[0] = dstPtrStackOuterLoop[nDims];
         bool bEmptyTile = false;
-        if( !tileIndices.empty() && tileIndices == m_anCachedTiledIndices )
-        {
-            if( !m_bCachedTiledValid )
-                return false;
-            bEmptyTile = m_bCachedTiledEmpty;
-        }
-        else
-        {
-            if( !FlushDirtyTile() )
-                return false;
-
-            m_anCachedTiledIndices = tileIndices;
-            m_bCachedTiledValid = LoadTileData(tileIndices, bEmptyTile);
-            if( !m_bCachedTiledValid )
-            {
-                return false;
-            }
-            m_bCachedTiledEmpty = bEmptyTile;
-        }
 
         const GByte* pabySrcTile = m_abyDecodedTileData.empty() ?
-                        m_abyRawTileData.data(): m_abyDecodedTileData.data();
+                            m_abyRawTileData.data(): m_abyDecodedTileData.data();
+        bool bMatchFoundInMapTileIndexToCachedTile = false;
+
+        // Use cache built by IAdviseRead() if possible
+        if( !m_oMapTileIndexToCachedTile.empty() )
+        {
+            uint64_t nTileIdx = 0;
+            for( size_t j = 0; j < nDims; ++j )
+            {
+                if( j > 0 )
+                    nTileIdx *= m_aoDims[j-1]->GetSize();
+                nTileIdx += tileIndices[j];
+            }
+            const auto oIter = m_oMapTileIndexToCachedTile.find(nTileIdx);
+            if( oIter != m_oMapTileIndexToCachedTile.end() )
+            {
+                bMatchFoundInMapTileIndexToCachedTile = true;
+                if( oIter->second.abyDecoded.empty() )
+                {
+                    bEmptyTile = true;
+                }
+                else
+                {
+                    pabySrcTile = oIter->second.abyDecoded.data();
+                }
+            }
+            else
+            {
+                CPLDebugOnly(ZARR_DEBUG_KEY, "Cache miss for tile " CPL_FRMT_GUIB,
+                             static_cast<GUIntBig>(nTileIdx));
+            }
+        }
+
+        if( !bMatchFoundInMapTileIndexToCachedTile )
+        {
+            if( !tileIndices.empty() && tileIndices == m_anCachedTiledIndices )
+            {
+                if( !m_bCachedTiledValid )
+                    return false;
+                bEmptyTile = m_bCachedTiledEmpty;
+            }
+            else
+            {
+                if( !FlushDirtyTile() )
+                    return false;
+
+                m_anCachedTiledIndices = tileIndices;
+                m_bCachedTiledValid = LoadTileData(tileIndices.data(), bEmptyTile);
+                if( !m_bCachedTiledValid )
+                {
+                    return false;
+                }
+                m_bCachedTiledEmpty = bEmptyTile;
+            }
+
+            pabySrcTile = m_abyDecodedTileData.empty() ?
+                            m_abyRawTileData.data(): m_abyDecodedTileData.data();
+        }
         const size_t nSrcDTSize = m_abyDecodedTileData.empty() ? nSourceSize : nDTSize;
 
         for( size_t i = 0; i < nDims; ++i )
@@ -1690,7 +2148,7 @@ bool ZarrArray::FlushDirtyTile() const
         VSIStatBufL sStat;
         if( VSIStatL(osFilename.c_str(), &sStat) == 0 )
         {
-            CPLDebugOnly("ZARR", "Deleting tile %s that has now empty content",
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Deleting tile %s that has now empty content",
                          osFilename.c_str());
             return VSIUnlink(osFilename.c_str()) == 0;
         }
@@ -1866,6 +2324,8 @@ bool ZarrArray::IWrite(const GUInt64* arrayStartIdx,
     if( !AllocateWorkingBuffers() )
         return false;
 
+    m_oMapTileIndexToCachedTile.clear();
+
     // Need to be kept in top-level scope
     std::vector<GUInt64> arrayStartIdxMod;
     std::vector<GInt64> arrayStepMod;
@@ -1967,7 +2427,7 @@ lbl_next_depth:
             if( bWriteWholeTile )
             {
                 const bool bWholePartialTileThisDim =
-                    arrayStartIdx[i] + countInnerLoopInit[i] == m_aoDims[i]->GetSize();
+                    indicesOuterLoop[i] + countInnerLoopInit[i] == m_aoDims[i]->GetSize();
                 bWriteWholeTile = (countInnerLoopInit[i] == m_anBlockSize[i] ||
                                    bWholePartialTileThisDim);
                 if( bWholePartialTileThisDim )
@@ -2009,7 +2469,7 @@ lbl_next_depth:
                 // If we don't write the whole tile, we need to fetch a
                 // potentially existing one.
                 bool bEmptyTile = false;
-                m_bCachedTiledValid = LoadTileData(tileIndices, bEmptyTile);
+                m_bCachedTiledValid = LoadTileData(tileIndices.data(), bEmptyTile);
                 if( !m_bCachedTiledValid )
                 {
                     return false;
@@ -3142,6 +3602,7 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
     const CPLCompressor* psCompressor = nullptr;
     const CPLCompressor* psDecompressor = nullptr;
     const auto oCompressor = oRoot["compressor"];
+    std::string osDecompressorId("NONE");
     if( isZarrV2 )
     {
         if( !oCompressor.IsValid() )
@@ -3155,19 +3616,19 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
         else if( oCompressor.GetType() == CPLJSONObject::Type::Object )
         {
-            const auto osCompressorId = oCompressor["id"].ToString();
-            if( osCompressorId.empty() )
+            osDecompressorId = oCompressor["id"].ToString();
+            if( osDecompressorId.empty() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing compressor id");
                 return nullptr;
             }
-            psCompressor = CPLGetCompressor( osCompressorId.c_str() );
-            psDecompressor = CPLGetDecompressor( osCompressorId.c_str() );
+            psCompressor = CPLGetCompressor( osDecompressorId.c_str() );
+            psDecompressor = CPLGetDecompressor( osDecompressorId.c_str() );
             if( psCompressor == nullptr || psDecompressor == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Decompressor %s not handled",
-                         osCompressorId.c_str());
+                         osDecompressorId.c_str());
                 return nullptr;
             }
         }
@@ -3194,9 +3655,9 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                     auto posSlash = osCodecName.find('/');
                     if( posSlash != std::string::npos )
                     {
-                        osCodecName.resize(posSlash);
-                        psCompressor = CPLGetCompressor( osCodecName.c_str() );
-                        psDecompressor = CPLGetDecompressor( osCodecName.c_str() );
+                        osDecompressorId = osCodecName.substr(0, posSlash);
+                        psCompressor = CPLGetCompressor( osDecompressorId.c_str() );
+                        psDecompressor = CPLGetDecompressor( osDecompressorId.c_str() );
                     }
                     break;
                 }
@@ -3262,12 +3723,14 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                                      osArrayName,
                                      aoDims, oType, aoDtypeElts, anBlockSize,
                                      bFortranOrder);
+    if( !poArray )
+        return nullptr;
     poArray->SetUpdatable(m_bUpdatable); // must be set before SetAttributes()
     poArray->SetFilename(osZarrayFilename);
     poArray->SetDimSeparator(osDimSeparator);
     if( isZarrV2 )
         poArray->SetCompressorJsonV2(oCompressor);
-    poArray->SetCompressorDecompressor(psCompressor, psDecompressor);
+    poArray->SetCompressorDecompressor(osDecompressorId, psCompressor, psDecompressor);
     poArray->SetFilters(oFiltersArray);
     if( !abyNoData.empty() )
     {
@@ -3296,7 +3759,261 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
         }
     }
 
+    if( CPLTestBool(m_poSharedResource->GetOpenOptions().FetchNameValueDef(
+                                                "CACHE_TILE_PRESENCE", "NO")) )
+    {
+        poArray->CacheTilePresence();
+    }
+
     return poArray;
+}
+
+/************************************************************************/
+/*                  ZarrArray::OpenTilePresenceCache()                  */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> ZarrArray::OpenTilePresenceCache(bool bCanCreate) const
+{
+    if( m_bHasTriedCacheTilePresenceArray )
+        return m_poCacheTilePresenceArray;
+    m_bHasTriedCacheTilePresenceArray = true;
+
+    if( m_nTotalTileCount == 1 )
+        return nullptr;
+
+    std::string osCacheFilename;
+    auto poRGCache = GetCacheRootGroup(bCanCreate, osCacheFilename);
+    if( !poRGCache )
+        return nullptr;
+
+    const std::string osTilePresenceArrayName(MassageName(GetFullName()) + "_tile_presence");
+    auto poTilePresenceArray = poRGCache->OpenMDArray(osTilePresenceArrayName);
+    const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+    if( poTilePresenceArray )
+    {
+        bool ok = true;
+        const auto apoDimsCache = poTilePresenceArray->GetDimensions();
+        if( poTilePresenceArray->GetDataType() != eByteDT ||
+            apoDimsCache.size() != m_aoDims.size() )
+        {
+            ok = false;
+        }
+        else
+        {
+            for( size_t i = 0; i < m_aoDims.size(); i++ )
+            {
+                const auto nExpectedDimSize =
+                    (m_aoDims[i]->GetSize() + m_anBlockSize[i]-1) / m_anBlockSize[i];
+                if( apoDimsCache[i]->GetSize() != nExpectedDimSize )
+                {
+                    ok = false;
+                    break;
+                }
+            }
+        }
+        if( !ok )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Array %s in %s has not expected characteristics",
+                     osTilePresenceArrayName.c_str(), osCacheFilename.c_str());
+            return nullptr;
+        }
+
+        if( !poTilePresenceArray->GetAttribute("filling_status") && !bCanCreate )
+        {
+            CPLDebug(ZARR_DEBUG_KEY,
+                     "Cache tile presence array for %s found, but filling not finished",
+                     GetFullName().c_str());
+            return nullptr;
+        }
+
+        CPLDebug(ZARR_DEBUG_KEY, "Using cache tile presence for %s", GetFullName().c_str());
+    }
+    else if( bCanCreate )
+    {
+        int idxDim = 0;
+        std::string osBlockSize;
+        std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
+        for( const auto& poDim: m_aoDims )
+        {
+            auto poNewDim = poRGCache->CreateDimension(
+                osTilePresenceArrayName + '_' + std::to_string(idxDim),
+                std::string(),
+                std::string(),
+                (poDim->GetSize() + m_anBlockSize[idxDim]-1) / m_anBlockSize[idxDim]);
+            if( !poNewDim )
+                return nullptr;
+            apoNewDims.emplace_back(poNewDim);
+
+            if( !osBlockSize.empty() )
+                osBlockSize += ',';
+            constexpr GUInt64 BLOCKSIZE = 256;
+            osBlockSize += std::to_string(
+                                std::min(poNewDim->GetSize(),BLOCKSIZE));
+
+            idxDim ++;
+        }
+
+        CPLStringList aosOptionsTilePresence;
+        aosOptionsTilePresence.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+        poTilePresenceArray = poRGCache->CreateMDArray(osTilePresenceArrayName,
+                                                       apoNewDims,
+                                                       eByteDT,
+                                                       aosOptionsTilePresence.List());
+        if( !poTilePresenceArray )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Cannot create %s in %s",
+                     osTilePresenceArrayName.c_str(), osCacheFilename.c_str());
+            return nullptr;
+        }
+        poTilePresenceArray->SetNoDataValue(0);
+    }
+    else
+    {
+        return nullptr;
+    }
+
+    m_poCacheTilePresenceArray = poTilePresenceArray;
+
+    return poTilePresenceArray;
+}
+
+/************************************************************************/
+/*                    ZarrArray::CacheTilePresence()                    */
+/************************************************************************/
+
+bool ZarrArray::CacheTilePresence()
+{
+    if( m_nTotalTileCount == 1 )
+        return true;
+
+    const std::string osDirectoryName = [this]()
+    {
+        if( m_nVersion == 2 )
+            return std::string(CPLGetDirname(m_osFilename.c_str()));
+
+        std::string osTmp = m_osRootDirectoryName + "/data/root";
+        if( GetFullName() != "/" )
+            osTmp += GetFullName();
+        return osTmp;
+    }
+    ();
+
+    struct DirCloser
+    {
+        DirCloser(const DirCloser&) = delete;
+        DirCloser& operator= (const DirCloser&) = delete;
+
+        VSIDIR* m_psDir;
+
+        explicit DirCloser(VSIDIR* psDir): m_psDir(psDir) {}
+        ~DirCloser() { VSICloseDir(m_psDir); }
+    };
+
+    auto psDir = VSIOpenDir(osDirectoryName.c_str(), -1, nullptr);
+    if( !psDir )
+        return false;
+    DirCloser dirCloser(psDir);
+
+    auto poTilePresenceArray = OpenTilePresenceCache(true);
+    if( !poTilePresenceArray )
+    {
+        return false;
+    }
+
+    if( poTilePresenceArray->GetAttribute("filling_status") )
+    {
+        CPLDebug(ZARR_DEBUG_KEY,
+                 "CacheTilePresence(): %s already filled. Nothing to do",
+                 poTilePresenceArray->GetName().c_str());
+        return true;
+    }
+
+    std::vector<GUInt64> anTileIdx(m_aoDims.size());
+    const std::vector<size_t> anCount(m_aoDims.size(), 1);
+    const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+    const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+    const auto apoDimsCache = poTilePresenceArray->GetDimensions();
+    const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
+
+    CPLDebug(ZARR_DEBUG_KEY,
+             "CacheTilePresence(): Iterating over %s to find which tiles are present...",
+             osDirectoryName.c_str());
+    uint64_t nCounter = 0;
+    while( const VSIDIREntry* psEntry = VSIGetNextDirEntry(psDir) )
+    {
+        if( !VSI_ISDIR(psEntry->nMode) )
+        {
+            int nOff = 0;
+            if( m_nVersion == 3 )
+            {
+                if( psEntry->pszName[0] != 'c' )
+                    continue;
+                nOff = 1;
+            }
+            const CPLStringList aosTokens(
+                CSLTokenizeString2( psEntry->pszName + nOff, m_osDimSeparator.c_str(), 0 ));
+            if( aosTokens.size() == static_cast<int>(m_aoDims.size()) )
+            {
+                // Get tile indices from filename
+                bool unexpectedIndex = false;
+                for( int i = 0; i < aosTokens.size(); ++i )
+                {
+                    anTileIdx[i] = static_cast<GUInt64>(CPLAtoGIntBig(aosTokens[i]));
+                    if( anTileIdx[i] >= apoDimsCache[i]->GetSize() )
+                    {
+                        unexpectedIndex = true;
+                    }
+                }
+                if( unexpectedIndex )
+                {
+                    continue;
+                }
+
+                nCounter ++;
+                if( (nCounter % 1000) == 0 )
+                {
+                    CPLDebug(ZARR_DEBUG_KEY,
+                             "CacheTilePresence(): Listing in progress "
+                             "(last examined %s, at least %.02f %% completed)",
+                             psEntry->pszName,
+                             100.0 * double(nCounter) / double(m_nTotalTileCount));
+                }
+                constexpr GByte byOne = 1;
+                //CPLDebugOnly(ZARR_DEBUG_KEY, "Marking %s has present", psEntry->pszName);
+                if( !poTilePresenceArray->Write(anTileIdx.data(),
+                                                anCount.data(),
+                                                anArrayStep.data(),
+                                                anBufferStride.data(),
+                                                eByteDT,
+                                                &byOne) )
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    CPLDebug(ZARR_DEBUG_KEY, "CacheTilePresence(): finished");
+
+    // Write filling_status attribute
+    auto poAttr = poTilePresenceArray->CreateAttribute(
+        "filling_status", {}, GDALExtendedDataType::CreateString(), nullptr );
+    if( poAttr )
+    {
+        if( nCounter == 0 )
+            poAttr->Write("no_tile_present");
+        else if( nCounter == m_nTotalTileCount )
+            poAttr->Write("all_tiles_present");
+        else
+            poAttr->Write("some_tiles_missing");
+    }
+
+    // Force closing
+    m_poCacheTilePresenceArray = nullptr;
+    m_bHasTriedCacheTilePresenceArray = false;
+
+    return true;
 }
 
 /************************************************************************/

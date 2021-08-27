@@ -146,6 +146,10 @@ def test_gdalmdiminfo_lib_mem_dataset():
         "/dim0",
         "/dim1"
       ],
+      "dimension_size": [
+        2,
+        3
+      ],
       "attributes": {
         "myattr": {
           "datatype": "String",
@@ -183,6 +187,9 @@ def test_gdalmdiminfo_lib_mem_dataset():
       },
       "dimensions": [
         "/dim0"
+      ],
+      "dimension_size": [
+        2
       ],
       "nodata_value": {
         "x": 32767,
@@ -237,6 +244,9 @@ def test_gdalmdiminfo_lib_mem_dataset():
       "type": "my_type",
       "direction": "my_direction"
     }
+  ],
+  "dimension_size": [
+    2
   ],
   "nodata_value": {
     "x": 32767,

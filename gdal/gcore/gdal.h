@@ -1624,6 +1624,10 @@ int CPL_DLL GDALMDArrayWrite(GDALMDArrayH hArray,
 int CPL_DLL GDALMDArrayAdviseRead(GDALMDArrayH hArray,
                                   const GUInt64* arrayStartIdx,
                                   const size_t* count);
+int CPL_DLL GDALMDArrayAdviseReadEx(GDALMDArrayH hArray,
+                                    const GUInt64* arrayStartIdx,
+                                    const size_t* count,
+                                    CSLConstList papszOptions);
 GDALAttributeH CPL_DLL GDALMDArrayGetAttribute(GDALMDArrayH hArray, const char* pszName) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL *GDALMDArrayGetAttributes(GDALMDArrayH hArray, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL GDALMDArrayCreateAttribute(GDALMDArrayH hArray,

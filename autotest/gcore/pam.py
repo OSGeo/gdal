@@ -74,7 +74,7 @@ def test_pam_1():
 def test_pam_2():
 
     driver = gdal.GetDriverByName('PNM')
-    ds = driver.Create('tmp/pam.pnm', 10, 10)
+    ds = driver.Create('tmp/pam.pgm', 10, 10)
     band = ds.GetRasterBand(1)
 
     band.SetMetadata({'other': 'red', 'key': 'value'})
@@ -95,7 +95,7 @@ def test_pam_2():
 
 def test_pam_3():
 
-    ds = gdal.Open("tmp/pam.pnm")
+    ds = gdal.Open("tmp/pam.pgm")
 
     band = ds.GetRasterBand(1)
     base_md = band.GetMetadata()
@@ -117,11 +117,11 @@ def test_pam_3():
     assert band.GetNoDataValue() == 100, 'nodata not saved via pam'
 
     ds = None
-    ds = gdal.Open('tmp/pam.pnm', gdal.GA_Update)
+    ds = gdal.Open('tmp/pam.pgm', gdal.GA_Update)
     assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
     ds = None
 
-    ds = gdal.Open('tmp/pam.pnm')
+    ds = gdal.Open('tmp/pam.pgm')
     assert ds.GetRasterBand(1).GetNoDataValue() is None, \
         'got nodata value whereas none was expected'
 
@@ -336,7 +336,8 @@ def test_pam_11():
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
     assert stats[0] == 74, 'did not get expected minimum'
     gdal.ErrorReset()
-    ds = None
+    with gdaltest.error_handler():
+        ds = None
     error_msg = gdal.GetLastErrorMsg()
     assert error_msg.startswith('Unable to save auxiliary information'), \
         'warning was expected at that point'
@@ -402,7 +403,8 @@ def test_pam_13():
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
 
-    ds = gdal.GetDriverByName('PNM').Create('/vsimem/tmp.pnm', 1, 1)
+    tmpfilename = '/vsimem/tmp.pgm'
+    ds = gdal.GetDriverByName('PNM').Create(tmpfilename, 1, 1)
     # if ds.GetRasterBand(1).SetColorTable(None) == 0:
     #    gdaltest.post_reason('fail')
     #    return 'fail'
@@ -418,9 +420,9 @@ def test_pam_13():
 
     ds = None
 
-    assert gdal.VSIStatL('/vsimem/tmp.pnm.aux.xml') is None
+    assert gdal.VSIStatL(tmpfilename + '.aux.xml') is None
 
-    gdal.Unlink('/vsimem/tmp.pnm')
+    gdal.Unlink(tmpfilename)
 
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'YES')
 
@@ -431,7 +433,7 @@ def test_pam_13():
 
 def test_pam_metadata_preserved():
 
-    tmpfilename = '/vsimem/tmp.pnm'
+    tmpfilename = '/vsimem/tmp.pgm'
     ds = gdal.GetDriverByName('PNM').Create(tmpfilename, 1, 1)
     ds.SetMetadataItem('foo', 'bar')
     ds = None
@@ -520,7 +522,7 @@ def test_pam_esri_GeodataXform_gcp():
 
 def test_pam_metadata_coordinate_epoch():
 
-    tmpfilename = '/vsimem/tmp.pnm'
+    tmpfilename = '/vsimem/tmp.pgm'
     ds = gdal.GetDriverByName('PNM').Create(tmpfilename, 1, 1)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)

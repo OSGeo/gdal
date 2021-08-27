@@ -2395,7 +2395,8 @@ protected:
     GDALMDArray(const std::string& osParentName, const std::string& osName);
 
     virtual bool IAdviseRead(const GUInt64* arrayStartIdx,
-                             const size_t* count) const;
+                             const size_t* count,
+                             CSLConstList papszOptions) const;
 
     virtual bool IsCacheable() const { return true; }
 
@@ -2404,6 +2405,10 @@ protected:
                                 double dfMean, double dfStdDev,
                                 GUInt64 nValidCount );
 
+    static std::string MassageName(const std::string& inputName);
+
+    std::shared_ptr<GDALGroup> GetCacheRootGroup(bool bCanCreate,
+                                                 std::string& osCacheFilenameOut) const;
 //! @endcond
 
 public:
@@ -2513,7 +2518,8 @@ public:
     virtual std::vector<std::shared_ptr<GDALMDArray>> GetCoordinateVariables() const;
 
     bool AdviseRead(const GUInt64* arrayStartIdx,
-                    const size_t* count) const;
+                    const size_t* count,
+                    CSLConstList papszOptions = nullptr) const;
 
     bool IsRegularlySpaced(double& dfStart, double& dfIncrement) const;
 

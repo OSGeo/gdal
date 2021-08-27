@@ -37,6 +37,7 @@
 
 #include <array>
 #include <map>
+#include <mutex>
 #include <set>
 
 /************************************************************************/
@@ -204,6 +205,7 @@ class ZarrSharedResource
     CPLJSONObject m_oObj{}; // For .zmetadata
     bool m_bZMetadataModified = false;
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
+    CPLStringList m_aosOpenOptions{};
 
 public:
     explicit ZarrSharedResource(const std::string& osRootDirectoryName);
@@ -217,6 +219,10 @@ public:
     void SetZMetadataItem(const std::string& osFilename, const CPLJSONObject& obj);
 
     const std::shared_ptr<GDALPamMultiDim>& GetPAM() { return m_poPAM; }
+
+    const CPLStringList& GetOpenOptions() const { return m_aosOpenOptions; }
+
+    void SetOpenOptions(CSLConstList papszOpenOptions) { m_aosOpenOptions = papszOpenOptions; }
 };
 
 /************************************************************************/
@@ -431,6 +437,7 @@ class ZarrArray final: public GDALPamMDArray
     GByte                                            *m_pabyNoData = nullptr;
     std::string                                       m_osDimSeparator { "." };
     std::string                                       m_osFilename{};
+    size_t                                            m_nTileSize = 0;
     mutable std::vector<GByte>                        m_abyRawTileData{};
     mutable std::vector<GByte>                        m_abyDecodedTileData{};
     mutable std::vector<uint64_t>                     m_anCachedTiledIndices{};
@@ -440,6 +447,7 @@ class ZarrArray final: public GDALPamMDArray
     bool                                              m_bUseOptimizedCodePaths = true;
     bool                                              m_bFortranOrder = false;
     const CPLCompressor                              *m_psCompressor = nullptr;
+    std::string                                       m_osDecompressorId{};
     const CPLCompressor                              *m_psDecompressor = nullptr;
     CPLJSONObject                                     m_oCompressorJSonV2{};
     CPLJSONObject                                     m_oCompressorJSonV3{};
@@ -464,6 +472,15 @@ class ZarrArray final: public GDALPamMDArray
     bool                                              m_bHasScale = false;
     bool                                              m_bScaleModified = false;
     std::weak_ptr<GDALGroup>                          m_poGroupWeak{};
+    uint64_t                                          m_nTotalTileCount = 0;
+    mutable bool                                      m_bHasTriedCacheTilePresenceArray = false;
+    mutable std::shared_ptr<GDALMDArray>              m_poCacheTilePresenceArray{};
+    mutable std::mutex                                m_oMutex{};
+    struct CachedTile
+    {
+        std::vector<GByte> abyDecoded{};
+    };
+    mutable std::map<uint64_t, CachedTile>            m_oMapTileIndexToCachedTile{};
 
     ZarrArray(const std::shared_ptr<ZarrSharedResource>& poSharedResource,
               const std::string& osParentName,
@@ -474,11 +491,24 @@ class ZarrArray final: public GDALPamMDArray
               const std::vector<GUInt64>& anBlockSize,
               bool bFortranOrder);
 
-    bool LoadTileData(const std::vector<uint64_t>& tileIndices,
+    bool LoadTileData(const uint64_t* tileIndices,
                       bool& bMissingTileOut) const;
+
+    bool LoadTileData(const uint64_t* tileIndices,
+                      bool bUseMutex,
+                      const CPLCompressor* psDecompressor,
+                      std::vector<GByte>& abyRawTileData,
+                      std::vector<GByte>& abyTmpRawTileData,
+                      std::vector<GByte>& abyDecodedTileData,
+                      bool& bMissingTileOut) const;
+
     void BlockTranspose(const std::vector<GByte>& abySrc,
                         std::vector<GByte>& abyDst,
                         bool bDecode) const;
+
+    bool AllocateWorkingBuffers(std::vector<GByte>& abyRawTileData,
+                                std::vector<GByte>& abyTmpRawTileData,
+                                std::vector<GByte>& abyDecodedTileData) const;
 
     bool AllocateWorkingBuffers() const;
 
@@ -489,6 +519,8 @@ class ZarrArray final: public GDALPamMDArray
     void DeallocateDecodedTileData();
 
     bool FlushDirtyTile() const;
+
+    std::shared_ptr<GDALMDArray> OpenTilePresenceCache(bool bCanCreate) const;
 
     // Disable copy constructor and assignment operator
     ZarrArray(const ZarrArray&) = delete;
@@ -509,7 +541,9 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
 
-    bool IsCacheable() const override { return false; }
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count,
+                     CSLConstList papszOptions) const override;
 
 public:
     ~ZarrArray() override;
@@ -565,9 +599,11 @@ public:
 
     void SetDimSeparator(const std::string& osDimSeparator) { m_osDimSeparator = osDimSeparator; }
 
-    void SetCompressorDecompressor(const CPLCompressor* psComp,
+    void SetCompressorDecompressor(const std::string& osDecompressorId,
+                                   const CPLCompressor* psComp,
                                    const CPLCompressor* psDecomp) {
         m_psCompressor = psComp;
+        m_osDecompressorId = osDecompressorId;
         m_psDecompressor = psDecomp;
     }
 
@@ -610,6 +646,8 @@ public:
     void SetNew(bool bNew) { m_bNew = bNew; }
 
     void Flush();
+
+    bool CacheTilePresence();
 };
 
 #endif // ZARR_H

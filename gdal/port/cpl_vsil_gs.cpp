@@ -105,6 +105,8 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 
     int* UnlinkBatch( CSLConstList papszFiles ) override;
     int RmdirRecursive( const char* pszDirname ) override;
+
+    std::string GetStreamingFilename(const std::string& osFilename) const override;
 };
 
 /************************************************************************/
@@ -133,7 +135,7 @@ class VSIGSHandle final : public IVSIS3LikeHandle
 
 VSIGSFSHandler::~VSIGSFSHandler()
 {
-    VSICurlFilesystemHandler::ClearCache();
+    VSICurlFilesystemHandlerBase::ClearCache();
     VSIGSHandleHelper::CleanMutex();
 }
 
@@ -143,7 +145,7 @@ VSIGSFSHandler::~VSIGSFSHandler()
 
 void VSIGSFSHandler::ClearCache()
 {
-    VSICurlFilesystemHandler::ClearCache();
+    VSICurlFilesystemHandlerBase::ClearCache();
 
     VSIGSHandleHelper::ClearCache();
 }
@@ -206,7 +208,7 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
+        VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -254,7 +256,7 @@ const char* VSIGSFSHandler::GetOptions()
     "  <Option name='CPL_GS_CREDENTIALS_FILE' type='string' "
         "description='Filename that contains Google Storage credentials' "
         "default='~/.boto'/>"
-    + VSICurlFilesystemHandler::GetOptionsStatic() +
+    + VSICurlFilesystemHandlerBase::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }
@@ -322,7 +324,7 @@ char** VSIGSFSHandler::GetFileMetadata( const char* pszFilename,
 
     if( pszDomain == nullptr || !EQUAL(pszDomain, "ACL") )
     {
-        return VSICurlFilesystemHandler::GetFileMetadata(
+        return VSICurlFilesystemHandlerBase::GetFileMetadata(
                     pszFilename, pszDomain, papszOptions);
     }
 
@@ -537,7 +539,7 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
         CPLDebug(GetDebugKey(),
                  "UnlinkBatch() has an efficient implementation "
                  "only for OAuth2 authentication");
-        return VSICurlFilesystemHandler::UnlinkBatch(papszFiles);
+        return VSICurlFilesystemHandlerBase::UnlinkBatch(papszFiles);
     }
 
     int* panRet = static_cast<int*>(
@@ -738,6 +740,17 @@ int VSIGSFSHandler::RmdirRecursive( const char* pszDirname )
         atoi(CPLGetConfigOption("CPL_VSIGS_UNLINK_BATCH_SIZE", "100")));
 
     return RmdirRecursiveInternal(pszDirname, nBatchSize);
+}
+
+/************************************************************************/
+/*                      GetStreamingFilename()                          */
+/************************************************************************/
+
+std::string VSIGSFSHandler::GetStreamingFilename(const std::string& osFilename) const
+{
+    if( STARTS_WITH(osFilename.c_str(), GetFSPrefix().c_str()) )
+        return "/vsigs_streaming/" + osFilename.substr(GetFSPrefix().size());
+    return osFilename;
 }
 
 /************************************************************************/

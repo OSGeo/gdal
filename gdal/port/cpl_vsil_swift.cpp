@@ -64,7 +64,7 @@ namespace cpl {
 /*                       AnalyseSwiftFileList()                         */
 /************************************************************************/
 
-void VSICurlFilesystemHandler::AnalyseSwiftFileList(
+void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
     const CPLString& osBaseURL,
     const CPLString& osPrefix,
     const char* pszJson,
@@ -250,11 +250,13 @@ public:
         VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
                                 const char* const *papszOptions) override
         {
-            return VSICurlFilesystemHandler::OpenDir(pszPath, nRecurseDepth,
+            return VSICurlFilesystemHandlerBase::OpenDir(pszPath, nRecurseDepth,
                                                      papszOptions);
         }
 
         const char* GetOptions() override;
+
+        std::string GetStreamingFilename(const std::string& osFilename) const override { return osFilename; }
 };
 
 /************************************************************************/
@@ -325,7 +327,7 @@ VSIVirtualHandle* VSISwiftFSHandler::Open( const char *pszFilename,
     }
 
     return
-        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError, papszOptions);
+        VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
 }
 
 /************************************************************************/
@@ -344,7 +346,7 @@ VSISwiftFSHandler::~VSISwiftFSHandler()
 
 void VSISwiftFSHandler::ClearCache()
 {
-    VSICurlFilesystemHandler::ClearCache();
+    VSICurlFilesystemHandlerBase::ClearCache();
 
     VSISwiftHandleHelper::ClearCache();
 }
@@ -384,7 +386,7 @@ const char* VSISwiftFSHandler::GetOptions()
         "description='Project domain name'/>"
     "  <Option name='OS_REGION_NAME' type='string' "
         "description='Region name'/>"
-    +  VSICurlFilesystemHandler::GetOptionsStatic() +
+    +  VSICurlFilesystemHandlerBase::GetOptionsStatic() +
         "</Options>");
     return osOptions.c_str();
 }
@@ -456,7 +458,7 @@ int VSISwiftFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    if( VSICurlFilesystemHandler::Stat(pszFilename, pStatBuf, nFlags) == 0 )
+    if( VSICurlFilesystemHandlerBase::Stat(pszFilename, pStatBuf, nFlags) == 0 )
     {
         // if querying /vsiswift/container_name, the GET will succeed and
         // we would consider this as a file whereas it should be exposed as
