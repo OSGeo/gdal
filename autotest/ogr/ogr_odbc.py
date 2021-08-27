@@ -86,6 +86,16 @@ def create_tmp_table():
     gdal.Unlink('tmp/odbc.mdb')
 
 
+@pytest.fixture()
+def ogrsf_path():
+    import test_cli_utilities
+    path = test_cli_utilities.get_test_ogrsf_path()
+    if path is None:
+        pytest.skip('ogrsf test utility not found')
+
+    return path
+
+
 ###############################################################################
 # Basic testing
 
@@ -149,12 +159,8 @@ def test_ogr_odbc_1(create_tmp_table):
 # Run test_ogrsf
 
 
-def test_ogr_odbc_2(create_tmp_table):
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
-
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/odbc.mdb')
+def test_ogr_odbc_2(create_tmp_table, ogrsf_path):
+    ret = gdaltest.runexternal(ogrsf_path + ' tmp/odbc.mdb')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -224,14 +230,7 @@ def test_null_memo():
 # Run test_ogrsf on null_memo database
 
 
-def test_ogr_odbc_ogrsf_null_memo():
-    if sys.platform != 'win32':
-        pytest.skip("Currently failing on mdbtools driver")
-
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
-
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' data/mdb/null_memo.mdb')
+def test_ogr_odbc_ogrsf_null_memo(ogrsf_path):
+    ret = gdaltest.runexternal(ogrsf_path + ' data/mdb/null_memo.mdb')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
