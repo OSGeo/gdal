@@ -52,11 +52,7 @@ static GDALDataset *OGRWalkDriverOpen( GDALOpenInfo* poOpenInfo )
 #ifndef WIN32
     // Try to register MDB Tools driver
     CPLODBCDriverInstaller dri;
-    if ( !dri.InstallMdbToolsDriver() )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
-    }
+    dri.InstallMdbToolsDriver();
 #endif /* ndef WIN32 */
 
     OGRWalkDataSource  *poDS = new OGRWalkDataSource();

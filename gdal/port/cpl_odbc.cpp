@@ -296,7 +296,7 @@ bool CPLODBCDriverInstaller::InstallMdbToolsDriver()
         if ( !InstallDriver(driver.c_str(), nullptr, ODBC_INSTALL_COMPLETE) )
         {
             // Report ODBC error
-            CPLError( CE_Failure, CPLE_AppDefined, "ODBC: %s", GetLastError() );
+            CPLError( CE_Failure, CPLE_AppDefined, "ODBC: Unable to install MDB driver for ODBC, MDB access may not supported: %s", GetLastError() );
             return false;
         }
         else
