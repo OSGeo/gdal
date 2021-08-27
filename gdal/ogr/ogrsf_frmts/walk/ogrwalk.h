@@ -191,19 +191,6 @@ public:
     CPLODBCSession     *GetSession() { return &oSession; }
 };
 
-/************************************************************************/
-/*                            OGRWalkDriver                             */
-/************************************************************************/
-
-class OGRWalkDriver final: public OGRODBCMDBDriver
-{
-public:
-                ~OGRWalkDriver();
-
-    static GDALDataset * OGRWalkDriverOpen( GDALOpenInfo* poOpenInfo );
-
-};
-
 void RegisterOGRWalk();
 
 #endif /* ndef OGRWALK_H_INCLUDED */

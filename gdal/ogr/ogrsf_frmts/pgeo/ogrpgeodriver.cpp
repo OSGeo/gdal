@@ -32,20 +32,12 @@
 
 CPL_CVSID("$Id$")
 
-/************************************************************************/
-/*                            ~OGRODBCDriver()                            */
-/************************************************************************/
-
-OGRPGeoDriver::~OGRPGeoDriver()
-
-{
-}
 
 /************************************************************************/
 /*                                OGRPGeoDriverOpen()                   */
 /************************************************************************/
 
-GDALDataset * OGRPGeoDriver::OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset * OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:") )
@@ -96,25 +88,7 @@ GDALDataset * OGRPGeoDriver::OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
 
 #ifndef WIN32
     // Try to register MDB Tools driver
-    //
-    // ODBCINST.INI NOTE:
-    // This operation requires write access to odbcinst.ini file
-    // located in directory pointed by ODBCINISYS variable.
-    // Usually, it points to /etc, so non-root users can overwrite this
-    // setting ODBCINISYS with location they have write access to, e.g.:
-    // $ export ODBCINISYS=$HOME/etc
-    // $ touch $ODBCINISYS/odbcinst.ini
-    //
-    // See: http://www.unixodbc.org/internals.html
-    //
-    if ( !InstallMdbDriver( "PGeo" ) )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
-    }
-    else
-        CPLDebug( "PGeo", "MDB Tools driver installed successfully!");
-
+    CPLODBCDriverInstaller::InstallMdbToolsDriver();
 #endif /* ndef WIN32 */
 
     // Open data source
@@ -129,148 +103,8 @@ GDALDataset * OGRPGeoDriver::OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
         return poDS;
 }
 
-/*
- * START OF UNIX-only features.
- */
-#ifndef WIN32
-
 /************************************************************************/
-/*                           InstallMdbDriver()                         */
-/************************************************************************/
-
-bool OGRODBCMDBDriver::InstallMdbDriver(const char *pszDriverName)
-{
-    CPLString osDriverFile;
-
-    if ( !FindDriverLib( pszDriverName, osDriverFile ) )
-    {
-        return false;
-    }
-    else
-    {
-        CPLAssert( !osDriverFile.empty() );
-        CPLDebug( pszDriverName, "MDB Tools driver: %s", osDriverFile.c_str() );
-
-        CPLString driverName("Microsoft Access Driver (*.mdb)");
-        CPLString driver(driverName);
-        driver += '\0';
-        driver += "Driver=";
-        driver += osDriverFile; // Found by FindDriverLib()
-        driver += '\0';
-        driver += "FileUsage=1";
-        driver += '\0';
-        driver += '\0';
-
-        // Create installer and register driver
-        CPLODBCDriverInstaller dri;
-
-        if ( !dri.InstallDriver(driver.c_str(), nullptr, ODBC_INSTALL_COMPLETE) )
-        {
-            // Report ODBC error
-            CPLError( CE_Failure, CPLE_AppDefined, "ODBC: %s", dri.GetLastError() );
-            return false;
-        }
-    }
-
-    return true;
-}
-
-/************************************************************************/
-/*                           FindDriverLib()                            */
-/************************************************************************/
-
-bool OGRODBCMDBDriver::FindDriverLib( const char * pszDriverName, CPLString &osDriverFile )
-{
-    // Default name and path of driver library
-    const char* aszDefaultLibName[] = {
-        "libmdbodbc.so",
-        "libmdbodbc.so.0" /* for Ubuntu 8.04 support */
-    };
-    const int nLibNames = sizeof(aszDefaultLibName) / sizeof(aszDefaultLibName[0]);
-    const char* libPath[] = {
-        "/usr/lib/x86_64-linux-gnu/odbc", /* ubuntu 20.04 */
-        "/usr/lib64",
-        "/usr/local/lib64",
-        "/usr/lib",
-        "/usr/local/lib"
-    };
-    const int nLibPaths = sizeof(libPath) / sizeof(libPath[0]);
-
-    const char* pszDrvCfg = CPLGetConfigOption("MDBDRIVER_PATH", nullptr);
-    if ( nullptr != pszDrvCfg )
-    {
-        // Directory or file path
-        CPLString strLibPath(pszDrvCfg);
-
-        VSIStatBuf sStatBuf;
-        if ( VSIStat( pszDrvCfg, &sStatBuf ) == 0
-             && VSI_ISDIR( sStatBuf.st_mode ) )
-        {
-            // Find default library in custom directory
-            const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], nullptr );
-            CPLAssert( nullptr != pszDriverFile );
-
-            strLibPath = pszDriverFile;
-        }
-
-        if ( LibraryExists( strLibPath.c_str() ) )
-        {
-            // Save custom driver path
-            osDriverFile = strLibPath;
-            return true;
-        }
-    }
-
-    // Try to find library in default path
-    for ( int i = 0; i < nLibPaths; i++ )
-    {
-        for ( int j = 0; j < nLibNames; j++ )
-        {
-            const char* pszDriverFile = CPLFormFilename( libPath[i], aszDefaultLibName[j], nullptr );
-            CPLAssert( nullptr != pszDriverFile );
-
-            if ( LibraryExists( pszDriverFile ) )
-            {
-                // Save default driver path
-                osDriverFile = pszDriverFile;
-                return true;
-            }
-        }
-    }
-
-    CPLError(CE_Failure, CPLE_AppDefined, "%s: MDB Tools driver not found!\n", pszDriverName);
-    // Driver not found!
-    return false;
-}
-
-/************************************************************************/
-/*                           LibraryExists()                            */
-/************************************************************************/
-
-bool OGRODBCMDBDriver::LibraryExists(const char* pszLibPath)
-{
-    CPLAssert( nullptr != pszLibPath );
-
-    VSIStatBuf stb;
-
-    if ( 0 == VSIStat( pszLibPath, &stb ) )
-    {
-        if (VSI_ISREG( stb.st_mode ) || VSI_ISLNK(stb.st_mode))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-#endif /* ndef WIN32 */
-/*
- * END OF UNIX-only features
- */
-
-/************************************************************************/
-/*                           RegisterOGRODBC()                          */
+/*                           RegisterOGRPGeo()                          */
 /************************************************************************/
 
 void RegisterOGRPGeo()
@@ -279,7 +113,7 @@ void RegisterOGRPGeo()
     if( GDALGetDriverByName( "PGeo" ) != nullptr )
         return;
 
-    OGRPGeoDriver* poDriver = new OGRPGeoDriver;
+    GDALDriver* poDriver = new GDALDriver;
 
     poDriver->SetDescription( "PGeo" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
@@ -295,7 +129,7 @@ void RegisterOGRPGeo()
 "  </Option>"
 "</OpenOptionList>");
 
-    poDriver->pfnOpen = OGRPGeoDriver::OGRPGeoDriverOpen;
+    poDriver->pfnOpen = OGRPGeoDriverOpen;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

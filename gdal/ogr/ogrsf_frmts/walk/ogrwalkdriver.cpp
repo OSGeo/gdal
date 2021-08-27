@@ -31,20 +31,12 @@
 
 CPL_CVSID("$Id$")
 
-/************************************************************************/
-/*                          ~OGRWalkDriver()                            */
-/************************************************************************/
-
-OGRWalkDriver::~OGRWalkDriver()
-
-{
-}
 
 /************************************************************************/
 /*                                OGRWalkDriverOpen()                   */
 /************************************************************************/
 
-GDALDataset *OGRWalkDriver::OGRWalkDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRWalkDriverOpen( GDALOpenInfo* poOpenInfo )
 {
 
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:") )
@@ -59,25 +51,7 @@ GDALDataset *OGRWalkDriver::OGRWalkDriverOpen( GDALOpenInfo* poOpenInfo )
 
 #ifndef WIN32
     // Try to register MDB Tools driver
-    //
-    // ODBCINST.INI NOTE:
-    // This operation requires write access to odbcinst.ini file
-    // located in directory pointed by ODBCINISYS variable.
-    // Usually, it points to /etc, so non-root users can overwrite this
-    // setting ODBCINISYS with location they have write access to, e.g.:
-    // $ export ODBCINISYS=$HOME/etc
-    // $ touch $ODBCINISYS/odbcinst.ini
-    //
-    // See: http://www.unixodbc.org/internals.html
-    //
-    if ( !InstallMdbDriver( "Walk" ) )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unable to install MDB driver for ODBC, MDB access may not supported.\n" );
-    }
-    else
-        CPLDebug( "Walk", "MDB Tools driver installed successfully!");
-
+    CPLODBCDriverInstaller::InstallMdbToolsDriver();
 #endif /* ndef WIN32 */
 
     OGRWalkDataSource  *poDS = new OGRWalkDataSource();
@@ -108,12 +82,12 @@ void RegisterOGRWalk()
     if( GDALGetDriverByName( "Walk" ) != nullptr )
         return;
 
-    OGRWalkDriver* poDriver = new OGRWalkDriver;
+    GDALDriver* poDriver = new GDALDriver;
 
     poDriver->SetDescription( "Walk" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 
-    poDriver->pfnOpen = OGRWalkDriver::OGRWalkDriverOpen;
+    poDriver->pfnOpen = OGRWalkDriverOpen;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

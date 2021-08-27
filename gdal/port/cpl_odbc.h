@@ -65,6 +65,9 @@ class CPL_DLL CPLODBCDriverInstaller
     DWORD m_nErrorCode;
     DWORD m_nUsageCount;
 
+    static bool        FindMdbToolsDriverLib( CPLString& osDriverFile );
+    static bool        LibraryExists( const char* pszLibPath );
+
   public:
 
     // Default constructor.
@@ -89,6 +92,15 @@ class CPL_DLL CPLODBCDriverInstaller
      */
     int InstallDriver( const char* pszDriver, const char* pszPathIn,
             WORD fRequest = ODBC_INSTALL_COMPLETE );
+
+    /**
+     * Attempts to install the MDB Tools driver for Microsoft Access databases.
+     *
+     * This is only supported on non-Windows platforms.
+     *
+     * @since GDAL 3.4
+     */
+    static void InstallMdbToolsDriver();
 
     /**
      * Removes or changes information about the driver from

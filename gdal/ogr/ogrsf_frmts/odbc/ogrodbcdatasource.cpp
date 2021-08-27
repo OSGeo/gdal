@@ -104,6 +104,11 @@ static int CheckDSNStringTemplate(const char* pszStr)
 
 int OGRODBCDataSource::OpenMDB( GDALOpenInfo* poOpenInfo )
 {
+#ifndef WIN32
+    // Try to register MDB Tools driver
+    CPLODBCDriverInstaller::InstallMdbToolsDriver();
+#endif /* ndef WIN32 */
+
     const char* pszOptionName = "PGEO_DRIVER_TEMPLATE";
     const char* pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, nullptr );
     if( pszDSNStringTemplate == nullptr )
