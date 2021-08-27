@@ -3960,6 +3960,10 @@ bool ZarrArray::CacheTilePresence()
                 bool unexpectedIndex = false;
                 for( int i = 0; i < aosTokens.size(); ++i )
                 {
+                    if( CPLGetValueType(aosTokens[i]) != CPL_VALUE_INTEGER )
+                    {
+                        unexpectedIndex = true;
+                    }
                     anTileIdx[i] = static_cast<GUInt64>(CPLAtoGIntBig(aosTokens[i]));
                     if( anTileIdx[i] >= apoDimsCache[i]->GetSize() )
                     {
