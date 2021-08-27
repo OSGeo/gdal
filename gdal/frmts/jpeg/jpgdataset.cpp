@@ -3223,7 +3223,7 @@ void JPGDatasetCommon::DecompressMask()
                 break;
         }
 
-        if( iX == nRasterXSize )
+        if( iX == nRasterXSize && nChangedValBit == 1 )
         {
             CPLDebug("JPEG",
                      "Bit ordering in mask is guessed to be msb (unusual)");
