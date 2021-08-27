@@ -116,18 +116,13 @@ def test_envi_4():
 def test_envi_5():
 
     tst = gdaltest.GDALTest('envi', 'envi/aea.dat', 1, 24)
-    prj = """PROJCS["OSGB 1936 / British National Grid",
-    GEOGCS["OSGB 1936",
-        DATUM["OSGB_1936",
+    prj = """PROJCS["unnamed",
+    GEOGCS["GCS_unnamed",
+        DATUM["D_unnamed",
             SPHEROID["Airy 1830",6377563.396,299.3249646,
-                AUTHORITY["EPSG","7001"]],
-            TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489],
-            AUTHORITY["EPSG","6277"]],
-        PRIMEM["Greenwich",0,
-            AUTHORITY["EPSG","8901"]],
-        UNIT["degree",0.01745329251994328,
-            AUTHORITY["EPSG","9122"]],
-        AUTHORITY["EPSG","4277"]],
+                AUTHORITY["EPSG","7001"]]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.01745329251994328]],
     PROJECTION["Transverse_Mercator"],
     PARAMETER["latitude_of_origin",49],
     PARAMETER["central_meridian",-2],
@@ -136,24 +131,10 @@ def test_envi_5():
     PARAMETER["false_northing",-100000],
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]],
-    AUTHORITY["EPSG","27700"]]"""
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
 
-    # now it goes through ESRI WKT processing.
-    expected_prj = """PROJCS["OSGB_1936_British_National_Grid",
-    GEOGCS["GCS_OSGB 1936",
-        DATUM["OSGB_1936",
-            SPHEROID["Airy_1830",6377563.396,299.3249646]],
-        PRIMEM["Greenwich",0],
-        UNIT["Degree",0.017453292519943295]],
-    PROJECTION["Transverse_Mercator"],
-    PARAMETER["latitude_of_origin",49],
-    PARAMETER["central_meridian",-2],
-    PARAMETER["scale_factor",0.9996012717],
-    PARAMETER["false_easting",400000],
-    PARAMETER["false_northing",-100000],
-    UNIT["Meter",1]]"""
-
-    return tst.testSetProjection(prj=prj, expected_prj=expected_prj)
+    return tst.testSetProjection(prj=prj)
 
 ###############################################################################
 # Test LAEA Projection.
