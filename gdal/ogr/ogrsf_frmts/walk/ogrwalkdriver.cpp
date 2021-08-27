@@ -51,8 +51,7 @@ static GDALDataset *OGRWalkDriverOpen( GDALOpenInfo* poOpenInfo )
 
 #ifndef WIN32
     // Try to register MDB Tools driver
-    CPLODBCDriverInstaller dri;
-    dri.InstallMdbToolsDriver();
+    CPLODBCDriverInstaller::InstallMdbToolsDriver();
 #endif /* ndef WIN32 */
 
     OGRWalkDataSource  *poDS = new OGRWalkDataSource();

@@ -107,8 +107,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 {
 #ifndef WIN32
     // Try to register MDB Tools driver
-    CPLODBCDriverInstaller dri;
-    dri.InstallMdbToolsDriver();
+    CPLODBCDriverInstaller::InstallMdbToolsDriver();
 #endif /* ndef WIN32 */
 
     const char* pszOptionName = "PGEO_DRIVER_TEMPLATE";

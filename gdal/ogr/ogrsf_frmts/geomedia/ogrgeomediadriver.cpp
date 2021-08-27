@@ -81,8 +81,7 @@ static GDALDataset *OGRGeomediaDriverOpen( GDALOpenInfo* poOpenInfo )
 
 #ifndef WIN32
     // Try to register MDB Tools driver
-    CPLODBCDriverInstaller dri;
-    dri.InstallMdbToolsDriver();
+    CPLODBCDriverInstaller::InstallMdbToolsDriver();
 #endif /* ndef WIN32 */
 
     // Open data source

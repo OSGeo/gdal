@@ -64,9 +64,8 @@ class CPL_DLL CPLODBCDriverInstaller
     char m_szError[SQL_MAX_MESSAGE_LENGTH];
     DWORD m_nErrorCode;
     DWORD m_nUsageCount;
-    CPLString   m_osMdbToolsDriverFile = "";
 
-    bool        FindMdbToolsDriverLib();
+    static bool        FindMdbToolsDriverLib( CPLString& osDriverFile );
     static bool        LibraryExists( const char* pszLibPath );
 
   public:
@@ -99,11 +98,9 @@ class CPL_DLL CPLODBCDriverInstaller
      *
      * This is only supported on non-Windows platforms.
      *
-     * @return TRUE indicates success, FALSE if it fails.
-     *
      * @since GDAL 3.4
      */
-    bool InstallMdbToolsDriver();
+    static void InstallMdbToolsDriver();
 
     /**
      * Removes or changes information about the driver from

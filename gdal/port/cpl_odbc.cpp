@@ -34,6 +34,8 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 
+#include <mutex>
+
 CPL_CVSID("$Id$")
 
 #ifndef SQLColumns_TABLE_CAT
@@ -166,7 +168,7 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
 /*                      FindMdbToolsDriverLib()                         */
 /************************************************************************/
 
-bool CPLODBCDriverInstaller::FindMdbToolsDriverLib()
+bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
 {
     // Default name and path of driver library
     const char* aszDefaultLibName[] = {
@@ -203,7 +205,7 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib()
         if ( LibraryExists( strLibPath.c_str() ) )
         {
             // Save custom driver path
-            m_osMdbToolsDriverFile = strLibPath;
+            osDriverFile = strLibPath;
             return true;
         }
     }
@@ -219,7 +221,7 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib()
             if ( LibraryExists( pszDriverFile ) )
             {
                 // Save default driver path
-                m_osMdbToolsDriverFile = pszDriverFile;
+                osDriverFile = pszDriverFile;
                 return true;
             }
         }
@@ -255,55 +257,53 @@ bool CPLODBCDriverInstaller::LibraryExists(const char *pszLibPath)
 /*                      InstallMdbToolsDriver()                         */
 /************************************************************************/
 
-bool CPLODBCDriverInstaller::InstallMdbToolsDriver()
+void CPLODBCDriverInstaller::InstallMdbToolsDriver()
 {
 #ifdef WIN32
-    return false;
+    return;
 #else
-
-    //
-    // ODBCINST.INI NOTE:
-    // This operation requires write access to odbcinst.ini file
-    // located in directory pointed by ODBCINISYS variable.
-    // Usually, it points to /etc, so non-root users can overwrite this
-    // setting ODBCINISYS with location they have write access to, e.g.:
-    // $ export ODBCINISYS=$HOME/etc
-    // $ touch $ODBCINISYS/odbcinst.ini
-    //
-    // See: http://www.unixodbc.org/internals.html
-    //
-
-    if ( !FindMdbToolsDriverLib() )
+    static std::once_flag oofDriverInstallAttempted;
+    std::call_once( oofDriverInstallAttempted, [ = ]
     {
-        return false;
-    }
-    else
-    {
-        CPLAssert( !m_osMdbToolsDriverFile.empty() );
-        CPLDebug( "ODBC", "MDB Tools driver: %s", m_osMdbToolsDriverFile.c_str() );
+        //
+        // ODBCINST.INI NOTE:
+        // This operation requires write access to odbcinst.ini file
+        // located in directory pointed by ODBCINISYS variable.
+        // Usually, it points to /etc, so non-root users can overwrite this
+        // setting ODBCINISYS with location they have write access to, e.g.:
+        // $ export ODBCINISYS=$HOME/etc
+        // $ touch $ODBCINISYS/odbcinst.ini
+        //
+        // See: http://www.unixodbc.org/internals.html
+        //
+        CPLString osDriverFile;
 
-        CPLString driverName("Microsoft Access Driver (*.mdb)");
-        CPLString driver(driverName);
-        driver += '\0';
-        driver += "Driver=";
-        driver += m_osMdbToolsDriverFile; // Found by FindDriverLib()
-        driver += '\0';
-        driver += "FileUsage=1";
-        driver += '\0';
-        driver += '\0';
-
-        // Rregister driver
-        if ( !InstallDriver(driver.c_str(), nullptr, ODBC_INSTALL_COMPLETE) )
+        if ( FindMdbToolsDriverLib( osDriverFile ) )
         {
-            // Report ODBC error
-            CPLError( CE_Failure, CPLE_AppDefined, "ODBC: Unable to install MDB driver for ODBC, MDB access may not supported: %s", GetLastError() );
-            return false;
-        }
-        else
-            CPLDebug( "ODBC", "MDB Tools driver installed successfully!");
-    }
+            CPLAssert( !osDriverFile.empty() );
+            CPLDebug( "ODBC", "MDB Tools driver: %s", osDriverFile.c_str() );
 
-    return true;
+            CPLString driverName("Microsoft Access Driver (*.mdb)");
+            CPLString driver(driverName);
+            driver += '\0';
+            driver += "Driver=";
+            driver += osDriverFile; // Found by FindDriverLib()
+            driver += '\0';
+            driver += "FileUsage=1";
+            driver += '\0';
+            driver += '\0';
+
+            // Rregister driver
+            CPLODBCDriverInstaller dri;
+            if ( !dri.InstallDriver(driver.c_str(), nullptr, ODBC_INSTALL_COMPLETE) )
+            {
+                // Report ODBC error
+                CPLError( CE_Failure, CPLE_AppDefined, "ODBC: Unable to install MDB driver for ODBC, MDB access may not supported: %s", dri.GetLastError() );
+            }
+            else
+                CPLDebug( "ODBC", "MDB Tools driver installed successfully!");
+        }
+    } );
 #endif
 }
 
