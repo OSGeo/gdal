@@ -210,8 +210,6 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
     std::map<CPLString, GDALDataset*> m_oMapSharedSources{};
     std::shared_ptr<VRTGroup> m_poRootGroup{};
 
-    int            m_nRecursionCounter = 0;
-
     VRTRasterBand*      InitBand(const char* pszSubclass, int nBand,
                                  bool bAllowPansharpened);
     static GDALDataset *OpenVRTProtocol( const char* pszSpec );
@@ -576,7 +574,6 @@ class VRTSimpleSource;
 class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
 {
   private:
-    int            m_nRecursionCounter = 0;
     CPLString      m_osLastLocationInfo{};
     char         **m_papszSourceList = nullptr;
     int            m_nSkipBufferInitialization = -1;
