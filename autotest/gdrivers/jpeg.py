@@ -154,7 +154,7 @@ def test_jpeg_3():
 
     assert not os.path.exists('tmp/byte.wld')
 
-    
+
 ###############################################################################
 # Verify masked jpeg.
 
@@ -362,7 +362,7 @@ def test_jpeg_10():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Check creating a 12-bit JPEG
 
@@ -675,7 +675,22 @@ def test_jpeg_19():
         gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_19.jpg')
         gdal.GetDriverByName('JPEG').Delete('/vsimem/jpeg_19_msb.jpg')
 
-    
+###############################################################################
+# Test correct decection of LSB order in mask (#4351)
+
+
+def test_jpeg_mask_lsb_order_issue_4351():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 15, 4, 3)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(7, 2, 2, 1, b'\xFF' * 2)
+    tmpfilename = '/vsimem/test_jpeg_mask_lsb_order_issue_4351.jpg'
+    assert gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 2, 15, 1) == b'\x00' * 7 + b'\xFF' * 2 + b'\x00' * 6
+    ds = None
+    gdal.GetDriverByName('JPEG').Delete(tmpfilename)
+
 ###############################################################################
 # Test correct GCP reading with PAM (#5352)
 
@@ -851,7 +866,7 @@ def test_jpeg_24():
         ds = None
         gdal.GetDriverByName('JPEG').Delete('/vsimem/byte.jpg')
 
-    
+
 ###############################################################################
 # Test COMMENT
 
@@ -918,7 +933,7 @@ def test_jpeg_27_max_scan_number():
         gdal.SetConfigOption('GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER', None)
         assert cs == 0 and gdal.GetLastErrorMsg() != ''
 
-    
+
 ###############################################################################
 # Test writing of EXIF and GPS tags
 
