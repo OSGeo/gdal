@@ -170,21 +170,6 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
 
 bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
 {
-    // Default name and path of driver library
-    const char* aszDefaultLibName[] = {
-        "libmdbodbc.so",
-        "libmdbodbc.so.0" /* for Ubuntu 8.04 support */
-    };
-    const int nLibNames = sizeof(aszDefaultLibName) / sizeof(aszDefaultLibName[0]);
-    const char* libPath[] = {
-        "/usr/lib/x86_64-linux-gnu/odbc", /* ubuntu 20.04 */
-        "/usr/lib64",
-        "/usr/local/lib64",
-        "/usr/lib",
-        "/usr/local/lib"
-    };
-    const int nLibPaths = sizeof(libPath) / sizeof(libPath[0]);
-
     const char* pszDrvCfg = CPLGetConfigOption("MDBDRIVER_PATH", nullptr);
     if ( nullptr != pszDrvCfg )
     {
@@ -196,7 +181,7 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
              && VSI_ISDIR( sStatBuf.st_mode ) )
         {
             // Find default library in custom directory
-            const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], nullptr );
+            const char* pszDriverFile = CPLFormFilename( pszDrvCfg, "libmdbodbc.so", nullptr );
             CPLAssert( nullptr != pszDriverFile );
 
             strLibPath = pszDriverFile;
@@ -210,12 +195,42 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
         }
     }
 
-    // Try to find library in default path
-    for ( int i = 0; i < nLibPaths; i++ )
+    // Check if we have a declaration of the driver in /etc/odbcinst.ini
+    GByte* pabyRet = nullptr;
+    CPL_IGNORE_RET_VAL(VSIIngestFile(nullptr, "/etc/odbcinst.ini", &pabyRet,
+                                     nullptr, 100 * 1000));
+    if( pabyRet )
     {
-        for ( int j = 0; j < nLibNames; j++ )
+        const bool bFound = strstr(reinterpret_cast<const char*>(pabyRet),
+                                   "Microsoft Access Driver") != nullptr;
+        CPLFree(pabyRet);
+        if( bFound )
         {
-            const char* pszDriverFile = CPLFormFilename( libPath[i], aszDefaultLibName[j], nullptr );
+            CPLDebug("ODBC", "Declaration of Microsoft Access Driver found in /etc/odbcinst.ini");
+            return false;
+        }
+    }
+
+    // Default name and path of driver library
+    const char* const apszLibNames[] = {
+        "libmdbodbc.so",
+        "libmdbodbc.so.0" /* for Ubuntu 8.04 support */
+    };
+    const char* const apzPaths[] = {
+        "/usr/lib/x86_64-linux-gnu/odbc", /* ubuntu 20.04 */
+        "/usr/lib64",
+        "/usr/lib64/odbc", /* fedora */
+        "/usr/local/lib64",
+        "/usr/lib",
+        "/usr/local/lib"
+    };
+
+    // Try to find library in default paths
+    for ( const char* pszPath: apzPaths )
+    {
+        for( const char* pszLibName: apszLibNames )
+        {
+            const char* pszDriverFile = CPLFormFilename( pszPath, pszLibName, nullptr );
             CPLAssert( nullptr != pszDriverFile );
 
             if ( LibraryExists( pszDriverFile ) )
