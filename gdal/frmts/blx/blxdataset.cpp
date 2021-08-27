@@ -49,11 +49,10 @@ class BLXDataset final: public GDALPamDataset
         return GetSpatialRefFromOldGetProjectionRef();
     }
 
-    blxcontext_t *blxcontext;
+    blxcontext_t *blxcontext = nullptr;
 
-    int nOverviewCount;
-    bool bIsOverview;
-    BLXDataset *papoOverviewDS[BLX_OVERVIEWLEVELS];
+    bool bIsOverview = false;
+    std::vector<std::unique_ptr<BLXDataset>> apoOverviewDS{};
 
   public:
     BLXDataset();
@@ -127,15 +126,14 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new BLXRasterBand( poDS, 1 ));
 
     // Create overview bands
-    poDS->nOverviewCount = BLX_OVERVIEWLEVELS;
-    for(int i=0; i < poDS->nOverviewCount; i++) {
-        poDS->papoOverviewDS[i] = new BLXDataset();
-        poDS->papoOverviewDS[i]->blxcontext = poDS->blxcontext;
-        poDS->papoOverviewDS[i]->bIsOverview = true;
-        poDS->papoOverviewDS[i]->nRasterXSize = poDS->nRasterXSize >> (i+1);
-        poDS->papoOverviewDS[i]->nRasterYSize = poDS->nRasterYSize >> (i+1);
+    for(int i=0; i < BLX_OVERVIEWLEVELS; i++) {
+        poDS->apoOverviewDS.emplace_back(cpl::make_unique<BLXDataset>());
+        poDS->apoOverviewDS[i]->blxcontext = poDS->blxcontext;
+        poDS->apoOverviewDS[i]->bIsOverview = true;
+        poDS->apoOverviewDS[i]->nRasterXSize = poDS->nRasterXSize >> (i+1);
+        poDS->apoOverviewDS[i]->nRasterYSize = poDS->nRasterYSize >> (i+1);
         poDS->nBands = 1;
-        poDS->papoOverviewDS[i]->SetBand(1, new BLXRasterBand( poDS->papoOverviewDS[i], 1, i+1));
+        poDS->apoOverviewDS[i]->SetBand(1, new BLXRasterBand( poDS->apoOverviewDS[i].get(), 1, i+1));
     }
 
 /* -------------------------------------------------------------------- */
@@ -159,14 +157,7 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-BLXDataset::BLXDataset() :
-    blxcontext(nullptr),
-    nOverviewCount(0),
-    bIsOverview(false)
-{
-    for( int i = 0; i < BLX_OVERVIEWLEVELS; i++ )
-        papoOverviewDS[i] = nullptr;
-}
+BLXDataset::BLXDataset() = default;
 
 BLXDataset::~BLXDataset()
 {
@@ -176,9 +167,6 @@ BLXDataset::~BLXDataset()
             blxclose(blxcontext);
             blx_free_context(blxcontext);
         }
-        for(int i=0; i < nOverviewCount; i++)
-            if(papoOverviewDS[i])
-                delete papoOverviewDS[i];
     }
 }
 
@@ -221,19 +209,18 @@ BLXRasterBand::BLXRasterBand( BLXDataset *poDSIn, int nBandIn,
 
 int BLXRasterBand::GetOverviewCount()
 {
-    BLXDataset *poGDS = reinterpret_cast<BLXDataset *>(poDS);
-
-    return poGDS->nOverviewCount;
+    BLXDataset *poGDS = cpl::down_cast<BLXDataset *>(poDS);
+    return static_cast<int>(poGDS->apoOverviewDS.size());
 }
 
 GDALRasterBand *BLXRasterBand::GetOverview( int i )
 {
-    BLXDataset *poGDS = reinterpret_cast<BLXDataset *>(poDS);
+    BLXDataset *poGDS = cpl::down_cast<BLXDataset *>(poDS);
 
-    if( i < 0 || i >= poGDS->nOverviewCount )
+    if( i < 0 || static_cast<size_t>(i) >= poGDS->apoOverviewDS.size() )
         return nullptr;
 
-    return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
+    return poGDS->apoOverviewDS[i]->GetRasterBand(nBand);
 }
 
 CPLErr BLXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
