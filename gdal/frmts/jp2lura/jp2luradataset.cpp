@@ -2392,7 +2392,7 @@ CPLErr  JP2LuraDataset::IRasterIO(GDALRWFlag eRWFlag,
     /* ==================================================================== */
 
     if ((nBufXSize < nXSize || nBufYSize < nYSize)
-            && poBand->GetOverviewCount() > 0 && eRWFlag == GF_Read)
+            && poBand->GetOverviewCount() > 0 )
     {
         int         nOverview;
         GDALRasterIOExtraArg sExtraArg;

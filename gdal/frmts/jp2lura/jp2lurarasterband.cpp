@@ -237,7 +237,7 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     /*      this request?                                                   */
     /* ==================================================================== */
     if ((nBufXSize < nXSize || nBufYSize < nYSize)
-            && GetOverviewCount() > 0 && eRWFlag == GF_Read)
+            && GetOverviewCount() > 0)
     {
         int         nOverview;
         GDALRasterIOExtraArg sExtraArg;

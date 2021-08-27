@@ -967,7 +967,7 @@ int TABDATFile::DeleteField( int iField )
         {
             if( i < iField )
                 nRecordSizeBefore += m_pasFieldDef[i].byLength;
-            else if( i > iField )
+            else /* if( i > iField ) */
                 nRecordSizeAfter += m_pasFieldDef[i].byLength;
             oTempFile.AddField(
                 m_pasFieldDef[i].szName, m_pasFieldDef[i].eTABType,
@@ -1315,7 +1315,7 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
         if( i != iField )
         {
             if( i < iField ) nRecordSizeBefore += m_pasFieldDef[i].byLength;
-            else if( i > iField ) nRecordSizeAfter += m_pasFieldDef[i].byLength;
+            else /*if( i > iField )*/ nRecordSizeAfter += m_pasFieldDef[i].byLength;
             oTempFile.AddField(m_pasFieldDef[i].szName,
                                m_pasFieldDef[i].eTABType,
                                m_pasFieldDef[i].byLength,

@@ -760,7 +760,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
         pabyUncomprBuf = nullptr;
         return;
     }
-    unsigned int iLength = 0;
+
     unsigned int i = 0;
     unsigned int j = 0;
     if ( poDSIn->sInfoHeader.iBitCount == 8 )         // RLE8
@@ -769,7 +769,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
         {
             if ( pabyComprBuf[i] )
             {
-                iLength = pabyComprBuf[i++];
+                unsigned int iLength = pabyComprBuf[i++];
                 if( j == iUncomprSize )
                     break;
                 while( iLength > 0 && j < iUncomprSize && i < iComprSize )
@@ -815,8 +815,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
                 }
                 else                                // Absolute mode
                 {
-                    if (i < iComprSize)
-                        iLength = pabyComprBuf[i++];
+                    CPLAssert (i < iComprSize);
+                    unsigned int iLength = pabyComprBuf[i++];
                     if( j == iUncomprSize )
                         break;
                     for ( unsigned k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
@@ -833,7 +833,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
         {
             if ( pabyComprBuf[i] )
             {
-                iLength = pabyComprBuf[i++];
+                unsigned int iLength = pabyComprBuf[i++];
                 if( j == iUncomprSize )
                     break;
                 while( iLength > 0 && j < iUncomprSize && i < iComprSize )
@@ -882,8 +882,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
                 }
                 else                                // Absolute mode
                 {
-                    if (i < iComprSize)
-                        iLength = pabyComprBuf[i++];
+                    CPLAssert (i < iComprSize);
+                    unsigned int iLength = pabyComprBuf[i++];
                     if( j == iUncomprSize )
                         break;
                     for ( unsigned k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
