@@ -212,17 +212,4 @@ class OGRODBCDataSource final: public OGRDataSource
     CPLODBCSession     *GetSession() { return &oSession; }
 };
 
-/************************************************************************/
-/*                             OGRODBCDriver                            */
-/************************************************************************/
-
-class OGRODBCDriver final: public GDALDriver
-{
-  public:
-                virtual ~OGRODBCDriver();
-
-    static GDALDataset *OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo );
-
-};
-
 #endif /* ndef OGR_ODBC_H_INCLUDED */

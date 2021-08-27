@@ -32,19 +32,10 @@
 CPL_CVSID("$Id$")
 
 /************************************************************************/
-/*                            ~OGRODBCDriver()                            */
-/************************************************************************/
-
-OGRODBCDriver::~OGRODBCDriver()
-
-{
-}
-
-/************************************************************************/
 /*                      OGRODBCDriverOpen()                             */
 /************************************************************************/
 
-GDALDataset *OGRODBCDriver::OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "ODBC:") &&
@@ -73,7 +64,7 @@ void RegisterOGRODBC()
     if( GDALGetDriverByName( "ODBC" ) != nullptr )
         return;
 
-    OGRODBCDriver* poDriver = new OGRODBCDriver;
+    GDALDriver* poDriver = new GDALDriver;
 
     poDriver->SetDescription( "ODBC" );
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
@@ -89,7 +80,7 @@ void RegisterOGRODBC()
 "  </Option>"
 "</OpenOptionList>");
 
-    poDriver->pfnOpen = OGRODBCDriver::OGRODBCDriverOpen;
+    poDriver->pfnOpen = OGRODBCDriverOpen;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
