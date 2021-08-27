@@ -175,7 +175,6 @@ class OGRODBCDataSource final: public OGRDataSource
 
     char               *pszName;
 
-    int                 bDSUpdate;
     CPLODBCSession      oSession;
 
     // We maintain a list of known SRID to reduce the number of trips to
@@ -184,16 +183,15 @@ class OGRODBCDataSource final: public OGRDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
 
-    int                 OpenMDB( const char *, int bUpdate );
+    int                 OpenMDB( const char * );
 
   public:
                         OGRODBCDataSource();
                         virtual ~OGRODBCDataSource();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( GDALOpenInfo* poOpenInfo );
     int                 OpenTable( const char *pszTableName,
-                                   const char *pszGeomCol,
-                                   int bUpdate );
+                                   const char *pszGeomCol );
 
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override { return nLayers; }
@@ -216,18 +214,13 @@ class OGRODBCDataSource final: public OGRDataSource
 /*                             OGRODBCDriver                            */
 /************************************************************************/
 
-class OGRODBCDriver final: public OGRSFDriver
+class OGRODBCDriver final: public GDALDriver
 {
   public:
                 virtual ~OGRODBCDriver();
 
-    const char *GetName() override;
-    OGRDataSource *Open( const char *, int ) override;
+    static GDALDataset *OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo );
 
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = nullptr ) override;
-
-    int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_ODBC_H_INCLUDED */

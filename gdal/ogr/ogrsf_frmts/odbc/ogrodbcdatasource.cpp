@@ -40,7 +40,6 @@ OGRODBCDataSource::OGRODBCDataSource() :
     papoLayers(nullptr),
     nLayers(0),
     pszName(nullptr),
-    bDSUpdate(FALSE),
     nKnownSRID(0),
     panSRID(nullptr),
     papoSRS(nullptr)
@@ -103,7 +102,7 @@ static int CheckDSNStringTemplate(const char* pszStr)
 /*                              OpenMDB()                               */
 /************************************************************************/
 
-int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
+int OGRODBCDataSource::OpenMDB( const char * pszNewName )
 {
     const char* pszOptionName = "PGEO_DRIVER_TEMPLATE";
     const char* pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, nullptr );
@@ -129,8 +128,6 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
     }
 
     pszName = CPLStrdup( pszNewName );
-
-    bDSUpdate = bUpdate;
 
     // Collate a list of all tables in the data source
     CPLODBCStatement oTableList( &oSession );
@@ -178,7 +175,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
     for ( const CPLString &osTableName : aosTableNames )
     {
-        OpenTable( osTableName, nullptr, bUpdate );
+        OpenTable( osTableName, nullptr );
     }
 
     return TRUE;
@@ -188,13 +185,14 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
-                             CPL_UNUSED int bTestOpen )
+int OGRODBCDataSource::Open( GDALOpenInfo* poOpenInfo )
 {
     CPLAssert( nLayers == 0 );
 
+    const char * pszNewName = poOpenInfo->pszFilename;
+
     if( !STARTS_WITH_CI(pszNewName, "ODBC:") && IsSupportedMsAccessFileExtension(CPLGetExtension(pszNewName)))
-        return OpenMDB(pszNewName, bUpdate);
+        return OpenMDB(pszNewName);
 
 /* -------------------------------------------------------------------- */
 /*      Start parsing dataset name from the end of string, fetching     */
@@ -345,8 +343,6 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 
     pszName = CPLStrdup( pszNewName );
 
-    bDSUpdate = bUpdate;
-
 /* -------------------------------------------------------------------- */
 /*      If no explicit list of tables was given, check for a list in    */
 /*      a geometry_columns table.                                       */
@@ -408,9 +404,9 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
          iTable++ )
     {
         if( strlen(papszGeomCol[iTable]) > 0 )
-            OpenTable( papszTables[iTable], papszGeomCol[iTable], bUpdate );
+            OpenTable( papszTables[iTable], papszGeomCol[iTable] );
         else
-            OpenTable( papszTables[iTable], nullptr, bUpdate );
+            OpenTable( papszTables[iTable], nullptr );
     }
 
     CSLDestroy( papszTables );
@@ -494,8 +490,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /************************************************************************/
 
 int OGRODBCDataSource::OpenTable( const char *pszNewName,
-                                  const char *pszGeomCol,
-                                  CPL_UNUSED int bUpdate )
+                                  const char *pszGeomCol )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
