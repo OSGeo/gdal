@@ -36,38 +36,44 @@ from osgeo import gdal
 
 
 import gdaltest
-import ogrtest
 import pytest
 
-# Skip all tests if we aren't on Windows.
-pytestmark = pytest.mark.skipif(sys.platform != 'win32', reason='Incorrect platform')
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_driver():
+    driver = ogr.GetDriverByName('ODBC')
+    if driver is not None:
+        driver.Register()
+    else:
+        pytest.skip("ODBC driver not available", allow_module_level=True)
+
+    # we may have the ODBC GDAL driver, but be missing an ODBC driver for MS Access on the test environment
+    # so open a test dataset and check to see if it's supported
+    ds = driver.Open('data/mdb/empty.mdb')
+    if 'MDB_ODBC_DRIVER_INSTALLED' in os.environ:
+        # if environment variable is set, then we know that the ODBC driver is installed and something
+        # unexpected has happened (i.e. GDAL driver is broken!)
+        assert ds is not None
+    elif ds is None:
+        pytest.skip('could not open DB. MDB ODBC driver probably missing or misconfigured', allow_module_level=True)
 
 
-###############################################################################
-# Basic testing
+@pytest.fixture()
+def create_tmp_table():
+    if sys.platform != 'win32':
+        pytest.skip("Requires an ODBC driver with write capabilities")
 
-
-def test_ogr_odbc_1():
-
-    ogrtest.odbc_drv = ogr.GetDriverByName('ODBC')
-    if ogrtest.odbc_drv is None:
-        pytest.skip()
-
-    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
-    if ds is None:
-        ogrtest.odbc_drv = None
-        pytest.skip()
-
-    ds = None
+    odbc_drv = ogr.GetDriverByName('ODBC')
 
     shutil.copy('data/mdb/empty.mdb', 'tmp/odbc.mdb')
 
     # Create and fill tables
-    ds = ogrtest.odbc_drv.Open('tmp/odbc.mdb')
+    ds = odbc_drv.Open('tmp/odbc.mdb')
     ds.ExecuteSQL("CREATE TABLE test (intfield INT, doublefield DOUBLE, stringfield VARCHAR)")
     ds.ExecuteSQL("INSERT INTO test (intfield, doublefield, stringfield) VALUES (1, 2.34, 'foo')")
 
-    ds.ExecuteSQL("CREATE TABLE test_with_pk (OGR_FID INT PRIMARY KEY, intfield INT, doublefield DOUBLE, stringfield VARCHAR)")
+    ds.ExecuteSQL(
+        "CREATE TABLE test_with_pk (OGR_FID INT PRIMARY KEY, intfield INT, doublefield DOUBLE, stringfield VARCHAR)")
     ds.ExecuteSQL("INSERT INTO test_with_pk (OGR_FID, intfield) VALUES (1, 2)")
     ds.ExecuteSQL("INSERT INTO test_with_pk (OGR_FID, intfield) VALUES (2, 3)")
     ds.ExecuteSQL("INSERT INTO test_with_pk (OGR_FID, intfield) VALUES (3, 4)")
@@ -75,24 +81,45 @@ def test_ogr_odbc_1():
     ds.ExecuteSQL("INSERT INTO test_with_pk (OGR_FID, intfield) VALUES (5, 6)")
     ds = None
 
+    yield
+
+    gdal.Unlink('tmp/odbc.mdb')
+
+
+@pytest.fixture()
+def ogrsf_path():
+    import test_cli_utilities
+    path = test_cli_utilities.get_test_ogrsf_path()
+    if path is None:
+        pytest.skip('ogrsf test utility not found')
+
+    return path
+
+
+###############################################################################
+# Basic testing
+
+
+def test_ogr_odbc_1(create_tmp_table):
+    odbc_drv = ogr.GetDriverByName('ODBC')
     # Test with ODBC:user/pwd@dsn syntax
-    ds = ogrtest.odbc_drv.Open('ODBC:user/pwd@DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
+    ds = odbc_drv.Open('ODBC:user/pwd@DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
     assert ds is not None
     ds = None
 
     # Test with ODBC:dsn syntax
-    ds = ogrtest.odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
+    ds = odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb')
     assert ds is not None
     ds = None
 
     # Test with ODBC:dsn,table_list syntax
-    ds = ogrtest.odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb,test')
+    ds = odbc_drv.Open('ODBC:DRIVER=Microsoft Access Driver (*.mdb);DBQ=tmp/odbc.mdb,test')
     assert ds is not None
     assert ds.GetLayerCount() == 1
     ds = None
 
     # Reopen and check
-    ds = ogrtest.odbc_drv.Open('tmp/odbc.mdb')
+    ds = odbc_drv.Open('tmp/odbc.mdb')
     assert ds.GetLayerCount() == 2
 
     lyr = ds.GetLayerByName('test')
@@ -132,20 +159,8 @@ def test_ogr_odbc_1():
 # Run test_ogrsf
 
 
-def test_ogr_odbc_2():
-    if ogrtest.odbc_drv is None:
-        pytest.skip()
-
-    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
-    if ds is None:
-        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
-        pytest.skip()
-
-    import test_cli_utilities
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        pytest.skip()
-
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/odbc.mdb')
+def test_ogr_odbc_2(create_tmp_table, ogrsf_path):
+    ret = gdaltest.runexternal(ogrsf_path + ' tmp/odbc.mdb')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -154,15 +169,8 @@ def test_ogr_odbc_2():
 
 
 def test_extensions():
-    if ogrtest.odbc_drv is None:
-        pytest.skip()
-
-    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
-    if ds is None:
-        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
-        pytest.skip()
-
-    ds = ogrtest.odbc_drv.Open('data/mdb/empty.style')
+    odbc_drv = ogr.GetDriverByName('ODBC')
+    ds = odbc_drv.Open('data/mdb/empty.style')
     assert ds is not None
     lyr = ds.GetLayerByName('Line Symbols')
     assert lyr is not None
@@ -171,7 +179,7 @@ def test_extensions():
         # can't run this on Github "Windows builds" workflow, as that has the older
         # 'Microsoft Access Driver (*.mdb)' ODBC driver only, which doesn't support accdb
         # databases
-        ds = ogrtest.odbc_drv.Open('data/mdb/empty.accdb')
+        ds = odbc_drv.Open('data/mdb/empty.accdb')
         assert ds is not None
 
 
@@ -180,13 +188,11 @@ def test_extensions():
 
 
 def test_null_memo():
-    if ogrtest.odbc_drv is None:
-        pytest.skip()
+    if sys.platform != 'win32':
+        pytest.skip("Currently failing on mdbtools driver")
 
-    ds = ogrtest.odbc_drv.Open('data/mdb/null_memo.mdb')
-    if ds is None:
-        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
-        pytest.skip()
+    odbc_drv = ogr.GetDriverByName('ODBC')
+    ds = odbc_drv.Open('data/mdb/null_memo.mdb')
 
     lyr = ds.GetLayerByName('PROP')
     expected_str = [
@@ -221,11 +227,10 @@ def test_null_memo():
 
 
 ###############################################################################
-# Cleanup
+# Run test_ogrsf on null_memo database
 
 
-def test_ogr_odbc_cleanup():
-    if ogrtest.odbc_drv is None:
-        pytest.skip()
+def test_ogr_odbc_ogrsf_null_memo(ogrsf_path):
+    ret = gdaltest.runexternal(ogrsf_path + ' data/mdb/null_memo.mdb')
 
-    gdal.Unlink('tmp/odbc.mdb')
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
