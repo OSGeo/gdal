@@ -41,30 +41,19 @@ OGRODBCDriver::~OGRODBCDriver()
 }
 
 /************************************************************************/
-/*                              GetName()                               */
+/*                      OGRODBCDriverOpen()                             */
 /************************************************************************/
 
-const char *OGRODBCDriver::GetName()
+GDALDataset *OGRODBCDriver::OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    return "ODBC";
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-OGRDataSource *OGRODBCDriver::Open( const char * pszFilename,
-                                     int bUpdate )
-
-{
-    if( !STARTS_WITH_CI(pszFilename, "ODBC:") &&
-        !OGRODBCDataSource::IsSupportedMsAccessFileExtension( CPLGetExtension( pszFilename ) ) )
+    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "ODBC:") &&
+        !OGRODBCDataSource::IsSupportedMsAccessFileExtension( CPLGetExtension( poOpenInfo->pszFilename ) ) )
         return nullptr;
 
     OGRODBCDataSource *poDS = new OGRODBCDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( poOpenInfo ) )
     {
         delete poDS;
         return nullptr;
@@ -73,43 +62,6 @@ OGRDataSource *OGRODBCDriver::Open( const char * pszFilename,
         return poDS;
 }
 
-/************************************************************************/
-/*                          CreateDataSource()                          */
-/************************************************************************/
-
-OGRDataSource *OGRODBCDriver::CreateDataSource( const char * pszName,
-                                              char ** /* papszOptions */ )
-
-{
-    if( !STARTS_WITH_CI(pszName, "ODBC:") )
-        return nullptr;
-
-    OGRODBCDataSource *poDS = new OGRODBCDataSource();
-
-    if( !poDS->Open( pszName, TRUE, TRUE ) )
-    {
-        delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined,
-         "ODBC driver doesn't currently support database creation.\n"
-                  "Please create database with the `createdb' command." );
-        return nullptr;
-    }
-
-    return poDS;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRODBCDriver::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
 
 /************************************************************************/
 /*                           RegisterOGRODBC()                            */
@@ -118,10 +70,26 @@ int OGRODBCDriver::TestCapability( const char * pszCap )
 void RegisterOGRODBC()
 
 {
-    OGRSFDriver* poDriver = new OGRODBCDriver;
+    if( GDALGetDriverByName( "ODBC" ) != nullptr )
+        return;
+
+    OGRODBCDriver* poDriver = new OGRODBCDriver;
+
+    poDriver->SetDescription( "ODBC" );
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "ODBC:");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "mdb accdb" );
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/odbc.html");
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as MSys* tables) should be listed' default='NO'>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
+"</OpenOptionList>");
+
+    poDriver->pfnOpen = OGRODBCDriver::OGRODBCDriverOpen;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

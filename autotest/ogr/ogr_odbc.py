@@ -226,6 +226,49 @@ def test_null_memo():
         feat = lyr.GetNextFeature()
 
 
+
+###############################################################################
+# Test LIST_ALL_TABLES open option
+
+
+def test_ogr_odbc_list_all_tables():
+    if sys.platform == 'win32':
+        pytest.skip("MS Access ODBC driver always culls system tables, nothing left to test")
+
+    if ogrtest.odbc_drv is None:
+        pytest.skip()
+
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
+    if ds is None:
+        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
+        pytest.skip()
+
+    ds = ogrtest.odbc_drv.Open('data/mdb/null_memo.mdb')
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 1, 'did not get expected layer count'
+
+    # Test LIST_ALL_TABLES=YES open option
+    odbc_ds_all_table = gdal.OpenEx('data/mdb/null_memo.mdb', gdal.OF_VECTOR,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+
+    assert odbc_ds_all_table.GetLayerCount() == 12, 'did not get expected layer count'
+    layer_names = set(odbc_ds_all_table.GetLayer(i).GetName() for i in range(odbc_ds_all_table.GetLayerCount()))
+
+    assert layer_names == {'MSysObjects',
+                           'MSysACEs',
+                           'MSysQueries',
+                           'MSysRelationships',
+                           'MSysAccessObjects',
+                           'MSysAccessXML',
+                           'MSysNameMap',
+                           'MSysNavPaneGroupCategories',
+                           'MSysNavPaneGroups',
+                           'MSysNavPaneGroupToObjects',
+                           'MSysNavPaneObjectIDs',
+                           'PROP'}
+
+
 ###############################################################################
 # Run test_ogrsf on null_memo database
 
