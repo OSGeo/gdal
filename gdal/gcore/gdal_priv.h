@@ -2732,6 +2732,30 @@ public:
 };
 //! @endcond
 
+/************************************************************************/
+/*                       GDALAntiRecursionGuard                         */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+struct GDALAntiRecursionStruct;
+class GDALAntiRecursionGuard
+{
+    GDALAntiRecursionStruct* m_psAntiRecursionStruct;
+    std::string m_osIdentifier;
+    int m_nDepth;
+
+    GDALAntiRecursionGuard(const GDALAntiRecursionGuard&) = delete;
+    GDALAntiRecursionGuard& operator= (const GDALAntiRecursionGuard&) = delete;
+
+public:
+    explicit GDALAntiRecursionGuard(const std::string& osIdentifier);
+             GDALAntiRecursionGuard(const GDALAntiRecursionGuard& other, const std::string& osIdentifier);
+    ~GDALAntiRecursionGuard();
+    int GetCallDepth() const { return m_nDepth; }
+};
+//! @endcond
+
+
 /* ==================================================================== */
 /*      An assortment of overview related stuff.                        */
 /* ==================================================================== */
