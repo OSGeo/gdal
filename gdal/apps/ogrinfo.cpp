@@ -651,7 +651,7 @@ static void RemoveSQLComments(char*& pszSQL)
 /*                           PrintLayerSummary()                        */
 /************************************************************************/
 
-static void PrintLayerSummary(OGRLayer* poLayer, bool bGeomType)
+static void PrintLayerSummary(OGRLayer* poLayer, bool bGeomType, bool bIsPrivate=false)
 {
     printf("%s", poLayer->GetName());
 
@@ -684,6 +684,11 @@ static void PrintLayerSummary(OGRLayer* poLayer, bool bGeomType)
         printf(" (%s)",
                OGRGeometryTypeToName(
                    poLayer->GetGeomType()));
+
+    if( bIsPrivate )
+    {
+        printf(" [private]");
+    }
 
     printf("\n");
 }
@@ -1251,7 +1256,7 @@ MAIN_START(nArgc, papszArgv)
                 if( !bAllLayers )
                 {
                     printf("%d: ", iLayer + 1);
-                    PrintLayerSummary(poLayer, bGeomType);
+                    PrintLayerSummary(poLayer, bGeomType, poDS->IsLayerPrivate(iLayer));
                 }
                 else
                 {
