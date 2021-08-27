@@ -1,7 +1,8 @@
 # From https://www.sphinx-doc.org/en/master/development/tutorials/todo.html
 
-import sphinx.locale
 import docutils.statemachine
+import sphinx.locale
+
 sphinx.locale.admonitionlabels['shortname'] = ''
 sphinx.locale.admonitionlabels['built_in_by_default'] = ''  # 'Built-in by default'
 sphinx.locale.admonitionlabels['supports_create'] = ''  # 'Supports Create()'
@@ -9,6 +10,7 @@ sphinx.locale.admonitionlabels['supports_createcopy'] = ''  # 'Supports CreateCo
 sphinx.locale.admonitionlabels['supports_georeferencing'] = ''  # 'Supports georeferencing'
 sphinx.locale.admonitionlabels['supports_virtualio'] = ''  # 'Supports VirtualIO'
 sphinx.locale.admonitionlabels['supports_multidimensional'] = ''  # 'Supports multidimensional'
+sphinx.locale.admonitionlabels['deprecated_driver'] = ''  # 'Driver is deprecated and marked for removal'
 
 def setup(app):
     app.add_node(shortname,
@@ -58,6 +60,12 @@ def setup(app):
                  latex=(visit_admonition, depart_node),
                  text=(visit_admonition, depart_node))
     app.add_directive('supports_multidimensional', MultiDimensionalDirective)
+
+    app.add_node(deprecated_driver,
+                 html=(visit_deprecated_driver_node, depart_node),
+                 latex=(visit_admonition, depart_node),
+                 text=(visit_admonition, depart_node))
+    app.add_directive('deprecated_driver', DeprecatedDriverDirective)
 
     app.connect('env-purge-doc', purge_driverproperties)
 
@@ -126,6 +134,13 @@ class supports_multidimensional(nodes.Admonition, nodes.Element):
 def visit_supports_multidimensional_node(self, node):
     self.body.append(self.starttag(
             node, 'div', CLASS=('admonition supports_multidimensional')))
+
+class deprecated_driver(nodes.Admonition, nodes.Element):
+    pass
+
+def visit_deprecated_driver_node(self, node):
+    self.body.append(self.starttag(
+            node, 'div', CLASS=('danger deprecated_driver')))
 
 from docutils.parsers.rst import Directive
 
@@ -270,6 +285,41 @@ class MultiDimensionalDirective(Directive):
         return finish_directive(self, 'supports_multidimensional', node)
 
 
+class DeprecatedDriverDirective(Directive):
+
+    # this enables content in the directive
+    has_content = True
+
+    def run(self):
+
+        explanation = []
+        version_targeted_for_removal = [c[len('version_targeted_for_removal:'):].strip() for c in self.content if
+                                        c.startswith('version_targeted_for_removal:')]
+        if version_targeted_for_removal:
+            explanation.append(
+                "This driver is considered for removal in GDAL {}.".format(version_targeted_for_removal[0]))
+        else:
+            explanation.append("This driver is considered for removal in a future GDAL release.")
+
+        explanation.append("You are invited to convert any dataset in that format to another more common one. "
+                           "If you need this driver in future GDAL versions, create a ticket at https://github.com/OSGeo/gdal "
+                           "(look first for an existing one first) to explain how critical it is for you "
+                           "(but the GDAL project may still remove it).")
+
+        env_variable = [c[len('env_variable:'):].strip() for c in self.content if
+                        c.startswith('env_variable:')]
+        if env_variable:
+            explanation.append("To enable use of the deprecated driver the {} configuration option /"
+                               " environment variable must be set to YES.".format(env_variable[0]))
+
+        self.content = docutils.statemachine.StringList(explanation)
+
+        node = deprecated_driver('\n'.join(self.content))
+        node += nodes.title(_('Deprecated'), _('Deprecated'))
+
+        return finish_directive(self, 'deprecated_driver', node)
+
+
 def purge_driverproperties(app, env, docname):
     for directive in ['all_shortname',
                       'all_built_in_by_default',
@@ -278,6 +328,7 @@ def purge_driverproperties(app, env, docname):
                       'all_supports_createcopy',
                       'all_supports_georeferencing',
                       'all_supports_virtualio',
-                      'all_supports_multidimensional']:
+                      'all_supports_multidimensional',
+                      'all_deprecated_driver']:
         if hasattr(env, directive):
             setattr(env, directive, [ embed for embed in getattr(env, directive) if embed['docname'] != docname])
