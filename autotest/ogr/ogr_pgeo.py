@@ -33,6 +33,7 @@ import gdaltest
 import ogrtest
 import os
 import pytest
+import sys
 from osgeo import gdal
 from osgeo import ogr
 
@@ -40,9 +41,7 @@ from osgeo import ogr
 @pytest.fixture(scope="module", autouse=True)
 def setup_driver():
     driver = ogr.GetDriverByName('PGeo')
-    if driver is not None:
-        driver.Register()
-    else:
+    if driver is None:
         pytest.skip("PGeo driver not available", allow_module_level=True)
 
     # remove mdb driver
@@ -99,6 +98,13 @@ def ogrsf_path():
         pytest.skip('ogrsf test utility not found')
 
     return path
+
+
+def recent_enough_mdb_odbc_driver():
+    # At time of writing, mdbtools <= 0.9.4 has some deficiencies
+    # See https://github.com/OSGeo/gdal/pull/4354#issuecomment-907455798 for details
+    # So allow some tests only or Windows, or on a local machine that don't have the CI environment variable set
+    return sys.platform == 'win32' or 'CI' not in os.environ
 
 ###############################################################################
 # Basic testing - PGeo v10 format
@@ -482,10 +488,12 @@ def test_ogr_pgeo_non_spatial():
        feat.GetField('int_field') != 13 or \
        feat.GetField('long_int_field') != 10001 or \
        feat.GetField('float_field') != 13.5 or \
-       feat.GetField('double_field') != 14.5 or \
-       feat.GetField('date_field') != '2020/01/30 00:00:00':
+       feat.GetField('double_field') != 14.5:
         feat.DumpReadable()
         pytest.fail('did not get expected attributes')
+
+    if recent_enough_mdb_odbc_driver():
+        assert feat.GetField('date_field') == '2020/01/30 00:00:00'
 
     feat_count = non_spatial_layer.GetFeatureCount()
     assert feat_count == 2, 'did not get expected feature count'
@@ -561,7 +569,10 @@ def test_ogr_pgeo_z_m_handling():
     pgeo_ds = ogr.Open('data/pgeo/geometry_types.mdb')
 
     point_z_layer = pgeo_ds.GetLayerByName('point_z')
-    assert point_z_layer.GetGeomType() == ogr.wkbPoint25D
+    if recent_enough_mdb_odbc_driver():
+        assert point_z_layer.GetGeomType() == ogr.wkbPoint25D
+    else:
+        assert point_z_layer.GetGeomType() in (ogr.wkbPoint, ogr.wkbPoint25D)
 
     feat = point_z_layer.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,
@@ -578,7 +589,10 @@ def test_ogr_pgeo_z_m_handling():
         pytest.fail('did not get expected geometry')
 
     point_m_layer = pgeo_ds.GetLayerByName('point_m')
-    assert point_m_layer.GetGeomType() == ogr.wkbPointM
+    if recent_enough_mdb_odbc_driver():
+        assert point_m_layer.GetGeomType() == ogr.wkbPointM
+    else:
+        assert point_m_layer.GetGeomType() in (ogr.wkbPoint, ogr.wkbPointM)
 
     feat = point_m_layer.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,
@@ -595,7 +609,10 @@ def test_ogr_pgeo_z_m_handling():
         pytest.fail('did not get expected geometry')
 
     point_zm_layer = pgeo_ds.GetLayerByName('point_zm')
-    assert point_zm_layer.GetGeomType() == ogr.wkbPointZM
+    if recent_enough_mdb_odbc_driver():
+        assert point_zm_layer.GetGeomType() == ogr.wkbPointZM
+    else:
+        assert point_zm_layer.GetGeomType() in (ogr.wkbPoint, ogr.wkbPointZM)
 
     feat = point_zm_layer.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,

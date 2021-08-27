@@ -14,7 +14,7 @@ dnf install -y clang make diffutils ccache \
               libtiff-devel libgeotiff-devel \
               poppler-cpp-devel \
               cryptopp-devel \
-              mdbtools-devel unixODBC-devel \
+              mdbtools-devel mdbtools-odbc unixODBC-devel \
               armadillo-devel qhull-devel \
               hdf-devel hdf5-devel netcdf-devel \
               mongo-cxx-driver-devel libpq-devel \
