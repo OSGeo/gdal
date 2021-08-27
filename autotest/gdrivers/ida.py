@@ -122,7 +122,9 @@ def test_ida_5():
     PARAMETER["central_meridian",0],
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0],
-    UNIT["meter",1]]"""
+    UNIT["meter",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
 
     return gdaltest.ida_tst.testSetProjection(prj=prj)
 
