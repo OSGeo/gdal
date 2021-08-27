@@ -40,9 +40,7 @@ from osgeo import ogr
 @pytest.fixture(scope="module", autouse=True)
 def setup_driver():
     driver = ogr.GetDriverByName('PGeo')
-    if driver is not None:
-        driver.Register()
-    else:
+    if driver is None:
         pytest.skip("PGeo driver not available", allow_module_level=True)
 
     # remove mdb driver

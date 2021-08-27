@@ -42,9 +42,7 @@ import pytest
 @pytest.fixture(scope="module", autouse=True)
 def setup_driver():
     driver = ogr.GetDriverByName('ODBC')
-    if driver is not None:
-        driver.Register()
-    else:
+    if driver is None:
         pytest.skip("ODBC driver not available", allow_module_level=True)
 
     # we may have the ODBC GDAL driver, but be missing an ODBC driver for MS Access on the test environment
