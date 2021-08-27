@@ -189,13 +189,7 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
                 m_bHasGdbItemsTable = true;
             }
 
-            // a bunch of internal tables we don't want to expose...
-            if( !osTableName.empty() &&
-                    ( bListAllTables ||
-                        ( !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
-                            && !osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
-                            && !(osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
-                        ) ) )
+            if( !osTableName.empty() && ( bListAllTables || !IsPrivateLayerName( osTableName ) ) )
             {
                 aosTableNames.emplace_back( osTableName );
             }
@@ -321,6 +315,33 @@ OGRLayer *OGRPGeoDataSource::GetLayer( int iLayer )
         return nullptr;
     else
         return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                    IsPrivateLayerName()                              */
+/************************************************************************/
+
+bool OGRPGeoDataSource::IsPrivateLayerName(const CPLString &osName)
+{
+    const CPLString osLCTableName(CPLString(osName).tolower());
+
+    return ( (osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
+         || osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
+         || (osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
+        );
+}
+
+/************************************************************************/
+/*                    IsLayerPrivate()                                  */
+/************************************************************************/
+
+bool OGRPGeoDataSource::IsLayerPrivate(int iLayer) const
+{
+    if( iLayer < 0 || iLayer >= nLayers )
+        return false;
+
+    const std::string osName( papoLayers[iLayer]->GetName() );
+    return IsPrivateLayerName( osName );
 }
 
 /************************************************************************/

@@ -180,6 +180,7 @@ class OGRPGeoDataSource final: public OGRDataSource
     mutable bool        m_COUNT_STAR_state_known = false;
     mutable bool        m_COUNT_STAR_working = false;
 #endif
+    static bool         IsPrivateLayerName( const CPLString& osName );
   public:
                         OGRPGeoDataSource();
                         virtual ~OGRPGeoDataSource();
@@ -192,6 +193,7 @@ class OGRPGeoDataSource final: public OGRDataSource
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override { return nLayers; }
     OGRLayer            *GetLayer( int ) override;
+    bool                IsLayerPrivate( int ) const override;
 
     int                 TestCapability( const char * ) override;
 
