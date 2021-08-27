@@ -208,25 +208,5 @@ class OGRPGeoDataSource final: public OGRDataSource
     bool HasGdbItemsTable() const { return m_bHasGdbItemsTable; }
 };
 
-/************************************************************************/
-/*                           OGRODBCMDBDriver                           */
-/************************************************************************/
-
-class OGRODBCMDBDriver CPL_NON_FINAL: public GDALDriver
-{
-
-};
-
-/************************************************************************/
-/*                             OGRPGeoDriver                            */
-/************************************************************************/
-
-class OGRPGeoDriver final: public OGRODBCMDBDriver
-{
-  public:
-                ~OGRPGeoDriver();
-
-    static GDALDataset * OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo );
-};
 
 #endif /* ndef _OGR_PGeo_H_INCLUDED */

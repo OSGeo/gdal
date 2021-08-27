@@ -32,20 +32,12 @@
 
 CPL_CVSID("$Id$")
 
-/************************************************************************/
-/*                            ~OGRODBCDriver()                            */
-/************************************************************************/
-
-OGRPGeoDriver::~OGRPGeoDriver()
-
-{
-}
 
 /************************************************************************/
 /*                                OGRPGeoDriverOpen()                   */
 /************************************************************************/
 
-GDALDataset * OGRPGeoDriver::OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset * OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:") )
@@ -127,7 +119,7 @@ void RegisterOGRPGeo()
     if( GDALGetDriverByName( "PGeo" ) != nullptr )
         return;
 
-    OGRPGeoDriver* poDriver = new OGRPGeoDriver;
+    GDALDriver* poDriver = new GDALDriver;
 
     poDriver->SetDescription( "PGeo" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
@@ -143,7 +135,7 @@ void RegisterOGRPGeo()
 "  </Option>"
 "</OpenOptionList>");
 
-    poDriver->pfnOpen = OGRPGeoDriver::OGRPGeoDriverOpen;
+    poDriver->pfnOpen = OGRPGeoDriverOpen;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

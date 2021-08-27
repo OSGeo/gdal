@@ -188,16 +188,4 @@ class OGRGeomediaDataSource final: public OGRDataSource
     CPLODBCSession     *GetSession() { return &oSession; }
 };
 
-/************************************************************************/
-/*                          OGRGeomediaDriver                           */
-/************************************************************************/
-
-class OGRGeomediaDriver final: public OGRODBCMDBDriver
-{
-  public:
-                ~OGRGeomediaDriver();
-
-    static GDALDataset *OGRGeomediaDriverOpen( GDALOpenInfo* poOpenInfo );
-};
-
 #endif /* ndef _OGR_Geomedia_H_INCLUDED */

@@ -31,20 +31,12 @@
 
 CPL_CVSID("$Id$")
 
-/************************************************************************/
-/*                          ~OGRWalkDriver()                            */
-/************************************************************************/
-
-OGRWalkDriver::~OGRWalkDriver()
-
-{
-}
 
 /************************************************************************/
 /*                                OGRWalkDriverOpen()                   */
 /************************************************************************/
 
-GDALDataset *OGRWalkDriver::OGRWalkDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRWalkDriverOpen( GDALOpenInfo* poOpenInfo )
 {
 
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:") )
@@ -95,12 +87,12 @@ void RegisterOGRWalk()
     if( GDALGetDriverByName( "Walk" ) != nullptr )
         return;
 
-    OGRWalkDriver* poDriver = new OGRWalkDriver;
+    GDALDriver* poDriver = new GDALDriver;
 
     poDriver->SetDescription( "Walk" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 
-    poDriver->pfnOpen = OGRWalkDriver::OGRWalkDriverOpen;
+    poDriver->pfnOpen = OGRWalkDriverOpen;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

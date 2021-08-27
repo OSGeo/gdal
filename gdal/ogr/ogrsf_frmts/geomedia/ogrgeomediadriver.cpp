@@ -33,19 +33,10 @@
 CPL_CVSID("$Id$")
 
 /************************************************************************/
-/*                          ~OGRODBCDriver()                            */
-/************************************************************************/
-
-OGRGeomediaDriver::~OGRGeomediaDriver()
-
-{
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *OGRGeomediaDriver::OGRGeomediaDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRGeomediaDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:") )
@@ -128,7 +119,7 @@ void RegisterOGRGeomedia()
     if( GDALGetDriverByName( "Geomedia" ) != nullptr )
         return;
 
-    OGRGeomediaDriver* poDriver = new OGRGeomediaDriver;
+    GDALDriver* poDriver = new GDALDriver;
 
     poDriver->SetDescription( "Geomedia" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
@@ -136,7 +127,7 @@ void RegisterOGRGeomedia()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/geomedia.html" );
 
-    poDriver->pfnOpen = OGRGeomediaDriver::OGRGeomediaDriverOpen;
+    poDriver->pfnOpen = OGRGeomediaDriverOpen;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
