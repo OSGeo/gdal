@@ -235,15 +235,8 @@ def test_ogr_odbc_list_all_tables():
     if sys.platform == 'win32':
         pytest.skip("MS Access ODBC driver always culls system tables, nothing left to test")
 
-    if ogrtest.odbc_drv is None:
-        pytest.skip()
-
-    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
-    if ds is None:
-        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
-        pytest.skip()
-
-    ds = ogrtest.odbc_drv.Open('data/mdb/null_memo.mdb')
+    odbc_drv = ogr.GetDriverByName('ODBC')
+    ds = odbc_drv.Open('data/mdb/null_memo.mdb')
     assert ds is not None
 
     assert ds.GetLayerCount() == 1, 'did not get expected layer count'
