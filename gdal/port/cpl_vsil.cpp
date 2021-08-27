@@ -155,14 +155,6 @@ char **VSISiblingFiles( const char *pszFilename)
 /*                             VSIReadRecursive()                       */
 /************************************************************************/
 
-typedef struct
-{
-    char **papszFiles;
-    int i;
-    char* pszPath;
-    char* pszDisplayedPath;
-} VSIReadDirRecursiveTask;
-
 /**
  * \brief Read names in a directory recursively.
  *
@@ -170,7 +162,7 @@ typedef struct
  * It returns a list of strings containing the names of files and directories
  * in this directory and all subdirectories.  The resulting string list becomes
  * the responsibility of the application and should be freed with CSLDestroy()
- *  when no longer needed.
+ * when no longer needed.
  *
  * Note that no error is issued via CPLError() if the directory path is
  * invalid, though NULL is returned.
@@ -187,133 +179,24 @@ typedef struct
 
 char **VSIReadDirRecursive( const char *pszPathIn )
 {
+    const char* const apszOptions[] = { "NAME_AND_TYPE_ONLY=YES", nullptr };
+    VSIDIR* psDir = VSIOpenDir(pszPathIn, -1, apszOptions);
+    if( !psDir )
+        return nullptr;
     CPLStringList oFiles;
-    char **papszFiles = nullptr;
-    VSIStatBufL psStatBuf;
-    CPLString osTemp1;
-    CPLString osTemp2;
-    int i = 0;
-    bool bReadDir = true;
-
-    std::vector<VSIReadDirRecursiveTask> aoStack;
-    char* pszPath = CPLStrdup(pszPathIn);
-    char* pszDisplayedPath = nullptr;
-
-    while( true )
+    while( auto psEntry = VSIGetNextDirEntry(psDir) )
     {
-        if( bReadDir )
+        if( VSI_ISDIR(psEntry->nMode) && psEntry->pszName[0] &&
+            psEntry->pszName[strlen(psEntry->pszName)-1] != '/' )
         {
-            // Get listing.
-            papszFiles = VSIReadDir( pszPath );
-
-            bReadDir = false;
-            i = 0;
+            oFiles.AddString((std::string(psEntry->pszName) + '/').c_str());
         }
-
-        for( ; papszFiles != nullptr && papszFiles[i] != nullptr; i++ )
+        else
         {
-            // Do not recurse up the tree.
-            if( EQUAL(".", papszFiles[i]) || EQUAL("..", papszFiles[i]) )
-              continue;
-
-            // Build complete file name for stat.
-            osTemp1.clear();
-            osTemp1.append( pszPath );
-            if( !osTemp1.empty() && osTemp1.back() != '/' )
-                osTemp1.append( "/" );
-            osTemp1.append( papszFiles[i] );
-
-            // If is file, add it.
-            if( VSIStatL( osTemp1.c_str(), &psStatBuf ) != 0 )
-                continue;
-
-            if( VSI_ISREG( psStatBuf.st_mode ) )
-            {
-                if( pszDisplayedPath )
-                {
-                    osTemp1.clear();
-                    osTemp1.append( pszDisplayedPath );
-                    if( !osTemp1.empty() && osTemp1.back() != '/' )
-                        osTemp1.append( "/" );
-                    osTemp1.append( papszFiles[i] );
-                    oFiles.AddString( osTemp1 );
-                }
-                else
-                    oFiles.AddString( papszFiles[i] );
-            }
-            else if( VSI_ISDIR( psStatBuf.st_mode ) )
-            {
-                // Add directory entry.
-                osTemp2.clear();
-                if( pszDisplayedPath )
-                {
-                    osTemp2.append( pszDisplayedPath );
-                    osTemp2.append( "/" );
-                }
-                osTemp2.append( papszFiles[i] );
-                if( !osTemp2.empty() && osTemp2.back() != '/' )
-                    osTemp2.append( "/" );
-                oFiles.AddString( osTemp2.c_str() );
-
-                VSIReadDirRecursiveTask sTask;
-                sTask.papszFiles = papszFiles;
-                sTask.i = i;
-                sTask.pszPath = CPLStrdup(pszPath);
-                sTask.pszDisplayedPath =
-                    pszDisplayedPath ? CPLStrdup(pszDisplayedPath) : nullptr;
-                aoStack.push_back(sTask);
-
-                CPLFree(pszPath);
-                pszPath = CPLStrdup( osTemp1.c_str() );
-
-                char* pszDisplayedPathNew = nullptr;
-                if( pszDisplayedPath )
-                {
-                    pszDisplayedPathNew =
-                        CPLStrdup(
-                            CPLSPrintf("%s/%s",
-                                       pszDisplayedPath, papszFiles[i]));
-                }
-                else
-                {
-                    pszDisplayedPathNew = CPLStrdup( papszFiles[i] );
-                }
-                CPLFree(pszDisplayedPath);
-                pszDisplayedPath = pszDisplayedPathNew;
-
-                i = 0;
-                papszFiles = nullptr;
-                bReadDir = true;
-
-                break;
-            }
-        }
-
-        if( !bReadDir )
-        {
-            CSLDestroy( papszFiles );
-
-            if( !aoStack.empty() )
-            {
-                const int iLast = static_cast<int>(aoStack.size()) - 1;
-                CPLFree(pszPath);
-                CPLFree(pszDisplayedPath);
-                papszFiles = aoStack[iLast].papszFiles;
-                i = aoStack[iLast].i + 1;
-                pszPath = aoStack[iLast].pszPath;
-                pszDisplayedPath = aoStack[iLast].pszDisplayedPath;
-
-                aoStack.resize(iLast);
-            }
-            else
-            {
-                break;
-            }
+            oFiles.AddString(psEntry->pszName);
         }
     }
-
-    CPLFree(pszPath);
-    CPLFree(pszDisplayedPath);
+    VSICloseDir(psDir);
 
     return oFiles.StealList();
 }
@@ -363,6 +246,10 @@ char **CPLReadDir( const char *pszPath )
  * <li>PREFIX=string: (GDAL >= 3.4) Filter to select filenames only starting
  *     with the specified prefix. Implemented efficiently for /vsis3/, /vsigs/,
  *     and /vsiaz/ (but not /vsiadls/)
+ * </li>
+ * <li>NAME_AND_TYPE_ONLY=YES/NO: (GDAL >= 3.4) Defaults to NO. If set to YES,
+ *     only the pszName and nMode members of VSIDIR are guaranteed to be set.
+ *     This is implemented efficiently for the Unix virtual file system.
  * </li>
  * </ul>
  *
