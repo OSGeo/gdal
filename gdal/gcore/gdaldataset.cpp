@@ -4421,6 +4421,34 @@ OGRLayerH GDALDatasetGetLayerByName( GDALDatasetH hDS, const char *pszName )
 }
 
 /************************************************************************/
+/*                        GDALDatasetIsLayerPrivate()                   */
+/************************************************************************/
+
+/**
+ \brief Returns true if the layer at the specified index is deemed a private or
+ system table, or an internal detail only.
+
+ This function is the same as the C++ method GDALDataset::IsLayerPrivate()
+
+ @since GDAL 3.4
+
+ @param hDS the dataset handle.
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return true if the layer is a private or system table.
+*/
+
+int GDALDatasetIsLayerPrivate( GDALDatasetH hDS, int iLayer )
+
+{
+    VALIDATE_POINTER1(hDS, "GDALDatasetIsLayerPrivate", false);
+
+    const bool res = GDALDataset::FromHandle(hDS)->IsLayerPrivate(iLayer);
+
+    return res ? 1 : 0;
+}
+
+/************************************************************************/
 /*                        GDALDatasetDeleteLayer()                      */
 /************************************************************************/
 
@@ -6853,6 +6881,26 @@ int GDALDataset::GetLayerCount() { return 0; }
 */
 
 OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer) { return nullptr; }
+
+/************************************************************************/
+/*                                IsLayerPrivate()                      */
+/************************************************************************/
+
+/**
+ \fn GDALDataset::IsLayerPrivate(int)
+ \brief Returns true if the layer at the specified index is deemed a private or
+ system table, or an internal detail only.
+
+ This method is the same as the C function GDALDatasetIsLayerPrivate().
+
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return true if the layer is a private or system table.
+
+ @since GDAL 3.4
+*/
+
+bool GDALDataset::IsLayerPrivate(CPL_UNUSED int iLayer) const { return false; }
 
 /************************************************************************/
 /*                           ResetReading()                             */

@@ -616,6 +616,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     virtual int         GetLayerCount() override { return nLayers; }
     virtual OGRLayer   *GetLayer( int ) override;
     virtual OGRLayer   *GetLayerByName( const char* ) override;
+    virtual bool        IsLayerPrivate( int ) const override;
     OGRLayer           *GetLayerByNameNotVisible( const char* );
     virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName ) override;
 

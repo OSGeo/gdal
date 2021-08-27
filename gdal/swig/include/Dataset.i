@@ -903,6 +903,10 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALDatasetGetLayerCount(self);
   }
 
+  bool IsLayerPrivate( int index ) {
+    return GDALDatasetIsLayerPrivate(self, index);
+  }
+
 #ifdef SWIGJAVA
   OGRLayerShadow *GetLayerByIndex( int index ) {
 #else

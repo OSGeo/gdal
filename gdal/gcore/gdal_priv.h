@@ -695,6 +695,8 @@ private:
     virtual int         GetLayerCount();
     virtual OGRLayer    *GetLayer(int iLayer);
 
+    virtual bool        IsLayerPrivate(int iLayer) const;
+
     /** Class returned by GetLayers() that acts as a range of layers.
      * @since GDAL 2.3
      */

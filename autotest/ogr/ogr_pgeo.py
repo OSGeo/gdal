@@ -216,6 +216,16 @@ def test_ogr_pgeo_list_all_tables():
                  'points_Shape_Index', 'polys_Shape_Index']:
         assert name in layer_names
 
+    private_layers = [pgeo_ds_all_table.GetLayer(i).GetName() for i in range(pgeo_ds_all_table.GetLayerCount()) if pgeo_ds_all_table.IsLayerPrivate(i)]
+    for name in ['GDB_ColumnInfo', 'GDB_DatabaseLocks', 'GDB_GeomColumns', 'GDB_ItemRelationships',
+                 'GDB_ItemRelationshipTypes', 'GDB_Items', 'GDB_Items_Shape_Index', 'GDB_ItemTypes',
+                 'GDB_RasterColumns', 'GDB_ReplicaLog', 'GDB_SpatialRefs', 'lines_Shape_Index',
+                 'points_Shape_Index', 'polys_Shape_Index']:
+        assert name in private_layers
+    for name in ['lines','points', 'polys', 'non_spatial']:
+        assert name not in private_layers
+
+
 
 ###############################################################################
 # Test spatial filter

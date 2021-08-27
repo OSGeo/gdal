@@ -245,6 +245,61 @@ def test_ogr_sqlite_3():
 
     assert tr
 
+
+###############################################################################
+# Test retrieving layers
+
+
+def test_ogr_sqlite_layers():
+
+    if gdaltest.sl_ds is None:
+        pytest.skip()
+
+    assert gdaltest.sl_ds.GetLayerCount() == 2, 'did not get expected layer count'
+
+    lyr = gdaltest.sl_ds.GetLayer(0)
+    assert lyr is not None
+    assert lyr.GetName() == 'a_layer', 'did not get expected layer name'
+    assert lyr.GetGeomType() == ogr.wkbUnknown, 'did not get expected layer geometry type'
+    assert lyr.GetFeatureCount() == 0, 'did not get expected feature count'
+
+    lyr = gdaltest.sl_ds.GetLayer(1)
+    assert lyr is not None
+    assert lyr.GetName() == 'tpoly', 'did not get expected layer name'
+    assert lyr.GetGeomType() == ogr.wkbUnknown, 'did not get expected layer geometry type'
+    assert lyr.GetFeatureCount() == 10, 'did not get expected feature count'
+
+    # Test LIST_ALL_TABLES=YES open option
+    sl_ds_all_table = gdal.OpenEx('tmp/sqlite_test.db', gdal.OF_VECTOR | gdal.OF_UPDATE,
+                                 open_options=['LIST_ALL_TABLES=YES'])
+    assert sl_ds_all_table.GetLayerCount() == 5, 'did not get expected layer count'
+    lyr = sl_ds_all_table.GetLayer(0)
+    assert lyr is not None
+    assert lyr.GetName() == 'a_layer', 'did not get expected layer name'
+    assert not sl_ds_all_table.IsLayerPrivate(0)
+
+    lyr = sl_ds_all_table.GetLayer(1)
+    assert lyr is not None
+    assert lyr.GetName() == 'tpoly', 'did not get expected layer name'
+    assert not sl_ds_all_table.IsLayerPrivate(1)
+
+    lyr = sl_ds_all_table.GetLayer(2)
+    assert lyr is not None
+    assert lyr.GetName() == 'geometry_columns', 'did not get expected layer name'
+    assert sl_ds_all_table.IsLayerPrivate(2)
+
+    lyr = sl_ds_all_table.GetLayer(3)
+    assert lyr is not None
+    assert lyr.GetName() == 'spatial_ref_sys', 'did not get expected layer name'
+    assert sl_ds_all_table.IsLayerPrivate(3)
+
+    lyr = sl_ds_all_table.GetLayer(4)
+    assert lyr is not None
+    assert lyr.GetName() == 'sqlite_sequence', 'did not get expected layer name'
+    assert sl_ds_all_table.IsLayerPrivate(4)
+
+
+
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
 # geometries are still OK.

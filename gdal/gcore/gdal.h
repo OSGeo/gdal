@@ -860,6 +860,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 int    CPL_DLL GDALDatasetGetLayerCount( GDALDatasetH );
 OGRLayerH CPL_DLL GDALDatasetGetLayer( GDALDatasetH, int );
 OGRLayerH CPL_DLL GDALDatasetGetLayerByName( GDALDatasetH, const char * );
+int       CPL_DLL GDALDatasetIsLayerPrivate( GDALDatasetH, int );
 OGRErr    CPL_DLL GDALDatasetDeleteLayer( GDALDatasetH, int );
 OGRLayerH CPL_DLL GDALDatasetCreateLayer( GDALDatasetH, const char *,
                                       OGRSpatialReferenceH, OGRwkbGeometryType,
