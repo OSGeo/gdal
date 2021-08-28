@@ -367,6 +367,10 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount( const char* pszFileName,
                                      GDALAccess /* eAccess */,
                                      const char* pszOwner )
 {
+    // May fix https://github.com/OSGeo/gdal/issues/4318
+    if( bInDestruction )
+        return;
+
     GDALProxyPoolCacheEntry* cur = firstEntry;
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
 
@@ -386,16 +390,18 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount( const char* pszFileName,
             /* dataset */
             GDALSetResponsiblePIDForCurrentThread(cur->responsiblePID);
 
-            refCountOfDisableRefCount ++;
-            GDALClose(cur->poDS);
-            refCountOfDisableRefCount --;
-
-            GDALSetResponsiblePIDForCurrentThread(responsiblePID);
+            GDALDataset* poDS = cur->poDS;
 
             cur->poDS = nullptr;
             cur->pszFileName[0] = '\0';
             CPLFree(cur->pszOwner);
             cur->pszOwner = nullptr;
+
+            refCountOfDisableRefCount ++;
+            GDALClose(poDS);
+            refCountOfDisableRefCount --;
+
+            GDALSetResponsiblePIDForCurrentThread(responsiblePID);
             break;
         }
 
