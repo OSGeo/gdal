@@ -1264,7 +1264,7 @@ DGNCreateConeElem( DGNHandle hDGN,
     }
     else
     {
-      psCone->quat[0] = 1 << 31;
+      psCone->quat[0] = static_cast<int>(1U << 31);
       psCone->quat[1] = 0;
       psCone->quat[2] = 0;
       psCone->quat[3] = 0;
