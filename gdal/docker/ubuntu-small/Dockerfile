@@ -161,7 +161,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
         export CXX=$PWD/ccache_g++.sh; \
         ccache -M 1G; \
     fi \
-    && LDFLAGS="-L/build${PROJ_INSTALL_PREFIX}/lib -linternalproj" ./configure --prefix=/usr "${WITH_HOST}" --without-libtool \
+    && LDFLAGS="-L/build${PROJ_INSTALL_PREFIX}/lib -linternalproj" \
+    ./configure --prefix=/usr --sysconfdir=/etc "${WITH_HOST}" --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
     --with-python \

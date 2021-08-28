@@ -281,7 +281,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         mkdir -p "$HOME/.ccache"; \
         ccache -M 1G; \
     fi \
-    && ./configure --prefix=/usr --without-libtool \
+    && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
     --with-hide-internal-symbols \
     --with-liblzma \
     --with-proj=/usr \

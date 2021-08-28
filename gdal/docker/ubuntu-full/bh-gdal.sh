@@ -62,7 +62,8 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
       GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS --with-dods-root=/usr "
     fi
 
-    LDFLAGS="-L/build${PROJ_INSTALL_PREFIX-/usr/local}/lib -linternalproj" ./configure --prefix=/usr "${WITH_HOST}" \
+    LDFLAGS="-L/build${PROJ_INSTALL_PREFIX-/usr/local}/lib -linternalproj" \
+    ./configure --prefix=/usr --sysconfdir=/etc "${WITH_HOST}" \
     --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
