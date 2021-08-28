@@ -32,6 +32,28 @@
 
 CPL_CVSID("$Id$")
 
+/************************************************************************/
+/*                     OGRPGeoDriverIdentify()                          */
+/************************************************************************/
+
+static int OGRPGeoDriverIdentify( GDALOpenInfo* poOpenInfo )
+
+{
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:")
+        || STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOMEDIA:"))
+    {
+        return FALSE;
+    }
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:") )
+        return TRUE;
+
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"mdb") )
+        return FALSE;
+
+    // Could potentially be a PGeo, Walk, Geomedia or generic ODBC database
+    return -1;
+}
 
 /************************************************************************/
 /*                                OGRPGeoDriverOpen()                   */
@@ -40,14 +62,8 @@ CPL_CVSID("$Id$")
 static GDALDataset * OGRPGeoDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:") )
-        return nullptr;
-
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOMEDIA:") )
-        return nullptr;
-
-    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:")
-        && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"mdb") )
+    // The method might return -1 when it is undecided
+    if (OGRPGeoDriverIdentify(poOpenInfo) == FALSE)
         return nullptr;
 
     // Disabling the attempt to guess if a MDB file is a PGeo database
@@ -130,6 +146,7 @@ void RegisterOGRPGeo()
 "</OpenOptionList>");
 
     poDriver->pfnOpen = OGRPGeoDriverOpen;
+    poDriver->pfnIdentify = OGRPGeoDriverIdentify;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
