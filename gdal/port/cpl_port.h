@@ -731,52 +731,14 @@ template<> struct CPLStaticAssert<true>
 
 /** Byte-swap a 16 bit pointer */
 #define CPL_SWAP16PTR(x) \
-do {                                                              \
-    GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
+do {                                                                        \
+    GUInt16 _n16;                                                           \
+    void* _lx = x;                                                          \
+    memcpy(&_n16, _lx, 2);                                                  \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 2); \
-                                                                  \
-    byTemp = _pabyDataT[0];                                       \
-    _pabyDataT[0] = _pabyDataT[1];                                \
-    _pabyDataT[1] = byTemp;                                       \
+    _n16 = CPL_SWAP16(_n16);                                                \
+    memcpy(_lx, &_n16, 2);                                                  \
 } while(0)
-
-#if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
-
-/** Byte-swap a 32 bit pointer */
-#define CPL_SWAP32PTR(x) \
-do {                                                              \
-    GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
-    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4);  \
-                                                                  \
-    byTemp = _pabyDataT[0];                                       \
-    _pabyDataT[0] = _pabyDataT[3];                                \
-    _pabyDataT[3] = byTemp;                                       \
-    byTemp = _pabyDataT[1];                                       \
-    _pabyDataT[1] = _pabyDataT[2];                                \
-    _pabyDataT[2] = byTemp;                                       \
-} while(0)
-
-/** Byte-swap a 64 bit pointer */
-#define CPL_SWAP64PTR(x) \
-do {                                                              \
-    GByte       byTemp, *_pabyDataT = CPL_REINTERPRET_CAST(GByte*, x);              \
-    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
-                                                                  \
-    byTemp = _pabyDataT[0];                                       \
-    _pabyDataT[0] = _pabyDataT[7];                                \
-    _pabyDataT[7] = byTemp;                                       \
-    byTemp = _pabyDataT[1];                                       \
-    _pabyDataT[1] = _pabyDataT[6];                                \
-    _pabyDataT[6] = byTemp;                                       \
-    byTemp = _pabyDataT[2];                                       \
-    _pabyDataT[2] = _pabyDataT[5];                                \
-    _pabyDataT[5] = byTemp;                                       \
-    byTemp = _pabyDataT[3];                                       \
-    _pabyDataT[3] = _pabyDataT[4];                                \
-    _pabyDataT[4] = byTemp;                                       \
-} while(0)
-
-#else
 
 /** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
@@ -799,8 +761,6 @@ do {                                                                        \
     _n64 = CPL_SWAP64(_n64);                                                \
     memcpy(_lx, &_n64, 8);                                                    \
 } while(0)
-
-#endif
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAPDOUBLE(p) CPL_SWAP64PTR(p)
