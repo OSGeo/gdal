@@ -705,11 +705,7 @@ template<> struct CPLStaticAssert<true>
 /** Byte-swap a 16bit unsigned integer */
 #define CPL_SWAP16(x) CPL_STATIC_CAST(GUInt16, (CPL_STATIC_CAST(GUInt16, x) << 8) | (CPL_STATIC_CAST(GUInt16, x) >> 8) )
 
-#if defined(HAVE_GCC_BSWAP) && (defined(__i386__) || defined(__x86_64__))
-/* Could potentially be extended to other architectures but must be checked */
-/* that the intrinsic is indeed efficient */
-/* GCC (at least 4.6  or above) need that include */
-#include <x86intrin.h>
+#if defined(HAVE_GCC_BSWAP)
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x) CPL_STATIC_CAST(GUInt32, __builtin_bswap32(CPL_STATIC_CAST(GUInt32, x)))
 /** Byte-swap a 64bit unsigned integer */
