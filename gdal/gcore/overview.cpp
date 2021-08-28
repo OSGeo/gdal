@@ -57,6 +57,17 @@
 #define USE_SSE2
 
 #include "gdalsse_priv.h"
+
+#ifdef __SSE3__
+#include <pmmintrin.h>
+#endif
+#ifdef __SSSE3__
+#include <tmmintrin.h>
+#endif
+#ifdef __SSE4_1__
+#include <smmintrin.h>
+#endif
+
 #endif
 
 CPL_CVSID("$Id$")
