@@ -588,7 +588,7 @@ DDFRecord *S57Writer::MakeRecord()
 /************************************************************************/
 
 bool S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
-                               double *padfX, double *padfY, double *padfZ )
+                               const double *padfX, const double *padfY, const double *padfZ )
 
 {
     const char *pszFieldName = "SG2D";
@@ -671,14 +671,14 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
         CPLAssert( poFeature->GetFieldAsInteger( "RCNM") == RCNM_VI
                    || poFeature->GetFieldAsInteger( "RCNM") == RCNM_VC );
 
-        double dfX = poPoint->getX();
-        double dfY = poPoint->getY();
-        double dfZ = poPoint->getZ();
+        const double adfX[1] = { poPoint->getX() };
+        const double adfY[1] = { poPoint->getY() };
+        const double adfZ[1] = { poPoint->getZ() };
 
-        if( dfZ == 0.0 )
-            WriteGeometry( poRec, 1, &dfX, &dfY, nullptr );
+        if( adfZ[0] == 0.0 )
+            WriteGeometry( poRec, 1, &adfX[0], &adfY[0], nullptr );
         else
-            WriteGeometry( poRec, 1, &dfX, &dfY, &dfZ );
+            WriteGeometry( poRec, 1, &adfX[0], &adfY[0], &adfZ[0] );
     }
 
 /* -------------------------------------------------------------------- */

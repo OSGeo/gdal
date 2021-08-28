@@ -338,9 +338,10 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      We need various criteria to skip out to block based methods.    */
 /* -------------------------------------------------------------------- */
+    int anBand[1] = { nBand };
     if( poBaseDS->TestUseBlockIO( nXOff, nYOff, nXSize, nYSize,
                                   nBufXSize, nBufYSize,
-                                  eBufType, 1, &nBand ) )
+                                  eBufType, 1, &anBand[0] ) )
         return GDALPamRasterBand::IRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType,
@@ -352,7 +353,7 @@ JPIPKAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     GDALAsyncReader* ario =
         poBaseDS->BeginAsyncReader(nXOff, nYOff, nXSize, nYSize,
                                    pData, nBufXSize, nBufYSize, eBufType,
-                                   1, &nBand,
+                                   1, &anBand[0],
                                    static_cast<int>(nPixelSpace),
                                    static_cast<int>(nLineSpace), 0, nullptr);
 
@@ -1207,7 +1208,7 @@ JPIPKAKDataset::TestUseBlockIO( CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
                                 int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize,
                                 CPL_UNUSED GDALDataType eDataType,
-                                int nBandCount, int *panBandList ) const
+                                int nBandCount, const int *panBandList ) const
 
 {
 /* -------------------------------------------------------------------- */
