@@ -131,7 +131,7 @@ AC_DEFUN([GEOS_INIT],[
       ax_save_LIBS="${LIBS}"
       LIBS=${GEOS_LIBS}
       ax_save_CFLAGS="${CFLAGS}"
-      CFLAGS="${GEOS_CFLAGS}"
+      CFLAGS="${GEOS_CFLAGS} ${CFLAGS}"
 
       AC_CHECK_LIB([geos_c],
         [GEOSversion],

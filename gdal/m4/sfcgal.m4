@@ -130,7 +130,7 @@ AC_DEFUN([SFCGAL_INIT],[
       ax_save_LIBS="${LIBS}"
       LIBS=${SFCGAL_LIBS}
       ax_save_CFLAGS="${CFLAGS}"
-      CFLAGS="${SFCGAL_CFLAGS}"
+      CFLAGS="${SFCGAL_CFLAGS} ${CFLAGS}"
 
       AC_CHECK_LIB([SFCGAL],
         [sfcgal_version],
