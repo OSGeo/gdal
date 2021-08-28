@@ -2858,12 +2858,11 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                         AntiRecursionStruct                          */
+/*                         GDALAntiRecursionStruct                      */
 /************************************************************************/
 
-namespace {
 // Prevent infinite recursion.
-struct AntiRecursionStruct
+struct GDALAntiRecursionStruct
 {
     struct DatasetContext
     {
@@ -2891,19 +2890,19 @@ struct AntiRecursionStruct
 
     std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
     int nRecLevel = 0;
+    std::map<std::string, int> m_oMapDepth{};
 };
-} // namespace
 
 #ifdef WIN32
 // Currently thread_local and C++ objects don't work well with DLL on Windows
 static void FreeAntiRecursion( void* pData )
 {
-    delete static_cast<AntiRecursionStruct*>(pData);
+    delete static_cast<GDALAntiRecursionStruct*>(pData);
 }
 
-static AntiRecursionStruct& GetAntiRecursion()
+static GDALAntiRecursionStruct& GetAntiRecursion()
 {
-    static AntiRecursionStruct dummy;
+    static GDALAntiRecursionStruct dummy;
     int bMemoryErrorOccurred = false;
     void* pData = CPLGetTLSEx(CTLS_GDALOPEN_ANTIRECURSION, &bMemoryErrorOccurred);
     if( bMemoryErrorOccurred )
@@ -2912,7 +2911,7 @@ static AntiRecursionStruct& GetAntiRecursion()
     }
     if( pData == nullptr)
     {
-        auto pAntiRecursion = new AntiRecursionStruct();
+        auto pAntiRecursion = new GDALAntiRecursionStruct();
         CPLSetTLSWithFreeFuncEx( CTLS_GDALOPEN_ANTIRECURSION,
                                  pAntiRecursion,
                                  FreeAntiRecursion, &bMemoryErrorOccurred );
@@ -2923,15 +2922,40 @@ static AntiRecursionStruct& GetAntiRecursion()
         }
         return *pAntiRecursion;
     }
-    return *static_cast<AntiRecursionStruct*>(pData);
+    return *static_cast<GDALAntiRecursionStruct*>(pData);
 }
 #else
-static thread_local AntiRecursionStruct g_tls_antiRecursion;
-static AntiRecursionStruct& GetAntiRecursion()
+static thread_local GDALAntiRecursionStruct g_tls_antiRecursion;
+static GDALAntiRecursionStruct& GetAntiRecursion()
 {
     return g_tls_antiRecursion;
 }
 #endif
+
+//! @cond Doxygen_Suppress
+GDALAntiRecursionGuard::GDALAntiRecursionGuard(const std::string& osIdentifier):
+    m_psAntiRecursionStruct(&GetAntiRecursion()),
+    m_osIdentifier(osIdentifier),
+    m_nDepth(++ m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier])
+{
+    CPLAssert(!osIdentifier.empty());
+}
+
+GDALAntiRecursionGuard::GDALAntiRecursionGuard(const GDALAntiRecursionGuard& other, const std::string& osIdentifier):
+    m_psAntiRecursionStruct(other.m_psAntiRecursionStruct),
+    m_osIdentifier(osIdentifier.empty() ? osIdentifier : other.m_osIdentifier + osIdentifier),
+    m_nDepth(m_osIdentifier.empty() ? 0 : ++ m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier])
+{
+}
+
+GDALAntiRecursionGuard::~GDALAntiRecursionGuard()
+{
+    if( !m_osIdentifier.empty() )
+    {
+        -- m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier];
+    }
+}
+//! @endcond
 
 /************************************************************************/
 /*                            GetFileList()                             */
@@ -2961,8 +2985,8 @@ char **GDALDataset::GetFileList()
     CPLString osMainFilename = GetDescription();
     VSIStatBufL sStat;
 
-    AntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
-    const AntiRecursionStruct::DatasetContext datasetCtxt(
+    GDALAntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
+    const GDALAntiRecursionStruct::DatasetContext datasetCtxt(
         osMainFilename, 0, 0);
     auto& aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
     if( aosDatasetList.find(datasetCtxt) != aosDatasetList.end() )
@@ -3331,7 +3355,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
                            const_cast<char **>(papszSiblingFiles));
     oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
-    AntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
+    GDALAntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
     if( sAntiRecursion.nRecLevel == 100 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -3339,7 +3363,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         return nullptr;
     }
 
-    auto dsCtxt = AntiRecursionStruct::DatasetContext(
+    auto dsCtxt = GDALAntiRecursionStruct::DatasetContext(
         std::string(pszFilename), nOpenFlags, CSLCount(papszAllowedDrivers));
     if( sAntiRecursion.aosDatasetNamesWithFlags.find(dsCtxt) !=
                 sAntiRecursion.aosDatasetNamesWithFlags.end() )

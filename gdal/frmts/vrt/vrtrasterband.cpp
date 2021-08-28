@@ -1151,7 +1151,7 @@ void VRTRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
 int VRTRasterBand::GetOverviewCount()
 
 {
-    VRTDataset* poVRTDS = static_cast<VRTDataset *>( poDS );
+    VRTDataset* poVRTDS = cpl::down_cast<VRTDataset *>( poDS );
     if( !poVRTDS->AreOverviewsEnabled() )
         return 0;
 
@@ -1164,8 +1164,27 @@ int VRTRasterBand::GetOverviewCount()
     if( nOverviewCount )
         return nOverviewCount;
 
-    // If not found, implicit virtual overviews
-    poVRTDS->BuildVirtualOverviews();
+    if( poVRTDS->m_apoOverviews.empty() )
+    {
+        // If not found, implicit virtual overviews
+
+        const std::string osFctId("VRTRasterBand::GetOverviewCount");
+        GDALAntiRecursionGuard oGuard(osFctId);
+        if( oGuard.GetCallDepth() >= 32 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+            return 0;
+        }
+
+        GDALAntiRecursionGuard oGuard2(oGuard, poVRTDS->GetDescription());
+        if( oGuard2.GetCallDepth() >= 2 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+            return 0;
+        }
+
+        poVRTDS->BuildVirtualOverviews();
+    }
     if( !poVRTDS->m_apoOverviews.empty() && poVRTDS->m_apoOverviews[0] )
         return static_cast<int>( poVRTDS->m_apoOverviews.size() );
 

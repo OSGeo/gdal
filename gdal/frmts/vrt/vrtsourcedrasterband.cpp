@@ -152,17 +152,19 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    // When using GDALProxyPoolDataset for sources, the recursion will not be
-    // detected at VRT opening but when doing RasterIO. As the proxy pool will
-    // return the already opened dataset, we can just test a member variable.
-    // We allow 1, since IRasterIO() can be called from ComputeStatistics(),
-    // which itself increments the recursion counter.
-    if( m_nRecursionCounter > 1 )
+    const std::string osFctId("VRTSourcedRasterBand::IRasterIO");
+    GDALAntiRecursionGuard oGuard(osFctId);
+    if( oGuard.GetCallDepth() >= 32 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "VRTSourcedRasterBand::IRasterIO() called "
-                  "recursively on the same band. "
-                  "It looks like the VRT is referencing itself." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
+    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
+    // Allow 2 recursion depths on the same dataset for non-nearest resampling
+    if( oGuard2.GetCallDepth() > 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
         return CE_Failure;
     }
 
@@ -307,7 +309,6 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
 
-    m_nRecursionCounter++;
 
     GDALProgressFunc const pfnProgressGlobal = psExtraArg->pfnProgress;
     void * const pProgressDataGlobal = psExtraArg->pProgressData;
@@ -339,8 +340,6 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     psExtraArg->pfnProgress = pfnProgressGlobal;
     psExtraArg->pProgressData = pProgressDataGlobal;
-
-    m_nRecursionCounter--;
 
     return eErr;
 }
@@ -579,18 +578,24 @@ double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
         return CPLAtofM(pszValue);
     }
 
-    if( m_nRecursionCounter > 0 )
+    const std::string osFctId("VRTSourcedRasterBand::GetMinimum");
+    GDALAntiRecursionGuard oGuard(osFctId);
+    if( oGuard.GetCallDepth() >= 32 )
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "VRTSourcedRasterBand::GetMinimum() called "
-            "recursively on the same band. "
-            "It looks like the VRT is referencing itself." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
         if( pbSuccess != nullptr )
             *pbSuccess = FALSE;
-        return 0.0;
+        return 0;
     }
-    m_nRecursionCounter ++;
+
+    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
+    if( oGuard2.GetCallDepth() >= 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        if( pbSuccess != nullptr )
+            *pbSuccess = FALSE;
+        return 0;
+    }
 
     double dfMin = 0;
     for( int iSource = 0; iSource < nSources; iSource++ )
@@ -602,15 +607,12 @@ double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
         if( !bSuccess )
         {
             dfMin = GDALRasterBand::GetMinimum(pbSuccess);
-            m_nRecursionCounter --;
             return dfMin;
         }
 
         if( iSource == 0 || dfSourceMin < dfMin )
             dfMin = dfSourceMin;
     }
-
-    m_nRecursionCounter --;
 
     if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
@@ -636,17 +638,24 @@ double VRTSourcedRasterBand::GetMaximum( int *pbSuccess )
         return CPLAtofM(pszValue);
     }
 
-    if( m_nRecursionCounter > 0 )
+    const std::string osFctId("VRTSourcedRasterBand::GetMaximum");
+    GDALAntiRecursionGuard oGuard(osFctId);
+    if( oGuard.GetCallDepth() >= 32 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "VRTSourcedRasterBand::GetMaximum() called "
-                  "recursively on the same band. "
-                  "It looks like the VRT is referencing itself." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
         if( pbSuccess != nullptr )
             *pbSuccess = FALSE;
-        return 0.0;
+        return 0;
     }
-    m_nRecursionCounter ++;
+
+    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
+    if( oGuard2.GetCallDepth() >= 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        if( pbSuccess != nullptr )
+            *pbSuccess = FALSE;
+        return 0;
+    }
 
     double dfMax = 0;
     for( int iSource = 0; iSource < nSources; iSource++ )
@@ -658,15 +667,12 @@ double VRTSourcedRasterBand::GetMaximum( int *pbSuccess )
         if( !bSuccess )
         {
             dfMax = GDALRasterBand::GetMaximum(pbSuccess);
-            m_nRecursionCounter--;
             return dfMax;
         }
 
         if( iSource == 0 || dfSourceMax > dfMax )
             dfMax = dfSourceMax;
     }
-
-    m_nRecursionCounter--;
 
     if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
@@ -711,19 +717,24 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
             return poBand->ComputeRasterMinMax( TRUE, adfMinMax );
     }
 
+    const std::string osFctId("VRTSourcedRasterBand::ComputeRasterMinMax");
+    GDALAntiRecursionGuard oGuard(osFctId);
+    if( oGuard.GetCallDepth() >= 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
+    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
+    if( oGuard2.GetCallDepth() >= 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try with source bands.                                          */
 /* -------------------------------------------------------------------- */
-    if( m_nRecursionCounter > 0 )
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "VRTSourcedRasterBand::ComputeRasterMinMax() called "
-            "recursively on the same band. "
-            "It looks like the VRT is referencing itself." );
-        return CE_Failure;
-    }
-    m_nRecursionCounter ++;
 
     adfMinMax[0] = 0.0;
     adfMinMax[1] = 0.0;
@@ -737,7 +748,6 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
         {
             const CPLErr eErr2 =
                 GDALRasterBand::ComputeRasterMinMax( bApproxOK, adfMinMax );
-            m_nRecursionCounter --;
             return eErr2;
         }
 
@@ -746,8 +756,6 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
         if( iSource == 0 || adfSourceMinMax[1] > adfMinMax[1] )
             adfMinMax[1] = adfSourceMinMax[1];
     }
-
-    m_nRecursionCounter--;
 
     return CE_None;
 }
@@ -808,19 +816,24 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                               pfnProgress, pProgressData );
     }
 
+    const std::string osFctId("VRTSourcedRasterBand::ComputeStatistics");
+    GDALAntiRecursionGuard oGuard(osFctId);
+    if( oGuard.GetCallDepth() >= 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
+    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
+    if( oGuard2.GetCallDepth() >= 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try with source bands.                                          */
 /* -------------------------------------------------------------------- */
-    if( m_nRecursionCounter > 0 )
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "VRTSourcedRasterBand::ComputeStatistics() called "
-            "recursively on the same band. "
-            "It looks like the VRT is referencing itself." );
-        return CE_Failure;
-    }
-    m_nRecursionCounter ++;
 
     double dfMin = 0.0;
     double dfMax = 0.0;
@@ -839,11 +852,8 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                                pdfMin, pdfMax,
                                                pdfMean, pdfStdDev,
                                                pfnProgress, pProgressData );
-        m_nRecursionCounter --;
         return eErr2;
     }
-
-    m_nRecursionCounter --;
 
     SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
 
@@ -903,19 +913,24 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
         }
     }
 
+    const std::string osFctId("VRTSourcedRasterBand::GetHistogram");
+    GDALAntiRecursionGuard oGuard(osFctId);
+    if( oGuard.GetCallDepth() >= 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
+    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
+    if( oGuard2.GetCallDepth() >= 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try with source bands.                                          */
 /* -------------------------------------------------------------------- */
-    if( m_nRecursionCounter > 0 )
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "VRTSourcedRasterBand::GetHistogram() called recursively on the "
-            "same band. It looks like the VRT is referencing itself." );
-        return CE_Failure;
-    }
-    m_nRecursionCounter ++;
-
     const CPLErr eErr =
         papoSources[0]->GetHistogram( GetXSize(), GetYSize(), dfMin, dfMax,
                                       nBuckets,
@@ -929,11 +944,8 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
                                           nBuckets, panHistogram,
                                           bIncludeOutOfRange, bApproxOK,
                                           pfnProgress, pProgressData );
-        m_nRecursionCounter --;
         return eErr2;
     }
-
-    m_nRecursionCounter--;
 
     SetDefaultHistogram( dfMin, dfMax, nBuckets, panHistogram );
 
