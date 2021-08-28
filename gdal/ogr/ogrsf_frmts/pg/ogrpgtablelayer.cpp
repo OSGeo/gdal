@@ -1813,8 +1813,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             else
                 osCommand += "''";
         }
-        else if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB &&
-                 bWkbAsOid )
+        else if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB /* && bWkbAsOid */ )
         {
             Oid     oid = GeometryToOID( poGeom );
 

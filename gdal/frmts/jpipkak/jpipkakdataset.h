@@ -174,7 +174,7 @@ public:
 
     int TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
                         int nBufXSize, int nBufYSize, GDALDataType eDataType,
-                        int nBandCount, int *panBandList ) const;
+                        int nBandCount, const int *panBandList ) const;
 
     //gdaldataset methods
     virtual CPLErr GetGeoTransform( double * ) override;

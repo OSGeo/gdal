@@ -57,11 +57,7 @@ void to_native(SUB_VISIRLINE& v) {
 }
 
 static void swap_64_bits(unsigned char* b) {
-    for (int i=0; i < 4; i++) {
-        unsigned char t = b[i];
-        b[i] = b[7-i];
-        b[7-i] = t;
-    }
+    CPL_SWAP64PTR(b);
 }
 
 void to_native(RADIOMETRIC_PROCESSING_RECORD& r) {

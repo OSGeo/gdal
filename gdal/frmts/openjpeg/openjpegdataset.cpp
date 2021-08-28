@@ -705,7 +705,7 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
 
     if( (nBufXSize < nXSize || nBufYSize < nYSize)
-        && poBand->GetOverviewCount() > 0 && eRWFlag == GF_Read )
+        && poBand->GetOverviewCount() > 0 )
     {
         int bTried;
         CPLErr eErr = TryOverviewRasterIO( eRWFlag,

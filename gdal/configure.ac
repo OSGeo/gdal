@@ -486,7 +486,6 @@ dnl ---------------------------------------------------------------------------
 AC_MSG_CHECKING([whether GCC bswap builtins are available])
 
 rm -f bswapbuiltins.c
-echo '#include <x86intrin.h>' > bswapbuiltins.c
 echo 'int main(int argc, char** argv) { (void)__builtin_bswap32(0); (void)__builtin_bswap64(0); return 0; } ' >> bswapbuiltins.c
 if test -z "`${CC} ${CFLAGS} bswapbuiltins.c -o bswapbuiltins 2>&1`" ; then
     HAVE_GCC_BSWAP=yes

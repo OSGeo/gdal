@@ -985,12 +985,13 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
     float fValue = 0.0f;
     memcpy(&fValue, &nValue, 4);
 
-    char *pcValue = reinterpret_cast<char*>(&nValue);
+    char achValue[4];
+    memcpy(achValue, &nValue, 4);
 
     GInt16 n16Val1 = 0;
-    memcpy(&n16Val1, pcValue + 2, sizeof(GInt16));
+    memcpy(&n16Val1, achValue + 2, sizeof(GInt16));
     GInt16 n16Val2 = 0;
-    memcpy(&n16Val2, pcValue, sizeof(GInt16));
+    memcpy(&n16Val2, achValue, sizeof(GInt16));
 
     /* For double precision values, we only use the first half
      * of the height bytes... and leave the other 4 bytes as zeros!
@@ -1012,10 +1013,10 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
                     nOffset, nValue, nValue,
                     n16Val1, n16Val2, fValue, dValue);
 
-    fprintf(fpOut, "\t[%c%c%c%c]\n", isprint(pcValue[0])?pcValue[0]:'.',
-                             isprint(pcValue[1])?pcValue[1]:'.',
-                             isprint(pcValue[2])?pcValue[2]:'.',
-                             isprint(pcValue[3])?pcValue[3]:'.');
+    fprintf(fpOut, "\t[%c%c%c%c]\n", isprint(achValue[0])?achValue[0]:'.',
+                             isprint(achValue[1])?achValue[1]:'.',
+                             isprint(achValue[2])?achValue[2]:'.',
+                             isprint(achValue[3])?achValue[3]:'.');
 }
 
 /**********************************************************************

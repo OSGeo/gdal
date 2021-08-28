@@ -66,7 +66,7 @@ inline static int run_length(const Byte *s, int max_count)
 //
 // C compress function, returns compressed size
 // len is the size of the input buffer
-// caller should ensure that output buffer is at least 2 * N to be safe, 
+// caller should ensure that output buffer is at least 2 * N to be safe,
 // dropping to N * 7/4 for larger input
 // If the Code is chosen to be the least present value in input, the
 // output size requirement is bound by N / 256 + N
@@ -176,7 +176,8 @@ static Byte getLeastUsed(const Byte *src, size_t len) {
     --len;
     hist[*src++]++;
   }
-  return UC(std::min_element(hist.begin(), hist.end()) - hist.begin());
+  const size_t nIdxMin = std::min_element(hist.begin(), hist.end()) - hist.begin();
+  return UC(nIdxMin);
 }
 
 // Read from a packed source until the src is exhausted

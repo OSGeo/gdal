@@ -577,15 +577,20 @@ GMLFeature *GMLReader::NextFeature()
 #ifdef HAVE_EXPAT
     if (bUseExpatReader)
         return NextFeatureExpat();
-#endif
-
-#ifdef HAVE_XERCES
-    if (!bUseExpatReader)
-        return NextFeatureXerces();
-#endif
-
+#  ifdef HAVE_XERCES
+    return NextFeatureXerces();
+#  else
     CPLError(CE_Failure, CPLE_AppDefined, "NextFeature(): Should not happen");
     return nullptr;
+#  endif
+#else
+#  ifdef HAVE_XERCES
+    if (!bUseExpatReader)
+        return NextFeatureXerces();
+#  endif
+    CPLError(CE_Failure, CPLE_AppDefined, "NextFeature(): Should not happen");
+    return nullptr;
+#endif
 }
 
 /************************************************************************/

@@ -383,8 +383,8 @@ public:
     bool                CreateS57File( const char *pszFilename );
     bool                Close();
 
-    bool                WriteGeometry( DDFRecord *, int, double *, double *,
-                                       double * );
+    bool                WriteGeometry( DDFRecord *, int, const double *, const double *,
+                                       const double * );
     bool                WriteATTF( DDFRecord *, OGRFeature * );
     bool                WritePrimitive( OGRFeature *poFeature );
     bool                WriteCompleteFeature( OGRFeature *poFeature );

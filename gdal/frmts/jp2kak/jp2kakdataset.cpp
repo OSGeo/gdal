@@ -2491,6 +2491,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // Set the GeoTIFF and GML boxes if georeferencing is available,
     // and this is a JP2 file.
     double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    // cppcheck-suppress knownConditionTrueFalse
     if( bIsJP2
         && ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
              && (adfGeoTransform[0] != 0.0
@@ -2581,6 +2582,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     // Open codestream box.
+    // cppcheck-suppress knownConditionTrueFalse
     if( bIsJP2 )
         jp2_out.open_codestream();
 

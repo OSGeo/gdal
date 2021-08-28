@@ -315,13 +315,13 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psCell->rnghigh.y = DGN_INT32( psDGN->abyElem + 64 );
 
               psCell->trans[0] =
-                1.0 * DGN_INT32( psDGN->abyElem + 68 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 68 ) / (1U<<31);
               psCell->trans[1] =
-                1.0 * DGN_INT32( psDGN->abyElem + 72 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 72 ) / (1U<<31);
               psCell->trans[2] =
-                1.0 * DGN_INT32( psDGN->abyElem + 76 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 76 ) / (1U<<31);
               psCell->trans[3] =
-                1.0 * DGN_INT32( psDGN->abyElem + 80 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 80 ) / (1U<<31);
 
               psCell->origin.x = DGN_INT32( psDGN->abyElem + 84 );
               psCell->origin.y = DGN_INT32( psDGN->abyElem + 88 );
@@ -357,23 +357,23 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psCell->rnghigh.z = DGN_INT32( psDGN->abyElem + 72 );
 
               psCell->trans[0] =
-                1.0 * DGN_INT32( psDGN->abyElem + 76 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 76 ) / (1U<<31);
               psCell->trans[1] =
-                1.0 * DGN_INT32( psDGN->abyElem + 80 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 80 ) / (1U<<31);
               psCell->trans[2] =
-                1.0 * DGN_INT32( psDGN->abyElem + 84 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 84 ) / (1U<<31);
               psCell->trans[3] =
-                1.0 * DGN_INT32( psDGN->abyElem + 88 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 88 ) / (1U<<31);
               psCell->trans[4] =
-                1.0 * DGN_INT32( psDGN->abyElem + 92 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 92 ) / (1U<<31);
               psCell->trans[5] =
-                1.0 * DGN_INT32( psDGN->abyElem + 96 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 96 ) / (1U<<31);
               psCell->trans[6] =
-                1.0 * DGN_INT32( psDGN->abyElem + 100 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 100 ) / (1U<<31);
               psCell->trans[7] =
-                1.0 * DGN_INT32( psDGN->abyElem + 104 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 104 ) / (1U<<31);
               psCell->trans[8] =
-                1.0 * DGN_INT32( psDGN->abyElem + 108 ) / (1<<31);
+                1.0 * DGN_INT32( psDGN->abyElem + 108 ) / (1U<<31);
 
               psCell->origin.x = DGN_INT32( psDGN->abyElem + 112 );
               psCell->origin.y = DGN_INT32( psDGN->abyElem + 116 );
