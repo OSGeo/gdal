@@ -230,26 +230,19 @@ char** GDALMDReaderEROS::LoadImdTxtFile()
         return nullptr;
 
     char** papszIMD = nullptr;
-    char szName[22];
-    int i, j;
 
-    for(i = 0; papszLines[i] != nullptr; i++)
+    for(int i = 0; papszLines[i] != nullptr; i++)
     {
         const char *pszLine = papszLines[i];
         if( CPLStrnlen(pszLine, 21) >= 21 )
         {
-            for(j = 0; j < 21; j++)
+            char szName[22];
+            memcpy(szName, pszLine, 21);
+            szName[21] = 0;
+            char* pszSpace = strchr(szName, ' ');
+            if(pszSpace)
             {
-                if(pszLine[j] == ' ' )
-                {
-                    break;
-                }
-                szName[j] = pszLine[j];
-            }
-
-            if(j > 0)
-            {
-                szName[j] = 0;
+                *pszSpace = 0;
                 papszIMD = CSLAddNameValue(papszIMD, szName, pszLine + 20);
             }
         }
