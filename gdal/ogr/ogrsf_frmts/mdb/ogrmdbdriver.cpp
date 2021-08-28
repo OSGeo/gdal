@@ -92,8 +92,14 @@ OGRDataSource *OGRMDBDriver::Open( const char * pszFilename,
         delete poDS;
         return nullptr;
     }
-    else
-        return poDS;
+
+    if( !GDALIsDriverDeprecatedForGDAL35StillEnabled("MDB", "You should consider using the generic ODBC driver with an updated MDBTools Access driver instead.") )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
+    return poDS;
 }
 
 /************************************************************************/
