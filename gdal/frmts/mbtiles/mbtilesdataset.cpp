@@ -2450,6 +2450,7 @@ int MBTilesGetBandCountAndTileSize(
         VSICurlUninstallReadCbk(fpCURLOGR);
 
         /* Did the spy intercept something interesting ? */
+        // cppcheck-suppress knownConditionTrueFalse
         if (nBands != -1)
         {
             CPLErrorReset();

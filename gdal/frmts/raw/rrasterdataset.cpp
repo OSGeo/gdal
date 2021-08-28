@@ -1322,6 +1322,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
             }
 
+            // cppcheck-suppress knownConditionTrueFalse
             if( !bIsCompatibleOfCT )
             {
                 poDS->m_poRAT.reset(new GDALDefaultRasterAttributeTable());
