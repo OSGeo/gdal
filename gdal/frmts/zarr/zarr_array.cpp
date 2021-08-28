@@ -3359,7 +3359,20 @@ std::shared_ptr<ZarrArray> ZarrGroupBase::LoadArray(const std::string& osArrayNa
                 {
                     const auto osDimFullpath = arrayDims[i].ToString();
                     auto poDim = poRG->OpenDimensionFromFullname(osDimFullpath);
-                    if( poDim )
+                    if( poDim == nullptr )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot find NCZarr dimension %s",
+                                 osDimFullpath.c_str());
+                    }
+                    else if( poDim->GetSize() != aoDims[i]->GetSize() )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Inconsistency in size between NCZarr "
+                                 "dimension %s and regular dimension",
+                                 osDimFullpath.c_str());
+                    }
+                    else
                     {
                         aoDims[i] = poDim;
 

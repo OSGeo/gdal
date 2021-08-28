@@ -638,18 +638,6 @@ bool ZarrGroupV2::InitFromZGroup(const CPLJSONObject& obj)
             }
         }
 
-        // Create dimensions first, as they will be potentially patched
-        // by the OpenMDArray() later
-        const auto dims = nczarrGroup["dims"];
-        for( const auto& jDim: dims.GetChildren() )
-        {
-            const GUInt64 nSize = jDim.ToLong();
-            CreateDimension(jDim.GetName(),
-                            std::string(), // type
-                            std::string(), // direction,
-                            nSize, nullptr);
-        }
-
         const auto IsValidName = [](const std::string& s)
         {
             return !s.empty() &&
@@ -658,6 +646,34 @@ bool ZarrGroupV2::InitFromZGroup(const CPLJSONObject& obj)
                    s.find("/") == std::string::npos &&
                    s.find("\\") == std::string::npos;
         };
+
+        // Create dimensions first, as they will be potentially patched
+        // by the OpenMDArray() later
+        const auto dims = nczarrGroup["dims"];
+        for( const auto& jDim: dims.GetChildren() )
+        {
+            const auto osName = jDim.GetName();
+            const GUInt64 nSize = jDim.ToLong();
+            if( !IsValidName(osName) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid dimension name for %s",
+                         osName.c_str());
+            }
+            else if( nSize == 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid dimension size for %s",
+                         osName.c_str());
+            }
+            else
+            {
+                CreateDimension(osName,
+                                std::string(), // type
+                                std::string(), // direction,
+                                nSize, nullptr);
+            }
+        }
 
         const auto vars = nczarrGroup["vars"].ToArray();
         // open first indexing variables

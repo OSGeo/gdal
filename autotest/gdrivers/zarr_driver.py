@@ -2539,3 +2539,64 @@ def test_zarr_advise_read(compression):
     finally:
         gdal.RmdirRecursive(filename)
 
+
+
+def test_zarr_read_invalid_nczarr_dim():
+
+    try:
+        gdal.Mkdir('/vsimem/test.zarr', 0)
+
+        j = { "chunks": [1,1],
+              "compressor": None,
+              "dtype": '!b1',
+              "fill_value": None,
+              "filters": None,
+              "order": "C",
+              "shape": [ 1,1 ],
+              "zarr_format": 2,
+              "_NCZARR_ARRAY":{"dimrefs":["/MyGroup/lon", "/OtherGroup/lat"]}
+        }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/.zarray', json.dumps(j))
+
+        j = { "chunks": [1],
+              "compressor": None,
+              "dtype": '!b1',
+              "fill_value": None,
+              "filters": None,
+              "order": "C",
+              "shape": [ 1 ],
+              "zarr_format": 2
+        }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/MyGroup/lon/.zarray', json.dumps(j))
+
+        j = { "_NCZARR_GROUP":{ "dims":{ "lon": 0 } } }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/MyGroup/.zgroup', json.dumps(j))
+
+        j = { "chunks": [2],
+              "compressor": None,
+              "dtype": '!b1',
+              "fill_value": None,
+              "filters": None,
+              "order": "C",
+              "shape": [ 2 ],
+              "zarr_format": 2
+        }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/OtherGroup/lat/.zarray', json.dumps(j))
+
+        j = { "_NCZARR_GROUP":{ "dims":{ "lat": 2, "invalid.name": 2 } } }
+
+        gdal.FileFromMemBuffer('/vsimem/test.zarr/OtherGroup/.zgroup', json.dumps(j))
+
+        with gdaltest.error_handler():
+            ds = gdal.OpenEx('/vsimem/test.zarr', gdal.OF_MULTIDIM_RASTER)
+            assert ds
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray('test')
+            assert ar
+
+    finally:
+        gdal.RmdirRecursive('/vsimem/test.zarr')
