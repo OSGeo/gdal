@@ -694,7 +694,7 @@ bool WCSDataset201::ExtractGridInfo()
     std::vector<CPLString> uoms = Split(
         CPLGetXMLValue(coverage, (path + ".uomLabels").c_str(), ""), " ", axis_order_swap);
 
-    if (axes.size() < 2 || bbox.size() < 2) {
+    if (axes.size() < 2) {
         CPLError(CE_Failure, CPLE_AppDefined, "The coverage has less than 2 dimensions or no axisLabels.");
         return false;
     }
