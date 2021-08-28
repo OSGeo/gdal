@@ -9,18 +9,6 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 
 # Alpine based (3.14)
 
-## Ultra small: `osgeo/gdal:alpine-ultrasmall-latest`
-
-* Image size: ~ 50 MB
-* Raster drivers: VRT, GTiff, HFA, PNG, JPEG, MEM, JP2OpenJPEG, WEB, GPKG
-* Vector drivers: Shapefile, MapInfo, VRT, Memory, GeoJSON, GPKG, SQLite
-* External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp, libzstd, libtiff (no LERC support at time of writing)
-* No GDAL Python
-* Base PROJ grid package
-* Overall licensing terms of the GDAL build: permissive (X/MIT, BSD style, Apache, etc..)
-
-See [alpine-ultrasmall/Dockerfile](alpine-ultrasmall/Dockerfile)
-
 ## Small: `osgeo/gdal:alpine-small-latest`
 
 * Image size: ~ 59 MB
