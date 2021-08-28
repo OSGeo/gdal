@@ -796,6 +796,19 @@ def test_ogr_flatgeobuf_ossfuzz_bug_29462():
 
 
 ###############################################################################
+# Check that we don't crash or leak
+
+
+@pytest.mark.parametrize("filename", ['data/flatgeobuf/invalid_polyhedralsurface_of_curvepolygon.fgb',
+                                      'data/flatgeobuf/invalid_compoundcurve_non_contiguous_curves.fgb'])
+def test_ogr_flatgeobuf_read_invalid_geometries(filename):
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(filename)
+        lyr = ds.GetLayer(0)
+        for f in lyr:
+            pass
+
+###############################################################################
 
 
 def test_ogr_flatgeobuf_read_coordinate_metadata_wkt():
