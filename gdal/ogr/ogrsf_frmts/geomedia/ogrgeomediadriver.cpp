@@ -49,36 +49,6 @@ static GDALDataset *OGRGeomediaDriverOpen( GDALOpenInfo* poOpenInfo )
         && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"mdb") )
         return nullptr;
 
-    /* Disabling the attempt to guess if a MDB file is a Geomedia database */
-    /* or not. See similar fix in PGeo driver for rationale. */
-#if 0
-    if( !STARTS_WITH_CI(pszFilename, "GEOMEDIA:") &&
-        EQUAL(CPLGetExtension(pszFilename),"mdb") )
-    {
-        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-        if (!fp)
-            return NULL;
-        GByte* pabyHeader = (GByte*) CPLMalloc(100000);
-        VSIFReadL(pabyHeader, 100000, 1, fp);
-        VSIFCloseL(fp);
-
-        /* Look for GAliasTable table */
-        const GByte pabyNeedle[] = { 'G', 0, 'A', 0, 'l', 0, 'i', 0, 'a', 0, 's', 0, 'T', 0, 'a', 0, 'b', 0, 'l', 0, 'e'};
-        int bFound = FALSE;
-        for(int i=0;i<100000 - (int)sizeof(pabyNeedle);i++)
-        {
-            if (memcmp(pabyHeader + i, pabyNeedle, sizeof(pabyNeedle)) == 0)
-            {
-                bFound = TRUE;
-                break;
-            }
-        }
-        CPLFree(pabyHeader);
-        if (!bFound)
-            return NULL;
-    }
-#endif
-
 #ifndef WIN32
     // Try to register MDB Tools driver
     CPLODBCDriverInstaller::InstallMdbToolsDriver();
