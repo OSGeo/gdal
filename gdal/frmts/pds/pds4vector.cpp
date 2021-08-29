@@ -1748,7 +1748,7 @@ void PDS4DelimitedTable::GenerateVRT()
 
     CPLCreateXMLElementAndValue(psLayer, "SrcLayer", GetName());
 
-    CPLCreateXMLElementAndValue(psLayer, "GeometryType",
+    CPLXMLNode* psLastChild = CPLCreateXMLElementAndValue(psLayer, "GeometryType",
         OGRVRTGetSerializedGeometryType(GetGeomType()).c_str());
 
     if( GetSpatialRef() )
@@ -1762,13 +1762,18 @@ void PDS4DelimitedTable::GenerateVRT()
         }
     }
 
-    for( int i = 0; i < m_poRawFeatureDefn->GetFieldCount(); i++ )
+    while( psLastChild->psNext )
+        psLastChild = psLastChild->psNext;
+    const int nFieldCount = m_poRawFeatureDefn->GetFieldCount();
+    for( int i = 0; i < nFieldCount; i++ )
     {
         if( i != m_iWKT && i != m_iLongField && i != m_iLatField &&
             i != m_iAltField )
         {
             OGRFieldDefn* poFieldDefn = m_poRawFeatureDefn->GetFieldDefn(i);
-            CPLXMLNode* psField = CPLCreateXMLNode(psLayer, CXT_Element, "Field");
+            CPLXMLNode* psField = CPLCreateXMLNode(nullptr, CXT_Element, "Field");
+            psLastChild->psNext = psField;
+            psLastChild = psField;
             CPLAddXMLAttributeAndValue(psField, "name", poFieldDefn->GetNameRef());
             CPLAddXMLAttributeAndValue(psField, "type",
                                     OGR_GetFieldTypeName(poFieldDefn->GetType()));
@@ -1788,16 +1793,20 @@ void PDS4DelimitedTable::GenerateVRT()
 
     if( m_iWKT >= 0 )
     {
-        CPLXMLNode* psField = CPLCreateXMLNode(psLayer,
+        CPLXMLNode* psField = CPLCreateXMLNode(nullptr,
                                                CXT_Element, "GeometryField");
+        psLastChild->psNext = psField;
+        psLastChild = psField;
         CPLAddXMLAttributeAndValue(psField, "encoding", "WKT");
         CPLAddXMLAttributeAndValue(psField, "field",
                             m_poRawFeatureDefn->GetFieldDefn(m_iWKT)->GetNameRef());
     }
     else if( m_iLongField >= 0 && m_iLatField >= 0 )
     {
-        CPLXMLNode* psField = CPLCreateXMLNode(psLayer,
+        CPLXMLNode* psField = CPLCreateXMLNode(nullptr,
                                                CXT_Element, "GeometryField");
+        psLastChild->psNext = psField;
+        psLastChild = psField;
         CPLAddXMLAttributeAndValue(psField, "encoding", "PointFromColumns");
         CPLAddXMLAttributeAndValue(psField, "x",
                 m_poRawFeatureDefn->GetFieldDefn(m_iLongField)->GetNameRef());
@@ -1809,6 +1818,8 @@ void PDS4DelimitedTable::GenerateVRT()
                     m_poRawFeatureDefn->GetFieldDefn(m_iAltField)->GetNameRef());
         }
     }
+
+    CPL_IGNORE_RET_VAL(psLastChild);
 
     CPLSerializeXMLTreeToFile(psRoot, osVRTFilename);
     CPLDestroyXMLNode(psRoot);
@@ -2285,37 +2296,47 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
                         (osPrefix + "fields").c_str(),
                         CPLSPrintf("%d", static_cast<int>(m_aoFields.size())));
 
-    CPLCreateXMLElementAndValue(psRecord,
+    CPLXMLNode* psLastChild = CPLCreateXMLElementAndValue(psRecord,
                                 (osPrefix + "groups").c_str(), "0");
 
 
     CPLAssert(static_cast<int>(m_aoFields.size()) ==
                         m_poRawFeatureDefn->GetFieldCount());
 
+    const auto osPrefixedFieldDelimited(osPrefix + "Field_Delimited");
+    const auto osPrefixedName(osPrefix + "name");
+    const auto osPrefixedFieldNumber(osPrefix + "field_number");
+    const auto osPrefixedFieldData(osPrefix + "data_type");
+    const auto osPrefixMaxFieldLength(osPrefix + "maximum_field_length");
+    const auto osPrefixedUnit(osPrefix + "unit");
+    const auto osPrefixedDescription(osPrefix + "description");
+    CPLAssert(psLastChild->psNext == nullptr);
     for(int i = 0; i < static_cast<int>(m_aoFields.size()); i++ )
     {
-        auto& f= m_aoFields[i];
+        const auto& f = m_aoFields[i];
 
         CPLXMLNode* psField = CPLCreateXMLNode(
-            psRecord, CXT_Element, (osPrefix + "Field_Delimited").c_str());
+            nullptr, CXT_Element, osPrefixedFieldDelimited.c_str());
+        psLastChild->psNext = psField;
+        psLastChild = psField;
 
         CPLCreateXMLElementAndValue(psField,
-                        (osPrefix + "name").c_str(),
+                        osPrefixedName.c_str(),
                         m_poRawFeatureDefn->GetFieldDefn(i)->GetNameRef());
 
         CPLCreateXMLElementAndValue(psField,
-                                    (osPrefix + "field_number").c_str(),
+                                    osPrefixedFieldNumber.c_str(),
                                     CPLSPrintf("%d", i+1));
 
         CPLCreateXMLElementAndValue(psField,
-                                    (osPrefix + "data_type").c_str(),
+                                    osPrefixedFieldData.c_str(),
                                     f.m_osDataType.c_str());
 
         int nWidth = m_poRawFeatureDefn->GetFieldDefn(i)->GetWidth();
         if( nWidth > 0 )
         {
             auto psfield_length = CPLCreateXMLElementAndValue(psField,
-                                        (osPrefix + "maximum_field_length").c_str(),
+                                        osPrefixMaxFieldLength.c_str(),
                                         CPLSPrintf("%d", nWidth));
             CPLAddXMLAttributeAndValue(psfield_length, "unit", "byte");
         }
@@ -2323,14 +2344,14 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode* psFAO)
         if( !f.m_osUnit.empty() )
         {
             CPLCreateXMLElementAndValue(psField,
-                                        (osPrefix + "unit").c_str(),
+                                        osPrefixedUnit.c_str(),
                                         m_aoFields[i].m_osUnit.c_str());
         }
 
         if( !f.m_osDescription.empty() )
         {
             CPLCreateXMLElementAndValue(psField,
-                                        (osPrefix + "description").c_str(),
+                                        osPrefixedDescription.c_str(),
                                         m_aoFields[i].m_osDescription.c_str());
         }
 
