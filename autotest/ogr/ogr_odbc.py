@@ -192,8 +192,8 @@ def test_extensions():
 
 
 def test_null_memo():
-    if sys.platform != 'win32':
-        pytest.skip("Currently failing on mdbtools driver")
+    if not recent_enough_mdb_odbc_driver():
+        pytest.skip("test skipped because of assumption that a not enough version of MDBTools is available")
 
     odbc_drv = ogr.GetDriverByName('ODBC')
     ds = odbc_drv.Open('data/mdb/null_memo.mdb')
