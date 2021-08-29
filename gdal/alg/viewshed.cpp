@@ -53,12 +53,12 @@ inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget, doubl
     std::vector<GByte>& vResult, GByte byVisibleVal, GByte byInvisibleVal)
 {
     if (padfZVal[iPixel] + dfZTarget < dfZ)
-    {
-        padfZVal[iPixel] = dfZ;
         vResult[iPixel] = byInvisibleVal;
-    }
     else
         vResult[iPixel] = byVisibleVal;
+
+    if (padfZVal[iPixel] < dfZ)
+        padfZVal[iPixel] = dfZ;
 }
 
 inline static bool AdjustHeightInRange(const double* adfGeoTransform, int iPixel, int iLine, double& dfHeight, double dfDistance2, double dfCurvCoeff, double dfSphereDiameter)
