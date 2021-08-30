@@ -669,6 +669,7 @@ typedef struct
 #define VSI_STAT_EXISTS_FLAG    0x1
 #define VSI_STAT_NATURE_FLAG    0x2
 #define VSI_STAT_SIZE_FLAG      0x4
+#define VSI_STAT_SET_ERROR_FLAG 0x8
 
 struct StatBuf
 {
