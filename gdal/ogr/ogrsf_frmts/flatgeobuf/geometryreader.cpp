@@ -315,7 +315,12 @@ OGRCurvePolygon *GeometryReader::readCurvePolygon()
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
         if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
-        cp->addRingDirectly(g.release()->toCurve());
+        auto poCurve = g.release()->toCurve();
+        if( cp->addRingDirectly(poCurve) != OGRERR_NONE )
+        {
+            delete poCurve;
+            return nullptr;
+        }
     }
     return cp.release();
 }
