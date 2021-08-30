@@ -232,6 +232,42 @@ def test_ogr_pgeo_list_all_tables():
         assert name not in private_layers
 
 
+###############################################################################
+# Test opening a private table by name
+
+
+def test_ogr_pgeo_open_private_table():
+    pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
+    assert pgeo_ds is not None
+
+    assert pgeo_ds.GetLayerCount() == 4, 'did not get expected layer count'
+
+    # open a standard layer by name
+    lines_lyr = pgeo_ds.GetLayerByName('lines')
+    assert lines_lyr is not None
+    assert lines_lyr.GetGeomType() == ogr.wkbMultiLineString, 'did not get expected layer geometry type'
+    assert lines_lyr.GetFeatureCount() == 6, 'did not get expected feature count'
+
+    gdb_items_lyr = pgeo_ds.GetLayerByName('GDB_Items')
+    assert gdb_items_lyr is not None
+    
+
+    assert gdb_items_lyr is not None
+    assert gdb_items_lyr.GetGeomType() == ogr.wkbNone, 'did not get expected layer geometry type'
+    assert gdb_items_lyr.GetFeatureCount() == 6, 'did not get expected feature count'
+
+    feat = gdb_items_lyr.GetNextFeature()
+    # depending on ODBC driver, UID fields have different text representations
+    assert 'ECC818B5-6C5D-4447-BEF5' in feat.GetField('UUID')
+
+    # try a second time, same layer should be returned
+    gdb_items_lyr2 = pgeo_ds.GetLayerByName('GDB_Items')
+    assert gdb_items_lyr2 is not None
+
+    # a layer which doesn't exist
+    other_lyr = pgeo_ds.GetLayerByName('xxx')
+    assert other_lyr is None
+
 
 ###############################################################################
 # Test spatial filter

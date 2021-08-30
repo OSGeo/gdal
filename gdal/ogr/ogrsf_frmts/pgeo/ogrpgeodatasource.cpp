@@ -183,6 +183,7 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
         {
             const CPLString osTableName = CPLString( oTableList.GetColData(2) );
             const CPLString osLCTableName(CPLString(osTableName).tolower());
+            m_aosAllLCTableNames.insert( osLCTableName );
 
             if( osLCTableName == "gdb_items" )
             {
@@ -315,6 +316,43 @@ OGRLayer *OGRPGeoDataSource::GetLayer( int iLayer )
         return nullptr;
     else
         return papoLayers[iLayer];
+}
+
+OGRLayer* OGRPGeoDataSource::GetLayerByName( const char* pszLayerName )
+{
+  OGRLayer* poLayer = GDALDataset::GetLayerByName(pszLayerName);
+  if( poLayer != nullptr )
+      return poLayer;
+
+  // if table name doesn't exist in database, don't try any further
+  const CPLString osLCTableName(CPLString(pszLayerName).tolower());
+  if ( m_aosAllLCTableNames.find( osLCTableName ) == m_aosAllLCTableNames.end() )
+      return nullptr;
+
+  for( const auto & poInvisibleLayer : m_apoInvisibleLayers )
+  {
+      if( EQUAL(poInvisibleLayer->GetName(), pszLayerName) )
+          return poInvisibleLayer.get();
+  }
+
+  std::unique_ptr< OGRPGeoTableLayer > poInvisibleLayer( new OGRPGeoTableLayer( this ) );
+
+  if( poInvisibleLayer->Initialize( pszLayerName,         // TableName
+                           nullptr,         // FieldName
+                           0,   // ShapeType (ESRI_LAYERGEOMTYPE_NULL)
+                           0,   // ExtentLeft
+                           0,   // ExtentRight
+                           0,   // ExtentBottom
+                           0,   // ExtentTop
+                           0,   // SRID
+                           0,   // HasZ
+                           0)   // HasM
+      == CE_None )
+  {
+      poLayer = poInvisibleLayer.get();
+      m_apoInvisibleLayers.emplace_back( std::move( poInvisibleLayer ) );
+  }
+  return poLayer;
 }
 
 /************************************************************************/

@@ -35,6 +35,8 @@
 #include "cpl_odbc.h"
 #include "cpl_error.h"
 
+#include <unordered_set>
+
 /************************************************************************/
 /*                            OGRPGeoLayer                              */
 /************************************************************************/
@@ -174,7 +176,10 @@ class OGRPGeoDataSource final: public OGRDataSource
 
     mutable CPLODBCSession oSession;
 
+    std::unordered_set< std::string > m_aosAllLCTableNames;
     bool                m_bHasGdbItemsTable = false;
+
+    std::vector<std::unique_ptr<OGRLayer>> m_apoInvisibleLayers;
 
 #ifndef _WIN32
     mutable bool        m_COUNT_STAR_state_known = false;
@@ -193,6 +198,7 @@ class OGRPGeoDataSource final: public OGRDataSource
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override { return nLayers; }
     OGRLayer            *GetLayer( int ) override;
+    OGRLayer            *GetLayerByName( const char* ) override;
     bool                IsLayerPrivate( int ) const override;
 
     int                 TestCapability( const char * ) override;
