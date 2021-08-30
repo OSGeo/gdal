@@ -274,6 +274,14 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     nXSize = nXStop - nXStart;
     nX -= nXStart;
 
+    nYSize = nYStop - nYStart;
+
+    if (nXSize == 0 || nYSize == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid target raster size");
+        return nullptr;
+    }
+
     std::vector<double> vFirstLineVal;
     std::vector<double> vLastLineVal;
     std::vector<double> vThisLineVal;
@@ -670,7 +678,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
 
         std::swap(padfLastLineVal, padfThisLineVal);
 
-        if (!pfnProgress((nYStart - iLine + 1) / static_cast<double>(nYStop),
+        if (!pfnProgress((nY - iLine) / static_cast<double>(nYSize),
                 "", pProgressArg))
         {
             CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
@@ -845,12 +853,18 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
 
         std::swap(padfLastLineVal, padfThisLineVal);
 
-        if(!pfnProgress((iLine + 1) / static_cast<double>(nYStop),
-                         "", pProgressArg) )
+        if (!pfnProgress((iLine - nYStart) / static_cast<double>(nYSize),
+            "", pProgressArg))
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
             return nullptr;
         }
+    }
+
+    if (!pfnProgress(1.0, "", pProgressArg))
+    {
+        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+        return nullptr;
     }
 
     return GDALDataset::FromHandle(poDstDS.release());
