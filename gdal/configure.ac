@@ -2688,6 +2688,12 @@ else
 
 fi
 
+if test "$HAVE_OGDI" = "yes" ; then
+  dnl See https://github.com/libogdi/ogdi/issues/20
+  AC_CHECK_HEADERS([rpc/rpc.h],,
+        [PKG_CHECK_MODULES([RPC], [libtirpc], [CXXFLAGS="$CXXFLAGS $RPC_CFLAGS"])])
+fi
+
 AC_SUBST(HAVE_OGDI,$HAVE_OGDI)
 AC_SUBST(OGDI_INCLUDE,$OGDI_INCLUDE)
 

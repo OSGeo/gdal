@@ -796,6 +796,8 @@ SOSI_ENABLED
 X_FME_HOME
 OGDI_INCLUDE
 HAVE_OGDI
+RPC_LIBS
+RPC_CFLAGS
 OGDI_LIBS
 OGDI_CFLAGS
 GIF_SETTING
@@ -1255,6 +1257,8 @@ PQ_CFLAGS
 PQ_LIBS
 OGDI_CFLAGS
 OGDI_LIBS
+RPC_CFLAGS
+RPC_LIBS
 MONGOCXXV3_CFLAGS
 MONGOCXXV3_LIBS
 HDF5_CFLAGS
@@ -2273,6 +2277,8 @@ Some influential environment variables:
   PQ_LIBS     linker flags for PQ, overriding pkg-config
   OGDI_CFLAGS C compiler flags for OGDI, overriding pkg-config
   OGDI_LIBS   linker flags for OGDI, overriding pkg-config
+  RPC_CFLAGS  C compiler flags for RPC, overriding pkg-config
+  RPC_LIBS    linker flags for RPC, overriding pkg-config
   MONGOCXXV3_CFLAGS
               C compiler flags for MONGOCXXV3, overriding pkg-config
   MONGOCXXV3_LIBS
@@ -32269,6 +32275,112 @@ fi
       as_fn_error $? "libogdi not found." "$LINENO" 5
     fi
   fi
+
+fi
+
+if test "$HAVE_OGDI" = "yes" ; then
+    for ac_header in rpc/rpc.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "rpc/rpc.h" "ac_cv_header_rpc_rpc_h" "$ac_includes_default"
+if test "x$ac_cv_header_rpc_rpc_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_RPC_RPC_H 1
+_ACEOF
+
+else
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for RPC" >&5
+$as_echo_n "checking for RPC... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$RPC_CFLAGS"; then
+        pkg_cv_RPC_CFLAGS="$RPC_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libtirpc\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libtirpc") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_RPC_CFLAGS=`$PKG_CONFIG --cflags "libtirpc" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$RPC_LIBS"; then
+        pkg_cv_RPC_LIBS="$RPC_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libtirpc\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libtirpc") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_RPC_LIBS=`$PKG_CONFIG --libs "libtirpc" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        RPC_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libtirpc"`
+        else
+	        RPC_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libtirpc"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$RPC_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (libtirpc) were not met:
+
+$RPC_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables RPC_CFLAGS
+and RPC_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+" "$LINENO" 5
+elif test $pkg_failed = untried; then
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables RPC_CFLAGS
+and RPC_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	RPC_CFLAGS=$pkg_cv_RPC_CFLAGS
+	RPC_LIBS=$pkg_cv_RPC_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	CXXFLAGS="$CXXFLAGS $RPC_CFLAGS"
+fi
+fi
+
+done
 
 fi
 
