@@ -328,6 +328,7 @@ bool OGRPGeoDataSource::IsPrivateLayerName(const CPLString &osName)
     return ( (osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys") // MS Access internal tables
          || osLCTableName.endsWith( "_shape_index") // gdb spatial index tables, internal details only
          || (osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_") // gdb private tables
+         || osLCTableName == "selections" || osLCTableName == "selectedobjects" // found in older personal geodatabases
         );
 }
 
