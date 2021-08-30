@@ -2839,6 +2839,9 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
 
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+        return VSICurlFilesystemHandlerBase::Stat(pszFilename, pStatBuf, nFlags);
+
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
     if( !IsAllowedFilename( pszFilename ) )
         return -1;

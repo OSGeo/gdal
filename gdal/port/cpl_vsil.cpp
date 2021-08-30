@@ -747,8 +747,8 @@ int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
  * UTF-8 encoded.
  * @param psStatBuf the structure to load with information.
  * @param nFlags 0 to get all information, or VSI_STAT_EXISTS_FLAG,
- *                  VSI_STAT_NATURE_FLAG or VSI_STAT_SIZE_FLAG, or a
- *                  combination of those to get partial info.
+ *                 VSI_STAT_NATURE_FLAG, VSI_STAT_SIZE_FLAG, VSI_STAT_SET_ERROR_FLAG,
+ *                 VSI_STAT_CACHE_ONLY or a combination of those to get partial info.
  *
  * @return 0 on success or -1 on an error.
  *

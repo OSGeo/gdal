@@ -452,6 +452,9 @@ int VSISwiftFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
 
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+        return VSICurlFilesystemHandlerBase::Stat(pszFilename, pStatBuf, nFlags);
+
     CPLString osFilename(pszFilename);
     if( osFilename.back() == '/' )
         osFilename.resize( osFilename.size() - 1 );

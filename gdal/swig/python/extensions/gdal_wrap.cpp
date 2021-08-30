@@ -45409,6 +45409,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "VSI_STAT_NATURE_FLAG",SWIG_From_int(static_cast< int >(0x2)));
   SWIG_Python_SetConstant(d, "VSI_STAT_SIZE_FLAG",SWIG_From_int(static_cast< int >(0x4)));
   SWIG_Python_SetConstant(d, "VSI_STAT_SET_ERROR_FLAG",SWIG_From_int(static_cast< int >(0x8)));
+  SWIG_Python_SetConstant(d, "VSI_STAT_CACHE_ONLY",SWIG_From_int(static_cast< int >(0x10)));
   SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_UNKNOWN",SWIG_From_int(static_cast< int >(0)));
   SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_DATA",SWIG_From_int(static_cast< int >(1)));
   SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_HOLE",SWIG_From_int(static_cast< int >(2)));
