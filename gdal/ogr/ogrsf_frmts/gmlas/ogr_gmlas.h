@@ -924,7 +924,7 @@ class GMLASSchemaAnalyzer
         CPLString GetPrefix( const CPLString& osNamespaceURI );
         CPLString MakeXPath( const CPLString& osNamespace,
                                           const CPLString& osName );
-        void LaunderFieldNames( GMLASFeatureClass& oClass );
+        bool LaunderFieldNames( GMLASFeatureClass& oClass );
         void LaunderClassNames();
 
         XSElementDeclaration* GetTopElementDeclarationFromXPath(

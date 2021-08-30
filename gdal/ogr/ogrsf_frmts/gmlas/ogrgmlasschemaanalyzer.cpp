@@ -347,7 +347,7 @@ static CPLString GetNSOfLastXPathComponent(const CPLString& osXPath )
 /************************************************************************/
 
 // Make sure that field names are unique within the class
-void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
+bool GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
 {
     std::vector<GMLASField>& aoFields = oClass.GetFields();
 
@@ -437,6 +437,15 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
         for(size_t i=0; i< aoFields.size();i++)
         {
             int nNameSize = static_cast<int>(aoFields[i].GetName().size());
+            /* Somewhat arbitrary limitation to avoid performance issues in */
+            /* OGRGMLASTruncateIdentifier() */
+            if( nNameSize > 1024 )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Field name with excessive length (%d) found",
+                         nNameSize);
+                return false;
+            }
             if( nNameSize > m_nIdentifierMaxLength )
             {
                 aoFields[i].SetName(
@@ -492,8 +501,10 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
     std::vector<GMLASFeatureClass>& aoNestedClasses = oClass.GetNestedClasses();
     for(size_t i=0; i<aoNestedClasses.size();i++)
     {
-        LaunderFieldNames( aoNestedClasses[i] );
+        if( !LaunderFieldNames( aoNestedClasses[i] ) )
+            return false;
     }
+    return true;
 }
 
 /************************************************************************/
@@ -1282,7 +1293,8 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
             // TODO ?
         }
 
-        LaunderFieldNames( oClass );
+        if( !LaunderFieldNames( oClass ) )
+            return false;
 
         m_aoClasses.push_back(oClass);
         return true;

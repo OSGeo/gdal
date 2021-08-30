@@ -30,6 +30,9 @@
 
 #include "ogr_gmlas.h"
 
+#include <map>
+#include <set>
+
 /************************************************************************/
 /*                  OGRGMLASTruncateIdentifier()                        */
 /************************************************************************/
@@ -97,33 +100,58 @@ CPLString OGRGMLASTruncateIdentifier(const CPLString& osName,
     CSLDestroy(papszTokens);
 
     // Truncate identifier by removing last character of longest part
-    bool bHasDoneSomething = true;
-    while( nExtra > 0 && bHasDoneSomething )
+    std::map<int, std::set<size_t>> oMapLengthToIdx;
+    // Ignore last token in map creation
+    for( size_t j=0; j + 1 < aosTokens.size(); ++j )
     {
-        bHasDoneSomething = false;
-        int nMaxSize = 0;
-        size_t nIdxMaxSize = 0;
-        for( size_t j=0; j < aosTokens.size(); ++j )
+        const int nTokenLen = static_cast<int>(aosTokens[j].size());
+        oMapLengthToIdx[nTokenLen].insert(j);
+    }
+    int nLastTokenSize = static_cast<int>(aosTokens.back().size());
+    if( oMapLengthToIdx.empty() )
+    {
+        if( nLastTokenSize > nExtra )
         {
-            int nTokenLen = static_cast<int>(aosTokens[j].size());
-            if( nTokenLen > nMaxSize )
-            {
-                // Avoid truncating last token unless it is excessively longer
-                // than previous ones.
-                if( j < aosTokens.size() - 1 ||
-                    nTokenLen > 2 * nMaxSize )
-                {
-                    nMaxSize = nTokenLen;
-                    nIdxMaxSize = j;
-                }
-            }
+            aosTokens[aosTokens.size() - 1].resize( nLastTokenSize - nExtra );
+            nExtra = 0;
         }
-
-        if( nMaxSize > 1 )
+    }
+    else
+    {
+        bool bHasDoneSomething = true;
+        while( nExtra > 0 && bHasDoneSomething )
         {
-            aosTokens[nIdxMaxSize].resize( nMaxSize - 1 );
-            bHasDoneSomething = true;
-            nExtra --;
+            bHasDoneSomething = false;
+            auto iter = oMapLengthToIdx.end();
+            --iter;
+            // Avoid truncating last token unless it is excessively longer
+            // than previous ones.
+            if( nLastTokenSize > 2 * iter->first )
+            {
+                aosTokens[aosTokens.size() - 1].resize( nLastTokenSize - 1 );
+                nLastTokenSize --;
+                bHasDoneSomething = true;
+                nExtra --;
+            }
+            else if( iter->first > 1 )
+            {
+                // Reduce one token by one character
+                const size_t j = *iter->second.begin();
+                aosTokens[j].resize( iter->first - 1 );
+
+                // Move it to a new bucket
+                iter->second.erase(iter->second.begin());
+                oMapLengthToIdx[iter->first-1].insert(j);
+
+                // Remove this bucket if is empty
+                if( iter->second.empty() )
+                {
+                    oMapLengthToIdx.erase(iter);
+                }
+
+                nExtra --;
+                bHasDoneSomething = true;
+            }
         }
     }
 
