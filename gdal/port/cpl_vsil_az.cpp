@@ -256,6 +256,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         prop.bIsDirectory = false;
                         prop.mTime = static_cast<time_t>(entry->nMTime);
                         prop.ETag = ETag;
+                        prop.nMode = entry->nMode;
 
                         CPLString osCachedFilename =
                             osBaseURL + "/" + CPLAWSURLEncode(osPrefix, false) +
@@ -303,6 +304,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                             prop.bHasComputedFileSize = true;
                             prop.fileSize = 0;
                             prop.mTime = 0;
+                            prop.nMode = entry->nMode;
 
                             CPLString osCachedFilename =
                                 osBaseURL + "/" + CPLAWSURLEncode(osPrefix, false) +
