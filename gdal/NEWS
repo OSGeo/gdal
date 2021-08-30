@@ -4,6 +4,161 @@ The 3.3.1 release is a bug fix release.
 
 == Build ==
 
+* Fix compilation error and warnings in C++20
+* Fix 'One definition rule' violations related to 12-bit JPEG support, FromHandle() methods and SQLite related drivers
+* Unix build: Fix GEOS detection in cross compilation (#4368)
+
+== Port ==
+
+* VSIGetMemFileBuffer(): delay destroying VSIMemFile on bUnlinkAndSeize (#4158, #4179)
+* /vsizip/: fix memory leak in error code path (oss-fuzz #29715)
+* minixml parser: fix performance issue on very large processing instructions (oss-fuzz #37113)
+
+== GDAL algorithms ==
+
+* Polygonize: fix self intersection polygon when raster image contains complex holes (#3337, #1158, #3319)
+
+== GDAL utilities ==
+
+* gdalwarp: fix exporting to WKT when a projection that isn't supported in WKT1 is involved (#4133)
+* gdalwarp: allow reprojecting a rater with geotransform = (0,1,0,0,0,-1) (#4147)
+* gdalwarp: slightly change default behavior of unified src band masking when a pixel is evaluate to the nodata value on all bands (#4253)
+* gdal_viewshed: fix incorrect calculation if target height is specified (#4381)
+* gdal_calc.py - fix `hideNoData` for input: `NoDataValue!='none'`, `hideNoData=True`
+* gdal_fillnodata.py: fix -si option (#4192)
+
+== osgeo_utils ==
+
+* util.py - fix get_raster_min_max() (#4312)
+* color_table.py - fix get_color_table_from_raster for ds w/o color table + tests
+
+== GDAL core ==
+
+* CPLKeywordParser / IMD parser: accept .IMD files with non-properly quoted values (#4037)
+* IMD writer: properly quote values that have spaces (#4037)
+* rasterio.cpp: fixed progress calculation
+* GetIndexColorTranslationTo(): fix non-exact color matching when palettes don't have the same number of entries (#4156)
+* Block cache: fix potential infinite loop in case of high concurrency and multi-threaded writing (#3848)
+* GDALDataset::GetFileList(): avoid cyclic calls on odd/corrupted datasets...
+* Overview building: fix crash possibility if user interrupting multi-threaded computation
+* GDALDatasetPool: avoid potential crash during destruction (#4318)
+
+== GDAL drivers ==
+
+AIGRID driver:
+ * fix crash when accessing twice to a broken tile (#4316)
+
+BAG driver:
+ * ignore pixel at nodata value when updating min/max attributes (#4057)
+
+DERIVED driver:
+ * Derived dataset: copy RPC metadata if it exists (#4048)
+
+ENVI driver:
+ * Open(): use .hdr as an additional extension in priority over a replacement one (#4317)
+
+ERS driver:
+ * avoid long open delay on bogus datasets that reference themselves
+
+GeoRaster driver:
+ * Set the SRID value for the extent when flushing the metadata to the database. (#4110, #4106)
+
+GTiff driver:
+ * set color interpretation on overview bands (#3939)
+ * SRS reading: ignore vertical information when one of the tag has a value in the private user range (#4197)
+
+JPEG driver:
+ * fix wrong detection of bit ordering (msb instead of lsb) of mask band (#4351)
+
+netCDF driver:
+ * fix reading MODIS_ARRAY.nc file that has non CF-compliant way of expressing axis and CRS (#4075)
+ * properly deal with Polar Stereographic in reading and writing (#4144)
+
+NITF driver:
+ * fix writing of COMRAT field in JPEG/JPEG2000 mode, when there are FILE TREs
+
+PCIDSK driver:
+ * fix retrieval of RPC metadata (3.3 regression) (#4118)
+
+PDF driver:
+ * avoid potential nullptr dereference on corrupted datasets (oss-fuzz #28635)
+ * Poppler backend: limit CPU time when reading extremely corrupted file.
+
+SAR_CEOS driver:
+ * fix memory leak (oss-fuzz #35634)
+
+TGA driver:
+ * fix heap buffer overflow (oss-fuzz #35520)
+
+VRT driver:
+ * avoid potential very deep call stack if SourceFilename contains empty string. (oss-fuzz 37530)
+
+ZMap driver:
+ * undeprecate it since we got feedback it is still useful (#4086)
+
+== OGRSpatialReference ==
+
+* AutoIdentifyEPSG(): do not add AUTHORITY node if the axis order of the geographic CRS contradicts the one from EPSG (#4038)
+* OGRCoordinateTransformation: fix transformation between CRS that only differ by axis order (#4038)
+* OGRCoordinateTransformation: when a WKT def contradicts its AUTHORITY node, use the WKT def (#4038)
+* OGRCoordinateTransformation: deal with bogus NaN coordinates as output of PROJ (#4224)
+
+== OGR drivers ==
+
+DWG driver:
+ * Make Closed AcDb2dPolyline and AcDb3dPolyline to Closed OGRLineString (#4264)
+
+[geomedia, walk] drivers:
+ * Check sql tables for required tables before trying to query them when trying to open a .mdb dataset
+
+FlatGeobuf driver:
+ * fix memory leaks when reading invalid geometries (oss-fuzz #37752, #37834)
+
+GML driver:
+ * fix reading compound curves with gml:ArcByCenterPoint and in a projected CRS in northing/easting axis order (#4155)
+ * avoid read heap-buffer-overflow. (oss-fuzz #35363)
+
+GMLAS driver:
+ * avoid uncaught exception when opening corrupted .xsd
+
+GPX driver:
+ * avoid potential integer overflow on writing (oss-fuzz #30937)
+
+MongoDB3 driver:
+ * build: fix deprecation warnings with mongocxx >= 3.6
+
+MVT driver:
+ * use 'number' instead of wrong 'numeric' when generating metadata tilestats (#4160)
+ * reader: be tolerant to broken points generated by Mapserver
+
+ODBC driver:
+ * improvements regarding DSN
+ * Update ODBC driver metadata
+
+OpenFileGDB driver:
+ * fix reading of raster fields
+
+PGeo driver:
+ * Correctly reflect that non-spatial tables have no geometry, not unknown geometry
+ * Fix "GetNextFeature() returned non NULL feature after end of iteration" errors raised by test_ogrsf
+ * Add more internal tables to block list
+ * Fixes for sql based layers
+
+XLS driver:
+ * Set OLCStringsAsUTF8 capability to TRUE
+
+== Python bindings ==
+
+* Build windows python wrappers with -threads argument
+* fix behavior of SetMetadata() when a value is of type bytes (#4292)
+* fix GDALPythonObjectFromCStr() to return a bytes() object rather than a corrupted unicode string when invalid UTF-8 sequences are found
+
+= GDAL/OGR 3.3.1 Release Notes =
+
+The 3.3.1 release is a bug fix release.
+
+== Build ==
+
 * configure: fix explicit disabling of geos/sfcgal
 * fix build against OpenEXR 3.0.1 (#3770)
 * fix lack of compilation of nasakeywordhandler.o with some old/non-gnu
@@ -12,18 +167,18 @@ The 3.3.1 release is a bug fix release.
 == Port ==
 
 * /vsiaz/: avoid appending same chunk several times
-* /vsiaz/: advertize missing AZURE_NO_SIGN_REQUEST option
+* /vsiaz/: advertise missing AZURE_NO_SIGN_REQUEST option
 * IVSIS3LikeFSHandler::Sync(): add missing lock
 * VSIS3FSHandler::GetOptions(): fix non-XML conformity (fixes
   https://github.com/postgis/postgis/pull/618#discussion_r652143176)
 * /vsiswift/: Fix openstack swift endpoint detection, add application_credential
   authentication support (#3960)
-* /vsiswift/: advertize missing options
+* /vsiswift/: advertise missing options
 * Fix incorrect ODBC type mapping for a number of SQL types
 
 == GDAL utilities ==
 
-* gdal_contour: fix bad coordinate order when outputing from raster with
+* gdal_contour: fix bad coordinate order when outputting from raster with
   geographic CRS to KML driver (#3757)
 * gdalasyncread.cpp: add missing .h to gdal_version include. (#3951)
 
@@ -90,9 +245,9 @@ HDF5 driver:
  * multidim API: fix crash when extracting a field from a compound HDF5 data type
 
 netCDF driver:
- * fix wrong offseting by -360 of longitude values when huge nodata value found
+ * fix wrong offsetting by -360 of longitude values when huge nodata value found
    at beginning or end of line
- * be more restrictive on axis to decide if to advertize a geotransform
+ * be more restrictive on axis to decide if to advertise a geotransform
 
 PostgisRaster driver:
  * support for libpq services (#3820)
