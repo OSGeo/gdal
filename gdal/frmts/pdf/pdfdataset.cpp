@@ -1410,26 +1410,26 @@ public:
 
     virtual void SetBaseClip(const FX_RECT& rect) override { m_poParent->SetBaseClip(rect); }
 
-    virtual bool SetClip_PathFill(const CFX_PathData* pPathData,
+    virtual bool SetClip_PathFill(const CFX_Path* pPath,
                                 const CFX_Matrix* pObject2Device,
                                 const CFX_FillRenderOptions& fill_options) override
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
             return true;
-        return m_poParent->SetClip_PathFill(pPathData, pObject2Device, fill_options);
+        return m_poParent->SetClip_PathFill(pPath, pObject2Device, fill_options);
     }
 
-    virtual bool     SetClip_PathStroke(const CFX_PathData* pPathData,
-                                       const CFX_Matrix* pObject2Device,
-                                       const CFX_GraphStateData* pGraphState
+    virtual bool     SetClip_PathStroke(const CFX_Path* pPath,
+                                  const CFX_Matrix* pObject2Device,
+                                  const CFX_GraphStateData* pGraphState
                                       ) override
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
             return true;
-        return m_poParent->SetClip_PathStroke(pPathData, pObject2Device, pGraphState);
+        return m_poParent->SetClip_PathStroke(pPath, pObject2Device, pGraphState);
     }
 
-    virtual bool DrawPath(const CFX_PathData* pPathData,
+    virtual bool DrawPath(const CFX_Path* pPath,
                         const CFX_Matrix* pObject2Device,
                         const CFX_GraphStateData* pGraphState,
                         uint32_t fill_color,
@@ -1439,7 +1439,7 @@ public:
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
             return true;
-        return m_poParent->DrawPath(pPathData, pObject2Device, pGraphState ,
+        return m_poParent->DrawPath(pPath, pObject2Device, pGraphState ,
                                     fill_color, stroke_color, fill_options,
                                     blend_type);
     }
@@ -1657,7 +1657,7 @@ void myRenderPageImpl(PDFDataset* poDS,
   }
 
   const CPDF_OCContext::UsageType usage =
-      (flags & FPDF_PRINTING) ? CPDF_OCContext::Print : CPDF_OCContext::View;
+      (flags & FPDF_PRINTING) ? CPDF_OCContext::kPrint : CPDF_OCContext::kView;
   pContext->m_pOptions->SetOCContext(
       pdfium::MakeRetain<GDALPDFiumOCContext>(poDS, pPage->GetDocument(), usage));
 
