@@ -265,6 +265,60 @@ def test_ogr_odbc_list_all_tables():
                            'MSysNavPaneObjectIDs',
                            'PROP'}
 
+    private_layers = [odbc_ds_all_table.GetLayer(i).GetName() for i in range(odbc_ds_all_table.GetLayerCount()) if
+                      odbc_ds_all_table.IsLayerPrivate(i)]
+    for name in ['MSysObjects',
+                 'MSysACEs',
+                 'MSysQueries',
+                 'MSysRelationships',
+                 'MSysAccessObjects',
+                 'MSysAccessXML',
+                 'MSysNameMap',
+                 'MSysNavPaneGroupCategories',
+                 'MSysNavPaneGroups',
+                 'MSysNavPaneGroupToObjects',
+                 'MSysNavPaneObjectIDs']:
+        assert name in private_layers
+    assert 'PROP' not in private_layers
+
+
+###############################################################################
+# Test opening a private table by name
+
+
+def test_ogr_odbc_open_private_table():
+    odbc_drv = ogr.GetDriverByName('ODBC')
+    ds = odbc_drv.Open('data/mdb/null_memo.mdb')
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 1, 'did not get expected layer count'
+
+    # open a standard layer by name
+    prop_lyr = ds.GetLayerByName('PROP')
+    assert prop_lyr is not None
+    assert prop_lyr.GetFeatureCount() == 6, 'did not get expected feature count'
+
+    if sys.platform == 'win32':
+        # nothing more to test -- the MS Access ODBC driver always culls system tables, so we can't open those
+        return
+
+    msys_objects_lyr = ds.GetLayerByName('MSysObjects')
+    assert msys_objects_lyr is not None
+
+    assert msys_objects_lyr is not None
+    assert msys_objects_lyr.GetFeatureCount() == 28, 'did not get expected feature count'
+
+    feat = msys_objects_lyr.GetNextFeature()
+    assert feat.GetField('Name') == 'Tables'
+
+    # try a second time, same layer should be returned
+    msys_objects_lyr2 = ds.GetLayerByName('MSysObjects')
+    assert msys_objects_lyr2 is not None
+
+    # a layer which doesn't exist
+    other_lyr = ds.GetLayerByName('xxx')
+    assert other_lyr is None
+
 
 ###############################################################################
 # Run test_ogrsf on null_memo database

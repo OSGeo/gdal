@@ -155,6 +155,10 @@ int OGRODBCDataSource::OpenMDB( GDALOpenInfo* poOpenInfo )
                 }
 
                 osLayerName += pszTableName;
+
+                const CPLString osLCTableName(CPLString(osLayerName).tolower());
+                m_aosAllLCTableNames.insert( osLCTableName );
+
                 aosTableNames.emplace_back( osLayerName );
             }
         }
@@ -549,6 +553,54 @@ OGRLayer *OGRODBCDataSource::GetLayer( int iLayer )
     else
         return papoLayers[iLayer];
 }
+
+/************************************************************************/
+/*                              GetLayerByName()                        */
+/************************************************************************/
+
+OGRLayer* OGRODBCDataSource::GetLayerByName( const char* pszLayerName )
+{
+  OGRLayer* poLayer = GDALDataset::GetLayerByName(pszLayerName);
+  if( poLayer != nullptr )
+      return poLayer;
+
+  // if table name doesn't exist in database, don't try any further
+  const CPLString osLCTableName(CPLString(pszLayerName).tolower());
+  if ( m_aosAllLCTableNames.find( osLCTableName ) == m_aosAllLCTableNames.end() )
+      return nullptr;
+
+  // try to open the table -- if successful the table will be added to papoLayers
+  // as the last item
+  if ( OpenTable( pszLayerName, nullptr ) )
+      return papoLayers[nLayers-1];
+  else
+      return nullptr;
+}
+
+/************************************************************************/
+/*                    IsPrivateLayerName()                              */
+/************************************************************************/
+
+bool OGRODBCDataSource::IsPrivateLayerName(const CPLString &osName)
+{
+    const CPLString osLCTableName(CPLString(osName).tolower());
+
+    return osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys"; // MS Access internal tables
+}
+
+/************************************************************************/
+/*                    IsLayerPrivate()                                  */
+/************************************************************************/
+
+bool OGRODBCDataSource::IsLayerPrivate(int iLayer) const
+{
+    if( iLayer < 0 || iLayer >= nLayers )
+        return false;
+
+    const std::string osName( papoLayers[iLayer]->GetName() );
+    return IsPrivateLayerName( osName );
+}
+
 /************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
