@@ -20320,16 +20320,17 @@ SWIGINTERN PyObject *_wrap_Dataset_IsLayerPrivate(PyObject *SWIGUNUSEDPARM(self)
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  PyObject *swig_obj[2] ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
   bool result;
-
-  if (!SWIG_Python_UnpackTuple(args, "Dataset_IsLayerPrivate", 2, 2, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Dataset_IsLayerPrivate",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_IsLayerPrivate" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
-  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Dataset_IsLayerPrivate" "', argument " "2"" of type '" "int""'");
   } 
@@ -45407,6 +45408,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "VSI_STAT_EXISTS_FLAG",SWIG_From_int(static_cast< int >(0x1)));
   SWIG_Python_SetConstant(d, "VSI_STAT_NATURE_FLAG",SWIG_From_int(static_cast< int >(0x2)));
   SWIG_Python_SetConstant(d, "VSI_STAT_SIZE_FLAG",SWIG_From_int(static_cast< int >(0x4)));
+  SWIG_Python_SetConstant(d, "VSI_STAT_SET_ERROR_FLAG",SWIG_From_int(static_cast< int >(0x8)));
+  SWIG_Python_SetConstant(d, "VSI_STAT_CACHE_ONLY",SWIG_From_int(static_cast< int >(0x10)));
   SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_UNKNOWN",SWIG_From_int(static_cast< int >(0)));
   SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_DATA",SWIG_From_int(static_cast< int >(1)));
   SWIG_Python_SetConstant(d, "VSI_RANGE_STATUS_HOLE",SWIG_From_int(static_cast< int >(2)));

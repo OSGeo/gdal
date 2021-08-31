@@ -256,6 +256,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         prop.bIsDirectory = false;
                         prop.mTime = static_cast<time_t>(entry->nMTime);
                         prop.ETag = ETag;
+                        prop.nMode = entry->nMode;
 
                         CPLString osCachedFilename =
                             osBaseURL + "/" + CPLAWSURLEncode(osPrefix, false) +
@@ -303,6 +304,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                             prop.bHasComputedFileSize = true;
                             prop.fileSize = 0;
                             prop.mTime = 0;
+                            prop.nMode = entry->nMode;
 
                             CPLString osCachedFilename =
                                 osBaseURL + "/" + CPLAWSURLEncode(osPrefix, false) +
@@ -600,6 +602,9 @@ int VSIAzureFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
+
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+        return VSICurlFilesystemHandlerBase::Stat(pszFilename, pStatBuf, nFlags);
 
     CPLString osFilename(pszFilename);
 

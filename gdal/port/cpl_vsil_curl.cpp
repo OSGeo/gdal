@@ -4100,12 +4100,26 @@ int VSICurlFilesystemHandlerBase::Stat( const char *pszFilename,
         !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
         return -1;
 
+    memset(pStatBuf, 0, sizeof(VSIStatBufL));
+
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+    {
+        cpl::FileProp oFileProp;
+        if( !GetCachedFileProp(GetURLFromFilename(pszFilename), oFileProp) ||
+            oFileProp.eExists != EXIST_YES )
+        {
+            return -1;
+        }
+        pStatBuf->st_mode = static_cast<unsigned short>(oFileProp.nMode);
+        pStatBuf->st_mtime = oFileProp.mTime;
+        pStatBuf->st_size = oFileProp.fileSize;
+        return 0;
+    }
+
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsAction oContextAction("Stat");
 
     const CPLString osFilename(pszFilename);
-
-    memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     if( !IsAllowedFilename( pszFilename ) )
         return -1;

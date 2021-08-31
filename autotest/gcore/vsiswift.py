@@ -57,7 +57,7 @@ def test_vsiswift_init():
         if gdaltest.swift_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
-    
+
 ###############################################################################
 # Error cases
 
@@ -116,7 +116,7 @@ def test_vsiswift_start_webserver():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    
+
 ###############################################################################
 # Test authentication with SWIFT_AUTH_V1_URL + SWIFT_USER + SWIFT_KEY
 
@@ -516,7 +516,16 @@ def test_vsiswift_stat():
         stat_res = gdal.VSIStatL('/vsiswift/foo')
         assert stat_res is not None and stat.S_ISDIR(stat_res.mode)
 
-    
+    # No network access done
+    s = gdal.VSIStatL('/vsiswift/foo',
+                      gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG |gdal.VSI_STAT_CACHE_ONLY)
+    assert s
+    assert stat.S_ISDIR(s.mode)
+
+    # No network access done
+    assert gdal.VSIStatL('/vsiswift/i_do_not_exist',
+                         gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG | gdal.VSI_STAT_CACHE_ONLY) is None
+
 ###############################################################################
 # Test ReadDir()
 
@@ -672,7 +681,7 @@ def test_vsiswift_fake_write():
             pytest.fail(ret)
         gdal.VSIFCloseL(f)
 
-    
+
 ###############################################################################
 # Test Unlink()
 

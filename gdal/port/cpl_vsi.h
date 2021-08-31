@@ -208,6 +208,10 @@ int CPL_DLL     VSIStatL( const char *, VSIStatBufL * ) CPL_WARN_UNUSED_RESULT;
 #define VSI_STAT_SIZE_FLAG           0x4
 /** Flag provided to VSIStatExL() to issue a VSIError in case of failure */
 #define VSI_STAT_SET_ERROR_FLAG      0x8
+/** Flag provided to VSIStatExL() to only use already cached results.
+ * @since GDAL 3.4
+ */
+#define VSI_STAT_CACHE_ONLY          0x10
 
 int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, int nFlags ) CPL_WARN_UNUSED_RESULT;
 

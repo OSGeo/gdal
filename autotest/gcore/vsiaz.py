@@ -978,6 +978,18 @@ def test_vsiaz_opendir():
 
     gdal.CloseDir(d)
 
+    # No network access done
+    s = gdal.VSIStatL('/vsiaz/opendir/some_dir/my_prefix_test.txt',
+                      gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG |gdal.VSI_STAT_CACHE_ONLY)
+    assert s
+    assert (s.mode & 32768) != 0
+    assert s.size == 40
+    assert s.mtime == 1
+
+    # No network access done
+    assert gdal.VSIStatL('/vsiaz/opendir/some_dir/i_do_not_exist.txt',
+                         gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG | gdal.VSI_STAT_CACHE_ONLY) is None
+
 
 ###############################################################################
 # Test RmdirRecursive() with a fake server

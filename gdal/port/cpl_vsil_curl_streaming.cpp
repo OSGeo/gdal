@@ -1638,6 +1638,15 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
 
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+    {
+        const std::string osVSICURLFilename =
+            std::string("/vsicurl/") + (pszFilename + GetFSPrefix().size());
+        return VSIStatExL( osVSICURLFilename.c_str(),
+                           pStatBuf,
+                           nFlags );
+    }
+
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     VSICurlStreamingHandle* poHandle =

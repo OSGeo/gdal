@@ -269,6 +269,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                     if( nMaxFiles != 1 && bCacheEntries )
                     {
                         FileProp prop;
+                        prop.nMode = entry->nMode;
                         prop.eExists = EXIST_YES;
                         prop.bHasComputedFileSize = true;
                         prop.fileSize = entry->nSize;
@@ -324,6 +325,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                             prop.bHasComputedFileSize = true;
                             prop.fileSize = 0;
                             prop.mTime = 0;
+                            prop.nMode = S_IFDIR;
 
                             CPLString osCachedFilename =
                                 osBaseURL + CPLAWSURLEncode(osPrefix,false) +
@@ -373,6 +375,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                         prop.bHasComputedFileSize = true;
                         prop.fileSize = 0;
                         prop.mTime = 0;
+                        prop.nMode = S_IFDIR;
 
                         CPLString osCachedFilename = osBaseURL + CPLAWSURLEncode(pszName, false);
 #if DEBUG_VERBOSE
@@ -2835,6 +2838,9 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
+
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+        return VSICurlFilesystemHandlerBase::Stat(pszFilename, pStatBuf, nFlags);
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
     if( !IsAllowedFilename( pszFilename ) )

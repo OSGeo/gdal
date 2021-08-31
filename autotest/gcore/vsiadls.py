@@ -291,8 +291,8 @@ def test_vsiadls_opendir():
     handler.add('GET', '/azure/blob/myaccount/fs1?directory=sub_dir&recursive=true&resource=filesystem', 200,
                 {'Content-type': 'application/json;charset=utf-8'},
                 """
-                {"paths":[{"name":"foo.txt","contentLength":"123456","lastModified": "Mon, 01 Jan 1970 00:00:01"},
-                          {"name":"my_prefix_test.txt","contentLength":"40","lastModified": "Mon, 01 Jan 1970 00:00:01"}]}
+                {"paths":[{"name":"sub_dir/foo.txt","contentLength":"123456","lastModified": "Mon, 01 Jan 1970 00:00:01"},
+                          {"name":"sub_dir/my_prefix_test.txt","contentLength":"40","lastModified": "Mon, 01 Jan 1970 00:00:01"}]}
                 """)
     with webserver.install_http_handler(handler):
         d = gdal.OpenDir('/vsiadls/fs1/sub_dir', -1, ['PREFIX=my_prefix'])
@@ -310,6 +310,18 @@ def test_vsiadls_opendir():
     assert entry is None
 
     gdal.CloseDir(d)
+
+    # No network access done
+    s = gdal.VSIStatL('/vsiadls/fs1/sub_dir/my_prefix_test.txt',
+                      gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG |gdal.VSI_STAT_CACHE_ONLY)
+    assert s
+    assert (s.mode & 32768) != 0
+    assert s.size == 40
+    assert s.mtime == 1
+
+    # No network access done
+    assert gdal.VSIStatL('/vsiadls/fs1/sub_dir/i_do_not_exist.txt',
+                         gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG | gdal.VSI_STAT_CACHE_ONLY) is None
 
 ###############################################################################
 # Test write

@@ -452,6 +452,9 @@ int VSISwiftFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
 
+    if( (nFlags & VSI_STAT_CACHE_ONLY) != 0 )
+        return VSICurlFilesystemHandlerBase::Stat(pszFilename, pStatBuf, nFlags);
+
     CPLString osFilename(pszFilename);
     if( osFilename.back() == '/' )
         osFilename.resize( osFilename.size() - 1 );
@@ -477,6 +480,7 @@ int VSISwiftFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
             cachedFileProp.fileSize = 0;
             cachedFileProp.bIsDirectory = true;
             cachedFileProp.mTime = 0;
+            cachedFileProp.nMode = S_IFDIR;
             SetCachedFileProp(osURL, cachedFileProp);
 
             pStatBuf->st_size = 0;
@@ -494,10 +498,30 @@ int VSISwiftFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     int nRet = CSLFindStringCaseSensitive(papszContents,
                     CPLGetFilename(osFilename)) >= 0 ? 0 : -1;
     CSLDestroy(papszContents);
+
+    FileProp cachedFileProp;
     if( nRet == 0 )
     {
         pStatBuf->st_mode = S_IFDIR;
+
+        cachedFileProp.eExists = EXIST_YES;
+        cachedFileProp.bHasComputedFileSize = false;
+        cachedFileProp.fileSize = 0;
+        cachedFileProp.bIsDirectory = true;
+        cachedFileProp.mTime = 0;
+        cachedFileProp.nMode = S_IFDIR;
     }
+    else
+    {
+        cachedFileProp.eExists = EXIST_NO;
+    }
+
+    IVSIS3LikeHandleHelper* poS3HandleHelper =
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), true);
+    CPLString osURL(poS3HandleHelper->GetURL());
+    delete poS3HandleHelper;
+    SetCachedFileProp(osURL, cachedFileProp);
+
     return nRet;
 }
 
