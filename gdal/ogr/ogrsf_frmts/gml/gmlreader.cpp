@@ -1375,8 +1375,16 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
         if( !bOnlyDetectSRS && papsGeometry != nullptr && papsGeometry[0] != nullptr )
         {
             if( poClass->GetGeometryPropertyCount() == 0 )
+            {
+                std::string osGeomName(m_osSingleGeomElemPath);
+                const auto nPos = osGeomName.rfind('|');
+                if( nPos != std::string::npos )
+                    osGeomName = osGeomName.substr(nPos + 1);
                 poClass->AddGeometryProperty(
-                    new GMLGeometryPropertyDefn("", "", wkbUnknown, -1, true));
+                    new GMLGeometryPropertyDefn(osGeomName.c_str(),
+                                                m_osSingleGeomElemPath.c_str(),
+                                                wkbUnknown, -1, true));
+            }
         }
 
         if( bGetExtents && papsGeometry != nullptr )

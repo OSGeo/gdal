@@ -209,6 +209,7 @@ def test_ogr_gml_2():
     assert gml_ds.GetLayerCount() == 1, 'wrong number of layers'
 
     lyr = gml_ds.GetLayerByName('GEM')
+    assert lyr.GetGeometryColumn() == 'Geometry'
     feat = lyr.GetNextFeature()
 
     assert feat.GetField('Name') == 'Aartselaar', 'Wrong name field value'
