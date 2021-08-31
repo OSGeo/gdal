@@ -469,19 +469,19 @@ int VSISwiftFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
         if( std::count(osFilename.begin(), osFilename.end(), '/') <= 2 )
         {
 
-            IVSIS3LikeHandleHelper* poS3HandleHelper =
-                CreateHandleHelper(pszFilename + GetFSPrefix().size(), true);
-            CPLString osURL(poS3HandleHelper->GetURL());
-            delete poS3HandleHelper;
-
-            FileProp cachedFileProp;
-            cachedFileProp.eExists = EXIST_YES;
-            cachedFileProp.bHasComputedFileSize = false;
-            cachedFileProp.fileSize = 0;
-            cachedFileProp.bIsDirectory = true;
-            cachedFileProp.mTime = 0;
-            cachedFileProp.nMode = S_IFDIR;
-            SetCachedFileProp(osURL, cachedFileProp);
+            auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                CreateHandleHelper(pszFilename + GetFSPrefix().size(), true));
+            if( poHandleHelper )
+            {
+                FileProp cachedFileProp;
+                cachedFileProp.eExists = EXIST_YES;
+                cachedFileProp.bHasComputedFileSize = false;
+                cachedFileProp.fileSize = 0;
+                cachedFileProp.bIsDirectory = true;
+                cachedFileProp.mTime = 0;
+                cachedFileProp.nMode = S_IFDIR;
+                SetCachedFileProp(poHandleHelper->GetURL(), cachedFileProp);
+            }
 
             pStatBuf->st_size = 0;
             pStatBuf->st_mode = S_IFDIR;
@@ -516,11 +516,12 @@ int VSISwiftFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
         cachedFileProp.eExists = EXIST_NO;
     }
 
-    IVSIS3LikeHandleHelper* poS3HandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), true);
-    CPLString osURL(poS3HandleHelper->GetURL());
-    delete poS3HandleHelper;
-    SetCachedFileProp(osURL, cachedFileProp);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), true));
+    if( poHandleHelper )
+    {
+        SetCachedFileProp(poHandleHelper->GetURL(), cachedFileProp);
+    }
 
     return nRet;
 }
