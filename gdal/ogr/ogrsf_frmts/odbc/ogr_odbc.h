@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
 #include "cpl_error.h"
+#include <unordered_set>
 
 /************************************************************************/
 /*                            OGRODBCLayer                              */
@@ -185,6 +186,9 @@ class OGRODBCDataSource final: public OGRDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
 
+    // set of all lowercase table names. Note that this is only used when opening MDB datasources, not generic ODBC ones.
+    std::unordered_set< std::string > m_aosAllLCTableNames;
+
     int                 OpenMDB(GDALOpenInfo *poOpenInfo );
 
   public:
@@ -198,6 +202,7 @@ class OGRODBCDataSource final: public OGRDataSource
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override { return nLayers; }
     OGRLayer            *GetLayer( int ) override;
+    OGRLayer            *GetLayerByName( const char* ) override;
 
     int                 TestCapability( const char * ) override;
 
