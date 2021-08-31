@@ -265,6 +265,22 @@ def test_ogr_odbc_list_all_tables():
                            'MSysNavPaneObjectIDs',
                            'PROP'}
 
+    private_layers = [odbc_ds_all_table.GetLayer(i).GetName() for i in range(odbc_ds_all_table.GetLayerCount()) if
+                      odbc_ds_all_table.IsLayerPrivate(i)]
+    for name in ['MSysObjects',
+                 'MSysACEs',
+                 'MSysQueries',
+                 'MSysRelationships',
+                 'MSysAccessObjects',
+                 'MSysAccessXML',
+                 'MSysNameMap',
+                 'MSysNavPaneGroupCategories',
+                 'MSysNavPaneGroups',
+                 'MSysNavPaneGroupToObjects',
+                 'MSysNavPaneObjectIDs']:
+        assert name in private_layers
+    assert 'PROP' not in private_layers
+
 
 ###############################################################################
 # Test opening a private table by name

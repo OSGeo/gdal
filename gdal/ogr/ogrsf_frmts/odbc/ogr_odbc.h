@@ -190,7 +190,7 @@ class OGRODBCDataSource final: public OGRDataSource
     std::unordered_set< std::string > m_aosAllLCTableNames;
 
     int                 OpenMDB(GDALOpenInfo *poOpenInfo );
-
+    static bool         IsPrivateLayerName( const CPLString& osName );
   public:
                         OGRODBCDataSource();
                         virtual ~OGRODBCDataSource();
@@ -203,6 +203,7 @@ class OGRODBCDataSource final: public OGRDataSource
     int                 GetLayerCount() override { return nLayers; }
     OGRLayer            *GetLayer( int ) override;
     OGRLayer            *GetLayerByName( const char* ) override;
+    bool                IsLayerPrivate( int ) const override;
 
     int                 TestCapability( const char * ) override;
 

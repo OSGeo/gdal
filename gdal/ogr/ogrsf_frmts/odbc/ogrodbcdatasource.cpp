@@ -578,6 +578,30 @@ OGRLayer* OGRODBCDataSource::GetLayerByName( const char* pszLayerName )
 }
 
 /************************************************************************/
+/*                    IsPrivateLayerName()                              */
+/************************************************************************/
+
+bool OGRODBCDataSource::IsPrivateLayerName(const CPLString &osName)
+{
+    const CPLString osLCTableName(CPLString(osName).tolower());
+
+    return osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "msys"; // MS Access internal tables
+}
+
+/************************************************************************/
+/*                    IsLayerPrivate()                                  */
+/************************************************************************/
+
+bool OGRODBCDataSource::IsLayerPrivate(int iLayer) const
+{
+    if( iLayer < 0 || iLayer >= nLayers )
+        return false;
+
+    const std::string osName( papoLayers[iLayer]->GetName() );
+    return IsPrivateLayerName( osName );
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
