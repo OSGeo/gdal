@@ -24,6 +24,7 @@ The 3.3.2 release is a bug fix release.
 * gdalwarp: allow reprojecting a rater with geotransform = (0,1,0,0,0,-1) (#4147)
 * gdalwarp: slightly change default behavior of unified src band masking when a pixel is evaluate to the nodata value on all bands (#4253)
 * gdal_viewshed: fix incorrect calculation if target height is specified (#4381)
+* gdal_viewshed: fix incorrect progress reporting (#4390)
 * gdal_calc.py - fix `hideNoData` for input: `NoDataValue!='none'`, `hideNoData=True`
 * gdal_fillnodata.py: fix -si option (#4192)
 
