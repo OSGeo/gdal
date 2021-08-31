@@ -184,6 +184,8 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (GetFileSystemOptions) VSIGetFileSystemOptions;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
+%rename (SetThreadLocalConfigOption) CPLSetThreadLocalConfigOption;
+%rename (GetThreadLocalConfigOption) wrapper_CPLGetThreadLocalConfigOption;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
@@ -473,11 +475,16 @@ void VSICloseDir(VSIDIR* dir);
 
 %apply Pointer NONNULL {const char * pszKey};
 void CPLSetConfigOption( const char * pszKey, const char * pszValue );
+void CPLSetThreadLocalConfigOption( const char * pszKey, const char * pszValue );
 
 %inline {
 const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDefault = NULL )
 {
     return CPLGetConfigOption( pszKey, pszDefault );
+}
+const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const char * pszDefault = NULL )
+{
+    return CPLGetThreadLocalConfigOption( pszKey, pszDefault );
 }
 }
 %clear const char * pszKey;
