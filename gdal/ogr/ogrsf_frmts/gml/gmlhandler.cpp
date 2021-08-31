@@ -1152,7 +1152,22 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
             }
 
             else
+            {
+                if( m_poReader->IsConsistentSingleGeomElemPath() )
+                {
+                    const std::string& osGeomElemPath = m_poReader->GetSingleGeomElemPath();
+                    if( osGeomElemPath.empty() )
+                    {
+                        m_poReader->SetSingleGeomElemPath(poState->osPath);
+                    }
+                    else if( poState->osPath != osGeomElemPath )
+                    {
+                        m_poReader->SetConsistentSingleGeomElemPath(false);
+                        m_poReader->SetSingleGeomElemPath(std::string());
+                    }
+                }
                 bReadGeometry = true;
+            }
         }
         if (bReadGeometry)
         {
