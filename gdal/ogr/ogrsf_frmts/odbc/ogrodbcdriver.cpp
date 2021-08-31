@@ -32,14 +32,42 @@
 CPL_CVSID("$Id$")
 
 /************************************************************************/
+/*                     OGRODBCDriverIdentify()                          */
+/************************************************************************/
+
+static int OGRODBCDriverIdentify( GDALOpenInfo* poOpenInfo )
+
+{
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "WALK:")
+        || STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOMEDIA:")
+        || STARTS_WITH_CI(poOpenInfo->pszFilename, "PGEO:"))
+    {
+        return FALSE;
+    }
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "ODBC:") )
+        return TRUE;
+
+    const char* psExtension(CPLGetExtension(poOpenInfo->pszFilename));
+    if( EQUAL(psExtension,"mdb") )
+        return -1; // Could potentially be a PGeo, Walk or Geomedia MDB database
+
+    if ( OGRODBCDataSource::IsSupportedMsAccessFileExtension( psExtension ) )
+        return TRUE; // An Access database which isn't a .MDB file (we checked that above), so this is the only candidate driver
+
+    // doesn't start with "ODBC:", and isn't an access database => not supported
+    return FALSE;
+}
+
+
+/************************************************************************/
 /*                      OGRODBCDriverOpen()                             */
 /************************************************************************/
 
 static GDALDataset *OGRODBCDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "ODBC:") &&
-        !OGRODBCDataSource::IsSupportedMsAccessFileExtension( CPLGetExtension( poOpenInfo->pszFilename ) ) )
+    if (OGRODBCDriverIdentify(poOpenInfo) == FALSE)
         return nullptr;
 
     OGRODBCDataSource *poDS = new OGRODBCDataSource();
@@ -81,6 +109,7 @@ void RegisterOGRODBC()
 "</OpenOptionList>");
 
     poDriver->pfnOpen = OGRODBCDriverOpen;
+    poDriver->pfnIdentify = OGRODBCDriverIdentify;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
