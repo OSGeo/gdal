@@ -1673,9 +1673,17 @@ def SetConfigOption(*args):
     """SetConfigOption(char const * pszKey, char const * pszValue)"""
     return _gdal.SetConfigOption(*args)
 
+def SetThreadLocalConfigOption(*args):
+    """SetThreadLocalConfigOption(char const * pszKey, char const * pszValue)"""
+    return _gdal.SetThreadLocalConfigOption(*args)
+
 def GetConfigOption(*args):
     """GetConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"""
     return _gdal.GetConfigOption(*args)
+
+def GetThreadLocalConfigOption(*args):
+    """GetThreadLocalConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"""
+    return _gdal.GetThreadLocalConfigOption(*args)
 
 def CPLBinaryToHex(*args):
     """CPLBinaryToHex(int nBytes) -> retStringAndCPLFree *"""
