@@ -642,6 +642,15 @@ def test_rmf_31d():
     return tst.testCreateCopy(check_minmax=0, check_srs=1, check_gt=1)
 
 
+def rmf_31e_data_gen(min_val, max_val, stripeSize, sx):
+    numpy = pytest.importorskip('numpy')
+    x = numpy.array([[min_val,max_val//2],[max_val,1]], dtype = numpy.int32)
+    x = numpy.block([[x, numpy.flip(x,0)],
+                    [numpy.flip(x, 1), x.transpose()]])
+    x = numpy.tile(x, (stripeSize // x.shape[0], sx // x.shape[1]))
+    return x
+
+
 def test_rmf_31e():
     numpy = pytest.importorskip('numpy')
 
@@ -649,7 +658,7 @@ def test_rmf_31e():
     if drv is None:
         pytest.skip()
     # Create test data
-    stripeSize = 32;
+    stripeSize = 32
     sx = 256
     sy = 8*stripeSize
     tst_name = 'tmp/rmf_31e.tif'
@@ -661,28 +670,32 @@ def test_rmf_31e():
     tst_ds.GetRasterBand(1).WriteArray(buff, 0, 0)
 
     # 4-bit deltas
-    buff = numpy.random.randint(0, 16, [stripeSize, sx])
+    buff = rmf_31e_data_gen(0, 16 - 1, stripeSize, sx)
     tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize)
 
     # 8-bit deltas
-    buff = numpy.random.randint(0, 256, [stripeSize, sx])
+    buff = rmf_31e_data_gen(0, 256 - 1, stripeSize, sx)
     tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*2)
 
     # 12-bit deltas
-    buff = numpy.random.randint(0, 256*16, [stripeSize, sx])
+    buff = rmf_31e_data_gen(0, 256*16 - 1, stripeSize, sx)
     tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*3)
 
     # 16-bit deltas
-    buff = numpy.random.randint(0, 256*256, [stripeSize, sx])
+    buff = rmf_31e_data_gen(0, 256*256 - 1, stripeSize, sx)
     tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*4)
 
     # 24-bit deltas
-    buff = numpy.random.randint(0, 256*256*256, [stripeSize, sx])
+    buff = rmf_31e_data_gen(0, 256*256*256 - 1, stripeSize, sx)
     tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*5)
 
     # 32-bit deltas
-    buff = numpy.random.randint(0, 256*256*256*128 - 1, [stripeSize, sx])
+    buff = rmf_31e_data_gen(0, 256*256*256*128 - 1, stripeSize, sx)
     tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*6)
+
+    # Negative values
+    buff = rmf_31e_data_gen(-(256*256*256 - 2), 256*256*256 - 2, stripeSize, sx)
+    tst_ds.GetRasterBand(1).WriteArray(buff, 0, stripeSize*7)
 
     tst_ds = None
     tst_ds = gdal.Open(tst_name)
