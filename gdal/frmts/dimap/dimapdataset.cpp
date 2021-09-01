@@ -1340,6 +1340,7 @@ int DIMAPDataset::ReadImageInformation2()
     auto poSrcBandFirstImage = poImageDS->GetRasterBand(1);
     const int nSrcOverviews = std::min(30, poSrcBandFirstImage->GetOverviewCount());
     if(nSrcOverviews>0) {
+        CPLConfigOptionSetter oSetter("VRT_VIRTUAL_OVERVIEWS", "YES", false);
         std::unique_ptr<int[]> ovrLevels(new int[nSrcOverviews]);
         int iLvl=1;
         for(int i=0; i<nSrcOverviews; i++) {

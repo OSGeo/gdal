@@ -94,6 +94,9 @@ def test_dimap_2_single_component():
         cs = ds.GetRasterBand(1).Checksum()
         assert cs == 7024, 'wrong checksum.'
 
+        nOvr = ds.GetRasterBand(1).GetOverviewCount()
+        assert nOvr == 1, 'overviews not correctly exposed'
+
         ds = None
 
 
