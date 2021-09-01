@@ -360,7 +360,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
         }
         else if( iSrsId == -1)
         {
-            poSpatialRef->SetLocalCS("Undefined cartesian SRS");
+            poSpatialRef->SetLocalCS("Undefined Cartesian SRS");
             poSpatialRef->SetLinearUnits( SRS_UL_METER, 1.0 );
         }
 
@@ -582,7 +582,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
             if (EQUAL(pszName, "Undefined geographic SRS"))
                 return 0;
 
-            if (EQUAL(pszName, "Undefined cartesian SRS"))
+            if (EQUAL(pszName, "Undefined Cartesian SRS"))
                 return -1;
         }
     }
@@ -932,7 +932,7 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_bMetadataDirty(false),
     m_bRecordInsertedInGPKGContent(false),
     m_bGeoTransformValid(false),
-    m_nSRID(-1),  // Unknown cartesian.
+    m_nSRID(-1),  // Unknown Cartesian.
     m_dfTMSMinX(0.0),
     m_dfTMSMaxY(0.0),
     m_nOverviewCount(0),
@@ -4179,7 +4179,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             osSQL += ", definition_12_063";
         osSQL +=
             ") VALUES ("
-            "'Undefined cartesian SRS', -1, 'NONE', -1, 'undefined', 'undefined cartesian coordinate reference system'";
+            "'Undefined Cartesian SRS', -1, 'NONE', -1, 'undefined', 'undefined Cartesian coordinate reference system'";
         if( m_bHasDefinition12_063 )
             osSQL += ", 'undefined'";
         osSQL +=
