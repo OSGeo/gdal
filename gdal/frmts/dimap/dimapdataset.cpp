@@ -36,6 +36,7 @@
 #include "mdreader/reader_pleiades.h"
 #include "vrtdataset.h"
 #include <map>
+#include <algorithm>
 
 CPL_CVSID("$Id$")
 
@@ -1331,6 +1332,21 @@ int DIMAPDataset::ReadImageInformation2()
                                             nWidth, nHeight );
             }
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Expose Overviews if available                                   */
+/* -------------------------------------------------------------------- */
+    auto poSrcBandFirstImage = poImageDS->GetRasterBand(1);
+    const int nSrcOverviews = std::min(30, poSrcBandFirstImage->GetOverviewCount());
+    if(nSrcOverviews>0) {
+        std::unique_ptr<int[]> ovrLevels(new int[nSrcOverviews]);
+        int iLvl=1;
+        for(int i=0; i<nSrcOverviews; i++) {
+            iLvl*=2;
+            ovrLevels[i]=iLvl;
+        }
+        poVRTDS->IBuildOverviews("average",nSrcOverviews,ovrLevels.get(),0,nullptr,nullptr,nullptr);
     }
 
 #ifdef DEBUG_VERBOSE
