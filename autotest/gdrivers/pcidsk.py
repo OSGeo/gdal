@@ -593,6 +593,17 @@ def test_pcidsk_online_rpc():
     assert ds.GetMetadata("RPC") is not None
 
 ###############################################################################
+# Test opening invalid files
+
+
+@pytest.mark.parametrize("filename", ["data/pcidsk/invalid_segment_pointers_offset.pix"])
+def test_pcidsk_invalid_files(filename):
+
+    with gdaltest.error_handler():
+        assert gdal.VSIStatL(filename) is not None
+        assert gdal.Open(filename) is None
+
+###############################################################################
 # Cleanup.
 
 
