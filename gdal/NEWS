@@ -17,6 +17,7 @@ The 3.3.2 release is a bug fix release.
 == GDAL algorithms ==
 
 * Polygonize: fix self intersection polygon when raster image contains complex holes (#3337, #1158, #3319)
+* OpenCL warper: remove extra double quote character in resampling kernel (#4404)
 
 == GDAL utilities ==
 
