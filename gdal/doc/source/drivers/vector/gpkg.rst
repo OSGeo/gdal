@@ -170,7 +170,7 @@ The following open options are available:
 Note: open options are typically specified with "-oo name=value" syntax
 in most OGR utilities, or with the GDALOpenEx() API call.
 
-Note: configuration option :decl_configoption:`OGR_SQLITE_JOURNAL` can 
+Note: configuration option :decl_configoption:`OGR_SQLITE_JOURNAL` can
 be used to set the journal mode of the GeoPackage (and thus SQLite)
 file, see also https://www.sqlite.org/pragma.html#pragma_journal_mode.
 
@@ -289,7 +289,7 @@ metadata domain can be used in read/write to read from/update the
 corresponding columns of the gpkg_contents table.
 
 Non-spatial tables
-~~~~~~~~~~~~~~~~~~
+------------------
 
 The core GeoPackage specification of GeoPackage 1.0 and 1.1 did not
 support non-spatial tables. This was added in GeoPackage 1.2 as the
@@ -332,6 +332,21 @@ option and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option.
 Starting with GDAL 2.3, this can be easily verified if the
 SQLITE_HAS_COLUMN_METADATA=YES driver metadata item is declared (for
 example with "ogrinfo --format GPKG")
+
+Coordinate Reference Systems
+----------------------------
+
+Valid geographic, projected and compound CRS supported in general by GDAL are
+also supported by GeoPackage and stored in the ``gpkg_spatial_ref_sys`` table.
+
+Two special hard-coded CRS are reserved per the GeoPackage specification:
+
+- SRID 0, for a Undefined Geographic CRS. This one is selected by default if
+  creating a spatial layer without any explicit CRS
+
+- SRID -1, for a Undefined Projected CRS. It might be selected by creating a
+  layer with a CRS instanciated from the following WKT string:
+  ``LOCAL_CS["Undefined cartesian SRS"]``. (GDAL >= 3.3)
 
 Level of support of GeoPackage Extensions
 -----------------------------------------
