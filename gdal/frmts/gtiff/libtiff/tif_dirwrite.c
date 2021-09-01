@@ -3168,6 +3168,7 @@ TIFFLinkDirectory(TIFF* tif)
 			 * First directory, overwrite offset in header.
 			 */
 			tif->tif_header.classic.tiff_diroff = (uint32_t) tif->tif_diroff;
+			tif->tif_lastdiroff = tif->tif_diroff;
 			(void) TIFFSeekFile(tif,4, SEEK_SET);
 			if (!WriteOK(tif, &m, 4)) {
 				TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
@@ -3179,7 +3180,13 @@ TIFFLinkDirectory(TIFF* tif)
 		/*
 		 * Not the first directory, search to the last and append.
 		 */
-		nextdir = tif->tif_header.classic.tiff_diroff;
+		if (tif->tif_lastdiroff != 0) {
+		    nextdir = (uint32_t) tif->tif_lastdiroff;
+		}
+		else {
+		    nextdir = tif->tif_header.classic.tiff_diroff;
+		}
+
 		while(1) {
 			uint16_t dircount;
 			uint32_t nextnextdir;
@@ -3210,6 +3217,7 @@ TIFFLinkDirectory(TIFF* tif)
 					     "Error writing directory link");
 					return (0);
 				}
+				tif->tif_lastdiroff = tif->tif_diroff;
 				break;
 			}
 			nextdir=nextnextdir;
@@ -3227,6 +3235,7 @@ TIFFLinkDirectory(TIFF* tif)
 			 * First directory, overwrite offset in header.
 			 */
 			tif->tif_header.big.tiff_diroff = tif->tif_diroff;
+			tif->tif_lastdiroff = tif->tif_diroff;
 			(void) TIFFSeekFile(tif,8, SEEK_SET);
 			if (!WriteOK(tif, &m, 8)) {
 				TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
@@ -3238,7 +3247,12 @@ TIFFLinkDirectory(TIFF* tif)
 		/*
 		 * Not the first directory, search to the last and append.
 		 */
-		nextdir = tif->tif_header.big.tiff_diroff;
+		if (tif->tif_lastdiroff != 0) {
+		    nextdir = tif->tif_lastdiroff;
+		}
+		else {
+		    nextdir = tif->tif_header.big.tiff_diroff;
+		}
 		while(1) {
 			uint64_t dircount64;
 			uint16_t dircount;
@@ -3277,6 +3291,7 @@ TIFFLinkDirectory(TIFF* tif)
 					     "Error writing directory link");
 					return (0);
 				}
+				tif->tif_lastdiroff = tif->tif_diroff;
 				break;
 			}
 			nextdir=nextnextdir;

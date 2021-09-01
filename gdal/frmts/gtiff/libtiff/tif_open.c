@@ -354,6 +354,7 @@ TIFFClientOpen(
 		if (!TIFFDefaultDirectory(tif))
 			goto bad;
 		tif->tif_diroff = 0;
+		tif->tif_lastdiroff = 0;
 		tif->tif_dirlist = NULL;
 		tif->tif_dirlistsize = 0;
 		tif->tif_dirnumber = 0;

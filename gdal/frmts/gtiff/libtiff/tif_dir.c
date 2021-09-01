@@ -1819,6 +1819,7 @@ TIFFUnlinkDirectory(TIFF* tif, uint16_t dirn)
 	TIFFDefaultDirectory(tif);
 	tif->tif_diroff = 0;			/* force link on next write */
 	tif->tif_nextdiroff = 0;		/* next write must be at end */
+	tif->tif_lastdiroff = 0;		/* will be updated on next link */
 	tif->tif_curoff = 0;
 	tif->tif_row = (uint32_t) -1;
 	tif->tif_curstrip = (uint32_t) -1;
