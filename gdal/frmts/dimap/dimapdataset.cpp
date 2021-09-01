@@ -1341,10 +1341,10 @@ int DIMAPDataset::ReadImageInformation2()
     const int nSrcOverviews = std::min(30, poSrcBandFirstImage->GetOverviewCount());
     if(nSrcOverviews>0) {
         std::unique_ptr<int[]> ovrLevels(new int[nSrcOverviews]);
-        int iLvl=2;
+        int iLvl=1;
         for(int i=0; i<nSrcOverviews; i++) {
-            ovrLevels[i]=iLvl;
             iLvl*=2;
+            ovrLevels[i]=iLvl;
         }
         poVRTDS->IBuildOverviews("average",nSrcOverviews,ovrLevels.get(),0,nullptr,nullptr,nullptr);
     }
