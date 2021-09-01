@@ -710,7 +710,7 @@ void setPixel(__global outType *dstReal,
         fImag = 0.0f;
 
     } else if (fDensity.x < 0.9999f || fDensity.y < 0.9999f ||
-               "fDensity.z < 0.9999f || fDensity.w < 0.9999f ) {
+               fDensity.z < 0.9999f || fDensity.w < 0.9999f ) {
         vecf fDstReal, fDstImag;
         float fDstDensity;
 
