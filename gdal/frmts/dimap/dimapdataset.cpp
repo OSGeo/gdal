@@ -36,6 +36,7 @@
 #include "mdreader/reader_pleiades.h"
 #include "vrtdataset.h"
 #include <map>
+#include <algorithm>
 
 CPL_CVSID("$Id$")
 
@@ -1333,18 +1334,19 @@ int DIMAPDataset::ReadImageInformation2()
         }
     }
 
-    if(CPLTestBool(CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS","NO"))) {
-        auto poSrcBandFirstImage = poImageDS->GetRasterBand(1);
-        int nSrcOverviews = poSrcBandFirstImage->GetOverviewCount();
-        if(nSrcOverviews>0) {
-            std::unique_ptr<int[]> ovrLevels(new int[nSrcOverviews]);
-            int iLvl=2;
-            for(int i=0; i<nSrcOverviews; i++) {
-                ovrLevels[i]=iLvl;
-                iLvl*=2;
-            }
-            poVRTDS->IBuildOverviews("average",nSrcOverviews,ovrLevels.get(),0,nullptr,nullptr,nullptr);
+/* -------------------------------------------------------------------- */
+/*      Expose Overviews if available                                   */
+/* -------------------------------------------------------------------- */
+    auto poSrcBandFirstImage = poImageDS->GetRasterBand(1);
+    const int nSrcOverviews = std::min(30, poSrcBandFirstImage->GetOverviewCount());
+    if(nSrcOverviews>0) {
+        std::unique_ptr<int[]> ovrLevels(new int[nSrcOverviews]);
+        int iLvl=2;
+        for(int i=0; i<nSrcOverviews; i++) {
+            ovrLevels[i]=iLvl;
+            iLvl*=2;
         }
+        poVRTDS->IBuildOverviews("average",nSrcOverviews,ovrLevels.get(),0,nullptr,nullptr,nullptr);
     }
 
 #ifdef DEBUG_VERBOSE
