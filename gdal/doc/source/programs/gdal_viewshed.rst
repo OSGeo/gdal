@@ -45,7 +45,7 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 .. option:: -b <band>
 
    Select an input band **band** containing the DEM data. Bands are numbered from 1.
-   Only a single band can be used. Only the part of the raster within the specified 
+   Only a single band can be used. Only the part of the raster within the specified
    maximum distance around the observer point is processed.
 
 .. option:: -a_nodata <value>
@@ -99,7 +99,7 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
      {SphereDiameterFactor}=1/{CurvCoeff}=1/(1-{RefractionCoeff})
 
    For visible light, the standard atmospheric refraction coefficient that is generally used is 1/7.
-   Thus the default value for CurvCoeff that gdal_viewshed uses is 0.85714 (=~ 1-1/7).
+   Thus the default value (since GDAL 3.4) for CurvCoeff that gdal_viewshed uses is 0.85714 (=~ 1-1/7).
 
    The height of the DEM is corrected according to the following formula:
 

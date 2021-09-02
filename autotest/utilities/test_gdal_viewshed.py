@@ -60,7 +60,7 @@ def test_gdal_viewshed():
     ds = None
     gdal.Unlink(viewshed_in)
     gdal.Unlink(viewshed_out)
-    assert cs == 42397
+    assert cs == 14613
     assert nodata is None
 
 
@@ -77,7 +77,7 @@ def test_gdal_viewshed_alternative_modes():
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
     gdal.Unlink(viewshed_out)
-    assert cs == 48478
+    assert cs == 45734
     assert nodata is None
 
     _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om GROUND -oz {} -ox {} -oy {} {} {}'.format(oz[0], ox[0], oy[0], viewshed_in, viewshed_out))
@@ -89,7 +89,7 @@ def test_gdal_viewshed_alternative_modes():
     ds = None
     gdal.Unlink(viewshed_in)
     gdal.Unlink(viewshed_out)
-    assert cs == 49633
+    assert cs == 8364
     assert nodata is None
 
 
@@ -98,7 +98,7 @@ def test_gdal_viewshed_alternative_modes():
 
 def test_gdal_viewshed_all_options():
     make_viewshed_input()
-    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -tz 5 -md 20000 -cc 0.85714 -iv 127 -vv 254 -ov 0 {} {}'.format(oz[1], ox[0], oy[0], viewshed_in, viewshed_out))
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -tz 5 -md 20000 -cc 0 -iv 127 -vv 254 -ov 0 {} {}'.format(oz[1], ox[0], oy[0], viewshed_in, viewshed_out))
     assert err is None or err == ''
     ds = gdal.Open(viewshed_out)
     assert ds
@@ -107,7 +107,7 @@ def test_gdal_viewshed_all_options():
     ds = None
     gdal.Unlink(viewshed_in)
     gdal.Unlink(viewshed_out)
-    assert cs == 24390
+    assert cs == 24435
     assert nodata == 0
 
 
