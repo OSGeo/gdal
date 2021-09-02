@@ -36,7 +36,7 @@ import subprocess
 import sys
 
 import gdaltest
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 import pytest
 from threading import Thread
 
@@ -1787,3 +1787,20 @@ def test_osr_basic_export_equal_earth_to_wkt():
     assert wkt == srs.ExportToWkt(['FORMAT=WKT2'])
     assert 'METHOD["Equal Earth",' in wkt
     assert gdal.GetLastErrorMsg() == ''
+
+
+###############################################################################
+# Test too long user input
+
+
+def test_osr_basic_set_from_user_input_too_long():
+
+    srs = osr.SpatialReference()
+    with gdaltest.error_handler():
+        assert srs.SetFromUserInput("+proj=pipeline " + "+step +proj=longlat " * 100000) != ogr.OGRERR_NONE
+
+    with gdaltest.error_handler():
+        assert srs.SetFromUserInput("AUTO:" + "x" * 100000) != ogr.OGRERR_NONE
+
+    with gdaltest.error_handler():
+        assert srs.SetFromUserInput("http://opengis.net/def/crs/" + "x" * 100000) != ogr.OGRERR_NONE

@@ -4198,6 +4198,12 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 
 {
 #if PROJ_AT_LEAST_VERSION(8,1,0)
+    if( strlen(pszURL) >= 10000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long input string");
+        return OGRERR_CORRUPT_DATA;
+    }
+
     auto obj = proj_create(d->getPROJContext(), pszURL);
     if( !obj )
     {
@@ -4356,6 +4362,12 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
 
 {
 #if PROJ_AT_LEAST_VERSION(8,1,0)
+    if( strlen(pszDefinition) >= 10000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long input string");
+        return OGRERR_CORRUPT_DATA;
+    }
+
     auto obj = proj_create(d->getPROJContext(), pszDefinition);
     if( !obj )
     {
