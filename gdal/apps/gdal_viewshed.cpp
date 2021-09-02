@@ -90,7 +90,8 @@ MAIN_START(argc, argv)
     double dfInvisibleVal = 0.0;
     double dfOutOfRangeVal = 0.0;
     double dfNoDataVal = -1.0;
-    double dfCurvCoeff = 0.0;
+    // Value for standard atmospheric refraction. See doc/source/programs/gdal_viewshed.rst
+    double dfCurvCoeff = 0.85714;
     const char *pszDriverName = nullptr;
     const char *pszSrcFilename = nullptr;
     const char *pszDstFilename = nullptr;
