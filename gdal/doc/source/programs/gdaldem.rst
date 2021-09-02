@@ -96,12 +96,15 @@ grid using gdalwarp before using gdaldem.
 
     * ``hillshade``
 
-        Generate a shaded relief map from any GDAL-supported elevation raster
+        Generate a shaded relief map from any GDAL-supported elevation raster.
 
     * ``slope``
 
-        Generate a slope map from any GDAL-supported elevation raster aspect to
-        generate an aspect map from any GDAL-supported elevation raster
+        Generate a slope map from any GDAL-supported elevation raster.
+
+    * ``aspect``
+
+        Generate an aspect map from any GDAL-supported elevation raster.
 
     * ``color-relief``
 
