@@ -464,8 +464,8 @@ def test_ogr_esrijson_read_multipointzm():
 ###############################################################################
 # Test ESRI FeatureService scrolling
 
-
-def test_ogr_esrijson_featureservice_scrolling():
+@pytest.mark.parametrize("prefix", ["", "ESRIJSON:"])
+def test_ogr_esrijson_featureservice_scrolling(prefix):
 
     @contextlib.contextmanager
     def cleanup_after_me():
@@ -634,7 +634,7 @@ def test_ogr_esrijson_featureservice_scrolling():
 
             gdal.FileFromMemBuffer('/vsimem/esrijson/test.json?resultRecordCount=1', resultOffset0)
             gdal.FileFromMemBuffer('/vsimem/esrijson/test.json?resultRecordCount=1&resultOffset=1', resultOffset1)
-            ds = ogr.Open('/vsimem/esrijson/test.json?resultRecordCount=1')
+            ds = ogr.Open(prefix + '/vsimem/esrijson/test.json?resultRecordCount=1')
             lyr = ds.GetLayer(0)
             f = lyr.GetNextFeature()
             assert f is not None and f.GetFID() == 1
