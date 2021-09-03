@@ -39,13 +39,15 @@ import pytest
 
 pytestmark = pytest.mark.require_driver('GPX')
 
-
 ###############################################################################
 @pytest.fixture(autouse=True, scope='module')
 def startup_and_cleanup():
 
-    if ogr.Open('data/gpx/test.gpx') is None:
-        pytest.skip()
+    # Check that the GPX driver has read support
+    with gdaltest.error_handler():
+        if ogr.Open('data/gpx/test.gpx') is None:
+            assert 'Expat' in gdal.GetLastErrorMsg()
+            pytest.skip('GDAL build without Expat support')
 
     yield
 
