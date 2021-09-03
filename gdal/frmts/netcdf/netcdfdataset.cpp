@@ -3308,18 +3308,11 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     poDS->FetchCopyParam(pszGridMappingValue,
                                         CF_PP_NORTH_POLE_GRID_LONGITUDE,0.0);
 
-                // Hack
-                oSRS.SetProjection( "Rotated_pole" );
-                oSRS.SetExtension(oSRS.GetRoot()->GetValue(),
-                    "PROJ4",
-                    CPLSPrintf("+proj=ob_tran +o_proj=longlat +lon_0=%.18g "
-                               "+o_lon_p=%.18g +o_lat_p=%.18g +a=%.18g "
-                               "+b=%.18g +to_meter=0.0174532925199 +wktext",
-                               180.0 + dfGridNorthPoleLong,
-                               dfNorthPoleGridLong,
-                               dfGridNorthPoleLat,
-                               dfEarthRadius,
-                               dfEarthRadius));
+                oSRS.SetDerivedGeogCRSWithPoleRotationNetCDFCFConvention(
+                                                           "Rotated_pole",
+                                                           dfGridNorthPoleLat,
+                                                           dfGridNorthPoleLong,
+                                                           dfNorthPoleGridLong);
                 bRotatedPole = true;
             }
 
