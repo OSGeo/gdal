@@ -33,6 +33,7 @@ import os.path
 import stat
 import sys
 from osgeo import gdal
+from contextlib import ExitStack
 
 
 import gdaltest
@@ -49,40 +50,27 @@ def open_for_read(uri):
 
 @pytest.fixture()
 def initialise_aws_s3():
-    vars_to_restore = {}
-    aws_vars = (
-        'AWS_SECRET_ACCESS_KEY',
-        'AWS_ACCESS_KEY_ID',
-        'AWS_TIMESTAMP',
-        'AWS_HTTPS',
-        'AWS_VIRTUAL_HOSTING',
-        'AWS_S3_ENDPOINT',
-        'AWS_REQUEST_PAYER',
-        'AWS_DEFAULT_REGION',
-        'AWS_DEFAULT_PROFILE',
-        'AWS_PROFILE',
-        'AWS_NO_SIGN_REQUEST'
-    )
-    for var in aws_vars:
-        value = gdal.GetConfigOption(var)
-        if value is not None:
-            vars_to_restore[var] = value
-            gdal.SetConfigOption(var, "")
+    options = {
+        'AWS_SECRET_ACCESS_KEY': '',
+        'AWS_ACCESS_KEY_ID': '',
+        'AWS_TIMESTAMP': '',
+        'AWS_HTTPS': '',
+        'AWS_VIRTUAL_HOSTING': '',
+        'AWS_S3_ENDPOINT': '',
+        'AWS_REQUEST_PAYER': '',
+        'AWS_DEFAULT_REGION': '',
+        'AWS_DEFAULT_PROFILE': '',
+        'AWS_PROFILE': '',
+        'AWS_NO_SIGN_REQUEST': 'NO',
+        # To avoid user AWS credentials in ~/.aws/credentials
+        # and ~/.aws/config to mess up our tests
+        'CPL_AWS_CREDENTIALS_FILE': '',
+        'AWS_CONFIG_FILE': '',
+        'CPL_AWS_EC2_API_ROOT_URL': ''
+    }
 
-    # To avoid user AWS credentials in ~/.aws/credentials and ~/.aws/config
-    # to mess up our tests
-    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
-    gdal.SetConfigOption('AWS_CONFIG_FILE', '')
-    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
-
-    yield
-
-    for var, value in vars_to_restore.items():
-        gdal.SetConfigOption(var, value)
-
-    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', None)
-    gdal.SetConfigOption('AWS_CONFIG_FILE', None)
-    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', None)
+    with gdaltest.config_options(options):
+        yield
 
 
 @pytest.fixture(scope="module")
