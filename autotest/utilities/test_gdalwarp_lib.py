@@ -266,7 +266,7 @@ def test_gdalwarp_lib_15():
 
     assert ds.GetRasterBand(1).GetNoDataValue() == 1, 'Bad nodata value'
 
-    assert ds.GetRasterBand(1).Checksum() in (4523, 4547) # 4547 on Mac / Conda
+    assert ds.GetRasterBand(1).Checksum() in (4523, 4547) # 4547 with HPGN grids
 
     ds = None
 
