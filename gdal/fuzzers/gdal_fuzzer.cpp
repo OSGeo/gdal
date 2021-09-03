@@ -212,6 +212,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     {
                         bDoCheckSum = false;
                     }
+                    // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=38051
+                    else if( STARTS_WITH_CI(pszCompress, "LERC") &&
+                        (static_cast<int64_t>(GDALGetRasterYSize(hDS)) * nSimultaneousBands * GDALGetRasterXSize(hDS) > (INT_MAX / 2) ||
+                         static_cast<int64_t>(GDALGetRasterYSize(hDS)) * nSimultaneousBands * GDALGetRasterXSize(hDS) * 4 / 3 + 100 > (INT_MAX / 2)) )
+                    {
+                        bDoCheckSum = false;
+                    }
                 }
 
                 GIntBig nNewPixels = static_cast<GIntBig>(nBXSize) * nBYSize;
