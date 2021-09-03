@@ -65,6 +65,11 @@ class RequestResponse(object):
         self.add_content_length_header = add_content_length_header
         self.unexpected_headers = unexpected_headers
 
+    def __repr__(self):
+        return (
+            f"RequestResponse({self.method}, {self.path}, {self.code}, headers={self.headers}, "
+            f"body={self.body}, custom_method={self.custom_method}, "
+
 
 class FileHandler(object):
     def __init__(self, _dict):
