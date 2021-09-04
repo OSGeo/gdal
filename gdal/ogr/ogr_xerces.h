@@ -48,6 +48,12 @@ void CPL_DLL OGRDeinitializeXerces(void);
 InputSource CPL_DLL* OGRCreateXercesInputSource(VSILFILE* fp);
 void CPL_DLL OGRDestroyXercesInputSource(InputSource* is);
 
+void CPL_DLL OGRStartXercesLimitsForThisThread(size_t nMaxMemAlloc,
+                                               const char* pszMsgMaxMemAlloc,
+                                               double dfTimeoutSecond,
+                                               const char* pszMsgTimeout);
+void CPL_DLL OGRStopXercesLimitsForThisThread();
+
 namespace OGR
 {
 CPLString CPL_DLL transcode( const XMLCh *panXMLString, int nLimitingChars = -1 );
