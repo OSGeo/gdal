@@ -5929,9 +5929,11 @@ bool GDALMDArray::IsRegularlySpaced(double& dfStart, double& dfIncrement) const
     // First try with the first block. This can avoid excessive processing time,
     // for example with Zarr datasets. https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37636
     const auto nBlockSize = GetBlockSize()[0];
-    if( nBlockSize >= 3 && nBlockSize < nCount )
+    if( nCount > 3 && nBlockSize > 0 && nBlockSize < nCount )
     {
-        anCount[0] = static_cast<size_t>(nBlockSize);
+        const size_t nReducedCount =
+            std::max<size_t>(3U, static_cast<size_t>(nBlockSize));
+        anCount[0] = nReducedCount;
         if( !Read(anStart, anCount, nullptr, nullptr,
                   GDALExtendedDataType::Create(GDT_Float64),
                   &adfTmp[0]) )
@@ -5944,8 +5946,8 @@ bool GDALMDArray::IsRegularlySpaced(double& dfStart, double& dfIncrement) const
         }
 
         // Get next values
-        anStart[0] += nBlockSize;
-        anCount[0] -= static_cast<size_t>(nBlockSize);
+        anStart[0] = nReducedCount;
+        anCount[0] = nCount - nReducedCount;
     }
 
     if( !Read(anStart, anCount, nullptr, nullptr,
