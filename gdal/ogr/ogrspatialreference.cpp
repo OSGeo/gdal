@@ -9853,17 +9853,27 @@ int OGRSpatialReference::GetAxesCount() const
         return 0;
     }
     d->demoteFromBoundCRS();
+    auto ctxt = d->getPROJContext();
     if( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
     {
         for( int i = 0; ; i++ )
         {
-            auto subCRS = proj_crs_get_sub_crs(d->getPROJContext(), d->m_pj_crs, i);
+            auto subCRS = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, i);
             if( !subCRS )
                 break;
-            auto cs = proj_crs_get_coordinate_system(d->getPROJContext(), subCRS);
+            if( proj_get_type(subCRS) == PJ_TYPE_BOUND_CRS )
+            {
+                auto baseCRS = proj_get_source_crs(ctxt, subCRS);
+                if( baseCRS )
+                {
+                    proj_destroy(subCRS);
+                    subCRS = baseCRS;
+                }
+            }
+            auto cs = proj_crs_get_coordinate_system(ctxt, subCRS);
             if( cs )
             {
-                axisCount += proj_cs_get_axis_count(d->getPROJContext(), cs);
+                axisCount += proj_cs_get_axis_count(ctxt, cs);
                 proj_destroy(cs);
             }
             proj_destroy(subCRS);
@@ -9871,10 +9881,10 @@ int OGRSpatialReference::GetAxesCount() const
     }
     else
     {
-        auto cs = proj_crs_get_coordinate_system(d->getPROJContext(), d->m_pj_crs);
+        auto cs = proj_crs_get_coordinate_system(ctxt, d->m_pj_crs);
         if( cs )
         {
-            axisCount = proj_cs_get_axis_count(d->getPROJContext(), cs);
+            axisCount = proj_cs_get_axis_count(ctxt, cs);
             proj_destroy(cs);
         }
     }

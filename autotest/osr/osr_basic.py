@@ -1804,3 +1804,26 @@ def test_osr_basic_set_from_user_input_too_long():
 
     with gdaltest.error_handler():
         assert srs.SetFromUserInput("http://opengis.net/def/crs/" + "x" * 100000) != ogr.OGRERR_NONE
+
+
+###############################################################################
+# Test GetAxesCount()
+
+
+def test_osr_basic_get_axes_count():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=tmerc +datum=WGS84")
+    assert srs.GetAxesCount() == 2
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=tmerc +ellps=GRS80 +towgs84=0,0,0")
+    assert srs.GetAxesCount() == 2
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4979)
+    assert srs.GetAxesCount() == 3
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=tmerc +datum=WGS84 +geoidgrids=foo.gtx")
+    assert srs.GetAxesCount() == 3
