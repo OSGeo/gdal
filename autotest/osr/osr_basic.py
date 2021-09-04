@@ -1351,15 +1351,15 @@ def test_osr_basic_26():
 def test_osr_basic_setgeogcs():
 
     sr = osr.SpatialReference()
-    sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
-    assert sr.ExportToWkt() == 'GEOGCS["unnamed",DATUM["unnamed",SPHEROID["unnamed",0,0]],PRIMEM["Reference meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
+    sr.SetGeogCS(None, None, None, 1, 2, None, 0, None, 0)
+    assert sr.ExportToWkt() == 'GEOGCS["unnamed",DATUM["unnamed",SPHEROID["unnamed",1,2]],PRIMEM["Reference meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
 
     sr.SetGeogCS('a', 'b', 'c', 1, 2, 'd', 3, 'e', 4)
     assert sr.ExportToWkt() == 'GEOGCS["a",DATUM["b",SPHEROID["c",1,2]],PRIMEM["d",3],UNIT["e",4],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
 
     sr.SetUTM(31)
-    sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
-    assert sr.ExportToWkt() == 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["unnamed",SPHEROID["unnamed",0,0]],PRIMEM["Reference meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+    sr.SetGeogCS(None, None, None, 1, 2, None, 0, None, 0)
+    assert sr.ExportToWkt() == 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["unnamed",SPHEROID["unnamed",1,2]],PRIMEM["Reference meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
 
 ###############################################################################
 # Test other authorities than EPSG, e.g. IGNF:XXXX
