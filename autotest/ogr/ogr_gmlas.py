@@ -2712,3 +2712,29 @@ def test_ogr_gmlas_invalid_version_xsd():
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_invalid_version_xsd.xml')
     assert ds is None
+
+
+###############################################################################
+# Test opening a file whose .xsd leads to huge memory allocation
+# Related to https://issues.apache.org/jira/browse/XERCESC-1051
+
+
+def test_ogr_gmlas_huge_memory_allocation():
+
+    with gdaltest.config_option('OGR_GMLAS_XERCES_MAX_TIME', '0'):
+        with gdaltest.error_handler():
+            ds = gdal.OpenEx('GMLAS:data/gmlas/test_max_mem_xerces.xml')
+        assert ds is None
+
+
+###############################################################################
+# Test opening a file whose .xsd leads to huge processing time
+# Related to https://issues.apache.org/jira/browse/XERCESC-1051
+
+
+def test_ogr_gmlas_huge_processing_time():
+
+    with gdaltest.config_option('OGR_GMLAS_XERCES_MAX_TIME', '0.5'):
+        with gdaltest.error_handler():
+            ds = gdal.OpenEx('GMLAS:data/gmlas/test_max_time_xerces.xml')
+        assert ds is None

@@ -1,0 +1,27 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:element name="main_elt">
+  <xs:complexType>
+     <xs:sequence>
+        <xs:group ref="myns:mygroup" minOccurs="0" maxOccurs="1"/>
+      </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:group name="mygroup">
+  <xs:sequence>
+      <!-- related to https://issues.apache.org/jira/browse/XERCESC-1051 -->
+      <xs:element name="elt" maxOccurs="33333">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="x" type="xs:int" maxOccurs="1"/>
+            </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+  </xs:sequence>
+</xs:group>
+
+</xs:schema>

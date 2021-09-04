@@ -33,8 +33,10 @@
 #pragma GCC system_header
 #endif
 
+#include <xercesc/framework/MemoryManager.hpp>
 #include <xercesc/sax/InputSource.hpp>
 #include <xercesc/util/BinInputStream.hpp>
+#include <xercesc/util/OutOfMemoryException.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLNetAccessor.hpp>
 #include <xercesc/util/XMLUniDefs.hpp>

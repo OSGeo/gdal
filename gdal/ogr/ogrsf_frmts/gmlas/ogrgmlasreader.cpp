@@ -35,6 +35,8 @@
 
 #include "cpl_json_header.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -537,6 +539,29 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
     const bool bCacheGrammar = true;
     Grammar* poGrammar = nullptr;
     std::string osLoadGrammarErrorMsg("loadGrammar failed");
+
+    const int nMaxMem = std::min(2048, std::max(0, atoi(
+        CPLGetConfigOption("OGR_GMLAS_XERCES_MAX_MEMORY", "500"))));
+    const std::string osMsgMaxMem = CPLSPrintf(
+        "Xerces-C memory allocation exceeds %d MB. "
+        "This can happen on schemas with a big value for maxOccurs. "
+        "Define the OGR_GMLAS_XERCES_MAX_MEMORY configuration option to a "
+        "bigger value (in MB) to increase that limitation, "
+        "or 0 to remove it completely.",
+        nMaxMem);
+    const double dfTimeout = CPLAtof(
+        CPLGetConfigOption("OGR_GMLAS_XERCES_MAX_TIME", "2"));
+    const std::string osMsgTimeout = CPLSPrintf(
+        "Processing in Xerces exceeded maximum allowed of %.3f s. "
+        "This can happen on schemas with a big value for maxOccurs. "
+        "Define the OGR_GMLAS_XERCES_MAX_TIME configuration option to a "
+        "bigger value (in second) to increase that limitation, "
+        "or 0 to remove it completely.",
+        dfTimeout);
+    OGRStartXercesLimitsForThisThread(static_cast<size_t>(nMaxMem) * 1024 * 1024,
+                                      osMsgMaxMem.c_str(),
+                                      dfTimeout,
+                                      osMsgTimeout.c_str());
     try
     {
         poGrammar = poParser->loadGrammar(oSource,
@@ -551,12 +576,20 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
     {
         osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
     }
+    catch( const OutOfMemoryException& e )
+    {
+        if( strstr(CPLGetLastErrorMsg(), "configuration option") == nullptr )
+        {
+            osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
+        }
+    }
     catch( const DOMException& e )
     {
         // Can happen with a .xsd that has a bad <?xml version="
         // declaration.
         osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
     }
+    OGRStopXercesLimitsForThisThread();
 
     // Restore previous handlers
     poParser->setEntityResolver( poOldEntityResolver );
@@ -565,8 +598,11 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
 
     if( poGrammar == nullptr )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                 osLoadGrammarErrorMsg.c_str());
+        if( !osLoadGrammarErrorMsg.empty() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                     osLoadGrammarErrorMsg.c_str());
+        }
         return false;
     }
     if( oErrorHandler.hasFailed() )
