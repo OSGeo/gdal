@@ -476,7 +476,7 @@ bool VSIGSHandleHelper::GetConfiguration(CSLConstList papszOptions,
             return false;
         }
         CPLString osPrivateKey = oDoc.GetRoot().GetString("private_key");
-        osPrivateKey.replaceAll("\\n", "\n");
+        osPrivateKey.replaceAll("\\n", "\n").replaceAll("\n\n", "\n").replaceAll("\r", "");
         CPLString osClientEmail = oDoc.GetRoot().GetString("client_email");
         const char* pszScope =
             CSLFetchNameValueDef( papszOptions, "GS_OAUTH2_SCOPE",
@@ -518,7 +518,7 @@ bool VSIGSHandleHelper::GetConfiguration(CSLConstList papszOptions,
                 CPLFree(pabyBuffer);
             }
         }
-        osPrivateKey.replaceAll("\\n", "\n");
+        osPrivateKey.replaceAll("\\n", "\n").replaceAll("\n\n", "\n").replaceAll("\r", "");
 
         CPLString osClientEmail = CSLFetchNameValueDef(papszOptions,
             "GS_OAUTH2_CLIENT_EMAIL",
