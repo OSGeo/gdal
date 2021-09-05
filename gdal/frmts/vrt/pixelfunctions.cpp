@@ -126,6 +126,27 @@ static CPLErr PowPixelFuncHelper( void **papoSources, int nSources, void *pData,
                                   int nPixelSpace, int nLineSpace,
                                   double base, double fact );
 
+template<typename T> inline double GetSrcVal(const void* pSource, GDALDataType eSrcType, T ii)
+{
+    switch( eSrcType )
+    {
+        case GDT_Unknown: return 0;
+        case GDT_Byte: return static_cast<const GByte*>(pSource)[ii];
+        case GDT_UInt16: return static_cast<const GUInt16*>(pSource)[ii];
+        case GDT_Int16: return static_cast<const GInt16*>(pSource)[ii];
+        case GDT_UInt32: return static_cast<const GUInt32*>(pSource)[ii];
+        case GDT_Int32: return static_cast<const GInt32*>(pSource)[ii];
+        case GDT_Float32: return static_cast<const float*>(pSource)[ii];
+        case GDT_Float64: return static_cast<const double*>(pSource)[ii];
+        case GDT_CInt16: return static_cast<const GInt16*>(pSource)[2 * ii];
+        case GDT_CInt32: return static_cast<const GInt32*>(pSource)[2 * ii];
+        case GDT_CFloat32: return static_cast<const float*>(pSource)[2 * ii];
+        case GDT_CFloat64: return static_cast<const double*>(pSource)[2 * ii];
+        case GDT_TypeCount: break;
+    }
+    return 0;
+}
+
 static CPLErr FetchDoubleArg(CSLConstList papszArgs, const char *pszName, double* pdfX)
 {
     const char* pszVal = CSLFetchNameValue(papszArgs, pszName);
@@ -231,10 +252,10 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Set pixels ---- */
     for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-            // Source raster pixels may be obtained with SRCVAL macro.
+            // Source raster pixels may be obtained with GetSrcVal macro.
             const double adfPixVal[2] = {
-                SRCVAL(pReal, eSrcType, ii),  // re
-                SRCVAL(pImag, eSrcType, ii)  // im
+                GetSrcVal(pReal, eSrcType, ii),  // re
+                GetSrcVal(pImag, eSrcType, ii)  // im
             };
 
             GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
@@ -264,9 +285,9 @@ static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
-                const double dfReal = SRCVAL(pReal, eSrcType, ii);
-                const double dfImag = SRCVAL(pImag, eSrcType, ii);
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfReal = GetSrcVal(pReal, eSrcType, ii);
+                const double dfImag = GetSrcVal(pImag, eSrcType, ii);
 
                 const double dfPixVal =
                     sqrt( dfReal * dfReal + dfImag * dfImag );
@@ -283,9 +304,9 @@ static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
+                // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfPixVal =
-                    fabs(SRCVAL(papoSources[0], eSrcType, ii));
+                    fabs(GetSrcVal(papoSources[0], eSrcType, ii));
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
@@ -316,9 +337,9 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
-                const double dfReal = SRCVAL(pReal, eSrcType, ii);
-                const double dfImag = SRCVAL(pImag, eSrcType, ii);
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfReal = GetSrcVal(pReal, eSrcType, ii);
+                const double dfImag = GetSrcVal(pImag, eSrcType, ii);
 
                 const double dfPixVal = atan2(dfImag, dfReal);
 
@@ -336,8 +357,8 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 const void * const pReal = papoSources[0];
 
-                // Source raster pixels may be obtained with SRCVAL macro.
-                const double dfReal = SRCVAL(pReal, eSrcType, ii);
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfReal = GetSrcVal(pReal, eSrcType, ii);
                 const double dfPixVal = (dfReal < 0) ? M_PI : 0.0;
 
                 GDALCopyWords(
@@ -370,10 +391,10 @@ static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
+                // Source raster pixels may be obtained with GetSrcVal macro.
                 const double adfPixVal[2] = {
-                    +SRCVAL(pReal, eSrcType, ii),  // re
-                    -SRCVAL(pImag, eSrcType, ii)  // im
+                    +GetSrcVal(pReal, eSrcType, ii),  // re
+                    -GetSrcVal(pImag, eSrcType, ii)  // im
                 };
 
                 GDALCopyWords(
@@ -417,9 +438,9 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                     const void * const pImag =
                         static_cast<const GByte *>(pReal) + nOffset;
 
-                    // Source raster pixels may be obtained with SRCVAL macro.
-                    adfSum[0] += SRCVAL(pReal, eSrcType, ii);
-                    adfSum[1] += SRCVAL(pImag, eSrcType, ii);
+                    // Source raster pixels may be obtained with GetSrcVal macro.
+                    adfSum[0] += GetSrcVal(pReal, eSrcType, ii);
+                    adfSum[1] += GetSrcVal(pImag, eSrcType, ii);
                 }
 
                 GDALCopyWords(
@@ -437,8 +458,8 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                 double dfSum = 0;  // Not complex.
 
                 for( int iSrc = 0; iSrc < nSources; ++iSrc ) {
-                    // Source raster pixels may be obtained with SRCVAL macro.
-                    dfSum += SRCVAL(papoSources[iSrc], eSrcType, ii);
+                    // Source raster pixels may be obtained with GetSrcVal macro.
+                    dfSum += GetSrcVal(papoSources[iSrc], eSrcType, ii);
                 }
 
                 GDALCopyWords(
@@ -474,12 +495,12 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
+                // Source raster pixels may be obtained with GetSrcVal macro.
                 double adfPixVal[2] = {
-                    SRCVAL(pReal0, eSrcType, ii)
-                    - SRCVAL(pReal1, eSrcType, ii),
-                    SRCVAL(pImag0, eSrcType, ii)
-                    - SRCVAL(pImag1, eSrcType, ii)
+                    GetSrcVal(pReal0, eSrcType, ii)
+                    - GetSrcVal(pReal1, eSrcType, ii),
+                    GetSrcVal(pImag0, eSrcType, ii)
+                    - GetSrcVal(pImag1, eSrcType, ii)
                 };
 
                 GDALCopyWords(
@@ -494,10 +515,10 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
+                // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
-                const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii)
-                    - SRCVAL(papoSources[1], eSrcType, ii);
+                const double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii)
+                    - GetSrcVal(papoSources[1], eSrcType, ii);
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
@@ -537,9 +558,9 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
                     const double dfOldR = adfPixVal[0];
                     const double dfOldI = adfPixVal[1];
 
-                    // Source raster pixels may be obtained with SRCVAL macro.
-                    const double dfNewR = SRCVAL(pReal, eSrcType, ii);
-                    const double dfNewI = SRCVAL(pImag, eSrcType, ii);
+                    // Source raster pixels may be obtained with GetSrcVal macro.
+                    const double dfNewR = GetSrcVal(pReal, eSrcType, ii);
+                    const double dfNewI = GetSrcVal(pImag, eSrcType, ii);
 
                     adfPixVal[0] = dfOldR * dfNewR - dfOldI * dfNewI;
                     adfPixVal[1] = dfOldR * dfNewI + dfOldI * dfNewR;
@@ -560,8 +581,8 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
                 double dfPixVal = 1.0;  // Not complex.
 
                 for( int iSrc = 0; iSrc < nSources; ++iSrc ) {
-                    // Source raster pixels may be obtained with SRCVAL macro.
-                    dfPixVal *= SRCVAL(papoSources[iSrc], eSrcType, ii);
+                    // Source raster pixels may be obtained with GetSrcVal macro.
+                    dfPixVal *= GetSrcVal(papoSources[iSrc], eSrcType, ii);
                 }
 
                 GDALCopyWords(
@@ -597,11 +618,11 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
 
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
-                const double dfReal0 = SRCVAL(pReal0, eSrcType, ii);
-                const double dfReal1 = SRCVAL(pReal1, eSrcType, ii);
-                const double dfImag0 = SRCVAL(pImag0, eSrcType, ii);
-                const double dfImag1 = SRCVAL(pImag1, eSrcType, ii);
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfReal0 = GetSrcVal(pReal0, eSrcType, ii);
+                const double dfReal1 = GetSrcVal(pReal1, eSrcType, ii);
+                const double dfImag0 = GetSrcVal(pImag0, eSrcType, ii);
+                const double dfImag1 = GetSrcVal(pImag1, eSrcType, ii);
                 const double adfPixVal[2] = {
                     dfReal0 * dfReal1 + dfImag0 * dfImag1,
                     dfReal1 * dfImag0 - dfReal0 * dfImag1
@@ -618,11 +639,11 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
     {
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
+                // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
                 const double adfPixVal[2] = {
-                    SRCVAL(papoSources[0], eSrcType, ii)
-                    * SRCVAL(papoSources[1], eSrcType, ii),
+                    GetSrcVal(papoSources[0], eSrcType, ii)
+                    * GetSrcVal(papoSources[1], eSrcType, ii),
                     0.0
                 };
 
@@ -656,9 +677,9 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
 
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
-                const double dfReal = SRCVAL(pReal, eSrcType, ii);
-                const double dfImag = SRCVAL(pImag, eSrcType, ii);
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfReal = GetSrcVal(pReal, eSrcType, ii);
+                const double dfImag = GetSrcVal(pImag, eSrcType, ii);
                 const double dfAux = dfReal * dfReal + dfImag * dfImag;
                 const double adfPixVal[2] = {
                     dfAux == 0 ? std::numeric_limits<double>::infinity() : dfReal / dfAux,
@@ -676,9 +697,9 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
+                // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
-                const double dfVal = SRCVAL(papoSources[0], eSrcType, ii);
+                const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
                 const double dfPixVal =
                     dfVal == 0 ? std::numeric_limits<double>::infinity() :
                     1.0 / dfVal;
@@ -713,9 +734,9 @@ static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
-                const double dfReal = SRCVAL(pReal, eSrcType, ii);
-                const double dfImag = SRCVAL(pImag, eSrcType, ii);
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfReal = GetSrcVal(pReal, eSrcType, ii);
+                const double dfImag = GetSrcVal(pImag, eSrcType, ii);
 
                 const double dfPixVal = dfReal * dfReal + dfImag * dfImag;
 
@@ -731,8 +752,8 @@ static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
-                double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii);
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii);
                 dfPixVal *= dfPixVal;
 
                 GDALCopyWords(
@@ -759,9 +780,9 @@ static CPLErr SqrtPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Set pixels ---- */
     for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-            // Source raster pixels may be obtained with SRCVAL macro.
+            // Source raster pixels may be obtained with GetSrcVal macro.
             const double dfPixVal =
-                sqrt( SRCVAL(papoSources[0], eSrcType, ii) );
+                sqrt( GetSrcVal(papoSources[0], eSrcType, ii) );
 
             GDALCopyWords(
                 &dfPixVal, GDT_Float64, 0,
@@ -796,9 +817,9 @@ static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
-                const double dfReal = SRCVAL(pReal, eSrcType, ii);
-                const double dfImag = SRCVAL(pImag, eSrcType, ii);
+                // Source raster pixels may be obtained with GetSrcVal macro.
+                const double dfReal = GetSrcVal(pReal, eSrcType, ii);
+                const double dfImag = GetSrcVal(pImag, eSrcType, ii);
 
                 const double dfPixVal =
                     fact * log10( sqrt( dfReal * dfReal + dfImag * dfImag ) );
@@ -815,10 +836,10 @@ static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
         /* ---- Set pixels ---- */
         for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-                // Source raster pixels may be obtained with SRCVAL macro.
+                // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfPixVal =
                     fact * log10( fabs(
-                        SRCVAL(papoSources[0], eSrcType, ii) ) );
+                        GetSrcVal(papoSources[0], eSrcType, ii) ) );
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
@@ -865,9 +886,9 @@ static CPLErr PowPixelFuncHelper( void **papoSources, int nSources, void *pData,
     /* ---- Set pixels ---- */
     for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-            // Source raster pixels may be obtained with SRCVAL macro.
+            // Source raster pixels may be obtained with GetSrcVal macro.
             const double dfPixVal =
-                pow(base, SRCVAL(papoSources[0], eSrcType, ii) / fact);
+                pow(base, GetSrcVal(papoSources[0], eSrcType, ii) / fact);
 
             GDALCopyWords(
                 &dfPixVal, GDT_Float64, 0,
@@ -915,7 +936,7 @@ static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
     for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
             const double dfPixVal = std::pow(
-                    SRCVAL(papoSources[0], eSrcType, ii),
+                    GetSrcVal(papoSources[0], eSrcType, ii),
                     power);
 
             GDALCopyWords(
@@ -992,8 +1013,8 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Set pixels ---- */
     for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
-            const double dfY0 = SRCVAL(papoSources[i0], eSrcType, ii);
-            const double dfY1 = SRCVAL(papoSources[i1], eSrcType, ii);
+            const double dfY0 = GetSrcVal(papoSources[i0], eSrcType, ii);
+            const double dfY1 = GetSrcVal(papoSources[i1], eSrcType, ii);
 
             const double dfPixVal = InterpolationFunction(dfT0, dfX1, dfY0, dfY1, dfT);
 

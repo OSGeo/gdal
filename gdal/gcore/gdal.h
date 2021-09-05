@@ -896,6 +896,9 @@ bool CPL_DLL GDALDatasetAddFieldDomain(GDALDatasetH hDS,
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 
+/* Note: the only user of SRCVAL() was frmts/vrt/pixelfunctions.cpp and we no */
+/* longer use it. */
+
 /**
  * SRCVAL - Macro which may be used by pixel functions to obtain
  *          a pixel from a source buffer.
