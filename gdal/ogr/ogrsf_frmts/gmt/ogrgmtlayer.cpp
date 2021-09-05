@@ -315,6 +315,7 @@ bool OGRGmtLayer::ReadLine()
     if( osLine[0] != '#' || osLine.find_first_of('@') == std::string::npos )
         return true;
 
+    CPLStringList aosKeyedValues;
     for( size_t i = 0; i < osLine.length(); i++ )
     {
         if( osLine[i] == '@' && i + 2 <= osLine.size() )
@@ -346,11 +347,12 @@ bool OGRGmtLayer::ReadLine()
             CPLString osKeyValue = osLine.substr(i+1,1);
             osKeyValue += pszUEValue;
             CPLFree( pszUEValue );
-            papszKeyedValues = CSLAddString( papszKeyedValues, osKeyValue );
+            aosKeyedValues.AddString( osKeyValue );
 
             i = iValEnd;
         }
     }
+    papszKeyedValues = aosKeyedValues.StealList();
 
     return true;
 }
