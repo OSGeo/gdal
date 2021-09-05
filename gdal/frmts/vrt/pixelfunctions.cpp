@@ -177,14 +177,14 @@ static CPLErr RealPixelFunc( void **papoSources, int nSources, void *pData,
     if( nSources != 1 ) return CE_Failure;
 
     const int nPixelSpaceSrc = GDALGetDataTypeSizeBytes( eSrcType );
-    const int nLineSpaceSrc = nPixelSpaceSrc * nXSize;
+    const size_t nLineSpaceSrc = static_cast<size_t>(nPixelSpaceSrc) * nXSize;
 
     /* ---- Set pixels ---- */
     for( int iLine = 0; iLine < nYSize; ++iLine ) {
         GDALCopyWords(
             static_cast<GByte *>(papoSources[0]) + nLineSpaceSrc * iLine,
             eSrcType, nPixelSpaceSrc,
-            static_cast<GByte *>(pData) + nLineSpace * iLine,
+            static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine,
             eBufType, nPixelSpace, nXSize );
     }
 
@@ -204,7 +204,7 @@ static CPLErr ImagPixelFunc( void **papoSources, int nSources, void *pData,
     {
         const GDALDataType eSrcBaseType = GDALGetNonComplexDataType( eSrcType );
         const int nPixelSpaceSrc = GDALGetDataTypeSizeBytes( eSrcType );
-        const int nLineSpaceSrc = nPixelSpaceSrc * nXSize;
+        const size_t nLineSpaceSrc = static_cast<size_t>(nPixelSpaceSrc) * nXSize;
 
         const void * const pImag = static_cast<GByte *>(papoSources[0])
             + GDALGetDataTypeSizeBytes( eSrcType ) / 2;
@@ -215,7 +215,7 @@ static CPLErr ImagPixelFunc( void **papoSources, int nSources, void *pData,
             GDALCopyWords(
                 static_cast<const GByte *>(pImag) + nLineSpaceSrc * iLine,
                 eSrcBaseType, nPixelSpaceSrc,
-                static_cast<GByte *>(pData) + nLineSpace * iLine,
+                static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine,
                 eBufType, nPixelSpace, nXSize );
         }
     }
@@ -229,7 +229,7 @@ static CPLErr ImagPixelFunc( void **papoSources, int nSources, void *pData,
             // Always copy from the same location.
             GDALCopyWords(
                 &dfImag, eSrcType, 0,
-                static_cast<GByte *>(pData) + nLineSpace * iLine,
+                static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine,
                 eBufType, nPixelSpace, nXSize);
         }
     }
@@ -250,7 +250,8 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
     const void * const pImag = papoSources[1];
 
     /* ---- Set pixels ---- */
-    for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+    size_t ii = 0;
+    for( int iLine = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
             // Source raster pixels may be obtained with GetSrcVal macro.
             const double adfPixVal[2] = {
@@ -259,7 +260,7 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
             };
 
             GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
-                          static_cast<GByte *>(pData) + nLineSpace * iLine +
+                          static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                           iCol * nPixelSpace, eBufType, nPixelSpace, 1);
         }
     }
@@ -283,7 +284,8 @@ static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
                     + GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfReal = GetSrcVal(pReal, eSrcType, ii);
@@ -294,7 +296,7 @@ static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -302,7 +304,8 @@ static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfPixVal =
@@ -310,7 +313,7 @@ static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -335,7 +338,8 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
             + GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfReal = GetSrcVal(pReal, eSrcType, ii);
@@ -345,7 +349,7 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -357,14 +361,15 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
         for( int iLine = 0; iLine < nYSize; ++iLine ) {
             GDALCopyWords(
                 &dfZero, GDT_Float64, 0,
-                static_cast<GByte *>(pData) + nLineSpace * iLine,
+                static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine,
                 eBufType, nPixelSpace, nXSize );
         }
     }
     else
     {
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 const void * const pReal = papoSources[0];
 
@@ -374,7 +379,7 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -400,7 +405,8 @@ static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
             static_cast<GByte *>(papoSources[0]) + nOffset;
 
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double adfPixVal[2] = {
@@ -410,7 +416,7 @@ static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     adfPixVal, GDT_CFloat64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -440,7 +446,8 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
         const int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 double adfSum[2] = { 0.0, 0.0 };
 
@@ -456,7 +463,7 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     adfSum, GDT_CFloat64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
         }
@@ -464,7 +471,8 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 double dfSum = 0;  // Not complex.
 
@@ -475,7 +483,7 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfSum, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
         }
@@ -504,7 +512,8 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
             static_cast<GByte *>(papoSources[1]) + nOffset;
 
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 double adfPixVal[2] = {
@@ -516,7 +525,7 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     adfPixVal, GDT_CFloat64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -524,7 +533,8 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
@@ -533,7 +543,7 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
         }
@@ -557,7 +567,8 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
         const int nOffset = GDALGetDataTypeSizeBytes( eSrcType ) / 2;
 
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 double adfPixVal[2] = { 1.0, 0.0 };
 
@@ -579,7 +590,7 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     adfPixVal, GDT_CFloat64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
         }
@@ -587,7 +598,8 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 double dfPixVal = 1.0;  // Not complex.
 
@@ -598,7 +610,7 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
         }
@@ -627,7 +639,8 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
         const void * const pImag1 =
             static_cast<GByte *>(papoSources[1]) + nOffset;
 
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfReal0 = GetSrcVal(pReal0, eSrcType, ii);
@@ -641,14 +654,15 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     adfPixVal, GDT_CFloat64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
     }
     else
     {
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
@@ -660,7 +674,7 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     adfPixVal, GDT_CFloat64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -686,7 +700,8 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
         const void * const pImag =
             static_cast<GByte *>(papoSources[0]) + nOffset;
 
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfReal = GetSrcVal(pReal, eSrcType, ii);
@@ -698,7 +713,7 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     adfPixVal, GDT_CFloat64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
         }
@@ -706,7 +721,8 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 // Not complex.
@@ -717,7 +733,7 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -743,7 +759,8 @@ static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
             static_cast<GByte *>(papoSources[0]) + nOffset;
 
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfReal = GetSrcVal(pReal, eSrcType, ii);
@@ -753,7 +770,7 @@ static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
         }
@@ -761,7 +778,8 @@ static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
     else
     {
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 double dfPixVal = GetSrcVal(papoSources[0], eSrcType, ii);
@@ -769,7 +787,7 @@ static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
             }
         }
@@ -789,7 +807,8 @@ static CPLErr SqrtPixelFunc( void **papoSources, int nSources, void *pData,
     if( GDALDataTypeIsComplex( eSrcType ) ) return CE_Failure;
 
     /* ---- Set pixels ---- */
-    for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+    size_t ii = 0;
+    for( int iLine = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
             // Source raster pixels may be obtained with GetSrcVal macro.
             const double dfPixVal =
@@ -797,7 +816,7 @@ static CPLErr SqrtPixelFunc( void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(
                 &dfPixVal, GDT_Float64, 0,
-                static_cast<GByte *>(pData) + nLineSpace * iLine +
+                static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                 iCol * nPixelSpace, eBufType, nPixelSpace, 1);
         }
     }
@@ -826,7 +845,8 @@ static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
             static_cast<GByte *>(papoSources[0]) + nOffset;
 
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfReal = GetSrcVal(pReal, eSrcType, ii);
@@ -837,7 +857,7 @@ static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -845,7 +865,8 @@ static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
     else
     {
         /* ---- Set pixels ---- */
-        for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+        size_t ii = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
             for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
                 // Source raster pixels may be obtained with GetSrcVal macro.
                 const double dfPixVal =
@@ -854,7 +875,7 @@ static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
 
                 GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1 );
             }
         }
@@ -895,7 +916,8 @@ static CPLErr PowPixelFuncHelper( void **papoSources, int nSources, void *pData,
     if( GDALDataTypeIsComplex( eSrcType ) ) return CE_Failure;
 
     /* ---- Set pixels ---- */
-    for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+    size_t ii = 0;
+    for( int iLine = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
             // Source raster pixels may be obtained with GetSrcVal macro.
             const double dfPixVal =
@@ -903,7 +925,7 @@ static CPLErr PowPixelFuncHelper( void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(
                 &dfPixVal, GDT_Float64, 0,
-                static_cast<GByte *>(pData) + nLineSpace * iLine +
+                static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                 iCol * nPixelSpace, eBufType, nPixelSpace, 1);
         }
     }
@@ -944,7 +966,8 @@ static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
     if ( FetchDoubleArg(papszArgs, "power", &power) != CE_None ) return CE_Failure;
 
     /* ---- Set pixels ---- */
-    for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+    size_t ii = 0;
+    for( int iLine = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
             const double dfPixVal = std::pow(
                     GetSrcVal(papoSources[0], eSrcType, ii),
@@ -952,7 +975,7 @@ static CPLErr PowPixelFunc( void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
         }
     }
@@ -1022,7 +1045,8 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
     double dfX1 = dfT0 + dfDt;
 
     /* ---- Set pixels ---- */
-    for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
+    size_t ii = 0;
+    for( int iLine = 0; iLine < nYSize; ++iLine ) {
         for( int iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
             const double dfY0 = GetSrcVal(papoSources[i0], eSrcType, ii);
             const double dfY1 = GetSrcVal(papoSources[i1], eSrcType, ii);
@@ -1031,7 +1055,7 @@ CPLErr InterpolatePixelFunc( void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(
                     &dfPixVal, GDT_Float64, 0,
-                    static_cast<GByte *>(pData) + nLineSpace * iLine +
+                    static_cast<GByte *>(pData) + static_cast<GSpacing>(nLineSpace) * iLine +
                     iCol * nPixelSpace, eBufType, nPixelSpace, 1);
         }
     }
