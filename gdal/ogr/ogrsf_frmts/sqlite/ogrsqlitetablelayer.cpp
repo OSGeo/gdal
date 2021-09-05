@@ -338,6 +338,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
+    bool bHasRowId = m_bIsTable;
 
     const char *pszSQL =
         CPLSPrintf("SELECT %s* FROM '%s' LIMIT 1",
@@ -348,11 +349,25 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
     int rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, nullptr );
     if( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to query table %s for column definitions : %s.",
-                  pszTableName, sqlite3_errmsg(hDB) );
+        const char* pszErrMsg = sqlite3_errmsg(hDB);
+        if( m_bIsTable && pszErrMsg && strstr(pszErrMsg, "_rowid_") != nullptr )
+        {
+            // This is likely a table WITHOUT ROWID
+            bHasRowId = false;
+            sqlite3_finalize( hColStmt );
+            hColStmt = nullptr;
+            pszSQL = CPLSPrintf(
+                "SELECT * FROM '%s' LIMIT 1", pszEscapedTableName);
+            rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, nullptr );
+        }
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to query table %s for column definitions : %s.",
+                      pszTableName, sqlite3_errmsg(hDB) );
 
-        return CE_Failure;
+            return CE_Failure;
+        }
     }
 
     rc = sqlite3_step( hColStmt );
@@ -368,14 +383,13 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
 /* -------------------------------------------------------------------- */
 /*      What should we use as FID?  If there is a primary key           */
 /*      integer field, then this will be used as the _rowid_, and we    */
-/*      will pick up the real column name here.  Otherwise, we will     */
-/*      just use fid.                                                   */
+/*      will pick up the real column name here.                         */
 /*                                                                      */
 /*      Note that the select _rowid_ will return the real column        */
 /*      name if the rowid corresponds to another primary key            */
 /*      column.                                                         */
 /* -------------------------------------------------------------------- */
-    if( m_bIsTable )
+    if( bHasRowId )
     {
         CPLFree( pszFIDColumn );
         pszFIDColumn = CPLStrdup(SQLUnescape(sqlite3_column_name( hColStmt, 0 )));
@@ -632,7 +646,9 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
 /* -------------------------------------------------------------------- */
 
     const char *pszSQL =
-        CPLSPrintf("SELECT _rowid_, * FROM '%s' LIMIT 1", pszEscapedTableName);
+        CPLSPrintf("SELECT %s* FROM '%s' LIMIT 1",
+                   pszFIDColumn != nullptr ? "_rowid_, " : "",
+                   pszEscapedTableName);
 
     int rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, nullptr );
     if( rc != SQLITE_OK )
@@ -745,7 +761,7 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     iNextShapeId = 0;
 
     osSQL.Printf( "SELECT %s* FROM '%s' %s",
-                  m_bIsTable ? "_rowid_, " : "",
+                  pszFIDColumn != nullptr ? "_rowid_, " : "",
                   pszEscapedTableName,
                   osWHERE.c_str() );
 #ifdef DEBUG_VERBOSE
