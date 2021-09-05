@@ -1,16 +1,15 @@
 <VRTDataset rasterXSize="20" rasterYSize="20">
-  <VRTRasterBand dataType="CFloat32" band="1" subClass="VRTDerivedRasterBand">
-    <Description>Make complex</Description>
-    <PixelFunctionType>complex</PixelFunctionType>
-    <SourceTransferType>CFloat32</SourceTransferType>
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Product with complex conjugate</Description>
+    <PixelFunctionType>cmul</PixelFunctionType>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">int32.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">../uint16.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
     </SimpleSource>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">int32.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">../int32.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>

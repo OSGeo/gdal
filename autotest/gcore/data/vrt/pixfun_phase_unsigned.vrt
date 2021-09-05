@@ -2,9 +2,9 @@
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Phase</Description>
     <PixelFunctionType>phase</PixelFunctionType>
-    <SourceTransferType>CFloat64</SourceTransferType>
+    <SourceTransferType>Byte</SourceTransferType>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">cint_sar.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">../byte.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="5" ySize="6"/>
       <DstRect xOff="0" yOff="0" xSize="5" ySize="6"/>
