@@ -3787,10 +3787,10 @@ void OGRGeoPackageTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 /*                        HasFastSpatialFilter()                        */
 /************************************************************************/
 
-int OGRGeoPackageTableLayer::HasFastSpatialFilter( int iGeomColIn )
+bool OGRGeoPackageTableLayer::HasFastSpatialFilter( int iGeomColIn )
 {
     if( iGeomColIn < 0 || iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount() )
-        return FALSE;
+        return false;
     return HasSpatialIndex();
 }
 

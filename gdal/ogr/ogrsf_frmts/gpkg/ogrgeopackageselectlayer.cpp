@@ -35,10 +35,10 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer( GDALGeoPackageDataset *poDS,
-                                            CPLString osSQLIn,
+                                            const CPLString& osSQLIn,
                                             sqlite3_stmt *hStmtIn,
-                                            int bUseStatementForGetNextFeature,
-                                            int bEmptyLayer ) :
+                                            bool bUseStatementForGetNextFeature,
+                                            bool bEmptyLayer ) :
     OGRGeoPackageLayer(poDS)
 {
     // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
@@ -106,12 +106,12 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     bDoStep = true;
 
 #ifdef DEBUG
-    CPLDebug( "OGR_GPKG", "prepare_v2(%s)", poBehavior->osSQLCurrent.c_str() );
+    CPLDebug( "OGR_GPKG", "prepare_v2(%s)", poBehavior->m_osSQLCurrent.c_str() );
 #endif
 
     const int rc =
-        sqlite3_prepare_v2( m_poDS->GetDB(), poBehavior->osSQLCurrent,
-                         static_cast<int>(poBehavior->osSQLCurrent.size()),
+        sqlite3_prepare_v2( m_poDS->GetDB(), poBehavior->m_osSQLCurrent,
+                         static_cast<int>(poBehavior->m_osSQLCurrent.size()),
                          &m_poQueryStatement, nullptr );
 
     if( rc == SQLITE_OK )
@@ -122,7 +122,7 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
-                  poBehavior->osSQLCurrent.c_str(), sqlite3_errmsg(m_poDS->GetDB()) );
+                  poBehavior->m_osSQLCurrent.c_str(), sqlite3_errmsg(m_poDS->GetDB()) );
         m_poQueryStatement = nullptr;
         return OGRERR_FAILURE;
     }

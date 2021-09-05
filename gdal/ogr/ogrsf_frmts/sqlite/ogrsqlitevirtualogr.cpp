@@ -463,10 +463,10 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
     OGR2SQLITEModule* poModule = (OGR2SQLITEModule*) pAux;
     OGRLayer* poLayer = nullptr;
-    int bExposeOGR_STYLE = FALSE;
-    int bCloseDS = FALSE;
-    int bInternalUse = FALSE;
-    int bExposeOGRNativeData = FALSE;
+    bool bExposeOGR_STYLE = false;
+    bool bCloseDS = false;
+    bool bInternalUse = false;
+    bool bExposeOGRNativeData = false;
 
 /* -------------------------------------------------------------------- */
 /*      If called from ogrexecutesql.cpp                                */
@@ -475,7 +475,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     if( poDS != nullptr && (argc == 6 || argc == 7) &&
         CPLGetValueType(argv[3]) == CPL_VALUE_INTEGER )
     {
-        bInternalUse = TRUE;
+        bInternalUse = true;
 
         int nDSIndex = atoi(argv[3]);
         if( nDSIndex >= 0 )
@@ -497,8 +497,8 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
             return SQLITE_ERROR;
         }
 
-        bExposeOGR_STYLE = atoi(SQLUnescape(argv[5]));
-        bExposeOGRNativeData = (argc == 7) ? atoi(SQLUnescape(argv[6])) : FALSE;
+        bExposeOGR_STYLE = atoi(SQLUnescape(argv[5])) != 0;
+        bExposeOGRNativeData = (argc == 7) ? atoi(SQLUnescape(argv[6])) != 0: false;
     }
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 /* -------------------------------------------------------------------- */
@@ -529,7 +529,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
             return SQLITE_ERROR;
         }
 
-        int bUpdate = atoi(osUpdate);
+        const bool bUpdate = atoi(osUpdate) != 0;
 
         poDS = (OGRDataSource* )OGROpenShared(osDSName, bUpdate, nullptr);
         if( poDS == nullptr )
@@ -575,14 +575,14 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
         if( argc >= 7 )
         {
-            bExposeOGR_STYLE = atoi(SQLUnescape(argv[6]));
+            bExposeOGR_STYLE = atoi(SQLUnescape(argv[6])) != 0;
         }
         if( argc >= 8 )
         {
-            bExposeOGRNativeData = atoi(SQLUnescape(argv[7]));
+            bExposeOGRNativeData = atoi(SQLUnescape(argv[7])) != 0;
         }
 
-        bCloseDS = TRUE;
+        bCloseDS = true;
     }
 #endif // VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
     OGR2SQLITE_vtab* vtab =
@@ -826,14 +826,14 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
             (iCol < 0 || poFDefn->GetFieldDefn(iCol)->GetType() != OFTBinary))
         {
             pIndex->aConstraintUsage[i].argvIndex = nConstraints + 1;
-            pIndex->aConstraintUsage[i].omit = TRUE;
+            pIndex->aConstraintUsage[i].omit = true;
 
             nConstraints ++;
         }
         else
         {
             pIndex->aConstraintUsage[i].argvIndex = 0;
-            pIndex->aConstraintUsage[i].omit = FALSE;
+            pIndex->aConstraintUsage[i].omit = false;
         }
     }
 
@@ -861,18 +861,18 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
         }
     }
 
-    pIndex->orderByConsumed = FALSE;
+    pIndex->orderByConsumed = false;
     pIndex->idxNum = 0;
 
     if (nConstraints != 0)
     {
         pIndex->idxStr = (char *) panConstraints;
-        pIndex->needToFreeIdxStr = TRUE;
+        pIndex->needToFreeIdxStr = true;
     }
     else
     {
         pIndex->idxStr = nullptr;
-        pIndex->needToFreeIdxStr = FALSE;
+        pIndex->needToFreeIdxStr = false;
     }
 
     return SQLITE_OK;
@@ -1031,12 +1031,12 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
         {
             const char* pszFieldName = poFieldDefn->GetNameRef();
             char ch = '\0';
-            int bNeedsQuoting = swq_is_reserved_keyword(pszFieldName);
+            bool bNeedsQuoting = swq_is_reserved_keyword(pszFieldName) != 0;
             for(int j = 0; !bNeedsQuoting &&
                            (ch = pszFieldName[j]) != '\0'; j++ )
             {
                 if (!(isalnum((int)ch) || ch == '_'))
-                    bNeedsQuoting = TRUE;
+                    bNeedsQuoting = true;
             }
 
             if( bNeedsQuoting )
@@ -2036,7 +2036,7 @@ int OGR2SQLITESpatialIndex_ConnectCreate(sqlite3* hDB, void *pAux,
     vtab->pszVTableName = CPLStrdup(SQLEscapeName(argv[2]));
     vtab->poModule = poModule;
     vtab->poDS = poDS;
-    vtab->bCloseDS = TRUE;
+    vtab->bCloseDS = true;
     vtab->poLayer = poLayer;
     vtab->nMyRef = 0;
 
@@ -2128,7 +2128,7 @@ int OGR2SQLITESpatialIndex_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pI
         for( int i = 0; i < pIndex->nConstraint; i++ )
         {
             pIndex->aConstraintUsage[i].argvIndex = nConstraints + 1;
-            pIndex->aConstraintUsage[i].omit = TRUE;
+            pIndex->aConstraintUsage[i].omit = true;
 
             nConstraints ++;
         }
@@ -2153,9 +2153,9 @@ int OGR2SQLITESpatialIndex_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pI
         }
 
         pIndex->idxStr = (char *) panConstraints;
-        pIndex->needToFreeIdxStr = TRUE;
+        pIndex->needToFreeIdxStr = true;
 
-        pIndex->orderByConsumed = FALSE;
+        pIndex->orderByConsumed = false;
         pIndex->idxNum = 0;
 
         return SQLITE_OK;
@@ -2168,11 +2168,11 @@ int OGR2SQLITESpatialIndex_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pI
         for (i = 0; i < pIndex->nConstraint; i++)
         {
             pIndex->aConstraintUsage[i].argvIndex = 0;
-            pIndex->aConstraintUsage[i].omit = FALSE;
+            pIndex->aConstraintUsage[i].omit = false;
         }
 
         pIndex->idxStr = NULL;
-        pIndex->needToFreeIdxStr = FALSE;
+        pIndex->needToFreeIdxStr = false;
 */
     }
 }
@@ -2336,7 +2336,7 @@ int OGR2SQLITESpatialIndex_Filter(sqlite3_vtab_cursor* pCursor,
     pMyCursor->poLayer->ResetReading();
 
     pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
-    pMyCursor->bHasSetBounds = FALSE;
+    pMyCursor->bHasSetBounds = false;
 
     return SQLITE_OK;
 }
@@ -2355,7 +2355,7 @@ int OGR2SQLITESpatialIndex_Next(sqlite3_vtab_cursor* pCursor)
 
     delete pMyCursor->poFeature;
     pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
-    pMyCursor->bHasSetBounds = FALSE;
+    pMyCursor->bHasSetBounds = false;
 
     return SQLITE_OK;
 }
@@ -2407,7 +2407,7 @@ int OGR2SQLITESpatialIndex_Column(sqlite3_vtab_cursor* pCursor,
         {
             OGREnvelope sEnvelope;
             poGeom->getEnvelope(&sEnvelope);
-            pMyCursor->bHasSetBounds = TRUE;
+            pMyCursor->bHasSetBounds = true;
             pMyCursor->dfMinX = sEnvelope.MinX;
             pMyCursor->dfMinY = sEnvelope.MinY;
             pMyCursor->dfMaxX = sEnvelope.MaxX;

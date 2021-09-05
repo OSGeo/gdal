@@ -399,7 +399,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
     int                 TestCapability( const char * ) override;
     OGRFeatureDefn*     GetLayerDefn() override { return m_poFeatureDefn; }
 
-    virtual int          HasFastSpatialFilter(int /*iGeomCol*/) override { return FALSE; }
+    virtual bool         HasFastSpatialFilter(int /*iGeomCol*/) override { return false; }
     virtual CPLString    GetSpatialWhere(int /*iGeomCol*/,
                                          OGRGeometry* /*poFilterGeom*/) override { return ""; }
 };
@@ -569,7 +569,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     void                RenameTo(const char* pszDstTableName);
 
-    virtual int          HasFastSpatialFilter(int iGeomCol) override;
+    virtual bool         HasFastSpatialFilter(int iGeomCol) override;
     virtual CPLString    GetSpatialWhere(int iGeomCol,
                                          OGRGeometry* poFilterGeom) override;
 
@@ -633,10 +633,10 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer, public IOGRSQL
 
   public:
                         OGRGeoPackageSelectLayer( GDALGeoPackageDataset *,
-                                              CPLString osSQL,
+                                              const CPLString& osSQL,
                                               sqlite3_stmt *,
-                                              int bUseStatementForGetNextFeature,
-                                              int bEmptyLayer );
+                                              bool bUseStatementForGetNextFeature,
+                                              bool bEmptyLayer );
                        virtual ~OGRGeoPackageSelectLayer();
 
     virtual void        ResetReading() override;
