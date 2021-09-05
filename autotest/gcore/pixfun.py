@@ -217,6 +217,19 @@ def test_pixfun_phase_r():
 
 
 ###############################################################################
+# Verify phase extraction from a unsigned dataset (completely boring !)
+
+def test_pixfun_phase_unsigned():
+
+    filename = 'data/vrt/pixfun_phase_unsigned.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, ('Unable to open "%s" dataset.' % filename)
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    assert numpy.alltrue(data == numpy.zeros(data.shape))
+
+
+###############################################################################
 # Verify cmplex conjugare computation on a complex dataset.
 
 def test_pixfun_conj_c():

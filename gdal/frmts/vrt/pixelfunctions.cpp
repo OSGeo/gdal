@@ -350,6 +350,17 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
             }
         }
     }
+    else if( GDALDataTypeIsInteger( eSrcType ) &&
+             !GDALDataTypeIsSigned( eSrcType ) )
+    {
+        constexpr double dfZero = 0;
+        for( int iLine = 0; iLine < nYSize; ++iLine ) {
+            GDALCopyWords(
+                &dfZero, GDT_Float64, 0,
+                static_cast<GByte *>(pData) + nLineSpace * iLine,
+                eBufType, nPixelSpace, nXSize );
+        }
+    }
     else
     {
         /* ---- Set pixels ---- */
