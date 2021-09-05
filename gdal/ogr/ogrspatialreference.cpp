@@ -4034,7 +4034,11 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
             return importFromDict( "IAU2000.wkt", pszCode );
         }
     }
-
+    if( strlen(pszURN) >= 1000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long input string");
+        return OGRERR_CORRUPT_DATA;
+    }
     auto obj = proj_create(d->getPROJContext(), pszURN);
     if( !obj )
     {
