@@ -352,7 +352,12 @@ OGRMultiSurface *GeometryReader::readMultiSurface()
         auto g = std::unique_ptr<OGRGeometry>(reader.read());
         if (dynamic_cast<OGRSurface *>(g.get()) == nullptr)
             return nullptr;
-        ms->addGeometryDirectly(g.release());
+        auto poSubGeom = g.release();
+        if( ms->addGeometryDirectly(poSubGeom) != OGRERR_NONE )
+        {
+            delete poSubGeom;
+            return nullptr;
+        }
     }
     return ms.release();
 }
