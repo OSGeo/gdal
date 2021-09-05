@@ -4,7 +4,7 @@
     <PixelFunctionType>mod</PixelFunctionType>
     <SourceTransferType>CFloat64</SourceTransferType>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">cint_sar.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">../cint_sar.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="5" ySize="6"/>
       <DstRect xOff="0" yOff="0" xSize="5" ySize="6"/>

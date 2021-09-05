@@ -4,7 +4,7 @@
     <PixelFunctionType>imag</PixelFunctionType>
     <SourceTransferType>Float32</SourceTransferType>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">float32.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">../float32.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
