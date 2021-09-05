@@ -3167,6 +3167,45 @@ def test_ogr_sqlite_view_type():
     f = lyr.GetNextFeature()
     assert f['c'] == 1
 
+
+###############################################################################
+# Test table WITHOUT ROWID
+
+
+def test_ogr_sqlite_without_rowid():
+
+    tmpfilename = '/vsimem/without_rowid.db'
+    try:
+        ds = ogr.GetDriverByName('SQLite').CreateDataSource(tmpfilename)
+        ds.ExecuteSQL('CREATE TABLE t(key TEXT NOT NULL PRIMARY KEY, value TEXT) WITHOUT ROWID')
+        ds = None
+
+        ds = ogr.Open(tmpfilename, update=1)
+        lyr = ds.GetLayer('t')
+        assert lyr.GetFIDColumn() == ''
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f['key'] = 'foo'
+        f['value'] = 'bar'
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert f.GetFID() == -1 # hard to do best
+
+        assert lyr.GetFeatureCount() == 1
+
+        f = lyr.GetNextFeature()
+        assert f['key'] == 'foo'
+        assert f['value'] == 'bar'
+        assert f.GetFID() == 0 # somewhat arbitrary
+
+        f = lyr.GetFeature(0)
+        assert f['key'] == 'foo'
+
+        ds = None
+    finally:
+        gdal.Unlink(tmpfilename)
+
+
 ###############################################################################
 #
 
