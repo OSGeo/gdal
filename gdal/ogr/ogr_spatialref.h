@@ -688,6 +688,13 @@ class CPL_DLL OGRSpatialReference
                                                double dfSouthPoleLon,
                                                double dfAxisRotation );
 
+    /** Pole rotation (netCDF CF convention) */
+    OGRErr      SetDerivedGeogCRSWithPoleRotationNetCDFCFConvention(
+                                               const char* pszCRSName,
+                                               double dfGridNorthPoleLat,
+                                               double dfGridNorthPoleLon,
+                                               double dfNorthPoleGridLon );
+
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,
                                const char *pszOverrideUnitName = nullptr,
