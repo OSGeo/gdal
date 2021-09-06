@@ -658,6 +658,32 @@ void ZarrArray::SerializeV3(const CPLJSONObject& oAttrs)
 }
 
 /************************************************************************/
+/*                  ZarrArray::NeedDecodedBuffer()                      */
+/************************************************************************/
+
+bool ZarrArray::NeedDecodedBuffer() const
+{
+    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                               m_aoDtypeElts.back().nativeSize;
+    if( m_oType.GetClass() == GEDTC_COMPOUND && nSourceSize != m_oType.GetSize() )
+    {
+        return true;
+    }
+    else if( m_oType.GetClass() != GEDTC_STRING )
+    {
+        for( const auto& elt: m_aoDtypeElts )
+        {
+            if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
+                elt.nativeType == DtypeElt::NativeType::STRING )
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
 /*               ZarrArray::AllocateWorkingBuffers()                    */
 /************************************************************************/
 
@@ -668,15 +694,28 @@ bool ZarrArray::AllocateWorkingBuffers() const
 
     m_bAllocateWorkingBuffersDone = true;
 
+    GUIntBig nSizeNeeded = m_nTileSize;
+    if( m_bFortranOrder || m_oFiltersArray.Size() != 0 )
+        nSizeNeeded *= 2;
+    if( NeedDecodedBuffer() )
+    {
+        size_t nDecodedBufferSize = m_oType.GetSize();
+        for( const auto& nBlockSize: m_anBlockSize )
+        {
+            nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
+        }
+        nSizeNeeded += nDecodedBufferSize;
+    }
+
     // Reserve a buffer for tile content
-    if( m_nTileSize > 1024 * 1024 * 1024 &&
+    if( nSizeNeeded > 1024 * 1024 * 1024 &&
         !CPLTestBool(CPLGetConfigOption("ZARR_ALLOW_BIG_TILE_SIZE", "NO")) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Zarr tile allocation would require " CPL_FRMT_GUIB " bytes. "
                  "By default the driver limits to 1 GB. To allow that memory "
                  "allocation, set the ZARR_ALLOW_BIG_TILE_SIZE configuration "
-                 "option to YES.", static_cast<GUIntBig>(m_nTileSize));
+                 "option to YES.", nSizeNeeded);
         return false;
     }
 
@@ -710,26 +749,7 @@ bool ZarrArray::AllocateWorkingBuffers(std::vector<GByte>& abyRawTileData,
         return false;
     }
 
-    bool bNeedDecodedBuffer = false;
-    const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
-                               m_aoDtypeElts.back().nativeSize;
-    if( m_oType.GetClass() == GEDTC_COMPOUND && nSourceSize != m_oType.GetSize() )
-    {
-        bNeedDecodedBuffer = true;
-    }
-    else if( m_oType.GetClass() != GEDTC_STRING )
-    {
-        for( const auto& elt: m_aoDtypeElts )
-        {
-            if( elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
-                elt.nativeType == DtypeElt::NativeType::STRING )
-            {
-                bNeedDecodedBuffer = true;
-                break;
-            }
-        }
-    }
-    if( bNeedDecodedBuffer )
+    if( NeedDecodedBuffer() )
     {
         size_t nDecodedBufferSize = m_oType.GetSize();
         for( const auto& nBlockSize: m_anBlockSize )

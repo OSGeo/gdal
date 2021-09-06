@@ -506,6 +506,8 @@ class ZarrArray final: public GDALPamMDArray
                         std::vector<GByte>& abyDst,
                         bool bDecode) const;
 
+    bool NeedDecodedBuffer() const;
+
     bool AllocateWorkingBuffers(std::vector<GByte>& abyRawTileData,
                                 std::vector<GByte>& abyTmpRawTileData,
                                 std::vector<GByte>& abyDecodedTileData) const;
