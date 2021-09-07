@@ -1692,6 +1692,30 @@ def test_osr_GetUTMZone_Projected3D():
 
 
 ###############################################################################
+# Check GetProjParm() on a Projected 3D CRS
+
+def test_osr_GetProjParm_Projected3D():
+
+    utm_srs = osr.SpatialReference()
+    # Southern hemisphere
+    utm_srs.SetUTM(11, 0)
+    utm_srs.SetWellKnownGeogCS('WGS84')
+    utm_srs.PromoteTo3D()
+
+    parm_list = \
+        [(osr.SRS_PP_CENTRAL_MERIDIAN, -117.0),
+         (osr.SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+            (osr.SRS_PP_SCALE_FACTOR, 0.9996),
+            (osr.SRS_PP_FALSE_EASTING, 500000.0),
+            (osr.SRS_PP_FALSE_NORTHING, 10000000.0)]
+
+    for param in parm_list:
+        value = utm_srs.GetProjParm(param[0], -1111)
+        assert value == pytest.approx(param[1], abs=.00000000000010), ('got %g for %s instead of %g.'
+                                 % (value, param[0], param[1]))
+
+
+###############################################################################
 def test_SetPROJAuxDbPaths():
     # This test use auxiliary database created with proj 6.3.2
     # (tested up to 8.0.0) and can be sensitive to future
