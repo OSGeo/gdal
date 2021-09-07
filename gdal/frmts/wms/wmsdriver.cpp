@@ -167,8 +167,13 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 
             double dfWestLongitudeDeg, dfSouthLatitudeDeg,
                     dfEastLongitudeDeg, dfNorthLatitudeDeg;
-            oSRS.GetAreaOfUse(&dfWestLongitudeDeg, &dfSouthLatitudeDeg,
-                    &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr);
+            if (!oSRS.GetAreaOfUse(&dfWestLongitudeDeg, &dfSouthLatitudeDeg,
+                    &dfEastLongitudeDeg, &dfNorthLatitudeDeg, nullptr))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "Failed retrieving a default bounding box for the requested SRS");
+                return nullptr;
+            }
             auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
                     OGRCreateCoordinateTransformation(OGRSpatialReference::GetWGS84SRS(),
                                                         &oSRS));
