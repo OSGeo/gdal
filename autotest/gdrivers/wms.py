@@ -641,6 +641,11 @@ def test_wms_16():
     ds = gdal.Open(name)
     assert ds is not None, ('open of %s failed.' % name)
 
+    # check that the default bbox works for srs != EPSG:4326
+    name = 'http://demo.opengeo.org/geoserver/wms?SERVICE=WMS&request=GetMap&version=1.1.1&layers=og:bugsites&styles=&srs=EPSG:26713'
+    ds = gdal.Open(name)
+    assert ds is not None, ('open of %s failed.' % name)
+
     # Matches feature of "WFS:http://demo.opengeo.org/geoserver/wfs?SRSNAME=EPSG:900913" og:bugsites
     # OGRFeature(og:bugsites):68846
     #   gml_id (String) = bugsites.68846
