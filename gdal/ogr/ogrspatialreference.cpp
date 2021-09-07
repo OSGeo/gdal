@@ -5328,6 +5328,9 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
                                          OGRErr *pnErr ) const
 
 {
+    d->refreshProjObj();
+    GetRoot(); // force update of d->m_bNodesWKT2
+
     if( pnErr != nullptr )
         *pnErr = OGRERR_NONE;
 
@@ -5345,6 +5348,17 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
     const int iChild = FindProjParm( pszName, poPROJCS );
     if( iChild == -1 )
     {
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+        if( IsProjected() && GetAxesCount() == 3 )
+        {
+            OGRSpatialReference* poSRSTmp = Clone();
+            poSRSTmp->DemoteTo2D(nullptr);
+            const double dfRet = poSRSTmp->GetProjParm(pszName, dfDefaultValue, pnErr);
+            delete poSRSTmp;
+            return dfRet;
+        }
+#endif
+
         if( pnErr != nullptr )
             *pnErr = OGRERR_FAILURE;
         return dfDefaultValue;
