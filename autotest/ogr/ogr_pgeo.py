@@ -250,9 +250,6 @@ def test_ogr_pgeo_open_private_table():
 
     gdb_items_lyr = pgeo_ds.GetLayerByName('GDB_Items')
     assert gdb_items_lyr is not None
-    
-
-    assert gdb_items_lyr is not None
     assert gdb_items_lyr.GetGeomType() == ogr.wkbNone, 'did not get expected layer geometry type'
     assert gdb_items_lyr.GetFeatureCount() == 6, 'did not get expected feature count'
 
@@ -742,3 +739,39 @@ def test_ogr_pgeo_read_metadata():
 
     ds.ReleaseResultSet(sql_lyr)
 
+
+###############################################################################
+# Test retrieving layer names with non-ascii characters
+
+@pytest.mark.skipif(sys.platform == 'win32', reason="See https://github.com/OSGeo/gdal/issues/2894")
+def test_ogr_pgeo_layer_name_encoding():
+    ds = gdal.OpenEx('data/pgeo/encoding.mdb', gdal.OF_VECTOR)
+
+    assert ds.GetLayerCount() == 2, 'did not get expected layer count'
+
+    assert set([ds.GetLayer(i).GetName() for i in range(2)]) == set(['special_chars_áõã', 'táble'])
+
+
+###############################################################################
+# Test retrieving layer names with non-ascii characters
+
+@pytest.mark.skipif(sys.platform == 'win32', reason="See https://github.com/OSGeo/gdal/issues/2894")
+def test_ogr_pgeo_feature_encoding():
+    ds = gdal.OpenEx('data/pgeo/encoding.mdb', gdal.OF_VECTOR)
+
+    lyr = ds.GetLayerByName('táble')
+    assert lyr is not None
+    assert lyr.GetFeatureCount() == 1, 'did not get expected feature count'
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetField('name') == 'táble'
+
+
+###############################################################################
+# Run test_ogrsf on dataset with non-ascii characters
+
+
+def test_ogr_pgeo_ogrsf_encoding(ogrsf_path):
+    ret = gdaltest.runexternal(ogrsf_path + ' data/pgeo/encoding.mdb')
+
+    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
