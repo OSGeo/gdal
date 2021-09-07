@@ -34,7 +34,6 @@
 
 import os
 import shutil
-import sys
 
 from osgeo import gdal, osr
 
@@ -1595,29 +1594,26 @@ def test_warp_52():
 # Test Grey+Alpha
 
 
-@pytest.mark.xfail(sys.platform == 'darwin',
-                   reason="Expected checksum should be updated for Mac")
 @pytest.mark.parametrize('typestr', ('Byte', 'UInt16', 'Int16'))
 @pytest.mark.parametrize('option', ('-wo USE_GENERAL_CASE=TRUE', ''),
                          ids=['generalCase', 'default'])
-# First checksum is proj 4.8, second proj 4.9.2
 @pytest.mark.parametrize('alg_name, expected_cs', (
-    pytest.param('near', [3781, 3843], id='near'),
-    pytest.param('cubic', [3942, 4133], id='cubic'),
-    pytest.param('cubicspline', [3874, 4076], id='cubicspline'),
-    pytest.param('bilinear', [4019, 3991], id='bilinear'),
+    pytest.param('near', [1192], id='near'),
+    pytest.param('cubic', [1061], id='cubic'),
+    pytest.param('cubicspline', [1252], id='cubicspline'),
+    pytest.param('bilinear', [1206, 1204], id='bilinear'),
 ))
 def test_warp_53(typestr, option, alg_name, expected_cs):
 
     src_ds = gdal.Translate('', '../gcore/data/byte.tif',
-                            options=f'-of MEM -b 1 -b 1 -ot {typestr}')
+                            options=f'-a_srs EPSG:32611 -of MEM -b 1 -b 1 -ot {typestr}')
     src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     src_ds.GetRasterBand(2).Fill(255)
     zero = struct.pack('B' * 1, 0)
     src_ds.GetRasterBand(2).WriteRaster(10, 10, 1, 1, zero,
                                         buf_type=gdal.GDT_Byte)
     dst_ds = gdal.Translate('', src_ds,
-                            options='-of MEM -a_srs EPSG:32611')
+                            options='-outsize 10 10 -of MEM -a_srs EPSG:32611')
 
     dst_ds.GetRasterBand(1).Fill(0)
     dst_ds.GetRasterBand(2).Fill(0)
@@ -1625,7 +1621,7 @@ def test_warp_53(typestr, option, alg_name, expected_cs):
     cs1 = dst_ds.GetRasterBand(1).Checksum()
     cs2 = dst_ds.GetRasterBand(2).Checksum()
     assert cs1 in expected_cs
-    assert cs2 in [3903, 4138]
+    assert cs2 == 1218
 
 
 ###############################################################################

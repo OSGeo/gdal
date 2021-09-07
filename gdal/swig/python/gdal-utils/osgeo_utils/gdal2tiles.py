@@ -2872,7 +2872,10 @@ class GDAL2Tiles(object):
             args['resolutions'] = '[' + ','.join('%.18g' % res for res in resolutions) + ']'
 
             if self.options.xyz:
-                args['origin'] = '[-180,90]'
+                if self.options.tmscompatible:
+                    args['origin'] = '[-180,90]'
+                else:
+                    args['origin'] = '[-180,270]'
                 args['y_formula'] = 'tileCoord[2]'
             else:
                 args['origin'] = '[-180,-90]'

@@ -318,25 +318,6 @@ def test_gdalwarp_14():
     ds = None
 
 ###############################################################################
-# Test -dstnodata
-
-
-def test_gdalwarp_15():
-    if test_cli_utilities.get_gdalwarp_path() is None:
-        pytest.skip()
-
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -dstnodata 1 -t_srs EPSG:32610 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp15.tif')
-
-    ds = gdal.Open('tmp/testgdalwarp15.tif')
-    assert ds is not None
-
-    assert ds.GetRasterBand(1).GetNoDataValue() == 1, 'Bad nodata value'
-
-    assert ds.GetRasterBand(1).Checksum() == 4523, 'Bad checksum'
-
-    ds = None
-
-###############################################################################
 # Test -of VRT which is a special case
 
 
@@ -803,7 +784,7 @@ def test_gdalwarp_34():
     for i in range(6):
         assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5), 'bad gt'
 
-    
+
 ###############################################################################
 # Test -ts and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
 
