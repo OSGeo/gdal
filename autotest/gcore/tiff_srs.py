@@ -848,3 +848,11 @@ def test_tiff_srs_read_VerticalUnitsGeoKey_private_range():
         sr = ds.GetSpatialRef()
     assert sr.GetName() == "NAD83 / UTM zone 16N"
     assert gdal.GetLastErrorMsg() != ''
+
+
+def test_tiff_srs_read_invalid_semimajoraxis_compound():
+    ds = gdal.Open('data/gtiff/invalid_semimajoraxis_compound.tif')
+    # Check that it doesn't crash. PROJ >= 8.2.0 will return a NULL CRS
+    # whereas previous versions will return a non-NULL one
+    with gdaltest.error_handler():
+        ds.GetSpatialRef()
