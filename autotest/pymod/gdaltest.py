@@ -1633,7 +1633,6 @@ def config_options(options):
     oldvals = {key: gdal.GetConfigOption(key) for key in options}
     for key in options:
         gdal.SetConfigOption(key, options[key])
-        print(key, "'" + gdal.GetConfigOption(key) + "'")
     try:
         yield
     finally:
