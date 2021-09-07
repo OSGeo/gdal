@@ -53,23 +53,14 @@ answering questions.
 Chat
 ----
 
-You can find some GDAL developers in the IRC channel #gdal on `Freenode`_
-which is bridged to a `#gdal:osgeo.org`_ Matrix room.
+You can find some GDAL developers in the IRC channel #gdal on `Libera.Chat`_.
 This mechanism is usually reserved for active meetings and other outreach
 with the community.
 The `Mailing List`_ and `GitHub`_ avenues are going to be more productive
 communication channels in most situations.
 
-.. note:: the Freenode channel only accepts messages from registered
-          users, so make sure to complete that step. Instructions can be
-          found on https://wiki.osgeo.org/wiki/Matrix for doing it from
-          the Matrix side and https://freenode.net/kb/answer/registration
-          for doing it from the IRC side (if you don't use Matrix)
-
-
 .. _`git`: https://en.wikipedia.org/wiki/Git_(software)
-.. _`Freenode`: http://freenode.net
-.. _`#gdal:osgeo.org`: http://matrix.to/#/#gdal:osgeo.org
+.. _`Libera.Chat`: https://web.libera.chat/#gdal
 
 
 Social media
