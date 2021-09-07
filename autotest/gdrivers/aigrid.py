@@ -124,6 +124,9 @@ def test_aigrid_6():
 
 def test_aigrid_broken():
 
+    if os.path.exists('tmp/broken_aigrid'):
+        shutil.rmtree('tmp/broken_aigrid')
+
     shutil.copytree('data/aigrid/abc3x1', 'tmp/broken_aigrid')
 
     # Write a bad offset for a block

@@ -85,6 +85,8 @@ def test_ogr_gmt_2():
 
         feat = shp_lyr.GetNextFeature()
 
+    gmt_lyr = None
+    gmt_ds = None
 
     # Verify that stuff we just wrote is still OK.
 
