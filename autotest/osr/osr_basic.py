@@ -1715,3 +1715,26 @@ def test_osr_basic_export_equal_earth_to_wkt():
     assert wkt == srs.ExportToWkt(['FORMAT=WKT2'])
     assert 'METHOD["Equal Earth",' in wkt
     assert gdal.GetLastErrorMsg() == ''
+
+
+###############################################################################
+# Test GetAxesCount()
+
+
+def test_osr_basic_get_axes_count():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=tmerc +datum=WGS84")
+    assert srs.GetAxesCount() == 2
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=tmerc +ellps=GRS80 +towgs84=0,0,0")
+    assert srs.GetAxesCount() == 2
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4979)
+    assert srs.GetAxesCount() == 3
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=tmerc +datum=WGS84 +geoidgrids=foo.gtx")
+    assert srs.GetAxesCount() == 3
