@@ -10,40 +10,6 @@ on:
 
 jobs:
 
-  cppcheck_1604:
-    runs-on: ubuntu-16.04
-    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Install Requirements
-        run: |
-          sudo apt update
-          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3
-
-      - name: Cache PROJ build
-        uses: actions/cache@v2
-        with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-cache-cppcheck-1604
-
-      - name: Build PROJ
-        run: |
-            curl http://download.osgeo.org/proj/proj-6.3.2.tar.gz > proj-6.3.2.tar.gz
-            tar xzf proj-6.3.2.tar.gz
-            mv proj-6.3.2 proj
-            cd proj
-            CC="ccache gcc" CXX="ccache g++" CFLAGS=-O0 CXXFLAGS=-O0 ./configure --without-static --prefix=/tmp/projinstall
-            make -j$(nproc)
-            make install -j$(nproc)
-
-      - name: Run configure
-        run: (cd gdal && ./configure --with-proj=/tmp/projinstall)
-
-      - name: Run cppcheck test
-        run: ./gdal/scripts/cppcheck.sh
-
   cppcheck_2004:
     runs-on: ubuntu-20.04
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
