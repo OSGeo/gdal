@@ -2199,7 +2199,7 @@ bool PDS4DelimitedTable::ReadFields(const CPLXMLNode* psParent,
                 return false;
             }
             if( STARTS_WITH(f.m_osDataType, "ASCII_") &&
-                eType == OFTInteger &&
+                eType == OFTInteger && eSubType == OFSTNone &&
                 (nMaximumFieldLength == 0 || nMaximumFieldLength >= 10) )
             {
                 eType = OFTInteger64;
