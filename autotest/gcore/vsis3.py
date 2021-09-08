@@ -47,14 +47,24 @@ def open_for_read(uri):
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
 
-@pytest.fixture(scope="module")
-def ignore_aws_credentials():
+@pytest.fixture()
+def aws_test_config():
     options = {
         # To avoid user AWS credentials in ~/.aws/credentials
         # and ~/.aws/config to mess up our tests
         'CPL_AWS_CREDENTIALS_FILE': '',
         'AWS_CONFIG_FILE': '',
         'CPL_AWS_EC2_API_ROOT_URL': '',
+        'AWS_NO_SIGN_REQUEST': 'NO',
+        'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
+        'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
+        'AWS_TIMESTAMP': '20150101T000000Z',
+        'AWS_HTTPS': 'NO',
+        'AWS_VIRTUAL_HOSTING': 'NO',
+        'AWS_REQUEST_PAYER': '',
+        'AWS_DEFAULT_REGION': 'us-east-1',
+        'AWS_DEFAULT_PROFILE': 'default',
+        'AWS_PROFILE': 'default',
         'AWS_NO_SIGN_REQUEST': 'NO'
     }
 
@@ -73,22 +83,9 @@ def webserver_port():
     try:
         if webserver_port == 0:
             pytest.skip()
-
-        options = {
-            'AWS_SECRET_ACCESS_KEY': 'AWS_SECRET_ACCESS_KEY',
-            'AWS_ACCESS_KEY_ID': 'AWS_ACCESS_KEY_ID',
-            'AWS_TIMESTAMP': '20150101T000000Z',
-            'AWS_HTTPS': 'NO',
-            'AWS_VIRTUAL_HOSTING': 'NO',
-            'AWS_S3_ENDPOINT': f'127.0.0.1:{webserver_port}',
-            'AWS_REQUEST_PAYER': '',
-            'AWS_DEFAULT_REGION': 'us-east-1',
-            'AWS_DEFAULT_PROFILE': 'default',
-            'AWS_PROFILE': 'default',
-            'AWS_NO_SIGN_REQUEST': 'NO'
-        }
-
-        with gdaltest.config_options(options):
+        with gdaltest.config_option(
+                'AWS_S3_ENDPOINT', f'127.0.0.1:{webserver_port}',
+        ):
             yield webserver_port
     finally:
         gdal.VSICurlClearCache()
@@ -99,14 +96,19 @@ def webserver_port():
 ###############################################################################
 
 
-def test_vsis3_init(ignore_aws_credentials):
-    assert gdal.GetSignedURL('/vsis3/foo/bar') is None
+def test_vsis3_init(aws_test_config):
+    options = {
+        'AWS_SECRET_ACCESS_KEY': '',
+        'AWS_ACCESS_KEY_ID': '',
+    }
+    with gdaltest.config_options(options):
+        assert gdal.GetSignedURL('/vsis3/foo/bar') is None
 
 ###############################################################################
 # Test AWS_NO_SIGN_REQUEST=YES
 
 
-def test_vsis3_no_sign_request(ignore_aws_credentials):
+def test_vsis3_no_sign_request(aws_test_config):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -155,7 +157,7 @@ def test_vsis3_no_sign_request(ignore_aws_credentials):
 # Test Sync() and multithreaded download
 
 
-def test_vsis3_sync_multithreaded_download(ignore_aws_credentials):
+def test_vsis3_sync_multithreaded_download(aws_test_config):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -191,7 +193,7 @@ def test_vsis3_sync_multithreaded_download(ignore_aws_credentials):
 # Test Sync() and multithreaded download and CHUNK_SIZE
 
 
-def test_vsis3_sync_multithreaded_download_chunk_size(ignore_aws_credentials):
+def test_vsis3_sync_multithreaded_download_chunk_size(aws_test_config):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -227,7 +229,7 @@ def test_vsis3_sync_multithreaded_download_chunk_size(ignore_aws_credentials):
 # Error cases
 
 
-def test_vsis3_1(ignore_aws_credentials):
+def test_vsis3_1(aws_test_config):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
@@ -323,7 +325,7 @@ def get_s3_fake_bucket_resource_method(request):
 # Test with a fake AWS server
 
 
-def test_vsis3_2(ignore_aws_credentials, webserver_port):
+def test_vsis3_2(aws_test_config, webserver_port):
     signed_url = gdal.GetSignedURL('/vsis3/s3_fake_bucket/resource')
     expected_url_8080 = (
         'http://127.0.0.1:8080/s3_fake_bucket/resource'
@@ -871,7 +873,7 @@ def test_vsis3_2(ignore_aws_credentials, webserver_port):
 
 
 def test_vsis3_open_after_config_option_change(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port):
     gdal.VSICurlClearCache()
 
@@ -920,7 +922,7 @@ def test_vsis3_open_after_config_option_change(
 # Test ReadDir() with a fake AWS server
 
 
-def test_vsis3_readdir(ignore_aws_credentials, webserver_port):
+def test_vsis3_readdir(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
 
     def method(request):
@@ -1401,7 +1403,7 @@ def test_vsis3_readdir(ignore_aws_credentials, webserver_port):
 # Test OpenDir() with a fake AWS server
 
 
-def test_vsis3_opendir(ignore_aws_credentials, webserver_port):
+def test_vsis3_opendir(aws_test_config, webserver_port):
     # Unlimited depth
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1659,7 +1661,7 @@ def test_vsis3_opendir(ignore_aws_credentials, webserver_port):
 # Test simple PUT support with a fake AWS server
 
 
-def test_vsis3_4(ignore_aws_credentials, webserver_port):
+def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdaltest.error_handler():
             f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3', 'wb')
@@ -1913,7 +1915,7 @@ def test_vsis3_4(ignore_aws_credentials, webserver_port):
 # Test simple PUT support with retry logic
 
 
-def test_vsis3_write_single_put_retry(ignore_aws_credentials, webserver_port):
+def test_vsis3_write_single_put_retry(aws_test_config, webserver_port):
     with gdaltest.config_options({'GDAL_HTTP_MAX_RETRY': '2',
                                   'GDAL_HTTP_RETRY_DELAY': '0.01'}):
 
@@ -1975,7 +1977,7 @@ def test_vsis3_write_single_put_retry(ignore_aws_credentials, webserver_port):
 # Test simple DELETE support with a fake AWS server
 
 
-def test_vsis3_5(ignore_aws_credentials, webserver_port):
+def test_vsis3_5(aws_test_config, webserver_port):
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdaltest.error_handler():
             ret = gdal.Unlink('/vsis3/foo')
@@ -2066,7 +2068,7 @@ def test_vsis3_5(ignore_aws_credentials, webserver_port):
 # Test DeleteObjects with a fake AWS server
 
 
-def test_vsis3_unlink_batch(ignore_aws_credentials, webserver_port):
+def test_vsis3_unlink_batch(aws_test_config, webserver_port):
     def method(request):
         if request.headers['Content-MD5'] != 'Ze0X4LdlTwCsT+WpNxD9FA==':
             sys.stderr.write(
@@ -2158,7 +2160,7 @@ def test_vsis3_unlink_batch(ignore_aws_credentials, webserver_port):
 # Test RmdirRecursive() with a fake AWS server
 
 
-def test_vsis3_rmdir_recursive(ignore_aws_credentials, webserver_port):
+def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add(
         'GET',
@@ -2271,7 +2273,7 @@ def test_vsis3_rmdir_recursive(ignore_aws_credentials, webserver_port):
 # Test multipart upload with a fake AWS server
 
 
-def test_vsis3_6(ignore_aws_credentials, webserver_port):
+def test_vsis3_6(aws_test_config, webserver_port):
     with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
             f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket4/large_file.tif', 'wb')
@@ -2627,7 +2629,7 @@ def test_vsis3_6(ignore_aws_credentials, webserver_port):
 # Test multipart upload with retry logic
 
 
-def test_vsis3_write_multipart_retry(ignore_aws_credentials, webserver_port):
+def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
 
     with gdaltest.config_options({'GDAL_HTTP_MAX_RETRY': '2',
                                   'GDAL_HTTP_RETRY_DELAY': '0.01'}):
@@ -2725,7 +2727,7 @@ def test_vsis3_write_multipart_retry(ignore_aws_credentials, webserver_port):
 # Test abort pending multipart uploads
 
 
-def test_vsis3_abort_pending_uploads(ignore_aws_credentials, webserver_port):
+def test_vsis3_abort_pending_uploads(aws_test_config, webserver_port):
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -2782,7 +2784,7 @@ def test_vsis3_abort_pending_uploads(ignore_aws_credentials, webserver_port):
 # Test Mkdir() / Rmdir()
 
 
-def test_vsis3_7(ignore_aws_credentials, webserver_port):
+def test_vsis3_7(aws_test_config, webserver_port):
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -2995,7 +2997,7 @@ def test_vsis3_7(ignore_aws_credentials, webserver_port):
 # Test handling of file and directory with same name
 
 
-def test_vsis3_8(ignore_aws_credentials, webserver_port):
+def test_vsis3_8(aws_test_config, webserver_port):
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -3035,7 +3037,7 @@ def test_vsis3_8(ignore_aws_credentials, webserver_port):
 # Test vsisync() with SYNC_STRATEGY=ETAG
 
 
-def test_vsis3_sync_etag(ignore_aws_credentials, webserver_port):
+def test_vsis3_sync_etag(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -3260,7 +3262,7 @@ def test_vsis3_sync_etag(ignore_aws_credentials, webserver_port):
 # Test vsisync() with SYNC_STRATEGY=TIMESTAMP
 
 
-def test_vsis3_sync_timestamp(ignore_aws_credentials, webserver_port):
+def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
 
     options = ['SYNC_STRATEGY=TIMESTAMP']
 
@@ -3368,7 +3370,7 @@ def test_vsis3_sync_timestamp(ignore_aws_credentials, webserver_port):
 # Test vsisync() with SYNC_STRATEGY=OVERWRITE
 
 
-def test_vsis3_sync_overwrite(ignore_aws_credentials, webserver_port):
+def test_vsis3_sync_overwrite(aws_test_config, webserver_port):
 
     options = ['SYNC_STRATEGY=OVERWRITE']
 
@@ -3434,7 +3436,7 @@ def test_vsis3_sync_overwrite(ignore_aws_credentials, webserver_port):
 
 
 def test_vsis3_sync_source_target_in_vsis3(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
 
@@ -3495,7 +3497,7 @@ def test_vsis3_sync_source_target_in_vsis3(
 # Test rename
 
 
-def test_vsis3_fake_rename(ignore_aws_credentials, webserver_port):
+def test_vsis3_fake_rename(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
@@ -3551,7 +3553,7 @@ def test_vsis3_fake_rename(ignore_aws_credentials, webserver_port):
 # Test rename
 
 
-def test_vsis3_fake_rename_dir(ignore_aws_credentials, webserver_port):
+def test_vsis3_fake_rename_dir(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
@@ -3656,7 +3658,7 @@ def test_vsis3_fake_rename_dir(ignore_aws_credentials, webserver_port):
 
 
 def test_vsis3_fake_rename_on_existing_dir(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
 
@@ -3690,7 +3692,7 @@ def test_vsis3_fake_rename_on_existing_dir(
 
 
 def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
 
@@ -3837,7 +3839,7 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
 
 
 def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
 
@@ -3914,7 +3916,7 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
 # Test reading/writing metadata
 
 
-def test_vsis3_metadata(ignore_aws_credentials, webserver_port):
+def test_vsis3_metadata(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -4027,7 +4029,7 @@ def test_vsis3_metadata(ignore_aws_credentials, webserver_port):
 # requests
 
 
-def test_vsis3_no_useless_requests(ignore_aws_credentials, webserver_port):
+def test_vsis3_no_useless_requests(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -4060,7 +4062,7 @@ def test_vsis3_no_useless_requests(ignore_aws_credentials, webserver_port):
 # Test w+ access
 
 
-def test_vsis3_random_write(ignore_aws_credentials, webserver_port):
+def test_vsis3_random_write(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -4088,7 +4090,7 @@ def test_vsis3_random_write(ignore_aws_credentials, webserver_port):
 # Test w+ access
 
 
-def test_vsis3_random_write_failure_1(ignore_aws_credentials, webserver_port):
+def test_vsis3_random_write_failure_1(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -4110,7 +4112,7 @@ def test_vsis3_random_write_failure_1(ignore_aws_credentials, webserver_port):
 # Test w+ access
 
 
-def test_vsis3_random_write_failure_2(ignore_aws_credentials, webserver_port):
+def test_vsis3_random_write_failure_2(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -4134,7 +4136,7 @@ def test_vsis3_random_write_failure_2(ignore_aws_credentials, webserver_port):
 
 
 def test_vsis3_random_write_gtiff_create_copy(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
 
@@ -4182,7 +4184,7 @@ def test_vsis3_random_write_gtiff_create_copy(
 # Read credentials from simulated ~/.aws/credentials
 
 
-def test_vsis3_read_credentials_file(ignore_aws_credentials, webserver_port):
+def test_vsis3_read_credentials_file(aws_test_config, webserver_port):
 
     options = {
         'AWS_SECRET_ACCESS_KEY': '',
@@ -4225,7 +4227,7 @@ aws_secret_access_key = bar
 # Read credentials from simulated  ~/.aws/config
 
 
-def test_vsis3_read_config_file(ignore_aws_credentials, webserver_port):
+def test_vsis3_read_config_file(aws_test_config, webserver_port):
     options = {
         'AWS_SECRET_ACCESS_KEY': '',
         'AWS_ACCESS_KEY_ID': '',
@@ -4269,7 +4271,7 @@ aws_secret_access_key = bar
 
 
 def test_vsis3_read_credentials_config_file(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
     options = {
@@ -4330,7 +4332,7 @@ aws_secret_access_key = bar
 
 
 def test_vsis3_read_credentials_config_file_non_default_profile(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port,
         tmpdir
 ):
@@ -4398,7 +4400,7 @@ aws_secret_access_key = bar
 
 
 def test_vsis3_read_credentials_config_file_inconsistent(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
 
@@ -4465,7 +4467,7 @@ aws_secret_access_key = bar
     reason='Incorrect platform'
 )
 def test_vsis3_read_credentials_ec2_imdsv2(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
     options = {
@@ -4548,7 +4550,7 @@ def test_vsis3_read_credentials_ec2_imdsv2(
     reason='Incorrect platform'
 )
 def test_vsis3_read_credentials_ec2_imdsv1(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
     options = {
@@ -4615,7 +4617,7 @@ def test_vsis3_read_credentials_ec2_imdsv1(
     reason='Incorrect platform'
 )
 def test_vsis3_read_credentials_ec2_expiration(
-        ignore_aws_credentials,
+        aws_test_config,
         webserver_port
 ):
 
@@ -4723,7 +4725,7 @@ def test_vsis3_read_credentials_ec2_expiration(
 # Nominal cases (require valid credentials)
 
 
-def test_vsis3_extra_1(ignore_aws_credentials):
+def test_vsis3_extra_1(aws_test_config):
 
     if not gdaltest.built_against_curl():
         pytest.skip()
