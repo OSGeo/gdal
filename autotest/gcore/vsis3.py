@@ -72,7 +72,7 @@ def aws_test_config():
         yield
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def webserver_port():
     if not gdaltest.built_against_curl():
         pytest.skip()
