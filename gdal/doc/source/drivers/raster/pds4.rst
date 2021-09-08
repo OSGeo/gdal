@@ -163,6 +163,10 @@ options are available:
    field definition. Only DELIMITED supports arbitrary encoding of
    geometry as a WKT string. The two other table types only support
    points for geographic coordinates (LAT, LONG).
+-  **LINE_ENDING**\ = CRLF/LF. Determines the line-ending character sequence.
+   Only applies to TABLE_TYPE=DELIMITED or CHARACTER. The default is CRLF
+   (Carriage Return and Line Feed). It can be set to LF for just Line Feed
+   character. (GDAL >= 3.4)
 -  **GEOM_COLUMNS**\ =AUTO/WKT/LONG_LAT. Specify how the geometry is
    encoded. In AUTO mode, for DELIMITED tables, if the input geometry is
    Point with a geographic CRS attached to the laye, then a LONG and LAT
