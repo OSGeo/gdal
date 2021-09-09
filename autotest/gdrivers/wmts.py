@@ -199,7 +199,7 @@ def test_wmts_9():
         <Layer>
             <Identifier/>
             <TileMatrixSetLink>
-                <TileMatrixSet/>
+                <TileMatrixSet>tms</TileMatrixSet>
             </TileMatrixSetLink>
             <Style>
                 <Identifier/>
@@ -228,7 +228,7 @@ def test_wmts_10():
         <Layer>
             <Identifier/>
             <TileMatrixSetLink>
-                <TileMatrixSet/>
+                <TileMatrixSet>tms</TileMatrixSet>
             </TileMatrixSetLink>
             <Style>
                 <Identifier/>
@@ -236,7 +236,7 @@ def test_wmts_10():
             <ResourceURL format="image/png" template="/vsimem/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
         </Layer>
         <TileMatrixSet>
-            <Identifier/>
+            <Identifier>tms</Identifier>
         </TileMatrixSet>
     </Contents>
 </Capabilities>""")
@@ -260,7 +260,7 @@ def test_wmts_11():
         <Layer>
             <Identifier/>
             <TileMatrixSetLink>
-                <TileMatrixSet/>
+                <TileMatrixSet>tms</TileMatrixSet>
             </TileMatrixSetLink>
             <Style>
                 <Identifier/>
@@ -268,7 +268,7 @@ def test_wmts_11():
             <ResourceURL format="image/png" template="/vsimem/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
         </Layer>
         <TileMatrixSet>
-            <Identifier/>
+            <Identifier>tms</Identifier>
             <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
         </TileMatrixSet>
     </Contents>
@@ -293,7 +293,7 @@ def test_wmts_12():
         <Layer>
             <Identifier/>
             <TileMatrixSetLink>
-                <TileMatrixSet/>
+                <TileMatrixSet>tms</TileMatrixSet>
             </TileMatrixSetLink>
             <Style>
                 <Identifier/>
@@ -301,7 +301,7 @@ def test_wmts_12():
             <ResourceURL format="image/png" template="/vsimem/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
         </Layer>
         <TileMatrixSet>
-            <Identifier/>
+            <Identifier>tms</Identifier>
             <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
             <TileMatrix/>
         </TileMatrixSet>
@@ -327,14 +327,14 @@ def test_wmts_12bis():
         <Layer>
             <Identifier/>
             <TileMatrixSetLink>
-                <TileMatrixSet/>
+                <TileMatrixSet>tms</TileMatrixSet>
             </TileMatrixSetLink>
             <Style>
                 <Identifier/>
             </Style>
         </Layer>
         <TileMatrixSet>
-            <Identifier/>
+            <Identifier>tms</Identifier>
             <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
             <TileMatrix>
                 <Identifier>0</Identifier>
@@ -355,6 +355,46 @@ def test_wmts_12bis():
     assert ds is None
 
 ###############################################################################
+# Error: TileMatrixSetLink points to non-existing TileMatrix
+
+
+def test_wmts_tilematrixsetlink_to_non_existing_tilematrix():
+
+    if gdaltest.wmts_drv is None:
+        pytest.skip()
+
+    xml = """<Capabilities>
+    <Contents>
+        <Layer>
+            <Identifier/>
+            <TileMatrixSetLink>
+                <TileMatrixSet>unknown</TileMatrixSet>
+            </TileMatrixSetLink>
+            <Style>
+                <Identifier/>
+            </Style>
+            <ResourceURL format="image/png" template="/vsimem/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+        </Layer>
+        <TileMatrixSet>
+            <Identifier>tms</Identifier>
+            <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
+            <TileMatrix>
+                <Identifier>0</Identifier>
+                <ScaleDenominator>559082264.029</ScaleDenominator>
+                <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
+                <TileWidth>256</TileWidth>
+                <TileHeight>256</TileHeight>
+                <MatrixWidth>1</MatrixWidth>
+                <MatrixHeight>1</MatrixHeight>
+            </TileMatrix>
+        </TileMatrixSet>
+    </Contents>
+</Capabilities>"""
+    with gdaltest.tempfile('/vsimem/test_wmts.xml', xml), gdaltest.error_handler():
+        ds = gdal.Open('WMTS:/vsimem/test_wmts.xml')
+    assert ds is None
+
+###############################################################################
 # Minimal
 
 
@@ -368,7 +408,7 @@ def test_wmts_13():
         <Layer>
             <Identifier/>
             <TileMatrixSetLink>
-                <TileMatrixSet/>
+                <TileMatrixSet>tms</TileMatrixSet>
             </TileMatrixSetLink>
             <Style>
                 <Identifier/>
@@ -376,7 +416,7 @@ def test_wmts_13():
             <ResourceURL format="image/png" template="/vsimem/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
         </Layer>
         <TileMatrixSet>
-            <Identifier/>
+            <Identifier>tms</Identifier>
             <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
             <TileMatrix>
                 <Identifier>0</Identifier>
@@ -416,6 +456,7 @@ def test_wmts_13():
     for connection_str in ['WMTS:/vsimem/minimal.xml,layer=',
                            'WMTS:/vsimem/minimal.xml,style=',
                            'WMTS:/vsimem/minimal.xml,tilematrixset=',
+                           'WMTS:/vsimem/minimal.xml,tilematrixset=tms',
                            'WMTS:/vsimem/minimal.xml,tilematrix=',
                            'WMTS:/vsimem/minimal.xml,zoom_level=',
                            'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=']:
@@ -1378,7 +1419,7 @@ def wmts_23(imagetype, expected_cs):
         <Layer>
             <Identifier/>
             <TileMatrixSetLink>
-                <TileMatrixSet/>
+                <TileMatrixSet>tms</TileMatrixSet>
             </TileMatrixSetLink>
             <Style>
                 <Identifier/>
@@ -1386,7 +1427,7 @@ def wmts_23(imagetype, expected_cs):
             <ResourceURL format="image/png" template=" """ + serviceUrl + """/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
         </Layer>
         <TileMatrixSet>
-            <Identifier/>
+            <Identifier>tms</Identifier>
             <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
             <TileMatrix>
                 <Identifier>0</Identifier>
@@ -1417,7 +1458,7 @@ def wmts_23(imagetype, expected_cs):
         cs = ds.GetRasterBand(i + 1).Checksum()
         assert cs == expected_cs[i]
 
-    
+
 
 def test_wmts_23_gray():
     return wmts_23('gray', [60137, 60137, 60137, 4428])
@@ -1853,6 +1894,6 @@ def test_wmts_cleanup():
     except OSError:
         pass
 
-    
+
 
 
