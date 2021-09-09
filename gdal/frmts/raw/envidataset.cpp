@@ -250,7 +250,6 @@ ENVIDataset::ENVIDataset() :
     bFoundMapinfo(false),
     bHeaderDirty(false),
     bFillFile(false),
-    pszProjection(CPLStrdup("")),
     interleave(BSQ)
 {
     adfGeoTransform[0] = 0.0;
@@ -309,7 +308,6 @@ ENVIDataset::~ENVIDataset()
     {
         GDALDeinitGCPs(static_cast<int>(m_asGCPs.size()), m_asGCPs.data());
     }
-    CPLFree(pszProjection);
     CPLFree(pszHDRFilename);
 }
 
@@ -550,7 +548,7 @@ char **ENVIDataset::GetFileList()
 /*      TODO: We really need to do some name lookups.                   */
 /************************************************************************/
 
-static int ENVIGetEPSGGeogCS( OGRSpatialReference *poThis )
+static int ENVIGetEPSGGeogCS( const OGRSpatialReference *poThis )
 
 {
     const char *pszAuthName = poThis->GetAuthorityName("GEOGCS");
@@ -660,10 +658,7 @@ void ENVIDataset::WriteProjectionInfo()
 
     // Minimal case - write out simple geotransform if we have a
     // non-default geotransform.
-    const std::string osLocalCs = "LOCAL_CS";
-    if( pszProjection == nullptr || strlen(pszProjection) == 0  ||
-        (strlen(pszProjection) >= osLocalCs.size() &&
-         STARTS_WITH(pszProjection, osLocalCs.c_str())) )
+    if( m_oSRS.IsEmpty() || m_oSRS.IsLocal() )
     {
         if( bHasNonDefaultGT )
         {
@@ -676,12 +671,8 @@ void ENVIDataset::WriteProjectionInfo()
         return;
     }
 
-    // Ingest WKT.
-    OGRSpatialReference oSRS;
-    if( oSRS.importFromWkt(pszProjection) != OGRERR_NONE )
-        return;
-
     // Try to translate the datum and get major/minor ellipsoid values.
+    const OGRSpatialReference& oSRS = m_oSRS;
     const int nEPSG_GCS = ENVIGetEPSGGeogCS(&oSRS);
     CPLString osDatum;
 
@@ -967,18 +958,16 @@ void ENVIDataset::WriteProjectionInfo()
     }
 
     // write out coordinate system string
-    if ( oSRS.morphToESRI() == OGRERR_NONE )
+    char *pszProjESRI = nullptr;
+    const char* const apszOptions[] = { "FORMAT=WKT1_ESRI", nullptr };
+    if ( oSRS.exportToWkt(&pszProjESRI, apszOptions) == OGRERR_NONE )
     {
-        char *pszProjESRI = nullptr;
-        if ( oSRS.exportToWkt(&pszProjESRI) == OGRERR_NONE )
-        {
-            if ( strlen(pszProjESRI) )
-                bOK &= VSIFPrintfL(fp, "coordinate system string = {%s}\n",
-                                   pszProjESRI) >= 0;
-        }
-        CPLFree(pszProjESRI);
-        pszProjESRI = nullptr;
+        if ( strlen(pszProjESRI) )
+            bOK &= VSIFPrintfL(fp, "coordinate system string = {%s}\n",
+                               pszProjESRI) >= 0;
     }
+    CPLFree(pszProjESRI);
+    pszProjESRI = nullptr;
 
     if( !bOK )
     {
@@ -1153,20 +1142,24 @@ bool ENVIDataset::WritePseudoGcpInfo()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *ENVIDataset::_GetProjectionRef() { return pszProjection; }
+const OGRSpatialReference *ENVIDataset::GetSpatialRef() const
+{
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
+}
 
 /************************************************************************/
-/*                          SetProjection()                             */
+/*                          SetSpatialRef()                             */
 /************************************************************************/
 
-CPLErr ENVIDataset::_SetProjection( const char *pszNewProjection )
+CPLErr ENVIDataset::SetSpatialRef( const OGRSpatialReference *poSRS )
 
 {
-    CPLFree(pszProjection);
-    pszProjection = CPLStrdup(pszNewProjection);
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     bHeaderDirty = true;
 
@@ -1566,7 +1559,7 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     // Still lots more that could be added for someone with the patience.
 
     // Fallback to localcs if we don't recognise things.
-    if( oSRS.GetRoot() == nullptr )
+    if( oSRS.IsEmpty() )
         oSRS.SetLocalCS(papszFields[0]);
 
     // Try to set datum from projection info line if we have a
@@ -1644,16 +1637,8 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         }
     }
 
-    // Turn back into WKT.
-    if( oSRS.GetRoot() != nullptr )
-    {
-        if ( pszProjection )
-        {
-            CPLFree(pszProjection);
-            pszProjection = nullptr;
-        }
-        oSRS.exportToWkt(&pszProjection);
-    }
+    m_oSRS = oSRS;
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     CSLDestroy(papszFields);
     CSLDestroy(papszPI);
