@@ -1496,7 +1496,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 /* -------------------------------------------------------------------- */
     GDALDataset         *Create( const char * pszName,
                                  int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char ** papszOptions ) CPL_WARN_UNUSED_RESULT;
+                                 GDALDataType eType, CSLConstList papszOptions ) CPL_WARN_UNUSED_RESULT;
 
     GDALDataset         *CreateMultiDimensional( const char * pszName,
                                                  CSLConstList papszRootGroupOptions,
@@ -1509,7 +1509,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                    const char * pszOldName );
 
     GDALDataset         *CreateCopy( const char *, GDALDataset *,
-                                     int, char **,
+                                     int, CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData ) CPL_WARN_UNUSED_RESULT;
 
@@ -1577,7 +1577,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 /* -------------------------------------------------------------------- */
 //! @cond Doxygen_Suppress
     GDALDataset         *DefaultCreateCopy( const char *, GDALDataset *,
-                                            int, char **,
+                                            int, CSLConstList papszOptions,
                                             GDALProgressFunc pfnProgress,
                                             void * pProgressData ) CPL_WARN_UNUSED_RESULT;
 
