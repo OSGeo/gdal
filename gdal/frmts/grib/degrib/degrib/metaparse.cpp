@@ -373,9 +373,9 @@ static int ParseSect1 (sInt4 *is1, sInt4 ns1, grib_MetaData *meta)
                  "Use meta data at your own risk.\n");
       } else if (meta->pds2.mstrVersion != 255) {
          printf ("Warning: use meta data at your own risk.\n");
-         printf ("Supported master table versions: (1,2,3,4,5) yours is %u... ", 
+         printf ("Supported master table versions: (1,2,3,4,5) yours is %u... ",
                  meta->pds2.mstrVersion);
-         printf ("Supported local table version supported (0,1) yours is %u...\n", 
+         printf ("Supported local table version supported (0,1) yours is %u...\n",
                  meta->pds2.lclVersion);
       }
    }
@@ -2876,7 +2876,7 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
                         if (txt_f_valid[index]) {
                            txt_f_valid[index] = 2;
                         } else {
-                           /* Table is not valid here so set value to missPri 
+                           /* Table is not valid here so set value to missPri
                             */
                            value = attrib->missPri;
                            (*missCnt)++;
@@ -3007,7 +3007,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
           vsi_l_offset curPos = VSIFTellL(fp);
           VSIFSeekL(fp, 0, SEEK_END);
           vsi_l_offset fileSize = VSIFTellL(fp);
-          VSIFSeekL(fp, curPos, SEEK_SET);      
+          VSIFSeekL(fp, curPos, SEEK_SET);
           // allow a compression ratio of 1:1000
           if( subNxNy / 1000 > fileSize )
           {
@@ -3020,7 +3020,14 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
 
       double* newData = nullptr;
       const size_t nBufferSize = subNxNy * sizeof (double);
-      if( nBufferSize / sizeof(double) == subNxNy )
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+      if( nBufferSize > static_cast<size_t>(INT_MIN) )
+      {
+          errSprintf ("Memory allocation failed due to being bigger than 2 GB in fuzzing mode");
+      }
+      else
+#endif
+      if( nBufferSize / sizeof(double) == subNxNy)
       {
         newData = (double *) realloc ((void *) (*Grib_Data), nBufferSize);
       }
