@@ -168,6 +168,7 @@ test_include_from_cpp_file_with_extern_c:
 clean:
 	$(RM) $(PROGS) testsse
 	$(RM) $(OBJ)
+	$(RM) *.o
 	$(RM) *.a
 	$(RM) *.out
 	$(RM) *~
