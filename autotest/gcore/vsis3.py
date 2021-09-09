@@ -64,8 +64,7 @@ def aws_test_config():
         'AWS_REQUEST_PAYER': '',
         'AWS_DEFAULT_REGION': 'us-east-1',
         'AWS_DEFAULT_PROFILE': 'default',
-        'AWS_PROFILE': 'default',
-        'AWS_NO_SIGN_REQUEST': 'NO'
+        'AWS_PROFILE': 'default'
     }
 
     with gdaltest.config_options(options):
@@ -4346,8 +4345,6 @@ def test_vsis3_read_credentials_config_file_non_default_profile(
         # runner unless it is set to 'myprofile' here.
         'AWS_DEFAULT_PROFILE': 'myprofile'
     }
-
-    options = {}
 
     os_aws = tmpdir.mkdir(".aws")
 
