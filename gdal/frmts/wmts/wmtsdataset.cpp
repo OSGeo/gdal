@@ -1191,6 +1191,17 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
     std::map<CPLString, WMTSTileMatrixLimits> aoMapTileMatrixLimits;
     std::map<CPLString, CPLString> aoMapDimensions;
 
+    // Collect TileMatrixSet identifiers
+    std::set<std::string> oSetTMSIdentifiers;
+    for(CPLXMLNode* psIter = psContents->psChild; psIter != nullptr; psIter = psIter->psNext )
+    {
+        if( psIter->eType != CXT_Element || strcmp(psIter->pszValue, "TileMatrixSet") != 0 )
+            continue;
+        const char* pszIdentifier = CPLGetXMLValue(psIter, "Identifier", nullptr);
+        if( pszIdentifier )
+            oSetTMSIdentifiers.insert(pszIdentifier);
+    }
+
     for(CPLXMLNode* psIter = psContents->psChild; psIter != nullptr; psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element || strcmp(psIter->pszValue, "Layer") != 0 )
@@ -1269,6 +1280,14 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             {
                 const char* pszTMS = CPLGetXMLValue(
                                             psSubIter, "TileMatrixSet", "");
+                if( oSetTMSIdentifiers.find(pszTMS) == oSetTMSIdentifiers.end() )
+                {
+                    CPLDebug("WMTS",
+                             "Layer %s has a TileMatrixSetLink to %s, "
+                             "but it is not defined as a TileMatrixSet",
+                             pszIdentifier, pszTMS);
+                    continue;
+                }
                 if( !osTMS.empty() && strcmp(osTMS, pszTMS) != 0 )
                     continue;
                 if( strcmp(osSelectLayer, pszIdentifier) == 0 &&
