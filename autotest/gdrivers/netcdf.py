@@ -875,6 +875,24 @@ def netcdf_25_nc4():
     return netcdf_check_vars('tmp/netcdf_25_nc4.nc', vals_global, vals_band)
 
 ###############################################################################
+# check reading a file with valid_range with float values
+
+
+def test_netcdf_float_valid_range():
+
+    ds = gdal.Open('data/netcdf/float_valid_range.nc')
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx((0.1, 0.9), abs=1e-6)
+
+###############################################################################
+# check reading a file with valid_min and valid_max with float values
+
+
+def test_netcdf_float_valid_min_max():
+
+    ds = gdal.Open('data/netcdf/float_valid_min_max.nc')
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx((0.1, 0.9), abs=1e-6)
+
+###############################################################################
 # check support for WRITE_BOTTOMUP file creation option
 # use a dummy file with no lon/lat info to force a different checksum
 # depending on y-axis order
