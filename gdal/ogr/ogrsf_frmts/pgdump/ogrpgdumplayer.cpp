@@ -1543,6 +1543,13 @@ CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn* poFieldDefn)
 OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
                                     int bApproxOK )
 {
+    if( poFeatureDefn->GetFieldCount() + poFeatureDefn->GetGeomFieldCount() == 1600 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Maximum number of fields supported is 1600.");
+        return OGRERR_FAILURE;
+    }
+
     CPLString osFieldType;
     OGRFieldDefn oField( poFieldIn );
 
@@ -1638,6 +1645,13 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
 OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                         int /* bApproxOK */ )
 {
+    if( poFeatureDefn->GetFieldCount() + poFeatureDefn->GetGeomFieldCount() == 1600 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Maximum number of fields supported is 1600.");
+        return OGRERR_FAILURE;
+    }
+
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if( eType == wkbNone )
     {
