@@ -460,6 +460,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                 adfValidRange[1] = CPLAtof(aosValidRange[1]);
             }
         }
+        CPLFree(pszValidRange);
 
         // If not found look for valid_min and valid_max.
         if( !bValidRangeValid )
