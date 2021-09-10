@@ -4276,6 +4276,34 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if (fp == nullptr)
         return nullptr;
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    {
+        // Workaround for ossfuzz only due to
+        // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37584
+        // https://gitlab.freedesktop.org/poppler/poppler/-/issues/1137
+        GByte* pabyRet = nullptr;
+        vsi_l_offset nSize = 0;
+        if( VSIIngestFile(fp, pszFilename, &pabyRet, &nSize, 10 * 1024 * 1024) )
+        {
+            // Replace nul byte by something else so that strstr() works
+            for( size_t i = 0; i < nSize; i++ )
+            {
+                if( pabyRet[i] == 0 ) pabyRet[i] = ' ';
+            }
+            if( strstr(reinterpret_cast<const char*>(pabyRet), "/JBIG2Decode") )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "/JBIG2Decode found. Giving up due to potential "
+                         "very long processing time.");
+                CPLFree(pabyRet);
+                VSIFCloseL(fp);
+                return nullptr;
+            }
+        }
+        CPLFree(pabyRet);
+    }
+#endif
+
     fp = (VSILFILE*)VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
     fpKeeper.reset(fp);
 
