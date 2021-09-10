@@ -390,7 +390,8 @@ INPUT                  = port \
                          ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
                          ogr/ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
                          swig/python/gdal-utils/scripts \
-                         gnm
+                         gnm \
+                         doxygen_index.md
 
 # If the value of the INPUT tag contains directories, you can use the
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp
@@ -472,6 +473,13 @@ INPUT_FILTER           =
 # files to browse (i.e. when SOURCE_BROWSER is set to YES).
 
 FILTER_SOURCE_FILES    = NO
+
+# If the USE_MDFILE_AS_MAINPAGE tag refers to the name of a markdown file that
+# is part of the input, its contents will be placed on the main page
+# (index.html). This can be useful if you have a project on for instance GitHub
+# and want to reuse the introduction page also for the doxygen output.
+
+USE_MDFILE_AS_MAINPAGE = doxygen_index.md
 
 #---------------------------------------------------------------------------
 # configuration options related to source browsing
