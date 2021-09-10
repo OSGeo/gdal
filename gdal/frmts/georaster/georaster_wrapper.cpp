@@ -323,7 +323,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
         else
         {
             poGRW->sSchema = "";
-            poGRW->sOwner  = poGRW->poConnection->GetUser();
+            poGRW->sOwner  = poGRW->poConnection->GetSessionUser();
         }
 
         CSLDestroy( papszSchema );
