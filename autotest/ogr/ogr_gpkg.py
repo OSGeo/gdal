@@ -1631,11 +1631,11 @@ def test_ogr_gpkg_write_srs_undefined_geographic():
     gdal.Unlink('tmp/ogr_gpkg_srs_undefined_geographic.gpkg')
 
 
-def test_ogr_gpkg_write_srs_undefined_cartesian():
+def test_ogr_gpkg_write_srs_undefined_Cartesian():
 
-    gdal.Unlink('tmp/ogr_gpkg_srs_cartesian.gpkg')
+    gdal.Unlink('tmp/ogr_gpkg_srs_Cartesian.gpkg')
 
-    gpkg_ds = gdaltest.gpkg_dr.CreateDataSource('tmp/ogr_gpkg_srs_cartesian.gpkg')
+    gpkg_ds = gdaltest.gpkg_dr.CreateDataSource('tmp/ogr_gpkg_srs_Cartesian.gpkg')
     assert gpkg_ds is not None
 
     # Check initial default SRS entries in gpkg_spatial_ref_sys
@@ -1645,14 +1645,14 @@ def test_ogr_gpkg_write_srs_undefined_cartesian():
     gpkg_ds.ReleaseResultSet(sql_lyr)
 
     srs= osr.SpatialReference()
-    srs.SetFromUserInput('LOCAL_CS["Undefined cartesian SRS"]')
-    lyr = gpkg_ds.CreateLayer('srs_test_cartesian_layer', geom_type=ogr.wkbPoint, srs=srs)
+    srs.SetFromUserInput('LOCAL_CS["Undefined Cartesian SRS"]')
+    lyr = gpkg_ds.CreateLayer('srs_test_Cartesian_layer', geom_type=ogr.wkbPoint, srs=srs)
     srs_wkt = lyr.GetSpatialRef().ExportToWkt()
-    assert srs_wkt.find('Undefined cartesian SRS') >= 0
+    assert srs_wkt.find('Undefined Cartesian SRS') >= 0
     assert lyr.GetSpatialRef().IsLocal()
 
     gpkg_ds = None
-    gpkg_ds = ogr.Open('tmp/ogr_gpkg_srs_cartesian.gpkg')
+    gpkg_ds = ogr.Open('tmp/ogr_gpkg_srs_Cartesian.gpkg')
 
     # Check no new SRS entries have been inserted into gpkg_spatial_ref_sys
     sql_lyr = gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM gpkg_spatial_ref_sys")
@@ -1661,11 +1661,11 @@ def test_ogr_gpkg_write_srs_undefined_cartesian():
 
     lyr = gpkg_ds.GetLayer(0)
     srs_wkt = lyr.GetSpatialRef().ExportToWkt()
-    assert srs_wkt.find('Undefined cartesian SRS') >= 0, srs_wkt
+    assert srs_wkt.find('Undefined Cartesian SRS') >= 0, srs_wkt
     assert lyr.GetSpatialRef().IsLocal()
 
     gpkg_ds = None
-    gdal.Unlink('tmp/ogr_gpkg_srs_cartesian.gpkg')
+    gdal.Unlink('tmp/ogr_gpkg_srs_Cartesian.gpkg')
 
 ###############################################################################
 # Test maximum width of text fields
