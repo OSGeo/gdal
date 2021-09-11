@@ -7,6 +7,9 @@ INGRES
 
 .. build_dependencies:: INGRESS
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_INGRES
+
 This driver implements read and write access for spatial data in
 `INGRES <http://www.actian.com/products/ingres/geospatial/>`__ database
 tables.

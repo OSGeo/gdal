@@ -8,6 +8,9 @@ ARCGEN - Arc/Info Generate
 
 .. built_in_by_default::
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_ARCGEN
+
 This driver reads files in Arc/Info Generate format. Those files are simple
 ASCII files that contain points, lines or polygons (one type of geometry per
 file).

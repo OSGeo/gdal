@@ -7,6 +7,9 @@ DODS/OPeNDAP
 
 .. build_dependencies:: libdap
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_OGR_DODS
+
 This driver implements read-only support for reading feature data from
 OPeNDAP (DODS) servers. It is optionally included in OGR if built with
 OPeNDAP support libraries.

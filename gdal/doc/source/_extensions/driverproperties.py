@@ -301,8 +301,14 @@ class DeprecatedDriverDirective(Directive):
         else:
             explanation.append("This driver is considered for removal in a future GDAL release.")
 
-        explanation.append("You are invited to convert any dataset in that format to another more common one. "
-                           "If you need this driver in future GDAL versions, create a ticket at https://github.com/OSGeo/gdal "
+        message = [c[len('message:'):].strip() for c in self.content if
+                                        c.startswith('message:')]
+        if message:
+            explanation.append(message[0])
+        else:
+            explanation.append("You are invited to convert any dataset in that format to another more common one.")
+
+        explanation.append("If you need this driver in future GDAL versions, create a ticket at https://github.com/OSGeo/gdal "
                            "(look first for an existing one first) to explain how critical it is for you "
                            "(but the GDAL project may still remove it).")
 

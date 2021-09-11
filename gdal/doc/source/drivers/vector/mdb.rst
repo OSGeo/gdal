@@ -7,6 +7,10 @@ Access MDB databases
 
 .. build_dependencies:: JDK/JRE and Jackcess
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_MDB
+   message: You should consider using the generic ODBC driver with an updated MDBTools Access driver instead.
+
 OGR optionally supports reading access .mdb files by using the Java
 `Jackcess <http://jackcess.sourceforge.net/>`__ library.
 
