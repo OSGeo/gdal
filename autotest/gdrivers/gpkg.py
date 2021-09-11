@@ -1204,7 +1204,7 @@ def test_gpkg_15():
     # Repeated SetProjection()
     out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     assert out_ds.GetSpatialRef().IsLocal()
-    assert out_ds.GetProjectionRef().find('Undefined cartesian SRS') >= 0
+    assert out_ds.GetProjectionRef().find('Undefined Cartesian SRS') >= 0
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     ret = out_ds.SetProjection(srs.ExportToWkt())
@@ -1219,7 +1219,7 @@ def test_gpkg_15():
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     assert out_ds.GetSpatialRef().IsLocal()
-    assert out_ds.GetProjectionRef().find('Undefined cartesian SRS') >= 0
+    assert out_ds.GetProjectionRef().find('Undefined Cartesian SRS') >= 0
     # Test setting on read-only dataset
     gdal.PushErrorHandler()
     ret = out_ds.SetProjection('')
@@ -3226,12 +3226,12 @@ def test_gpkg_wkt2():
 
     lyr = ds.ExecuteSQL('SELECT * FROM gpkg_spatial_ref_sys ORDER BY srs_id')
     f = lyr.GetNextFeature()
-    assert f.GetField('srs_name') == 'Undefined cartesian SRS'
+    assert f.GetField('srs_name') == 'Undefined Cartesian SRS'
     assert f.GetField('srs_id') == -1
     assert f.GetField('organization') == 'NONE'
     assert f.GetField('organization_coordsys_id') == -1
     assert f.GetField('definition') == 'undefined'
-    assert f.GetField('description') == 'undefined cartesian coordinate reference system'
+    assert f.GetField('description') == 'undefined Cartesian coordinate reference system'
     assert f.GetField('definition_12_063') == 'undefined'
 
     lyr.GetNextFeature()
