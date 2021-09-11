@@ -691,13 +691,43 @@ int PDS4Dataset::Identify(GDALOpenInfo* poOpenInfo)
 {
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "PDS4:") )
         return TRUE;
+    if( poOpenInfo->nHeaderBytes == 0 )
+        return FALSE;
 
-    const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
-    return poOpenInfo->nHeaderBytes > 0 &&
-           (strstr(pszHeader, "Product_Observational") != nullptr ||
-            strstr(pszHeader, "Product_Ancillary") != nullptr ||
-            strstr(pszHeader, "Product_Collection") != nullptr) &&
-           strstr(pszHeader, "http://pds.nasa.gov/pds4/pds/v1") != nullptr;
+    const auto HasProductSomethingRootElement = [](const char* pszStr)
+    {
+        return strstr(pszStr, "Product_Observational") != nullptr ||
+               strstr(pszStr, "Product_Ancillary") != nullptr ||
+               strstr(pszStr, "Product_Collection") != nullptr;
+    };
+    const auto HasPDS4Schema = [](const char* pszStr)
+    {
+        return strstr(pszStr, "://pds.nasa.gov/pds4/pds/v1") != nullptr;
+    };
+
+    for( int i = 0; i < 2; ++i )
+    {
+        const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
+        int nMatches = 0;
+        if( HasProductSomethingRootElement(pszHeader) )
+            nMatches ++;
+        if( HasPDS4Schema(pszHeader) )
+            nMatches ++;
+        if( nMatches == 2 )
+        {
+           return TRUE;
+        }
+        if( i == 0 )
+        {
+            if( nMatches == 0 || poOpenInfo->nHeaderBytes >= 8192 )
+                break;
+            // If we have found one of the 2 matching elements to identify
+            // PDS4 products, but have only ingested the default 1024 bytes,
+            // then try to ingest more.
+            poOpenInfo->TryToIngest(8192);
+        }
+    }
+    return FALSE;
 }
 
 /************************************************************************/
