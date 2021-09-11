@@ -108,6 +108,8 @@ CPL_CVSID("$Id$")
 
 static bool bGlobalInExternalOvr = false;
 
+static thread_local int gnThreadLocalLibtiffError = 0;
+
 // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
 #if TIFFLIB_VERSION >= 20120922
 #define SUPPORTS_MORE_THAN_32768_DIRECTORIES
@@ -4767,6 +4769,8 @@ bool GTiffDataset::ReadStrile(int nBlockId,
     else
         m_bHasUsedReadEncodedAPI = true;
 
+    // Set to 1 to allow GTiffErrorHandler to implement limitation on error messages
+    gnThreadLocalLibtiffError = 1;
     if( TIFFIsTiled( m_hTIFF ) )
     {
         if( TIFFReadEncodedTile( m_hTIFF, nBlockId, pOutputBuffer,
@@ -4775,7 +4779,7 @@ bool GTiffDataset::ReadStrile(int nBlockId,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                         "TIFFReadEncodedTile() failed." );
-
+            gnThreadLocalLibtiffError = 0;
             return false;
         }
     }
@@ -4787,10 +4791,11 @@ bool GTiffDataset::ReadStrile(int nBlockId,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "TIFFReadEncodedStrip() failed." );
-
+            gnThreadLocalLibtiffError = 0;
             return false;
         }
     }
+    gnThreadLocalLibtiffError = 0;
     return true;
 }
 
@@ -7614,6 +7619,8 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
     if( m_poGDS->m_nLoadedBlock >= nBlockYOff )
         m_poGDS->m_nLoadedBlock = -1;
 
+    // Set to 1 to allow GTiffErrorHandler to implement limitation on error messages
+    gnThreadLocalLibtiffError = 1;
     while( m_poGDS->m_nLoadedBlock < nBlockYOff )
     {
         ++m_poGDS->m_nLoadedBlock;
@@ -7648,9 +7655,11 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
             ReportError( CE_Failure, CPLE_AppDefined,
                       "TIFFReadScanline() failed." );
             m_poGDS->m_nLoadedBlock = -1;
+            gnThreadLocalLibtiffError = 0;
             return CE_Failure;
         }
     }
+    gnThreadLocalLibtiffError = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Translate 1bit data to eight bit.                               */
@@ -19724,6 +19733,13 @@ static char *PrepareTIFFErrorFormat( const char *module, const char *fmt )
 static void
 GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 {
+    if( gnThreadLocalLibtiffError > 0 )
+    {
+        gnThreadLocalLibtiffError ++;
+        if( gnThreadLocalLibtiffError > 10 )
+            return;
+    }
+
     if( strstr(fmt,"nknown field") != nullptr )
         return;
 
@@ -19747,6 +19763,13 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 static void
 GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
 {
+    if( gnThreadLocalLibtiffError > 0 )
+    {
+        gnThreadLocalLibtiffError ++;
+        if( gnThreadLocalLibtiffError > 10 )
+            return;
+    }
+
     if( strcmp(fmt, "Maximum TIFF file size exceeded") == 0 )
     {
         // Ideally there would be a thread-safe way of setting this flag,
