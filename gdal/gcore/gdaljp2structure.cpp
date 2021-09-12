@@ -47,6 +47,15 @@
 
 constexpr int knbMaxJPEG2000Components = 16384; // per the JPEG2000 standard
 
+namespace
+{
+    struct DumpContext
+    {
+        int nCurLineCount;
+        int nMaxLineCount;
+    };
+}
+
 static CPLXMLNode* GetLastChild(CPLXMLNode* psParent)
 {
     CPLXMLNode* psChild = psParent->psChild;
@@ -55,10 +64,37 @@ static CPLXMLNode* GetLastChild(CPLXMLNode* psParent)
     return psChild;
 }
 
-static void AddElement(CPLXMLNode* psParent,
+static CPLXMLNode* _AddError(CPLXMLNode* psParent, const char* pszErrorMsg,
+                            GIntBig nOffset = 0)
+{
+    CPLXMLNode* psError = CPLCreateXMLNode( psParent, CXT_Element, "Error" );
+    CPLAddXMLAttributeAndValue(psError, "message", pszErrorMsg );
+    if( nOffset )
+    {
+        CPLAddXMLAttributeAndValue(psError, "offset",
+                                CPLSPrintf(CPL_FRMT_GIB, nOffset )  );
+    }
+    return psError;
+}
+
+static CPLXMLNode* AddElement(CPLXMLNode* psParent,
                        CPLXMLNode*& psLastChild,
+                       DumpContext* psDumpContext,
                        CPLXMLNode* psNewElt)
 {
+    if( psDumpContext->nCurLineCount > psDumpContext->nMaxLineCount )
+    {
+        CPLDestroyXMLNode(psNewElt);
+
+        if( psDumpContext->nCurLineCount == psDumpContext->nMaxLineCount + 1 )
+        {
+            _AddError(psParent, "Too many lines in dump");
+            psDumpContext->nCurLineCount++;
+        }
+        return nullptr;
+    }
+    psDumpContext->nCurLineCount++;
+
     if( psLastChild == nullptr )
         psLastChild = GetLastChild(psParent);
     if( psLastChild == nullptr )
@@ -66,14 +102,21 @@ static void AddElement(CPLXMLNode* psParent,
     else
         psLastChild->psNext = psNewElt;
     psLastChild = psNewElt;
+    return psNewElt;
 }
 
 static void AddField(CPLXMLNode* psParent,
                      CPLXMLNode*& psLastChild,
+                     DumpContext* psDumpContext,
                      const char* pszFieldName,
                      int nFieldSize, const char* pszValue,
                      const char* pszDescription = nullptr)
 {
+    if( psDumpContext->nCurLineCount > psDumpContext->nMaxLineCount + 1 )
+    {
+        return;
+    }
+
     CPLXMLNode* psField = CPLCreateXMLElementAndValue(
                                     nullptr, "Field", pszValue );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
@@ -81,15 +124,21 @@ static void AddField(CPLXMLNode* psParent,
     CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize ) );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
-    AddElement(psParent, psLastChild, psField);
+    AddElement(psParent, psLastChild, psDumpContext, psField);
 }
 
 static void AddHexField(CPLXMLNode* psParent,
                         CPLXMLNode*& psLastChild,
+                        DumpContext* psDumpContext,
                         const char* pszFieldName,
                         int nFieldSize, const char* pszValue,
                         const char* pszDescription = nullptr)
 {
+    if( psDumpContext->nCurLineCount > psDumpContext->nMaxLineCount + 1 )
+    {
+        return;
+    }
+
     CPLXMLNode* psField = CPLCreateXMLElementAndValue(
                                     nullptr, "Field", pszValue );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
@@ -97,49 +146,67 @@ static void AddHexField(CPLXMLNode* psParent,
     CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize ) );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
-    AddElement(psParent, psLastChild, psField);
+    AddElement(psParent, psLastChild, psDumpContext, psField);
 }
 
 static void AddField(CPLXMLNode* psParent,
                      CPLXMLNode*& psLastChild,
+                     DumpContext* psDumpContext,
                      const char* pszFieldName, GByte nVal,
                      const char* pszDescription = nullptr)
 {
+    if( psDumpContext->nCurLineCount > psDumpContext->nMaxLineCount + 1 )
+    {
+        return;
+    }
+
     CPLXMLNode* psField = CPLCreateXMLElementAndValue(
                                 nullptr, "Field", CPLSPrintf("%d", nVal) );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
     CPLAddXMLAttributeAndValue(psField, "type", "uint8" );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
-    AddElement(psParent, psLastChild, psField);
+    AddElement(psParent, psLastChild, psDumpContext, psField);
 }
 
 static void AddField(CPLXMLNode* psParent,
                      CPLXMLNode*& psLastChild,
+                     DumpContext* psDumpContext,
                      const char* pszFieldName, GUInt16 nVal,
                      const char* pszDescription = nullptr)
 {
+    if( psDumpContext->nCurLineCount > psDumpContext->nMaxLineCount + 1 )
+    {
+        return;
+    }
+
     CPLXMLNode* psField = CPLCreateXMLElementAndValue(
                                 nullptr, "Field", CPLSPrintf("%d", nVal) );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
     CPLAddXMLAttributeAndValue(psField, "type", "uint16" );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
-    AddElement(psParent, psLastChild, psField);
+    AddElement(psParent, psLastChild, psDumpContext, psField);
 }
 
 static void AddField(CPLXMLNode* psParent,
                      CPLXMLNode*& psLastChild,
+                     DumpContext* psDumpContext,
                      const char* pszFieldName, GUInt32 nVal,
                      const char* pszDescription = nullptr)
 {
+    if( psDumpContext->nCurLineCount - 1 >= psDumpContext->nMaxLineCount )
+    {
+        return;
+    }
+
     CPLXMLNode* psField = CPLCreateXMLElementAndValue(
                                 nullptr, "Field", CPLSPrintf("%u", nVal) );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
     CPLAddXMLAttributeAndValue(psField, "type", "uint32" );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
-    AddElement(psParent, psLastChild, psField);
+    AddElement(psParent, psLastChild, psDumpContext, psField);
 }
 
 static const char* GetInterpretationOfBPC(GByte bpc)
@@ -168,7 +235,8 @@ static const char* GetStandardFieldString(GUInt16 nVal)
 }
 
 static void DumpGeoTIFFBox(CPLXMLNode* psBox,
-                           GDALJP2Box& oBox)
+                           GDALJP2Box& oBox,
+                           DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -196,6 +264,8 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
             CPLXMLNode* psXMLVRT = CPLParseXMLString(reinterpret_cast<const char*>(pabyXML));
             if( psXMLVRT )
             {
+                ++psDumpContext->nCurLineCount;
+
                 CPLXMLNode* psXMLContentNode =
                     CPLCreateXMLNode( psBox, CXT_Element, "DecodedGeoTIFF" );
                 psXMLContentNode->psChild = psXMLVRT;
@@ -227,7 +297,8 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
     CPLFree(pabyBoxData);
 }
 
-static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -243,7 +314,7 @@ static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             char szBranding[5];
             memcpy(szBranding, pabyIter, 4);
             szBranding[4] = 0;
-            AddField(psDecodedContent, psLastChild, "BR", 4, szBranding);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "BR", 4, szBranding);
             pabyIter += 4;
             nRemainingLength -= 4;
         }
@@ -252,7 +323,7 @@ static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             GUInt32 nVal;
             memcpy(&nVal, pabyIter, 4);
             CPL_MSBPTR32(&nVal);
-            AddField(psDecodedContent, psLastChild,  "MinV", nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext,  "MinV", nVal);
             pabyIter += 4;
             nRemainingLength -= 4;
         }
@@ -264,6 +335,7 @@ static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             szBranding[4] = 0;
             AddField(psDecodedContent,
                      psLastChild,
+                     psDumpContext,
                         CPLSPrintf("CL%d", nCLIndex),
                         4, szBranding);
             pabyIter += 4;
@@ -272,6 +344,7 @@ static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         }
         if( nRemainingLength > 0 )
             AddElement( psDecodedContent, psLastChild,
+                        psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -279,7 +352,8 @@ static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     CPLFree(pabyBoxData);
 }
 
-static void DumpIHDRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpIHDRBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -295,7 +369,8 @@ static void DumpIHDRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             GUInt32 nVal;
             memcpy(&nVal, pabyIter, 4);
             CPL_MSBPTR32(&nVal);
-            AddField(psDecodedContent, psLastChild, "HEIGHT", nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     "HEIGHT", nVal);
             pabyIter += 4;
             nRemainingLength -= 4;
         }
@@ -304,7 +379,8 @@ static void DumpIHDRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             GUInt32 nVal;
             memcpy(&nVal, pabyIter, 4);
             CPL_MSBPTR32(&nVal);
-            AddField(psDecodedContent, psLastChild, "WIDTH", nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     "WIDTH", nVal);
             pabyIter += 4;
             nRemainingLength -= 4;
         }
@@ -313,37 +389,43 @@ static void DumpIHDRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             GUInt16 nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
-            AddField(psDecodedContent, psLastChild, "NC", nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     "NC", nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
         if( nRemainingLength >= 1 )
         {
-            AddField(psDecodedContent, psLastChild, "BPC", *pabyIter,
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     "BPC", *pabyIter,
                         GetInterpretationOfBPC(*pabyIter));
             pabyIter += 1;
             nRemainingLength -= 1;
         }
         if( nRemainingLength >= 1 )
         {
-            AddField(psDecodedContent, psLastChild, "C", *pabyIter);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     "C", *pabyIter);
             pabyIter += 1;
             nRemainingLength -= 1;
         }
         if( nRemainingLength >= 1 )
         {
-            AddField(psDecodedContent, psLastChild, "UnkC", *pabyIter);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     "UnkC", *pabyIter);
             pabyIter += 1;
             nRemainingLength -= 1;
         }
         if( nRemainingLength >= 1 )
         {
-            AddField(psDecodedContent, psLastChild, "IPR", *pabyIter);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     "IPR", *pabyIter);
             /*pabyIter += 1;*/
             nRemainingLength -= 1;
         }
         if( nRemainingLength > 0 )
             AddElement( psDecodedContent, psLastChild,
+                        psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -351,7 +433,8 @@ static void DumpIHDRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     CPLFree(pabyBoxData);
 }
 
-static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -367,6 +450,7 @@ static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         {
             AddField(psDecodedContent,
                      psLastChild,
+                     psDumpContext,
                         CPLSPrintf("BPC%d", nBPCIndex),
                         *pabyIter,
                         GetInterpretationOfBPC(*pabyIter));
@@ -376,6 +460,7 @@ static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         }
         if( nRemainingLength > 0 )
             AddElement( psDecodedContent, psLastChild,
+                        psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -383,7 +468,8 @@ static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     CPLFree(pabyBoxData);
 }
 
-static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -398,7 +484,7 @@ static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         if( nRemainingLength >= 1 )
         {
             nMeth = *pabyIter;
-            AddField(psDecodedContent, psLastChild, "METH", nMeth,
+            AddField(psDecodedContent, psLastChild, psDumpContext, "METH", nMeth,
                         (nMeth == 0) ? "Enumerated Colourspace":
                         (nMeth == 1) ? "Restricted ICC profile": nullptr);
             pabyIter += 1;
@@ -406,13 +492,13 @@ static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         }
         if( nRemainingLength >= 1 )
         {
-            AddField(psDecodedContent, psLastChild, "PREC", *pabyIter);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "PREC", *pabyIter);
             pabyIter += 1;
             nRemainingLength -= 1;
         }
         if( nRemainingLength >= 1 )
         {
-            AddField(psDecodedContent, psLastChild, "APPROX", *pabyIter);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "APPROX", *pabyIter);
             pabyIter += 1;
             nRemainingLength -= 1;
         }
@@ -421,7 +507,7 @@ static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             GUInt32 nVal;
             memcpy(&nVal, pabyIter, 4);
             CPL_MSBPTR32(&nVal);
-            AddField(psDecodedContent, psLastChild, "EnumCS", nVal,
+            AddField(psDecodedContent, psLastChild, psDumpContext, "EnumCS", nVal,
                         (nVal == 16) ? "sRGB" :
                         (nVal == 17) ? "greyscale":
                         (nVal == 18) ? "sYCC" : nullptr);
@@ -430,6 +516,7 @@ static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         }
         if( nRemainingLength > 0 )
             AddElement(psDecodedContent, psLastChild,
+                       psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -437,7 +524,8 @@ static void DumpCOLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     CPLFree(pabyBoxData);
 }
 
-static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -455,7 +543,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             NE = nVal;
-            AddField(psDecodedContent, psLastChild, "NE", nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "NE", nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
@@ -463,7 +551,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         if( nRemainingLength >= 1 )
         {
             NPC = *pabyIter;
-            AddField(psDecodedContent, psLastChild, "NPC", NPC);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "NPC", NPC);
             pabyIter += 1;
             nRemainingLength -= 1;
         }
@@ -474,6 +562,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             {
                 b8BitOnly &= (*pabyIter <= 7);
                 AddField(psDecodedContent, psLastChild,
+                         psDumpContext,
                             CPLSPrintf("B%d", i),
                             *pabyIter,
                             GetInterpretationOfBPC(*pabyIter));
@@ -490,6 +579,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                     if( nRemainingLength >= 1 )
                     {
                         AddField(psDecodedContent, psLastChild,
+                                 psDumpContext,
                                 CPLSPrintf("C_%d_%d", j, i),
                                 *pabyIter);
                         pabyIter += 1;
@@ -500,6 +590,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         }
         if( nRemainingLength > 0 )
             AddElement( psDecodedContent, psLastChild,
+                        psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -507,7 +598,8 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     CPLFree(pabyBoxData);
 }
 
-static void DumpCMAPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpCMAPBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -524,13 +616,13 @@ static void DumpCMAPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             GUInt16 nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
-            AddField(psDecodedContent, psLastChild,
+            AddField(psDecodedContent, psLastChild, psDumpContext,
                         CPLSPrintf("CMP%d", nIndex),
                         nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
 
-            AddField(psDecodedContent, psLastChild,
+            AddField(psDecodedContent, psLastChild, psDumpContext,
                         CPLSPrintf("MTYP%d", nIndex),
                         *pabyIter,
                         (*pabyIter == 0) ? "Direct use":
@@ -538,7 +630,7 @@ static void DumpCMAPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             pabyIter += 1;
             nRemainingLength -= 1;
 
-            AddField(psDecodedContent, psLastChild,
+            AddField(psDecodedContent, psLastChild, psDumpContext,
                         CPLSPrintf("PCOL%d", nIndex),
                         *pabyIter);
             pabyIter += 1;
@@ -547,7 +639,7 @@ static void DumpCMAPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             nIndex ++;
         }
         if( nRemainingLength > 0 )
-            AddElement( psDecodedContent, psLastChild,
+            AddElement( psDecodedContent, psLastChild, psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -555,7 +647,8 @@ static void DumpCMAPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     CPLFree(pabyBoxData);
 }
 
-static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -573,7 +666,7 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(&nVal, pabyIter, 2);
             nChannels = nVal;
             CPL_MSBPTR16(&nVal);
-            AddField(psDecodedContent, psLastChild, "N", nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "N", nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
@@ -584,7 +677,7 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 GUInt16 nVal;
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
-                AddField(psDecodedContent, psLastChild,
+                AddField(psDecodedContent, psLastChild, psDumpContext,
                             CPLSPrintf("Cn%d", i),
                             nVal);
                 pabyIter += 2;
@@ -595,7 +688,7 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 GUInt16 nVal;
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
-                AddField(psDecodedContent, psLastChild,
+                AddField(psDecodedContent, psLastChild, psDumpContext,
                             CPLSPrintf("Typ%d", i),
                             nVal,
                             (nVal == 0) ? "Colour channel":
@@ -610,7 +703,7 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 GUInt16 nVal;
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
-                AddField(psDecodedContent, psLastChild,
+                AddField(psDecodedContent, psLastChild, psDumpContext,
                             CPLSPrintf("Asoc%d", i),
                             nVal,
                             (nVal == 0) ? "Associated to the whole image":
@@ -621,7 +714,7 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             }
         }
         if( nRemainingLength > 0 )
-            AddElement( psDecodedContent, psLastChild,
+            AddElement( psDecodedContent, psLastChild, psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -629,7 +722,8 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     CPLFree(pabyBoxData);
 }
 
-static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -653,7 +747,8 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             nNumV = nVal;
-            AddField(psDecodedContent, psLastChild, CPLSPrintf("VR%cN", chC), nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     CPLSPrintf("VR%cN", chC), nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
@@ -663,7 +758,8 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             nDenomV = nVal;
-            AddField(psDecodedContent, psLastChild, CPLSPrintf("VR%cD", chC), nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     CPLSPrintf("VR%cD", chC), nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
@@ -673,7 +769,8 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             nNumH = nVal;
-            AddField(psDecodedContent, psLastChild, CPLSPrintf("HR%cN", chC), nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     CPLSPrintf("HR%cN", chC), nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
@@ -683,20 +780,23 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             nDenomH = nVal;
-            AddField(psDecodedContent, psLastChild, CPLSPrintf("HR%cD", chC), nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     CPLSPrintf("HR%cD", chC), nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
         if( nRemainingLength >= 1 )
         {
-            AddField(psDecodedContent, psLastChild, CPLSPrintf("VR%cE", chC), *pabyIter);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     CPLSPrintf("VR%cE", chC), *pabyIter);
             nExpV = *pabyIter;
             pabyIter += 1;
             nRemainingLength -= 1;
         }
         if( nRemainingLength >= 1 )
         {
-            AddField(psDecodedContent, psLastChild, CPLSPrintf("HR%cE", chC), *pabyIter);
+            AddField(psDecodedContent, psLastChild, psDumpContext,
+                     CPLSPrintf("HR%cE", chC), *pabyIter);
             nExpH = *pabyIter;
             /*pabyIter += 1;*/
             nRemainingLength -= 1;
@@ -706,16 +806,16 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             const char* pszVRes =
                 (nDenomV == 0) ? "invalid" :
                     CPLSPrintf("%.03f", 1.0 * nNumV / nDenomV * pow(10.0, nExpV));
-            AddElement(psDecodedContent, psLastChild,
+            AddElement(psDecodedContent, psLastChild, psDumpContext,
                 CPLCreateXMLElementAndValue( nullptr, "VRes", pszVRes ));
             const char* pszHRes =
                 (nDenomH == 0) ? "invalid" :
                     CPLSPrintf("%.03f", 1.0 * nNumH / nDenomH * pow(10.0, nExpH));
-            AddElement(psDecodedContent, psLastChild,
+            AddElement(psDecodedContent, psLastChild, psDumpContext,
                 CPLCreateXMLElementAndValue( nullptr, "HRes", pszHRes ));
         }
         else if( nRemainingLength > 0 )
-            AddElement(psDecodedContent, psLastChild,
+            AddElement(psDecodedContent, psLastChild, psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -723,7 +823,8 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
     CPLFree(pabyBoxData);
 }
 
-static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
+static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox,
+                        DumpContext* psDumpContext)
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
@@ -738,7 +839,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         if( nRemainingLength >= 1 )
         {
             ML = *pabyIter;
-            AddField(psDecodedContent, psLastChild, "ML", *pabyIter);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "ML", *pabyIter);
             pabyIter += 1;
             nRemainingLength -= 1;
         }
@@ -751,7 +852,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 pabyIter += 1;
                 nRemainingLength -= 1;
             }
-            AddHexField(psDecodedContent, psLastChild, "FUAM", static_cast<int>(ML), osHex.c_str());
+            AddHexField(psDecodedContent, psLastChild, psDumpContext, "FUAM", static_cast<int>(ML), osHex.c_str());
         }
         if( nRemainingLength >= ML )
         {
@@ -762,7 +863,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 pabyIter += 1;
                 nRemainingLength -= 1;
             }
-            AddHexField(psDecodedContent, psLastChild, "DCM", static_cast<int>(ML), osHex.c_str());
+            AddHexField(psDecodedContent, psLastChild, psDumpContext, "DCM", static_cast<int>(ML), osHex.c_str());
         }
         GUInt16 NSF = 0;
         if( nRemainingLength >= 2 )
@@ -771,7 +872,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             NSF = nVal;
-            AddField(psDecodedContent, psLastChild, "NSF", nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "NSF", nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
@@ -782,7 +883,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 GUInt16 nVal;
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
-                AddField(psDecodedContent, psLastChild,
+                AddField(psDecodedContent, psLastChild, psDumpContext,
                             CPLSPrintf("SF%d", iNSF), nVal,
                             GetStandardFieldString(nVal));
                 pabyIter += 2;
@@ -799,7 +900,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                     pabyIter += 1;
                     nRemainingLength -= 1;
                 }
-                AddHexField(psDecodedContent, psLastChild,
+                AddHexField(psDecodedContent, psLastChild, psDumpContext,
                             CPLSPrintf("SM%d", iNSF),
                             static_cast<int>(ML), osHex.c_str());
             }
@@ -813,7 +914,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             NVF = nVal;
-            AddField(psDecodedContent, psLastChild, "NVF", nVal);
+            AddField(psDecodedContent, psLastChild, psDumpContext, "NVF", nVal);
             pabyIter += 2;
             nRemainingLength -= 2;
         }
@@ -828,7 +929,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                     pabyIter += 1;
                     nRemainingLength -= 1;
                 }
-                AddHexField(psDecodedContent, psLastChild,
+                AddHexField(psDecodedContent, psLastChild, psDumpContext,
                             CPLSPrintf("VF%d", iNVF),
                             static_cast<int>(ML), osHex.c_str());
             }
@@ -843,7 +944,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                     pabyIter += 1;
                     nRemainingLength -= 1;
                 }
-                AddHexField(psDecodedContent, psLastChild,
+                AddHexField(psDecodedContent, psLastChild, psDumpContext,
                             CPLSPrintf("VM%d", iNVF),
                             static_cast<int>(ML), osHex.c_str());
             }
@@ -851,7 +952,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 break;
         }
         if( nRemainingLength > 0 )
-            AddElement( psDecodedContent, psLastChild,
+            AddElement( psDecodedContent, psLastChild, psDumpContext,
                 CPLCreateXMLElementAndValue(
                     nullptr, "RemainingBytes",
                     CPLSPrintf("%d", static_cast<int>(nRemainingLength) )));
@@ -861,6 +962,7 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
 
 static CPLXMLNode* CreateMarker(CPLXMLNode* psCSBox,
                                 CPLXMLNode*& psLastChildCSBox,
+                                DumpContext* psDumpContext,
                                 const char* pszName,
                                 GIntBig nOffset, GIntBig nLength)
 {
@@ -870,30 +972,17 @@ static CPLXMLNode* CreateMarker(CPLXMLNode* psCSBox,
                                CPLSPrintf(CPL_FRMT_GIB, nOffset )  );
     CPLAddXMLAttributeAndValue(psMarker, "length",
                                CPLSPrintf(CPL_FRMT_GIB, 2 + nLength ) );
-    AddElement( psCSBox, psLastChildCSBox, psMarker );
-    return psMarker;
-}
-
-static CPLXMLNode* _AddError(CPLXMLNode* psParent, const char* pszErrorMsg,
-                            GIntBig nOffset = 0)
-{
-    CPLXMLNode* psError = CPLCreateXMLNode( psParent, CXT_Element, "Error" );
-    CPLAddXMLAttributeAndValue(psError, "message", pszErrorMsg );
-    if( nOffset )
-    {
-        CPLAddXMLAttributeAndValue(psError, "offset",
-                                CPLSPrintf(CPL_FRMT_GIB, nOffset )  );
-    }
-    return psError;
+    return AddElement( psCSBox, psLastChildCSBox, psDumpContext, psMarker );
 }
 
 
 static void AddError(CPLXMLNode* psParent,
                      CPLXMLNode*& psLastChild,
+                     DumpContext* psDumpContext,
                      const char* pszErrorMsg,
                      GIntBig nOffset = 0)
 {
-    AddElement( psParent, psLastChild,
+    AddElement( psParent, psLastChild, psDumpContext,
                 _AddError(nullptr, pszErrorMsg, nOffset) );
 }
 
@@ -929,14 +1018,16 @@ static const char* GetMarkerName(GByte byVal)
 static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                                       VSILFILE* fp,
                                       GIntBig nBoxDataOffset,
-                                      GIntBig nBoxDataLength)
+                                      GIntBig nBoxDataLength,
+                                      DumpContext* psDumpContext)
 {
     GByte abyMarker[2];
     CPLXMLNode* psCSBox = CPLCreateXMLNode( psBox, CXT_Element, "JP2KCodeStream" );
     CPLXMLNode* psLastChildCSBox = nullptr;
     if( VSIFSeekL(fp, nBoxDataOffset, SEEK_SET) != 0 )
     {
-        AddError(psCSBox, psLastChildCSBox, "Cannot read codestream", 0);
+        AddError(psCSBox, psLastChildCSBox, psDumpContext,
+                 "Cannot read codestream", 0);
         return psCSBox;
     }
     GByte* pabyMarkerData = static_cast<GByte*>(CPLMalloc(65535+1));
@@ -949,24 +1040,27 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                         (v == 3) ? "PCRL" :
                         (v == 4) ? "CPRL" : ""); };
 
-    while( true )
+    while( psDumpContext->nCurLineCount <= psDumpContext->nMaxLineCount + 1 )
     {
         GIntBig nOffset = static_cast<GIntBig>(VSIFTellL(fp));
         if( nOffset == nBoxDataOffset + nBoxDataLength )
             break;
         if( VSIFReadL(abyMarker, 2, 1, fp) != 1 )
         {
-            AddError(psCSBox, psLastChildCSBox, "Cannot read marker", nOffset);
+            AddError(psCSBox, psLastChildCSBox, psDumpContext,
+                     "Cannot read marker", nOffset);
             break;
         }
         if( abyMarker[0] != 0xFF )
         {
-            AddError(psCSBox, psLastChildCSBox, "Not a marker", nOffset);
+            AddError(psCSBox, psLastChildCSBox, psDumpContext,
+                     "Not a marker", nOffset);
             break;
         }
         if( abyMarker[1] == 0x4F )
         {
-            CreateMarker( psCSBox, psLastChildCSBox, "SOC", nOffset, 0 );
+            CreateMarker( psCSBox, psLastChildCSBox, psDumpContext,
+                          "SOC", nOffset, 0 );
             continue;
         }
         if( abyMarker[1] == 0x93 )
@@ -989,7 +1083,9 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             else if( nNextTileOffset >= nOffset + 2 )
                 nMarkerSize = nNextTileOffset - nOffset - 2;
 
-            CreateMarker( psCSBox, psLastChildCSBox, "SOD", nOffset, nMarkerSize );
+            CreateMarker( psCSBox, psLastChildCSBox, psDumpContext,
+                          "SOD",
+                          nOffset, nMarkerSize );
             if( bBreak )
                 break;
 
@@ -1001,7 +1097,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             else if( nNextTileOffset && nNextTileOffset >= nOffset + 2 )
             {
                 if( VSIFSeekL(fp, nNextTileOffset, SEEK_SET) != 0 )
-                    AddError(psCSBox, psLastChildCSBox,
+                    AddError(psCSBox, psLastChildCSBox, psDumpContext,
                              "Cannot seek to", nNextTileOffset);
                 nNextTileOffset = 0;
             }
@@ -1009,19 +1105,21 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             {
                 /* We have seek and check before we hit a EOC */
                 nOffset = nBoxDataOffset + nBoxDataLength - 2;
-                CreateMarker( psCSBox, psLastChildCSBox, "EOC", nOffset, 0 );
+                CreateMarker( psCSBox, psLastChildCSBox, psDumpContext,
+                              "EOC", nOffset, 0 );
             }
             continue;
         }
         if( abyMarker[1] == 0xD9 )
         {
-            CreateMarker( psCSBox, psLastChildCSBox, "EOC", nOffset, 0 );
+            CreateMarker( psCSBox, psLastChildCSBox, psDumpContext,
+                          "EOC", nOffset, 0 );
             continue;
         }
         /* Reserved markers */
         if( abyMarker[1] >= 0x30 && abyMarker[1] <= 0x3F )
         {
-            CreateMarker( psCSBox, psLastChildCSBox,
+            CreateMarker( psCSBox, psLastChildCSBox, psDumpContext,
                           CPLSPrintf("Unknown 0xFF%02X", abyMarker[1]), nOffset, 0 );
             continue;
         }
@@ -1029,24 +1127,27 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         GUInt16 nMarkerSize;
         if( VSIFReadL(&nMarkerSize, 2, 1, fp) != 1 )
         {
-            AddError(psCSBox, psLastChildCSBox,
+            AddError(psCSBox, psLastChildCSBox, psDumpContext,
                      CPLSPrintf("Cannot read marker size of %s", GetMarkerName(abyMarker[1])), nOffset);
             break;
         }
         CPL_MSBPTR16(&nMarkerSize);
         if( nMarkerSize < 2 )
         {
-            AddError(psCSBox, psLastChildCSBox,
+            AddError(psCSBox, psLastChildCSBox, psDumpContext,
                      CPLSPrintf("Invalid marker size of %s", GetMarkerName(abyMarker[1])), nOffset);
             break;
         }
 
         CPLXMLNode* psMarker = CreateMarker( psCSBox, psLastChildCSBox,
+                                             psDumpContext,
                         GetMarkerName(abyMarker[1]), nOffset, nMarkerSize );
+        if( !psMarker )
+            break;
         CPLXMLNode* psLastChild = nullptr;
         if( VSIFReadL(pabyMarkerData, nMarkerSize - 2, 1, fp) != 1 )
         {
-            AddError(psMarker, psLastChild,
+            AddError(psMarker, psLastChild, psDumpContext,
                      "Cannot read marker data", nOffset);
             break;
         }
@@ -1060,13 +1161,14 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             if( nRemainingMarkerSize >= 1 ) {
                 v = *pabyMarkerDataIter;
                 const auto comment = commentFunc ? commentFunc(v) : std::string();
-                AddField(psMarker, psLastChild, name, *pabyMarkerDataIter,
+                AddField(psMarker, psLastChild, psDumpContext, name, *pabyMarkerDataIter,
                          comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 1;
                 nRemainingMarkerSize -= 1;
             }
             else {
-                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name));
+                AddError(psMarker, psLastChild, psDumpContext,
+                         CPLSPrintf("Cannot read field %s", name));
                 v = 0;
                 bError = true;
             }
@@ -1080,13 +1182,14 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 memcpy(&v, pabyMarkerDataIter, 2);
                 CPL_MSBPTR16(&v);
                 const auto comment = commentFunc ? commentFunc(v) : std::string();
-                AddField(psMarker, psLastChild, name, v,
+                AddField(psMarker, psLastChild, psDumpContext, name, v,
                          comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 2;
                 nRemainingMarkerSize -= 2;
             }
             else {
-                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name));
+                AddError(psMarker, psLastChild, psDumpContext,
+                         CPLSPrintf("Cannot read field %s", name));
                 v = 0;
                 bError = true;
             }
@@ -1100,13 +1203,14 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 memcpy(&v, pabyMarkerDataIter, 4);
                 CPL_MSBPTR32(&v);
                 const auto comment = commentFunc ? commentFunc(v) : std::string();
-                AddField(psMarker, psLastChild, name, v,
+                AddField(psMarker, psLastChild, psDumpContext, name, v,
                          comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 4;
                 nRemainingMarkerSize -= 4;
             }
             else {
-                AddError(psMarker, psLastChild, CPLSPrintf("Cannot read field %s", name));
+                AddError(psMarker, psLastChild, psDumpContext,
+                         CPLSPrintf("Cannot read field %s", name));
                 v = 0;
                 bError = true;
             }
@@ -1159,7 +1263,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT8("TPsot");
             READ_MARKER_FIELD_UINT8("TNsot");
             if( nRemainingMarkerSize > 0 )
-                AddElement( psMarker, psLastChild,
+                AddElement( psMarker, psLastChild, psDumpContext,
                     CPLCreateXMLElementAndValue(
                         nullptr, "RemainingBytes",
                         CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
@@ -1219,7 +1323,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                  }
              }
              if( nRemainingMarkerSize > 0 )
-                AddElement( psMarker, psLastChild,
+                AddElement( psMarker, psLastChild, psDumpContext,
                     CPLCreateXMLElementAndValue(
                         nullptr, "RemainingBytes",
                         CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
@@ -1251,7 +1355,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("YRsiz%d", i));
             }
             if( nRemainingMarkerSize > 0 )
-                AddElement( psMarker, psLastChild,
+                AddElement( psMarker, psLastChild, psDumpContext,
                     CPLCreateXMLElementAndValue(
                         nullptr, "RemainingBytes",
                         CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
@@ -1279,12 +1383,13 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                     osInterp += "EPH marker segments may be used";
                 else
                     osInterp += "No EPH marker segments";
-                AddField(psMarker, psLastChild, "Scod", nLastVal, osInterp.c_str());
+                AddField(psMarker, psLastChild, psDumpContext,
+                         "Scod", nLastVal, osInterp.c_str());
                 pabyMarkerDataIter += 1;
                 nRemainingMarkerSize -= 1;
             }
             else {
-                AddError(psMarker, psLastChild,
+                AddError(psMarker, psLastChild, psDumpContext,
                          CPLSPrintf("Cannot read field %s", "Scod"));
             }
             READ_MARKER_FIELD_UINT8("SGcod_Progress",  lambdaPOCType);
@@ -1306,7 +1411,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 while( nRemainingMarkerSize >= 1 )
                 {
                     auto nLastVal = *pabyMarkerDataIter;
-                    AddField(psMarker, psLastChild,
+                    AddField(psMarker, psLastChild, psDumpContext,
                              CPLSPrintf("SPcod_Precincts%d", i), *pabyMarkerDataIter,
                              CPLSPrintf("PPx=%d PPy=%d: %dx%d",
                                         nLastVal & 0xf, nLastVal >> 4,
@@ -1317,7 +1422,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 }
             }
             if( nRemainingMarkerSize > 0 )
-                AddElement( psMarker, psLastChild,
+                AddElement( psMarker, psLastChild, psDumpContext,
                     CPLCreateXMLElementAndValue(
                         nullptr, "RemainingBytes",
                         CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
@@ -1340,12 +1445,13 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 }
                 else
                     osInterp += "Standard precincts";
-                AddField(psMarker, psLastChild, "Scoc", nLastVal, osInterp.c_str());
+                AddField(psMarker, psLastChild, psDumpContext,
+                         "Scoc", nLastVal, osInterp.c_str());
                 pabyMarkerDataIter += 1;
                 nRemainingMarkerSize -= 1;
             }
             else {
-                AddError(psMarker, psLastChild,
+                AddError(psMarker, psLastChild, psDumpContext,
                          CPLSPrintf("Cannot read field %s", "Scoc"));
             }
             READ_MARKER_FIELD_UINT8("SPcoc_NumDecompositions");
@@ -1364,7 +1470,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 while( nRemainingMarkerSize >= 1 )
                 {
                     auto nLastVal = *pabyMarkerDataIter;
-                    AddField(psMarker, psLastChild,
+                    AddField(psMarker, psLastChild, psDumpContext,
                              CPLSPrintf("SPcoc_Precincts%d", i), *pabyMarkerDataIter,
                              CPLSPrintf("PPx=%d PPy=%d: %dx%d",
                                         nLastVal & 0xf, nLastVal >> 4,
@@ -1375,7 +1481,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 }
             }
             if( nRemainingMarkerSize > 0 )
-                AddElement( psMarker, psLastChild,
+                AddElement( psMarker, psLastChild, psDumpContext,
                     CPLCreateXMLElementAndValue(
                         nullptr, "RemainingBytes",
                         CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
@@ -1404,7 +1510,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 i ++;
             }
             if( nRemainingMarkerSize > 0 )
-                AddElement( psMarker, psLastChild,
+                AddElement( psMarker, psLastChild, psDumpContext,
                     CPLCreateXMLElementAndValue(
                         nullptr, "RemainingBytes",
                         CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
@@ -1427,7 +1533,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 }
                 else
                 {
-                    AddField(psMarker, psLastChild,
+                    AddField(psMarker, psLastChild, psDumpContext,
                              CPLSPrintf("Iplt%d", i), nPacketLength);
                     nPacketLength = 0;
                     i ++;
@@ -1437,7 +1543,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             }
             if( nPacketLength != 0 )
             {
-                AddError(psMarker, psLastChild,
+                AddError(psMarker, psLastChild, psDumpContext,
                          "Incorrect PLT marker");
             }
         }
@@ -1452,7 +1558,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                  }
              }
              if( nRemainingMarkerSize > 0 )
-                AddElement( psMarker, psLastChild,
+                AddElement( psMarker, psLastChild, psDumpContext,
                     CPLCreateXMLElementAndValue(
                         nullptr, "RemainingBytes",
                         CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
@@ -1589,7 +1695,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             }
             if( nRemainingMarkerSize > 0 )
             {
-                AddElement( psMarker, psLastChild,
+                AddElement( psMarker, psLastChild, psDumpContext,
                     CPLCreateXMLElementAndValue(
                         nullptr, "RemainingBytes",
                         CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
@@ -1612,7 +1718,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             {
                 GByte abyBackup = pabyMarkerDataIter[nRemainingMarkerSize];
                 pabyMarkerDataIter[nRemainingMarkerSize] = 0;
-                AddField(psMarker, psLastChild,
+                AddField(psMarker, psLastChild, psDumpContext,
                          "COM",
                          static_cast<int>(nRemainingMarkerSize),
                          reinterpret_cast<const char*>(pabyMarkerDataIter));
@@ -1622,7 +1728,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
 
         if( VSIFSeekL(fp, nOffset + 2 + nMarkerSize, SEEK_SET) != 0 )
         {
-            AddError(psCSBox, psLastChildCSBox,
+            AddError(psCSBox, psLastChildCSBox, psDumpContext,
                      "Cannot seek to next marker", nOffset + 2 + nMarkerSize);
             break;
         }
@@ -1643,7 +1749,8 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       GDALJP2Box* poParentBox,
                                       CSLConstList papszOptions,
                                       int nRecLevel,
-                                      vsi_l_offset nFileOrParentBoxSize)
+                                      vsi_l_offset nFileOrParentBoxSize,
+                                      DumpContext* psDumpContext)
 {
     // Limit recursion to a reasonable level. I believe that in practice 2
     // should be sufficient, but just in case someone creates deeply
@@ -1656,13 +1763,16 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
     CPLXMLNode* psLastChild = nullptr;
     if( oBox.ReadFirstChild(poParentBox) )
     {
-        while( strlen(oBox.GetType()) > 0 )
+        while( strlen(oBox.GetType()) > 0 &&
+               psDumpContext->nCurLineCount <= psDumpContext->nMaxLineCount + 1 )
         {
             GIntBig nBoxDataLength = oBox.GetDataLength();
             const char* pszBoxType = oBox.GetType();
 
             CPLXMLNode* psBox = CPLCreateXMLNode( nullptr, CXT_Element, "JP2Box" );
-            AddElement( psParent, psLastChild, psBox );
+            psBox = AddElement( psParent, psLastChild, psDumpContext, psBox );
+            if( !psBox )
+                break;
             CPLAddXMLAttributeAndValue(psBox, "name", pszBoxType );
             CPLAddXMLAttributeAndValue(psBox, "box_offset",
                                        CPLSPrintf(CPL_FRMT_GIB, oBox.GetBoxOffset() )  );
@@ -1676,7 +1786,7 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
             if( nBoxDataLength > GINTBIG_MAX - oBox.GetDataOffset() )
             {
                 CPLXMLNode* psLastChildBox = nullptr;
-                AddError(psBox, psLastChildBox, "Invalid box_length");
+                AddError(psBox, psLastChildBox, psDumpContext, "Invalid box_length");
                 break;
             }
 
@@ -1694,7 +1804,7 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                  static_cast<vsi_l_offset>(nBoxDataLength) > nFileOrParentBoxSize - oBox.GetDataOffset()) )
             {
                 CPLXMLNode* psLastChildBox = nullptr;
-                AddError(psBox, psLastChildBox, "Invalid box_length");
+                AddError(psBox, psLastChildBox, psDumpContext, "Invalid box_length");
                 break;
             }
 
@@ -1704,7 +1814,8 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                                  papszOptions,
                                                  nRecLevel + 1,
                                                  oBox.GetDataOffset() +
-                                                    static_cast<vsi_l_offset>(nBoxDataLength));
+                                                    static_cast<vsi_l_offset>(nBoxDataLength),
+                                                 psDumpContext);
             }
             else
             {
@@ -1719,13 +1830,16 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                     }
                     pszBinaryContent[2*16] = '\0';
                     CPLXMLNode* psUUIDNode =
-                                CPLCreateXMLNode( psBox, CXT_Element, "UUID" );
+                                CPLCreateXMLNode( nullptr, CXT_Element, "UUID" );
                     if( GDALJP2Metadata::IsUUID_MSI(pabyUUID) )
                         CPLAddXMLAttributeAndValue(psUUIDNode, "description", "GeoTIFF" );
                     else if( GDALJP2Metadata::IsUUID_XMP(pabyUUID) )
                         CPLAddXMLAttributeAndValue(psUUIDNode, "description", "XMP" );
                     CPLCreateXMLNode( psUUIDNode, CXT_Text, pszBinaryContent);
                     VSIFree(pszBinaryContent);
+
+                    CPLXMLNode* psLastChildBox = nullptr;
+                    AddElement( psBox, psLastChildBox, psDumpContext, psUUIDNode );
                 }
 
                 if( (CPLFetchBool(papszOptions, "BINARY_CONTENT", false) ||
@@ -1733,7 +1847,7 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                     strcmp(pszBoxType, "jp2c") != 0 &&
                     nBoxDataLength < 100 * 1024 )
                 {
-                    CPLXMLNode* psBinaryContent = CPLCreateXMLNode( psBox, CXT_Element, "BinaryContent" );
+                    CPLXMLNode* psBinaryContent = CPLCreateXMLNode( nullptr, CXT_Element, "BinaryContent" );
                     GByte* pabyBoxData = oBox.ReadBoxData();
                     int nBoxLength = static_cast<int>(nBoxDataLength);
                     char* pszBinaryContent = static_cast<char*>(VSIMalloc( 2 * nBoxLength + 1 ));
@@ -1749,6 +1863,9 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                     }
                     CPLFree(pabyBoxData);
                     VSIFree(pszBinaryContent);
+
+                    CPLXMLNode* psLastChildBox = nullptr;
+                    AddElement( psBox, psLastChildBox, psDumpContext, psBinaryContent );
                 }
 
                 if( (CPLFetchBool(papszOptions, "TEXT_CONTENT", false) ||
@@ -1773,14 +1890,19 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                             if( psXMLContentBox )
                             {
                                 CPLXMLNode* psXMLContentNode =
-                                    CPLCreateXMLNode( psBox, CXT_Element, "XMLContent" );
+                                    CPLCreateXMLNode( nullptr, CXT_Element, "XMLContent" );
                                 psXMLContentNode->psChild = psXMLContentBox;
+
+                                CPLXMLNode* psLastChildBox = nullptr;
+                                AddElement( psBox, psLastChildBox, psDumpContext, psXMLContentNode);
                             }
                             else
                             {
-                                CPLCreateXMLNode(
-                                    CPLCreateXMLNode( psBox, CXT_Element, "TextContent" ),
-                                        CXT_Text, pszBoxData);
+                                auto psTextElement = CPLCreateXMLNode( nullptr, CXT_Element, "TextContent" );
+                                CPLCreateXMLNode(psTextElement, CXT_Text, pszBoxData);
+
+                                CPLXMLNode* psLastChildBox = nullptr;
+                                AddElement( psBox, psLastChildBox, psDumpContext, psTextElement);
                             }
                         }
                     }
@@ -1793,50 +1915,52 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                         CPLFetchBool(papszOptions, "ALL", false) )
                     {
                         DumpJPK2CodeStream(psBox, fp,
-                                           oBox.GetDataOffset(), nBoxDataLength);
+                                           oBox.GetDataOffset(),
+                                           nBoxDataLength,
+                                           psDumpContext);
                     }
                 }
                 else if( strcmp(pszBoxType, "uuid") == 0 &&
                          GDALJP2Metadata::IsUUID_MSI(oBox.GetUUID()) )
                 {
-                    DumpGeoTIFFBox(psBox, oBox);
+                    DumpGeoTIFFBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "ftyp") == 0 )
                 {
-                    DumpFTYPBox(psBox, oBox);
+                    DumpFTYPBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "ihdr") == 0 )
                 {
-                    DumpIHDRBox(psBox, oBox);
+                    DumpIHDRBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "bpcc") == 0 )
                 {
-                    DumpBPCCBox(psBox, oBox);
+                    DumpBPCCBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "colr") == 0 )
                 {
-                    DumpCOLRBox(psBox, oBox);
+                    DumpCOLRBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "pclr") == 0 )
                 {
-                    DumpPCLRBox(psBox, oBox);
+                    DumpPCLRBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "cmap") == 0 )
                 {
-                    DumpCMAPBox(psBox, oBox);
+                    DumpCMAPBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "cdef") == 0 )
                 {
-                    DumpCDEFBox(psBox, oBox);
+                    DumpCDEFBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "resc") == 0 ||
                          strcmp(pszBoxType, "resd") == 0)
                 {
-                    DumpRESxBox(psBox, oBox);
+                    DumpRESxBox(psBox, oBox, psDumpContext);
                 }
                 else if( strcmp(pszBoxType, "rreq") == 0 )
                 {
-                    DumpRREQBox(psBox, oBox);
+                    DumpRREQBox(psBox, oBox, psDumpContext);
                 }
             }
 
@@ -1884,6 +2008,10 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
     }
 
     CPLXMLNode* psParent = nullptr;
+    DumpContext dc;
+    dc.nCurLineCount = 0;
+    dc.nMaxLineCount = atoi(CPLGetConfigOption("GDAL_JPEG2000_STRUCTURE_MAX_LINES", "500000"));
+
     if( memcmp(abyHeader, jpc_header, sizeof(jpc_header)) == 0 )
     {
         if( CPLFetchBool(papszOptions, "CODESTREAM", false) ||
@@ -1892,7 +2020,7 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
             if( VSIFSeekL(fp, 0, SEEK_END) == 0 )
             {
                 GIntBig nBoxDataLength = static_cast<GIntBig>(VSIFTellL(fp));
-                psParent = DumpJPK2CodeStream(nullptr, fp, 0, nBoxDataLength);
+                psParent = DumpJPK2CodeStream(nullptr, fp, 0, nBoxDataLength, &dc);
                 CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename );
             }
         }
@@ -1902,7 +2030,15 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
         psParent = CPLCreateXMLNode( nullptr, CXT_Element, "JP2File" );
         CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename );
         vsi_l_offset nFileSize = 0;
-        GDALGetJPEG2000StructureInternal(psParent, fp, nullptr, papszOptions, 0, nFileSize);
+        GDALGetJPEG2000StructureInternal(psParent, fp, nullptr, papszOptions, 0, nFileSize, &dc);
+    }
+
+    if( dc.nCurLineCount > dc.nMaxLineCount )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Maximum number of lines in JPEG2000 structure dump reached. "
+                 "Increase GDAL_JPEG2000_STRUCTURE_MAX_LINES beyond %d.",
+                 dc.nMaxLineCount);
     }
 
     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));

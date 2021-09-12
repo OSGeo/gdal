@@ -30,9 +30,9 @@
 
 import os
 
-
 from osgeo import gdal
 
+import gdaltest
 import pytest
 
 
@@ -51,7 +51,7 @@ def test_jp2metadata_1():
     expected_gt = (356000.0, 0.5, 0.0, 7596000.0, 0.0, -0.5)
     for i in range(6):
         assert gt[i] == pytest.approx(expected_gt[i], abs=1e-5)
-    
+
 ###############################################################################
 # Test Pleiades imagery metadata
 
@@ -86,7 +86,7 @@ def test_jp2metadata_2():
 
     assert not os.path.exists('data/jpeg2000/IMG_md_ple_R1C1.jp2.aux.xml')
 
-    
+
 ###############################################################################
 # Test reading GMLJP2 file with srsName only on the Envelope, and lots of other
 # metadata junk.  This file is also handled currently with axis reordering
@@ -183,6 +183,31 @@ def test_jp2metadata_5():
 
     ds = None
 
+###############################################################################
+# Get structure of a JPEG2000 file
 
 
+def test_jp2metadata_getjpeg2000structure():
 
+    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte.jp2', ['ALL=YES'])
+    assert ret is not None
+
+    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte_tlm_plt.jp2', ['ALL=YES'])
+    assert ret is not None
+
+    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte_one_poc.j2k', ['ALL=YES'])
+    assert ret is not None
+
+    with gdaltest.config_option('GDAL_JPEG2000_STRUCTURE_MAX_LINES', '15'):
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte.jp2', ['ALL=YES'])
+        assert ret is not None
+        assert gdal.GetLastErrorMsg() != ''
+
+    with gdaltest.config_option('GDAL_JPEG2000_STRUCTURE_MAX_LINES', '150'):
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte.jp2', ['ALL=YES'])
+        assert ret is not None
+        assert gdal.GetLastErrorMsg() != ''

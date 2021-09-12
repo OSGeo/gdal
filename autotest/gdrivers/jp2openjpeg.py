@@ -1677,21 +1677,6 @@ def test_jp2openjpeg_42():
     gdal.Unlink('/vsimem/jp2openjpeg_42.jp2')
 
 ###############################################################################
-# Get structure of a JPEG2000 file
-
-
-def test_jp2openjpeg_43():
-
-    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte.jp2', ['ALL=YES'])
-    assert ret is not None
-
-    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte_tlm_plt.jp2', ['ALL=YES'])
-    assert ret is not None
-
-    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte_one_poc.j2k', ['ALL=YES'])
-    assert ret is not None
-
-###############################################################################
 # Check a file against a OrthoimageryCoverage document
 
 
