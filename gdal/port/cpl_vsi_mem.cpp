@@ -369,6 +369,9 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
     size_t nBytesToRead = nSize * nCount;
+    if( nBytesToRead == 0 )
+        return 0;
+
     if( nCount > 0 && nBytesToRead / nCount != nSize )
     {
         bEOF = true;
