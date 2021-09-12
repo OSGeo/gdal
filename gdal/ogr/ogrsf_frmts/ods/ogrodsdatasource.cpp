@@ -701,6 +701,30 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
 }
 
 /************************************************************************/
+/*                      ReserveAndLimitFieldCount()                     */
+/************************************************************************/
+
+static void ReserveAndLimitFieldCount(OGRLayer* poLayer,
+                                      std::vector<std::string>& aosValues)
+{
+    const int nMaxCols = atoi(
+        CPLGetConfigOption("OGR_ODS_MAX_FIELD_COUNT", "2000"));
+    if( static_cast<int>(aosValues.size()) > nMaxCols )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "%d columns detected. Limiting to %d. "
+                 "Set OGR_ODS_MAX_FIELD_COUNT configuration option "
+                 "to allow more fields.",
+                 static_cast<int>(aosValues.size()),
+                 nMaxCols);
+        aosValues.resize(nMaxCols);
+    }
+
+    poLayer->GetLayerDefn()->ReserveSpaceForFields(
+        static_cast<int>(aosValues.size()));
+}
+
+/************************************************************************/
 /*                           endElementTable()                          */
 /************************************************************************/
 
@@ -722,6 +746,8 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
         else if (nCurLine == 1)
         {
             /* If we have only one single line in the sheet */
+
+            ReserveAndLimitFieldCount(poCurLayer, apoFirstLineValues);
 
             for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
@@ -981,6 +1007,8 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
 
             poCurLayer->SetHasHeaderLine(bFirstLineIsHeaders);
 
+            ReserveAndLimitFieldCount(poCurLayer, apoFirstLineValues);
+
             if (bFirstLineIsHeaders)
             {
                 for(i = 0; i < apoFirstLineValues.size(); i++)
@@ -1045,6 +1073,9 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                     bEndTableParsing = true;
                     return;
                 }
+
+                ReserveAndLimitFieldCount(poCurLayer, apoCurLineValues);
+
                 for( i = static_cast<size_t>(
                          poCurLayer->GetLayerDefn()->GetFieldCount());
                      i < apoCurLineValues.size();
@@ -1121,7 +1152,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                         }
                         else if( eFieldType == OFTInteger &&
                                  poFieldDefn->GetSubType() == OFSTBoolean &&
-                                 eValType == OFTInteger && 
+                                 eValType == OFTInteger &&
                                  eValSubType != OFSTBoolean )
                         {
                             poFieldDefn->SetSubType(OFSTNone);
