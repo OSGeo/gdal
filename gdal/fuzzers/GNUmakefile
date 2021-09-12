@@ -33,6 +33,7 @@ clean:
 	$(RM) gml_geom_import_fuzzer$(EXE)
 	$(RM) spatialite_geom_import_fuzzer$(EXE)
 	$(RM) osr_set_from_user_input_fuzzer$(EXE)
+	$(RM) get_jpeg2000_structure_fuzzer$(EXE)
 
 gdal_fuzzer$(EXE): gdal_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) gdal_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
@@ -72,6 +73,9 @@ spatialite_geom_import_fuzzer$(EXE): spatialite_geom_import_fuzzer.$(OBJ_EXT) $(
 
 osr_set_from_user_input_fuzzer$(EXE): osr_set_from_user_input_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) osr_set_from_user_input_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+get_jpeg2000_structure_fuzzer$(EXE): get_jpeg2000_structure_fuzzer.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LDFLAGS) $(LNK_FLAGS) $(CXXFLAGS) $(GDAL_INCLUDE) get_jpeg2000_structure_fuzzer.cpp fuzzingengine.cpp $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 dummyfuzzers_dynamic: fuzzingengine.o
 	$(AR) r libFuzzingEngine.a fuzzingengine.o
