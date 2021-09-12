@@ -913,6 +913,7 @@ static const char* GetMarkerName(GByte byVal)
         case 0x5D: return "QCC";
         case 0x5E: return "RGN";
         case 0x5F: return "POC";
+        case 0x59: return "CPF"; // HTJ2K
         case 0x60: return "PPM";
         case 0x61: return "PPT";
         case 0x63: return "CRG";
@@ -942,11 +943,12 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
     GIntBig nNextTileOffset = 0;
     int Csiz = -1;
     const auto lambdaPOCType = [](GByte v) {
-                return (v == 0) ? "LRCP" :
+        return std::string((v == 0) ? "LRCP" :
                         (v == 1) ? "RLCP" :
                         (v == 2) ? "RPCL" :
                         (v == 3) ? "PCRL" :
-                        (v == 4) ? "CPRL" : nullptr; };
+                        (v == 4) ? "CPRL" : ""); };
+
     while( true )
     {
         GIntBig nOffset = static_cast<GIntBig>(VSIFTellL(fp));
@@ -1053,12 +1055,13 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         bool bError = false;
 
         auto READ_MARKER_FIELD_UINT8 = [&](const char* name,
-                                           const char* (*commentFunc)(GByte) = nullptr) {
+                                           std::string (*commentFunc)(GByte) = nullptr) {
             GByte v;
             if( nRemainingMarkerSize >= 1 ) {
                 v = *pabyMarkerDataIter;
+                const auto comment = commentFunc ? commentFunc(v) : std::string();
                 AddField(psMarker, psLastChild, name, *pabyMarkerDataIter,
-                         commentFunc ? commentFunc(v) : nullptr);
+                         comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 1;
                 nRemainingMarkerSize -= 1;
             }
@@ -1071,13 +1074,14 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         };
 
         auto READ_MARKER_FIELD_UINT16 = [&](const char* name,
-                                            const char* (*commentFunc)(GUInt16) = nullptr) {
+                                            std::string (*commentFunc)(GUInt16) = nullptr) {
             GUInt16 v;
             if( nRemainingMarkerSize >= 2 ) {
                 memcpy(&v, pabyMarkerDataIter, 2);
                 CPL_MSBPTR16(&v);
+                const auto comment = commentFunc ? commentFunc(v) : std::string();
                 AddField(psMarker, psLastChild, name, v,
-                         commentFunc ? commentFunc(v) : nullptr);
+                         comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 2;
                 nRemainingMarkerSize -= 2;
             }
@@ -1090,13 +1094,14 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         };
 
         auto READ_MARKER_FIELD_UINT32 = [&](const char* name,
-                                            const char* (*commentFunc)(GUInt32) = nullptr) {
+                                            std::string (*commentFunc)(GUInt32) = nullptr) {
             GUInt32 v;
             if( nRemainingMarkerSize >= 4 ) {
                 memcpy(&v, pabyMarkerDataIter, 4);
                 CPL_MSBPTR32(&v);
+                const auto comment = commentFunc ? commentFunc(v) : std::string();
                 AddField(psMarker, psLastChild, name, v,
-                         commentFunc ? commentFunc(v) : nullptr);
+                         comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 4;
                 nRemainingMarkerSize -= 4;
             }
@@ -1106,6 +1111,45 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 bError = true;
             }
             return v;
+        };
+
+        const auto cblkstyleLamba = [](GByte v)
+        {
+            std::string osInterp;
+            if( v & 0x1 )
+                osInterp += "Selective arithmetic coding bypass";
+            else
+                osInterp += "No selective arithmetic coding bypass";
+            osInterp += ", ";
+            if( v & 0x2 )
+                osInterp += "Reset context probabilities on coding pass boundaries";
+            else
+                osInterp += "No reset of context probabilities on coding pass boundaries";
+            osInterp += ", ";
+            if( v & 0x4 )
+                osInterp += "Termination on each coding pass";
+            else
+                osInterp += "No termination on each coding pass";
+            osInterp += ", ";
+            if( v & 0x8 )
+                osInterp += "Vertically causal context";
+            else
+                osInterp += "No vertically causal context";
+            osInterp += ", ";
+            if( v & 0x10 )
+                osInterp += "Predictable termination";
+            else
+                osInterp += "No predictable termination";
+            osInterp += ", ";
+            if( v & 0x20 )
+                osInterp += "Segmentation symbols are used";
+            else
+                osInterp += "No segmentation symbols are used";
+            if( v & 0x40 )
+                osInterp += ", High Throughput algorithm";
+            if( v & 0x80 )
+                osInterp += ", Mixed HT and Part1 code-block style";
+            return osInterp;
         };
 
         if( abyMarker[1] == 0x90 ) /* SOT */
@@ -1130,7 +1174,48 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
              {
                  if( (Pcap >> (31 - i)) & 1 )
                  {
-                     READ_MARKER_FIELD_UINT16(CPLSPrintf("Scap_P%d", i+1));
+                     if( i + 1 == 15 )
+                     {
+                         READ_MARKER_FIELD_UINT16(CPLSPrintf("Scap_P%d", i+1), [](GUInt16 v) {
+                             std::string ret;
+                             if( (v >> 14) == 0 )
+                                 ret = "All code-blocks are HT code-blocks";
+                             else if( (v >> 14) == 2 )
+                                 ret = "Either all HT or all Part1 code-blocks per tile component";
+                             else if( (v >> 14) == 3 )
+                                 ret = "Mixed HT or all Part1 code-blocks per tile component";
+                             else
+                                 ret = "Reserved value for bit 14 and 15";
+                             ret += ", ";
+                             if( (v >> 13) & 1 )
+                                 ret += "More than one HT set per code-block";
+                             else
+                                 ret += "Zero or one HT set per code-block";
+                             ret += ", ";
+                             if( (v >> 12) & 1 )
+                                 ret += "ROI marker can be present";
+                             else
+                                 ret += "No ROI marker";
+                             ret += ", ";
+                             if( (v >> 11) & 1 )
+                                 ret += "Heterogeneous codestream";
+                             else
+                                 ret += "Homogeneous codestream";
+                             ret += ", ";
+                             if( (v >> 5) & 1 )
+                                 ret += "HT code-blocks can be used with irreversible transforms";
+                             else
+                                 ret += "HT code-blocks only used with reversible transforms";
+                             ret += ", ";
+                             ret += "P=";
+                             ret += CPLSPrintf("%d", v & 0x31);
+                             return ret;
+                         });
+                     }
+                     else
+                     {
+                         READ_MARKER_FIELD_UINT16(CPLSPrintf("Scap_P%d", i+1));
+                     }
                  }
              }
              if( nRemainingMarkerSize > 0 )
@@ -1142,10 +1227,11 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         else if( abyMarker[1] == 0x51 ) /* SIZ */
         {
             READ_MARKER_FIELD_UINT16("Rsiz", [](GUInt16 v) {
-                return (v == 0) ? "Unrestricted profile":
+                return std::string(
+                        (v == 0) ? "Unrestricted profile":
                         (v == 1) ? "Profile 0":
                         (v == 2) ? "Profile 1":
-                        (v == 16384) ? "HTJ2K": nullptr; });
+                        (v == 16384) ? "HTJ2K": ""); });
             READ_MARKER_FIELD_UINT32("Xsiz");
             READ_MARKER_FIELD_UINT32("Ysiz");
             READ_MARKER_FIELD_UINT32("XOsiz");
@@ -1160,7 +1246,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             for(int i=0;i<Csiz && !bError;i++)
             {
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("Ssiz%d", i), [](GByte v) {
-                        return GetInterpretationOfBPC(v); });
+                        const char* psz = GetInterpretationOfBPC(v); return std::string(psz ? psz : ""); });
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("XRsiz%d", i));
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("YRsiz%d", i));
             }
@@ -1206,56 +1292,14 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT8("SGcod_MCT");
             READ_MARKER_FIELD_UINT8("SPcod_NumDecompositions");
             READ_MARKER_FIELD_UINT8("SPcod_xcb_minus_2", [](GByte v) {
-                return v <= 8 ? CPLSPrintf("%d", 1 << (2+v)) : "invalid"; });
+                return std::string(v <= 8 ? CPLSPrintf("%d", 1 << (2+v)) : "invalid"); });
             READ_MARKER_FIELD_UINT8("SPcod_ycb_minus_2", [](GByte v) {
-                return v <= 8 ? CPLSPrintf("%d", 1 << (2+v)) : "invalid"; });
-            if( nRemainingMarkerSize >= 1 ) {
-                auto nLastVal = *pabyMarkerDataIter;
-                CPLString osInterp;
-                if( nLastVal & 0x1 )
-                    osInterp += "Selective arithmetic coding bypass";
-                else
-                    osInterp += "No selective arithmetic coding bypass";
-                osInterp += ", ";
-                if( nLastVal & 0x2 )
-                    osInterp += "Reset context probabilities on coding pass boundaries";
-                else
-                    osInterp += "No reset of context probabilities on coding pass boundaries";
-                osInterp += ", ";
-                if( nLastVal & 0x4 )
-                    osInterp += "Termination on each coding pass";
-                else
-                    osInterp += "No termination on each coding pass";
-                osInterp += ", ";
-                if( nLastVal & 0x8 )
-                    osInterp += "Vertically causal context";
-                else
-                    osInterp += "No vertically causal context";
-                osInterp += ", ";
-                if( nLastVal & 0x10 )
-                    osInterp += "Predictable termination";
-                else
-                    osInterp += "No predictable termination";
-                osInterp += ", ";
-                if( nLastVal & 0x20 )
-                    osInterp += "Segmentation symbols are used";
-                else
-                    osInterp += "No segmentation symbols are used";
-                if( nLastVal & 0x40 )
-                    osInterp += ", High Throughput algorithm";
-                AddField(psMarker, psLastChild,
-                         "SPcod_cbstyle", static_cast<GByte>(nLastVal), osInterp.c_str());
-                pabyMarkerDataIter += 1;
-                nRemainingMarkerSize -= 1;
-            }
-            else {
-                AddError(psMarker,
-                         psLastChild,
-                         CPLSPrintf("Cannot read field %s", "SPcod_cbstyle"));
-            }
+                return std::string(v <= 8 ? CPLSPrintf("%d", 1 << (2+v)) : "invalid"); });
+            READ_MARKER_FIELD_UINT8("SPcod_cbstyle", cblkstyleLamba);
             READ_MARKER_FIELD_UINT8("SPcod_transformation", [](GByte v) {
-                return (v == 0) ? "9-7 irreversible":
-                       (v == 1) ? "5-3 reversible": nullptr; });
+                return std::string(
+                       (v == 0) ? "9-7 irreversible":
+                       (v == 1) ? "5-3 reversible": ""); });
             if( bHasPrecincts )
             {
                 int i = 0;
@@ -1280,14 +1324,69 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x53 ) /* COC */
         {
+            if( Csiz < 257 )
+                READ_MARKER_FIELD_UINT8("Ccoc");
+            else
+                READ_MARKER_FIELD_UINT16("Ccoc");
+
+            bool bHasPrecincts = false;
+            if( nRemainingMarkerSize >= 1 ) {
+                auto nLastVal = *pabyMarkerDataIter;
+                CPLString osInterp;
+                if( nLastVal & 0x1 )
+                {
+                    bHasPrecincts = true;
+                    osInterp += "User defined precincts";
+                }
+                else
+                    osInterp += "Standard precincts";
+                AddField(psMarker, psLastChild, "Scoc", nLastVal, osInterp.c_str());
+                pabyMarkerDataIter += 1;
+                nRemainingMarkerSize -= 1;
+            }
+            else {
+                AddError(psMarker, psLastChild,
+                         CPLSPrintf("Cannot read field %s", "Scoc"));
+            }
+            READ_MARKER_FIELD_UINT8("SPcoc_NumDecompositions");
+            READ_MARKER_FIELD_UINT8("SPcoc_xcb_minus_2", [](GByte v) {
+                return std::string(v <= 8 ? CPLSPrintf("%d", 1 << (2+v)) : "invalid"); });
+            READ_MARKER_FIELD_UINT8("SPcoc_ycb_minus_2", [](GByte v) {
+                return std::string(v <= 8 ? CPLSPrintf("%d", 1 << (2+v)) : "invalid"); });
+            READ_MARKER_FIELD_UINT8("SPcoc_cbstyle", cblkstyleLamba);
+            READ_MARKER_FIELD_UINT8("SPcoc_transformation", [](GByte v) {
+                return std::string(
+                       (v == 0) ? "9-7 irreversible":
+                       (v == 1) ? "5-3 reversible": ""); });
+            if( bHasPrecincts )
+            {
+                int i = 0;
+                while( nRemainingMarkerSize >= 1 )
+                {
+                    auto nLastVal = *pabyMarkerDataIter;
+                    AddField(psMarker, psLastChild,
+                             CPLSPrintf("SPcoc_Precincts%d", i), *pabyMarkerDataIter,
+                             CPLSPrintf("PPx=%d PPy=%d: %dx%d",
+                                        nLastVal & 0xf, nLastVal >> 4,
+                                        1 << (nLastVal & 0xf), 1 << (nLastVal >> 4)));
+                    pabyMarkerDataIter += 1;
+                    nRemainingMarkerSize -= 1;
+                    i ++;
+                }
+            }
+            if( nRemainingMarkerSize > 0 )
+                AddElement( psMarker, psLastChild,
+                    CPLCreateXMLElementAndValue(
+                        nullptr, "RemainingBytes",
+                        CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
         }
         else if( abyMarker[1] == 0x55 ) /* TLM */
         {
             READ_MARKER_FIELD_UINT8("Ztlm");
             auto Stlm = READ_MARKER_FIELD_UINT8("Stlm", [](GByte v) {
-                return CPLSPrintf("ST=%d SP=%d",
+                return std::string(CPLSPrintf("ST=%d SP=%d",
                                (v >> 4) & 3,
-                               (v >> 6) & 1); });
+                               (v >> 6) & 1)); });
             int ST = (Stlm >> 4) & 3;
             int SP = (Stlm >> 6) & 1;
             int nTilePartDescLength = ST + ((SP == 0) ? 2 : 4);
@@ -1342,11 +1441,120 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                          "Incorrect PLT marker");
             }
         }
+        else if( abyMarker[1] == 0x59 ) /* CPF (HTJ2K) */
+        {
+             const GUInt16 Lcpf = nMarkerSize;
+             if( Lcpf > 2 && (Lcpf % 2) == 0 )
+             {
+                 for( GUInt16 i = 0; i < (Lcpf - 2) / 2; i++ )
+                 {
+                     READ_MARKER_FIELD_UINT16(CPLSPrintf("Pcpf%d", i+1));
+                 }
+             }
+             if( nRemainingMarkerSize > 0 )
+                AddElement( psMarker, psLastChild,
+                    CPLCreateXMLElementAndValue(
+                        nullptr, "RemainingBytes",
+                        CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
+        }
         else if( abyMarker[1] == 0x5C ) /* QCD */
         {
+            const int Sqcd = READ_MARKER_FIELD_UINT8("Sqcd", [](GByte v) {
+                std::string ret;
+                if( (v & 31) == 0 )
+                    ret = "No quantization";
+                else if( (v & 31) == 1 )
+                    ret = "Scalar derived";
+                else if( (v & 31) == 2 )
+                    ret = "Scalar expounded";
+                ret += ", ";
+                ret += CPLSPrintf("guard bits = %d", v >> 5);
+                return ret;
+            });
+            if( (Sqcd & 31) == 0 )
+            {
+                // Reversible
+                int i = 0;
+                while( nRemainingMarkerSize > 0 )
+                {
+                    READ_MARKER_FIELD_UINT8(
+                        CPLSPrintf("SPqcd%d", i),
+                        [](GByte v) {
+                            return std::string(CPLSPrintf("epsilon_b = %d", v >> 3));
+                        }
+                    );
+                    ++i;
+                }
+            }
+            else
+            {
+                int i = 0;
+                while( nRemainingMarkerSize > 0 )
+                {
+                    READ_MARKER_FIELD_UINT16(
+                        CPLSPrintf("SPqcd%d", i),
+                        [](GUInt16 v) {
+                            return std::string(
+                                CPLSPrintf("mantissa_b = %d, epsilon_b = %d",
+                                           v & ((1 << 11)-1),
+                                           v >> 11));
+                        }
+                    );
+                    ++i;
+                }
+            }
         }
         else if( abyMarker[1] == 0x5D ) /* QCC */
         {
+            if( Csiz < 257 )
+                READ_MARKER_FIELD_UINT8("Cqcc");
+            else
+                READ_MARKER_FIELD_UINT16("Cqcc");
+
+            const int Sqcc = READ_MARKER_FIELD_UINT8("Sqcc", [](GByte v) {
+                std::string ret;
+                if( (v & 31) == 0 )
+                    ret = "No quantization";
+                else if( (v & 31) == 1 )
+                    ret = "Scalar derived";
+                else if( (v & 31) == 2 )
+                    ret = "Scalar expounded";
+                ret += ", ";
+                ret += CPLSPrintf("guard bits = %d", v >> 5);
+                return ret;
+            });
+            if( (Sqcc & 31) == 0 )
+            {
+                // Reversible
+                int i = 0;
+                while( nRemainingMarkerSize > 0 )
+                {
+                    READ_MARKER_FIELD_UINT8(
+                        CPLSPrintf("SPqcc%d", i),
+                        [](GByte v) {
+                            return std::string(CPLSPrintf("epsilon_b = %d", v >> 3));
+                        }
+                    );
+                    ++i;
+                }
+            }
+            else
+            {
+                int i = 0;
+                while( nRemainingMarkerSize > 0 )
+                {
+                    READ_MARKER_FIELD_UINT16(
+                        CPLSPrintf("SPqcc%d", i),
+                        [](GUInt16 v) {
+                            return std::string(
+                                CPLSPrintf("mantissa_b = %d, epsilon_b = %d",
+                                           v & ((1 << 11)-1),
+                                           v >> 11));
+                        }
+                    );
+                    ++i;
+                }
+            }
         }
         else if( abyMarker[1] == 0x5E ) /* RGN */
         {
@@ -1399,7 +1607,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         else if( abyMarker[1] == 0x64 ) /* COM */
         {
             auto RCom = READ_MARKER_FIELD_UINT16("Rcom", [](GUInt16 v) {
-                return (v == 0 ) ? "Binary" : (v == 1) ? "LATIN1" : nullptr; });
+                return std::string((v == 0 ) ? "Binary" : (v == 1) ? "LATIN1" : ""); });
             if( RCom == 1 )
             {
                 GByte abyBackup = pabyMarkerDataIter[nRemainingMarkerSize];
