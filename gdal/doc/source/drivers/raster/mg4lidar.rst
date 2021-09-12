@@ -8,6 +8,9 @@ MG4Lidar -- MrSID/MG4 LiDAR Compression / Point Cloud View files
 
 .. build_dependencies:: LIDAR SDK
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_MG4LIDAR
+
 This driver provides a way to view MrSID/MG4 compressed LiDAR file as a
 raster DEM. The specifics of the conversion depend on the desired
 cellsize, filter criteria, aggregation methods and possibly several

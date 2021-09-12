@@ -8,6 +8,9 @@ JPEGLS
 
 .. build_dependencies:: CharLS library
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_JPEGLS
+
 This driver is an implementation of a JPEG-LS reader/writer based on the
 Open Source CharLS library (BSD style license).
 

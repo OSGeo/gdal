@@ -7,6 +7,9 @@ FMEObjects Gateway
 
 .. build_dependencies:: FME
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_FME
+
 Feature sources supported by FMEObjects are supported for reading by OGR
 if the FMEObjects gateway is configured, and if a licensed copy of
 FMEObjects is installed and accessible.

@@ -9,6 +9,10 @@ MongoDB
 
 .. build_dependencies:: Mongo C++ client legacy library
 
+.. deprecated_driver:: version_targeted_for_removal: 3.5
+   env_variable: GDAL_ENABLE_DEPRECATED_DRIVER_MONGODB
+   message: You should consider using the MongoDBV3 driver instead.
+
 This driver can connect to the a MongoDB service.
 
 The driver supports read, creation, update and delete operations of
