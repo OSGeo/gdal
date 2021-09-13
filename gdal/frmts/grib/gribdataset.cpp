@@ -1145,18 +1145,17 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
 
         // GRIB messages can be preceded by "garbage". GRIB2Inventory()
         // does not return the offset to the real start of the message
-        GByte abyHeader[1024 + 1];
+        char szHeader[1024 + 1];
         VSIFSeekL( poDS->fp, psInv->start, SEEK_SET );
-        size_t nRead = VSIFReadL( abyHeader, 1, sizeof(abyHeader)-1, poDS->fp );
-        abyHeader[nRead] = 0;
+        const int nRead = static_cast<int>(VSIFReadL( szHeader, 1, sizeof(szHeader)-1, poDS->fp ));
+        szHeader[nRead] = 0;
         // Find the real offset of the fist message
-        const char *pasHeader = reinterpret_cast<char *>(abyHeader);
         int nOffsetFirstMessage = 0;
-        for(int j = 0; j < poOpenInfo->nHeaderBytes - 3; j++)
+        for(int j = 0; j + 3 < nRead; j++)
         {
-            if(STARTS_WITH_CI(pasHeader + j, "GRIB")
+            if(STARTS_WITH_CI(szHeader + j, "GRIB")
 #ifdef ENABLE_TDLP
-               || STARTS_WITH_CI(pasHeader + j, "TDLP")
+               || STARTS_WITH_CI(szHeader + j, "TDLP")
 #endif
             )
             {
