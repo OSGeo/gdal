@@ -28,7 +28,6 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 import array
-import math
 from typing import Union, Sequence, TYPE_CHECKING
 
 ScalarLike = Union[
@@ -65,5 +64,5 @@ def array_dist(x: ArrayOrScalarLike, y: ArrayOrScalarLike, is_max: bool = True) 
     try:
         from osgeo_utils.auxiliary.numpy_util import array_dist as np_array_dist
         return np_array_dist(x=x, y=y, is_max=is_max)
-    except ImportError as e:
+    except ImportError:
         return max(abs(a-b) for a, b in zip(x, y)) if is_max else max(abs(a-b) for a, b in zip(x, y))

@@ -37,7 +37,6 @@ from typing import Optional
 from osgeo import gdal
 
 from osgeo_utils.auxiliary.base import PathLikeOrStr
-from osgeo_utils.auxiliary.color_palette import ColorPaletteOrPathOrStrings
 from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
 from osgeo_utils.auxiliary.color_table import get_color_table, ColorTableLike
 

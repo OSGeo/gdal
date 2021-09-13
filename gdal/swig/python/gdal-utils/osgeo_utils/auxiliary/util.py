@@ -32,7 +32,6 @@
 import os
 from numbers import Real
 from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator, List
-from warnings import warn
 
 from osgeo import gdal, __version__ as gdal_version_str
 from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLikeOrStr, enum_to_str, OptionalBoolStr, \
