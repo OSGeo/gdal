@@ -65,7 +65,6 @@ jobs:
             export FLAKE8="flake8 --config autotest/setup.cfg"
             $FLAKE8 autotest
             $FLAKE8 gdal/swig/python/gdal-utils/
-            $FLAKE8 gdal/swig/python/osgeo/
 
   doxygen:
     runs-on: ubuntu-18.04
