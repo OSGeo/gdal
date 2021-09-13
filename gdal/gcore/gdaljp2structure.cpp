@@ -982,6 +982,11 @@ static void AddError(CPLXMLNode* psParent,
                      const char* pszErrorMsg,
                      GIntBig nOffset = 0)
 {
+    if( psDumpContext->nCurLineCount > psDumpContext->nMaxLineCount + 1 )
+    {
+        return;
+    }
+
     AddElement( psParent, psLastChild, psDumpContext,
                 _AddError(nullptr, pszErrorMsg, nOffset) );
 }
@@ -1581,7 +1586,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             {
                 // Reversible
                 int i = 0;
-                while( nRemainingMarkerSize > 0 )
+                while( nRemainingMarkerSize >= 1 )
                 {
                     READ_MARKER_FIELD_UINT8(
                         CPLSPrintf("SPqcd%d", i),
@@ -1595,7 +1600,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             else
             {
                 int i = 0;
-                while( nRemainingMarkerSize > 0 )
+                while( nRemainingMarkerSize >= 2 )
                 {
                     READ_MARKER_FIELD_UINT16(
                         CPLSPrintf("SPqcd%d", i),
@@ -1633,7 +1638,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             {
                 // Reversible
                 int i = 0;
-                while( nRemainingMarkerSize > 0 )
+                while( nRemainingMarkerSize >= 1 )
                 {
                     READ_MARKER_FIELD_UINT8(
                         CPLSPrintf("SPqcc%d", i),
@@ -1647,7 +1652,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             else
             {
                 int i = 0;
-                while( nRemainingMarkerSize > 0 )
+                while( nRemainingMarkerSize >= 2 )
                 {
                     READ_MARKER_FIELD_UINT16(
                         CPLSPrintf("SPqcc%d", i),
