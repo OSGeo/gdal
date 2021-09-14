@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 import shutil
 from osgeo import gdal
@@ -42,7 +43,8 @@ import pytest
 import random
 from datetime import datetime
 
-pytestmark = pytest.mark.require_driver('NGW')
+pytestmark = [pytest.mark.require_driver('NGW'),
+              pytest.mark.skipif('CI' in os.environ, reason="NGW tests are flaky. See https://github.com/OSGeo/gdal/issues/4453")]
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope='module')

@@ -29,6 +29,7 @@
 #  SOFTWARE.
 ################################################################################
 
+import os
 import sys
 
 sys.path.append('../pymod')
@@ -43,7 +44,8 @@ import pytest
 import random
 from datetime import datetime
 
-pytestmark = pytest.mark.require_driver('NGW')
+pytestmark = [pytest.mark.require_driver('NGW'),
+              pytest.mark.skipif('CI' in os.environ, reason="NGW tests are flaky. See https://github.com/OSGeo/gdal/issues/4453")]
 
 def check_availability(url):
     # Sandbox cleans at 1:05 on monday (UTC)
