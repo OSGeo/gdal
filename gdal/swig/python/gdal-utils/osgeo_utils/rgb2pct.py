@@ -33,7 +33,6 @@
 import os.path
 import sys
 import textwrap
-from abc import ABC, abstractmethod
 from typing import Optional
 
 from osgeo import gdal

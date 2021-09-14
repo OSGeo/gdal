@@ -27,7 +27,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-from typing import Union, Tuple, Optional
+from typing import Union, Optional
 
 import osgeo
 from osgeo import osr, ogr, gdal
