@@ -254,8 +254,8 @@ control the behavior of this driver.
    table will be first erased with the SQL TRUNCATE command before
    inserting the first feature. This is an alternative to using the
    -overwrite flag of ogr2ogr, that avoids views based on the table to
-   be destroyed. Typical use case: "ogr2ogr -append PG:dbname=foo
-   abc.shp --config OGR_TRUNCATE YES".
+   be destroyed. Typical use case: ``ogr2ogr -append PG:dbname=foo
+   abc.shp --config OGR_TRUNCATE YES``.
 
 Examples
 ~~~~~~~~
