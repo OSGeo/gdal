@@ -199,6 +199,11 @@ namespace tut
 
         ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, true /* floating */, false /* complex */), GDT_Float64);
         ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, true /* floating */, true /* complex */), GDT_CFloat64);
+
+        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Byte, -32768, 0), GDT_Int16);
+        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Byte, -32769, 0), GDT_Int32);
+        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Float32, -99999, 0), GDT_Float32);
+        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Float32, -99999.9876, 0), GDT_Float64);
     }
 
 #undef ENSURE
