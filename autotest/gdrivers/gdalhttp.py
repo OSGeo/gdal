@@ -30,7 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import subprocess
 import sys
 from osgeo import gdal
@@ -134,24 +133,6 @@ def test_http_4():
     filelist = ds.GetFileList()
     assert '/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif' in filelist
 
-###############################################################################
-# Test HTTP driver with non VSIL driver
-
-
-def test_http_5():
-    url = 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gdrivers/data/s4103.blx'
-    ds = gdal.Open(url)
-    if ds is None:
-        skip_if_unreachable(url, try_read=True)
-        pytest.fail()
-    filename = ds.GetDescription()
-    ds = None
-
-    with pytest.raises(OSError):
-        os.stat(filename)
-        pytest.fail('file %s should have been removed' % filename)
-
-    
 ###############################################################################
 # Test HTTP driver with OGR driver
 
