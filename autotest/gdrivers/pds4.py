@@ -68,7 +68,6 @@ def validate_xml(filename):
                                   force_download=True):
         pytest.skip()
 
-
     # Needed by PDS4_CART_1D00_1933
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1B10_1700.xsd',
                                   'pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1B10_1700.xsd',
@@ -1442,3 +1441,50 @@ def test_pds4_createlabelonly_pds3():
     return _test_createlabelonly(src_ds, expected_content = '<parsing_standard_id>PDS3</parsing_standard_id>')
 
 
+
+###############################################################################
+# Test CreateCopy() with a template that has sp:Spectral_Characteristics
+
+
+def test_pds4_spectral_characteristics():
+
+    # Needed by template_with_sp.xml
+    if not gdaltest.download_file('http://pds.nasa.gov/pds4/sp/v1/PDS4_SP_1100.xsd',
+                                  'pds.nasa.gov_pds4_sp_v1_PDS4_SP_1100.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    # Needed by PDS4_SP_1100.xsd
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1100.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1100.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    # Needed by template_with_sp.xml
+    if not gdaltest.download_file('http://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1600.xsd',
+                                  'pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1600.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    # Needed by PDS4_DISP_1600.xsd
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1600.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1600.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    filename = '/vsimem/out.xml'
+    with hide_substitution_warnings_error_handler():
+        gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                            options=['TEMPLATE=data/pds4/template_with_sp.xml'])
+
+    ret = validate_xml(filename)
+    assert ret, 'validation failed'
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 100000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert '<Array_3D_Spectrum>' in data
+    assert '<local_identifier>Spectral_Qube_Object</local_identifier>' in data
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
