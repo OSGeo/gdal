@@ -3432,6 +3432,20 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
         }
     }
 
+    // Depending on the vrsion of the DISP schema, Local_Internal_Reference
+    // may be in the disp: namespace or the default one.
+    const auto GetLocalIdentifierReferenceFromDisciplineArea =
+        [](const CPLXMLNode* psDisciplineArea, const char* pszDefault)
+    {
+        return CPLGetXMLValue(psDisciplineArea,
+            "disp:Display_Settings.Local_Internal_Reference."
+                                                    "local_identifier_reference",
+            CPLGetXMLValue(psDisciplineArea,
+                   "disp:Display_Settings.disp:Local_Internal_Reference."
+                                                    "local_identifier_reference",
+                    pszDefault));
+    };
+
     if( GetRasterCount() || !osWKT.empty() )
     {
         CPLXMLNode* psDisciplineArea = CPLGetXMLNode(psProduct,
@@ -3449,6 +3463,26 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                 {
                     CPLRemoveXMLChild(psDisciplineArea, psCart);
                     CPLDestroyXMLNode(psCart);
+                }
+
+                if( CPLGetXMLNode(psDisciplineArea, "sp:Spectral_Characteristics") )
+                {
+                    const char* pszArrayType = CSLFetchNameValue(m_papszCreationOptions, "ARRAY_TYPE");
+                    // The schematron PDS4_SP_1100.sch requires that
+                    // sp:local_identifier_reference is used by Array_[2D|3D]_Spectrum/pds:local_identifier
+                    if( pszArrayType == nullptr )
+                    {
+                        m_papszCreationOptions = CSLSetNameValue(
+                            m_papszCreationOptions, "ARRAY_TYPE", "Array_3D_Spectrum");
+                    }
+                    else if( !EQUAL(pszArrayType, "Array_2D_Spectrum") &&
+                             !EQUAL(pszArrayType, "Array_3D_Spectrum") )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "PDS4_SP_xxxx.sch schematron requires the "
+                                 "use of ARRAY_TYPE=Array_2D_Spectrum or "
+                                 "Array_3D_Spectrum");
+                    }
                 }
             }
         }
@@ -3527,10 +3561,8 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
 
             if( IsCARTVersionGTE(pszCARTVersion, "1900") )
             {
-                const char* pszLocalIdentifier = CPLGetXMLValue(
+                const char* pszLocalIdentifier = GetLocalIdentifierReferenceFromDisciplineArea(
                     psDisciplineArea,
-                    "disp:Display_Settings.Local_Internal_Reference."
-                                                    "local_identifier_reference",
                     GetRasterCount() == 0 && GetLayerCount() > 0 ?
                         GetLayer(0)->GetName() : "image");
                 CPLXMLNode* psLIR = CPLCreateXMLNode(psCart, CXT_Element,
@@ -3668,11 +3700,8 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
             }
             CPLXMLNode* psDisciplineArea = CPLGetXMLNode(psProduct,
                 (osPrefix + "Observation_Area." + osPrefix + "Discipline_Area").c_str());
-            const char* pszLocalIdentifier = CPLGetXMLValue(
-                psDisciplineArea,
-                "disp:Display_Settings.Local_Internal_Reference."
-                                                "local_identifier_reference",
-                "image");
+            const char* pszLocalIdentifier = GetLocalIdentifierReferenceFromDisciplineArea(
+                psDisciplineArea, "image");
 
             if( m_poExternalDS && m_poExternalDS->GetDriver() &&
                 EQUAL(m_poExternalDS->GetDriver()->GetDescription(), "GTiff") )
