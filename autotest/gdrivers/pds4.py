@@ -1502,3 +1502,14 @@ def check_pds4_oblique_cylindrical(filename):
 
 def test_pds4_oblique_cylindrical_read():
     check_pds4_oblique_cylindrical('data/pds4/oblique_cylindrical.xml')
+
+
+def test_pds4_oblique_cylindrical_write():
+    src_ds = gdal.Open('data/pds4/oblique_cylindrical.xml')
+    filename = '/vsimem/out.xml'
+
+    gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds)
+    check_pds4_oblique_cylindrical(filename)
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
