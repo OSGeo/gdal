@@ -3648,10 +3648,29 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
             }
             if( psFAOPrev->psNext != nullptr )
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Unexpected content found after Observation_Area in template");
-                CPLDestroyXMLNode( psTemplateSpecialConstants );
-                return;
+                // There may be an optional Reference_List element between
+                // Observation_Area and File_Area_Observational
+                if( !(psFAOPrev->psNext->eType == CXT_Element &&
+                      psFAOPrev->psNext->pszValue == osPrefix + "Reference_List") )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Unexpected content found after Observation_Area in template");
+                    CPLDestroyXMLNode( psTemplateSpecialConstants );
+                    return;
+                }
+                psFAOPrev = psFAOPrev->psNext;
+                while( psFAOPrev->psNext != nullptr &&
+                    psFAOPrev->psNext->eType == CXT_Comment )
+                {
+                    psFAOPrev = psFAOPrev->psNext;
+                }
+                if( psFAOPrev->psNext != nullptr )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Unexpected content found after Reference_List in template");
+                    CPLDestroyXMLNode( psTemplateSpecialConstants );
+                    return;
+                }
             }
 
             CPLXMLNode* psFAO = CPLCreateXMLNode(nullptr, CXT_Element,
