@@ -435,7 +435,7 @@ def test_pds4_9():
 
     template = '/vsimem/template.xml'
 
-    # Empty Special_Constants
+    # Empty Special_Constants + optional Reference_List
     gdal.FileFromMemBuffer(template, """
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -475,6 +475,15 @@ def test_pds4_9():
         </Internal_Reference>
         </Target_Identification>
     </Observation_Area>
+    <!-- some comments -->
+    <Reference_List>
+        <External_Reference>
+          <doi>doi</doi>
+          <reference_text>ref_text</reference_text>
+          <description>instrument overview</description>
+        </External_Reference>
+    </Reference_List>
+    <!-- other comments -->
     <File_Area_Observational>
         <Array_2D>
             <Special_Constants />
@@ -491,6 +500,14 @@ def test_pds4_9():
     ndv = ds.GetRasterBand(1).GetNoDataValue()
     assert ndv == 10
     ds = None
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    assert 'some comments' in data
+    assert '<Reference_List>' in data
+    assert 'other comments' in data
 
     ret = validate_xml(filename)
     assert ret, 'validation failed'
