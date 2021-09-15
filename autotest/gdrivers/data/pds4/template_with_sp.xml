@@ -1,0 +1,893 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1D00.sch"  schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1600.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/sp/v1/PDS4_SP_1100.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<Product_Observational
+    xmlns="http://pds.nasa.gov/pds4/pds/v1"
+    xmlns:disp="http://pds.nasa.gov/pds4/disp/v1"
+    xmlns:galileonims="https://pds.nasa.gov/pds4/mission/galileonims/v1"
+    xmlns:sp="http://pds.nasa.gov/pds4/sp/v1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1
+    http://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1D00.xsd
+    http://pds.nasa.gov/pds4/sp/v1
+    http://pds.nasa.gov/pds4/sp/v1/PDS4_SP_1100.xsd
+    http://pds.nasa.gov/pds4/disp/v1
+    http://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1600.xsd">
+  <Identification_Area>
+    <logical_identifier>urn:nasa:pds:multi_galileo_nims_tube.gcube_cahill_2019:data:c9e001ti_spt</logical_identifier>
+    <version_id>1.0</version_id>
+    <title>Galileo NIMS ISIS tube spectral data</title>
+    <information_model_version>1.14.0.0</information_model_version>
+    <product_class>Product_Observational</product_class>
+  </Identification_Area>
+  <Observation_Area>
+    <Time_Coordinates>
+      <start_date_time>1997-06-26T16:00:20Z</start_date_time>
+      <stop_date_time>1997-06-26T16:05:23Z</stop_date_time>
+    </Time_Coordinates>
+    <Investigation_Area>
+      <name>Galileo</name>
+      <type>Mission</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:investigation:mission.galileo</lid_reference>
+        <reference_type>data_to_investigation</reference_type>
+      </Internal_Reference>
+    </Investigation_Area>
+    <Observing_System>
+      <Observing_System_Component>
+        <name>Near Infrared Mapping Spectrometer</name>
+        <type>Instrument</type>
+        <Internal_Reference>
+          <lid_reference>urn:nasa:pds:context:instrument:nims.go</lid_reference>
+          <reference_type>is_instrument</reference_type>
+        </Internal_Reference>
+      </Observing_System_Component>
+    </Observing_System>
+    <Target_Identification>
+      <name>Europa</name>
+      <type>Satellite</type>
+    </Target_Identification>
+    <Discipline_Area>
+      <disp:Display_Settings>
+        <disp:Local_Internal_Reference>
+          <local_identifier_reference>Spectral_Qube_Object</local_identifier_reference>
+          <local_reference_type>display_settings_to_array
+          </local_reference_type>
+        </disp:Local_Internal_Reference>
+        <disp:Display_Direction>
+          <disp:horizontal_display_axis>Sample</disp:horizontal_display_axis>
+          <disp:horizontal_display_direction>Left to Right</disp:horizontal_display_direction>
+          <disp:vertical_display_axis>Line</disp:vertical_display_axis>
+          <disp:vertical_display_direction>Top to Bottom</disp:vertical_display_direction>
+        </disp:Display_Direction>
+      </disp:Display_Settings>
+      <sp:Spectral_Characteristics>
+        <sp:bin_width_desc>Band shapes are approximately Gaussian.</sp:bin_width_desc>
+        <sp:Local_Internal_Reference>
+          <sp:local_identifier_reference>Spectral_Qube_Object</sp:local_identifier_reference>
+          <sp:local_reference_type>spectral_characteristics_to_array_object</sp:local_reference_type>
+        </sp:Local_Internal_Reference>
+        <sp:Axis_Bin_Set>
+          <sp:Local_Internal_Reference>
+            <sp:local_identifier_reference>Band</sp:local_identifier_reference>
+            <sp:local_reference_type>spectral_characteristics_to_array_axis</sp:local_reference_type>
+          </sp:Local_Internal_Reference>
+          <sp:Bin>
+            <sp:bin_sequence_number>0</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.7016</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>1</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>1</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.7276</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>1</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>2</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.7537</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>1</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>3</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.7797</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>1</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>4</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.8058</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>1</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>5</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.8318</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>1</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>6</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.8405</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>2</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>7</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.8666</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>2</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>8</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.8927</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>2</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>9</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.9188</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>2</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>10</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.9449</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>2</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>11</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">0.9709</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>2</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>12</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.2638</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>4</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>13</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.3159</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>4</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>14</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.3679</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>4</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>15</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.4199</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>4</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>16</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.4720</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>4</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>17</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.5240</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>4</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>18</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.5421</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>5</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>19</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.5942</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>5</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>20</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.6464</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>5</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>21</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.6985</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>5</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>22</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.7506</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>5</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>23</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.8027</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>5</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>24</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.8225</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>6</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>25</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.8747</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>6</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>26</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.9268</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>6</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>27</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">1.9791</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>6</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>28</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.0312</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>6</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>29</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.0834</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>6</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>30</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.1037</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>7</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>31</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.1560</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>7</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>32</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.2083</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>7</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>33</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.2606</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>7</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>34</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.3128</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>7</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>35</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.3651</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>7</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>36</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.6690</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>9</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>37</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.7214</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>9</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>38</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.7738</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>9</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>39</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.8262</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>9</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>40</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.8786</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>9</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>41</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.9310</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>9</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>42</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">2.9485</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>10</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>43</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.0009</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>10</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>44</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.0534</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>10</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>45</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.1058</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>10</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>46</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.1583</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>10</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>47</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.2107</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>10</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>48</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.2318</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>11</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>49</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.2843</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>11</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>50</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.3369</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>11</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>51</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.3894</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>11</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>52</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.4419</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>11</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>53</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.4944</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>11</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>54</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.5145</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>55</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.5407</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>56</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.5670</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>57</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.5933</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>58</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.6196</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>59</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.6459</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>60</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.6722</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>61</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.6985</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>62</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.7247</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>63</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.7510</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>64</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.7773</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>65</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.8036</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>12</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>66</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.7975</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>67</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.8238</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>68</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.8501</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>69</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.8764</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>70</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.9028</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>71</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.9291</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>72</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.9554</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>73</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">3.9817</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>74</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.0080</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>75</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.0343</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>76</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.0606</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>77</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.0869</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>13</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>78</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.0807</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>79</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.1071</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>80</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.1334</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>81</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.1597</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>82</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.1861</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>83</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.2124</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>84</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.2387</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>85</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.2651</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>86</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.2914</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>87</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.3177</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>88</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.3441</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>89</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.3704</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>14</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>90</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.3647</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>91</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.3910</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>92</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.4174</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>93</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.4437</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>94</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.4701</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>95</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.4965</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>96</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.5228</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>97</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.5492</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>98</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.5755</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>99</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.6019</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>100</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.6282</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>101</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.6546</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>15</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>102</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.6467</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>103</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.6731</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>104</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.6994</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>105</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.7258</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>106</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.7522</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>107</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.7786</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>108</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.8050</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>109</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.8313</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>110</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.8577</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>111</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.8841</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>112</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.9104</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>113</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.9368</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>16</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>114</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.9291</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>115</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.9555</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>116</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">4.9819</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>117</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.0083</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>118</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.0346</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>119</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.0610</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>120</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.0874</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>121</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.1138</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>122</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.1402</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>123</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.1666</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>124</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.1930</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+          <sp:Bin>
+            <sp:bin_sequence_number>125</sp:bin_sequence_number>
+            <sp:center_value unit="micrometer">5.2194</sp:center_value>
+            <sp:bin_width unit="micrometer">0.025</sp:bin_width>
+            <sp:detector_number>17</sp:detector_number>
+          </sp:Bin>
+        </sp:Axis_Bin_Set>
+      </sp:Spectral_Characteristics>
+    </Discipline_Area>
+  </Observation_Area>
+  <File_Area_Observational>
+    <File>
+      <file_name>c9e001ti_spt.cub</file_name>
+      <creation_date_time>2018-12-17T10:05:30</creation_date_time>
+      <comment>Unprojected spectral image in ISIS qube format</comment>
+    </File>
+    <Header>
+      <name>ISIS3 label</name>
+      <offset unit="byte">0</offset>
+      <object_length unit="byte">65536</object_length>
+      <parsing_standard_id>ISIS3</parsing_standard_id>
+    </Header>
+    <Header>
+      <name>history record</name>
+      <offset unit="byte">771136</offset>
+      <object_length unit="byte">618</object_length>
+      <parsing_standard_id>7-Bit ASCII Text</parsing_standard_id>
+    </Header>
+    <Header>
+      <name>original label</name>
+      <offset unit="byte">771754</offset>
+      <object_length unit="byte">42347</object_length>
+      <parsing_standard_id>7-Bit ASCII Text</parsing_standard_id>
+    </Header>
+    <Array_3D_Spectrum>
+      <local_identifier>Spectral_Qube_Object</local_identifier>
+<offset unit="byte">65536</offset>
+      <axes>3</axes>
+      <axis_index_order>Last Index Fastest</axis_index_order>
+      <Element_Array>
+        <data_type>IEEE754LSBSingle</data_type>
+      </Element_Array>
+      <Axis_Array>
+        <axis_name>Band</axis_name>
+        <elements>126</elements>
+        <sequence_number>1</sequence_number>
+      </Axis_Array>
+      <Axis_Array>
+        <axis_name>Line</axis_name>
+        <elements>70</elements>
+        <sequence_number>2</sequence_number>
+      </Axis_Array>
+      <Axis_Array>
+        <axis_name>Sample</axis_name>
+        <elements>20</elements>
+        <sequence_number>3</sequence_number>
+      </Axis_Array>
+      <Special_Constants>
+        <missing_constant>0xFF7FFFFB</missing_constant>
+        <not_applicable_constant>NaN</not_applicable_constant>
+        <high_representation_saturation>0xFF7FFFFF</high_representation_saturation>
+        <valid_minimum>0xFF7FFFFA</valid_minimum>
+        <low_instrument_saturation>0xFF7FFFFD</low_instrument_saturation>
+        <low_representation_saturation>0xFF7FFFFC</low_representation_saturation>
+      </Special_Constants>
+    </Array_3D_Spectrum>
+  </File_Area_Observational>
+</Product_Observational>
