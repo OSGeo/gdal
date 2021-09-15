@@ -748,9 +748,9 @@ static const struct
     { "nm", 1e-9 }
 };
 
-static double GetLinearValue(CPLXMLNode* psParent, const char* pszElementName)
+static double GetLinearValue(const CPLXMLNode* psParent, const char* pszElementName)
 {
-    CPLXMLNode* psNode = CPLGetXMLNode(psParent, pszElementName);
+    const CPLXMLNode* psNode = CPLGetXMLNode(psParent, pszElementName);
     if( psNode == nullptr )
         return 0.0;
     double dfVal = CPLAtof(CPLGetXMLValue(psNode, nullptr, ""));
@@ -921,6 +921,17 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
         return;
     }
 
+    double dfLongitudeMultiplier = 1;
+    const CPLXMLNode* psGeodeticModel = CPLGetXMLNode(psSR, "Geodetic_Model");
+    if( psGeodeticModel != nullptr )
+    {
+        if( EQUAL(CPLGetXMLValue(psGeodeticModel, "longitude_direction", ""),
+                  "Positive West") )
+        {
+            dfLongitudeMultiplier = -1;
+        }
+    }
+
     OGRSpatialReference oSRS;
     CPLXMLNode* psGridCoordinateSystem = CPLGetXMLNode(psSR,
                                             "Planar.Grid_Coordinate_System");
@@ -931,6 +942,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
     double dfStdParallel1 = 0.0;
     double dfStdParallel2 = 0.0;
     double dfScale = 1.0;
+    double dfMapProjectionRotation = 0.0;
     if( psGridCoordinateSystem != nullptr )
     {
         osProjName = CPLGetXMLValue(psGridCoordinateSystem,
@@ -956,7 +968,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                 if( psProjParamNode )
                 {
                     dfCenterLon = GetAngularValue(psProjParamNode,
-                                    "longitude_of_central_meridian");
+                                    "longitude_of_central_meridian") * dfLongitudeMultiplier;
                     dfCenterLat = GetAngularValue(psProjParamNode,
                                     "latitude_of_projection_origin");
                     dfScale = CPLAtof(CPLGetXMLValue(psProjParamNode,
@@ -994,12 +1006,12 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                 bool bGotCenterLon = false;
                 dfCenterLon = GetAngularValue(psProjParamNode,
                                               "longitude_of_central_meridian",
-                                              &bGotCenterLon);
+                                              &bGotCenterLon) * dfLongitudeMultiplier;
                 if( !bGotCenterLon )
                 {
                     dfCenterLon = GetAngularValue(psProjParamNode,
                                     "straight_vertical_longitude_from_pole",
-                                    &bGotCenterLon);
+                                    &bGotCenterLon) * dfLongitudeMultiplier;
                 }
                 dfCenterLat = GetAngularValue(psProjParamNode,
                                     "latitude_of_projection_origin");
@@ -1015,6 +1027,9 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                     CPLGetXMLValue(psProjParamNode, pszScaleParam, nullptr);
                 bGotScale = pszScaleVal != nullptr;
                 dfScale = ( pszScaleVal ) ? CPLAtof(pszScaleVal) : 1.0;
+
+                dfMapProjectionRotation =
+                    GetAngularValue(psProjParamNode, "map_projection_rotation");
             }
 
             CPLXMLNode* psObliqueAzimuth = CPLGetXMLNode(psProjParamNode,
@@ -1187,7 +1202,23 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
             {
                 oSRS.SetVDG(dfCenterLon, 0, 0);
             }
+            else if (EQUAL(osProjName, "Oblique Cylindrical" )) {
+                const double poleLatitude = GetAngularValue(
+                    psProjParamNode, "oblique_proj_pole_latitude");
+                const double poleLongitude = GetAngularValue(
+                    psProjParamNode, "oblique_proj_pole_longitude") * dfLongitudeMultiplier;
+                const double poleRotation = GetAngularValue(
+                    psProjParamNode, "oblique_proj_pole_rotation");
 
+                CPLString oProj4String;
+                // Cf isis3dataset.cpp comments for ObliqueCylindrical
+                oProj4String.Printf(
+                    "+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g +o_lat_p=%.18g +lon_0=%.18g",
+                    -poleRotation,
+                    180-poleLatitude,
+                    poleLongitude);
+                oSRS.SetFromUserInput(oProj4String);
+            }
             else
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
@@ -1215,7 +1246,6 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
         oSRS.SetLinearUnits("Metre", 1.0);
     }
 
-    CPLXMLNode* psGeodeticModel = CPLGetXMLNode(psSR, "Geodetic_Model");
     if( psGeodeticModel != nullptr )
     {
         const char* pszLatitudeType = CPLGetXMLValue(psGeodeticModel,
@@ -1349,6 +1379,24 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
             m_adfGeoTransform[4] = 0.0;
             m_adfGeoTransform[5] = -dfYRes;
             m_bGotTransform = true;
+
+            if( dfMapProjectionRotation != 0 )
+            {
+                const double sin_rot = dfMapProjectionRotation == 90 ? 1.0 : sin(dfMapProjectionRotation / 180 * M_PI);
+                const double cos_rot = dfMapProjectionRotation == 90 ? 0.0 : cos(dfMapProjectionRotation / 180 * M_PI);
+                const double gt_1 = cos_rot * m_adfGeoTransform[1] - sin_rot * m_adfGeoTransform[4];
+                const double gt_2 = cos_rot * m_adfGeoTransform[2] - sin_rot * m_adfGeoTransform[5];
+                const double gt_0 = cos_rot * m_adfGeoTransform[0] - sin_rot * m_adfGeoTransform[3];
+                const double gt_4 = sin_rot * m_adfGeoTransform[1] + cos_rot * m_adfGeoTransform[4];
+                const double gt_5 = sin_rot * m_adfGeoTransform[2] + cos_rot * m_adfGeoTransform[5];
+                const double gt_3 = sin_rot * m_adfGeoTransform[0] + cos_rot * m_adfGeoTransform[3];
+                m_adfGeoTransform[1] = gt_1;
+                m_adfGeoTransform[2] = gt_2;
+                m_adfGeoTransform[0] = gt_0;
+                m_adfGeoTransform[4] = gt_4;
+                m_adfGeoTransform[5] = gt_5;
+                m_adfGeoTransform[3] = gt_3;
+            }
         }
     }
 
