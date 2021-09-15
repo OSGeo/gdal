@@ -445,11 +445,15 @@ GMLASReader::~GMLASReader()
             delete m_aoStackContext[i].m_poFeature;
         }
     }
-    for( size_t i = 0; i < m_aoFeaturesReady.size(); i++ )
     {
-        CPLDebug("GMLAS", "Delete feature m_aoFeaturesReady[%d].first=%p",
-                 static_cast<int>(i), m_aoFeaturesReady[i].first);
-        delete m_aoFeaturesReady[i].first;
+        int i = 0;
+        for( auto& feature: m_aoFeaturesReady )
+        {
+            CPLDebug("GMLAS", "Delete feature m_aoFeaturesReady[%d].first=%p",
+                     i, feature.first);
+            delete feature.first;
+            ++i;
+        }
     }
     if( !m_apsXMLNodeStack.empty() )
     {
@@ -2879,10 +2883,10 @@ void GMLASReader::ProcessSWEDataRecord(CPLXMLNode* psRoot)
         // patch them
         std::vector<OGRFeature*> apoFeatures;
         apoFeatures.push_back(m_oCurCtxt.m_poFeature);
-        for(size_t i = 0; i < m_aoFeaturesReady.size(); ++i )
+        for(auto& feature: m_aoFeaturesReady )
         {
-            if( m_aoFeaturesReady[i].second == m_oCurCtxt.m_poLayer )
-                apoFeatures.push_back(m_aoFeaturesReady[i].first);
+            if( feature.second == m_oCurCtxt.m_poLayer )
+                apoFeatures.push_back(feature.first);
         }
         m_oCurCtxt.m_poLayer->ProcessDataRecordCreateFields(
             psRoot, apoFeatures, m_poFieldsMetadataLayer);
@@ -3179,8 +3183,8 @@ OGRFeature* GMLASReader::GetNextFeature( OGRGMLASLayer** ppoBelongingLayer,
 {
     while( !m_aoFeaturesReady.empty() )
     {
-        OGRFeature* m_poFeatureReady = m_aoFeaturesReady[0].first;
-        OGRGMLASLayer* m_poFeatureReadyLayer = m_aoFeaturesReady[0].second;
+        OGRFeature* m_poFeatureReady = m_aoFeaturesReady.front().first;
+        OGRGMLASLayer* m_poFeatureReadyLayer = m_aoFeaturesReady.front().second;
         m_aoFeaturesReady.erase( m_aoFeaturesReady.begin() );
 
         if( m_poLayerOfInterest == nullptr ||
@@ -3229,9 +3233,9 @@ OGRFeature* GMLASReader::GetNextFeature( OGRGMLASLayer** ppoBelongingLayer,
 
             while( !m_aoFeaturesReady.empty() )
             {
-                OGRFeature* m_poFeatureReady = m_aoFeaturesReady[0].first;
+                OGRFeature* m_poFeatureReady = m_aoFeaturesReady.front().first;
                 OGRGMLASLayer* m_poFeatureReadyLayer =
-                                               m_aoFeaturesReady[0].second;
+                                               m_aoFeaturesReady.front().second;
                 m_aoFeaturesReady.erase( m_aoFeaturesReady.begin() );
 
                 if( m_poLayerOfInterest == nullptr ||

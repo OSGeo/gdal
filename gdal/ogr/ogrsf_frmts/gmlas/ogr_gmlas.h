@@ -40,6 +40,7 @@
 
 #include "ogr_gmlas_consts.h"
 
+#include <list>
 #include <set>
 #include <map>
 #include <vector>
@@ -1308,7 +1309,7 @@ class GMLASReader final: public DefaultHandler
         std::vector<OGRGMLASLayer*>* m_papoLayers;
 
         /** Vector of features ready for consumption */
-        std::vector< std::pair<OGRFeature*, OGRGMLASLayer*> > m_aoFeaturesReady;
+        std::list< std::pair<OGRFeature*, OGRGMLASLayer*> > m_aoFeaturesReady;
 
         /** OGR field index of the current field */
         int               m_nCurFieldIdx;
