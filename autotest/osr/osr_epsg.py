@@ -397,7 +397,7 @@ def test_osr_GetCRSInfoListFromDatabase():
     found = False
     for record in l:
         if record.auth_name == 'EPSG' and record.code == '2154':
-            assert record.name == 'RGF93 / Lambert-93'
+            assert 'Lambert-93' in record.name
             assert record.type == osr.OSR_CRS_TYPE_PROJECTED
             assert not record.deprecated
             assert record.bbox_valid
