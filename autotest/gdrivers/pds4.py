@@ -1488,3 +1488,28 @@ def test_pds4_spectral_characteristics():
     assert '<local_identifier>Spectral_Qube_Object</local_identifier>' in data
 
     gdal.GetDriverByName('PDS4').Delete(filename)
+
+
+
+###############################################################################
+# Test Oblique Cylindrical
+
+
+def check_pds4_oblique_cylindrical(filename):
+    ds = gdal.Open(filename)
+    assert ds.GetSpatialRef().ExportToProj4().startswith('+proj=ob_tran +R=2575000 +o_proj=eqc +o_lon_p=-158.352054 +o_lat_p=191.769776 +lon_0=-163.331591 ')
+    assert ds.GetGeoTransform() == pytest.approx((-3190898.22208, 0, 351.11116, -764017.88416, 351.11116, 0), rel=1e-8)
+
+def test_pds4_oblique_cylindrical_read():
+    check_pds4_oblique_cylindrical('data/pds4/oblique_cylindrical.xml')
+
+
+def test_pds4_oblique_cylindrical_write():
+    src_ds = gdal.Open('data/pds4/oblique_cylindrical.xml')
+    filename = '/vsimem/out.xml'
+
+    gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds)
+    check_pds4_oblique_cylindrical(filename)
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
