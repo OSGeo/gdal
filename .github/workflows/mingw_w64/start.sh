@@ -39,7 +39,7 @@ sh $SCRIPT_DIR/install-python.sh
 export WINEPREFIX=$HOME/.wine64
 
 sudo apt-get install -y --no-install-recommends \
-    ccache \
+    ccache automake \
     binutils-mingw-w64-x86-64 \
     gcc-mingw-w64-x86-64 \
     g++-mingw-w64-x86-64 \
@@ -76,6 +76,7 @@ tar xzf sqlite-autoconf-3250100.tar.gz
 
 # build GDAL
 cd gdal
+./autogen.sh
 ./configure --host=x86_64-w64-mingw32 --with-proj=/tmp/install
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps

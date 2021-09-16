@@ -38,6 +38,7 @@ tar xzf sqlite-autoconf-3250100.tar.gz
 
 # build GDAL
 cd gdal
+./autogen.sh
 ./configure --host=x86_64-w64-mingw32 --with-proj=/tmp/install
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps

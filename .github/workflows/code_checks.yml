@@ -23,7 +23,7 @@ jobs:
           sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev
 
       - name: Run configure
-        run: (cd gdal && ./configure)
+        run: (cd gdal && ./autogen.sh && ./configure)
 
       - name: Run cppcheck test
         run: ./gdal/scripts/cppcheck.sh

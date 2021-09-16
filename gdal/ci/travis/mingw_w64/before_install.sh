@@ -6,7 +6,7 @@ cat /etc/apt/sources.list
 ls -al /etc/apt/sources.list.d
 sudo apt-get update -qq
 sudo apt-get install -y \
-    ccache \
+    ccache automake \
     binutils-mingw-w64-x86-64 \
     gcc-mingw-w64-x86-64 \
     g++-mingw-w64-x86-64 \

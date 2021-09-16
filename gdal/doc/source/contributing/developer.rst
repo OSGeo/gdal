@@ -11,6 +11,7 @@ Build:
 ::
 
    cd gdal
+   ./autogen.sh
    ./configure [options]
    make -j8 -s
    cd apps; make -s test_ogrsf; cd ..

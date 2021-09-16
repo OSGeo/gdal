@@ -113,6 +113,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal/gdal \
+    && ./autogen.sh \
     && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
     --with-hide-internal-symbols \
     --with-proj=/usr \

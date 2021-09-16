@@ -11,6 +11,7 @@ find ${CONDA_PREFIX}/lib -name '*.la' -delete
 
 # build GDAL
 cd gdal
+./autogen.sh
 # --without-tiledb because of https://github.com/OSGeo/gdal/issues/3122
 ./configure --prefix=$HOME/install-gdal \
     --enable-debug \
