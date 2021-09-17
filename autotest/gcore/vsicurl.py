@@ -285,9 +285,11 @@ def test_vsicurl_test_redirect():
     assert f is not None
 
     gdal.VSIFSeekL(f, 0, 2)
-    if gdal.VSIFTellL(f) != 1000000:
+    try:
+        assert gdal.VSIFTellL(f) == 1000000
+    except:
         gdal.VSIFCloseL(f)
-        pytest.fail(gdal.VSIFTellL(f))
+        raise
     gdal.VSIFSeekL(f, 0, 0)
 
     handler = webserver.SequentialHandler()
@@ -403,9 +405,11 @@ def test_vsicurl_test_redirect_x_amz():
     assert f is not None
 
     gdal.VSIFSeekL(f, 0, 2)
-    if gdal.VSIFTellL(f) != 1000000:
+    try:
+        assert gdal.VSIFTellL(f) == 1000000
+    except:
         gdal.VSIFCloseL(f)
-        pytest.fail(gdal.VSIFTellL(f))
+        raise
     gdal.VSIFSeekL(f, 0, 0)
 
     handler = webserver.SequentialHandler()
