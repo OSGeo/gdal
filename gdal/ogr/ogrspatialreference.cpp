@@ -11206,25 +11206,64 @@ int OGRSpatialReference::EPSGTreatsAsLatLong() const
     }
 
     bool ret = false;
-    auto cs = proj_crs_get_coordinate_system(d->getPROJContext(),
-                                                d->m_pj_crs);
-    d->undoDemoteFromBoundCRS();
-
-    if( cs )
+    if ( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
     {
-        const char* pszDirection = nullptr;
-        if( proj_cs_get_axis_info(
-            d->getPROJContext(), cs, 0, nullptr, nullptr, &pszDirection,
-            nullptr, nullptr, nullptr, nullptr) )
+        for( int i = 0; i < 2; i++ )
         {
-            if( EQUAL(pszDirection, "north") )
+            auto sub_crs = proj_crs_get_sub_crs(d->getPROJContext(),
+                                                    d->m_pj_crs, i);
+            if ( ! sub_crs )
             {
-                ret = true;
+                break;
+            }
+
+            auto cs = proj_crs_get_coordinate_system(d->getPROJContext(),
+                                                        sub_crs);
+            if ( cs )
+            {
+                const char* pszDirection = nullptr;
+                if( proj_cs_get_axis_info(
+                    d->getPROJContext(), cs, 0, nullptr, nullptr,
+                    &pszDirection, nullptr, nullptr, nullptr, nullptr) )
+                {
+                    if( EQUAL(pszDirection, "north") )
+                    {
+                        ret = true;
+                    }
+                }
+
+                proj_destroy(cs);
+            }
+
+            proj_destroy(sub_crs);
+
+            if ( ret )
+            {
+                break;
             }
         }
-
-        proj_destroy(cs);
     }
+    else
+    {
+        auto cs = proj_crs_get_coordinate_system(d->getPROJContext(),
+                                                    d->m_pj_crs);
+        if ( cs )
+        {
+            const char* pszDirection = nullptr;
+            if( proj_cs_get_axis_info(
+                d->getPROJContext(), cs, 0, nullptr, nullptr, &pszDirection,
+                nullptr, nullptr, nullptr, nullptr) )
+            {
+                if( EQUAL(pszDirection, "north") )
+                {
+                    ret = true;
+                }
+            }
+
+            proj_destroy(cs);
+        }
+    }
+    d->undoDemoteFromBoundCRS();
 
     return ret;
 }
