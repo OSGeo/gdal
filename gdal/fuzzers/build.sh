@@ -55,7 +55,7 @@ fi
 # libsqlite3-dev${ARCH_SUFFIX}
 PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
           libpng-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
-          libwebp-dev${ARCH_SUFFIX} libicu-dev${ARCH_SUFFIX} libnetcdf-dev${ARCH_SUFFIX} \
+          libwebp-dev${ARCH_SUFFIX} libnetcdf-dev${ARCH_SUFFIX} \
           libssl-dev${ARCH_SUFFIX} \
           libfreetype6-dev${ARCH_SUFFIX} libfontconfig1-dev${ARCH_SUFFIX} libtiff5-dev${ARCH_SUFFIX} libboost-dev${ARCH_SUFFIX}"
 
@@ -118,7 +118,7 @@ cd ..
 # build Xerces-c
 cd xerces-c
 ./reconf
-CFLAGS=$NON_FUZZING_CFLAGS CXXFLAGS=$NON_FUZZING_CXXFLAGS ./configure --prefix=$SRC/install --with-curl=$SRC/install
+CFLAGS=$NON_FUZZING_CFLAGS CXXFLAGS=$NON_FUZZING_CXXFLAGS ./configure --prefix=$SRC/install --with-curl=$SRC/install --without-icu
 make clean -s
 make -j$(nproc) -s
 make install
@@ -151,7 +151,7 @@ if [ "$SANITIZER" = "undefined" ]; then
 fi
 
 cd gdal
-export LDFLAGS="${CXXFLAGS} -licuuc -licudata"
+export LDFLAGS="${CXXFLAGS}"
 PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3=$SRC/install --with-xerces=$SRC/install --with-webp --with-netcdf=$SRC/install --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-jpeg=internal --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
 make clean -s
 make -j$(nproc) -s static-lib
@@ -163,7 +163,7 @@ export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz"
 export EXTRA_LIBS="$EXTRA_LIBS -ltiff -lproj "
 export EXTRA_LIBS="$EXTRA_LIBS -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -lpng -lz"
 # Xerces-C related
-export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lxerces-c -licuuc -licudata"
+export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lxerces-c"
 # netCDF related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lnetcdf -lhdf5_serial_hl -lhdf5_serial -lsz -laec -lz"
 # poppler related
