@@ -11208,17 +11208,12 @@ int OGRSpatialReference::EPSGTreatsAsLatLong() const
     bool ret = false;
     if ( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
     {
-        for( int i = 0; i < 2; i++ )
+        auto horizCRS = proj_crs_get_sub_crs(d->getPROJContext(),
+                                                d->m_pj_crs, 0);
+        if ( horizCRS )
         {
-            auto sub_crs = proj_crs_get_sub_crs(d->getPROJContext(),
-                                                    d->m_pj_crs, i);
-            if ( ! sub_crs )
-            {
-                break;
-            }
-
             auto cs = proj_crs_get_coordinate_system(d->getPROJContext(),
-                                                        sub_crs);
+                                                        horizCRS);
             if ( cs )
             {
                 const char* pszDirection = nullptr;
@@ -11235,12 +11230,7 @@ int OGRSpatialReference::EPSGTreatsAsLatLong() const
                 proj_destroy(cs);
             }
 
-            proj_destroy(sub_crs);
-
-            if ( ret )
-            {
-                break;
-            }
+            proj_destroy(horizCRS);
         }
     }
     else
