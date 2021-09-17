@@ -1,6 +1,6 @@
 #!/bin/bash
 
-conda install -c conda-forge conda-build anaconda-client python=3.8 -y
+conda install -c conda-forge conda-build automake pkgconfig anaconda-client python=3.8 -y
 
 # Generating ./configure #
 (cd gdal && ./autogen.sh && cd ../ )
