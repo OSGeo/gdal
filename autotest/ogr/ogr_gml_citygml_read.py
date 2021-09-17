@@ -4,11 +4,11 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  GML Reading Driver for Japanese FGD GML v4 testing.
-# Author:   Hiroshi Miura <miurahr@linux.com>
+# Purpose:  GML Reading Driver for CityGML testing.
+# Author:   mugwort_rc <mugwort.rc@gmail.com>
 #
 ###############################################################################
-# Copyright (c) 2017, Hiroshi Miura <miurahr@linux.com>
+# Copyright (c) 2021, mugwort_rc <mugwort.rc@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
