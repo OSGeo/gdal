@@ -55,7 +55,8 @@ using namespace PCIDSK;
  */
 
 PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
-                          const PCIDSKInterfaces *interfaces )
+                          const PCIDSKInterfaces *interfaces,
+                          int max_channel_count )
 
 {
 /* -------------------------------------------------------------------- */
@@ -101,7 +102,7 @@ PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
 /* -------------------------------------------------------------------- */
     try
     {
-        file->InitializeFromHeader();
+        file->InitializeFromHeader(max_channel_count);
     }
     catch(...)
     {
