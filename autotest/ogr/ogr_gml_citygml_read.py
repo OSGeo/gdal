@@ -42,7 +42,7 @@ import pytest
 # Test reading CityGML files
 ###############################################################################
 
-_citygml_dir = 'data/gml_citygml/'
+_test_data_dir = 'data/gml/'
 
 ###############################################################################
 # Test reading CityGML of Project PLATEAU
@@ -50,7 +50,7 @@ _citygml_dir = 'data/gml_citygml/'
 def test_gml_read_compound_crs_lat_long():
 
     # open CityGML file
-    gml = ogr.Open(_citygml_dir + 'compound_crs.gml')
+    gml = ogr.Open(_test_data_dir + 'citygml_compound_crs.gml')
 
     # check number of layers
     assert gml.GetLayerCount() == 1, 'Wrong layer count'
