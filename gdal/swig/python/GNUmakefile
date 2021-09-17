@@ -102,7 +102,7 @@ build: .generated_files_up_to_date
 egg:
 	$(PYTHON) setup.py bdist_egg
 
-site_package_dir=$(shell $(PYTHON) -c "from __future__ import print_function;from distutils.sysconfig import get_python_lib;print(get_python_lib(prefix=\"$(PREFIX)\"))")
+site_package_dir=$(shell $(PYTHON) -c "from trimmedsysconfig import get_python_lib;print(get_python_lib(prefix=\"$(PREFIX)\"))")
 
 ifeq ($(PY_HAVE_SETUPTOOLS),1)
     setup_opts=--single-version-externally-managed --record=record.txt
