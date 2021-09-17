@@ -597,6 +597,15 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
     WriteFuncStruct* psStruct = static_cast<WriteFuncStruct *>(req);
     const size_t nSize = count * nmemb;
 
+    if( psStruct->bIsHTTP && !psStruct->bIsInHeader && psStruct->bDownloadHeaderOnly )
+    {
+        // If moved permanently/temporarily, go on.
+        // Otherwise stop now,
+        if( !(psStruct->nHTTPCode == 301 ||
+              psStruct->nHTTPCode == 302) )
+            return 0;
+    }
+
     char* pNewBuffer = static_cast<char *>(
         VSIRealloc(psStruct->pBuffer, psStruct->nSize + nSize + 1));
     if( pNewBuffer )
@@ -674,29 +683,22 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                 pszLine[nSize - 2] = '\r';
             }*/
 
-            if( pszLine[0] == '\r' || pszLine[0] == '\n' )
+            if( pszLine[0] == '\r' && pszLine[1] == '\n' )
             {
-                if( psStruct->bDownloadHeaderOnly )
-                {
-                    // If moved permanently/temporarily, go on.
-                    // Otherwise stop now,
-                    if( !(psStruct->nHTTPCode == 301 ||
-                          psStruct->nHTTPCode == 302) )
-                        return 0;
-                }
 #if !CURL_AT_LEAST_VERSION(7,54,0)
-                else if( psStruct->bIsProxyConnectHeader )
+                if( psStruct->bIsProxyConnectHeader )
                 {
                     psStruct->bIsProxyConnectHeader = false;
                 }
-#endif //!CURL_AT_LEAST_VERSION(7,54,0)
                 else
+#endif //!CURL_AT_LEAST_VERSION(7,54,0)
                 {
                     psStruct->bIsInHeader = false;
 
                     // Detect servers that don't support range downloading.
                     if( psStruct->nHTTPCode == 200 &&
                         psStruct->bDetectRangeDownloadingError &&
+                        !psStruct->bDownloadHeaderOnly &&
                         !psStruct->bMultiRange &&
                         !psStruct->bFoundContentRange &&
                         (psStruct->nStartOffset != 0 ||
