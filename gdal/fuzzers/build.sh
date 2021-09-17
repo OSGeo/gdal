@@ -54,7 +54,7 @@ fi
 # libxerces-c-dev${ARCH_SUFFIX}
 # libsqlite3-dev${ARCH_SUFFIX}
 PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
-          libpng12-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
+          libpng-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
           libwebp-dev${ARCH_SUFFIX} libicu-dev${ARCH_SUFFIX} libnetcdf-dev${ARCH_SUFFIX} \
           libssl-dev${ARCH_SUFFIX} \
           libfreetype6-dev${ARCH_SUFFIX} libfontconfig1-dev${ARCH_SUFFIX} libtiff5-dev${ARCH_SUFFIX} libboost-dev${ARCH_SUFFIX}"
@@ -161,7 +161,7 @@ export EXTRA_LIBS="-Wl,-Bstatic "
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz"
 # PROJ
 export EXTRA_LIBS="$EXTRA_LIBS -ltiff -lproj "
-export EXTRA_LIBS="$EXTRA_LIBS -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -lpng12 -lz"
+export EXTRA_LIBS="$EXTRA_LIBS -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -lpng -lz"
 # Xerces-C related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lxerces-c -licuuc -licudata"
 # netCDF related
