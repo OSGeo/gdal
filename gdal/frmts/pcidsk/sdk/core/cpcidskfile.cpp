@@ -516,7 +516,7 @@ std::vector<unsigned> CPCIDSKFile::GetSegmentIDs(int type,
 /*                        InitializeFromHeader()                        */
 /************************************************************************/
 
-void CPCIDSKFile::InitializeFromHeader()
+void CPCIDSKFile::InitializeFromHeader(int max_channel_count_allowed)
 
 {
 /* -------------------------------------------------------------------- */
@@ -533,6 +533,13 @@ void CPCIDSKFile::InitializeFromHeader()
     {
         return ThrowPCIDSKException(
             "Invalid width, height and/or channel_count" );
+    }
+    if( max_channel_count_allowed >= 0 && channel_count > max_channel_count_allowed )
+    {
+        return ThrowPCIDSKException(
+            "channel_count = %d exceeds max_channel_count_allowed = %d",
+            channel_count,
+            max_channel_count_allowed );
     }
     file_size = fh.GetUInt64(16,16);
 
@@ -762,6 +769,7 @@ void CPCIDSKFile::InitializeFromHeader()
         // fetch the filename, if there is one.
         std::string filename;
         ih.Get(64,64,filename);
+        filename.resize(strlen(filename.c_str()));
 
         // Check for an extended link file
         bool bLinked = false;

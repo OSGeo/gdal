@@ -54,7 +54,9 @@ namespace PCIDSK {
 /*                      PCIDSK Access Functions                         */
 /************************************************************************/
 PCIDSKFile PCIDSK_DLL *Open( std::string filename, std::string access,
-                             const PCIDSKInterfaces *interfaces = nullptr );
+                             const PCIDSKInterfaces *interfaces = nullptr,
+                             int max_channel_count_allowed = -1 );
+
 PCIDSKFile PCIDSK_DLL *Create( std::string filename, int pixels, int lines,
                                int channel_count, eChanType *channel_types,
                                std::string options,

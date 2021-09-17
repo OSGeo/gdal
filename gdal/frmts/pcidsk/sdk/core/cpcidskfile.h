@@ -50,7 +50,7 @@ namespace PCIDSK
     class CPCIDSKFile final: public PCIDSKFile
     {
         friend PCIDSKFile PCIDSK_DLL *Open( std::string filename,
-            std::string access, const PCIDSKInterfaces *interfaces );
+            std::string access, const PCIDSKInterfaces *interfaces, int max_channel_count_allowed );
     public:
 
         CPCIDSKFile( std::string filename );
@@ -122,7 +122,7 @@ namespace PCIDSK
     private:
         PCIDSKInterfaces interfaces;
 
-        void         InitializeFromHeader();
+        void         InitializeFromHeader(int max_channel_count_allowed = -1);
 
         std::string  base_filename;
 
