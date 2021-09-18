@@ -31,6 +31,10 @@
 
 #include "netcdfdataset.h"
 
+#ifdef HAVE_NETCDF_MEM
+#include "netcdf_mem.h"
+#endif
+
 #ifdef NETCDF_HAS_NC4
 
 /************************************************************************/
@@ -51,6 +55,7 @@ class netCDFSharedResources
 #ifdef ENABLE_UFFD
     cpl_uffd_context *m_pUffdCtx = nullptr;
 #endif
+    VSILFILE* m_fpVSIMEM = nullptr;
     bool m_bDefineMode = false;
     std::map<int, int> m_oMapDimIdToGroupId{};
     bool m_bIsInIndexingVariable = false;
@@ -513,6 +518,9 @@ netCDFSharedResources::~netCDFSharedResources()
         NETCDF_UFFD_UNMAP(m_pUffdCtx);
     }
 #endif
+
+    if( m_fpVSIMEM )
+        VSIFCloseL(m_fpVSIMEM);
 
 #ifdef ENABLE_NCDUMP
     if( m_bFileToDestroyAtClosing )
@@ -3876,30 +3884,59 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         CPLFree(pszTemp);
     }
 #endif
-    int status2;
+    int status2 = -1;
 
     auto poSharedResources(std::make_shared<netCDFSharedResources>(osFilename));
 #ifdef ENABLE_NCDUMP
     poSharedResources->m_bFileToDestroyAtClosing = bFileToDestroyAtClosing;
 #endif
 
-#ifdef ENABLE_UFFD
-    bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
-    bool bReadOnly = (poOpenInfo->eAccess == GA_ReadOnly);
-    void * pVma = nullptr;
-    uint64_t nVmaSize = 0;
-    cpl_uffd_context * pCtx = nullptr;
 
-    if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
-      pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
-    if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
-      status2 = nc_open_mem(osFilenameForNCOpen, nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
+#ifdef HAVE_NETCDF_MEM
+    if( STARTS_WITH(osFilenameForNCOpen, "/vsimem/") &&
+        poOpenInfo->eAccess == GA_ReadOnly )
+    {
+        vsi_l_offset nLength = 0;
+        poDS->fpVSIMEM = VSIFOpenL(osFilenameForNCOpen, "rb");
+        if( poDS->fpVSIMEM )
+        {
+            // We assume that the file will not be modified. If it is, then
+            // pabyBuffer might become invalid.
+            GByte* pabyBuffer = VSIGetMemFileBuffer(osFilenameForNCOpen,
+                                                    &nLength, false);
+            if( pabyBuffer )
+            {
+                status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen),
+                                    nMode, static_cast<size_t>(nLength), pabyBuffer,
+                                    &cdfid);
+            }
+        }
+    }
     else
-      status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
-    poSharedResources->m_pUffdCtx = pCtx;
-#else
-    status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #endif
+    {
+#ifdef ENABLE_UFFD
+        bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
+        bool bReadOnly = (poOpenInfo->eAccess == GA_ReadOnly);
+        void * pVma = nullptr;
+        uint64_t nVmaSize = 0;
+        cpl_uffd_context * pCtx = nullptr;
+
+        if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
+          pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
+        if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
+        {
+            // netCDF code, at least for netCDF 4.7.0, is confused by filenames like
+            // /vsicurl/http[s]://example.com/foo.nc, so just pass the final part
+            status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen), nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
+        }
+        else
+          status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+        poSharedResources->m_pUffdCtx = pCtx;
+#else
+        status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+#endif
+    }
     if( status2 != NC_NOERR )
     {
 #ifdef NCDF_DEBUG
@@ -3927,6 +3964,8 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 #endif
     poSharedResources->m_bReadOnly = nMode == NC_NOWRITE;
     poSharedResources->m_cdfid = cdfid;
+    poSharedResources->m_fpVSIMEM = poDS->fpVSIMEM;
+    poDS->fpVSIMEM = nullptr;
 
     // Is this a real netCDF file?
     int ndims;

@@ -34,6 +34,7 @@
 #include <cstring>
 #include <string>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
@@ -56,6 +57,11 @@
 #include "cpl_vsi.h"
 #include "cpl_multiproc.h"
 
+#ifndef UFFD_USER_MODE_ONLY
+// The UFFD_USER_MODE_ONLY flag got added in kernel 5.11 which is the one
+// used by Ubuntu 20.04, but the linux-libc-dev package corresponds to 5.4
+#define UFFD_USER_MODE_ONLY 1
+#endif
 
 #define BAD_MMAP (reinterpret_cast<void *>(-1))
 #define MAX_MESSAGES (0x100)
@@ -410,11 +416,33 @@ cpl_uffd_context* CPLCreateUserFaultMapping(const char * pszFilename, void ** pp
   }
 
   // Get userfaultfd
-  if ((ctx->uffd = static_cast<int>(syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK))) == -1) {
+
+  // Since kernel 5.2, raw userfaultfd is disabled since if the fault originates
+  // from the kernel, that could lead to easier exploitation of kernel bugs.
+  // Since kernel 5.11, UFFD_USER_MODE_ONLY can be used to restrict the mechanism
+  // to faults occuring only from user space, which is likely to be our use case.
+  ctx->uffd = static_cast<int>(syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY));
+  if( ctx->uffd == -1 && errno == EINVAL )
+      ctx->uffd = static_cast<int>(syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK));
+  if( ctx->uffd == -1 )
+  {
+    const int l_errno = errno;
     ctx->uffd = -1;
     uffd_cleanup(ctx);
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "CPLCreateUserFaultMapping(): syscall(__NR_userfaultfd) failed");
+    if( l_errno == EPERM )
+    {
+        // Since kernel 5.2
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLCreateUserFaultMapping(): syscall(__NR_userfaultfd) failed: "
+                 "insufficient permission. add CAP_SYS_PTRACE capability, or "
+                 "set /proc/sys/vm/unprivileged_userfaultfd to 0");
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLCreateUserFaultMapping(): syscall(__NR_userfaultfd) failed: "
+                 "error = %d", l_errno);
+    }
     return nullptr;
   }
 

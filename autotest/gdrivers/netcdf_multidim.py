@@ -1712,3 +1712,60 @@ def test_netcdf_multidim_cache_pamproxydb():
         assert ret.find('success') != -1, ('netcdf_multidim_pamproxydb.py -test_netcdf_multidim_cache_pamproxydb failed %s' % ret)
     finally:
         remove_dir()
+
+
+###############################################################################
+# Test opening a /vsimem/ file
+
+
+def test_netcdf_multidim_open_vsimem():
+
+    if gdal.GetDriverByName('netCDF').GetMetadataItem('NETCDF_HAS_NETCDF_MEM') is None:
+        pytest.skip('NETCDF_HAS_NETCDF_MEM missing')
+
+    gdal.FileFromMemBuffer('/vsimem/test.nc',
+                           open('data/netcdf/trmm.nc', 'rb').read())
+    ds = gdal.OpenEx('/vsimem/test.nc', gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    gdal.Unlink('/vsimem/test.nc')
+    assert rg
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar
+    assert ar.Read() is not None
+
+
+###############################################################################
+# Test /vsi access through userfaultfd
+
+
+def test_netcdf_multidim_open_userfaultfd():
+
+    gdal.Unlink('tmp/test_netcdf_open_userfaultfd.zip')
+
+    f = gdal.VSIFOpenL('/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc', 'wb')
+    assert f
+    data = open('data/netcdf/byte_no_cf.nc', 'rb').read()
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    # Can only work on Linux, with some kernel versions... not in Docker by default
+    # so mostly test that we don't crash
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx("/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc", gdal.OF_MULTIDIM_RASTER)
+
+    success_expected = False
+    if 'CI' not in os.environ:
+        uname = os.uname()
+        if uname.sysname == 'Linux':
+            version = uname.release.split('.')
+            major = int(version[0])
+            minor = int(version[1])
+            if (major, minor) >= (5, 11):
+                assert ds
+                success_expected = True
+
+    if ds and not success_expected:
+        print('/vsi access through userfaultfd succeeded')
+
+    gdal.Unlink('tmp/test_netcdf_open_userfaultfd.zip')
