@@ -3925,7 +3925,11 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         if ( bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported() )
           pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma, &nVmaSize);
         if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
-          status2 = nc_open_mem(osFilenameForNCOpen, nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
+        {
+            // netCDF code, at least for netCDF 4.7.0, is confused by filenames like
+            // /vsicurl/http[s]://example.com/foo.nc, so just pass the final part
+            status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen), nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
+        }
         else
           status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
         poSharedResources->m_pUffdCtx = pCtx;
