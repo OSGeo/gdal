@@ -34,6 +34,7 @@
 #include <cstring>
 #include <string>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
@@ -411,10 +412,23 @@ cpl_uffd_context* CPLCreateUserFaultMapping(const char * pszFilename, void ** pp
 
   // Get userfaultfd
   if ((ctx->uffd = static_cast<int>(syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK))) == -1) {
+    const int l_errno = errno;
     ctx->uffd = -1;
     uffd_cleanup(ctx);
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "CPLCreateUserFaultMapping(): syscall(__NR_userfaultfd) failed");
+    if( l_errno == EPERM )
+    {
+        // Since kernel 5.2
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLCreateUserFaultMapping(): syscall(__NR_userfaultfd) failed: "
+                 "insufficient permission. add CAP_SYS_PTRACE capability, or "
+                 "set /proc/sys/vm/unprivileged_userfaultfd to 0");
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLCreateUserFaultMapping(): syscall(__NR_userfaultfd) failed: "
+                 "error = %d", l_errno);
+    }
     return nullptr;
   }
 
