@@ -334,6 +334,26 @@ cd $CUR_DIR
 zip -r $OUT/zarr_fuzzer_seed_corpus.zip ./*.zarr.tar ./*.zr3.tar >/dev/null
 rm ./*.zarr.tar ./*.zr3.tar
 
+echo "Building dimap_fuzzer_seed_corups.zip"
+rm -f $OUT/dimap_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/gdrivers/data/dimap2
+for dirname in *; do
+    cd $dirname
+    {
+        filelist=$(find . -type f)
+        printf "FUZZER_FRIENDLY_ARCHIVE\\n"
+        for f in $filelist; do
+          printf "***NEWFILE***:%s\\n" "$f"
+          cat $f
+        done
+    } > $CUR_DIR/dimap_$(basename $dirname).tar
+    cd ..
+done
+cd $CUR_DIR
+zip -r $OUT/dimap_fuzzer_seed_corpus.zip dimap_*.tar >/dev/null
+rm dimap_*.tar
+
 echo "Building ogr_sdts_fuzzer_seed_corpus.zip"
 rm -f $OUT/ogr_sdts_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
