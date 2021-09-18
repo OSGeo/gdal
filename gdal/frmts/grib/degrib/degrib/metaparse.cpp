@@ -3021,7 +3021,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
       double* newData = nullptr;
       const size_t nBufferSize = subNxNy * sizeof (double);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-      if( nBufferSize > static_cast<size_t>(INT_MIN) )
+      if( nBufferSize > static_cast<size_t>(INT_MAX) )
       {
           errSprintf ("Memory allocation failed due to being bigger than 2 GB in fuzzing mode");
       }
