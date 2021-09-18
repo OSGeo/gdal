@@ -5929,7 +5929,7 @@ bool GDALMDArray::IsRegularlySpaced(double& dfStart, double& dfIncrement) const
     // First try with the first block. This can avoid excessive processing time,
     // for example with Zarr datasets. https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37636
     const auto nBlockSize = GetBlockSize()[0];
-    if( nCount > 3 && nBlockSize >= 3 && nBlockSize < nCount )
+    if( nCount > 3 && nBlockSize >= 3 && nBlockSize < nCount - 1 )
     {
         const size_t nReducedCount = static_cast<size_t>(nBlockSize);
         anCount[0] = nReducedCount;
