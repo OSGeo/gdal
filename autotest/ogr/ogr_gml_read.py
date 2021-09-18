@@ -74,6 +74,10 @@ def startup_and_cleanup():
     except OSError:
         pass
     try:
+        os.remove('data/gml/citygml_compound_crs.gfs')
+    except OSError:
+        pass
+    try:
         os.remove('data/gml/gnis_pop_100.gfs')
     except OSError:
         pass
@@ -327,7 +331,7 @@ def test_ogr_gml_6():
         gml_ds = None
         os.remove(os.path.join('data', 'gml', filename + '.gfs'))
 
-    
+
 ###############################################################################
 # Test of colon terminated prefixes for attribute values (Ticket#2493)
 
@@ -369,7 +373,7 @@ def test_ogr_gml_8():
     feat = lyr.GetNextFeature()
     assert feat.GetFieldAsString('name') == 'Āliamanu'
 
-    
+
 ###############################################################################
 # Test writing invalid UTF-8 content in a GML file (ticket #2971)
 
@@ -668,7 +672,34 @@ def test_ogr_gml_16():
         feat.DumpReadable()
         pytest.fail('did not get expected values')
 
-    
+
+###############################################################################
+# Test reading CityGML of Project PLATEAU
+
+
+def test_gml_read_compound_crs_lat_long():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    # open CityGML file
+    gml = ogr.Open('data/gml/citygml_compound_crs.gml')
+
+    # check number of layers
+    assert gml.GetLayerCount() == 1, 'Wrong layer count'
+
+    lyr = gml.GetLayer(0)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(6668)  # JGD2011
+    assert sr.IsSame(lyr.GetSpatialRef(), options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), 'Wrong SRS'
+
+    wkt = 'POLYHEDRALSURFACE Z (((139.812484938717 35.7092130413279 0.15,139.812489071491 35.7091641446533 0.15,139.812444202746 35.7091610722245 0.15,139.812439721473 35.7092112956502 0.15,139.812436111402 35.7092517484017 0.15,139.812481422309 35.7092546406366 0.15,139.812484938717 35.7092130413279 0.15)),((139.812484938717 35.7092130413279 0.15,139.812481422309 35.7092546406366 0.15,139.812481422309 35.7092546406366 12.08,139.812484938717 35.7092130413279 12.08,139.812484938717 35.7092130413279 0.15)),((139.812481422309 35.7092546406366 0.15,139.812436111402 35.7092517484017 0.15,139.812436111402 35.7092517484017 12.08,139.812481422309 35.7092546406366 12.08,139.812481422309 35.7092546406366 0.15)),((139.812436111402 35.7092517484017 0.15,139.812439721473 35.7092112956502 0.15,139.812439721473 35.7092112956502 12.08,139.812436111402 35.7092517484017 12.08,139.812436111402 35.7092517484017 0.15)),((139.812439721473 35.7092112956502 0.15,139.812444202746 35.7091610722245 0.15,139.812444202746 35.7091610722245 12.08,139.812439721473 35.7092112956502 12.08,139.812439721473 35.7092112956502 0.15)),((139.812444202746 35.7091610722245 0.15,139.812489071491 35.7091641446533 0.15,139.812489071491 35.7091641446533 12.08,139.812444202746 35.7091610722245 12.08,139.812444202746 35.7091610722245 0.15)),((139.812489071491 35.7091641446533 0.15,139.812484938717 35.7092130413279 0.15,139.812484938717 35.7092130413279 12.08,139.812489071491 35.7091641446533 12.08,139.812489071491 35.7091641446533 0.15)),((139.812484938717 35.7092130413279 12.08,139.812481422309 35.7092546406366 12.08,139.812436111402 35.7092517484017 12.08,139.812439721473 35.7092112956502 12.08,139.812444202746 35.7091610722245 12.08,139.812489071491 35.7091641446533 12.08,139.812484938717 35.7092130413279 12.08)))'
+
+    # check the first feature
+    feat = lyr.GetNextFeature()
+    assert not ogrtest.check_feature_geometry(feat, wkt), 'Wrong geometry'
+
+
 ###############################################################################
 # Read layer SRS for WFS 1.0.0 return
 
@@ -1270,7 +1301,7 @@ def test_ogr_gml_33():
         expected_fid = read_seq[1]
         assert fid == expected_fid, ('failed at step %d' % i)
 
-    
+
 ###############################################################################
 # Test writing non-ASCII UTF-8 content (#4117, #4299)
 
@@ -1588,7 +1619,7 @@ def test_ogr_gml_43():
 
         assert not can_download_schema, '.gfs found, but schema could be downloaded'
 
-    
+
 ###############################################################################
 # Test providing a custom XSD filename
 
@@ -1755,7 +1786,7 @@ def test_ogr_gml_46():
         if frmt == 'GML3Deegree':
             break
 
-    
+
 ###############################################################################
 # Test validation of WFS GML documents
 
@@ -1904,7 +1935,7 @@ def test_ogr_gml_51():
         assert feat is not None
         ds = None
 
-    
+
 ###############################################################################
 # Test reading MTKGML files
 
@@ -2014,9 +2045,9 @@ def test_ogr_gml_55():
 
     with pytest.raises(OSError):
         os.unlink('data/gml/ogr_gml_55.gfs')
-    
 
-    
+
+
 ###############################################################################
 # Test support for gml:FeaturePropertyType and multiple geometry field
 # Necessary for Finnish NLS data
@@ -2058,9 +2089,9 @@ def test_ogr_gml_56():
 
     with pytest.raises(OSError):
         os.unlink('data/gml/ogr_gml_56.gfs')
-    
 
-    
+
+
 ###############################################################################
 # Test write support for multiple geometry field
 
@@ -2119,7 +2150,7 @@ def test_ogr_gml_57():
         gdal.Unlink('/vsimem/ogr_gml_57.gml')
         gdal.Unlink('/vsimem/ogr_gml_57.xsd')
 
-    
+
 ###############################################################################
 # Test support for Inspire Cadastral schemas
 
@@ -2494,7 +2525,7 @@ def test_ogr_gml_62():
         feat = None
         ds = None
 
-    
+
 ###############################################################################
 # Test reading RUIAN VFR files
 
@@ -2552,7 +2583,7 @@ def test_ogr_gml_64():
             feat = lyr.GetNextFeature()
             assert feat is not None, parser
 
-    
+
 ###############################################################################
 # Test SRSDIMENSION_LOC=GEOMETRY option (#5606)
 
@@ -2593,7 +2624,7 @@ def test_ogr_gml_65():
         gdal.Unlink(filename)
         gdal.Unlink(filename[0:-3] + "xsd")
 
-    
+
 ###############################################################################
 # Test curve geometries
 
@@ -3141,7 +3172,7 @@ def ogr_gml_71_helper(ds):
         f.DumpReadable()
         pytest.fail()
 
-    
+
 
 def test_ogr_gml_71():
 
@@ -3156,7 +3187,7 @@ def test_ogr_gml_71():
 
     with pytest.raises(OSError):
         os.unlink('data/gml/wfsjointlayer.gfs')
-    
+
 
     # With .xsd but that is only partially understood
     ds = gdal.OpenEx('data/gml/wfsjointlayer.gml', open_options=['XSD=data/gml/wfsjointlayer_not_understood.xsd'])
@@ -3252,7 +3283,7 @@ def test_ogr_gml_73():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test FORCE_SRS_DETECTION open option
 
@@ -3351,7 +3382,7 @@ def test_ogr_gml_76():
             lyr = ds.GetLayer(0)
             lyr.GetNextFeature()
 
-    
+
 ###############################################################################
 # Test interpretation of http://www.opengis.net/def/crs/EPSG/0/ URLs (#6678)
 
@@ -3651,13 +3682,13 @@ def test_ogr_gml_featuretype_suffix_in_xsd():
         pytest.skip()
 
     gdal.Unlink('data/gml/arcgis-world-wfs.gfs')
-    
+
     ds = ogr.Open('data/gml/arcgis-world-wfs.gml,xsd=data/gml/arcgis-world-wfs.xsd')
     lyr = ds.GetLayer(0)
-    
+
     for i in range(2, 4):
       assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTReal
-    
+
     gdal.Unlink('data/gml/arcgis-world-wfs.gfs')
 
 ###############################################################################
