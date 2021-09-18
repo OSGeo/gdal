@@ -1530,6 +1530,7 @@ void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
         {
             m_pszGlobalSRSName = CPLStrdup(pszGlobalSRSName);
         }
+        m_bCanUseGlobalSRSName = m_pszGlobalSRSName != nullptr;
     }
 }
 
