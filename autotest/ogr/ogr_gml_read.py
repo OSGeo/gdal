@@ -679,6 +679,9 @@ def test_ogr_gml_16():
 
 def test_gml_read_compound_crs_lat_long():
 
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
     # open CityGML file
     gml = ogr.Open('data/gml/citygml_compound_crs.gml')
 
