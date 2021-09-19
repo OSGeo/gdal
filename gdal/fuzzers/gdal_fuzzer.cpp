@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <vector>
 
 #include "gdal.h"
 #include "cpl_conv.h"
@@ -90,6 +91,72 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     REGISTER_FUNC();
 
     return 0;
+}
+
+static void ExploreAttributes(const GDALIHasAttribute* attributeHolder)
+{
+    const auto attributes = attributeHolder->GetAttributes();
+    for( const auto& attribute: attributes )
+    {
+        attribute->ReadAsRaw();
+    }
+
+    attributeHolder->GetAttribute("i_do_not_exist");
+}
+
+static void ExploreArray(const std::shared_ptr<GDALMDArray>& poArray)
+{
+    ExploreAttributes(poArray.get());
+
+    poArray->GetFilename();
+    poArray->GetStructuralInfo();
+    poArray->GetUnit();
+    poArray->GetSpatialRef();
+    poArray->GetRawNoDataValue();
+    poArray->GetOffset();
+    poArray->GetScale();
+    poArray->GetCoordinateVariables();
+
+    if( poArray->GetDataType().GetClass() == GEDTC_NUMERIC )
+    {
+        const auto nDimCount = poArray->GetDimensionCount();
+        std::vector<GUInt64> anArrayStartIdx(nDimCount);
+        std::vector<size_t> anCount(nDimCount, 1);
+        std::vector<GInt64> anArrayStep(nDimCount);
+        std::vector<GPtrDiff_t> anBufferStride(nDimCount);
+        std::vector<GByte> abyData( poArray->GetDataType().GetSize() );
+        poArray->Read(anArrayStartIdx.data(),
+                      anCount.data(),
+                      anArrayStep.data(),
+                      anBufferStride.data(),
+                      poArray->GetDataType(),
+                      &abyData[0]);
+    }
+}
+
+static void ExploreGroup(const std::shared_ptr<GDALGroup>& poGroup)
+{
+    ExploreAttributes(poGroup.get());
+
+    const auto groupNames = poGroup->GetGroupNames();
+    poGroup->OpenGroup("i_do_not_exist");
+    for( const auto& name: groupNames )
+    {
+        auto poSubGroup = poGroup->OpenGroup(name);
+        if( poSubGroup )
+            ExploreGroup(poSubGroup);
+    }
+
+    const auto arrayNames = poGroup->GetMDArrayNames();
+    poGroup->OpenMDArray("i_do_not_exist");
+    for( const auto& name: arrayNames )
+    {
+        auto poArray = poGroup->OpenMDArray(name);
+        if( poArray )
+        {
+            ExploreArray(poArray);
+        }
+    }
 }
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
@@ -287,6 +354,17 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 
         GDALClose(hDS);
     }
+
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GDALDataset::Open( pszGDALFilename, GDAL_OF_MULTIDIM_RASTER ));
+    if( poDS )
+    {
+        auto poRootGroup = poDS->GetRootGroup();
+        poDS.reset();
+        if( poRootGroup )
+            ExploreGroup(poRootGroup);
+    }
+
     CPLPopErrorHandler();
 #ifdef USE_FILESYSTEM
     VSIUnlink( szTempFilename );
