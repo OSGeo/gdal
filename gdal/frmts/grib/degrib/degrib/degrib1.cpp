@@ -1923,9 +1923,27 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
    /* nd5 needs to be gribLen in (sInt4) units rounded up. */
    nd5 = (gribLen + 3) / 4;
    if (nd5 > IS->ipackLen) {
+      if( gribLen > 100 * 1024 * 1024 )
+      {
+         vsi_l_offset curPos = VSIFTellL(fp);
+         VSIFSeekL(fp, 0, SEEK_END);
+         vsi_l_offset fileSize = VSIFTellL(fp);
+         VSIFSeekL(fp, curPos, SEEK_SET);
+         if( fileSize < gribLen )
+         {
+            errSprintf("File too short");
+            return -1;
+         }
+      }
+      sInt4* newipack = (sInt4 *) realloc ((void *) (IS->ipack),
+                                     nd5 * sizeof (sInt4));
+      if( newipack == nullptr )
+      {
+          errSprintf ("Out of memory\n");
+          return -1;
+      }
       IS->ipackLen = nd5;
-      IS->ipack = (sInt4 *) realloc ((void *) (IS->ipack),
-                                     (IS->ipackLen) * sizeof (sInt4));
+      IS->ipack = newipack;
    }
    c_ipack = (uChar *) IS->ipack;
    /* Init last sInt4 to 0, to make sure that the padded bytes are 0. */
