@@ -158,7 +158,7 @@ int ReadSECT0 (VSILFILE *fp, char **buff, uInt4 *buffLen, sInt4 limit,
    while (
 #if 0
 /* tdlpack is no longer supported by GDAL */
-          (tdlpMatch != 4) && 
+          (tdlpMatch != 4) &&
 #endif
           (gribMatch != 4)) {
       for (i = curLen - 8; i + 7 < curLen; i++) {
@@ -410,13 +410,17 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
    if ((sectNum == 2) || (sectNum == 3)) {
       /* Figure out the size of section 2 and 3. */
       /* ERO: check change from + 5 to +6+4 per r39022 */
-      if (*curTot + 6 + 4 > gribLen) {
+      if (*curTot > gribLen - (6 + 4)) {
          errSprintf ("ERROR: Ran out of data in Section 2 or 3\n");
          return -1;
       }
       /* Handle optional section 2. */
       if (c_ipack[*curTot + 4] == 2) {
          MEMCPY_BIG (&sectLen, c_ipack + *curTot, 4);
+         if( sectLen < 0 || *curTot > INT_MAX - sectLen ) {
+           errSprintf ("ERROR: Invalid sectLen for section 2\n");
+           return -1;
+         }
          *curTot = *curTot + sectLen;
          if (ns[2] < sectLen)
             ns[2] = sectLen;
@@ -433,6 +437,10 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
          return -2;
       }
       MEMCPY_BIG (&sectLen, c_ipack + *curTot, 4);
+      if( sectLen < 0 || *curTot > INT_MAX - sectLen ) {
+        errSprintf ("ERROR: Invalid sectLen for section 3\n");
+        return -1;
+      }
       if (ns[3] < sectLen)
          ns[3] = sectLen;
       /* While we are here, grab the total number of grid points nd2x3. */
@@ -448,7 +456,7 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
 */
 
    /* Figure out the size of section 4. */
-   if (*curTot + 5 > gribLen) {
+   if (*curTot > gribLen - 5) {
       errSprintf ("ERROR: Ran out of data in Section 4\n");
       return -1;
    }
@@ -457,6 +465,10 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
       return -2;
    }
    MEMCPY_BIG (&sectLen, c_ipack + *curTot, 4);
+   if( sectLen < 0 || *curTot > INT_MAX - sectLen ) {
+      errSprintf ("ERROR: Invalid sectLen for section 4\n");
+      return -1;
+   }
    if (ns[4] < sectLen)
       ns[4] = sectLen;
    *curTot = *curTot + sectLen;
@@ -468,7 +480,7 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
 
    /* Figure out the size of section 5. */
     /* ERO: check change from + 5 to +9+2 per r39127 */
-   if (*curTot + 9 + 2 > gribLen) {
+   if (*curTot > gribLen - (9 + 2)) {
       errSprintf ("ERROR: Ran out of data in Section 5\n");
       return -1;
    }
@@ -477,6 +489,10 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
       return -2;
    }
    MEMCPY_BIG (&sectLen, c_ipack + *curTot, 4);
+   if( sectLen < 0 || *curTot > INT_MAX - sectLen ) {
+      errSprintf ("ERROR: Invalid sectLen for section 5\n");
+      return -1;
+   }
    /* While we are here, grab the packing method. */
    MEMCPY_BIG (table50, c_ipack + *curTot + 9, 2);
    if (ns[5] < sectLen)
@@ -489,7 +505,7 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
 */
 
    /* Figure out the size of section 6. */
-   if (*curTot + 5 > gribLen) {
+   if (*curTot > gribLen - 5) {
       errSprintf ("ERROR: Ran out of data in Section 6\n");
       return -1;
    }
@@ -498,6 +514,10 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
       return -2;
    }
    MEMCPY_BIG (&sectLen, c_ipack + *curTot, 4);
+   if( sectLen < 0 || *curTot > INT_MAX - sectLen ) {
+      errSprintf ("ERROR: Invalid sectLen for section 6\n");
+      return -1;
+   }
    if (ns[6] < sectLen)
       ns[6] = sectLen;
    *curTot = *curTot + sectLen;
@@ -508,7 +528,7 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
 */
 
    /* Figure out the size of section 7. */
-   if (*curTot + 5 > gribLen) {
+   if (*curTot > gribLen - 5) {
       errSprintf ("ERROR: Ran out of data in Section 7\n");
       return -1;
    }
@@ -517,6 +537,10 @@ static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
       return -2;
    }
    MEMCPY_BIG (&sectLen, c_ipack + *curTot, 4);
+   if( sectLen < 0 || *curTot > INT_MAX - sectLen ) {
+      errSprintf ("ERROR: Invalid sectLen for section 7\n");
+      return -1;
+   }
    if (ns[7] < sectLen)
       ns[7] = sectLen;
    *curTot = *curTot + sectLen;
