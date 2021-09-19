@@ -207,7 +207,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
         bool bIsDir = false;
         const CPLString osStrippedFilename =
                                 GetStrippedFilename(osFileName, bIsDir);
-        if( osStrippedFilename.empty() )
+        if( osStrippedFilename.empty() || osStrippedFilename[0] == '/' )
             continue;
 
         if( oSet.find(osStrippedFilename) == oSet.end() )
