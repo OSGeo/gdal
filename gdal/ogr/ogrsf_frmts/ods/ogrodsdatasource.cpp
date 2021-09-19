@@ -707,8 +707,13 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
 static void ReserveAndLimitFieldCount(OGRLayer* poLayer,
                                       std::vector<std::string>& aosValues)
 {
-    const int nMaxCols = atoi(
+    int nMaxCols = atoi(
         CPLGetConfigOption("OGR_ODS_MAX_FIELD_COUNT", "2000"));
+    // Arbitrary limit to please Coverity Scan that would complain about
+    // tainted_data to resize aosValues.
+    constexpr int MAXCOLS_LIMIT = 1000000;
+    if( nMaxCols > MAXCOLS_LIMIT )
+        nMaxCols = MAXCOLS_LIMIT;
     if( static_cast<int>(aosValues.size()) > nMaxCols )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
