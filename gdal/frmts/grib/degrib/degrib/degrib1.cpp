@@ -1937,7 +1937,7 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
       }
       sInt4* newipack = (sInt4 *) realloc ((void *) (IS->ipack),
                                      nd5 * sizeof (sInt4));
-      if( newipack == NULL )
+      if( newipack == nullptr )
       {
           errSprintf ("Out of memory\n");
           return -1;
