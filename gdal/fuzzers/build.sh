@@ -18,6 +18,12 @@
 # This script is meant to be run by
 # https://github.com/google/oss-fuzz/blob/master/projects/gdal/Dockerfile
 
+# See https://github.com/google/oss-fuzz/issues/6427#issuecomment-922504548
+if test -f /usr/local/lib/libc++.a; then
+  echo "Rename /usr/local/lib/libc++.a to /usr/local/lib/libc++.a.disabled"
+  mv /usr/local/lib/libc++.a /usr/local/lib/libc++.a.disabled
+fi
+
 rm -rf proj
 git clone --depth 1 https://github.com/OSGeo/PROJ proj
 
