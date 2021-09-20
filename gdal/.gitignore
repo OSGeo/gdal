@@ -5,6 +5,8 @@ detectsse.dSYM
 gdal.pc
 config.log
 config.status
+configure
+aclocal.m4
 libtool
 cpl_config.h
 clean_main_build_output.bat
