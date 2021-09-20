@@ -591,6 +591,45 @@ libtiff will fail to compress the data.
 Note also that the dimensions of the tiles or strips must be a multiple
 of 8 for PHOTOMETRIC=RGB or 16 for PHOTOMETRIC=YCBCR
 
+Lossless conversion of JPEG into JPEG-in-TIFF
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The conversion of a JPEG file (but *not* a JPEG-in-TIFF file) to a JPEG-in-TIFF
+file without decompression and compression cycles, and thus without any additional
+quality loss, can be done with gdal_translate (or the CreateCopy() API),
+if all the following conditions are met:
+
+- the source dataset is a JPEG file (or a VRT with a JPEG as a single SimpleSource)
+- the target dataset is a JPEG-in-TIFF file
+- no explicity target JPEG quality is specified
+- no change in colorspace is specified
+- no sub-windowing is requested
+- and more generally, no change that alters pixel values
+
+The generation of a tiled JPEG-in-TIFF from the original JPEG image is possible.
+Explicit assigment of target SRS and bounds are also possible.
+
+So, the following commands will use the lossless copy method :
+
+::
+
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG
+
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co TILED=YES
+
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -a_srs EPSG:4326 -a_ullr -180 90 180 -90
+
+
+whereas the following commands will *not* (and thus cause JPEG decompression and
+compression):
+
+::
+
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co QUALITY=60
+
+    gdal_translate in.jpg out.tif -srcwin 0 0 500 500 -co COMPRESS=JPEG
+
+
 Streaming operations
 ~~~~~~~~~~~~~~~~~~~~
 
