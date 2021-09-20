@@ -342,7 +342,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         OGRFieldType eFieldType = OFTString;
         if (pszDeclType != nullptr)
         {
-            if (EQUAL(pszDeclType, "INTEGER_BOOLEAN"))
+            if (EQUAL(pszDeclType, "INTEGER_BOOLEAN") || EQUAL(pszDeclType, "BOOLEAN"))
             {
                 oField.SetType(OFTInteger);
                 oField.SetSubType(OFSTBoolean);
@@ -373,11 +373,17 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 oField.SetType(OFTStringList);
             }
-            else if (EQUAL(pszDeclType, "BIGINT") || EQUAL(pszDeclType, "INT8"))
+            else if (EQUAL(pszDeclType, "BIGINT") || EQUAL(pszDeclType, "INT8") || 
+                     EQUAL(pszDeclType, "UNSIGNED BIG INT"))
             {
                 oField.SetType(OFTInteger64);
             }
-            else if (STARTS_WITH_CI(pszDeclType, "INTEGER"))
+            else if (STARTS_WITH_CI(pszDeclType, "INTEGER") ||
+                     EQUAL(pszDeclType, "INT") ||
+                     EQUAL(pszDeclType, "TINYINT") ||
+                     EQUAL(pszDeclType, "SMALLINT") ||
+                     EQUAL(pszDeclType, "MEDIUMINT") ||
+                     EQUAL(pszDeclType, "INT2"))
             {
                 oField.SetType(OFTInteger);
             }
@@ -387,7 +393,11 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 oField.SetSubType(OFSTFloat32);
             }
             else if (EQUAL(pszDeclType, "FLOAT") ||
-                     EQUAL(pszDeclType, "DECIMAL"))
+                     EQUAL(pszDeclType, "DECIMAL") ||
+                     EQUAL(pszDeclType, "REAL") ||
+                     EQUAL(pszDeclType, "DOUBLE") ||
+                     EQUAL(pszDeclType, "DOUBLE PRECISION") ||
+                     EQUAL(pszDeclType, "NUMERIC"))
             {
                 oField.SetType(OFTReal);
             }
@@ -438,7 +448,13 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                 }
             }
             else if (EQUAL(pszDeclType, "TEXT") ||
-                     STARTS_WITH_CI(pszDeclType, "VARCHAR"))
+                     STARTS_WITH_CI(pszDeclType, "VARCHAR") || 
+                     STARTS_WITH_CI(pszDeclType, "CHARACTER") || 
+                     STARTS_WITH_CI(pszDeclType, "VARYING CHARACTER") || 
+                     STARTS_WITH_CI(pszDeclType, "NCHAR") || 
+                     STARTS_WITH_CI(pszDeclType, "NATIVE CHARACTER") || 
+                     STARTS_WITH_CI(pszDeclType, "NVARCHAR") || 
+                     EQUAL(pszDeclType, "CLOB"))
             {
                 oField.SetType( OFTString );
                 if( strstr(pszDeclType, "_deflate") != nullptr )
