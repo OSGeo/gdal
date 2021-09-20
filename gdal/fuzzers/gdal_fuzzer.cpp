@@ -258,7 +258,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 const char* pszCompress =
                     GDALGetMetadataItem(hDS, "COMPRESSION", "IMAGE_STRUCTURE");
                 if( pszCompress != nullptr &&
-                    ((nBYSize == 1 && nYSizeToRead > 1 &&
+                    ((nBYSize == 1 && GDALGetRasterYSize(hDS) > 1 &&
                       GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
                                         "BLOCK_OFFSET_0_1", "TIFF") == nullptr) ||
                      nBXSize != GDALGetRasterXSize(hDS)) &&
@@ -343,7 +343,19 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             GDALRasterBandH hMaskBand = GDALGetMaskBand(hBand);
             GDALGetRasterBandXSize(hMaskBand);
             if( bDoCheckSum && nFlags == GMF_PER_DATASET )
-                GDALChecksumImage(hMaskBand, 0, 0, nXSizeToRead, nYSizeToRead);
+            {
+                int nBXSize = 0, nBYSize = 0;
+                GDALGetBlockSize( hMaskBand, &nBXSize, &nBYSize );
+                if( nBXSize == 0 || nBYSize == 0 ||
+                    nBXSize > INT_MAX / 2 / nBYSize )
+                {
+                    // do nothing
+                }
+                else
+                {
+                    GDALChecksumImage(hMaskBand, 0, 0, nXSizeToRead, nYSizeToRead);
+                }
+            }
 
             int nOverviewCount = GDALGetOverviewCount(hBand);
             for( int i = 0; i < nOverviewCount; i++ )
