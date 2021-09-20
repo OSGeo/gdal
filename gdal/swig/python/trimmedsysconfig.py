@@ -13,6 +13,7 @@ Email:        <fdrake@acm.org>
 
 import os
 import sys
+from sysconfig import get_python_version
 
 # These are needed in a couple of spots, so just compute them once.
 PREFIX = os.path.normpath(sys.prefix)
@@ -20,13 +21,14 @@ EXEC_PREFIX = os.path.normpath(sys.exec_prefix)
 BASE_PREFIX = os.path.normpath(sys.base_prefix)
 BASE_EXEC_PREFIX = os.path.normpath(sys.base_exec_prefix)
 
-def get_python_version():
-    """Return a string containing the major and minor Python version,
-    leaving off the patchlevel.  Sample return values could be '1.5'
-    or '2.2'.
-    """
-    return '%d.%d' % sys.version_info[:2]
-
+# Added by GDAL
+def _is_debian():
+    import setuptools.command.easy_install
+    ei = setuptools.command.easy_install.easy_install
+    for opt, _, _ in ei.user_options:
+        if opt == 'install-layout=':
+            return True
+    return False
 
 
 def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
@@ -55,7 +57,8 @@ def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
                                  "lib", "python" + get_python_version())
         if standard_lib:
             return libpython
-        elif (is_default_prefix and
+        # This check is Debian specific
+        elif (_is_debian() and is_default_prefix and
               'PYTHONUSERBASE' not in os.environ and
               'VIRTUAL_ENV' not in os.environ and
               'real_prefix' not in sys.__dict__ and
