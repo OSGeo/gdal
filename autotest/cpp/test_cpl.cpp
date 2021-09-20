@@ -3448,7 +3448,7 @@ namespace tut
 
         // Slighly improved version of https://xkcd.com/221/, as suggested by
         // "man srand"
-        const auto DummyRand = [&next, MAX_RAND_VAL]()
+        const auto DummyRand = [&]()
         {
            next = next * 1103515245 + 12345;
            return((unsigned)(next/65536) % (MAX_RAND_VAL+1));
@@ -3463,7 +3463,7 @@ namespace tut
         auto hTree = CPLQuadTreeCreate(&globalbounds, nullptr);
         ensure(hTree != nullptr);
 
-        const auto GenerateRandomRect = [&DummyRand, MAX_RAND_VAL](CPLRectObj& rect)
+        const auto GenerateRandomRect = [&](CPLRectObj& rect)
         {
             rect.minx = double(DummyRand()) / MAX_RAND_VAL;
             rect.miny = double(DummyRand()) / MAX_RAND_VAL;
