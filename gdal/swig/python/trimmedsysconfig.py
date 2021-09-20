@@ -23,10 +23,8 @@ BASE_EXEC_PREFIX = os.path.normpath(sys.base_exec_prefix)
 
 # Added by GDAL
 def _is_debian():
-    import setuptools.command.easy_install
-    ei = setuptools.command.easy_install.easy_install
-    for opt, _, _ in ei.user_options:
-        if opt == 'install-layout=':
+    for p in sys.path:
+        if 'dist-packages' in p:
             return True
     return False
 
