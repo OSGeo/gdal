@@ -47,6 +47,9 @@ If the product contains multiple swaths and multiple polatizations, the
 driver shows the first swath by default. To access other swaths, the
 user must select a specific subdataset.
 
+The syntax of subdataset naming and their content has been significantly
+change in GDAL 3.4.
+
 Examples
 --------
 
@@ -127,136 +130,17 @@ Examples
 
       $ gdalinfo SENTINEL1_DS:S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_006672_008EA0_24EE.SAFE:IW_VV
 
-   ::
 
-      Driver: SAFE/Sentinel-1 SAR SAFE Product
-      Files: S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_006672_008EA0_24EE.SAFE/manifest.safe
-             S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_006672_008EA0_24EE.SAFE/measurement/s1a-iw-grd-vh-20150705t064241-20150705t064306-006672-008ea0-002.tiff
-      Size is 256, 167
-      Coordinate System is `'
-      GCP Projection =
-      GEOGCS["WGS 84",
-          DATUM["WGS_1984",
-              SPHEROID["WGS 84",6378137,298.257223563,
-                  AUTHORITY["EPSG","7030"]],
-              AUTHORITY["EPSG","6326"]],
-          PRIMEM["Greenwich",0,
-              AUTHORITY["EPSG","8901"]],
-          UNIT["degree",0.0174532925199433,
-              AUTHORITY["EPSG","9122"]],
-          AUTHORITY["EPSG","4326"]]
-      GCP[  0]: Id=1, Info=
-                (0,0) -> (-8.03500070209827,39.6332161725022,141.853266630322)
-      Metadata:
-        ACQUISITION_START_TIME=2015-07-05T06:42:41.504840
-        ACQUISITION_STOP_TIME=2015-07-05T06:43:06.503530
-        BEAM_MODE=IW
-        BEAM_SWATH=IW
-        FACILITY_IDENTIFIER=UPA_
-        LINE_SPACING=1.000655e+01
-        MISSION_ID=S1A
-        MODE=IW
-        ORBIT_DIRECTION=DESCENDING
-        ORBIT_NUMBER=6672
-        PIXEL_SPACING=1.000000e+01
-        PRODUCT_TYPE=GRD
-        SATELLITE_IDENTIFIER=SENTINEL-1
-        SENSOR_IDENTIFIER=SAR
-        SWATH=IW
-      Subdatasets:
-        SUBDATASET_1_NAME=SENTINEL1_DS:S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_006672_008EA0_24EE.SAFE:IW_VH
-        SUBDATASET_1_DESC=Single band with IW swath and VH polarization
-        SUBDATASET_2_NAME=SENTINEL1_DS:S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_006672_008EA0_24EE.SAFE:IW_VV
-        SUBDATASET_2_DESC=Single band with IW swath and VV polarization
-        SUBDATASET_3_NAME=SENTINEL1_DS:S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_006672_008EA0_24EE.SAFE:IW
-        SUBDATASET_3_DESC=IW swath with all polarizations as bands
-      Corner Coordinates:
-      Upper Left  (    0.0,    0.0)
-      Lower Left  (    0.0,  167.0)
-      Upper Right (  256.0,    0.0)
-      Lower Right (  256.0,  167.0)
-      Center      (  128.0,   83.5)
-      Band 1 Block=256x16 Type=UInt16, ColorInterp=Undefined
-        Metadata:
-          POLARISATION=VH
-          SWATH=IW
-
--  A SLC product with 5 swaths in single pol (the first EW1/HH is
-   selected by default):
+   or starting with GDAL 3.4
 
    ::
 
-      $ gdalinfo S1A_EW_SLC__1SSH_20150226T010823_20150226T010902_004787_005F2B_E43E.SAFE
-
-   ::
-
-
-      Driver: SAFE/Sentinel-1 SAR SAFE Product
-      Files: S1A_EW_SLC__1SSH_20150226T010823_20150226T010902_004787_005F2B_E43E.SAFE/manifest.safe
-             S1A_EW_SLC__1SSH_20150226T010823_20150226T010902_004787_005F2B_E43E.SAFE/measurement/s1a-ew1-slc-hh-20150226t010823-20150226t010859-004787-005f2b-001.tiff
-      Size is 6871, 14016
-      Coordinate System is `'
-      GCP Projection =
-      GEOGCS["WGS 84",
-          DATUM["WGS_1984",
-              SPHEROID["WGS 84",6378137,298.257223563,
-                  AUTHORITY["EPSG","7030"]],
-              AUTHORITY["EPSG","6326"]],
-          PRIMEM["Greenwich",0,
-              AUTHORITY["EPSG","8901"]],
-          UNIT["degree",0.0174532925199433,
-              AUTHORITY["EPSG","9122"]],
-          AUTHORITY["EPSG","4326"]]
-      GCP[  0]: Id=1, Info=
-                (0,0) -> (-26.9158879633399,-76.5938687850829,250.211451298701)
-      GCP[  1]: Id=2, Info=
-
-      ...suppressed output...
-
-      GCP[272]: Id=273, Info=
-                (6870,14015) -> (-35.4972634588715,-75.5331533717809,0)
-      Metadata:
-        ACQUISITION_START_TIME=2015-02-26T01:08:23.095253
-        ACQUISITION_STOP_TIME=2015-02-26T01:09:02.335069
-        BEAM_MODE=EW
-        BEAM_SWATH=EW1
-        FACILITY_IDENTIFIER=ESRIN headquarters
-        LINE_SPACING=1.992087e+01
-        MISSION_ID=S1A
-        MODE=EW
-        ORBIT_DIRECTION=ASCENDING
-        ORBIT_NUMBER=4787
-        PIXEL_SPACING=5.990303e+00
-        PRODUCT_TYPE=SLC
-        SATELLITE_IDENTIFIER=SENTINEL-1
-        SENSOR_IDENTIFIER=SAR
-        SWATH=EW1
-      Subdatasets:
-        SUBDATASET_1_NAME=SENTINEL1_DS:S1A_EW_SLC__1SSH_20150226T010823_20150226T010902_004787_005F2B_E43E.SAFE:EW1_HH
-        SUBDATASET_1_DESC=Single band with EW1 swath and HH polarization
-        SUBDATASET_2_NAME=SENTINEL1_DS:S1A_EW_SLC__1SSH_20150226T010823_20150226T010902_004787_005F2B_E43E.SAFE:EW2_HH
-        SUBDATASET_2_DESC=Single band with EW2 swath and HH polarization
-        SUBDATASET_3_NAME=SENTINEL1_DS:S1A_EW_SLC__1SSH_20150226T010823_20150226T010902_004787_005F2B_E43E.SAFE:EW3_HH
-        SUBDATASET_3_DESC=Single band with EW3 swath and HH polarization
-        SUBDATASET_4_NAME=SENTINEL1_DS:S1A_EW_SLC__1SSH_20150226T010823_20150226T010902_004787_005F2B_E43E.SAFE:EW4_HH
-        SUBDATASET_4_DESC=Single band with EW4 swath and HH polarization
-        SUBDATASET_5_NAME=SENTINEL1_DS:S1A_EW_SLC__1SSH_20150226T010823_20150226T010902_004787_005F2B_E43E.SAFE:EW5_HH
-        SUBDATASET_5_DESC=Single band with EW5 swath and HH polarization
-      Corner Coordinates:
-      Upper Left  (    0.0,    0.0)
-      Lower Left  (    0.0,14016.0)
-      Upper Right ( 6871.0,    0.0)
-      Lower Right ( 6871.0,14016.0)
-      Center      ( 3435.5, 7008.0)
-      Band 1 Block=7852x1 Type=CInt16, ColorInterp=Undefined
-        Metadata:
-          POLARISATION=HH
-          SWATH=EW1
+      $ gdalinfo SENTINEL1_CALIB:UNCALIB:test.SAFE:IW_VV:AMPLITUDE
 
 Data Calibration
 ----------------
 
-Currently the driver does not apply calibration information.
+Starting with GDAL 3.4, calibration is applied for SIGMA0, BETA0 and GAMMA calibration subdataset
 
 See Also
 --------
