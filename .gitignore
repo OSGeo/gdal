@@ -26,10 +26,6 @@ __pycache__/
 .env*/
 .venv*/
 
-# autotools
-gdal/configure
-gdal/aclocal.m4
-
 # CMake
 CMakeLists.txt
 *.cmake
