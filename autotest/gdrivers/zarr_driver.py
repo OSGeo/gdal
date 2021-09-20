@@ -590,7 +590,7 @@ def test_zarr_read_crs(crs_member):
     }
 
     zattrs_all = {
-        "crs": {
+        "_CRS": {
             "projjson": {
                 "$schema": "https://proj.org/schemas/v0.2/projjson.schema.json",
                 "type": "GeographicCRS",
@@ -687,7 +687,7 @@ def test_zarr_read_crs(crs_member):
         }
     }
 
-    zattrs = {"crs": {crs_member: zattrs_all["crs"][crs_member]}}
+    zattrs = {"_CRS": {crs_member: zattrs_all["_CRS"][crs_member]}}
 
     try:
         gdal.Mkdir('/vsimem/test.zarr', 0)
@@ -1576,8 +1576,8 @@ def test_zarr_create_array_set_crs():
         data = gdal.VSIFReadL(1, 10000, f)
         gdal.VSIFCloseL(f)
         j = json.loads(data)
-        assert 'crs' in j
-        crs = j['crs']
+        assert '_CRS' in j
+        crs = j['_CRS']
         assert 'wkt' in crs
         assert 'url' in crs
         if 'projjson' in crs:
