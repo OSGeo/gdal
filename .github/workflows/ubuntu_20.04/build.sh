@@ -25,6 +25,8 @@ fi
 
 cd /build/gdal
 
+./autogen.sh
+
 ./configure --prefix=/usr \
     ${OTHER_SWITCHES} \
     --without-libtool \

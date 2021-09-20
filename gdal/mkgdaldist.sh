@@ -133,12 +133,20 @@ find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
     sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" "$i"
 done
 
+
+CWD=${PWD}
+cd gdal
+
+#
+# Generate ./configure
+#
+echo "* Generating ./configure..."
+./autogen.sh
+
 #
 # Generate man pages
 #
 echo "* Generating man pages..."
-CWD=${PWD}
-cd gdal
 if test -d "man"; then
     rm -rf man
 fi

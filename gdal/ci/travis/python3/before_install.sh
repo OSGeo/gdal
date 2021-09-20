@@ -12,7 +12,7 @@ sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 #sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update
 # postgis postgresql-9.5 postgresql-client-9.5 postgresql-9.5-postgis-2.2 libpq-dev
-sudo apt-get install -y --allow-unauthenticated ccache python3-dev python3-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev libkml-dev libopenjp2-7-dev libzstd1-dev openjdk-8-jdk ant
+sudo apt-get install -y --allow-unauthenticated automake ccache python3-dev python3-numpy libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev  libepsilon-dev  liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev libkml-dev libopenjp2-7-dev libzstd1-dev openjdk-8-jdk ant
 # libgta-dev
 sudo apt-get install -y python3-lxml
 sudo apt-get install -y libqhull-dev

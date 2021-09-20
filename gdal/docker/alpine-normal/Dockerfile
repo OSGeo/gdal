@@ -281,6 +281,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         mkdir -p "$HOME/.ccache"; \
         ccache -M 1G; \
     fi \
+    && ./autogen.sh \
     && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
     --with-hide-internal-symbols \
     --with-liblzma \

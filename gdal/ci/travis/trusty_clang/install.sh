@@ -26,6 +26,7 @@ $SCRIPT_DIR/../common_install.sh
 
 cd gdal
 
+./autogen.sh
 ARCH_FLAGS=""
 AVX2_AVAIL=1
 grep avx2 /proc/cpuinfo >/dev/null || AVX2_AVAIL=0

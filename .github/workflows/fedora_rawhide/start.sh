@@ -3,7 +3,7 @@
 set -e
 
 dnf install -y --setopt=install_weak_deps=False proj-devel
-dnf install -y clang make diffutils ccache \
+dnf install -y clang automake make diffutils ccache \
               libxml2-devel libxslt-devel expat-devel xerces-c-devel \
               zlib-devel xz-devel libzstd-devel blosc-devel \
               giflib-devel libjpeg-devel libpng-devel \
@@ -51,6 +51,7 @@ ccache -s
 # Configure GDAL
 CURRENT_DIR=$PWD
 cd gdal
+./autogen.sh
 CC='ccache clang' CXX='ccache clang++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-python=/usr/bin/python3 --with-poppler --with-spatialite --with-liblzma --with-webp --with-hdf4 --with-hdf5 --with-armadillo
 
 make USER_DEFS=-Werror -j$(nproc)

@@ -21,6 +21,8 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
 (
     cd gdal/gdal
 
+    ./autogen.sh
+
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
         rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/"
