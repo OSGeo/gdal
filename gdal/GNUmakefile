@@ -35,10 +35,13 @@ LIBGDAL-$(HAVE_LD_SHARED)	+=	$(GDAL_SLIB)
 # override if we are using libtool
 LIBGDAL-$(HAVE_LIBTOOL)	:= $(LIBGDAL)
 
-default:	lib-target apps-target swig-target gdal.pc
+default:	configure lib-target apps-target swig-target gdal.pc
 ifeq ($(PDF_PLUGIN),yes)
 	(cd frmts/pdf; $(MAKE) plugin)
 endif
+
+configure: configure.ac
+	./autogen.sh
 
 lib-target:	check-lib;
 
