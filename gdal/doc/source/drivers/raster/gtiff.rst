@@ -604,7 +604,7 @@ if all the following conditions are met:
 - no explicity target JPEG quality is specified
 - no change in colorspace is specified
 - no sub-windowing is requested
-- and more geneally, no change that alters pixel values
+- and more generally, no change that alters pixel values
 
 The generation of a tiled JPEG-in-TIFF from the original JPEG image is possible.
 Explicit assigment of target SRS and bounds are also possible.
