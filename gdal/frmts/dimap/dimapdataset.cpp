@@ -1184,6 +1184,10 @@ int DIMAPDataset::ReadImageInformation2()
                     {
                         int nRow = atoi(pszR);
                         int nCol = atoi(pszC);
+                        if( nRow < 0 || nCol < 0 )
+                        {
+                            return false;
+                        }
                         const CPLString osTileFilename(
                             CPLFormCIFilename( osPath, pszHref, nullptr ));
                         if( (nRow == 1 && nCol == 1 && nPart == 0) || osImageDSFilename.empty() ) {
@@ -1243,7 +1247,8 @@ int DIMAPDataset::ReadImageInformation2()
         nTileWidth = poImageDS->GetRasterXSize();
         nTileHeight = poImageDS->GetRasterYSize();
     }
-    else
+
+    if( !(nTileWidth > 0 && nTileHeight > 0) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot get tile dimension");
         return FALSE;
@@ -1287,8 +1292,8 @@ int DIMAPDataset::ReadImageInformation2()
         {
             const int nRow = oTileIdxNameTuple.first.nRow;
             const int nCol = oTileIdxNameTuple.first.nCol;
-            if( (nRow - 1) * nTileHeight < nRasterYSize &&
-                (nCol - 1) * nTileWidth < nRasterXSize )
+            if( static_cast<int64_t>(nRow - 1) * nTileHeight < nRasterYSize &&
+                static_cast<int64_t>(nCol - 1) * nTileWidth < nRasterXSize )
             {
                 int nSrcBand;
                 if( bTwoDataFilesPerTile )
@@ -1313,12 +1318,12 @@ int DIMAPDataset::ReadImageInformation2()
                 }
 
                 int nHeight = nTileHeight;
-                if( nRow * nTileHeight > nRasterYSize )
+                if( static_cast<int64_t>(nRow) * nTileHeight > nRasterYSize )
                 {
                     nHeight = nRasterYSize - (nRow - 1) * nTileHeight;
                 }
                 int nWidth = nTileWidth;
-                if( nCol * nTileWidth > nRasterXSize )
+                if( static_cast<int64_t>(nCol) * nTileWidth > nRasterXSize )
                 {
                     nWidth = nRasterXSize - (nCol - 1) * nTileWidth;
                 }
