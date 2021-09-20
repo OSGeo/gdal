@@ -435,7 +435,7 @@ cpl_uffd_context* CPLCreateUserFaultMapping(const char * pszFilename, void ** pp
         CPLError(CE_Failure, CPLE_AppDefined,
                  "CPLCreateUserFaultMapping(): syscall(__NR_userfaultfd) failed: "
                  "insufficient permission. add CAP_SYS_PTRACE capability, or "
-                 "set /proc/sys/vm/unprivileged_userfaultfd to 0");
+                 "set /proc/sys/vm/unprivileged_userfaultfd to 1");
     }
     else
     {
