@@ -2319,13 +2319,12 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
             if (rPixelSizeX * nRasterXSize > 360)
                 CPLError(CE_Warning, CPLE_NotSupported,
                     "Cannot properly handle GRIB2 files with overlaps and 0-360 longitudes");
-            else if (rPixelSizeX * nRasterXSize == 360)
+            else if (rPixelSizeX * nRasterXSize == 360 && meta->gds.projType == GS3_LATLON)
             {
                 nSplitAndSwap = static_cast<int>(ceil(180 / rPixelSizeX));
                 // Find the first row number east of the antimeridian
                 CPLDebug("GRIB", "Enabling Split&Swap mode, antimeridian is at %d", nSplitAndSwap);
                 rMinX = -180;
-                rMaxX = 180;
             }
             else if (Lon360to180(rMinX) > Lon360to180(rMaxX))
             {
@@ -2337,7 +2336,6 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
                 CPLDebug("GRIB", "Shifting longitudes from %lf:%lf to %lf:%lf",
                     rMinX, rMaxX, Lon360to180(rMinX), Lon360to180(rMaxX));
                 rMinX = Lon360to180(rMinX);
-                rMaxX = Lon360to180(rMaxX);
             }
         }
     }
