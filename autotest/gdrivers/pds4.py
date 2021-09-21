@@ -48,6 +48,31 @@ def validate_xml(filename):
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
 
+    # for GDAL 3.4 / PDS4_PDS_1G00
+
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1G00.xsd',
+                                  'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1G00.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1G00_1950.xsd',
+                                  'pds.nasa.gov_pds4_cart_v1_PDS4_CART_1G00_1950.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1G00_1500.xsd',
+                                  'pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1G00_1500.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    # Used by PDS4_CART_1G00_1950.xsd
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/geom/v1/PDS4_GEOM_1G00_1920.xsd',
+                                  'pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1G00_1920.xsd',
+                                  force_download=True):
+        pytest.skip()
+
+    # GDAL 3.3
+
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1D00.xsd',
                                   'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1D00.xsd',
                                   force_download=True):
@@ -104,8 +129,11 @@ def validate_xml(filename):
 ###############################################################################
 # Perform simple read test on PDS4 dataset.
 
-
-def test_pds4_read_cart_1700():
+@pytest.mark.parametrize("filename", ['pds4/byte_pds4_cart_1700.xml',
+                                      'pds4/byte_pds4_cart_1b00.xml',
+                                      'pds4/byte_pds4_cart_1d00_1933.xml',
+                                      'pds4/byte_pds4_cart_1g00_1950.xml'])
+def test_pds4_read_cart_versions(filename):
     srs = """PROJCS["Transverse Mercator Earth",
     GEOGCS["GCS_Earth",
         DATUM["D_North_American_Datum_1927",
@@ -121,53 +149,7 @@ def test_pds4_read_cart_1700():
 """
     gt = (-59280.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('PDS4', 'pds4/byte_pds4_cart_1700.xml', 1, 4672)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
-
-###############################################################################
-# Perform simple read test on PDS4 dataset.
-
-
-def test_pds4_read_cart_1B00():
-    srs = """PROJCS["Transverse Mercator Earth",
-    GEOGCS["GCS_Earth",
-        DATUM["D_North_American_Datum_1927",
-            SPHEROID["North_American_Datum_1927",6378206.4,0]],
-        PRIMEM["Reference_Meridian",0],
-        UNIT["degree",0.0174532925199433]],
-    PROJECTION["Transverse_Mercator"],
-    PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",-117],
-    PARAMETER["scale_factor",0.9996],
-    PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0],UNIT["meter",1]]
-"""
-    gt = (-59280.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
-
-    tst = gdaltest.GDALTest('PDS4', 'pds4/byte_pds4_cart_1b00.xml', 1, 4672)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
-
-###############################################################################
-# Perform simple read test on PDS4 dataset.
-
-
-def test_pds4_read_cart_1D00_1933():
-    srs = """PROJCS["Transverse Mercator Earth",
-    GEOGCS["GCS_Earth",
-        DATUM["D_North_American_Datum_1927",
-            SPHEROID["North_American_Datum_1927",6378206.4,0]],
-        PRIMEM["Reference_Meridian",0],
-        UNIT["degree",0.0174532925199433]],
-    PROJECTION["Transverse_Mercator"],
-    PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",-117],
-    PARAMETER["scale_factor",0.9996],
-    PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0],UNIT["meter",1]]
-"""
-    gt = (-59280.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
-
-    tst = gdaltest.GDALTest('PDS4', 'pds4/byte_pds4_cart_1d00_1933.xml', 1, 4672)
+    tst = gdaltest.GDALTest('PDS4', filename, 1, 4672)
     return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
@@ -278,44 +260,59 @@ def test_pds4_7():
 ###############################################################################
 # Test SRS support
 
+@pytest.mark.parametrize('proj4str', ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                                      '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_1SP
+                                      '+proj=lcc +lat_0=10 +lon_0=-112.5 +lat_1=9 +lat_2=11 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_2SP
+                                      '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +gamma=12 +k=1 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
+                                      '+proj=omerc +lat_0=10 +lat_1=12 +lon_1=11 +lat_2=14 +lon_2=13 +k=1 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
+                                      '+proj=stere +lat_0=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Polar Stereographic
+                                      '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                                      '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                                      '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                                      '+proj=merc +lat_ts=2 +lon_0=3 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                                      '+proj=merc +lon_0=3 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                                      '+proj=ortho +lat_0=1 +lon_0=2 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                                      '+proj=laea +lat_0=1 +lon_0=2 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
+                                     ])
+def test_pds4_projected_srs(proj4str):
 
-def test_pds4_8():
+    options = ['VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier',
+               'VAR_INVESTIGATION_AREA_LID_REFERENCE=urn:foo:bar:baz:ialr',
+               'VAR_TARGET_TYPE=planet']
 
     filename = '/vsimem/out.xml'
-    for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
-                  '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_1SP
-                  '+proj=lcc +lat_0=10 +lon_0=-112.5 +lat_1=9 +lat_2=11 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # LCC_2SP
-                  '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +gamma=12 +k=1 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator Azimuth Center
-                  '+proj=omerc +lat_0=10 +lat_1=12 +lon_1=11 +lat_2=14 +lon_2=13 +k=1 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Oblique Mercator 2 points
-                  '+proj=stere +lat_0=90 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',  # Polar Stereographic
-                  '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
-                  '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
-                  '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
-                  '+proj=merc +lat_ts=2 +lon_0=3 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
-                  '+proj=merc +lon_0=3 +k=0.9 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
-                  '+proj=ortho +lat_0=1 +lon_0=2 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
-                  '+proj=laea +lat_0=1 +lon_0=2 +x_0=0 +y_0=0 +R=2439400 +units=m +no_defs',
-                 ]:
-        ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
-        sr = osr.SpatialReference()
-        sr.ImportFromProj4(proj4)
-        ds.SetProjection(sr.ExportToWkt())
-        ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-        with gdaltest.error_handler():
-            ds = None
 
-        ret = validate_xml(filename)
-        assert ret, ('validation of file for %s failed' % proj4)
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, options=options)
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4(proj4str)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    with gdaltest.error_handler():
+        ds = None
 
-        ds = gdal.Open(filename)
-        wkt = ds.GetProjectionRef()
-        sr = osr.SpatialReference()
-        sr.SetFromUserInput(wkt)
-        got_proj4 = sr.ExportToProj4().strip()
-        assert got_proj4 == proj4, ''
+    ret = validate_xml(filename)
+    assert ret, ('validation of file for %s failed' % proj4str)
+
+    ds = gdal.Open(filename)
+    wkt = ds.GetProjectionRef()
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput(wkt)
+    got_proj4 = sr.ExportToProj4().strip()
+    assert got_proj4 == proj4str, ''
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+
+def test_pds4_longlat_srs():
+
+    options = ['VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier',
+               'VAR_INVESTIGATION_AREA_LID_REFERENCE=urn:foo:bar:baz:ialr',
+               'VAR_TARGET_TYPE=planet']
+
+    filename = '/vsimem/out.xml'
 
     # longlat doesn't roundtrip as such
-    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, options=options)
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +R=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
@@ -353,8 +350,14 @@ def test_pds4_9():
 
     filename = '/vsimem/out.xml'
     # Test copy of all specialConstants
+
+    options = ['VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier',
+               'VAR_INVESTIGATION_AREA_LID_REFERENCE=urn:foo:bar:baz:ialr',
+               'VAR_TARGET_TYPE=planet']
+
     with hide_substitution_warnings_error_handler():
-        gdal.Translate(filename, 'data/pds4/byte_pds4_cart_1700.xml', format='PDS4')
+        gdal.Translate(filename, 'data/pds4/byte_pds4_cart_1700.xml',
+                       format='PDS4', creationOptions=options)
 
     ret = validate_xml(filename)
     assert ret, 'validation failed'
@@ -374,7 +377,7 @@ def test_pds4_9():
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/pds4/byte_pds4_cart_1700.xml', format='PDS4',
                            noData=75,
-                           creationOptions=['IMAGE_FORMAT=' + frmt])
+                           creationOptions=['IMAGE_FORMAT=' + frmt] + options)
 
         ret = validate_xml(filename)
         assert ret, 'validation failed'
@@ -396,7 +399,7 @@ def test_pds4_9():
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/pds4/byte_pds4_cart_1700.xml', format='PDS4',
                            creationOptions=['USE_SRC_LABEL=NO',
-                                            'IMAGE_FORMAT=' + frmt])
+                                            'IMAGE_FORMAT=' + frmt] + options)
 
         ret = validate_xml(filename)
         assert ret, 'validation failed'
@@ -409,7 +412,7 @@ def test_pds4_9():
 
         # Test filling with nodata
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                                 options=['IMAGE_FORMAT=' + frmt])
+                                                 options=['IMAGE_FORMAT=' + frmt] + options)
         ds.GetRasterBand(1).SetNoDataValue(1)
         with hide_substitution_warnings_error_handler():
             ds = None
@@ -421,7 +424,7 @@ def test_pds4_9():
 
         # Test setting nodata and then explicit Fill()
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                                 options=['IMAGE_FORMAT=' + frmt])
+                                                 options=['IMAGE_FORMAT=' + frmt] + options)
         ds.GetRasterBand(1).SetNoDataValue(10)
         ds.GetRasterBand(1).Fill(1)
         with hide_substitution_warnings_error_handler():
@@ -490,7 +493,7 @@ def test_pds4_9():
     </File_Area_Observational>
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                             options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template] + options)
     ds.GetRasterBand(1).SetNoDataValue(10)
     with hide_substitution_warnings_error_handler():
         ds = None
@@ -560,7 +563,7 @@ def test_pds4_9():
     </File_Area_Observational>
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                             options=['TEMPLATE=' + template])
+                                             options=['TEMPLATE=' + template] + options)
     ds.GetRasterBand(1).SetNoDataValue(10)
     with hide_substitution_warnings_error_handler():
         ds = None
@@ -1129,10 +1132,15 @@ def test_pds4_16():
 
 def test_pds4_17():
 
+    options = ['VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier',
+               'VAR_INVESTIGATION_AREA_LID_REFERENCE=urn:foo:bar:baz:ialr',
+               'VAR_TARGET_TYPE=planet',
+               'VAR_TARGET=planet']
+
     filename = '/vsimem/out.xml'
 
     with gdaltest.error_handler():
-        gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options=['ARRAY_TYPE=Array_2D'])
+        gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options=['ARRAY_TYPE=Array_2D'] + options)
 
     ret = validate_xml(filename)
     assert ret, 'validation failed'
@@ -1149,12 +1157,12 @@ def test_pds4_17():
 
     # Test multi-band creation with Array_2D
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options=['ARRAY_TYPE=Array_2D'])
+        ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options=['ARRAY_TYPE=Array_2D'] + options)
     assert ds is None, 'expected failure'
 
     # Test multi-band creation with Array_3D_Spectrum
     with gdaltest.error_handler():
-        gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options=['ARRAY_TYPE=Array_3D_Spectrum'])
+        gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options=['ARRAY_TYPE=Array_3D_Spectrum'] + options)
 
     ret = validate_xml(filename)
     assert ret, 'validation failed'
@@ -1295,13 +1303,14 @@ def test_pds4_append_subdataset_not_same_srs():
 def _test_createlabelonly(src_ds,
                           expected_content = None,
                           filename = '/vsimem/out.xml',
-                          validate = False):
+                          validate = False,
+                          creation_options = []):
 
     src_ds_name = src_ds.GetDescription()
     src_driver_name = src_ds.GetDriver().GetDescription()
 
     with gdaltest.error_handler():
-        assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['CREATE_LABEL_ONLY=YES'])
+        assert gdal.GetDriverByName('PDS4').CreateCopy(filename, src_ds, options=['CREATE_LABEL_ONLY=YES'] + creation_options)
     with gdaltest.error_handler():
         ds = gdal.Open(filename)
     assert ds
@@ -1356,8 +1365,14 @@ def test_pds4_createlabelonly_gtiff():
 
     gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/byte.tif', gdal.Open('data/byte.tif'))
 
+    options = ['VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier',
+               'VAR_INVESTIGATION_AREA_LID_REFERENCE=urn:foo:bar:baz:ialr']
+
     src_ds = gdal.Open('/vsimem/byte.tif')
-    return _test_createlabelonly(src_ds, expected_content = '<parsing_standard_id>TIFF 6.0</parsing_standard_id>', validate = True)
+    return _test_createlabelonly(src_ds,
+                                 expected_content = '<parsing_standard_id>TIFF 6.0</parsing_standard_id>',
+                                 validate = True,
+                                 creation_options = options)
 
 
 ###############################################################################

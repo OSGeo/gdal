@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="https://pds.nasa.gov/datastandards/schema/released/pds/v1/PDS4_PDS_1G00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1G00_1500.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<?xml-model href="https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1G00_1953.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1" xmlns:pds="http://pds.nasa.gov/pds4/pds/v1" xmlns:disp="http://pds.nasa.gov/pds4/disp/v1" xmlns:cart="http://pds.nasa.gov/pds4/cart/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+    http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1G00.xsd
+    http://pds.nasa.gov/pds4/disp/v1 https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1G00_1500.xsd
+    http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1G00_1950.xsd">
+  <Identification_Area>
+    <logical_identifier>urn:foo:bar:baz:logical_identifier</logical_identifier>
+    <version_id>1.0</version_id>
+    <title>byte_pds4_cart_1g00_1950.xml</title>
+    <information_model_version>1.16.0.0</information_model_version>
+    <product_class>Product_Observational</product_class>
+  </Identification_Area>
+  <Observation_Area>
+    <Time_Coordinates>
+      <start_date_time xsi:nil="true" nilReason="inapplicable" />
+      <stop_date_time xsi:nil="true" nilReason="inapplicable" />
+    </Time_Coordinates>
+    <Investigation_Area>
+      <name>${INVESTIGATION_AREA_NAME}</name>
+      <type>Mission</type>
+      <Internal_Reference>
+        <lid_reference>urn:foo:bar:baz:ialr</lid_reference>
+        <reference_type>data_to_investigation</reference_type>
+      </Internal_Reference>
+    </Investigation_Area>
+    <Observing_System>
+      <Observing_System_Component>
+        <name>${OBSERVING_SYSTEM_NAME}</name>
+        <type>Spacecraft</type>
+      </Observing_System_Component>
+    </Observing_System>
+    <Target_Identification>
+      <name>Earth</name>
+      <type>Planet</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:target:planet.earth</lid_reference>
+        <reference_type>data_to_target</reference_type>
+      </Internal_Reference>
+    </Target_Identification>
+    <Discipline_Area>
+      <disp:Display_Settings>
+        <Local_Internal_Reference>
+          <local_identifier_reference>image</local_identifier_reference>
+          <local_reference_type>display_settings_to_array</local_reference_type>
+        </Local_Internal_Reference>
+        <disp:Display_Direction>
+          <disp:horizontal_display_axis>Sample</disp:horizontal_display_axis>
+          <disp:horizontal_display_direction>Left to Right</disp:horizontal_display_direction>
+          <disp:vertical_display_axis>Line</disp:vertical_display_axis>
+          <disp:vertical_display_direction>Top to Bottom</disp:vertical_display_direction>
+        </disp:Display_Direction>
+      </disp:Display_Settings>
+      <cart:Cartography>
+        <Local_Internal_Reference>
+          <local_identifier_reference>image</local_identifier_reference>
+          <local_reference_type>cartography_parameters_to_image_object</local_reference_type>
+        </Local_Internal_Reference>
+        <cart:Spatial_Domain>
+          <cart:Bounding_Coordinates>
+            <cart:west_bounding_coordinate unit="deg">-117.640404630426559</cart:west_bounding_coordinate>
+            <cart:east_bounding_coordinate unit="deg">-117.62736289167276</cart:east_bounding_coordinate>
+            <cart:north_bounding_coordinate unit="deg">33.7102128225641948</cart:north_bounding_coordinate>
+            <cart:south_bounding_coordinate unit="deg">33.6993632991392857</cart:south_bounding_coordinate>
+          </cart:Bounding_Coordinates>
+        </cart:Spatial_Domain>
+        <cart:Spatial_Reference_Information>
+          <cart:Horizontal_Coordinate_System_Definition>
+            <cart:Planar>
+              <cart:Map_Projection>
+                <cart:map_projection_name>Transverse Mercator</cart:map_projection_name>
+                <cart:Transverse_Mercator>
+                  <cart:scale_factor_at_central_meridian>0.999600000000000044</cart:scale_factor_at_central_meridian>
+                  <cart:longitude_of_central_meridian unit="deg">-117</cart:longitude_of_central_meridian>
+                  <cart:latitude_of_projection_origin unit="deg">0</cart:latitude_of_projection_origin>
+                </cart:Transverse_Mercator>
+              </cart:Map_Projection>
+              <cart:Planar_Coordinate_Information>
+                <cart:planar_coordinate_encoding_method>Coordinate Pair</cart:planar_coordinate_encoding_method>
+                <cart:Coordinate_Representation>
+                  <cart:pixel_resolution_x unit="m/pixel">60</cart:pixel_resolution_x>
+                  <cart:pixel_resolution_y unit="m/pixel">60</cart:pixel_resolution_y>
+                  <cart:pixel_scale_x unit="pixel/deg">1855.34503419624093</cart:pixel_scale_x>
+                  <cart:pixel_scale_y unit="pixel/deg">1855.34503419624093</cart:pixel_scale_y>
+                </cart:Coordinate_Representation>
+              </cart:Planar_Coordinate_Information>
+              <cart:Geo_Transformation>
+                <cart:upperleft_corner_x unit="m">-59280</cart:upperleft_corner_x>
+                <cart:upperleft_corner_y unit="m">3751320</cart:upperleft_corner_y>
+              </cart:Geo_Transformation>
+            </cart:Planar>
+            <cart:Geodetic_Model>
+              <cart:latitude_type>Planetocentric</cart:latitude_type>
+              <cart:spheroid_name>North_American_Datum_1927</cart:spheroid_name>
+              <cart:a_axis_radius unit="m">6378206.40000000037</cart:a_axis_radius>
+              <cart:b_axis_radius unit="m">6378206.40000000037</cart:b_axis_radius>
+              <cart:c_axis_radius unit="m">6378206.40000000037</cart:c_axis_radius>
+              <cart:longitude_direction>Positive East</cart:longitude_direction>
+            </cart:Geodetic_Model>
+          </cart:Horizontal_Coordinate_System_Definition>
+        </cart:Spatial_Reference_Information>
+      </cart:Cartography>
+    </Discipline_Area>
+  </Observation_Area>
+  <File_Area_Observational>
+    <File>
+      <file_name>byte_pds4_cart_1g00_1950.img</file_name>
+    </File>
+    <Array_3D_Image>
+      <local_identifier>image</local_identifier>
+      <offset unit="byte">0</offset>
+      <axes>3</axes>
+      <axis_index_order>Last Index Fastest</axis_index_order>
+      <Element_Array>
+        <data_type>UnsignedByte</data_type>
+      </Element_Array>
+      <Axis_Array>
+        <axis_name>Band</axis_name>
+        <elements>1</elements>
+        <sequence_number>1</sequence_number>
+      </Axis_Array>
+      <Axis_Array>
+        <axis_name>Line</axis_name>
+        <elements>20</elements>
+        <sequence_number>2</sequence_number>
+      </Axis_Array>
+      <Axis_Array>
+        <axis_name>Sample</axis_name>
+        <elements>20</elements>
+        <sequence_number>3</sequence_number>
+      </Axis_Array>
+    </Array_3D_Image>
+  </File_Area_Observational>
+</Product_Observational>

@@ -47,6 +47,8 @@
     "avoid deleting the binary file when the label is deleted. Keep it to " \
     "preserve this behavior."
 
+#define CURRENT_CART_VERSION        "1G00_1950"
+
 extern "C" void GDALRegister_PDS4();
 
 /************************************************************************/
@@ -879,7 +881,8 @@ static double GetAngularValue(CPLXMLNode* psParent, const char* pszElementName,
 /*                          ReadGeoreferencing()                       */
 /************************************************************************/
 
-// See https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd,
+// See https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1G00_1950.xsd, (GDAL 3.4)
+//     https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd,
 //     https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd,
 //     https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd
 // and the corresponding .sch files
@@ -2342,6 +2345,9 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         const bool bUse_CART_1933_Or_Later =
             IsCARTVersionGTE(pszCARTVersion, "1D00_1933");
 
+        const bool bUse_CART_1950_Or_Later =
+            IsCARTVersionGTE(pszCARTVersion, "1G00_1950");
+
         if( pszProjection == nullptr )
         {
             pszPDS4ProjectionName = "Equirectangular";
@@ -2423,14 +2429,26 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
         {
             pszPDS4ProjectionName = "Polar Stereographic";
-            aoProjParams.push_back(ProjParam(
-                bUse_CART_1933_Or_Later ?  "longitude_of_central_meridian" :
-                                           "straight_vertical_longitude_from_pole",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
-            aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
-                    oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
-            aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
-                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+            if( bUse_CART_1950_Or_Later )
+            {
+                aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+                aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
+            }
+            else
+            {
+                aoProjParams.push_back(ProjParam(
+                    bUse_CART_1933_Or_Later ?  "longitude_of_central_meridian" :
+                                               "straight_vertical_longitude_from_pole",
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
+                aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+            }
         }
 
         else if( EQUAL(pszProjection, SRS_PT_POLYCONIC) )
@@ -3645,11 +3663,17 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                             osCartSchema = "https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd";
                             pszCARTVersion = "1B00";
                         }
-                        else
+                        else if( strstr(psSchemaLoc->psChild->pszValue, "PDS4_PDS_1D00.xsd") )
                         {
                             // GDAL 3.1
                             osCartSchema = "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd";
                             pszCARTVersion = "1D00_1933";
+                        }
+                        else
+                        {
+                            // GDAL 3.4
+                            osCartSchema = "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_" CURRENT_CART_VERSION ".xsd";
+                            pszCARTVersion = CURRENT_CART_VERSION;
                         }
                         CPLString osNewVal(psSchemaLoc->psChild->pszValue);
                         osNewVal += " http://pds.nasa.gov/pds4/cart/v1 " + osCartSchema;
@@ -3953,7 +3977,7 @@ void PDS4Dataset::WriteHeader()
 
     if( m_bCreateHeader )
     {
-        CPLString osCARTVersion("1D00_1933");
+        CPLString osCARTVersion(CURRENT_CART_VERSION);
         char* pszXML = CPLSerializeXMLTree(psRoot);
         if( pszXML )
         {
