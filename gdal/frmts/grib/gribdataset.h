@@ -109,6 +109,7 @@ class GRIBDataset final: public GDALPamDataset
     GIntBig nCachedBytes;
     GIntBig nCachedBytesThreshold;
     int bCacheOnlyOneBand;
+    int nSplitAndSwap;
     GRIBRasterBand *poLastUsedBand;
     std::shared_ptr<GDALGroup> m_poRootGroup{};
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
