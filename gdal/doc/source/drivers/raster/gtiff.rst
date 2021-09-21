@@ -625,7 +625,7 @@ compression):
 
 ::
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co QUALITY=60
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co JPEG_QUALITY=60
 
     gdal_translate in.jpg out.tif -srcwin 0 0 500 500 -co COMPRESS=JPEG
 
