@@ -224,9 +224,9 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
 /**
  * \class GDALDataset "gdal_priv.h"
  *
- * A dataset encapsulating one or more raster bands.  Details are
- * further discussed in the <a href="gdal_datamodel.html#GDALDataset">GDAL
- * Data Model</a>.
+ * A dataset encapsulating one or more raster bands.  Details are further
+ * discussed in the <a href="https://gdal.org/user/raster_data_model.html">GDAL
+ * Raster Data Model</a>.
  *
  * Use GDALOpen() or GDALOpenShared() to create a GDALDataset for a named file,
  * or GDALDriver::Create() or GDALDriver::CreateCopy() to create a new
