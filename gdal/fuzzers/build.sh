@@ -24,15 +24,10 @@ git clone --depth 1 https://github.com/OSGeo/PROJ proj
 rm -rf curl
 git clone --depth 1 https://github.com/curl/curl.git curl
 
-rm -rf netcdf-4.4.1.1
-curl https://src.fedoraproject.org/lookaside/pkgs/netcdf/netcdf-4.4.1.1.tar.gz/9210fd5355bee868684d9b8f83064aa6/netcdf-4.4.1.1.tar.gz > netcdf-4.4.1.1.tar.gz && \
-    tar xzf netcdf-4.4.1.1.tar.gz && \
-    rm -f netcdf-4.4.1.1.tar.gz && \
-    mv netcdf-c-4.4.1.1 netcdf-4.4.1.1 && \
-    cd netcdf-4.4.1.1 && \
-    patch -p0 < $SRC/gdal/gdal/fuzzers/NC4_put_propattr_leak_fix.patch && \
-    patch -p0 < $SRC/gdal/gdal/fuzzers/libnetcdf_fix_undefined_left_shift_in_ncx_get_size_t.patch && \
-    cd ..
+rm -rf netcdf-c-4.7.4
+curl -L https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.7.4.tar.gz > v4.7.4.tar.gz && \
+    tar xzf v4.7.4.tar.gz && \
+    rm -f v4.7.4.tar.gz
 
 rm -rf poppler
 git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
@@ -140,7 +135,7 @@ cd ..
 
 if [ "$ARCHITECTURE" = "x86_64" ]; then
   # build libnetcdf.a
-  cd netcdf-4.4.1.1
+  cd netcdf-c-4.7.4
   mkdir -p build
   cd build
   cmake .. -DCMAKE_INSTALL_PREFIX=$SRC/install -DHDF5_C_LIBRARY=libhdf5_serial.a -DHDF5_HL_LIBRARY=libhdf5_serial_hl.a -DHDF5_INCLUDE_DIR=/usr/include/hdf5/serial -DENABLE_DAP:BOOL=OFF -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_UTILITIES:BOOL=OFF -DBUILD_TESTING:BOOL=OFF -DENABLE_TESTS:BOOL=OFF
