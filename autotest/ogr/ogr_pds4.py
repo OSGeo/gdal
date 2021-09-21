@@ -311,9 +311,9 @@ def test_ogr_pds4_create_table_character(line_ending):
         layer_creation_options.append('LINE_ENDING=' + line_ending)
     if line_ending == 'error':
         with gdaltest.error_handler():
-            lyr = ds.CreateLayer('foo', options=layer_creation_options)
+            lyr = ds.CreateLayer('0f:oo', options=layer_creation_options)
     else:
-        lyr = ds.CreateLayer('foo', options=layer_creation_options)
+        lyr = ds.CreateLayer('0f:oo', options=layer_creation_options)
     fld = ogr.FieldDefn('bool', ogr.OFTInteger)
     fld.SetSubType(ogr.OFSTBoolean)
     lyr.CreateField(fld)
@@ -348,14 +348,15 @@ def test_ogr_pds4_create_table_character(line_ending):
         assert '<record_delimiter>Carriage-Return Line-Feed</record_delimiter>' in data
     assert 'LSB' not in data
     assert 'MSB' not in data
+    assert '<local_identifier>_0f_oo</local_identifier>' in data
 
     if line_ending is None:
         # Only do that check in that configuration for faster test execution
         assert validate_xml('/vsimem/test.xml')
 
-    assert gdal.VSIStatL('/vsimem/test/foo.dat')
+    assert gdal.VSIStatL('/vsimem/test/0f_oo.dat')
 
-    f = gdal.VSIFOpenL('/vsimem/test/foo.dat', 'rb')
+    f = gdal.VSIFOpenL('/vsimem/test/0f_oo.dat', 'rb')
     data = gdal.VSIFReadL(1, 100000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     if line_ending == 'LF':

@@ -414,14 +414,23 @@ CPLXMLNode* PDS4TableBaseLayer::RefreshFileAreaObservationalBeginningCommon(
     if( !osName.empty() )
         CPLCreateXMLElementAndValue(psTable,
                                     (osPrefix + "name").c_str(), osName);
-    if( !osLocalIdentifier.empty() )
-        CPLCreateXMLElementAndValue(psTable,
-                                    (osPrefix + "local_identifier").c_str(),
-                                    osLocalIdentifier);
-    else
-        CPLCreateXMLElementAndValue(psTable,
-                                    (osPrefix + "local_identifier").c_str(),
-                                    GetName());
+    if( osLocalIdentifier.empty() )
+    {
+        // Make a valid NCName
+        osLocalIdentifier = GetName();
+        if( isdigit(osLocalIdentifier[0]) )
+        {
+            osLocalIdentifier = '_' + osLocalIdentifier;
+        }
+        for( char& ch: osLocalIdentifier )
+        {
+            if( !isalnum(ch) && static_cast<unsigned>(ch) <= 127 )
+                ch = '_';
+        }
+    }
+    CPLCreateXMLElementAndValue(psTable,
+                                (osPrefix + "local_identifier").c_str(),
+                                osLocalIdentifier);
 
     CPLXMLNode* psOffset = CPLCreateXMLElementAndValue(
         psTable, (osPrefix + "offset").c_str(),

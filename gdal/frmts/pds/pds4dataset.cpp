@@ -4040,11 +4040,19 @@ OGRLayer* PDS4Dataset::ICreateLayer( const char *pszName,
     bool bSameDirectory = CPLTestBool(CSLFetchNameValueDef(papszOptions,
                                                            "SAME_DIRECTORY",
                                                            "NO"));
+
+    std::string osBasename(pszName);
+    for( char& ch: osBasename )
+    {
+        if( !isalnum(ch) && static_cast<unsigned>(ch) <= 127 )
+            ch = '_';
+    }
+
     CPLString osFullFilename;
     if( bSameDirectory )
     {
         osFullFilename = CPLFormFilename( CPLGetPath(m_osXMLFilename.c_str()),
-                                          pszName, pszExt );
+                                          osBasename.c_str(), pszExt );
         VSIStatBufL sStat;
         if( VSIStatL(osFullFilename, &sStat) == 0 )
         {
@@ -4069,7 +4077,7 @@ OGRLayer* PDS4Dataset::ICreateLayer( const char *pszName,
                      "Cannot create directory %s", osDirectory.c_str());
             return nullptr;
         }
-        osFullFilename = CPLFormFilename( osDirectory, pszName, pszExt );
+        osFullFilename = CPLFormFilename( osDirectory, osBasename.c_str(), pszExt );
     }
 
     if( EQUAL(pszTableType, "DELIMITED") )
