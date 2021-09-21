@@ -2329,7 +2329,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
                     nSplitAndSwapColumn);
                 rMinX = -180;
             }
-            else if (Lon360to180(rMinX) > Lon360to180(rMaxX))
+            else if (Lon360to180(rMinX) > Lon360to180(rMaxX) && meta->gds.projType == GS3_LATLON)
             {
                 nSplitAndSwapColumn = static_cast<int>(ceil((180 - rMinX) / rPixelSizeX));
                 rMinX = Lon360to180(rMinX);
@@ -2337,7 +2337,6 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
                     nSplitAndSwapColumn);
             }
             else
-
             {
                 CPLDebug("GRIB", "Shifting longitudes from %lf:%lf to %lf:%lf",
                     rMinX, rMaxX, Lon360to180(rMinX), Lon360to180(rMaxX));
